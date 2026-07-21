@@ -6,21 +6,6 @@
   },
   {
     "inputs": [],
-    "name": "BoardOfDirectorsNotFound",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "CandidateNotFound",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "EmptyTitle",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "EnforcedPause",
     "type": "error"
   },
@@ -36,43 +21,7 @@
   },
   {
     "inputs": [],
-    "name": "InvalidTieWinner",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "vote",
-        "type": "uint256"
-      }
-    ],
-    "name": "InvalidVote",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NoCandidates",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NoTieToResolve",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OfficerAddressNotSet",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OnlyFounder",
     "type": "error"
   },
   {
@@ -99,7 +48,63 @@
   },
   {
     "inputs": [],
-    "name": "ProposalNotActive",
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Voting__BoardOfDirectorsNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Voting__CandidateNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Voting__EmptyTitle",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Voting__InvalidTieWinner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "vote",
+        "type": "uint256"
+      }
+    ],
+    "name": "Voting__InvalidVote",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Voting__NoCandidates",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Voting__NoTieToResolve",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Voting__OfficerAddressNotSet",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Voting__OnlyFounder",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Voting__ProposalNotActive",
     "type": "error"
   },
   {
@@ -110,22 +115,17 @@
         "type": "uint256"
       }
     ],
-    "name": "ProposalNotFound",
+    "name": "Voting__ProposalNotFound",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "ReentrancyGuardReentrantCall",
+    "name": "Voting__VoterAlreadyVoted",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "VoterAlreadyVoted",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "VoterNotEligible",
+    "name": "Voting__VoterNotEligible",
     "type": "error"
   },
   {
@@ -136,17 +136,17 @@
         "type": "address"
       }
     ],
-    "name": "VoterNotRegistered",
+    "name": "Voting__VoterNotRegistered",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "WrongTieBreakOption",
+    "name": "Voting__WrongTieBreakOption",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "ZeroSender",
+    "name": "Voting__ZeroSender",
     "type": "error"
   },
   {
@@ -375,32 +375,32 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "_title",
+        "name": "title",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "_description",
+        "name": "description",
         "type": "string"
       },
       {
         "internalType": "bool",
-        "name": "_isElection",
+        "name": "isElection",
         "type": "bool"
       },
       {
         "internalType": "uint256",
-        "name": "_winnerCount",
+        "name": "winnerCount",
         "type": "uint256"
       },
       {
         "internalType": "address[]",
-        "name": "_voters",
+        "name": "voters",
         "type": "address[]"
       },
       {
         "internalType": "address[]",
-        "name": "_candidates",
+        "name": "candidates",
         "type": "address[]"
       }
     ],
@@ -420,6 +420,19 @@
     "name": "concludeProposal",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOfficerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -555,29 +568,161 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getProposalCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getProposalsById",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "draftedBy",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "isElection",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "winnerCount",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "yes",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "no",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "abstain",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct Types.DirectiveVotes",
+            "name": "votes",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "candidateAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "votes",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct Types.Candidate[]",
+            "name": "candidates",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "bool",
+                "name": "isEligible",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "isVoted",
+                "type": "bool"
+              },
+              {
+                "internalType": "address",
+                "name": "memberAddress",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct Types.Member[]",
+            "name": "voters",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "bool",
+            "name": "hasTie",
+            "type": "bool"
+          },
+          {
+            "internalType": "address[]",
+            "name": "tiedCandidates",
+            "type": "address[]"
+          },
+          {
+            "internalType": "enum Types.TieBreakOption",
+            "name": "selectedTieBreakOption",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct Types.Proposal",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
-        "name": "_sender",
+        "name": "sender",
         "type": "address"
       }
     ],
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "officerAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -608,100 +753,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "proposalCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "proposalsById",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "title",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "description",
-        "type": "string"
-      },
-      {
-        "internalType": "address",
-        "name": "draftedBy",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "isElection",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "isActive",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "winnerCount",
-        "type": "uint256"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "yes",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "no",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "abstain",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct Types.DirectiveVotes",
-        "name": "votes",
-        "type": "tuple"
-      },
-      {
-        "internalType": "bool",
-        "name": "hasTie",
-        "type": "bool"
-      },
-      {
-        "internalType": "enum Types.TieBreakOption",
-        "name": "selectedTieBreakOption",
-        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -754,7 +805,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_boardOfDirectors",
+        "name": "boardMembers",
         "type": "address[]"
       }
     ],
@@ -781,6 +832,19 @@
     "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {

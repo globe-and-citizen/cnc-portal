@@ -194,7 +194,7 @@ describe('Officer Contract', function () {
       // Test unauthorized access
       await expect(
         officer.connect(addr3).deployBeaconProxy('Bank', initData)
-      ).to.be.revertedWithCustomError(officer, 'NotOwnerOrInitializing')
+      ).to.be.revertedWithCustomError(officer, 'Officer__NotOwnerOrInitializing')
 
       // Test authorized access (founder)
       await expect(officer.connect(owner).deployBeaconProxy('Bank', initData)).to.emit(
@@ -210,11 +210,11 @@ describe('Officer Contract', function () {
       const newContractType = 'NewBankType'
 
       // Verify beacon doesn't exist yet
-      expect(await officer.contractBeacons(newContractType)).to.equal(ethers.ZeroAddress)
+      expect(await officer.getContractBeacon(newContractType)).to.equal(ethers.ZeroAddress)
 
       // Attempt to deploy proxy with new contract type should fail
       await expect(officer.connect(owner).deployBeaconProxy(newContractType, initData))
-        .to.be.revertedWithCustomError(officer, 'BeaconNotConfigured')
+        .to.be.revertedWithCustomError(officer, 'Officer__BeaconNotConfigured')
         .withArgs(newContractType)
     })
   })
@@ -239,12 +239,12 @@ describe('Officer Contract', function () {
     it('Should restrict pause/unpause to owners', async function () {
       await expect(officer.connect(addr3).pause()).to.be.revertedWithCustomError(
         officer,
-        'Unauthorized'
+        'Officer__Unauthorized'
       )
 
       await expect(officer.connect(addr3).unpause()).to.be.revertedWithCustomError(
         officer,
-        'Unauthorized'
+        'Officer__Unauthorized'
       )
     })
   })
@@ -272,7 +272,7 @@ describe('Officer Contract', function () {
 
       await expect(deployOfficerInstance(invalidConfig, [], false)).to.be.revertedWithCustomError(
         officer,
-        'ZeroAddress'
+        'Officer__ZeroAddress'
       )
     })
 
@@ -286,7 +286,7 @@ describe('Officer Contract', function () {
 
       await expect(deployOfficerInstance(invalidConfig, [], false)).to.be.revertedWithCustomError(
         officer,
-        'EmptyBeaconType'
+        'Officer__EmptyBeaconType'
       )
     })
 
@@ -303,7 +303,7 @@ describe('Officer Contract', function () {
       ]
 
       await expect(deployOfficerInstance(duplicateConfigs, [], false))
-        .to.be.revertedWithCustomError(officer, 'DuplicateBeaconType')
+        .to.be.revertedWithCustomError(officer, 'Officer__DuplicateBeaconType')
         .withArgs('TestBeacon')
     })
 
@@ -321,8 +321,8 @@ describe('Officer Contract', function () {
 
       const officerContract = await deployOfficerInstance(validConfigs, [], false)
 
-      expect(await officerContract.contractBeacons('TestBeacon1')).to.equal(addr1.address)
-      expect(await officerContract.contractBeacons('TestBeacon2')).to.equal(addr2.address)
+      expect(await officerContract.getContractBeacon('TestBeacon1')).to.equal(addr1.address)
+      expect(await officerContract.getContractBeacon('TestBeacon2')).to.equal(addr2.address)
     })
 
     it('Should initialize and deploy contracts in one transaction when isDeployAllContracts is true', async function () {
@@ -442,7 +442,9 @@ describe('Officer Contract', function () {
         'Elections',
         deployedContracts[1].contractAddress
       )
-      expect(await electionsInstance.officerAddress()).to.equal(await officerContract.getAddress())
+      expect(await electionsInstance.getOfficerAddress()).to.equal(
+        await officerContract.getAddress()
+      )
 
       //  ADD: Verify SafeDepositRouter has MINTER_ROLE
       const investorInstance = await ethers.getContractAt(
@@ -562,7 +564,7 @@ describe('Officer Contract', function () {
         'Elections',
         deployedContracts[1].contractAddress
       )
-      expect(await electionsInstance.officerAddress()).to.equal(await officer.getAddress())
+      expect(await electionsInstance.getOfficerAddress()).to.equal(await officer.getAddress())
     })
 
     it('Should fail when deploying with empty contract type', async function () {
@@ -575,7 +577,7 @@ describe('Officer Contract', function () {
 
       await expect(
         officer.connect(owner).deployAllContracts(deployments)
-      ).to.be.revertedWithCustomError(officer, 'EmptyContractType')
+      ).to.be.revertedWithCustomError(officer, 'Officer__EmptyContractType')
     })
 
     it('Should fail when deploying with empty initializer data', async function () {
@@ -587,7 +589,7 @@ describe('Officer Contract', function () {
       ]
 
       await expect(officer.connect(owner).deployAllContracts(deployments))
-        .to.be.revertedWithCustomError(officer, 'MissingInitializerData')
+        .to.be.revertedWithCustomError(officer, 'Officer__MissingInitializerData')
         .withArgs('Bank')
     })
 
@@ -600,7 +602,7 @@ describe('Officer Contract', function () {
       ]
 
       await expect(officer.connect(owner).deployAllContracts(deployments))
-        .to.be.revertedWithCustomError(officer, 'BeaconNotConfigured')
+        .to.be.revertedWithCustomError(officer, 'Officer__BeaconNotConfigured')
         .withArgs('NonExistentContract')
     })
 
@@ -617,7 +619,7 @@ describe('Officer Contract', function () {
 
       await expect(
         officer.connect(addr3).deployAllContracts(deployments)
-      ).to.be.revertedWithCustomError(officer, 'NotOwnerOrInitializing')
+      ).to.be.revertedWithCustomError(officer, 'Officer__NotOwnerOrInitializing')
     })
   })
 
@@ -768,10 +770,10 @@ describe('Officer Contract', function () {
         safeDepositRouterAddress!
       )
 
-      expect(await safeDepositRouterInstance.safeAddress()).to.equal(addr1.address)
+      expect(await safeDepositRouterInstance.getSafeAddress()).to.equal(addr1.address)
       // ✅ FIX: Compare with the actual fixed-point value (1.0x = 1000000 in 6 decimals)
-      expect(await safeDepositRouterInstance.multiplier()).to.equal(parseUnits('1', 6))
-      expect(await safeDepositRouterInstance.depositsEnabled()).to.equal(false) // Disabled by default
+      expect(await safeDepositRouterInstance.getMultiplier()).to.equal(parseUnits('1', 6))
+      expect(await safeDepositRouterInstance.getDepositsEnabled()).to.equal(false) // Disabled by default
     })
 
     it('Should not auto-grant MINTER_ROLE when using deployAllContracts directly', async function () {
@@ -882,7 +884,9 @@ describe('Officer Contract', function () {
         safeDepositRouterAddress!
       )
 
-      expect(await safeDepositRouterInstance.officerAddress()).to.equal(await officer.getAddress())
+      expect(await safeDepositRouterInstance.getOfficerAddress()).to.equal(
+        await officer.getAddress()
+      )
     })
 
     it('Should handle SafeDepositRouter deployment order correctly', async function () {
@@ -914,7 +918,9 @@ describe('Officer Contract', function () {
         safeDepositRouterAddress!
       )
 
-      expect(await safeDepositRouterInstance.officerAddress()).to.equal(await officer.getAddress())
+      expect(await safeDepositRouterInstance.getOfficerAddress()).to.equal(
+        await officer.getAddress()
+      )
       expect(await safeDepositRouterInstance.owner()).to.equal(await officer.getAddress())
     })
   })

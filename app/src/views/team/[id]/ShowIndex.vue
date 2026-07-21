@@ -15,6 +15,7 @@
       />
     </div>
     <TeamArchivedBanner v-if="teamStore.currentTeamMeta?.data" />
+    <LegacyContractBanner v-if="teamStore.currentTeamMeta?.data" />
     <div
       v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.data"
       class="flex flex-col gap-6"
@@ -36,6 +37,7 @@ import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 import TeamArchivedBanner from '@/components/sections/DashboardView/TeamArchivedBanner.vue'
+import LegacyContractBanner from '@/components/sections/DashboardView/LegacyContractBanner.vue'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import CompanyOverview from '@/components/sections/DashboardView/CompanyOverview.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
@@ -50,10 +52,6 @@ const teamOutletKey = computed(() => {
   const name = route.name
   if (name === 'bod-proposals' || name === 'proposal-detail') {
     return route.fullPath
-  }
-  // Keep the Accounting layout mounted while switching its sub-sections.
-  if (typeof name === 'string' && name.startsWith('accounting')) {
-    return 'accounting'
   }
   return String(name ?? route.fullPath)
 })

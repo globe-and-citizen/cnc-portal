@@ -110,7 +110,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         .to.emit(expenseAccount, 'ApprovalDeactivated')
         .withArgs(signatureHash)
 
-      const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      const expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.state).to.equal(2) // Inactive state
     })
 
@@ -123,7 +123,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         .to.emit(expenseAccount, 'ApprovalActivated')
         .withArgs(signatureHash)
 
-      const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      const expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.state).to.equal(1) // Active state
     })
 
@@ -231,13 +231,13 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
 
         await expect(
           expenseAccount.connect(owner).depositToken(unsupportedToken, amount)
-        ).to.be.revertedWithCustomError(expenseAccount, 'TokenNotSupported')
+        ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__TokenNotSupported')
       })
 
       it('Should not allow zero amount deposits', async () => {
         await expect(
           expenseAccount.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
-        ).to.be.revertedWithCustomError(expenseAccount, 'ZeroAmount')
+        ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__ZeroAmount')
       })
 
       it('Should not allow non-owners to change token addresses', async () => {
@@ -252,13 +252,13 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       it('Should not allow changing to invalid token symbols', async () => {
         await expect(
           expenseAccount.addTokenSupport(ethers.ZeroAddress)
-        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupportZeroAddress')
+        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupport__ZeroAddress')
       })
 
       it('Should not allow setting zero address as token address', async () => {
         await expect(
           expenseAccount.removeTokenSupport(ethers.ZeroAddress)
-        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupportZeroAddress')
+        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupport__ZeroAddress')
       })
     })
   })

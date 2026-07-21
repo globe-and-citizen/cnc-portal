@@ -26,14 +26,14 @@ describe('Bank', () => {
   const BANK_FEE_BPS = 50n
 
   const ERRORS = {
-    INSUFFICIENT_BALANCE: 'InsufficientBalance',
+    INSUFFICIENT_BALANCE: 'Bank__InsufficientBalance',
     PAUSED: 'EnforcedPause',
-    UNSUPPORTED_TOKEN: 'UnsupportedToken',
-    TOKEN_SUPPORT_ALREADY_ADDED: 'TokenSupportAlreadyAdded',
-    TOKEN_SUPPORT_NOT_FOUND: 'TokenSupportNotFound',
-    TOKEN_SUPPORT_ZERO_ADDRESS: 'TokenSupportZeroAddress',
-    ZERO_ADDRESS: 'ZeroAddress',
-    ZERO_AMOUNT: 'ZeroAmount'
+    UNSUPPORTED_TOKEN: 'Bank__UnsupportedToken',
+    TOKEN_SUPPORT_ALREADY_ADDED: 'TokenSupport__AlreadyAdded',
+    TOKEN_SUPPORT_NOT_FOUND: 'TokenSupport__NotFound',
+    TOKEN_SUPPORT_ZERO_ADDRESS: 'TokenSupport__ZeroAddress',
+    ZERO_ADDRESS: 'Bank__ZeroAddress',
+    ZERO_AMOUNT: 'Bank__ZeroAmount'
   } as const
 
   async function deployContracts() {
@@ -97,7 +97,7 @@ describe('Bank', () => {
     it('should set the correct owner and initial values', async () => {
       const officerAddress = await officer.getAddress()
       expect(await bankProxy.owner()).to.eq(owner.address)
-      expect(await bankProxy.officerAddress()).to.eq(officerAddress)
+      expect(await bankProxy.getOfficerAddress()).to.eq(officerAddress)
       expect(await bankProxy.isTokenSupported(await mockUSDT.getAddress())).to.be.true
       expect(await bankProxy.isTokenSupported(await mockUSDC.getAddress())).to.be.true
     })
@@ -459,7 +459,7 @@ describe('Bank', () => {
 
       await expect(
         localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, 1n)
-      ).to.be.revertedWithCustomError(localBank, 'FixedReturnContractNotFound')
+      ).to.be.revertedWithCustomError(localBank, 'Bank__FixedReturnContractNotFound')
     })
 
     it('rejects when the offer token is not supported by Bank', async () => {
@@ -493,7 +493,7 @@ describe('Bank', () => {
 
       await expect(
         localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, 0n)
-      ).to.be.revertedWithCustomError(localBank, 'ZeroAmount')
+      ).to.be.revertedWithCustomError(localBank, 'Bank__ZeroAmount')
     })
 
     it('rejects an amount exceeding the treasury balance', async () => {

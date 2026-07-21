@@ -201,16 +201,13 @@ import {
   DIVIDEND_TYPES,
   log
 } from '@/utils'
-import { useQuery } from '@vue/apollo-composable'
 import { computed, watch } from 'vue'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
-import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { useInvestorSymbol } from '@/composables/investor/reads'
-import { GET_INVESTOR_EVENTS } from '@/queries/ponder/investor.queries'
-import { GET_SAFE_DEPOSIT_ROUTER_EVENTS } from '@/queries/ponder/safe-deposit-router.queries'
-import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
+import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
+import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
 
 const teamStore = useTeamStore()
@@ -238,33 +235,15 @@ const getUsdPrice = (tokenId: TokenId | null): number => {
   return 0
 }
 
-const {
-  result,
-  error,
-  loading: investorLoading
-} = useQuery<InvestorEventsQuery>(
-  GET_INVESTOR_EVENTS,
-  { contractAddress: investorAddress, limit: 500 },
-  {
-    pollInterval: GRAPHQL_POLL_INTERVAL,
-    fetchPolicy: 'cache-and-network',
-    enabled: computed(() => Boolean(investorAddress.value))
-  }
-)
+// EXPERIMENT: source Investor + SafeDepositRouter events from the RPC (eth_getLogs)
+// instead of Ponder.
+const { result, error, loading: investorLoading } = useInvestorEventsViaLogs(investorAddress)
 
 const {
   result: safeResult,
   error: safeError,
   loading: safeLoading
-} = useQuery<SafeDepositRouterEventsQuery>(
-  GET_SAFE_DEPOSIT_ROUTER_EVENTS,
-  { contractAddress: safeDepositRouterAddress, limit: 500 },
-  {
-    pollInterval: GRAPHQL_POLL_INTERVAL,
-    fetchPolicy: 'cache-and-network',
-    enabled: computed(() => Boolean(safeDepositRouterAddress.value))
-  }
-)
+} = useSafeDepositRouterEventsViaLogs(safeDepositRouterAddress)
 
 const loading = computed(() => investorLoading.value || safeLoading.value)
 

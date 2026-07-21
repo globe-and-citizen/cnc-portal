@@ -26,7 +26,8 @@
           color="primary"
           icon="heroicons:hand-raised"
           label="Lend to a round"
-          @click="toast.add({ title: 'Pick an open round below to lend' })"
+          data-test="lend-hint-button"
+          @click="showLendHint"
         />
       </div>
     </div>
@@ -45,6 +46,9 @@
     </div>
 
     <template v-else>
+      <!-- Contract balance -->
+      <CreditBalanceSection />
+
       <!-- Credit Account hero -->
       <CreditAccountHero />
 
@@ -121,6 +125,7 @@ import CreditAccountHero from '@/components/sections/CommunityCreditView/CreditA
 import CreditHistoryTable from '@/components/sections/CommunityCreditView/CreditHistoryTable.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
+import CreditBalanceSection from '@/components/sections/CommunityCreditView/CreditBalanceSection.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -142,9 +147,15 @@ function goRound(roundId: string) {
   router.push({ name: 'community-credit-round', params: { id: teamId.value, roundId } })
 }
 function goRepay(roundId: string) {
-  router.push({ name: 'community-credit-repay', params: { id: teamId.value, roundId } })
+  // Same behavior as the round page's own "Repay round" button — switch to the inline
+  // Repay layout variant rather than a separate route.
+  store.setVariant('repay')
+  goRound(roundId)
 }
 function onHistorySelect(round: CreditRound) {
   goRound(round.id)
+}
+function showLendHint() {
+  toast.add({ title: 'Pick an open round below to lend' })
 }
 </script>

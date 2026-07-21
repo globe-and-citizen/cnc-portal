@@ -42,7 +42,11 @@ export interface AccountingSheet {
   rows: SheetRows
 }
 
-/** `"$1,234.50"` → `1234.5`; `"—"` / `""` → `""` (blank cell). */
+/**
+ * A displayed figure as a spreadsheet number: `"$1,234.50"` → `1234.5`;
+ * `"—"` / `""` → `""` (blank cell). Applies to any formatted amount — USD, a
+ * token quantity, a rate — so the cell is sortable and summable in Excel.
+ */
 function usd(value: string): number | '' {
   if (!value || value === '—') return ''
   const n = Number(value.replace(/[$,]/g, ''))
@@ -125,7 +129,10 @@ const LEDGER_SHEET_CELL: Record<
   activity: (r, resolveName) => activityText(r.activity, resolveName),
   account: (r) => r.account,
   dr: (r) => usd(r.dr),
-  cr: (r) => usd(r.cr)
+  cr: (r) => usd(r.cr),
+  currency: (r) => r.currency,
+  quantity: (r) => usd(r.quantity),
+  rate: (r) => usd(r.rate)
 }
 
 interface LedgerSheetOptions {
@@ -133,6 +140,7 @@ interface LedgerSheetOptions {
   from?: Date | null
   to?: Date | null
   columns?: LedgerColumnKey[]
+  currencies?: string[]
 }
 
 function ledgerSheet(
@@ -140,7 +148,13 @@ function ledgerSheet(
   resolveName?: ResolveName,
   opts: LedgerSheetOptions = {}
 ): SheetRows {
-  const { rows, total } = presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to)
+  const { rows, total } = presentLedger(
+    acc.entries,
+    opts.filter ?? 'All',
+    opts.from,
+    opts.to,
+    opts.currencies
+  )
   const cols = resolveLedgerColumns(opts.columns)
   return [
     // Title row spells out the active category / period; the tab keeps its short name.
@@ -184,7 +198,8 @@ function sectionSheet(
           filter: spec.filter,
           from: spec.from,
           to: spec.to,
-          columns: spec.columns
+          columns: spec.columns,
+          currencies: spec.currencies
         })
     }
   })()

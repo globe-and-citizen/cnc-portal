@@ -6,12 +6,11 @@ import { catalogueLedger } from './catalogueLedger'
 describe('buildLedger — summary on the catalogue worked example', () => {
   const { summary, entries } = buildLedger(catalogueLedger)
 
-  it('rolls up the period totals (cash / income / expense / equity / net)', () => {
+  it('rolls up the period totals (cash / income / expense / equity)', () => {
     expect(summary.cash).toBeCloseTo(142.2, 2)
     expect(summary.income).toBeCloseTo(115, 2)
     expect(summary.expense).toBeCloseTo(110.8, 2)
     expect(summary.equity).toBeCloseTo(138, 2)
-    expect(summary.netIncome).toBeCloseTo(4.2, 2)
   })
 
   it('counts only monetary postings (memo-only Default-D excluded)', () => {
@@ -23,6 +22,28 @@ describe('buildLedger — summary on the catalogue worked example', () => {
   it('returns entries sorted chronologically', () => {
     const times = entries.map((e) => e.timestamp)
     expect(times).toEqual([...times].sort((a, b) => a - b))
+  })
+})
+
+describe('buildLedger — rolls up transaction fees as a dedicated metric', () => {
+  const fee: LedgerEntry = {
+    id: 'fee-1',
+    timestamp: 100,
+    useCase: 'FEE',
+    debit: 'Transaction Fee Expense',
+    credit: 'Cash — Bank',
+    amountUsd: 0.5,
+    token: 'usdc',
+    rawAmount: '500000',
+    memo: 'Transaction fee skimmed from Bank',
+    enrichment: 'not-applicable'
+  }
+
+  it('sums Transaction Fee Expense into `summary.transactionFees` (a subset of expense)', () => {
+    const { summary } = buildLedger([fee, { ...fee, id: 'fee-2', amountUsd: 0.25 }])
+    expect(summary.transactionFees).toBeCloseTo(0.75, 4)
+    // The fee is also part of total expense, so the two agree here.
+    expect(summary.expense).toBeCloseTo(0.75, 4)
   })
 })
 
@@ -58,5 +79,98 @@ describe('dedupeInternalTransfers', () => {
     const ext: LedgerEntry = { ...base, id: 'x', internal: false, useCase: 'UC-BANK-02' }
     const twin: LedgerEntry = { ...ext, id: 'y' }
     expect(dedupeInternalTransfers([ext, twin])).toHaveLength(2)
+  })
+})
+
+describe('buildLedger — drops orphaned $0 postings (unpriced native legs)', () => {
+  const wageSettlement: LedgerEntry = {
+    id: 'withdraw-1',
+    timestamp: 100,
+    useCase: 'UC-CASH-03',
+    debit: 'Wage Payable',
+    credit: 'Cash — Payroll',
+    amountUsd: 0, // native POL, no price-of-record → $0
+    token: 'native',
+    rawAmount: '1000000000000000',
+    internal: false,
+    memo: 'Wage withdrawal — cash settlement',
+    enrichment: 'needs-off-chain-data'
+  }
+  const realDeposit: LedgerEntry = {
+    id: 'bd1',
+    timestamp: 50,
+    useCase: 'UC-BANK-02',
+    debit: 'Cash — Bank',
+    credit: 'Service Revenue',
+    amountUsd: 100,
+    token: 'usdc',
+    rawAmount: '100000000',
+    internal: false,
+    memo: 'Client payment',
+    enrichment: 'not-applicable'
+  }
+
+  it('removes a $0 posting with real accounts but no share count', () => {
+    const { entries } = buildLedger([realDeposit, wageSettlement])
+    expect(entries.map((e) => e.id)).toEqual(['bd1']) // the orphan $0 line is gone
+  })
+
+  it('keeps a priced sub-cent fee so every transfer surfaces its own fee line', () => {
+    // 0.5% fee on a few POL: 0.015 POL × ~$0.2 ≈ $0.003 → rounds to $0.00, but it
+    // carries a real rate of record, so it is a genuine (tiny) posting, not an
+    // unpriced phantom — it must stay visible in the general ledger.
+    const polFee: LedgerEntry = {
+      id: 'fee-1',
+      timestamp: 120,
+      useCase: 'FEE',
+      debit: 'Transaction Fee Expense',
+      credit: 'Cash — Bank',
+      amountUsd: 0.003,
+      token: 'native',
+      rawAmount: '15000000000000000',
+      rate: 0.2,
+      internal: false,
+      memo: 'Transaction fee skimmed from Bank',
+      enrichment: 'not-applicable'
+    }
+    const { entries } = buildLedger([realDeposit, polFee])
+    expect(entries.map((e) => e.id)).toEqual(['bd1', 'fee-1'])
+  })
+
+  it('still drops the same $0 leg when it is unpriced (no rate of record)', () => {
+    const { entries } = buildLedger([realDeposit, wageSettlement])
+    expect(entries.map((e) => e.id)).toEqual(['bd1']) // rate-less → unpriced phantom, gone
+  })
+
+  it('keeps a $0 posting that still records a share count', () => {
+    const shareLeg: LedgerEntry = {
+      ...wageSettlement,
+      id: 'shares-1',
+      debit: 'Shares to be issued',
+      credit: 'Investor Equity',
+      token: 'sher',
+      shares: 5
+    }
+    const { entries } = buildLedger([shareLeg])
+    expect(entries.map((e) => e.id)).toEqual(['shares-1'])
+  })
+
+  it('keeps memo-only Default-D entries (no legs, real share count)', () => {
+    const memoOnly: LedgerEntry = {
+      id: 'mint-1',
+      timestamp: 10,
+      useCase: 'DEFAULT-D',
+      debit: null,
+      credit: null,
+      amountUsd: 0,
+      token: 'sher',
+      rawAmount: '0',
+      internal: false,
+      shares: 12,
+      memo: 'Direct SHER mint',
+      enrichment: 'not-applicable'
+    }
+    const { entries } = buildLedger([memoOnly])
+    expect(entries.map((e) => e.id)).toEqual(['mint-1'])
   })
 })

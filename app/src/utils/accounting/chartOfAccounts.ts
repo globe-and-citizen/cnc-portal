@@ -9,9 +9,11 @@
  * Scope notes (spec §5–§6):
  * - `Infrastructure Expense` / `Interest Expense` are intentionally **absent** —
  *   they are Phase 2 gaps with no data feed yet.
- * - Fees are an **internal move** (Bank → `Cash — FeeCollector`), not an income
- *   or expense account. `Cash — FeeCollector` is a cash pocket; there is no
- *   separate "Fee" account.
+ * - `Network Fee Expense` (gas paid to validators) is likewise **absent**: gas is
+ *   not indexed by any feed yet, so there is nothing to post.
+ * - The Bank protocol fee (`FeePaid`) *is* booked, as a real cost leaving the
+ *   treasury: `Transaction Fee Expense`. The fee is skimmed to the protocol-wide
+ *   FeeCollector (not a team pocket), so it is an expense, not an internal move.
  */
 
 /** The five fundamental account classes of double-entry bookkeeping. */
@@ -40,7 +42,8 @@ export const ACCOUNT_NAMES = [
   'Share-based Compensation',
   'Operating Expense',
   'Dividend Expense',
-  'Trading Loss'
+  'Trading Loss',
+  'Transaction Fee Expense'
 ] as const
 
 export type AccountName = (typeof ACCOUNT_NAMES)[number]
@@ -69,7 +72,8 @@ export const CHART_OF_ACCOUNTS: Readonly<Record<AccountName, AccountClass>> = {
   'Share-based Compensation': 'EXPENSE',
   'Operating Expense': 'EXPENSE',
   'Dividend Expense': 'EXPENSE',
-  'Trading Loss': 'EXPENSE'
+  'Trading Loss': 'EXPENSE',
+  'Transaction Fee Expense': 'EXPENSE'
 }
 
 /** The chart as an ordered list of `{ name, class }` records. */

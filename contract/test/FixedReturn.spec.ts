@@ -26,27 +26,27 @@ describe('FixedReturn', () => {
   const TERM_DURATION = 12
 
   const ERRORS = {
-    ZERO_ADDRESS: 'ZeroAddress',
-    INVALID_DEADLINE: 'InvalidDeadline',
-    INVALID_TERM_DURATION: 'InvalidTermDuration',
-    LENDER_CAP_EXCEEDS_TARGET: 'LenderCapExceedsFundingTarget',
-    ALLOCATION_SUM_EXCEEDS_TARGET: 'AllocationSumExceedsFundingTarget',
-    WHITELIST_LENGTH_MISMATCH: 'WhitelistLengthMismatch',
-    OFFER_NOT_OPEN: 'OfferNotOpen',
-    OFFER_NOT_FUNDED: 'OfferNotFunded',
-    OFFER_NOT_REFUNDABLE: 'OfferNotRefundable',
-    DEADLINE_NOT_PASSED: 'DeadlineNotPassed',
-    NOT_WHITELISTED: 'NotWhitelisted',
-    DEPOSIT_EXCEEDS_ALLOCATION: 'DepositExceedsAllocation',
-    DEPOSIT_EXCEEDS_LENDER_CAP: 'DepositExceedsLenderCap',
-    FUNDING_TARGET_REACHED: 'FundingTargetReached',
-    NOTHING_TO_REFUND: 'NothingToRefund',
-    ZERO_AMOUNT: 'ZeroAmount',
-    TOKEN_NOT_SUPPORTED: 'TokenSupportNotFound',
-    TOKEN_NOT_SUPPORTED_BY_BANK: 'TokenNotSupportedByBank',
-    EXCEEDS_REPAYMENT_OBLIGATION: 'ExceedsRepaymentObligation',
+    ZERO_ADDRESS: 'FixedReturn__ZeroAddress',
+    INVALID_DEADLINE: 'FixedReturn__InvalidDeadline',
+    INVALID_TERM_DURATION: 'FixedReturn__InvalidTermDuration',
+    LENDER_CAP_EXCEEDS_TARGET: 'FixedReturn__LenderCapExceedsFundingTarget',
+    ALLOCATION_SUM_BELOW_TARGET: 'FixedReturn__AllocationSumBelowFundingTarget',
+    WHITELIST_LENGTH_MISMATCH: 'FixedReturn__WhitelistLengthMismatch',
+    DUPLICATE_WHITELIST_ADDRESS: 'FixedReturn__DuplicateWhitelistAddress',
+    OFFER_NOT_OPEN: 'FixedReturn__OfferNotOpen',
+    OFFER_NOT_FUNDED: 'FixedReturn__OfferNotFunded',
+    DEADLINE_NOT_PASSED: 'FixedReturn__DeadlineNotPassed',
+    NO_FUNDS_RAISED: 'FixedReturn__NoFundsRaised',
+    NOT_WHITELISTED: 'FixedReturn__NotWhitelisted',
+    DEPOSIT_EXCEEDS_ALLOCATION: 'FixedReturn__DepositExceedsAllocation',
+    DEPOSIT_EXCEEDS_LENDER_CAP: 'FixedReturn__DepositExceedsLenderCap',
+    FUNDING_TARGET_REACHED: 'FixedReturn__FundingTargetReached',
+    ZERO_AMOUNT: 'FixedReturn__ZeroAmount',
+    TOKEN_NOT_SUPPORTED: 'TokenSupport__NotFound',
+    TOKEN_NOT_SUPPORTED_BY_BANK: 'FixedReturn__TokenNotSupportedByBank',
+    EXCEEDS_REPAYMENT_OBLIGATION: 'FixedReturn__ExceedsRepaymentObligation',
     OWNABLE_UNAUTHORIZED: 'OwnableUnauthorizedAccount',
-    NOT_BANK: 'NotBank'
+    NOT_BANK: 'FixedReturn__NotBank'
   } as const
 
   // Deploys MockOfficer, then deploys Bank and FixedReturn with MockOfficer impersonated
@@ -170,7 +170,7 @@ describe('FixedReturn', () => {
       .connect(owner)
       .createLendingOffer(baseParams(token, startDate, subscriptionDeadline, overrides))
     await tx.wait()
-    return fixedReturn.totalOfferings()
+    return fixedReturn.getTotalOfferings()
   }
 
   async function createWhitelistOffer(
@@ -207,7 +207,7 @@ describe('FixedReturn', () => {
 
     it('reports its version', async () => {
       const { fixedReturn } = await loadFixture(deployFixture)
-      expect(await fixedReturn.version()).to.equal('1.1.0')
+      expect(await fixedReturn.version()).to.equal('2.0.0')
     })
 
     it('rejects a zero-address owner', async () => {
@@ -472,7 +472,71 @@ describe('FixedReturn', () => {
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.WHITELIST_LENGTH_MISMATCH)
     })
 
-    it('rejects whitelist allocations summing above the funding target', async () => {
+    it('rejects a whitelist with a duplicate address', async () => {
+      const { fixedReturn, owner, token, lenderA, lenderB, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+
+      await expect(
+        fixedReturn.connect(owner).createLendingOffer(
+          baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
+            fundingAccess: FundingAccess.Whitelist,
+            whitelistAddrs: [lenderA.address, lenderB.address, lenderA.address],
+            allocations: [
+              ethers.parseUnits('40000', 6),
+              ethers.parseUnits('40000', 6),
+              ethers.parseUnits('20000', 6)
+            ]
+          })
+        )
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.DUPLICATE_WHITELIST_ADDRESS)
+    })
+
+    it('rejects a duplicate address even when one occurrence is UNCAPPED_ALLOCATION', async () => {
+      const { fixedReturn, owner, token, lenderA, lenderB, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const uncapped = await fixedReturn.UNCAPPED_ALLOCATION()
+
+      await expect(
+        fixedReturn.connect(owner).createLendingOffer(
+          baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
+            fundingAccess: FundingAccess.Whitelist,
+            whitelistAddrs: [lenderA.address, lenderB.address, lenderA.address],
+            allocations: [uncapped, ethers.parseUnits('40000', 6), ethers.parseUnits('20000', 6)]
+          })
+        )
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.DUPLICATE_WHITELIST_ADDRESS)
+    })
+
+    it('allows whitelist allocations summing above the funding target, as a buffer against a lender not depositing', async () => {
+      const { fixedReturn, owner, token, lenderA, lenderB, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline,
+        {
+          fundingAccess: FundingAccess.Whitelist,
+          whitelistAddrs: [lenderA.address, lenderB.address],
+          allocations: [ethers.parseUnits('60000', 6), ethers.parseUnits('50000', 6)] // sums to 110k > 100k target
+        }
+      )
+
+      expect(await fixedReturn.getLenderAllocation(offerId, lenderA.address)).to.equal(
+        ethers.parseUnits('60000', 6)
+      )
+
+      // Over-allocation on paper doesn't let actual deposits over-raise: the running
+      // total is still capped at fundingTarget regardless of individual allocations.
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
+      await expect(
+        fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('50000', 6))
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.FUNDING_TARGET_REACHED)
+    })
+
+    it('rejects fully-capped whitelist allocations summing below the funding target', async () => {
       const { fixedReturn, owner, token, lenderA, lenderB, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
 
@@ -481,10 +545,31 @@ describe('FixedReturn', () => {
           baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
             fundingAccess: FundingAccess.Whitelist,
             whitelistAddrs: [lenderA.address, lenderB.address],
-            allocations: [ethers.parseUnits('60000', 6), ethers.parseUnits('50000', 6)] // sums to 110k > 100k target
+            allocations: [ethers.parseUnits('60000', 6), ethers.parseUnits('30000', 6)] // sums to 90k < 100k target
           })
         )
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.ALLOCATION_SUM_EXCEEDS_TARGET)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.ALLOCATION_SUM_BELOW_TARGET)
+    })
+
+    it('allows an uncapped lender even when the capped allocations fall short of the target', async () => {
+      const { fixedReturn, owner, token, lenderA, lenderB, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const uncapped = await fixedReturn.UNCAPPED_ALLOCATION()
+
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline,
+        {
+          fundingAccess: FundingAccess.Whitelist,
+          whitelistAddrs: [lenderA.address, lenderB.address],
+          allocations: [ethers.parseUnits('20000', 6), uncapped] // capped sum (20k) alone is well short of 100k
+        }
+      )
+
+      expect(await fixedReturn.getLenderAllocation(offerId, lenderB.address)).to.equal(uncapped)
     })
   })
 
@@ -505,7 +590,7 @@ describe('FixedReturn', () => {
         .to.emit(fixedReturn, 'FundsLent')
         .withArgs(offerId, lenderA.address, amount)
 
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(amount)
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(amount)
     })
 
     it('rejects a zero amount', async () => {
@@ -640,7 +725,7 @@ describe('FixedReturn', () => {
 
       const amount = ethers.parseUnits('50000', 6)
       await expect(fixedReturn.connect(lenderA).lendFunds(offerId, amount)).to.not.be.reverted
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(amount)
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(amount)
     })
 
     it('transitions to Funded and emits LendingOfferFunded once the target is reached', async () => {
@@ -699,7 +784,7 @@ describe('FixedReturn', () => {
 
       const amount = ethers.parseUnits('60000', 6)
       await fixedReturn.connect(lenderA).lendFunds(offerId, amount)
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(amount)
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(amount)
     })
 
     it('rejects a caller with no allocation', async () => {
@@ -769,46 +854,112 @@ describe('FixedReturn', () => {
       await expect(fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6)))
         .to.not.be.reverted
     })
-  })
 
-  describe('markAsRefundable', () => {
-    it('flips an unfunded, deadline-passed offer to Refundable', async () => {
-      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
+    it('lets an uncapped whitelisted lender deposit beyond what a personal cap would allow', async () => {
+      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
+      const uncapped = await fixedReturn.UNCAPPED_ALLOCATION()
       const offerId = await createGeneralOffer(
         fixedReturn,
         owner,
         await token.getAddress(),
         startDate,
-        subscriptionDeadline
+        subscriptionDeadline,
+        {
+          fundingAccess: FundingAccess.Whitelist,
+          whitelistAddrs: [lenderA.address, lenderB.address],
+          allocations: [ethers.parseUnits('20000', 6), uncapped]
+        }
       )
 
-      await time.increaseTo(subscriptionDeadline + 1)
-      await expect(fixedReturn.connect(owner).markAsRefundable(offerId))
-        .to.emit(fixedReturn, 'LendingOfferRefundable')
-        .withArgs(offerId)
-
-      const offer = await fixedReturn.getLendingOffer(offerId)
-      expect(offer.state).to.equal(OfferState.Refundable)
+      // lenderB is uncapped — deposits far more than lenderA's 20k allocation would allow.
+      await expect(fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('80000', 6)))
+        .to.not.be.reverted
     })
 
-    it('rejects flipping before the deadline has passed', async () => {
-      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
+    it("still bounds an uncapped whitelisted lender by the offer's remaining funding target", async () => {
+      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
+      const uncapped = await fixedReturn.UNCAPPED_ALLOCATION()
       const offerId = await createGeneralOffer(
         fixedReturn,
         owner,
         await token.getAddress(),
         startDate,
-        subscriptionDeadline
+        subscriptionDeadline,
+        {
+          fundingAccess: FundingAccess.Whitelist,
+          whitelistAddrs: [lenderA.address, lenderB.address],
+          allocations: [ethers.parseUnits('20000', 6), uncapped]
+        }
       )
 
       await expect(
-        fixedReturn.connect(owner).markAsRefundable(offerId)
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.DEADLINE_NOT_PASSED)
+        fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('100001', 6))
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.FUNDING_TARGET_REACHED)
+    })
+  })
+
+  describe('refundLenders', () => {
+    it('flips an unfunded, deadline-passed offer to Refundable and pushes every lender their principal back', async () => {
+      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
+      await fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('20000', 6))
+      await time.increaseTo(subscriptionDeadline + 1)
+
+      const balanceABefore = await token.balanceOf(lenderA.address)
+      const balanceBBefore = await token.balanceOf(lenderB.address)
+
+      const tx = fixedReturn.connect(owner).refundLenders(offerId)
+      await expect(tx).to.emit(fixedReturn, 'LendingOfferRefundable').withArgs(offerId)
+      await expect(tx)
+        .to.emit(fixedReturn, 'PrincipalRefunded')
+        .withArgs(offerId, lenderA.address, ethers.parseUnits('30000', 6))
+      await expect(tx)
+        .to.emit(fixedReturn, 'PrincipalRefunded')
+        .withArgs(offerId, lenderB.address, ethers.parseUnits('20000', 6))
+      await expect(tx)
+        .to.emit(fixedReturn, 'RefundsDistributed')
+        .withArgs(offerId, ethers.parseUnits('50000', 6))
+
+      const offer = await fixedReturn.getLendingOffer(offerId)
+      expect(offer.state).to.equal(OfferState.Refundable)
+      expect(await token.balanceOf(lenderA.address)).to.equal(
+        balanceABefore + ethers.parseUnits('30000', 6)
+      )
+      expect(await token.balanceOf(lenderB.address)).to.equal(
+        balanceBBefore + ethers.parseUnits('20000', 6)
+      )
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(0)
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderB.address)).to.equal(0)
     })
 
-    it('rejects flipping an already-funded offer', async () => {
+    it('rejects refunding before the deadline has passed', async () => {
+      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+
+      await expect(fixedReturn.connect(owner).refundLenders(offerId)).to.be.revertedWithCustomError(
+        fixedReturn,
+        ERRORS.DEADLINE_NOT_PASSED
+      )
+    })
+
+    it('rejects refunding an already-funded offer', async () => {
       const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
@@ -821,9 +972,30 @@ describe('FixedReturn', () => {
       await fundOffer(fixedReturn, offerId, lenderA, lenderB)
 
       await time.increaseTo(subscriptionDeadline + 1)
-      await expect(
-        fixedReturn.connect(owner).markAsRefundable(offerId)
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OFFER_NOT_OPEN)
+      await expect(fixedReturn.connect(owner).refundLenders(offerId)).to.be.revertedWithCustomError(
+        fixedReturn,
+        ERRORS.OFFER_NOT_OPEN
+      )
+    })
+
+    it('rejects a second call once the offer is already Refundable', async () => {
+      const { fixedReturn, owner, lenderA, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
+      await time.increaseTo(subscriptionDeadline + 1)
+      await fixedReturn.connect(owner).refundLenders(offerId)
+
+      await expect(fixedReturn.connect(owner).refundLenders(offerId)).to.be.revertedWithCustomError(
+        fixedReturn,
+        ERRORS.OFFER_NOT_OPEN
+      )
     })
 
     it('rejects a non-owner caller', async () => {
@@ -839,62 +1011,11 @@ describe('FixedReturn', () => {
 
       await time.increaseTo(subscriptionDeadline + 1)
       await expect(
-        fixedReturn.connect(stranger).markAsRefundable(offerId)
+        fixedReturn.connect(stranger).refundLenders(offerId)
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OWNABLE_UNAUTHORIZED)
     })
-  })
 
-  describe('claimRefund', () => {
-    async function setupRefundable() {
-      const fixture = await loadFixture(deployFixture)
-      const { fixedReturn, owner, lenderA, token, startDate, subscriptionDeadline } = fixture
-      const offerId = await createGeneralOffer(
-        fixedReturn,
-        owner,
-        await token.getAddress(),
-        startDate,
-        subscriptionDeadline
-      )
-      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
-      await time.increaseTo(subscriptionDeadline + 1)
-      await fixedReturn.connect(owner).markAsRefundable(offerId)
-      return { ...fixture, offerId }
-    }
-
-    it('returns the lender principal and zeroes their deposit', async () => {
-      const { fixedReturn, lenderA, token, offerId } = await setupRefundable()
-      const balanceBefore = await token.balanceOf(lenderA.address)
-
-      await expect(fixedReturn.connect(lenderA).claimRefund(offerId))
-        .to.emit(fixedReturn, 'PrincipalRefunded')
-        .withArgs(offerId, lenderA.address, ethers.parseUnits('60000', 6))
-
-      expect(await token.balanceOf(lenderA.address)).to.equal(
-        balanceBefore + ethers.parseUnits('60000', 6)
-      )
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(0)
-    })
-
-    it('rejects a claim from a lender with nothing deposited', async () => {
-      const { fixedReturn, lenderB, offerId } = await setupRefundable()
-
-      await expect(fixedReturn.connect(lenderB).claimRefund(offerId)).to.be.revertedWithCustomError(
-        fixedReturn,
-        ERRORS.NOTHING_TO_REFUND
-      )
-    })
-
-    it('rejects a second claim from the same lender', async () => {
-      const { fixedReturn, lenderA, offerId } = await setupRefundable()
-
-      await fixedReturn.connect(lenderA).claimRefund(offerId)
-      await expect(fixedReturn.connect(lenderA).claimRefund(offerId)).to.be.revertedWithCustomError(
-        fixedReturn,
-        ERRORS.NOTHING_TO_REFUND
-      )
-    })
-
-    it('rejects a claim on an offer that is not Refundable', async () => {
+    it('rejects refunding an offer the issuer already accepted — mutually exclusive with acceptPartialFunding', async () => {
       const { fixedReturn, owner, lenderA, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
@@ -904,11 +1025,194 @@ describe('FixedReturn', () => {
         startDate,
         subscriptionDeadline
       )
-      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
+      await time.increaseTo(subscriptionDeadline + 1)
+      await fixedReturn.connect(owner).acceptPartialFunding(offerId)
 
-      await expect(fixedReturn.connect(lenderA).claimRefund(offerId)).to.be.revertedWithCustomError(
+      await expect(fixedReturn.connect(owner).refundLenders(offerId)).to.be.revertedWithCustomError(
         fixedReturn,
-        ERRORS.OFFER_NOT_REFUNDABLE
+        ERRORS.OFFER_NOT_OPEN
+      )
+    })
+  })
+
+  describe('acceptPartialFunding', () => {
+    it('sweeps the partial raise to Bank and flips a stalled offer to Funded', async () => {
+      const { fixedReturn, bank, owner, lenderA, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
+      await time.increaseTo(subscriptionDeadline + 1)
+
+      const bankBalanceBefore = await token.balanceOf(await bank.getAddress())
+
+      const tx = fixedReturn.connect(owner).acceptPartialFunding(offerId)
+      await expect(tx)
+        .to.emit(fixedReturn, 'PartialFundingAccepted')
+        .withArgs(offerId, ethers.parseUnits('30000', 6), FUNDING_TARGET)
+      await expect(tx).to.emit(fixedReturn, 'LendingOfferFunded').withArgs(offerId)
+
+      const offer = await fixedReturn.getLendingOffer(offerId)
+      expect(offer.state).to.equal(OfferState.Funded)
+      expect(offer.totalFunded).to.equal(ethers.parseUnits('30000', 6))
+      expect(await token.balanceOf(await bank.getAddress())).to.equal(
+        bankBalanceBefore + ethers.parseUnits('30000', 6)
+      )
+    })
+
+    it('rejects accepting before the deadline has passed', async () => {
+      const { fixedReturn, owner, lenderA, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
+
+      await expect(
+        fixedReturn.connect(owner).acceptPartialFunding(offerId)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.DEADLINE_NOT_PASSED)
+    })
+
+    it('rejects accepting an offer with nothing raised', async () => {
+      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await time.increaseTo(subscriptionDeadline + 1)
+
+      await expect(
+        fixedReturn.connect(owner).acceptPartialFunding(offerId)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.NO_FUNDS_RAISED)
+    })
+
+    it('rejects accepting an already-funded offer', async () => {
+      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fundOffer(fixedReturn, offerId, lenderA, lenderB)
+
+      await time.increaseTo(subscriptionDeadline + 1)
+      await expect(
+        fixedReturn.connect(owner).acceptPartialFunding(offerId)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OFFER_NOT_OPEN)
+    })
+
+    it('rejects a second call once the offer is already Funded', async () => {
+      const { fixedReturn, owner, lenderA, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
+      await time.increaseTo(subscriptionDeadline + 1)
+      await fixedReturn.connect(owner).acceptPartialFunding(offerId)
+
+      await expect(
+        fixedReturn.connect(owner).acceptPartialFunding(offerId)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OFFER_NOT_OPEN)
+    })
+
+    it('rejects a non-owner caller', async () => {
+      const { fixedReturn, stranger, owner, lenderA, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
+
+      await time.increaseTo(subscriptionDeadline + 1)
+      await expect(
+        fixedReturn.connect(stranger).acceptPartialFunding(offerId)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OWNABLE_UNAUTHORIZED)
+    })
+
+    it('rejects accepting an offer the issuer already refunded — mutually exclusive with refundLenders', async () => {
+      const { fixedReturn, owner, lenderA, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
+      await time.increaseTo(subscriptionDeadline + 1)
+      await fixedReturn.connect(owner).refundLenders(offerId)
+
+      await expect(
+        fixedReturn.connect(owner).acceptPartialFunding(offerId)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OFFER_NOT_OPEN)
+    })
+
+    it('lets repayLenders distribute proportionally against the partial totalFunded actually accepted', async () => {
+      const {
+        fixedReturn,
+        bankSigner,
+        owner,
+        lenderA,
+        lenderB,
+        token,
+        startDate,
+        subscriptionDeadline
+      } = await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      // Raises 50k against a 100k target — well short — then the issuer accepts it.
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
+      await fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('20000', 6))
+      await time.increaseTo(subscriptionDeadline + 1)
+      await fixedReturn.connect(owner).acceptPartialFunding(offerId)
+
+      const repayAmount = ethers.parseUnits('54000', 6) // 50k principal + 8% interest
+      // Bank would transfer this installment in before calling repayLenders.
+      await token.mint(await fixedReturn.getAddress(), repayAmount)
+
+      const balanceABefore = await token.balanceOf(lenderA.address)
+      const balanceBBefore = await token.balanceOf(lenderB.address)
+
+      // Obligation is based on totalFunded (50k), not fundingTarget (100k): 50k + 8% = 54k.
+      await fixedReturn.connect(bankSigner).repayLenders(offerId, repayAmount)
+
+      expect(await token.balanceOf(lenderA.address)).to.equal(
+        balanceABefore + ethers.parseUnits('32400', 6) // 60% of 54k
+      )
+      expect(await token.balanceOf(lenderB.address)).to.equal(
+        balanceBBefore + ethers.parseUnits('21600', 6) // 40% of 54k
       )
     })
   })
@@ -1324,7 +1628,7 @@ describe('FixedReturn', () => {
       await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
 
       expect(await fixedReturn.getOfferLenders(offerId)).to.deep.equal([lenderA.address])
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(
         ethers.parseUnits('60000', 6)
       )
     })
@@ -1366,7 +1670,7 @@ describe('FixedReturn', () => {
         { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
       )) as unknown as FixedReturn
 
-      expect(await fixedReturn.officerAddress()).to.equal(officerAddress)
+      expect(await fixedReturn.getOfficerAddress()).to.equal(officerAddress)
     })
   })
 })

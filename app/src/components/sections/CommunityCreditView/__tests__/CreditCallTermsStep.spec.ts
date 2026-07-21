@@ -75,4 +75,39 @@ describe('CreditCallTermsStep', () => {
     await wrapper.find('[data-test="cc-unit-years"]').trigger('click')
     expect(form.period).toBe(730)
   })
+
+  describe('validate', () => {
+    it('passes for a valid form', () => {
+      const wrapper = mountStep(makeForm())
+      expect(wrapper.vm.validate()).toBe(true)
+    })
+
+    it('fails and shows an error when the deadline is in the past', async () => {
+      const wrapper = mountStep(makeForm({ deadline: '2020-01-01' }))
+      expect(wrapper.vm.validate()).toBe(false)
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('[data-test="cc-deadline-error"]').text()).toContain(
+        'cannot be in the past'
+      )
+    })
+
+    it('passes with a zero rate — an interest-free round is a valid use case', () => {
+      const wrapper = mountStep(makeForm({ rate: '0' }))
+      expect(wrapper.vm.validate()).toBe(true)
+    })
+
+    it('fails and shows an error when the rate is negative', async () => {
+      const wrapper = mountStep(makeForm({ rate: '-1' }))
+      expect(wrapper.vm.validate()).toBe(false)
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('[data-test="cc-rate-error"]').text()).toContain('cannot be negative')
+    })
+
+    it('fails and shows an error when the term exceeds 365 days', async () => {
+      const wrapper = mountStep(makeForm({ period: 730 }))
+      expect(wrapper.vm.validate()).toBe(false)
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('[data-test="cc-term-error"]').text()).toContain('cannot exceed 365')
+    })
+  })
 })
