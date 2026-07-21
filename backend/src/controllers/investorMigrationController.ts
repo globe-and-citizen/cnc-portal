@@ -75,19 +75,17 @@ export const getInvestorMigration = async (req: Request, res: Response) => {
 
   try {
     // authz enforced by requireTeamMember middleware
-    const migration = await prisma.investorMigration.findFirst({
+    const migrations = await prisma.investorMigration.findMany({
       where: { teamId },
       orderBy: { createdAt: 'desc' },
     });
 
-    if (!migration) {
-      return errorResponse(404, 'No migration found for this team', res);
-    }
-
-    return res.status(200).json({
-      ...migration,
-      blockNumber: migration.blockNumber.toString(),
-    });
+    return res.status(200).json(
+      migrations.map((m) => ({
+        ...m,
+        blockNumber: m.blockNumber.toString(),
+      }))
+    );
   } catch (error) {
     return errorResponse(500, error, res);
   }

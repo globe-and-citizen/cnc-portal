@@ -33,9 +33,12 @@ const userAddress = computed(() => userStore.address as Address | undefined)
 const investorV2Address = useInvestorV2Address()
 const investorV2AddressValue = computed(() => investorV2Address.value as Address)
 const { data: migrationRoot } = useInvestorV2MigrationRoot()
-const { data: migrationData } = useGetInvestorMigrationQuery({
+const { data: allMigrations } = useGetInvestorMigrationQuery({
   queryParams: { teamId: teamStore.currentTeamId as string | number }
 })
+
+// Get the most recent migration (backend sorts by createdAt desc)
+const migrationData = computed(() => allMigrations.value?.[0])
 
 const isOwner = computed(() => {
   const teamData = teamStore.currentTeamMeta.data

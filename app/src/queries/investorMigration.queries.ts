@@ -51,8 +51,8 @@ export const useCreateInvestorMigrationMutation = createMutationHook<
 })
 
 // ============================================================================
-// GET /investor-migration?teamId= - Fetch a team's persisted migration
-// snapshot, if any (used by the future claim UI to recompute proofs)
+// GET /investor-migration?teamId= - Fetch all persisted migration snapshots
+// for a team (returns empty array if none exist)
 // ============================================================================
 
 export interface GetInvestorMigrationParams {
@@ -62,7 +62,7 @@ export interface GetInvestorMigrationParams {
 }
 
 export const useGetInvestorMigrationQuery = createQueryHook<
-  InvestorMigration,
+  InvestorMigration[],
   GetInvestorMigrationParams
 >({
   endpoint: 'investor-migration',

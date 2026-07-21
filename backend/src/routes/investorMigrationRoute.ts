@@ -72,7 +72,7 @@ investorMigrationRoutes.post(
  * @openapi
  * /investor-migration:
  *  get:
- *   summary: Get the persisted migration snapshot for a team, if any
+ *   summary: Get all persisted migration snapshots for a team
  *   tags: [InvestorMigration]
  *   security:
  *     - bearerAuth: []
@@ -84,13 +84,11 @@ investorMigrationRoutes.post(
  *         type: integer
  *   responses:
  *     200:
- *       description: Migration snapshot retrieved successfully
+ *       description: Migration snapshots retrieved successfully (may be empty array)
  *     400:
  *       description: Bad request
  *     403:
  *       description: Caller is not a member of the team
- *     404:
- *       description: No migration found for this team
  *     500:
  *       description: Internal server error
  */
