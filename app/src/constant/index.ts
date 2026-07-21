@@ -32,6 +32,8 @@ interface AddressMapping {
   'CashRemunerationEIP712Module#CashRemunerationEIP712': string
   'InvestorsV1BeaconModule#Beacon'?: string
   'InvestorsV1BeaconModule#InvestorV1'?: string
+  'InvestorBeaconModule#Beacon'?: string
+  'InvestorBeaconModule#Investor'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
   'MockTokens#USDCe'?: string
@@ -216,6 +218,7 @@ export const VESTING_BEACON_ADDRESS = safeResolveAddress('VestingBeaconModule#Be
 export const OFFICER_ADDRESS = safeResolveAddress('Officer#Officer')
 export const OFFICER_BEACON = safeResolveAddress('Officer#FactoryBeacon')
 export const INVESTOR_V1_BEACON_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#Beacon')
+export const INVESTOR_BEACON_ADDRESS = safeResolveAddress('InvestorBeaconModule#Beacon')
 
 export const FEE_COLLECTOR_ADDRESS = safeResolveAddress('FeeCollectorModule#FeeCollector')
 

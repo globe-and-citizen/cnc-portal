@@ -64,6 +64,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Address of the Board of Directors contract
   address private s_bodContract;
 
+  /// @notice Cache for O(1) deployed contract lookup by type hash
+  mapping(bytes32 contractTypeHash => address deployedAddress) private s_deployedContractsByHash;
+
   /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
   ///      new state variables above so the reserve stays constant and proxy slots don't shift.
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
@@ -275,6 +278,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     address proxyAddress = address(proxy);
     s_deployedContracts.push(DeployedContract(contractType, proxyAddress));
+    s_deployedContractsByHash[keccak256(bytes(contractType))] = proxyAddress;
     emit ContractDeployed(contractType, proxyAddress);
 
     if (keccak256(bytes(contractType)) == keccak256(bytes("Elections"))) {
@@ -288,6 +292,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         )
       );
       s_deployedContracts.push(DeployedContract("BoardOfDirectors", s_bodContract));
+      s_deployedContractsByHash[keccak256(bytes("BoardOfDirectors"))] = s_bodContract;
       emit ContractDeployed("BoardOfDirectors", s_bodContract);
     }
 
@@ -326,15 +331,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return The address of the contract, or address(0) if not found
    */
   function findDeployedContract(string memory contractType) public view returns (address) {
-    bytes32 target = keccak256(bytes(contractType));
-    uint256 length = s_deployedContracts.length;
-    for (uint256 i = 0; i < length; ++i) {
-      DeployedContract storage deployed = s_deployedContracts[i];
-      if (keccak256(bytes(deployed.contractType)) == target) {
-        return deployed.contractAddress;
-      }
-    }
-    return address(0);
+    return s_deployedContractsByHash[keccak256(bytes(contractType))];
   }
 
   /// @notice Current contract version, per semver.

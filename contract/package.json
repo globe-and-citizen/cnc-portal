@@ -25,15 +25,11 @@
     "update-abi": "ts-node scripts/copy-abi.ts",
     "validate-upgrade": "npx hardhat run scripts/validate-upgrade.ts",
     "validate-upgrade:polygon": "npx hardhat run scripts/validate-upgrade.ts --network polygon",
-    "validate-upgrade:local": "npx hardhat run scripts/validate-upgrade.ts --network localhost",
-    "snapshot-migration": "npx hardhat run scripts/snapshot-migration.ts",
-    "snapshot-migration:polygon": "npx hardhat run scripts/snapshot-migration.ts --network polygon",
-    "snapshot-migration:local": "npx hardhat run scripts/snapshot-migration.ts --network localhost"
+    "validate-upgrade:local": "npx hardhat run scripts/validate-upgrade.ts --network localhost"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/hardhat-upgrades": "^3.0.5",
-    "@openzeppelin/merkle-tree": "^1.0.8",
     "@typechain/hardhat": "^9.1.0",
     "@typescript-eslint/eslint-plugin": "^8.57.0",
     "@typescript-eslint/parser": "^8.57.0",

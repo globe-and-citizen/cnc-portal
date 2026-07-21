@@ -285,17 +285,19 @@ contract Investor is
     if (supply == 0) revert Investor__NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    if (currentShareholders.length == 0) revert Investor__NoShareholders();
+    uint256 shareholderCount = currentShareholders.length;
+    if (shareholderCount == 0) revert Investor__NoShareholders();
 
     uint256 remaining = _amount;
+    uint256 lastIndex = shareholderCount - 1;
 
-    for (uint256 i = 0; i < currentShareholders.length; i++) {
+    for (uint256 i = 0; i < shareholderCount; ++i) {
       address shareholder = currentShareholders[i].shareholder;
       uint256 balance = currentShareholders[i].amount;
 
       uint256 share = (_amount * balance) / supply;
 
-      if (i == currentShareholders.length - 1) {
+      if (i == lastIndex) {
         share = remaining;
       } else if (share > remaining) {
         share = remaining;
@@ -309,7 +311,7 @@ contract Investor is
       }
     }
 
-    emit DividendDistributed(msg.sender, address(0), _amount, currentShareholders.length);
+    emit DividendDistributed(msg.sender, address(0), _amount, shareholderCount);
   }
 
   /**
@@ -330,33 +332,36 @@ contract Investor is
     if (supply == 0) revert Investor__NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    if (currentShareholders.length == 0) revert Investor__NoShareholders();
+    uint256 shareholderCount = currentShareholders.length;
+    if (shareholderCount == 0) revert Investor__NoShareholders();
     uint256 tokenBal = IERC20(_token).balanceOf(address(this));
     if (tokenBal < _amount)
       revert Investor__InsufficientFundedTokenBalance(_token, _amount, tokenBal);
 
     uint256 remaining = _amount;
+    uint256 lastIndex = shareholderCount - 1;
+    IERC20 token = IERC20(_token);
 
-    for (uint256 i = 0; i < currentShareholders.length; i++) {
+    for (uint256 i = 0; i < shareholderCount; ++i) {
       address shareholder = currentShareholders[i].shareholder;
       uint256 balance = currentShareholders[i].amount;
 
       uint256 share = (_amount * balance) / supply;
 
-      if (i == currentShareholders.length - 1) {
+      if (i == lastIndex) {
         share = remaining;
       } else if (share > remaining) {
         share = remaining;
       }
 
       if (share > 0) {
-        IERC20(_token).safeTransfer(shareholder, share);
+        token.safeTransfer(shareholder, share);
         emit DividendPaid(shareholder, _token, share);
         remaining -= share;
       }
     }
 
-    emit DividendDistributed(msg.sender, _token, _amount, currentShareholders.length);
+    emit DividendDistributed(msg.sender, _token, _amount, shareholderCount);
   }
 
   /// @notice Pauses token operations.
@@ -438,9 +443,11 @@ contract Investor is
   function _getShareholders() internal view returns (Shareholder[] memory) {
     uint256 length = s_shareholderSet.length();
     Shareholder[] memory _shareholders = new Shareholder[](length);
-    for (uint256 i = 0; i < length; i++) {
-      address shareholder = s_shareholderSet.at(i);
-      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
+    unchecked {
+      for (uint256 i = 0; i < length; ++i) {
+        address shareholder = s_shareholderSet.at(i);
+        _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
+      }
     }
     return _shareholders;
   }

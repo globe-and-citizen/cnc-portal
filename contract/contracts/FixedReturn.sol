@@ -645,23 +645,26 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     uint256 lenderCount = lenders.length;
     uint256 totalRepaid = offer.totalRepaidByIssuer;
     uint256 cumulativeForNonLast = 0;
-    for (uint256 i = 0; i < lenderCount; ++i) {
-      address lender = lenders[i];
-      uint256 cumulativeEntitlement;
-      if (i + 1 == lenderCount) {
-        cumulativeEntitlement = totalRepaid - cumulativeForNonLast;
-      } else {
-        cumulativeEntitlement =
-          (totalRepaid * s_lenderDeposits[offerId][lender]) /
-          offer.totalFunded;
-        cumulativeForNonLast += cumulativeEntitlement;
-      }
-      uint256 alreadyPaid = s_totalPaidToLender[offerId][lender];
-      uint256 share = cumulativeEntitlement > alreadyPaid ? cumulativeEntitlement - alreadyPaid : 0;
-      s_totalPaidToLender[offerId][lender] = cumulativeEntitlement;
-      if (share > 0) {
-        IERC20(offer.token).safeTransfer(lender, share);
-        emit LenderRepaid(offerId, lender, share);
+
+    unchecked {
+      for (uint256 i = 0; i < lenderCount; ++i) {
+        address lender = lenders[i];
+        uint256 cumulativeEntitlement;
+        if (i + 1 == lenderCount) {
+          cumulativeEntitlement = totalRepaid - cumulativeForNonLast;
+        } else {
+          cumulativeEntitlement =
+            (totalRepaid * s_lenderDeposits[offerId][lender]) /
+            offer.totalFunded;
+          cumulativeForNonLast += cumulativeEntitlement;
+        }
+        uint256 alreadyPaid = s_totalPaidToLender[offerId][lender];
+        uint256 share = cumulativeEntitlement > alreadyPaid ? cumulativeEntitlement - alreadyPaid : 0;
+        if (share > 0) {
+          s_totalPaidToLender[offerId][lender] = cumulativeEntitlement;
+          IERC20(offer.token).safeTransfer(lender, share);
+          emit LenderRepaid(offerId, lender, share);
+        }
       }
     }
 

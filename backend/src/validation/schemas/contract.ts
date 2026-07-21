@@ -9,6 +9,7 @@ import { addressSchema, teamIdSchema } from './common';
 const contractTypes = [
   'Bank',
   'InvestorV1',
+  'Investor',
   'Voting',
   'BoardOfDirectors',
   'ExpenseAccount',
