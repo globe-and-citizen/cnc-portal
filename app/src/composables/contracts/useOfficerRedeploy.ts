@@ -14,12 +14,13 @@ import { computed, ref } from 'vue'
 import { readContract } from '@wagmi/core'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
+import { useToast } from '@nuxt/ui/composables'
 import { useTeamStore } from '@/stores'
 import {
   useDeployOfficer,
   useInvalidateOfficerQueries
 } from '@/composables/contracts/useOfficerDeployment'
-import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
+import { useSetMigrationRootMutation } from '@/composables/investor/useSetMigrationRoot'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { log } from '@/utils'
@@ -50,7 +51,7 @@ export function useOfficerRedeploy() {
   // invalidation pass — see CONVENTIONS.md §1 / §2.
   const deployMutation = useDeployOfficer({ silent: true, skipInvalidation: true })
   const registerMutation = useCreateOfficerMutation()
-  const migrateMutation = useMigrateShareholders({ silent: true })
+  const migrateMutation = useSetMigrationRootMutation({ silent: true })
   const invalidateQueries = useInvalidateOfficerQueries()
 
   // Workflow-level state that spans multiple mutations.
