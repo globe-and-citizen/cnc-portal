@@ -263,7 +263,7 @@ is chosen **explicitly** by the developer.
      `folderForOfficerBeacon` in `artifacts/registry.ts` (`useOfficerBeaconFolder`).
      This is the wired path today (each generation has a distinct Officer beacon).
   3. `CURRENT_VERSION` — safe default while the beacon read is in flight.
-  Use it to branch at the call site.
+     Use it to branch at the call site.
 - **Unchanged function → no versioning.** If a function's signature is identical
   across versions, its single composable keeps using the current ABI; the encoding
   is version-invariant, so it works for every team.

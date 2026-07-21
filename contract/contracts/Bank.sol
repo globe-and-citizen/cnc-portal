@@ -424,5 +424,4 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     if (investorAddress == address(0)) revert Bank__InvestorContractNotFound();
     return investorAddress;
   }
-
 }
