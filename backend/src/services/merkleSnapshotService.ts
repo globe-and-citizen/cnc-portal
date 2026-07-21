@@ -1,6 +1,16 @@
-import { Address } from 'viem';
-import { StandardMerkleTree } from '@openzeppelin/merkle-tree';
+import { Address, encodeAbiParameters, keccak256, concat } from 'viem';
+import { MerkleTree } from 'merkletreejs';
 import publicClient from '../utils/viem.config';
+
+// Double hash matching Investor.sol line 464:
+// bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(account, amount))));
+function computeLeaf(account: Address, amount: bigint): Buffer {
+  const innerHash = keccak256(
+    encodeAbiParameters([{ type: 'address' }, { type: 'uint256' }], [account, amount])
+  );
+  const outerHash = keccak256(concat([innerHash]));
+  return Buffer.from(outerHash.slice(2), 'hex');
+}
 
 const INVESTOR_ABI = [
   {
@@ -72,19 +82,20 @@ export async function generateMerkleSnapshot(investorV1Address: Address): Promis
     );
   }
 
-  // Build Merkle tree with (address, amount) leaves
-  const leaves = shareholders.map((sh) => [sh.address, BigInt(sh.amount)]);
-  const tree = StandardMerkleTree.of(leaves, ['address', 'uint256']);
+  // Build Merkle tree with double-hashed leaves matching Investor.sol
+  const leafHashes = shareHoldersRaw.map((sh) => computeLeaf(sh.address, sh.amount));
+  const tree = new MerkleTree(leafHashes, keccak256, { hashLeaves: false, sortLeaves: false });
 
   // Generate proofs for each shareholder
   const proofs: Record<string, string[]> = {};
-  for (let i = 0; i < leaves.length; i++) {
-    const [address] = leaves[i];
-    proofs[(address as string).toLowerCase()] = tree.getProof(i);
+  for (let i = 0; i < leafHashes.length; i++) {
+    const address = shareHoldersRaw[i].address.toLowerCase();
+    const proof = tree.getProof(leafHashes[i]);
+    proofs[address] = proof.map((p) => `0x${p.data.toString('hex')}`);
   }
 
   return {
-    root: tree.root,
+    root: `0x${tree.getRoot().toString('hex')}`,
     shareholders,
     proofs,
     blockNumber,
