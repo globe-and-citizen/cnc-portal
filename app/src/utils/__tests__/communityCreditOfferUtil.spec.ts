@@ -14,6 +14,23 @@ import {
 
 const ARBITRARY_TOKEN = '0x1111111111111111111111111111111111111111' as const
 
+const lendOffer = (over: Partial<LendingOfferStruct> = {}): LendingOfferStruct => ({
+  token: USDC_ADDRESS,
+  fundingTarget: 100000_000000n,
+  interestRateBps: 800n,
+  termDuration: 12,
+  termUnit: 1,
+  startDate: 1893456000n, // 2030-01-01T00:00:00Z
+  subscriptionDeadline: 1893369600n,
+  fundingAccess: 0,
+  isCapEnabled: false,
+  lenderCap: 0n,
+  totalFunded: 30000_000000n,
+  totalRepaidByIssuer: 0n,
+  state: 0,
+  ...over
+})
+
 function baseForm(overrides: Partial<CreditOfferForm> = {}): CreditOfferForm {
   return {
     title: 'Test Note',
@@ -143,22 +160,6 @@ describe('toFixedReturnOfferParams', () => {
 
 describe('toLenderOffering', () => {
   const DECIMALS = 6
-  const lendOffer = (over: Partial<LendingOfferStruct> = {}): LendingOfferStruct => ({
-    token: USDC_ADDRESS,
-    fundingTarget: 100000_000000n,
-    interestRateBps: 800n,
-    termDuration: 12,
-    termUnit: 1,
-    startDate: 1893456000n, // 2030-01-01T00:00:00Z
-    subscriptionDeadline: 1893369600n,
-    fundingAccess: 0,
-    isCapEnabled: false,
-    lenderCap: 0n,
-    totalFunded: 30000_000000n,
-    totalRepaidByIssuer: 0n,
-    state: 0,
-    ...over
-  })
 
   it('allows any lender for a General offer with no cap', () => {
     const offering = toLenderOffering(
@@ -300,21 +301,7 @@ describe('toLenderOffering', () => {
 describe('isLendingOfferAcceptingFunds', () => {
   const deadlineSeconds = 1893369600
   const deadline = new Date(deadlineSeconds * 1000)
-  const baseOffer: LendingOfferStruct = {
-    token: USDC_ADDRESS,
-    fundingTarget: 100000_000000n,
-    interestRateBps: 800n,
-    termDuration: 12,
-    termUnit: 1,
-    startDate: 1893456000n,
-    subscriptionDeadline: BigInt(deadlineSeconds),
-    fundingAccess: 0,
-    isCapEnabled: false,
-    lenderCap: 0n,
-    totalFunded: 30000_000000n,
-    totalRepaidByIssuer: 0n,
-    state: 0
-  }
+  const baseOffer = lendOffer()
 
   it('accepts an Open offer through its deadline', () => {
     expect(isLendingOfferAcceptingFunds(baseOffer, deadline)).toBe(true)
