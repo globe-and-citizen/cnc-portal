@@ -1,7 +1,11 @@
 import { formatUnits, maxUint256, parseUnits } from 'viem'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import type { ZodSafeParseResult } from 'zod'
+
+dayjs.extend(utc)
 import type {
+  CreditCallForm,
   CreditLender,
   CreditOfferForm,
   CreditRound,
@@ -101,6 +105,7 @@ export const ROUND_STATUS_META: Record<RoundStatus, StatusMeta> = {
   stalled: { label: 'Action needed', color: 'warning' },
   funded: { label: 'Funded', color: 'info' },
   active: { label: 'In repayment', color: 'warning' },
+  overdue: { label: 'Overdue', color: 'error' },
   repaid: { label: 'Repaid', color: 'success' },
   refunded: { label: 'Refunded', color: 'neutral' }
 }
@@ -139,6 +144,23 @@ export function creditRadioClass(active: boolean) {
   ]
 }
 
+/** Friendly term label, e.g. `180 days (from 6 months)` for a non-day custom term.
+ *  Leads with `form.period` — the whole-day value actually submitted on-chain — rather
+ *  than the raw custom entry, since rounding can make them diverge a lot (2000 minutes
+ *  rounds down to 1 day, not the ~1.4 days it looks like at a glance). Shared by the
+ *  wizard's own preview and the sticky summary card so they can't drift apart. */
+export function creditTermLabel(
+  form: Pick<CreditCallForm, 'period' | 'periodMode' | 'periodVal' | 'periodUnit'>
+): string {
+  const days = `${form.period} day${form.period === 1 ? '' : 's'}`
+  if (form.periodMode === 'custom' && form.periodUnit !== 'days' && Number(form.periodVal)) {
+    const n = Number(form.periodVal)
+    const unit = n === 1 ? form.periodUnit.slice(0, -1) : form.periodUnit
+    return `${days} (from ${n} ${unit})`
+  }
+  return days
+}
+
 // ───────── on-chain → CreditRound adapters ─────────
 
 /** Days per FixedReturn.sol TermUnit (Days, Months, Years). */
@@ -163,6 +185,14 @@ function offerExpectedTotal(offer: LendingOfferStruct): bigint {
   return offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000n
 }
 
+/** True once `now` has passed an offer's maturity date (startDate + term) — the
+ *  contract itself never checks this (repayLenders has no on-chain maturity guard), so
+ *  it's purely a display signal, same spirit as isLendingOfferAcceptingFunds for the
+ *  subscription deadline. */
+function isOfferPastMaturity(offer: LendingOfferStruct, now: Date): boolean {
+  return now.getTime() >= offerMaturityDate(offer).getTime()
+}
+
 /**
  * Resolves FixedReturn.sol's OfferState (+ deadline and repayment progress) to a
  * Community Credit round status: Open→open (or stalled, once its deadline has passed
@@ -170,7 +200,11 @@ function offerExpectedTotal(offer: LendingOfferStruct): bigint {
  * decision), Funded→funded, Refundable→refunded (refundLenders already pushed every
  * lender's principal back by the time this state is observable — there's no
  * intermediate "refund pending" state to distinguish), Repaying→active until the
- * issuer has repaid the full principal+interest, then repaid.
+ * issuer has repaid the full principal+interest, then repaid. Funded and Repaying both
+ * additionally resolve to overdue once past maturity with the debt not yet fully
+ * repaid — purely a badge, since nothing on-chain enforces or blocks on maturity; the
+ * issuer can still repay (or a lender still gets refunded via the stalled path, which
+ * is unrelated and only applies pre-Funded) exactly as before.
  */
 export function offerStateToRoundStatus(
   offer: LendingOfferStruct,
@@ -178,20 +212,31 @@ export function offerStateToRoundStatus(
 ): RoundStatus {
   switch (offer.state) {
     case 1:
-      return 'funded'
+      return isOfferPastMaturity(offer, now) ? 'overdue' : 'funded'
     case 2:
       return 'refunded'
     case 3:
-      return offer.totalRepaidByIssuer >= offerExpectedTotal(offer) ? 'repaid' : 'active'
+      if (offer.totalRepaidByIssuer >= offerExpectedTotal(offer)) return 'repaid'
+      return isOfferPastMaturity(offer, now) ? 'overdue' : 'active'
     default:
       return isLendingOfferAcceptingFunds(offer, now) ? 'open' : 'stalled'
   }
 }
 
-/** Short human date for an on-chain unix-seconds timestamp, or `—` when unset. */
+/** Short human date+time for an on-chain unix-seconds timestamp, or `—` when unset.
+ *  Includes the clock time (not just the day) since subscriptionDeadline is minute-
+ *  precision on-chain — two rounds closing hours apart on the same calendar day must
+ *  render distinguishably. Formatted in UTC, not the browser's local zone: the wizard
+ *  builds this same timestamp from `deadline`+`deadlineTime` by treating the typed
+ *  clock time as UTC (see toUnixSeconds), so rendering it back in local time would
+ *  silently shift it by the viewer's UTC offset — a round set for "11:01 UTC" showing
+ *  up as "18:01" with no indication why. 12-hour with AM/PM to match
+ *  CreditCallSummaryCard's deadline row and the native time input's own rendering —
+ *  our own formatting, not left to the browser's locale, so it's guaranteed consistent
+ *  for every viewer regardless of OS/browser. */
 function formatOfferDate(unixSeconds: bigint): string {
   const secs = Number(unixSeconds)
-  return secs > 0 ? dayjs(secs * 1000).format('MMM D') : '—'
+  return secs > 0 ? dayjs.utc(secs * 1000).format('MMM D, h:mm A [UTC]') : '—'
 }
 
 /** Absolute maturity (startDate + term) of an offer, for sorting/comparison. */
@@ -217,7 +262,7 @@ export function lendingOfferToCreditRound(
 ): CreditRound {
   const { offerId, offer, decimals } = raw
   const status = offerStateToRoundStatus(offer, now)
-  const maturity = dayjs(offerMaturityDate(offer)).format('MMM D')
+  const maturity = dayjs.utc(offerMaturityDate(offer)).format('MMM D')
 
   return {
     id: String(offerId),

@@ -3,7 +3,9 @@ import { useTeamStore, useCurrencyStore } from '@/stores'
 import { getTokenIcon, resolveTokenIdByAddress, tokenSymbol } from '@/utils/constantUtil'
 import { NETWORK } from '@/constant'
 import { zeroAddress } from 'viem'
+import { getTransactionTypeLabel } from '@/utils/transactionTypeRegistry'
 export { formatDecodedValue } from '@/utils/abiDecodeUtil'
+export * from '@/utils/transactionTypeRegistry'
 
 export const parseBigIntOrZero = (value: string): bigint => {
   try {
@@ -124,6 +126,24 @@ export const getTransactionSummary = (
       return tx.amount ? `Multiplier → ${tx.amount}${tx.token}` : 'Multiplier updated'
     case 'officerAddressUpdated':
       return 'Officer address updated'
+    case 'lendingOfferCreated':
+      return amt ? `Round opened · target ${amt}` : 'Round opened'
+    case 'fundsLent':
+      return from ? `Lent by ${from}` : amt ? `Lent ${amt}` : 'Funds lent'
+    case 'lenderRepaid':
+      return to ? `Repaid to ${to}` : amt ? `Repaid ${amt}` : 'Lender repaid'
+    case 'lendingOfferFunded':
+      return 'Round fully funded'
+    case 'lendingOfferRefundable':
+      return 'Round marked refundable'
+    case 'partialFundingAccepted':
+      return amt ? `Partial funding accepted · ${amt}` : 'Partial funding accepted'
+    case 'principalRefunded':
+      return to ? `Refunded to ${to}` : amt ? `Refunded ${amt}` : 'Principal refunded'
+    case 'refundsDistributed':
+      return amt ? `Refunds distributed · ${amt}` : 'Refunds distributed'
+    case 'repaymentDistributed':
+      return amt ? `Repayment distributed · ${amt}` : 'Repayment distributed'
     default:
       return ''
   }
@@ -145,131 +165,11 @@ export const getInitialTokenSupportSummary = (row: {
   return `${tokenCount} token${tokenCount === 1 ? '' : 's'} supported`
 }
 
-import type { UBadgeColor } from '@/types/ui'
-
-const TYPE_COLORS: Record<string, UBadgeColor> = {
-  deposit: 'success',
-  tokenDeposit: 'success',
-  mint: 'success',
-  safeDeposit: 'success',
-  dividendPaid: 'success',
-  transfer: 'info',
-  tokenTransfer: 'info',
-  rawTokenIn: 'info',
-  rawTokenOut: 'info',
-  rawTokenInternal: 'info',
-  wageClaimEnabled: 'info',
-  wageClaimDisabled: 'info',
-  officerAddressUpdated: 'info',
-  withdraw: 'warning',
-  withdrawToken: 'warning',
-  ownerTreasuryWithdrawNative: 'warning',
-  ownerTreasuryWithdrawToken: 'warning',
-  dividendDistribution: 'warning',
-  dividendDistributed: 'warning',
-  approvalActivated: 'warning',
-  approvalDeactivated: 'warning',
-  feePaid: 'error',
-  dividendPaymentFailed: 'error',
-  tokenSupportAdded: 'primary',
-  tokenSupportRemoved: 'primary',
-  tokenAddressChanged: 'primary',
-  safeDepositsEnabled: 'primary',
-  safeDepositsDisabled: 'primary',
-  safeAddressUpdated: 'primary',
-  safeMultiplierUpdated: 'primary',
-  ownershipTransferred: 'primary'
-}
-
-export const getTransactionTypeColor = (type: string): UBadgeColor => TYPE_COLORS[type] ?? 'neutral'
-
-const TYPE_LABELS: Record<string, string> = {
-  deposit: 'Deposit',
-  tokenDeposit: 'Token deposit',
-  transfer: 'Transfer',
-  tokenTransfer: 'Token transfer',
-  withdraw: 'Withdrawal',
-  withdrawToken: 'Token withdrawal',
-  ownerTreasuryWithdrawNative: 'Treasury withdrawal',
-  ownerTreasuryWithdrawToken: 'Treasury token withdrawal',
-  feePaid: 'Fee paid',
-  mint: 'Shares minted',
-  safeDeposit: 'Safe deposit',
-  dividendDistribution: 'Dividend distribution',
-  dividendDistributed: 'Dividend distributed',
-  dividendPaid: 'Dividend paid',
-  dividendPaymentFailed: 'Payment failed',
-  rawTokenIn: 'Token received',
-  rawTokenOut: 'Token sent',
-  rawTokenInternal: 'Internal transfer',
-  approvalActivated: 'Approval activated',
-  approvalDeactivated: 'Approval deactivated',
-  wageClaimEnabled: 'Wage claim enabled',
-  wageClaimDisabled: 'Wage claim disabled',
-  tokenSupportAdded: 'Token support added',
-  tokenSupportRemoved: 'Token support removed',
-  tokenAddressChanged: 'Token address updated',
-  safeDepositsEnabled: 'Safe deposits enabled',
-  safeDepositsDisabled: 'Safe deposits disabled',
-  safeAddressUpdated: 'Safe address updated',
-  safeMultiplierUpdated: 'Multiplier updated',
-  officerAddressUpdated: 'Officer address updated',
-  ownershipTransferred: 'Ownership transferred'
-}
-
-export const DIVIDEND_TYPES = new Set([
-  'dividendDistribution',
-  'dividendDistributed',
-  'dividendPaid',
-  'dividendPaymentFailed'
-])
-
-export const formatTxHash = (hash: string): string =>
-  hash.length >= 10 ? `${hash.slice(0, 6)}…${hash.slice(-4)}` : hash
-
-export const getTransactionTypeLabel = (type: string): string =>
-  TYPE_LABELS[type] ??
-  type.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase())
-
 const toGroupedLeafRow = <T extends { txHash: string }>(row: T): GroupedTransactionRow<T> => ({
   ...row,
   groupedEventCount: 1,
   subRows: []
 })
-
-const COUNTERPARTY_FROM = new Set(['deposit', 'tokenDeposit', 'rawTokenIn', 'safeDeposit'])
-
-const COUNTERPARTY_TO = new Set([
-  'transfer',
-  'tokenTransfer',
-  'withdraw',
-  'withdrawToken',
-  'ownerTreasuryWithdrawNative',
-  'ownerTreasuryWithdrawToken',
-  'feePaid',
-  'rawTokenOut',
-  'dividendPaid',
-  'ownershipTransferred'
-  // wageClaimEnabled/wageClaimDisabled excluded: their `to` is a bytes32 signature hash, not an address
-])
-
-const COUNTERPARTY_SHAREHOLDERS = new Set([
-  'dividendDistribution',
-  'dividendDistributed',
-  'dividendPaymentFailed',
-  'mint'
-])
-
-export const getTransactionCounterparty = (tx: {
-  type: string
-  from: string
-  to: string
-}): { label: string; address: string | null } => {
-  if (COUNTERPARTY_FROM.has(tx.type)) return { label: 'From', address: tx.from }
-  if (COUNTERPARTY_TO.has(tx.type)) return { label: 'To', address: tx.to }
-  if (COUNTERPARTY_SHAREHOLDERS.has(tx.type)) return { label: 'Shareholders', address: null }
-  return { label: '—', address: null }
-}
 
 export const groupTransactionsByTxHash = <T extends { txHash: string }>(
   rows: ReadonlyArray<T>

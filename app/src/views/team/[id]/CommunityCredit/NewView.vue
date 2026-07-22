@@ -206,6 +206,7 @@ const form = reactive<CreditCallForm>({
   periodVal: '90',
   periodUnit: 'days',
   deadline: '2026-07-31',
+  deadlineTime: '23:59',
   access: 'everyone',
   whitelist: [],
   capOn: false,
@@ -277,6 +278,7 @@ async function publish() {
       termValue: form.period,
       termUnit: 'days',
       deadline: form.deadline,
+      deadlineTime: form.deadlineTime,
       access: form.access === 'restricted' ? 'whitelist' : 'general',
       capOn: form.capOn,
       cap: Number(form.cap) || 0,
@@ -290,7 +292,7 @@ async function publish() {
     const total = (await readContract(config, {
       address: fixedReturnAddress.value,
       abi: FIXED_RETURN_ABI,
-      functionName: 'totalOfferings'
+      functionName: 'getTotalOfferings'
     })) as bigint
     const offerId = Number(total)
 
