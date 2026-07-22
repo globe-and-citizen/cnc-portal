@@ -85,6 +85,49 @@ describe('enrichEntries', () => {
     expect(entry.memo).toContain('#42')
   })
 
+  it('pairs each settlement to the claim it actually paid (by amount), not the nearest week', () => {
+    // Two claims settled on the same day: 5h and 10h at 10 usdc/h → 50 and 100 usdc.
+    // Both withdrawals are dated in the later week, so "nearest week" would collapse
+    // them onto the 10h claim; amount-matching must keep each on its own claim.
+    const wage = { ratePerHour: [{ type: 'usdc', amount: 10 }], maximumHoursPerWeek: 40 }
+    const fiveHours = {
+      memberAddress: ADDR.member,
+      weekStart: new Date(1_700_000_000 * 1000).toISOString(),
+      minutesWorked: 300,
+      wage,
+      claims: []
+    } as unknown as WeeklyClaim
+    const tenHours = {
+      memberAddress: ADDR.member,
+      weekStart: new Date(1_700_600_000 * 1000).toISOString(),
+      minutesWorked: 600,
+      wage,
+      claims: []
+    } as unknown as WeeklyClaim
+
+    const settle = (id: string, rawAmount: string): LedgerEntry =>
+      makeEntry({
+        id,
+        timestamp: 1_700_650_000, // both near the 10h week
+        useCase: 'UC-CASH-03',
+        debit: 'Wage Payable',
+        credit: 'Cash — Payroll',
+        amountUsd: 0,
+        token: 'usdc',
+        rawAmount,
+        counterparty: ADDR.member,
+        memo: 'Wage withdrawal — cash settlement',
+        enrichment: 'needs-off-chain-data'
+      })
+
+    const [fivePaid, tenPaid] = enrichEntries(
+      [settle('s5', '50000000'), settle('s10', '100000000')],
+      { weeklyClaims: [fiveHours, tenHours] }
+    )
+    expect(fivePaid.minutesWorked).toBe(300)
+    expect(tenPaid.minutesWorked).toBe(600)
+  })
+
   it('keeps the needs-off-chain-data flag when no portal record matches', () => {
     const [entry] = enrichEntries([payrollEntry()], { weeklyClaims: [] })
     expect(entry.enrichment).toBe('needs-off-chain-data')

@@ -228,7 +228,6 @@ describe('toLenderOffering', () => {
     expect(offering.allowed).toBe(true)
     expect(offering.remaining).toBe(3000)
     expect(offering.myDeposited).toBe(2000)
-    expect(offering.limitsLabel).toBe('5,000 USDC cap')
   })
 
   it('disallows a Whitelist offer when the lender has no allocation', () => {

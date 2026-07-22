@@ -25,35 +25,34 @@
 
       <div>
         <p class="text-dimmed pt-2 pb-1 text-[11px] font-bold tracking-wider uppercase">Revenue</p>
-        <div
+        <StatementLine
           v-for="r in income.revLines"
           :key="r.label"
-          class="border-default/60 flex items-center justify-between border-b py-2"
-        >
-          <span class="text-sm">{{ r.label }}</span>
-          <span class="text-success text-sm font-semibold tabular-nums">{{ r.value }}</span>
-        </div>
+          :line="r"
+          value-class="text-success"
+          data-test-prefix="income"
+          @drilldown="openDrilldown"
+        />
         <p v-if="!income.revLines.length" class="text-dimmed py-2 text-sm">
           No revenue this period
         </p>
-        <div class="flex items-center justify-between py-2.5">
+        <div class="flex items-center justify-between py-4">
           <span class="text-sm font-bold">Total revenue</span>
           <span class="text-sm font-bold tabular-nums">{{ income.totalRevenue }}</span>
         </div>
 
         <p class="text-dimmed pt-3 pb-1 text-[11px] font-bold tracking-wider uppercase">Expenses</p>
-        <div
+        <StatementLine
           v-for="e in income.expLines"
           :key="e.label"
-          class="border-default/60 flex items-center justify-between border-b py-2"
-        >
-          <span class="text-sm">{{ e.label }}</span>
-          <span class="text-sm font-semibold tabular-nums">{{ e.value }}</span>
-        </div>
+          :line="e"
+          data-test-prefix="income"
+          @drilldown="openDrilldown"
+        />
         <p v-if="!income.expLines.length" class="text-dimmed py-2 text-sm">
           No expenses this period
         </p>
-        <div class="flex items-center justify-between py-2.5">
+        <div class="flex items-center justify-between py-4">
           <span class="text-sm font-bold">Total expenses</span>
           <span class="text-sm font-bold tabular-nums">{{ income.totalExpenses }}</span>
         </div>
@@ -76,6 +75,15 @@
         </div>
       </div>
     </UCard>
+
+    <LedgerDrilldownModal
+      v-model:open="drilldownOpen"
+      v-model:columns="drilldownColumns"
+      :account="drilldownAccount"
+      :total="drilldownTotal"
+      :entries="drilldownEntries"
+      @export="onDrilldownExport"
+    />
   </div>
 </template>
 
@@ -83,10 +91,13 @@
 import { computed, ref } from 'vue'
 import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
+import StatementLine from './StatementLine.vue'
+import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
-import { presentIncome } from '@/utils/accounting/presenter'
+import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
+import { presentIncome, type StatementLineView } from '@/utils/accounting/presenter'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
@@ -98,11 +109,36 @@ const income = computed(() =>
   presentIncome(acc.entries.value, period.value.start, period.value.end)
 )
 
+// A real date window is in play only when the picker isn't on "All time" (whose
+// bounds are epoch → today, not a user choice); "All time" drills the whole book.
+const dateSelected = computed(() => !isAllTimeRange(period.value))
+
+// Per-line drill-down — over the same reporting period the statement shows.
+const {
+  open: drilldownOpen,
+  account: drilldownAccount,
+  total: drilldownTotal,
+  columns: drilldownColumns,
+  drilldownEntries,
+  openFor,
+  onExport: onDrilldownExport
+} = useLedgerDrilldown(
+  acc.entries,
+  () => ({
+    from: dateSelected.value ? period.value.start : null,
+    to: dateSelected.value ? period.value.end : null
+  }),
+  'cnc-accounting-income-drilldown-columns-v1'
+)
+
+function openDrilldown(line: StatementLineView): void {
+  if (line.account) openFor(line.account, line.value)
+}
+
 // Export the current, period-filtered statement. Pass null bounds for "All time"
 // (whose range is epoch → today, not a user choice) so the heading and filename
 // read "All time" rather than a spurious "Jan 1, 1970 – …" window.
 const { exportPdf, exportExcel } = useAccountingExport()
-const dateSelected = computed(() => !isAllTimeRange(period.value))
 const spec = (): SectionSpec => ({
   key: 'income',
   from: dateSelected.value ? period.value.start : null,
