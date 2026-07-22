@@ -19,6 +19,7 @@ export * from './transactionHistoryUtil'
 export * from './abiDecodeUtil'
 export * from './investorsTransactionUtil'
 export * from './bankTransactionUtil'
+export * from './fixedReturnTransactionUtil'
 export * from './cashRemunerationTransactionUtil'
 export * from './expenseTransactionUtil'
 /**

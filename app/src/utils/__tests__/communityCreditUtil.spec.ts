@@ -105,6 +105,7 @@ describe('communityCreditUtil', () => {
         stalled: { label: 'Action needed', color: 'warning' },
         funded: { label: 'Funded', color: 'info' },
         active: { label: 'In repayment', color: 'warning' },
+        overdue: { label: 'Overdue', color: 'error' },
         repaid: { label: 'Repaid', color: 'success' },
         refunded: { label: 'Refunded', color: 'neutral' }
       }

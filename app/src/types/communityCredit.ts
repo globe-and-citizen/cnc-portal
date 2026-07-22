@@ -104,8 +104,19 @@ export interface FixedReturnOfferingResponse {
 // every lender's principal back in the same transaction), so this is a terminal state,
 // never a pending one; 'stalled' = still contract-state Open but past its deadline
 // without reaching target — the issuer hasn't yet chosen refundLenders or
-// acceptPartialFunding.
-export type RoundStatus = 'open' | 'stalled' | 'funded' | 'active' | 'repaid' | 'refunded'
+// acceptPartialFunding; 'overdue' = Funded or Repaying, not yet fully repaid, past its
+// maturity date (deadline + term) — purely a display flag (mirrors the old, since-
+// removed FixedReturnView's isOfferingPastMaturity/'overdue' check). The contract has
+// no on-chain maturity enforcement, so this never blocks or gates any action — repay
+// still works exactly the same before or after maturity, this only changes the badge.
+export type RoundStatus =
+  | 'open'
+  | 'stalled'
+  | 'funded'
+  | 'active'
+  | 'overdue'
+  | 'repaid'
+  | 'refunded'
 
 export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline' | 'repay'
 
@@ -133,7 +144,11 @@ export interface CreditWhitelistAllocationSummary {
   description: string
 }
 
-/** Units offered for a custom term length. The term is always stored in days. */
+/** Units offered for a custom term length. No `minutes`/sub-day unit here — unlike the
+ *  deadline's own minute-precision time field, termDuration has a hard on-chain floor
+ *  of 1 whole day (FixedReturn__InvalidTermDuration reverts at 0), so any sub-day
+ *  custom value would always round down to a rejected 0. Confirmed directly against
+ *  the contract: 2 minutes -> termDuration 0 -> revert. */
 export type CreditTermUnit = 'days' | 'weeks' | 'months' | 'years'
 
 /** A member position inside a credit round. */
@@ -212,6 +227,9 @@ export interface CreditCallForm {
   periodVal: string
   periodUnit: CreditTermUnit
   deadline: string
+  /** Clock time (HH:mm, UTC) paired with `deadline` — lets a round close at an exact
+   *  minute rather than always end-of-day, e.g. for testing a deadline a few minutes out. */
+  deadlineTime: string
   access: CreditAccess
   /** Searchable, per-lender custom-amount whitelist. */
   whitelist: CreditWhitelistEntry[]
@@ -232,6 +250,7 @@ export interface CreditOfferForm {
   termValue: number
   termUnit: FixedReturnTermUnit
   deadline: string
+  deadlineTime: string
   access: FixedReturnAccessMode
   capOn: boolean
   cap: number
