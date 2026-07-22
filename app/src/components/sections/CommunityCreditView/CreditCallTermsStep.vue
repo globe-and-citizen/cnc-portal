@@ -31,7 +31,10 @@
               id="cc-deadline"
               variant="outline"
               color="neutral"
-              :class="['w-full justify-start font-normal', termErrors.deadline && 'ring-error ring-1']"
+              :class="[
+                'w-full justify-start font-normal',
+                termErrors.deadline && 'ring-error ring-1'
+              ]"
               :label="deadlineLabel"
               data-test="cc-deadline"
             />
