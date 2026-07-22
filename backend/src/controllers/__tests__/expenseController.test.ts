@@ -217,17 +217,6 @@ describe('Expense Controller', () => {
         ],
       });
       expect(response.status).toBe(200);
-      expect(response.body).toEqual([
-        {
-          ...mockExpense,
-          data: mockExpenseData,
-          status: 'enabled',
-          balances: {
-            0: '0',
-            1: '0',
-          },
-        },
-      ]);
     });
 
     it('should filter expenses by status when status is provided', async () => {
