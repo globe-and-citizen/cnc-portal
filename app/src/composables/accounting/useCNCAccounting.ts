@@ -10,21 +10,20 @@
  *   - **Backend DB** — the team's contracts, signed weekly claims and approved
  *     expenses, the off-chain accrual + category context (spec §3.2).
  *
- * The raw feeds are handed to the pure {@link buildRawCncEntries} /
- * {@link assembleFromRawEntries}, which run the #2113 source mappers, the #2117
- * consolidation and the statement builders.
+ * The raw feeds are handed to the pure {@link assembleCncAccounting}, which runs
+ * the #2113 source mappers, the #2117 consolidation and the statement builders.
  * Optional / flaky sources (the external Safe service, a contract a team has not
  * deployed) degrade gracefully: a missing or failed feed is simply absent from
  * the ledger and never blocks the page or surfaces as a hard error.
  */
-import { computed, ref, toValue, watch, type ComputedRef, type MaybeRefOrGetter } from 'vue'
+import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import { useQuery as useApolloQuery } from '@vue/apollo-composable'
 import { useReadContract } from '@wagmi/vue'
 import type { DocumentNode } from 'graphql'
 import { type Address } from 'viem'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
-import { FEE_COLLECTOR_ADDRESS, GRAPHQL_POLL_INTERVAL, SUPPORTED_TOKENS } from '@/constant'
+import { FEE_COLLECTOR_ADDRESS, GRAPHQL_POLL_INTERVAL } from '@/constant'
 import type { ContractType } from '@/types/teamContract'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
@@ -41,15 +40,11 @@ import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransferInitiators } from './useTransferInitiators'
-import { useHistoricalTokenRates } from './useHistoricalTokenRates'
 import {
-  assembleFromRawEntries,
-  buildRawCncEntries,
-  collectNativeRateDays,
+  assembleCncAccounting,
   type CncAccounting,
   type CncAccountingInput
 } from '@/utils/accounting/assemble'
-import { makeHistoricalRateOfRecord } from '@/utils/accounting/historicalRate'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import type { AccountingSummary } from '@/utils/accounting/buildLedger'
 import type { GeneralLedger } from '@/utils/accounting/generalLedger'
@@ -204,36 +199,14 @@ export function useCNCAccounting(
     expenses: expenses.data.value
   }))
 
-  // Timestamped USD price-of-record for native (POL/ETH): fetch each transacting
-  // day's historical price (spec §2 — never a live/deferred rate). USDC is pegged
-  // $1 by `toUsd` and SHER is valued from the router multiplier, so only native
-  // is fetched here; SHER/other days fall through to the live fallback.
-  //
-  // The days come *from* the mapped feed, which is valued *with* the rate — so the
-  // day set is held in a plain ref, written by a watcher, rather than a computed
-  // that would close the loop into a cycle. The set depends only on timestamps, so
-  // it settles on the first pass and a re-valuation never changes it.
-  const nativeCoingeckoId = SUPPORTED_TOKENS.find((t) => t.id === 'native')?.coingeckoId ?? ''
-  const nativeRateDays = ref<string[]>([])
-  const historicalRates = useHistoricalTokenRates('native', nativeCoingeckoId, nativeRateDays)
-  const rateOfRecord = computed<UsdRateOfRecord>(() =>
-    makeHistoricalRateOfRecord(historicalRates.value, liveRate)
-  )
-
-  const rawEntries = computed<LedgerEntry[]>(() =>
-    buildRawCncEntries({ ...baseInput.value, rateOfRecord: rateOfRecord.value })
-  )
-  watch(
-    rawEntries,
-    (entries) => {
-      const days = collectNativeRateDays(entries)
-      // Same days re-fetch nothing, so only publish a genuine change.
-      if (days.join() !== nativeRateDays.value.join()) nativeRateDays.value = days
-    },
-    { immediate: true }
-  )
-
-  const accounting = computed<CncAccounting>(() => assembleFromRawEntries(rawEntries.value))
+  // Native (POL/ETH) is valued at the **current** live price (currency store /
+  // CoinGecko) — the same "current rate everywhere" rule SHER follows. A fixed POL
+  // quantity is worth today's price wherever it appears, so the treasury asset
+  // reflects real current value and the whole POL book re-values together when the
+  // price moves (no per-date historical fetch). USDC is pegged $1 by `toUsd`; SHER
+  // is valued from the router multiplier (see buildRateOfRecord). The live price is
+  // already wired into `baseInput.rateOfRecord` (`liveRate`).
+  const accounting = computed<CncAccounting>(() => assembleCncAccounting(baseInput.value))
 
   // Resolve the human who signed each internal transfer (the tx feed carries only
   // a hash), then attach it so the ledger reads "Stravid87 transferred money from
