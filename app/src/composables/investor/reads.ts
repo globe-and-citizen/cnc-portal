@@ -9,7 +9,7 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investors'
  */
 export function useInvestorAddress() {
   const teamStore = useTeamStore()
-  return computed(() => teamStore.getContractAddressByType('InvestorV1'))
+  return computed(() => teamStore.getContractAddressByType('Investor'))
 }
 
 export function useInvestorName() {
@@ -18,7 +18,9 @@ export function useInvestorName() {
     address: investorsAddress,
     abi: INVESTOR_ABI,
     functionName: 'name' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
@@ -28,7 +30,9 @@ export function useInvestorSymbol() {
     address: investorsAddress,
     abi: INVESTOR_ABI,
     functionName: 'symbol' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
@@ -38,7 +42,9 @@ export function useInvestorTotalSupply() {
     address: investorsAddress,
     abi: INVESTOR_ABI,
     functionName: 'totalSupply' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
@@ -48,7 +54,9 @@ export function useInvestorOwner() {
     address: investorsAddress,
     abi: INVESTOR_ABI,
     functionName: 'owner' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
@@ -77,7 +85,9 @@ export function useInvestorShareholders() {
     address: investorsAddress,
     abi: INVESTOR_ABI,
     functionName: 'getShareholders' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
