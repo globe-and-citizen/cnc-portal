@@ -252,7 +252,7 @@ const ctas = computed<Cta[]>(() => {
   }
 
   if (store.isOwner) {
-    if (r.status === 'active' || r.status === 'funded') {
+    if (r.status === 'active' || r.status === 'funded' || r.status === 'overdue') {
       list.push({
         test: 'round-cta-repay',
         label: 'Repay round',

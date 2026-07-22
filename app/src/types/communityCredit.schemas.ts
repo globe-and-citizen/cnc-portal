@@ -13,7 +13,12 @@ export const creditCallBasicsSchema = z.object({
 })
 
 interface CreditCallTermsSchemaContext {
+  /** Today's date, YYYY-MM-DD — floors the date part of the deadline. */
   today: string
+  /** Current instant — floors a same-day deadline's clock time too, now that the
+   *  deadline picker allows minute precision. Optional so callers that only care
+   *  about the date-level check (or existing tests) can omit it. */
+  now?: Date
 }
 
 /** Deadline/term rules, since Credit's rate field lives in the Terms step rather than
@@ -33,6 +38,7 @@ export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContex
         .min(0, 'Rate cannot be negative')
         .max(100, 'Rate must be 100% or less'),
       deadline: z.string().min(1, 'Subscription deadline is required'),
+      deadlineTime: z.string().optional(),
       period: z
         .number({ error: 'Term is required' })
         .int('Term must be a whole number')
@@ -46,6 +52,19 @@ export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContex
       message: 'Subscription deadline cannot be in the past',
       path: ['deadline']
     })
+    .refine(
+      (data) => {
+        if (!context.now || !data.deadlineTime) return true
+        // Only the same-day case needs the clock-time check — an earlier refine
+        // already rejects any past date outright.
+        if (data.deadline !== context.today) return true
+        return new Date(`${data.deadline}T${data.deadlineTime}:00Z`) >= context.now
+      },
+      {
+        message: 'Subscription deadline cannot be in the past',
+        path: ['deadlineTime']
+      }
+    )
 }
 
 interface CreditCallAccessSchemaContext {

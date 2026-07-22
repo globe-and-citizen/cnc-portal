@@ -17,6 +17,7 @@ function baseForm(overrides: Partial<CreditOfferForm> = {}): CreditOfferForm {
     termValue: 90,
     termUnit: 'days',
     deadline: '2026-06-30',
+    deadlineTime: '23:59',
     access: 'whitelist',
     capOn: false,
     cap: 0,

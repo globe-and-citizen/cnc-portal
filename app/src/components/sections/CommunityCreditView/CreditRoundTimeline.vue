@@ -134,9 +134,15 @@ const LIFE_ORDER: RoundStatus[] = ['open', 'stalled', 'funded', 'active', 'repai
 // 'refunded' isn't a further step down the happy path — it's a divergent outcome once a
 // round misses its deadline, so it has no slot in LIFE_ORDER. Anchor it at the "Funded"
 // dot's position so the Draft/Open steps still render as done instead of every dot
-// looking unstarted (LIFE_ORDER.indexOf would otherwise return -1).
+// looking unstarted (LIFE_ORDER.indexOf would otherwise return -1). 'overdue' is just
+// 'funded'/'active' with a maturity-passed badge on top (see offerStateToRoundStatus) —
+// same "In repayment" position as 'active'.
 const currentIndex = computed(() =>
-  props.round.status === 'refunded' ? 2 : LIFE_ORDER.indexOf(props.round.status)
+  props.round.status === 'refunded'
+    ? 2
+    : props.round.status === 'overdue'
+      ? LIFE_ORDER.indexOf('active')
+      : LIFE_ORDER.indexOf(props.round.status)
 )
 const isRefunded = computed(() => props.round.status === 'refunded')
 

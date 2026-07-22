@@ -83,8 +83,11 @@ export function getSupportedCreditTokenOptions(addresses: Address[]) {
   ).map((token) => ({ label: token.symbol, value: token.symbol }))
 }
 
-function toUnixEndOfDaySeconds(dateStr: string): bigint {
-  return BigInt(Math.floor(new Date(`${dateStr}T23:59:59Z`).getTime() / 1000))
+/** `timeStr` is UTC clock time (HH:mm) — same convention as the rest of Community
+ *  Credit's date handling (e.g. `formatDateUTC`), so a picked deadline means the same
+ *  instant everywhere regardless of the issuer's local timezone. */
+function toUnixSeconds(dateStr: string, timeStr: string): bigint {
+  return BigInt(Math.floor(new Date(`${dateStr}T${timeStr}:00Z`).getTime() / 1000))
 }
 
 /**
@@ -107,10 +110,10 @@ export function toFixedReturnOfferParams(
     interestRateBps: BigInt(Math.round(form.rate * 100)),
     termDuration: form.termValue,
     termUnit: TERM_UNIT_INDEX[form.termUnit],
-    // Deadline and start are the same date — the loan term begins the day
-    // fundraising closes. End-of-day encoding keeps the full displayed date usable.
-    startDate: toUnixEndOfDaySeconds(form.deadline),
-    subscriptionDeadline: toUnixEndOfDaySeconds(form.deadline),
+    // Deadline and start are the same instant — the loan term begins the moment
+    // fundraising closes.
+    startDate: toUnixSeconds(form.deadline, form.deadlineTime),
+    subscriptionDeadline: toUnixSeconds(form.deadline, form.deadlineTime),
     fundingAccess: FUNDING_ACCESS_INDEX[form.access],
     isCapEnabled: form.capOn,
     lenderCap: form.capOn ? parseUnits(String(form.cap), token.decimals) : 0n,

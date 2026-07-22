@@ -62,7 +62,10 @@ const REPAID_OFFER: FixedReturnRawOffer = {
 const FUNDED_OFFER: FixedReturnRawOffer = {
   offerId: 3,
   decimals: 6,
-  offer: offer({ totalFunded: 40_000_000000n, state: 1 }) // fully raised, not yet repaid
+  // startDate overridden so maturity (startDate + 90 days) lands after the mocked NOW —
+  // the default offer()'s startDate matured long before NOW, which would otherwise
+  // resolve this to 'overdue' instead of the plain 'funded' this test is about.
+  offer: offer({ totalFunded: 40_000_000000n, state: 1, startDate: 1_999_000_000n })
 }
 // Still contract-state Open, but its subscription window closed without reaching
 // target — no longer fundable; offerStateToRoundStatus resolves this to 'stalled'.

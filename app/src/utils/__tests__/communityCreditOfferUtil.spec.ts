@@ -40,6 +40,7 @@ function baseForm(overrides: Partial<CreditOfferForm> = {}): CreditOfferForm {
     termValue: 12,
     termUnit: 'months',
     deadline: '2026-06-30',
+    deadlineTime: '23:59',
     access: 'general',
     capOn: false,
     cap: 0,
@@ -109,11 +110,24 @@ describe('toFixedReturnOfferParams', () => {
     expect(params.allocations).toEqual([])
   })
 
-  it('uses the subscription deadline as the term start at the end of the selected UTC day', () => {
-    const params = toFixedReturnOfferParams(baseForm({ deadline: '2026-06-30' }), [])
+  it('uses the subscription deadline date + time (UTC) as the term start', () => {
+    const params = toFixedReturnOfferParams(
+      baseForm({ deadline: '2026-06-30', deadlineTime: '23:59' }),
+      []
+    )
 
-    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 59) / 1000))
-    expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 59) / 1000))
+    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 0) / 1000))
+    expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 0) / 1000))
+  })
+
+  it('honors a custom deadline time down to the minute', () => {
+    const params = toFixedReturnOfferParams(
+      baseForm({ deadline: '2026-06-30', deadlineTime: '14:30' }),
+      []
+    )
+
+    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 5, 30, 14, 30, 0) / 1000))
+    expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 14, 30, 0) / 1000))
   })
 
   it('sets lenderCap to zero when isCapEnabled is false, regardless of the cap field', () => {
