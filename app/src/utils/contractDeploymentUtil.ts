@@ -213,7 +213,7 @@ export const getDeploymentConfigs = (
 
   // Vesting contract — agreement-only; mints the team's share token on release.
   // NOTE: Vesting/CashRemuneration/accounting composables still resolve the
-  // share token via getContractAddressByType('InvestorV1') — they will not
+  // share token via getInvestorAddress() — they will not
   // find a v2 team's contract until updated (tracked separately from this
   // deploy-pipeline wiring; see the Investor v2 migration effort, issue #2286).
   deployments.push({

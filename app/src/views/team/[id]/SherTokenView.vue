@@ -25,5 +25,5 @@ import ShareholderClaimSection from '@/components/sections/SherTokenView/Shareho
 
 const teamStore = useTeamStore()
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
+const investorsAddress = computed(() => teamStore.getInvestorAddress())
 </script>

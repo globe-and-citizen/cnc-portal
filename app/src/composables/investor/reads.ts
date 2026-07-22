@@ -9,7 +9,7 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investors'
  */
 export function useInvestorAddress() {
   const teamStore = useTeamStore()
-  return computed(() => teamStore.getContractAddressByType('Investor'))
+  return computed(() => teamStore.getInvestorAddress())
 }
 
 export function useInvestorName() {
