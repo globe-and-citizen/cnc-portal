@@ -36,8 +36,7 @@ import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/i
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import { buildSherMultiplierTimeline, makeSherUsdRate } from '@/utils/accounting/sherRate'
-import { settleSherIssuances } from '@/utils/accounting/mappers/sherIssuance'
+import { resolveCurrentSherMultiplier, makeSherUsdRate } from '@/utils/accounting/sherRate'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { dayKey } from '@/utils/accounting/historicalRate'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
@@ -248,15 +247,16 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
  *
  * SHER has no market price, so it is valued from the router's compensation
  * multiplier (1 SHER = 1/multiplier USD) — that is what makes a wage paid in SHER
- * increase Investor Equity. Each SHER leg is frozen at the multiplier of its own
- * date (historised); an issuance is then settled at the frozen value of the
- * accruals it matches (see {@link settleSherIssuances}) — a company books no
- * gain/loss on its own equity, so a multiplier change never touches the P&L.
+ * increase Investor Equity. The wage quantity is a fixed number of SHER, so every
+ * SHER leg is valued at the **current** multiplier: the accrual and the issuance
+ * that settles it share one rate, `Shares to be issued` nets to zero on its own,
+ * and a multiplier change re-values the whole SHER book coherently (see
+ * {@link resolveCurrentSherMultiplier}).
  */
 function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
   const sherRate = makeSherUsdRate(
-    buildSherMultiplierTimeline(
+    resolveCurrentSherMultiplier(
       input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
       input.safeDepositRouterEvents?.safeDeposits?.items,
       input.currentSherMultiplier
@@ -297,15 +297,15 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
   // The rate is a pure function of (token, timestamp), so it is resolved once here
   // rather than threaded through every mapper — with the same resolver the mappers
   // valued `amountUsd` with, so amountUsd = Quantité × rate.
+  // Every SHER leg is valued at the current multiplier (see buildRateOfRecord), so
+  // an accrual and the issuance that settles it carry the same rate for the same
+  // quantity — `Shares to be issued` nets to zero with no re-valuation step needed.
   const stamped = rawEntries.map((entry) => ({
     ...entry,
     rate: tokenUsdRate(entry.token, atDate(entry.timestamp), rateOfRecord)
   }))
 
-  // Settle each SHER issuance at the frozen value of the accruals it extinguishes
-  // (FIFO per member): equity receives what was actually contributed, `Shares to
-  // be issued` nets to zero, and a multiplier change never creates a gain/loss.
-  return settleSherIssuances(stamped).sort((a, b) => a.timestamp - b.timestamp)
+  return stamped.sort((a, b) => a.timestamp - b.timestamp)
 }
 
 /**
