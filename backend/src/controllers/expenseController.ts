@@ -116,12 +116,17 @@ const syncExpenseStatus = async (expense: Expense) => {
 
   const data = expense.data as BudgetLimit;
 
-  const balances = (await publicClient.readContract({
+  const balance = (await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
     abi: ABI,
-    functionName: 'expenseBalances',
+    functionName: 'getExpenseBalance',
     args: [keccak256(expense.signature as Address)],
-  })) as unknown as [bigint, bigint, bigint, 0 | 1 | 2];
+  })) as unknown as {
+    lastWithdrawnDate: bigint;
+    totalWithdrawn: bigint;
+    lastWithdrawnPeriod: bigint;
+    state: 0 | 1 | 2;
+  };
 
   const isNewPeriod = await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
@@ -148,25 +153,25 @@ const syncExpenseStatus = async (expense: Expense) => {
   const amountTransferred = isNewPeriod
     ? '0'
     : data.tokenAddress === zeroAddress
-      ? `${formatEther(balances[1])}`
-      : `${Number(balances[1]) / 1e6}`;
+      ? `${formatEther(balance.totalWithdrawn)}`
+      : `${Number(balance.totalWithdrawn) / 1e6}`;
 
   const isLimitReached =
     !isNewPeriod &&
     (Number(data.amount || Number.MAX_VALUE) <= Number(amountTransferred) ||
-      ((expense.data as BudgetLimit).frequencyType === 0 && balances[1] > 0));
+      ((expense.data as BudgetLimit).frequencyType === 0 && balance.totalWithdrawn > 0));
 
   const formattedExpense = {
     ...expense,
     balances: {
-      0: `${balances[0]}`,
+      0: `${balance.lastWithdrawnDate}`,
       1: amountTransferred,
     },
     status: isExpired
       ? 'expired'
       : isLimitReached
         ? 'limit-reached'
-        : balances[3] === 2
+        : balance.state === 2
           ? 'disabled'
           : 'enabled',
   };
@@ -180,7 +185,7 @@ const syncExpenseStatus = async (expense: Expense) => {
       ...(formattedExpense.data as BudgetLimit),
       balances: {
         1: amountTransferred,
-        0: `${balances[0]}`,
+        0: `${balance.lastWithdrawnDate}`,
       },
     };
   }
