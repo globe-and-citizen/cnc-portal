@@ -97,6 +97,43 @@ describe('mapCashRemunerationEvents', () => {
     })
   })
 
+  it('drops the empty GO leg of a SHER-only claim, keeping just the share issuance', () => {
+    // A claim paid only in SHER still fires a native Withdraw(employee, 0) for the
+    // wage's zero-rate GO component (the contract emits per component, no >0 guard).
+    // Only the SHER equity leg should survive — no phantom $0 "Wage settlement".
+    const entries = mapCashRemunerationEvents(
+      {
+        withdraws: [
+          {
+            id: 'go-0',
+            contractAddress: ADDR.payroll,
+            withdrawer: ADDR.member,
+            amount: '0',
+            timestamp: 100
+          }
+        ],
+        withdrawTokens: [
+          {
+            id: 'sher-25',
+            contractAddress: ADDR.payroll,
+            withdrawer: ADDR.member,
+            tokenAddress: ADDR.sherToken,
+            amount: '25000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toMatchObject({
+      debit: 'Shares to be issued',
+      credit: 'Investor Equity',
+      token: 'sher',
+      shares: 25
+    })
+  })
+
   it('books an owner sweep back to Bank as an internal move', () => {
     const [entry] = mapCashRemunerationEvents(
       {

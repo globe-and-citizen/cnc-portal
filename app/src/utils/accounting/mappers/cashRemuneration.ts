@@ -118,10 +118,12 @@ export function mapCashRemunerationEvents(
   }
 
   for (const row of input.withdraws ?? []) {
+    if (BigInt(row.amount) <= 0n) continue
     entries.push(cashSettlement(row, null, ctx))
   }
 
   for (const row of input.withdrawTokens ?? []) {
+    if (BigInt(row.amount) <= 0n) continue
     const isSher = ctx.tokenIdOf(row.tokenAddress) === 'sher'
     entries.push(isSher ? shareSettlement(row, ctx) : cashSettlement(row, row.tokenAddress, ctx))
   }
