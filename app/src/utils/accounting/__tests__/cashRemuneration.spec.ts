@@ -134,6 +134,26 @@ describe('mapCashRemunerationEvents', () => {
     })
   })
 
+  it('drops a dust native withdrawal that rounds to $0.00 (not just an exact zero)', () => {
+    // A few wei of the 18-decimal native token: > 0, so the old `amount <= 0` guard
+    // let it through, but it renders as quantity 0 / $0.00 — pure clutter. Skipped.
+    const entries = mapCashRemunerationEvents(
+      {
+        withdraws: [
+          {
+            id: 'dust',
+            contractAddress: ADDR.payroll,
+            withdrawer: ADDR.member,
+            amount: '1000000', // 1e6 wei ≈ 1e-12 native → rounds to 0 at 6 dp
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entries).toHaveLength(0)
+  })
+
   it('books an owner sweep back to Bank as an internal move', () => {
     const [entry] = mapCashRemunerationEvents(
       {
