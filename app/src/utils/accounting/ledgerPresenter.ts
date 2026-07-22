@@ -8,6 +8,7 @@ import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from 
 import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { mergeBankFees } from './mergeBankFees'
+import { flattenLedgerRows } from './payrollGrouping'
 import { filterLedgerByCurrency } from './ledgerCurrency'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
@@ -210,7 +211,7 @@ function movementOf(rawAmount: string, token: TokenId, rate?: number): Movement 
   try {
     whole = wholeTokenAmount(BigInt(rawAmount), token)
   } catch {
-    whole = 0
+    // malformed raw amount → keep 0
   }
   return {
     currency: currencySymbol(token),
@@ -355,9 +356,10 @@ export function filterLedgerEntries(
   return currencies ? filterLedgerByCurrency(scoped, currencies, filter === FEE_FILTER) : scoped
 }
 
-/** Flatten postings into the table's two-rows-per-entry shape. */
+/** Flatten postings into rows, folding each wage event's per-currency legs into one
+ *  compound posting ({@link compoundLedgerRows}); other entries stay two rows each. */
 export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
-  return entries.flatMap((entry) => rowsOf(entry))
+  return flattenLedgerRows(entries, rowsOf)
 }
 
 /** True when an entry carries a {@link FEE_ACCOUNT} leg (folded or standalone). */
