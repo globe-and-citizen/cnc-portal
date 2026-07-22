@@ -37,7 +37,7 @@ function claim(weekStartSeconds: number) {
   } as never
 }
 
-describe('SHER accrual valuation across a multiplier change', () => {
+describe('SHER accrual valuation at the current multiplier', () => {
   const a = assembleCncAccounting({
     ...BASE,
     safeDepositRouterEvents: {
@@ -63,14 +63,17 @@ describe('SHER accrual valuation across a multiplier change', () => {
     ]
   })
 
-  it('values each accrual at the multiplier of its own week', () => {
+  it('values every accrual at the current multiplier, whenever the SHER was earned', () => {
     const accruals = a.entries
       .filter((e) => e.useCase === 'UC-CASH-02' && e.token === 'sher')
       .sort((x, y) => x.timestamp - y.timestamp)
     expect(accruals).toHaveLength(2)
-    expect(accruals[0].rate).toBeCloseTo(1, 6) // week ended before the change → 1x
-    expect(accruals[0].amountUsd).toBeCloseTo(50, 6)
-    expect(accruals[1].rate).toBeCloseTo(1 / 6, 6) // week ended after the change → 6x
-    expect(accruals[1].amountUsd).toBeCloseTo(50 / 6, 4)
+    // The current multiplier is 6x (the latest MultiplierUpdated), so both 50-SHER
+    // weeks value alike — 50 SHER is 50 SHER whenever it was earned, only its USD
+    // worth follows the current rate.
+    for (const accrual of accruals) {
+      expect(accrual.rate).toBeCloseTo(1 / 6, 6)
+      expect(accrual.amountUsd).toBeCloseTo(50 / 6, 4)
+    }
   })
 })
