@@ -23,6 +23,7 @@ import type {
 } from '@/types/ponder/cash-remuneration'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import { isNegligibleAmount } from '@/utils/accounting/toUsd'
 import { atDate, type MapperContext } from './context'
 
 export interface CashRemunerationMapperInput {
@@ -118,14 +119,16 @@ export function mapCashRemunerationEvents(
   }
 
   for (const row of input.withdraws ?? []) {
-    if (BigInt(row.amount) <= 0n) continue
+    if (isNegligibleAmount(BigInt(row.amount), ctx.tokenIdOf(null))) continue
     entries.push(cashSettlement(row, null, ctx))
   }
 
   for (const row of input.withdrawTokens ?? []) {
-    if (BigInt(row.amount) <= 0n) continue
-    const isSher = ctx.tokenIdOf(row.tokenAddress) === 'sher'
-    entries.push(isSher ? shareSettlement(row, ctx) : cashSettlement(row, row.tokenAddress, ctx))
+    const tokenId = ctx.tokenIdOf(row.tokenAddress)
+    if (isNegligibleAmount(BigInt(row.amount), tokenId)) continue
+    entries.push(
+      tokenId === 'sher' ? shareSettlement(row, ctx) : cashSettlement(row, row.tokenAddress, ctx)
+    )
   }
 
   for (const row of input.ownerTreasuryWithdrawNatives ?? []) {

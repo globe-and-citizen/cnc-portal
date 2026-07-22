@@ -29,6 +29,7 @@ import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { TokenId } from '@/constant'
 import { buildClaimRatesWithOvertime } from '@/utils/wageUtil'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { isNegligibleAmount } from '@/utils/accounting/toUsd'
 import { atDate, type MapperContext } from './context'
 
 /** A weekly claim spans the seven days from its `weekStart` (UTC ISO Monday). */
@@ -98,7 +99,7 @@ export function mapPayrollAccruals(
     for (const rate of rates) {
       const tokenId = rate.type as TokenId
       const base = rate.totalAmount
-      if (base <= 0n) continue
+      if (isNegligibleAmount(base, tokenId)) continue
       const isShare = tokenId === 'sher'
       entries.push(
         makeEntry({
