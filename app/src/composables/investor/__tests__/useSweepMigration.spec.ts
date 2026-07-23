@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Address, Hex } from 'viem'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
-import { completeMigration, sweepMigration } from '../useSweepMigration'
+import {
+  completeMigration,
+  sweepMigration,
+  useCompleteMigrationMutation,
+  useSweepMigrationMutation
+} from '../useSweepMigration'
+import { useMutationFn, smartUseMutation } from '@/tests/mocks/composables.mock'
 
 vi.mock('@/composables/contracts/useContractWritesV3', async (importOriginal) => {
   const actual = (await importOriginal()) as object
@@ -51,5 +57,54 @@ describe('sweepMigration', () => {
       functionName: 'completeMigration',
       args: []
     })
+  })
+})
+
+describe('useSweepMigrationMutation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useMutationFn.mockImplementation(smartUseMutation)
+    vi.mocked(executeContractWrite).mockResolvedValue({
+      hash: '0xhash' as never,
+      receipt: { status: 'success' } as never,
+      simulation: {} as never
+    })
+  })
+
+  it('exposes a mutation that runs sweepMigration', async () => {
+    const mutation = useSweepMigrationMutation()
+    const receipt = await mutation.mutateAsync({
+      investorV2Address: INVESTOR,
+      holders: [HOLDER],
+      amounts: [100n],
+      proofs: [PROOF]
+    })
+
+    expect(receipt).toEqual({ status: 'success' })
+    expect(executeContractWrite).toHaveBeenCalledWith(
+      expect.objectContaining({ functionName: 'bulkClaim' })
+    )
+  })
+})
+
+describe('useCompleteMigrationMutation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useMutationFn.mockImplementation(smartUseMutation)
+    vi.mocked(executeContractWrite).mockResolvedValue({
+      hash: '0xhash' as never,
+      receipt: { status: 'success' } as never,
+      simulation: {} as never
+    })
+  })
+
+  it('exposes a mutation that runs completeMigration', async () => {
+    const mutation = useCompleteMigrationMutation()
+    const receipt = await mutation.mutateAsync(INVESTOR)
+
+    expect(receipt).toEqual({ status: 'success' })
+    expect(executeContractWrite).toHaveBeenCalledWith(
+      expect.objectContaining({ functionName: 'completeMigration' })
+    )
   })
 })
