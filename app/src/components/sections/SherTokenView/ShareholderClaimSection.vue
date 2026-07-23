@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-y-4">
+  <div v-if="showSection" class="flex flex-col gap-y-4">
     <UAlert
       :color="migrationComplete ? 'success' : 'info'"
       variant="soft"
