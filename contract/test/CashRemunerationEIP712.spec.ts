@@ -1,8 +1,9 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
 import { expect } from 'chai'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { CashRemunerationEIP712 } from '../typechain-types'
-import { MockERC20 } from '../typechain-types'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type { CashRemunerationEIP712, MockERC20 } from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 describe('CashRemuneration*** (EIP712)', () => {
   let cashRemunerationProxy: CashRemunerationEIP712
@@ -118,7 +119,7 @@ describe('CashRemuneration*** (EIP712)', () => {
           value: amount
         })
 
-        await expect(tx).to.changeEtherBalance(cashRemunerationProxy, amount)
+        await expect(tx).to.changeEtherBalance(ethers, cashRemunerationProxy, amount)
         await expect(tx)
           .to.emit(cashRemunerationProxy, 'Deposited')
           .withArgs(employer.address, amount)
@@ -171,7 +172,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         const amount = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
         const amountUSDC = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[1].hourlyRate) / 60n
 
-        await expect(tx).to.changeEtherBalance(employee, amount)
+        await expect(tx).to.changeEtherBalance(ethers, employee, amount)
         await expect(tx)
           .to.emit(cashRemunerationProxy, 'Withdraw')
           .withArgs(employee.address, amount)
@@ -257,7 +258,7 @@ describe('CashRemuneration*** (EIP712)', () => {
           const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
           const amount = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
 
-          await expect(tx).to.changeEtherBalance(employee, amount)
+          await expect(tx).to.changeEtherBalance(ethers, employee, amount)
           await expect(tx)
             .to.emit(cashRemunerationProxy, 'Withdraw')
             .withArgs(employee.address, amount)

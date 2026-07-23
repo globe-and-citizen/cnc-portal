@@ -1,6 +1,6 @@
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
-import { readFileSync } from 'fs'
-import { join } from 'path'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 const MockTokensModule = buildModule('MockTokens', (m) => {
   const usdc = m.contract('MockERC20', ['USD Coin', 'USDC'], { id: 'USDC' })
@@ -10,7 +10,7 @@ const MockTokensModule = buildModule('MockTokens', (m) => {
   // Load recipients from recipients.json (shared with bulkTransferConfig)
   let testAccounts: string[] = []
   try {
-    const recipientsPath = join(__dirname, '../../scripts/recipients.json')
+    const recipientsPath = join(import.meta.dirname, '../../scripts/recipients.json')
     const fileContent = readFileSync(recipientsPath, 'utf8')
     const data = JSON.parse(fileContent)
     if (Array.isArray(data.recipients)) {

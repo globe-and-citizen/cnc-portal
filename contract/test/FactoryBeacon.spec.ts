@@ -1,7 +1,8 @@
-import { ethers } from 'hardhat'
+import { ethers, initializeHardhat, loadFixture } from './hardhat-context.js'
 import { expect } from 'chai'
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
-import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs'
+import { anyValue } from '@nomicfoundation/hardhat-ethers-chai-matchers/withArgs'
+
+before(initializeHardhat)
 
 describe('FactoryBeacon', () => {
   async function deployFixture() {
@@ -71,7 +72,7 @@ describe('FactoryBeacon', () => {
   it('reverts proxy creation when initializer data is invalid', async () => {
     const { user1, factoryBeacon } = await loadFixture(deployFixture)
 
-    await expect(factoryBeacon.connect(user1).createBeaconProxy('0x1234')).to.be.reverted
+    await expect(factoryBeacon.connect(user1).createBeaconProxy('0x1234')).to.be.revert(ethers)
   })
 
   it('allows owner upgrade and blocks non-owner upgrades', async () => {

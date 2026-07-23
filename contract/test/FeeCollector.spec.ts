@@ -1,7 +1,9 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
 import { expect } from 'chai'
-import { FeeCollector, MockERC20 } from '../typechain-types'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import type { FeeCollector, MockERC20 } from '../typechain-types/index.js'
+import type { SignerWithAddress } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('FeeCollector', () => {
   let feeCollector: FeeCollector
@@ -169,7 +171,7 @@ describe('FeeCollector', () => {
     it('should not allow reinitialization', async () => {
       feeCollector = await deployFeeCollector()
 
-      await expect(feeCollector.initialize(owner.address, [], [])).to.be.reverted
+      await expect(feeCollector.initialize(owner.address, [], [])).to.be.revert(ethers)
     })
 
     it('should accept maximum valid BPS (10000 = 100%)', async () => {
@@ -246,7 +248,7 @@ describe('FeeCollector', () => {
           to: await feeCollector.getAddress(),
           value: depositAmount
         })
-      ).to.changeEtherBalance(feeCollector, depositAmount)
+      ).to.changeEtherBalance(ethers, feeCollector, depositAmount)
 
       expect(await feeCollector.getBalance()).to.equal(depositAmount)
     })
@@ -400,11 +402,12 @@ describe('FeeCollector', () => {
       const tx = feeCollector.withdraw()
 
       await expect(tx).to.changeTokenBalances(
+        ethers,
         mockUSDT,
         [feeCollector, owner],
         [-usdtAmount, usdtAmount]
       )
-      await expect(feeCollector.withdraw()).to.not.be.reverted // idempotent no-op after sweep
+      await expect(feeCollector.withdraw()).to.not.be.revert(ethers) // idempotent no-op after sweep
       expect(await mockUSDT.balanceOf(await feeCollector.getAddress())).to.equal(0)
       expect(await mockUSDC.balanceOf(await feeCollector.getAddress())).to.equal(0)
     })
@@ -414,8 +417,11 @@ describe('FeeCollector', () => {
       await mockUSDT.mint(await feeCollector.getAddress(), amount)
       // mockUSDC is supported but has zero balance — sweep should not move it
       const tx = feeCollector.withdraw()
-      await expect(tx).to.changeTokenBalances(mockUSDT, [feeCollector, owner], [-amount, amount])
-      await expect(tx).to.changeTokenBalances(mockUSDC, [feeCollector, owner], [0n, 0n])
+      await expect(tx).to.changeTokenBalances(ethers, mockUSDT, [feeCollector, owner], [
+        -amount,
+        amount
+      ])
+      await expect(tx).to.changeTokenBalances(ethers, mockUSDC, [feeCollector, owner], [0n, 0n])
     })
 
     it('should not allow non-owner to trigger token sweep', async () => {
@@ -444,7 +450,7 @@ describe('FeeCollector', () => {
     it('should sweep full native balance to owner when no beneficiary is set', async () => {
       const fullBalance = await feeCollector.getBalance()
 
-      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(owner, fullBalance)
+      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(ethers, owner, fullBalance)
       expect(await feeCollector.getBalance()).to.equal(0)
     })
 
@@ -457,13 +463,15 @@ describe('FeeCollector', () => {
       const fullNative = await feeCollector.getBalance()
 
       const tx = feeCollector.withdraw()
-      await expect(tx).to.changeEtherBalance(owner, fullNative)
+      await expect(tx).to.changeEtherBalance(ethers, owner, fullNative)
       await expect(tx).to.changeTokenBalances(
+        ethers,
         mockUSDT,
         [feeCollector, owner],
         [-usdtAmount, usdtAmount]
       )
       await expect(tx).to.changeTokenBalances(
+        ethers,
         mockUSDC,
         [feeCollector, owner],
         [-usdcAmount, usdcAmount]
@@ -481,7 +489,7 @@ describe('FeeCollector', () => {
 
       const fullNative = await feeCollector.getBalance()
       const tx = feeCollector.withdraw()
-      await expect(tx).to.changeEtherBalance(user2, fullNative)
+      await expect(tx).to.changeEtherBalance(ethers, user2, fullNative)
       await expect(tx).to.emit(feeCollector, 'Withdrawn').withArgs(user2.address, fullNative)
     })
 
@@ -490,7 +498,7 @@ describe('FeeCollector', () => {
       await feeCollector.setFeeBeneficiary(ethers.ZeroAddress)
 
       const fullNative = await feeCollector.getBalance()
-      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(owner, fullNative)
+      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(ethers, owner, fullNative)
     })
 
     it('should not allow non-owner to withdraw', async () => {
@@ -507,7 +515,7 @@ describe('FeeCollector', () => {
 
     it('should be a no-op when every balance is zero', async () => {
       const emptyFeeCollector = await deployFeeCollector()
-      await expect(emptyFeeCollector.withdraw()).to.not.be.reverted
+      await expect(emptyFeeCollector.withdraw()).to.not.be.revert(ethers)
       expect(await emptyFeeCollector.getBalance()).to.equal(0)
     })
   })
@@ -667,6 +675,7 @@ describe('FeeCollector', () => {
       const fullBalance = await feeCollector.getBalance()
 
       await expect(() => feeCollector.connect(user1).withdraw()).to.changeEtherBalance(
+        ethers,
         user1,
         fullBalance
       )

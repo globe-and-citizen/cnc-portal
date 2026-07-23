@@ -1,5 +1,7 @@
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('SafeDepositRouter', function () {
   async function deployFixture() {
@@ -191,7 +193,7 @@ describe('SafeDepositRouter', function () {
 
     await usdc.connect(depositor).approve(await router.getAddress(), amount)
 
-    await expect(router.connect(depositor).deposit(await usdc.getAddress(), amount)).to.be.reverted
+    await expect(router.connect(depositor).deposit(await usdc.getAddress(), amount)).to.be.revert(ethers)
   })
 
   it('pause and unpause by owner', async () => {

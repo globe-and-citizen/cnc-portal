@@ -1,8 +1,10 @@
-import { ethers } from 'hardhat'
+import { ethers, initializeHardhat } from './hardhat-context.js'
 import { expect } from 'chai'
-import { ContractTransactionReceipt, LogDescription } from 'ethers'
-import { AdCampaignManager } from '../typechain-types'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import type { ContractTransactionReceipt, LogDescription } from 'ethers'
+import type { AdCampaignManager } from '../typechain-types/index.js'
+import type { SignerWithAddress } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('AdCampaignManager', () => {
   let adCampaignManager: AdCampaignManager

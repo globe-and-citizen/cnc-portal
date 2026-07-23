@@ -1,6 +1,6 @@
-import { ethers } from 'hardhat'
-import { parseEther, formatEther } from 'ethers'
-import { BULK_TRANSFER_CONFIG } from './bulkTransferConfig'
+import hre from 'hardhat'
+import { formatEther, isAddress, parseEther } from 'ethers'
+import { BULK_TRANSFER_CONFIG } from './bulkTransferConfig.js'
 
 // Extract configuration
 const { recipients, amountPerRecipient, customAmounts, delayBetweenTx, gasLimit } =
@@ -10,6 +10,7 @@ const { recipients, amountPerRecipient, customAmounts, delayBetweenTx, gasLimit 
 const DEFAULT_AMOUNT = parseEther(amountPerRecipient)
 
 async function bulkSendEth() {
+  const { ethers } = await hre.network.getOrCreate()
   console.log('🚀 Starting bulk ETH transfer...')
 
   // Get the signer (deployer account)
@@ -57,7 +58,7 @@ async function bulkSendEth() {
       )
 
       // Check if address is valid
-      if (!ethers.isAddress(recipient)) {
+      if (!isAddress(recipient)) {
         console.error(`❌ Invalid address: ${recipient}`)
         results.push({ address: recipient, status: 'failed', error: 'Invalid address' })
         continue

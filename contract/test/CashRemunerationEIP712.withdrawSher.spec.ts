@@ -1,24 +1,25 @@
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import {
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type {
   Officer,
-  UpgradeableBeacon,
-  Investor__factory,
-  CashRemunerationEIP712__factory,
+  Beacon,
   CashRemunerationEIP712,
   Investor,
   FeeCollector
-} from '../typechain-types'
+} from '../typechain-types/index.js'
+import { Investor__factory, CashRemunerationEIP712__factory } from '../typechain-types/index.js'
+
+before(initializeHardhat)
 import { ZeroAddress } from 'ethers'
 
 describe('Cash Remuneration - Withdraw SHER', function () {
   let officer: Officer
   let investor: Investor__factory
-  let investorBeacon: UpgradeableBeacon
+  let investorBeacon: Beacon
   let investorProxy: Investor
   let cashRemunerationEIP712: CashRemunerationEIP712__factory
-  let cashRemunerationEIP712Beacon: UpgradeableBeacon
+  let cashRemunerationEIP712Beacon: Beacon
   let cashRemunerationEIP712Proxy: CashRemunerationEIP712
   let owner: SignerWithAddress
   let addr1: SignerWithAddress
@@ -49,12 +50,12 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     // Deploy implementation contracts
     investor = await ethers.getContractFactory('Investor')
-    investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as UpgradeableBeacon
+  investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as Beacon
 
     cashRemunerationEIP712 = await ethers.getContractFactory('CashRemunerationEIP712')
     cashRemunerationEIP712Beacon = (await upgrades.deployBeacon(
       cashRemunerationEIP712
-    )) as unknown as UpgradeableBeacon
+    )) as unknown as Beacon
 
     const beaconConfigs: Array<{ beaconType: string; beaconAddress: string }> = [
       {

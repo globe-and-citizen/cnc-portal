@@ -1,20 +1,24 @@
-import { ethers, upgrades } from 'hardhat'
-import { expect } from 'chai'
 import {
-  loadFixture,
-  time,
+  ethers,
   impersonateAccount,
-  setBalance
-} from '@nomicfoundation/hardhat-network-helpers'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import {
+  initializeHardhat,
+  loadFixture,
+  setBalance,
+  time,
+  upgrades
+} from './hardhat-context.js'
+import { expect } from 'chai'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type {
   Bank,
   FeeCollector,
   FixedReturn,
   MockERC20,
   MockOfficer,
   Officer
-} from '../typechain-types'
+} from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 describe('FixedReturn', () => {
   const TermUnit = { Days: 0, Months: 1, Years: 2 }
@@ -221,7 +225,7 @@ describe('FixedReturn', () => {
 
     it('rejects being initialized a second time', async () => {
       const { fixedReturn, owner } = await loadFixture(deployFixture)
-      await expect(fixedReturn.initialize([], owner.address)).to.be.reverted
+      await expect(fixedReturn.initialize([], owner.address)).to.be.revert(ethers)
     })
 
     it('pre-registers an initial set of supported tokens, mirroring Bank', async () => {
@@ -687,7 +691,7 @@ describe('FixedReturn', () => {
       await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
       // remaining room is exactly 40k — must succeed, not revert
       await expect(fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6)))
-        .to.not.be.reverted
+        .to.not.be.revert(ethers)
 
       const offer = await fixedReturn.getLendingOffer(offerId)
       expect(offer.totalFunded).to.equal(FUNDING_TARGET)
@@ -724,7 +728,7 @@ describe('FixedReturn', () => {
       )
 
       const amount = ethers.parseUnits('50000', 6)
-      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, amount)).to.not.be.reverted
+      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, amount)).to.not.be.revert(ethers)
       expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(amount)
     })
 
@@ -852,7 +856,7 @@ describe('FixedReturn', () => {
       )
 
       await expect(fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6)))
-        .to.not.be.reverted
+        .to.not.be.revert(ethers)
     })
 
     it('lets an uncapped whitelisted lender deposit beyond what a personal cap would allow', async () => {
@@ -874,7 +878,7 @@ describe('FixedReturn', () => {
 
       // lenderB is uncapped — deposits far more than lenderA's 20k allocation would allow.
       await expect(fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('80000', 6)))
-        .to.not.be.reverted
+        .to.not.be.revert(ethers)
     })
 
     it("still bounds an uncapped whitelisted lender by the offer's remaining funding target", async () => {

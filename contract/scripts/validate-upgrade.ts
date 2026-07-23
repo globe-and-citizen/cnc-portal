@@ -1,7 +1,7 @@
 import hre from 'hardhat'
-import { upgrades } from 'hardhat'
-import fs from 'fs'
-import path from 'path'
+import { upgrades as createUpgrades } from '@openzeppelin/hardhat-upgrades'
+import fs from 'node:fs'
+import path from 'node:path'
 
 type ContractConfig = {
   name: string
@@ -26,7 +26,7 @@ const UPGRADEABLE_CONTRACTS: ContractConfig[] = [
   { name: 'Vesting' }
 ]
 
-const BASELINE_ROOT = path.join(__dirname, '..', 'storage-baselines')
+const BASELINE_ROOT = path.join(import.meta.dirname, '..', 'storage-baselines')
 
 /** Networks we accept as real targets. `hardhat` (the in-memory one that hardhat
  *  defaults to when --network is omitted) is rejected so that users can't bake a
@@ -36,9 +36,8 @@ const KNOWN_NETWORKS = new Set(['polygon', 'mainnet', 'sepolia', 'amoy', 'localh
 /** Networks where a missing baseline should be treated as an error (production). */
 const PRODUCTION_NETWORKS = new Set(['polygon', 'mainnet'])
 
-function resolveNetwork(): string {
-  const network = hre.network.name
-  if (network === 'hardhat') {
+function resolveNetwork(network: string): string {
+  if (network === 'default' || network === 'hardhat') {
     throw new Error(
       'No network selected. Pass `--network <name>` (e.g. polygon, localhost). ' +
         'The in-memory hardhat network is not a valid baseline target.'
@@ -75,11 +74,16 @@ type StorageLayout = {
 
 async function getStorageLayout(contractName: string): Promise<StorageLayout> {
   const allNames = await hre.artifacts.getAllFullyQualifiedNames()
-  const fqn = allNames.find((n) => n.endsWith(':' + contractName))
+  const fqn = Array.from(allNames).find((n) => n.endsWith(':' + contractName))
   if (!fqn) throw new Error(`Contract ${contractName} not found in artifacts`)
 
-  const buildInfo = await hre.artifacts.getBuildInfo(fqn)
-  if (!buildInfo) throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
+  const buildInfoId = await hre.artifacts.getBuildInfoId(fqn)
+  if (!buildInfoId) throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
+  const buildInfoPath = await hre.artifacts.getBuildInfoPath(buildInfoId)
+  if (!buildInfoPath) throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
+  const buildInfo = JSON.parse(await fs.promises.readFile(buildInfoPath, 'utf8')) as {
+    output: unknown
+  }
 
   const [sourceName, name] = fqn.split(':')
   const contractOutput = (
@@ -201,17 +205,18 @@ type ValidationResult = {
 
 async function validateContract(
   config: ContractConfig,
-  network: string
+  network: string,
+  connection: Awaited<ReturnType<typeof hre.network.getOrCreate>>,
+  upgrades: Awaited<ReturnType<typeof createUpgrades>>
 ): Promise<ValidationResult> {
   const contractName = config.name
   const errors: string[] = []
   const warnings: string[] = []
 
   try {
-    const Factory = await hre.ethers.getContractFactory(contractName)
+    const Factory = await connection.ethers.getContractFactory(contractName)
     await upgrades.validateImplementation(Factory, {
-      kind: 'beacon',
-      constructorArgs: config.constructorArgs ?? []
+      kind: 'beacon'
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
@@ -303,8 +308,10 @@ function printResult(r: ValidationResult) {
 }
 
 async function main() {
-  const network = resolveNetwork()
-  await hre.run('compile', { quiet: true })
+  const connection = await hre.network.getOrCreate()
+  const network = resolveNetwork(connection.networkName)
+  await hre.tasks.getTask('build').run({ quiet: true })
+  const upgrades = await createUpgrades(hre, connection)
 
   const bakeMode = process.env.BAKE === '1'
   const target = process.env.CONTRACT
@@ -331,7 +338,7 @@ async function main() {
   const results: ValidationResult[] = []
   for (const cfg of targets) {
     try {
-      results.push(await validateContract(cfg, network))
+      results.push(await validateContract(cfg, network, connection, upgrades))
     } catch (e) {
       results.push({
         name: cfg.name,

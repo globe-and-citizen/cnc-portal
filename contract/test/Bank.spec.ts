@@ -1,15 +1,22 @@
-import { ethers, upgrades } from 'hardhat'
-import { expect } from 'chai'
 import {
+  ethers,
+  impersonateAccount,
+  initializeHardhat,
+  setBalance,
+  upgrades
+} from './hardhat-context.js'
+import { expect } from 'chai'
+import type {
   Bank,
   FeeCollector,
   MockERC20,
   MockFixedReturn,
   MockOfficer,
   Officer
-} from '../typechain-types'
-import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { impersonateAccount, setBalance } from '@nomicfoundation/hardhat-network-helpers'
+} from '../typechain-types/index.js'
+import type { HardhatEthersSigner, SignerWithAddress } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('Bank', () => {
   let bankProxy: Bank
@@ -103,7 +110,7 @@ describe('Bank', () => {
     })
 
     it('should not allow to initialize the contract again', async () => {
-      await expect(bankProxy.initialize([], await officer.getAddress())).to.be.reverted
+      await expect(bankProxy.initialize([], await officer.getAddress())).to.be.revert(ethers)
     })
 
     it('should reject zero address in initialization', async () => {
@@ -191,10 +198,11 @@ describe('Bank', () => {
 
         await expect(async () =>
           owner.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
-        ).to.changeEtherBalance(bankProxy, depositAmount)
+        ).to.changeEtherBalance(ethers, bankProxy, depositAmount)
 
         const tx = bank.transfer(contractor.address, transferAmount)
         await expect(tx).to.changeEtherBalances(
+          ethers,
           [bankProxy, contractor, feeCollectorAddress],
           [-transferAmount, netAmount, fee]
         )
@@ -233,7 +241,7 @@ describe('Bank', () => {
 
         await expect(async () =>
           member1.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
-        ).to.changeEtherBalance(bankProxy, depositAmount)
+        ).to.changeEtherBalance(ethers, bankProxy, depositAmount)
 
         await expect(bankProxy.connect(member1).transfer(contractor.address, transferAmount))
           .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
@@ -252,11 +260,11 @@ describe('Bank', () => {
       it('should allow owner to pause and unpause', async () => {
         await bank.pause()
         expect(await bankProxy.paused()).to.be.true
-        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
+      await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.revert(ethers)
 
         await bank.unpause()
         expect(await bankProxy.paused()).to.be.false
-        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.reverted
+      await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.revert(ethers)
       })
 
       it('should not allow non-owner to pause or unpause', async () => {
@@ -320,6 +328,7 @@ describe('Bank', () => {
       const tx = bank.transferToken(await mockUSDT.getAddress(), contractor.address, amount)
 
       await expect(tx).to.changeTokenBalances(
+        ethers,
         mockUSDT,
         [bankProxy, contractor, feeCollectorAddress],
         [-amount, netAmount, fee]

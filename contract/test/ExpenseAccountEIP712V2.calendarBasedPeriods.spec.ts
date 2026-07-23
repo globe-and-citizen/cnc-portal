@@ -1,10 +1,10 @@
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
-import { ExpenseAccountEIP712 } from '../typechain-types'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { AddressLike } from 'ethers'
-import { time } from '@nomicfoundation/hardhat-toolbox/network-helpers'
+import { ethers, initializeHardhat, loadFixture, time, upgrades } from './hardhat-context.js'
+import type { ExpenseAccountEIP712 } from '../typechain-types/index.js'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type { AddressLike } from 'ethers'
+
+before(initializeHardhat)
 
 describe('ExpenseAccountEIP712V2', function () {
   let owner: SignerWithAddress
