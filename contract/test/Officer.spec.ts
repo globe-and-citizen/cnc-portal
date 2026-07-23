@@ -11,7 +11,7 @@ import {
   UpgradeableBeacon,
   Elections__factory,
   Proposals__factory,
-  InvestorV1__factory,
+  Investor__factory,
   SafeDepositRouter__factory,
   MockERC20
 } from '../typechain-types'
@@ -19,7 +19,7 @@ import {
 describe('Officer Contract', function () {
   let officer: Officer
   let bankAccount: Bank__factory
-  let investor: InvestorV1__factory
+  let investor: Investor__factory
   let electionsContract: Elections__factory
   let expenseAccount: ExpenseAccountEIP712__factory
   let proposalsContract: Proposals__factory
@@ -83,7 +83,7 @@ describe('Officer Contract', function () {
     bankAccount = await ethers.getContractFactory('Bank')
     bankAccountBeacon = (await upgrades.deployBeacon(bankAccount)) as unknown as UpgradeableBeacon
 
-    investor = await ethers.getContractFactory('InvestorV1')
+    investor = await ethers.getContractFactory('Investor')
     investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as UpgradeableBeacon
 
     electionsContract = await ethers.getContractFactory('Elections')
@@ -115,7 +115,7 @@ describe('Officer Contract', function () {
 
     // Configure beacons
     await officer.connect(owner).configureBeacon('Bank', await bankAccountBeacon.getAddress())
-    await officer.connect(owner).configureBeacon('InvestorV1', await investorBeacon.getAddress())
+    await officer.connect(owner).configureBeacon('Investor', await investorBeacon.getAddress())
     await officer.connect(owner).configureBeacon('Elections', await electionsBeacon.getAddress())
     await officer.connect(owner).configureBeacon('BoardOfDirectors', await bodBeacon.getAddress())
     await officer
@@ -178,9 +178,10 @@ describe('Officer Contract', function () {
         officer.connect(owner).deployBeaconProxy('ExpenseAccountEIP712', expenseInitData)
       ).to.emit(officer, 'ExpenseAccountEIP712Deployed')
 
-      await expect(
-        officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
-      ).to.emit(officer, 'InvestorV1Deployed')
+      await expect(officer.connect(owner).deployBeaconProxy('Investor', investorInitData)).to.emit(
+        officer,
+        'InvestorDeployed'
+      )
 
       //  ADD: Deploy SafeDepositRouter
       await expect(
@@ -351,7 +352,7 @@ describe('Officer Contract', function () {
           beaconAddress: proposalsBeaconAddr
         },
         {
-          beaconType: 'InvestorV1',
+          beaconType: 'Investor',
           beaconAddress: investorBeaconAddr
         },
         //  ADD: SafeDepositRouter beacon config
@@ -401,7 +402,7 @@ describe('Officer Contract', function () {
           initializerData: proposalsInitData
         },
         {
-          contractType: 'InvestorV1',
+          contractType: 'Investor',
           initializerData: investorInitData
         },
         // ✅ ADD: SafeDepositRouter deployment
@@ -415,7 +416,7 @@ describe('Officer Contract', function () {
 
       const deployedContracts = await officerContract.getDeployedContracts()
 
-      // Verify all contracts deployed (Bank, Elections, BoardOfDirectors, Proposals, InvestorV1, SafeDepositRouter)
+      // Verify all contracts deployed (Bank, Elections, BoardOfDirectors, Proposals, Investor, SafeDepositRouter)
       expect(deployedContracts.length).to.equal(6)
 
       expect(deployedContracts[0].contractType).to.equal('Bank')
@@ -430,7 +431,7 @@ describe('Officer Contract', function () {
       expect(deployedContracts[3].contractType).to.equal('Proposals')
       expect(deployedContracts[3].contractAddress).to.not.equal(ethers.ZeroAddress)
 
-      expect(deployedContracts[4].contractType).to.equal('InvestorV1')
+      expect(deployedContracts[4].contractType).to.equal('Investor')
       expect(deployedContracts[4].contractAddress).to.not.equal(ethers.ZeroAddress)
 
       //  ADD: Verify SafeDepositRouter deployment
@@ -448,7 +449,7 @@ describe('Officer Contract', function () {
 
       //  ADD: Verify SafeDepositRouter has MINTER_ROLE
       const investorInstance = await ethers.getContractAt(
-        'InvestorV1',
+        'Investor',
         deployedContracts[4].contractAddress
       )
       const minterRole = await investorInstance.MINTER_ROLE()
@@ -632,7 +633,7 @@ describe('Officer Contract', function () {
       expect(types).to.include('Elections')
       expect(types).to.include('BoardOfDirectors')
       expect(types).to.include('ExpenseAccountEIP712')
-      expect(types).to.include('InvestorV1')
+      expect(types).to.include('Investor')
       expect(types).to.include('SafeDepositRouter')
     })
 
@@ -751,8 +752,8 @@ describe('Officer Contract', function () {
         ]
       )
 
-      // Deploy InvestorV1 first
-      await officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+      // Deploy Investor first
+      await officer.connect(owner).deployBeaconProxy('Investor', investorInitData)
 
       // Deploy SafeDepositRouter
       await officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
@@ -796,7 +797,7 @@ describe('Officer Contract', function () {
 
       const deployments = [
         {
-          contractType: 'InvestorV1',
+          contractType: 'Investor',
           initializerData: investorInitData
         },
         {
@@ -809,13 +810,13 @@ describe('Officer Contract', function () {
 
       const deployedContracts = await officer.getDeployedContracts()
       const investorAddress = deployedContracts.find(
-        (c) => c.contractType === 'InvestorV1'
+        (c) => c.contractType === 'Investor'
       )?.contractAddress
       const safeDepositRouterAddress = deployedContracts.find(
         (c) => c.contractType === 'SafeDepositRouter'
       )?.contractAddress
 
-      const investorInstance = await ethers.getContractAt('InvestorV1', investorAddress!)
+      const investorInstance = await ethers.getContractAt('Investor', investorAddress!)
       const minterRole = await investorInstance.MINTER_ROLE()
 
       const hasMinterRole = await investorInstance.hasRole(minterRole, safeDepositRouterAddress!)
@@ -839,7 +840,7 @@ describe('Officer Contract', function () {
         ]
       )
 
-      await officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+      await officer.connect(owner).deployBeaconProxy('Investor', investorInitData)
       await officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
 
       const deployedContracts = await officer.getDeployedContracts()
@@ -871,7 +872,7 @@ describe('Officer Contract', function () {
         ]
       )
 
-      await officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+      await officer.connect(owner).deployBeaconProxy('Investor', investorInitData)
       await officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
 
       const deployedContracts = await officer.getDeployedContracts()
@@ -906,7 +907,7 @@ describe('Officer Contract', function () {
       )
 
       await officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
-      await officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+      await officer.connect(owner).deployBeaconProxy('Investor', investorInitData)
 
       const deployedContracts = await officer.getDeployedContracts()
       const safeDepositRouterAddress = deployedContracts.find(
