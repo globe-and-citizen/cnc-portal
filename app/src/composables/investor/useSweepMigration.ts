@@ -14,7 +14,7 @@ export interface SweepArgs {
 }
 
 /**
- * Bulk claim unclaimed shares and close the migration (owner sweep).
+ * Bulk claim migrated shares for the shareholder list.
  * Already-claimed shareholders are skipped by the contract.
  */
 export async function sweepMigration(args: SweepArgs) {
@@ -25,28 +25,36 @@ export async function sweepMigration(args: SweepArgs) {
     args: [args.holders, args.amounts, args.proofs]
   })
 
-  const { receipt: completionReceipt } = await executeContractWrite({
-    address: args.investorV2Address,
+  return receipt
+}
+
+/**
+ * Close the migration after the owner has dispatched the remaining claims.
+ * Once closed, no further shareholder claim is accepted by the contract.
+ */
+export async function completeMigration(investorV2Address: Address) {
+  const { receipt } = await executeContractWrite({
+    address: investorV2Address,
     abi: INVESTOR_V2_ABI,
     functionName: 'completeMigration',
     args: []
   })
 
-  return { receipt, completionReceipt }
+  return receipt
 }
 
 /**
  * TanStack-wrapped sweep. Exposes isPending, error, data for UI binding.
  */
 export function useSweepMigrationMutation() {
-  return useMutation<
-    {
-      receipt: ExecuteContractWriteResult['receipt']
-      completionReceipt: ExecuteContractWriteResult['receipt']
-    },
-    Error,
-    SweepArgs
-  >({
+  return useMutation<ExecuteContractWriteResult['receipt'], Error, SweepArgs>({
     mutationFn: sweepMigration
+  })
+}
+
+/** TanStack-wrapped migration completion for the owner. */
+export function useCompleteMigrationMutation() {
+  return useMutation<ExecuteContractWriteResult['receipt'], Error, Address>({
+    mutationFn: completeMigration
   })
 }

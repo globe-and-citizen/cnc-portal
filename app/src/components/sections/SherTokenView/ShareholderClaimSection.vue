@@ -1,5 +1,17 @@
 <template>
-  <div v-if="showSection" class="flex flex-col gap-y-4">
+  <div class="flex flex-col gap-y-4">
+    <UAlert
+      :color="migrationComplete ? 'success' : 'info'"
+      variant="soft"
+      :icon="migrationComplete ? 'i-heroicons-check-circle' : 'i-heroicons-arrow-path'"
+      :title="migrationComplete ? 'Migration status: Complete' : 'Migration status: Open'"
+      :description="
+        migrationComplete
+          ? 'isMigrationComplete = true. All migration actions are closed on-chain.'
+          : 'isMigrationComplete = false. Shareholders can still claim their migrated shares.'
+      "
+      data-test="migration-status-alert"
+    />
     <MerkleClaimForm
       :investor-v2-address="investorV2AddressValue"
       :migration-data="migrationData"
@@ -7,7 +19,7 @@
       data-test="merkle-claim-form-section"
     />
     <MigrationOwnerSweep
-      v-if="isOwner"
+      v-if="isOwner && migrationComplete !== true"
       :investor-v2-address="investorV2AddressValue"
       :migration-data="migrationData"
       data-test="migration-owner-sweep-section"
@@ -58,7 +70,6 @@ const showSection = computed(() => {
   if (migrationRoot.value === undefined || migrationRoot.value === null) return false
   if (migrationRoot.value === '0x0000000000000000000000000000000000000000000000000000000000000000')
     return false
-  if (migrationComplete.value === true) return false
   return !!migrationData.value
 })
 </script>

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Address, Hex } from 'viem'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
-import { sweepMigration } from '../useSweepMigration'
+import { completeMigration, sweepMigration } from '../useSweepMigration'
 
 vi.mock('@/composables/contracts/useContractWritesV3', async (importOriginal) => {
   const actual = (await importOriginal()) as object
@@ -25,7 +25,7 @@ describe('sweepMigration', () => {
     })
   })
 
-  it('bulk claims with proofs and closes the migration', async () => {
+  it('bulk claims with proofs without closing the migration', async () => {
     await sweepMigration({
       investorV2Address: INVESTOR,
       holders: [HOLDER],
@@ -39,7 +39,13 @@ describe('sweepMigration', () => {
       functionName: 'bulkClaim',
       args: [[HOLDER], [100n], [PROOF]]
     })
-    expect(executeContractWrite).toHaveBeenNthCalledWith(2, {
+    expect(executeContractWrite).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes the migration in a separate owner transaction', async () => {
+    await completeMigration(INVESTOR)
+
+    expect(executeContractWrite).toHaveBeenCalledWith({
       address: INVESTOR,
       abi: expect.anything(),
       functionName: 'completeMigration',

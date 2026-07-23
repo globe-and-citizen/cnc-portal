@@ -3,34 +3,49 @@
     <div class="flex items-start gap-3">
       <UIcon name="i-heroicons-sparkles" class="text-info mt-1 h-5 w-5 shrink-0" />
       <div class="flex-1">
-        <p class="font-semibold">Complete migration (owner only)</p>
+        <p class="font-semibold">Dispatch migrated shares (owner only)</p>
         <p class="mt-1 text-sm">
-          Bulk claim any unclaimed shares and close the migration. Already claimed shareholders are
-          skipped on-chain. Only the team owner can perform this action.
+          Dispatch the frozen snapshot to all shareholders. Already claimed shareholders are skipped
+          on-chain. Complete the migration separately when no more claims are expected.
         </p>
 
         <UAlert
-          v-if="sweep.isError.value && sweep.error.value"
+          v-if="
+            (sweep.isError.value && sweep.error.value) ||
+            (completion.isError.value && completion.error.value)
+          "
           color="error"
           variant="soft"
           icon="i-heroicons-x-circle"
-          title="Sweep failed"
-          :description="sweep.error.value.message"
+          title="Migration action failed"
+          :description="sweep.error.value?.message ?? completion.error.value?.message"
           class="mt-3"
-          data-test="sweep-error"
+          data-test="migration-owner-error"
         />
 
-        <div class="mt-3">
+        <div class="mt-3 flex flex-wrap items-center gap-3">
           <p class="mb-2 text-xs text-gray-500">
-            Will process {{ unclaimedCount }} shareholder{{ unclaimedCount === 1 ? '' : 's' }}
+            Snapshot contains {{ shareholderCount }} shareholder{{
+              shareholderCount === 1 ? '' : 's'
+            }}
           </p>
           <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
             <UButton
               :loading="sweep.isPending.value"
-              :disabled="sweep.isPending.value || archivedDisabled || unclaimedCount === 0"
+              :disabled="sweep.isPending.value || archivedDisabled || snapshotClaimCount === 0"
               color="info"
-              @click="onSweep"
-              data-test="sweep-button"
+              @click="onDispatch"
+              data-test="dispatch-button"
+            >
+              Dispatch remaining claims
+            </UButton>
+            <UButton
+              :loading="completion.isPending.value"
+              :disabled="sweep.isPending.value || completion.isPending.value || archivedDisabled"
+              color="neutral"
+              variant="outline"
+              @click="onComplete"
+              data-test="complete-migration-button"
             >
               Complete migration
             </UButton>
@@ -44,7 +59,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { type Address } from 'viem'
-import { useSweepMigrationMutation } from '@/composables/investor/useSweepMigration'
+import {
+  useCompleteMigrationMutation,
+  useSweepMigrationMutation
+} from '@/composables/investor/useSweepMigration'
 import { useToast } from '@nuxt/ui/composables'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import type { InvestorMigration } from '@/queries/investorMigration.queries'
@@ -58,6 +76,7 @@ const props = defineProps<Props>()
 
 const toast = useToast()
 const sweep = useSweepMigrationMutation()
+const completion = useCompleteMigrationMutation()
 
 const shareholdersWithProofs = computed(() => {
   if (!props.migrationData?.shareholders) return []
@@ -67,10 +86,11 @@ const shareholdersWithProofs = computed(() => {
   })
 })
 
-const unclaimedCount = computed(() => shareholdersWithProofs.value.length)
+const snapshotClaimCount = computed(() => shareholdersWithProofs.value.length)
+const shareholderCount = computed(() => props.migrationData?.shareholders?.length ?? 0)
 
-const onSweep = async () => {
-  if (shareholdersWithProofs.value.length === 0) {
+const onDispatch = async () => {
+  if (snapshotClaimCount.value === 0) {
     toast.add({
       title: 'Migration proofs unavailable',
       description: 'The shareholder migration snapshot does not contain claim proofs',
@@ -91,12 +111,24 @@ const onSweep = async () => {
     {
       onSuccess: () => {
         toast.add({
-          title: 'Migration completed!',
-          description: `${unclaimedCount.value} shareholder${unclaimedCount.value === 1 ? '' : 's'} minted`,
+          title: 'Claims dispatched!',
+          description: `${snapshotClaimCount.value} snapshot claim${snapshotClaimCount.value === 1 ? '' : 's'} processed`,
           color: 'success'
         })
       }
     }
   )
+}
+
+const onComplete = () => {
+  completion.mutate(props.investorV2Address, {
+    onSuccess: () => {
+      toast.add({
+        title: 'Migration completed!',
+        description: 'The migration is closed and no further claims can be made.',
+        color: 'success'
+      })
+    }
+  })
 }
 </script>
