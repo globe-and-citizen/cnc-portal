@@ -39,7 +39,7 @@
                 :model-value="state.startDate ? dateToCalendarDate(state.startDate) : undefined"
                 :min-value="dateToCalendarDate(minStartDate)"
                 @update:model-value="
-                  (val) => {
+                  (val: DateValue | DateValue[] | DateRange | null | undefined) => {
                     const selectedDate = (val as CalendarDate).toDate(getLocalTimeZone())
                     state.startDate = ensureFutureDate(selectedDate, minStartDate)
                     startDateOpen = false
@@ -63,7 +63,7 @@
                 :model-value="state.endDate ? dateToCalendarDate(state.endDate) : undefined"
                 :min-value="today(getLocalTimeZone())"
                 @update:model-value="
-                  (val) => {
+                  (val: DateValue | DateValue[] | DateRange | null | undefined) => {
                     state.endDate = (val as CalendarDate).toDate(getLocalTimeZone())
                     endDateOpen = false
                   }
@@ -115,7 +115,8 @@ import type { OldProposal, User } from '@/types'
 import { reactive, ref, onMounted, onUnmounted } from 'vue'
 import { z } from 'zod'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
-import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
+import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date'
+import type { DateRange } from 'reka-ui'
 import { formatDateMMDDYYYY, dateToCalendarDate, ensureFutureDate } from '@/utils/dayUtils'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 

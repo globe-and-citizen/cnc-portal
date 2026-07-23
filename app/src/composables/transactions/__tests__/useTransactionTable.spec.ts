@@ -1,6 +1,6 @@
 import { computed, nextTick, ref } from 'vue'
 import { describe, expect, it } from 'vitest'
-import { useTransactionTable } from '../useTransactionTable'
+import { useTransactionTable, childHidden, childRowClass } from '../useTransactionTable'
 
 type TransactionFixture = {
   txHash: string
@@ -117,5 +117,17 @@ describe('useTransactionTable', () => {
 
     expect(table.displayedTransactions.value).toHaveLength(3)
     expect(table.total.value).toBe(3)
+  })
+})
+
+describe('transaction table row meta helpers', () => {
+  it('childRowClass elevates grouped child rows only', () => {
+    expect(childRowClass({ depth: 0 })).toBe('')
+    expect(childRowClass({ depth: 1 })).toBe('bg-elevated')
+  })
+
+  it('childHidden hides cells on child rows only', () => {
+    expect(childHidden({ row: { depth: 0 } })).toBe('')
+    expect(childHidden({ row: { depth: 1 } })).toBe('hidden')
   })
 })

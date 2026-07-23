@@ -26,7 +26,7 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
-      :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
+      :meta="{ class: { tr: childRowClass } }"
     >
       <template #date-cell="{ row }">
         <template v-if="row.depth === 0">
@@ -178,7 +178,7 @@ import TablePagination from '@/components/TablePagination.vue'
 import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
 import TransactionChildRow from '@/components/TransactionChildRow.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
+import { useTransactionTable, childRowClass } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import type { ExpenseTransaction } from '@/types/transactions'
 import {

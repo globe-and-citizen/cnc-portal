@@ -26,7 +26,7 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
-      :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
+      :meta="{ class: { tr: childRowClass } }"
     >
       <template #date-cell="{ row }">
         <template v-if="row.depth === 0">
@@ -202,7 +202,7 @@ import {
   log
 } from '@/utils'
 import { computed, watch } from 'vue'
-import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
+import { useTransactionTable, childRowClass } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { useInvestorSymbol } from '@/composables/investor/reads'
