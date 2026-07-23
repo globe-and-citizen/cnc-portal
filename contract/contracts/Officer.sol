@@ -435,7 +435,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     OwnableUpgradeable(investorAddress).transferOwnership(ownerAddress);
   }
 
-  function _emitContractDeployedEvent(string calldata contractType, address deployedAddress) internal {
+  function _emitContractDeployedEvent(
+    string calldata contractType,
+    address deployedAddress
+  ) internal {
     bytes32 typeHash = keccak256(bytes(contractType));
     if (typeHash == keccak256(bytes("Bank"))) {
       emit BankDeployed(deployedAddress);
