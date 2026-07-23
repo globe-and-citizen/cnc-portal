@@ -1,9 +1,8 @@
 import boardOfDirectorsBeaconModule from './BoardOfDirectorsBeaconModule'
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
 import bankBeaconModule from './BankBeaconModule'
-// import ExpenseAccountModule from './ExpenseAccountModule'
 import ExpenseAccountEIP712Module from './ExpenseAccountEIP712Module'
-import investorsV1BeaconModule from './InvestorsV1BeaconModule'
+import investorBeaconModule from './InvestorBeaconModule'
 import CashRemunerationEIP712Module from './CashRemunerationEIP712Module'
 import SafeDepositRouterBeaconModule from './SafeDepositRouterBeaconModule'
 import vestingBeaconModule from './VestingBeaconModule'
@@ -25,8 +24,7 @@ export default buildModule('Officer', (m) => {
   m.useModule(boardOfDirectorsBeaconModule)
   m.useModule(proposalBeaconModule)
   m.useModule(electionsBeaconModule)
-  m.useModule(investorsV1BeaconModule)
-  // m.useModule(ExpenseAccountModule)
+  m.useModule(investorBeaconModule)
   m.useModule(ExpenseAccountEIP712Module)
   m.useModule(CashRemunerationEIP712Module)
   m.useModule(SafeDepositRouterBeaconModule)

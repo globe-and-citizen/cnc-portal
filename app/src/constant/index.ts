@@ -32,6 +32,8 @@ interface AddressMapping {
   'CashRemunerationEIP712Module#CashRemunerationEIP712': string
   'InvestorsV1BeaconModule#Beacon'?: string
   'InvestorsV1BeaconModule#InvestorV1'?: string
+  'InvestorBeaconModule#Beacon'?: string
+  'InvestorBeaconModule#Investor'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
   'MockTokens#USDCe'?: string
@@ -158,8 +160,8 @@ export function validateAddresses() {
     'Officer#FactoryBeacon',
     'ExpenseAccountEIP712Module#ExpenseAccountEIP712',
     'ExpenseAccountEIP712Module#FactoryBeacon',
-    'InvestorsV1BeaconModule#Beacon',
-    'InvestorsV1BeaconModule#InvestorV1',
+    'InvestorBeaconModule#Beacon',
+    'InvestorBeaconModule#Investor',
     'CashRemunerationEIP712Module#FactoryBeacon',
     'CashRemunerationEIP712Module#CashRemunerationEIP712',
     'SafeDepositRouterBeaconModule#SafeDepositRouter',
@@ -216,6 +218,12 @@ export const VESTING_BEACON_ADDRESS = safeResolveAddress('VestingBeaconModule#Be
 export const OFFICER_ADDRESS = safeResolveAddress('Officer#Officer')
 export const OFFICER_BEACON = safeResolveAddress('Officer#FactoryBeacon')
 export const INVESTOR_V1_BEACON_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#Beacon')
+export const INVESTOR_BEACON_ADDRESS = safeResolveAddress('InvestorBeaconModule#Beacon')
+
+// Auto-detect which Investor beacon is available (V2 new, V1 legacy)
+export function getInvestorBeaconAddress(): Address | null {
+  return INVESTOR_BEACON_ADDRESS || INVESTOR_V1_BEACON_ADDRESS
+}
 
 export const FEE_COLLECTOR_ADDRESS = safeResolveAddress('FeeCollectorModule#FeeCollector')
 

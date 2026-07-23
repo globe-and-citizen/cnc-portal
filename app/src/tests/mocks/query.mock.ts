@@ -356,6 +356,11 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useSyncContractsMutation: () => createMockMutationResponse(),
   useCreateOfficerMutation: () => createMockMutationResponse(),
 
+  // Investor migration queries - investorMigration.queries.ts
+  useCreateInvestorMigrationMutation: () => createMockMutationResponse(),
+  useGetInvestorMigrationQuery: () => createMockQueryResponse(null),
+  useGenerateMerkleSnapshotMutation: () => createMockMutationResponse(),
+
   // Health queries - health.queries.ts
   useGetBackendHealthQuery: () => ({
     ...createMockQueryResponse(mockHealthCheckData),

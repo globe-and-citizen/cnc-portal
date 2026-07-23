@@ -127,8 +127,24 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "shareholder",
+        "type": "address"
+      }
+    ],
+    "name": "Investor__AlreadyMigrated",
+    "type": "error"
+  },
+  {
     "inputs": [],
-    "name": "InvestorV1__BankContractNotFound",
+    "name": "Investor__BankContractNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Investor__DividendsFrozenDuringMigration",
     "type": "error"
   },
   {
@@ -149,7 +165,7 @@
         "type": "uint256"
       }
     ],
-    "name": "InvestorV1__InsufficientFundedTokenBalance",
+    "name": "Investor__InsufficientFundedTokenBalance",
     "type": "error"
   },
   {
@@ -165,7 +181,27 @@
         "type": "uint256"
       }
     ],
-    "name": "InvestorV1__InvalidNativeFunding",
+    "name": "Investor__InvalidNativeFunding",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Investor__InvalidProof",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Investor__LengthMismatch",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Investor__MigrationAlreadyComplete",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Investor__MigrationRootNotSet",
     "type": "error"
   },
   {
@@ -176,17 +212,17 @@
         "type": "address"
       }
     ],
-    "name": "InvestorV1__NativeTransferFailed",
+    "name": "Investor__NativeTransferFailed",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvestorV1__NoShareholders",
+    "name": "Investor__NoShareholders",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvestorV1__NoTokensMinted",
+    "name": "Investor__NoTokensMinted",
     "type": "error"
   },
   {
@@ -197,22 +233,22 @@
         "type": "address"
       }
     ],
-    "name": "InvestorV1__NotBank",
+    "name": "Investor__NotBank",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvestorV1__OfficerAddressNotSet",
+    "name": "Investor__OfficerAddressNotSet",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvestorV1__ZeroAddress",
+    "name": "Investor__ZeroAddress",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvestorV1__ZeroAmount",
+    "name": "Investor__ZeroAmount",
     "type": "error"
   },
   {
@@ -343,37 +379,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "shareholder",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "reason",
-        "type": "string"
-      }
-    ],
-    "name": "DividendPaymentFailed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": false,
         "internalType": "uint64",
         "name": "version",
@@ -381,6 +386,44 @@
       }
     ],
     "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "shareholder",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "MigrationClaimed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "MigrationCompleted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "root",
+        "type": "bytes32"
+      }
+    ],
+    "name": "MigrationRootSet",
     "type": "event"
   },
   {
@@ -641,6 +684,85 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "shareholders",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "amounts",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "bytes32[][]",
+        "name": "proofs",
+        "type": "bytes32[][]"
+      }
+    ],
+    "name": "bulkClaim",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "burn",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "burnFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "proof",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "claim",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "completeMigration",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "decimals",
     "outputs": [
@@ -668,8 +790,8 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct InvestorV1.Shareholder[]",
-        "name": "shareholders",
+        "internalType": "struct Investor.Shareholder[]",
+        "name": "_shareholders",
         "type": "tuple[]"
       }
     ],
@@ -682,7 +804,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -695,18 +817,50 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "token",
+        "name": "_token",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
     "name": "distributeTokenDividends",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "shareholder",
+        "type": "address"
+      }
+    ],
+    "name": "getMigrationClaimed",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMigrationRoot",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -743,19 +897,6 @@
   },
   {
     "inputs": [],
-    "name": "getShareholderSet",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "getShareholders",
     "outputs": [
       {
@@ -771,7 +912,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct InvestorV1.Shareholder[]",
+        "internalType": "struct Investor.Shareholder[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -843,23 +984,36 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "tokenName",
+        "name": "_name",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "tokenSymbol",
+        "name": "_symbol",
         "type": "string"
       },
       {
         "internalType": "address",
-        "name": "initialOwner",
+        "name": "_owner",
         "type": "address"
       }
     ],
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isMigrationComplete",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -947,6 +1101,19 @@
       }
     ],
     "name": "revokeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "root",
+        "type": "bytes32"
+      }
+    ],
+    "name": "setMigrationRoot",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

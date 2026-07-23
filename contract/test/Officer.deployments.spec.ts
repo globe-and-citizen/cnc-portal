@@ -7,7 +7,7 @@ import {
   Officer,
   UpgradeableBeacon,
   Elections__factory,
-  InvestorV1__factory,
+  Investor__factory,
   CashRemunerationEIP712__factory,
   ExpenseAccountEIP712__factory,
   FeeCollector
@@ -24,7 +24,7 @@ describe('Officer Contract', function () {
   let officer: Officer
   let bankAccount: Bank__factory
   let bankAccountBeacon: UpgradeableBeacon
-  let investor: InvestorV1__factory
+  let investor: Investor__factory
   let investorBeacon: UpgradeableBeacon
   let elections: Elections__factory
   let electionsBeacon: UpgradeableBeacon
@@ -64,7 +64,7 @@ describe('Officer Contract', function () {
     bankAccount = await ethers.getContractFactory('Bank')
     bankAccountBeacon = (await upgrades.deployBeacon(bankAccount)) as unknown as UpgradeableBeacon
 
-    investor = await ethers.getContractFactory('InvestorV1')
+    investor = await ethers.getContractFactory('Investor')
     investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as UpgradeableBeacon
 
     // proposals = await ethers.getContractFactory('Proposals')
@@ -111,7 +111,7 @@ describe('Officer Contract', function () {
         beaconAddress: await cashRemunerationEip712Beacon.getAddress()
       },
       {
-        beaconType: 'InvestorV1',
+        beaconType: 'Investor',
         beaconAddress: await investorBeacon.getAddress()
       },
       {
@@ -135,7 +135,7 @@ describe('Officer Contract', function () {
     })
 
     deployments.push({
-      contractType: 'InvestorV1',
+      contractType: 'Investor',
       initializerData: investor.interface.encodeFunctionData('initialize', [
         'Bitcoin',
         'BTC',
@@ -205,10 +205,7 @@ describe('Officer Contract', function () {
       'CashRemunerationEIP712',
       contractAddresses.get('CashRemunerationEIP712')!
     )
-    const investorV1Proxy = await ethers.getContractAt(
-      'InvestorV1',
-      contractAddresses.get('InvestorV1')!
-    )
+    const investorProxy = await ethers.getContractAt('Investor', contractAddresses.get('Investor')!)
 
     expect((await cashRemunerationEip712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
@@ -217,27 +214,27 @@ describe('Officer Contract', function () {
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await cashRemunerationEip712Proxy.isTokenSupported(await investorV1Proxy.getAddress())
+      await cashRemunerationEip712Proxy.isTokenSupported(await investorProxy.getAddress())
     ).to.be.equal(true)
 
-    expect((await investorV1Proxy.owner()).toLocaleLowerCase()).to.be.equal(
+    expect((await investorProxy.owner()).toLocaleLowerCase()).to.be.equal(
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await investorV1Proxy.hasRole(
-        await investorV1Proxy.MINTER_ROLE(),
+      await investorProxy.hasRole(
+        await investorProxy.MINTER_ROLE(),
         await cashRemunerationEip712Proxy.getAddress()
       )
     ).to.be.equal(true)
     expect(
-      await investorV1Proxy.hasRole(await investorV1Proxy.MINTER_ROLE(), owner.address)
+      await investorProxy.hasRole(await investorProxy.MINTER_ROLE(), owner.address)
     ).to.be.equal(true)
     expect(
-      await investorV1Proxy.hasRole(await investorV1Proxy.DEFAULT_ADMIN_ROLE(), owner.address)
+      await investorProxy.hasRole(await investorProxy.DEFAULT_ADMIN_ROLE(), owner.address)
     ).to.be.equal(true)
 
     // Vesting is deployed per-team via the same beacon flow: bound to the Officer,
-    // owned by the team owner, and granted MINTER_ROLE on InvestorV1.
+    // owned by the team owner, and granted MINTER_ROLE on Investor.
     const vestingProxy = await ethers.getContractAt('Vesting', contractAddresses.get('Vesting')!)
     expect((await vestingProxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
@@ -246,8 +243,8 @@ describe('Officer Contract', function () {
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await investorV1Proxy.hasRole(
-        await investorV1Proxy.MINTER_ROLE(),
+      await investorProxy.hasRole(
+        await investorProxy.MINTER_ROLE(),
         await vestingProxy.getAddress()
       )
     ).to.be.equal(true)

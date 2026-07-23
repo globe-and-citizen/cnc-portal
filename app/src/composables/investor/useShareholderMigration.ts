@@ -3,21 +3,27 @@
  *   - onSuccess: outcome toast describing which branch fired
  *                ('done' / 'noop-already-migrated' / 'noop-empty').
  *   - onError:   no toast — `mutation.error` is left for callers to render
- *                inline (UAlert) or interpret with `instanceof
- *                InconsistentSupplyError` to drive a banner / retry UI.
- *   - Invalidation: none — the read-side queries this migration affects live
- *                outside the wrapper's scope. Callers refetch the specific
- *                bits they need after a successful migration.
+ *                inline (UAlert).
+ *   - Invalidation: invalidates the persisted migration snapshot query for
+ *                this team (investorMigrationKeys) on a successful 'done'.
+ *                Read-side contract queries live outside this wrapper's
+ *                scope — callers refetch what they need separately.
  *   - Options:   pass `silent: true` when composing inside an orchestrator
  *                that emits its own flow-level outcome toast.
  */
 import { useMutation } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
-import type { Address } from 'viem'
+import { zeroHash, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
+import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import {
+  useCreateInvestorMigrationMutation,
+  useGenerateMerkleSnapshotMutation
+} from '@/queries/investorMigration.queries'
+import { useToast } from '@nuxt/ui/composables'
 
 export interface Shareholder {
   shareholder: Address
@@ -25,58 +31,50 @@ export interface Shareholder {
 }
 
 export interface MigrateShareholdersArgs {
+  teamId: string | number
   previousOfficerAddress: Address
   newInvestorAddress: Address
 }
 
 export type MigrateShareholdersResult =
-  | { kind: 'done'; migratedCount: number; shareholders: readonly Shareholder[] }
+  | {
+      kind: 'done'
+      migratedCount: number
+      previousInvestorAddress: Address
+      merkleRoot: Hex
+      blockNumber: bigint
+      shareholders: readonly Shareholder[]
+    }
   | { kind: 'noop-empty' }
-  | { kind: 'noop-already-migrated'; matchedCount: number }
+  | { kind: 'noop-already-migrated' }
 
-/**
- * Thrown by `migrateShareholders` when the new InvestorV1 already holds a
- * non-zero totalSupply that does not match the sum of the old shareholders.
- * Retrying in this state would double-mint, so the function refuses to act.
- */
-export class InconsistentSupplyError extends Error {
-  readonly newSupply: bigint
-  readonly expectedSupply: bigint
-  constructor(newSupply: bigint, expectedSupply: bigint) {
-    super(
-      `New InvestorV1 totalSupply=${newSupply} does not match expected sum of previous shareholders=${expectedSupply}. Migration blocked to prevent double-minting.`
-    )
-    this.name = 'InconsistentSupplyError'
-    this.newSupply = newSupply
-    this.expectedSupply = expectedSupply
-  }
-}
-
-const findInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
+const findPreviousInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
   const contracts = (await readContract(config, {
     address: officerAddress,
     abi: OFFICER_ABI,
     functionName: 'getTeam'
   })) as readonly { contractType: string; contractAddress: Address }[]
-  return contracts.find((c) => c.contractType === 'InvestorV1')?.contractAddress ?? null
+  // Support both V2→V2 redeploy (finds 'Investor') and V1→V2 migration (finds 'InvestorV1')
+  return (
+    contracts.find((c) => c.contractType === 'Investor' || c.contractType === 'InvestorV1')
+      ?.contractAddress ?? null
+  )
 }
 
 /**
- * Copies shareholders from the previous Officer's InvestorV1 onto the new one
- * via `distributeMint`. Call directly for raw control, or use
- * `useMigrateShareholders` for TanStack-managed loading/error state.
- *
- * Guards:
- *   - totalSupply(new) == 0 → migrate
- *   - totalSupply(new) == sum(old shareholders) → noop-already-migrated
- *   - otherwise → throws {@link InconsistentSupplyError}
+ * Guards before migration:
+ *   - old Investor (V1 or V2) has 0 shareholders → noop-empty
+ *   - new Investor already has a migration root set → noop-already-migrated
+ *   - otherwise → proceed to generate & commit
  */
-export async function migrateShareholders(
+export async function checkMigrationEligibility(
   args: MigrateShareholdersArgs
-): Promise<MigrateShareholdersResult> {
-  const oldInvestor = await findInvestorAddress(args.previousOfficerAddress)
+): Promise<
+  { eligible: true } | { eligible: false; reason: 'noop-empty' | 'noop-already-migrated' }
+> {
+  const oldInvestor = await findPreviousInvestorAddress(args.previousOfficerAddress)
   if (!oldInvestor) {
-    throw new Error('Previous Officer has no InvestorV1 sub-contract to migrate from')
+    throw new Error('Previous Officer has no Investor contract to migrate from')
   }
 
   const shareholders = (await readContract(config, {
@@ -86,31 +84,20 @@ export async function migrateShareholders(
   })) as readonly Shareholder[]
 
   if (shareholders.length === 0) {
-    return { kind: 'noop-empty' }
+    return { eligible: false, reason: 'noop-empty' }
   }
 
-  const newSupply = (await readContract(config, {
+  const existingRoot = (await readContract(config, {
     address: args.newInvestorAddress,
-    abi: INVESTOR_ABI,
-    functionName: 'totalSupply'
-  })) as bigint
+    abi: INVESTOR_V2_ABI,
+    functionName: 'getMigrationRoot'
+  })) as Hex
 
-  if (newSupply > 0n) {
-    const expected = shareholders.reduce((acc, s) => acc + s.amount, 0n)
-    if (newSupply === expected) {
-      return { kind: 'noop-already-migrated', matchedCount: shareholders.length }
-    }
-    throw new InconsistentSupplyError(newSupply, expected)
+  if (existingRoot !== zeroHash) {
+    return { eligible: false, reason: 'noop-already-migrated' }
   }
 
-  await executeContractWrite({
-    address: args.newInvestorAddress,
-    abi: INVESTOR_ABI,
-    functionName: 'distributeMint',
-    args: [shareholders.map((s) => ({ shareholder: s.shareholder, amount: s.amount }))]
-  })
-
-  return { kind: 'done', migratedCount: shareholders.length, shareholders }
+  return { eligible: true }
 }
 
 export interface UseMigrateShareholdersOptions {
@@ -123,26 +110,131 @@ export interface UseMigrateShareholdersOptions {
 }
 
 /**
- * TanStack-wrapped variant of {@link migrateShareholders}. Prefer this in
- * components: it exposes `mutateAsync`, `isPending`, `error`, `data` without
- * any manual ref juggling.
+ * Orchestrates shareholder migration from v1 to v2:
+ *   1. Check eligibility (no previous root, shareholders exist)
+ *   2. Generate Merkle snapshot with double hash via backend
+ *   3. Write root to new Investor v2 contract
+ *   4. Persist snapshot for shareholders' later claim proof fetches
  *
- * Side effects: emits a success toast describing the outcome (done / noop).
- * Error toasts are intentionally left to the caller because the right
- * message depends on where the migration was triggered from (inline retry,
- * standalone banner, orchestrated redeploy). Callers typically surface the
- * error via `mutation.error` on their own UI instead.
+ * Side effects: emits a success toast describing the outcome.
+ * Callers typically render errors via `mutation.error` on their own UI.
  */
 export function useMigrateShareholders(options: UseMigrateShareholdersOptions = {}) {
   const toast = useToast()
+  const generateSnapshotMutation = useGenerateMerkleSnapshotMutation()
+  const persistMutation = useCreateInvestorMigrationMutation()
+
   return useMutation<MigrateShareholdersResult, Error, MigrateShareholdersArgs>({
     mutationKey: ['migrateShareholders'],
-    mutationFn: migrateShareholders,
+    mutationFn: async (args) => {
+      const oldInvestor = await findPreviousInvestorAddress(args.previousOfficerAddress)
+      if (!oldInvestor) {
+        throw new Error('Previous Officer has no Investor contract to migrate from')
+      }
+
+      const eligibility = await checkMigrationEligibility(args)
+      if (!eligibility.eligible) {
+        if (eligibility.reason === 'noop-empty') {
+          return { kind: eligibility.reason }
+        }
+
+        // A previous attempt may have committed the root and failed before
+        // persisting the snapshot. Rebuild the snapshot and repair the
+        // backend record instead of treating the migration as complete.
+        const snapshot = await generateSnapshotMutation.mutateAsync({
+          body: { investorV1Address: oldInvestor }
+        })
+        if (!snapshot) {
+          throw new Error('Failed to regenerate Merkle snapshot')
+        }
+
+        const existingRoot = (await readContract(config, {
+          address: args.newInvestorAddress,
+          abi: INVESTOR_V2_ABI,
+          functionName: 'getMigrationRoot'
+        })) as Hex
+
+        if (existingRoot.toLowerCase() !== snapshot.root.toLowerCase()) {
+          throw new Error(
+            'The new Investor already has a migration root that does not match the current shareholder snapshot'
+          )
+        }
+
+        await persistMutation.mutateAsync({
+          body: {
+            teamId: args.teamId,
+            previousInvestorAddress: oldInvestor,
+            newInvestorAddress: args.newInvestorAddress,
+            merkleRoot: snapshot.root,
+            blockNumber: snapshot.blockNumber,
+            shareholders: snapshot.shareholders.map((s) => ({
+              shareholder: s.address as Address,
+              amount: s.amount
+            }))
+          }
+        })
+
+        return {
+          kind: 'done',
+          migratedCount: snapshot.shareholders.length,
+          previousInvestorAddress: oldInvestor,
+          merkleRoot: snapshot.root as Hex,
+          blockNumber: BigInt(snapshot.blockNumber),
+          shareholders: snapshot.shareholders.map((s) => ({
+            shareholder: s.address as Address,
+            amount: BigInt(s.amount)
+          }))
+        }
+      }
+
+      // Generate Merkle snapshot with double hash from backend
+      const snapshot = await generateSnapshotMutation.mutateAsync({
+        body: { investorV1Address: oldInvestor }
+      })
+      if (!snapshot) {
+        throw new Error('Failed to generate Merkle snapshot')
+      }
+
+      // Write root to new Investor v2
+      await executeContractWrite({
+        address: args.newInvestorAddress,
+        abi: INVESTOR_V2_ABI,
+        functionName: 'setMigrationRoot',
+        args: [snapshot.root]
+      })
+
+      // Persist snapshot so shareholders can fetch their claim proofs
+      await persistMutation.mutateAsync({
+        body: {
+          teamId: args.teamId,
+          previousInvestorAddress: oldInvestor,
+          newInvestorAddress: args.newInvestorAddress,
+          merkleRoot: snapshot.root,
+          blockNumber: snapshot.blockNumber,
+          shareholders: snapshot.shareholders.map((s) => ({
+            shareholder: s.address as Address,
+            amount: s.amount
+          }))
+        }
+      })
+
+      return {
+        kind: 'done',
+        migratedCount: snapshot.shareholders.length,
+        previousInvestorAddress: oldInvestor,
+        merkleRoot: snapshot.root as Hex,
+        blockNumber: BigInt(snapshot.blockNumber),
+        shareholders: snapshot.shareholders.map((s) => ({
+          shareholder: s.address as Address,
+          amount: BigInt(s.amount)
+        }))
+      }
+    },
     onSuccess: (result) => {
       if (options.silent) return
       if (result.kind === 'done') {
         toast.add({
-          title: `Migrated ${result.migratedCount} shareholder${result.migratedCount === 1 ? '' : 's'}`,
+          title: `Migration root set for ${result.migratedCount} shareholder${result.migratedCount === 1 ? '' : 's'}`,
           color: 'success'
         })
       } else if (result.kind === 'noop-already-migrated') {

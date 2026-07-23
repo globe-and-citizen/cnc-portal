@@ -69,7 +69,7 @@ const { mutateAsync: syncWeeklyClaim, error: syncWeeklyClaimError } = useSyncWee
 const getTokenAddress = (type: string): Address => {
   if (type === 'native') return zeroAddress as Address
   if (type === 'usdc') return USDC_ADDRESS as Address
-  return teamStore.getContractAddressByType('InvestorV1') as Address
+  return teamStore.getInvestorAddress() as Address
 }
 
 const withdrawClaim = async () => {

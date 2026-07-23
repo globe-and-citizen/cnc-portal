@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -8,7 +9,6 @@ import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol"
 import {IBoardOfDirectors} from "./interfaces/IBoardOfDirectors.sol";
 import {ICashRemuneration} from "./interfaces/ICashRemuneration.sol";
 import {IFeeCollector} from "./interfaces/IFeeCollector.sol";
-import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
 import {ISafeDepositRouter} from "./interfaces/ISafeDepositRouter.sol";
 import {IVesting} from "./interfaces/IVesting.sol";
 
@@ -64,13 +64,32 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Address of the Board of Directors contract
   address private s_bodContract;
 
+  /// @notice Cache for O(1) deployed contract lookup by type hash
+  mapping(bytes32 contractTypeHash => address deployedAddress) private s_deployedContractsByHash;
+
   /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
   ///      new state variables above so the reserve stays constant and proxy slots don't shift.
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[50] private __gap;
 
-  /// @notice Emitted when a new contract is deployed via beacon proxy
-  event ContractDeployed(string contractType, address deployedAddress);
+  /// @notice Emitted when a new Bank is deployed via beacon proxy
+  event BankDeployed(address indexed bank);
+  /// @notice Emitted when a new Elections is deployed via beacon proxy
+  event ElectionsDeployed(address indexed elections);
+  /// @notice Emitted when a new Proposals is deployed via beacon proxy
+  event ProposalsDeployed(address indexed proposals);
+  /// @notice Emitted when a new BoardOfDirectors is deployed via beacon proxy
+  event BoardOfDirectorsDeployed(address indexed board);
+  /// @notice Emitted when a new Investor (V2) is deployed via beacon proxy
+  event InvestorDeployed(address indexed investor);
+  /// @notice Emitted when a new CashRemunerationEIP712 is deployed via beacon proxy
+  event CashRemunerationEIP712Deployed(address indexed remuneration);
+  /// @notice Emitted when a new SafeDepositRouter is deployed via beacon proxy
+  event SafeDepositRouterDeployed(address indexed router);
+  /// @notice Emitted when a new Vesting is deployed via beacon proxy
+  event VestingDeployed(address indexed vesting);
+  /// @notice Emitted when a new ExpenseAccountEIP712 is deployed via beacon proxy
+  event ExpenseAccountEIP712Deployed(address indexed account);
   /// @notice Emitted when a new beacon is configured
   event BeaconConfigured(string contractType, address beaconAddress);
 
@@ -275,7 +294,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     address proxyAddress = address(proxy);
     s_deployedContracts.push(DeployedContract(contractType, proxyAddress));
-    emit ContractDeployed(contractType, proxyAddress);
+    s_deployedContractsByHash[keccak256(bytes(contractType))] = proxyAddress;
+    _emitContractDeployedEvent(contractType, proxyAddress);
 
     if (keccak256(bytes(contractType)) == keccak256(bytes("Elections"))) {
       address bodContractBeacon = s_contractBeacons["BoardOfDirectors"];
@@ -288,7 +308,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         )
       );
       s_deployedContracts.push(DeployedContract("BoardOfDirectors", s_bodContract));
-      emit ContractDeployed("BoardOfDirectors", s_bodContract);
+      s_deployedContractsByHash[keccak256(bytes("BoardOfDirectors"))] = s_bodContract;
+      emit BoardOfDirectorsDeployed(s_bodContract);
     }
 
     return proxyAddress;
@@ -326,15 +347,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return The address of the contract, or address(0) if not found
    */
   function findDeployedContract(string memory contractType) public view returns (address) {
-    bytes32 target = keccak256(bytes(contractType));
-    uint256 length = s_deployedContracts.length;
-    for (uint256 i = 0; i < length; ++i) {
-      DeployedContract storage deployed = s_deployedContracts[i];
-      if (keccak256(bytes(deployed.contractType)) == target) {
-        return deployed.contractAddress;
-      }
-    }
-    return address(0);
+    return s_deployedContractsByHash[keccak256(bytes(contractType))];
   }
 
   /// @notice Current contract version, per semver.
@@ -373,31 +386,34 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address cashRemunerationAddress = findDeployedContract("CashRemunerationEIP712");
     address depositRouterAddress = findDeployedContract("SafeDepositRouter");
     address vestingAddress = findDeployedContract("Vesting");
-    address investorV1Address = findDeployedContract("InvestorV1");
 
-    // Only proceed if InvestorV1 was deployed
-    if (investorV1Address == address(0)) {
+    // Officer deploys only Investor (V2). Legacy InvestorV1 instances remain in prod unchanged.
+    address investorAddress = findDeployedContract("Investor");
+
+    // Only proceed if Investor V2 was deployed
+    if (investorAddress == address(0)) {
       return;
     }
 
-    IInvestorV1 investorV1 = IInvestorV1(investorV1Address);
-    bytes32 minterRole = investorV1.MINTER_ROLE();
-    bytes32 adminRole = investorV1.DEFAULT_ADMIN_ROLE();
+    // Cast to AccessControlUpgradeable-compatible interface for role management
+    AccessControlUpgradeable investor = AccessControlUpgradeable(investorAddress);
+    bytes32 minterRole = keccak256("MINTER_ROLE");
+    bytes32 adminRole = investor.DEFAULT_ADMIN_ROLE();
 
     // Setup CashRemuneration permissions if deployed
     if (cashRemunerationAddress != address(0)) {
       ICashRemuneration cashRemuneration = ICashRemuneration(cashRemunerationAddress);
-      cashRemuneration.addTokenSupport(investorV1Address);
+      cashRemuneration.addTokenSupport(investorAddress);
       cashRemuneration.transferOwnership(ownerAddress);
 
       // Grant MINTER_ROLE to CashRemuneration
-      investorV1.grantRole(minterRole, cashRemunerationAddress);
+      investor.grantRole(minterRole, cashRemunerationAddress);
     }
 
     // Setup SafeDepositRouter permissions if deployed
     if (depositRouterAddress != address(0)) {
       // Grant MINTER_ROLE to SafeDepositRouter (no longer needs setInvestorAddress)
-      investorV1.grantRole(minterRole, depositRouterAddress);
+      investor.grantRole(minterRole, depositRouterAddress);
 
       // Transfer ownership to final owner
       ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
@@ -407,15 +423,39 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     // Setup Vesting permissions if deployed
     if (vestingAddress != address(0)) {
       // Grant MINTER_ROLE so release()/stopVesting() can mint vested shares on demand
-      investorV1.grantRole(minterRole, vestingAddress);
+      investor.grantRole(minterRole, vestingAddress);
 
       // Transfer ownership to final owner so the team owner manages schedules
       IVesting(vestingAddress).transferOwnership(ownerAddress);
     }
 
-    // Setup owner permissions on InvestorV1
-    investorV1.grantRole(minterRole, ownerAddress);
-    investorV1.grantRole(adminRole, ownerAddress);
-    investorV1.transferOwnership(ownerAddress);
+    // Setup owner permissions on Investor V2
+    investor.grantRole(minterRole, ownerAddress);
+    investor.grantRole(adminRole, ownerAddress);
+    OwnableUpgradeable(investorAddress).transferOwnership(ownerAddress);
+  }
+
+  function _emitContractDeployedEvent(
+    string calldata contractType,
+    address deployedAddress
+  ) internal {
+    bytes32 typeHash = keccak256(bytes(contractType));
+    if (typeHash == keccak256(bytes("Bank"))) {
+      emit BankDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("Elections"))) {
+      emit ElectionsDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("Proposals"))) {
+      emit ProposalsDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("Investor"))) {
+      emit InvestorDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("CashRemunerationEIP712"))) {
+      emit CashRemunerationEIP712Deployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("SafeDepositRouter"))) {
+      emit SafeDepositRouterDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("Vesting"))) {
+      emit VestingDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("ExpenseAccountEIP712"))) {
+      emit ExpenseAccountEIP712Deployed(deployedAddress);
+    }
   }
 }

@@ -12,13 +12,13 @@ describe('SafeDepositRouter', function () {
     const usdc = await MockToken.deploy('USD Coin', 'USDC')
     await usdc.waitForDeployment()
 
-    const InvestorFactory = await ethers.getContractFactory('InvestorV1')
+    const InvestorFactory = await ethers.getContractFactory('Investor')
     const investor = await upgrades.deployProxy(InvestorFactory, ['SHER', 'SHER', owner.address], {
       initializer: 'initialize'
     })
 
     const investorAddress = await investor.getAddress()
-    await mockOfficer.setDeployedContract('InvestorV1', investorAddress)
+    await mockOfficer.setDeployedContract('Investor', investorAddress)
 
     const RouterFactory = await ethers.getContractFactory('SafeDepositRouter')
     const routerImplementation = await RouterFactory.connect(owner).deploy()

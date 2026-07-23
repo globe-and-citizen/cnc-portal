@@ -3,6 +3,7 @@ import { Prisma, Team, User } from '@prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getActiveOfficerVersion } from '../contractController';
 import { authorizeUser } from '../../middleware/authMiddleware';
 import teamRoutes from '../../routes/teamRoutes';
 import { addNotification, prisma } from '../../utils';
@@ -358,7 +359,7 @@ describe('Team Controller', () => {
       // expect(response.body).toEqual(teamMockResolve);
     });
 
-    it('exposes isMigrated=true when current officer is on CURRENT_OFFICER_VERSION', async () => {
+    it('exposes isMigrated=true when current officer matches the active network version', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         ...teamMockResolve,
         teamOfficers: [
@@ -370,7 +371,7 @@ describe('Team Controller', () => {
             deployBlockNumber: null,
             deployedAt: null,
             previousOfficerId: null,
-            version: 'v0.10',
+            version: getActiveOfficerVersion(),
             createdAt: new Date(),
             updatedAt: new Date(),
             previousOfficer: null,
@@ -386,7 +387,7 @@ describe('Team Controller', () => {
       const response = await request(app).get('/1');
       expect(response.status).toBe(200);
       expect(response.body.isMigrated).toBe(true);
-      expect(response.body.currentOfficer?.version).toBe('v0.10');
+      expect(response.body.currentOfficer?.version).toBe(getActiveOfficerVersion());
     });
 
     it('exposes isMigrated=false when current officer is legacy', async () => {

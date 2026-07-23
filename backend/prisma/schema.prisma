@@ -58,6 +58,7 @@ model Team {
   updatedAt              DateTime                 @updatedAt
   teamFunctionOverrides  TeamFunctionOverride[]
   fixedReturnOfferings   FixedReturnOffering[]
+  investorMigrations     InvestorMigration[]
 }
 
 model MemberTeamsData {
@@ -269,5 +270,29 @@ model FixedReturnOffering {
   updatedAt DateTime @updatedAt
 
   @@unique([teamId, offerId])
+  @@index([teamId])
+}
+
+// Frozen shareholder snapshot for an InvestorV1 -> Investor (v2) Merkle-pull
+// migration (issue #2286). The list is captured client-side at the moment
+// setMigrationRoot is called and persisted here so any shareholder can later
+// fetch their (amount, proof) to self-claim — Ponder cannot reconstruct this
+// after the fact since it never indexed InvestorV1 Transfer events, and the
+// on-chain root alone doesn't reveal the leaves it commits to.
+model InvestorMigration {
+  id                      Int      @id @default(autoincrement())
+  teamId                  Int
+  team                    Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  previousInvestorAddress String
+  newInvestorAddress      String   @unique
+  merkleRoot              String
+  blockNumber             BigInt
+  // [{ shareholder: Address, amount: string (uint256) }, ...] — the frozen
+  // snapshot StandardMerkleTree.of(...) was built from; proofs are
+  // recomputed on demand from this list rather than stored, since the tree
+  // is a pure deterministic function of it.
+  shareholders            Json
+  createdAt               DateTime @default(now())
+
   @@index([teamId])
 }

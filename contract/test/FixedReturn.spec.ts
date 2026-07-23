@@ -76,7 +76,7 @@ describe('FixedReturn', () => {
 
     // repayLenders is onlyBank — impersonate the real Bank address so FixedReturn's
     // own repayment logic (ceiling, cumulative distribution, rounding) can be unit
-    // tested directly, mirroring how InvestorV1.spec.ts tests distributeTokenDividends
+    // tested directly, mirroring how Investor.spec.ts tests distributeTokenDividends
     // via an impersonated bankSigner rather than the full Bank call chain.
     const bankAddress = await bank.getAddress()
     await impersonateAccount(bankAddress)

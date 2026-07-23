@@ -124,6 +124,19 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "bank",
+        "type": "address"
+      }
+    ],
+    "name": "BankDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "string",
         "name": "contractType",
@@ -156,19 +169,52 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "string",
-        "name": "contractType",
-        "type": "string"
-      },
-      {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "deployedAddress",
+        "name": "board",
         "type": "address"
       }
     ],
-    "name": "ContractDeployed",
+    "name": "BoardOfDirectorsDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "remuneration",
+        "type": "address"
+      }
+    ],
+    "name": "CashRemunerationEIP712Deployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "elections",
+        "type": "address"
+      }
+    ],
+    "name": "ElectionsDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "ExpenseAccountEIP712Deployed",
     "type": "event"
   },
   {
@@ -182,6 +228,19 @@
       }
     ],
     "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "investor",
+        "type": "address"
+      }
+    ],
+    "name": "InvestorDeployed",
     "type": "event"
   },
   {
@@ -220,6 +279,32 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "proposals",
+        "type": "address"
+      }
+    ],
+    "name": "ProposalsDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "router",
+        "type": "address"
+      }
+    ],
+    "name": "SafeDepositRouterDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -227,6 +312,19 @@
       }
     ],
     "name": "Unpaused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "vesting",
+        "type": "address"
+      }
+    ],
+    "name": "VestingDeployed",
     "type": "event"
   },
   {

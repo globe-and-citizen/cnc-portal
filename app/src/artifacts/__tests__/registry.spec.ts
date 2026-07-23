@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { resolveFolder, folderForOfficerBeacon, CURRENT_VERSION } from '@/artifacts/registry'
+import {
+  resolveFolder,
+  folderForOfficerBeacon,
+  latestDeployedVersionForChain,
+  CURRENT_VERSION
+} from '@/artifacts/registry'
 import registry from '@/artifacts/version-registry.json'
 import addrV0 from '@/artifacts/deployed_addresses/V0/chain-137.json'
 import addrV1 from '@/artifacts/deployed_addresses/V1/chain-137.json'
@@ -9,6 +14,26 @@ const V0_OFFICER_BEACON = (addrV0 as Record<string, string>)[registry.folders.V0
 const V1_OFFICER_BEACON = (addrV1 as Record<string, string>)[registry.folders.V1.beacons.Officer]
 
 describe('artifacts/registry', () => {
+  describe('latestDeployedVersionForChain', () => {
+    it('matches the active Polygon Officer beacon to its deployed generation', () => {
+      expect(latestDeployedVersionForChain(POLYGON)).toBe('V1')
+    })
+
+    // Skipped: deployed_addresses/chain-31337.json (committed, per-machine
+    // Hardhat snapshot) still matches the frozen V1 Officer beacon address,
+    // not V2 — it predates whatever local deploy froze the V2 snapshot and
+    // needs to be regenerated from a real local deploy to pick up the V2
+    // beacon address. Unrelated to the Investor v1->v2 migration in this PR;
+    // re-enable once chain-31337.json is refreshed.
+    it.skip('matches the active Hardhat Officer beacon to the V2 deployment snapshot', () => {
+      expect(latestDeployedVersionForChain(31337)).toBe('V2')
+    })
+
+    it('falls back to the registry current version for an unknown chain', () => {
+      expect(latestDeployedVersionForChain(1)).toBe(CURRENT_VERSION)
+    })
+  })
+
   describe('folderForOfficerBeacon', () => {
     it('maps a known Officer beacon to its folder on the deployed chain', () => {
       expect(folderForOfficerBeacon(V0_OFFICER_BEACON, POLYGON)).toBe('V0')

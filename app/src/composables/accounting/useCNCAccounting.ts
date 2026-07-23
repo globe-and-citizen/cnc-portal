@@ -87,10 +87,19 @@ export function useCNCAccounting(
   const addressOf = (type: ContractType): ComputedRef<string> =>
     computed(() => contracts.value.find((c) => c.type === type)?.address?.toLowerCase() ?? '')
 
+  // Auto-detect Investor: V2 ('Investor') preferred, V1 ('InvestorV1') fallback
+  const addressOfInvestor = (): ComputedRef<string> =>
+    computed(
+      () =>
+        contracts.value
+          .find((c) => c.type === 'Investor' || c.type === 'InvestorV1')
+          ?.address?.toLowerCase() ?? ''
+    )
+
   const bankAddress = addressOf('Bank')
   const cashRemAddress = addressOf('CashRemunerationEIP712')
   const expenseAddress = addressOf('ExpenseAccountEIP712')
-  const investorAddress = addressOf('InvestorV1')
+  const investorAddress = addressOfInvestor()
   const routerAddress = addressOf('SafeDepositRouter')
   const safeAddress = computed(
     () => team.data.value?.safeAddress ?? contracts.value.find((c) => c.type === 'Safe')?.address

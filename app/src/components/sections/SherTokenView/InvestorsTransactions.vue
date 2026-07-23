@@ -218,7 +218,7 @@ const investorTokenSymbol = computed(() =>
 )
 
 const investorAddress = computed(() => {
-  const address = teamStore.getContractAddressByType('InvestorV1')
+  const address = teamStore.getInvestorAddress()
   return address ? address.toLowerCase() : ''
 })
 

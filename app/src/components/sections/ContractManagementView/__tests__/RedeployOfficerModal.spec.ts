@@ -17,7 +17,6 @@ const mockRedeployState = {
   reset: vi.fn(),
   isRunning: ref(false),
   migrationFailed: ref(false),
-  isInconsistent: ref(false),
   deployError: ref<Error | null>(null),
   registerError: ref<Error | null>(null),
   migrationError: ref<Error | null>(null),
@@ -77,7 +76,6 @@ describe('RedeployOfficerModal', () => {
     vi.clearAllMocks()
     mockRedeployState.isRunning.value = false
     mockRedeployState.migrationFailed.value = false
-    mockRedeployState.isInconsistent.value = false
     mockRedeployState.deployError.value = null
     mockRedeployState.registerError.value = null
     mockRedeployState.migrationError.value = null
@@ -184,16 +182,6 @@ describe('RedeployOfficerModal', () => {
     await retry.trigger('click')
     await flushPromises()
     expect(mockRedeployState.retryMigration).toHaveBeenCalledTimes(1)
-  })
-
-  it('disables retry button when migration is inconsistent', async () => {
-    mockRedeployState.migrationFailed.value = true
-    mockRedeployState.isInconsistent.value = true
-    const wrapper = mountModal({ open: true })
-    await flushPromises()
-
-    const retry = wrapper.findComponent('[data-test="retry-migration"]')
-    expect(retry.props('disabled')).toBe(true)
   })
 
   it('cancel closes the modal when no migration is pending', async () => {

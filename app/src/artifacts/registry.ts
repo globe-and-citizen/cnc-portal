@@ -54,6 +54,36 @@ const addressSnapshots = import.meta.glob<Record<string, string>>(
   { eager: true, import: 'default' }
 )
 
+const currentAddressSnapshots = import.meta.glob<Record<string, string>>(
+  './deployed_addresses/chain-*.json',
+  { eager: true, import: 'default' }
+)
+
+/**
+ * Resolve the latest contract generation deployed on a chain by matching its
+ * active Officer beacon against the versioned deployment snapshots. Networks
+ * without a matching frozen snapshot use the registry's current generation.
+ */
+export function latestDeployedVersionForChain(chainId: number): string {
+  const currentPath = `./deployed_addresses/chain-${chainId}.json`
+  const currentOfficerBeacon = currentAddressSnapshots[currentPath]?.['Officer#FactoryBeacon']
+
+  if (!currentOfficerBeacon) return CURRENT_VERSION
+
+  for (const [path, addresses] of Object.entries(addressSnapshots)) {
+    const match = path.match(/\/deployed_addresses\/([^/]+)\/chain-(\d+)\.json$/)
+    const version = match?.[1]
+    if (!version || Number(match[2]) !== chainId) continue
+
+    const snapshotOfficerBeacon = addresses['Officer#FactoryBeacon']
+    if (snapshotOfficerBeacon?.toLowerCase() === currentOfficerBeacon.toLowerCase()) {
+      return version
+    }
+  }
+
+  return CURRENT_VERSION
+}
+
 // chainId → (lowercased Officer FactoryBeacon address → folder). Each generation's
 // Officer beacon is a distinct address per chain, so this maps a team's on-chain
 // Officer beacon back to its artifact folder. It's the concrete identifier the

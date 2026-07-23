@@ -9,9 +9,9 @@ describe('Vesting', () => {
   const DURATION = 60 * 60 * 24 * 30 // 30 days
 
   // Deploy Vesting per-team through a MockOfficer, exactly like SafeDepositRouter:
-  // - InvestorV1 is the team share token, registered on the officer
+  // - Investor is the team share token, registered on the officer
   // - Vesting is a BeaconProxy whose officerAddress is the officer (set from msg.sender)
-  // - the team owner owns the Vesting; the Vesting holds MINTER_ROLE on InvestorV1
+  // - the team owner owns the Vesting; the Vesting holds MINTER_ROLE on Investor
   async function deployFixture(grantMinter = true) {
     const [teamOwner, member, member2, nonOwner] = await ethers.getSigners()
 
@@ -19,7 +19,7 @@ describe('Vesting', () => {
     const mockOfficer = await MockOfficerFactory.deploy()
     await mockOfficer.waitForDeployment()
 
-    const InvestorFactory = await ethers.getContractFactory('InvestorV1')
+    const InvestorFactory = await ethers.getContractFactory('Investor')
     const investor = await upgrades.deployProxy(
       InvestorFactory,
       ['Share', 'SHARE', teamOwner.address],
@@ -27,7 +27,7 @@ describe('Vesting', () => {
     )
     await investor.waitForDeployment()
     const investorAddress = await investor.getAddress()
-    await mockOfficer.setDeployedContract('InvestorV1', investorAddress)
+    await mockOfficer.setDeployedContract('Investor', investorAddress)
 
     const VestingFactory = await ethers.getContractFactory('Vesting')
     const vestingImplementation = await VestingFactory.connect(teamOwner).deploy()
