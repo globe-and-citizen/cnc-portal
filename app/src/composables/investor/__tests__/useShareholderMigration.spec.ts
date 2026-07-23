@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { readContract } from '@wagmi/core'
 import { zeroHash } from 'viem'
-import { useMigrateShareholders } from '../useShareholderMigration'
+import { checkMigrationEligibility, useMigrateShareholders } from '../useShareholderMigration'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import {
   useCreateInvestorMigrationMutation,
@@ -183,5 +183,80 @@ describe('useMigrateShareholders', () => {
         newInvestorAddress: NEW_INVESTOR
       })
     ).rejects.toThrow(/no Investor contract/i)
+  })
+
+  it('throws when the snapshot generation fails on the main path', async () => {
+    stubReads({ existingRoot: zeroHash })
+    const { generateMutation, persistMutation } = configureSnapshotMutation()
+    generateMutation.mutateAsync.mockResolvedValue(undefined)
+
+    const migration = useMigrateShareholders()
+    await expect(
+      migration.mutateAsync({
+        teamId: 1,
+        previousOfficerAddress: PREV_OFFICER,
+        newInvestorAddress: NEW_INVESTOR
+      })
+    ).rejects.toThrow(/failed to generate merkle snapshot/i)
+    expect(executeContractWrite).not.toHaveBeenCalled()
+    expect(persistMutation.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('throws when the snapshot regeneration fails on the repair path', async () => {
+    stubReads({ existingRoot: SOME_ROOT })
+    const { generateMutation, persistMutation } = configureSnapshotMutation()
+    generateMutation.mutateAsync.mockResolvedValue(undefined)
+
+    const migration = useMigrateShareholders()
+    await expect(
+      migration.mutateAsync({
+        teamId: 1,
+        previousOfficerAddress: PREV_OFFICER,
+        newInvestorAddress: NEW_INVESTOR
+      })
+    ).rejects.toThrow(/failed to regenerate merkle snapshot/i)
+    expect(persistMutation.mutateAsync).not.toHaveBeenCalled()
+  })
+})
+
+describe('checkMigrationEligibility', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('throws when the previous Officer has no Investor contract', async () => {
+    stubReads({ oldInvestor: null })
+
+    await expect(
+      checkMigrationEligibility({
+        teamId: 1,
+        previousOfficerAddress: PREV_OFFICER,
+        newInvestorAddress: NEW_INVESTOR
+      })
+    ).rejects.toThrow(/no Investor contract/i)
+  })
+
+  it('reports ineligible with noop-empty when there are no shareholders to migrate', async () => {
+    stubReads({ shareholders: [] })
+
+    await expect(
+      checkMigrationEligibility({
+        teamId: 1,
+        previousOfficerAddress: PREV_OFFICER,
+        newInvestorAddress: NEW_INVESTOR
+      })
+    ).resolves.toEqual({ eligible: false, reason: 'noop-empty' })
+  })
+
+  it('reports eligible when there are shareholders and no migration root yet', async () => {
+    stubReads({ existingRoot: zeroHash })
+
+    await expect(
+      checkMigrationEligibility({
+        teamId: 1,
+        previousOfficerAddress: PREV_OFFICER,
+        newInvestorAddress: NEW_INVESTOR
+      })
+    ).resolves.toEqual({ eligible: true })
   })
 })
