@@ -159,13 +159,17 @@ const investorFactory = factory({
 
 const cashRemunerationFactory = factory({
   address: factoryAddress,
-  event: parseAbiItem("event CashRemunerationEIP712Deployed(address indexed remuneration)"),
+  event: parseAbiItem(
+    "event CashRemunerationEIP712Deployed(address indexed remuneration)",
+  ),
   parameter: "remuneration",
 });
 
 const safeDepositRouterFactory = factory({
   address: factoryAddress,
-  event: parseAbiItem("event SafeDepositRouterDeployed(address indexed router)"),
+  event: parseAbiItem(
+    "event SafeDepositRouterDeployed(address indexed router)",
+  ),
   parameter: "router",
 });
 
@@ -177,7 +181,9 @@ const vestingFactory = factory({
 
 const expenseAccountFactory = factory({
   address: factoryAddress,
-  event: parseAbiItem("event ExpenseAccountEIP712Deployed(address indexed account)"),
+  event: parseAbiItem(
+    "event ExpenseAccountEIP712Deployed(address indexed account)",
+  ),
   parameter: "account",
 });
 
@@ -239,7 +245,9 @@ export default createConfig({
       abi: BOARD_OF_DIRECTORS_ABI,
       address: factory({
         address: factoryAddress,
-        event: parseAbiItem("event BoardOfDirectorsDeployed(address indexed board)"),
+        event: parseAbiItem(
+          "event BoardOfDirectorsDeployed(address indexed board)",
+        ),
         parameter: "board",
       }),
       startBlock,
