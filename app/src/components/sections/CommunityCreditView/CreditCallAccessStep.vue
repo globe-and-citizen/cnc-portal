@@ -111,7 +111,7 @@ import {
   applyZodFieldErrors,
   creditAccessRowClass,
   creditRadioClass,
-  findOfferingToken,
+  findCreditToken,
   formatAmount
 } from '@/utils'
 import { createCreditCallAccessSchema, type CreditCallForm } from '@/types'
@@ -194,7 +194,7 @@ function updateWhitelistCustom(i: number, custom: boolean) {
 function validate(): boolean {
   const schema = createCreditCallAccessSchema({
     target: Number(form.value.target) || 0,
-    decimals: findOfferingToken(form.value.token)?.decimals
+    decimals: findCreditToken(form.value.token)?.decimals
   })
   const result = schema.safeParse({
     access: form.value.access,

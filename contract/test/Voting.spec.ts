@@ -84,7 +84,7 @@ describe('Voting Contract', () => {
       .to.emit(voting, 'DirectiveVoted')
       .withArgs(voter1.address, 0, 1)
 
-    const proposal = await voting.proposalsById(0)
+    const proposal = await voting.getProposalsById(0)
     expect(proposal.votes.yes).to.equal(1)
   })
 
@@ -103,7 +103,7 @@ describe('Voting Contract', () => {
     await voting.connect(voter1).voteDirective(0, 0) // no
     await voting.connect(voter2).voteDirective(0, 2) // abstain
 
-    const proposal = await voting.proposalsById(0)
+    const proposal = await voting.getProposalsById(0)
     expect(proposal.votes.no).to.equal(1)
     expect(proposal.votes.abstain).to.equal(1)
   })
@@ -114,13 +114,13 @@ describe('Voting Contract', () => {
     await voting.addProposal('Directive', 'Description', false, 0, [voter1.address], [])
 
     await expect(voting.connect(voter1).voteDirective(0, 4))
-      .to.be.revertedWithCustomError(voting, 'InvalidVote')
+      .to.be.revertedWithCustomError(voting, 'Voting__InvalidVote')
       .withArgs(4)
 
     await voting.connect(voter1).voteDirective(0, 1)
     await expect(voting.connect(voter1).voteDirective(0, 1)).to.be.revertedWithCustomError(
       voting,
-      'VoterAlreadyVoted'
+      'Voting__VoterAlreadyVoted'
     )
   })
 
@@ -162,7 +162,7 @@ describe('Voting Contract', () => {
       .to.emit(voting, 'ProposalConcluded')
       .withArgs(0, false)
 
-    const proposal = await voting.proposalsById(0)
+    const proposal = await voting.getProposalsById(0)
     expect(proposal.isActive).to.equal(false)
   })
 
@@ -172,7 +172,7 @@ describe('Voting Contract', () => {
     await voting.addProposal('Directive', 'Description', false, 0, [voter1.address], [])
 
     await expect(voting.connect(outsider).voteDirective(0, 1))
-      .to.be.revertedWithCustomError(voting, 'VoterNotRegistered')
+      .to.be.revertedWithCustomError(voting, 'Voting__VoterNotRegistered')
       .withArgs(outsider.address)
   })
 
@@ -185,14 +185,14 @@ describe('Voting Contract', () => {
 
     await expect(
       voting.connect(voter1).voteElection(0, outsider.address)
-    ).to.be.revertedWithCustomError(voting, 'CandidateNotFound')
+    ).to.be.revertedWithCustomError(voting, 'Voting__CandidateNotFound')
   })
 
   it('rejects voteDirective on non-existent proposal', async () => {
     const { voting, voter1 } = await deployFixture()
 
     await expect(voting.connect(voter1).voteDirective(99, 1))
-      .to.be.revertedWithCustomError(voting, 'ProposalNotFound')
+      .to.be.revertedWithCustomError(voting, 'Voting__ProposalNotFound')
       .withArgs(99)
   })
 
@@ -200,7 +200,7 @@ describe('Voting Contract', () => {
     const { voting, voter1, founder } = await deployFixture()
 
     await expect(voting.connect(voter1).voteElection(99, founder.address))
-      .to.be.revertedWithCustomError(voting, 'ProposalNotFound')
+      .to.be.revertedWithCustomError(voting, 'Voting__ProposalNotFound')
       .withArgs(99)
   })
 
@@ -211,7 +211,7 @@ describe('Voting Contract', () => {
 
     await expect(voting.connect(voter1).concludeProposal(0)).to.be.revertedWithCustomError(
       voting,
-      'OnlyFounder'
+      'Voting__OnlyFounder'
     )
   })
 
@@ -220,7 +220,7 @@ describe('Voting Contract', () => {
 
     await expect(
       voting.addProposal('', 'Description', false, 0, [voter1.address], [])
-    ).to.be.revertedWithCustomError(voting, 'EmptyTitle')
+    ).to.be.revertedWithCustomError(voting, 'Voting__EmptyTitle')
   })
 
   it('rejects election proposal with empty candidates', async () => {
@@ -228,7 +228,7 @@ describe('Voting Contract', () => {
 
     await expect(
       voting.addProposal('Election', 'desc', true, 1, [voter1.address], [])
-    ).to.be.revertedWithCustomError(voting, 'NoCandidates')
+    ).to.be.revertedWithCustomError(voting, 'Voting__NoCandidates')
   })
 
   it('getProposalById returns correct proposal data', async () => {
@@ -246,7 +246,7 @@ describe('Voting Contract', () => {
     const { voting } = await deployFixture()
 
     await expect(voting.getProposalById(99))
-      .to.be.revertedWithCustomError(voting, 'ProposalNotFound')
+      .to.be.revertedWithCustomError(voting, 'Voting__ProposalNotFound')
       .withArgs(99)
   })
 
@@ -331,7 +331,7 @@ describe('Voting Contract', () => {
       )
 
       // A new proposal should have been created
-      expect(await voting.proposalCount()).to.equal(2)
+      expect(await voting.getProposalCount()).to.equal(2)
     })
 
     it('rejects resolveTie by non-founder', async () => {
@@ -341,7 +341,7 @@ describe('Voting Contract', () => {
 
       await expect(voting.connect(voter1).resolveTie(0, 0)).to.be.revertedWithCustomError(
         voting,
-        'OnlyFounder'
+        'Voting__OnlyFounder'
       )
     })
 
@@ -356,7 +356,7 @@ describe('Voting Contract', () => {
 
       await expect(voting.connect(founder).resolveTie(0, 0)).to.be.revertedWithCustomError(
         voting,
-        'NoTieToResolve'
+        'Voting__NoTieToResolve'
       )
     })
 
@@ -369,7 +369,7 @@ describe('Voting Contract', () => {
 
       await expect(
         voting.connect(founder).selectWinner(0, outsider.address)
-      ).to.be.revertedWithCustomError(voting, 'InvalidTieWinner')
+      ).to.be.revertedWithCustomError(voting, 'Voting__InvalidTieWinner')
     })
 
     it('rejects selectWinner when tie break option is not FOUNDER_CHOICE', async () => {
@@ -384,7 +384,7 @@ describe('Voting Contract', () => {
       // Try selectWinner anyway
       await expect(
         voting.connect(founder).selectWinner(0, voter1.address)
-      ).to.be.revertedWithCustomError(voting, 'NoTieToResolve')
+      ).to.be.revertedWithCustomError(voting, 'Voting__NoTieToResolve')
     })
   })
 })

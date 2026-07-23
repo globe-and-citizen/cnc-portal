@@ -199,7 +199,7 @@ describe('Officer Contract', function () {
 
     // Test Officer's deployed contracts
     const bankProxy = await ethers.getContractAt('Bank', contractAddresses.get('Bank')!)
-    expect(await bankProxy.officerAddress()).to.equal(await officer.getAddress())
+    expect(await bankProxy.getOfficerAddress()).to.equal(await officer.getAddress())
 
     const cashRemunerationEip712Proxy = await ethers.getContractAt(
       'CashRemunerationEIP712',
@@ -210,7 +210,7 @@ describe('Officer Contract', function () {
       contractAddresses.get('InvestorV1')!
     )
 
-    expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
+    expect((await cashRemunerationEip712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
     expect((await cashRemunerationEip712Proxy.owner()).toLocaleLowerCase()).to.be.equal(
@@ -239,7 +239,7 @@ describe('Officer Contract', function () {
     // Vesting is deployed per-team via the same beacon flow: bound to the Officer,
     // owned by the team owner, and granted MINTER_ROLE on InvestorV1.
     const vestingProxy = await ethers.getContractAt('Vesting', contractAddresses.get('Vesting')!)
-    expect((await vestingProxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
+    expect((await vestingProxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
     expect((await vestingProxy.owner()).toLocaleLowerCase()).to.be.equal(

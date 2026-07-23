@@ -162,6 +162,26 @@ describe('buildTables (section selection)', () => {
     expect(ledger.title).toBe('General Ledger')
   })
 
+  it('drills a single account, heading and total scoped to it (issue #2249)', () => {
+    const [ledger] = buildTables(sampleBooks(), [{ key: 'ledger', account: 'Cash — Bank' }])
+    expect(ledger.title).toBe('General Ledger — Cash — Bank')
+    // The $100 deposit posts a Cash — Bank leg; the total nets the account balance.
+    expect(ledger.body.at(-1)!.some((c) => c === '$100.00')).toBe(true)
+  })
+
+  it('drills an aggregate line with its label and supplied total (Retained earnings)', () => {
+    const [ledger] = buildTables(sampleBooks(), [
+      {
+        key: 'ledger',
+        account: ['Service Revenue'],
+        accountLabel: 'Retained earnings',
+        accountTotal: '$100.00'
+      }
+    ])
+    expect(ledger.title).toBe('General Ledger — Retained earnings')
+    expect(ledger.body.at(-1)!.some((c) => c === '$100.00')).toBe(true)
+  })
+
   it('stamps the reporting period / "as of" date on the statement headings', () => {
     const [income] = buildTables(sampleBooks(), [
       { key: 'income', from: new Date('2026-01-01'), to: new Date('2026-02-01') }

@@ -20,25 +20,32 @@ const isE2E = import.meta.env.VITE_E2E === 'true'
  * priority) and the public endpoints (drpc, publicnode) are the safety net.
  * These are current-state reads (`eth_call`/`getBalance`), so publicnode's log
  * pruning is irrelevant here.
+ *
+ * `batch: true` collapses every RPC call fired in the same tick into a single
+ * JSON-RPC POST. Feeds that fan out many calls at once — e.g. the accounting
+ * event scan's one `getBlock` per block — then cost one HTTP round-trip instead
+ * of N, without changing any call site.
  */
 const polygonRpcUrl = import.meta.env.VITE_APP_POLYGON_RPC_URL
+
+const batched = { batch: true } as const
 
 export const config = createConfig({
   chains: [mainnet, sepolia, polygon, hardhat, polygonAmoy],
   connectors: isE2E ? [e2eMockConnector()] : [injected()],
   transports: {
     [mainnet.id]: fallback([
-      http(),
-      http('https://eth.drpc.org'),
-      http('https://ethereum-rpc.publicnode.com')
+      http(undefined, batched),
+      http('https://eth.drpc.org', batched),
+      http('https://ethereum-rpc.publicnode.com', batched)
     ]),
-    [sepolia.id]: http('https://sepolia.drpc.org'),
+    [sepolia.id]: http('https://sepolia.drpc.org', batched),
     [polygon.id]: fallback([
-      ...(polygonRpcUrl ? [http(polygonRpcUrl)] : []),
-      http('https://polygon.drpc.org'),
-      http('https://polygon-bor-rpc.publicnode.com')
+      ...(polygonRpcUrl ? [http(polygonRpcUrl, batched)] : []),
+      http('https://polygon.drpc.org', batched),
+      http('https://polygon-bor-rpc.publicnode.com', batched)
     ]),
-    [polygonAmoy.id]: http(),
-    [hardhat.id]: http()
+    [polygonAmoy.id]: http(undefined, batched),
+    [hardhat.id]: http(undefined, batched)
   }
 })

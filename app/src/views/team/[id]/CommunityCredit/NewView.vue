@@ -162,11 +162,11 @@ import {
   applyZodFieldErrors,
   classifyError,
   creditChipClass,
-  getSupportedOfferingTokenOptions,
+  getSupportedCreditTokenOptions,
   toCreditCallOfferParams
 } from '@/utils'
-import { creditCallBasicsSchema, type CreditCallForm, type OfferingForm } from '@/types'
-import StepIndicator from '@/components/sections/FixedReturnView/StepIndicator.vue'
+import { creditCallBasicsSchema, type CreditCallForm, type CreditOfferForm } from '@/types'
+import StepIndicator from '@/components/ui/StepIndicator.vue'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'
 import CreditCallTermsStep from '@/components/sections/CommunityCreditView/CreditCallTermsStep.vue'
 import CreditCallSummaryCard from '@/components/sections/CommunityCreditView/CreditCallSummaryCard.vue'
@@ -190,7 +190,7 @@ const accessStepRef = ref<StepHandle>(null)
 // Only tokens this team's FixedReturn contract actually accepts (ERC20-only).
 const { data: supportedTokens } = useFixedReturnGetSupportedTokens()
 const tokens = computed(() =>
-  getSupportedOfferingTokenOptions((supportedTokens.value as Address[] | undefined) ?? []).map(
+  getSupportedCreditTokenOptions((supportedTokens.value as Address[] | undefined) ?? []).map(
     (option) => option.value
   )
 )
@@ -206,6 +206,7 @@ const form = reactive<CreditCallForm>({
   periodVal: '90',
   periodUnit: 'days',
   deadline: '2026-07-31',
+  deadlineTime: '23:59',
   access: 'everyone',
   whitelist: [],
   capOn: false,
@@ -269,7 +270,7 @@ async function publish() {
     // the subscription deadline, so startDate == deadline. FixedReturn.sol requires
     // subscriptionDeadline <= startDate (reverts InvalidDeadline otherwise). The term is
     // already in canonical days, so it maps straight to the contract's Days unit.
-    const offeringForm: OfferingForm = {
+    const offeringForm: CreditOfferForm = {
       title: form.name.trim(),
       purpose: form.desc.trim(),
       principal: Number(form.target) || 0,
@@ -277,6 +278,7 @@ async function publish() {
       termValue: form.period,
       termUnit: 'days',
       deadline: form.deadline,
+      deadlineTime: form.deadlineTime,
       access: form.access === 'restricted' ? 'whitelist' : 'general',
       capOn: form.capOn,
       cap: Number(form.cap) || 0,
@@ -290,7 +292,7 @@ async function publish() {
     const total = (await readContract(config, {
       address: fixedReturnAddress.value,
       abi: FIXED_RETURN_ABI,
-      functionName: 'totalOfferings'
+      functionName: 'getTotalOfferings'
     })) as bigint
     const offerId = Number(total)
 

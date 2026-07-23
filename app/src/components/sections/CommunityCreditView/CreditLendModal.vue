@@ -70,6 +70,13 @@
                 @click="amount = String(q.value)"
               />
             </div>
+            <span
+              v-if="errors.amount"
+              class="text-error mt-1.5 block text-xs"
+              data-test="lend-amount-error"
+            >
+              {{ errors.amount }}
+            </span>
           </div>
 
           <!-- Projected return -->
@@ -137,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { parseUnits, zeroAddress, type Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
@@ -151,14 +158,15 @@ import { useFixedReturnLendFunds } from '@/composables/fixedReturn/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import {
+  applyZodFieldErrors,
   classifyError,
-  findOfferingToken,
+  findCreditToken,
   formatAmount,
   roundToDisplayPrecision,
   toLenderOffering,
   UNCAPPED_ALLOCATION
 } from '@/utils'
-import type { CreditRound, LendingOfferStruct } from '@/types'
+import { createLendAmountSchema, type CreditRound, type LendingOfferStruct } from '@/types'
 
 const props = defineProps<{ round: CreditRound | null }>()
 const emit = defineEmits<{ close: []; lent: [] }>()
@@ -177,7 +185,7 @@ const remaining = computed(() => (props.round ? props.round.target - props.round
 
 // CreditRound.token is a symbol; resolve it to the on-chain token to scale amounts and
 // approve/lend against. FixedReturn is ERC20-only, so an unknown symbol means we can't lend.
-const token = computed(() => (props.round ? findOfferingToken(props.round.token) : undefined))
+const token = computed(() => (props.round ? findCreditToken(props.round.token) : undefined))
 const decimals = computed(() => token.value?.decimals ?? 6)
 const amountUnits = computed(() => parseUnits(String(numericAmount.value || 0), decimals.value))
 
@@ -231,6 +239,17 @@ const capLeft = computed(() => {
 // the funding-level gap, which can overstate what this lender can actually still lend.
 const displayRemaining = computed(() => lenderOffering.value?.remaining ?? remaining.value)
 
+const errors = reactive({ amount: '' })
+const lendAmountSchema = computed(() =>
+  createLendAmountSchema({ remaining: displayRemaining.value, tokenSymbol: props.round?.token })
+)
+function validate(): boolean {
+  return applyZodFieldErrors(
+    lendAmountSchema.value.safeParse({ amount: numericAmount.value }),
+    errors
+  )
+}
+
 const subtitle = computed(() =>
   props.round
     ? `${props.round.rate}% interest · repaid ${props.round.maturity || 'at maturity'}`
@@ -279,6 +298,7 @@ async function confirm() {
   const round = props.round
   if (!round || numericAmount.value <= 0) return
   submitError.value = null
+  if (!validate()) return
 
   if (!fixedReturnAddress.value) {
     submitError.value = 'No Credit Account is deployed for this team.'
@@ -317,6 +337,7 @@ watch(
     if (!id) return
     amount.value = ''
     submitError.value = null
+    errors.amount = ''
     nextTick(() => panelRef.value?.focus())
   },
   { immediate: true }

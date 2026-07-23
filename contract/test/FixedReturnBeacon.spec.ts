@@ -138,7 +138,7 @@ describe('FixedReturnBeacon', () => {
         'FixedReturn',
         await fixedReturnBeaconProxy1.getAddress()
       )
-      expect(await fixedReturnBeacon.totalOfferings()).to.eq(0)
+      expect(await fixedReturnBeacon.getTotalOfferings()).to.eq(0)
     })
 
     it('should write correctly', async () => {

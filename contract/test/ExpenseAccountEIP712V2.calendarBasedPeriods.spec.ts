@@ -155,7 +155,7 @@ describe('ExpenseAccountEIP712V2', function () {
         .connect(approvedAddress)
         .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
 
-      let expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      let expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.8'))
 
       // Move forward 7 days to next Monday
@@ -167,7 +167,7 @@ describe('ExpenseAccountEIP712V2', function () {
         .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
 
       // Check that total withdrawn reset for new period
-      expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.5'))
 
       // Verify we're now in period 1
@@ -213,7 +213,10 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
-      ).to.be.revertedWithCustomError(expenseAccount, 'AmountExceedsPeriodBudget')
+      ).to.be.revertedWithCustomError(
+        expenseAccount,
+        'ExpenseAccountEIP712__AmountExceedsPeriodBudget'
+      )
 
       // Move to 1st of next month (period 1)
       await time.setNextBlockTimestamp(nextMonthTimestamp)
@@ -224,7 +227,7 @@ describe('ExpenseAccountEIP712V2', function () {
         .transfer(recipient.address, ethers.parseEther('0.7'), budgetLimit, signature)
 
       // Check that total withdrawn reset for new period
-      const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      const expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.7'))
 
       // Verify we're now in period 1 (next month)
@@ -371,7 +374,7 @@ describe('ExpenseAccountEIP712V2', function () {
         .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
 
       // Verify total withdrawn for first partial week
-      let expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      let expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('1'))
 
       // Move to next Monday (full new week)
@@ -391,7 +394,7 @@ describe('ExpenseAccountEIP712V2', function () {
         .connect(approvedAddress)
         .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
 
-      expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.8'))
     })
 

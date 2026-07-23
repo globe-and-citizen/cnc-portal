@@ -31,4 +31,8 @@ export interface SectionSpec {
    * (or all currencies) means no currency narrowing.
    */
   currencies?: string[]
+
+  account?: string | readonly string[]
+  accountLabel?: string
+  accountTotal?: string
 }
