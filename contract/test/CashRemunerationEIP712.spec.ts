@@ -291,8 +291,9 @@ describe('CashRemuneration*** (EIP712)', () => {
 
           const signature = await employer.signTypedData(domain, types, wageClaim)
 
-          await expect(cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)).to.be
-            .reverted
+          await expect(
+            cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
+          ).to.be.revert(ethers)
         })
         it('the contract is paused', async () => {
           await expect(cashRemunerationProxy.pause())

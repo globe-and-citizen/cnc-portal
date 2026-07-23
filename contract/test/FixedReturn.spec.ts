@@ -8,6 +8,7 @@ import {
   upgrades
 } from './hardhat-context.js'
 import { expect } from 'chai'
+import { parseUnits } from 'ethers'
 import type { SignerWithAddress } from './hardhat-context.js'
 import type {
   Bank,
@@ -25,7 +26,7 @@ describe('FixedReturn', () => {
   const FundingAccess = { General: 0, Whitelist: 1 }
   const OfferState = { Open: 0, Funded: 1, Refundable: 2, Repaying: 3 }
 
-  const FUNDING_TARGET = ethers.parseUnits('100000', 6)
+  const FUNDING_TARGET = parseUnits('100000', 6)
   const INTEREST_RATE_BPS = 800n // 8%, flat over the whole term
   const TERM_DURATION = 12
 

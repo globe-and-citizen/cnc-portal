@@ -523,8 +523,9 @@ describe('Bank', () => {
       const amount = ethers.parseUnits('100', 6)
       const fixedReturnBefore = await token.balanceOf(await mockFixedReturn.getAddress())
 
-      await expect(localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, amount)).to.be
-        .reverted
+      await expect(localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, amount)).to.be.revert(
+        ethers
+      )
 
       expect(await token.balanceOf(await mockFixedReturn.getAddress())).to.equal(fixedReturnBefore)
     })

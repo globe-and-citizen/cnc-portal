@@ -385,7 +385,7 @@ describe('AdCampaignManager', () => {
         adCampaignManager.connect(advertiser).createAdCampaign({
           value: ethers.parseEther('10')
         })
-      ).to.be.revertedWithCustomError
+      ).to.be.revertedWithCustomError(adCampaignManager, 'EnforcedPause')
 
       await adCampaignManager.connect(owner).unpause()
       expect(await adCampaignManager.paused()).to.equal(false)
