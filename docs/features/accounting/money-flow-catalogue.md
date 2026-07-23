@@ -117,9 +117,9 @@ The accounts used across the use cases and the worked example.
 | **Cash — Bank / Safe / Payroll / Expense / FeeCollector** | Asset     | Debit          | One pocket per on-chain account; rolls up into total Cash   |
 | **Trading account**                                       | Asset     | Debit          | Capital deployed to an external trader, carried at cost     |
 | **Wage Payable**                                          | Liability | Credit         | Payroll earned but not yet paid (accrual)                   |
-| **Shares to be issued**                                   | Liability | Credit         | SHER promised in a wage claim, minted to equity at withdraw |
+| **Shares to be issued**                                   | Liability | Credit         | SHER earned but not yet taken; floats at the current multiplier while pending, then clears into equity frozen at the withdraw-date value |
 | **Owner Capital**                                         | Equity    | Credit         | Founder deposits with no shares in return                   |
-| **Investor Equity**                                       | Equity    | Credit         | SHER share capital (mints with real value behind them)      |
+| **Investor Equity**                                       | Equity    | Credit         | SHER share capital — capital raises, wages paid in shares, and direct mints |
 | **Retained Earnings**                                     | Equity    | Credit         | Cumulative net income                                       |
 | **Service Revenue**                                       | Income    | Credit         | Payment from a client for a service                         |
 | **Trading Gain**                                          | Income    | Credit         | Profit returned by the trader                               |
@@ -129,6 +129,25 @@ The accounts used across the use cases and the worked example.
 | **Dividend Expense**                                      | Expense   | Debit          | Dividend distributed to shareholders                        |
 
 > **Fees.** A fee on a Bank transfer moves cash from Bank to `Cash — FeeCollector` — both are CNC pockets, so it is an **internal move**, not revenue. (If you ever bill an external team, recognise it as `Protocol Fee Revenue` at FeeCollector instead.)
+
+### Currency & valuation (rate of record)
+
+Every entry is reported in **USD**. The **quantity** of each currency is what actually moved on-chain and never changes; only its USD equivalence does. How each currency is converted:
+
+| Currency          | Rate of record                                     | Behaviour when the rate moves                                                                                                                                                                                          |
+| ----------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **USDC / USDT**   | pegged **$1.00**                                    | never moves                                                                                                                                                                                                            |
+| **POL (native)**  | the **current live price** (CoinGecko)             | The POL quantity is fixed; only its USD value moves. **Every** POL posting — past and present — is shown at **today's** price, so the whole POL book re-values together and stays balanced (no per-date historical rate). |
+| **SHER**          | the router **compensation multiplier** (1 SHER = `1 / multiplier` USD) | **Realization model** — a *taken* leg freezes, a *pending* leg floats (see below).                                                                                                     |
+
+**SHER — freeze at withdrawal, float while pending.** A wage is a **fixed quantity of SHER** (e.g. 10 h × 5 SHER/h = 50 SHER, whatever the multiplier is); the multiplier only changes its USD value, never the number of SHER minted. So:
+
+- a **withdrawal / mint** (UC-CASH-03 / Default D) is **frozen at the multiplier of its own date** — the value at which the shares were *taken* — and never moves again;
+- a **pending accrual** (SHER earned but not yet withdrawn, held in `Shares to be issued`, UC-CASH-02) **floats at the current multiplier** — re-valued every time the multiplier moves, until it is withdrawn.
+
+When a withdrawal settles an accrual, both legs carry the **withdrawal-date** value, so `Shares to be issued` nets to zero with no revaluation account. A partly-withdrawn accrual is quantity-weighted: the withdrawn part frozen, the rest still floating.
+
+> **Why POL and SHER differ.** Pending SHER is a *promise* the company still owes (a liability), so marking it to the current rate just restates what is owed; once withdrawn it is *realized* equity and locks. POL is cash the company *holds* — its dollar-equivalence is simply recomputed at the current price, and because both sides of every POL entry move together the books never fall out of balance.
 
 ---
 
@@ -238,20 +257,20 @@ flowchart TD
   minted{{"Minted(shareholder, amount)"}}:::evt
   minted -->|"+ Deposited (SafeDepositRouter)"| cap["Capital raise — UC-SDR-01<br/>Dr Cash (Safe) · Cr Investor Equity"]:::ok
   minted -->|"+ WithdrawToken (CashRemuneration)"| pay["Pay in shares — UC-CASH-03 (at withdraw)<br/>Dr Shares to be issued · Cr Investor Equity"]:::ok
-  minted ==>|"Minted alone (direct mint) · DEFAULT D"| d["Memo: +N shares, value 0<br/>no monetary entry"]:::def
+  minted ==>|"Minted alone (direct mint) · DEFAULT D"| d["Direct mint — Default D<br/>Dr Shares to be issued · Cr Investor Equity"]:::def
 
   classDef evt fill:#e0e7ff,stroke:#6366f1,color:#312e81;
   classDef ok fill:#dcfce7,stroke:#22c55e,color:#14532d;
   classDef def fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:3px;
 ```
 
-> **Default D.** A direct `individualMint` / `distributeMint` with no cash and no service behind it → **no monetary entry**; only the share count moves. Reconcile shares (`Σ Minted` = on-chain supply) separately from value (`Investor Equity` only holds mints with real value behind them).
+> **Default D.** A direct `individualMint` / `distributeMint` issues shares straight to equity — **Dr Shares to be issued · Cr Investor Equity**, valued at the SHER rate frozen at the mint date. When the mint corresponds to earlier wage accruals it clears them out of `Shares to be issued`; a mint with **no accrual behind it** debits `Shares to be issued` into a **contra (negative) balance** — a known edge to reconcile (`Σ Minted` = on-chain supply, checked against the value in `Investor Equity`).
 
 ---
 
 ## 6. Worked example — a full period
 
-This is the scenario in the companion spreadsheet, booked end to end. Amounts in USD (POL converted; SHER valued at the agreed price). It balances at every level.
+This is the scenario in the companion spreadsheet, booked end to end. Amounts in USD — POL at its current price, SHER at the router multiplier (see [Currency & valuation](#currency--valuation-rate-of-record)). This period has **no rate change**, so every SHER is valued at $1 and every POL amount is stable; the realization/float rules only bite once a rate moves. It balances at every level.
 
 ### 6.1 The events
 
@@ -324,10 +343,13 @@ The period runs **1 – 28 March 2026**. Each transaction is dated below, and th
 |            |                                        | Investor Equity                  |            |         10 |
 | 2026-03-25 | GRG invests $8 & gets SHER             | Cash — Safe                      |          8 |            |
 |            |                                        | Investor Equity                  |            |          8 |
-| 2026-03-26 | Ravi mints 30 SHER (Default D)         | — no entry (memo: +30 SHER)      |            |            |
+| 2026-03-26 | Ravi mints 30 SHER (Default D)         | Shares to be issued (30 SHER)    |         30 |            |
+|            |                                        | Investor Equity                  |            |         30 |
 | 2026-03-28 | Ravi pays $20 dividend                 | Dividend Expense                 |         20 |            |
 |            |                                        | Cash — Bank                      |            |         20 |
-| **TOTAL**  |                                        |                                  | **678.10** | **678.10** |
+| **TOTAL**  |                                        |                                  | **708.10** | **708.10** |
+
+> **Ravi's direct mint (#17).** It has **no wage accrual behind it** (Ravi never claimed those 30 SHER), so the `Dr Shares to be issued` has nothing to cancel: `Shares to be issued` is pushed to a **−30 contra balance** and `Investor Equity` rises by 30. The books still balance (the entry is 30 = 30); this is the known unbacked-direct-mint edge from [§5.4](#54-sher-mints--three-paths-one-minted-event).
 
 ### 6.3 T-accounts (per account)
 
@@ -384,7 +406,8 @@ Dr | Cr
    | #10 Geor wage mint     10
    | #15 HR                 10
    | #16 GRG                 8
-   | Solde (Cr)            138
+   | #17 Ravi direct mint   30
+   | Solde (Cr)            168
 
 Service Revenue (Income)
 Dr | Cr
@@ -404,7 +427,8 @@ Solde                  0 |
 Shares to be issued (Liability)
 Dr                       | Cr
 #10 Geor withdraw     10 | #9  Geor claim (SHER)  10
-Solde                  0 |
+#17 Ravi direct mint  30 |
+Solde (Dr, contra)    30 |   (unbacked direct mint — see #17)
 
 Payroll Expense   (Dr) 50.8  — #9
 Operating Expense (Dr) 20    — #12
@@ -420,16 +444,16 @@ Owner Capital          0     (empty — everyone got shares or it was revenue)
 | Cash                | Asset     |     142.20 |            |
 | Trading account     | Asset     |          0 |            |
 | Owner Capital       | Equity    |            |          0 |
-| Investor Equity     | Equity    |            |        138 |
+| Investor Equity     | Equity    |            |        168 |
 | Service Revenue     | Income    |            |        100 |
 | Trading Gain        | Income    |            |         15 |
 | Wage Payable        | Liability |          0 |          0 |
-| Shares to be issued | Liability |          0 |          0 |
+| Shares to be issued | Liability |      30.00 |            |
 | Payroll Expense     | Expense   |      50.80 |            |
 | Operating Expense   | Expense   |         20 |            |
 | Trading Loss        | Expense   |         20 |            |
 | Dividend Expense    | Expense   |         20 |            |
-| **TOTAL**           |           | **253.00** | **253.00** |
+| **TOTAL**           |           | **283.00** | **283.00** |
 
 ### 6.5 Income statement
 
@@ -454,24 +478,25 @@ Owner Capital          0     (empty — everyone got shares or it was revenue)
 | Trading account (at cost)                         |                   0.00 |
 | **Total assets**                                  |             **142.20** |
 | **LIABILITIES**                                   |                        |
-| None (Wage Payable & Shares to be issued settled) |                   0.00 |
-| **Total liabilities**                             |               **0.00** |
+| Wage Payable (settled)                            |                   0.00 |
+| Shares to be issued (unbacked direct mint, contra) |                −30.00 |
+| **Total liabilities**                             |              **−30.00** |
 | **EQUITY**                                        |                        |
 | Owner capital                                     |                   0.00 |
-| Investor equity (SHER)                            |                 138.00 |
+| Investor equity (SHER)                            |                 168.00 |
 | Retained earnings (net profit)                    |                   4.20 |
-| **Total equity**                                  |             **142.20** |
-| **Assets = Liabilities + Equity**                 | **142.20 = 142.20** ✅ |
+| **Total equity**                                  |             **172.20** |
+| **Assets = Liabilities + Equity**                 | **142.20 = −30.00 + 172.20** ✅ |
 
 ---
 
 ## 7. Reconciliation & notes
 
-- **It balances at every level:** journal 678.10 = 678.10 · trial balance 253 = 253 · assets 142.20 = equity 142.20.
+- **It balances at every level:** journal 708.10 = 708.10 · trial balance 283 = 283 · assets 142.20 = liabilities −30 + equity 172.20.
 - **Internal transfers don't touch the statements.** Funding payroll/expense from Bank, and the Safe → Bank transfer, only move cash between pockets — no effect on the income statement, balance-sheet totals, or net trial balance. The Safe → Bank transfer of 71.75 exists only because operating payments (payroll, expense, dividend, trader) leave from Bank while the funding (investments) lands in Safe.
 - **Fees stay inside Cash.** The $0.23 of fees moved from Bank to FeeCollector — both CNC pockets — so no revenue is recognised here.
-- **Shares vs value.** `Investor Equity` ($138) only counts mints with real value behind them (investments + the SHER paid as wages). Ravi's 30-SHER direct mint is **Default D** — tracked as +30 shares at **$0**, so it never inflates equity value.
-- **SHER wages are recognised at withdraw, not at claim.** From the claim until the withdrawal, the SHER part of a wage sits in the `Shares to be issued` liability; only at `withdraw()` does `individualMint` fire and the $10 move into `Investor Equity`. This matches the on-chain `WithdrawToken` / `Minted` events. The withdraw nets the liability to $0, so it never appears on the balance sheet at period end — but in a period where a claim is open without a matching withdrawal, `Shares to be issued` carries the promised SHER as a liability.
+- **Shares vs value.** `Investor Equity` ($168) counts capital raises ($100 + $10 + $10 + $8), the SHER paid as a wage ($10) and Ravi's direct mint ($30). Ravi's mint (**Default D**) issues 30 SHER straight to equity; because he never accrued them, the offsetting `Dr Shares to be issued` has nothing to cancel and leaves that liability at **−30** (contra) — the known unbacked-direct-mint edge. Still reconcile shares (`Σ Minted` = on-chain supply) against the value in `Investor Equity`.
+- **SHER wages are recognised at withdraw, not at claim.** From the claim until the withdrawal, the SHER part of a wage sits in the `Shares to be issued` liability — **floating at the current multiplier** while it is pending. Only at `withdraw()` does `individualMint` fire and the value move into `Investor Equity`, **frozen at the withdraw-date multiplier**. This matches the on-chain `WithdrawToken` / `Minted` events. The withdraw nets the liability to $0, so it never appears on the balance sheet at period end — but in a period where a claim is open without a matching withdrawal, `Shares to be issued` carries the promised SHER, re-valued at the current multiplier.
 - **Owner Capital is $0** in this period: everyone who put money in either received shares (Investor Equity) or it was a client payment (Service Revenue) — nobody made a pure founder deposit.
 
 ### Coverage scorecard
