@@ -45,6 +45,14 @@ export const makeTeamStore = (overrides: Record<string, unknown> = {}) => {
       store.currentTeamId = id
     }),
     getContractAddressByType: vi.fn(defaultGetContractAddressByType),
+    // Mirrors the real store: V2 ('Investor') preferred, V1 ('InvestorV1')
+    // fallback — delegates to `store.getContractAddressByType` at call time
+    // (not a fixed closure) so a spec overriding that spy is automatically
+    // respected here too, same as in production.
+    getInvestorAddress: vi.fn(
+      () =>
+        store.getContractAddressByType('Investor') || store.getContractAddressByType('InvestorV1')
+    ),
     fetchTeam: vi.fn(),
     ...overrides
   }
@@ -63,6 +71,14 @@ export const mockTeamStore = makeTeamStore()
 export const resetTeamStoreMock = () => {
   Object.assign(mockTeamStore, teamStoreDataDefaults())
   mockTeamStore.getContractAddressByType = vi.fn(defaultGetContractAddressByType)
+  // Delegates to `mockTeamStore.getContractAddressByType` at call time (see
+  // makeTeamStore) — resetting that above is enough for most specs, but this
+  // also clears a direct override of getInvestorAddress itself, if any.
+  mockTeamStore.getInvestorAddress = vi.fn(
+    () =>
+      mockTeamStore.getContractAddressByType('Investor') ||
+      mockTeamStore.getContractAddressByType('InvestorV1')
+  )
   mockTeamStore.setCurrentTeamId.mockClear()
   mockTeamStore.fetchTeam.mockClear()
   mockTeamStore.teamsMeta.reloadTeams.mockClear()
