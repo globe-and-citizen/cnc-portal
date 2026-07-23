@@ -50,6 +50,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   // @notice Address of the Commission Collector
+  /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
   address private immutable i_feeCollectorAddress;
 
   /// @notice Mapping of contract type to beacon address

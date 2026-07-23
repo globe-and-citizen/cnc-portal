@@ -19,7 +19,7 @@ const MockTokensModule = buildModule('MockTokens', (m) => {
       throw new Error('recipients.json does not contain a valid recipients array')
     }
   } catch (e) {
-    throw new Error('Failed to load recipients from recipcdients.json: ' + (e as Error).message)
+    throw new Error('Failed to load recipients from recipients.json: ' + (e as Error).message)
   }
 
   testAccounts.forEach((account, index) => {

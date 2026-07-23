@@ -86,28 +86,20 @@ describe('Officer Contract', function () {
     investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as Beacon
 
     electionsContract = await ethers.getContractFactory('Elections')
-    electionsBeacon = (await upgrades.deployBeacon(
-      electionsContract
-    )) as unknown as Beacon
+    electionsBeacon = (await upgrades.deployBeacon(electionsContract)) as unknown as Beacon
 
     boardOfDirectors = await ethers.getContractFactory('BoardOfDirectors')
     bodBeacon = (await upgrades.deployBeacon(boardOfDirectors)) as unknown as Beacon
 
     expenseAccount = await ethers.getContractFactory('ExpenseAccountEIP712')
-    expenseAccountBeacon = (await upgrades.deployBeacon(
-      expenseAccount
-    )) as unknown as Beacon
+    expenseAccountBeacon = (await upgrades.deployBeacon(expenseAccount)) as unknown as Beacon
 
     proposalsContract = await ethers.getContractFactory('Proposals')
-    proposalsBeacon = (await upgrades.deployBeacon(
-      proposalsContract
-    )) as unknown as Beacon
+    proposalsBeacon = (await upgrades.deployBeacon(proposalsContract)) as unknown as Beacon
 
     //  ADD: Deploy SafeDepositRouter beacon
     safeDepositRouter = await ethers.getContractFactory('SafeDepositRouter')
-    safeDepositRouterBeacon = (await upgrades.deployBeacon(
-      safeDepositRouter
-    )) as unknown as Beacon
+    safeDepositRouterBeacon = (await upgrades.deployBeacon(safeDepositRouter)) as unknown as Beacon
 
     // Deploy Officer contract
     officer = await deployOfficerInstance()

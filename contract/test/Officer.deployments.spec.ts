@@ -7,7 +7,7 @@ import {
   Elections__factory,
   Investor__factory,
   CashRemunerationEIP712__factory,
-  ExpenseAccountEIP712__factory,
+  ExpenseAccountEIP712__factory
 } from '../typechain-types/index.js'
 import type { Beacon, FeeCollector, Officer } from '../typechain-types/index.js'
 import { ZeroAddress } from 'ethers'

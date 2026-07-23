@@ -2,7 +2,7 @@
   "name": "hardhat-project",
   "type": "module",
   "scripts": {
-    "typechain": "npx hardhat typechain",
+    "typechain": "npx hardhat build",
     "compile": "npx hardhat build",
     "node": "npx hardhat node",
     "deploy": "bash deploy.sh localhost",

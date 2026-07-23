@@ -78,9 +78,11 @@ async function getStorageLayout(contractName: string): Promise<StorageLayout> {
   if (!fqn) throw new Error(`Contract ${contractName} not found in artifacts`)
 
   const buildInfoId = await hre.artifacts.getBuildInfoId(fqn)
-  if (!buildInfoId) throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
+  if (!buildInfoId)
+    throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
   const buildInfoPath = await hre.artifacts.getBuildInfoPath(buildInfoId)
-  if (!buildInfoPath) throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
+  if (!buildInfoPath)
+    throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
   const buildInfo = JSON.parse(await fs.promises.readFile(buildInfoPath, 'utf8')) as {
     output: unknown
   }
@@ -216,8 +218,12 @@ async function validateContract(
   try {
     const Factory = await connection.ethers.getContractFactory(contractName)
     await upgrades.validateImplementation(Factory, {
-      kind: 'beacon'
-    })
+      kind: 'beacon',
+      // Hardhat Upgrades v4 keeps constructorArgs in the runtime options used
+      // to encode the implementation bytecode, although its public
+      // ValidateImplementationOptions type omits the field.
+      ...(config.constructorArgs ? { constructorArgs: config.constructorArgs } : {})
+    } as Parameters<typeof upgrades.validateImplementation>[1])
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     errors.push(`OZ safety check failed:\n      ${msg.split('\n').join('\n      ')}`)

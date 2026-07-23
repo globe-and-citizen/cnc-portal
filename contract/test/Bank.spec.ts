@@ -260,11 +260,13 @@ describe('Bank', () => {
       it('should allow owner to pause and unpause', async () => {
         await bank.pause()
         expect(await bankProxy.paused()).to.be.true
-      await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.revert(ethers)
+        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.revert(ethers)
 
         await bank.unpause()
         expect(await bankProxy.paused()).to.be.false
-      await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.revert(ethers)
+        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.revert(
+          ethers
+        )
       })
 
       it('should not allow non-owner to pause or unpause', async () => {
@@ -523,9 +525,9 @@ describe('Bank', () => {
       const amount = ethers.parseUnits('100', 6)
       const fixedReturnBefore = await token.balanceOf(await mockFixedReturn.getAddress())
 
-      await expect(localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, amount)).to.be.revert(
-        ethers
-      )
+      await expect(
+        localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, amount)
+      ).to.be.revert(ethers)
 
       expect(await token.balanceOf(await mockFixedReturn.getAddress())).to.equal(fixedReturnBefore)
     })

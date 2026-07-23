@@ -417,10 +417,12 @@ describe('FeeCollector', () => {
       await mockUSDT.mint(await feeCollector.getAddress(), amount)
       // mockUSDC is supported but has zero balance — sweep should not move it
       const tx = feeCollector.withdraw()
-      await expect(tx).to.changeTokenBalances(ethers, mockUSDT, [feeCollector, owner], [
-        -amount,
-        amount
-      ])
+      await expect(tx).to.changeTokenBalances(
+        ethers,
+        mockUSDT,
+        [feeCollector, owner],
+        [-amount, amount]
+      )
       await expect(tx).to.changeTokenBalances(ethers, mockUSDC, [feeCollector, owner], [0n, 0n])
     })
 

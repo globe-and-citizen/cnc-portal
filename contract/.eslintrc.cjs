@@ -3,6 +3,7 @@ module.exports = {
     es2021: true,
     node: true
   },
+  ignorePatterns: ['artifacts/**', 'coverage/**', 'ignition/deployments/**', 'typechain-types/**'],
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   overrides: [
     {

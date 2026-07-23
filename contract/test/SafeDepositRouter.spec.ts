@@ -193,7 +193,9 @@ describe('SafeDepositRouter', function () {
 
     await usdc.connect(depositor).approve(await router.getAddress(), amount)
 
-    await expect(router.connect(depositor).deposit(await usdc.getAddress(), amount)).to.be.revert(ethers)
+    await expect(router.connect(depositor).deposit(await usdc.getAddress(), amount)).to.be.revert(
+      ethers
+    )
   })
 
   it('pause and unpause by owner', async () => {

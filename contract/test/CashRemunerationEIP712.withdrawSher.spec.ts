@@ -50,7 +50,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     // Deploy implementation contracts
     investor = await ethers.getContractFactory('Investor')
-  investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as Beacon
+    investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as Beacon
 
     cashRemunerationEIP712 = await ethers.getContractFactory('CashRemunerationEIP712')
     cashRemunerationEIP712Beacon = (await upgrades.deployBeacon(
