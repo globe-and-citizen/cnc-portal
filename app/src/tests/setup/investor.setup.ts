@@ -30,5 +30,6 @@ vi.mock('@/composables/investor/writes', () => ({
  */
 vi.mock('@/composables/investor/readsV2', () => ({
   useInvestorV2Address: vi.fn(() => computed(() => MOCK_INVESTOR_ADDRESS)),
-  useInvestorV2MigrationRoot: vi.fn(() => mockInvestorV2Reads.migrationRoot)
+  useInvestorV2MigrationRoot: vi.fn(() => mockInvestorV2Reads.migrationRoot),
+  useInvestorV2MigrationComplete: vi.fn(() => mockInvestorV2Reads.migrationComplete)
 }))

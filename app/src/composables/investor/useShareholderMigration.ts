@@ -134,7 +134,57 @@ export function useMigrateShareholders(options: UseMigrateShareholdersOptions = 
 
       const eligibility = await checkMigrationEligibility(args)
       if (!eligibility.eligible) {
-        return { kind: eligibility.reason }
+        if (eligibility.reason === 'noop-empty') {
+          return { kind: eligibility.reason }
+        }
+
+        // A previous attempt may have committed the root and failed before
+        // persisting the snapshot. Rebuild the snapshot and repair the
+        // backend record instead of treating the migration as complete.
+        const snapshot = await generateSnapshotMutation.mutateAsync({
+          body: { investorV1Address: oldInvestor }
+        })
+        if (!snapshot) {
+          throw new Error('Failed to regenerate Merkle snapshot')
+        }
+
+        const existingRoot = (await readContract(config, {
+          address: args.newInvestorAddress,
+          abi: INVESTOR_V2_ABI,
+          functionName: 'getMigrationRoot'
+        })) as Hex
+
+        if (existingRoot.toLowerCase() !== snapshot.root.toLowerCase()) {
+          throw new Error(
+            'The new Investor already has a migration root that does not match the current shareholder snapshot'
+          )
+        }
+
+        await persistMutation.mutateAsync({
+          body: {
+            teamId: args.teamId,
+            previousInvestorAddress: oldInvestor,
+            newInvestorAddress: args.newInvestorAddress,
+            merkleRoot: snapshot.root,
+            blockNumber: snapshot.blockNumber,
+            shareholders: snapshot.shareholders.map((s) => ({
+              shareholder: s.address as Address,
+              amount: s.amount
+            }))
+          }
+        })
+
+        return {
+          kind: 'done',
+          migratedCount: snapshot.shareholders.length,
+          previousInvestorAddress: oldInvestor,
+          merkleRoot: snapshot.root as Hex,
+          blockNumber: BigInt(snapshot.blockNumber),
+          shareholders: snapshot.shareholders.map((s) => ({
+            shareholder: s.address as Address,
+            amount: BigInt(s.amount)
+          }))
+        }
       }
 
       // Generate Merkle snapshot with double hash from backend

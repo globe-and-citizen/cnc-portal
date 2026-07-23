@@ -10,7 +10,6 @@
       v-if="isOwner"
       :investor-v2-address="investorV2AddressValue"
       :migration-data="migrationData"
-      :claimed-addresses="claimedAddresses"
       data-test="migration-owner-sweep-section"
     />
   </div>
@@ -20,7 +19,11 @@
 import { computed } from 'vue'
 import { type Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { useInvestorV2Address, useInvestorV2MigrationRoot } from '@/composables/investor/readsV2'
+import {
+  useInvestorV2Address,
+  useInvestorV2MigrationComplete,
+  useInvestorV2MigrationRoot
+} from '@/composables/investor/readsV2'
 import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 import MerkleClaimForm from './MerkleClaimForm.vue'
 import MigrationOwnerSweep from './MigrationOwnerSweep.vue'
@@ -33,6 +36,7 @@ const userAddress = computed(() => userStore.address as Address | undefined)
 const investorV2Address = useInvestorV2Address()
 const investorV2AddressValue = computed(() => investorV2Address.value as Address)
 const { data: migrationRoot } = useInvestorV2MigrationRoot()
+const { data: migrationComplete } = useInvestorV2MigrationComplete()
 const { data: allMigrations } = useGetInvestorMigrationQuery({
   queryParams: { teamId: teamStore.currentTeamId as string | number }
 })
@@ -49,15 +53,12 @@ const isOwner = computed(() => {
   )
 })
 
-const claimedAddresses = computed<Set<Address>>(() => {
-  return new Set()
-})
-
 const showSection = computed(() => {
   if (!investorV2Address.value) return false
   if (migrationRoot.value === undefined || migrationRoot.value === null) return false
   if (migrationRoot.value === '0x0000000000000000000000000000000000000000000000000000000000000000')
     return false
+  if (migrationComplete.value === true) return false
   return !!migrationData.value
 })
 </script>

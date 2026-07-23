@@ -209,8 +209,10 @@ describe('useOfficerRedeploy', () => {
       previousOfficer: { id: 1, address: PREV_OFFICER },
       contractsCreated: 0
     })
-    // InvestorV1 not present in the returned team contract list.
-    mockReadContract.mockResolvedValue([{ contractType: 'Voting', contractAddress: '0xvoting' }])
+    // The previous Officer resolves, but the newly deployed Officer has no Investor.
+    mockReadContract
+      .mockResolvedValueOnce([{ contractType: 'Investor', contractAddress: NEW_INVESTOR }])
+      .mockResolvedValueOnce([{ contractType: 'Voting', contractAddress: '0xvoting' }])
 
     const { redeploy, workflowError } = useOfficerRedeploy()
     await redeploy({ name: 'Shares', symbol: 'SH' })

@@ -7,7 +7,7 @@ import {
   getInvestorMigrationQuerySchema,
   z,
 } from '../validation';
-import { generateMerkleSnapshot } from '../services/merkleSnapshotService';
+import { buildMerkleProofSet, generateMerkleSnapshot } from '../services/merkleSnapshotService';
 
 type CreateInvestorMigrationBody = z.infer<typeof createInvestorMigrationBodySchema>;
 type GetInvestorMigrationQuery = z.infer<typeof getInvestorMigrationQuerySchema>;
@@ -50,6 +50,31 @@ export const createInvestorMigration = async (req: Request, res: Response) => {
       return errorResponse(403, 'Caller is not the owner of the new Investor contract', res);
     }
 
+    const existingMigration = await prisma.investorMigration.findUnique({
+      where: { newInvestorAddress },
+    });
+
+    if (existingMigration) {
+      const sameSnapshot =
+        existingMigration.teamId === teamId &&
+        existingMigration.previousInvestorAddress.toLowerCase() ===
+          previousInvestorAddress.toLowerCase() &&
+        existingMigration.merkleRoot.toLowerCase() === merkleRoot.toLowerCase();
+
+      if (!sameSnapshot) {
+        return errorResponse(
+          409,
+          'A different migration snapshot already exists for this Investor contract',
+          res
+        );
+      }
+
+      return res.status(200).json({
+        ...existingMigration,
+        blockNumber: existingMigration.blockNumber.toString(),
+      });
+    }
+
     const migration = await prisma.investorMigration.create({
       data: {
         teamId,
@@ -81,10 +106,25 @@ export const getInvestorMigration = async (req: Request, res: Response) => {
     });
 
     return res.status(200).json(
-      migrations.map((m) => ({
-        ...m,
-        blockNumber: m.blockNumber.toString(),
-      }))
+      migrations.map((m) => {
+        const shareholders = m.shareholders as Array<{
+          shareholder: string;
+          amount: string;
+        }>;
+        const { root, proofs } = buildMerkleProofSet(shareholders);
+
+        if (root.toLowerCase() !== m.merkleRoot.toLowerCase()) {
+          throw new Error(
+            `Persisted migration root does not match its shareholder snapshot for Investor ${m.newInvestorAddress}`
+          );
+        }
+
+        return {
+          ...m,
+          blockNumber: m.blockNumber.toString(),
+          proofs,
+        };
+      })
     );
   } catch (error) {
     return errorResponse(500, error, res);

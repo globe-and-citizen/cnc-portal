@@ -242,7 +242,8 @@ vi.mock('@/queries/investorMigration.queries', () => ({
     team: (teamId: string | number) => ['investorMigration', String(teamId)] as const
   },
   useCreateInvestorMigrationMutation: vi.fn(queryMocks.useCreateInvestorMigrationMutation),
-  useGetInvestorMigrationQuery: vi.fn(queryMocks.useGetInvestorMigrationQuery)
+  useGetInvestorMigrationQuery: vi.fn(queryMocks.useGetInvestorMigrationQuery),
+  useGenerateMerkleSnapshotMutation: vi.fn(queryMocks.useGenerateMerkleSnapshotMutation)
 }))
 
 /**

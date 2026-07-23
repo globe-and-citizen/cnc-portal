@@ -50,6 +50,44 @@ interface MerkleSnapshot {
   totalSupply: string;
 }
 
+export interface StoredShareholder {
+  shareholder: string;
+  amount: string;
+}
+
+export interface MerkleProofSet {
+  root: string;
+  proofs: Record<string, string[]>;
+}
+
+/**
+ * Rebuild the deterministic Merkle tree from a persisted shareholder list.
+ * The persisted list is the source of truth because the on-chain root alone
+ * cannot be used to recover its leaves or proofs.
+ */
+export function buildMerkleProofSet(shareholders: readonly StoredShareholder[]): MerkleProofSet {
+  const leafHashes = shareholders.map((shareholder) =>
+    computeLeaf(shareholder.shareholder as Address, BigInt(shareholder.amount))
+  );
+  const tree = new MerkleTree(leafHashes, keccak256, {
+    hashLeaves: false,
+    sortLeaves: false,
+  });
+
+  const proofs: Record<string, string[]> = {};
+  for (let i = 0; i < leafHashes.length; i++) {
+    const address = shareholders[i].shareholder.toLowerCase();
+    proofs[address] = tree
+      .getProof(leafHashes[i])
+      .map((proof) => `0x${proof.data.toString('hex')}`);
+  }
+
+  return {
+    root: `0x${tree.getRoot().toString('hex')}`,
+    proofs,
+  };
+}
+
 export async function generateMerkleSnapshot(investorV1Address: Address): Promise<MerkleSnapshot> {
   // Read shareholders from v1 Investor
   const shareHoldersRaw = (await publicClient.readContract({
@@ -83,19 +121,15 @@ export async function generateMerkleSnapshot(investorV1Address: Address): Promis
   }
 
   // Build Merkle tree with double-hashed leaves matching Investor.sol
-  const leafHashes = shareHoldersRaw.map((sh) => computeLeaf(sh.address, sh.amount));
-  const tree = new MerkleTree(leafHashes, keccak256, { hashLeaves: false, sortLeaves: false });
-
-  // Generate proofs for each shareholder
-  const proofs: Record<string, string[]> = {};
-  for (let i = 0; i < leafHashes.length; i++) {
-    const address = shareHoldersRaw[i].address.toLowerCase();
-    const proof = tree.getProof(leafHashes[i]);
-    proofs[address] = proof.map((p) => `0x${p.data.toString('hex')}`);
-  }
+  const { root, proofs } = buildMerkleProofSet(
+    shareholders.map((shareholder) => ({
+      shareholder: shareholder.address,
+      amount: shareholder.amount,
+    }))
+  );
 
   return {
-    root: `0x${tree.getRoot().toString('hex')}`,
+    root,
     shareholders,
     proofs,
     blockNumber,

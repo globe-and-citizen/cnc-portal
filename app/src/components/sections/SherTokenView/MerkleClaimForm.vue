@@ -52,14 +52,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { type Address } from 'viem'
-import { parseUnits } from 'viem'
+import { type Address, type Hex, parseUnits } from 'viem'
 import { useClaimMigrationMutation } from '@/composables/investor/useClaimMigration'
 import { useToast } from '@nuxt/ui/composables'
+import type { InvestorMigration } from '@/queries/investorMigration.queries'
 
 interface Props {
   investorV2Address: Address
-  migrationData: any
+  migrationData: InvestorMigration | undefined
   userAddress: Address | undefined
 }
 
@@ -69,17 +69,17 @@ const toast = useToast()
 const claim = useClaimMigrationMutation()
 const claimAmount = ref('')
 
-const userProof = computed(() => {
+const userProof = computed<Hex[] | null>(() => {
   if (!props.userAddress || !props.migrationData?.proofs) return null
-  return props.migrationData.proofs[props.userAddress.toLowerCase()]
+  return props.migrationData.proofs[props.userAddress.toLowerCase()] ?? null
 })
 
-const userAmount = computed(() => {
+const userAmount = computed<string | null>(() => {
   if (!props.userAddress || !props.migrationData?.shareholders) return null
   const sh = props.migrationData.shareholders.find(
-    (s: any) => s.address.toLowerCase() === props.userAddress?.toLowerCase()
+    (s) => s.shareholder.toLowerCase() === props.userAddress?.toLowerCase()
   )
-  return sh?.amount
+  return sh?.amount ?? null
 })
 
 const onClaim = async () => {
@@ -92,7 +92,16 @@ const onClaim = async () => {
     return
   }
 
-  const amount = parseUnits(claimAmount.value, 6) // Assuming 6 decimals
+  const amount = parseUnits(claimAmount.value, 6)
+
+  if (amount !== BigInt(userAmount.value)) {
+    toast.add({
+      title: 'Invalid claim amount',
+      description: 'The claim amount must match the frozen migration snapshot',
+      color: 'error'
+    })
+    return
+  }
 
   claim.mutate(
     {

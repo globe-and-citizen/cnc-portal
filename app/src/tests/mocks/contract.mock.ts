@@ -138,7 +138,8 @@ export const mockInvestorReads = {
  * InvestorV1, see composables/investor/readsV2.ts.
  */
 export const mockInvestorV2Reads = {
-  migrationRoot: createContractReadMock<`0x${string}`>(zeroHash)
+  migrationRoot: createContractReadMock<`0x${string}`>(zeroHash),
+  migrationComplete: createContractReadMock(false)
 }
 
 export const mockInvestorWrites = {

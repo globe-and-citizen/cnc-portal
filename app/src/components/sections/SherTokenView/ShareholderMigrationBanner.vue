@@ -5,10 +5,17 @@
       <div class="flex-1">
         <p class="font-semibold">Shareholder migration pending</p>
         <p class="mt-1 text-sm">
-          A new Officer was deployed for this team but the previous share token holders' migration
-          root has not been committed on the new Investor contract yet. Click below to read the
-          previous shareholders on-chain and commit their claim allocation here — each holder then
-          self-claims their balance.
+          <template v-if="needsSnapshotRepair">
+            The migration root is already committed on the new Investor contract, but the migration
+            snapshot is missing from the backend. Click below to rebuild and persist it so holders
+            can claim their balance.
+          </template>
+          <template v-else>
+            A new Officer was deployed for this team but the previous share token holders' migration
+            root has not been committed on the new Investor contract yet. Click below to read the
+            previous shareholders on-chain and commit their claim allocation here — each holder then
+            self-claims their balance.
+          </template>
         </p>
 
         <UAlert
@@ -31,7 +38,9 @@
               @click="onRun"
               data-test="migrate-from-previous-button"
             >
-              Migrate from previous Officer
+              {{
+                needsSnapshotRepair ? 'Repair migration snapshot' : 'Migrate from previous Officer'
+              }}
             </UButton>
           </TeamArchivedTooltip>
         </div>
@@ -48,18 +57,33 @@ import { useTeamStore } from '@/stores'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useInvestorV2Address, useInvestorV2MigrationRoot } from '@/composables/investor/readsV2'
 import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
+import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
 
 const currentInvestorAddress = useInvestorV2Address()
 const { data: currentMigrationRoot, refetch: refetchMigrationRoot } = useInvestorV2MigrationRoot()
+const { data: migrationSnapshots } = useGetInvestorMigrationQuery({
+  queryParams: { teamId: teamStore.currentTeamId as string | number }
+})
 
 const migrate = useMigrateShareholders()
 
 const previousOfficerAddress = computed<Address | null>(() => {
   const prev = teamStore.currentTeamMeta.data?.currentOfficer?.previousOfficer
   return prev?.address ? (prev.address as Address) : null
+})
+
+const needsSnapshotRepair = computed(() => {
+  if (currentMigrationRoot.value === undefined || currentMigrationRoot.value === null) {
+    return false
+  }
+  return (
+    currentMigrationRoot.value !== zeroHash &&
+    Array.isArray(migrationSnapshots.value) &&
+    migrationSnapshots.value.length === 0
+  )
 })
 
 // Visible only when there is a previous Officer to migrate from AND the new
@@ -69,7 +93,8 @@ const showBanner = computed(() => {
   if (!previousOfficerAddress.value) return false
   if (!currentInvestorAddress.value) return false
   if (currentMigrationRoot.value === undefined || currentMigrationRoot.value === null) return false
-  return currentMigrationRoot.value === zeroHash
+  if (currentMigrationRoot.value === zeroHash) return true
+  return needsSnapshotRepair.value
 })
 
 const onRun = () => {

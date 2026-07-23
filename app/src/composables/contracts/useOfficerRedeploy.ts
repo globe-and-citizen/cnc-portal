@@ -20,8 +20,7 @@ import {
   useDeployOfficer,
   useInvalidateOfficerQueries
 } from '@/composables/contracts/useOfficerDeployment'
-import { useSetMigrationRootMutation } from '@/composables/investor/useSetMigrationRoot'
-import { useGenerateMerkleSnapshotMutation } from '@/queries/investorMigration.queries'
+import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { log } from '@/utils'
@@ -52,8 +51,7 @@ export function useOfficerRedeploy() {
   // invalidation pass — see CONVENTIONS.md §1 / §2.
   const deployMutation = useDeployOfficer({ silent: true, skipInvalidation: true })
   const registerMutation = useCreateOfficerMutation()
-  const generateSnapshotMutation = useGenerateMerkleSnapshotMutation()
-  const migrateMutation = useSetMigrationRootMutation({ silent: true })
+  const migrateMutation = useMigrateShareholders({ silent: true })
   const invalidateQueries = useInvalidateOfficerQueries()
 
   // Workflow-level state that spans multiple mutations.
@@ -71,7 +69,6 @@ export function useOfficerRedeploy() {
     () =>
       deployMutation.isPending.value ||
       registerMutation.isPending.value ||
-      generateSnapshotMutation.isPending.value ||
       migrateMutation.isPending.value
   )
   const migrationFailed = computed(
@@ -106,20 +103,21 @@ export function useOfficerRedeploy() {
     previousInvestorAddress: Address
     newInvestorAddress: Address
   }) => {
-    // Step 1: Generate Merkle snapshot from previous Investor v1
-    const snapshot = await generateSnapshotMutation.mutateAsync({
-      body: { investorV1Address: ctx.previousInvestorAddress }
-    })
-    if (!snapshot) return
+    try {
+      const result = await migrateMutation.mutateAsync({
+        teamId: ctx.teamId,
+        previousOfficerAddress: ctx.previousOfficerAddress,
+        newInvestorAddress: ctx.newInvestorAddress
+      })
 
-    // Step 2: Write root to new Investor v2 contract
-    await migrateMutation.mutateAsync({
-      investorV2Address: ctx.newInvestorAddress,
-      root: snapshot.root as any,
-      shareholderCount: snapshot.shareholders.length
-    })
-    if (migrateMutation.isSuccess.value) {
-      pendingMigration.value = null
+      if (result) {
+        // A no-op is a valid terminal state: there are no holders to migrate
+        // or the root was already committed.
+        pendingMigration.value = null
+      }
+    } catch {
+      // Keep pendingMigration so the modal can expose retry/skip controls.
+      // The child mutation owns the concrete error ref rendered by the UI.
     }
   }
 
@@ -149,7 +147,6 @@ export function useOfficerRedeploy() {
     workflowError.value = null
     deployMutation.reset()
     registerMutation.reset()
-    generateSnapshotMutation.reset()
     migrateMutation.reset()
   }
 
@@ -225,7 +222,6 @@ export function useOfficerRedeploy() {
     // Reactive errors — bind directly to UAlert in the template
     deployError: deployMutation.error,
     registerError: registerMutation.error,
-    generateSnapshotError: generateSnapshotMutation.error,
     migrationError: migrateMutation.error,
     workflowError
   }

@@ -5,8 +5,8 @@
       <div class="flex-1">
         <p class="font-semibold">Complete migration (owner only)</p>
         <p class="mt-1 text-sm">
-          Bulk claim any unclaimed shares. This ensures all shareholders are minted, even those who
-          haven't claimed yet. Only the team owner can perform this action.
+          Bulk claim any unclaimed shares and close the migration. Already claimed shareholders are
+          skipped on-chain. Only the team owner can perform this action.
         </p>
 
         <UAlert
@@ -22,9 +22,7 @@
 
         <div class="mt-3">
           <p class="mb-2 text-xs text-gray-500">
-            Will claim {{ unclaimedCount }} unclaimed shareholder{{
-              unclaimedCount === 1 ? '' : 's'
-            }}
+            Will process {{ unclaimedCount }} shareholder{{ unclaimedCount === 1 ? '' : 's' }}
           </p>
           <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
             <UButton
@@ -49,11 +47,11 @@ import { type Address } from 'viem'
 import { useSweepMigrationMutation } from '@/composables/investor/useSweepMigration'
 import { useToast } from '@nuxt/ui/composables'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import type { InvestorMigration } from '@/queries/investorMigration.queries'
 
 interface Props {
   investorV2Address: Address
-  migrationData: any
-  claimedAddresses: Set<Address>
+  migrationData: InvestorMigration | undefined
 }
 
 const props = defineProps<Props>()
@@ -61,21 +59,22 @@ const props = defineProps<Props>()
 const toast = useToast()
 const sweep = useSweepMigrationMutation()
 
-const unclaimedShareholders = computed(() => {
+const shareholdersWithProofs = computed(() => {
   if (!props.migrationData?.shareholders) return []
-  return props.migrationData.shareholders.filter(
-    (sh: any) => !props.claimedAddresses.has(sh.address.toLowerCase() as Address)
-  )
+  return props.migrationData.shareholders.filter((sh) => {
+    const proof = props.migrationData?.proofs?.[sh.shareholder.toLowerCase()]
+    return Array.isArray(proof)
+  })
 })
 
-const unclaimedCount = computed(() => unclaimedShareholders.value.length)
+const unclaimedCount = computed(() => shareholdersWithProofs.value.length)
 
 const onSweep = async () => {
-  if (unclaimedShareholders.value.length === 0) {
+  if (shareholdersWithProofs.value.length === 0) {
     toast.add({
-      title: 'No unclaimed shares',
-      description: 'All shareholders have already claimed their shares',
-      color: 'info'
+      title: 'Migration proofs unavailable',
+      description: 'The shareholder migration snapshot does not contain claim proofs',
+      color: 'error'
     })
     return
   }
@@ -83,8 +82,11 @@ const onSweep = async () => {
   sweep.mutate(
     {
       investorV2Address: props.investorV2Address,
-      holders: unclaimedShareholders.value.map((sh: any) => sh.address as Address),
-      amounts: unclaimedShareholders.value.map((sh: any) => BigInt(sh.amount))
+      holders: shareholdersWithProofs.value.map((sh) => sh.shareholder as Address),
+      amounts: shareholdersWithProofs.value.map((sh) => BigInt(sh.amount)),
+      proofs: shareholdersWithProofs.value.map(
+        (sh) => props.migrationData?.proofs[sh.shareholder.toLowerCase()] ?? []
+      )
     },
     {
       onSuccess: () => {

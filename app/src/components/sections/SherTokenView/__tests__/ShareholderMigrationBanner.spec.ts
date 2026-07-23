@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { zeroHash, type Address, type Hex } from 'viem'
 import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
 import { useInvestorV2Address, useInvestorV2MigrationRoot } from '@/composables/investor/readsV2'
+import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 import { useTeamStore } from '@/stores'
 import { mockInvestorV2Reads, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
@@ -58,12 +59,14 @@ function setupMocks(
     previousOfficer?: { address: Address } | null
     migrationRoot?: Hex | null | undefined
     investorAddress?: Address | null
+    migrationSnapshots?: unknown[] | undefined
   } = {}
 ) {
   const previousOfficer =
     'previousOfficer' in opts ? opts.previousOfficer : { address: PREVIOUS_OFFICER }
   const migrationRoot = 'migrationRoot' in opts ? opts.migrationRoot : zeroHash
   const investorAddress = 'investorAddress' in opts ? opts.investorAddress : NEW_INVESTOR
+  const migrationSnapshots = 'migrationSnapshots' in opts ? opts.migrationSnapshots : undefined
 
   vi.mocked(useTeamStore).mockReturnValue({
     ...mockTeamStore,
@@ -91,6 +94,9 @@ function setupMocks(
   vi.mocked(useInvestorV2MigrationRoot).mockReturnValue(
     mockInvestorV2Reads.migrationRoot as unknown as ReturnType<typeof useInvestorV2MigrationRoot>
   )
+  vi.mocked(useGetInvestorMigrationQuery).mockReturnValue({
+    data: ref(migrationSnapshots)
+  } as unknown as ReturnType<typeof useGetInvestorMigrationQuery>)
 }
 
 function mountBanner() {
@@ -131,6 +137,17 @@ describe('ShareholderMigrationBanner', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-test="shareholder-migration-banner"]').exists()).toBe(false)
+  })
+
+  it('shows a repair action when the root exists but the snapshot is missing', async () => {
+    setupMocks({ migrationRoot: SOME_ROOT, migrationSnapshots: [] })
+    const wrapper = mountBanner()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="shareholder-migration-banner"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="migrate-from-previous-button"]').text()).toContain(
+      'Repair migration snapshot'
+    )
   })
 
   it('hides the banner when the migration root is undefined (still loading)', async () => {

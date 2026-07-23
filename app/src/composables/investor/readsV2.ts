@@ -22,3 +22,13 @@ export function useInvestorV2MigrationRoot() {
     query: { enabled: !!investorAddress.value && isAddress(investorAddress.value) }
   })
 }
+
+export function useInvestorV2MigrationComplete() {
+  const investorAddress = useInvestorV2Address()
+  return useReadContract({
+    address: investorAddress,
+    abi: INVESTOR_V2_ABI,
+    functionName: 'isMigrationComplete' as const,
+    query: { enabled: !!investorAddress.value && isAddress(investorAddress.value) }
+  })
+}

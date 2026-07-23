@@ -1,4 +1,5 @@
 import { toValue, type MaybeRefOrGetter } from 'vue'
+import type { Hex } from 'viem'
 import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 
 /**
@@ -14,6 +15,8 @@ export interface InvestorMigrationShareholder {
   amount: string
 }
 
+export type InvestorMigrationProofs = Record<string, Hex[]>
+
 export interface InvestorMigration {
   id: number
   teamId: number
@@ -22,6 +25,7 @@ export interface InvestorMigration {
   merkleRoot: string
   blockNumber: string
   shareholders: InvestorMigrationShareholder[]
+  proofs: InvestorMigrationProofs
   createdAt: string
 }
 
