@@ -538,13 +538,13 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
           publicClient.readContract({
             address: teamContract.address as `0x${string}`,
             abi: CASH_REMUNERATION_ABI,
-            functionName: 'paidWageClaims',
+            functionName: 'getPaidWageClaim',
             args: [signatureHash],
           }),
           publicClient.readContract({
             address: teamContract.address as `0x${string}`,
             abi: CASH_REMUNERATION_ABI,
-            functionName: 'disabledWageClaims',
+            functionName: 'getDisabledWageClaim',
             args: [signatureHash],
           }),
         ]);
