@@ -8,6 +8,7 @@ const createWageData = (overrides: Partial<WageWithForm> = {}): WageWithForm => 
   teamId: 1,
   userAddress: '0x123',
   maximumHoursPerWeek: 40,
+  maximumHoursPerDay: 8,
   maximumOvertimeHoursPerWeek: 0,
   enableOvertimeRules: false,
   ratePerHour: [
@@ -71,6 +72,24 @@ describe('SetMemberWageStandardStep.vue', () => {
     expect(wrapper.text()).toContain('USDC')
   })
 
+  it('binds the daily cap and reflects it in the hint', async () => {
+    const wageData = createWageData()
+    const wrapper = createWrapper(wageData)
+
+    expect(wrapper.find('[data-test="daily-cap-hint"]').text()).toContain('8 hrs/day')
+
+    await wrapper.find('input[data-test="daily-cap-input"]').setValue('6')
+
+    expect(wageData.maximumHoursPerDay).toBe(6)
+    expect(wrapper.find('[data-test="daily-cap-hint"]').text()).toContain('6 hrs/day')
+  })
+
+  it('falls back to the default daily cap in the hint when the field is emptied', async () => {
+    const wrapper = createWrapper(createWageData({ maximumHoursPerDay: 0 }))
+
+    expect(wrapper.find('[data-test="daily-cap-hint"]').text()).toContain('8 hrs/day')
+  })
+
   it('applies overtime card active state and button label when overtime is enabled', () => {
     const disabledWrapper = createWrapper(createWageData({ enableOvertimeRules: false }))
     const enabledWrapper = createWrapper(createWageData({ enableOvertimeRules: true }))
@@ -91,8 +110,9 @@ describe('SetMemberWageStandardStep.vue', () => {
     const numberInputs = wrapper.findAll('input[type="number"]')
     const checkboxInputs = wrapper.findAll('input[type="checkbox"]')
 
+    // 0 = weekly cap, 1 = daily cap, then one input per hourly rate
     await numberInputs[0]?.setValue('35')
-    await numberInputs[1]?.setValue('7')
+    await numberInputs[2]?.setValue('7')
     for (const checkbox of checkboxInputs) {
       await checkbox.setValue(true)
     }
@@ -168,7 +188,8 @@ describe('SetMemberWageStandardStep.vue', () => {
       ]
     })
     const wrapper = createWrapper(wageData)
-    const firstAmountInput = wrapper.findAll('input[type="number"]')[1]
+    // Index 2: the two cap inputs (weekly, daily) come first
+    const firstAmountInput = wrapper.findAll('input[type="number"]')[2]
 
     await firstAmountInput?.setValue('0')
 
