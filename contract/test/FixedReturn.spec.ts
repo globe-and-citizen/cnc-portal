@@ -1,26 +1,31 @@
-import { ethers, upgrades } from 'hardhat'
-import { expect } from 'chai'
 import {
-  loadFixture,
-  time,
+  ethers,
   impersonateAccount,
-  setBalance
-} from '@nomicfoundation/hardhat-network-helpers'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import {
+  initializeHardhat,
+  loadFixture,
+  setBalance,
+  time,
+  upgrades
+} from './hardhat-context.js'
+import { expect } from 'chai'
+import { parseUnits } from 'ethers'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type {
   Bank,
   FeeCollector,
   FixedReturn,
   MockERC20,
   MockOfficer,
   Officer
-} from '../typechain-types'
+} from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 describe('FixedReturn', () => {
   const FundingAccess = { General: 0, Whitelist: 1 }
   const OfferState = { Open: 0, Funded: 1, Refundable: 2, Repaying: 3 }
 
-  const FUNDING_TARGET = ethers.parseUnits('100000', 6)
+  const FUNDING_TARGET = parseUnits('100000', 6)
   const INTEREST_RATE_BPS = 800n // 8%, flat over the whole term
   const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60
 
@@ -68,7 +73,7 @@ describe('FixedReturn', () => {
     const bank = (await upgrades.deployProxy(
       BankFactory.connect(officerSigner),
       [[], owner.address],
-      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
     )) as unknown as Bank
 
     await mockOfficer.setDeployedContract('Bank', await bank.getAddress())
@@ -85,7 +90,7 @@ describe('FixedReturn', () => {
     const fixedReturn = (await upgrades.deployProxy(
       FixedReturnFactory.connect(officerSigner),
       [initialTokens, owner.address],
-      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
     )) as unknown as FixedReturn
 
     await mockOfficer.setDeployedContract('FixedReturn', await fixedReturn.getAddress())
@@ -211,7 +216,8 @@ describe('FixedReturn', () => {
       const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
       await expect(
         upgrades.deployProxy(FixedReturnFactory, [[], ethers.ZeroAddress], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(FixedReturnFactory, ERRORS.ZERO_ADDRESS)
     })
@@ -1629,7 +1635,7 @@ describe('FixedReturn', () => {
       const feeCollector = (await upgrades.deployProxy(
         FeeCollectorFactory,
         [owner.address, [], []],
-        { initializer: 'initialize' }
+        { initializer: 'initialize', unsafeAllow: ['constructor'] }
       )) as unknown as FeeCollector
 
       const officer = (await upgrades.deployProxy(OfficerFactory, [owner.address, [], [], false], {
@@ -1647,7 +1653,7 @@ describe('FixedReturn', () => {
       const fixedReturn = (await upgrades.deployProxy(
         FixedReturnFactory.connect(officerSigner),
         [[], owner.address],
-        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
       )) as unknown as FixedReturn
 
       expect(await fixedReturn.getOfficerAddress()).to.equal(officerAddress)

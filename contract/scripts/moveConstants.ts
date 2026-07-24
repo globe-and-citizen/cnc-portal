@@ -1,12 +1,12 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 
-const sourceDir = path.join(__dirname, '../ignition/deployments')
+const sourceDir = path.join(import.meta.dirname, '../ignition/deployments')
 
 const destinationDirs = [
-  path.resolve(__dirname, '../../app/src/artifacts/deployed_addresses'),
-  path.resolve(__dirname, '../../dashboard/app/artifacts/deployed_addresses'),
-  path.resolve(__dirname, '../../ponder/artifacts/deployed_addresses')
+  path.resolve(import.meta.dirname, '../../app/src/artifacts/deployed_addresses'),
+  path.resolve(import.meta.dirname, '../../dashboard/app/artifacts/deployed_addresses'),
+  path.resolve(import.meta.dirname, '../../ponder/artifacts/deployed_addresses')
 ]
 
 // The version registry (source of truth mapping Officer-generation tags to
@@ -14,12 +14,12 @@ const destinationDirs = [
 // `version-registry.json`. Each consumer's version-aware resolver reads it.
 // Backend is included even though it doesn't consume deployed_addresses — it
 // resolves a team's version from this registry.
-const registrySource = path.resolve(__dirname, '../versions/registry.json')
+const registrySource = path.resolve(import.meta.dirname, '../versions/registry.json')
 const registryDestinations = [
-  path.resolve(__dirname, '../../app/src/artifacts/version-registry.json'),
-  path.resolve(__dirname, '../../dashboard/app/artifacts/version-registry.json'),
-  path.resolve(__dirname, '../../ponder/artifacts/version-registry.json'),
-  path.resolve(__dirname, '../../backend/src/artifacts/version-registry.json')
+  path.resolve(import.meta.dirname, '../../app/src/artifacts/version-registry.json'),
+  path.resolve(import.meta.dirname, '../../dashboard/app/artifacts/version-registry.json'),
+  path.resolve(import.meta.dirname, '../../ponder/artifacts/version-registry.json'),
+  path.resolve(import.meta.dirname, '../../backend/src/artifacts/version-registry.json')
 ]
 
 destinationDirs.forEach((dir) => {

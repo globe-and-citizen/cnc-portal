@@ -1,5 +1,5 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 
 /**
  * Freeze the CURRENT top-level artifact set into a versioned snapshot folder
@@ -34,7 +34,7 @@ if (!versionMatch) {
 }
 const version = `V${versionMatch[1]}`
 
-const repoRoot = path.resolve(__dirname, '../..')
+const repoRoot = path.resolve(import.meta.dirname, '../..')
 
 // deployed_addresses to freeze: real networks only. chain-31337 is a per-machine
 // local snapshot and meaningless as a historical reference.

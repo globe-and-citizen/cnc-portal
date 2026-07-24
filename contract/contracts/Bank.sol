@@ -3,9 +3,9 @@ pragma solidity ^0.8.24;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {TokenSupport} from "./base/TokenSupport.sol";
 import {IFeeCollector} from "./interfaces/IFeeCollector.sol";
 import {IFixedReturn} from "./interfaces/IFixedReturn.sol";
@@ -18,7 +18,7 @@ import {IOfficer} from "./interfaces/IOfficer.sol";
  *         and dividend distribution via the Investor contract.
  * @dev Upgradeable, pausable and reentrancy-guarded. Resolves Investor/FeeCollector via Officer.
  */
-contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, TokenSupport {
+contract Bank is OwnableUpgradeable, ReentrancyGuard, PausableUpgradeable, TokenSupport {
   using SafeERC20 for IERC20;
 
   /**
@@ -360,7 +360,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function initialize(address[] calldata tokenAddresses, address sender) public initializer {
     if (sender == address(0)) revert Bank__ZeroAddress();
     __Ownable_init(sender);
-    __ReentrancyGuard_init();
     __Pausable_init();
     // Set the initial supported tokens
     uint256 length = tokenAddresses.length;

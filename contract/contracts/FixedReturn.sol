@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {TokenSupport} from "./base/TokenSupport.sol";
 import {IBank} from "./interfaces/IBank.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
@@ -89,7 +89,7 @@ import {IOfficer} from "./interfaces/IOfficer.sol";
  *  title and description are accepted as createLendingOffer params but never stored
  *  or emitted on-chain — the calling application persists them linked by offerId.
  */
-contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSupport {
+contract FixedReturn is OwnableUpgradeable, ReentrancyGuard, TokenSupport {
   using SafeERC20 for IERC20;
 
   // ────────────────────────────────────────────────────
@@ -327,7 +327,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   ) external initializer {
     if (ownerAddress == address(0)) revert FixedReturn__ZeroAddress();
     __Ownable_init(ownerAddress);
-    __ReentrancyGuard_init();
 
     s_officerAddress = msg.sender;
 
@@ -616,9 +615,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       revert FixedReturn__OfferNotFunded();
 
     // Repayment ceiling — prevent overpayment beyond total lender entitlement.
-    uint256 totalObligation = offer.totalFunded +
-      (offer.totalFunded * offer.interestRateBps) /
-      10_000;
+    uint256 totalObligation =
+      offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000;
     if (offer.totalRepaidByIssuer + amount > totalObligation)
       revert FixedReturn__ExceedsRepaymentObligation();
 
@@ -642,14 +640,12 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
           cumulativeEntitlement = totalRepaid - cumulativeForNonLast;
         } else {
           cumulativeEntitlement =
-            (totalRepaid * s_lenderDeposits[offerId][lender]) /
-            offer.totalFunded;
+            (totalRepaid * s_lenderDeposits[offerId][lender]) / offer.totalFunded;
           cumulativeForNonLast += cumulativeEntitlement;
         }
         uint256 alreadyPaid = s_totalPaidToLender[offerId][lender];
-        uint256 share = cumulativeEntitlement > alreadyPaid
-          ? cumulativeEntitlement - alreadyPaid
-          : 0;
+        uint256 share =
+          cumulativeEntitlement > alreadyPaid ? cumulativeEntitlement - alreadyPaid : 0;
         if (share > 0) {
           s_totalPaidToLender[offerId][lender] = cumulativeEntitlement;
           IERC20(offer.token).safeTransfer(lender, share);
@@ -676,9 +672,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     if (lenderDeposit == 0) return 0;
     LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.totalFunded == 0) return 0;
-    uint256 totalObligation = offer.totalFunded +
-      (offer.totalFunded * offer.interestRateBps) /
-      10_000;
+    uint256 totalObligation =
+      offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000;
     return (totalObligation * lenderDeposit) / offer.totalFunded;
   }
 
