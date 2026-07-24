@@ -145,7 +145,6 @@ describe('FixedReturn', () => {
       fundingTarget: FUNDING_TARGET,
       interestRateBps: INTEREST_RATE_BPS,
       maturityDate: startDate + ONE_YEAR_SECONDS,
-      startDate,
       subscriptionDeadline,
       fundingAccess: FundingAccess.General,
       isCapEnabled: false,
@@ -300,7 +299,6 @@ describe('FixedReturn', () => {
           await token.getAddress(),
           FUNDING_TARGET,
           INTEREST_RATE_BPS,
-          startDate,
           subscriptionDeadline,
           FundingAccess.General
         )
@@ -349,13 +347,25 @@ describe('FixedReturn', () => {
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.TOKEN_NOT_SUPPORTED_BY_BANK)
     })
 
-    it('rejects a subscriptionDeadline after startDate', async () => {
+    it('rejects a subscriptionDeadline equal to the current block timestamp', async () => {
       const { fixedReturn, owner, token, startDate } = await loadFixture(deployFixture)
+      const now = await time.latest()
 
       await expect(
-        fixedReturn.connect(owner).createLendingOffer(
-          baseParams(await token.getAddress(), startDate, startDate + 1) // deadline after start
-        )
+        fixedReturn
+          .connect(owner)
+          .createLendingOffer(baseParams(await token.getAddress(), startDate, now))
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_DEADLINE)
+    })
+
+    it('rejects a subscriptionDeadline in the past', async () => {
+      const { fixedReturn, owner, token, startDate } = await loadFixture(deployFixture)
+      const past = (await time.latest()) - 100
+
+      await expect(
+        fixedReturn
+          .connect(owner)
+          .createLendingOffer(baseParams(await token.getAddress(), startDate, past))
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_DEADLINE)
     })
 

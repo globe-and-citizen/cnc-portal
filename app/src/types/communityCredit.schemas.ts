@@ -19,11 +19,16 @@ export const creditCallBasicsSchema = z.object({
 })
 
 interface CreditCallTermsSchemaContext {
-  /** Today's date, YYYY-MM-DD — floors the date part of the deadline. */
+  /** Today's date, YYYY-MM-DD — floors the date part of the deadline. Callers should
+   *  derive both this and `now` from the same instant (ideally the chain's own block
+   *  time, plus a confirmation buffer — see CreditCallTermsStep.vue), not a bare device
+   *  clock read, since FixedReturn.sol itself now rejects a subscriptionDeadline that
+   *  isn't strictly in the future. */
   today: string
-  /** Current instant — floors a same-day deadline's clock time too, now that the
-   *  deadline picker allows minute precision. Optional so callers that only care
-   *  about the date-level check (or existing tests) can omit it. */
+  /** Current instant (already padded with whatever confirmation buffer the caller
+   *  wants) — floors a same-day deadline's clock time too, now that the deadline
+   *  picker allows minute precision. Optional so callers that only care about the
+   *  date-level check (or existing tests) can omit it. */
   now?: Date
 }
 
@@ -67,7 +72,7 @@ export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContex
         return new Date(`${data.deadline}T${data.deadlineTime}:00Z`) >= context.now
       },
       {
-        message: 'Subscription deadline cannot be in the past',
+        message: 'Subscription deadline must be a little further in the future',
         path: ['deadlineTime']
       }
     )

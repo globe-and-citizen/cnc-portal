@@ -153,6 +153,7 @@ import {
   addCreditTerm,
   applyZodFieldErrors,
   creditChipClass,
+  creditCallDeadlineContext,
   creditTermLabel,
   formatAmount,
   MINUTES_PER_DAY
@@ -164,10 +165,7 @@ const form = defineModel<CreditCallForm>('form', { required: true })
 const termErrors = reactive<Record<string, string>>({})
 
 function validate(): boolean {
-  const schema = createCreditCallTermsSchema({
-    today: new Date().toISOString().slice(0, 10),
-    now: new Date()
-  })
+  const schema = createCreditCallTermsSchema(creditCallDeadlineContext())
   const result = schema.safeParse({
     rate: form.value.rate,
     deadline: form.value.deadline,

@@ -64,7 +64,6 @@ function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct
     fundingTarget: 40_000_000000n,
     interestRateBps: 500n,
     maturityDate: 1_700_000_000n + BigInt(90 * 86_400),
-    startDate: 1_700_000_000n,
     subscriptionDeadline: 1_700_000_000n,
     fundingAccess: 0,
     isCapEnabled: false,

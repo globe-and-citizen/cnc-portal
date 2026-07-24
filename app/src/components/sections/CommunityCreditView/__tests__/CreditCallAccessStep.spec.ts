@@ -17,6 +17,7 @@ function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
     periodVal: '90',
     periodUnit: 'days',
     deadline: '2026-07-31',
+    deadlineTime: '23:59',
     access: 'everyone',
     whitelist: [],
     capOn: false,
@@ -27,6 +28,12 @@ function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
 
 function mountStep(form: CreditCallForm) {
   return mount(CreditCallAccessStep, { props: { form } })
+}
+
+function whitelistEntry(form: CreditCallForm, index = 0): CreditCallForm['whitelist'][number] {
+  const entry = form.whitelist[index]
+  expect(entry).toBeDefined()
+  return entry as CreditCallForm['whitelist'][number]
 }
 
 // mockTeamStore defaults to Member 1 (0x1234…7890), Member 2 (0x0987…4321) and Bob
@@ -159,15 +166,15 @@ describe('CreditCallAccessStep', () => {
       await wrapper.find(`[data-test="user-dropdown-${BOB}"]`).trigger('click')
 
       expect(form.whitelist).toHaveLength(1)
-      expect(form.whitelist[0]).toMatchObject({ address: BOB, username: 'Bob' })
+      expect(whitelistEntry(form)).toMatchObject({ address: BOB, username: 'Bob' })
 
       // Focusing switches the lender to custom mode (matching a real click into the
       // field) before it becomes typable.
       const input = wrapper.find('[data-test="whitelist-amount-input"]')
       await input.trigger('focus')
       await input.setValue('5000')
-      expect(form.whitelist[0].amount).toBe(5000)
-      expect(form.whitelist[0].custom).toBe(true)
+      expect(whitelistEntry(form).amount).toBe(5000)
+      expect(whitelistEntry(form).custom).toBe(true)
     })
 
     it('removes a selected lender', async () => {
@@ -198,8 +205,8 @@ describe('CreditCallAccessStep', () => {
       const wrapper = mountStep(form)
 
       const input = wrapper.find('[data-test="whitelist-amount-input"]')
-      expect(form.whitelist[0].custom).toBeFalsy()
-      expect(form.whitelist[0].amount).toBe(4000)
+      expect(whitelistEntry(form).custom).toBeFalsy()
+      expect(whitelistEntry(form).amount).toBe(4000)
       expect((input.element as HTMLInputElement).value).toBe('4000')
       expect(input.attributes('readonly')).toBeDefined()
     })
@@ -215,7 +222,7 @@ describe('CreditCallAccessStep', () => {
       form.cap = '4000'
       await nextTick()
 
-      expect(form.whitelist[0].amount).toBe(4000)
+      expect(whitelistEntry(form).amount).toBe(4000)
     })
 
     it('updates live on every keystroke, converging on the final typed cap value', async () => {
@@ -228,13 +235,13 @@ describe('CreditCallAccessStep', () => {
 
       form.cap = '1'
       await nextTick()
-      expect(form.whitelist[0].amount).toBe(1)
+      expect(whitelistEntry(form).amount).toBe(1)
       form.cap = '10'
       await nextTick()
-      expect(form.whitelist[0].amount).toBe(10)
+      expect(whitelistEntry(form).amount).toBe(10)
       form.cap = '100'
       await nextTick()
-      expect(form.whitelist[0].amount).toBe(100)
+      expect(whitelistEntry(form).amount).toBe(100)
     })
 
     it('keeps tracking on later cap changes too, as long as the lender stays default', async () => {
@@ -249,7 +256,7 @@ describe('CreditCallAccessStep', () => {
       form.cap = '6000'
       await nextTick()
 
-      expect(form.whitelist[0].amount).toBe(6000)
+      expect(whitelistEntry(form).amount).toBe(6000)
     })
 
     it('clears every lender back to unset (and non-custom) once the round-level cap is switched off', async () => {
@@ -272,10 +279,10 @@ describe('CreditCallAccessStep', () => {
       form.capOn = false
       await nextTick()
 
-      expect(form.whitelist[0].amount).toBeNull()
-      expect(form.whitelist[0].custom).toBeFalsy()
-      expect(form.whitelist[1].amount).toBeNull()
-      expect(form.whitelist[1].custom).toBeFalsy()
+      expect(whitelistEntry(form).amount).toBeNull()
+      expect(whitelistEntry(form).custom).toBeFalsy()
+      expect(whitelistEntry(form, 1).amount).toBeNull()
+      expect(whitelistEntry(form, 1).custom).toBeFalsy()
     })
 
     it('switches to custom mode and becomes editable once the input is focused', async () => {
@@ -290,9 +297,9 @@ describe('CreditCallAccessStep', () => {
       const input = wrapper.find('[data-test="whitelist-amount-input"]')
       await input.trigger('focus')
 
-      expect(form.whitelist[0].custom).toBe(true)
+      expect(whitelistEntry(form).custom).toBe(true)
       // Focusing doesn't change the amount — it was already tracking the cap (4000).
-      expect(form.whitelist[0].amount).toBe(4000)
+      expect(whitelistEntry(form).amount).toBe(4000)
     })
 
     it('stops tracking the cap once a lender is custom, keeping whatever amount it was given', async () => {
@@ -307,7 +314,7 @@ describe('CreditCallAccessStep', () => {
       form.cap = '6000'
       await nextTick()
 
-      expect(form.whitelist[0].amount).toBe(2500)
+      expect(whitelistEntry(form).amount).toBe(2500)
     })
 
     it('clearing a custom lender leaves the amount unset without exiting custom mode', async () => {
@@ -321,8 +328,8 @@ describe('CreditCallAccessStep', () => {
 
       await wrapper.find('[data-test="whitelist-amount-input"]').setValue('')
 
-      expect(form.whitelist[0].amount).toBeNull()
-      expect(form.whitelist[0].custom).toBe(true)
+      expect(whitelistEntry(form).amount).toBeNull()
+      expect(whitelistEntry(form).custom).toBe(true)
     })
 
     it('hides "Reset to default" for a lender still in default mode', () => {
@@ -351,13 +358,13 @@ describe('CreditCallAccessStep', () => {
 
       await resetButton.trigger('click')
 
-      expect(form.whitelist[0].custom).toBe(false)
-      expect(form.whitelist[0].amount).toBe(4000)
+      expect(whitelistEntry(form).custom).toBe(false)
+      expect(whitelistEntry(form).amount).toBe(4000)
 
       // Re-synced lenders keep tracking future cap changes again.
       form.cap = '6000'
       await nextTick()
-      expect(form.whitelist[0].amount).toBe(6000)
+      expect(whitelistEntry(form).amount).toBe(6000)
     })
   })
 

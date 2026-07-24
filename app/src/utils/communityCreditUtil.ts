@@ -114,35 +114,8 @@ export function statusMeta(status: RoundStatus): StatusMeta {
   return ROUND_STATUS_META[status]
 }
 
-// ───────── form control styling (shared by the create wizard) ─────────
-
-/** Base classes for the plain text/number/date inputs used in the wizard. */
-export const CREDIT_FIELD_CLASS =
-  'w-full h-[38px] rounded-lg border border-default bg-default px-3 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/20'
-
-/** Selectable pill (token / term length) — highlighted when active. */
-export function creditChipClass(active: boolean) {
-  return [
-    'flex-1 rounded-lg border px-3.5 py-2 text-center text-xs font-semibold transition-colors cursor-pointer',
-    active ? 'border-primary bg-primary/10 text-primary' : 'border-default bg-default text-muted'
-  ]
-}
-
-/** Large radio-style access option row. */
-export function creditAccessRowClass(active: boolean) {
-  return [
-    'flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors',
-    active ? 'border-primary bg-primary/5' : 'border-default bg-default'
-  ]
-}
-
-/** Radio bullet outline. */
-export function creditRadioClass(active: boolean) {
-  return [
-    'inline-flex h-5 w-5 flex-none items-center justify-center rounded-full border-2',
-    active ? 'border-primary' : 'border-default'
-  ]
-}
+// Form control styling (shared by the create wizard) now lives in
+// communityCreditWizardUtil.ts alongside the rest of the wizard-only helpers.
 
 /** `period`'s canonical unit — whole minutes, matching the deadline's own
  *  minute-precision clock field. */
@@ -215,17 +188,17 @@ export function formatCalendarBreakdown(
 
 /**
  * Same calendar breakdown as `formatCalendarBreakdown`, but for an already-created
- * on-chain round — computed directly from its `startDate`/`maturityDate` instants
- * rather than a wizard form's deadline + relative period, so every round card shows
- * the same "what does this term actually mean" treatment as a custom wizard entry,
- * not a bare, possibly four-or-five-digit day count.
+ * on-chain round — computed directly from its `subscriptionDeadline`/`maturityDate`
+ * instants rather than a wizard form's deadline + relative period, so every round card
+ * shows the same "what does this term actually mean" treatment as a custom wizard
+ * entry, not a bare, possibly four-or-five-digit day count.
  */
 export function formatRoundTerm(
-  startDate: bigint,
+  subscriptionDeadline: bigint,
   maturityDate: bigint,
   periodMinutes: number
 ): string {
-  const start = dayjs.utc(Number(startDate) * 1000)
+  const start = dayjs.utc(Number(subscriptionDeadline) * 1000)
   const maturity = dayjs.utc(Number(maturityDate) * 1000)
   return calendarBreakdownBetween(start, maturity) || formatCreditPeriod(periodMinutes)
 }
@@ -267,8 +240,8 @@ function offerExpectedTotal(offer: LendingOfferStruct): bigint {
   return offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000n
 }
 
-/** True once `now` has passed an offer's maturity date (startDate + term) — the
- *  contract itself never checks this (repayLenders has no on-chain maturity guard), so
+/** True once `now` has passed an offer's maturity date (subscriptionDeadline + term) —
+ *  the contract itself never checks this (repayLenders has no on-chain maturity guard), so
  *  it's purely a display signal, same spirit as isLendingOfferAcceptingFunds for the
  *  subscription deadline. */
 function isOfferPastMaturity(offer: LendingOfferStruct, now: Date): boolean {
@@ -343,7 +316,7 @@ export function lendingOfferToCreditRound(
   const { offerId, offer, decimals } = raw
   const status = offerStateToRoundStatus(offer, now)
   const maturity = dayjs.utc(offerMaturityDate(offer)).format('MMM D')
-  const period = Math.round((Number(offer.maturityDate) - Number(offer.startDate)) / 60)
+  const period = Math.round((Number(offer.maturityDate) - Number(offer.subscriptionDeadline)) / 60)
 
   return {
     id: String(offerId),
@@ -354,13 +327,13 @@ export function lendingOfferToCreditRound(
     totalRepaid: Number(formatUnits(offer.totalRepaidByIssuer, decimals)),
     rate: Number(offer.interestRateBps) / 100,
     period,
-    termLabel: formatRoundTerm(offer.startDate, offer.maturityDate, period),
+    termLabel: formatRoundTerm(offer.subscriptionDeadline, offer.maturityDate, period),
     status,
     // Only a genuinely still-fundable round (status 'open', not 'stalled') belongs in
     // the "Open & active rounds" card grid — same instant used for `status` above, so
     // the two can never disagree at the deadline boundary.
     fundable: isLendingOfferAcceptingFunds(offer, now),
-    opened: formatOfferDate(offer.startDate),
+    opened: formatOfferDate(offer.subscriptionDeadline),
     deadline: formatOfferDate(offer.subscriptionDeadline),
     maturity,
     repaidOn: status === 'repaid' ? maturity : undefined,

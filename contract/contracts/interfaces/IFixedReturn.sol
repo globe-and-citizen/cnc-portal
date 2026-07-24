@@ -31,7 +31,6 @@ interface IFixedReturn is IOwnable, ITokenSupport {
     uint256 maturityDate; // informational only — not enforced on-chain beyond the
     // creation-time check that it comes after subscriptionDeadline; repayLenders itself
     // never gates on this
-    uint256 startDate;
     uint256 subscriptionDeadline;
     FundingAccess fundingAccess;
     bool isCapEnabled; // only relevant in General mode
@@ -47,7 +46,6 @@ interface IFixedReturn is IOwnable, ITokenSupport {
     uint256 fundingTarget;
     uint256 interestRateBps;
     uint256 maturityDate;
-    uint256 startDate;
     uint256 subscriptionDeadline;
     FundingAccess fundingAccess;
     bool isCapEnabled;
@@ -64,7 +62,6 @@ interface IFixedReturn is IOwnable, ITokenSupport {
     address indexed token,
     uint256 fundingTarget,
     uint256 interestRateBps,
-    uint256 startDate,
     uint256 subscriptionDeadline,
     FundingAccess fundingAccess
   );

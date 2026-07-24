@@ -165,9 +165,6 @@ export function toFixedReturnOfferParams(
     maturityDate: BigInt(
       addCreditTerm(form.deadline, form.deadlineTime, form.termValue, form.termUnit)
     ),
-    // Deadline and start are the same instant — the loan term begins the moment
-    // fundraising closes.
-    startDate: toUnixSeconds(form.deadline, form.deadlineTime),
     subscriptionDeadline: toUnixSeconds(form.deadline, form.deadlineTime),
     fundingAccess: FUNDING_ACCESS_INDEX[form.access],
     isCapEnabled: form.capOn,

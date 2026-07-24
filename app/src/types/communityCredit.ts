@@ -35,7 +35,6 @@ export interface FixedReturnOfferParams {
   fundingTarget: bigint
   interestRateBps: bigint
   maturityDate: bigint
-  startDate: bigint
   subscriptionDeadline: bigint
   fundingAccess: 0 | 1
   isCapEnabled: boolean
@@ -50,7 +49,6 @@ export interface LendingOfferStruct {
   fundingTarget: bigint
   interestRateBps: bigint
   maturityDate: bigint
-  startDate: bigint
   subscriptionDeadline: bigint
   fundingAccess: 0 | 1
   isCapEnabled: boolean
@@ -188,9 +186,9 @@ export interface CreditRound {
   /** Term length in whole minutes — raw value, not for direct display. */
   period: number
   /** Display-ready term, e.g. `21 years, 10 months, 3 weeks, 4 days` — the calendar
-   *  breakdown between the round's startDate and maturityDate (see `formatRoundTerm`),
-   *  same treatment a custom wizard entry gets, computed once here since only this
-   *  mapper has the raw on-chain instants the breakdown needs. */
+   *  breakdown between the round's subscriptionDeadline and maturityDate (see
+   *  `formatRoundTerm`), same treatment a custom wizard entry gets, computed once here
+   *  since only this mapper has the raw on-chain instants the breakdown needs. */
   termLabel: string
   status: RoundStatus
   /** True only while `status === 'open'` — false once the round is `'stalled'` (or any

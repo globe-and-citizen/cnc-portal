@@ -19,7 +19,6 @@ const lendOffer = (over: Partial<LendingOfferStruct> = {}): LendingOfferStruct =
   fundingTarget: 100000_000000n,
   interestRateBps: 800n,
   maturityDate: 1925078400n, // 2031-01-01T00:00:00Z
-  startDate: 1893456000n, // 2030-01-01T00:00:00Z
   subscriptionDeadline: 1893369600n,
   fundingAccess: 0,
   isCapEnabled: false,
@@ -161,7 +160,6 @@ describe('toFixedReturnOfferParams', () => {
       []
     )
 
-    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 0) / 1000))
     expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 0) / 1000))
   })
 
@@ -171,7 +169,6 @@ describe('toFixedReturnOfferParams', () => {
       []
     )
 
-    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 5, 30, 14, 30, 0) / 1000))
     expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 14, 30, 0) / 1000))
   })
 

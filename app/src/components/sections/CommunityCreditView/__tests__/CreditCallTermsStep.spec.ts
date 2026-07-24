@@ -20,7 +20,7 @@ function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
     deadline: '2026-07-31',
     deadlineTime: '23:59',
     access: 'everyone',
-    whitelist: {},
+    whitelist: [],
     capOn: false,
     cap: '10000',
     ...overrides
@@ -184,7 +184,7 @@ describe('CreditCallTermsStep', () => {
       expect(wrapper.vm.validate()).toBe(false)
       await wrapper.vm.$nextTick()
       expect(wrapper.find('[data-test="cc-deadline-time-error"]').text()).toContain(
-        'cannot be in the past'
+        'further in the future'
       )
     })
 

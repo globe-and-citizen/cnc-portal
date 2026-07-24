@@ -17,6 +17,7 @@ function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
     periodVal: '90',
     periodUnit: 'days',
     deadline: '2026-07-31',
+    deadlineTime: '23:59',
     access: 'everyone',
     whitelist: [],
     capOn: false,

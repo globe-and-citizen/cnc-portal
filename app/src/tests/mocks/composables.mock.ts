@@ -185,6 +185,15 @@ export const mockUseBodIsBodAction = {
 }
 
 /**
+ * Mock useBlockTimestamp composable — the chain's own clock, reactive (unix seconds
+ * as a bigint). Defaults to null (no block seen yet) so callers fall back to the
+ * device clock, matching real behavior before the first block resolves. Tests that
+ * care about the chain-time path (e.g. a deadline validated against block time)
+ * should set `mockBlockTimestamp.value` directly.
+ */
+export const mockBlockTimestamp = ref<bigint | null>(null)
+
+/**
  * Mock useSubmitRestriction composable
  */
 export const mockUseSubmitRestriction = {
@@ -270,6 +279,9 @@ export const resetComposableMocks = () => {
   mockUseBodIsBodAction.isBod.value = false
   mockUseBodIsBodAction.isLoading.value = false
   mockUseBodIsBodAction.error.value = null
+
+  // Reset block timestamp mock — no block seen yet, by default
+  mockBlockTimestamp.value = null
 
   // Reset submit restriction mock
   mockUseSubmitRestriction.isRestricted.value = false

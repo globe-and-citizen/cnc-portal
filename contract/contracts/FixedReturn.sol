@@ -118,7 +118,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     uint256 maturityDate; // informational only — not enforced on-chain beyond the
     // creation-time check that it comes after subscriptionDeadline; repayLenders itself
     // never gates on this
-    uint256 startDate;
     uint256 subscriptionDeadline;
     FundingAccess fundingAccess;
     bool isCapEnabled; // only relevant in General mode
@@ -135,7 +134,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     uint256 fundingTarget;
     uint256 interestRateBps;
     uint256 maturityDate;
-    uint256 startDate;
     uint256 subscriptionDeadline;
     FundingAccess fundingAccess;
     bool isCapEnabled;
@@ -221,7 +219,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     address indexed token,
     uint256 fundingTarget,
     uint256 interestRateBps,
-    uint256 startDate,
     uint256 subscriptionDeadline,
     FundingAccess fundingAccess
   );
@@ -258,7 +255,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @dev A required address argument was the zero address.
   error FixedReturn__ZeroAddress();
-  /// @dev subscriptionDeadline must be on or before startDate.
+  /// @dev subscriptionDeadline is not strictly in the future.
   error FixedReturn__InvalidDeadline();
   /// @dev maturityDate is not strictly after subscriptionDeadline.
   error FixedReturn__InvalidMaturityDate();
@@ -381,8 +378,12 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     if (!IBank(bankAddress).isTokenSupported(params.token))
       revert FixedReturn__TokenNotSupportedByBank(params.token);
 
-    // The subscription window must close on or before the loan's start date.
-    if (params.subscriptionDeadline > params.startDate) revert FixedReturn__InvalidDeadline();
+    // The subscription window must still be in the future — the UI already checks
+    // this, but the contract shouldn't rely on that alone (e.g. a direct call, a
+    // stale client clock, or a delayed tx would otherwise create an offer that's
+    // dead on arrival: lendFunds reverts immediately and refund/accept become
+    // callable right away).
+    if (params.subscriptionDeadline <= block.timestamp) revert FixedReturn__InvalidDeadline();
 
     // The loan must mature strictly after the subscription window closes.
     if (params.maturityDate <= params.subscriptionDeadline)
@@ -401,7 +402,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       fundingTarget: params.fundingTarget,
       interestRateBps: params.interestRateBps,
       maturityDate: params.maturityDate,
-      startDate: params.startDate,
       subscriptionDeadline: params.subscriptionDeadline,
       fundingAccess: params.fundingAccess,
       isCapEnabled: params.isCapEnabled,
@@ -442,7 +442,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       token: params.token,
       fundingTarget: params.fundingTarget,
       interestRateBps: params.interestRateBps,
-      startDate: params.startDate,
       subscriptionDeadline: params.subscriptionDeadline,
       fundingAccess: params.fundingAccess
     });

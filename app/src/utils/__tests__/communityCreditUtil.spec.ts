@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import {
-  CREDIT_FIELD_CLASS,
   applyZodFieldErrors,
   avatarStyle,
-  creditAccessRowClass,
-  creditChipClass,
   creditInitials,
-  creditRadioClass,
   creditTermLabel,
   formatAmount,
   formatNumber,
@@ -17,6 +13,12 @@ import {
   roundTotalDue,
   statusMeta
 } from '../communityCreditUtil'
+import {
+  CREDIT_FIELD_CLASS,
+  creditAccessRowClass,
+  creditChipClass,
+  creditRadioClass
+} from '../communityCreditWizardUtil'
 import type { RoundStatus } from '@/types'
 
 describe('communityCreditUtil', () => {
