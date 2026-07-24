@@ -161,11 +161,18 @@ import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffer
 import {
   applyZodFieldErrors,
   classifyError,
+  creditCallDeadlineContext,
   creditChipClass,
+  createDefaultCreditCallForm,
   getSupportedCreditTokenOptions,
   toCreditCallOfferParams
 } from '@/utils'
-import { creditCallBasicsSchema, type CreditCallForm, type CreditOfferForm } from '@/types'
+import {
+  createCreditCallTermsSchema,
+  creditCallBasicsSchema,
+  type CreditCallForm,
+  type CreditOfferForm
+} from '@/types'
 import StepIndicator from '@/components/ui/StepIndicator.vue'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'
 import CreditCallTermsStep from '@/components/sections/CommunityCreditView/CreditCallTermsStep.vue'
@@ -195,23 +202,7 @@ const tokens = computed(() =>
   )
 )
 
-const form = reactive<CreditCallForm>({
-  name: '',
-  desc: '',
-  target: '25000',
-  token: 'USDC',
-  rate: '6',
-  period: 90,
-  periodMode: 'preset',
-  periodVal: '90',
-  periodUnit: 'days',
-  deadline: '2026-07-31',
-  deadlineTime: '23:59',
-  access: 'everyone',
-  whitelist: [],
-  capOn: false,
-  cap: ''
-})
+const form = reactive<CreditCallForm>(createDefaultCreditCallForm())
 
 // Keep the selected token valid against what the contract supports.
 watch(
@@ -246,6 +237,21 @@ function validateBasics(): boolean {
 function back() {
   if (step.value > 0) step.value--
 }
+
+/** Re-checks the Terms step's deadline directly against `form` — CreditCallTermsStep
+ *  isn't mounted once the wizard has moved past it, and its own validate() only runs
+ *  when leaving that step, never again right before publish, when the deadline can
+ *  have gone stale after time spent on Access. */
+function isTermsDeadlineStillValid(): boolean {
+  const schema = createCreditCallTermsSchema(creditCallDeadlineContext())
+  return schema.safeParse({
+    rate: form.rate,
+    deadline: form.deadline,
+    deadlineTime: form.deadlineTime,
+    period: form.period
+  }).success
+}
+
 function next() {
   if (step.value === 0 && !validateBasics()) return
   if (step.value === 1 && termsStepRef.value?.validate?.() === false) return
@@ -253,6 +259,12 @@ function next() {
 
   if (!isLastStep.value) {
     step.value++
+    return
+  }
+
+  if (!isTermsDeadlineStillValid()) {
+    submitError.value =
+      'Subscription deadline must be a little further in the future — go back to Terms to update it.'
     return
   }
   publish()
@@ -267,16 +279,17 @@ async function publish() {
 
   try {
     // A Community Credit round has a single date: lending closes and the loan starts on
-    // the subscription deadline, so startDate == deadline. FixedReturn.sol requires
-    // subscriptionDeadline <= startDate (reverts InvalidDeadline otherwise). The term is
-    // already in canonical days, so it maps straight to the contract's Days unit.
+    // the subscription deadline. FixedReturn.sol requires subscriptionDeadline to be
+    // strictly in the future (reverts InvalidDeadline otherwise). The term is already
+    // resolved to canonical whole minutes, so termUnit: 'minutes' below is exact —
+    // toFixedReturnOfferParams adds it straight onto the deadline to get maturityDate.
     const offeringForm: CreditOfferForm = {
       title: form.name.trim(),
       purpose: form.desc.trim(),
       principal: Number(form.target) || 0,
       rate: Number(form.rate) || 0,
       termValue: form.period,
-      termUnit: 'days',
+      termUnit: 'minutes',
       deadline: form.deadline,
       deadlineTime: form.deadlineTime,
       access: form.access === 'restricted' ? 'whitelist' : 'general',

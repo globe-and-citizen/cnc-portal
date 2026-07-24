@@ -8,6 +8,7 @@ import {
   UCalendarStub,
   UDropdownStub,
   UIconStub,
+  UInputTimeStub,
   UPopoverStub,
   USelectMenuStub
 } from '../stubs/nuxt-ui.stubs'
@@ -83,6 +84,12 @@ vi.mock('@nuxt/ui/components/Calendar.vue', async () => {
   return { default: UCalendarStub }
 })
 
+// InputTime vi.mock — complex reka-ui dependency (segmented TimeField inputs).
+vi.mock('@nuxt/ui/components/InputTime.vue', async () => {
+  const { UInputTimeStub } = await import('../stubs/nuxt-ui.stubs')
+  return { default: UInputTimeStub }
+})
+
 // Popover vi.mock so content slot is consistently available in tests.
 vi.mock('@nuxt/ui/components/Popover.vue', async () => {
   const { UPopoverStub } = await import('../stubs/nuxt-ui.stubs')
@@ -113,6 +120,8 @@ config.global.stubs = {
   SelectMenu: USelectMenuStub,
   UCalendar: UCalendarStub,
   Calendar: UCalendarStub,
+  UInputTime: UInputTimeStub,
+  InputTime: UInputTimeStub,
   UPopover: UPopoverStub,
   Popover: UPopoverStub
 }

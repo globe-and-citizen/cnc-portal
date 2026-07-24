@@ -51,7 +51,7 @@
   },
   {
     "inputs": [],
-    "name": "FixedReturn__InvalidTermDuration",
+    "name": "FixedReturn__InvalidMaturityDate",
     "type": "error"
   },
   {
@@ -279,12 +279,6 @@
         "indexed": false,
         "internalType": "uint256",
         "name": "interestRateBps",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "startDate",
         "type": "uint256"
       },
       {
@@ -521,18 +515,8 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint16",
-            "name": "termDuration",
-            "type": "uint16"
-          },
-          {
-            "internalType": "enum FixedReturn.TermUnit",
-            "name": "termUnit",
-            "type": "uint8"
-          },
-          {
             "internalType": "uint256",
-            "name": "startDate",
+            "name": "maturityDate",
             "type": "uint256"
           },
           {
@@ -682,18 +666,8 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint16",
-            "name": "termDuration",
-            "type": "uint16"
-          },
-          {
-            "internalType": "enum FixedReturn.TermUnit",
-            "name": "termUnit",
-            "type": "uint8"
-          },
-          {
             "internalType": "uint256",
-            "name": "startDate",
+            "name": "maturityDate",
             "type": "uint256"
           },
           {

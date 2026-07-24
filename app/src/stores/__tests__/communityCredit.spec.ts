@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { ref } from 'vue'
 import type { Address } from 'viem'
-import { mockFixedReturnReads, mockUserStore, useQueryFn } from '@/tests/mocks'
+import { mockBlockTimestamp, mockFixedReturnReads, mockUserStore, useQueryFn } from '@/tests/mocks'
 import type { FixedReturnRawOffer, LendingOfferStruct } from '@/types'
 
 // The store reads the offer list through useFixedReturnAllOffers (globally mocked) and
@@ -17,11 +17,9 @@ vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
 
 // The store derives "has the deadline passed" from the chain's own clock, not the
 // device's — fixed comfortably between EXPIRED_OPEN_OFFER's deadline (must read as
-// past) and OPEN_OFFER's (must read as not yet reached).
+// past) and OPEN_OFFER's (must read as not yet reached). useBlockTimestamp itself is
+// globally mocked (see composables.setup.ts); just drive its shared ref.
 const NOW = 2_000_000_000n
-vi.mock('@/composables/useBlockTimestamp', () => ({
-  useBlockTimestamp: vi.fn(() => ref(NOW))
-}))
 
 import { useCommunityCreditStore } from '@/stores/communityCredit'
 
@@ -32,9 +30,7 @@ function offer(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
     token: TOKEN,
     fundingTarget: 40_000_000000n,
     interestRateBps: 500n, // 5%
-    termDuration: 3,
-    termUnit: 1, // months
-    startDate: 1_700_000_000n,
+    maturityDate: 1_700_000_000n + BigInt(90 * 86_400), // arbitrary far-future instant
     // Far enough in the future that isLendingOfferAcceptingFunds' real-clock deadline
     // check treats an Open offer as still fundable, unless a test overrides it.
     subscriptionDeadline: 9_999_999_999n,
@@ -62,10 +58,14 @@ const REPAID_OFFER: FixedReturnRawOffer = {
 const FUNDED_OFFER: FixedReturnRawOffer = {
   offerId: 3,
   decimals: 6,
-  // startDate overridden so maturity (startDate + 90 days) lands after the mocked NOW —
-  // the default offer()'s startDate matured long before NOW, which would otherwise
-  // resolve this to 'overdue' instead of the plain 'funded' this test is about.
-  offer: offer({ totalFunded: 40_000_000000n, state: 1, startDate: 1_999_000_000n })
+  // maturityDate overridden so it lands after the mocked NOW — the default offer()'s
+  // maturityDate matured long before NOW, which would otherwise resolve this to
+  // 'overdue' instead of the plain 'funded' this test is about.
+  offer: offer({
+    totalFunded: 40_000_000000n,
+    state: 1,
+    maturityDate: 1_999_000_000n + BigInt(90 * 86_400)
+  })
 }
 // Still contract-state Open, but its subscription window closed without reaching
 // target — no longer fundable; offerStateToRoundStatus resolves this to 'stalled'.
@@ -78,6 +78,7 @@ const EXPIRED_OPEN_OFFER: FixedReturnRawOffer = {
 describe('Community Credit store (contract-backed)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    mockBlockTimestamp.value = NOW
     mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, REPAID_OFFER]
     mockFixedReturnReads.allOffers.isLoading.value = false
     mockFixedReturnReads.allOffers.isError.value = false

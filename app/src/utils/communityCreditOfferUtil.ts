@@ -1,25 +1,85 @@
 import { formatUnits, parseUnits, type Address } from 'viem'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type {
   CreditLenderOffering,
   CreditOfferForm,
+  CreditTermUnit,
   FixedReturnAccessMode,
   FixedReturnOfferParams,
-  FixedReturnTermUnit,
   FixedReturnWhitelistEntry,
   LendingOfferStruct
 } from '@/types'
 import { tokenSymbol } from './constantUtil'
 import { formatAmountWithPrecision } from './currencyUtil'
 
+dayjs.extend(utc)
+
 // ───────── FixedReturn offer/lender mapping (Community Credit's own — FixedReturn.sol
 // is Community Credit's contract, and has no application concept beyond it) ─────────
 
-/** Maximum term FixedReturn accepts, per FixedReturnTermUnit. */
-export const FIXED_RETURN_TERM_MAXIMUMS: Record<FixedReturnTermUnit, number> = {
-  days: 365,
-  months: 120,
-  years: 30
+/** UI-only sanity ceiling on a round's term length — FixedReturn.sol itself places no
+ *  upper bound on maturityDate, only that it comes after subscriptionDeadline. 30 years
+ *  matches the old on-chain bound for TermUnit.Years from before the maturityDate
+ *  migration removed per-unit enforcement (FixedReturn__InvalidTermDuration reverted
+ *  above 30 for that unit) — the closest thing this codebase has to a deliberate,
+ *  previously-agreed answer to "how long should a round be allowed to run." */
+export const CREDIT_TERM_MAX_YEARS = 30
+export const CREDIT_TERM_MAX_DAYS = CREDIT_TERM_MAX_YEARS * 365
+
+const CREDIT_TERM_UNIT_TO_DAYJS: Record<CreditTermUnit, dayjs.ManipulateType> = {
+  minutes: 'minute',
+  days: 'day',
+  weeks: 'week',
+  months: 'month',
+  years: 'year'
+}
+
+/** Rough days-per-unit, used only to sanity-clamp a custom entry before it reaches
+ *  real calendar arithmetic — precision doesn't matter here, only order of magnitude. */
+const CREDIT_TERM_UNIT_APPROX_DAYS: Record<CreditTermUnit, number> = {
+  minutes: 1 / 1_440,
+  days: 1,
+  weeks: 7,
+  months: 30.44,
+  years: 365.25
+}
+
+/** A generous ceiling well inside the ECMAScript `Date` range (valid roughly
+ *  ±100,000,000 days from the epoch) even after accounting for the anchor deadline's
+ *  own offset from the epoch. Any custom entry beyond this is already many orders of
+ *  magnitude past FixedReturn's own term cap (`CREDIT_TERM_MAX_DAYS`), so clamping
+ *  loses no meaningful information — it only guards against dayjs silently producing
+ *  an Invalid Date for a wildly out-of-range entry (e.g. "100000000" days, almost
+ *  exactly that boundary), which would otherwise propagate as NaN through every
+ *  downstream diff/format call instead of a readable (if enormous) term. */
+const SAFE_MAX_TERM_DAYS = 30_000_000
+
+/**
+ * Adds a term length (`value` + `unit`) to a UTC deadline instant (date + optional
+ * HH:mm clock time, defaulting to midnight), using real calendar arithmetic — e.g.
+ * `.add(6, 'month')` lands on the actual calendar date — rather than a flat
+ * days-per-unit approximation. Returns the resulting instant as unix seconds.
+ * Shared by the wizard's live term preview (CreditCallTermsStep.vue) and the actual
+ * on-chain `maturityDate` computed here in `toFixedReturnOfferParams`, so the two can
+ * never disagree.
+ */
+export function addCreditTerm(
+  deadline: string,
+  deadlineTime: string,
+  value: number,
+  unit: CreditTermUnit
+): number {
+  const approxDays = value * CREDIT_TERM_UNIT_APPROX_DAYS[unit]
+  const safeValue =
+    approxDays > SAFE_MAX_TERM_DAYS
+      ? SAFE_MAX_TERM_DAYS / CREDIT_TERM_UNIT_APPROX_DAYS[unit]
+      : value
+  return dayjs
+    .utc(`${deadline}T${deadlineTime || '00:00'}:00Z`)
+    .add(safeValue, CREDIT_TERM_UNIT_TO_DAYJS[unit])
+    .unix()
 }
 
 /**
@@ -33,12 +93,6 @@ export function decimalsForFixedReturnToken(tokenAddress: Address): number | und
     ?.decimals
 }
 
-const TERM_UNIT_INDEX: Record<FixedReturnTermUnit, 0 | 1 | 2> = { days: 0, months: 1, years: 2 }
-const TERM_UNIT_LABEL: Record<0 | 1 | 2, FixedReturnTermUnit> = {
-  0: 'days',
-  1: 'months',
-  2: 'years'
-}
 const FUNDING_ACCESS_INDEX: Record<FixedReturnAccessMode, 0 | 1> = { general: 0, whitelist: 1 }
 const FUNDING_ACCESS_LABEL: Record<0 | 1, FixedReturnAccessMode> = {
   0: 'general',
@@ -108,11 +162,9 @@ export function toFixedReturnOfferParams(
     token: token.address as Address,
     fundingTarget: parseUnits(String(form.principal), token.decimals),
     interestRateBps: BigInt(Math.round(form.rate * 100)),
-    termDuration: form.termValue,
-    termUnit: TERM_UNIT_INDEX[form.termUnit],
-    // Deadline and start are the same instant — the loan term begins the moment
-    // fundraising closes.
-    startDate: toUnixSeconds(form.deadline, form.deadlineTime),
+    maturityDate: BigInt(
+      addCreditTerm(form.deadline, form.deadlineTime, form.termValue, form.termUnit)
+    ),
     subscriptionDeadline: toUnixSeconds(form.deadline, form.deadlineTime),
     fundingAccess: FUNDING_ACCESS_INDEX[form.access],
     isCapEnabled: form.capOn,
@@ -197,8 +249,6 @@ export function toLenderOffering(
     id: String(offerId),
     title: title ?? `Round #${offerId}`,
     rate: Number(offer.interestRateBps) / 100,
-    term: offer.termDuration,
-    termUnit: TERM_UNIT_LABEL[offer.termUnit],
     access,
     allowed,
     cap,

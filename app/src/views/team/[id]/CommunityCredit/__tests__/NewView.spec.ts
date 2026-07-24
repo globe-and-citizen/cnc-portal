@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { Time } from '@internationalized/date'
 import type { CreditRound } from '@/types'
 
 // vue-router is globally mocked (composables.setup.ts); useRouter().push is
@@ -131,5 +132,34 @@ describe('NewView', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-test="cc-error"]').exists()).toBe(true)
+  })
+
+  it('re-checks the deadline right before publish and blocks without submitting if it went stale on Access', async () => {
+    mockWagmiCore.readContract.mockResolvedValue(1n)
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-24T09:00:00Z'))
+    try {
+      const wrapper = mount(NewView)
+      await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
+      await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+
+      // Deadline is 2 minutes out — passes the 60s-buffered check the Terms step ran
+      // when leaving it, same as CreditCallTermsStep validates on its own.
+      const calendar = wrapper.findComponent({ name: 'UCalendar' })
+      await calendar.vm.$emit('update:modelValue', { year: 2026, month: 7, day: 24 })
+      wrapper.findComponent({ name: 'UInputTime' }).vm.$emit('update:modelValue', new Time(9, 2))
+      await wrapper.vm.$nextTick()
+      await wrapper.find('[data-test="cc-next"]').trigger('click') // Terms → Access
+
+      // Time passes while the issuer is on Access — the deadline is now stale.
+      vi.setSystemTime(new Date('2026-07-24T09:03:00Z'))
+      await wrapper.find('[data-test="cc-next"]').trigger('click') // attempts Publish
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="cc-error"]').text()).toContain('further in the future')
+      expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

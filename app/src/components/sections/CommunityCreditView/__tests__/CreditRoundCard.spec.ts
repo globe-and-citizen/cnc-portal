@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import type { CreditRound } from '@/types'
 import { mockFixedReturnReads } from '@/tests/mocks'
+import { MINUTES_PER_DAY } from '@/utils'
 
 const { store } = vi.hoisted(() => ({ store: { isOwner: false } }))
 
@@ -18,9 +19,12 @@ function makeRound(overrides: Partial<CreditRound> = {}): CreditRound {
     token: 'USDC',
     target: 2,
     raised: 0,
+    totalRepaid: 0,
     rate: 6,
-    period: 1,
+    period: MINUTES_PER_DAY,
+    termLabel: '1 day',
     status: 'open',
+    fundable: true,
     opened: 'Jun 1',
     deadline: 'Aug 1',
     maturity: 'Aug 2',

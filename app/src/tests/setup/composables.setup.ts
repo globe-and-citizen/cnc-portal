@@ -14,6 +14,7 @@ import {
   mockUseFetch,
   mockUseSubmitRestriction,
   mockUseDeployContract,
+  mockBlockTimestamp,
   resetComposableMocks,
   resetDeployState
 } from '@/tests/mocks/composables.mock'
@@ -329,6 +330,13 @@ vi.mock('@/composables', async (importOriginal) => {
  */
 vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
   useSafeSendTransaction: vi.fn(() => mockUseSafeSendTransaction)
+}))
+
+/**
+ * Mock useBlockTimestamp composable — the chain's own clock.
+ */
+vi.mock('@/composables/useBlockTimestamp', () => ({
+  useBlockTimestamp: vi.fn(() => mockBlockTimestamp)
 }))
 
 /**

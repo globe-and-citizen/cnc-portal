@@ -1,8 +1,8 @@
 import type { RevertMessageResolver } from './errorCatalogs.types'
 
 export const FIXED_RETURN_ERRORS: Record<string, string | RevertMessageResolver> = {
-  InvalidDeadline: 'The subscription deadline must be on or before the loan start date',
-  InvalidTermDuration: 'The loan term is outside the supported range',
+  InvalidDeadline: 'The subscription deadline must be in the future',
+  InvalidMaturityDate: 'The loan maturity date must be strictly after the subscription deadline',
   LenderCapExceedsFundingTarget: 'The per-lender cap exceeds the funding target',
   AllocationSumExceedsFundingTarget: 'Whitelist allocations exceed the funding target',
   WhitelistLengthMismatch: 'Whitelist addresses and allocations do not match',

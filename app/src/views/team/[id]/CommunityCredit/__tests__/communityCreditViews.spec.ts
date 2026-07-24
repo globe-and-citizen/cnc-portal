@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import type { CreditRound, LendingOfferStruct } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
+import { MINUTES_PER_DAY } from '@/utils'
 
 // vue-router is globally mocked (composables.setup.ts); useRouter().push is
 // mockRouterPush and useRoute() reads the shared reactive mockRoute.
@@ -61,7 +62,8 @@ function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
     raised: 23400,
     totalRepaid: 0,
     rate: 5,
-    period: 90,
+    period: 90 * MINUTES_PER_DAY,
+    termLabel: '90 days',
     status: 'open',
     fundable: true,
     opened: 'Jun 1',
@@ -82,9 +84,7 @@ function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct
     token: USDC_ADDRESS,
     fundingTarget: 40_000_000000n,
     interestRateBps: 500n,
-    termDuration: 90,
-    termUnit: 0,
-    startDate: 1_700_000_000n,
+    maturityDate: 1_700_000_000n + BigInt(90 * 86_400),
     subscriptionDeadline: 1_700_000_000n,
     fundingAccess: 0,
     isCapEnabled: false,
