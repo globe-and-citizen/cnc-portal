@@ -38,7 +38,7 @@
               :model-value="state.startDate ? dateToCalendarDate(state.startDate) : undefined"
               :min-value="today(getLocalTimeZone())"
               @update:model-value="
-                (val) => {
+                (val: unknown) => {
                   const minStart = new Date(Date.now() + MIN_START_DELAY_MS)
                   state.startDate = ensureFutureDate(
                     (val as CalendarDate).toDate(getLocalTimeZone()),
@@ -66,7 +66,7 @@
                 state.startDate ? dateToCalendarDate(state.startDate) : today(getLocalTimeZone())
               "
               @update:model-value="
-                (val) => {
+                (val: unknown) => {
                   state.endDate = (val as CalendarDate).toDate(getLocalTimeZone())
                   endDateOpen = false
                 }

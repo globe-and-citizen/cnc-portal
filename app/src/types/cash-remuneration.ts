@@ -72,6 +72,8 @@ export interface WeeklyClaim {
   weekStart: string // ISO date string
   data: {
     ownerAddress?: Address
+    contractAddress?: Address
+    chainId?: number
   }
   memberAddress: Address
   teamId: number

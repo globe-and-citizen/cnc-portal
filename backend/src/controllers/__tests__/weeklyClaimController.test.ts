@@ -288,24 +288,24 @@ describe('Weekly Claim Controller', () => {
     it('should return 400 for missing signature on sign', async () => {
       const response = await putAction('sign', '1', { ...VALID_SIGN_BODY, signature: undefined });
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Missing or invalid signature');
+      expect(response.body.message).toContain('body.signature');
     });
 
     it.each([
       {
         title: 'missing signedAgainstContractAddress',
         body: { ...VALID_SIGN_BODY, signedAgainstContractAddress: undefined },
-        message: 'Missing or invalid signedAgainstContractAddress',
+        message: 'body.signedAgainstContractAddress',
       },
       {
         title: 'missing typedDataMessage',
         body: { ...VALID_SIGN_BODY, typedDataMessage: undefined },
-        message: 'Missing typedDataMessage',
+        message: 'body.typedDataMessage',
       },
       {
         title: 'missing chainId',
         body: { ...VALID_SIGN_BODY, chainId: undefined },
-        message: 'Missing or invalid chainId',
+        message: 'body.chainId',
       },
     ])('should return 400 on sign for $title', async ({ body, message }) => {
       const response = await putAction('sign', '1', body);
@@ -383,6 +383,11 @@ describe('Weekly Claim Controller', () => {
           data: expect.objectContaining({
             status: 'signed',
             signedAgainstContractAddress: CASH_REMUNERATION_ADDRESS,
+            data: expect.objectContaining({
+              ownerAddress: CALLER,
+              contractAddress: CASH_REMUNERATION_ADDRESS,
+              chainId: VALID_SIGN_BODY.chainId,
+            }),
           }),
         })
       );
