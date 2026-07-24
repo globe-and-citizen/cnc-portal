@@ -4,11 +4,16 @@ import {
   applyZodFieldErrors,
   avatarStyle,
   creditInitials,
+  formatCalendarBreakdown,
   creditTermLabel,
   formatAmount,
+  formatCreditPeriod,
   formatNumber,
+  formatRoundTerm,
   MINUTES_PER_DAY,
   reachedFundingTarget,
+  repayableCeiling,
+  roundToDisplayPrecision,
   roundInterest,
   roundTotalDue,
   statusMeta
@@ -29,9 +34,43 @@ describe('communityCreditUtil', () => {
       expect(formatNumber(1234567)).toBe('1,234,567')
       expect(formatNumber(0)).toBe('0')
     })
+
+    it('keeps requested fractional precision for display amounts', () => {
+      expect(formatAmount(0.123456, 'USDC', 4)).toBe('0.1235 USDC')
+      expect(formatNumber(1234.5678, 2)).toBe('1,234.57')
+    })
+  })
+
+  describe('repayment display helpers', () => {
+    it('rounds floating-point noise to display precision without collapsing small amounts', () => {
+      expect(roundToDisplayPrecision(0.1 + 0.2)).toBe(0.3)
+      expect(roundToDisplayPrecision(0.00004)).toBe(0)
+      expect(roundToDisplayPrecision(0.00005)).toBe(0.0001)
+    })
+
+    it('caps repayable amount at the treasury balance when loaded', () => {
+      expect(repayableCeiling(1000, 400.123456)).toBe(400.1235)
+    })
+
+    it('uses the outstanding amount when the treasury balance has not loaded yet', () => {
+      expect(repayableCeiling(1000.123456, null)).toBe(1000.1235)
+    })
   })
 
   describe('creditTermLabel', () => {
+    it('humanizes singular minute, hour and day periods without plural suffixes', () => {
+      expect(formatCreditPeriod(1)).toBe('1 minute')
+      expect(formatCreditPeriod(60)).toBe('1 hour')
+      expect(formatCreditPeriod(MINUTES_PER_DAY)).toBe('1 day')
+    })
+
+    it('falls back to plain period labels when calendar anchors are missing or unchanged', () => {
+      expect(formatCalendarBreakdown('', '', 45)).toBe('45 minutes')
+      expect(formatCalendarBreakdown('2026-07-31', '', 60)).toBe('1 hour')
+      expect(formatCalendarBreakdown('2026-07-31', '23:59', 0)).toBe('0 minutes')
+      expect(formatRoundTerm(1_700_000_000n, 1_700_000_000n, 0)).toBe('0 minutes')
+    })
+
     it('shows a plain day count for a preset, regardless of the deadline', () => {
       expect(
         creditTermLabel({
@@ -171,6 +210,9 @@ describe('communityCreditUtil', () => {
     it('handles a single name and the "(you)" suffix', () => {
       expect(creditInitials('You')).toBe('Y')
       expect(creditInitials('Hela E. (you)')).toBe('HE')
+    })
+    it('returns an empty string for a blank name', () => {
+      expect(creditInitials('   ')).toBe('')
     })
   })
 

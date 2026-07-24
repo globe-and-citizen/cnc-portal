@@ -75,6 +75,10 @@ describe('communityCreditUtil on-chain mappers', () => {
         offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 1_100_000n }, afterMaturity)
       ).toBe('repaid')
     })
+
+    it('uses the current clock when no explicit now is passed', () => {
+      expect(offerStateToRoundStatus(makeOffer({ state: 2 }))).toBe('refunded')
+    })
   })
 
   describe('lendingOfferToCreditRound', () => {
@@ -212,6 +216,10 @@ describe('communityCreditUtil on-chain mappers', () => {
       const [a, b] = gradientForAddress(address).split(',')
       expect(gradientForAddress(address)).toBe(`${a},${b}`)
       expect(a).not.toBe(b)
+    })
+
+    it('falls back to the next palette stop when both hashed stops match', () => {
+      expect(gradientForAddress('')).toBe('#00bf7a,#00b8d9')
     })
   })
 
