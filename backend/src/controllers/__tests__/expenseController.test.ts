@@ -9,6 +9,14 @@ import { authorizeUser } from '../../middleware/authMiddleware';
 import ABI from '../../artifacts/expense-account-eip712.json';
 import * as viem from 'viem';
 
+vi.mock('viem', async (importOriginal) => {
+  const actual: object = await importOriginal();
+  return {
+    ...actual,
+    recoverTypedDataAddress: vi.fn(),
+  };
+});
+
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
@@ -70,6 +78,16 @@ const mockExpenseData = {
   endDate: END_DATE, // 30 days from start date
 };
 
+const mockExpenseContractAddress = '0x2222222222222222222222222222222222222222';
+
+const validCreateExpenseBody = {
+  teamId: 1,
+  signature: '0x1234',
+  signedAgainstContractAddress: mockExpenseContractAddress,
+  chainId: 1,
+  data: mockExpenseData,
+};
+
 const mockExpense = {
   id: 1,
   teamId: 1,
@@ -92,6 +110,9 @@ describe('Expense Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: false } as never);
+    vi.mocked(viem.recoverTypedDataAddress).mockResolvedValue(
+      '0x1234567890123456789012345678901234567890'
+    );
   });
 
   describe('POST: /', () => {
@@ -106,11 +127,23 @@ describe('Expense Controller', () => {
 
     it('Should return 403 if the caller is not the owner of the team', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValueOnce(null);
-      const response = await request(app).post('/').send({
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
+        id: 1,
         teamId: 1,
-        signature: 'mockSignature',
-        data: mockExpenseData,
+        address: mockExpenseContractAddress,
+        type: 'ExpenseAccountEIP712',
+        deployer: '0x1234567890123456789012345678901234567890',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue(
+        '0x0000000000000000000000000000000000000001'
+      );
+      const response = await request(app)
+        .post('/')
+        .send({
+          ...validCreateExpenseBody,
+        });
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Caller is not the owner of the team');
@@ -120,7 +153,7 @@ describe('Expense Controller', () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
         id: 1,
         teamId: 1,
-        address: '0x1234567890123456789012345678901234567890',
+        address: mockExpenseContractAddress,
         type: 'ExpenseAccountEIP712',
         deployer: '0x1234567890123456789012345678901234567890',
         createdAt: new Date(),
@@ -134,11 +167,11 @@ describe('Expense Controller', () => {
         '0x1234567890123456789012345678901234567890'
       );
 
-      const response = await request(app).post('/').send({
-        teamId: 1,
-        signature: '0xmockSignature',
-        data: mockExpenseData,
-      });
+      const response = await request(app)
+        .post('/')
+        .send({
+          ...validCreateExpenseBody,
+        });
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual(mockExpense);
@@ -149,7 +182,7 @@ describe('Expense Controller', () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
         id: 1,
         teamId: 1,
-        address: '0x1234567890123456789012345678901234567890',
+        address: mockExpenseContractAddress,
         type: 'ExpenseAccountEIP712',
         deployer: '0x1234567890123456789012345678901234567890',
         createdAt: new Date(),
@@ -160,11 +193,11 @@ describe('Expense Controller', () => {
         '0x1234567890123456789012345678901234567890'
       );
 
-      const response = await request(app).post('/').send({
-        teamId: 1,
-        signature: 'mockSignature',
-        data: mockExpenseData,
-      });
+      const response = await request(app)
+        .post('/')
+        .send({
+          ...validCreateExpenseBody,
+        });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
@@ -210,8 +243,13 @@ describe('Expense Controller', () => {
         functionName: 'isNewPeriod',
         args: [
           {
-            ...mockExpenseData,
             amount: viem.parseUnits(mockExpenseData.amount.toString(), 6),
+            frequencyType: mockExpenseData.frequencyType,
+            customFrequency: BigInt(mockExpenseData.customFrequency),
+            startDate: BigInt(mockExpenseData.startDate),
+            endDate: BigInt(mockExpenseData.endDate),
+            tokenAddress: mockExpenseData.tokenAddress,
+            approvedAddress: mockExpenseData.approvedAddress,
           },
           '0xdfe1aec4a1b77ff33c295850060a264c2a6c628ccb530f212338801f3f08b8c5',
         ],

@@ -183,6 +183,8 @@ describe('archived team guard on write routes', () => {
         .send({
           teamId: 1,
           signature: '0xsig',
+          signedAgainstContractAddress: '0x2222222222222222222222222222222222222222',
+          chainId: 1,
           data: {
             approvedAddress: OWNER_ADDRESS,
             amount: 150,

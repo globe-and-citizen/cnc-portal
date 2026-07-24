@@ -16,6 +16,7 @@ vi.mock('viem', async (importOriginal) => {
     parseEventLogs: vi.fn(() => []),
     parseSignature: vi.fn(),
     hashTypedData: vi.fn(),
+    recoverTypedDataAddress: vi.fn(),
     keccak256: vi.fn()
     // zeroAddress: '0x0000000000000000000000000000000000000000' // No need to mock this constant, we can just use the real value in tests without issue. If we need to test with a different zero address for some reason, we can do that on a case by case basis in individual tests.
   }

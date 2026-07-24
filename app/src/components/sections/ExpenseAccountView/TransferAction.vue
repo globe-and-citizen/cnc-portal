@@ -74,9 +74,17 @@ import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { getTokens, log, parseError } from '@/utils'
-import { encodeFunctionData, parseEther, zeroAddress, type Address } from 'viem'
+import {
+  encodeFunctionData,
+  parseEther,
+  recoverTypedDataAddress,
+  zeroAddress,
+  type Address,
+  type Hex
+} from 'viem'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import { estimateGas, readContract } from '@wagmi/core'
+import { useChainId } from '@wagmi/vue'
 import { config } from '@/wagmi.config'
 import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { useERC20Approve } from '@/composables/erc20/writes'
@@ -90,6 +98,7 @@ const props = defineProps<{ row: TableRow }>()
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const toast = useToast()
+const chainId = useChainId()
 const { balances } = useContractBalance(
   ref(teamStore.getContractAddressByType('ExpenseAccountEIP712'))
 )
@@ -134,11 +143,88 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   const budgetLimit = props.row.data
   if (!expenseAccountEip712Address.value || !props.row) return
 
+  if (!(await verifyApprovalSignature(budgetLimit))) return
+
   if (budgetLimit.tokenAddress === zeroAddress) {
     await transferNativeToken(to, amount, budgetLimit)
   } else {
     await transferErc20Token(to, amount, budgetLimit)
   }
+}
+
+const budgetLimitTypes = {
+  BudgetLimit: [
+    { name: 'amount', type: 'uint256' },
+    { name: 'frequencyType', type: 'uint8' },
+    { name: 'customFrequency', type: 'uint256' },
+    { name: 'startDate', type: 'uint256' },
+    { name: 'endDate', type: 'uint256' },
+    { name: 'tokenAddress', type: 'address' },
+    { name: 'approvedAddress', type: 'address' }
+  ]
+} as const
+
+const buildContractBudgetLimit = (budgetLimit: BudgetLimit) => ({
+  amount:
+    budgetLimit.tokenAddress === zeroAddress
+      ? parseEther(`${budgetLimit.amount}`)
+      : BigInt(Number(budgetLimit.amount) * 1e6),
+  frequencyType: Number(budgetLimit.frequencyType),
+  customFrequency: BigInt(Number(budgetLimit.customFrequency)),
+  startDate: BigInt(Number(budgetLimit.startDate)),
+  endDate: BigInt(Number(budgetLimit.endDate)),
+  tokenAddress: budgetLimit.tokenAddress,
+  approvedAddress: budgetLimit.approvedAddress
+})
+
+const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
+  const currentContract = expenseAccountEip712Address.value
+  if (!currentContract) return false
+
+  if (
+    budgetLimit.signedAgainstContractAddress &&
+    budgetLimit.signedAgainstContractAddress.toLowerCase() !== currentContract.toLowerCase()
+  ) {
+    errorMessage.value = 'Signature issued for a different ExpenseAccount contract'
+    return false
+  }
+
+  if (budgetLimit.chainId && budgetLimit.chainId !== chainId.value) {
+    errorMessage.value = 'Signature issued for a different network'
+    return false
+  }
+
+  try {
+    const owner = (await readContract(config, {
+      address: currentContract,
+      abi: EXPENSE_ACCOUNT_EIP712_ABI,
+      functionName: 'owner'
+    })) as Address
+
+    const recovered = await recoverTypedDataAddress({
+      domain: {
+        name: 'CNCExpenseAccount',
+        version: '1',
+        chainId: chainId.value,
+        verifyingContract: currentContract
+      },
+      types: budgetLimitTypes,
+      primaryType: 'BudgetLimit',
+      message: buildContractBudgetLimit(budgetLimit),
+      signature: props.row.signature as Hex
+    })
+
+    if (recovered.toLowerCase() !== owner.toLowerCase()) {
+      errorMessage.value = 'Signature issued for a different ExpenseAccount contract'
+      return false
+    }
+  } catch (error) {
+    log.error('Error verifying expense approval signature:', parseError(error))
+    errorMessage.value = 'Failed to verify expense approval signature'
+    return false
+  }
+
+  return true
 }
 
 const submitExpenseAccountTransfer = (args: readonly unknown[]) => {
@@ -163,17 +249,7 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
   const args = [
     to,
     parseEther(amount),
-    {
-      ...budgetLimit,
-      amount:
-        budgetLimit.tokenAddress === zeroAddress
-          ? parseEther(`${budgetLimit.amount}`)
-          : BigInt(Number(budgetLimit.amount) * 1e6),
-      frequencyType: Number(budgetLimit.frequencyType),
-      customFrequency: BigInt(Number(budgetLimit.customFrequency)),
-      startDate: Number(budgetLimit.startDate),
-      endDate: Number(budgetLimit.endDate)
-    },
+    buildContractBudgetLimit(budgetLimit),
     props.row.signature
   ] as const
 
@@ -214,19 +290,7 @@ const transferErc20Token = async (to: string, amount: string, budgetLimit: Budge
   }
 
   const buildArgs = () =>
-    [
-      to,
-      _amount,
-      {
-        ...budgetLimit,
-        amount: BigInt(Number(budgetLimit.amount) * 1e6),
-        frequencyType: Number(budgetLimit.frequencyType),
-        customFrequency: BigInt(Number(budgetLimit.customFrequency)),
-        startDate: Number(budgetLimit.startDate),
-        endDate: Number(budgetLimit.endDate)
-      },
-      props.row.signature
-    ] as const
+    [to, _amount, buildContractBudgetLimit(budgetLimit), props.row.signature] as const
 
   if (allowance < _amount) {
     approveMutation.mutate(
