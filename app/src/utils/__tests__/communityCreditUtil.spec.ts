@@ -8,8 +8,10 @@ import {
   creditChipClass,
   creditInitials,
   creditRadioClass,
+  creditTermLabel,
   formatAmount,
   formatNumber,
+  MINUTES_PER_DAY,
   reachedFundingTarget,
   roundInterest,
   roundTotalDue,
@@ -24,6 +26,107 @@ describe('communityCreditUtil', () => {
       expect(formatAmount(1000, 'POL')).toBe('1,000 POL')
       expect(formatNumber(1234567)).toBe('1,234,567')
       expect(formatNumber(0)).toBe('0')
+    })
+  })
+
+  describe('creditTermLabel', () => {
+    it('shows a plain day count for a preset, regardless of the deadline', () => {
+      expect(
+        creditTermLabel({
+          period: 90 * MINUTES_PER_DAY,
+          periodMode: 'preset',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('90 days')
+    })
+
+    it('breaks any custom term down into its real calendar equivalent, whichever unit built it', () => {
+      // 2026-07-31 + 90 months = 2034-01-31 exactly (7 years, 6 months, no remainder) —
+      // the exact scenario a flat "2741 days (from 90 months)" used to render as.
+      const ninetyMonthsMinutes = Math.round(
+        (Date.UTC(2034, 0, 31) - Date.UTC(2026, 6, 31)) / 1000 / 60
+      )
+      expect(
+        creditTermLabel({
+          period: ninetyMonthsMinutes,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '00:00'
+        })
+      ).toBe('7 years, 6 months')
+
+      // Built from "2 weeks" (a days/weeks unit, not months/years) — still broken down,
+      // not left as a flat "14 days", since it's still a custom entry.
+      expect(
+        creditTermLabel({
+          period: 14 * MINUTES_PER_DAY,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('2 weeks')
+
+      // The exact "8000 days" scenario reported live — reads far better as years/
+      // months/weeks/days than as a bare four-digit day count.
+      expect(
+        creditTermLabel({
+          period: 8000 * MINUTES_PER_DAY,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('21 years, 10 months, 3 weeks, 4 days')
+    })
+
+    it('includes a remainder-days term when the span is not a round number of months', () => {
+      // 2026-01-01 + (6 calendar months + 3 days) worth of minutes → "6 months, 3 days".
+      const sixMonthsMinutes = Math.round((Date.UTC(2026, 6, 1) - Date.UTC(2026, 0, 1)) / 1000 / 60)
+      expect(
+        creditTermLabel({
+          period: sixMonthsMinutes + 3 * MINUTES_PER_DAY,
+          periodMode: 'custom',
+          deadline: '2026-01-01',
+          deadlineTime: '00:00'
+        })
+      ).toBe('6 months, 3 days')
+    })
+
+    it('includes hours and minutes for a custom minutes term that is not a whole day', () => {
+      // 8000 minutes = 5 days, 13h 20m — the day-only cascade used to silently drop
+      // the sub-day remainder and show a flat "5 days", 800 minutes short of reality.
+      expect(
+        creditTermLabel({
+          period: 8000,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('5 days, 13 hours, 20 minutes')
+    })
+
+    it('breaks a wildly-over-cap custom days entry into a readable calendar span', () => {
+      // A mistyped "10,000,000 days" is still a valid *number*, but a bare day count
+      // doesn't communicate the scale of the mistake nearly as clearly as years does.
+      expect(
+        creditTermLabel({
+          period: 10_000_000 * MINUTES_PER_DAY,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('27379 years, 3 weeks, 5 days')
+    })
+
+    it('falls back to formatCreditPeriod when no deadline is set yet', () => {
+      expect(
+        creditTermLabel({
+          period: 90,
+          periodMode: 'custom',
+          deadline: '',
+          deadlineTime: ''
+        })
+      ).toBe('2 hours') // formatCreditPeriod(90) rounds 90 minutes up to the nearest hour
     })
   })
 

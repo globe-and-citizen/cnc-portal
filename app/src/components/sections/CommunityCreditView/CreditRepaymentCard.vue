@@ -19,7 +19,7 @@
         <span class="text-[22px] font-extrabold tracking-tight">{{ formatAmount(total) }}</span>
       </div>
       <div class="text-muted text-[11px]">
-        Matures {{ round.maturity || '—' }} · {{ round.period }} days
+        Matures {{ round.maturity || '—' }} · {{ round.termLabel }}
       </div>
     </div>
   </div>

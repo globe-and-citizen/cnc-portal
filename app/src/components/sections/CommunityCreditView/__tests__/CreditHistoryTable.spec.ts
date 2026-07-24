@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import type { CreditRound } from '@/types'
+import { MINUTES_PER_DAY } from '@/utils'
 
 const { store } = vi.hoisted(() => ({ store: { historyRounds: [] as CreditRound[] } }))
 
@@ -18,7 +19,8 @@ function makeRound(overrides: Partial<CreditRound> = {}): CreditRound {
     target: 40000,
     raised: 40000,
     rate: 5,
-    period: 90,
+    period: 90 * MINUTES_PER_DAY,
+    termLabel: '90 days',
     status: 'repaid',
     opened: 'Jun 1',
     deadline: 'Jun 28',

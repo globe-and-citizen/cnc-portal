@@ -17,18 +17,17 @@ import {
 } from '../typechain-types'
 
 describe('FixedReturn', () => {
-  const TermUnit = { Days: 0, Months: 1, Years: 2 }
   const FundingAccess = { General: 0, Whitelist: 1 }
   const OfferState = { Open: 0, Funded: 1, Refundable: 2, Repaying: 3 }
 
   const FUNDING_TARGET = ethers.parseUnits('100000', 6)
   const INTEREST_RATE_BPS = 800n // 8%, flat over the whole term
-  const TERM_DURATION = 12
+  const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60
 
   const ERRORS = {
     ZERO_ADDRESS: 'FixedReturn__ZeroAddress',
     INVALID_DEADLINE: 'FixedReturn__InvalidDeadline',
-    INVALID_TERM_DURATION: 'FixedReturn__InvalidTermDuration',
+    INVALID_MATURITY_DATE: 'FixedReturn__InvalidMaturityDate',
     LENDER_CAP_EXCEEDS_TARGET: 'FixedReturn__LenderCapExceedsFundingTarget',
     ALLOCATION_SUM_BELOW_TARGET: 'FixedReturn__AllocationSumBelowFundingTarget',
     WHITELIST_LENGTH_MISMATCH: 'FixedReturn__WhitelistLengthMismatch',
@@ -145,8 +144,7 @@ describe('FixedReturn', () => {
       token,
       fundingTarget: FUNDING_TARGET,
       interestRateBps: INTEREST_RATE_BPS,
-      termDuration: TERM_DURATION,
-      termUnit: TermUnit.Months,
+      maturityDate: startDate + ONE_YEAR_SECONDS,
       startDate,
       subscriptionDeadline,
       fundingAccess: FundingAccess.General,
@@ -207,7 +205,7 @@ describe('FixedReturn', () => {
 
     it('reports its version', async () => {
       const { fixedReturn } = await loadFixture(deployFixture)
-      expect(await fixedReturn.version()).to.equal('2.0.0')
+      expect(await fixedReturn.version()).to.equal('3.0.0')
     })
 
     it('rejects a zero-address owner', async () => {
@@ -283,6 +281,7 @@ describe('FixedReturn', () => {
       expect(offer.token).to.equal(await token.getAddress())
       expect(offer.fundingTarget).to.equal(FUNDING_TARGET)
       expect(offer.interestRateBps).to.equal(INTEREST_RATE_BPS)
+      expect(offer.maturityDate).to.equal(startDate + ONE_YEAR_SECONDS)
       expect(offer.state).to.equal(OfferState.Open)
     })
 
@@ -360,87 +359,60 @@ describe('FixedReturn', () => {
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_DEADLINE)
     })
 
-    it('rejects a zero termDuration', async () => {
+    it('rejects a maturityDate equal to subscriptionDeadline', async () => {
       const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
 
       await expect(
         fixedReturn.connect(owner).createLendingOffer(
           baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
-            termDuration: 0
+            maturityDate: subscriptionDeadline
           })
         )
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_MATURITY_DATE)
     })
 
-    it('rejects a zero termDuration in Days', async () => {
+    it('rejects a maturityDate before subscriptionDeadline', async () => {
       const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
 
       await expect(
         fixedReturn.connect(owner).createLendingOffer(
           baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
-            termUnit: TermUnit.Days,
-            termDuration: 0
+            maturityDate: subscriptionDeadline - 1
           })
         )
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_MATURITY_DATE)
     })
 
-    it('rejects a zero termDuration in Years', async () => {
+    it('accepts a maturityDate exactly one second after subscriptionDeadline', async () => {
       const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
 
       await expect(
         fixedReturn.connect(owner).createLendingOffer(
           baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
-            termUnit: TermUnit.Years,
-            termDuration: 0
+            maturityDate: subscriptionDeadline + 1
           })
         )
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
+      ).to.not.be.reverted
     })
 
-    it('rejects a termDuration beyond the max for its unit', async () => {
+    it('accepts a maturityDate many years out, since no upper bound is enforced', async () => {
       const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
 
-      await expect(
-        fixedReturn.connect(owner).createLendingOffer(
-          baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
-            termUnit: TermUnit.Months,
-            termDuration: 121 // max for Months is 120
-          })
-        )
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
-    })
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline,
+        { maturityDate: startDate + 50 * ONE_YEAR_SECONDS }
+      )
 
-    it('rejects a Days termDuration beyond its max', async () => {
-      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
-        await loadFixture(deployFixture)
-
-      await expect(
-        fixedReturn.connect(owner).createLendingOffer(
-          baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
-            termUnit: TermUnit.Days,
-            termDuration: 366 // max for Days is 365
-          })
-        )
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
-    })
-
-    it('rejects a Years termDuration beyond its max', async () => {
-      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
-        await loadFixture(deployFixture)
-
-      await expect(
-        fixedReturn.connect(owner).createLendingOffer(
-          baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
-            termUnit: TermUnit.Years,
-            termDuration: 31 // max for Years is 30
-          })
-        )
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
+      const offer = await fixedReturn.getLendingOffer(offerId)
+      expect(offer.maturityDate).to.equal(startDate + 50 * ONE_YEAR_SECONDS)
     })
 
     it('rejects a lenderCap exceeding the funding target', async () => {

@@ -1,6 +1,12 @@
 import { z } from 'zod'
 import { parseUnits } from 'viem'
-import { FIXED_RETURN_TERM_MAXIMUMS, sumWhitelistAmountUnits } from '@/utils'
+import {
+  CREDIT_TERM_MAX_DAYS,
+  CREDIT_TERM_MAX_YEARS,
+  formatCalendarBreakdown,
+  MINUTES_PER_DAY,
+  sumWhitelistAmountUnits
+} from '@/utils'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 
 /** Same underlying FixedReturn contract, same basic rules — adapted to CreditCallForm's
@@ -27,9 +33,13 @@ interface CreditCallTermsSchemaContext {
  *  contract places no floor on interestRateBps.
  *  Cap validation belongs to CreditCallAccessStep.vue (where the cap fields actually
  *  live in Credit's step layout) and is handled separately, not here.
- *  `period` is always submitted on-chain as Days (NewView.vue hardcodes
- *  termUnit: 'days'), so the cap is a flat 365 days regardless of which unit the
- *  issuer used to enter it — no per-unit max needed like FixedReturn. */
+ *  `period` is always resolved to whole minutes before it reaches this schema (see
+ *  `addCreditTerm`), regardless of which unit the issuer entered it in — FixedReturn.sol
+ *  itself places no upper bound on the resulting maturityDate, only that it comes after
+ *  subscriptionDeadline, so this cap (`CREDIT_TERM_MAX_YEARS`) is a UI-only sanity
+ *  ceiling. The over-cap error is a superRefine rather than a plain `.max()` so it can
+ *  quote back the issuer's own entry as a calendar breakdown (e.g. "35 years, 2
+ *  months exceeds the 30-year maximum") instead of a bare, hard-to-place minute count. */
 export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContext) {
   return z
     .object({
@@ -43,10 +53,6 @@ export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContex
         .number({ error: 'Term is required' })
         .int('Term must be a whole number')
         .positive('Term must be greater than 0')
-        .max(
-          FIXED_RETURN_TERM_MAXIMUMS.days,
-          `Term cannot exceed ${FIXED_RETURN_TERM_MAXIMUMS.days} days`
-        )
     })
     .refine((data) => data.deadline >= context.today, {
       message: 'Subscription deadline cannot be in the past',
@@ -65,6 +71,15 @@ export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContex
         path: ['deadlineTime']
       }
     )
+    .superRefine((data, ctx) => {
+      if (data.period <= CREDIT_TERM_MAX_DAYS * MINUTES_PER_DAY) return
+      const entered = formatCalendarBreakdown(data.deadline, data.deadlineTime ?? '', data.period)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['period'],
+        message: `Term of ${entered} exceeds the ${CREDIT_TERM_MAX_YEARS}-year maximum`
+      })
+    })
 }
 
 interface CreditCallAccessSchemaContext {

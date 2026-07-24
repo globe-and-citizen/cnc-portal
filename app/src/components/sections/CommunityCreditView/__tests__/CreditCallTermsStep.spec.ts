@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { reactive } from 'vue'
+import { Time } from '@internationalized/date'
 import CreditCallTermsStep from '../CreditCallTermsStep.vue'
 import type { CreditCallForm } from '@/types'
+import { MINUTES_PER_DAY } from '@/utils'
 
 function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
   return reactive({
@@ -11,7 +13,7 @@ function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
     target: '25000',
     token: 'USDC',
     rate: '6',
-    period: 90,
+    period: 90 * MINUTES_PER_DAY,
     periodMode: 'preset',
     periodVal: '90',
     periodUnit: 'days',
@@ -34,7 +36,7 @@ describe('CreditCallTermsStep', () => {
     const form = makeForm()
     const wrapper = mountStep(form)
     await wrapper.find('[data-test="cc-term-30"]').trigger('click')
-    expect(form.period).toBe(30)
+    expect(form.period).toBe(30 * MINUTES_PER_DAY)
     expect(form.periodMode).toBe('preset')
     // The custom inputs are hidden in preset mode.
     expect(wrapper.find('[data-test="cc-term-value"]').exists()).toBe(false)
@@ -49,32 +51,36 @@ describe('CreditCallTermsStep', () => {
     expect(wrapper.find('[data-test="cc-term-value"]').exists()).toBe(true)
   })
 
-  it('converts a custom value + unit into whole days', async () => {
+  it('converts a custom value + unit into whole days, using real calendar arithmetic off the deadline', async () => {
     const form = makeForm({ periodMode: 'custom', periodVal: '6' })
     const wrapper = mountStep(form)
     await wrapper.find('[data-test="cc-unit-months"]').trigger('click')
     expect(form.periodUnit).toBe('months')
-    expect(form.period).toBe(180) // 6 * 30
+    // 2026-07-31 + 6 calendar months = 2027-01-31 → Aug(31)+Sep(30)+Oct(31)+Nov(30)+
+    // Dec(31)+Jan(31) = 184 days, not a flat 6 * 30 = 180.
+    expect(form.period).toBe(184 * MINUTES_PER_DAY)
   })
 
-  it('shows a friendly term label in the preview for non-day units, leading with the applied days', async () => {
+  it('shows the calendar breakdown in the preview for a months/years custom term', async () => {
     const form = makeForm({
       periodMode: 'custom',
       periodVal: '6',
       periodUnit: 'months',
-      period: 180
+      period: 184 * MINUTES_PER_DAY
     })
     const wrapper = mountStep(form)
-    expect(wrapper.text()).toContain('180 days (from 6 months)')
+    expect(wrapper.text()).toContain('6 months after funding')
   })
 
   it('weeks and years convert correctly', async () => {
     const form = makeForm({ periodMode: 'custom', periodVal: '2' })
     const wrapper = mountStep(form)
     await wrapper.find('[data-test="cc-unit-weeks"]').trigger('click')
-    expect(form.period).toBe(14)
+    expect(form.period).toBe(14 * MINUTES_PER_DAY)
     await wrapper.find('[data-test="cc-unit-years"]').trigger('click')
-    expect(form.period).toBe(730)
+    // 2026-07-31 + 2 calendar years = 2028-07-31, a span that includes the Feb 29 of
+    // leap year 2028 → 731 days, not a flat 2 * 365 = 730.
+    expect(form.period).toBe(731 * MINUTES_PER_DAY)
   })
 
   it('recalculates off the freshly typed value, not a stale one, when editing a custom term', async () => {
@@ -85,7 +91,7 @@ describe('CreditCallTermsStep', () => {
     const wrapper = mountStep(form)
     await wrapper.find('[data-test="cc-term-value"]').setValue('3')
     expect(form.periodVal).toBe('3')
-    expect(form.period).toBe(21) // 3 weeks
+    expect(form.period).toBe(21 * MINUTES_PER_DAY) // 3 weeks
   })
 
   it('fails validation when the term is 0 days', async () => {
@@ -126,15 +132,19 @@ describe('CreditCallTermsStep', () => {
     it('redisplays a typed local time unchanged after it round-trips through UTC storage', async () => {
       const form = makeForm({ deadline: '2026-07-31', deadlineTime: '12:00' })
       const wrapper = mountStep(form)
-      await wrapper.find('[data-test="cc-deadline-time"]').setValue('09:15')
-      const el = wrapper.find('[data-test="cc-deadline-time"]').element as HTMLInputElement
-      expect(el.value).toBe('09:15')
+      const timeInput = wrapper.findComponent({ name: 'UInputTime' })
+      timeInput.vm.$emit('update:modelValue', new Time(9, 15))
+      await wrapper.vm.$nextTick()
+      const value = timeInput.props('modelValue') as Time
+      expect(value.hour).toBe(9)
+      expect(value.minute).toBe(15)
     })
 
     it('converts a typed local time to the correct UTC instant (catches sign/offset direction bugs)', async () => {
       const form = makeForm({ deadline: '2026-07-31', deadlineTime: '12:00' })
       const wrapper = mountStep(form)
-      await wrapper.find('[data-test="cc-deadline-time"]').setValue('09:15')
+      wrapper.findComponent({ name: 'UInputTime' }).vm.$emit('update:modelValue', new Time(9, 15))
+      await wrapper.vm.$nextTick()
       // Same construction the component's own localPartsToUtc performs — an independent
       // reference computation, not a copy-paste of the implementation under test.
       const local = new Date(2026, 6, 31, 9, 15)
@@ -190,11 +200,11 @@ describe('CreditCallTermsStep', () => {
       expect(wrapper.find('[data-test="cc-rate-error"]').text()).toContain('cannot be negative')
     })
 
-    it('fails and shows an error when the term exceeds 365 days', async () => {
-      const wrapper = mountStep(makeForm({ period: 730 }))
+    it('fails and shows a calendar-breakdown error when the term exceeds the 30-year maximum', async () => {
+      const wrapper = mountStep(makeForm({ period: 31 * 365 * MINUTES_PER_DAY }))
       expect(wrapper.vm.validate()).toBe(false)
       await wrapper.vm.$nextTick()
-      expect(wrapper.find('[data-test="cc-term-error"]').text()).toContain('cannot exceed 365')
+      expect(wrapper.find('[data-test="cc-term-error"]').text()).toContain('30-year maximum')
     })
   })
 })

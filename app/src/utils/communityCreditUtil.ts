@@ -144,27 +144,105 @@ export function creditRadioClass(active: boolean) {
   ]
 }
 
-/** Friendly term label, e.g. `180 days (from 6 months)` for a non-day custom term.
- *  Leads with `form.period` — the whole-day value actually submitted on-chain — rather
- *  than the raw custom entry, since rounding can make them diverge a lot (2000 minutes
- *  rounds down to 1 day, not the ~1.4 days it looks like at a glance). Shared by the
- *  wizard's own preview and the sticky summary card so they can't drift apart. */
-export function creditTermLabel(
-  form: Pick<CreditCallForm, 'period' | 'periodMode' | 'periodVal' | 'periodUnit'>
-): string {
-  const days = `${form.period} day${form.period === 1 ? '' : 's'}`
-  if (form.periodMode === 'custom' && form.periodUnit !== 'days' && Number(form.periodVal)) {
-    const n = Number(form.periodVal)
-    const unit = n === 1 ? form.periodUnit.slice(0, -1) : form.periodUnit
-    return `${days} (from ${n} ${unit})`
+/** `period`'s canonical unit — whole minutes, matching the deadline's own
+ *  minute-precision clock field. */
+export const MINUTES_PER_DAY = 1_440
+
+/** Humanizes a whole-minute term length to the coarsest unit that keeps it a whole
+ *  number — minutes under an hour, hours under a day, days otherwise. Almost every
+ *  round is day-scale or longer, so this reads naturally without ever showing an
+ *  ugly fraction (e.g. "0.03 days" for a 45-minute term). */
+export function formatCreditPeriod(minutes: number): string {
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'}`
+  if (minutes < MINUTES_PER_DAY) {
+    const hours = Math.round(minutes / 60)
+    return `${hours} hour${hours === 1 ? '' : 's'}`
   }
-  return days
+  const days = Math.round(minutes / MINUTES_PER_DAY)
+  return `${days} day${days === 1 ? '' : 's'}`
+}
+
+const CALENDAR_BREAKDOWN_UNITS: {
+  unit: 'year' | 'month' | 'week' | 'day' | 'hour' | 'minute'
+  label: string
+}[] = [
+  { unit: 'year', label: 'year' },
+  { unit: 'month', label: 'month' },
+  { unit: 'week', label: 'week' },
+  { unit: 'day', label: 'day' },
+  { unit: 'hour', label: 'hour' },
+  { unit: 'minute', label: 'minute' }
+]
+
+/** Core cursor-walk: consumes `end`'s distance from `start` one calendar unit at a
+ *  time (years, then months, then weeks, then days), so e.g. 90 months from a given
+ *  start reads as `7 years, 6 months` rather than a flat day count. Shared by every
+ *  breakdown entry point below — the wizard's own preview, the terms schema's
+ *  over-cap error, and every on-chain round card — so they can never disagree. */
+function calendarBreakdownBetween(start: dayjs.Dayjs, end: dayjs.Dayjs): string {
+  let cursor = start
+  const parts: string[] = []
+  for (const { unit, label } of CALENDAR_BREAKDOWN_UNITS) {
+    const amount = end.diff(cursor, unit)
+    if (amount > 0) {
+      parts.push(`${amount} ${label}${amount === 1 ? '' : 's'}`)
+      cursor = cursor.add(amount, unit)
+    }
+  }
+  return parts.join(', ')
+}
+
+/**
+ * Breaks a term length down into a calendar-exact `7 years, 6 months` style string,
+ * anchored on the real subscription deadline — e.g. 90 months is shown as its actual
+ * calendar equivalent, not the flat day count the contract stores. Falls back to
+ * `formatCreditPeriod` once no deadline is set yet (nothing to anchor the breakdown
+ * on) or the breakdown comes back empty (a span under one day). Exported standalone
+ * so the terms schema's over-the-cap error message can render the exact same
+ * breakdown as the summary card, rather than a bare number the issuer would have to
+ * mentally convert.
+ */
+export function formatCalendarBreakdown(
+  deadline: string,
+  deadlineTime: string,
+  periodMinutes: number
+): string {
+  if (!deadline) return formatCreditPeriod(periodMinutes)
+  const cursor = dayjs.utc(`${deadline}T${deadlineTime || '00:00'}:00Z`)
+  const maturity = cursor.add(periodMinutes, 'minute')
+  return calendarBreakdownBetween(cursor, maturity) || formatCreditPeriod(periodMinutes)
+}
+
+/**
+ * Same calendar breakdown as `formatCalendarBreakdown`, but for an already-created
+ * on-chain round — computed directly from its `startDate`/`maturityDate` instants
+ * rather than a wizard form's deadline + relative period, so every round card shows
+ * the same "what does this term actually mean" treatment as a custom wizard entry,
+ * not a bare, possibly four-or-five-digit day count.
+ */
+export function formatRoundTerm(startDate: bigint, maturityDate: bigint, periodMinutes: number): string {
+  const start = dayjs.utc(Number(startDate) * 1000)
+  const maturity = dayjs.utc(Number(maturityDate) * 1000)
+  return calendarBreakdownBetween(start, maturity) || formatCreditPeriod(periodMinutes)
+}
+
+/**
+ * Friendly term label. A preset chip shows its own literal day count (`90 days`) —
+ * that's exactly what the button said. Any custom term, regardless of which unit
+ * built it, shows the real calendar breakdown instead (`8000 days` reads as `21
+ * years, 10 months, 3 weeks, 4 days`) — composing your own term deserves seeing what
+ * it actually means, not a raw number in whichever unit you happened to type it in.
+ * Shared by the wizard's own preview and the sticky summary card so they can't drift
+ * apart.
+ */
+export function creditTermLabel(
+  form: Pick<CreditCallForm, 'period' | 'periodMode' | 'deadline' | 'deadlineTime'>
+): string {
+  if (form.periodMode !== 'custom' || !form.deadline) return formatCreditPeriod(form.period)
+  return formatCalendarBreakdown(form.deadline, form.deadlineTime, form.period)
 }
 
 // ───────── on-chain → CreditRound adapters ─────────
-
-/** Days per FixedReturn.sol TermUnit (Days, Months, Years). */
-const TERM_UNIT_DAYS: Record<0 | 1 | 2, number> = { 0: 1, 1: 30, 2: 365 }
 
 /** Avatar gradient palette — lenders have no on-chain color, so derive one by address. */
 const CREDIT_GRADIENT_STOPS = ['#00bf7a', '#00b8d9', '#3366ff', '#0f3d2e', '#00925c']
@@ -239,11 +317,9 @@ function formatOfferDate(unixSeconds: bigint): string {
   return secs > 0 ? dayjs.utc(secs * 1000).format('MMM D, h:mm A [UTC]') : '—'
 }
 
-/** Absolute maturity (startDate + term) of an offer, for sorting/comparison. */
+/** Absolute maturity of an offer, for sorting/comparison. */
 export function offerMaturityDate(offer: LendingOfferStruct): Date {
-  return dayjs(Number(offer.startDate) * 1000)
-    .add(offer.termDuration * TERM_UNIT_DAYS[offer.termUnit], 'day')
-    .toDate()
+  return new Date(Number(offer.maturityDate) * 1000)
 }
 
 /**
@@ -263,6 +339,7 @@ export function lendingOfferToCreditRound(
   const { offerId, offer, decimals } = raw
   const status = offerStateToRoundStatus(offer, now)
   const maturity = dayjs.utc(offerMaturityDate(offer)).format('MMM D')
+  const period = Math.round((Number(offer.maturityDate) - Number(offer.startDate)) / 60)
 
   return {
     id: String(offerId),
@@ -272,7 +349,8 @@ export function lendingOfferToCreditRound(
     raised: Number(formatUnits(offer.totalFunded, decimals)),
     totalRepaid: Number(formatUnits(offer.totalRepaidByIssuer, decimals)),
     rate: Number(offer.interestRateBps) / 100,
-    period: offer.termDuration * TERM_UNIT_DAYS[offer.termUnit],
+    period,
+    termLabel: formatRoundTerm(offer.startDate, offer.maturityDate, period),
     status,
     // Only a genuinely still-fundable round (status 'open', not 'stalled') belongs in
     // the "Open & active rounds" card grid — same instant used for `status` above, so

@@ -163,6 +163,7 @@ import {
   classifyError,
   creditChipClass,
   getSupportedCreditTokenOptions,
+  MINUTES_PER_DAY,
   toCreditCallOfferParams
 } from '@/utils'
 import { creditCallBasicsSchema, type CreditCallForm, type CreditOfferForm } from '@/types'
@@ -201,7 +202,7 @@ const form = reactive<CreditCallForm>({
   target: '25000',
   token: 'USDC',
   rate: '6',
-  period: 90,
+  period: 90 * MINUTES_PER_DAY,
   periodMode: 'preset',
   periodVal: '90',
   periodUnit: 'days',
@@ -269,14 +270,15 @@ async function publish() {
     // A Community Credit round has a single date: lending closes and the loan starts on
     // the subscription deadline, so startDate == deadline. FixedReturn.sol requires
     // subscriptionDeadline <= startDate (reverts InvalidDeadline otherwise). The term is
-    // already in canonical days, so it maps straight to the contract's Days unit.
+    // already resolved to canonical whole minutes, so termUnit: 'minutes' below is exact —
+    // toFixedReturnOfferParams adds it straight onto the deadline to get maturityDate.
     const offeringForm: CreditOfferForm = {
       title: form.name.trim(),
       purpose: form.desc.trim(),
       principal: Number(form.target) || 0,
       rate: Number(form.rate) || 0,
       termValue: form.period,
-      termUnit: 'days',
+      termUnit: 'minutes',
       deadline: form.deadline,
       deadlineTime: form.deadlineTime,
       access: form.access === 'restricted' ? 'whitelist' : 'general',

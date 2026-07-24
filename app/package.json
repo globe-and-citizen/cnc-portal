@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:e2e": "VITE_E2E=true VITE_APP_NETWORK_ALIAS=hardhat vite",
     "build": "run-s type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",

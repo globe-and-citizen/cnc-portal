@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { reactive } from 'vue'
 import type { CreditCallForm } from '@/types'
+import { MINUTES_PER_DAY } from '@/utils'
 import CreditCallAccessStep from '../CreditCallAccessStep.vue'
 
 function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
@@ -11,7 +12,7 @@ function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
     target: '25000',
     token: 'USDC',
     rate: '6',
-    period: 90,
+    period: 90 * MINUTES_PER_DAY,
     periodMode: 'preset',
     periodVal: '90',
     periodUnit: 'days',
