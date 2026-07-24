@@ -23,15 +23,14 @@
 
       <div>
         <p class="text-dimmed pt-2 pb-1 text-[11px] font-bold tracking-wider uppercase">Assets</p>
-        <div
+        <StatementLine
           v-for="a in balance.assetLines"
           :key="a.label"
-          class="border-default/60 flex items-center justify-between border-b py-2"
-        >
-          <span class="text-sm">{{ a.label }}</span>
-          <span class="text-sm font-semibold tabular-nums">{{ a.value }}</span>
-        </div>
-        <div class="flex items-center justify-between py-2.5">
+          :line="a"
+          data-test-prefix="balance"
+          @drilldown="openDrilldown"
+        />
+        <div class="flex items-center justify-between py-4">
           <span class="text-sm font-bold">Total assets</span>
           <span class="text-sm font-bold tabular-nums">{{ balance.totalAssets }}</span>
         </div>
@@ -39,25 +38,25 @@
         <p class="text-dimmed pt-3 pb-1 text-[11px] font-bold tracking-wider uppercase">
           Liabilities
         </p>
-        <div
+        <StatementLine
           v-for="l in balance.liabLines"
           :key="l.label"
-          class="border-default/60 flex items-center justify-between border-b py-2"
-        >
-          <span class="text-muted text-sm">{{ l.label }}</span>
-          <span class="text-muted text-sm font-semibold tabular-nums">{{ l.value }}</span>
-        </div>
+          :line="l"
+          label-class="text-muted"
+          value-class="text-muted"
+          data-test-prefix="balance"
+          @drilldown="openDrilldown"
+        />
 
         <p class="text-dimmed pt-3 pb-1 text-[11px] font-bold tracking-wider uppercase">Equity</p>
-        <div
+        <StatementLine
           v-for="q in balance.equityLines"
           :key="q.label"
-          class="border-default/60 flex items-center justify-between border-b py-2"
-        >
-          <span class="text-sm">{{ q.label }}</span>
-          <span class="text-sm font-semibold tabular-nums">{{ q.value }}</span>
-        </div>
-        <div class="flex items-center justify-between py-2.5">
+          :line="q"
+          data-test-prefix="balance"
+          @drilldown="openDrilldown"
+        />
+        <div class="flex items-center justify-between py-4">
           <span class="text-sm font-bold">Total equity</span>
           <span class="text-sm font-bold tabular-nums">{{ balance.totalEquity }}</span>
         </div>
@@ -70,6 +69,15 @@
         </div>
       </div>
     </UCard>
+
+    <LedgerDrilldownModal
+      v-model:open="drilldownOpen"
+      v-model:columns="drilldownColumns"
+      :account="drilldownAccount"
+      :total="drilldownTotal"
+      :entries="drilldownEntries"
+      @export="onDrilldownExport"
+    />
   </div>
 </template>
 
@@ -77,10 +85,13 @@
 import { computed, ref } from 'vue'
 import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
+import StatementLine from './StatementLine.vue'
+import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
-import { presentBalance } from '@/utils/accounting/presenter'
+import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
+import { presentBalance, type StatementLineView } from '@/utils/accounting/presenter'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
@@ -89,6 +100,28 @@ const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
 const acc = useAccountingContext()
 const balance = computed(() => presentBalance(acc.entries.value, asOf.value))
+
+// Per-line drill-down — over the same as-of slice the balance sheet is built from.
+const {
+  open: drilldownOpen,
+  account: drilldownAccount,
+  total: drilldownTotal,
+  columns: drilldownColumns,
+  drilldownEntries,
+  openFor,
+  onExport: onDrilldownExport
+} = useLedgerDrilldown(
+  acc.entries,
+  () => ({ from: null, to: asOf.value }),
+  'cnc-accounting-balance-drilldown-columns-v1'
+)
+
+function openDrilldown(line: StatementLineView): void {
+  // Retained earnings is an aggregate of every income + expense account; other
+  // lines drill into their single account.
+  if (line.accounts?.length) openFor(line.accounts, line.value, 'Retained earnings')
+  else if (line.account) openFor(line.account, line.value)
+}
 
 // Export the current, as-of-filtered balance sheet. The filename carries the
 // "as of" date so a stack of exports stays distinguishable.

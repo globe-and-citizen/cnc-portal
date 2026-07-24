@@ -90,7 +90,10 @@ describe('NewView', () => {
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
     await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
-    await wrapper.find('[data-test="cc-deadline"]').setValue('2020-01-01')
+    // The deadline field is a UCalendar behind a popover button, not a plain input —
+    // same interaction CreditCallTermsStep.spec.ts uses to drive it in isolation.
+    const calendar = wrapper.findComponent({ name: 'UCalendar' })
+    await calendar.vm.$emit('update:modelValue', { year: 2020, month: 1, day: 1 })
     await wrapper.find('[data-test="cc-next"]').trigger('click') // blocked on Terms
 
     expect(wrapper.find('[data-test="cc-deadline-error"]').text()).toContain(

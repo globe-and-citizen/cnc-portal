@@ -1,9 +1,10 @@
 import { z } from 'zod'
 import { parseUnits } from 'viem'
-import { OFFERING_TERM_MAXIMUMS, sumWhitelistAmountUnits } from '@/utils'
+import { FIXED_RETURN_TERM_MAXIMUMS, sumWhitelistAmountUnits } from '@/utils'
+import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 
-/** Mirrors FixedReturn's offeringBasicsSchema (offering.schemas.ts) — same underlying
- *  contract, same rules — adapted to CreditCallForm's string-typed form fields. */
+/** Same underlying FixedReturn contract, same basic rules — adapted to CreditCallForm's
+ *  string-typed form fields. */
 export const creditCallBasicsSchema = z.object({
   name: z.string().min(3, 'Round name must be at least 3 characters'),
   target: z.coerce
@@ -12,14 +13,18 @@ export const creditCallBasicsSchema = z.object({
 })
 
 interface CreditCallTermsSchemaContext {
+  /** Today's date, YYYY-MM-DD — floors the date part of the deadline. */
   today: string
+  /** Current instant — floors a same-day deadline's clock time too, now that the
+   *  deadline picker allows minute precision. Optional so callers that only care
+   *  about the date-level check (or existing tests) can omit it. */
+  now?: Date
 }
 
-/** Mirrors FixedReturn's createOfferingTermsSchema (deadline/term rules), since Credit's
- *  rate field lives in the Terms step rather than Basics — scoped to exactly the fields
- *  CreditCallTermsStep.vue owns. Rate deliberately allows 0 here (an interest-free round
- *  is a valid Community Credit use case and the contract places no floor on
- *  interestRateBps), unlike offeringBasicsSchema's rate rule which still requires > 0.
+/** Deadline/term rules, since Credit's rate field lives in the Terms step rather than
+ *  Basics — scoped to exactly the fields CreditCallTermsStep.vue owns. Rate deliberately
+ *  allows 0 here — an interest-free round is a valid Community Credit use case and the
+ *  contract places no floor on interestRateBps.
  *  Cap validation belongs to CreditCallAccessStep.vue (where the cap fields actually
  *  live in Credit's step layout) and is handled separately, not here.
  *  `period` is always submitted on-chain as Days (NewView.vue hardcodes
@@ -33,16 +38,33 @@ export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContex
         .min(0, 'Rate cannot be negative')
         .max(100, 'Rate must be 100% or less'),
       deadline: z.string().min(1, 'Subscription deadline is required'),
+      deadlineTime: z.string().optional(),
       period: z
         .number({ error: 'Term is required' })
         .int('Term must be a whole number')
         .positive('Term must be greater than 0')
-        .max(OFFERING_TERM_MAXIMUMS.days, `Term cannot exceed ${OFFERING_TERM_MAXIMUMS.days} days`)
+        .max(
+          FIXED_RETURN_TERM_MAXIMUMS.days,
+          `Term cannot exceed ${FIXED_RETURN_TERM_MAXIMUMS.days} days`
+        )
     })
     .refine((data) => data.deadline >= context.today, {
       message: 'Subscription deadline cannot be in the past',
       path: ['deadline']
     })
+    .refine(
+      (data) => {
+        if (!context.now || !data.deadlineTime) return true
+        // Only the same-day case needs the clock-time check — an earlier refine
+        // already rejects any past date outright.
+        if (data.deadline !== context.today) return true
+        return new Date(`${data.deadline}T${data.deadlineTime}:00Z`) >= context.now
+      },
+      {
+        message: 'Subscription deadline cannot be in the past',
+        path: ['deadlineTime']
+      }
+    )
 }
 
 interface CreditCallAccessSchemaContext {
@@ -55,8 +77,7 @@ interface CreditCallAccessSchemaContext {
   decimals?: number
 }
 
-/** Same searchable, per-lender custom-amount whitelist shape as Issue Note's
- *  createOfferingAccessSchema (offering.schemas.ts), but Community Credit only allows
+/** Community Credit's searchable, per-lender custom-amount whitelist only allows
  *  two whitelist modes — capOn off: every lender is uncapped, no per-lender amount
  *  needed; capOn on: every lender needs an explicit amount, and they must sum to at
  *  least the target (matching FixedReturn.sol's UNCAPPED_ALLOCATION vs. a capped
@@ -140,4 +161,50 @@ export function createCreditCallAccessSchema(context: CreditCallAccessSchemaCont
       message: 'Cap cannot exceed the principal target',
       path: ['cap']
     })
+}
+
+interface RepayAmountSchemaContext {
+  outstanding: number
+  treasuryBalance: number
+  tokenSymbol?: string
+}
+
+export function createRepayAmountSchema({
+  outstanding,
+  treasuryBalance,
+  tokenSymbol = 'Token'
+}: RepayAmountSchemaContext) {
+  return z.object({
+    amount: z
+      .number()
+      .positive('Amount must be greater than 0.')
+      .refine((value) => value <= outstanding, {
+        message: `Cannot exceed outstanding balance of ${formatAmountWithPrecision(outstanding, 0, 4)} ${tokenSymbol}.`
+      })
+      .refine((value) => value <= treasuryBalance, {
+        message: `Cannot exceed treasury balance of ${formatAmountWithPrecision(treasuryBalance, 0, 4)} ${tokenSymbol}.`
+      })
+  })
+}
+
+interface LendAmountSchemaContext {
+  /** The tighter of the round's remaining funding gap and the lender's own remaining
+   *  whitelist allocation/general cap — same figure already shown in the modal's
+   *  "Remaining"/"Your cap left" tile (`CreditLendModal.vue`'s `displayRemaining`). */
+  remaining: number
+  tokenSymbol?: string
+}
+
+export function createLendAmountSchema({
+  remaining,
+  tokenSymbol = 'Token'
+}: LendAmountSchemaContext) {
+  return z.object({
+    amount: z
+      .number()
+      .positive('Amount must be greater than 0.')
+      .refine((value) => value <= remaining, {
+        message: `Cannot exceed remaining amount of ${formatAmountWithPrecision(remaining, 0, 4)} ${tokenSymbol}.`
+      })
+  })
 }

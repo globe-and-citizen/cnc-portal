@@ -10,12 +10,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { parseEther, type Address } from 'viem'
-import {
-  assembleCncAccounting,
-  buildRawCncEntries,
-  collectNativeRateDays,
-  type CncAccountingInput
-} from '../assemble'
+import { assembleCncAccounting, type CncAccountingInput } from '../assemble'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { TeamContract } from '@/types/teamContract'
 import type { UsdRateOfRecord } from '../toUsd'
@@ -140,14 +135,5 @@ describe('accounting non-regression', () => {
       // amountUsd = whole-token quantity × rate, so the derived USD is consistent.
       expect(entry.amountUsd).toBeGreaterThan(0)
     }
-  })
-
-  it('reports the distinct UTC days that need a native (POL) price', () => {
-    // The whole history is on one block time, so a single day needs pricing.
-    expect(collectNativeRateDays(buildRawCncEntries(sampleInput()))).toEqual([
-      new Date(TS * 1000).toISOString().slice(0, 10)
-    ])
-    // No native events → no days to price.
-    expect(collectNativeRateDays(buildRawCncEntries({}))).toEqual([])
   })
 })

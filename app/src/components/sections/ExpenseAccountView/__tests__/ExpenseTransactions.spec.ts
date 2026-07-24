@@ -32,7 +32,15 @@ import {
   buildPaginatedExpenseQueryResult
 } from './ExpenseTransactions.test-utils'
 
-const expenseQuery = createMockApolloQueryState()
+const mockExpenseQuery = createMockApolloQueryState()
+const mockExpenseAddr = { value: null as null | { value: string } }
+
+vi.mock('@/composables/expense/useExpenseEventsViaLogs', () => ({
+  useExpenseEventsViaLogs: (addr: { value: string }) => {
+    mockExpenseAddr.value = addr
+    return mockExpenseQuery
+  }
+}))
 const incomingTransfersQuery = createMockApolloQueryState()
 const mockCurrencyStore = makeCurrencyStoreMock()
 const mockGetTokenPrice = mockCurrencyStore.getTokenPrice
@@ -76,13 +84,13 @@ describe('ExpenseTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockApolloUseQueryByVariableKey(vi.mocked(useQuery), expenseQuery, {
+    mockApolloUseQueryByVariableKey(vi.mocked(useQuery), mockExpenseQuery, {
       toAddress: incomingTransfersQuery
     })
     vi.mocked(useCurrencyStore).mockReturnValue(
       mockCurrencyStore as unknown as ReturnType<typeof useCurrencyStore>
     )
-    resetMockApolloQueryState(expenseQuery, buildExpenseQueryResult())
+    resetMockApolloQueryState(mockExpenseQuery, buildExpenseQueryResult())
     resetMockApolloQueryState(incomingTransfersQuery, buildIncomingTransfersQueryResult())
     mockCurrencyStore.supportedTokens = [
       { id: 'native', symbol: 'ETH', address: ZERO_ADDRESS },
@@ -123,7 +131,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('groups multiple events sharing the same tx hash as sub-rows', () => {
-    expenseQuery.result.value = buildGroupedExpenseQueryResult()
+    mockExpenseQuery.result.value = buildGroupedExpenseQueryResult()
     incomingTransfersQuery.result.value = undefined
     wrapper = createWrapper()
 
@@ -143,7 +151,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('renders grouped zero-value child events with value fallback', () => {
-    expenseQuery.result.value = buildGroupedZeroChildExpenseQueryResult()
+    mockExpenseQuery.result.value = buildGroupedZeroChildExpenseQueryResult()
     incomingTransfersQuery.result.value = undefined
     wrapper = createWrapper()
 
@@ -163,7 +171,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('changes page via table footer pagination controls', async () => {
-    expenseQuery.result.value = buildPaginatedExpenseQueryResult(25)
+    mockExpenseQuery.result.value = buildPaginatedExpenseQueryResult(25)
     incomingTransfersQuery.result.value = undefined
     wrapper = createWrapper()
 
@@ -178,7 +186,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('anchors the current first row when page size changes', async () => {
-    expenseQuery.result.value = buildPaginatedExpenseQueryResult(25)
+    mockExpenseQuery.result.value = buildPaginatedExpenseQueryResult(25)
     incomingTransfersQuery.result.value = undefined
     wrapper = createWrapper()
 
@@ -196,27 +204,22 @@ describe('ExpenseTransactions', () => {
 
   it('uses disabled query option when expense address is empty', () => {
     wrapper = createWrapper('' as Address)
-    const expenseQueryVariables = vi.mocked(useQuery).mock.calls[0]?.[1] as {
-      contractAddress: { value: string }
-    }
-    const expenseQueryOptions = vi.mocked(useQuery).mock.calls[0]?.[2] as {
-      enabled: { value: boolean }
-    }
-    const incomingTransfersVariables = vi.mocked(useQuery).mock.calls[1]?.[1] as {
+    // Expense events now come from the getLogs composable — assert it received the
+    // empty address. The incoming-transfers feed is still an Apollo query (call 0).
+    expect(mockExpenseAddr.value?.value).toBe('')
+    const incomingTransfersVariables = vi.mocked(useQuery).mock.calls[0]?.[1] as {
       toAddress: { value: string }
     }
-    const incomingTransfersOptions = vi.mocked(useQuery).mock.calls[1]?.[2] as {
+    const incomingTransfersOptions = vi.mocked(useQuery).mock.calls[0]?.[2] as {
       enabled: { value: boolean }
     }
 
-    expect(expenseQueryVariables.contractAddress.value).toBe('')
-    expect(expenseQueryOptions.enabled.value).toBe(false)
     expect(incomingTransfersVariables.toAddress.value).toBe('')
     expect(incomingTransfersOptions.enabled.value).toBe(false)
   })
 
   it('maps ownership transfer events with a — value', () => {
-    expenseQuery.result.value = {
+    mockExpenseQuery.result.value = {
       ...buildExpenseQueryResult(),
       expenseOwnershipTransferreds: {
         items: [
@@ -245,7 +248,7 @@ describe('ExpenseTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    expenseQuery.result.value = buildFallbackExpenseQueryResult()
+    mockExpenseQuery.result.value = buildFallbackExpenseQueryResult()
 
     wrapper = createWrapper()
 
@@ -266,18 +269,18 @@ describe('ExpenseTransactions', () => {
     wrapper = createWrapper()
 
     const error = new Error('expense query failed')
-    expenseQuery.error.value = error
+    mockExpenseQuery.error.value = error
     await nextTick()
     expect(logErrorSpy).toHaveBeenCalledWith('Ponder expense transaction query error:', error)
 
-    expenseQuery.error.value = null
+    mockExpenseQuery.error.value = null
     incomingTransfersQuery.error.value = error
     await nextTick()
     expect(logErrorSpy).toHaveBeenCalledTimes(2)
   })
 
   it('shows an empty state when there are no transactions', () => {
-    expenseQuery.result.value = undefined
+    mockExpenseQuery.result.value = undefined
     incomingTransfersQuery.result.value = undefined
     wrapper = createWrapper()
     expect(wrapper.find('[data-test="expense-transactions-empty"]').exists()).toBe(true)
@@ -285,9 +288,9 @@ describe('ExpenseTransactions', () => {
   })
 
   it('shows an error state when a transactions query fails', () => {
-    expenseQuery.result.value = undefined
+    mockExpenseQuery.result.value = undefined
     incomingTransfersQuery.result.value = undefined
-    expenseQuery.error.value = new Error('expense query failed')
+    mockExpenseQuery.error.value = new Error('expense query failed')
     wrapper = createWrapper()
     expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(true)
   })

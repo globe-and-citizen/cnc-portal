@@ -9,6 +9,11 @@ import { parseEther, parseUnits, type Address } from 'viem'
 
 const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
 
+/**
+ * Daily hours ceiling applied when a wage does not specify one.
+ */
+export const DEFAULT_MAXIMUM_HOURS_PER_DAY = 8
+
 export const formatMinutesAsDuration = (totalMinutes: number): string => {
   const h = Math.floor(totalMinutes / 60)
   const m = totalMinutes % 60

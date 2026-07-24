@@ -111,7 +111,8 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
         r.status === 'open' ||
         r.status === 'stalled' ||
         r.status === 'funded' ||
-        r.status === 'active'
+        r.status === 'active' ||
+        r.status === 'overdue'
     )
   )
   const outstandingPrincipal = computed(() =>
@@ -131,7 +132,9 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
     const soonest = (offersQuery.data.value ?? [])
       .filter((raw) => {
         const s = offerStateToRoundStatus(raw.offer, now.value)
-        return s === 'open' || s === 'stalled' || s === 'funded' || s === 'active'
+        return (
+          s === 'open' || s === 'stalled' || s === 'funded' || s === 'active' || s === 'overdue'
+        )
       })
       .map((raw) => offerMaturityDate(raw.offer))
       .sort((a, b) => a.getTime() - b.getTime())[0]

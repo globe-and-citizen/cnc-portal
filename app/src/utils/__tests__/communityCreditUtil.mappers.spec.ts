@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { Address } from 'viem'
 import {
   gradientForAddress,
   lendingOfferToCreditRound,
@@ -7,7 +8,6 @@ import {
   offerStateToRoundStatus
 } from '../communityCreditUtil'
 import type { FixedReturnOfferLender, FixedReturnRawOffer, LendingOfferStruct } from '@/types'
-import type { Address } from 'viem'
 
 describe('communityCreditUtil on-chain mappers', () => {
   const baseOffer: LendingOfferStruct = {
@@ -34,13 +34,18 @@ describe('communityCreditUtil on-chain mappers', () => {
   describe('offerStateToRoundStatus', () => {
     // baseOffer.subscriptionDeadline is a fixed unix timestamp — pass `now` explicitly
     // wherever the Open/deadline boundary matters, rather than relying on the real clock.
+    // baseOffer's maturity (startDate 1_700_000_000 + 3 months) lands at 1_707_776_000 —
+    // beforeDeadline/afterDeadline sit on either side of the *subscription* deadline but
+    // both predate maturity, so they double as "before maturity" for the Funded/Repaying
+    // cases below; afterMaturity is explicitly past it for the new overdue cases.
     const beforeDeadline = new Date(1_700_400_000 * 1000)
     const afterDeadline = new Date(1_700_600_000 * 1000)
+    const afterMaturity = new Date(1_708_000_000 * 1000)
 
     it('maps Open / Funded / Refundable', () => {
       expect(offerStateToRoundStatus(makeOffer({ state: 0 }), beforeDeadline)).toBe('open')
-      expect(offerStateToRoundStatus(makeOffer({ state: 1 }))).toBe('funded')
-      expect(offerStateToRoundStatus(makeOffer({ state: 2 }))).toBe('refunded')
+      expect(offerStateToRoundStatus(makeOffer({ state: 1 }), beforeDeadline)).toBe('funded')
+      expect(offerStateToRoundStatus(makeOffer({ state: 2 }), beforeDeadline)).toBe('refunded')
     })
 
     it('maps a still-Open offer past its deadline to stalled', () => {
@@ -49,10 +54,28 @@ describe('communityCreditUtil on-chain mappers', () => {
     it('treats Repaying as active until principal + interest is fully repaid', () => {
       // totalFunded 1_000_000 @ 10% → expected 1_100_000
       const repaying = makeOffer({ state: 3, totalFunded: 1_000_000n, interestRateBps: 1000n })
-      expect(offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 500_000n })).toBe('active')
-      expect(offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 1_100_000n })).toBe(
-        'repaid'
-      )
+      expect(
+        offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 500_000n }, beforeDeadline)
+      ).toBe('active')
+      expect(
+        offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 1_100_000n }, beforeDeadline)
+      ).toBe('repaid')
+    })
+
+    it('maps Funded past maturity to overdue — no on-chain check blocks it, it is a display flag', () => {
+      expect(offerStateToRoundStatus(makeOffer({ state: 1 }), afterMaturity)).toBe('overdue')
+    })
+    it('maps Repaying past maturity with an outstanding balance to overdue', () => {
+      const repaying = makeOffer({ state: 3, totalFunded: 1_000_000n, interestRateBps: 1000n })
+      expect(
+        offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 500_000n }, afterMaturity)
+      ).toBe('overdue')
+    })
+    it('a fully repaid offer stays repaid past maturity, never overdue', () => {
+      const repaying = makeOffer({ state: 3, totalFunded: 1_000_000n, interestRateBps: 1000n })
+      expect(
+        offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 1_100_000n }, afterMaturity)
+      ).toBe('repaid')
     })
   })
 

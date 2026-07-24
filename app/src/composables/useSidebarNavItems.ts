@@ -168,17 +168,6 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
           icon: 'heroicons:lock-closed',
           disabled,
           to: { name: 'vesting', params: teamParams() }
-        },
-        {
-          label: 'Debt Financing',
-          icon: 'heroicons:banknotes',
-          disabled,
-          to: { name: 'fixed-return', params: teamParams() },
-          defaultOpen: hasCompany.value,
-          children: [
-            { label: 'Fixed Return', to: { name: 'fixed-return', params: teamParams() } },
-            { label: 'Browse & Lend', to: { name: 'lender-marketplace', params: teamParams() } }
-          ]
         }
       ]
     ]

@@ -81,6 +81,16 @@ export function wholeTokenAmount(amount: bigint, tokenId: TokenId): number {
 }
 
 /**
+ * True when a raw base-unit amount rounds to nothing — a `0` quantity / `$0.00`
+ * leg at the ledger's 6-dp display: an exact zero, or **dust** (a tiny non-zero
+ * amount, e.g. a native wage component of a few wei). Such a leg carries no value
+ * and only clutters a posting, so mappers skip it.
+ */
+export function isNegligibleAmount(amount: bigint, tokenId: TokenId): boolean {
+  return Number(wholeTokenAmount(amount, tokenId).toFixed(6)) === 0
+}
+
+/**
  * Normalize a raw on-chain token amount to USD: `Quantité × Taux`, stored at
  * 6-dp precision (spec §2–3). For USD-pegged stablecoins the rate is `1.000000`,
  * so the USD amount equals the quantity exactly.

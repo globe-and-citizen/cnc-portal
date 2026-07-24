@@ -1,12 +1,12 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 
 /**
  * Freeze the CURRENT top-level artifact set into a versioned snapshot folder
  * (`<version>/`) across every consumer, so an older contract version keeps
  * working for production teams that haven't migrated.
  *
- * Usage:  npm run freeze -- v1
+ * Usage:  npm run freeze -- V1
  *
  * Run this BEFORE compiling/deploying the next version (see the release runbook
  * in .claude/plans and contract/UPGRADE_STRATEGY.md). It never compiles — it
@@ -26,13 +26,15 @@ import * as path from 'path'
  * entry point in its own style.
  */
 
-const version = process.argv[2]
-if (!version || !/^v\d+$/.test(version)) {
-  console.error('Usage: npm run freeze -- <vN>   (e.g. npm run freeze -- v1)')
+const rawVersion = process.argv[2]
+const versionMatch = rawVersion?.match(/^v?(\d+(?:\.\d+)?)$/i)
+if (!versionMatch) {
+  console.error('Usage: npm run freeze -- <VN>   (e.g. npm run freeze -- V1)')
   process.exit(1)
 }
+const version = `V${versionMatch[1]}`
 
-const repoRoot = path.resolve(__dirname, '../..')
+const repoRoot = path.resolve(import.meta.dirname, '../..')
 
 // deployed_addresses to freeze: real networks only. chain-31337 is a per-machine
 // local snapshot and meaningless as a historical reference.

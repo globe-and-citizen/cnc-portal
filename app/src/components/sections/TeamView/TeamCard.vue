@@ -39,6 +39,15 @@
             variant="soft"
             size="sm"
           />
+          <UBadge
+            v-if="isOnLegacyContracts"
+            label="Legacy"
+            icon="i-lucide-triangle-alert"
+            color="warning"
+            variant="soft"
+            size="sm"
+            data-test="team-legacy-badge"
+          />
         </div>
       </div>
     </div>
@@ -57,4 +66,10 @@ const userStore = useUserDataStore()
 const props = defineProps<Props>()
 const isHidden = computed(() => props.team.isHidden)
 const isArchived = computed(() => props.team.isArchived)
+// Legacy = an Officer is deployed but on an older contract generation. Gate on
+// the Officer existing so onboarding teams (isMigrated false, no Officer) don't
+// get flagged.
+const isOnLegacyContracts = computed(
+  () => !!props.team.currentOfficer?.address && props.team.isMigrated === false
+)
 </script>

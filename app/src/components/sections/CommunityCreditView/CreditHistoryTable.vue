@@ -77,13 +77,15 @@ const rows = computed(() =>
         ? 'Deadline passed — awaiting refund or acceptance'
         : round.status === 'refunded'
           ? 'Refunded — principal returned to lenders'
-          : round.status === 'funded'
-            ? `Awaiting repayment · matures ${round.maturity}`
-            : round.status === 'active'
-              ? `Repaying · matures ${round.maturity}`
-              : `Repaid ${round.repaidOn ?? round.maturity}`
+          : round.status === 'overdue'
+            ? `Overdue — matured ${round.maturity}, not yet repaid`
+            : round.status === 'funded'
+              ? `Awaiting repayment · matures ${round.maturity}`
+              : round.status === 'active'
+                ? `Repaying · matures ${round.maturity}`
+                : `Repaid ${round.repaidOn ?? round.maturity}`
     const icon =
-      round.status === 'stalled'
+      round.status === 'stalled' || round.status === 'overdue'
         ? 'heroicons:exclamation-triangle'
         : round.status === 'refunded'
           ? 'heroicons:arrow-uturn-left'
@@ -91,13 +93,15 @@ const rows = computed(() =>
             ? 'heroicons:clock'
             : 'heroicons:check-badge'
     const iconClass =
-      round.status === 'stalled'
-        ? 'bg-warning/10 text-warning'
-        : round.status === 'refunded'
-          ? 'bg-neutral/10 text-neutral'
-          : round.status === 'funded' || round.status === 'active'
-            ? 'bg-info/10 text-info'
-            : 'bg-success/10 text-success'
+      round.status === 'overdue'
+        ? 'bg-error/10 text-error'
+        : round.status === 'stalled'
+          ? 'bg-warning/10 text-warning'
+          : round.status === 'refunded'
+            ? 'bg-neutral/10 text-neutral'
+            : round.status === 'funded' || round.status === 'active'
+              ? 'bg-info/10 text-info'
+              : 'bg-success/10 text-success'
     return {
       round,
       status: statusMeta(round.status),

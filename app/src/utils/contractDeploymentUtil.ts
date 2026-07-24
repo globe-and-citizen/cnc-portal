@@ -5,7 +5,7 @@ import {
   BOD_BEACON_ADDRESS,
   CASH_REMUNERATION_EIP712_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
-  INVESTOR_V1_BEACON_ADDRESS,
+  INVESTOR_BEACON_ADDRESS,
   PROPOSALS_BEACON_ADDRESS,
   ELECTIONS_BEACON_ADDRESS,
   SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS,
@@ -19,7 +19,7 @@ import { BANK_ABI } from '@/artifacts/abi/bank'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
+import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
@@ -58,7 +58,7 @@ export const validateBeaconAddresses = (): void => {
       name: 'CASH_REMUNERATION_EIP712_BEACON_ADDRESS',
       value: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
     },
-    { name: 'INVESTOR_V1_BEACON_ADDRESS', value: INVESTOR_V1_BEACON_ADDRESS },
+    { name: 'INVESTOR_BEACON_ADDRESS', value: INVESTOR_BEACON_ADDRESS },
     { name: 'ELECTIONS_BEACON_ADDRESS', value: ELECTIONS_BEACON_ADDRESS },
     {
       name: 'SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS',
@@ -103,8 +103,8 @@ export const getBeaconConfigs = (): BeaconConfig[] => {
       beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS!
     },
     {
-      beaconType: 'InvestorV1',
-      beaconAddress: INVESTOR_V1_BEACON_ADDRESS!
+      beaconType: 'Investor',
+      beaconAddress: INVESTOR_BEACON_ADDRESS!
     },
     {
       beaconType: 'Elections',
@@ -147,11 +147,11 @@ export const getDeploymentConfigs = (
     })
   })
 
-  // InvestorV1 contract
+  // Investor contract (v2 — brand-new teams never get an InvestorV1)
   deployments.push({
-    contractType: 'InvestorV1',
+    contractType: 'Investor',
     initializerData: encodeFunctionData({
-      abi: INVESTOR_ABI,
+      abi: INVESTOR_V2_ABI,
       functionName: 'initialize',
       args: [investorInput.name, investorInput.symbol, zeroAddress]
     })
@@ -211,7 +211,11 @@ export const getDeploymentConfigs = (
     })
   })
 
-  // Vesting contract — agreement-only; mints the team's InvestorV1 on release.
+  // Vesting contract — agreement-only; mints the team's share token on release.
+  // NOTE: Vesting/CashRemuneration/accounting composables still resolve the
+  // share token via getInvestorAddress() — they will not
+  // find a v2 team's contract until updated (tracked separately from this
+  // deploy-pipeline wiring; see the Investor v2 migration effort, issue #2286).
   deployments.push({
     contractType: 'Vesting',
     initializerData: encodeFunctionData({

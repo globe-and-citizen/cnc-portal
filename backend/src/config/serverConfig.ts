@@ -18,6 +18,7 @@ import claimRoutes from '../routes/claimRoute';
 import weeklyClaimRoutes from '../routes/weeklyClaimRoute';
 import expenseRoutes from '../routes/expenseRoute';
 import fixedReturnOfferingRoutes from '../routes/fixedReturnOfferingRoute';
+import investorMigrationRoutes from '../routes/investorMigrationRoute';
 import uploadRoute from '../routes/uploadRoute';
 import storageRoute from '../routes/storageRoute';
 import contractRoutes from '../routes/contractRoutes';
@@ -112,6 +113,7 @@ class Server {
       weeklyClaim: '/api/weeklyclaim/',
       expense: '/api/expense/',
       fixedReturnOffering: '/api/fixed-return-offering/',
+      investorMigration: '/api/investor-migration/',
       claim: '/api/claim/',
       upload: '/api/upload/',
       file: '/api/file/',
@@ -202,6 +204,7 @@ class Server {
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
     this.app.use(this.paths.fixedReturnOffering, authorizeUser, fixedReturnOfferingRoutes);
+    this.app.use(this.paths.investorMigration, authorizeUser, investorMigrationRoutes);
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.file, authorizeUser, storageRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);

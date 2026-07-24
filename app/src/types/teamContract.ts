@@ -2,6 +2,7 @@ import type { Address } from 'viem'
 export type ContractType =
   | 'Bank'
   | 'InvestorV1'
+  | 'Investor'
   | 'Voting'
   | 'BoardOfDirectors'
   | 'ExpenseAccountEIP712'

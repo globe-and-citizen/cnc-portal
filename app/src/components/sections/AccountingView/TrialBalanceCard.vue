@@ -29,9 +29,31 @@
         </div>
       </template>
 
-      <UTable :data="tableRows" :columns="columns">
+      <UTable
+        :data="tableRows"
+        :columns="columns"
+        :ui="{ tr: 'group' }"
+        :meta="{ class: { tr: rowClass } }"
+        @select="onRowSelect"
+      >
         <template #account-cell="{ row: { original: row } }">
-          <span :class="row.isTotal ? 'font-extrabold' : 'font-semibold'">{{ row.account }}</span>
+          <span v-if="row.isTotal" class="font-extrabold">{{ row.account }}</span>
+          <div v-else class="flex w-full items-center justify-between gap-3">
+            <button
+              type="button"
+              class="focus-visible:ring-neutral truncate rounded font-semibold focus-visible:ring-2 focus-visible:outline-none"
+              :data-test="`drilldown-${row.account}`"
+              @click.stop="openDrilldown(row)"
+            >
+              {{ row.account }}
+            </button>
+            <span
+              class="bg-neutral/10 text-neutral inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100"
+            >
+              <UIcon name="i-heroicons-magnifying-glass" class="size-3.5" />
+              Details
+            </span>
+          </div>
         </template>
         <template #nature-cell="{ row: { original: row } }">
           <span
@@ -72,17 +94,28 @@
         </template>
       </UTable>
     </UCard>
+
+    <LedgerDrilldownModal
+      v-model:open="drilldownOpen"
+      v-model:columns="drilldownColumns"
+      :account="drilldownAccount"
+      :total="drilldownTotal"
+      :entries="drilldownEntries"
+      @export="onDrilldownExport"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
+import type { TableColumn, TableRow } from '@nuxt/ui'
 import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
+import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
 import { exportFilename } from '@/utils/accounting/exportNaming'
@@ -124,14 +157,48 @@ const tableRows = computed<TrialTableRow[]>(() => [
 
 const columns: TableColumn<TrialTableRow>[] = [
   { accessorKey: 'account', header: 'Account' },
-  { accessorKey: 'nature', header: 'Nature' },
-  { accessorKey: 'dr', header: 'Debit' },
-  { accessorKey: 'cr', header: 'Credit' }
+  { accessorKey: 'nature', header: 'Nature', meta: { class: { th: 'w-[24%]' } } },
+  { accessorKey: 'dr', header: 'Debit', meta: { class: { th: 'w-[13%]' } } },
+  { accessorKey: 'cr', header: 'Credit', meta: { class: { th: 'w-[13%]' } } }
 ]
+
+// On hover, a soft rounded-pill fill (matching the Income / Balance statement
+// rows): the fill sits on the cells so the first / last round into a pill, and
+// no full-width band or accent bar.
+function rowClass(row: TableRow<TrialTableRow>): string {
+  return row.original.isTotal
+    ? ''
+    : 'cursor-pointer [&>td]:transition-colors [&:hover>td]:bg-elevated/60 [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg'
+}
+
+function onRowSelect(_event: Event, row: TableRow<TrialTableRow>): void {
+  if (!row.original.isTotal) openDrilldown(row.original)
+}
+
+const { exportPdf, exportExcel } = useAccountingExport()
+
+// Per-line drill-down — over the same as-of slice the trial balance is built from.
+const {
+  open: drilldownOpen,
+  account: drilldownAccount,
+  total: drilldownTotal,
+  columns: drilldownColumns,
+  drilldownEntries,
+  openFor,
+  onExport: onDrilldownExport
+} = useLedgerDrilldown(
+  acc.entries,
+  () => ({ from: null, to: asOf.value }),
+  'cnc-accounting-drilldown-columns-v1'
+)
+
+function openDrilldown(row: TrialTableRow): void {
+  // The line's balance sits in whichever column isn't the em-dash placeholder.
+  openFor(row.account, row.dr === '—' ? row.cr : row.dr)
+}
 
 // Export the current, as-of-filtered trial balance. The filename carries the
 // "as of" date so a stack of exports stays distinguishable.
-const { exportPdf, exportExcel } = useAccountingExport()
 const spec = (): SectionSpec => ({ key: 'trial', asOf: asOf.value })
 const onExport = () => {
   const s = spec()

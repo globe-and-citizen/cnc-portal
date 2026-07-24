@@ -1,52 +1,57 @@
-import { ethers, upgrades } from 'hardhat'
-import { expect } from 'chai'
 import {
-  loadFixture,
-  time,
+  ethers,
   impersonateAccount,
-  setBalance
-} from '@nomicfoundation/hardhat-network-helpers'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import {
+  initializeHardhat,
+  loadFixture,
+  setBalance,
+  time,
+  upgrades
+} from './hardhat-context.js'
+import { expect } from 'chai'
+import { parseUnits } from 'ethers'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type {
   Bank,
   FeeCollector,
   FixedReturn,
   MockERC20,
   MockOfficer,
   Officer
-} from '../typechain-types'
+} from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 describe('FixedReturn', () => {
   const TermUnit = { Days: 0, Months: 1, Years: 2 }
   const FundingAccess = { General: 0, Whitelist: 1 }
   const OfferState = { Open: 0, Funded: 1, Refundable: 2, Repaying: 3 }
 
-  const FUNDING_TARGET = ethers.parseUnits('100000', 6)
+  const FUNDING_TARGET = parseUnits('100000', 6)
   const INTEREST_RATE_BPS = 800n // 8%, flat over the whole term
   const TERM_DURATION = 12
 
   const ERRORS = {
-    ZERO_ADDRESS: 'ZeroAddress',
-    INVALID_DEADLINE: 'InvalidDeadline',
-    INVALID_TERM_DURATION: 'InvalidTermDuration',
-    LENDER_CAP_EXCEEDS_TARGET: 'LenderCapExceedsFundingTarget',
-    ALLOCATION_SUM_BELOW_TARGET: 'AllocationSumBelowFundingTarget',
-    WHITELIST_LENGTH_MISMATCH: 'WhitelistLengthMismatch',
-    DUPLICATE_WHITELIST_ADDRESS: 'DuplicateWhitelistAddress',
-    OFFER_NOT_OPEN: 'OfferNotOpen',
-    OFFER_NOT_FUNDED: 'OfferNotFunded',
-    DEADLINE_NOT_PASSED: 'DeadlineNotPassed',
-    NO_FUNDS_RAISED: 'NoFundsRaised',
-    NOT_WHITELISTED: 'NotWhitelisted',
-    DEPOSIT_EXCEEDS_ALLOCATION: 'DepositExceedsAllocation',
-    DEPOSIT_EXCEEDS_LENDER_CAP: 'DepositExceedsLenderCap',
-    FUNDING_TARGET_REACHED: 'FundingTargetReached',
-    ZERO_AMOUNT: 'ZeroAmount',
-    TOKEN_NOT_SUPPORTED: 'TokenSupportNotFound',
-    TOKEN_NOT_SUPPORTED_BY_BANK: 'TokenNotSupportedByBank',
-    EXCEEDS_REPAYMENT_OBLIGATION: 'ExceedsRepaymentObligation',
+    ZERO_ADDRESS: 'FixedReturn__ZeroAddress',
+    INVALID_DEADLINE: 'FixedReturn__InvalidDeadline',
+    INVALID_TERM_DURATION: 'FixedReturn__InvalidTermDuration',
+    LENDER_CAP_EXCEEDS_TARGET: 'FixedReturn__LenderCapExceedsFundingTarget',
+    ALLOCATION_SUM_BELOW_TARGET: 'FixedReturn__AllocationSumBelowFundingTarget',
+    WHITELIST_LENGTH_MISMATCH: 'FixedReturn__WhitelistLengthMismatch',
+    DUPLICATE_WHITELIST_ADDRESS: 'FixedReturn__DuplicateWhitelistAddress',
+    OFFER_NOT_OPEN: 'FixedReturn__OfferNotOpen',
+    OFFER_NOT_FUNDED: 'FixedReturn__OfferNotFunded',
+    DEADLINE_NOT_PASSED: 'FixedReturn__DeadlineNotPassed',
+    NO_FUNDS_RAISED: 'FixedReturn__NoFundsRaised',
+    NOT_WHITELISTED: 'FixedReturn__NotWhitelisted',
+    DEPOSIT_EXCEEDS_ALLOCATION: 'FixedReturn__DepositExceedsAllocation',
+    DEPOSIT_EXCEEDS_LENDER_CAP: 'FixedReturn__DepositExceedsLenderCap',
+    FUNDING_TARGET_REACHED: 'FixedReturn__FundingTargetReached',
+    ZERO_AMOUNT: 'FixedReturn__ZeroAmount',
+    TOKEN_NOT_SUPPORTED: 'TokenSupport__NotFound',
+    TOKEN_NOT_SUPPORTED_BY_BANK: 'FixedReturn__TokenNotSupportedByBank',
+    EXCEEDS_REPAYMENT_OBLIGATION: 'FixedReturn__ExceedsRepaymentObligation',
     OWNABLE_UNAUTHORIZED: 'OwnableUnauthorizedAccount',
-    NOT_BANK: 'NotBank'
+    NOT_BANK: 'FixedReturn__NotBank'
   } as const
 
   // Deploys MockOfficer, then deploys Bank and FixedReturn with MockOfficer impersonated
@@ -69,14 +74,14 @@ describe('FixedReturn', () => {
     const bank = (await upgrades.deployProxy(
       BankFactory.connect(officerSigner),
       [[], owner.address],
-      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
     )) as unknown as Bank
 
     await mockOfficer.setDeployedContract('Bank', await bank.getAddress())
 
     // repayLenders is onlyBank — impersonate the real Bank address so FixedReturn's
     // own repayment logic (ceiling, cumulative distribution, rounding) can be unit
-    // tested directly, mirroring how InvestorV1.spec.ts tests distributeTokenDividends
+    // tested directly, mirroring how Investor.spec.ts tests distributeTokenDividends
     // via an impersonated bankSigner rather than the full Bank call chain.
     const bankAddress = await bank.getAddress()
     await impersonateAccount(bankAddress)
@@ -86,7 +91,7 @@ describe('FixedReturn', () => {
     const fixedReturn = (await upgrades.deployProxy(
       FixedReturnFactory.connect(officerSigner),
       [initialTokens, owner.address],
-      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
     )) as unknown as FixedReturn
 
     await mockOfficer.setDeployedContract('FixedReturn', await fixedReturn.getAddress())
@@ -170,7 +175,7 @@ describe('FixedReturn', () => {
       .connect(owner)
       .createLendingOffer(baseParams(token, startDate, subscriptionDeadline, overrides))
     await tx.wait()
-    return fixedReturn.totalOfferings()
+    return fixedReturn.getTotalOfferings()
   }
 
   async function createWhitelistOffer(
@@ -207,21 +212,22 @@ describe('FixedReturn', () => {
 
     it('reports its version', async () => {
       const { fixedReturn } = await loadFixture(deployFixture)
-      expect(await fixedReturn.version()).to.equal('1.4.0')
+      expect(await fixedReturn.version()).to.equal('2.0.0')
     })
 
     it('rejects a zero-address owner', async () => {
       const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
       await expect(
         upgrades.deployProxy(FixedReturnFactory, [[], ethers.ZeroAddress], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(FixedReturnFactory, ERRORS.ZERO_ADDRESS)
     })
 
     it('rejects being initialized a second time', async () => {
       const { fixedReturn, owner } = await loadFixture(deployFixture)
-      await expect(fixedReturn.initialize([], owner.address)).to.be.reverted
+      await expect(fixedReturn.initialize([], owner.address)).to.be.revert(ethers)
     })
 
     it('pre-registers an initial set of supported tokens, mirroring Bank', async () => {
@@ -524,7 +530,7 @@ describe('FixedReturn', () => {
         }
       )
 
-      expect(await fixedReturn.lenderAllocation(offerId, lenderA.address)).to.equal(
+      expect(await fixedReturn.getLenderAllocation(offerId, lenderA.address)).to.equal(
         ethers.parseUnits('60000', 6)
       )
 
@@ -569,7 +575,7 @@ describe('FixedReturn', () => {
         }
       )
 
-      expect(await fixedReturn.lenderAllocation(offerId, lenderB.address)).to.equal(uncapped)
+      expect(await fixedReturn.getLenderAllocation(offerId, lenderB.address)).to.equal(uncapped)
     })
   })
 
@@ -590,7 +596,7 @@ describe('FixedReturn', () => {
         .to.emit(fixedReturn, 'FundsLent')
         .withArgs(offerId, lenderA.address, amount)
 
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(amount)
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(amount)
     })
 
     it('rejects a zero amount', async () => {
@@ -686,8 +692,9 @@ describe('FixedReturn', () => {
 
       await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
       // remaining room is exactly 40k — must succeed, not revert
-      await expect(fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6)))
-        .to.not.be.reverted
+      await expect(
+        fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6))
+      ).to.not.be.revert(ethers)
 
       const offer = await fixedReturn.getLendingOffer(offerId)
       expect(offer.totalFunded).to.equal(FUNDING_TARGET)
@@ -724,8 +731,8 @@ describe('FixedReturn', () => {
       )
 
       const amount = ethers.parseUnits('50000', 6)
-      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, amount)).to.not.be.reverted
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(amount)
+      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, amount)).to.not.be.revert(ethers)
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(amount)
     })
 
     it('transitions to Funded and emits LendingOfferFunded once the target is reached', async () => {
@@ -784,7 +791,7 @@ describe('FixedReturn', () => {
 
       const amount = ethers.parseUnits('60000', 6)
       await fixedReturn.connect(lenderA).lendFunds(offerId, amount)
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(amount)
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(amount)
     })
 
     it('rejects a caller with no allocation', async () => {
@@ -851,8 +858,9 @@ describe('FixedReturn', () => {
         }
       )
 
-      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6)))
-        .to.not.be.reverted
+      await expect(
+        fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
+      ).to.not.be.revert(ethers)
     })
 
     it('lets an uncapped whitelisted lender deposit beyond what a personal cap would allow', async () => {
@@ -873,8 +881,9 @@ describe('FixedReturn', () => {
       )
 
       // lenderB is uncapped — deposits far more than lenderA's 20k allocation would allow.
-      await expect(fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('80000', 6)))
-        .to.not.be.reverted
+      await expect(
+        fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('80000', 6))
+      ).to.not.be.revert(ethers)
     })
 
     it("still bounds an uncapped whitelisted lender by the offer's remaining funding target", async () => {
@@ -938,8 +947,8 @@ describe('FixedReturn', () => {
       expect(await token.balanceOf(lenderB.address)).to.equal(
         balanceBBefore + ethers.parseUnits('20000', 6)
       )
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(0)
-      expect(await fixedReturn.lenderDeposits(offerId, lenderB.address)).to.equal(0)
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(0)
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderB.address)).to.equal(0)
     })
 
     it('rejects refunding before the deadline has passed', async () => {
@@ -1628,7 +1637,7 @@ describe('FixedReturn', () => {
       await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('30000', 6))
 
       expect(await fixedReturn.getOfferLenders(offerId)).to.deep.equal([lenderA.address])
-      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(
+      expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(
         ethers.parseUnits('60000', 6)
       )
     })
@@ -1649,7 +1658,7 @@ describe('FixedReturn', () => {
       const feeCollector = (await upgrades.deployProxy(
         FeeCollectorFactory,
         [owner.address, [], []],
-        { initializer: 'initialize' }
+        { initializer: 'initialize', unsafeAllow: ['constructor'] }
       )) as unknown as FeeCollector
 
       const officer = (await upgrades.deployProxy(OfficerFactory, [owner.address, [], [], false], {
@@ -1667,10 +1676,10 @@ describe('FixedReturn', () => {
       const fixedReturn = (await upgrades.deployProxy(
         FixedReturnFactory.connect(officerSigner),
         [[], owner.address],
-        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
       )) as unknown as FixedReturn
 
-      expect(await fixedReturn.officerAddress()).to.equal(officerAddress)
+      expect(await fixedReturn.getOfficerAddress()).to.equal(officerAddress)
     })
   })
 })

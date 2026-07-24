@@ -6,22 +6,12 @@
   },
   {
     "inputs": [],
-    "name": "EnforcedPause",
+    "name": "Bank__FeeCollectorNotConfigured",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "ExpectedPause",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "FeeCollectorNotConfigured",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "FixedReturnContractNotFound",
+    "name": "Bank__FixedReturnContractNotFound",
     "type": "error"
   },
   {
@@ -37,7 +27,7 @@
         "type": "uint256"
       }
     ],
-    "name": "InsufficientBalance",
+    "name": "Bank__InsufficientBalance",
     "type": "error"
   },
   {
@@ -48,7 +38,53 @@
         "type": "uint16"
       }
     ],
-    "name": "InvalidFeeBps",
+    "name": "Bank__InvalidFeeBps",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Bank__InvestorContractNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Bank__OfficerAddressNotSet",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Bank__TransferFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "Bank__UnsupportedToken",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Bank__ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Bank__ZeroAmount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EnforcedPause",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpectedPause",
     "type": "error"
   },
   {
@@ -58,17 +94,7 @@
   },
   {
     "inputs": [],
-    "name": "InvestorContractNotFound",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OfficerAddressNotSet",
     "type": "error"
   },
   {
@@ -117,7 +143,7 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportAlreadyAdded",
+    "name": "TokenSupport__AlreadyAdded",
     "type": "error"
   },
   {
@@ -128,38 +154,12 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportNotFound",
+    "name": "TokenSupport__NotFound",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TokenSupportZeroAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "TransferFailed",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "UnsupportedToken",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAmount",
+    "name": "TokenSupport__ZeroAddress",
     "type": "error"
   },
   {
@@ -406,7 +406,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],
@@ -419,12 +419,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
@@ -437,7 +437,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
@@ -450,12 +450,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
@@ -497,6 +497,19 @@
   },
   {
     "inputs": [],
+    "name": "getOfficerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getSupportedTokenCount",
     "outputs": [
       {
@@ -525,7 +538,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -544,12 +557,12 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_tokenAddresses",
+        "name": "tokenAddresses",
         "type": "address[]"
       },
       {
         "internalType": "address",
-        "name": "_sender",
+        "name": "sender",
         "type": "address"
       }
     ],
@@ -562,7 +575,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -572,19 +585,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "officerAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -627,7 +627,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],
@@ -647,12 +647,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_to",
+        "name": "to",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
@@ -678,17 +678,17 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_to",
+        "name": "to",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
@@ -702,6 +702,19 @@
     "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {

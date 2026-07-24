@@ -3,49 +3,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_feeCollector",
+        "name": "feeCollector",
         "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "contractType",
-        "type": "string"
-      }
-    ],
-    "name": "BeaconNotConfigured",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "BodMustBeDeployedViaElections",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "beaconType",
-        "type": "string"
-      }
-    ],
-    "name": "DuplicateBeaconType",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "EmptyBeaconType",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "EmptyContractType",
-    "type": "error"
   },
   {
     "inputs": [],
@@ -63,6 +26,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "string",
@@ -70,17 +38,59 @@
         "type": "string"
       }
     ],
-    "name": "MissingInitializerData",
+    "name": "Officer__BeaconNotConfigured",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NotInitializing",
+    "name": "Officer__BodMustBeDeployedViaElections",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "beaconType",
+        "type": "string"
+      }
+    ],
+    "name": "Officer__DuplicateBeaconType",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NotOwnerOrInitializing",
+    "name": "Officer__EmptyBeaconType",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Officer__EmptyContractType",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "contractType",
+        "type": "string"
+      }
+    ],
+    "name": "Officer__MissingInitializerData",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Officer__NotOwnerOrInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Officer__Unauthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Officer__ZeroAddress",
     "type": "error"
   },
   {
@@ -111,14 +121,17 @@
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "Unauthorized",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
-    "type": "error"
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "bank",
+        "type": "address"
+      }
+    ],
+    "name": "BankDeployed",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -156,19 +169,52 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "string",
-        "name": "contractType",
-        "type": "string"
-      },
-      {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "deployedAddress",
+        "name": "board",
         "type": "address"
       }
     ],
-    "name": "ContractDeployed",
+    "name": "BoardOfDirectorsDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "remuneration",
+        "type": "address"
+      }
+    ],
+    "name": "CashRemunerationEIP712Deployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "elections",
+        "type": "address"
+      }
+    ],
+    "name": "ElectionsDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "ExpenseAccountEIP712Deployed",
     "type": "event"
   },
   {
@@ -182,6 +228,19 @@
       }
     ],
     "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "investor",
+        "type": "address"
+      }
+    ],
+    "name": "InvestorDeployed",
     "type": "event"
   },
   {
@@ -220,6 +279,32 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "proposals",
+        "type": "address"
+      }
+    ],
+    "name": "ProposalsDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "router",
+        "type": "address"
+      }
+    ],
+    "name": "SafeDepositRouterDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -227,6 +312,19 @@
       }
     ],
     "name": "Unpaused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "vesting",
+        "type": "address"
+      }
+    ],
+    "name": "VestingDeployed",
     "type": "event"
   },
   {
@@ -245,44 +343,6 @@
     "name": "configureBeacon",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "name": "contractBeacons",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "contractTypes",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -361,7 +421,52 @@
   },
   {
     "inputs": [],
+    "name": "getBodContract",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getConfiguredContractTypes",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "contractType",
+        "type": "string"
+      }
+    ],
+    "name": "getContractBeacon",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getContractTypes",
     "outputs": [
       {
         "internalType": "string[]",
@@ -458,7 +563,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "ownerAddress",
         "type": "address"
       },
       {
@@ -492,12 +597,12 @@
           }
         ],
         "internalType": "struct DeploymentData[]",
-        "name": "_deployments",
+        "name": "deployments",
         "type": "tuple[]"
       },
       {
         "internalType": "bool",
-        "name": "_isDeployAllContracts",
+        "name": "isDeployAllContracts",
         "type": "bool"
       }
     ],
@@ -510,7 +615,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],
@@ -583,6 +688,19 @@
     "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   }
 ]

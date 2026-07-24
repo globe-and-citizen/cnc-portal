@@ -12,12 +12,12 @@
         "type": "string"
       }
     ],
-    "name": "DuplicateContractType",
+    "name": "FeeCollector__DuplicateContractType",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "EmptyContractType",
+    "name": "FeeCollector__EmptyContractType",
     "type": "error"
   },
   {
@@ -28,7 +28,33 @@
         "type": "uint16"
       }
     ],
-    "name": "InvalidBps",
+    "name": "FeeCollector__InvalidBps",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "FeeCollector__TokenNotSupported",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FeeCollector__WithdrawalFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FeeCollector__ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FeeCollector__ZeroAmount",
     "type": "error"
   },
   {
@@ -87,7 +113,7 @@
         "type": "address"
       }
     ],
-    "name": "TokenNotSupported",
+    "name": "TokenSupport__AlreadyAdded",
     "type": "error"
   },
   {
@@ -98,38 +124,12 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportAlreadyAdded",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "TokenSupportNotFound",
+    "name": "TokenSupport__NotFound",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TokenSupportZeroAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "WithdrawalFailed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAmount",
+    "name": "TokenSupport__ZeroAddress",
     "type": "error"
   },
   {
@@ -307,26 +307,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],
     "name": "addTokenSupport",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "feeBeneficiary",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -362,6 +349,19 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getFeeBeneficiary",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -416,7 +416,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -435,7 +435,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "initialOwner",
         "type": "address"
       },
       {
@@ -452,12 +452,12 @@
           }
         ],
         "internalType": "struct FeeCollector.FeeConfig[]",
-        "name": "_configs",
+        "name": "configs",
         "type": "tuple[]"
       },
       {
         "internalType": "address[]",
-        "name": "_tokenAddresses",
+        "name": "tokenAddresses",
         "type": "address[]"
       }
     ],
@@ -470,7 +470,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -538,7 +538,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],
@@ -576,7 +576,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_beneficiary",
+        "name": "beneficiary",
         "type": "address"
       }
     ],
@@ -596,6 +596,19 @@
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {

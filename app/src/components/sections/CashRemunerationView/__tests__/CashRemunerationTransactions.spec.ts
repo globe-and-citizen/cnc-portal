@@ -59,7 +59,15 @@ vi.mock('@nuxt/ui/components/Select.vue', () => ({
   }
 }))
 
-const cashRemunerationQuery = createMockApolloQueryState()
+const mockCashRemQuery = createMockApolloQueryState()
+const mockCashRemAddr = { value: null as null | { value: string } }
+
+vi.mock('@/composables/cashRemuneration/useCashRemunerationEventsViaLogs', () => ({
+  useCashRemunerationEventsViaLogs: (addr: { value: string }) => {
+    mockCashRemAddr.value = addr
+    return mockCashRemQuery
+  }
+}))
 const incomingTransfersQuery = createMockApolloQueryState()
 const mockCurrencyStore = makeCurrencyStoreMock()
 const mockGetTokenPrice = mockCurrencyStore.getTokenPrice
@@ -81,13 +89,13 @@ describe('CashRemunerationTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockApolloUseQueryByVariableKey(vi.mocked(useQuery), cashRemunerationQuery, {
+    mockApolloUseQueryByVariableKey(vi.mocked(useQuery), mockCashRemQuery, {
       toAddress: incomingTransfersQuery
     })
     vi.mocked(useCurrencyStore).mockReturnValue(
       mockCurrencyStore as unknown as ReturnType<typeof useCurrencyStore>
     )
-    resetMockApolloQueryState(cashRemunerationQuery, buildCashRemunerationQueryResult())
+    resetMockApolloQueryState(mockCashRemQuery, buildCashRemunerationQueryResult())
     resetMockApolloQueryState(incomingTransfersQuery, buildIncomingTransfersQueryResult())
     mockCurrencyStore.supportedTokens = [
       { id: 'native', symbol: 'ETH', address: ZERO_ADDRESS },
@@ -148,25 +156,23 @@ describe('CashRemunerationTransactions', () => {
   it('uses disabled query option when contract address is empty', () => {
     wrapper = createWrapper('' as Address)
 
-    const cashQueryVariables = vi.mocked(useQuery).mock.calls[0]?.[1] as {
-      contractAddress: { value: string }
-    }
+    // Payroll events now come from the getLogs composable — assert it received
+    // the empty address. The incoming-transfers feed is still Apollo (call 0).
+    expect(mockCashRemAddr.value?.value).toBe('')
 
-    const incomingQueryVariables = vi.mocked(useQuery).mock.calls[1]?.[1] as {
+    const incomingQueryVariables = vi.mocked(useQuery).mock.calls[0]?.[1] as {
       toAddress: { value: string }
     }
-    const incomingQueryOptions = vi.mocked(useQuery).mock.calls[1]?.[2] as {
+    const incomingQueryOptions = vi.mocked(useQuery).mock.calls[0]?.[2] as {
       enabled: { value: boolean }
     }
-
-    expect(cashQueryVariables.contractAddress.value).toBe('')
 
     expect(incomingQueryVariables.toAddress.value).toBe('')
     expect(incomingQueryOptions.enabled.value).toBe(false)
   })
 
   it('maps ownership transfer events with a zero amount', () => {
-    cashRemunerationQuery.result.value = {
+    mockCashRemQuery.result.value = {
       ...buildCashRemunerationQueryResult(),
       cashRemunerationOwnershipTransferreds: {
         items: [
@@ -196,7 +202,7 @@ describe('CashRemunerationTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    cashRemunerationQuery.result.value = {
+    mockCashRemQuery.result.value = {
       cashRemunerationDeposits: {
         items: [
           {
@@ -241,7 +247,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('renders grouped child rows and aggregated parent values', () => {
-    cashRemunerationQuery.result.value = {
+    mockCashRemQuery.result.value = {
       cashRemunerationDeposits: {
         items: [
           {
@@ -287,7 +293,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('renders counterparty and value fallbacks for zero-value metadata events', () => {
-    cashRemunerationQuery.result.value = {
+    mockCashRemQuery.result.value = {
       cashRemunerationDeposits: { items: [] },
       cashRemunerationWithdraws: { items: [] },
       cashRemunerationWithdrawTokens: { items: [] },

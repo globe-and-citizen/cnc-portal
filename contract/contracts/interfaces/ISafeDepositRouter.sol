@@ -15,12 +15,12 @@ import {ITokenSupport} from "./ITokenSupport.sol";
 interface ISafeDepositRouter is IPausable, IOwnable, ITokenSupport {
   // ============ Configuration ============
   /// @notice Set the safe address where deposits are sent
-  /// @param _newSafe New safe address
-  function setSafeAddress(address _newSafe) external;
+  /// @param newSafe New safe address
+  function setSafeAddress(address newSafe) external;
 
   /// @notice Set the SHER token multiplier
-  /// @param _newMultiplier New multiplier value
-  function setMultiplier(uint256 _newMultiplier) external;
+  /// @param newMultiplier New multiplier value
+  function setMultiplier(uint256 newMultiplier) external;
 
   // ============ Deposit Controls ============
   /// @notice Enable deposits

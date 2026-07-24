@@ -103,7 +103,7 @@ import { useFundFixedReturnRepayment } from '@/composables/bank/writes'
 import { useErc20BalanceOf } from '@/composables/erc20/reads'
 import {
   classifyError,
-  decimalsForOfferingToken,
+  decimalsForFixedReturnToken,
   formatAmount,
   offerLenderToCreditLender,
   repayableCeiling,
@@ -134,7 +134,7 @@ const { data: rawOffer, refetch: refetchOffer } = useFixedReturnGetLendingOffer(
 const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)
 const tokenAddress = computed(() => offer.value?.token ?? zeroAddress)
 const decimals = computed(() =>
-  offer.value ? (decimalsForOfferingToken(offer.value.token) ?? 6) : 6
+  offer.value ? (decimalsForFixedReturnToken(offer.value.token) ?? 6) : 6
 )
 const { data: lenderData } = useFixedReturnOfferLenders(roundId, tokenAddress)
 

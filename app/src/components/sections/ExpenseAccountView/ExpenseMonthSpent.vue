@@ -28,32 +28,15 @@ import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
-import { useQuery } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
-import { formatUnits } from 'viem'
+import { formatUnits, zeroAddress } from 'viem'
 import { computed, watch } from 'vue'
 import { SUPPORTED_TOKENS } from '@/constant'
+import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
 
 const teamStore = useTeamStore()
 const toast = useToast()
 const currencyStore = useCurrencyStore()
 const contractAddress = computed(() => teamStore.getContractAddressByType('ExpenseAccountEIP712'))
-
-const EXPENSE_TRANSACTIONS_QUERY = gql`
-  query GetExpenseTransactions($contractAddress: Bytes!, $startDate: BigInt!, $endDate: BigInt!) {
-    transactions(
-      where: {
-        contractAddress: $contractAddress
-        blockTimestamp_gte: $startDate
-        blockTimestamp_lte: $endDate
-        transactionType: transfer
-      }
-    ) {
-      amount
-      tokenAddress
-    }
-  }
-`
 
 const now = new Date()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000
@@ -61,17 +44,26 @@ const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime() 
 const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime() / 1000
 const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0).getTime() / 1000
 
-const { result, loading, error } = useQuery(EXPENSE_TRANSACTIONS_QUERY, {
-  contractAddress,
-  startDate: startOfMonth,
-  endDate: endOfMonth
-})
+// EXPERIMENT: derive monthly spend from the RPC-sourced Expense events instead
+// of Ponder. Transfers out = native (tokenAddress = zeroAddress) + token.
+const { result: expenseEvents, loading, error } = useExpenseEventsViaLogs(contractAddress)
 
-const { result: prevResult, error: prevError } = useQuery(EXPENSE_TRANSACTIONS_QUERY, {
-  contractAddress,
-  startDate: startOfPrevMonth,
-  endDate: endOfPrevMonth
-})
+const transfersInRange = (
+  start: number,
+  end: number
+): { amount: bigint; tokenAddress: string }[] => {
+  const events = expenseEvents.value
+  if (!events) return []
+  const inRange = (ts: number) => ts >= start && ts <= end
+  return [
+    ...events.expenseTransfers.items
+      .filter((t) => inRange(t.timestamp))
+      .map((t) => ({ amount: BigInt(t.amount), tokenAddress: zeroAddress as string })),
+    ...events.expenseTokenTransfers.items
+      .filter((t) => inRange(t.timestamp))
+      .map((t) => ({ amount: BigInt(t.amount), tokenAddress: t.token }))
+  ]
+}
 
 /** Sums `transfer` transactions, converted to the local currency. */
 const sumInLocalCurrency = (transactions: { amount: bigint; tokenAddress: string }[]): number => {
@@ -97,9 +89,11 @@ const sumInLocalCurrency = (transactions: { amount: bigint; tokenAddress: string
   return totalInLocal
 }
 
-const monthlySpentLocal = computed(() => sumInLocalCurrency(result.value?.transactions ?? []))
+const monthlySpentLocal = computed(() =>
+  sumInLocalCurrency(transfersInRange(startOfMonth, endOfMonth))
+)
 const prevMonthlySpentLocal = computed(() =>
-  sumInLocalCurrency(prevResult.value?.transactions ?? [])
+  sumInLocalCurrency(transfersInRange(startOfPrevMonth, endOfPrevMonth))
 )
 
 const totalMonthlySpentAmount = computed(() =>
@@ -117,10 +111,10 @@ const spendingDelta = computed<{ percent: string; direction: 'up' | 'down' } | n
   }
 })
 
-watch([error, prevError], ([err, prevErr]) => {
-  if (err || prevErr) {
+watch(error, (err) => {
+  if (err) {
     toast.add({ title: 'Failed to fetch monthly spent amount', color: 'error' })
-    log.error('Failed to fetch monthly spent amount', err ?? prevErr)
+    log.error('Failed to fetch monthly spent amount', err)
   }
 })
 </script>

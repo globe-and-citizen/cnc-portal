@@ -1,5 +1,5 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 
 // ⚠️ DRIFT WARNING — do not run `npm run update-abi` without reconciling first.
 // The typed ABI wrappers actually on disk (app/src/artifacts/abi/*.ts) are
@@ -22,19 +22,18 @@ const contracts = [
   'CashRemunerationEIP712',
   'Elections',
   'ExpenseAccountEIP712',
-  'InvestorV1',
+  'Investor',
   'Officer',
   'Proposals',
   'Vesting',
-  'Voting',
   'SafeDepositRouter'
 ]
 
 // Source directory for compiled artifacts
-const artifactsDir = path.join(__dirname, '../artifacts/contracts')
+const artifactsDir = path.join(import.meta.dirname, '../artifacts/contracts')
 
 // Destination directory for generated TypeScript ABI files
-const destinationDir = path.resolve(__dirname, '../../app/src/artifacts/abi')
+const destinationDir = path.resolve(import.meta.dirname, '../../app/src/artifacts/abi')
 
 // Ensure destination directory exists
 if (!fs.existsSync(destinationDir)) {
