@@ -88,7 +88,15 @@ async function getStorageLayout(contractName: string): Promise<StorageLayout> {
   }
 
   const [sourceName, name] = fqn.split(':')
-  const contractOutput = buildInfoOutput.output.contracts[sourceName]?.[name]
+  // Hardhat 3 stores project sources in build-info output under a `project/`-prefixed
+  // key (e.g. "project/contracts/Bank.sol") that doesn't match the artifact FQN's
+  // source name 1:1, so match by suffix instead of exact key.
+  const matchingSourceKey = Object.keys(buildInfoOutput.output.contracts).find(
+    (key) => key === sourceName || key.endsWith('/' + sourceName)
+  )
+  const contractOutput = matchingSourceKey
+    ? buildInfoOutput.output.contracts[matchingSourceKey]?.[name]
+    : undefined
   if (!contractOutput?.storageLayout) {
     throw new Error(
       `No storageLayout for ${contractName}. The OpenZeppelin hardhat-upgrades plugin should enable this automatically — check that it is imported in hardhat.config.ts.`
