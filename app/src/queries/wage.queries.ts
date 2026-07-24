@@ -67,6 +67,8 @@ export interface SetWageBody {
   maximumOvertimeHoursPerWeek?: number | null
   /** Maximum hours allowed per week */
   maximumHoursPerWeek: number
+  /** Maximum hours claimable in a single day (defaults to 8 server-side) */
+  maximumHoursPerDay?: number
 }
 
 /**
