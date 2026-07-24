@@ -26,6 +26,10 @@ jobs:
           # in `target` itself, so no separate `npm ci` step is needed.
           target: "contract/"
           node-version: 24
+          # Slither 0.11.5 pins crytic-compile <0.4.0, which cannot parse
+          # Hardhat 3's hh3-sol-build-info format. Use the Hardhat 3-compatible
+          # Slither source until that support is released on PyPI.
+          slither-version: "ff1bf3ff4a5ebdfa63e4b83cb4885f682624daad"
           solc-version: "0.8.24"
           slither-config: "contract/slither.config.json"
           # Report-only for the initial rollout: existing contracts still carry
