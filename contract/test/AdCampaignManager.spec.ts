@@ -1,8 +1,10 @@
-import { ethers } from 'hardhat'
+import { ethers, initializeHardhat } from './hardhat-context.js'
 import { expect } from 'chai'
-import { ContractTransactionReceipt, LogDescription } from 'ethers'
-import { AdCampaignManager } from '../typechain-types'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import type { ContractTransactionReceipt, LogDescription } from 'ethers'
+import type { AdCampaignManager } from '../typechain-types/index.js'
+import type { SignerWithAddress } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('AdCampaignManager', () => {
   let adCampaignManager: AdCampaignManager
@@ -383,7 +385,7 @@ describe('AdCampaignManager', () => {
         adCampaignManager.connect(advertiser).createAdCampaign({
           value: ethers.parseEther('10')
         })
-      ).to.be.revertedWithCustomError
+      ).to.be.revertedWithCustomError(adCampaignManager, 'EnforcedPause')
 
       await adCampaignManager.connect(owner).unpause()
       expect(await adCampaignManager.paused()).to.equal(false)

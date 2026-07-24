@@ -1,7 +1,9 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
 import { expect } from 'chai'
-import { FeeCollector, MockERC20 } from '../typechain-types'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import type { FeeCollector, MockERC20 } from '../typechain-types/index.js'
+import type { SignerWithAddress } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('FeeCollector', () => {
   let feeCollector: FeeCollector
@@ -41,7 +43,8 @@ describe('FeeCollector', () => {
   async function deployFeeCollector(configs = INITIAL_CONFIGS, tokens: string[] = []) {
     const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
     return (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, configs, tokens], {
-      initializer: 'initialize'
+      initializer: 'initialize',
+      unsafeAllow: ['constructor']
     })) as unknown as FeeCollector
   }
 
@@ -77,12 +80,14 @@ describe('FeeCollector', () => {
     it('should reject zero address as owner', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [ethers.ZeroAddress, INITIAL_CONFIGS, []], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.ZERO_ADDRESS)
     })
@@ -95,12 +100,14 @@ describe('FeeCollector', () => {
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.EMPTY_TYPE)
     })
@@ -113,12 +120,14 @@ describe('FeeCollector', () => {
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.INVALID_BPS)
     })
@@ -131,12 +140,14 @@ describe('FeeCollector', () => {
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, duplicateConfigs, []], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.DUPLICATE_TYPE)
     })
@@ -144,7 +155,8 @@ describe('FeeCollector', () => {
     it('should reject zero token address in initialization', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
@@ -152,7 +164,8 @@ describe('FeeCollector', () => {
           FeeCollectorFactory,
           [owner.address, INITIAL_CONFIGS, [ethers.ZeroAddress]],
           {
-            initializer: 'initialize'
+            initializer: 'initialize',
+            unsafeAllow: ['constructor']
           }
         )
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.ZERO_ADDRESS)
@@ -169,7 +182,7 @@ describe('FeeCollector', () => {
     it('should not allow reinitialization', async () => {
       feeCollector = await deployFeeCollector()
 
-      await expect(feeCollector.initialize(owner.address, [], [])).to.be.reverted
+      await expect(feeCollector.initialize(owner.address, [], [])).to.be.revert(ethers)
     })
 
     it('should accept maximum valid BPS (10000 = 100%)', async () => {
@@ -246,7 +259,7 @@ describe('FeeCollector', () => {
           to: await feeCollector.getAddress(),
           value: depositAmount
         })
-      ).to.changeEtherBalance(feeCollector, depositAmount)
+      ).to.changeEtherBalance(ethers, feeCollector, depositAmount)
 
       expect(await feeCollector.getBalance()).to.equal(depositAmount)
     })
@@ -400,11 +413,12 @@ describe('FeeCollector', () => {
       const tx = feeCollector.withdraw()
 
       await expect(tx).to.changeTokenBalances(
+        ethers,
         mockUSDT,
         [feeCollector, owner],
         [-usdtAmount, usdtAmount]
       )
-      await expect(feeCollector.withdraw()).to.not.be.reverted // idempotent no-op after sweep
+      await expect(feeCollector.withdraw()).to.not.be.revert(ethers) // idempotent no-op after sweep
       expect(await mockUSDT.balanceOf(await feeCollector.getAddress())).to.equal(0)
       expect(await mockUSDC.balanceOf(await feeCollector.getAddress())).to.equal(0)
     })
@@ -414,8 +428,13 @@ describe('FeeCollector', () => {
       await mockUSDT.mint(await feeCollector.getAddress(), amount)
       // mockUSDC is supported but has zero balance — sweep should not move it
       const tx = feeCollector.withdraw()
-      await expect(tx).to.changeTokenBalances(mockUSDT, [feeCollector, owner], [-amount, amount])
-      await expect(tx).to.changeTokenBalances(mockUSDC, [feeCollector, owner], [0n, 0n])
+      await expect(tx).to.changeTokenBalances(
+        ethers,
+        mockUSDT,
+        [feeCollector, owner],
+        [-amount, amount]
+      )
+      await expect(tx).to.changeTokenBalances(ethers, mockUSDC, [feeCollector, owner], [0n, 0n])
     })
 
     it('should not allow non-owner to trigger token sweep', async () => {
@@ -444,7 +463,7 @@ describe('FeeCollector', () => {
     it('should sweep full native balance to owner when no beneficiary is set', async () => {
       const fullBalance = await feeCollector.getBalance()
 
-      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(owner, fullBalance)
+      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(ethers, owner, fullBalance)
       expect(await feeCollector.getBalance()).to.equal(0)
     })
 
@@ -457,13 +476,15 @@ describe('FeeCollector', () => {
       const fullNative = await feeCollector.getBalance()
 
       const tx = feeCollector.withdraw()
-      await expect(tx).to.changeEtherBalance(owner, fullNative)
+      await expect(tx).to.changeEtherBalance(ethers, owner, fullNative)
       await expect(tx).to.changeTokenBalances(
+        ethers,
         mockUSDT,
         [feeCollector, owner],
         [-usdtAmount, usdtAmount]
       )
       await expect(tx).to.changeTokenBalances(
+        ethers,
         mockUSDC,
         [feeCollector, owner],
         [-usdcAmount, usdcAmount]
@@ -481,7 +502,7 @@ describe('FeeCollector', () => {
 
       const fullNative = await feeCollector.getBalance()
       const tx = feeCollector.withdraw()
-      await expect(tx).to.changeEtherBalance(user2, fullNative)
+      await expect(tx).to.changeEtherBalance(ethers, user2, fullNative)
       await expect(tx).to.emit(feeCollector, 'Withdrawn').withArgs(user2.address, fullNative)
     })
 
@@ -490,7 +511,7 @@ describe('FeeCollector', () => {
       await feeCollector.setFeeBeneficiary(ethers.ZeroAddress)
 
       const fullNative = await feeCollector.getBalance()
-      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(owner, fullNative)
+      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(ethers, owner, fullNative)
     })
 
     it('should not allow non-owner to withdraw', async () => {
@@ -507,7 +528,7 @@ describe('FeeCollector', () => {
 
     it('should be a no-op when every balance is zero', async () => {
       const emptyFeeCollector = await deployFeeCollector()
-      await expect(emptyFeeCollector.withdraw()).to.not.be.reverted
+      await expect(emptyFeeCollector.withdraw()).to.not.be.revert(ethers)
       expect(await emptyFeeCollector.getBalance()).to.equal(0)
     })
   })
@@ -667,6 +688,7 @@ describe('FeeCollector', () => {
       const fullBalance = await feeCollector.getBalance()
 
       await expect(() => feeCollector.connect(user1).withdraw()).to.changeEtherBalance(
+        ethers,
         user1,
         fullBalance
       )

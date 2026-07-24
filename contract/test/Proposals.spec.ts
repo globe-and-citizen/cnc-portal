@@ -1,6 +1,7 @@
-import { ethers } from 'hardhat'
+import { ethers, initializeHardhat, loadFixture, time } from './hardhat-context.js'
 import { expect } from 'chai'
-import { time, loadFixture } from '@nomicfoundation/hardhat-network-helpers'
+
+before(initializeHardhat)
 
 const ONE_DAY_IN_SECS = 24 * 60 * 60
 

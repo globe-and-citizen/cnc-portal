@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {DateTime} from "@quant-finance/solidity-datetime/contracts/DateTime.sol";
 import {TokenSupport} from "./base/TokenSupport.sol";
 import {IInvestor} from "./interfaces/IInvestor.sol";
@@ -20,7 +20,7 @@ import {IOfficer} from "./interfaces/IOfficer.sol";
  */
 contract CashRemunerationEIP712 is
   OwnableUpgradeable,
-  ReentrancyGuardUpgradeable,
+  ReentrancyGuard,
   EIP712Upgradeable,
   PausableUpgradeable,
   TokenSupport
@@ -66,8 +66,9 @@ contract CashRemunerationEIP712 is
   bytes32 private constant _WAGE_TYPEHASH = keccak256(abi.encodePacked(_WAGE_TYPE));
 
   /// @dev Typehash for the WageClaim struct, used in EIP-712 encoding.
-  bytes32 private constant _WAGE_CLAIM_TYPEHASH =
-    keccak256(abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE));
+  bytes32 private constant _WAGE_CLAIM_TYPEHASH = keccak256(
+    abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE)
+  );
 
   /// @dev Mapping to track wage claims that have already been paid.
   mapping(bytes32 signatureHash => bool paid) private s_paidWageClaims;
@@ -446,7 +447,6 @@ contract CashRemunerationEIP712 is
   function initialize(address initialOwner, address[] calldata tokenAddresses) public initializer {
     address owner = initialOwner == address(0) ? msg.sender : initialOwner;
     __Ownable_init(owner);
-    __ReentrancyGuard_init();
     __EIP712_init("CashRemuneration", "1");
     __Pausable_init();
 

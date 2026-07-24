@@ -3,9 +3,9 @@ pragma solidity ^0.8.24;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {TokenSupport} from "./base/TokenSupport.sol";
 
@@ -14,12 +14,7 @@ import {TokenSupport} from "./base/TokenSupport.sol";
  * @notice Global vault for native tokens and ERC20 tokens + immutable per-contract-type fee configuration.
  *         Upgradeable and protected with reentrancy guard.
  */
-contract FeeCollector is
-  Initializable,
-  OwnableUpgradeable,
-  ReentrancyGuardUpgradeable,
-  TokenSupport
-{
+contract FeeCollector is Initializable, OwnableUpgradeable, ReentrancyGuard, TokenSupport {
   using SafeERC20 for IERC20;
   using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -285,7 +280,6 @@ contract FeeCollector is
     if (initialOwner == address(0)) revert FeeCollector__ZeroAddress();
 
     __Ownable_init(initialOwner);
-    __ReentrancyGuard_init();
 
     // Store fee configs
     for (uint256 i = 0; i < configs.length; i++) {
