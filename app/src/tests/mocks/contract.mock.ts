@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { ref } from 'vue'
+import { zeroHash } from 'viem'
 import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
 import type { LendingOfferStruct } from '@/types'
 
@@ -132,6 +133,15 @@ export const mockInvestorReads = {
   investorCount: createContractReadMock(0n)
 }
 
+/**
+ * Investor v2 (Investor.sol) read mocks — distinct contractType from
+ * InvestorV1, see composables/investor/readsV2.ts.
+ */
+export const mockInvestorV2Reads = {
+  migrationRoot: createContractReadMock<`0x${string}`>(zeroHash),
+  migrationComplete: createContractReadMock(false)
+}
+
 export const mockInvestorWrites = {
   invest: createContractWriteV3Mock(),
   claimDividend: createContractWriteV3Mock(),
@@ -173,8 +183,12 @@ export const mockFixedReturnReads = {
 export const mockFixedReturnWrites = {
   createLendingOffer: createContractWriteV3Mock(),
   lendFunds: createContractWriteV3Mock(),
+  // markAsRefundable / claimRefund no longer exist on FixedReturn v1.3.0 — kept only
+  // because Issue Note's refund UI still calls them (reverts at runtime until migrated).
   markAsRefundable: createContractWriteV3Mock(),
   claimRefund: createContractWriteV3Mock(),
+  refundLenders: createContractWriteV3Mock(),
+  acceptPartialFunding: createContractWriteV3Mock(),
   addTokenSupport: createContractWriteV3Mock(),
   removeTokenSupport: createContractWriteV3Mock()
 }
@@ -188,6 +202,7 @@ export const resetContractMocks = () => {
     mockBankReads,
     mockBODReads,
     mockInvestorReads,
+    mockInvestorV2Reads,
     mockCashRemunerationReads,
     mockExpenseAccountReads,
     mockFixedReturnReads

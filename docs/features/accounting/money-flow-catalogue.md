@@ -112,21 +112,21 @@ Direction: **IN** (money in), **OUT** (money out), **INT** (internal transfer be
 
 The accounts used across the use cases and the worked example.
 
-| Account                                                   | Type      | Normal balance | Notes                                                     |
-| --------------------------------------------------------- | --------- | -------------- | --------------------------------------------------------- |
-| **Cash — Bank / Safe / Payroll / Expense / FeeCollector** | Asset     | Debit          | One pocket per on-chain account; rolls up into total Cash |
-| **Trading account**                                       | Asset     | Debit          | Capital deployed to an external trader, carried at cost   |
-| **Wage Payable**                                          | Liability | Credit         | Payroll earned but not yet paid (accrual)                 |
+| Account                                                   | Type      | Normal balance | Notes                                                       |
+| --------------------------------------------------------- | --------- | -------------- | ----------------------------------------------------------- |
+| **Cash — Bank / Safe / Payroll / Expense / FeeCollector** | Asset     | Debit          | One pocket per on-chain account; rolls up into total Cash   |
+| **Trading account**                                       | Asset     | Debit          | Capital deployed to an external trader, carried at cost     |
+| **Wage Payable**                                          | Liability | Credit         | Payroll earned but not yet paid (accrual)                   |
 | **Shares to be issued**                                   | Liability | Credit         | SHER promised in a wage claim, minted to equity at withdraw |
-| **Owner Capital**                                         | Equity    | Credit         | Founder deposits with no shares in return                 |
-| **Investor Equity**                                       | Equity    | Credit         | SHER share capital (mints with real value behind them)    |
-| **Retained Earnings**                                     | Equity    | Credit         | Cumulative net income                                     |
-| **Service Revenue**                                       | Income    | Credit         | Payment from a client for a service                       |
-| **Trading Gain**                                          | Income    | Credit         | Profit returned by the trader                             |
-| **Payroll Expense**                                       | Expense   | Debit          | Wages earned                                              |
-| **Operating Expense**                                     | Expense   | Debit          | Approved expense payouts                                  |
-| **Trading Loss**                                          | Expense   | Debit          | Loss on capital deployed to the trader                    |
-| **Dividend Expense**                                      | Expense   | Debit          | Dividend distributed to shareholders                      |
+| **Owner Capital**                                         | Equity    | Credit         | Founder deposits with no shares in return                   |
+| **Investor Equity**                                       | Equity    | Credit         | SHER share capital (mints with real value behind them)      |
+| **Retained Earnings**                                     | Equity    | Credit         | Cumulative net income                                       |
+| **Service Revenue**                                       | Income    | Credit         | Payment from a client for a service                         |
+| **Trading Gain**                                          | Income    | Credit         | Profit returned by the trader                               |
+| **Payroll Expense**                                       | Expense   | Debit          | Wages earned                                                |
+| **Operating Expense**                                     | Expense   | Debit          | Approved expense payouts                                    |
+| **Trading Loss**                                          | Expense   | Debit          | Loss on capital deployed to the trader                      |
+| **Dividend Expense**                                      | Expense   | Debit          | Dividend distributed to shareholders                        |
 
 > **Fees.** A fee on a Bank transfer moves cash from Bank to `Cash — FeeCollector` — both are CNC pockets, so it is an **internal move**, not revenue. (If you ever bill an external team, recognise it as `Protocol Fee Revenue` at FeeCollector instead.)
 
@@ -205,15 +205,15 @@ flowchart LR
   classDef liability fill:#fef3c7,stroke:#f59e0b,color:#78350f;
 ```
 
-| UC             | Interaction                            | Journal entry                                                                     |
-| -------------- | -------------------------------------- | --------------------------------------------------------------------------------- |
-| **UC-CASH-02** | wage earned (accrual, at claim)        | Dr Payroll Expense · Cr Wage Payable (cash part) · Cr Shares to be issued (SHER part) |
+| UC             | Interaction                            | Journal entry                                                                                   |
+| -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **UC-CASH-02** | wage earned (accrual, at claim)        | Dr Payroll Expense · Cr Wage Payable (cash part) · Cr Shares to be issued (SHER part)           |
 | **UC-CASH-03** | wage paid (at withdraw)                | Dr Wage Payable · Cr Cash — Payroll · Dr Shares to be issued · Cr Investor Equity (SHER minted) |
-| **UC-EXP-01**  | approved expense paid (cash basis)     | Dr Operating Expense · Cr Cash — Expense                                          |
-| **UC-INV-01**  | dividend paid pro-rata                 | Dr Dividend Expense · Cr Cash — Bank                                              |
-| **UC-BANK-03** | fund payroll/expense from Bank (+ fee) | Dr Cash — Payroll/Expense · Dr Cash — FeeCollector (fee) · Cr Cash — Bank         |
-| **UC-TRD-01**  | deploy capital to trader               | Dr Trading account · Cr Cash — Bank                                               |
-| **UC-TRD-03**  | trader loses part of the capital       | Dr Cash (returned) · Dr Trading Loss · Cr Trading account                         |
+| **UC-EXP-01**  | approved expense paid (cash basis)     | Dr Operating Expense · Cr Cash — Expense                                                        |
+| **UC-INV-01**  | dividend paid pro-rata                 | Dr Dividend Expense · Cr Cash — Bank                                                            |
+| **UC-BANK-03** | fund payroll/expense from Bank (+ fee) | Dr Cash — Payroll/Expense · Dr Cash — FeeCollector (fee) · Cr Cash — Bank                       |
+| **UC-TRD-01**  | deploy capital to trader               | Dr Trading account · Cr Cash — Bank                                                             |
+| **UC-TRD-03**  | trader loses part of the capital       | Dr Cash (returned) · Dr Trading Loss · Cr Trading account                                       |
 
 ### 5.3 Payroll is accrual; expense is cash basis
 
@@ -415,21 +415,21 @@ Owner Capital          0     (empty — everyone got shares or it was revenue)
 
 ### 6.4 Trial balance
 
-| Account           | Type      |      Debit |     Credit |
-| ----------------- | --------- | ---------: | ---------: |
-| Cash              | Asset     |     142.20 |            |
-| Trading account   | Asset     |          0 |            |
-| Owner Capital     | Equity    |            |          0 |
-| Investor Equity   | Equity    |            |        138 |
-| Service Revenue   | Income    |            |        100 |
-| Trading Gain      | Income    |            |         15 |
-| Wage Payable      | Liability |          0 |          0 |
-| Shares to be issued | Liability |        0 |          0 |
-| Payroll Expense   | Expense   |      50.80 |            |
-| Operating Expense | Expense   |         20 |            |
-| Trading Loss      | Expense   |         20 |            |
-| Dividend Expense  | Expense   |         20 |            |
-| **TOTAL**         |           | **253.00** | **253.00** |
+| Account             | Type      |      Debit |     Credit |
+| ------------------- | --------- | ---------: | ---------: |
+| Cash                | Asset     |     142.20 |            |
+| Trading account     | Asset     |          0 |            |
+| Owner Capital       | Equity    |            |          0 |
+| Investor Equity     | Equity    |            |        138 |
+| Service Revenue     | Income    |            |        100 |
+| Trading Gain        | Income    |            |         15 |
+| Wage Payable        | Liability |          0 |          0 |
+| Shares to be issued | Liability |          0 |          0 |
+| Payroll Expense     | Expense   |      50.80 |            |
+| Operating Expense   | Expense   |         20 |            |
+| Trading Loss        | Expense   |         20 |            |
+| Dividend Expense    | Expense   |         20 |            |
+| **TOTAL**           |           | **253.00** | **253.00** |
 
 ### 6.5 Income statement
 
@@ -447,21 +447,21 @@ Owner Capital          0     (empty — everyone got shares or it was revenue)
 
 ### 6.6 Balance sheet
 
-|                                   |                      $ |
-| --------------------------------- | ---------------------: |
-| **ASSETS**                        |                        |
-| Cash (USDC + POL)                 |                 142.20 |
-| Trading account (at cost)         |                   0.00 |
-| **Total assets**                  |             **142.20** |
-| **LIABILITIES**                   |                        |
-| None (Wage Payable & Shares to be issued settled) |   0.00 |
-| **Total liabilities**             |               **0.00** |
-| **EQUITY**                        |                        |
-| Owner capital                     |                   0.00 |
-| Investor equity (SHER)            |                 138.00 |
-| Retained earnings (net profit)    |                   4.20 |
-| **Total equity**                  |             **142.20** |
-| **Assets = Liabilities + Equity** | **142.20 = 142.20** ✅ |
+|                                                   |                      $ |
+| ------------------------------------------------- | ---------------------: |
+| **ASSETS**                                        |                        |
+| Cash (USDC + POL)                                 |                 142.20 |
+| Trading account (at cost)                         |                   0.00 |
+| **Total assets**                                  |             **142.20** |
+| **LIABILITIES**                                   |                        |
+| None (Wage Payable & Shares to be issued settled) |                   0.00 |
+| **Total liabilities**                             |               **0.00** |
+| **EQUITY**                                        |                        |
+| Owner capital                                     |                   0.00 |
+| Investor equity (SHER)                            |                 138.00 |
+| Retained earnings (net profit)                    |                   4.20 |
+| **Total equity**                                  |             **142.20** |
+| **Assets = Liabilities + Equity**                 | **142.20 = 142.20** ✅ |
 
 ---
 

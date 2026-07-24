@@ -31,8 +31,8 @@ export const useCurrencyStore = defineStore('currency', () => {
 
   const supportedToken = computed(() => {
     const tokens = [...SUPPORTED_TOKENS]
-    const investorsV1Address = teamStore.getContractAddressByType('InvestorV1')
-    if (investorsV1Address && !tokens.some((t) => t.id === 'sher')) {
+    const investorAddress = teamStore.getInvestorAddress()
+    if (investorAddress && !tokens.some((t) => t.id === 'sher')) {
       tokens.push({
         id: 'sher',
         name: 'Sher Token',
@@ -40,10 +40,10 @@ export const useCurrencyStore = defineStore('currency', () => {
         code: 'SHER',
         coingeckoId: 'sher-token',
         decimals: 6,
-        address: investorsV1Address
+        address: investorAddress
       })
     } else {
-      console.warn('InvestorV1 contract address not found, Sher Token will not be included')
+      console.warn('Investor contract address not found, Sher Token will not be included')
     }
     return tokens
   })

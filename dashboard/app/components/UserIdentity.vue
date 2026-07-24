@@ -19,9 +19,12 @@
       >
         {{ user.name }}
       </p>
-      <UBadge variant="subtle" color="neutral" class="px-1.5!">
-        <span class="font-mono text-xs">{{ shortenedAddress }}</span>
-      </UBadge>
+      <div class="flex items-center gap-0.5 min-w-0">
+        <UBadge variant="subtle" color="neutral" class="px-1.5!">
+          <span class="font-mono text-xs">{{ shortenedAddress }}</span>
+        </UBadge>
+        <CopyButton v-if="address" :value="address" label="Address copied" />
+      </div>
     </div>
   </div>
 </template>

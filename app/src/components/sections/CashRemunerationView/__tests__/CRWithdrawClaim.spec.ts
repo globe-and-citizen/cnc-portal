@@ -97,7 +97,7 @@ describe('CRWithdrawClaim', () => {
     mockTeamStore.getContractAddressByType = vi.fn((type: string) => {
       if (type === 'CashRemunerationEIP712') return MOCK_CONTRACT_ADDRESS
       if (type === 'InvestorV1') return MOCK_INVESTOR_ADDRESS
-      return MOCK_CONTRACT_ADDRESS
+      return undefined
     })
     mockTeamStore.currentTeamId = '1'
 

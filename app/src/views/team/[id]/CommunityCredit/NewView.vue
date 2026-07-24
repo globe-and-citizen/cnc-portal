@@ -27,21 +27,25 @@
           <div v-if="step === 0" class="flex flex-col gap-4.5">
             <div>
               <label class="mb-1.5 block text-sm font-medium" for="cc-name">Round name</label>
-              <input
+              <UInput
                 id="cc-name"
                 v-model="form.name"
-                :class="CREDIT_FIELD_CLASS"
+                :color="basicsErrors.name ? 'error' : undefined"
                 placeholder="e.g. Q3 runway bridge"
+                class="w-full"
                 data-test="cc-name"
               />
+              <p v-if="basicsErrors.name" class="text-error mt-1 text-xs" data-test="cc-name-error">
+                {{ basicsErrors.name }}
+              </p>
             </div>
             <div>
               <label class="mb-1.5 block text-sm font-medium" for="cc-desc">Purpose</label>
-              <textarea
+              <UTextarea
                 id="cc-desc"
                 v-model="form.desc"
-                :class="[CREDIT_FIELD_CLASS, 'min-h-20 py-2.5']"
                 placeholder="What is this credit for? Members see this before lending."
+                class="w-full"
               />
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -49,30 +53,39 @@
                 <label class="mb-1.5 block text-sm font-medium" for="cc-target"
                   >Target amount</label
                 >
-                <div class="relative">
-                  <input
-                    id="cc-target"
-                    v-model="form.target"
-                    type="number"
-                    min="0"
-                    :class="[CREDIT_FIELD_CLASS, 'pr-14']"
-                    placeholder="25000"
-                  />
-                  <span
-                    class="text-muted absolute top-1/2 right-3 -translate-y-1/2 text-xs font-bold"
-                  >
-                    {{ form.token }}
-                  </span>
-                </div>
+                <UInput
+                  id="cc-target"
+                  v-model="form.target"
+                  type="number"
+                  min="0"
+                  :color="basicsErrors.target ? 'error' : undefined"
+                  placeholder="25000"
+                  class="w-full"
+                  data-test="cc-target"
+                >
+                  <template #trailing>
+                    <span class="text-muted text-xs font-bold">{{ form.token }}</span>
+                  </template>
+                </UInput>
+                <p
+                  v-if="basicsErrors.target"
+                  class="text-error mt-1 text-xs"
+                  data-test="cc-target-error"
+                >
+                  {{ basicsErrors.target }}
+                </p>
               </div>
               <div>
-                <label class="mb-1.5 block text-sm font-medium">Token</label>
-                <div class="flex gap-1.5">
+                <label id="cc-token-label" class="mb-1.5 block text-sm font-medium">Token</label>
+                <div class="flex gap-1.5" role="radiogroup" aria-labelledby="cc-token-label">
                   <button
                     v-for="t in tokens"
                     :key="t"
                     type="button"
+                    role="radio"
+                    :aria-checked="form.token === t"
                     :class="creditChipClass(form.token === t)"
+                    :data-test="`cc-token-${t}`"
                     @click="form.token = t"
                   >
                     {{ t }}
@@ -83,10 +96,10 @@
           </div>
 
           <!-- Step 2 — Terms -->
-          <CreditCallTermsStep v-else-if="step === 1" v-model:form="form" />
+          <CreditCallTermsStep v-else-if="step === 1" ref="termsStepRef" v-model:form="form" />
 
           <!-- Step 3 — Access -->
-          <CreditCallAccessStep v-else v-model:form="form" />
+          <CreditCallAccessStep v-else ref="accessStepRef" v-model:form="form" />
         </div>
 
         <!-- Error -->
@@ -139,7 +152,6 @@ import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { config } from '@/wagmi.config'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { useCommunityCreditStore } from '@/stores'
 import {
   useFixedReturnAddress,
   useFixedReturnGetSupportedTokens
@@ -147,14 +159,14 @@ import {
 import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writes'
 import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffering.queries'
 import {
-  CREDIT_FIELD_CLASS,
+  applyZodFieldErrors,
   classifyError,
   creditChipClass,
-  getSupportedOfferingTokenOptions,
-  toFixedReturnOfferParams
+  getSupportedCreditTokenOptions,
+  toCreditCallOfferParams
 } from '@/utils'
-import type { CreditCallForm, OfferingForm, WhitelistEntry } from '@/types'
-import StepIndicator from '@/components/sections/FixedReturnView/StepIndicator.vue'
+import { creditCallBasicsSchema, type CreditCallForm, type CreditOfferForm } from '@/types'
+import StepIndicator from '@/components/ui/StepIndicator.vue'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'
 import CreditCallTermsStep from '@/components/sections/CommunityCreditView/CreditCallTermsStep.vue'
 import CreditCallSummaryCard from '@/components/sections/CommunityCreditView/CreditCallSummaryCard.vue'
@@ -163,7 +175,6 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const queryClient = useQueryClient()
-const store = useCommunityCreditStore()
 const fixedReturnAddress = useFixedReturnAddress()
 
 const teamId = computed(() => String(route.params.id))
@@ -172,10 +183,14 @@ const stepLabels = ['Basics', 'Terms', 'Access']
 const step = ref(0)
 const isLastStep = computed(() => step.value === stepLabels.length - 1)
 
+type StepHandle = { validate?: () => boolean } | null
+const termsStepRef = ref<StepHandle>(null)
+const accessStepRef = ref<StepHandle>(null)
+
 // Only tokens this team's FixedReturn contract actually accepts (ERC20-only).
 const { data: supportedTokens } = useFixedReturnGetSupportedTokens()
 const tokens = computed(() =>
-  getSupportedOfferingTokenOptions((supportedTokens.value as Address[] | undefined) ?? []).map(
+  getSupportedCreditTokenOptions((supportedTokens.value as Address[] | undefined) ?? []).map(
     (option) => option.value
   )
 )
@@ -191,10 +206,11 @@ const form = reactive<CreditCallForm>({
   periodVal: '90',
   periodUnit: 'days',
   deadline: '2026-07-31',
+  deadlineTime: '23:59',
   access: 'everyone',
-  whitelist: {},
+  whitelist: [],
   capOn: false,
-  cap: '10000'
+  cap: ''
 })
 
 // Keep the selected token valid against what the contract supports.
@@ -207,7 +223,7 @@ watch(
   { immediate: true }
 )
 
-const whitelistCount = computed(() => Object.values(form.whitelist).filter(Boolean).length)
+const whitelistCount = computed(() => form.whitelist.length)
 
 const createOfferResult = useFixedReturnCreateLendingOffer()
 const createMetadataResult = useCreateFixedReturnOfferingMutation()
@@ -219,10 +235,22 @@ const publishLabel = computed(() =>
   isLastStep.value ? (isPublishing.value ? 'Publishing…' : 'Publish credit call') : 'Continue'
 )
 
+const basicsErrors = reactive<Record<string, string>>({})
+
+/** Validates the Basics step; populates basicsErrors and returns whether it passed. */
+function validateBasics(): boolean {
+  const result = creditCallBasicsSchema.safeParse({ name: form.name, target: form.target })
+  return applyZodFieldErrors(result, basicsErrors)
+}
+
 function back() {
   if (step.value > 0) step.value--
 }
 function next() {
+  if (step.value === 0 && !validateBasics()) return
+  if (step.value === 1 && termsStepRef.value?.validate?.() === false) return
+  if (step.value === 2 && accessStepRef.value?.validate?.() === false) return
+
   if (!isLastStep.value) {
     step.value++
     return
@@ -242,7 +270,7 @@ async function publish() {
     // the subscription deadline, so startDate == deadline. FixedReturn.sol requires
     // subscriptionDeadline <= startDate (reverts InvalidDeadline otherwise). The term is
     // already in canonical days, so it maps straight to the contract's Days unit.
-    const offeringForm: OfferingForm = {
+    const offeringForm: CreditOfferForm = {
       title: form.name.trim(),
       purpose: form.desc.trim(),
       principal: Number(form.target) || 0,
@@ -250,32 +278,21 @@ async function publish() {
       termValue: form.period,
       termUnit: 'days',
       deadline: form.deadline,
+      deadlineTime: form.deadlineTime,
       access: form.access === 'restricted' ? 'whitelist' : 'general',
       capOn: form.capOn,
       cap: Number(form.cap) || 0,
       token: form.token
     }
 
-    // The boolean picker only captures who's in — split the target evenly as each
-    // whitelisted lender's on-chain allocation.
-    const selected = Object.entries(form.whitelist)
-      .filter(([, checked]) => checked)
-      .map(([address]) => address)
-    const perLender = selected.length ? (Number(form.target) || 0) / selected.length : 0
-    const whitelist: WhitelistEntry[] = selected.map((address) => ({
-      username: store.members.find((member) => member.id === address)?.name ?? address,
-      address,
-      amount: perLender
-    }))
-
-    const params = toFixedReturnOfferParams(offeringForm, whitelist)
+    const params = toCreditCallOfferParams(offeringForm, form.whitelist)
     await createOfferResult.mutateAsync({ args: [params] })
 
     // Offers are 1-indexed and sequential, so the new offer's id is the post-write count.
     const total = (await readContract(config, {
       address: fixedReturnAddress.value,
       abi: FIXED_RETURN_ABI,
-      functionName: 'totalOfferings'
+      functionName: 'getTotalOfferings'
     })) as bigint
     const offerId = Number(total)
 

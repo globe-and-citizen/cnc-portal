@@ -93,9 +93,7 @@ describe('Team Store', () => {
   describe('getContractAddressByType', () => {
     it('returns the address of a matching contract', () => {
       const store = useTeamStore()
-      expect(store.getContractAddressByType('InvestorV1')).toBe(
-        '0x1111111111111111111111111111111111111111'
-      )
+      expect(store.getInvestorAddress()).toBe('0x1111111111111111111111111111111111111111')
     })
 
     it('returns undefined when no contract of the requested type exists', () => {
@@ -108,7 +106,7 @@ describe('Team Store', () => {
         buildQueryReturn({ data: ref(undefined), isSuccess: ref(false), isFetched: ref(false) })
       )
       const store = useTeamStore()
-      expect(store.getContractAddressByType('InvestorV1')).toBeUndefined()
+      expect(store.getInvestorAddress()).toBeUndefined()
     })
   })
 

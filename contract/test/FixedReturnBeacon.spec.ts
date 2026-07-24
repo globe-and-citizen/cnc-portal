@@ -1,6 +1,7 @@
-import { ethers } from 'hardhat'
+import { ethers, initializeHardhat, loadFixture } from './hardhat-context.js'
 import { expect } from 'chai'
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
+
+before(initializeHardhat)
 
 describe('FixedReturnBeacon', () => {
   async function deployFixture() {
@@ -138,7 +139,7 @@ describe('FixedReturnBeacon', () => {
         'FixedReturn',
         await fixedReturnBeaconProxy1.getAddress()
       )
-      expect(await fixedReturnBeacon.totalOfferings()).to.eq(0)
+      expect(await fixedReturnBeacon.getTotalOfferings()).to.eq(0)
     })
 
     it('should write correctly', async () => {

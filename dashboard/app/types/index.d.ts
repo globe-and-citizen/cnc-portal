@@ -67,6 +67,7 @@ export interface PreviousOfficerRef {
 export interface CurrentOfficer {
   id: number
   address: string
+  version: string | null
   teamId: number
   deployer: string
   deployBlockNumber: string | null
@@ -77,12 +78,46 @@ export interface CurrentOfficer {
   updatedAt: string
 }
 
+// One row of a team's Officer linked list, as returned by
+// GET /contract/officers?teamId= (ordered newest-first). `isCurrent` flags the
+// head of the chain (the Officer with no successor).
+export interface TeamOfficer {
+  id: number
+  address: string
+  version: string | null
+  teamId: number
+  deployer: string
+  deployBlockNumber: string | null
+  deployedAt: string | null
+  previousOfficerId: number | null
+  isCurrent: boolean
+  // Contracts deployed under this Officer generation (GET /contract/officers).
+  contracts?: TeamContract[]
+  createdAt: string
+  updatedAt: string
+}
+
+// A contract governed by a team (Bank, Voting, Campaign, …), as returned on the
+// team detail endpoint. Officer-less contracts (Safe, SafeDepositRouter) and the
+// current Officer's contracts are merged into `Team.teamContracts`.
+export interface TeamContract {
+  id: number
+  address: string
+  type: string
+  deployer: string
+  teamId: number
+  officerId: number | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Team {
   id: number
   name: string
   description: string | null
   ownerAddress: string
   currentOfficer: CurrentOfficer | null
+  teamContracts?: TeamContract[]
   createdAt: string
   updatedAt: string
   _count?: {

@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { computed, ref } from 'vue'
-import type { Address } from 'viem'
+import { zeroHash, type Address, type Hex } from 'viem'
 import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
-import { useInvestorAddress, useInvestorTotalSupply } from '@/composables/investor/reads'
-import { InconsistentSupplyError } from '@/composables/investor/useShareholderMigration'
+import { useInvestorV2Address, useInvestorV2MigrationRoot } from '@/composables/investor/readsV2'
+import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 import { useTeamStore } from '@/stores'
-import { mockInvestorReads, mockTeamStore, renderWithProviders } from '@/tests/mocks'
+import { mockInvestorV2Reads, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
 // ---------------------------------------------------------------------------
-// Mock the migration composable. Investor reads + team store come from the
+// Mock the migration composable. Investor v2 reads + team store come from the
 // global setup files (investor.setup.ts, store.setup.ts); we just rebind them
 // per test via vi.mocked().
 // ---------------------------------------------------------------------------
@@ -36,6 +36,7 @@ vi.mock('@/composables/investor/useShareholderMigration', async () => {
 
 const PREVIOUS_OFFICER = '0x000000000000000000000000000000000000dead' as Address
 const NEW_INVESTOR = '0x4234567890123456789012345678901234567890' as Address
+const SOME_ROOT = '0x1234567800000000000000000000000000000000000000000000000000000000' as Hex
 
 // Banner-friendly stubs for the @nuxt/ui primitives that aren't covered by
 // the global stubs (UCard / UAlert / UIcon-inside-card). UButton is already
@@ -56,17 +57,20 @@ const stubs = {
 function setupMocks(
   opts: {
     previousOfficer?: { address: Address } | null
-    totalSupply?: bigint | null | undefined
+    migrationRoot?: Hex | null | undefined
     investorAddress?: Address | null
+    migrationSnapshots?: unknown[] | undefined
   } = {}
 ) {
   const previousOfficer =
     'previousOfficer' in opts ? opts.previousOfficer : { address: PREVIOUS_OFFICER }
-  const totalSupply = 'totalSupply' in opts ? opts.totalSupply : 0n
+  const migrationRoot = 'migrationRoot' in opts ? opts.migrationRoot : zeroHash
   const investorAddress = 'investorAddress' in opts ? opts.investorAddress : NEW_INVESTOR
+  const migrationSnapshots = 'migrationSnapshots' in opts ? opts.migrationSnapshots : undefined
 
   vi.mocked(useTeamStore).mockReturnValue({
     ...mockTeamStore,
+    currentTeamId: 1,
     currentTeamMeta: {
       isPending: false,
       data: {
@@ -81,15 +85,18 @@ function setupMocks(
     }
   } as unknown as ReturnType<typeof useTeamStore>)
 
-  vi.mocked(useInvestorAddress).mockReturnValue(
-    computed(() => investorAddress) as unknown as ReturnType<typeof useInvestorAddress>
+  vi.mocked(useInvestorV2Address).mockReturnValue(
+    computed(() => investorAddress) as unknown as ReturnType<typeof useInvestorV2Address>
   )
 
-  mockInvestorReads.totalSupply.data.value =
-    totalSupply === undefined ? undefined : (totalSupply as unknown as bigint)
-  vi.mocked(useInvestorTotalSupply).mockReturnValue(
-    mockInvestorReads.totalSupply as unknown as ReturnType<typeof useInvestorTotalSupply>
+  mockInvestorV2Reads.migrationRoot.data.value =
+    migrationRoot === undefined ? undefined : (migrationRoot as unknown as Hex)
+  vi.mocked(useInvestorV2MigrationRoot).mockReturnValue(
+    mockInvestorV2Reads.migrationRoot as unknown as ReturnType<typeof useInvestorV2MigrationRoot>
   )
+  vi.mocked(useGetInvestorMigrationQuery).mockReturnValue({
+    data: ref(migrationSnapshots)
+  } as unknown as ReturnType<typeof useGetInvestorMigrationQuery>)
 }
 
 function mountBanner() {
@@ -107,8 +114,8 @@ describe('ShareholderMigrationBanner', () => {
     mockMigrateState.data.value = null
   })
 
-  it('shows the banner when a previous officer exists and new supply is 0', async () => {
-    setupMocks({ totalSupply: 0n })
+  it('shows the banner when a previous officer exists and no migration root is set', async () => {
+    setupMocks({ migrationRoot: zeroHash })
     const wrapper = mountBanner()
     await flushPromises()
 
@@ -117,23 +124,34 @@ describe('ShareholderMigrationBanner', () => {
   })
 
   it('hides the banner when there is no previous officer', async () => {
-    setupMocks({ previousOfficer: null, totalSupply: 0n })
+    setupMocks({ previousOfficer: null, migrationRoot: zeroHash })
     const wrapper = mountBanner()
     await flushPromises()
 
     expect(wrapper.find('[data-test="shareholder-migration-banner"]').exists()).toBe(false)
   })
 
-  it('hides the banner when the new InvestorV1 already has a non-zero totalSupply', async () => {
-    setupMocks({ totalSupply: 1n })
+  it('hides the banner when the new Investor already has a migration root set', async () => {
+    setupMocks({ migrationRoot: SOME_ROOT })
     const wrapper = mountBanner()
     await flushPromises()
 
     expect(wrapper.find('[data-test="shareholder-migration-banner"]').exists()).toBe(false)
   })
 
-  it('hides the banner when totalSupply is undefined (still loading)', async () => {
-    setupMocks({ totalSupply: undefined })
+  it('shows a repair action when the root exists but the snapshot is missing', async () => {
+    setupMocks({ migrationRoot: SOME_ROOT, migrationSnapshots: [] })
+    const wrapper = mountBanner()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="shareholder-migration-banner"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="migrate-from-previous-button"]').text()).toContain(
+      'Repair migration snapshot'
+    )
+  })
+
+  it('hides the banner when the migration root is undefined (still loading)', async () => {
+    setupMocks({ migrationRoot: undefined })
     const wrapper = mountBanner()
     await flushPromises()
 
@@ -141,15 +159,15 @@ describe('ShareholderMigrationBanner', () => {
   })
 
   it('hides the banner when current investor address is null', async () => {
-    setupMocks({ investorAddress: null, totalSupply: 0n })
+    setupMocks({ investorAddress: null, migrationRoot: zeroHash })
     const wrapper = mountBanner()
     await flushPromises()
 
     expect(wrapper.find('[data-test="shareholder-migration-banner"]').exists()).toBe(false)
   })
 
-  it('calls migrate.mutate with previous officer + new investor addresses on click', async () => {
-    setupMocks({ totalSupply: 0n })
+  it('calls migrate.mutate with teamId + previous officer + new investor addresses on click', async () => {
+    setupMocks({ migrationRoot: zeroHash })
     const wrapper = mountBanner()
     await flushPromises()
 
@@ -158,40 +176,25 @@ describe('ShareholderMigrationBanner', () => {
     expect(mockMigrateState.mutate).toHaveBeenCalledTimes(1)
     const [args] = mockMigrateState.mutate.mock.calls[0]
     expect(args).toEqual({
+      teamId: 1,
       previousOfficerAddress: PREVIOUS_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
   })
 
   it('renders the inline error alert when migrate.error is set', async () => {
-    setupMocks({ totalSupply: 0n })
+    setupMocks({ migrationRoot: zeroHash })
     mockMigrateState.isError.value = true
-    mockMigrateState.error.value = new Error('mint reverted')
+    mockMigrateState.error.value = new Error('setMigrationRoot reverted')
 
     const wrapper = mountBanner()
     await flushPromises()
 
     expect(wrapper.find('[data-test="migration-banner-error"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="migration-banner-blocked"]').exists()).toBe(false)
-  })
-
-  it('renders the "blocked" alert when error is an InconsistentSupplyError', async () => {
-    setupMocks({ totalSupply: 0n })
-    mockMigrateState.isError.value = true
-    mockMigrateState.error.value = new InconsistentSupplyError('supply mismatch')
-
-    const wrapper = mountBanner()
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="migration-banner-blocked"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="migration-banner-error"]').exists()).toBe(false)
-
-    const btn = wrapper.findComponent('[data-test="migrate-from-previous-button"]')
-    expect(btn.props('disabled')).toBe(true)
   })
 
   it('shows the button in a loading state while migration is pending', async () => {
-    setupMocks({ totalSupply: 0n })
+    setupMocks({ migrationRoot: zeroHash })
     mockMigrateState.isPending.value = true
 
     const wrapper = mountBanner()

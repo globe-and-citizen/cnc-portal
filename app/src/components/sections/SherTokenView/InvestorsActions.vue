@@ -71,7 +71,7 @@ defineEmits<{
 const toast = useToast()
 const teamStore = useTeamStore()
 
-const investorAddress = teamStore.getContractAddressByType('InvestorV1')
+const investorAddress = computed(() => teamStore.getInvestorAddress())
 const bankAddress = teamStore.getContractAddressByType('Bank')
 
 const {

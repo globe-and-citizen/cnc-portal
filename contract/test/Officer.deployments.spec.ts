@@ -1,18 +1,18 @@
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
+import type { SignerWithAddress } from './hardhat-context.js'
 import {
   Bank__factory,
   BoardOfDirectors__factory,
-  Officer,
-  UpgradeableBeacon,
   Elections__factory,
-  InvestorV1__factory,
+  Investor__factory,
   CashRemunerationEIP712__factory,
-  ExpenseAccountEIP712__factory,
-  FeeCollector
-} from '../typechain-types'
+  ExpenseAccountEIP712__factory
+} from '../typechain-types/index.js'
+import type { Beacon, FeeCollector, Officer } from '../typechain-types/index.js'
 import { ZeroAddress } from 'ethers'
+
+before(initializeHardhat)
 
 // Define the DeployedContract type to match the contract struct
 interface DeployedContract {
@@ -23,19 +23,19 @@ interface DeployedContract {
 describe('Officer Contract', function () {
   let officer: Officer
   let bankAccount: Bank__factory
-  let bankAccountBeacon: UpgradeableBeacon
-  let investor: InvestorV1__factory
-  let investorBeacon: UpgradeableBeacon
+  let bankAccountBeacon: Beacon
+  let investor: Investor__factory
+  let investorBeacon: Beacon
   let elections: Elections__factory
-  let electionsBeacon: UpgradeableBeacon
+  let electionsBeacon: Beacon
   // let proposals: Proposals__factory
-  // let proposalsBeacon: UpgradeableBeacon
+  // let proposalsBeacon: Beacon
   let expenseAccountEip712: ExpenseAccountEIP712__factory
-  let expenseAccountEip712Beacon: UpgradeableBeacon
+  let expenseAccountEip712Beacon: Beacon
   let bod: BoardOfDirectors__factory
-  let bodBeacon: UpgradeableBeacon
+  let bodBeacon: Beacon
   let cashRemunerationEip712: CashRemunerationEIP712__factory
-  let cashRemunerationEip712Beacon: UpgradeableBeacon
+  let cashRemunerationEip712Beacon: Beacon
   let owner: SignerWithAddress
   let feeCollector: FeeCollector
 
@@ -56,38 +56,49 @@ describe('Officer Contract', function () {
       FeeCollector,
       [owner.address, feeConfigs, supportedTokens],
       {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       }
     )) as unknown as FeeCollector
 
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')
-    bankAccountBeacon = (await upgrades.deployBeacon(bankAccount)) as unknown as UpgradeableBeacon
+    bankAccountBeacon = (await upgrades.deployBeacon(bankAccount, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
-    investor = await ethers.getContractFactory('InvestorV1')
-    investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as UpgradeableBeacon
+    investor = await ethers.getContractFactory('Investor')
+    investorBeacon = (await upgrades.deployBeacon(investor, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     // proposals = await ethers.getContractFactory('Proposals')
-    // proposalsBeacon = (await upgrades.deployBeacon(proposals)) as unknown as UpgradeableBeacon
+    // proposalsBeacon = (await upgrades.deployBeacon(proposals)) as unknown as Beacon
 
     elections = await ethers.getContractFactory('Elections')
-    electionsBeacon = (await upgrades.deployBeacon(elections)) as unknown as UpgradeableBeacon
+    electionsBeacon = (await upgrades.deployBeacon(elections, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     bod = await ethers.getContractFactory('BoardOfDirectors')
-    bodBeacon = (await upgrades.deployBeacon(bod)) as unknown as UpgradeableBeacon
+    bodBeacon = (await upgrades.deployBeacon(bod, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     expenseAccountEip712 = await ethers.getContractFactory('ExpenseAccountEIP712')
-    expenseAccountEip712Beacon = (await upgrades.deployBeacon(
-      expenseAccountEip712
-    )) as unknown as UpgradeableBeacon
+    expenseAccountEip712Beacon = (await upgrades.deployBeacon(expenseAccountEip712, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     cashRemunerationEip712 = await ethers.getContractFactory('CashRemunerationEIP712')
-    cashRemunerationEip712Beacon = (await upgrades.deployBeacon(
-      cashRemunerationEip712
-    )) as unknown as UpgradeableBeacon
+    cashRemunerationEip712Beacon = (await upgrades.deployBeacon(cashRemunerationEip712, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     const vesting = await ethers.getContractFactory('Vesting')
-    const vestingBeacon = (await upgrades.deployBeacon(vesting)) as unknown as UpgradeableBeacon
+    const vestingBeacon = (await upgrades.deployBeacon(vesting, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     const beaconConfigs: Array<{ beaconType: string; beaconAddress: string }> = [
       {
@@ -111,7 +122,7 @@ describe('Officer Contract', function () {
         beaconAddress: await cashRemunerationEip712Beacon.getAddress()
       },
       {
-        beaconType: 'InvestorV1',
+        beaconType: 'Investor',
         beaconAddress: await investorBeacon.getAddress()
       },
       {
@@ -135,7 +146,7 @@ describe('Officer Contract', function () {
     })
 
     deployments.push({
-      contractType: 'InvestorV1',
+      contractType: 'Investor',
       initializerData: investor.interface.encodeFunctionData('initialize', [
         'Bitcoin',
         'BTC',
@@ -199,55 +210,52 @@ describe('Officer Contract', function () {
 
     // Test Officer's deployed contracts
     const bankProxy = await ethers.getContractAt('Bank', contractAddresses.get('Bank')!)
-    expect(await bankProxy.officerAddress()).to.equal(await officer.getAddress())
+    expect(await bankProxy.getOfficerAddress()).to.equal(await officer.getAddress())
 
     const cashRemunerationEip712Proxy = await ethers.getContractAt(
       'CashRemunerationEIP712',
       contractAddresses.get('CashRemunerationEIP712')!
     )
-    const investorV1Proxy = await ethers.getContractAt(
-      'InvestorV1',
-      contractAddresses.get('InvestorV1')!
-    )
+    const investorProxy = await ethers.getContractAt('Investor', contractAddresses.get('Investor')!)
 
-    expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
+    expect((await cashRemunerationEip712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
     expect((await cashRemunerationEip712Proxy.owner()).toLocaleLowerCase()).to.be.equal(
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await cashRemunerationEip712Proxy.isTokenSupported(await investorV1Proxy.getAddress())
+      await cashRemunerationEip712Proxy.isTokenSupported(await investorProxy.getAddress())
     ).to.be.equal(true)
 
-    expect((await investorV1Proxy.owner()).toLocaleLowerCase()).to.be.equal(
+    expect((await investorProxy.owner()).toLocaleLowerCase()).to.be.equal(
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await investorV1Proxy.hasRole(
-        await investorV1Proxy.MINTER_ROLE(),
+      await investorProxy.hasRole(
+        await investorProxy.MINTER_ROLE(),
         await cashRemunerationEip712Proxy.getAddress()
       )
     ).to.be.equal(true)
     expect(
-      await investorV1Proxy.hasRole(await investorV1Proxy.MINTER_ROLE(), owner.address)
+      await investorProxy.hasRole(await investorProxy.MINTER_ROLE(), owner.address)
     ).to.be.equal(true)
     expect(
-      await investorV1Proxy.hasRole(await investorV1Proxy.DEFAULT_ADMIN_ROLE(), owner.address)
+      await investorProxy.hasRole(await investorProxy.DEFAULT_ADMIN_ROLE(), owner.address)
     ).to.be.equal(true)
 
     // Vesting is deployed per-team via the same beacon flow: bound to the Officer,
-    // owned by the team owner, and granted MINTER_ROLE on InvestorV1.
+    // owned by the team owner, and granted MINTER_ROLE on Investor.
     const vestingProxy = await ethers.getContractAt('Vesting', contractAddresses.get('Vesting')!)
-    expect((await vestingProxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
+    expect((await vestingProxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
     expect((await vestingProxy.owner()).toLocaleLowerCase()).to.be.equal(
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await investorV1Proxy.hasRole(
-        await investorV1Proxy.MINTER_ROLE(),
+      await investorProxy.hasRole(
+        await investorProxy.MINTER_ROLE(),
         await vestingProxy.getAddress()
       )
     ).to.be.equal(true)

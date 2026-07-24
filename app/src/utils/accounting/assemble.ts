@@ -35,8 +35,14 @@ import { buildGeneralLedger, type GeneralLedger } from '@/utils/accounting/gener
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import { buildSherMultiplierTimeline, makeSherUsdRate } from '@/utils/accounting/sherRate'
+import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
+import {
+  buildSherMultiplierTimeline,
+  makeSherUsdRate,
+  currentSherUsdRate
+} from '@/utils/accounting/sherRate'
+import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
+import { atDate } from '@/utils/accounting/mappers/context'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
@@ -240,20 +246,17 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
 }
 
 /**
- * Assemble a team's consolidated ledger and the three statements from its raw
- * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ * The USD rate-of-record resolver for a team's feeds: the caller's price source
+ * for native (POL/ETH), overlaid with the SHER price.
+ *
+ * SHER has no market price, so it is valued from the router's compensation
+ * multiplier (1 SHER = 1/multiplier USD) — that is what makes a wage paid in SHER
+ * increase Investor Equity. Here each SHER leg is stamped at the multiplier of its
+ * **own date** (historised timeline), so a withdrawal / mint freezes at its
+ * realization-date rate. {@link settleWithdrawnSher} then re-values the *pending*
+ * (un-withdrawn) accruals to the current multiplier — see {@link buildRawCncEntries}.
  */
-export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
-  const internalAddresses = collectInternalAddresses(
-    input.contracts,
-    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
-  )
-
-  // SHER has no market price; value it from the router's compensation multiplier
-  // (1 SHER = 1/multiplier USD, historised over the multiplier changes) so
-  // wage-in-SHER increases Investor Equity. With no change events we use the
-  // router's live multiplier (read from the contract) or, failing that, the
-  // contract's 1x default (1 SHER = $1) — no longer the Phase-1 $0.
+function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
   const sherRate = makeSherUsdRate(
     buildSherMultiplierTimeline(
@@ -262,9 +265,22 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
       input.currentSherMultiplier
     )
   )
-  const rateOfRecord: UsdRateOfRecord = sherRate
+  return sherRate
     ? (tokenId, at) => (tokenId === 'sher' ? sherRate(at) : baseRate(tokenId, at))
     : baseRate
+}
+
+/**
+ * Run the source mappers and stamp each posting with its rate of record, yielding
+ * the raw, pre-consolidation feed: Devise (`token`), Quantité (`rawAmount`), Taux
+ * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
+ */
+export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
+  const internalAddresses = collectInternalAddresses(
+    input.contracts,
+    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
+  )
+  const rateOfRecord = buildRateOfRecord(input)
 
   const ctx = buildMapperContext({
     contracts: input.contracts,
@@ -281,6 +297,33 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     expenses: input.expenses
   })
 
+  // The rate is a pure function of (token, timestamp), so it is resolved once here
+  // rather than threaded through every mapper — with the same resolver the mappers
+  // valued `amountUsd` with, so amountUsd = Quantité × rate. Each SHER leg lands at
+  // its own-date rate, so a withdrawal / mint is frozen at its realization value.
+  const stamped = rawEntries.map((entry) => ({
+    ...entry,
+    rate: tokenUsdRate(entry.token, atDate(entry.timestamp), rateOfRecord)
+  }))
+
+  // Freeze the withdrawn SHER at its realization rate and float the pending accruals
+  // at the current multiplier: matched accrual quantity cancels its issuance in
+  // `Shares to be issued`, the rest floats until it is taken.
+  const currentRate = currentSherUsdRate(
+    input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
+    input.safeDepositRouterEvents?.safeDeposits?.items,
+    input.currentSherMultiplier
+  )
+  return settleWithdrawnSher(stamped, currentRate).sort((a, b) => a.timestamp - b.timestamp)
+}
+
+/**
+ * Consolidate a raw feed into the ledger and the three statements. Split from
+ * {@link assembleCncAccounting} so a caller that already holds the raw entries
+ * (the composable, which derives the price-fetch days from them) doesn't run the
+ * whole mapper pipeline a second time.
+ */
+export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
   const { entries, summary } = buildLedger(rawEntries)
 
   return {
@@ -290,6 +333,14 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     incomeStatement: buildIncomeStatement(entries),
     balanceSheet: buildBalanceSheet(entries)
   }
+}
+
+/**
+ * Assemble a team's consolidated ledger and the three statements from its raw
+ * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ */
+export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
+  return assembleFromRawEntries(buildRawCncEntries(input))
 }
 
 /** An empty accounting result — used before any data has loaded. */

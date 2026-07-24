@@ -4,8 +4,9 @@
  * Loads every feed a team's books need and exposes the consolidated ledger plus
  * the three financial statements to the UI from a single composable:
  *
- *   - **Ponder** — on-chain events for the team's Bank, CashRemuneration, Expense,
- *     InvestorV1 and SafeDepositRouter contracts (spec §3.1).
+ *   - **On-chain (getLogs)** — events for the team's Bank, CashRemuneration,
+ *     Expense, InvestorV1 and SafeDepositRouter contracts, reconstructed from the
+ *     RPC via the shared `use*EventsViaLogs` composables (no indexer dependency).
  *   - **Safe** — the team Safe's incoming native / ERC-20 transfers (spec §3.1).
  *   - **Backend DB** — the team's contracts, signed weekly claims and approved
  *     expenses, the off-chain accrual + category context (spec §3.2).
@@ -17,23 +18,17 @@
  * the ledger and never blocks the page or surfaces as a hard error.
  */
 import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
-import { useQuery as useApolloQuery } from '@vue/apollo-composable'
 import { useReadContract } from '@wagmi/vue'
-import type { DocumentNode } from 'graphql'
 import { type Address } from 'viem'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
-import { FEE_COLLECTOR_ADDRESS, GRAPHQL_POLL_INTERVAL } from '@/constant'
+import { FEE_COLLECTOR_ADDRESS } from '@/constant'
 import type { ContractType } from '@/types/teamContract'
-import type { BankEventsQuery } from '@/types/ponder/bank'
-import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
-import type { ExpenseEventsQuery } from '@/types/ponder/expense'
-import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
-import { GET_BANK_EVENTS } from '@/queries/ponder/bank.queries'
-import { GET_CASH_REMUNERATION_EVENTS } from '@/queries/ponder/cash-remuneration.queries'
-import { GET_EXPENSE_EVENTS } from '@/queries/ponder/expense.queries'
-import { GET_INVESTOR_EVENTS } from '@/queries/ponder/investor.queries'
-import { GET_SAFE_DEPOSIT_ROUTER_EVENTS } from '@/queries/ponder/safe-deposit-router.queries'
+import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
+import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
+import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
+import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
+import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
@@ -88,45 +83,37 @@ export function useCNCAccounting(
   const team = useGetTeamQuery({ pathParams: { teamId } })
   const contracts = computed(() => team.data.value?.teamContracts ?? [])
 
-  /** Resolve a contract's lower-cased address by type (Ponder stores lowercase). */
+  /** Resolve a contract's lower-cased address by type (logs/args compare lowercase). */
   const addressOf = (type: ContractType): ComputedRef<string> =>
     computed(() => contracts.value.find((c) => c.type === type)?.address?.toLowerCase() ?? '')
+
+  // Auto-detect Investor: V2 ('Investor') preferred, V1 ('InvestorV1') fallback
+  const addressOfInvestor = (): ComputedRef<string> =>
+    computed(
+      () =>
+        contracts.value
+          .find((c) => c.type === 'Investor' || c.type === 'InvestorV1')
+          ?.address?.toLowerCase() ?? ''
+    )
 
   const bankAddress = addressOf('Bank')
   const cashRemAddress = addressOf('CashRemunerationEIP712')
   const expenseAddress = addressOf('ExpenseAccountEIP712')
-  const investorAddress = addressOf('InvestorV1')
+  const investorAddress = addressOfInvestor()
   const routerAddress = addressOf('SafeDepositRouter')
   const safeAddress = computed(
     () => team.data.value?.safeAddress ?? contracts.value.find((c) => c.type === 'Safe')?.address
   )
 
-  // ── Ponder: one event query per deployed contract, enabled only when present.
-  // Variables/options follow the app's established Apollo pattern (reactive refs
-  // inside the objects, as in BankTransactions.vue) so the query fires once the
-  // contract address resolves from the team. ──
-  const ponderQuery = <T>(document: DocumentNode, address: ComputedRef<string>) =>
-    useApolloQuery<T>(
-      document,
-      { contractAddress: address, limit: EVENT_LIMIT },
-      {
-        enabled: computed(() => Boolean(address.value)),
-        pollInterval: GRAPHQL_POLL_INTERVAL,
-        fetchPolicy: 'cache-and-network'
-      }
-    )
-
-  const bank = ponderQuery<BankEventsQuery>(GET_BANK_EVENTS, bankAddress)
-  const cashRem = ponderQuery<CashRemunerationEventsQuery>(
-    GET_CASH_REMUNERATION_EVENTS,
-    cashRemAddress
-  )
-  const expense = ponderQuery<ExpenseEventsQuery>(GET_EXPENSE_EVENTS, expenseAddress)
-  const investor = ponderQuery<InvestorEventsQuery>(GET_INVESTOR_EVENTS, investorAddress)
-  const router = ponderQuery<SafeDepositRouterEventsQuery>(
-    GET_SAFE_DEPOSIT_ROUTER_EVENTS,
-    routerAddress
-  )
+  // ── On-chain events via getLogs: one composable per deployed contract, each
+  // enabled only when its address resolves from the team. Every composable scans
+  // the contract from its deploy block and returns the exact same shape the Ponder
+  // queries did, so everything downstream (mappers, assemble) is unchanged. ──
+  const bank = useBankEventsViaLogs(bankAddress)
+  const cashRem = useCashRemunerationEventsViaLogs(cashRemAddress)
+  const expense = useExpenseEventsViaLogs(expenseAddress)
+  const investor = useInvestorEventsViaLogs(investorAddress)
+  const router = useSafeDepositRouterEventsViaLogs(routerAddress)
 
   // ── Contract read: the router's live SHER multiplier. The `MultiplierUpdated`
   // events historise *changes*, but the initial multiplier is set in the
@@ -170,36 +157,43 @@ export function useCNCAccounting(
     () => team.data.value?.members?.map((m) => m.address) ?? []
   )
 
-  // USD price-of-record: the caller's resolver, else the app's live prices from
-  // the currency store (CoinGecko). USDC is pegged $1 by `toUsd`, so this only
-  // runs for the non-pegged tokens (native POL/ETH, SHER) — which otherwise show
-  // as $0 under the Phase-1 default.
+  // Live-price fallback: the caller's resolver, else the app's live prices from
+  // the currency store (CoinGecko). Used only while a day's historical price is
+  // in flight — the timestamped rate below is the actual rate of record.
   const currencyStore = useCurrencyStore()
-  const rateOfRecord: UsdRateOfRecord =
+  const liveRate: UsdRateOfRecord =
     options.rateOfRecord ?? ((tokenId) => currencyStore.getTokenPrice(tokenId, false, 'usd'))
 
-  const accounting = computed<CncAccounting>(() => {
-    const input: CncAccountingInput = {
-      contracts: contracts.value,
-      safeAddress: safeAddress.value,
-      founderAddresses: founderAddresses.value,
-      memberAddresses: memberAddresses.value,
-      feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
-      sherTokenAddress: options.sherTokenAddress ?? null,
-      safeDepositRouterAddress: routerAddress.value || null,
-      currentSherMultiplier: currentSherMultiplier.value,
-      rateOfRecord,
-      bankEvents: bank.result.value,
-      cashRemunerationEvents: cashRem.result.value,
-      expenseEvents: expense.result.value,
-      investorEvents: investor.result.value,
-      safeDepositRouterEvents: router.result.value,
-      safeTransfers: safeTransfers.data.value,
-      weeklyClaims: weeklyClaims.data.value?.data,
-      expenses: expenses.data.value
-    }
-    return assembleCncAccounting(input)
-  })
+  // The raw feeds + the live-price fallback — everything the ledger needs except
+  // the resolved historical rate.
+  const baseInput = computed<CncAccountingInput>(() => ({
+    contracts: contracts.value,
+    safeAddress: safeAddress.value,
+    founderAddresses: founderAddresses.value,
+    memberAddresses: memberAddresses.value,
+    feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
+    sherTokenAddress: options.sherTokenAddress ?? (investorAddress.value || null),
+    safeDepositRouterAddress: routerAddress.value || null,
+    currentSherMultiplier: currentSherMultiplier.value,
+    rateOfRecord: liveRate,
+    bankEvents: bank.result.value,
+    cashRemunerationEvents: cashRem.result.value,
+    expenseEvents: expense.result.value,
+    investorEvents: investor.result.value,
+    safeDepositRouterEvents: router.result.value,
+    safeTransfers: safeTransfers.data.value,
+    weeklyClaims: weeklyClaims.data.value?.data,
+    expenses: expenses.data.value
+  }))
+
+  // Native (POL/ETH) is valued at the **current** live price (currency store /
+  // CoinGecko) — the same "current rate everywhere" rule SHER follows. A fixed POL
+  // quantity is worth today's price wherever it appears, so the treasury asset
+  // reflects real current value and the whole POL book re-values together when the
+  // price moves (no per-date historical fetch). USDC is pegged $1 by `toUsd`; SHER
+  // is valued from the router multiplier (see buildRateOfRecord). The live price is
+  // already wired into `baseInput.rateOfRecord` (`liveRate`).
+  const accounting = computed<CncAccounting>(() => assembleCncAccounting(baseInput.value))
 
   // Resolve the human who signed each internal transfer (the tx feed carries only
   // a hash), then attach it so the ledger reads "Stravid87 transferred money from

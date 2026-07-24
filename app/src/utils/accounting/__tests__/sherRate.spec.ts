@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   buildSherMultiplierTimeline,
   makeSherUsdRate,
+  resolveCurrentSherMultiplier,
+  currentSherUsdRate,
   type SherMultiplierPoint
 } from '@/utils/accounting/sherRate'
 import { USDC_ADDRESS } from '@/constant'
@@ -31,7 +33,7 @@ function deposit(timestamp: number, usdc: number, sher: number): SafeDepositRow 
   } as SafeDepositRow
 }
 
-describe('makeSherUsdRate', () => {
+describe('makeSherUsdRate (per-date timeline — freezes a leg at its own date)', () => {
   it('returns null only for a truly empty timeline (defensive)', () => {
     expect(makeSherUsdRate([])).toBeNull()
   })
@@ -41,24 +43,13 @@ describe('makeSherUsdRate', () => {
     expect(rate(new Date(1_000 * 1000))).toBeCloseTo(1)
   })
 
-  it('uses the live contract multiplier when there are no change events', () => {
-    // currentMultiplier = 4x read straight from the router → 1 SHER = $0.25.
-    const rate = makeSherUsdRate(buildSherMultiplierTimeline(undefined, undefined, 4))!
-    expect(rate(new Date(1_000 * 1000))).toBeCloseTo(0.25)
-  })
-
-  it('prefers the live contract multiplier over the deposit-implied fallback', () => {
-    const rate = makeSherUsdRate(buildSherMultiplierTimeline([], [deposit(10, 100, 200)], 5))!
-    expect(rate(new Date(20 * 1000))).toBeCloseTo(0.2) // 5x live, not 2x deposit-implied
-  })
-
   it('values 1 SHER as 1 / multiplier', () => {
     const points: SherMultiplierPoint[] = [{ timestamp: 0, multiplier: 2 }]
     const rate = makeSherUsdRate(points)!
-    expect(rate(new Date(1_000 * 1000))).toBeCloseTo(0.5) // multiplier 2x → $0.50 / SHER
+    expect(rate(new Date(1_000 * 1000))).toBeCloseTo(0.5) // 2x → $0.50 / SHER
   })
 
-  it('uses the multiplier in effect on the entry date (historised)', () => {
+  it('uses the multiplier in effect on the entry date (historised, frozen per date)', () => {
     // 1x until t=100, then 4x from t=100 onward.
     const timeline = buildSherMultiplierTimeline([update(100, 1, 4)], undefined)
     const rate = makeSherUsdRate(timeline)!
@@ -66,16 +57,44 @@ describe('makeSherUsdRate', () => {
     expect(rate(new Date(150 * 1000))).toBeCloseTo(0.25) // after the change: 4x → $0.25
   })
 
-  it('falls back to the multiplier implied by a USD-pegged deposit', () => {
-    // No change events; 100 USDC minted 200 SHER → 2x → $0.50 / SHER.
-    const timeline = buildSherMultiplierTimeline([], [deposit(10, 100, 200)])
-    const rate = makeSherUsdRate(timeline)!
-    expect(rate(new Date(20 * 1000))).toBeCloseTo(0.5)
+  it('defends dates before the first change against a malformed oldMultiplier', () => {
+    const rows = [{ ...update(100, 1, 4), oldMultiplier: '' }]
+    const rate = makeSherUsdRate(buildSherMultiplierTimeline(rows, undefined))!
+    expect(rate(new Date(50 * 1000))).toBeCloseTo(1) // 1x default, not $0
+    expect(rate(new Date(150 * 1000))).toBeCloseTo(0.25) // the event still applies
   })
 
-  it('prefers the change events over the deposit-implied fallback', () => {
-    const timeline = buildSherMultiplierTimeline([update(100, 1, 5)], [deposit(10, 100, 200)])
+  it('falls back to the multiplier implied by a USD-pegged deposit', () => {
+    const timeline = buildSherMultiplierTimeline([], [deposit(10, 100, 200)])
     const rate = makeSherUsdRate(timeline)!
-    expect(rate(new Date(200 * 1000))).toBeCloseTo(0.2) // 5x from the event, not 2x from the deposit
+    expect(rate(new Date(20 * 1000))).toBeCloseTo(0.5) // 100 USDC → 200 SHER → 2x → $0.50
+  })
+})
+
+describe('resolveCurrentSherMultiplier (the rate pending accruals float at)', () => {
+  it('prefers the router live read over every fallback', () => {
+    expect(
+      resolveCurrentSherMultiplier([update(100, 1, 4)], [deposit(10, 100, 200)], 5)
+    ).toBeCloseTo(5)
+  })
+
+  it('falls back to the most recent change event when there is no live read', () => {
+    const events = [update(100, 1, 4), update(200, 4, 6)]
+    expect(resolveCurrentSherMultiplier(events, undefined, null)).toBeCloseTo(6)
+  })
+
+  it('falls back to a USD-pegged deposit when there are no events or live read', () => {
+    expect(resolveCurrentSherMultiplier([], [deposit(10, 100, 200)], null)).toBeCloseTo(2)
+  })
+
+  it('defaults to the 1x multiplier when nothing is known', () => {
+    expect(resolveCurrentSherMultiplier(undefined, undefined)).toBeCloseTo(1)
+  })
+})
+
+describe('currentSherUsdRate', () => {
+  it('is 1 / current multiplier', () => {
+    expect(currentSherUsdRate([update(100, 1, 5)], undefined, null)).toBeCloseTo(0.2) // 5x
+    expect(currentSherUsdRate(undefined, undefined, 4)).toBeCloseTo(0.25) // live 4x
   })
 })

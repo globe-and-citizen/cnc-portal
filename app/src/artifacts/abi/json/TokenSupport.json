@@ -7,7 +7,7 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportAlreadyAdded",
+    "name": "TokenSupport__AlreadyAdded",
     "type": "error"
   },
   {
@@ -18,12 +18,12 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportNotFound",
+    "name": "TokenSupport__NotFound",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TokenSupportZeroAddress",
+    "name": "TokenSupport__ZeroAddress",
     "type": "error"
   },
   {
@@ -56,7 +56,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],
@@ -95,7 +95,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -114,7 +114,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],

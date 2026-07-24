@@ -5,6 +5,8 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { mockUseAuth } from '@/tests/mocks/composables.mock'
 import { nextTick } from 'vue'
+import { latestDeployedVersionForChain } from '@/artifacts/registry'
+import { currentChainId, NETWORK } from '@/constant'
 
 describe('NavBar', () => {
   const createWrapper = () =>
@@ -31,6 +33,18 @@ describe('NavBar', () => {
     it('Should Render the component', () => {
       const wrapper = createWrapper()
       expect(wrapper.exists()).toBe(true)
+    })
+
+    it('shows the latest contract version deployed on the current network in development', () => {
+      const wrapper = createWrapper()
+      const badge = wrapper.find('[data-test="contract-version-badge"]')
+      const tooltip = wrapper.findComponent({ name: 'UTooltip' })
+
+      expect(import.meta.env.DEV).toBe(true)
+      expect(badge.text()).toContain(latestDeployedVersionForChain(currentChainId))
+      expect(tooltip.props('text')).toBe(
+        `Latest contract version deployed on ${NETWORK.networkName}`
+      )
     })
   })
 

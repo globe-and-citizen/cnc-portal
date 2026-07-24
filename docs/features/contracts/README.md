@@ -16,7 +16,6 @@
 | [Proposals](./proposals/README.md)                   | Board proposal creation and voting                 | 4 / 4   | ✅       | 🚫       |
 | [ExpenseAccount](./expense-account/README.md)        | EIP-712 signed expense budgets for employees       | 6 / 6   | ✅       | 🚫       |
 | [CashRemuneration](./cash-remuneration/README.md)    | EIP-712 signed wage claims with equity minting     | 5 / 5   | ✅       | 🚫       |
-| [Tips](./tips/README.md)                             | ETH tip distribution (push or pull)                | 4 / 4   | ✅       | 🚫       |
 | [Vesting](./vesting/README.md)                       | Linear ERC20 token vesting with cliff periods      | 5 / 5   | ✅       | 🚫       |
 | [FeeCollector](./fee-collector/README.md)            | Global fee vault with per-type configuration       | 4 / 4   | ✅       | ✅       |
 | [SafeDepositRouter](./safe-deposit-router/README.md) | Deposit tokens, receive SHER equity tokens         | 5 / 5   | ✅       | 🚫       |

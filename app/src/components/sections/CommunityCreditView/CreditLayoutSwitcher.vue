@@ -29,7 +29,8 @@ const store = useCommunityCreditStore()
 const options: { value: RoundDetailVariant; label: string }[] = [
   { value: 'ledger', label: 'Ledger' },
   { value: 'gauge', label: 'Gauge' },
-  { value: 'timeline', label: 'Timeline' }
+  { value: 'timeline', label: 'Timeline' },
+  { value: 'repay', label: 'Repay' }
 ]
 
 function pillClass(value: RoundDetailVariant) {

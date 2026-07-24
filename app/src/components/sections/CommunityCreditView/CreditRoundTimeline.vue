@@ -41,12 +41,7 @@
             }}</span>
             <span class="text-muted text-sm">/ {{ formatAmount(round.target) }}</span>
           </div>
-          <div class="bg-muted mt-3.5 h-3 overflow-hidden rounded-full">
-            <div
-              class="bg-primary h-full rounded-full transition-all"
-              :style="{ width: pct + '%' }"
-            ></div>
-          </div>
+          <UProgress :model-value="pct" :max="100" size="md" class="mt-3.5" />
         </div>
 
         <div class="border-default bg-default overflow-hidden rounded-2xl border shadow-sm">
@@ -106,7 +101,18 @@
                 <div class="text-sm font-semibold">{{ lender.name }}</div>
                 <div class="text-muted text-[11px]">{{ lender.share }}% share</div>
               </div>
-              <span class="text-sm font-bold">{{ formatAmount(lender.amount) }}</span>
+              <div class="flex flex-col items-end gap-1">
+                <span :class="lender.refunded ? 'text-muted text-sm' : 'text-sm font-bold'">{{
+                  formatAmount(lender.amount)
+                }}</span>
+                <UBadge
+                  v-if="lender.refunded"
+                  color="neutral"
+                  variant="subtle"
+                  label="Refunded"
+                  size="sm"
+                />
+              </div>
             </div>
           </div>
           <div v-else class="text-muted px-6 py-10 text-center text-sm">No lenders yet.</div>
@@ -124,8 +130,21 @@ import CreditAvatar from './CreditAvatar.vue'
 
 const props = defineProps<{ round: CreditRound }>()
 
-const LIFE_ORDER: RoundStatus[] = ['open', 'funded', 'active', 'repaid']
-const currentIndex = computed(() => LIFE_ORDER.indexOf(props.round.status))
+const LIFE_ORDER: RoundStatus[] = ['open', 'stalled', 'funded', 'active', 'repaid']
+// 'refunded' isn't a further step down the happy path — it's a divergent outcome once a
+// round misses its deadline, so it has no slot in LIFE_ORDER. Anchor it at the "Funded"
+// dot's position so the Draft/Open steps still render as done instead of every dot
+// looking unstarted (LIFE_ORDER.indexOf would otherwise return -1). 'overdue' is just
+// 'funded'/'active' with a maturity-passed badge on top (see offerStateToRoundStatus) —
+// same "In repayment" position as 'active'.
+const currentIndex = computed(() =>
+  props.round.status === 'refunded'
+    ? 2
+    : props.round.status === 'overdue'
+      ? LIFE_ORDER.indexOf('active')
+      : LIFE_ORDER.indexOf(props.round.status)
+)
+const isRefunded = computed(() => props.round.status === 'refunded')
 
 const pct = computed(() => percentOf(props.round.raised, props.round.target))
 const interest = computed(() => roundInterest(props.round))
@@ -133,20 +152,33 @@ const totalDue = computed(() => roundTotalDue(props.round))
 
 const lifecycle = computed(() => {
   const r = props.round
+  const refunded = isRefunded.value
   const meta = [
     { label: 'Draft', icon: 'heroicons:pencil-square', date: r.opened ? 'created' : '—' },
     { label: 'Open', icon: 'heroicons:lock-open', date: r.opened || '—' },
     {
-      label: 'Funded',
-      icon: 'heroicons:check-circle',
-      date: r.status === 'open' ? 'pending' : r.deadline || '—'
+      label: refunded ? 'Refunded' : 'Funded',
+      icon: refunded ? 'heroicons:arrow-uturn-left' : 'heroicons:check-circle',
+      date:
+        r.status === 'open' || r.status === 'stalled'
+          ? 'pending'
+          : refunded
+            ? 'principal returned'
+            : r.deadline || '—'
     },
     {
       label: 'In repayment',
       icon: 'heroicons:clock',
-      date: r.maturity && r.status !== 'open' ? `until ${r.maturity}` : '—'
+      date:
+        r.maturity && r.status !== 'open' && r.status !== 'stalled' && !refunded
+          ? `until ${r.maturity}`
+          : '—'
     },
-    { label: 'Repaid', icon: 'heroicons:banknotes', date: r.repaidOn || r.maturity || '—' }
+    {
+      label: 'Repaid',
+      icon: 'heroicons:banknotes',
+      date: refunded ? '—' : r.repaidOn || r.maturity || '—'
+    }
   ]
   return meta.map((m, i) => {
     const done = i < currentIndex.value
@@ -165,15 +197,29 @@ const lifecycle = computed(() => {
 
 const schedule = computed(() => {
   const r = props.round
+  const fundingReceived = {
+    title: 'Funding received',
+    date: r.status === 'open' ? 'in progress' : r.opened || '—',
+    amount: formatAmount(r.raised),
+    icon: 'heroicons:arrow-down-left',
+    chipClass: 'bg-success/12 text-success',
+    amountClass: 'text-success'
+  }
+  if (isRefunded.value) {
+    return [
+      fundingReceived,
+      {
+        title: 'Principal refunded',
+        date: 'returned to lenders',
+        amount: formatAmount(r.raised),
+        icon: 'heroicons:arrow-uturn-left',
+        chipClass: 'bg-neutral/12 text-neutral',
+        amountClass: 'text-default'
+      }
+    ]
+  }
   return [
-    {
-      title: 'Funding received',
-      date: r.status === 'open' ? 'in progress' : r.opened || '—',
-      amount: formatAmount(r.raised),
-      icon: 'heroicons:arrow-down-left',
-      chipClass: 'bg-success/12 text-success',
-      amountClass: 'text-success'
-    },
+    fundingReceived,
     {
       title: 'Repayment (principal + interest)',
       date: `matures ${r.maturity || '—'}`,
