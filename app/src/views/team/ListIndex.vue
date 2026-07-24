@@ -1,56 +1,24 @@
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex flex-col gap-3 md:flex-row md:items-center">
-      <h2 v-if="hasVisibleTeams">{{ route.meta.name }}</h2>
-      <div
-        class="flex items-center gap-3 md:ml-auto"
-        v-if="!teamsError && !teamsAreFetching"
-        data-test="team-visibility-toggles"
-      >
-        <span class="text-muted text-sm">Show also</span>
-        <div
-          class="border-default bg-default/70 inline-flex items-center rounded-full border px-2 py-1 shadow-xs"
-        >
-          <div class="flex items-center gap-2 px-2">
-            <USwitch
-              v-model="showHidden"
-              size="sm"
-              :ui="{ base: showHidden ? 'data-[state=checked]:bg-success  ' : '' }"
-              data-test="toggle-show-hidden"
-            />
-            <UIcon
-              name="i-tabler-eye-off"
-              class="size-4 transition-colors"
-              :class="showHidden ? 'text-success' : 'text-muted'"
-            />
-            <span
-              class="text-sm font-medium transition-colors"
-              :class="showHidden ? 'text-success' : 'text-muted'"
-              >Hidden</span
-            >
-          </div>
-          <div class="bg-default/70 mx-1 h-6 w-px" />
-          <div class="flex items-center gap-2 px-2">
-            <USwitch
-              v-model="showArchived"
-              size="sm"
-              :ui="{ base: showArchived ? 'data-[state=checked]:bg-warning' : '' }"
-              data-test="toggle-show-archived"
-            />
-            <UIcon
-              name="i-tabler-archive"
-              class="size-4 transition-colors"
-              :class="showArchived ? 'text-warning' : 'text-muted'"
-            />
-            <span
-              class="text-sm font-medium transition-colors"
-              :class="showArchived ? 'text-warning' : 'text-muted'"
-              >Archived</span
-            >
-          </div>
-        </div>
-      </div>
-    </div>
+    <CompaniesListToolbar
+      v-model:role="role"
+      v-model:query="query"
+      v-model:show-hidden="showHidden"
+      v-model:show-archived="showArchived"
+      v-model:view="view"
+      :title="title"
+      :counts="counts"
+    />
+
+    <!-- Treasury recap -->
+    <CompaniesTreasuryRecap
+      v-if="showRecap"
+      :aggregate="aggregate"
+      :owner-count="counts.owner"
+      :member-count="counts.employee"
+      data-test="companies-recap"
+    />
+
     <!-- Loader -->
     <div class="flex gap-3" data-test="loader" v-if="teamsAreFetching">
       <div class="flex w-1/4 flex-col gap-4" v-for="i in 4" :key="i">
@@ -89,68 +57,88 @@
     </div>
 
     <!-- Teams List -->
-
-    <div
-      class="grid grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3"
-      data-test="team-list"
-      v-if="Array.isArray(teams) && teams.length > 0"
-    >
-      <TeamCard
-        v-for="team in teams"
-        :key="team.id"
-        :team="team"
-        :data-test="`team-card-${team.id}`"
-        class="cursor-pointer transition duration-300 hover:scale-105"
-        @click="navigateToTeam(team.id)"
-      />
-    </div>
-
-    <!-- Add Team Button -->
-    <div
-      class="flex justify-center"
-      data-test="add-team-button"
-      v-if="!teamsError && !teamsAreFetching"
-    >
-      <UModal
-        v-model:open="openModal"
-        title="Create Company"
-        description="Create Your Company Step By Step"
+    <template v-if="!teamsError && !teamsAreFetching && Array.isArray(teams) && teams.length > 0">
+      <!-- No results for the active filters -->
+      <div
+        v-if="filtered.length === 0"
+        class="text-muted border-default flex flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center text-sm"
+        data-test="filter-empty-state"
       >
-        <AddTeamCard
-          data-test="add-team-card"
-          @click="openModal = true"
-          class="animate-fade-in h-16 w-72 transform text-sm transition duration-300 hover:scale-105"
-        />
+        <p>No companies match your filters.</p>
+        <UButton
+          color="neutral"
+          variant="soft"
+          size="sm"
+          data-test="clear-filters"
+          @click="clearFilters"
+        >
+          Clear filters
+        </UButton>
+      </div>
 
-        <template #body>
-          <AddTeamForm
-            @done="
-              () => {
-                console.log('Team created successfully, closing modal and refetching teams list')
-                openModal = false
-              }
-            "
-          />
-        </template>
-      </UModal>
-    </div>
+      <!-- Table view -->
+      <div v-else-if="view === 'table'" class="overflow-x-auto" data-test="table-view">
+        <CompaniesTable :teams="filtered" @open="navigateToTeam" @action="handleAction" />
+      </div>
+
+      <!-- Cards grid -->
+      <div
+        v-else
+        class="grid grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3"
+        data-test="team-list"
+      >
+        <TeamCard
+          v-for="team in filtered"
+          :key="team.id"
+          :team="team"
+          :data-test="`team-card-${team.id}`"
+          class="cursor-pointer transition duration-300 hover:scale-105"
+          @click="navigateToTeam(team.id)"
+          @action="handleAction"
+        />
+      </div>
+    </template>
+
+    <!-- Shared archive / delete confirmation -->
+    <CompanyActionConfirm
+      v-if="confirmKind"
+      :open="confirmOpen"
+      :kind="confirmKind ?? 'archive'"
+      :team-name="activeTeam?.name"
+      :loading="confirmLoading"
+      :error-message="confirmErrorMessage"
+      data-test="company-action-confirm"
+      @update:open="onConfirmOpenChange"
+      @confirm="onConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserDataStore } from '@/stores'
-import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
+import CompaniesListToolbar from '@/components/sections/CompaniesView/CompaniesListToolbar.vue'
+import CompaniesTreasuryRecap from '@/components/sections/CompaniesView/CompaniesTreasuryRecap.vue'
+import CompaniesTable from '@/components/sections/CompaniesView/CompaniesTable.vue'
+import CompanyActionConfirm from '@/components/sections/CompaniesView/CompanyActionConfirm.vue'
 import { useGetTeamsQuery } from '@/queries/team.queries'
-import { computed, ref, watch } from 'vue'
+import { useCompaniesFilter, type CompanyRoleFilter } from '@/composables/useCompaniesFilter'
+import { useTeamsTreasury } from '@/composables/treasury/useTeamsTreasury'
+import { useCompanyActions } from '@/composables/useCompanyActions'
 
-const openModal = ref(false)
 const showHidden = ref(false)
 const showArchived = ref(false)
+const role = ref<CompanyRoleFilter>('all')
+const query = ref('')
+const view = ref<'cards' | 'table'>('cards')
 
 const route = useRoute()
+const router = useRouter()
 const userDataStore = useUserDataStore()
+
+const title = computed(() => (route.meta.name as string | undefined) ?? 'Companies')
 
 const {
   data: teams,
@@ -164,7 +152,17 @@ const {
   }
 })
 
-const hasVisibleTeams = computed(
+const { filtered, counts } = useCompaniesFilter(teams, {
+  userAddress: () => userDataStore.address,
+  role,
+  query,
+  showHidden,
+  showArchived
+})
+
+const { aggregate } = useTeamsTreasury(() => teams.value ?? [])
+
+const showRecap = computed(
   () =>
     !teamsAreFetching.value &&
     !teamsError.value &&
@@ -172,22 +170,25 @@ const hasVisibleTeams = computed(
     teams.value.length > 0
 )
 
-const router = useRouter()
-
-// Opened from the navbar team picker's "Create company" action (/teams?create=1):
-// auto-open the create modal, then strip the query so a refresh won't re-open it.
-watch(
-  () => route.query?.create,
-  (create) => {
-    if (create) {
-      openModal.value = true
-      router.replace({ query: {} })
-    }
-  },
-  { immediate: true }
-)
+function clearFilters() {
+  role.value = 'all'
+  query.value = ''
+  showHidden.value = false
+  showArchived.value = false
+}
 
 const navigateToTeam = (id: number | string) => {
   router.push(`/teams/${id}`)
 }
+
+const {
+  activeTeam,
+  confirmKind,
+  confirmOpen,
+  confirmLoading,
+  confirmErrorMessage,
+  handleAction,
+  onConfirmOpenChange,
+  onConfirm
+} = useCompanyActions(teams, { onUpdate: navigateToTeam })
 </script>

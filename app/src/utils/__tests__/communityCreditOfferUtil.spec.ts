@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- cohesive util test suite; prettier reformatting lands it 1 line past the 300 cap */
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'

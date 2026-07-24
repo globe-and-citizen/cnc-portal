@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
 import ListIndex from '@/views/team/ListIndex.vue'
 import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-import { mockTeamsData, mockTeamData, mockRouterPush, mockRouterReplace } from '@/tests/mocks'
+import { mockTeamsData, mockTeamData, mockRouterPush, mockUserStore } from '@/tests/mocks'
 import type { Team } from '@/types'
 import { useRoute } from 'vue-router'
 
@@ -15,7 +14,7 @@ describe('ListIndex - Team List View', () => {
     vi.clearAllMocks()
     vi.mocked(useRoute).mockReturnValue({
       params: { id: '0' },
-      meta: { name: 'Team List View' }
+      meta: { name: 'Companies' }
     } as ReturnType<typeof useRoute>)
   })
 
@@ -25,7 +24,7 @@ describe('ListIndex - Team List View', () => {
 
   // Helper function for component mounting
   const createWrapper = (
-    teamsData: Team[] = mockTeamsData,
+    teamsData: Team[] | null = mockTeamsData,
     isLoading = false,
     error: Error | null = null
   ) => {
@@ -35,38 +34,47 @@ describe('ListIndex - Team List View', () => {
 
     return mount(ListIndex, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          AddTeamCard: {
-            template:
-              '<div data-test="add-team-card"><button data-test="add-team">Add Team</button></div>'
-          },
           TeamCard: {
             template:
               '<div :data-test="`team-card-${team.id}`" class="team-card"><strong>{{ team.name }}</strong></div>',
             props: ['team']
-          }
+          },
+          AddTeamForm: { template: '<div data-test="add-team-form"></div>' }
         }
       }
     })
   }
 
-  describe('Component Rendering', () => {
-    it('should render the page heading when teams are visible', () => {
+  describe('Toolbar', () => {
+    it('renders the page heading', () => {
       const wrapper = createWrapper()
-      expect(wrapper.find('h2').text()).toContain('Team List View')
+      expect(wrapper.find('h2').text()).toContain('Companies')
     })
 
-    it('should hide the page heading when no teams are visible', async () => {
-      const wrapper = createWrapper([])
+    it('keeps the toolbar visible while loading', async () => {
+      const wrapper = createWrapper([], true)
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('h2').exists()).toBe(false)
+      expect(wrapper.find('[data-test="companies-toolbar"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="create-company-button"]').exists()).toBe(true)
     })
 
-    it('should render component structure correctly', () => {
+    it('keeps the toolbar visible on error', async () => {
+      const wrapper = createWrapper([], false, new Error('boom'))
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="companies-toolbar"]').exists()).toBe(true)
+    })
+
+    it('renders every toolbar control', () => {
       const wrapper = createWrapper()
-      expect(wrapper.find('.flex.flex-col.gap-6').exists()).toBe(true)
+      expect(wrapper.find('[data-test="role-filter"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="search-companies"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="filters-button"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="view-toggle-cards"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="view-toggle-table"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="create-company-button"]').exists()).toBe(true)
     })
   })
 
@@ -85,20 +93,6 @@ describe('ListIndex - Team List View', () => {
 
       expect(wrapper.find('[data-test="team-list"]').exists()).toBe(false)
     })
-
-    it('should hide add team button during loading', async () => {
-      const wrapper = createWrapper([], true)
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(false)
-    })
-
-    it('should hide the page heading during loading', async () => {
-      const wrapper = createWrapper([], true)
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('h2').exists()).toBe(false)
-    })
   })
 
   describe('Empty State', () => {
@@ -116,6 +110,7 @@ describe('ListIndex - Team List View', () => {
       const emptyState = wrapper.find('[data-test="empty-state"]')
       expect(emptyState.text()).toContain('You are currently not a part of any team')
       expect(emptyState.text()).toContain('Create a new team now!')
+      expect(emptyState.text()).toContain(mockUserStore.name)
     })
 
     it('should display illustration in empty state', async () => {
@@ -134,11 +129,11 @@ describe('ListIndex - Team List View', () => {
       expect(wrapper.find('[data-test="team-list"]').exists()).toBe(false)
     })
 
-    it('should display add team button when no teams and not loading', async () => {
+    it('should display the create company button when no teams', async () => {
       const wrapper = createWrapper([], false)
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="create-company-button"]').exists()).toBe(true)
     })
   })
 
@@ -168,22 +163,6 @@ describe('ListIndex - Team List View', () => {
 
       expect(wrapper.find('[data-test="team-list"]').exists()).toBe(false)
     })
-
-    it('should hide add team button on error', async () => {
-      const error = new Error('Failed to fetch')
-      const wrapper = createWrapper([], false, error)
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(false)
-    })
-
-    it('should hide the page heading on error', async () => {
-      const error = new Error('Failed to fetch')
-      const wrapper = createWrapper([], false, error)
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('h2').exists()).toBe(false)
-    })
   })
 
   describe('Teams List Display', () => {
@@ -210,13 +189,126 @@ describe('ListIndex - Team List View', () => {
       expect(teamCard.exists()).toBe(true)
       expect(teamCard.text()).toContain(mockTeamData.name)
     })
+  })
 
-    it('should display add team button even when teams exist and not loading', async () => {
-      const wrapper = createWrapper(mockTeamsData, false)
-      await wrapper.vm.$nextTick()
+  describe('Role filter', () => {
+    const ownerTeam: Team = {
+      ...mockTeamData,
+      id: '10',
+      name: 'Owned Co',
+      ownerAddress: mockUserStore.address as Team['ownerAddress']
+    }
+    const employeeTeam: Team = {
+      ...mockTeamData,
+      id: '20',
+      name: 'Employed Co',
+      ownerAddress: '0x9999999999999999999999999999999999999999'
+    }
 
-      // The button shows when there's no error and not loading, regardless of team count
-      expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(true)
+    it('counts owner / employee teams relative to the signed-in user', () => {
+      const wrapper = createWrapper([ownerTeam, employeeTeam])
+      const roleFilter = wrapper.find('[data-test="role-filter"]')
+      expect(roleFilter.find('[data-test="role-option-all"]').text()).toContain('All · 2')
+      expect(roleFilter.find('[data-test="role-option-owner"]').text()).toContain('Owner · 1')
+      expect(roleFilter.find('[data-test="role-option-employee"]').text()).toContain('Employee · 1')
+    })
+
+    it('filters the rendered list when a role is selected', async () => {
+      const wrapper = createWrapper([ownerTeam, employeeTeam])
+      expect(wrapper.findAll('[data-test^="team-card-"]')).toHaveLength(2)
+
+      await wrapper.find('[data-test="role-option-owner"]').trigger('click')
+      const cards = wrapper.findAll('[data-test^="team-card-"]')
+      expect(cards).toHaveLength(1)
+      expect(cards[0]?.text()).toContain('Owned Co')
+
+      await wrapper.find('[data-test="role-option-employee"]').trigger('click')
+      const empCards = wrapper.findAll('[data-test^="team-card-"]')
+      expect(empCards).toHaveLength(1)
+      expect(empCards[0]?.text()).toContain('Employed Co')
+    })
+  })
+
+  describe('Search', () => {
+    const teams: Team[] = [
+      { ...mockTeamData, id: '1', name: 'Alpha', description: 'first' },
+      { ...mockTeamData, id: '2', name: 'Beta', description: 'second' }
+    ]
+
+    it('filters the list by name (case-insensitive)', async () => {
+      const wrapper = createWrapper(teams)
+      await wrapper.find('[data-test="search-companies"]').setValue('alpha')
+
+      const cards = wrapper.findAll('[data-test^="team-card-"]')
+      expect(cards).toHaveLength(1)
+      expect(cards[0]?.text()).toContain('Alpha')
+    })
+
+    it('filters the list by description', async () => {
+      const wrapper = createWrapper(teams)
+      await wrapper.find('[data-test="search-companies"]').setValue('second')
+
+      const cards = wrapper.findAll('[data-test^="team-card-"]')
+      expect(cards).toHaveLength(1)
+      expect(cards[0]?.text()).toContain('Beta')
+    })
+  })
+
+  describe('View toggle', () => {
+    it('renders the cards grid by default', () => {
+      const wrapper = createWrapper(mockTeamsData)
+      expect(wrapper.find('[data-test="team-list"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="table-view"]').exists()).toBe(false)
+    })
+
+    it('switches to the table view and back', async () => {
+      const wrapper = createWrapper(mockTeamsData)
+
+      await wrapper.find('[data-test="view-toggle-table"]').trigger('click')
+      expect(wrapper.find('[data-test="team-list"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="table-view"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="companies-table"]').exists()).toBe(true)
+
+      await wrapper.find('[data-test="view-toggle-cards"]').trigger('click')
+      expect(wrapper.find('[data-test="team-list"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="table-view"]').exists()).toBe(false)
+    })
+
+    it('renders the treasury recap when teams are loaded', () => {
+      const wrapper = createWrapper(mockTeamsData)
+      expect(wrapper.find('[data-test="companies-recap"]').exists()).toBe(true)
+    })
+  })
+
+  describe('Filters popover', () => {
+    it('exposes hidden / archived switches in the panel', () => {
+      const wrapper = createWrapper(mockTeamsData)
+      const panel = wrapper.find('[data-test="filters-panel"]')
+      expect(panel.exists()).toBe(true)
+      expect(panel.find('[data-test="toggle-show-hidden"]').exists()).toBe(true)
+      expect(panel.find('[data-test="toggle-show-archived"]').exists()).toBe(true)
+    })
+
+    it('shows an active-count badge once a visibility switch is on', async () => {
+      const wrapper = createWrapper(mockTeamsData)
+      expect(wrapper.find('[data-test="filters-count-badge"]').exists()).toBe(false)
+
+      // USwitch renders the data-test on its own button[role="switch"].
+      await wrapper.find('[data-test="toggle-show-hidden"]').trigger('click')
+
+      const badge = wrapper.find('[data-test="filters-count-badge"]')
+      expect(badge.exists()).toBe(true)
+      expect(badge.text()).toContain('1')
+    })
+
+    it('reset visibility turns both switches back off', async () => {
+      const wrapper = createWrapper(mockTeamsData)
+      await wrapper.find('[data-test="toggle-show-hidden"]').trigger('click')
+      await wrapper.find('[data-test="toggle-show-archived"]').trigger('click')
+      expect(wrapper.find('[data-test="filters-count-badge"]').text()).toContain('2')
+
+      await wrapper.find('[data-test="reset-visibility"]').trigger('click')
+      expect(wrapper.find('[data-test="filters-count-badge"]').exists()).toBe(false)
     })
   })
 
@@ -229,25 +321,6 @@ describe('ListIndex - Team List View', () => {
       await teamCard.trigger('click')
 
       expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamData.id}`)
-    })
-
-    it('should navigate with correct team ID', async () => {
-      const testTeam = { ...mockTeamData, id: '123' }
-      const wrapper = createWrapper([testTeam])
-      await wrapper.vm.$nextTick()
-
-      const teamCard = wrapper.find(`[data-test="team-card-${testTeam.id}"]`)
-      await teamCard.trigger('click')
-
-      expect(mockRouterPush).toHaveBeenCalledWith('/teams/123')
-    })
-
-    it('should open add team modal when add team button is clicked', async () => {
-      const wrapper = createWrapper([], false)
-      await wrapper.vm.$nextTick()
-
-      const addTeamBtn = wrapper.find('[data-test="add-team"]')
-      expect(addTeamBtn.exists()).toBe(true)
     })
 
     it('should handle multiple team clicks correctly', async () => {
@@ -273,54 +346,9 @@ describe('ListIndex - Team List View', () => {
     })
   })
 
-  describe('Add Team Button', () => {
-    it('should display add team button when empty and not loading', async () => {
-      const wrapper = createWrapper([], false)
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(true)
-    })
-  })
-
-  describe('Empty State with User Data', () => {
-    it('should display user name in empty state message', async () => {
-      const wrapper = createWrapper([], false)
-      await wrapper.vm.$nextTick()
-
-      const emptyState = wrapper.find('[data-test="empty-state"]')
-      // The component uses userDataStore.name, which is mocked by createTestingPinia
-      expect(emptyState.exists()).toBe(true)
-    })
-  })
-
   describe('Edge Cases', () => {
-    it('should handle loading state that transitions to success', async () => {
-      const wrapper = createWrapper([], true)
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="loader"]').exists()).toBe(true)
-
-      // Simulate data loaded
-      await wrapper.setData({}) // Force re-render
-      vi.mocked(useGetTeamsQuery).mockReturnValue(createMockQueryResponse(mockTeamsData, false))
-      await wrapper.vm.$nextTick()
-    })
-
     it('should handle null/undefined team data gracefully', async () => {
-      const useTeamsMock = vi.fn()
-      useTeamsMock.mockReturnValue(createMockQueryResponse(null, false))
-      vi.mocked(useGetTeamsQuery).mockImplementation(useTeamsMock)
-
-      const wrapper = mount(ListIndex, {
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })],
-          stubs: {
-            AddTeamCard: { template: '<div data-test="add-team-card"></div>' },
-            TeamCard: { template: '<div></div>', props: ['team'] }
-          }
-        }
-      })
-
+      const wrapper = createWrapper(null, false)
       await wrapper.vm.$nextTick()
       // Should render without crashing
       expect(wrapper.exists()).toBe(true)
@@ -333,29 +361,6 @@ describe('ListIndex - Team List View', () => {
 
       const teamCards = wrapper.findAll('[data-test^="team-card-"]')
       expect(teamCards).toHaveLength(1)
-    })
-  })
-
-  describe('Create company deep link', () => {
-    it('auto-opens the create modal and clears the query when navigated with ?create=1', async () => {
-      vi.mocked(useRoute).mockReturnValue({
-        params: {},
-        meta: { name: 'Team List View' },
-        query: { create: '1' }
-      } as unknown as ReturnType<typeof useRoute>)
-      vi.mocked(useGetTeamsQuery).mockReturnValueOnce(createMockQueryResponse(mockTeamsData))
-
-      const wrapper = mount(ListIndex, {
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })],
-          stubs: { AddTeamCard: true, TeamCard: true, AddTeamForm: true }
-        }
-      })
-      await wrapper.vm.$nextTick()
-
-      // The mocked UModal only renders its body (with the close button) when open.
-      expect(wrapper.find('[data-test="close-wage-modal-button"]').exists()).toBe(true)
-      expect(mockRouterReplace).toHaveBeenCalledWith({ query: {} })
     })
   })
 })
