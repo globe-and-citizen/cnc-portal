@@ -25,7 +25,9 @@ describe('createCreditCallTermsSchema — term length cap', () => {
   })
 
   it('rejects one day over the cap with a calendar-breakdown message, not a bare minute count', () => {
-    const result = schema.safeParse(baseTermsData({ period: 30 * 365 * MINUTES_PER_DAY + MINUTES_PER_DAY }))
+    const result = schema.safeParse(
+      baseTermsData({ period: 30 * 365 * MINUTES_PER_DAY + MINUTES_PER_DAY })
+    )
     expect(result.success).toBe(false)
     if (result.success) return
     const issue = result.error.issues.find((i) => i.path[0] === 'period')

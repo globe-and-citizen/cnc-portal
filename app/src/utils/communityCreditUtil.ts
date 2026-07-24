@@ -220,7 +220,11 @@ export function formatCalendarBreakdown(
  * the same "what does this term actually mean" treatment as a custom wizard entry,
  * not a bare, possibly four-or-five-digit day count.
  */
-export function formatRoundTerm(startDate: bigint, maturityDate: bigint, periodMinutes: number): string {
+export function formatRoundTerm(
+  startDate: bigint,
+  maturityDate: bigint,
+  periodMinutes: number
+): string {
   const start = dayjs.utc(Number(startDate) * 1000)
   const maturity = dayjs.utc(Number(maturityDate) * 1000)
   return calendarBreakdownBetween(start, maturity) || formatCreditPeriod(periodMinutes)

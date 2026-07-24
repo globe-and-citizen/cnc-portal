@@ -121,20 +121,28 @@ describe('toFixedReturnOfferParams', () => {
   it.each([
     ['2026-01-31', 1, 'months', Date.UTC(2026, 1, 28)] as const,
     ['2028-02-29', 1, 'years', Date.UTC(2029, 1, 28)] as const
-  ])('clamps %s + %d %s to the resulting month-end', (deadline, termValue, termUnit, expectedMs) => {
-    const params = toFixedReturnOfferParams(
-      baseForm({ deadline, deadlineTime: '00:00', termValue, termUnit }),
-      []
-    )
-    expect(params.maturityDate).toBe(BigInt(expectedMs / 1000))
-  })
+  ])(
+    'clamps %s + %d %s to the resulting month-end',
+    (deadline, termValue, termUnit, expectedMs) => {
+      const params = toFixedReturnOfferParams(
+        baseForm({ deadline, deadlineTime: '00:00', termValue, termUnit }),
+        []
+      )
+      expect(params.maturityDate).toBe(BigInt(expectedMs / 1000))
+    }
+  )
 
   it('never produces NaN for a wildly out-of-range custom term (dayjs Date-overflow guard)', () => {
     // 100,000,000 days is (almost exactly) the ECMAScript Date range's own outer edge —
     // dayjs.add() silently returns an Invalid Date past it, and every downstream
     // diff/unix call then returns NaN. addCreditTerm clamps before that happens.
     const params = toFixedReturnOfferParams(
-      baseForm({ deadline: '2026-07-31', deadlineTime: '23:59', termValue: 100_000_000, termUnit: 'days' }),
+      baseForm({
+        deadline: '2026-07-31',
+        deadlineTime: '23:59',
+        termValue: 100_000_000,
+        termUnit: 'days'
+      }),
       []
     )
     expect(Number.isFinite(Number(params.maturityDate))).toBe(true)

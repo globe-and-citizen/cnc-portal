@@ -243,10 +243,10 @@ function timeStrToTime(timeStr: string): Time {
   return new Time(hour || 0, minute || 0)
 }
 
-function timeValueToStr(value: Time | null | undefined): string {
-  if (!value) return ''
+function timeValueToStr(value: unknown): string {
+  if (!value || typeof value !== 'object' || !('hour' in value) || !('minute' in value)) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(value.hour)}:${pad(value.minute)}`
+  return `${pad(Number(value.hour))}:${pad(Number(value.minute))}`
 }
 
 const deadlineOpen = ref(false)

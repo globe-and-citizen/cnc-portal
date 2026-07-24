@@ -28,7 +28,7 @@ dayjs.extend(utc)
 export const CREDIT_TERM_MAX_YEARS = 30
 export const CREDIT_TERM_MAX_DAYS = CREDIT_TERM_MAX_YEARS * 365
 
-const CREDIT_TERM_UNIT_TO_DAYJS: Record<CreditTermUnit, dayjs.OpUnitType> = {
+const CREDIT_TERM_UNIT_TO_DAYJS: Record<CreditTermUnit, dayjs.ManipulateType> = {
   minutes: 'minute',
   days: 'day',
   weeks: 'week',
@@ -73,7 +73,9 @@ export function addCreditTerm(
 ): number {
   const approxDays = value * CREDIT_TERM_UNIT_APPROX_DAYS[unit]
   const safeValue =
-    approxDays > SAFE_MAX_TERM_DAYS ? SAFE_MAX_TERM_DAYS / CREDIT_TERM_UNIT_APPROX_DAYS[unit] : value
+    approxDays > SAFE_MAX_TERM_DAYS
+      ? SAFE_MAX_TERM_DAYS / CREDIT_TERM_UNIT_APPROX_DAYS[unit]
+      : value
   return dayjs
     .utc(`${deadline}T${deadlineTime || '00:00'}:00Z`)
     .add(safeValue, CREDIT_TERM_UNIT_TO_DAYJS[unit])

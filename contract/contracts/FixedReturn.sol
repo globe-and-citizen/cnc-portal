@@ -385,7 +385,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     if (params.subscriptionDeadline > params.startDate) revert FixedReturn__InvalidDeadline();
 
     // The loan must mature strictly after the subscription window closes.
-    if (params.maturityDate <= params.subscriptionDeadline) revert FixedReturn__InvalidMaturityDate();
+    if (params.maturityDate <= params.subscriptionDeadline)
+      revert FixedReturn__InvalidMaturityDate();
 
     if (
       params.fundingAccess == FundingAccess.General &&
