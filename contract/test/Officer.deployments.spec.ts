@@ -56,38 +56,49 @@ describe('Officer Contract', function () {
       FeeCollector,
       [owner.address, feeConfigs, supportedTokens],
       {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       }
     )) as unknown as FeeCollector
 
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')
-    bankAccountBeacon = (await upgrades.deployBeacon(bankAccount)) as unknown as Beacon
+    bankAccountBeacon = (await upgrades.deployBeacon(bankAccount, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     investor = await ethers.getContractFactory('Investor')
-    investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as Beacon
+    investorBeacon = (await upgrades.deployBeacon(investor, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     // proposals = await ethers.getContractFactory('Proposals')
     // proposalsBeacon = (await upgrades.deployBeacon(proposals)) as unknown as Beacon
 
     elections = await ethers.getContractFactory('Elections')
-    electionsBeacon = (await upgrades.deployBeacon(elections)) as unknown as Beacon
+    electionsBeacon = (await upgrades.deployBeacon(elections, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     bod = await ethers.getContractFactory('BoardOfDirectors')
-    bodBeacon = (await upgrades.deployBeacon(bod)) as unknown as Beacon
+    bodBeacon = (await upgrades.deployBeacon(bod, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     expenseAccountEip712 = await ethers.getContractFactory('ExpenseAccountEIP712')
-    expenseAccountEip712Beacon = (await upgrades.deployBeacon(
-      expenseAccountEip712
-    )) as unknown as Beacon
+    expenseAccountEip712Beacon = (await upgrades.deployBeacon(expenseAccountEip712, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     cashRemunerationEip712 = await ethers.getContractFactory('CashRemunerationEIP712')
-    cashRemunerationEip712Beacon = (await upgrades.deployBeacon(
-      cashRemunerationEip712
-    )) as unknown as Beacon
+    cashRemunerationEip712Beacon = (await upgrades.deployBeacon(cashRemunerationEip712, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     const vesting = await ethers.getContractFactory('Vesting')
-    const vestingBeacon = (await upgrades.deployBeacon(vesting)) as unknown as Beacon
+    const vestingBeacon = (await upgrades.deployBeacon(vesting, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     const beaconConfigs: Array<{ beaconType: string; beaconAddress: string }> = [
       {

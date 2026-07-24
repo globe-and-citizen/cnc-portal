@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IBoardOfDirectors} from "./interfaces/IBoardOfDirectors.sol";
 import {ICashRemuneration} from "./interfaces/ICashRemuneration.sol";
 import {IFeeCollector} from "./interfaces/IFeeCollector.sol";
@@ -28,7 +28,7 @@ struct DeploymentData {
  * @dev Upgradeable; owned by the team. Configures beacons, deploys proxies for contract types,
  *      and exposes discovery helpers used by peer contracts (Bank, Investor, etc.).
  */
-contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+contract Officer is OwnableUpgradeable, ReentrancyGuard, PausableUpgradeable {
   /**
    * @notice Configuration struct for beacon initialization.
    * @param beaconType Identifier of the contract type this beacon powers.
@@ -266,7 +266,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     bool isDeployAllContracts
   ) public initializer {
     __Ownable_init(ownerAddress);
-    __ReentrancyGuard_init();
     __Pausable_init();
 
     _configureBeacons(beaconConfigs);

@@ -23,7 +23,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
     expenseAccount = (await upgrades.deployProxy(
       ExpenseAccountImplementation,
       [owner.address, [await mockUSDT.getAddress(), await mockUSDC.getAddress()]],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as ExpenseAccountEIP712
   }
 

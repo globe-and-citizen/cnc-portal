@@ -37,6 +37,7 @@ export default defineConfig({
       '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol'
     ],
     settings: {
+      evmVersion: 'cancun',
       optimizer: {
         enabled: true,
         runs: 200

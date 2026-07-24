@@ -20,7 +20,7 @@ describe('CashRemuneration*** (EIP712)', () => {
     cashRemunerationProxy = (await upgrades.deployProxy(
       CashRemunerationImplementation,
       [employer.address, [await mockUSDC.getAddress()]],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as CashRemunerationEIP712
   }
 
@@ -48,7 +48,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         upgrades.deployProxy(
           CashRemunerationImplementation,
           [employer.address, [ethers.ZeroAddress]],
-          { initializer: 'initialize' }
+          { initializer: 'initialize', unsafeAllow: ['constructor'] }
         )
       ).to.be.revertedWithCustomError(cashRemunerationProxy, 'CashRemunerationEIP712__ZeroAddress')
     })

@@ -16,7 +16,8 @@ describe('SafeDepositRouter', function () {
 
     const InvestorFactory = await ethers.getContractFactory('Investor')
     const investor = await upgrades.deployProxy(InvestorFactory, ['SHER', 'SHER', owner.address], {
-      initializer: 'initialize'
+      initializer: 'initialize',
+      unsafeAllow: ['constructor']
     })
 
     const investorAddress = await investor.getAddress()

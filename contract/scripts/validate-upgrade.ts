@@ -80,19 +80,15 @@ async function getStorageLayout(contractName: string): Promise<StorageLayout> {
   const buildInfoId = await hre.artifacts.getBuildInfoId(fqn)
   if (!buildInfoId)
     throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
-  const buildInfoPath = await hre.artifacts.getBuildInfoPath(buildInfoId)
-  if (!buildInfoPath)
-    throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
-  const buildInfo = JSON.parse(await fs.promises.readFile(buildInfoPath, 'utf8')) as {
-    output: unknown
+  const buildInfoOutputPath = await hre.artifacts.getBuildInfoOutputPath(buildInfoId)
+  if (!buildInfoOutputPath)
+    throw new Error(`No build info output for ${contractName} — run \`npx hardhat compile\``)
+  const buildInfoOutput = JSON.parse(await fs.promises.readFile(buildInfoOutputPath, 'utf8')) as {
+    output: { contracts: Record<string, Record<string, { storageLayout?: StorageLayout }>> }
   }
 
   const [sourceName, name] = fqn.split(':')
-  const contractOutput = (
-    buildInfo.output as {
-      contracts: Record<string, Record<string, { storageLayout?: StorageLayout }>>
-    }
-  ).contracts[sourceName]?.[name]
+  const contractOutput = buildInfoOutput.output.contracts[sourceName]?.[name]
   if (!contractOutput?.storageLayout) {
     throw new Error(
       `No storageLayout for ${contractName}. The OpenZeppelin hardhat-upgrades plugin should enable this automatically — check that it is imported in hardhat.config.ts.`
@@ -219,6 +215,7 @@ async function validateContract(
     const Factory = await connection.ethers.getContractFactory(contractName)
     await upgrades.validateImplementation(Factory, {
       kind: 'beacon',
+      unsafeAllow: ['constructor'],
       // Hardhat Upgrades v4 keeps constructorArgs in the runtime options used
       // to encode the implementation bytecode, although its public
       // ValidateImplementationOptions type omits the field.

@@ -43,7 +43,8 @@ describe('FeeCollector', () => {
   async function deployFeeCollector(configs = INITIAL_CONFIGS, tokens: string[] = []) {
     const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
     return (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, configs, tokens], {
-      initializer: 'initialize'
+      initializer: 'initialize',
+      unsafeAllow: ['constructor']
     })) as unknown as FeeCollector
   }
 
@@ -79,12 +80,14 @@ describe('FeeCollector', () => {
     it('should reject zero address as owner', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [ethers.ZeroAddress, INITIAL_CONFIGS, []], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.ZERO_ADDRESS)
     })
@@ -97,12 +100,14 @@ describe('FeeCollector', () => {
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.EMPTY_TYPE)
     })
@@ -115,12 +120,14 @@ describe('FeeCollector', () => {
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.INVALID_BPS)
     })
@@ -133,12 +140,14 @@ describe('FeeCollector', () => {
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, duplicateConfigs, []], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.DUPLICATE_TYPE)
     })
@@ -146,7 +155,8 @@ describe('FeeCollector', () => {
     it('should reject zero token address in initialization', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       })) as unknown as FeeCollector
 
       await expect(
@@ -154,7 +164,8 @@ describe('FeeCollector', () => {
           FeeCollectorFactory,
           [owner.address, INITIAL_CONFIGS, [ethers.ZeroAddress]],
           {
-            initializer: 'initialize'
+            initializer: 'initialize',
+            unsafeAllow: ['constructor']
           }
         )
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.ZERO_ADDRESS)

@@ -57,7 +57,7 @@ describe('Bank', () => {
         [{ contractType: 'BANK', feeBps: Number(BANK_FEE_BPS) }],
         supportedTokens
       ],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as FeeCollector
 
     // Deploy Officer through a proxy; the implementation's constructor now calls
@@ -81,7 +81,11 @@ describe('Bank', () => {
     bankProxy = (await upgrades.deployProxy(
       BankImplementation.connect(officerSigner),
       [supportedTokens, await owner.getAddress()],
-      { initializer: 'initialize', initialOwner: await owner.getAddress() }
+      {
+        initializer: 'initialize',
+        initialOwner: await owner.getAddress(),
+        unsafeAllow: ['constructor']
+      }
     )) as unknown as Bank
 
     bank = bankProxy.connect(owner)
@@ -117,7 +121,8 @@ describe('Bank', () => {
       const BankImplementation = await ethers.getContractFactory('Bank')
       await expect(
         upgrades.deployProxy(BankImplementation, [[], ethers.ZeroAddress], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(BankImplementation, ERRORS.ZERO_ADDRESS)
     })
@@ -126,7 +131,8 @@ describe('Bank', () => {
       const BankImplementation = await ethers.getContractFactory('Bank')
       await expect(
         upgrades.deployProxy(BankImplementation, [[ethers.ZeroAddress], owner.address], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(BankImplementation, ERRORS.ZERO_ADDRESS)
     })
@@ -420,7 +426,7 @@ describe('Bank', () => {
       const localBank = (await upgrades.deployProxy(
         BankFactory.connect(officerSigner),
         [[], owner.address],
-        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
       )) as unknown as Bank
 
       const mockFixedReturn = (await MockFixedReturnFactory.deploy()) as unknown as MockFixedReturn

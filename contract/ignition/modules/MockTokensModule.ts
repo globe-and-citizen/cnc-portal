@@ -8,7 +8,7 @@ const MockTokensModule = buildModule('MockTokens', (m) => {
   const usdt = m.contract('MockERC20', ['Tether USD', 'USDT'], { id: 'USDT' })
 
   // Load recipients from recipients.json (shared with bulkTransferConfig)
-  let testAccounts: string[] = []
+  let testAccounts: string[]
   try {
     const recipientsPath = join(import.meta.dirname, '../../scripts/recipients.json')
     const fileContent = readFileSync(recipientsPath, 'utf8')
@@ -19,7 +19,9 @@ const MockTokensModule = buildModule('MockTokens', (m) => {
       throw new Error('recipients.json does not contain a valid recipients array')
     }
   } catch (e) {
-    throw new Error('Failed to load recipients from recipients.json: ' + (e as Error).message)
+    throw new Error('Failed to load recipients from recipients.json: ' + (e as Error).message, {
+      cause: e
+    })
   }
 
   testAccounts.forEach((account, index) => {

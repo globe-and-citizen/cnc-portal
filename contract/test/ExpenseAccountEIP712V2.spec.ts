@@ -29,7 +29,7 @@ describe('ExpenseAccountEIP712V2', function () {
     const expenseAccount = (await upgrades.deployProxy(
       ExpenseAccount,
       [owner.address, [await usdt.getAddress(), await usdc.getAddress()]],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as ExpenseAccountEIP712
     await expenseAccount.waitForDeployment()
 

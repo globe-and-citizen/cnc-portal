@@ -45,17 +45,20 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     const FeeCollector = await ethers.getContractFactory('FeeCollector')
     feeCollector = (await upgrades.deployProxy(FeeCollector, [owner.address, [], []], {
-      initializer: 'initialize'
+      initializer: 'initialize',
+      unsafeAllow: ['constructor']
     })) as unknown as FeeCollector
 
     // Deploy implementation contracts
     investor = await ethers.getContractFactory('Investor')
-    investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as Beacon
+    investorBeacon = (await upgrades.deployBeacon(investor, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     cashRemunerationEIP712 = await ethers.getContractFactory('CashRemunerationEIP712')
-    cashRemunerationEIP712Beacon = (await upgrades.deployBeacon(
-      cashRemunerationEIP712
-    )) as unknown as Beacon
+    cashRemunerationEIP712Beacon = (await upgrades.deployBeacon(cashRemunerationEIP712, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     const beaconConfigs: Array<{ beaconType: string; beaconAddress: string }> = [
       {

@@ -29,7 +29,8 @@ describe('BoardOfDirectors', () => {
     // `_disableInitializers()`, so `initialize` can only be invoked on a proxy.
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = (await upgrades.deployProxy(BankFactory, [[], founder.address], {
-      initializer: 'initialize'
+      initializer: 'initialize',
+      unsafeAllow: ['constructor']
     })) as unknown as Bank
     await bank.transferOwnership(await board.getAddress())
 

@@ -74,7 +74,7 @@ describe('FixedReturn', () => {
     const bank = (await upgrades.deployProxy(
       BankFactory.connect(officerSigner),
       [[], owner.address],
-      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
     )) as unknown as Bank
 
     await mockOfficer.setDeployedContract('Bank', await bank.getAddress())
@@ -91,7 +91,7 @@ describe('FixedReturn', () => {
     const fixedReturn = (await upgrades.deployProxy(
       FixedReturnFactory.connect(officerSigner),
       [initialTokens, owner.address],
-      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
     )) as unknown as FixedReturn
 
     await mockOfficer.setDeployedContract('FixedReturn', await fixedReturn.getAddress())
@@ -219,7 +219,8 @@ describe('FixedReturn', () => {
       const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
       await expect(
         upgrades.deployProxy(FixedReturnFactory, [[], ethers.ZeroAddress], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(FixedReturnFactory, ERRORS.ZERO_ADDRESS)
     })
@@ -1657,7 +1658,7 @@ describe('FixedReturn', () => {
       const feeCollector = (await upgrades.deployProxy(
         FeeCollectorFactory,
         [owner.address, [], []],
-        { initializer: 'initialize' }
+        { initializer: 'initialize', unsafeAllow: ['constructor'] }
       )) as unknown as FeeCollector
 
       const officer = (await upgrades.deployProxy(OfficerFactory, [owner.address, [], [], false], {
@@ -1675,7 +1676,7 @@ describe('FixedReturn', () => {
       const fixedReturn = (await upgrades.deployProxy(
         FixedReturnFactory.connect(officerSigner),
         [[], owner.address],
-        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
       )) as unknown as FixedReturn
 
       expect(await fixedReturn.getOfficerAddress()).to.equal(officerAddress)

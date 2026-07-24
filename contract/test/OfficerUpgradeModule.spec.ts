@@ -23,7 +23,7 @@ describe('OfficerUpgradeModule', function () {
     const feeCollectorImpl = (await upgrades.deployProxy(
       FeeCollectorFactory.connect(beaconOwner),
       [beaconOwner.address, [], []],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as FeeCollector
     await feeCollectorImpl.waitForDeployment()
 

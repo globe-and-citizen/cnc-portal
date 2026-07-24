@@ -24,7 +24,7 @@ describe('Vesting', () => {
     const investor = await upgrades.deployProxy(
       InvestorFactory,
       ['Share', 'SHARE', teamOwner.address],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )
     await investor.waitForDeployment()
     const investorAddress = await investor.getAddress()
