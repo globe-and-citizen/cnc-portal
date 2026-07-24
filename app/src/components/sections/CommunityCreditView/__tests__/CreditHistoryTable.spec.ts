@@ -65,4 +65,23 @@ describe('CreditHistoryTable', () => {
 
     expect(wrapper.emitted('select')).toEqual([[round]])
   })
+
+  it('renders the outcome copy for every history status', () => {
+    store.historyRounds = [
+      makeRound({ id: 'stalled', status: 'stalled' }),
+      makeRound({ id: 'refunded', status: 'refunded' }),
+      makeRound({ id: 'overdue', status: 'overdue' }),
+      makeRound({ id: 'funded', status: 'funded' }),
+      makeRound({ id: 'active', status: 'active' }),
+      makeRound({ id: 'repaid', status: 'repaid', repaidOn: undefined })
+    ]
+    const wrapper = mount(CreditHistoryTable)
+
+    expect(wrapper.text()).toContain('Deadline passed — awaiting refund or acceptance')
+    expect(wrapper.text()).toContain('Refunded — principal returned to lenders')
+    expect(wrapper.text()).toContain('Overdue — matured Oct 26, not yet repaid')
+    expect(wrapper.text()).toContain('Awaiting repayment · matures Oct 26')
+    expect(wrapper.text()).toContain('Repaying · matures Oct 26')
+    expect(wrapper.text()).toContain('Repaid Oct 26')
+  })
 })

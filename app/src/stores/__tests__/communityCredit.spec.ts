@@ -1,8 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { Address } from 'viem'
-import { mockBlockTimestamp, mockFixedReturnReads, mockUserStore, useQueryFn } from '@/tests/mocks'
+import {
+  mockBlockTimestamp,
+  mockFixedReturnReads,
+  mockUserStore,
+  mockWagmiCore,
+  useQueryFn
+} from '@/tests/mocks'
+import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
 import type { FixedReturnRawOffer, LendingOfferStruct } from '@/types'
 
 // The store reads the offer list through useFixedReturnAllOffers (globally mocked) and
@@ -10,9 +17,17 @@ import type { FixedReturnRawOffer, LendingOfferStruct } from '@/types'
 // query. Drive the owner ref through useQueryFn and stub the metadata query so the store
 // instantiates without a live query client; the owner ref is what drives isOwner.
 const ownerData = ref<string | undefined>(undefined)
+const { metadataQueryState } = vi.hoisted(() => ({
+  metadataQueryState: {
+    options: undefined as { queryParams: { teamId: () => unknown } } | undefined
+  }
+}))
 vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  useGetFixedReturnOfferingsQuery: vi.fn(() => ({ data: ref([]) }))
+  useGetFixedReturnOfferingsQuery: vi.fn((options) => {
+    metadataQueryState.options = options
+    return { data: ref([]) }
+  })
 }))
 
 // The store derives "has the deadline passed" from the chain's own clock, not the
@@ -24,6 +39,17 @@ const NOW = 2_000_000_000n
 import { useCommunityCreditStore } from '@/stores/communityCredit'
 
 const TOKEN = '0x0000000000000000000000000000000000000abc' as Address
+
+type OwnerQueryOptions = {
+  enabled: { value: boolean }
+  queryFn: () => Promise<Address>
+}
+
+function getOwnerQueryOptions(): OwnerQueryOptions {
+  const lastCall = useQueryFn.mock.calls.at(-1) as unknown as [OwnerQueryOptions] | undefined
+  if (!lastCall) throw new Error('Expected owner query options')
+  return lastCall[0]
+}
 
 function offer(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
   return {
@@ -78,11 +104,17 @@ const EXPIRED_OPEN_OFFER: FixedReturnRawOffer = {
 describe('Community Credit store (contract-backed)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    vi.mocked(useFixedReturnAddress).mockReturnValue(
+      computed(() => '0x5234567890123456789012345678901234567890' as Address)
+    )
     mockBlockTimestamp.value = NOW
     mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, REPAID_OFFER]
     mockFixedReturnReads.allOffers.isLoading.value = false
     mockFixedReturnReads.allOffers.isError.value = false
     ownerData.value = undefined
+    metadataQueryState.options = undefined
+    mockWagmiCore.readContract.mockReset()
+    useQueryFn.mockReset()
     useQueryFn.mockReturnValue({
       data: ownerData,
       isLoading: ref(false),
@@ -133,12 +165,74 @@ describe('Community Credit store (contract-backed)', () => {
     expect(store.nextMaturity).not.toBe('—')
   })
 
+  it('passes the current team id into the off-chain metadata query', () => {
+    const store = useCommunityCreditStore()
+
+    expect(store.rounds).toHaveLength(2)
+    expect(metadataQueryState.options?.queryParams.teamId()).toBe('1')
+  })
+
+  it('reports no next maturity when there are no outstanding offers', () => {
+    mockFixedReturnReads.allOffers.data.value = [REPAID_OFFER]
+    const store = useCommunityCreditStore()
+
+    expect(store.outstandingPrincipal).toBe(0)
+    expect(store.nextMaturity).toBe('—')
+  })
+
+  it('chooses the soonest maturity from outstanding offers', () => {
+    const laterOffer: FixedReturnRawOffer = {
+      offerId: 5,
+      decimals: 6,
+      offer: offer({ maturityDate: 2_200_000_000n })
+    }
+    const soonerOffer: FixedReturnRawOffer = {
+      offerId: 6,
+      decimals: 6,
+      offer: offer({ maturityDate: 2_100_000_000n })
+    }
+    mockFixedReturnReads.allOffers.data.value = [laterOffer, soonerOffer]
+    const store = useCommunityCreditStore()
+
+    expect(store.nextMaturity).toBe('Jul 18')
+  })
+
+  it('reflects the read error state', () => {
+    mockFixedReturnReads.allOffers.isError.value = true
+    const store = useCommunityCreditStore()
+
+    expect(store.isError).toBe(true)
+  })
+
   it('derives ownership from the connected wallet', () => {
     const store = useCommunityCreditStore()
     expect(store.isOwner).toBe(false)
     ownerData.value = mockUserStore.address
     expect(store.isOwner).toBe(true)
     expect(store.isLender).toBe(false)
+  })
+
+  it('disables the owner query when the fixed return address is missing', () => {
+    vi.mocked(useFixedReturnAddress).mockReturnValue(computed(() => undefined))
+
+    const store = useCommunityCreditStore()
+
+    expect(store.hasContract).toBe(false)
+    expect(getOwnerQueryOptions().enabled.value).toBe(false)
+  })
+
+  it('builds the owner read with the fixed return contract address', async () => {
+    mockWagmiCore.readContract.mockResolvedValue(mockUserStore.address)
+    useCommunityCreditStore()
+
+    await expect(getOwnerQueryOptions().queryFn()).resolves.toBe(mockUserStore.address)
+    expect(mockWagmiCore.readContract).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        address: '0x5234567890123456789012345678901234567890',
+        functionName: 'owner'
+      })
+    )
   })
 
   it('reflects the loading state and toggles the layout variant', () => {

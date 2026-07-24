@@ -89,4 +89,80 @@ describe('CreditRoundCard', () => {
 
     expect(wrapper.text()).toContain('1.9 USDC to go')
   })
+
+  it('shows stalled, refunded, partial-funded and target-reached progress notes', () => {
+    expect(
+      mount(CreditRoundCard, {
+        props: { round: makeRound({ status: 'stalled', raised: 0.5, target: 2 }) }
+      }).text()
+    ).toContain('1.5 USDC short · deadline passed')
+
+    expect(
+      mount(CreditRoundCard, {
+        props: { round: makeRound({ status: 'refunded', fundable: false }) }
+      }).text()
+    ).toContain('Refunded — principal returned to lenders')
+
+    expect(
+      mount(CreditRoundCard, {
+        props: { round: makeRound({ status: 'funded', fundable: false, raised: 1, target: 2 }) }
+      }).text()
+    ).toContain('Accepted with partial funding · matures Aug 2')
+
+    expect(
+      mount(CreditRoundCard, {
+        props: { round: makeRound({ status: 'funded', fundable: false, raised: 2, target: 2 }) }
+      }).text()
+    ).toContain('Target reached · matures Aug 2')
+  })
+
+  it('shows extra lender count after the first three avatars', () => {
+    const lenders = Array.from({ length: 5 }, (_, index) => ({
+      name: `Lender ${index}`,
+      addr: `0x${index}`,
+      gradient: '#00bf7a,#00b8d9',
+      amount: 1,
+      expected: 1.1,
+      paid: 0,
+      date: ''
+    }))
+
+    const wrapper = mount(CreditRoundCard, {
+      props: { round: makeRound({ lenders }) }
+    })
+
+    expect(wrapper.text()).toContain('+2')
+    expect(wrapper.text()).toContain('5 lenders')
+  })
+
+  it('emits open from the title and manage action for an owner', async () => {
+    store.isOwner = true
+    const wrapper = mount(CreditRoundCard, { props: { round: makeRound() } })
+
+    await wrapper.find('[data-test="credit-round-card"] > div').trigger('click')
+    await wrapper.find('[data-test="round-cta-open"]').trigger('click')
+
+    expect(wrapper.emitted('open')).toHaveLength(2)
+    expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
+  })
+
+  it('emits lend, repay and view actions from their CTAs', async () => {
+    const lendable = mount(CreditRoundCard, { props: { round: makeRound() } })
+    await lendable.find('[data-test="round-cta-lend"]').trigger('click')
+    expect(lendable.emitted('lend')).toHaveLength(1)
+
+    store.isOwner = true
+    const repayable = mount(CreditRoundCard, {
+      props: { round: makeRound({ status: 'active', fundable: false }) }
+    })
+    await repayable.find('[data-test="round-cta-repay"]').trigger('click')
+    expect(repayable.emitted('repay')).toHaveLength(1)
+
+    store.isOwner = false
+    const viewOnly = mount(CreditRoundCard, {
+      props: { round: makeRound({ status: 'active', fundable: false }) }
+    })
+    await viewOnly.find('[data-test="round-cta-open"]').trigger('click')
+    expect(viewOnly.emitted('open')).toHaveLength(1)
+  })
 })
