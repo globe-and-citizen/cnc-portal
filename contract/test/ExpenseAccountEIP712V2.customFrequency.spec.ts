@@ -1,9 +1,10 @@
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
-import { ExpenseAccountEIP712 } from '../typechain-types'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { AddressLike } from 'ethers'
+import { ethers, initializeHardhat, loadFixture, upgrades } from './hardhat-context.js'
+import type { ExpenseAccountEIP712 } from '../typechain-types/index.js'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type { AddressLike } from 'ethers'
+
+before(initializeHardhat)
 
 describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
   let owner: SignerWithAddress
@@ -28,7 +29,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
     const expenseAccount = (await upgrades.deployProxy(
       ExpenseAccount,
       [owner.address, [await usdt.getAddress(), await usdc.getAddress()]],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as ExpenseAccountEIP712
     await expenseAccount.waitForDeployment()
 

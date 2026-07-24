@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
 import {IOfficer} from "../interfaces/IOfficer.sol";
 import {ProposalUtils} from "./ProposalUtils.sol";
@@ -14,7 +14,7 @@ import {ProposalUtils} from "./ProposalUtils.sol";
  *         and automatically calculate results.
  * @dev Upgradeable, pausable, reentrancy-guarded. BoardOfDirectors is resolved via Officer.
  */
-contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuard {
   // --- Enums and Structs ---
   /// @dev Directive vote options.
   enum VoteOption {
@@ -338,7 +338,6 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   function initialize(address ownerAddress) public initializer {
     __Ownable_init(ownerAddress);
     __Pausable_init();
-    __ReentrancyGuard_init();
     s_nextProposalId = 1; // Start proposal IDs from 1
 
     if (msg.sender == address(0)) revert Proposals__ZeroSender();

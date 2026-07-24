@@ -1,8 +1,9 @@
 import { expect } from 'chai'
-import { ethers } from 'hardhat'
-import { time } from '@nomicfoundation/hardhat-network-helpers'
-import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
-import { Elections } from '../typechain-types'
+import { ethers, initializeHardhat, time } from './hardhat-context.js'
+import type { HardhatEthersSigner } from './hardhat-context.js'
+import type { Elections } from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 describe('Elections', function () {
   async function deployFixture() {
@@ -674,7 +675,7 @@ describe('Elections', function () {
           [candidate1.address, candidate2.address],
           [voter1.address, voter2.address]
         )
-    ).to.be.reverted
+    ).to.be.revert(ethers)
   })
 
   it('rejects castVote when paused', async () => {
@@ -691,6 +692,6 @@ describe('Elections', function () {
 
     await elections.connect(owner).pause()
 
-    await expect(elections.connect(voter1).castVote(1, candidate1.address)).to.be.reverted
+    await expect(elections.connect(voter1).castVote(1, candidate1.address)).to.be.revert(ethers)
   })
 })

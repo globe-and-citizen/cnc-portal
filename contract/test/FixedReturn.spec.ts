@@ -1,27 +1,32 @@
-import { ethers, upgrades } from 'hardhat'
-import { expect } from 'chai'
 import {
-  loadFixture,
-  time,
+  ethers,
   impersonateAccount,
-  setBalance
-} from '@nomicfoundation/hardhat-network-helpers'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import {
+  initializeHardhat,
+  loadFixture,
+  setBalance,
+  time,
+  upgrades
+} from './hardhat-context.js'
+import { expect } from 'chai'
+import { parseUnits } from 'ethers'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type {
   Bank,
   FeeCollector,
   FixedReturn,
   MockERC20,
   MockOfficer,
   Officer
-} from '../typechain-types'
+} from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 describe('FixedReturn', () => {
   const TermUnit = { Days: 0, Months: 1, Years: 2 }
   const FundingAccess = { General: 0, Whitelist: 1 }
   const OfferState = { Open: 0, Funded: 1, Refundable: 2, Repaying: 3 }
 
-  const FUNDING_TARGET = ethers.parseUnits('100000', 6)
+  const FUNDING_TARGET = parseUnits('100000', 6)
   const INTEREST_RATE_BPS = 800n // 8%, flat over the whole term
   const TERM_DURATION = 12
 
@@ -69,7 +74,7 @@ describe('FixedReturn', () => {
     const bank = (await upgrades.deployProxy(
       BankFactory.connect(officerSigner),
       [[], owner.address],
-      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
     )) as unknown as Bank
 
     await mockOfficer.setDeployedContract('Bank', await bank.getAddress())
@@ -86,7 +91,7 @@ describe('FixedReturn', () => {
     const fixedReturn = (await upgrades.deployProxy(
       FixedReturnFactory.connect(officerSigner),
       [initialTokens, owner.address],
-      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
     )) as unknown as FixedReturn
 
     await mockOfficer.setDeployedContract('FixedReturn', await fixedReturn.getAddress())
@@ -214,14 +219,15 @@ describe('FixedReturn', () => {
       const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
       await expect(
         upgrades.deployProxy(FixedReturnFactory, [[], ethers.ZeroAddress], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(FixedReturnFactory, ERRORS.ZERO_ADDRESS)
     })
 
     it('rejects being initialized a second time', async () => {
       const { fixedReturn, owner } = await loadFixture(deployFixture)
-      await expect(fixedReturn.initialize([], owner.address)).to.be.reverted
+      await expect(fixedReturn.initialize([], owner.address)).to.be.revert(ethers)
     })
 
     it('pre-registers an initial set of supported tokens, mirroring Bank', async () => {
@@ -686,8 +692,9 @@ describe('FixedReturn', () => {
 
       await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
       // remaining room is exactly 40k — must succeed, not revert
-      await expect(fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6)))
-        .to.not.be.reverted
+      await expect(
+        fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6))
+      ).to.not.be.revert(ethers)
 
       const offer = await fixedReturn.getLendingOffer(offerId)
       expect(offer.totalFunded).to.equal(FUNDING_TARGET)
@@ -724,7 +731,7 @@ describe('FixedReturn', () => {
       )
 
       const amount = ethers.parseUnits('50000', 6)
-      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, amount)).to.not.be.reverted
+      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, amount)).to.not.be.revert(ethers)
       expect(await fixedReturn.getLenderDeposits(offerId, lenderA.address)).to.equal(amount)
     })
 
@@ -851,8 +858,9 @@ describe('FixedReturn', () => {
         }
       )
 
-      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6)))
-        .to.not.be.reverted
+      await expect(
+        fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
+      ).to.not.be.revert(ethers)
     })
 
     it('lets an uncapped whitelisted lender deposit beyond what a personal cap would allow', async () => {
@@ -873,8 +881,9 @@ describe('FixedReturn', () => {
       )
 
       // lenderB is uncapped — deposits far more than lenderA's 20k allocation would allow.
-      await expect(fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('80000', 6)))
-        .to.not.be.reverted
+      await expect(
+        fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('80000', 6))
+      ).to.not.be.revert(ethers)
     })
 
     it("still bounds an uncapped whitelisted lender by the offer's remaining funding target", async () => {
@@ -1649,7 +1658,7 @@ describe('FixedReturn', () => {
       const feeCollector = (await upgrades.deployProxy(
         FeeCollectorFactory,
         [owner.address, [], []],
-        { initializer: 'initialize' }
+        { initializer: 'initialize', unsafeAllow: ['constructor'] }
       )) as unknown as FeeCollector
 
       const officer = (await upgrades.deployProxy(OfficerFactory, [owner.address, [], [], false], {
@@ -1667,7 +1676,7 @@ describe('FixedReturn', () => {
       const fixedReturn = (await upgrades.deployProxy(
         FixedReturnFactory.connect(officerSigner),
         [[], owner.address],
-        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
       )) as unknown as FixedReturn
 
       expect(await fixedReturn.getOfficerAddress()).to.equal(officerAddress)

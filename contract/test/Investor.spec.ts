@@ -1,11 +1,15 @@
 import { expect } from 'chai'
-import { ethers } from 'hardhat'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { ethers, initializeHardhat } from './hardhat-context.js'
+import type { SignerWithAddress } from './hardhat-context.js'
+
+import { AbiCoder } from 'ethers'
+
+before(initializeHardhat)
 
 // --- Minimal Merkle helper (sorted-pair hashing, compatible with OpenZeppelin
 // MerkleProof.verify). Leaf encoding mirrors the contract:
 // keccak256(bytes.concat(keccak256(abi.encode(address, uint256)))).
-const abi = ethers.AbiCoder.defaultAbiCoder()
+const abi = AbiCoder.defaultAbiCoder()
 
 function leafOf(account: string, amount: bigint): string {
   return ethers.keccak256(ethers.keccak256(abi.encode(['address', 'uint256'], [account, amount])))

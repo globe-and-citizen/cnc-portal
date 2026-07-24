@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IInvestor} from "./interfaces/IInvestor.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
 
@@ -22,7 +22,7 @@ import {IOfficer} from "./interfaces/IOfficer.sol";
  *      index. Schedules are never removed — a stopped one keeps its slot with
  *      `active = false`, a fully released one stays `active = true`.
  */
-contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+contract Vesting is OwnableUpgradeable, ReentrancyGuard, PausableUpgradeable {
   /**
    * @dev Vesting schedule parameters for a single grant.
    * @param start Vesting start timestamp.
@@ -265,7 +265,6 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function initialize() public initializer {
     __Ownable_init(msg.sender);
-    __ReentrancyGuard_init();
     __Pausable_init();
 
     if (msg.sender == address(0)) revert Vesting__ZeroSender();
