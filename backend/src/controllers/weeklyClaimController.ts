@@ -13,6 +13,9 @@ import {
 import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
+import { signWeeklyClaimBodySchema, z } from '../validation';
+
+type SignWeeklyClaimBody = z.infer<typeof signWeeklyClaimBodySchema>;
 
 // EIP-712 typed-data envelope for the WageClaim signature, mirroring the
 // frontend definition in app/src/components/sections/CashRemunerationView/
@@ -47,39 +50,11 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature, signedAgainstContractAddress, typedDataMessage, chainId } = req.body as {
-    signature?: string;
-    signedAgainstContractAddress?: string;
-    typedDataMessage?: {
-      employeeAddress: string;
-      minutesWorked: number;
-      date: string;
-      wages: { hourlyRate: string; tokenAddress: string }[];
-    };
-    chainId?: number;
-  };
-
-  // Format-level checks (action enum, id, signature hex format, addresses and
-  // chainId shape) are enforced by the route-level Zod middleware. Here we
-  // assert cross-field business rules that depend on the query action.
-  const errors: string[] = [];
-  if (action == 'sign') {
-    if (!signature || !isHex(signature)) errors.push('Missing or invalid signature');
-    // signedAgainstContractAddress + typedDataMessage + chainId are required
-    // for sign so the backend can authenticate the EIP-712 signature and
-    // tag the row with the verifying contract for stale-detection.
-    if (!signedAgainstContractAddress || !isAddress(signedAgainstContractAddress))
-      errors.push('Missing or invalid signedAgainstContractAddress');
-    if (!typedDataMessage) errors.push('Missing typedDataMessage');
-    if (!chainId || !Number.isInteger(chainId) || chainId <= 0)
-      errors.push('Missing or invalid chainId');
-  }
-
-  if (!id || isNaN(id)) errors.push('Missing or invalid id');
-
-  if (errors.length > 0) {
-    return errorResponse(400, errors.join('; '), res);
-  }
+  // Route-level `validateRequest(updateWeeklyClaimRequestSchema)` already
+  // enforces that signedAgainstContractAddress / typedDataMessage / chainId
+  // are present for `action=sign` (see weeklyClaim.ts), so `id` and
+  // `signature` here are guaranteed valid — no re-checking needed.
+  const { signature } = req.body as { signature?: string };
 
   let data: Prisma.WeeklyClaimUpdateInput = {};
   // let singleClaimStatus: statusType = "pending";
@@ -167,6 +142,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         break;
       }
       case 'sign': {
+        const { signature, signedAgainstContractAddress, typedDataMessage, chainId } =
+          req.body as SignWeeklyClaimBody;
+
         const signErrors: string[] = [];
 
         // Check if the caller is the Cash Remuneration owner
@@ -213,7 +191,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (
           !currentCashRemunerationContract ||
           currentCashRemunerationContract.address.toLowerCase() !==
-            (signedAgainstContractAddress as string).toLowerCase()
+            signedAgainstContractAddress.toLowerCase()
         ) {
           signErrors.push(
             'signedAgainstContractAddress does not match the team current CashRemunerationEIP712'
@@ -232,19 +210,19 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
               domain: {
                 name: 'CashRemuneration',
                 version: '1',
-                chainId: chainId as number,
+                chainId,
                 verifyingContract: signedAgainstContractAddress as Address,
               },
               types: WAGE_CLAIM_TYPES,
               primaryType: 'WageClaim',
               message: {
-                employeeAddress: typedDataMessage!.employeeAddress as Address,
-                minutesWorked: typedDataMessage!.minutesWorked,
-                wages: typedDataMessage!.wages.map((w) => ({
+                employeeAddress: typedDataMessage.employeeAddress as Address,
+                minutesWorked: typedDataMessage.minutesWorked,
+                wages: typedDataMessage.wages.map((w) => ({
                   hourlyRate: BigInt(w.hourlyRate),
                   tokenAddress: w.tokenAddress as Address,
                 })),
-                date: BigInt(typedDataMessage!.date),
+                date: BigInt(typedDataMessage.date),
               },
               signature: signature as Hex,
             });
@@ -269,7 +247,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           data: {
             ownerAddress: callerAddress,
             contractAddress: signedAgainstContractAddress,
-            ...(chainId ? { chainId } : {}),
+            chainId,
           },
           signedAgainstContractAddress,
         };

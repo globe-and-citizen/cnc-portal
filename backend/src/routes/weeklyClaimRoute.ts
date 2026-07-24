@@ -7,15 +7,13 @@ import {
 } from '../controllers/weeklyClaimController';
 import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
-  validate,
   validateBody,
   validateQuery,
+  validateRequest,
   getWeeklyClaimsQuerySchema,
   submitWeeklyGoalsBodySchema,
   syncWeeklyClaimsQuerySchema,
-  weeklyClaimIdParamsSchema,
-  updateWeeklyClaimQuerySchema,
-  updateWeeklyClaimBodySchema,
+  updateWeeklyClaimRequestSchema,
 } from '../validation';
 
 const weeklyClaimRoutes = express.Router();
@@ -414,11 +412,7 @@ weeklyClaimRoutes.put(
  */
 weeklyClaimRoutes.put(
   '/:id',
-  validate({
-    params: weeklyClaimIdParamsSchema,
-    query: updateWeeklyClaimQuerySchema,
-    body: updateWeeklyClaimBodySchema,
-  }),
+  validateRequest(updateWeeklyClaimRequestSchema),
   rejectIfArchived('params.weeklyClaimId'),
   updateWeeklyClaims
 );

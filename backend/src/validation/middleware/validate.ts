@@ -69,6 +69,44 @@ export const validate = (schemas: ValidationSchemas) => {
 };
 
 /**
+ * Validates params, query and body together against a single schema shaped
+ * as `{ params, query, body }`, instead of three independent ones.
+ *
+ * Use this only when a field's requiredness depends on another part of the
+ * request (e.g. a `query.action` value gating which `body` fields are
+ * required) — `validate()`'s three independent `.safeParse()` calls can't
+ * express that, since none of them sees the others' data. For anything that
+ * doesn't need cross-field rules, prefer `validate()`.
+ * @param schema - Zod schema for the combined `{ params, query, body }` shape
+ * @returns Express middleware function
+ */
+export const validateRequest = (schema: ZodSchema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = schema.safeParse({
+        params: req.params,
+        query: req.query,
+        body: req.body,
+      });
+      if (!result.success) {
+        const errors = formatZodError(result.error);
+        return errorResponse(400, `Invalid request - ${errors}`, res);
+      }
+
+      const parsed = result.data as { params?: unknown; query?: unknown; body?: unknown };
+      if (parsed.params !== undefined) req.params = parsed.params as Request['params'];
+      if (parsed.query !== undefined) req.query = parsed.query as Request['query'];
+      if (parsed.body !== undefined) req.body = parsed.body;
+
+      next();
+    } catch (error) {
+      console.error('Validation middleware error:', error);
+      return errorResponse(500, 'Validation middleware error', res);
+    }
+  };
+};
+
+/**
  * Helper functions for common validation patterns
  */
 
