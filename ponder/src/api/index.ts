@@ -31,7 +31,7 @@ import schema, {
   expenseApproval,
 } from "ponder:schema";
 import { Hono } from "hono";
-import { client, graphql, eq, and, lt, desc, inArray } from "ponder";
+import { client, graphql, eq, and, lt, desc, inArray, sum } from "ponder";
 
 const app = new Hono();
 
@@ -286,6 +286,73 @@ app.get("/teams/:teamAddress/events", async (c) => {
   );
 
   return c.json(serializable({ teamAddress, events: eventsByType }));
+});
+
+// ─── Endpoint: Platform-wide Bank transfer volume ─────────────────────────────
+// GET /stats/bank-transfer-volume
+// Sums outgoing Bank (treasury) transfers — native and per ERC-20 token —
+// grouped by Bank contract, plus platform-wide totals. Amounts are raw on-chain
+// integers (stringified, since JSON has no bigint). Consumers map each
+// contractAddress → team and value the raw amounts in USD. Bank transfer events
+// are only emitted by Bank contracts, so no contract-type filter is needed.
+app.get("/stats/bank-transfer-volume", async (c) => {
+  const [nativeRows, tokenRows] = await Promise.all([
+    db
+      .select({
+        contractAddress: bankTransfer.contractAddress,
+        total: sum(bankTransfer.amount),
+      })
+      .from(bankTransfer)
+      .groupBy(bankTransfer.contractAddress),
+    db
+      .select({
+        contractAddress: bankTokenTransfer.contractAddress,
+        token: bankTokenTransfer.token,
+        total: sum(bankTokenTransfer.amount),
+      })
+      .from(bankTokenTransfer)
+      .groupBy(bankTokenTransfer.contractAddress, bankTokenTransfer.token),
+  ]);
+
+  const byContract = new Map<
+    string,
+    { contractAddress: string; native: string; tokens: Record<string, string> }
+  >();
+  const ensure = (addr: string) => {
+    const key = addr.toLowerCase();
+    let entry = byContract.get(key);
+    if (!entry) {
+      entry = { contractAddress: key, native: "0", tokens: {} };
+      byContract.set(key, entry);
+    }
+    return entry;
+  };
+
+  let totalNative = 0n;
+  const totalTokens = new Map<string, bigint>();
+
+  for (const row of nativeRows) {
+    const amount = BigInt(row.total ?? "0");
+    ensure(row.contractAddress).native = amount.toString();
+    totalNative += amount;
+  }
+
+  for (const row of tokenRows) {
+    const amount = BigInt(row.total ?? "0");
+    const token = row.token.toLowerCase();
+    ensure(row.contractAddress).tokens[token] = amount.toString();
+    totalTokens.set(token, (totalTokens.get(token) ?? 0n) + amount);
+  }
+
+  return c.json({
+    totals: {
+      native: totalNative.toString(),
+      tokens: Object.fromEntries(
+        [...totalTokens].map(([token, amount]) => [token, amount.toString()]),
+      ),
+    },
+    byContract: [...byContract.values()],
+  });
 });
 
 // ─── Endpoint C: Activity timeline for a team ─────────────────────────────────

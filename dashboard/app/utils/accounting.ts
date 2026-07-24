@@ -285,7 +285,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     const from = transfer.from.toLowerCase()
     const to = transfer.to.toLowerCase()
     const amount = transferAmount(transfer)
-    let delta = 0
+    let delta: number
     if (to === wallet && from !== wallet) {
       delta = amount
     } else if (from === wallet && to !== wallet) {
