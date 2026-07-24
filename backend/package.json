@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
+  "packageManager": "npm@11.11.0",
+  "engines": {
+    "node": "24.x"
+  },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
