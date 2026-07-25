@@ -190,9 +190,8 @@ contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
 
     uint256 unspentBudget = campaign.budget - campaign.amountSpent;
 
-    uint256 paymentAmount = unspentBudget <= currentClaimedAmount
-      ? unspentBudget
-      : currentClaimedAmount;
+    uint256 paymentAmount =
+      unspentBudget <= currentClaimedAmount ? unspentBudget : currentClaimedAmount;
 
     if (address(this).balance < paymentAmount)
       revert AdCampaignManager__InsufficientContractBalance(paymentAmount, address(this).balance);
@@ -397,9 +396,8 @@ contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
    * @return A newly generated unique campaign code string.
    */
   function _generateCampaignCode() internal view returns (string memory) {
-    uint256 randomNumber = uint256(
-      keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender))
-    ) % 1000000;
+    uint256 randomNumber =
+      uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender))) % 1000000;
     return
       string(
         abi.encodePacked("CAMPAIGN-", block.timestamp.toString(), "-", randomNumber.toString())

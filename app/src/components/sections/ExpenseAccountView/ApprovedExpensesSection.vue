@@ -106,7 +106,7 @@ const userDataStore = useUserDataStore()
 const toast = useToast()
 const route = useRoute()
 const chainId = useChainId()
-const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
+const { signTypedDataAsync, error: signTypedDataError } = useSignTypedData()
 const { mutateAsync: addExpenseData, error: errorAddExpenseData } = useCreateExpenseMutation()
 
 const expenseAccountEip712Address = computed(
@@ -182,7 +182,7 @@ const approveUser = async (data: BudgetLimit) => {
     endDate: Number(data.endDate)
   }
 
-  await signTypedDataAsync({
+  const signedApproval = await signTypedDataAsync({
     types,
     primaryType: 'BudgetLimit',
     message,
@@ -192,7 +192,9 @@ const approveUser = async (data: BudgetLimit) => {
   const expenseAccountData = {
     body: {
       data,
-      signature: signature.value,
+      signature: signedApproval,
+      signedAgainstContractAddress: verifyingContract,
+      chainId: chainId.value,
       teamId: route.params.id
     }
   }

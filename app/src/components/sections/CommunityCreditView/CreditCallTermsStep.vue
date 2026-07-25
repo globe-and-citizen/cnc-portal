@@ -46,15 +46,14 @@
               />
             </template>
           </UPopover>
-          <UInput
-            :model-value="localDeadline.time"
-            type="time"
+          <UInputTime
+            :model-value="localDeadlineTime"
             class="w-40 shrink-0"
             data-test="cc-deadline-time"
-            @update:model-value="(val) => onLocalTimeInput(String(val ?? ''))"
+            @update:model-value="(val) => onLocalTimeInput(timeValueToStr(val))"
           >
             <template #trailing><span class="text-muted text-xs font-bold">Local</span></template>
-          </UInput>
+          </UInputTime>
         </div>
         <p class="text-muted mt-1 text-xs" data-test="cc-deadline-utc-readout">
           = {{ deadlineUtcReadout }}
@@ -80,8 +79,8 @@
           :key="p"
           type="button"
           role="radio"
-          :aria-checked="form.period === p && form.periodMode !== 'custom'"
-          :class="creditChipClass(form.period === p && form.periodMode !== 'custom')"
+          :aria-checked="form.period === presetMinutes(p) && form.periodMode !== 'custom'"
+          :class="creditChipClass(form.period === presetMinutes(p) && form.periodMode !== 'custom')"
           :data-test="`cc-term-${p}`"
           @click="selectPreset(p)"
         >
@@ -149,8 +148,16 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
-import { applyZodFieldErrors, creditChipClass, creditTermLabel, formatAmount } from '@/utils'
+import { CalendarDate, getLocalTimeZone, Time, today } from '@internationalized/date'
+import {
+  addCreditTerm,
+  applyZodFieldErrors,
+  creditChipClass,
+  creditCallDeadlineContext,
+  creditTermLabel,
+  formatAmount,
+  MINUTES_PER_DAY
+} from '@/utils'
 import { createCreditCallTermsSchema, type CreditCallForm, type CreditTermUnit } from '@/types'
 
 const form = defineModel<CreditCallForm>('form', { required: true })
@@ -158,10 +165,7 @@ const form = defineModel<CreditCallForm>('form', { required: true })
 const termErrors = reactive<Record<string, string>>({})
 
 function validate(): boolean {
-  const schema = createCreditCallTermsSchema({
-    today: new Date().toISOString().slice(0, 10),
-    now: new Date()
-  })
+  const schema = createCreditCallTermsSchema(creditCallDeadlineContext())
   const result = schema.safeParse({
     rate: form.value.rate,
     deadline: form.value.deadline,
@@ -231,9 +235,22 @@ function calendarDateToDeadline(date: CalendarDate): string {
   return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
 }
 
+// Same round-trip as the calendar date above, but for UInputTime's `Time` value.
+function timeStrToTime(timeStr: string): Time {
+  const [hour, minute] = (timeStr || '00:00').split(':').map(Number)
+  return new Time(hour || 0, minute || 0)
+}
+
+function timeValueToStr(value: unknown): string {
+  if (!value || typeof value !== 'object' || !('hour' in value) || !('minute' in value)) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(Number(value.hour))}:${pad(Number(value.minute))}`
+}
+
 const deadlineOpen = ref(false)
 const minDeadlineDate = today(getLocalTimeZone())
 const deadlineCalendarDate = computed(() => deadlineToCalendarDate(localDeadline.value.date))
+const localDeadlineTime = computed(() => timeStrToTime(localDeadline.value.time))
 const deadlineLabel = computed(() => {
   const cd = deadlineCalendarDate.value
   if (!cd) return 'Select a date'
@@ -250,22 +267,22 @@ function onLocalTimeInput(timeStr: string) {
   applyLocalDeadline(localDeadline.value.date, timeStr)
 }
 
+// Preset chips stay day-denominated for the common case — converted to canonical
+// minutes only when actually written to `form.period`.
 const PRESETS = [30, 60, 90, 120]
 const UNITS: { value: CreditTermUnit; label: string }[] = [
+  { value: 'minutes', label: 'Minutes' },
   { value: 'days', label: 'Days' },
   { value: 'weeks', label: 'Weeks' },
   { value: 'months', label: 'Months' },
   { value: 'years', label: 'Years' }
 ]
-const DAYS_PER_UNIT: Record<CreditTermUnit, number> = {
-  days: 1,
-  weeks: 7,
-  months: 30,
-  years: 365
+function presetMinutes(days: number) {
+  return days * MINUTES_PER_DAY
 }
 
 function selectPreset(days: number) {
-  form.value.period = days
+  form.value.period = presetMinutes(days)
   form.value.periodMode = 'preset'
 }
 
@@ -274,12 +291,20 @@ function enterCustom() {
   form.value.periodVal = form.value.periodVal || String(form.value.period)
 }
 
-/** Convert a custom value + unit into whole days and keep the form in sync. */
+/** Convert a custom value + unit into whole minutes and keep the form in sync. Anchored
+ *  on the chosen subscription deadline (falling back to today if none is picked yet)
+ *  via `addCreditTerm`'s real calendar arithmetic — e.g. 6 months lands on the actual
+ *  calendar date — rather than a flat days-per-unit approximation, so this preview
+ *  never disagrees with the maturityDate actually submitted on-chain. */
 function recalcPeriod(value: string, unit: CreditTermUnit) {
   form.value.periodMode = 'custom'
   form.value.periodVal = value
   form.value.periodUnit = unit
-  form.value.period = Math.max(0, Math.round((Number(value) || 0) * DAYS_PER_UNIT[unit]))
+  const n = Number(value) || 0
+  const anchorDeadline = form.value.deadline || calendarDateToDeadline(today(getLocalTimeZone()))
+  const anchorSeconds = addCreditTerm(anchorDeadline, form.value.deadlineTime, 0, unit)
+  const targetSeconds = addCreditTerm(anchorDeadline, form.value.deadlineTime, n, unit)
+  form.value.period = Math.max(0, Math.round((targetSeconds - anchorSeconds) / 60))
 }
 
 function unitClass(active: boolean) {

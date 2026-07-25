@@ -36,6 +36,7 @@
 
 <script setup lang="ts">
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { useToast } from '@nuxt/ui/composables'
 import { USDC_ADDRESS } from '@/constant'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
@@ -48,6 +49,10 @@ import { computed, ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
 import { useEnableClaim } from '@/composables/cashRemuneration/writes'
+import {
+  CASH_REMUNERATION_EIP712_TYPES,
+  buildCashRemunerationDomain
+} from './cashRemunerationEip712'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { TEAM_ARCHIVED_TOOLTIP } from '@/composables/useTeamWriteGuard'
 
@@ -108,27 +113,12 @@ const { error: claimError, mutateAsync: executeUpdateClaim } = useUpdateWeeklyCl
 
 const enableTx = useEnableClaim()
 
-// Domain configuration (constant)
-const typedDataDomain = computed(() => ({
-  name: 'CashRemuneration',
-  version: '1',
-  chainId: chainId.value,
-  verifyingContract: cashRemunerationAddress.value as Address
-}))
-
-// Type definitions (constant)
-const TYPED_DATA_TYPES = {
-  Wage: [
-    { name: 'hourlyRate', type: 'uint256' },
-    { name: 'tokenAddress', type: 'address' }
-  ],
-  WageClaim: [
-    { name: 'employeeAddress', type: 'address' },
-    { name: 'minutesWorked', type: 'uint16' },
-    { name: 'wages', type: 'Wage[]' },
-    { name: 'date', type: 'uint256' }
-  ]
-} as const
+const typedDataDomain = computed(() =>
+  buildCashRemunerationDomain({
+    chainId: chainId.value,
+    verifyingContract: cashRemunerationAddress.value as Address
+  })
+)
 
 // Helper functions
 const getTokenAddress = (type: string): Address => {
@@ -170,7 +160,7 @@ const approveClaim = async () => {
   try {
     const signature = await mutateAsync({
       domain: typedDataDomain.value,
-      types: TYPED_DATA_TYPES,
+      types: CASH_REMUNERATION_EIP712_TYPES,
       message: typedDataMessage.value,
       primaryType: 'WageClaim'
     })

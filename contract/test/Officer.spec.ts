@@ -1,20 +1,19 @@
 import { parseUnits } from 'ethers'
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
+import type { SignerWithAddress } from './hardhat-context.js'
 import {
   Bank__factory,
   BoardOfDirectors__factory,
   ExpenseAccountEIP712__factory,
-  FeeCollector,
-  Officer,
-  UpgradeableBeacon,
   Elections__factory,
   Proposals__factory,
   Investor__factory,
-  SafeDepositRouter__factory,
-  MockERC20
-} from '../typechain-types'
+  SafeDepositRouter__factory
+} from '../typechain-types/index.js'
+import type { Beacon, FeeCollector, MockERC20, Officer } from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 describe('Officer Contract', function () {
   let officer: Officer
@@ -25,14 +24,14 @@ describe('Officer Contract', function () {
   let proposalsContract: Proposals__factory
   let safeDepositRouter: SafeDepositRouter__factory
   let feeCollector: FeeCollector
-  let bankAccountBeacon: UpgradeableBeacon
-  let investorBeacon: UpgradeableBeacon
-  let electionsBeacon: UpgradeableBeacon
-  let expenseAccountBeacon: UpgradeableBeacon
-  let proposalsBeacon: UpgradeableBeacon
-  let safeDepositRouterBeacon: UpgradeableBeacon
+  let bankAccountBeacon: Beacon
+  let investorBeacon: Beacon
+  let electionsBeacon: Beacon
+  let expenseAccountBeacon: Beacon
+  let proposalsBeacon: Beacon
+  let safeDepositRouterBeacon: Beacon
   let boardOfDirectors: BoardOfDirectors__factory
-  let bodBeacon: UpgradeableBeacon
+  let bodBeacon: Beacon
   let owner: SignerWithAddress
   let addr1: SignerWithAddress
   let addr2: SignerWithAddress
@@ -75,40 +74,47 @@ describe('Officer Contract', function () {
       FeeCollector,
       [owner.address, [], supportedTokenAddresses],
       {
-        initializer: 'initialize'
+        initializer: 'initialize',
+        unsafeAllow: ['constructor']
       }
     )) as unknown as FeeCollector
 
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')
-    bankAccountBeacon = (await upgrades.deployBeacon(bankAccount)) as unknown as UpgradeableBeacon
+    bankAccountBeacon = (await upgrades.deployBeacon(bankAccount, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     investor = await ethers.getContractFactory('Investor')
-    investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as UpgradeableBeacon
+    investorBeacon = (await upgrades.deployBeacon(investor, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     electionsContract = await ethers.getContractFactory('Elections')
-    electionsBeacon = (await upgrades.deployBeacon(
-      electionsContract
-    )) as unknown as UpgradeableBeacon
+    electionsBeacon = (await upgrades.deployBeacon(electionsContract, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     boardOfDirectors = await ethers.getContractFactory('BoardOfDirectors')
-    bodBeacon = (await upgrades.deployBeacon(boardOfDirectors)) as unknown as UpgradeableBeacon
+    bodBeacon = (await upgrades.deployBeacon(boardOfDirectors, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     expenseAccount = await ethers.getContractFactory('ExpenseAccountEIP712')
-    expenseAccountBeacon = (await upgrades.deployBeacon(
-      expenseAccount
-    )) as unknown as UpgradeableBeacon
+    expenseAccountBeacon = (await upgrades.deployBeacon(expenseAccount, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     proposalsContract = await ethers.getContractFactory('Proposals')
-    proposalsBeacon = (await upgrades.deployBeacon(
-      proposalsContract
-    )) as unknown as UpgradeableBeacon
+    proposalsBeacon = (await upgrades.deployBeacon(proposalsContract, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     //  ADD: Deploy SafeDepositRouter beacon
     safeDepositRouter = await ethers.getContractFactory('SafeDepositRouter')
-    safeDepositRouterBeacon = (await upgrades.deployBeacon(
-      safeDepositRouter
-    )) as unknown as UpgradeableBeacon
+    safeDepositRouterBeacon = (await upgrades.deployBeacon(safeDepositRouter, {
+      unsafeAllow: ['constructor']
+    })) as unknown as Beacon
 
     // Deploy Officer contract
     officer = await deployOfficerInstance()

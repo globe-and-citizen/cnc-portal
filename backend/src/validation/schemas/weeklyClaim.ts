@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isHex } from 'viem';
 import { addressSchema, teamIdSchema, positiveIntegerSchema } from './common';
 
 // EIP-712 WageClaim message envelope as signed by the approver. The backend
@@ -89,16 +90,56 @@ export const updateWeeklyClaimQuerySchema = z.object({
   }),
 });
 
+// Body required for `action=sign` — the backend authenticates the EIP-712
+// signature and records the contract it was bound to. Kept as its own schema
+// (rather than inlined in updateWeeklyClaimRequestSchema below) so it's the
+// single source of truth for what "required for sign" means, reused by both
+// the request-level superRefine and updateWeeklyClaimBodySchema.
+export const signWeeklyClaimBodySchema = z.object({
+  signature: z
+    .string()
+    .min(1, 'signature must not be empty')
+    .refine((value) => isHex(value), {
+      message: 'signature must be a 0x-prefixed hex string',
+    }),
+  signedAgainstContractAddress: addressSchema,
+  typedDataMessage: wageClaimMessageSchema,
+  chainId: z.number().int().positive(),
+});
+
 // Update weekly claim request body
 //
-// signedAgainstContractAddress + typedDataMessage + chainId are required only
-// for `action=sign` so the backend can authenticate the EIP-712 signature.
-// They're optional at the schema level because the same body shape is reused
-// for withdraw / disable / enable, where they don't apply. The sign branch in
-// the controller enforces presence at request time and surfaces 400 errors.
-export const updateWeeklyClaimBodySchema = z.object({
-  signature: z.string().optional(),
-  signedAgainstContractAddress: addressSchema.optional(),
-  typedDataMessage: wageClaimMessageSchema.optional(),
-  chainId: z.number().int().positive().optional(),
-});
+// Derived from signWeeklyClaimBodySchema so the same shape covers
+// withdraw / disable / enable, where these fields don't apply and are
+// simply absent from the body.
+export const updateWeeklyClaimBodySchema = signWeeklyClaimBodySchema.partial();
+
+// Update weekly claim — full request (params + query + body validated
+// together).
+//
+// `action` (query) gates which `body` fields are required (signature +
+// signedAgainstContractAddress + typedDataMessage + chainId, for `sign`
+// only). Validating params/query/body as three independent schemas can't
+// express that cross-field rule — none of them can see the others' data —
+// so this single schema is the one wired into the route via
+// `validateRequest()` instead of `validate({ params, query, body })`.
+export const updateWeeklyClaimRequestSchema = z
+  .object({
+    params: weeklyClaimIdParamsSchema,
+    query: updateWeeklyClaimQuerySchema,
+    body: updateWeeklyClaimBodySchema,
+  })
+  .superRefine((data, ctx) => {
+    if (data.query.action !== 'sign') return;
+
+    const signBody = signWeeklyClaimBodySchema.safeParse(data.body);
+    if (!signBody.success) {
+      signBody.error.issues.forEach((issue) => {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['body', ...issue.path],
+          message: issue.message,
+        });
+      });
+    }
+  });

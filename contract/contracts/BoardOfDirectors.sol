@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IBoardOfDirectors} from "./interfaces/IBoardOfDirectors.sol";
 
@@ -9,7 +10,7 @@ import {IBoardOfDirectors} from "./interfaces/IBoardOfDirectors.sol";
  * @title BoardOfDirectors
  * @dev A contract that manages a board of directors and their actions.
  */
-contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
+contract BoardOfDirectors is Initializable, ReentrancyGuard, IBoardOfDirectors {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   /**
@@ -366,7 +367,6 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
       if (owners[i] == address(0)) revert BoardOfDirectors__ZeroAddress();
       s_ownersSet.add(owners[i]);
     }
-    __ReentrancyGuard_init();
   }
 
   // Private functions

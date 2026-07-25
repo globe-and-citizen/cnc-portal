@@ -1,5 +1,44 @@
 import { describe, expect, it } from 'vitest'
-import { createCreditCallAccessSchema, createRepayAmountSchema } from '../communityCredit.schemas'
+import {
+  createCreditCallAccessSchema,
+  createCreditCallTermsSchema,
+  createRepayAmountSchema
+} from '../communityCredit.schemas'
+import { MINUTES_PER_DAY } from '@/utils'
+
+function baseTermsData(overrides: Record<string, unknown> = {}) {
+  return {
+    rate: 6,
+    deadline: '2026-07-31',
+    deadlineTime: '23:59',
+    period: 90 * MINUTES_PER_DAY,
+    ...overrides
+  }
+}
+
+describe('createCreditCallTermsSchema — term length cap', () => {
+  const schema = createCreditCallTermsSchema({ today: '2026-01-01' })
+
+  it('passes at exactly the 30-year cap', () => {
+    const result = schema.safeParse(baseTermsData({ period: 30 * 365 * MINUTES_PER_DAY }))
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects one day over the cap with a calendar-breakdown message, not a bare minute count', () => {
+    const result = schema.safeParse(
+      baseTermsData({ period: 30 * 365 * MINUTES_PER_DAY + MINUTES_PER_DAY })
+    )
+    expect(result.success).toBe(false)
+    if (result.success) return
+    const issue = result.error.issues.find((i) => i.path[0] === 'period')
+    // 30*365 days from this deadline isn't quite 30 calendar years (leap years make a
+    // real 30-year span slightly longer than a flat 365-day/year multiply) — the
+    // message reflects the actual calendar breakdown, not a naive "30 years, 1 day".
+    expect(issue?.message).toBe(
+      'Term of 29 years, 11 months, 3 weeks, 3 days exceeds the 30-year maximum'
+    )
+  })
+})
 
 function baseAccessData(overrides: Record<string, unknown> = {}) {
   return {

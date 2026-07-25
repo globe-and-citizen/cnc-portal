@@ -1,8 +1,9 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers, initializeHardhat, loadFixture, upgrades } from './hardhat-context.js'
 import { expect } from 'chai'
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ZeroAddress } from 'ethers'
-import type { FeeCollector } from '../typechain-types'
+import type { FeeCollector } from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 /**
  * Exercises the semantics of ignition/modules/OfficerUpgradeModule.ts:
@@ -22,7 +23,7 @@ describe('OfficerUpgradeModule', function () {
     const feeCollectorImpl = (await upgrades.deployProxy(
       FeeCollectorFactory.connect(beaconOwner),
       [beaconOwner.address, [], []],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as FeeCollector
     await feeCollectorImpl.waitForDeployment()
 

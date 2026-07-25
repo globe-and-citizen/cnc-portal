@@ -1,5 +1,5 @@
-# Use Node.js 18 AS the base image
-FROM node:22-slim AS development 
+# Use Node.js 24 as the base image (matches CI, .nvmrc and package.json engines)
+FROM node:24-slim AS development
 
 # Install necessary dependencies (including CA certificates for SSL)
 RUN apt-get update -y \

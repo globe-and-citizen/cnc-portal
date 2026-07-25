@@ -1,7 +1,8 @@
-import { ethers } from 'hardhat'
+import { ethers, initializeHardhat, loadFixture } from './hardhat-context.js'
 import { expect } from 'chai'
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ZeroAddress } from 'ethers'
+
+before(initializeHardhat)
 
 /**
  * Exercises the semantics of ignition/modules/CashRemunerationUpgradeModule.ts:
