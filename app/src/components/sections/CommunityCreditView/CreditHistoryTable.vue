@@ -37,7 +37,7 @@
         <span class="font-mono text-sm">{{ row.original.round.rate }}%</span>
       </template>
       <template #term-cell="{ row }">
-        <span class="text-muted">{{ row.original.round.period }}d</span>
+        <span class="text-muted">{{ row.original.round.termLabel }}</span>
       </template>
       <template #outcome-cell="{ row }">
         <span class="text-muted">{{ row.original.outcome }}</span>

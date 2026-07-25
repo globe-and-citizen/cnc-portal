@@ -123,7 +123,7 @@ const progressNote = computed(() => {
 
 const terms = computed(() => [
   { icon: 'heroicons:receipt-percent', text: `${props.round.rate}% interest` },
-  { icon: 'heroicons:clock', text: `${props.round.period} days` },
+  { icon: 'heroicons:clock', text: props.round.termLabel },
   {
     icon: props.round.restricted ? 'heroicons:lock-closed' : 'heroicons:globe-alt',
     text: props.round.restricted ? 'Restricted' : 'Open to all'

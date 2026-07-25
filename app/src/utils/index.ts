@@ -1,5 +1,6 @@
 export * from './communityCreditOfferUtil'
 export * from './communityCreditUtil'
+export * from './communityCreditWizardUtil'
 export * from './errorUtil'
 export * from './classifyError'
 export * from './generalUtil'

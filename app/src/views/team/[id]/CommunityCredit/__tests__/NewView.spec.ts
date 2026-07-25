@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { computed } from 'vue'
+import { Time } from '@internationalized/date'
+import type { Address } from 'viem'
 import type { CreditRound } from '@/types'
+import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
+import { SUPPORTED_TOKENS } from '@/constant'
 
 // vue-router is globally mocked (composables.setup.ts); useRouter().push is
 // mockRouterPush and useRoute() reads the shared reactive mockRoute.
@@ -9,6 +14,7 @@ import {
   setMockRoute,
   useQueryClientFn,
   mockInvalidateQueries,
+  mockFixedReturnReads,
   mockFixedReturnWrites,
   mockWagmiCore
 } from '@/tests/mocks'
@@ -41,11 +47,15 @@ vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
 
 import NewView from '../NewView.vue'
 
+const FIXED_RETURN_ADDRESS = '0x5234567890123456789012345678901234567890' as Address
+
 describe('NewView', () => {
   beforeEach(() => {
+    vi.mocked(useFixedReturnAddress).mockReturnValue(computed(() => FIXED_RETURN_ADDRESS))
     mockRouterPush.mockClear()
     mockInvalidateQueries.mockClear()
     mockWagmiCore.readContract.mockReset()
+    mockFixedReturnReads.getSupportedTokens.data.value = []
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
       getQueryData: vi.fn(),
@@ -58,6 +68,41 @@ describe('NewView', () => {
   it('renders the credit-call wizard', () => {
     const wrapper = mount(NewView)
     expect(wrapper.text()).toContain('New credit call')
+    expect(wrapper.find('[data-test="cc-name"]').exists()).toBe(true)
+  })
+
+  it('renders supported token choices and updates the selected token', async () => {
+    const creditTokens = SUPPORTED_TOKENS.filter((token) => token.id !== 'native')
+    const firstToken = creditTokens[0]
+    const secondToken = creditTokens[1]
+    if (!firstToken || !secondToken) throw new Error('Expected at least two supported ERC20 tokens')
+
+    mockFixedReturnReads.getSupportedTokens.data.value = creditTokens.map((token) => token.address)
+    const wrapper = mount(NewView)
+
+    expect(wrapper.find(`[data-test="cc-token-${firstToken.symbol}"]`).exists()).toBe(true)
+    expect(wrapper.find(`[data-test="cc-token-${secondToken.symbol}"]`).exists()).toBe(true)
+
+    await wrapper.find(`[data-test="cc-token-${secondToken.symbol}"]`).trigger('click')
+
+    expect(
+      wrapper.find(`[data-test="cc-token-${secondToken.symbol}"]`).attributes('aria-checked')
+    ).toBe('true')
+  })
+
+  it('navigates back to the list from cancel and back buttons', async () => {
+    const wrapper = mount(NewView)
+
+    await wrapper.find('button').trigger('click')
+    expect(mockRouterPush).toHaveBeenLastCalledWith(
+      expect.objectContaining({ name: 'community-credit' })
+    )
+
+    await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    expect(wrapper.find('[data-test="cc-term-30"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="cc-back"]').trigger('click')
     expect(wrapper.find('[data-test="cc-name"]').exists()).toBe(true)
   })
 
@@ -131,5 +176,48 @@ describe('NewView', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-test="cc-error"]').exists()).toBe(true)
+  })
+
+  it('blocks publishing when the team has no deployed Credit Account', async () => {
+    vi.mocked(useFixedReturnAddress).mockReturnValue(computed(() => undefined))
+    const wrapper = mount(NewView)
+
+    await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="cc-error"]').text()).toContain('No Credit Account is deployed')
+    expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('re-checks the deadline right before publish and blocks without submitting if it went stale on Access', async () => {
+    mockWagmiCore.readContract.mockResolvedValue(1n)
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-24T09:00:00Z'))
+    try {
+      const wrapper = mount(NewView)
+      await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
+      await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+
+      // Deadline is 2 minutes out — passes the 60s-buffered check the Terms step ran
+      // when leaving it, same as CreditCallTermsStep validates on its own.
+      const calendar = wrapper.findComponent({ name: 'UCalendar' })
+      await calendar.vm.$emit('update:modelValue', { year: 2026, month: 7, day: 24 })
+      wrapper.findComponent({ name: 'UInputTime' }).vm.$emit('update:modelValue', new Time(9, 2))
+      await wrapper.vm.$nextTick()
+      await wrapper.find('[data-test="cc-next"]').trigger('click') // Terms → Access
+
+      // Time passes while the issuer is on Access — the deadline is now stale.
+      vi.setSystemTime(new Date('2026-07-24T09:03:00Z'))
+      await wrapper.find('[data-test="cc-next"]').trigger('click') // attempts Publish
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="cc-error"]').text()).toContain('further in the future')
+      expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

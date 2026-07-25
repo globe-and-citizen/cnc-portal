@@ -12,12 +12,6 @@ import {ITokenSupport} from "./ITokenSupport.sol";
  * Used by: Bank (to resolve the offer's token and trigger repayment distribution)
  */
 interface IFixedReturn is IOwnable, ITokenSupport {
-  enum TermUnit {
-    Days,
-    Months,
-    Years
-  }
-
   enum FundingAccess {
     General,
     Whitelist
@@ -34,9 +28,9 @@ interface IFixedReturn is IOwnable, ITokenSupport {
     address token;
     uint256 fundingTarget; // total amount the issuer wants to raise
     uint256 interestRateBps; // flat rate in basis points (800 = 8%), applied over the whole term
-    uint16 termDuration; // informational only — not enforced on-chain
-    TermUnit termUnit;
-    uint256 startDate;
+    uint256 maturityDate; // informational only — not enforced on-chain beyond the
+    // creation-time check that it comes after subscriptionDeadline; repayLenders itself
+    // never gates on this
     uint256 subscriptionDeadline;
     FundingAccess fundingAccess;
     bool isCapEnabled; // only relevant in General mode
@@ -51,9 +45,7 @@ interface IFixedReturn is IOwnable, ITokenSupport {
     address token;
     uint256 fundingTarget;
     uint256 interestRateBps;
-    uint16 termDuration;
-    TermUnit termUnit;
-    uint256 startDate;
+    uint256 maturityDate;
     uint256 subscriptionDeadline;
     FundingAccess fundingAccess;
     bool isCapEnabled;
@@ -70,7 +62,6 @@ interface IFixedReturn is IOwnable, ITokenSupport {
     address indexed token,
     uint256 fundingTarget,
     uint256 interestRateBps,
-    uint256 startDate,
     uint256 subscriptionDeadline,
     FundingAccess fundingAccess
   );

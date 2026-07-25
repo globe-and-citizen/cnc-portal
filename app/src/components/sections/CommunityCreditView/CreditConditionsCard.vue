@@ -35,7 +35,7 @@ const conditions = computed(() => [
     label: 'Interest rate',
     value: `${props.round.rate}% fixed`
   },
-  { icon: 'heroicons:clock', label: 'Term', value: `${props.round.period} days` },
+  { icon: 'heroicons:clock', label: 'Term', value: props.round.termLabel },
   {
     icon: 'heroicons:calendar-days',
     label: 'Subscription deadline',

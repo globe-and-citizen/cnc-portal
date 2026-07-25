@@ -167,6 +167,18 @@ export const UCalendarStub = defineComponent({
   }
 })
 
+// Reka-ui TimeField is segmented native inputs, impractical to drive in jsdom —
+// stubbed the same way UCalendar is. Tests interact via findComponent + emit
+// rather than typing into DOM segments.
+export const UInputTimeStub = defineComponent({
+  name: 'UInputTime',
+  props: ['modelValue'],
+  emits: ['update:modelValue'],
+  setup(props, { attrs, slots }) {
+    return () => h('div', { ...attrs }, slots.trailing?.())
+  }
+})
+
 export const UPopoverStub = defineComponent({
   name: 'UPopover',
   props: {
