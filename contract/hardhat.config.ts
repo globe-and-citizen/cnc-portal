@@ -31,7 +31,7 @@ export default defineConfig({
   },
 
   solidity: {
-    version: '0.8.24',
+    version: '0.8.28',
     npmFilesToBuild: [
       '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol',
       '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol'

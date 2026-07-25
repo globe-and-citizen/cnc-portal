@@ -249,11 +249,36 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
-    it('should return 400 if total hours exceed 24 hours for a single day', async () => {
+    it('should return 409 if the day total exceeds the wage daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim();
       (modifiedWeeklyClaims as any).claims = [
-        { dayWorked: testDate, hoursWorked: 20, minutesWorked: 1200 },
+        { id: 1, dayWorked: testDate, hoursWorked: 5, minutesWorked: 300 },
+      ];
+
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(
+        createMockWage({ maximumHoursPerDay: 6 })
+      );
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
+
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        minutesWorked: 120, // 300 + 120 = 420 minutes > 360 minutes (6h daily cap)
+        memo: 'memo',
+        dayWorked: testDate.toISOString(),
+      });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('daily hours limit would be exceeded');
+      expect(response.body.message).toContain('Daily allowance: 6h');
+      expect(response.body.message).toContain('Remaining to submit: 1h');
+    });
+
+    it('should fall back to the 8h default when the wage has no daily cap', async () => {
+      const testDate = dayjs.utc().startOf('day').toDate();
+      const modifiedWeeklyClaims = createMockWeeklyClaim();
+      (modifiedWeeklyClaims as any).claims = [
+        { id: 1, dayWorked: testDate, hoursWorked: 7, minutesWorked: 420 },
       ];
 
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
@@ -261,15 +286,36 @@ describe('Claim Controller', () => {
 
       const response = await request(app).post('/').send({
         teamId: 1,
-        minutesWorked: 300, // 300 + 1200 = 1500 minutes > 1440 minutes (24h)
+        minutesWorked: 120, // 420 + 120 = 540 minutes > 480 minutes (8h default)
         memo: 'memo',
         dayWorked: testDate.toISOString(),
       });
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe(
-        'Submission failed: the total number of hours for this day would exceed 24 hours (1440 minutes).'
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Daily allowance: 8h');
+    });
+
+    it('should allow a claim that stays within the daily cap', async () => {
+      const testDate = dayjs.utc().startOf('day').toDate();
+      const modifiedWeeklyClaims = createMockWeeklyClaim();
+      (modifiedWeeklyClaims as any).claims = [
+        { id: 1, dayWorked: testDate, hoursWorked: 4, minutesWorked: 240 },
+      ];
+
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(
+        createMockWage({ maximumHoursPerDay: 8 })
       );
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
+      vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        minutesWorked: 240, // 240 + 240 = 480 minutes = exactly the 8h cap
+        memo: 'memo',
+        dayWorked: testDate.toISOString(),
+      });
+
+      expect(response.status).toBe(201);
     });
 
     it('should return 400 when SUBMIT_RESTRICTION is active and dayWorked is outside the allowed window', async () => {
@@ -629,6 +675,33 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain(
         'Unable to update this claim: your weekly hours limit would be exceeded. Weekly allowance: 40h regular + 0h overtime = 40h. Already submitted: 38h. Remaining to submit: 2h.'
       );
+    });
+
+    it('should return 409 if updating claim exceeds the daily cap', async () => {
+      const testDate = dayjs.utc().startOf('day').toDate();
+      const mockClaim = {
+        id: 1,
+        dayWorked: testDate,
+        wage: { userAddress: TEST_ADDRESS, maximumHoursPerWeek: 40, maximumHoursPerDay: 8 },
+        weeklyClaim: {
+          status: 'pending',
+          claims: [
+            { id: 1, dayWorked: testDate, hoursWorked: 2, minutesWorked: 120 },
+            { id: 2, dayWorked: testDate, hoursWorked: 6, minutesWorked: 360 },
+          ],
+        },
+        fileAttachments: null,
+      };
+      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+
+      const response = await request(app).put('/1').send({
+        minutesWorked: 180, // 360 (other claim same day) + 180 > 480 minutes (8h)
+        memo: 'Updated memo',
+      });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('daily hours limit would be exceeded');
+      expect(response.body.message).toContain('Already submitted for that day: 6h');
     });
 
     it('should update claim successfully with valid data', async () => {
