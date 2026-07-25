@@ -6,10 +6,10 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 // solhint-disable-next-line max-line-length
 import {ERC20BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IOfficer} from "../interfaces/IOfficer.sol";
 
@@ -27,7 +27,7 @@ contract Investor is
   ERC20BurnableUpgradeable,
   OwnableUpgradeable,
   PausableUpgradeable,
-  ReentrancyGuardUpgradeable,
+  ReentrancyGuard,
   AccessControlUpgradeable
 {
   using EnumerableSet for EnumerableSet.AddressSet;
@@ -181,7 +181,6 @@ contract Investor is
     __Ownable_init(owner);
     __AccessControl_init();
     __Pausable_init();
-    __ReentrancyGuard_init();
 
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _grantRole(MINTER_ROLE, owner);

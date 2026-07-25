@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {TokenSupport} from "./base/TokenSupport.sol";
 import {IBank} from "./interfaces/IBank.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
@@ -89,7 +89,7 @@ import {IOfficer} from "./interfaces/IOfficer.sol";
  *  title and description are accepted as createLendingOffer params but never stored
  *  or emitted on-chain — the calling application persists them linked by offerId.
  */
-contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSupport {
+contract FixedReturn is OwnableUpgradeable, ReentrancyGuard, TokenSupport {
   using SafeERC20 for IERC20;
 
   // ────────────────────────────────────────────────────
@@ -98,12 +98,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   // Mirrored independently in interfaces/IFixedReturn.sol for external consumers —
   // this contract is not directly imported by it, matching the Bank/IBank,
   // FeeCollector/IFeeCollector convention used elsewhere in this codebase.
-
-  enum TermUnit {
-    Days,
-    Months,
-    Years
-  }
 
   enum FundingAccess {
     General,
@@ -121,9 +115,9 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     address token;
     uint256 fundingTarget; // total amount the issuer wants to raise
     uint256 interestRateBps; // flat rate in basis points (800 = 8%), applied over the whole term
-    uint16 termDuration; // informational only — not enforced on-chain
-    TermUnit termUnit;
-    uint256 startDate;
+    uint256 maturityDate; // informational only — not enforced on-chain beyond the
+    // creation-time check that it comes after subscriptionDeadline; repayLenders itself
+    // never gates on this
     uint256 subscriptionDeadline;
     FundingAccess fundingAccess;
     bool isCapEnabled; // only relevant in General mode
@@ -139,9 +133,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     address token;
     uint256 fundingTarget;
     uint256 interestRateBps;
-    uint16 termDuration;
-    TermUnit termUnit;
-    uint256 startDate;
+    uint256 maturityDate;
     uint256 subscriptionDeadline;
     FundingAccess fundingAccess;
     bool isCapEnabled;
@@ -227,7 +219,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     address indexed token,
     uint256 fundingTarget,
     uint256 interestRateBps,
-    uint256 startDate,
     uint256 subscriptionDeadline,
     FundingAccess fundingAccess
   );
@@ -264,10 +255,10 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @dev A required address argument was the zero address.
   error FixedReturn__ZeroAddress();
-  /// @dev subscriptionDeadline must be on or before startDate.
+  /// @dev subscriptionDeadline is not strictly in the future.
   error FixedReturn__InvalidDeadline();
-  /// @dev termDuration is zero or exceeds the maximum allowed for its termUnit.
-  error FixedReturn__InvalidTermDuration();
+  /// @dev maturityDate is not strictly after subscriptionDeadline.
+  error FixedReturn__InvalidMaturityDate();
   /// @dev lenderCap exceeds the offer's fundingTarget.
   error FixedReturn__LenderCapExceedsFundingTarget();
   /// @dev Every whitelist entry is capped (none UNCAPPED_ALLOCATION), but their sum
@@ -336,7 +327,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   ) external initializer {
     if (ownerAddress == address(0)) revert FixedReturn__ZeroAddress();
     __Ownable_init(ownerAddress);
-    __ReentrancyGuard_init();
 
     s_officerAddress = msg.sender;
 
@@ -387,16 +377,16 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     if (!IBank(bankAddress).isTokenSupported(params.token))
       revert FixedReturn__TokenNotSupportedByBank(params.token);
 
-    // The subscription window must close on or before the loan's start date.
-    if (params.subscriptionDeadline > params.startDate) revert FixedReturn__InvalidDeadline();
+    // The subscription window must still be in the future — the UI already checks
+    // this, but the contract shouldn't rely on that alone (e.g. a direct call, a
+    // stale client clock, or a delayed tx would otherwise create an offer that's
+    // dead on arrival: lendFunds reverts immediately and refund/accept become
+    // callable right away).
+    if (params.subscriptionDeadline <= block.timestamp) revert FixedReturn__InvalidDeadline();
 
-    if (params.termUnit == TermUnit.Days && (params.termDuration == 0 || params.termDuration > 365))
-      revert FixedReturn__InvalidTermDuration();
-    if (
-      params.termUnit == TermUnit.Months && (params.termDuration == 0 || params.termDuration > 120)
-    ) revert FixedReturn__InvalidTermDuration();
-    if (params.termUnit == TermUnit.Years && (params.termDuration == 0 || params.termDuration > 30))
-      revert FixedReturn__InvalidTermDuration();
+    // The loan must mature strictly after the subscription window closes.
+    if (params.maturityDate <= params.subscriptionDeadline)
+      revert FixedReturn__InvalidMaturityDate();
 
     if (
       params.fundingAccess == FundingAccess.General &&
@@ -410,9 +400,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       token: params.token,
       fundingTarget: params.fundingTarget,
       interestRateBps: params.interestRateBps,
-      termDuration: params.termDuration,
-      termUnit: params.termUnit,
-      startDate: params.startDate,
+      maturityDate: params.maturityDate,
       subscriptionDeadline: params.subscriptionDeadline,
       fundingAccess: params.fundingAccess,
       isCapEnabled: params.isCapEnabled,
@@ -453,7 +441,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       token: params.token,
       fundingTarget: params.fundingTarget,
       interestRateBps: params.interestRateBps,
-      startDate: params.startDate,
       subscriptionDeadline: params.subscriptionDeadline,
       fundingAccess: params.fundingAccess
     });
@@ -628,9 +615,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       revert FixedReturn__OfferNotFunded();
 
     // Repayment ceiling — prevent overpayment beyond total lender entitlement.
-    uint256 totalObligation = offer.totalFunded +
-      (offer.totalFunded * offer.interestRateBps) /
-      10_000;
+    uint256 totalObligation =
+      offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000;
     if (offer.totalRepaidByIssuer + amount > totalObligation)
       revert FixedReturn__ExceedsRepaymentObligation();
 
@@ -654,14 +640,12 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
           cumulativeEntitlement = totalRepaid - cumulativeForNonLast;
         } else {
           cumulativeEntitlement =
-            (totalRepaid * s_lenderDeposits[offerId][lender]) /
-            offer.totalFunded;
+            (totalRepaid * s_lenderDeposits[offerId][lender]) / offer.totalFunded;
           cumulativeForNonLast += cumulativeEntitlement;
         }
         uint256 alreadyPaid = s_totalPaidToLender[offerId][lender];
-        uint256 share = cumulativeEntitlement > alreadyPaid
-          ? cumulativeEntitlement - alreadyPaid
-          : 0;
+        uint256 share =
+          cumulativeEntitlement > alreadyPaid ? cumulativeEntitlement - alreadyPaid : 0;
         if (share > 0) {
           s_totalPaidToLender[offerId][lender] = cumulativeEntitlement;
           IERC20(offer.token).safeTransfer(lender, share);
@@ -688,9 +672,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     if (lenderDeposit == 0) return 0;
     LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.totalFunded == 0) return 0;
-    uint256 totalObligation = offer.totalFunded +
-      (offer.totalFunded * offer.interestRateBps) /
-      10_000;
+    uint256 totalObligation =
+      offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000;
     return (totalObligation * lenderDeposit) / offer.totalFunded;
   }
 
@@ -736,7 +719,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @notice Current contract version, per semver.
   function version() public pure returns (string memory) {
-    return "2.0.0";
+    return "3.0.0";
   }
 
   /// @dev Resolves Bank via Officer. Reverts if not found.

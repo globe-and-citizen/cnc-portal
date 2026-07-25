@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Wage" ADD COLUMN "maximumHoursPerDay" INTEGER NOT NULL DEFAULT 8;

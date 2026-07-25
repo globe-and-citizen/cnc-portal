@@ -187,7 +187,7 @@ const stats = computed(() => [
   {
     icon: 'heroicons:clock',
     label: 'Term',
-    value: `${props.round.period} days`,
+    value: props.round.termLabel,
     sub: 'single repayment'
   },
   {

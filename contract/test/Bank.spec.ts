@@ -1,15 +1,22 @@
-import { ethers, upgrades } from 'hardhat'
-import { expect } from 'chai'
 import {
+  ethers,
+  impersonateAccount,
+  initializeHardhat,
+  setBalance,
+  upgrades
+} from './hardhat-context.js'
+import { expect } from 'chai'
+import type {
   Bank,
   FeeCollector,
   MockERC20,
   MockFixedReturn,
   MockOfficer,
   Officer
-} from '../typechain-types'
-import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { impersonateAccount, setBalance } from '@nomicfoundation/hardhat-network-helpers'
+} from '../typechain-types/index.js'
+import type { HardhatEthersSigner, SignerWithAddress } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('Bank', () => {
   let bankProxy: Bank
@@ -50,7 +57,7 @@ describe('Bank', () => {
         [{ contractType: 'BANK', feeBps: Number(BANK_FEE_BPS) }],
         supportedTokens
       ],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as FeeCollector
 
     // Deploy Officer through a proxy; the implementation's constructor now calls
@@ -74,7 +81,11 @@ describe('Bank', () => {
     bankProxy = (await upgrades.deployProxy(
       BankImplementation.connect(officerSigner),
       [supportedTokens, await owner.getAddress()],
-      { initializer: 'initialize', initialOwner: await owner.getAddress() }
+      {
+        initializer: 'initialize',
+        initialOwner: await owner.getAddress(),
+        unsafeAllow: ['constructor']
+      }
     )) as unknown as Bank
 
     bank = bankProxy.connect(owner)
@@ -103,14 +114,15 @@ describe('Bank', () => {
     })
 
     it('should not allow to initialize the contract again', async () => {
-      await expect(bankProxy.initialize([], await officer.getAddress())).to.be.reverted
+      await expect(bankProxy.initialize([], await officer.getAddress())).to.be.revert(ethers)
     })
 
     it('should reject zero address in initialization', async () => {
       const BankImplementation = await ethers.getContractFactory('Bank')
       await expect(
         upgrades.deployProxy(BankImplementation, [[], ethers.ZeroAddress], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(BankImplementation, ERRORS.ZERO_ADDRESS)
     })
@@ -119,7 +131,8 @@ describe('Bank', () => {
       const BankImplementation = await ethers.getContractFactory('Bank')
       await expect(
         upgrades.deployProxy(BankImplementation, [[ethers.ZeroAddress], owner.address], {
-          initializer: 'initialize'
+          initializer: 'initialize',
+          unsafeAllow: ['constructor']
         })
       ).to.be.revertedWithCustomError(BankImplementation, ERRORS.ZERO_ADDRESS)
     })
@@ -191,10 +204,11 @@ describe('Bank', () => {
 
         await expect(async () =>
           owner.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
-        ).to.changeEtherBalance(bankProxy, depositAmount)
+        ).to.changeEtherBalance(ethers, bankProxy, depositAmount)
 
         const tx = bank.transfer(contractor.address, transferAmount)
         await expect(tx).to.changeEtherBalances(
+          ethers,
           [bankProxy, contractor, feeCollectorAddress],
           [-transferAmount, netAmount, fee]
         )
@@ -233,7 +247,7 @@ describe('Bank', () => {
 
         await expect(async () =>
           member1.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
-        ).to.changeEtherBalance(bankProxy, depositAmount)
+        ).to.changeEtherBalance(ethers, bankProxy, depositAmount)
 
         await expect(bankProxy.connect(member1).transfer(contractor.address, transferAmount))
           .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
@@ -252,11 +266,13 @@ describe('Bank', () => {
       it('should allow owner to pause and unpause', async () => {
         await bank.pause()
         expect(await bankProxy.paused()).to.be.true
-        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
+        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.revert(ethers)
 
         await bank.unpause()
         expect(await bankProxy.paused()).to.be.false
-        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.reverted
+        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.revert(
+          ethers
+        )
       })
 
       it('should not allow non-owner to pause or unpause', async () => {
@@ -320,6 +336,7 @@ describe('Bank', () => {
       const tx = bank.transferToken(await mockUSDT.getAddress(), contractor.address, amount)
 
       await expect(tx).to.changeTokenBalances(
+        ethers,
         mockUSDT,
         [bankProxy, contractor, feeCollectorAddress],
         [-amount, netAmount, fee]
@@ -409,7 +426,7 @@ describe('Bank', () => {
       const localBank = (await upgrades.deployProxy(
         BankFactory.connect(officerSigner),
         [[], owner.address],
-        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true, unsafeAllow: ['constructor'] }
       )) as unknown as Bank
 
       const mockFixedReturn = (await MockFixedReturnFactory.deploy()) as unknown as MockFixedReturn
@@ -514,8 +531,9 @@ describe('Bank', () => {
       const amount = ethers.parseUnits('100', 6)
       const fixedReturnBefore = await token.balanceOf(await mockFixedReturn.getAddress())
 
-      await expect(localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, amount)).to.be
-        .reverted
+      await expect(
+        localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, amount)
+      ).to.be.revert(ethers)
 
       expect(await token.balanceOf(await mockFixedReturn.getAddress())).to.equal(fixedReturnBefore)
     })

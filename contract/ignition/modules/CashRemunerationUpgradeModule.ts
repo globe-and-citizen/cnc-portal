@@ -1,20 +1,17 @@
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
-import fs from 'fs'
-import path from 'path'
-import { network } from 'hardhat'
+import fs from 'node:fs'
+import path from 'node:path'
 
 function getDeployedAddresses() {
-  let chainId: number | undefined
-
-  if (network.name === 'localhost') chainId = 31337
-  else chainId = network.config.chainId
+  const networkName = process.env.HARDHAT_NETWORK ?? 'default'
+  const chainId = networkName === 'polygon' ? 137 : 31337
 
   console.log(`chainId`, chainId)
-  console.log(`name`, network.name)
+  console.log(`name`, networkName)
 
   // Construct the path to the deployed_addresses.json file
   const deployedAddressesPath = path.join(
-    __dirname,
+    import.meta.dirname,
     `../deployments/chain-${chainId}/deployed_addresses.json`
   )
 

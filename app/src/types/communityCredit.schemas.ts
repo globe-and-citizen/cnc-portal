@@ -1,6 +1,12 @@
 import { z } from 'zod'
 import { parseUnits } from 'viem'
-import { FIXED_RETURN_TERM_MAXIMUMS, sumWhitelistAmountUnits } from '@/utils'
+import {
+  CREDIT_TERM_MAX_DAYS,
+  CREDIT_TERM_MAX_YEARS,
+  formatCalendarBreakdown,
+  MINUTES_PER_DAY,
+  sumWhitelistAmountUnits
+} from '@/utils'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 
 /** Same underlying FixedReturn contract, same basic rules — adapted to CreditCallForm's
@@ -13,11 +19,16 @@ export const creditCallBasicsSchema = z.object({
 })
 
 interface CreditCallTermsSchemaContext {
-  /** Today's date, YYYY-MM-DD — floors the date part of the deadline. */
+  /** Today's date, YYYY-MM-DD — floors the date part of the deadline. Callers should
+   *  derive both this and `now` from the same instant (ideally the chain's own block
+   *  time, plus a confirmation buffer — see CreditCallTermsStep.vue), not a bare device
+   *  clock read, since FixedReturn.sol itself now rejects a subscriptionDeadline that
+   *  isn't strictly in the future. */
   today: string
-  /** Current instant — floors a same-day deadline's clock time too, now that the
-   *  deadline picker allows minute precision. Optional so callers that only care
-   *  about the date-level check (or existing tests) can omit it. */
+  /** Current instant (already padded with whatever confirmation buffer the caller
+   *  wants) — floors a same-day deadline's clock time too, now that the deadline
+   *  picker allows minute precision. Optional so callers that only care about the
+   *  date-level check (or existing tests) can omit it. */
   now?: Date
 }
 
@@ -27,9 +38,13 @@ interface CreditCallTermsSchemaContext {
  *  contract places no floor on interestRateBps.
  *  Cap validation belongs to CreditCallAccessStep.vue (where the cap fields actually
  *  live in Credit's step layout) and is handled separately, not here.
- *  `period` is always submitted on-chain as Days (NewView.vue hardcodes
- *  termUnit: 'days'), so the cap is a flat 365 days regardless of which unit the
- *  issuer used to enter it — no per-unit max needed like FixedReturn. */
+ *  `period` is always resolved to whole minutes before it reaches this schema (see
+ *  `addCreditTerm`), regardless of which unit the issuer entered it in — FixedReturn.sol
+ *  itself places no upper bound on the resulting maturityDate, only that it comes after
+ *  subscriptionDeadline, so this cap (`CREDIT_TERM_MAX_YEARS`) is a UI-only sanity
+ *  ceiling. The over-cap error is a superRefine rather than a plain `.max()` so it can
+ *  quote back the issuer's own entry as a calendar breakdown (e.g. "35 years, 2
+ *  months exceeds the 30-year maximum") instead of a bare, hard-to-place minute count. */
 export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContext) {
   return z
     .object({
@@ -43,10 +58,6 @@ export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContex
         .number({ error: 'Term is required' })
         .int('Term must be a whole number')
         .positive('Term must be greater than 0')
-        .max(
-          FIXED_RETURN_TERM_MAXIMUMS.days,
-          `Term cannot exceed ${FIXED_RETURN_TERM_MAXIMUMS.days} days`
-        )
     })
     .refine((data) => data.deadline >= context.today, {
       message: 'Subscription deadline cannot be in the past',
@@ -61,10 +72,19 @@ export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContex
         return new Date(`${data.deadline}T${data.deadlineTime}:00Z`) >= context.now
       },
       {
-        message: 'Subscription deadline cannot be in the past',
+        message: 'Subscription deadline must be a little further in the future',
         path: ['deadlineTime']
       }
     )
+    .superRefine((data, ctx) => {
+      if (data.period <= CREDIT_TERM_MAX_DAYS * MINUTES_PER_DAY) return
+      const entered = formatCalendarBreakdown(data.deadline, data.deadlineTime ?? '', data.period)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['period'],
+        message: `Term of ${entered} exceeds the ${CREDIT_TERM_MAX_YEARS}-year maximum`
+      })
+    })
 }
 
 interface CreditCallAccessSchemaContext {

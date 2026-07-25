@@ -1,6 +1,10 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
 import { expect } from 'chai'
-import type { Bank } from '../typechain-types'
+import type { Bank } from '../typechain-types/index.js'
+import { Bank__factory } from '../typechain-types/index.js'
+import { Interface } from 'ethers'
+
+before(initializeHardhat)
 
 describe('BoardOfDirectors', () => {
   async function deployFixture() {
@@ -25,7 +29,8 @@ describe('BoardOfDirectors', () => {
     // `_disableInitializers()`, so `initialize` can only be invoked on a proxy.
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = (await upgrades.deployProxy(BankFactory, [[], founder.address], {
-      initializer: 'initialize'
+      initializer: 'initialize',
+      unsafeAllow: ['constructor']
     })) as unknown as Bank
     await bank.transferOwnership(await board.getAddress())
 
@@ -69,7 +74,7 @@ describe('BoardOfDirectors', () => {
       .addAction(
         await bank.getAddress(),
         'pause bank',
-        bank.interface.encodeFunctionData('pause', [])
+        new Interface(Bank__factory.abi).encodeFunctionData('pause')
       )
 
     await expect(board.connect(member2).approve(0)).to.emit(board, 'ActionExecuted')
@@ -136,7 +141,7 @@ describe('BoardOfDirectors', () => {
       .addAction(
         await bank.getAddress(),
         'pause bank',
-        bank.interface.encodeFunctionData('pause', [])
+        new Interface(Bank__factory.abi).encodeFunctionData('pause')
       )
 
     await board.connect(member2).approve(0) // executes the action (majority reached)
@@ -173,7 +178,7 @@ describe('BoardOfDirectors', () => {
       .addAction(
         await bank.getAddress(),
         'pause bank',
-        bank.interface.encodeFunctionData('pause', [])
+        new Interface(Bank__factory.abi).encodeFunctionData('pause')
       )
 
     await board.connect(member2).approve(0) // executes the action

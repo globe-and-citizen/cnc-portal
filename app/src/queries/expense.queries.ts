@@ -61,6 +61,10 @@ export interface CreateExpenseBody {
   }
   /** Signature for the expense account data */
   signature?: `0x${string}` | string
+  /** ExpenseAccountEIP712 contract the signature was bound to */
+  signedAgainstContractAddress: string
+  /** Chain ID the signature was bound to */
+  chainId: number
   /** Team ID this expense belongs to */
   teamId?: string | number | string[]
 }

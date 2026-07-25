@@ -1,6 +1,7 @@
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
-import { time } from '@nomicfoundation/hardhat-network-helpers'
+import { ethers, initializeHardhat, time, upgrades } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('Vesting', () => {
   const DECIMALS = 6
@@ -23,7 +24,7 @@ describe('Vesting', () => {
     const investor = await upgrades.deployProxy(
       InvestorFactory,
       ['Share', 'SHARE', teamOwner.address],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )
     await investor.waitForDeployment()
     const investorAddress = await investor.getAddress()
@@ -33,7 +34,7 @@ describe('Vesting', () => {
     const vestingImplementation = await VestingFactory.connect(teamOwner).deploy()
     await vestingImplementation.waitForDeployment()
 
-    const encodedInitialize = vestingImplementation.interface.encodeFunctionData('initialize', [])
+    const encodedInitialize = VestingFactory.interface.encodeFunctionData('initialize', [])
 
     const BeaconFactory = await ethers.getContractFactory('Beacon')
     const beacon = await BeaconFactory.connect(teamOwner).deploy(
@@ -363,7 +364,7 @@ describe('Vesting', () => {
 
       await expect(
         vesting.connect(teamOwner).addVesting(member.address, start, DURATION, CLIFF, VEST_AMOUNT)
-      ).to.not.be.reverted
+      ).to.not.be.revert(ethers)
     })
   })
 })
