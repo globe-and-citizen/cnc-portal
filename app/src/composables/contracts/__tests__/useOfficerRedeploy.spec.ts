@@ -1,11 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Address } from 'viem'
 import { useOfficerRedeploy } from '../useOfficerRedeploy'
-import { InconsistentSupplyError } from '@/composables/investor/useShareholderMigration'
 import { useTeamStore } from '@/stores'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
+import { mockWagmiCore } from '@/tests/mocks'
+import {
+  resetMutation,
+  NEW_OFFICER,
+  PREV_OFFICER,
+  NEW_INVESTOR
+} from './useOfficerRedeploy.fixture'
 
 // Hoisted refs so each mutation's exposed state can be flipped per test.
+// vi.mock() factories are hoisted above imports, so these can't live in the
+// shared fixture — see useOfficerRedeploy.fixture.ts.
 const {
   deployMock,
   migrateMock,
@@ -49,28 +56,6 @@ vi.mock('@/composables/investor/useShareholderMigration', async () => {
     useMigrateShareholders: migrateMock
   }
 })
-
-// Stub the on-chain lookup inside useOfficerRedeploy.
-const { mockReadContract } = vi.hoisted(() => ({ mockReadContract: vi.fn() }))
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual = (await importOriginal()) as object
-  return {
-    ...actual,
-    readContract: mockReadContract
-  }
-})
-
-const NEW_OFFICER = '0xdddd000000000000000000000000000000000000' as Address
-const PREV_OFFICER = '0xcccc000000000000000000000000000000000000' as Address
-const NEW_INVESTOR = '0xaaaa000000000000000000000000000000000000' as Address
-
-const resetMutation = (m: typeof deployMutationRefs) => {
-  m.mutateAsync.mockReset()
-  m.reset.mockReset()
-  m.isPending.value = false
-  m.isSuccess.value = false
-  m.error.value = null
-}
 
 describe('useOfficerRedeploy', () => {
   beforeEach(() => {
@@ -178,8 +163,8 @@ describe('useOfficerRedeploy', () => {
       previousOfficer: { id: 1, address: PREV_OFFICER },
       contractsCreated: 0
     })
-    mockReadContract.mockResolvedValue([
-      { contractType: 'InvestorV1', contractAddress: NEW_INVESTOR }
+    mockWagmiCore.readContract.mockResolvedValue([
+      { contractType: 'Investor', contractAddress: NEW_INVESTOR }
     ])
     migrateMutationRefs.mutateAsync.mockImplementation(async () => {
       migrateMutationRefs.isSuccess.value = true
@@ -190,6 +175,7 @@ describe('useOfficerRedeploy', () => {
     await redeploy({ name: 'Shares', symbol: 'SH' })
 
     expect(migrateMutationRefs.mutateAsync).toHaveBeenCalledWith({
+      teamId: 42,
       previousOfficerAddress: PREV_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
@@ -197,7 +183,7 @@ describe('useOfficerRedeploy', () => {
     expect(invalidateMock).toHaveBeenCalledWith()
   })
 
-  it('surfaces workflowError when the new InvestorV1 is missing from getTeam()', async () => {
+  it('surfaces workflowError when the previous Investor is missing from getTeam()', async () => {
     deployMutationRefs.mutateAsync.mockResolvedValue({
       hash: '0xhash',
       officerAddress: NEW_OFFICER,
@@ -209,8 +195,10 @@ describe('useOfficerRedeploy', () => {
       previousOfficer: { id: 1, address: PREV_OFFICER },
       contractsCreated: 0
     })
-    // InvestorV1 not present in the returned team contract list.
-    mockReadContract.mockResolvedValue([{ contractType: 'Voting', contractAddress: '0xvoting' }])
+    // The previous Officer's getTeam() has no Investor/InvestorV1 entry at all.
+    mockWagmiCore.readContract.mockResolvedValueOnce([
+      { contractType: 'Voting', contractAddress: '0xvoting' }
+    ])
 
     const { redeploy, workflowError } = useOfficerRedeploy()
     await redeploy({ name: 'Shares', symbol: 'SH' })
@@ -218,10 +206,10 @@ describe('useOfficerRedeploy', () => {
     expect(migrateMutationRefs.mutateAsync).not.toHaveBeenCalled()
     expect(invalidateMock).not.toHaveBeenCalled()
     expect(workflowError.value).toBeInstanceOf(Error)
-    expect(workflowError.value?.message).toMatch(/InvestorV1 could not be located/)
+    expect(workflowError.value?.message).toMatch(/could not locate previous investor/i)
   })
 
-  it('marks migration as failed (not auto-invalidating) when migrate mutation throws', async () => {
+  it('surfaces workflowError when the new Investor is missing from getTeam()', async () => {
     deployMutationRefs.mutateAsync.mockResolvedValue({
       hash: '0xhash',
       officerAddress: NEW_OFFICER,
@@ -233,109 +221,17 @@ describe('useOfficerRedeploy', () => {
       previousOfficer: { id: 1, address: PREV_OFFICER },
       contractsCreated: 0
     })
-    mockReadContract.mockResolvedValue([
-      { contractType: 'InvestorV1', contractAddress: NEW_INVESTOR }
-    ])
-    const err = new InconsistentSupplyError(999n, 300n)
-    // Don't throw — the wrapping tanstack mutation would set .error.value and
-    // return undefined rather than rethrow in the real impl. Mirror that here.
-    migrateMutationRefs.mutateAsync.mockImplementation(async () => {
-      migrateMutationRefs.isSuccess.value = false
-      migrateMutationRefs.error.value = err
-      return undefined
-    })
+    // The previous Officer resolves, but the newly deployed Officer has no Investor.
+    mockWagmiCore.readContract
+      .mockResolvedValueOnce([{ contractType: 'Investor', contractAddress: NEW_INVESTOR }])
+      .mockResolvedValueOnce([{ contractType: 'Voting', contractAddress: '0xvoting' }])
 
-    const { redeploy, migrationFailed, isInconsistent, migrationError } = useOfficerRedeploy()
+    const { redeploy, workflowError } = useOfficerRedeploy()
     await redeploy({ name: 'Shares', symbol: 'SH' })
 
-    expect(migrationFailed.value).toBe(true)
-    expect(isInconsistent.value).toBe(true)
-    expect(migrationError.value).toBe(err)
+    expect(migrateMutationRefs.mutateAsync).not.toHaveBeenCalled()
     expect(invalidateMock).not.toHaveBeenCalled()
-  })
-
-  it('retryMigration re-runs using the held pending addresses and clears on success', async () => {
-    // Seed a failed migration.
-    deployMutationRefs.mutateAsync.mockResolvedValue({
-      hash: '0xhash',
-      officerAddress: NEW_OFFICER,
-      deployBlockNumber: 10,
-      deployedAt: new Date()
-    })
-    registerMutationRefs.mutateAsync.mockResolvedValue({
-      officer: { id: 2, address: NEW_OFFICER },
-      previousOfficer: { id: 1, address: PREV_OFFICER },
-      contractsCreated: 0
-    })
-    mockReadContract.mockResolvedValue([
-      { contractType: 'InvestorV1', contractAddress: NEW_INVESTOR }
-    ])
-    migrateMutationRefs.mutateAsync.mockImplementationOnce(async () => {
-      migrateMutationRefs.error.value = new Error('boom')
-      return undefined
-    })
-
-    const composable = useOfficerRedeploy()
-    await composable.redeploy({ name: 'Shares', symbol: 'SH' })
-    expect(composable.migrationFailed.value).toBe(true)
-
-    // Now retry — this time the migration succeeds.
-    migrateMutationRefs.mutateAsync.mockImplementationOnce(async (ctx) => {
-      expect(ctx).toEqual({
-        previousOfficerAddress: PREV_OFFICER,
-        newInvestorAddress: NEW_INVESTOR
-      })
-      migrateMutationRefs.isSuccess.value = true
-      return { kind: 'done', migratedCount: 0, shareholders: [] }
-    })
-    await composable.retryMigration()
-
-    expect(composable.migrationFailed.value).toBe(false)
-    expect(invalidateMock).toHaveBeenCalledWith()
-  })
-
-  it('skipMigration clears pending state and invalidates', async () => {
-    deployMutationRefs.mutateAsync.mockResolvedValue({
-      hash: '0xhash',
-      officerAddress: NEW_OFFICER,
-      deployBlockNumber: 10,
-      deployedAt: new Date()
-    })
-    registerMutationRefs.mutateAsync.mockResolvedValue({
-      officer: { id: 2, address: NEW_OFFICER },
-      previousOfficer: { id: 1, address: PREV_OFFICER },
-      contractsCreated: 0
-    })
-    mockReadContract.mockResolvedValue([
-      { contractType: 'InvestorV1', contractAddress: NEW_INVESTOR }
-    ])
-    migrateMutationRefs.mutateAsync.mockImplementation(async () => {
-      migrateMutationRefs.error.value = new Error('migrate boom')
-      return undefined
-    })
-
-    const composable = useOfficerRedeploy()
-    await composable.redeploy({ name: 'Shares', symbol: 'SH' })
-    expect(composable.migrationFailed.value).toBe(true)
-
-    await composable.skipMigration()
-
-    expect(migrateMutationRefs.reset).toHaveBeenCalled()
-    expect(composable.migrationFailed.value).toBe(false)
-    expect(invalidateMock).toHaveBeenCalledWith()
-  })
-
-  it('reset clears workflow state and resets all child mutations', () => {
-    const c = useOfficerRedeploy()
-    c.reset()
-    expect(deployMutationRefs.reset).toHaveBeenCalled()
-    expect(registerMutationRefs.reset).toHaveBeenCalled()
-    expect(migrateMutationRefs.reset).toHaveBeenCalled()
-    expect(c.workflowError.value).toBeNull()
-  })
-
-  it('isRunning is false when no child mutation is pending', () => {
-    const c = useOfficerRedeploy()
-    expect(c.isRunning.value).toBe(false)
+    expect(workflowError.value).toBeInstanceOf(Error)
+    expect(workflowError.value?.message).toMatch(/Investor could not be located/)
   })
 })

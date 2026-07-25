@@ -20,7 +20,7 @@
         <UProgress :model-value="pct" :max="100" size="md" class="mt-4.5" />
         <div class="text-muted mt-2.5 flex justify-between text-[11px]">
           <span>Subscription closes {{ round.deadline || '—' }}</span>
-          <span>Matures {{ round.maturity || '—' }} · {{ round.period }} days</span>
+          <span>Matures {{ round.maturity || '—' }} · {{ round.termLabel }}</span>
         </div>
       </div>
 

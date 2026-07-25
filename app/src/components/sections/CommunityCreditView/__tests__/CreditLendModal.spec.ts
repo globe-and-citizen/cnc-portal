@@ -10,6 +10,7 @@ import {
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
 import { USDC_ADDRESS } from '@/constant'
+import { MINUTES_PER_DAY } from '@/utils'
 import CreditLendModal from '../CreditLendModal.vue'
 import type { CreditRound, LendingOfferStruct } from '@/types'
 
@@ -18,9 +19,7 @@ function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct
     token: USDC_ADDRESS,
     fundingTarget: 40_000_000000n,
     interestRateBps: 500n,
-    termDuration: 90,
-    termUnit: 0,
-    startDate: 1_700_000_000n,
+    maturityDate: 1_700_000_000n + BigInt(90 * 86_400),
     subscriptionDeadline: 1_700_000_000n,
     fundingAccess: 0,
     isCapEnabled: false,
@@ -39,9 +38,12 @@ function sampleRound(overrides: Partial<CreditRound> = {}): CreditRound {
     token: 'USDC',
     target: 40000,
     raised: 23400,
+    totalRepaid: 0,
     rate: 5,
-    period: 90,
+    period: 90 * MINUTES_PER_DAY,
+    termLabel: '90 days',
     status: 'open',
+    fundable: true,
     opened: 'Jun 1',
     deadline: 'Jun 28',
     maturity: 'Oct 26',

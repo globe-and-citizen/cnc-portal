@@ -18,6 +18,7 @@ import { getAddress, isAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
 import type { Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
+import { buildClaimRatesWithOvertime } from '@/utils/wageUtil'
 import type { LedgerEntry } from './ledgerEntry'
 
 export interface EnrichmentSources {
@@ -57,6 +58,59 @@ function nearest<T>(
   return rows.reduce((best, row) =>
     Math.abs(dateOf(row) - target) < Math.abs(dateOf(best) - target) ? row : best
   )
+}
+
+/**
+ * The claim's signed payout total, in base units, for the token a withdrawal
+ * settled — the reliable key for pairing a settlement to its claim. Reuses the
+ * canonical wage calc (the one the claim is signed and paid with), so it equals
+ * the on-chain amount exactly. `null` when the claim has no rate in that token.
+ */
+function claimTokenTotal(claim: WeeklyClaim, token: TokenId): bigint | null {
+  const rates = claim.wage?.ratePerHour
+  if (!rates?.length) return null
+  try {
+    const totals = buildClaimRatesWithOvertime({
+      totalMinutesWorked: claim.minutesWorked,
+      maximumHoursPerWeek: claim.wage.maximumHoursPerWeek,
+      ratePerHour: rates,
+      overtimeRatePerHour: claim.wage.overtimeRatePerHour
+    })
+    return totals.find((r) => (r.type as TokenId) === token)?.totalAmount ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Take the claim that backs a payroll settlement out of the member's pool, so it
+ * can never match a second withdrawal. Several claims often settle on the same
+ * day, so date proximity alone collapses them onto the most recent one; we prefer
+ * the claim whose signed total in the withdrawn token equals the amount actually
+ * withdrawn, and only fall back to the nearest by week when no amount matches.
+ */
+function takePayrollClaim(
+  pool: WeeklyClaim[] | undefined,
+  entry: LedgerEntry
+): WeeklyClaim | undefined {
+  if (!pool?.length) return undefined
+  let amount: bigint | null = null
+  try {
+    amount = BigInt(entry.rawAmount)
+  } catch {
+    amount = null
+  }
+  const exact =
+    amount != null && amount > 0n
+      ? pool.filter((c) => claimTokenTotal(c, entry.token) === amount)
+      : []
+  const candidates = exact.length ? exact : pool
+  const chosen = nearest(candidates, entry.timestamp, (c) => new Date(c.weekStart).getTime())
+  if (chosen) {
+    const idx = pool.indexOf(chosen)
+    if (idx >= 0) pool.splice(idx, 1)
+  }
+  return chosen
 }
 
 /** Human label for a wage rate, e.g. "12 usdc/h". */
@@ -112,9 +166,7 @@ export function enrichEntries(
     if (!member) return entry
 
     if (entry.useCase === 'UC-CASH-03') {
-      const claim = nearest(claimsByMember.get(member), entry.timestamp, (c) =>
-        new Date(c.weekStart).getTime()
-      )
+      const claim = takePayrollClaim(claimsByMember.get(member), entry)
       return enrichPayroll(entry, claim)
     }
     if (entry.useCase === 'UC-EXP-01') {

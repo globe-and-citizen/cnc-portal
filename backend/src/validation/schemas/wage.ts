@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { addressSchema, teamIdSchema } from './common';
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '../../utils/wageUtil';
 
 /**
  * Wage-related validation schemas
@@ -26,6 +27,14 @@ export const setWageBodySchema = z
       .positive('Overtime hours per week must be a positive integer')
       .nullable()
       .optional(),
+    // Daily ceiling; defaults to 8h so existing clients keep the status quo.
+    maximumHoursPerDay: z.coerce
+      .number()
+      .int()
+      .positive('Maximum hours per day must be a positive integer')
+      .max(24, 'Maximum hours per day cannot exceed 24 hours')
+      .optional()
+      .default(DEFAULT_MAXIMUM_HOURS_PER_DAY),
     ratePerHour: z.array(wageRateSchema).min(1, 'At least one rate must be provided'),
     overtimeRatePerHour: z.array(wageRateSchema).min(1).nullable().optional(),
   })

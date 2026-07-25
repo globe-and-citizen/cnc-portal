@@ -39,7 +39,7 @@ describe('InvestorsActions.vue', () => {
     mockTeamStore.getContractAddressByType = vi.fn((type: string) => {
       if (type === 'InvestorV1') return '0x2222222222222222222222222222222222222222'
       if (type === 'Bank') return '0x1111111111111111111111111111111111111111'
-      return '0x0000000000000000000000000000000000000000'
+      return undefined
     })
 
     mockInvestorReads.symbol.data.value = 'SHER'

@@ -90,7 +90,7 @@ export function useFixedReturnVersion() {
 }
 
 export function useFixedReturnTotalOfferings() {
-  return useFixedReturnRead('totalOfferings')
+  return useFixedReturnRead('getTotalOfferings')
 }
 
 export function useFixedReturnGetSupportedTokens() {
@@ -113,18 +113,18 @@ export function useFixedReturnTotalEntitlementOf(
 }
 
 export function useFixedReturnLenderDeposits(offerId: MaybeRef<bigint>, lender: MaybeRef<Address>) {
-  return useFixedReturnOfferLenderRead('lenderDeposits', offerId, lender)
+  return useFixedReturnOfferLenderRead('getLenderDeposits', offerId, lender)
 }
 
 export function useFixedReturnLenderAllocation(
   offerId: MaybeRef<bigint>,
   lender: MaybeRef<Address>
 ) {
-  return useFixedReturnOfferLenderRead('lenderAllocation', offerId, lender)
+  return useFixedReturnOfferLenderRead('getLenderAllocation', offerId, lender)
 }
 
 export function useFixedReturnHasDeposited(offerId: MaybeRef<bigint>, lender: MaybeRef<Address>) {
-  return useFixedReturnOfferLenderRead('hasDeposited', offerId, lender)
+  return useFixedReturnOfferLenderRead('getHasDeposited', offerId, lender)
 }
 
 export function useFixedReturnIsTokenSupported(token: MaybeRef<Address>) {
@@ -163,7 +163,7 @@ export function useFixedReturnAllOffers() {
       const total = (await readContract(config, {
         address,
         abi: FIXED_RETURN_ABI,
-        functionName: 'totalOfferings'
+        functionName: 'getTotalOfferings'
       })) as bigint
 
       const count = Number(total)
@@ -230,7 +230,7 @@ export function useFixedReturnOfferLenders(
             readContract(config, {
               address,
               abi: FIXED_RETURN_ABI,
-              functionName: 'lenderDeposits',
+              functionName: 'getLenderDeposits',
               args: [offerIdValue, lender]
             }) as Promise<bigint>,
             readContract(config, {
@@ -287,13 +287,13 @@ export function useFixedReturnMyLenderPositions() {
             readContract(config, {
               address,
               abi: FIXED_RETURN_ABI,
-              functionName: 'lenderAllocation',
+              functionName: 'getLenderAllocation',
               args: [BigInt(offerId), lender]
             }) as Promise<bigint>,
             readContract(config, {
               address,
               abi: FIXED_RETURN_ABI,
-              functionName: 'lenderDeposits',
+              functionName: 'getLenderDeposits',
               args: [BigInt(offerId), lender]
             }) as Promise<bigint>
           ])

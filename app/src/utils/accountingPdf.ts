@@ -31,6 +31,7 @@ import {
   ledgerTotalRow,
   type LedgerColumnKey
 } from '@/utils/accounting/ledgerPresenter'
+import { presentAccountLedger, accountLedgerTitle } from '@/utils/accounting/accountLedger'
 import { activityText } from '@/utils/accounting/describeEntry'
 import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
@@ -115,8 +116,6 @@ function balanceTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTabl
 }
 
 function trialTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable {
-  // Rebuild the ledger over the "as of" slice when a date is set, mirroring the
-  // Trial Balance card; otherwise use the pre-built whole-book ledger.
   const ledger = asOf
     ? buildGeneralLedger(filterByPeriod(acc.entries, null, asOf))
     : acc.generalLedger
@@ -155,6 +154,14 @@ interface LedgerTableOptions {
   to?: Date | null
   columns?: LedgerColumnKey[]
   currencies?: string[]
+  account?: string | readonly string[]
+  accountLabel?: string
+  accountTotal?: string
+}
+
+/** Display name for a drill-down: the account, or the aggregate's label. */
+function drillName(opts: LedgerTableOptions): string {
+  return Array.isArray(opts.account) ? (opts.accountLabel ?? 'Ledger') : (opts.account as string)
 }
 
 function ledgerTable(
@@ -162,20 +169,16 @@ function ledgerTable(
   resolveName?: ResolveName,
   opts: LedgerTableOptions = {}
 ): AccountingPdfTable {
-  const { rows, total } = presentLedger(
-    acc.entries,
-    opts.filter ?? 'All',
-    opts.from,
-    opts.to,
-    opts.currencies
-  )
+  const { rows, total } = opts.account
+    ? presentAccountLedger(acc.entries, opts.account, opts.from, opts.to, opts.accountTotal)
+    : presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
   const cols = resolveLedgerColumns(opts.columns)
   const body = rows.map((r) => cols.map((c) => LEDGER_PDF_CELL[c.value].pick(r, resolveName)))
-  // Carry the same movement total the table footer shows, so a filtered export
-  // still totals its rows.
   body.push(ledgerTotalRow(cols, total))
   return {
-    title: ledgerExportTitle(opts.filter, opts.from, opts.to),
+    title: opts.account
+      ? accountLedgerTitle(drillName(opts), opts.from, opts.to)
+      : ledgerExportTitle(opts.filter, opts.from, opts.to),
     head: cols.map((c) => c.label),
     align: cols.map((c) => LEDGER_PDF_CELL[c.value].align),
     body
@@ -203,7 +206,10 @@ function sectionTable(
         from: spec.from,
         to: spec.to,
         columns: spec.columns,
-        currencies: spec.currencies
+        currencies: spec.currencies,
+        account: spec.account,
+        accountLabel: spec.accountLabel,
+        accountTotal: spec.accountTotal
       })
   }
 }
@@ -235,14 +241,11 @@ function drawWatermark(doc: import('jspdf').jsPDF): void {
   const pageW = doc.internal.pageSize.getWidth()
   const pageH = doc.internal.pageSize.getHeight()
   doc.saveGraphicsState()
-  // jsPDF exposes GState off the instance; opacity keeps the mark behind the data.
   const GState = (doc as unknown as { GState: new (o: { opacity: number }) => unknown }).GState
   doc.setGState(new GState({ opacity: 0.08 }) as never)
   doc.setTextColor(120, 120, 120)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(90)
-  // Offset the anchor by half the text width along the 45° baseline so the mark's
-  // midpoint lands on the page centre (jsPDF's `align: 'center'` misbehaves with `angle`).
   const text = 'CNC Portal'
   const rad = (45 * Math.PI) / 180
   const halfWidth = doc.getTextWidth(text) / 2
@@ -255,7 +258,6 @@ function drawWatermark(doc: import('jspdf').jsPDF): void {
 export interface ExportPdfOptions {
   /** Download filename (with `.pdf`). */
   filename: string
-  /** Start each section (after the first) on a fresh page. */
   pageBreak?: boolean
 }
 

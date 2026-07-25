@@ -1,57 +1,8 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "AmountPerPeriodExceeded",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "AmountPerTransactionExceeded",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "currentTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "endDate",
-        "type": "uint256"
-      }
-    ],
-    "name": "ApprovalExpired",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "currentTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "startDate",
-        "type": "uint256"
-      }
-    ],
-    "name": "ApprovalNotActive",
-    "type": "error"
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
   },
   {
     "inputs": [],
@@ -88,6 +39,217 @@
   {
     "inputs": [],
     "name": "ExpectedPause",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__AmountExceedsBudgetLimit",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__AmountExceedsPeriodBudget",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__AmountPerPeriodExceeded",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__AmountPerTransactionExceeded",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "currentTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "endDate",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__ApprovalExpired",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "currentTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "startDate",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__ApprovalNotActive",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__BankContractNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "available",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__InsufficientNativeBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "available",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__InsufficientTokenBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__InvalidCustomFrequency",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__InvalidFrequencyType",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__OfficerAddressNotSet",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__OneTimeBudgetAlreadyUsed",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "expected",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "actual",
+        "type": "address"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__SignerNotAuthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "expected",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "actual",
+        "type": "address"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__SpenderNotApproved",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__TokenNotSupported",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__TokenTransferFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__TransferNotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "expected",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "received",
+        "type": "address"
+      }
+    ],
+    "name": "ExpenseAccountEIP712__UnauthorizedAccess",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpenseAccountEIP712__ZeroAmount",
     "type": "error"
   },
   {
@@ -152,16 +314,27 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "expected",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "received",
+        "name": "token",
         "type": "address"
       }
     ],
-    "name": "UnauthorizedAccess",
+    "name": "TokenSupport__AlreadyAdded",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupport__NotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TokenSupport__ZeroAddress",
     "type": "error"
   },
   {
@@ -226,6 +399,50 @@
       }
     ],
     "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "ownerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "OwnerTreasuryWithdrawNative",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "ownerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "OwnerTreasuryWithdrawToken",
     "type": "event"
   },
   {
@@ -322,6 +539,32 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupportAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupportRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "withdrawer",
         "type": "address"
       },
@@ -401,6 +644,19 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "addTokenSupport",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "components": [
           {
             "internalType": "uint256",
@@ -452,24 +708,6 @@
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "symbol",
-        "type": "string"
-      },
-      {
-        "internalType": "address",
-        "name": "newAddress",
-        "type": "address"
-      }
-    ],
-    "name": "changeTokenAddress",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -547,40 +785,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "expenseBalances",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "lastWithdrawnDate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalWithdrawn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "lastWithdrawnPeriod",
-        "type": "uint256"
-      },
-      {
-        "internalType": "enum ExpenseAccountEIP712.ApprovalState",
-        "name": "state",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "getBalance",
     "outputs": [
@@ -652,6 +856,60 @@
   {
     "inputs": [
       {
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getExpenseBalance",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "lastWithdrawnDate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalWithdrawn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastWithdrawnPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum ExpenseAccountEIP712.ApprovalState",
+            "name": "state",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct ExpenseAccountEIP712.ExpenseBalance",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOfficerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "components": [
           {
             "internalType": "uint256",
@@ -711,6 +969,32 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getSupportedTokenCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSupportedTokens",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -737,14 +1021,9 @@
         "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "_usdtAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_usdcAddress",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "tokenAddresses",
+        "type": "address[]"
       }
     ],
     "name": "initialize",
@@ -817,7 +1096,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -847,6 +1126,13 @@
   },
   {
     "inputs": [],
+    "name": "ownerWithdrawAllToBank",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "pause",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -866,6 +1152,19 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "removeTokenSupport",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "renounceOwnership",
     "outputs": [],
@@ -875,20 +1174,14 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "name": "supportedTokens",
-    "outputs": [
-      {
         "internalType": "address",
-        "name": "",
+        "name": "officerAddress",
         "type": "address"
       }
     ],
-    "stateMutability": "view",
+    "name": "setOfficerAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1040,6 +1333,19 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {

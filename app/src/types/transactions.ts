@@ -35,3 +35,11 @@ export interface InvestorsTransaction extends BaseTransaction {
   tokenAddress: string
   reason?: string
 }
+
+export interface CreditTransaction extends BaseTransaction {
+  amount: string | number
+  token: string
+  tokenAddress?: string
+  /** Absent for contract-level events not scoped to a single round. */
+  offerId?: string
+}

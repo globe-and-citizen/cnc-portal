@@ -4,13 +4,13 @@ pragma solidity ^0.8.24;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {DateTime} from "@quant-finance/solidity-datetime/contracts/DateTime.sol";
 import {TokenSupport} from "./base/TokenSupport.sol";
-import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IInvestor} from "./interfaces/IInvestor.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
@@ -20,7 +20,7 @@ import {IOfficer} from "./interfaces/IOfficer.sol";
  */
 contract CashRemunerationEIP712 is
   OwnableUpgradeable,
-  ReentrancyGuardUpgradeable,
+  ReentrancyGuard,
   EIP712Upgradeable,
   PausableUpgradeable,
   TokenSupport
@@ -66,8 +66,9 @@ contract CashRemunerationEIP712 is
   bytes32 private constant _WAGE_TYPEHASH = keccak256(abi.encodePacked(_WAGE_TYPE));
 
   /// @dev Typehash for the WageClaim struct, used in EIP-712 encoding.
-  bytes32 private constant _WAGE_CLAIM_TYPEHASH =
-    keccak256(abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE));
+  bytes32 private constant _WAGE_CLAIM_TYPEHASH = keccak256(
+    abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE)
+  );
 
   /// @dev Mapping to track wage claims that have already been paid.
   mapping(bytes32 signatureHash => bool paid) private s_paidWageClaims;
@@ -264,11 +265,11 @@ contract CashRemunerationEIP712 is
     s_paidWageClaims[sigHash] = true;
 
     // Officer.findDeployedContract is a non-reverting view that returns address(0)
-    // when the team has no InvestorV1, so a plain call is enough — the zero address
+    // when the team has no Investor contract, so a plain call is enough — the zero address
     // simply skips the mintable-token path below.
-    address investorV1Token = address(0);
+    address investorToken = address(0);
     if (s_officerAddress != address(0) && s_officerAddress.code.length > 0) {
-      investorV1Token = IOfficer(s_officerAddress).findDeployedContract("InvestorV1");
+      investorToken = IOfficer(s_officerAddress).findDeployedContract("Investor");
     }
 
     // Step 7: Process each wage component in the claim
@@ -299,10 +300,10 @@ contract CashRemunerationEIP712 is
         // Step 7b(i): Special Case - Mintable InvestorV1 Token
         // If we have an officer address configured and this is the InvestorV1 token,
         // we mint new tokens instead of transferring from contract balance
-        if (investorV1Token != address(0) && wage.tokenAddress == investorV1Token) {
+        if (investorToken != address(0) && wage.tokenAddress == investorToken) {
           // Mint new tokens directly to the employee
           // This creates new supply rather than transferring existing tokens
-          IInvestorV1(wage.tokenAddress).individualMint(employee, amountToPay);
+          IInvestor(wage.tokenAddress).individualMint(employee, amountToPay);
 
           // Emit event for token withdrawal (minting)
           emit WithdrawToken(employee, wage.tokenAddress, amountToPay);
@@ -446,7 +447,6 @@ contract CashRemunerationEIP712 is
   function initialize(address initialOwner, address[] calldata tokenAddresses) public initializer {
     address owner = initialOwner == address(0) ? msg.sender : initialOwner;
     __Ownable_init(owner);
-    __ReentrancyGuard_init();
     __EIP712_init("CashRemuneration", "1");
     __Pausable_init();
 

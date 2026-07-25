@@ -3,13 +3,13 @@ pragma solidity ^0.8.24;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {TokenSupport} from "./base/TokenSupport.sol";
 import {IFeeCollector} from "./interfaces/IFeeCollector.sol";
 import {IFixedReturn} from "./interfaces/IFixedReturn.sol";
-import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IInvestor} from "./interfaces/IInvestor.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
@@ -18,7 +18,7 @@ import {IOfficer} from "./interfaces/IOfficer.sol";
  *         and dividend distribution via the Investor contract.
  * @dev Upgradeable, pausable and reentrancy-guarded. Resolves Investor/FeeCollector via Officer.
  */
-contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, TokenSupport {
+contract Bank is OwnableUpgradeable, ReentrancyGuard, PausableUpgradeable, TokenSupport {
   using SafeERC20 for IERC20;
 
   /**
@@ -267,7 +267,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
       revert Bank__InsufficientBalance(amount, address(this).balance);
 
     address investorAddress = _getInvestorAddress();
-    IInvestorV1(investorAddress).distributeNativeDividends{value: amount}(amount);
+    IInvestor(investorAddress).distributeNativeDividends{value: amount}(amount);
 
     emit DividendDistributionTriggered(investorAddress, address(0), amount);
   }
@@ -290,7 +290,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
     address investorAddress = _getInvestorAddress();
     IERC20(token).safeTransfer(investorAddress, amount);
-    IInvestorV1(investorAddress).distributeTokenDividends(token, amount);
+    IInvestor(investorAddress).distributeTokenDividends(token, amount);
 
     emit DividendDistributionTriggered(investorAddress, token, amount);
   }
@@ -360,7 +360,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function initialize(address[] calldata tokenAddresses, address sender) public initializer {
     if (sender == address(0)) revert Bank__ZeroAddress();
     __Ownable_init(sender);
-    __ReentrancyGuard_init();
     __Pausable_init();
     // Set the initial supported tokens
     uint256 length = tokenAddresses.length;
@@ -410,19 +409,13 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   }
 
   /**
-   * @dev Resolves the deployed Investor contract from Officer.
-   * Tries "InvestorV1" first and falls back to "Investor" for compatibility.
+   * @dev Resolves the deployed Investor (V2) contract from Officer.
    */
   function _getInvestorAddress() internal view returns (address) {
     if (s_officerAddress == address(0)) revert Bank__OfficerAddressNotSet();
 
-    address investorAddress = IOfficer(s_officerAddress).findDeployedContract("InvestorV1");
-    if (investorAddress == address(0)) {
-      investorAddress = IOfficer(s_officerAddress).findDeployedContract("Investor");
-    }
-
+    address investorAddress = IOfficer(s_officerAddress).findDeployedContract("Investor");
     if (investorAddress == address(0)) revert Bank__InvestorContractNotFound();
     return investorAddress;
   }
-
 }

@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IInvestor} from "./interfaces/IInvestor.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
@@ -22,7 +22,7 @@ import {IOfficer} from "./interfaces/IOfficer.sol";
  *      index. Schedules are never removed — a stopped one keeps its slot with
  *      `active = false`, a fully released one stays `active = true`.
  */
-contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+contract Vesting is OwnableUpgradeable, ReentrancyGuard, PausableUpgradeable {
   /**
    * @dev Vesting schedule parameters for a single grant.
    * @param start Vesting start timestamp.
@@ -265,7 +265,6 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function initialize() public initializer {
     __Ownable_init(msg.sender);
-    __ReentrancyGuard_init();
     __Pausable_init();
 
     if (msg.sender == address(0)) revert Vesting__ZeroSender();
@@ -305,19 +304,18 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    *      MINTER_ROLE check so a missing grant reverts with a clear error.
    */
   function _mintShares(address to, uint256 amount) internal {
-    IInvestorV1 investor = IInvestorV1(_getInvestor());
+    IInvestor investor = IInvestor(_getInvestor());
     if (!investor.hasRole(investor.MINTER_ROLE(), address(this)))
       revert Vesting__InsufficientMinterRole();
     investor.individualMint(to, amount);
   }
 
   /**
-   * @dev Resolve the team's InvestorV1 address via the Officer registry.
-   *      Mirrors SafeDepositRouter._getInvestorAddress.
+   * @dev Resolve the team's Investor (V2) address via the Officer registry.
    */
   function _getInvestor() internal view returns (address) {
     if (s_officerAddress == address(0)) revert Vesting__OfficerAddressNotSet();
-    address investorAddress = IOfficer(s_officerAddress).findDeployedContract("InvestorV1");
+    address investorAddress = IOfficer(s_officerAddress).findDeployedContract("Investor");
     if (investorAddress == address(0)) revert Vesting__InvestorContractNotFound();
     return investorAddress;
   }

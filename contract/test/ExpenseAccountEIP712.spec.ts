@@ -1,8 +1,9 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
 import { expect } from 'chai'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { ExpenseAccountEIP712 } from '../typechain-types'
-import { MockERC20 } from '../typechain-types'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type { ExpenseAccountEIP712, MockERC20 } from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
   let expenseAccount: ExpenseAccountEIP712
@@ -22,7 +23,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
     expenseAccount = (await upgrades.deployProxy(
       ExpenseAccountImplementation,
       [owner.address, [await mockUSDT.getAddress(), await mockUSDC.getAddress()]],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as ExpenseAccountEIP712
   }
 
@@ -50,7 +51,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         value: amount
       })
 
-      await expect(tx).to.changeEtherBalance(expenseAccount, amount)
+      await expect(tx).to.changeEtherBalance(ethers, expenseAccount, amount)
       await expect(tx).to.emit(expenseAccount, 'Deposited').withArgs(owner.address, amount)
     })
 

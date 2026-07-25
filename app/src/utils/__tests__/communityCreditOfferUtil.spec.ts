@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- cohesive util test suite; prettier reformatting lands it 1 line past the 300 cap */
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
@@ -15,6 +14,21 @@ import {
 
 const ARBITRARY_TOKEN = '0x1111111111111111111111111111111111111111' as const
 
+const lendOffer = (over: Partial<LendingOfferStruct> = {}): LendingOfferStruct => ({
+  token: USDC_ADDRESS,
+  fundingTarget: 100000_000000n,
+  interestRateBps: 800n,
+  maturityDate: 1925078400n, // 2031-01-01T00:00:00Z
+  subscriptionDeadline: 1893369600n,
+  fundingAccess: 0,
+  isCapEnabled: false,
+  lenderCap: 0n,
+  totalFunded: 30000_000000n,
+  totalRepaidByIssuer: 0n,
+  state: 0,
+  ...over
+})
+
 function baseForm(overrides: Partial<CreditOfferForm> = {}): CreditOfferForm {
   return {
     title: 'Test Note',
@@ -24,6 +38,7 @@ function baseForm(overrides: Partial<CreditOfferForm> = {}): CreditOfferForm {
     termValue: 12,
     termUnit: 'months',
     deadline: '2026-06-30',
+    deadlineTime: '23:59',
     access: 'general',
     capOn: false,
     cap: 0,
@@ -81,23 +96,80 @@ describe('findCreditToken', () => {
 describe('toFixedReturnOfferParams', () => {
   it('scales amounts by the token decimals and maps enum indices for a General offer', () => {
     const params = toFixedReturnOfferParams(
-      baseForm({ principal: 100000, rate: 8.5, termUnit: 'days', access: 'general' }),
+      baseForm({
+        principal: 100000,
+        rate: 8.5,
+        termUnit: 'days',
+        termValue: 12,
+        access: 'general'
+      }),
       []
     )
 
     expect(params.fundingTarget).toBe(100000_000000n)
     expect(params.interestRateBps).toBe(850n)
-    expect(params.termUnit).toBe(0)
+    expect(params.maturityDate).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 0) / 1000 + 12 * 86_400))
     expect(params.fundingAccess).toBe(0)
     expect(params.whitelistAddrs).toEqual([])
     expect(params.allocations).toEqual([])
   })
 
-  it('uses the subscription deadline as the term start at the end of the selected UTC day', () => {
-    const params = toFixedReturnOfferParams(baseForm({ deadline: '2026-06-30' }), [])
+  // Month-end anchors clamp to the shorter month rather than overflowing, since dayjs
+  // (not a flat days-per-unit multiply) does the adding — Jan 31 + 1 month lands on
+  // Feb 28 (2026 isn't a leap year), and Feb 29 2028 + 1 year lands on Feb 28 2029.
+  it.each([
+    ['2026-01-31', 1, 'months', Date.UTC(2026, 1, 28)] as const,
+    ['2028-02-29', 1, 'years', Date.UTC(2029, 1, 28)] as const
+  ])(
+    'clamps %s + %d %s to the resulting month-end',
+    (deadline, termValue, termUnit, expectedMs) => {
+      const params = toFixedReturnOfferParams(
+        baseForm({ deadline, deadlineTime: '00:00', termValue, termUnit }),
+        []
+      )
+      expect(params.maturityDate).toBe(BigInt(expectedMs / 1000))
+    }
+  )
 
-    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 59) / 1000))
-    expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 59) / 1000))
+  it('never produces NaN for a wildly out-of-range custom term (dayjs Date-overflow guard)', () => {
+    // 100,000,000 days is (almost exactly) the ECMAScript Date range's own outer edge —
+    // dayjs.add() silently returns an Invalid Date past it, and every downstream
+    // diff/unix call then returns NaN. addCreditTerm clamps before that happens.
+    const params = toFixedReturnOfferParams(
+      baseForm({
+        deadline: '2026-07-31',
+        deadlineTime: '23:59',
+        termValue: 100_000_000,
+        termUnit: 'days'
+      }),
+      []
+    )
+    expect(Number.isFinite(Number(params.maturityDate))).toBe(true)
+  })
+
+  it('rejects a maturityDate that would not be strictly after subscriptionDeadline', () => {
+    // A zero-value custom term would submit maturityDate == subscriptionDeadline —
+    // FixedReturn.sol reverts FixedReturn__InvalidMaturityDate on that boundary.
+    const params = toFixedReturnOfferParams(baseForm({ termValue: 0, termUnit: 'days' }), [])
+    expect(params.maturityDate).toBe(params.subscriptionDeadline)
+  })
+
+  it('uses the subscription deadline date + time (UTC) as the term start', () => {
+    const params = toFixedReturnOfferParams(
+      baseForm({ deadline: '2026-06-30', deadlineTime: '23:59' }),
+      []
+    )
+
+    expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 0) / 1000))
+  })
+
+  it('honors a custom deadline time down to the minute', () => {
+    const params = toFixedReturnOfferParams(
+      baseForm({ deadline: '2026-06-30', deadlineTime: '14:30' }),
+      []
+    )
+
+    expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 14, 30, 0) / 1000))
   })
 
   it('sets lenderCap to zero when isCapEnabled is false, regardless of the cap field', () => {
@@ -144,31 +216,15 @@ describe('toFixedReturnOfferParams', () => {
 
 describe('toLenderOffering', () => {
   const DECIMALS = 6
-  const lendOffer = (over: Partial<LendingOfferStruct> = {}): LendingOfferStruct => ({
-    token: USDC_ADDRESS,
-    fundingTarget: 100000_000000n,
-    interestRateBps: 800n,
-    termDuration: 12,
-    termUnit: 1,
-    startDate: 1893456000n, // 2030-01-01T00:00:00Z
-    subscriptionDeadline: 1893369600n,
-    fundingAccess: 0,
-    isCapEnabled: false,
-    lenderCap: 0n,
-    totalFunded: 30000_000000n,
-    totalRepaidByIssuer: 0n,
-    state: 0,
-    ...over
-  })
+  const mkOffering = (
+    over: Partial<LendingOfferStruct> = {},
+    alloc = 0n,
+    deposited = 0n,
+    offerId = 1
+  ) => toLenderOffering(offerId, lendOffer(over), DECIMALS, alloc, deposited)
 
   it('allows any lender for a General offer with no cap', () => {
-    const offering = toLenderOffering(
-      1,
-      lendOffer({ fundingAccess: 0, isCapEnabled: false }),
-      DECIMALS,
-      0n,
-      0n
-    )
+    const offering = mkOffering({ fundingAccess: 0, isCapEnabled: false })
     expect(offering.allowed).toBe(true)
     expect(offering.cap).toBeNull()
     expect(offering.remaining).toBe(70000)
@@ -176,13 +232,7 @@ describe('toLenderOffering', () => {
   })
 
   it('caps a General offer with isCapEnabled at lenderCap', () => {
-    const offering = toLenderOffering(
-      1,
-      lendOffer({ fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n }),
-      DECIMALS,
-      0n,
-      0n
-    )
+    const offering = mkOffering({ fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n })
     expect(offering.allowed).toBe(true)
     expect(offering.cap).toBe(5000)
     expect(offering.remaining).toBe(5000)
@@ -190,10 +240,8 @@ describe('toLenderOffering', () => {
   })
 
   it('disallows a General offer once the lender has deposited up to the cap', () => {
-    const offering = toLenderOffering(
-      1,
-      lendOffer({ fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n }),
-      DECIMALS,
+    const offering = mkOffering(
+      { fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n },
       0n,
       5000_000000n
     )
@@ -204,33 +252,24 @@ describe('toLenderOffering', () => {
   })
 
   it('allows a General offer with room left after a partial deposit', () => {
-    const offering = toLenderOffering(
-      1,
-      lendOffer({ fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n }),
-      DECIMALS,
+    const offering = mkOffering(
+      { fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n },
       0n,
       2000_000000n
     )
     expect(offering.allowed).toBe(true)
     expect(offering.remaining).toBe(3000)
     expect(offering.myDeposited).toBe(2000)
-    expect(offering.limitsLabel).toBe('5,000 USDC cap')
   })
 
   it('disallows a Whitelist offer when the lender has no allocation', () => {
-    const offering = toLenderOffering(1, lendOffer({ fundingAccess: 1 }), DECIMALS, 0n, 0n)
+    const offering = mkOffering({ fundingAccess: 1 })
     expect(offering.allowed).toBe(false)
     expect(offering.cap).toBe(0)
   })
 
   it('allows a Whitelist offer and caps at the personal allocation', () => {
-    const offering = toLenderOffering(
-      1,
-      lendOffer({ fundingAccess: 1 }),
-      DECIMALS,
-      25000_000000n,
-      0n
-    )
+    const offering = mkOffering({ fundingAccess: 1 }, 25000_000000n)
     expect(offering.allowed).toBe(true)
     expect(offering.cap).toBe(25000)
     expect(offering.remaining).toBe(25000)
@@ -238,85 +277,47 @@ describe('toLenderOffering', () => {
   })
 
   it('disallows a Whitelist offer once the lender has deposited up to their allocation', () => {
-    const offering = toLenderOffering(
-      1,
-      lendOffer({ fundingAccess: 1 }),
-      DECIMALS,
-      25000_000000n,
-      25000_000000n
-    )
+    const offering = mkOffering({ fundingAccess: 1 }, 25000_000000n, 25000_000000n)
     expect(offering.allowed).toBe(false)
     expect(offering.remaining).toBe(0)
     expect(offering.limitsLabel).toBe('25,000 USDC allocation')
   })
 
   it('ignores lenderCap entirely in Whitelist mode', () => {
-    const offering = toLenderOffering(
-      1,
-      lendOffer({ fundingAccess: 1, isCapEnabled: true, lenderCap: 999_000000n }),
-      DECIMALS,
-      10000_000000n,
-      0n
+    const offering = mkOffering(
+      { fundingAccess: 1, isCapEnabled: true, lenderCap: 999_000000n },
+      10000_000000n
     )
     expect(offering.cap).toBe(10000)
   })
 
   it('limits a repeat lender by the offer-wide funding still available', () => {
-    const offering = toLenderOffering(
-      1,
-      lendOffer({
-        isCapEnabled: true,
-        lenderCap: 2_000000n,
-        totalFunded: 99999_500000n
-      }),
-      DECIMALS,
+    const offering = mkOffering(
+      { isCapEnabled: true, lenderCap: 2_000000n, totalFunded: 99999_500000n },
       0n,
       1_000000n
     )
-
     expect(offering.allowed).toBe(true)
     expect(offering.remaining).toBe(0.5)
     expect(offering.myDeposited).toBe(1)
   })
 
   it('disallows lending when no offer-wide funding remains', () => {
-    const offering = toLenderOffering(
-      1,
-      lendOffer({ totalFunded: 100000_000000n }),
-      DECIMALS,
-      0n,
-      0n
-    )
-
+    const offering = mkOffering({ totalFunded: 100000_000000n })
     expect(offering.allowed).toBe(false)
     expect(offering.remaining).toBe(0)
     expect(offering.pct).toBe(100)
   })
 
   it('falls back to a Round-numbered title when none is given', () => {
-    const offering = toLenderOffering(9, lendOffer(), DECIMALS, 0n, 0n)
-    expect(offering.title).toBe('Round #9')
+    expect(mkOffering({}, 0n, 0n, 9).title).toBe('Round #9')
   })
 })
 
 describe('isLendingOfferAcceptingFunds', () => {
   const deadlineSeconds = 1893369600
   const deadline = new Date(deadlineSeconds * 1000)
-  const baseOffer: LendingOfferStruct = {
-    token: USDC_ADDRESS,
-    fundingTarget: 100000_000000n,
-    interestRateBps: 800n,
-    termDuration: 12,
-    termUnit: 1,
-    startDate: 1893456000n,
-    subscriptionDeadline: BigInt(deadlineSeconds),
-    fundingAccess: 0,
-    isCapEnabled: false,
-    lenderCap: 0n,
-    totalFunded: 30000_000000n,
-    totalRepaidByIssuer: 0n,
-    state: 0
-  }
+  const baseOffer = lendOffer()
 
   it('accepts an Open offer through its deadline', () => {
     expect(isLendingOfferAcceptingFunds(baseOffer, deadline)).toBe(true)

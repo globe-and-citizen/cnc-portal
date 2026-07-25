@@ -492,6 +492,50 @@ ponder.on("InvestorV1:DividendPaymentFailed", async ({ event, context }) => {
   });
 });
 
+// ─── Investor (v2) ────────────────────────────────────────────────────────────
+// Same Minted/DividendDistributed/DividendPaid shapes as InvestorV1 — shares
+// the same tables, distinguished only by contractAddress. Unlike InvestorV1,
+// Investor.sol has no DividendPaymentFailed event: a failed native transfer
+// reverts the whole distribution instead of being caught and skipped, so
+// there's nothing to index there. setMigrationRoot/claim/bulkClaim events
+// aren't indexed yet either (no consumer needs them until the claim UI ships).
+
+ponder.on("Investor:Minted", async ({ event, context }) => {
+  await context.db.insert(investorMint).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    shareholder: event.args.shareholder,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("Investor:DividendDistributed", async ({ event, context }) => {
+  await context.db.insert(investorDividendDistributed).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    distributor: event.args.distributor,
+    token: event.args.token,
+    totalAmount: event.args.totalAmount,
+    shareholderCount: event.args.shareholderCount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("Investor:DividendPaid", async ({ event, context }) => {
+  await context.db.insert(investorDividendPaid).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    shareholder: event.args.shareholder,
+    token: event.args.token,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
 // ─── CashRemunerationEIP712 ───────────────────────────────────────────────────
 
 ponder.on("CashRemunerationEIP712:Deposited", async ({ event, context }) => {

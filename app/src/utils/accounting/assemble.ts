@@ -36,9 +36,13 @@ import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/i
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import { buildSherMultiplierTimeline, makeSherUsdRate } from '@/utils/accounting/sherRate'
+import {
+  buildSherMultiplierTimeline,
+  makeSherUsdRate,
+  currentSherUsdRate
+} from '@/utils/accounting/sherRate'
+import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
-import { dayKey } from '@/utils/accounting/historicalRate'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
@@ -246,10 +250,11 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
  * for native (POL/ETH), overlaid with the SHER price.
  *
  * SHER has no market price, so it is valued from the router's compensation
- * multiplier (1 SHER = 1/multiplier USD, historised over the multiplier changes)
- * — that is what makes a wage paid in SHER increase Investor Equity. With no
- * change events we fall back to the router's live multiplier, then to the
- * contract's 1x default.
+ * multiplier (1 SHER = 1/multiplier USD) — that is what makes a wage paid in SHER
+ * increase Investor Equity. Here each SHER leg is stamped at the multiplier of its
+ * **own date** (historised timeline), so a withdrawal / mint freezes at its
+ * realization-date rate. {@link settleWithdrawnSher} then re-values the *pending*
+ * (un-withdrawn) accruals to the current multiplier — see {@link buildRawCncEntries}.
  */
 function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
@@ -294,23 +299,22 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
 
   // The rate is a pure function of (token, timestamp), so it is resolved once here
   // rather than threaded through every mapper — with the same resolver the mappers
-  // valued `amountUsd` with, so amountUsd = Quantité × rate.
-  return rawEntries.map((entry) => ({
+  // valued `amountUsd` with, so amountUsd = Quantité × rate. Each SHER leg lands at
+  // its own-date rate, so a withdrawal / mint is frozen at its realization value.
+  const stamped = rawEntries.map((entry) => ({
     ...entry,
     rate: tokenUsdRate(entry.token, atDate(entry.timestamp), rateOfRecord)
   }))
-}
 
-/**
- * The distinct UTC days (`YYYY-MM-DD`) the feed has native (POL/ETH) activity on
- * — the daily prices the caller must fetch to value POL at its rate of record.
- */
-export function collectNativeRateDays(entries: readonly LedgerEntry[]): string[] {
-  const days = new Set<string>()
-  for (const entry of entries) {
-    if (entry.token === 'native') days.add(dayKey(atDate(entry.timestamp)))
-  }
-  return [...days]
+  // Freeze the withdrawn SHER at its realization rate and float the pending accruals
+  // at the current multiplier: matched accrual quantity cancels its issuance in
+  // `Shares to be issued`, the rest floats until it is taken.
+  const currentRate = currentSherUsdRate(
+    input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
+    input.safeDepositRouterEvents?.safeDeposits?.items,
+    input.currentSherMultiplier
+  )
+  return settleWithdrawnSher(stamped, currentRate).sort((a, b) => a.timestamp - b.timestamp)
 }
 
 /**

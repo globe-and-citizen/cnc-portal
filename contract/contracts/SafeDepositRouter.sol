@@ -4,12 +4,12 @@ pragma solidity ^0.8.24;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {TokenSupport} from "./base/TokenSupport.sol";
-import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IInvestor} from "./interfaces/IInvestor.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
@@ -31,7 +31,7 @@ import {IOfficer} from "./interfaces/IOfficer.sol";
 contract SafeDepositRouter is
   Initializable,
   OwnableUpgradeable,
-  ReentrancyGuardUpgradeable,
+  ReentrancyGuard,
   PausableUpgradeable,
   TokenSupport
 {
@@ -361,7 +361,6 @@ contract SafeDepositRouter is
     if (multiplier < MIN_MULTIPLIER) revert SafeDepositRouter__MultiplierTooLow();
 
     __Ownable_init(msg.sender);
-    __ReentrancyGuard_init();
     __Pausable_init();
 
     s_safeAddress = safeAddress;
@@ -458,7 +457,7 @@ contract SafeDepositRouter is
     address investorAddress = _getInvestorAddress();
 
     // Check MINTER_ROLE before attempting to mint
-    IInvestorV1 investor = IInvestorV1(investorAddress);
+    IInvestor investor = IInvestor(investorAddress);
     if (!investor.hasRole(investor.MINTER_ROLE(), address(this)))
       revert SafeDepositRouter__InsufficientMinterRole();
 
@@ -505,7 +504,7 @@ contract SafeDepositRouter is
    */
   function _getInvestorAddress() internal view returns (address) {
     if (s_officerAddress == address(0)) revert SafeDepositRouter__OfficerAddressNotSet();
-    address investorAddress = IOfficer(s_officerAddress).findDeployedContract("InvestorV1");
+    address investorAddress = IOfficer(s_officerAddress).findDeployedContract("Investor");
     if (investorAddress == address(0)) revert SafeDepositRouter__InvestorContractNotFound();
     return investorAddress;
   }

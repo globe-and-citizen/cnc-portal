@@ -24,6 +24,7 @@ export interface Wage {
   tokenRatePerHour?: number //@deprecated use ratePerHour instead
   usdcRatePerHour?: number //@deprecated use ratePerHour instead
   maximumHoursPerWeek: number
+  maximumHoursPerDay?: number
   disabled: boolean
   nextWageId: number | null
   createdAt: string // ISO date string
@@ -72,6 +73,8 @@ export interface WeeklyClaim {
   weekStart: string // ISO date string
   data: {
     ownerAddress?: Address
+    contractAddress?: Address
+    chainId?: number
   }
   memberAddress: Address
   teamId: number
@@ -109,4 +112,5 @@ export type WageWithForm = Omit<Wage, 'ratePerHour' | 'overtimeRatePerHour'> & {
   enableOvertimeRules: boolean
   ratePerHour: RatePerHourWithEnabled[]
   overtimeRatePerHour: RatePerHourWithEnabled[]
+  maximumHoursPerDay: number
 }

@@ -1,6 +1,7 @@
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
-import { time } from '@nomicfoundation/hardhat-network-helpers'
+import { ethers, initializeHardhat, time, upgrades } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('Vesting', () => {
   const DECIMALS = 6
@@ -9,9 +10,9 @@ describe('Vesting', () => {
   const DURATION = 60 * 60 * 24 * 30 // 30 days
 
   // Deploy Vesting per-team through a MockOfficer, exactly like SafeDepositRouter:
-  // - InvestorV1 is the team share token, registered on the officer
+  // - Investor is the team share token, registered on the officer
   // - Vesting is a BeaconProxy whose officerAddress is the officer (set from msg.sender)
-  // - the team owner owns the Vesting; the Vesting holds MINTER_ROLE on InvestorV1
+  // - the team owner owns the Vesting; the Vesting holds MINTER_ROLE on Investor
   async function deployFixture(grantMinter = true) {
     const [teamOwner, member, member2, nonOwner] = await ethers.getSigners()
 
@@ -19,21 +20,21 @@ describe('Vesting', () => {
     const mockOfficer = await MockOfficerFactory.deploy()
     await mockOfficer.waitForDeployment()
 
-    const InvestorFactory = await ethers.getContractFactory('InvestorV1')
+    const InvestorFactory = await ethers.getContractFactory('Investor')
     const investor = await upgrades.deployProxy(
       InvestorFactory,
       ['Share', 'SHARE', teamOwner.address],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )
     await investor.waitForDeployment()
     const investorAddress = await investor.getAddress()
-    await mockOfficer.setDeployedContract('InvestorV1', investorAddress)
+    await mockOfficer.setDeployedContract('Investor', investorAddress)
 
     const VestingFactory = await ethers.getContractFactory('Vesting')
     const vestingImplementation = await VestingFactory.connect(teamOwner).deploy()
     await vestingImplementation.waitForDeployment()
 
-    const encodedInitialize = vestingImplementation.interface.encodeFunctionData('initialize', [])
+    const encodedInitialize = VestingFactory.interface.encodeFunctionData('initialize', [])
 
     const BeaconFactory = await ethers.getContractFactory('Beacon')
     const beacon = await BeaconFactory.connect(teamOwner).deploy(
@@ -363,7 +364,7 @@ describe('Vesting', () => {
 
       await expect(
         vesting.connect(teamOwner).addVesting(member.address, start, DURATION, CLIFF, VEST_AMOUNT)
-      ).to.not.be.reverted
+      ).to.not.be.revert(ethers)
     })
   })
 })

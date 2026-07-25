@@ -161,6 +161,17 @@ export function activityOf(entry: LedgerEntry): ActivityCell {
   return { kind: 'plain', text: entryLabel(entry) }
 }
 
+/**
+ * Append "· + N SHER" to an actor narration when a compound payroll posting also
+ * issued shares, so the grouped entry's single Activity still names the equity
+ * part (e.g. "was paid for 5h of work + 10 SHER"). No-op when there are no shares,
+ * when the text already mentions SHER, or when the cell names no actor.
+ */
+export function withSherTail(cell: ActivityCell, sherShares: number): ActivityCell {
+  if (sherShares <= 0 || cell.kind !== 'actor' || /SHER/.test(cell.text)) return cell
+  return { ...cell, text: `${cell.text} + ${sherShares} SHER` }
+}
+
 /** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */
 function shortAddress(value: string): string {
   return /^0x[0-9a-fA-F]{40}$/.test(value) ? `${value.slice(0, 6)}…${value.slice(-4)}` : value

@@ -10,8 +10,11 @@ import type { UBadgeColor } from './ui'
 
 export type CreditRole = 'owner' | 'lender'
 
-/** FixedReturn.sol's TermUnit enum (Days, Months, Years), as a string union. */
-export type FixedReturnTermUnit = 'days' | 'months' | 'years'
+/** Units offered for the Terms step's Term length picker (CreditOfferForm.termUnit) —
+ *  the on-chain call no longer has an enum for this (FixedReturn.sol now stores an
+ *  absolute maturityDate), but the wizard still collects value+unit for a friendlier
+ *  input, converted to maturityDate via addCreditTerm at submission time. */
+export type FixedReturnTermUnit = 'minutes' | 'days' | 'months' | 'years'
 
 /** FixedReturn.sol's FundingAccess enum (General, Whitelist), as a string union. */
 export type FixedReturnAccessMode = 'general' | 'whitelist'
@@ -31,9 +34,7 @@ export interface FixedReturnOfferParams {
   token: Address
   fundingTarget: bigint
   interestRateBps: bigint
-  termDuration: number
-  termUnit: 0 | 1 | 2
-  startDate: bigint
+  maturityDate: bigint
   subscriptionDeadline: bigint
   fundingAccess: 0 | 1
   isCapEnabled: boolean
@@ -47,9 +48,7 @@ export interface LendingOfferStruct {
   token: Address
   fundingTarget: bigint
   interestRateBps: bigint
-  termDuration: number
-  termUnit: 0 | 1 | 2
-  startDate: bigint
+  maturityDate: bigint
   subscriptionDeadline: bigint
   fundingAccess: 0 | 1
   isCapEnabled: boolean
@@ -104,8 +103,19 @@ export interface FixedReturnOfferingResponse {
 // every lender's principal back in the same transaction), so this is a terminal state,
 // never a pending one; 'stalled' = still contract-state Open but past its deadline
 // without reaching target — the issuer hasn't yet chosen refundLenders or
-// acceptPartialFunding.
-export type RoundStatus = 'open' | 'stalled' | 'funded' | 'active' | 'repaid' | 'refunded'
+// acceptPartialFunding; 'overdue' = Funded or Repaying, not yet fully repaid, past its
+// maturity date (deadline + term) — purely a display flag (mirrors the old, since-
+// removed FixedReturnView's isOfferingPastMaturity/'overdue' check). The contract has
+// no on-chain maturity enforcement, so this never blocks or gates any action — repay
+// still works exactly the same before or after maturity, this only changes the badge.
+export type RoundStatus =
+  | 'open'
+  | 'stalled'
+  | 'funded'
+  | 'active'
+  | 'overdue'
+  | 'repaid'
+  | 'refunded'
 
 export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline' | 'repay'
 
@@ -133,8 +143,9 @@ export interface CreditWhitelistAllocationSummary {
   description: string
 }
 
-/** Units offered for a custom term length. The term is always stored in days. */
-export type CreditTermUnit = 'days' | 'weeks' | 'months' | 'years'
+/** Units offered for a custom term length — `minutes` matches the deadline's own
+ *  minute-precision clock field, since `period`'s canonical unit is whole minutes. */
+export type CreditTermUnit = 'minutes' | 'days' | 'weeks' | 'months' | 'years'
 
 /** A member position inside a credit round. */
 export interface CreditLender {
@@ -172,8 +183,13 @@ export interface CreditRound {
   totalRepaid: number
   /** Fixed interest rate over the whole term, in percent. */
   rate: number
-  /** Term length in days. */
+  /** Term length in whole minutes — raw value, not for direct display. */
   period: number
+  /** Display-ready term, e.g. `21 years, 10 months, 3 weeks, 4 days` — the calendar
+   *  breakdown between the round's subscriptionDeadline and maturityDate (see
+   *  `formatRoundTerm`), same treatment a custom wizard entry gets, computed once here
+   *  since only this mapper has the raw on-chain instants the breakdown needs. */
+  termLabel: string
   status: RoundStatus
   /** True only while `status === 'open'` — false once the round is `'stalled'` (or any
    *  later status), meaning lendFunds would revert. */
@@ -204,14 +220,17 @@ export interface CreditCallForm {
   target: string
   token: string
   rate: string
-  /** Term length resolved to whole days — the canonical value used downstream. */
+  /** Term length resolved to whole minutes — the canonical value used downstream. */
   period: number
   /** Whether the term came from a preset chip or a custom value + unit. */
   periodMode: 'preset' | 'custom'
-  /** Raw custom value (in `periodUnit`) before conversion to days. */
+  /** Raw custom value (in `periodUnit`) before conversion to minutes. */
   periodVal: string
   periodUnit: CreditTermUnit
   deadline: string
+  /** Clock time (HH:mm, UTC) paired with `deadline` — lets a round close at an exact
+   *  minute rather than always end-of-day, e.g. for testing a deadline a few minutes out. */
+  deadlineTime: string
   access: CreditAccess
   /** Searchable, per-lender custom-amount whitelist. */
   whitelist: CreditWhitelistEntry[]
@@ -232,6 +251,7 @@ export interface CreditOfferForm {
   termValue: number
   termUnit: FixedReturnTermUnit
   deadline: string
+  deadlineTime: string
   access: FixedReturnAccessMode
   capOn: boolean
   cap: number
@@ -250,8 +270,6 @@ export interface CreditLenderOffering {
   id: string
   title: string
   rate: number
-  term: number
-  termUnit: FixedReturnTermUnit
   access: FixedReturnAccessMode
   allowed: boolean
   cap: number | null

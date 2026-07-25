@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {DateTime} from "@quant-finance/solidity-datetime/contracts/DateTime.sol";
 import {TokenSupport} from "../base/TokenSupport.sol";
 import {IOfficer} from "../interfaces/IOfficer.sol";
@@ -20,7 +20,7 @@ import {IOfficer} from "../interfaces/IOfficer.sol";
 
 contract ExpenseAccountEIP712 is
   OwnableUpgradeable,
-  ReentrancyGuardUpgradeable,
+  ReentrancyGuard,
   EIP712Upgradeable,
   PausableUpgradeable,
   TokenSupport
@@ -457,7 +457,6 @@ contract ExpenseAccountEIP712 is
   function initialize(address owner, address[] calldata tokenAddresses) public initializer {
     if (owner == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
     __Ownable_init(owner);
-    __ReentrancyGuard_init();
     __EIP712_init("CNCExpenseAccount", "1");
     __Pausable_init();
 

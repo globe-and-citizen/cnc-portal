@@ -5,7 +5,7 @@ import { addNotification, prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { generateUniqueSlug } from '../utils/slug.util';
-import { CURRENT_OFFICER_VERSION } from './contractController';
+import { getActiveOfficerVersion } from './contractController';
 
 // A slug is taken when some team already holds it.
 const isTeamSlugTaken = async (slug: string) =>
@@ -59,13 +59,11 @@ export const serializeOfficer = (o: TeamOfficer | undefined | null) =>
       }
     : null;
 
-// True iff the current Officer was deployed with the CURRENT_OFFICER_VERSION
-// generation tag. Drives the frontend "team is on the previous contract
-// version" banner and freezes new-claim flows during the redeploy window
-// (issue #1825). Teams with no current Officer at all (never deployed)
-// surface `isMigrated: false`.
+// True iff the current Officer matches the active generation for the backend's
+// configured network. This keeps Hardhat V2 validation from marking Polygon
+// teams migrated before the Polygon deployment is complete.
 const deriveIsMigrated = (officer: { version?: string | null } | null | undefined) =>
-  officer?.version === CURRENT_OFFICER_VERSION;
+  officer?.version === getActiveOfficerVersion();
 
 // Pulls the head of the linked list out of an `include: currentOfficerInclude`
 // result and exposes it as `currentOfficer`. Removes the raw `teamOfficers`

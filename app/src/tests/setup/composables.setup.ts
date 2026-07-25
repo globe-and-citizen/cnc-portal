@@ -14,6 +14,7 @@ import {
   mockUseFetch,
   mockUseSubmitRestriction,
   mockUseDeployContract,
+  mockBlockTimestamp,
   resetComposableMocks,
   resetDeployState
 } from '@/tests/mocks/composables.mock'
@@ -234,6 +235,19 @@ vi.mock('@/queries/contract.queries', () => ({
 }))
 
 /**
+ * Mock Investor Migration Queries (investorMigration.queries.ts)
+ */
+vi.mock('@/queries/investorMigration.queries', () => ({
+  investorMigrationKeys: {
+    all: ['investorMigration'] as const,
+    team: (teamId: string | number) => ['investorMigration', String(teamId)] as const
+  },
+  useCreateInvestorMigrationMutation: vi.fn(queryMocks.useCreateInvestorMigrationMutation),
+  useGetInvestorMigrationQuery: vi.fn(queryMocks.useGetInvestorMigrationQuery),
+  useGenerateMerkleSnapshotMutation: vi.fn(queryMocks.useGenerateMerkleSnapshotMutation)
+}))
+
+/**
  * Mock Health Queries (health.queries.ts)
  */
 vi.mock('@/queries/health.queries', () => ({
@@ -316,6 +330,13 @@ vi.mock('@/composables', async (importOriginal) => {
  */
 vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
   useSafeSendTransaction: vi.fn(() => mockUseSafeSendTransaction)
+}))
+
+/**
+ * Mock useBlockTimestamp composable — the chain's own clock.
+ */
+vi.mock('@/composables/useBlockTimestamp', () => ({
+  useBlockTimestamp: vi.fn(() => mockBlockTimestamp)
 }))
 
 /**

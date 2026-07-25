@@ -122,7 +122,9 @@ vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => 
 
 vi.mock('@/stores', () => ({
   useTeamStore: () => ({
-    getContractAddressByType: mockGetContractAddressByType
+    getContractAddressByType: mockGetContractAddressByType,
+    getInvestorAddress: () =>
+      mockGetContractAddressByType('Investor') || mockGetContractAddressByType('InvestorV1')
   }),
   useCurrencyStore: () => ({
     localCurrency: { code: 'USD' },

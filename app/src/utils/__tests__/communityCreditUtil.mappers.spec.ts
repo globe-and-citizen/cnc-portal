@@ -14,9 +14,7 @@ describe('communityCreditUtil on-chain mappers', () => {
     token: '0x0000000000000000000000000000000000000abc' as Address,
     fundingTarget: 40_000_000000n,
     interestRateBps: 500n, // 5%
-    termDuration: 3,
-    termUnit: 1, // months → 90 days
-    startDate: 1_700_000_000n,
+    maturityDate: 1_700_500_000n + BigInt(90 * 86_400), // 90 days after subscriptionDeadline
     subscriptionDeadline: 1_700_500_000n,
     fundingAccess: 1, // whitelist
     isCapEnabled: true,
@@ -34,13 +32,18 @@ describe('communityCreditUtil on-chain mappers', () => {
   describe('offerStateToRoundStatus', () => {
     // baseOffer.subscriptionDeadline is a fixed unix timestamp — pass `now` explicitly
     // wherever the Open/deadline boundary matters, rather than relying on the real clock.
+    // baseOffer's maturityDate (subscriptionDeadline 1_700_500_000 + 90 days) lands at
+    // 1_708_276_000 — beforeDeadline/afterDeadline sit on either side of the subscription
+    // deadline but both predate maturity, so they double as "before maturity" for the
+    // Funded/Repaying cases below; afterMaturity is explicitly past it for the overdue cases.
     const beforeDeadline = new Date(1_700_400_000 * 1000)
     const afterDeadline = new Date(1_700_600_000 * 1000)
+    const afterMaturity = new Date(1_709_000_000 * 1000)
 
     it('maps Open / Funded / Refundable', () => {
       expect(offerStateToRoundStatus(makeOffer({ state: 0 }), beforeDeadline)).toBe('open')
-      expect(offerStateToRoundStatus(makeOffer({ state: 1 }))).toBe('funded')
-      expect(offerStateToRoundStatus(makeOffer({ state: 2 }))).toBe('refunded')
+      expect(offerStateToRoundStatus(makeOffer({ state: 1 }), beforeDeadline)).toBe('funded')
+      expect(offerStateToRoundStatus(makeOffer({ state: 2 }), beforeDeadline)).toBe('refunded')
     })
 
     it('maps a still-Open offer past its deadline to stalled', () => {
@@ -49,10 +52,32 @@ describe('communityCreditUtil on-chain mappers', () => {
     it('treats Repaying as active until principal + interest is fully repaid', () => {
       // totalFunded 1_000_000 @ 10% → expected 1_100_000
       const repaying = makeOffer({ state: 3, totalFunded: 1_000_000n, interestRateBps: 1000n })
-      expect(offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 500_000n })).toBe('active')
-      expect(offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 1_100_000n })).toBe(
-        'repaid'
-      )
+      expect(
+        offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 500_000n }, beforeDeadline)
+      ).toBe('active')
+      expect(
+        offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 1_100_000n }, beforeDeadline)
+      ).toBe('repaid')
+    })
+
+    it('maps Funded past maturity to overdue — no on-chain check blocks it, it is a display flag', () => {
+      expect(offerStateToRoundStatus(makeOffer({ state: 1 }), afterMaturity)).toBe('overdue')
+    })
+    it('maps Repaying past maturity with an outstanding balance to overdue', () => {
+      const repaying = makeOffer({ state: 3, totalFunded: 1_000_000n, interestRateBps: 1000n })
+      expect(
+        offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 500_000n }, afterMaturity)
+      ).toBe('overdue')
+    })
+    it('a fully repaid offer stays repaid past maturity, never overdue', () => {
+      const repaying = makeOffer({ state: 3, totalFunded: 1_000_000n, interestRateBps: 1000n })
+      expect(
+        offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 1_100_000n }, afterMaturity)
+      ).toBe('repaid')
+    })
+
+    it('uses the current clock when no explicit now is passed', () => {
+      expect(offerStateToRoundStatus(makeOffer({ state: 2 }))).toBe('refunded')
     })
   })
 
@@ -70,7 +95,11 @@ describe('communityCreditUtil on-chain mappers', () => {
       expect(round.target).toBe(40000)
       expect(round.raised).toBe(23400)
       expect(round.rate).toBe(5)
-      expect(round.period).toBe(90) // 3 months × 30
+      // maturityDate is 90 days (in minutes) after subscriptionDeadline
+      expect(round.period).toBe(90 * 1_440)
+      // Calendar breakdown between subscriptionDeadline and maturityDate, not a bare
+      // "90 days" — same "what does this actually mean" treatment a custom wizard entry gets.
+      expect(round.termLabel).toBe('2 months, 4 weeks, 1 day')
       expect(round.restricted).toBe(true)
       expect(round.cap).toBe(10000)
       expect(round.status).toBe('open')
@@ -188,14 +217,16 @@ describe('communityCreditUtil on-chain mappers', () => {
       expect(gradientForAddress(address)).toBe(`${a},${b}`)
       expect(a).not.toBe(b)
     })
+
+    it('falls back to the next palette stop when both hashed stops match', () => {
+      expect(gradientForAddress('')).toBe('#00bf7a,#00b8d9')
+    })
   })
 
   describe('offerMaturityDate', () => {
-    it('adds the term (in days) to the start date', () => {
-      const date = offerMaturityDate(
-        makeOffer({ startDate: 1_700_000_000n, termDuration: 30, termUnit: 0 })
-      )
-      expect(date.getTime()).toBe((1_700_000_000 + 30 * 86_400) * 1000)
+    it("returns the offer's maturityDate directly", () => {
+      const date = offerMaturityDate(makeOffer({ maturityDate: 1_700_030_400n }))
+      expect(date.getTime()).toBe(1_700_030_400 * 1000)
     })
   })
 })

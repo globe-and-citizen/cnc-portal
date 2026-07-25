@@ -1,4 +1,8 @@
 /**
+ * Daily hours ceiling applied when a wage does not specify one. */
+export const DEFAULT_MAXIMUM_HOURS_PER_DAY = 8;
+
+/**
  * Format a total number of minutes as a human-readable duration string.
  * Canonical implementation — also used in app/src/utils/wageUtil.ts.
  * Keep both in sync, or extract to a shared package when one is set up.
