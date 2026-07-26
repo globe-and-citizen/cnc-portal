@@ -381,7 +381,6 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Safe queries - safe.queries.ts
   useGetSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
   useSafePendingTransactionsQuery: () => createMockQueryResponse([]),
-  useDeploySafeMutation: () => createMockMutationResponse(),
   useApproveTransactionMutation: () => createMockMutationResponse(),
   useExecuteTransactionMutation: () => createMockMutationResponse(),
 
