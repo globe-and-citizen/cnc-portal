@@ -2,10 +2,16 @@ import { describe, it, expect } from 'vitest'
 import {
   entriesForAccount,
   accountBalance,
+  accountNet,
+  accountOpening,
+  openingRow,
+  withRunningBalance,
+  NO_OPENING,
   presentAccountLedger,
   accountLedgerTitle
 } from '@/utils/accounting/accountLedger'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { ledgerRows } from '@/utils/accounting/ledgerPresenter'
 import { money } from '@/utils/accounting/presenter'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { catalogueLedger } from './catalogueLedger'
@@ -27,10 +33,10 @@ describe('accountLedger — statement-line drill-down', () => {
       ).toBe(true)
     })
 
-    it('sorts newest first, like the ledger view', () => {
+    it('sorts oldest first, the reading order of a ledger', () => {
       const scoped = entriesForAccount(catalogueLedger, 'Cash — Safe')
       const times = scoped.map((e) => e.timestamp)
-      expect(times).toEqual([...times].sort((a, b) => b - a))
+      expect(times).toEqual([...times].sort((a, b) => a - b))
     })
 
     it('honours the as-of cutoff (to), excluding later postings', () => {
@@ -81,6 +87,103 @@ describe('accountLedger — statement-line drill-down', () => {
         expect(accountBalance(scoped, account)).toBe(money(balanceOf(account)))
       })
     }
+  })
+
+  // The per-line "Balance" column of a drill-down: the account's own rows carry
+  // the balance it stands at once that posting is booked, ending on the figure
+  // the ledger is left with.
+  describe('withRunningBalance', () => {
+    const account: AccountName = 'Cash — Safe'
+    const scoped = entriesForAccount(catalogueLedger, account)
+    const cash = (cell: string): number => Number(cell.replace(/[$,]/g, '') || 0)
+    const annotate = (entries = scoped, opening = 0) =>
+      withRunningBalance(ledgerRows(entries), account, opening)
+
+    it('opens on the first posting alone when nothing is carried in', () => {
+      const balances = annotate().filter((r) => r.balance)
+      expect(balances.length).toBeGreaterThan(1)
+      const first = balances[0]!
+      expect(first.balance).toBe(money(cash(first.dr) - cash(first.cr)))
+    })
+
+    it('lands the last row on the account balance', () => {
+      const balances = annotate().filter((r) => r.balance)
+      expect(balances[balances.length - 1]!.balance).toBe(accountBalance(scoped, account))
+      expect(balances[balances.length - 1]!.balance).toBe(money(balanceOf(account)))
+    })
+
+    it('carries an opening balance into the first row', () => {
+      const plain = annotate().filter((r) => r.balance)
+      const carried = annotate(scoped, 1000).filter((r) => r.balance)
+      expect(carried[0]!.balance).toBe(money(cash(plain[0]!.balance!) + 1000))
+      expect(carried[carried.length - 1]!.balance).toBe(money(balanceOf(account) + 1000))
+    })
+
+    it('leaves the facing leg of a posting without a balance', () => {
+      const rows = annotate()
+      expect(rows.some((r) => r.account !== account)).toBe(true)
+      expect(rows.filter((r) => r.account !== account).every((r) => r.balance === undefined)).toBe(
+        true
+      )
+    })
+
+    it('runs a page seeded from the entries above it, continuing the same walk', () => {
+      const pageSize = 2
+      const full = annotate().filter((r) => r.balance)
+      // Page two opens on what the entries already listed left behind.
+      const page = withRunningBalance(
+        ledgerRows(scoped.slice(pageSize, pageSize * 2)),
+        account,
+        accountNet(scoped.slice(0, pageSize), account)
+      ).filter((r) => r.balance)
+      expect(page[0]!.balance).toBe(full[pageSize]!.balance)
+    })
+
+    it('counts a credit-normal account the other way round', () => {
+      const equity: AccountName = 'Investor Equity'
+      const entries = entriesForAccount(catalogueLedger, equity)
+      const rows = withRunningBalance(ledgerRows(entries), equity, 0).filter((r) => r.balance)
+      // Equity is credited: its balance grows with the credit column.
+      expect(rows[0]!.balance).toBe(money(cash(rows[0]!.cr)))
+      expect(rows[rows.length - 1]!.balance).toBe(money(balanceOf(equity)))
+    })
+  })
+
+  // The "Opening balance" line heading an account's ledger (Odoo's "solde initial").
+  describe('accountOpening / openingRow', () => {
+    const account: AccountName = 'Cash — Safe'
+    const scoped = entriesForAccount(catalogueLedger, account)
+
+    it('carries nothing into an open-ended window', () => {
+      expect(accountOpening(catalogueLedger, account, null)).toEqual(NO_OPENING)
+      expect(accountOpening(catalogueLedger, '', new Date())).toEqual(NO_OPENING)
+    })
+
+    it('sums everything booked before the window opens', () => {
+      // A window opening after the first posting leaves that posting behind it.
+      const from = new Date((scoped[1]!.timestamp + 1) * 1000)
+      const opening = accountOpening(catalogueLedger, account, from)
+      const prior = entriesForAccount(catalogueLedger, account, null, new Date(+from - 1000))
+
+      expect(prior.length).toBeGreaterThan(0)
+      expect(opening.balance).toBe(accountNet(prior, account))
+      expect(opening.debits).toBe(
+        prior.filter((e) => e.debit === account).reduce((sum, e) => sum + e.amountUsd, 0)
+      )
+      // Opening + the window's own movements is still the all-time balance.
+      const within = entriesForAccount(catalogueLedger, account, from)
+      expect(money(opening.balance + accountNet(within, account))).toBe(money(balanceOf(account)))
+    })
+
+    it('heads the ledger with a dateless, actionless line', () => {
+      const row = openingRow({ debits: 12, credits: 4, balance: 8 })
+      expect(row.label).toBe('Opening balance')
+      expect(row.balance).toBe(money(8))
+      expect(row.dr).toBe(money(12))
+      expect(row.cr).toBe(money(4))
+      expect(row.date).toBe('')
+      expect(row.cat).toBe('')
+    })
   })
 
   describe('presentAccountLedger', () => {
