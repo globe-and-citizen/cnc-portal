@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@nomicfoundation/hardhat-keystore": "^3.0.12",
     "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.7",
     "@openzeppelin/hardhat-upgrades": "^4.1.0",
     "@types/chai": "^5.2.3",
