@@ -267,7 +267,10 @@ export function useFixedReturnOfferLenders(
     queryKey: ['fixedReturnOfferLenders', fixedReturnAddress, offerId, tokenValue],
     queryFn: fetchLenders,
     enabled: computed(
-      () => !!fixedReturnAddress.value && isAddress(tokenValue.value) && tokenValue.value !== zeroAddress
+      () =>
+        !!fixedReturnAddress.value &&
+        isAddress(tokenValue.value) &&
+        tokenValue.value !== zeroAddress
     )
   })
 }

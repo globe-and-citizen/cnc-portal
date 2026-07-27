@@ -145,9 +145,7 @@ const status = computed(() => statusMeta(round.value?.status ?? 'active'))
 // FixedReturn__OfferNotFunded() revert that the error classifier can't decode into a
 // friendly message (it only has Bank.json's ABI loaded, not FixedReturn's).
 const REPAYABLE_STATUSES: RoundStatus[] = ['funded', 'active', 'overdue']
-const isRepayable = computed(
-  () => !!round.value && REPAYABLE_STATUSES.includes(round.value.status)
-)
+const isRepayable = computed(() => !!round.value && REPAYABLE_STATUSES.includes(round.value.status))
 
 const { data: rawOffer, refetch: refetchOffer } = useFixedReturnGetLendingOffer(offerId)
 const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)

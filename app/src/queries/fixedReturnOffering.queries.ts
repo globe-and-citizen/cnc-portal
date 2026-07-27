@@ -18,7 +18,10 @@ export const fixedReturnOfferingKeys = {
   all: ['fixedReturnOfferings'] as const,
   lists: () => [...fixedReturnOfferingKeys.all, 'list'] as const,
   list: (teamId: string | number | null) =>
-    [...fixedReturnOfferingKeys.lists(), { teamId: teamId == null ? null : Number(teamId) }] as const
+    [
+      ...fixedReturnOfferingKeys.lists(),
+      { teamId: teamId == null ? null : Number(teamId) }
+    ] as const
 }
 
 // ============================================================================
