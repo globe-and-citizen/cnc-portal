@@ -3,7 +3,7 @@
     v-model:open="open"
     :title="account"
     :description="`General ledger entries composing this line — balance ${total}`"
-    :ui="{ content: 'rounded-2xl sm:max-w-5xl' }"
+    :ui="{ content: 'rounded-2xl sm:max-w-6xl' }"
   >
     <template #body>
       <div class="flex flex-col gap-4">
@@ -40,7 +40,13 @@
           </div>
         </div>
 
-        <LedgerTable :rows="pageRows" :total="total" :visible-columns="visibleColumns" />
+        <LedgerTable
+          :rows="pageRows"
+          :total="total"
+          :visible-columns="visibleColumns"
+          :show-balance="!!balanceAccount"
+          :closing-balance="closing"
+        />
 
         <TablePagination
           v-model:page="page"
@@ -64,12 +70,27 @@ import {
   LEDGER_COLUMNS,
   type LedgerColumnKey
 } from '@/utils/accounting/ledgerPresenter'
+import {
+  accountNet,
+  openingRow,
+  withRunningBalance,
+  NO_OPENING,
+  type AccountOpening
+} from '@/utils/accounting/accountLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 const props = defineProps<{
   account: string
   total: string
   entries: LedgerEntry[]
+  /** The one account being drilled — adds the running "Balance" column. Left
+   *  empty for an aggregate line, whose accounts have no single natural side. */
+  balanceAccount?: string
+  /** What the account carries into the window — heads the ledger as its
+   *  "Opening balance" line. */
+  opening?: AccountOpening
+  /** What the account is left standing at, once every posting is booked. */
+  closing?: string
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -97,6 +118,17 @@ watch(
 
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
-  return ledgerRows(props.entries.slice(start, start + pageSize.value))
+  const rows = ledgerRows(props.entries.slice(start, start + pageSize.value))
+  const account = props.balanceAccount
+  if (!account) return rows
+
+  // Entries read oldest-first: the page opens on what the account was left
+  // standing at by everything above it — the balance carried into the window
+  // plus the pages already turned.
+  const opening = props.opening ?? NO_OPENING
+  const carried = opening.balance + accountNet(props.entries.slice(0, start), account)
+  const walked = withRunningBalance(rows, account, carried)
+  // The "Opening balance" line heads the ledger, so it belongs to page one.
+  return start === 0 ? [openingRow(opening), ...walked] : walked
 })
 </script>
