@@ -42,7 +42,7 @@ external trader at cost; the live Polymarket position feed is **not** consolidat
 | ------------------- | --------------------------------------------------------------------------------------------------- |
 | Entity              | The CNC protocol entity (treasury + equity contracts), one consolidated ledger.                     |
 | Per-team vs. global | **Per team** — each team's contract set is its own books. Cross-team consolidation is out of scope. |
-| Currency            | USD reporting currency. POL converted at the rate of record; SHER valued at the agreed mint price.  |
+| Currency            | USD reporting currency. **POL** at its current live price (CoinGecko); **SHER** at the router multiplier — a withdrawal frozen at its own date, a pending accrual floating at the current rate; **USDC/USDT** pegged $1. See [catalogue → Currency & valuation](./money-flow-catalogue.md#currency--valuation-rate-of-record). |
 | Period              | A reporting period (the worked example uses 1–28 March 2026).                                       |
 | Basis               | Payroll = **accrual** (`Wage Payable` / `Shares to be issued`); everything else = **cash basis**.   |
 
@@ -121,8 +121,8 @@ already proxies transfer history via
 > The `**Minted` event** alone is ambiguous (capital raise vs. wage-in-shares vs. direct
 > mint) — it must be correlated with `Deposited` (SafeDepositRouter) or `WithdrawToken`
 > (CashRemuneration) to pick the right journal entry, per
-> [catalogue §5.4](./money-flow-catalogue.md). A `Minted` with neither is **Default D**
-> (memo only, value 0).
+> [catalogue §5.4](./money-flow-catalogue.md). A `Minted` with neither is **Default D** —
+> a direct mint booked **Dr Shares to be issued · Cr Investor Equity** at the SHER rate.
 
 ### 3.2 Portal database (accrual + classification context)
 
@@ -162,7 +162,7 @@ Each available source maps to a journal entry (catalogue §5) and thus to a stat
 | CashRemuneration `Withdraw` / `WithdrawToken` (+ `Minted`)           | UC-CASH-03        | Dr Wage Payable · Cr Cash — Payroll · Dr Shares to be issued · Cr Investor Equity | BS: liability settled, Cash ↓, Investor Equity ↑ |
 | ExpenseAccount `Transfer` / `TokenTransfer` (+ Expense record)       | UC-EXP-01         | Dr Operating Expense · Cr Cash — Expense                                          | IS: Operating Expense; BS: Cash ↓                |
 | Bank `DividendDistributionTriggered` / InvestorV1 `DividendPaid`     | UC-INV-01         | Dr Dividend Expense · Cr Cash — Bank                                              | IS: Dividend Expense; BS: Cash ↓                 |
-| InvestorV1 `Minted` alone (direct mint)                              | Default D         | — no monetary entry (memo: +N shares, value 0)                                    | none (share count only)                          |
+| InvestorV1 `Minted` alone (direct mint)                              | Default D         | Dr Shares to be issued · Cr Investor Equity (at the SHER rate, frozen at mint date) | BS: Investor Equity ↑ (unbacked mint drives Shares to be issued contra) |
 | FeeCollector `FeePaid` (from Bank transfers)                         | fee internal move | Dr Cash — FeeCollector · Cr Cash — Bank                                           | BS: internal cash move (no IS impact)            |
 
 
@@ -202,7 +202,7 @@ down rather than lumping them into one line:
 | **Payroll**                    | Wages earned by members (accrual)       | `Wage` / `WeeklyClaim` / `Claim` + CashRemuneration events | Phase 1 (`Payroll Expense`)   |
 | **Operating (ExpenseAccount)** | Approved member expense payouts         | `Expense` record + ExpenseAccount `Transfer`               | Phase 1 (`Operating Expense`) |
 | **Ponder (infra)**             | Indexer / hosting / infrastructure cost | **not captured on-chain** — paid off-platform              | Phase 2                       |
-| **Debt (interest)**            | Interest payments on borrowed funds     | **no debt/loan concept exists yet**                        | Phase 2                       |
+| **Debt (interest)**            | Interest payments on borrowed funds     | **no debt/loan feature exists on-chain yet** — accounts named, not yet wired to a feed | Phase 2                       |
 
 
 Phase 1 books **payroll** and **operating** expenses from existing data. **Ponder (infra)**
@@ -219,9 +219,9 @@ What complete company accounting needs that we **don't yet capture**:
 | Gap                                               | Why it matters                                                                                                         | Proposed Phase 2 capture                                                                                                                  |
 | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **Infra / Ponder cost**                           | A real expense paid off-platform (indexer, hosting) never hits a CNC contract, so it's invisible to an on-chain ledger | Manual expense entry or an off-chain bill record feeding `Operating Expense — Infra`                                                      |
-| **Debt & interest**                               | No loan/borrowing concept exists; can't book a liability or interest expense                                           | A liability account + interest schedule; manual entries until modelled                                                                    |
+| **Debt & interest**                               | No loan/borrowing feature exists on-chain; can't book a liability or interest expense from a live feed                 | Accounts and wording already named against the reference debt-scenario workbook (`CNC - Debt Scenario - Accounting Workbook.xlsx`, external) — `Loans Payable — Members` (`LOANS_PAYABLE`, current liability, credited when a lender funds, debited when principal is released), `Interest Payable` (`INTEREST_PAYABLE`, accrued-not-yet-paid, for terms longer than the payment cycle), `Interest Expense` (`INTEREST_EXPENSE`, cost of borrowing). Action `BORROWING`, transactions `LOAN_OFFER_OPENED` (memo, no posting) → `LOAN_FUNDED` → `LOAN_REPAID`. Call it a "borrowing round," not "debt issuance" — members lend to their own team, nothing is issued to a market. Still needs: a lending feature on-chain, the events it would emit, and the feed wiring once it exists. |
 | **Fee revenue (external billing)**                | Today all fees are internal moves; cross-team billing would be real revenue                                            | Recognise `Protocol Fee Revenue` at FeeCollector when the payer is external                                                               |
-| **FX / price-of-record**                          | POL→USD and SHER valuation need a defined rate source and timestamp per entry                                          | Pin a price oracle / rate-of-record per period; store the rate on each entry                                                              |
+| **FX / price-of-record** *(resolved)*             | POL→USD and SHER valuation need a defined rate source                                                                  | **Done:** POL at the current live price (CoinGecko), SHER at the router multiplier (withdrawal frozen at its date, pending accrual floats). Remaining: both refresh on the query lifecycle, not auto-watched on-chain — a live-refresh (block / `MultiplierUpdated`) is still open. |
 | **Cost classification of expenses**               | `Expense.data` JSON has category context but it isn't normalised into accounting categories                            | Map `Expense.data` categories → chart-of-accounts expense lines                                                                           |
 | **Polymarket / GC:Trader consolidation**          | The CNC's *total* result should fold in trading P&L                                                                    | Deferred — surface (GC:Trader project vs. dedicated app) undecided ([#2078](https://github.com/globe-and-citizen/cnc-portal/issues/2078)) |
 | **Period close / retained earnings roll-forward** | Multi-period reporting needs net income to close into retained earnings                                                | Define period boundaries and a close step in the pipeline                                                                                 |
