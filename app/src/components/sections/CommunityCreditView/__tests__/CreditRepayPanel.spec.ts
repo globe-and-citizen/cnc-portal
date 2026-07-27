@@ -201,6 +201,30 @@ describe('CreditRepayPanel', () => {
     expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).not.toHaveBeenCalled()
   })
 
+  it.each(['stalled', 'refunded', 'repaid'] as const)(
+    'disables Repay but does not show the "not yet funded" message on a %s round',
+    async (status) => {
+      // Regression: the alert's wording ("hasn't reached its funding target yet —
+      // repayment opens once it's fully funded") is only true while a round is still
+      // actively raising ('open'). It previously showed for every non-repayable status,
+      // which is misleading for 'stalled' (deadline passed, awaiting a refund/accept
+      // decision — may never be funded), 'refunded' (never will be funded), and 'repaid'
+      // (already was funded and fully repaid).
+      store.rounds = [sampleRound({ status, raised: 5000, target: 5000 })]
+      mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
+      mockFixedReturnReads.offerLenders.data.value = [
+        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
+      ]
+      setMockRoute({ params: { id: '1', roundId: '1' } })
+      const wrapper = mount(CreditRepayPanel)
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="repay-not-funded"]').exists()).toBe(false)
+      const button = wrapper.findComponent('[data-test="confirm-repay"]')
+      expect(button.props('disabled')).toBe(true)
+    }
+  )
+
   it('shows only the breakdown table for a non-owner, with no repay form', async () => {
     store.isOwner = false
     store.rounds = [sampleRound()]

@@ -47,7 +47,7 @@
         />
 
         <UAlert
-          v-if="!isRepayable"
+          v-if="isStillRaising"
           color="warning"
           variant="soft"
           icon="i-lucide-circle-alert"
@@ -146,6 +146,12 @@ const status = computed(() => statusMeta(round.value?.status ?? 'active'))
 // friendly message (it only has Bank.json's ABI loaded, not FixedReturn's).
 const REPAYABLE_STATUSES: RoundStatus[] = ['funded', 'active', 'overdue']
 const isRepayable = computed(() => !!round.value && REPAYABLE_STATUSES.includes(round.value.status))
+
+// The "hasn't reached its funding target yet" wording only makes sense while the round
+// is still actively raising — a 'stalled'/'refunded'/'repaid' round already resolved one
+// way or the other, so repeating "repayment opens once it's fully funded" there would be
+// inaccurate (refunded never will be; repaid already was).
+const isStillRaising = computed(() => round.value?.status === 'open')
 
 const { data: rawOffer, refetch: refetchOffer } = useFixedReturnGetLendingOffer(offerId)
 const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)
