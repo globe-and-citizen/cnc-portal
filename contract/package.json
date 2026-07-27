@@ -8,6 +8,7 @@
     "deploy": "bash deploy.sh localhost",
     "deploy:mock": "bash deploy.sh localhost mock",
     "deploy:polygon": "bash deploy.sh polygon",
+    "deploy:polFork": "bash deploy.sh polFork",
     "bulk-send": "npx hardhat run ./scripts/bulkSendEth.ts --network localhost",
     "test": "npx hardhat test",
     "coverage": "npx hardhat test --coverage",

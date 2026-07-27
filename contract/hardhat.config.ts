@@ -1,6 +1,7 @@
 import { configVariable, defineConfig } from 'hardhat/config'
 import hardhatToolboxMochaEthers from '@nomicfoundation/hardhat-toolbox-mocha-ethers'
 import openzeppelinUpgrades from '@openzeppelin/hardhat-upgrades'
+import hardhatKeystore from "@nomicfoundation/hardhat-keystore";
 
 const localNetwork = {
   type: 'edr-simulated' as const,
@@ -10,12 +11,18 @@ const localNetwork = {
 }
 
 export default defineConfig({
-  plugins: [hardhatToolboxMochaEthers, openzeppelinUpgrades],
+  plugins: [hardhatToolboxMochaEthers, openzeppelinUpgrades,hardhatKeystore],
 
   networks: {
     default: localNetwork,
     // Keep the explicit name available for existing `--network hardhat` usage.
     hardhat: localNetwork,
+    polFork: {
+      type: "edr-simulated",
+      forking: {
+        url: configVariable('POLYGON_URL'),
+      },
+    },
     localhost: {
       type: 'http',
       chainId: 31337,
