@@ -2,7 +2,7 @@ import { computed, unref, type MaybeRef, type MaybeRefOrGetter, toValue } from '
 import { useQuery } from '@tanstack/vue-query'
 import { useReadContract } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
-import { formatUnits, isAddress, type Address } from 'viem'
+import { formatUnits, isAddress, zeroAddress, type Address } from 'viem'
 import type { ExtractAbiFunctionNames } from 'abitype'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { config } from '@/wagmi.config'
@@ -253,10 +253,22 @@ export function useFixedReturnOfferLenders(
     }
   }
 
+  // `token` starts out as `zeroAddress` (the caller's placeholder default) until the
+  // offer itself resolves and reveals the real token. `zeroAddress` isn't merely
+  // "unknown" to decimalsForFixedReturnToken() — it's SUPPORTED_TOKENS' own `native`
+  // entry, at 18 decimals — so fetching before the real token arrives locks in the
+  // wrong decimals for the entire result (e.g. 500 USDC read back as ~0.0000000005),
+  // and since the query key didn't include the token, that wrong-decimals fetch would
+  // cache forever with no later refetch to correct it. Including `token` in the key
+  // and gating `enabled` on it being resolved avoids ever fetching against the
+  // placeholder in the first place.
+  const tokenValue = computed(() => toValue(token))
   return useQuery({
-    queryKey: ['fixedReturnOfferLenders', fixedReturnAddress, offerId],
+    queryKey: ['fixedReturnOfferLenders', fixedReturnAddress, offerId, tokenValue],
     queryFn: fetchLenders,
-    enabled: computed(() => !!fixedReturnAddress.value)
+    enabled: computed(
+      () => !!fixedReturnAddress.value && isAddress(tokenValue.value) && tokenValue.value !== zeroAddress
+    )
   })
 }
 
