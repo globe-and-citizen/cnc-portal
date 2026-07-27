@@ -1,5 +1,4 @@
-import Safe, { type SafeAccountConfig } from '@safe-global/protocol-kit'
-import type { SafeVersion } from '@safe-global/types-kit'
+import Safe from '@safe-global/protocol-kit'
 import { useConnection } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { getInjectedProvider } from '@/utils/safe'
@@ -61,61 +60,9 @@ export function useSafeSDK() {
     safeInstanceCache.delete(cacheKey)
   }
 
-  /**
-   * Create a predicted Safe SDK instance.
-   * This does not broadcast any transaction on-chain.
-   *
-   * @param safeAccountConfig - Safe configuration (owners, threshold)
-   * @param deploymentConfig - Deployment configuration (saltNonce, safeVersion)
-   * @returns Safe SDK instance configured with predicted safe data
-   */
-  const createPredictedSafeSdk = async (
-    safeAccountConfig: SafeAccountConfig,
-    deploymentConfig: {
-      saltNonce: string
-      safeVersion: SafeVersion
-    }
-  ): Promise<Safe> => {
-    const signer = getConnectedSigner(connection)
-
-    // Validate owners
-    const { owners, threshold } = safeAccountConfig
-    if (!owners || owners.length === 0) {
-      throw new Error('At least one owner required')
-    }
-
-    if (threshold < 1 || threshold > owners.length) {
-      throw new Error(`Threshold must be between 1 and ${owners.length}`)
-    }
-
-    owners.forEach((owner, i) => {
-      if (!isAddress(owner)) {
-        throw new Error(`Invalid owner address [${i}]: ${owner}`)
-      }
-    })
-
-    const provider = getInjectedProvider()
-
-    const predictedSafe = {
-      safeAccountConfig,
-      safeDeploymentConfig: {
-        saltNonce: deploymentConfig.saltNonce,
-        safeVersion: deploymentConfig.safeVersion
-      }
-    }
-
-    // Initialize Protocol Kit with predicted Safe
-    return Safe.init({
-      provider,
-      signer,
-      predictedSafe
-    })
-  }
-
   return {
     loadSafe,
     clearCache,
-    clearSafeCache,
-    createPredictedSafeSdk
+    clearSafeCache
   }
 }

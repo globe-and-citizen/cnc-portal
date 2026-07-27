@@ -1,17 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useConnection } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
-import { SAFE_VERSION } from '@/types/safe'
 import externalApiClient from '@/lib/external.axios.ts'
 import type {
-  SafeDeploymentParams,
   ExecuteTransactionParams,
   ApproveTransactionParams,
   UpdateSafeOwnersParams,
   TransferFromSafeParams,
   SafeExecutionResult
 } from '@/types/safe.mutation'
-import { deploySafeSchema, transferFromSafeSchema } from '@/types/safe.schemas'
+import { transferFromSafeSchema } from '@/types/safe.schemas'
 import { useSafeSDK } from '@/composables/safe/useSafeSdk'
 import { getTokenAddress } from '@/utils'
 import {
@@ -25,66 +23,10 @@ import {
 import {
   getExecutedErc20TransferTokenAddress,
   getTxServiceUrl,
-  randomSaltNonce,
   transformToSafeMultisigResponse
 } from '@/utils/safe'
 import { getConnectedSigner } from '@/utils/walletUtil'
 import { safeKeys } from './safe.queries'
-
-// ============================================================================
-// Deploy Safe - Mutation
-// ============================================================================
-
-/**
- * Mutation: Deploy a new Safe
- *
- * @endpoint N/A - Deployment via Safe SDK
- * @pathParams none
- * @queryParams none
- * @body { owners: string[], threshold: number }
- */
-export function useDeploySafeMutation() {
-  const queryClient = useQueryClient()
-  const { createPredictedSafeSdk } = useSafeSDK()
-
-  return useMutation<string, Error, SafeDeploymentParams>({
-    mutationFn: async (payload: SafeDeploymentParams) => {
-      const { owners, threshold } = deploySafeSchema.parse(payload)
-      const safeSdk = await createPredictedSafeSdk(
-        { owners, threshold },
-        {
-          saltNonce: randomSaltNonce(),
-          safeVersion: SAFE_VERSION
-        }
-      )
-
-      const deploymentTx = await safeSdk.createSafeDeploymentTransaction()
-      const walletClient = await safeSdk.getSafeProvider().getExternalSigner()
-
-      if (!walletClient?.account) {
-        throw new Error('Wallet signer account not available')
-      }
-
-      const txHash = await walletClient.sendTransaction({
-        account: walletClient.account,
-        to: deploymentTx.to as `0x${string}`,
-        data: deploymentTx.data as `0x${string}`,
-        value: BigInt(deploymentTx.value || '0'),
-        chain: undefined
-      })
-
-      const publicClient = safeSdk.getSafeProvider().getExternalProvider()
-      await publicClient.waitForTransactionReceipt({ hash: txHash })
-
-      return safeSdk.getAddress()
-    },
-    onSuccess: (safeAddress) => {
-      queryClient.invalidateQueries({
-        queryKey: safeKeys.info(safeAddress)
-      })
-    }
-  })
-}
 
 // ============================================================================
 // POST /api/v1/multisig-transactions/{safeTxHash}/confirmations/ - Approve

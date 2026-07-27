@@ -56,7 +56,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { isAddress } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
 
-import { useDeploySafeMutation } from '@/queries/safe.mutations'
+import { useDeploySafe } from '@/composables/safe/useSafeDeployment'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { NETWORK } from '@/constant'
@@ -75,7 +75,7 @@ const toast = useToast()
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 
-const { mutate: deploySafe, isPending: isDeploying } = useDeploySafeMutation()
+const { mutate: deploySafe, isPending: isDeploying } = useDeploySafe()
 const { mutate: createContract } = useCreateContractMutation()
 
 const canDeploy = computed(
@@ -113,7 +113,7 @@ const handleDeploySafe = () => {
       threshold: 1
     },
     {
-      onSuccess: (safeAddress) => {
+      onSuccess: ({ safeAddress }) => {
         createContract(
           {
             body: {
