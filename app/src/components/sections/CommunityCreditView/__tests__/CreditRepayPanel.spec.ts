@@ -176,6 +176,31 @@ describe('CreditRepayPanel', () => {
     expect(wrapper.find('[data-test="repay-error"]').exists()).toBe(true)
   })
 
+  it('disables the Repay button and explains why on a round still Open (not yet funded)', async () => {
+    // Regression for known-issues.md #13: the tab used to be reachable and submittable
+    // on a still-raising round, wasting a transaction on a guaranteed
+    // FixedReturn__OfferNotFunded() revert the error classifier couldn't even decode.
+    store.rounds = [sampleRound({ status: 'open', raised: 10000, target: 25000 })]
+    mockFixedReturnReads.getLendingOffer.data.value = offerStruct({
+      fundingTarget: 25_000_000000n,
+      totalFunded: 10_000_000000n
+    })
+    mockFixedReturnReads.offerLenders.data.value = [
+      { address: '0x00000000000000000000000000000000000000a1', principal: 10000, expected: 10600 }
+    ]
+    setMockRoute({ params: { id: '1', roundId: '1' } })
+    const wrapper = mount(CreditRepayPanel)
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="repay-not-funded"]').exists()).toBe(true)
+    const button = wrapper.findComponent('[data-test="confirm-repay"]')
+    expect(button.props('disabled')).toBe(true)
+
+    await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+    await flushPromises()
+    expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).not.toHaveBeenCalled()
+  })
+
   it('shows only the breakdown table for a non-owner, with no repay form', async () => {
     store.isOwner = false
     store.rounds = [sampleRound()]
