@@ -1,0 +1,1274 @@
+{
+  "_format": "hh3-artifact-1",
+  "contractName": "FactoryBeacon",
+  "sourceName": "contracts/beacons/FactoryBeacon.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "implementationAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "BeaconInvalidImplementation",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableInvalidOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "proxy",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "deployer",
+          "type": "address"
+        }
+      ],
+      "name": "BeaconProxyCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "Upgraded",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "createBeaconProxy",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "implementation",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newImplementation",
+          "type": "address"
+        }
+      ],
+      "name": "upgradeTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561000f575f5ffd5b50604051610af8380380610af883398101604081905261002e9161013e565b8033808061005657604051631e4fbdf760e01b81525f60048201526024015b60405180910390fd5b61005f81610071565b50610069826100c0565b50505061016b565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b806001600160a01b03163b5f036100f55760405163211eb15960e21b81526001600160a01b038216600482015260240161004d565b600180546001600160a01b0319166001600160a01b0383169081179091556040517fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b905f90a250565b5f6020828403121561014e575f5ffd5b81516001600160a01b0381168114610164575f5ffd5b9392505050565b610980806101785f395ff3fe608060405234801561000f575f5ffd5b5060043610610060575f3560e01c80633659cfe6146100645780635c60da1b14610079578063715018a6146100a25780638da5cb5b146100aa578063d0b74ad4146100ba578063f2fde38b146100cd575b5f5ffd5b6100776100723660046102bc565b6100e0565b005b6001546001600160a01b03165b6040516001600160a01b03909116815260200160405180910390f35b6100776100f4565b5f546001600160a01b0316610086565b6100776100c83660046102fd565b610107565b6100776100db3660046102bc565b610177565b6100e86101b6565b6100f1816101e2565b50565b6100fc6101b6565b6101055f610260565b565b5f3082604051610116906102af565b6101219291906103b0565b604051809103905ff08015801561013a573d5f5f3e3d5ffd5b5060405190915033906001600160a01b038316907fae2292667db92e6da511010072f5a5e0804f89f8d78418b077abb4893849ff87905f90a35050565b61017f6101b6565b6001600160a01b0381166101ad57604051631e4fbdf760e01b81525f60048201526024015b60405180910390fd5b6100f181610260565b5f546001600160a01b031633146101055760405163118cdaa760e01b81523360048201526024016101a4565b806001600160a01b03163b5f036102175760405163211eb15960e21b81526001600160a01b03821660048201526024016101a4565b600180546001600160a01b0319166001600160a01b0383169081179091556040517fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b905f90a250565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b610556806103f583390190565b5f602082840312156102cc575f5ffd5b81356001600160a01b03811681146102e2575f5ffd5b9392505050565b634e487b7160e01b5f52604160045260245ffd5b5f6020828403121561030d575f5ffd5b813567ffffffffffffffff811115610323575f5ffd5b8201601f81018413610333575f5ffd5b803567ffffffffffffffff81111561034d5761034d6102e9565b604051601f8201601f19908116603f0116810167ffffffffffffffff8111828210171561037c5761037c6102e9565b604052818152828201602001861015610393575f5ffd5b816020840160208301375f91810160200191909152949350505050565b60018060a01b0383168152604060208201525f82518060408401528060208501606085015e5f606082850101526060601f19601f830116840101915050939250505056fe60a060405234801561000f575f5ffd5b5060405161055638038061055683398101604081905261002e91610342565b818161003a828261004f565b506001600160a01b0316608052506104249050565b6100588261010c565b6040516001600160a01b038316907f1cf3b03a6cf19fa2baba4df148e9dcabedea7f8a5c07840e207e5c089be95d3e905f90a2805115610100576100fb826001600160a01b0316635c60da1b6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156100d1573d5f5f3e3d5ffd5b505050506040513d601f19601f820116820180604052508101906100f59190610404565b8261021a565b505050565b6101086102bb565b5050565b806001600160a01b03163b5f0361014657604051631933b43b60e21b81526001600160a01b03821660048201526024015b60405180910390fd5b807fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d5080546001600160a01b0319166001600160a01b0392831617905560408051635c60da1b60e01b815290515f92841691635c60da1b9160048083019260209291908290030181865afa1580156101bf573d5f5f3e3d5ffd5b505050506040513d601f19601f820116820180604052508101906101e39190610404565b9050806001600160a01b03163b5f0361010857604051634c9c8ce360e01b81526001600160a01b038216600482015260240161013d565b60605f61022784846102dc565b905080801561024857505f3d118061024857505f846001600160a01b03163b115b1561025d576102556102ef565b9150506102b5565b801561028757604051639996b31560e01b81526001600160a01b038516600482015260240161013d565b3d1561029a57610295610308565b6102b3565b60405163d6bda27560e01b815260040160405180910390fd5b505b92915050565b34156102da5760405163b398979f60e01b815260040160405180910390fd5b565b5f5f5f835160208501865af49392505050565b6040513d81523d5f602083013e3d602001810160405290565b6040513d5f823e3d81fd5b80516001600160a01b0381168114610329575f5ffd5b919050565b634e487b7160e01b5f52604160045260245ffd5b5f5f60408385031215610353575f5ffd5b61035c83610313565b60208401519092506001600160401b03811115610377575f5ffd5b8301601f81018513610387575f5ffd5b80516001600160401b038111156103a0576103a061032e565b604051601f8201601f19908116603f011681016001600160401b03811182821017156103ce576103ce61032e565b6040528181528282016020018710156103e5575f5ffd5b8160208401602083015e5f602083830101528093505050509250929050565b5f60208284031215610414575f5ffd5b61041d82610313565b9392505050565b60805161011b61043b5f395f601d015261011b5ff3fe6080604052600a600c565b005b60186014601a565b609d565b565b5f7f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316635c60da1b6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156076573d5f5f3e3d5ffd5b505050506040513d601f19601f820116820180604052508101906098919060ba565b905090565b365f5f375f5f365f845af43d5f5f3e80801560b6573d5ff35b3d5ffd5b5f6020828403121560c9575f5ffd5b81516001600160a01b038116811460de575f5ffd5b939250505056fea2646970667358221220b4d64fd7195fa42f26117eff095473c1e25894fb0cff5b2445bb04c4f290a30b64736f6c634300081c0033a2646970667358221220a843bcda7e9912ceae439a225d3f04c650d586e7101d3c9f557eb8994f8298b664736f6c634300081c0033",
+  "deployedBytecode": "0x608060405234801561000f575f5ffd5b5060043610610060575f3560e01c80633659cfe6146100645780635c60da1b14610079578063715018a6146100a25780638da5cb5b146100aa578063d0b74ad4146100ba578063f2fde38b146100cd575b5f5ffd5b6100776100723660046102bc565b6100e0565b005b6001546001600160a01b03165b6040516001600160a01b03909116815260200160405180910390f35b6100776100f4565b5f546001600160a01b0316610086565b6100776100c83660046102fd565b610107565b6100776100db3660046102bc565b610177565b6100e86101b6565b6100f1816101e2565b50565b6100fc6101b6565b6101055f610260565b565b5f3082604051610116906102af565b6101219291906103b0565b604051809103905ff08015801561013a573d5f5f3e3d5ffd5b5060405190915033906001600160a01b038316907fae2292667db92e6da511010072f5a5e0804f89f8d78418b077abb4893849ff87905f90a35050565b61017f6101b6565b6001600160a01b0381166101ad57604051631e4fbdf760e01b81525f60048201526024015b60405180910390fd5b6100f181610260565b5f546001600160a01b031633146101055760405163118cdaa760e01b81523360048201526024016101a4565b806001600160a01b03163b5f036102175760405163211eb15960e21b81526001600160a01b03821660048201526024016101a4565b600180546001600160a01b0319166001600160a01b0383169081179091556040517fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b905f90a250565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b610556806103f583390190565b5f602082840312156102cc575f5ffd5b81356001600160a01b03811681146102e2575f5ffd5b9392505050565b634e487b7160e01b5f52604160045260245ffd5b5f6020828403121561030d575f5ffd5b813567ffffffffffffffff811115610323575f5ffd5b8201601f81018413610333575f5ffd5b803567ffffffffffffffff81111561034d5761034d6102e9565b604051601f8201601f19908116603f0116810167ffffffffffffffff8111828210171561037c5761037c6102e9565b604052818152828201602001861015610393575f5ffd5b816020840160208301375f91810160200191909152949350505050565b60018060a01b0383168152604060208201525f82518060408401528060208501606085015e5f606082850101526060601f19601f830116840101915050939250505056fe60a060405234801561000f575f5ffd5b5060405161055638038061055683398101604081905261002e91610342565b818161003a828261004f565b506001600160a01b0316608052506104249050565b6100588261010c565b6040516001600160a01b038316907f1cf3b03a6cf19fa2baba4df148e9dcabedea7f8a5c07840e207e5c089be95d3e905f90a2805115610100576100fb826001600160a01b0316635c60da1b6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156100d1573d5f5f3e3d5ffd5b505050506040513d601f19601f820116820180604052508101906100f59190610404565b8261021a565b505050565b6101086102bb565b5050565b806001600160a01b03163b5f0361014657604051631933b43b60e21b81526001600160a01b03821660048201526024015b60405180910390fd5b807fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d5080546001600160a01b0319166001600160a01b0392831617905560408051635c60da1b60e01b815290515f92841691635c60da1b9160048083019260209291908290030181865afa1580156101bf573d5f5f3e3d5ffd5b505050506040513d601f19601f820116820180604052508101906101e39190610404565b9050806001600160a01b03163b5f0361010857604051634c9c8ce360e01b81526001600160a01b038216600482015260240161013d565b60605f61022784846102dc565b905080801561024857505f3d118061024857505f846001600160a01b03163b115b1561025d576102556102ef565b9150506102b5565b801561028757604051639996b31560e01b81526001600160a01b038516600482015260240161013d565b3d1561029a57610295610308565b6102b3565b60405163d6bda27560e01b815260040160405180910390fd5b505b92915050565b34156102da5760405163b398979f60e01b815260040160405180910390fd5b565b5f5f5f835160208501865af49392505050565b6040513d81523d5f602083013e3d602001810160405290565b6040513d5f823e3d81fd5b80516001600160a01b0381168114610329575f5ffd5b919050565b634e487b7160e01b5f52604160045260245ffd5b5f5f60408385031215610353575f5ffd5b61035c83610313565b60208401519092506001600160401b03811115610377575f5ffd5b8301601f81018513610387575f5ffd5b80516001600160401b038111156103a0576103a061032e565b604051601f8201601f19908116603f011681016001600160401b03811182821017156103ce576103ce61032e565b6040528181528282016020018710156103e5575f5ffd5b8160208401602083015e5f602083830101528093505050509250929050565b5f60208284031215610414575f5ffd5b61041d82610313565b9392505050565b60805161011b61043b5f395f601d015261011b5ff3fe6080604052600a600c565b005b60186014601a565b609d565b565b5f7f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316635c60da1b6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156076573d5f5f3e3d5ffd5b505050506040513d601f19601f820116820180604052508101906098919060ba565b905090565b365f5f375f5f365f845af43d5f5f3e80801560b6573d5ff35b3d5ffd5b5f6020828403121560c9575f5ffd5b81516001600160a01b038116811460de575f5ffd5b939250505056fea2646970667358221220b4d64fd7195fa42f26117eff095473c1e25894fb0cff5b2445bb04c4f290a30b64736f6c634300081c0033a2646970667358221220a843bcda7e9912ceae439a225d3f04c650d586e7101d3c9f557eb8994f8298b664736f6c634300081c0033",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "immutableReferences": {},
+  "inputSourceName": "project/contracts/beacons/FactoryBeacon.sol",
+  "buildInfoId": "solc-0_8_28-29a5573d855c14e88a67489218e1f33cf1aa515b",
+  "ast": {
+    "absolutePath": "project/contracts/beacons/FactoryBeacon.sol",
+    "exportedSymbols": {
+      "FactoryBeacon": [
+        1436
+      ],
+      "UpgradeableBeacon": [
+        654
+      ],
+      "UserBeaconProxy": [
+        1456
+      ]
+    },
+    "id": 1437,
+    "license": "MIT",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1381,
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".24"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "32:24:12"
+      },
+      {
+        "absolutePath": "npm/@openzeppelin/contracts@5.6.1/proxy/beacon/UpgradeableBeacon.sol",
+        "file": "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol",
+        "id": 1383,
+        "nameLocation": "-1:-1:-1",
+        "nodeType": "ImportDirective",
+        "scope": 1437,
+        "sourceUnit": 655,
+        "src": "58:93:12",
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 1382,
+              "name": "UpgradeableBeacon",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 654,
+              "src": "66:17:12",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "project/contracts/beacons/UserBeaconProxy.sol",
+        "file": "./UserBeaconProxy.sol",
+        "id": 1385,
+        "nameLocation": "-1:-1:-1",
+        "nodeType": "ImportDirective",
+        "scope": 1437,
+        "sourceUnit": 1457,
+        "src": "152:54:12",
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 1384,
+              "name": "UserBeaconProxy",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 1456,
+              "src": "160:15:12",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 1387,
+              "name": "UpgradeableBeacon",
+              "nameLocations": [
+                "481:17:12"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 654,
+              "src": "481:17:12"
+            },
+            "id": 1388,
+            "nodeType": "InheritanceSpecifier",
+            "src": "481:17:12"
+          }
+        ],
+        "canonicalName": "FactoryBeacon",
+        "contractDependencies": [
+          1456
+        ],
+        "contractKind": "contract",
+        "documentation": {
+          "id": 1386,
+          "nodeType": "StructuredDocumentation",
+          "src": "208:246:12",
+          "text": " @title FactoryBeacon\n @notice Beacon that can deploy fresh UserBeaconProxy instances pointing at itself.\n @dev Combines UpgradeableBeacon with a proxy-deployment helper so callers can spin\n      up new proxies in one transaction."
+        },
+        "fullyImplemented": true,
+        "id": 1436,
+        "linearizedBaseContracts": [
+          1436,
+          654,
+          147,
+          1074,
+          566
+        ],
+        "name": "FactoryBeacon",
+        "nameLocation": "464:13:12",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "anonymous": false,
+            "documentation": {
+              "id": 1389,
+              "nodeType": "StructuredDocumentation",
+              "src": "503:211:12",
+              "text": " @notice Emitted when a new beacon proxy is deployed via this factory.\n @param proxy The address of the newly created proxy.\n @param deployer The caller that requested the proxy deployment."
+            },
+            "eventSelector": "ae2292667db92e6da511010072f5a5e0804f89f8d78418b077abb4893849ff87",
+            "id": 1395,
+            "name": "BeaconProxyCreated",
+            "nameLocation": "723:18:12",
+            "nodeType": "EventDefinition",
+            "parameters": {
+              "id": 1394,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1391,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "proxy",
+                  "nameLocation": "758:5:12",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1395,
+                  "src": "742:21:12",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 1390,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "742:7:12",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1393,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "deployer",
+                  "nameLocation": "781:8:12",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1395,
+                  "src": "765:24:12",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 1392,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "765:7:12",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "741:49:12"
+            },
+            "src": "717:74:12"
+          },
+          {
+            "body": {
+              "id": 1405,
+              "nodeType": "Block",
+              "src": "891:2:12",
+              "statements": []
+            },
+            "id": 1406,
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [
+              {
+                "arguments": [
+                  {
+                    "id": 1400,
+                    "name": "implementationAddress",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 1397,
+                    "src": "856:21:12",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  {
+                    "expression": {
+                      "id": 1401,
+                      "name": "msg",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": -15,
+                      "src": "879:3:12",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_magic_message",
+                        "typeString": "msg"
+                      }
+                    },
+                    "id": 1402,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberLocation": "883:6:12",
+                    "memberName": "sender",
+                    "nodeType": "MemberAccess",
+                    "src": "879:10:12",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  }
+                ],
+                "id": 1403,
+                "kind": "baseConstructorSpecifier",
+                "modifierName": {
+                  "id": 1399,
+                  "name": "UpgradeableBeacon",
+                  "nameLocations": [
+                    "838:17:12"
+                  ],
+                  "nodeType": "IdentifierPath",
+                  "referencedDeclaration": 654,
+                  "src": "838:17:12"
+                },
+                "nodeType": "ModifierInvocation",
+                "src": "838:52:12"
+              }
+            ],
+            "name": "",
+            "nameLocation": "-1:-1:-1",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1398,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1397,
+                  "mutability": "mutable",
+                  "name": "implementationAddress",
+                  "nameLocation": "815:21:12",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1406,
+                  "src": "807:29:12",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 1396,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "807:7:12",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "806:31:12"
+            },
+            "returnParameters": {
+              "id": 1404,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "891:0:12"
+            },
+            "scope": 1436,
+            "src": "795:98:12",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 1434,
+              "nodeType": "Block",
+              "src": "1109:132:12",
+              "statements": [
+                {
+                  "assignments": [
+                    1414
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 1414,
+                      "mutability": "mutable",
+                      "name": "proxy",
+                      "nameLocation": "1131:5:12",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 1434,
+                      "src": "1115:21:12",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_UserBeaconProxy_$1456",
+                        "typeString": "contract UserBeaconProxy"
+                      },
+                      "typeName": {
+                        "id": 1413,
+                        "nodeType": "UserDefinedTypeName",
+                        "pathNode": {
+                          "id": 1412,
+                          "name": "UserBeaconProxy",
+                          "nameLocations": [
+                            "1115:15:12"
+                          ],
+                          "nodeType": "IdentifierPath",
+                          "referencedDeclaration": 1456,
+                          "src": "1115:15:12"
+                        },
+                        "referencedDeclaration": 1456,
+                        "src": "1115:15:12",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_UserBeaconProxy_$1456",
+                          "typeString": "contract UserBeaconProxy"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 1424,
+                  "initialValue": {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "id": 1420,
+                            "name": "this",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": -28,
+                            "src": "1167:4:12",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_FactoryBeacon_$1436",
+                              "typeString": "contract FactoryBeacon"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_FactoryBeacon_$1436",
+                              "typeString": "contract FactoryBeacon"
+                            }
+                          ],
+                          "id": 1419,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "1159:7:12",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 1418,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "1159:7:12",
+                            "typeDescriptions": {}
+                          }
+                        },
+                        "id": 1421,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "nameLocations": [],
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "1159:13:12",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "id": 1422,
+                        "name": "data",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 1409,
+                        "src": "1174:4:12",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      ],
+                      "id": 1417,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "NewExpression",
+                      "src": "1139:19:12",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_creation_nonpayable$_t_address_$_t_bytes_memory_ptr_$returns$_t_contract$_UserBeaconProxy_$1456_$",
+                        "typeString": "function (address,bytes memory) returns (contract UserBeaconProxy)"
+                      },
+                      "typeName": {
+                        "id": 1416,
+                        "nodeType": "UserDefinedTypeName",
+                        "pathNode": {
+                          "id": 1415,
+                          "name": "UserBeaconProxy",
+                          "nameLocations": [
+                            "1143:15:12"
+                          ],
+                          "nodeType": "IdentifierPath",
+                          "referencedDeclaration": 1456,
+                          "src": "1143:15:12"
+                        },
+                        "referencedDeclaration": 1456,
+                        "src": "1143:15:12",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_UserBeaconProxy_$1456",
+                          "typeString": "contract UserBeaconProxy"
+                        }
+                      }
+                    },
+                    "id": 1423,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1139:40:12",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_UserBeaconProxy_$1456",
+                      "typeString": "contract UserBeaconProxy"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1115:64:12"
+                },
+                {
+                  "eventCall": {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "id": 1428,
+                            "name": "proxy",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 1414,
+                            "src": "1217:5:12",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_UserBeaconProxy_$1456",
+                              "typeString": "contract UserBeaconProxy"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_UserBeaconProxy_$1456",
+                              "typeString": "contract UserBeaconProxy"
+                            }
+                          ],
+                          "id": 1427,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "1209:7:12",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 1426,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "1209:7:12",
+                            "typeDescriptions": {}
+                          }
+                        },
+                        "id": 1429,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "nameLocations": [],
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "1209:14:12",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "expression": {
+                          "id": 1430,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": -15,
+                          "src": "1225:3:12",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 1431,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "1229:6:12",
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "src": "1225:10:12",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "id": 1425,
+                      "name": "BeaconProxyCreated",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 1395,
+                      "src": "1190:18:12",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_address_$returns$__$",
+                        "typeString": "function (address,address)"
+                      }
+                    },
+                    "id": 1432,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1190:46:12",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 1433,
+                  "nodeType": "EmitStatement",
+                  "src": "1185:51:12"
+                }
+              ]
+            },
+            "documentation": {
+              "id": 1407,
+              "nodeType": "StructuredDocumentation",
+              "src": "897:154:12",
+              "text": " @notice Deploys a new UserBeaconProxy pointing at this beacon.\n @param data Initialization calldata forwarded to the proxy constructor."
+            },
+            "functionSelector": "d0b74ad4",
+            "id": 1435,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "createBeaconProxy",
+            "nameLocation": "1063:17:12",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1410,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1409,
+                  "mutability": "mutable",
+                  "name": "data",
+                  "nameLocation": "1094:4:12",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1435,
+                  "src": "1081:17:12",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 1408,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1081:5:12",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1080:19:12"
+            },
+            "returnParameters": {
+              "id": 1411,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1109:0:12"
+            },
+            "scope": 1436,
+            "src": "1054:187:12",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "scope": 1437,
+        "src": "455:788:12",
+        "usedErrors": [
+          13,
+          18,
+          584
+        ],
+        "usedEvents": [
+          24,
+          589,
+          1395
+        ]
+      }
+    ],
+    "src": "32:1212:12"
+  },
+  "metadata": {
+    "compiler": {
+      "version": "0.8.28+commit.7893614a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "implementationAddress",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
+            }
+          ],
+          "name": "BeaconInvalidImplementation",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnableInvalidOwner",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "name": "OwnableUnauthorizedAccount",
+          "type": "error"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "proxy",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "deployer",
+              "type": "address"
+            }
+          ],
+          "name": "BeaconProxyCreated",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
+            }
+          ],
+          "name": "Upgraded",
+          "type": "event"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "name": "createBeaconProxy",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "implementation",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "renounceOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "transferOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newImplementation",
+              "type": "address"
+            }
+          ],
+          "name": "upgradeTo",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      ],
+      "devdoc": {
+        "details": "Combines UpgradeableBeacon with a proxy-deployment helper so callers can spin      up new proxies in one transaction.",
+        "errors": {
+          "BeaconInvalidImplementation(address)": [
+            {
+              "details": "The `implementation` of the beacon is invalid."
+            }
+          ],
+          "OwnableInvalidOwner(address)": [
+            {
+              "details": "The owner is not a valid owner account. (eg. `address(0)`)"
+            }
+          ],
+          "OwnableUnauthorizedAccount(address)": [
+            {
+              "details": "The caller account is not authorized to perform an operation."
+            }
+          ]
+        },
+        "events": {
+          "BeaconProxyCreated(address,address)": {
+            "params": {
+              "deployer": "The caller that requested the proxy deployment.",
+              "proxy": "The address of the newly created proxy."
+            }
+          },
+          "Upgraded(address)": {
+            "details": "Emitted when the implementation returned by the beacon is changed."
+          }
+        },
+        "kind": "dev",
+        "methods": {
+          "createBeaconProxy(bytes)": {
+            "params": {
+              "data": "Initialization calldata forwarded to the proxy constructor."
+            }
+          },
+          "implementation()": {
+            "details": "Returns the current implementation address."
+          },
+          "owner()": {
+            "details": "Returns the address of the current owner."
+          },
+          "renounceOwnership()": {
+            "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner."
+          },
+          "transferOwnership(address)": {
+            "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+          },
+          "upgradeTo(address)": {
+            "details": "Upgrades the beacon to a new implementation. Emits an {Upgraded} event. Requirements: - msg.sender must be the owner of the contract. - `newImplementation` must be a contract."
+          }
+        },
+        "title": "FactoryBeacon",
+        "version": 1
+      },
+      "userdoc": {
+        "events": {
+          "BeaconProxyCreated(address,address)": {
+            "notice": "Emitted when a new beacon proxy is deployed via this factory."
+          }
+        },
+        "kind": "user",
+        "methods": {
+          "createBeaconProxy(bytes)": {
+            "notice": "Deploys a new UserBeaconProxy pointing at this beacon."
+          }
+        },
+        "notice": "Beacon that can deploy fresh UserBeaconProxy instances pointing at itself.",
+        "version": 1
+      }
+    },
+    "settings": {
+      "compilationTarget": {
+        "project/contracts/beacons/FactoryBeacon.sol": "FactoryBeacon"
+      },
+      "evmVersion": "cancun",
+      "libraries": {},
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "remappings": [
+        "project/:@openzeppelin/contracts/=npm/@openzeppelin/contracts@5.6.1/"
+      ]
+    },
+    "sources": {
+      "npm/@openzeppelin/contracts@5.6.1/access/Ownable.sol": {
+        "keccak256": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://8ed324d3920bb545059d66ab97d43e43ee85fd3bd52e03e401f020afb0b120f6",
+          "dweb:/ipfs/QmfEckWLmZkDDcoWrkEvMWhms66xwTLff9DDhegYpvHo1a"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/interfaces/IERC1967.sol": {
+        "keccak256": "0xbf2aefe54b76d7f7bcd4f6da1080b7b1662611937d870b880db584d09cea56b5",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://f5e7e2f12e0feec75296e57f51f82fdaa8bd1551f4b8cc6560442c0bf60f818c",
+          "dweb:/ipfs/QmcW9wDMaQ8RbQibMarfp17a3bABzY5KraWe2YDwuUrUoz"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/proxy/ERC1967/ERC1967Utils.sol": {
+        "keccak256": "0x3d8b816f00b4cabe9a9fb7e84908ef785d6e5b0ef988bcd3c52fe811b4559686",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://1e41440b371ccf99aa64903f055a5aa2419bf5b9dde0cb6a89f49b1317881dce",
+          "dweb:/ipfs/QmQY4wtjmo75SvystNQwsNLXix2PHTduvJXkPK5qyu7Niz"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/proxy/Proxy.sol": {
+        "keccak256": "0x80935e4fae2c414f4e7789e13a820d06901182a5733ab006f8d68b5b09db993f",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://752d991d6ca1087587b48103bc623f74888054f58581ff29166d90889c4765c5",
+          "dweb:/ipfs/QmRBsa6K2ChKxVWYY54YiyYhDBPbmY5HyKCtij5LoWh56o"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/proxy/beacon/BeaconProxy.sol": {
+        "keccak256": "0xef92aebf99249a8ac1d682b9a0f04b6f2af2a8f631cb126625bab15bafcefda8",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://9a0709f54f682b4d22d3108e5951019145cd0b4abda4517638410d231f37d960",
+          "dweb:/ipfs/QmdR3oRXqheNuBVRW1cMqDCffBsV1DtuvRHuaDph4ZTku2"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/proxy/beacon/IBeacon.sol": {
+        "keccak256": "0x20462ddb2665e9521372c76b001d0ce196e59dbbd989de9af5576cad0bd5628b",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://f417fd12aeec8fbfaceaa30e3a08a0724c0bc39de363e2acf6773c897abbaf6d",
+          "dweb:/ipfs/QmU4Hko6sApdweVM92CsiuLKkCk8HfyBeutF89PCTz5Tye"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/proxy/beacon/UpgradeableBeacon.sol": {
+        "keccak256": "0x5920bac7215d12961e23b207f6e81a1d64aa4935a4469abe95b64a96a3c3007b",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://b34bb828c45c3a4ebf6c2c585971abf5089e61357a3818a2900c7e85b74a1299",
+          "dweb:/ipfs/QmewGAzKsPXYfSjCKxuH1SekKxtdyzhdbdyxjF5gohLigt"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/utils/Address.sol": {
+        "keccak256": "0x0fa9e0d3a859900b5a46f70a03c73adf259603d5e05027a37fe0b45529d85346",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://c2add4da0240c9f2ce47649c8bb6b11b40e98cf6f88b8bdc76b2704e89391710",
+          "dweb:/ipfs/QmNQTwF2uVzu4CRtNxr8bxyP9XuW6VsZuo2Nr4KR2bZr3d"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/utils/Context.sol": {
+        "keccak256": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://6a708e8a5bdb1011c2c381c9a5cfd8a9a956d7d0a9dc1bd8bcdaf52f76ef2f12",
+          "dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/utils/Errors.sol": {
+        "keccak256": "0x6afa713bfd42cf0f7656efa91201007ac465e42049d7de1d50753a373648c123",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://ba1d02f4847670a1b83dec9f7d37f0b0418d6043447b69f3a29a5f9efc547fcf",
+          "dweb:/ipfs/QmQ7iH2keLNUKgq2xSWcRmuBE5eZ3F5whYAkAGzCNNoEWB"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/utils/LowLevelCall.sol": {
+        "keccak256": "0x6ba3db1346fc75a832aa6cd075e12f6f1fa172fa2122a020f324c319fe5be75e",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://ab92e9e1cb08144c43fa3a383a87c48f49a652d51156950b928c2a50bee6b3a5",
+          "dweb:/ipfs/QmWeKkKZBgLDKgRFGKCzsKybYF7C8g9ysg5kU1b1p7QFBi"
+        ]
+      },
+      "npm/@openzeppelin/contracts@5.6.1/utils/StorageSlot.sol": {
+        "keccak256": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://9f660b1f351b757dfe01438e59888f31f33ded3afcf5cb5b0d9bf9aa6f320a8b",
+          "dweb:/ipfs/QmarDJ5hZEgBtCmmrVzEZWjub9769eD686jmzb2XpSU1cM"
+        ]
+      },
+      "project/contracts/beacons/FactoryBeacon.sol": {
+        "keccak256": "0x03845422a0f568658875b664c5f9807dc1b0c65d253a27db5d9be98cd32cfad5",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://cb0432fc9f11b18c2f6ec0827efbdadb313ed0be37948da0ca57b39247b880f1",
+          "dweb:/ipfs/Qmcpyyza8uqymKgLEwKns8DoZbKkcp4oSDzDJRPosDRU3W"
+        ]
+      },
+      "project/contracts/beacons/UserBeaconProxy.sol": {
+        "keccak256": "0xbd45d9a6b5a7898f6ad305da170ec78622ecc3fbf916e17a079ea26405befe62",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://bf84778b88e18e05ba3cbc83e8c21114012acf565efaa2e466e17ee5df068443",
+          "dweb:/ipfs/QmRnhy2rjHwqrTWyqnXYQmEFvuXzZGMJ6NWboer8aQGkmZ"
+        ]
+      }
+    },
+    "version": 1
+  }
+}
