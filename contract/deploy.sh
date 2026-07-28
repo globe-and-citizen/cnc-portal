@@ -8,8 +8,7 @@ if [ -z "$1" ]; then
 fi
 
 
-# npx hardhat ignition deploy ignition/modules/ProxyModule.ts --network "$1"
-if [ "$1" != "localhost" ] && [ "$1" != "hardhat" ]; then
+if [ "$1" != "localhost" ] && [ "$1" != "hardhat" ] && [ "$1" != "polFork" ]; then
   npx hardhat ignition deploy ignition/modules/FeeCollectorModule.ts --network "$1"
   npx hardhat ignition deploy ignition/modules/BankBeaconModule.ts --network "$1"
   npx hardhat ignition deploy ignition/modules/BoardOfDirectorsBeaconModule.ts --network "$1"
@@ -19,6 +18,8 @@ if [ "$1" != "localhost" ] && [ "$1" != "hardhat" ]; then
   npx hardhat ignition deploy ignition/modules/ExpenseAccountEIP712Module.ts --network "$1"
   npx hardhat ignition deploy ignition/modules/CashRemunerationEIP712Module.ts --network "$1"
   npx hardhat ignition deploy ignition/modules/SafeDepositRouterBeaconModule.ts --network "$1"
+  npx hardhat ignition deploy ignition/modules/VestingBeaconModule.ts --network "$1"
+  npx hardhat ignition deploy ignition/modules/FixedReturnBeaconModule.ts --network "$1"
 fi
 
 npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network "$1"

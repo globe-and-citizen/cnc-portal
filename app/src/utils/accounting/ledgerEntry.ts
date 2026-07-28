@@ -32,6 +32,14 @@ export type UseCase =
   /** A team member funds the Safe to invest & get SHER — booked as a capital
    *  contribution (Cr Investor Equity) when no SafeDepositRouter event is present. */
   | 'UC-MEMBER-01'
+  /** A lender funds a Community Credit offer → the team borrows (Cr Loan Payable). */
+  | 'UC-CREDIT-01'
+  /** A fully (or partially) funded offer sweeps its principal to Bank — internal move. */
+  | 'UC-CREDIT-02'
+  /** Repayment installment pushed to a lender — principal leg and/or interest leg. */
+  | 'UC-CREDIT-03'
+  /** Principal refunded to a lender when an offer missed its funding target. */
+  | 'UC-CREDIT-04'
   /** Wage earned — accrual booked when the weekly claim is submitted. */
   | 'UC-CASH-02'
   /** Wage withdrawal settlement (cash leg and/or share leg). */

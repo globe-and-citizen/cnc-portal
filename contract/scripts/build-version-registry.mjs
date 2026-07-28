@@ -15,15 +15,24 @@ const VERSIONS_DIR = join(REPO, 'contract/versions')
 
 // Per-version metadata (deploy commit + on-chain deploy date + on-chain version()
 // range for future runtime resolution). Add a row here when cutting a new version.
-// The three real prod Officer#FactoryBeacon generations (with live teams),
+// The four real prod Officer#FactoryBeacon generations (with live teams),
 // identified from prod detection across teams — NOT the raw git deploy log
 // (deployed_addresses was hand-edited across branches, so it's unreliable).
 const VERSIONS = {
   V0: { commit: 'a8c6f815b', deployedAt: '2026-02-20', min: '0.0.0', max: '0.0.999' },
   'V0.1': { commit: 'd79baeaaf', deployedAt: '2026-04-24', min: '0.1.0', max: '0.1.999' },
-  V1: { commit: '9613f0882', deployedAt: '2026-04-24', min: '1.0.0', max: '1.999.999' }
+  V1: { commit: '9613f0882', deployedAt: '2026-04-24', min: '1.0.0', max: '1.999.999' },
+  V2: {
+    commit: '026a2377b',
+    deployedAt: '2026-07-27',
+    min: '2.0.0',
+    max: '2.999.999',
+    // V2 beaconized Vesting (was a transparent proxy through V1); prefer its
+    // beacon-pattern implementation key over the legacy `VestingModule#Vesting`.
+    implOverride: { Vesting: 'VestingBeaconModule#Vesting' }
+  }
 }
-const CURRENT = 'V1'
+const CURRENT = 'V2'
 
 // Canonical contractType -> Ignition module key. Entries whose key is absent from a
 // given version's deployed_addresses are dropped for that version.
@@ -34,6 +43,8 @@ const BEACONS = {
   Proposals: 'ProposalBeaconModule#Beacon',
   Elections: 'ElectionsBeaconModule#Beacon',
   InvestorV1: 'InvestorsV1BeaconModule#Beacon',
+  // V2 dropped the "V1" suffix (Investor.sol renamed away from InvestorV1.sol).
+  Investor: 'InvestorBeaconModule#Beacon',
   Voting: 'VotingBeaconModule#Beacon',
   ExpenseAccountEIP712: 'ExpenseAccountEIP712Module#FactoryBeacon',
   CashRemunerationEIP712: 'CashRemunerationEIP712Module#FactoryBeacon',
@@ -48,6 +59,7 @@ const IMPLEMENTATIONS = {
   Proposals: 'ProposalBeaconModule#Proposals',
   Elections: 'ElectionsBeaconModule#Elections',
   InvestorV1: 'InvestorsV1BeaconModule#InvestorV1',
+  Investor: 'InvestorBeaconModule#Investor',
   Voting: 'VotingBeaconModule#Voting',
   ExpenseAccountEIP712: 'ExpenseAccountEIP712Module#ExpenseAccountEIP712',
   CashRemunerationEIP712: 'CashRemunerationEIP712Module#CashRemunerationEIP712',
@@ -88,7 +100,7 @@ for (const [version, meta] of Object.entries(VERSIONS)) {
 
 const registry = {
   $comment:
-    "Deployment-aligned contract-artifact versions on Polygon, matched to the three real prod Officer#FactoryBeacon generations (detected across teams). Each folder (contract/versions/<version>/) snapshots the ABIs (recompiled at the deploy commit) + deployed_addresses (from git) for one deployment — see `officer`/`commit`/`deployedAt`. V0/V0.1/V1 are three DISTINCT full redeployments (each a new Officer + factory). `officerVersions` (backend TeamOfficer.version tags) is left empty: runtime per-team resolution is not wired yet — but each folder's `officer`/`beacons.Officer` is the concrete on-chain identifier a team maps to. Distributed to consumers as 'version-registry.json' via `npm run mc`. FLAT string maps keep prettier width-stable across consumers. See contract/versions/README.md.",
+    "Deployment-aligned contract-artifact versions on Polygon, matched to the four real prod Officer#FactoryBeacon generations (detected across teams). Each folder (contract/versions/<version>/) snapshots the ABIs (recompiled at the deploy commit) + deployed_addresses (from git) for one deployment — see `officer`/`commit`/`deployedAt`. V0/V0.1/V1/V2 are four DISTINCT full redeployments (each a new Officer + factory). `officerVersions` (backend TeamOfficer.version tags) is left empty: runtime per-team resolution is not wired yet — but each folder's `officer`/`beacons.Officer` is the concrete on-chain identifier a team maps to. Distributed to consumers as 'version-registry.json' via `npm run mc`. FLAT string maps keep prettier width-stable across consumers. See contract/versions/README.md.",
   current: CURRENT,
   folders
 }

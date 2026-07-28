@@ -20,6 +20,9 @@ vi.mock('@/composables/cashRemuneration/useCashRemunerationEventsViaLogs', () =>
 vi.mock('@/composables/expense/useExpenseEventsViaLogs', () => ({
   useExpenseEventsViaLogs: () => emptyLogsFeed()
 }))
+vi.mock('@/composables/fixedReturn/useFixedReturnEventsViaLogs', () => ({
+  useFixedReturnEventsViaLogs: () => emptyLogsFeed()
+}))
 vi.mock('@/composables/investor/useInvestorEventsViaLogs', () => ({
   useInvestorEventsViaLogs: () => emptyLogsFeed()
 }))
