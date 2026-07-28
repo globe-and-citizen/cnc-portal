@@ -7,13 +7,13 @@ import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 const SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES = {
   PAUSED: 'paused',
   OWNER: 'owner',
-  DEPOSITS_ENABLED: 'depositsEnabled',
-  SAFE_ADDRESS: 'safeAddress',
-  OFFICER_ADDRESS: 'officerAddress',
-  MULTIPLIER: 'multiplier',
+  DEPOSITS_ENABLED: 'getDepositsEnabled',
+  SAFE_ADDRESS: 'getSafeAddress',
+  OFFICER_ADDRESS: 'getOfficerAddress',
+  MULTIPLIER: 'getMultiplier',
   MIN_MULTIPLIER: 'MIN_MULTIPLIER',
   IS_TOKEN_SUPPORTED: 'isTokenSupported',
-  TOKEN_DECIMALS: 'tokenDecimals',
+  TOKEN_DECIMALS: 'getTokenDecimals',
   CALCULATE_COMPENSATION: 'calculateCompensation'
 } as const
 
