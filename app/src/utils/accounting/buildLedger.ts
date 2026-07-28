@@ -27,12 +27,13 @@
 import { classOf, type AccountName } from './chartOfAccounts'
 import type { LedgerEntry } from './ledgerEntry'
 
-/** The five on-chain cash pockets that roll up into total Cash. */
+/** The on-chain cash pockets that roll up into total Cash. */
 const CASH_ACCOUNTS: ReadonlySet<AccountName> = new Set<AccountName>([
   'Cash — Bank',
   'Cash — Safe',
   'Cash — Payroll',
   'Cash — Expense',
+  'Cash — Credit',
   'Cash — FeeCollector'
 ])
 

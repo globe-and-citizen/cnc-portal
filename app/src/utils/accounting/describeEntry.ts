@@ -25,6 +25,10 @@ const ENTRY_LABEL: Record<UseCase, string> = {
   'UC-BANK-03': 'Treasury funding',
   'UC-SDR-01': 'Investor contribution',
   'UC-MEMBER-01': 'Member capital contribution',
+  'UC-CREDIT-01': 'Credit funds lent',
+  'UC-CREDIT-02': 'Credit principal to Bank',
+  'UC-CREDIT-03': 'Credit repayment',
+  'UC-CREDIT-04': 'Credit principal refund',
   'UC-CASH-02': 'Wage accrual',
   'UC-CASH-03': 'Wage settlement',
   'UC-EXP-01': 'Operating expense',
@@ -53,7 +57,11 @@ export type ActivityCell =
   | { kind: 'plain'; text: string }
 
 /** Internal pocket-to-pocket moves — rendered as two contract avatars (from → to). */
-const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>(['INTERNAL', 'UC-BANK-03'])
+const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
+  'INTERNAL',
+  'UC-BANK-03',
+  'UC-CREDIT-02'
+])
 
 /** Use cases that name a single party (member / investor / client) — avatar + predicate. */
 const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
@@ -63,6 +71,9 @@ const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'UC-BANK-02',
   'UC-SDR-01',
   'UC-MEMBER-01',
+  'UC-CREDIT-01',
+  'UC-CREDIT-03',
+  'UC-CREDIT-04',
   'UC-EXP-01',
   'UC-INV-01',
   'DEFAULT-D'
@@ -127,6 +138,16 @@ function predicate(entry: LedgerEntry): string {
       return `invested ${amount} in capital${sher}`
     case 'UC-MEMBER-01':
       return `invested ${amount} in capital${sher}`
+    case 'UC-CREDIT-01':
+      return `lent ${amount} to the community credit`
+    case 'UC-CREDIT-03':
+      // The two legs of one installment read differently — the split is what the
+      // interest leg's `Interest Expense` debit marks (see the FixedReturn mapper).
+      return entry.debit === 'Interest Expense'
+        ? `was paid ${amount} of interest on their loan`
+        : `was repaid ${amount} of loan principal`
+    case 'UC-CREDIT-04':
+      return `was refunded ${amount} of lent principal`
     case 'UC-EXP-01':
       return expensePredicate(entry, amount)
     case 'UC-INV-01':
