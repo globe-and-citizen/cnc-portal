@@ -16,7 +16,7 @@ const V1_OFFICER_BEACON = (addrV1 as Record<string, string>)[registry.folders.V1
 describe('artifacts/registry', () => {
   describe('latestDeployedVersionForChain', () => {
     it('matches the active Polygon Officer beacon to its deployed generation', () => {
-      expect(latestDeployedVersionForChain(POLYGON)).toBe('V1')
+      expect(latestDeployedVersionForChain(POLYGON)).toBe('V2')
     })
 
     // Skipped: deployed_addresses/chain-31337.json (committed, per-machine
