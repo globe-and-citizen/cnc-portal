@@ -87,15 +87,37 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
 }
 
 /**
+ * Credit is the one category whose entries move money in **opposite directions** —
+ * a loan comes in, a repayment goes out — so each phase of the borrowing lifecycle
+ * gets its own badge colour instead of all three sharing the category teal. The
+ * "Credit" filter pill still gathers them all; only the colour differs, and the
+ * "Transaction" column already spells the phase out in words, so nothing is
+ * conveyed by colour alone.
+ *
+ * (`UC-CREDIT-02`, the funded-offer sweep to Bank, is a Transfer — not here.)
+ */
+const CREDIT_BADGE: Partial<Record<UseCase, string>> = {
+  // Money borrowed in, liability created — the category's teal.
+  'UC-CREDIT-01': 'bg-accent/10 text-accent',
+  // Debt settled, cash out (principal and fixed return alike) — violet, so a
+  // repayment can never be mistaken for a fresh loan on a busy journal page.
+  'UC-CREDIT-03': 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+  // The offer missed its target and the deposit went straight back — slate, an
+  // unwind rather than a real borrowing event.
+  'UC-CREDIT-04': 'bg-slate-500/15 text-slate-600 dark:text-slate-300'
+}
+
+/**
  * Badge classes for a ledger entry's "Action" pill. Normally one colour per
- * category, but the two payroll use cases are split so the journal shows at a
- * glance whether a wage was merely **accrued** (submitted, still owed — amber)
- * or **settled** (withdrawn, actually paid out — green).
+ * category, but two categories split by lifecycle phase: the payroll use cases,
+ * so the journal shows at a glance whether a wage was merely **accrued**
+ * (submitted, still owed — amber) or **settled** (withdrawn, actually paid out),
+ * and the credit ones (see {@link CREDIT_BADGE}).
  */
 export function badgeClassOf(entry: LedgerEntry): string {
   // A settled wage (UC-CASH-03 — withdrawn / actually paid out) reads as cyan,
   // distinct from a wage merely accrued (UC-CASH-02 — submitted, still owed),
   // which keeps the category's amber. Every other entry takes its category colour.
   if (entry.useCase === 'UC-CASH-03') return 'bg-accent/10 text-accent'
-  return CATEGORY_BADGE[categoryOf(entry)]
+  return CREDIT_BADGE[entry.useCase] ?? CATEGORY_BADGE[categoryOf(entry)]
 }
