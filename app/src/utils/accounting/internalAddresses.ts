@@ -25,6 +25,7 @@ export const INTERNAL_POCKET_CONTRACT_TYPES = [
   'Bank',
   'CashRemunerationEIP712',
   'ExpenseAccountEIP712',
+  'FixedReturn',
   'InvestorV1',
   'SafeDepositRouter'
 ] as const satisfies readonly ContractType[]
