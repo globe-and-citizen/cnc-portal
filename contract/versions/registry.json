@@ -1,6 +1,6 @@
 {
-  "$comment": "Deployment-aligned contract-artifact versions on Polygon, matched to the three real prod Officer#FactoryBeacon generations (detected across teams). Each folder (contract/versions/<version>/) snapshots the ABIs (recompiled at the deploy commit) + deployed_addresses (from git) for one deployment — see `officer`/`commit`/`deployedAt`. V0/V0.1/V1 are three DISTINCT full redeployments (each a new Officer + factory). `officerVersions` (backend TeamOfficer.version tags) is left empty: runtime per-team resolution is not wired yet — but each folder's `officer`/`beacons.Officer` is the concrete on-chain identifier a team maps to. Distributed to consumers as 'version-registry.json' via `npm run mc`. FLAT string maps keep prettier width-stable across consumers. See contract/versions/README.md.",
-  "current": "V1",
+  "$comment": "Deployment-aligned contract-artifact versions on Polygon, matched to the four real prod Officer#FactoryBeacon generations (detected across teams). Each folder (contract/versions/<version>/) snapshots the ABIs (recompiled at the deploy commit) + deployed_addresses (from git) for one deployment — see `officer`/`commit`/`deployedAt`. V0/V0.1/V1/V2 are four DISTINCT full redeployments (each a new Officer + factory). `officerVersions` (backend TeamOfficer.version tags) is left empty: runtime per-team resolution is not wired yet — but each folder's `officer`/`beacons.Officer` is the concrete on-chain identifier a team maps to. Distributed to consumers as 'version-registry.json' via `npm run mc`. FLAT string maps keep prettier width-stable across consumers. See contract/versions/README.md.",
+  "current": "V2",
   "folders": {
     "V0": {
       "officer": "0xb5D4BCc95B80672C28A31ab5fBbC71e827b8D33f",
@@ -93,6 +93,41 @@
         "CashRemunerationEIP712": "CashRemunerationEIP712Module#CashRemunerationEIP712",
         "SafeDepositRouter": "SafeDepositRouterBeaconModule#SafeDepositRouter",
         "Vesting": "VestingModule#Vesting",
+        "FeeCollector": "FeeCollectorModule#FeeCollector"
+      }
+    },
+    "V2": {
+      "officer": "0x870BF5480ECb9981B9dd893F9Acd2753aD82a3bA",
+      "commit": "026a2377b",
+      "deployedAt": "2026-07-27",
+      "officerVersions": [],
+      "onchainVersionMin": "2.0.0",
+      "onchainVersionMax": "2.999.999",
+      "beacons": {
+        "Officer": "Officer#FactoryBeacon",
+        "Bank": "BankBeaconModule#Beacon",
+        "BoardOfDirectors": "BoardOfDirectorsModule#Beacon",
+        "Proposals": "ProposalBeaconModule#Beacon",
+        "Elections": "ElectionsBeaconModule#Beacon",
+        "Investor": "InvestorBeaconModule#Beacon",
+        "ExpenseAccountEIP712": "ExpenseAccountEIP712Module#FactoryBeacon",
+        "CashRemunerationEIP712": "CashRemunerationEIP712Module#FactoryBeacon",
+        "SafeDepositRouter": "SafeDepositRouterBeaconModule#Beacon",
+        "Vesting": "VestingBeaconModule#Beacon",
+        "FixedReturn": "FixedReturnBeaconModule#Beacon"
+      },
+      "implementations": {
+        "Officer": "Officer#Officer",
+        "Bank": "BankBeaconModule#Bank",
+        "BoardOfDirectors": "BoardOfDirectorsModule#BoardOfDirectors",
+        "Proposals": "ProposalBeaconModule#Proposals",
+        "Elections": "ElectionsBeaconModule#Elections",
+        "Investor": "InvestorBeaconModule#Investor",
+        "ExpenseAccountEIP712": "ExpenseAccountEIP712Module#ExpenseAccountEIP712",
+        "CashRemunerationEIP712": "CashRemunerationEIP712Module#CashRemunerationEIP712",
+        "SafeDepositRouter": "SafeDepositRouterBeaconModule#SafeDepositRouter",
+        "Vesting": "VestingBeaconModule#Vesting",
+        "FixedReturn": "FixedReturnBeaconModule#FixedReturn",
         "FeeCollector": "FeeCollectorModule#FeeCollector"
       }
     }

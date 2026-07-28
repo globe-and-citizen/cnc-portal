@@ -1,0 +1,42 @@
+[
+  {
+    "inputs": [],
+    "name": "ElectionUtils__DuplicateCandidates",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionUtils__DuplicateVoters",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionUtils__ElectionIsOngoing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionUtils__InsufficientCandidates",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionUtils__InvalidCandidate",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionUtils__InvalidDates",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionUtils__InvalidSeatCount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionUtils__NoEligibleVoters",
+    "type": "error"
+  }
+]

@@ -127,7 +127,7 @@ export function useCNCAccounting(
   const routerMultiplier = useReadContract({
     address: computed(() => (routerAddress.value ? (routerAddress.value as Address) : undefined)),
     abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: 'multiplier',
+    functionName: 'getMultiplier',
     query: { enabled: computed(() => Boolean(routerAddress.value)) }
   })
 
