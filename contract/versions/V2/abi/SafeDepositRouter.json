@@ -6,101 +6,6 @@
   },
   {
     "inputs": [],
-    "name": "ElectionUtils__DuplicateCandidates",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ElectionUtils__DuplicateVoters",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ElectionUtils__InsufficientCandidates",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ElectionUtils__InvalidCandidate",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ElectionUtils__InvalidDates",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ElectionUtils__InvalidSeatCount",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ElectionUtils__NoEligibleVoters",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__AlreadyVoted",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__BoardOfDirectorsNotFound",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__ElectionEnded",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__ElectionIsOngoing",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__ElectionNotActive",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__ElectionNotFound",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__NotEligibleVoter",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__OfficerAddressNotSet",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__ResultsAlreadyPublished",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__ResultsNotReady",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__Unauthorized",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Elections__ZeroSender",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "EnforcedPause",
     "type": "error"
   },
@@ -142,46 +47,195 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__DepositsNotEnabled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InsufficientMinterRole",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidInvestorAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidSafeAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidTokenAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidTokenDecimals",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvestorContractNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__MultiplierTooLow",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__OfficerAddressNotSet",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "expected",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "actual",
+        "type": "uint256"
+      }
+    ],
+    "name": "SafeDepositRouter__SlippageExceeded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__TokenAlreadySupported",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__TokenNotSupported",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__ZeroAmount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__ZeroSender",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupport__AlreadyAdded",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupport__NotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TokenSupport__ZeroAddress",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "title",
-        "type": "string"
+        "internalType": "address",
+        "name": "depositor",
+        "type": "address"
       },
       {
         "indexed": true,
         "internalType": "address",
-        "name": "createdBy",
+        "name": "token",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "startDate",
+        "name": "tokenAmount",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "endDate",
+        "name": "sherAmount",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "seatCount",
+        "name": "timestamp",
         "type": "uint256"
       }
     ],
-    "name": "ElectionCreated",
+    "name": "Deposited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "disabledBy",
+        "type": "address"
+      }
+    ],
+    "name": "DepositsDisabled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "enabledBy",
+        "type": "address"
+      }
+    ],
+    "name": "DepositsEnabled",
     "type": "event"
   },
   {
@@ -195,6 +249,25 @@
       }
     ],
     "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldMultiplier",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newMultiplier",
+        "type": "uint256"
+      }
+    ],
+    "name": "MultiplierUpdated",
     "type": "event"
   },
   {
@@ -234,18 +307,88 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "oldSafe",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newSafe",
+        "type": "address"
+      }
+    ],
+    "name": "SafeAddressUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "address[]",
-        "name": "winners",
-        "type": "address[]"
+        "internalType": "uint8",
+        "name": "decimals",
+        "type": "uint8"
       }
     ],
-    "name": "ResultsPublished",
+    "name": "TokenSupportAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupportAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupportRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokensRecovered",
     "type": "event"
   },
   {
@@ -262,44 +405,27 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
+    "inputs": [],
+    "name": "MIN_MULTIPLIER",
+    "outputs": [
       {
-        "indexed": true,
         "internalType": "uint256",
-        "name": "electionId",
+        "name": "",
         "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
       }
     ],
-    "name": "VoteSubmitted",
-    "type": "event"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
-      },
-      {
         "internalType": "address",
-        "name": "candidate",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],
-    "name": "castVote",
+    "name": "addTokenSupport",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -307,100 +433,89 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "title",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "description",
-        "type": "string"
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "startDate",
+        "name": "tokenAmount",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "endDate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "seatCount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address[]",
-        "name": "candidates",
-        "type": "address[]"
-      },
-      {
-        "internalType": "address[]",
-        "name": "eligibleVoters",
-        "type": "address[]"
       }
     ],
-    "name": "createElection",
+    "name": "calculateCompensation",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "electionId",
+        "name": "",
         "type": "uint256"
       }
     ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "deposit",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getElection",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "title",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "description",
-        "type": "string"
-      },
-      {
         "internalType": "address",
-        "name": "createdBy",
+        "name": "tokenAddress",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "startDate",
+        "name": "amount",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "endDate",
+        "name": "minSherOut",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "seatCount",
-        "type": "uint256"
-      },
+      }
+    ],
+    "name": "depositWithSlippage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "disableDeposits",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "enableDeposits",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getDepositsEnabled",
+    "outputs": [
       {
         "internalType": "bool",
-        "name": "resultsPublished",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -408,97 +523,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getElectionCandidates",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "candidates",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getElectionEligibleVoters",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "voters",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
-    "name": "getElectionIds",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getElectionResults",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getElectionWinners",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getNextElectionId",
+    "name": "getMultiplier",
     "outputs": [
       {
         "internalType": "uint256",
@@ -523,14 +549,21 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "getSafeAddress",
+    "outputs": [
       {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
-    "name": "getVoteCount",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSupportedTokenCount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -542,83 +575,53 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getSupportedTokens",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenDecimals",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "safeAddress",
+        "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      }
-    ],
-    "name": "getVoteCounts",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
+        "internalType": "address[]",
+        "name": "tokenAddresses",
+        "type": "address[]"
       },
       {
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
-      }
-    ],
-    "name": "getVoterChoice",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
-        "name": "electionId",
+        "name": "multiplier",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
-      }
-    ],
-    "name": "hasVoted",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "ownerAddress",
-        "type": "address"
       }
     ],
     "name": "initialize",
@@ -629,17 +632,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "electionId",
-        "type": "uint256"
-      },
-      {
         "internalType": "address",
-        "name": "voter",
+        "name": "token",
         "type": "address"
       }
     ],
-    "name": "isEligibleVoter",
+    "name": "isTokenSupported",
     "outputs": [
       {
         "internalType": "bool",
@@ -686,12 +684,30 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
-        "name": "electionId",
+        "name": "amount",
         "type": "uint256"
       }
     ],
-    "name": "publishResults",
+    "name": "recoverERC20",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "removeTokenSupport",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -699,6 +715,32 @@
   {
     "inputs": [],
     "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "newMultiplier",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMultiplier",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newSafe",
+        "type": "address"
+      }
+    ],
+    "name": "setSafeAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
