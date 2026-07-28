@@ -1,5 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
-import { isUsdPegged, requireRateOfRecord, toUsd, type UsdRateOfRecord } from '../toUsd'
+import {
+  isUsdPegged,
+  requireRateOfRecord,
+  round6,
+  toUsd,
+  tokenUsdRate,
+  wholeTokenAmount,
+  type UsdRateOfRecord
+} from '../toUsd'
 import type { TokenId } from '@/constant'
 
 const AT = new Date('2026-03-13T00:00:00Z')
@@ -55,5 +63,42 @@ describe('toUsd', () => {
 
   it('default resolver always throws (only reached for non-pegged tokens)', () => {
     expect(() => requireRateOfRecord('native', AT)).toThrow()
+  })
+
+  it('stores the USD amount at 6-dp precision (spec §3)', () => {
+    // 0.070352 POL × $0.08 = 0.0056281600 → stored 0.005628 (not full float)
+    const rate: UsdRateOfRecord = () => 0.08
+    expect(toUsd(70_352_000_000_000_000n, 'native', AT, rate)).toBe(0.005628)
+  })
+})
+
+describe('round6', () => {
+  it('rounds to six decimals, the storage precision', () => {
+    expect(round6(0.00562816)).toBe(0.005628)
+    expect(round6(0.0000282)).toBe(0.000028)
+    expect(round6(1)).toBe(1)
+    expect(round6(-0.8955)).toBe(-0.8955)
+  })
+})
+
+describe('wholeTokenAmount', () => {
+  it('divides base units by the token decimals', () => {
+    expect(wholeTokenAmount(1_000_000_000_000_000_000n, 'native')).toBe(1) // 18 dp
+    expect(wholeTokenAmount(2_500_000n, 'usdc')).toBe(2.5) // 6 dp
+    expect(wholeTokenAmount(0n, 'native')).toBe(0)
+  })
+})
+
+describe('tokenUsdRate', () => {
+  it('is exactly $1.000000 for pegged stablecoins, ignoring the resolver', () => {
+    const rate = vi.fn<UsdRateOfRecord>(() => 999)
+    expect(tokenUsdRate('usdc', AT)).toBe(1)
+    expect(tokenUsdRate('usdt', AT, rate)).toBe(1)
+    expect(rate).not.toHaveBeenCalled()
+  })
+
+  it('resolves and 6-dp-rounds the rate for non-pegged tokens', () => {
+    expect(tokenUsdRate('native', AT, () => 0.08)).toBe(0.08)
+    expect(tokenUsdRate('sher', AT, () => 1 / 3)).toBe(0.333333)
   })
 })

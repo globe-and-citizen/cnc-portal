@@ -26,7 +26,7 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
-      :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
+      :meta="{ class: { tr: (row: { depth: number }) => (row.depth > 0 ? 'bg-elevated' : '') } }"
     >
       <template #date-cell="{ row }">
         <template v-if="row.depth === 0">
@@ -182,10 +182,9 @@ import {
   enrichTransaction
 } from '@/utils'
 import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { GET_INCOMING_BANK_TOKEN_TRANSFERS } from '@/queries/ponder/bank.queries'
-import { GET_CASH_REMUNERATION_EVENTS } from '@/queries/ponder/cash-remuneration.queries'
 import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
-import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
 
 const props = defineProps<{
   cashRemunerationAddress: Address
@@ -194,22 +193,13 @@ const props = defineProps<{
 const currencyStore = useCurrencyStore()
 const contractAddress = computed(() => props.cashRemunerationAddress.toLowerCase())
 
+// EXPERIMENT: source the payroll contract's own events from the RPC (eth_getLogs)
+// instead of Ponder. The incoming Bank→payroll transfers below stay on Ponder.
 const {
   result,
   error,
   loading: cashRemunerationLoading
-} = useQuery<CashRemunerationEventsQuery>(
-  GET_CASH_REMUNERATION_EVENTS,
-  {
-    contractAddress,
-    limit: 500
-  },
-  {
-    enabled: computed(() => Boolean(contractAddress.value)),
-    pollInterval: GRAPHQL_POLL_INTERVAL,
-    fetchPolicy: 'cache-and-network'
-  }
-)
+} = useCashRemunerationEventsViaLogs(contractAddress)
 
 const {
   result: incomingTokenTransfersResult,

@@ -26,7 +26,8 @@
           color="primary"
           icon="heroicons:hand-raised"
           label="Lend to a round"
-          @click="toast.add({ title: 'Pick an open round below to lend' })"
+          data-test="lend-hint-button"
+          @click="showLendHint"
         />
       </div>
     </div>
@@ -45,6 +46,9 @@
     </div>
 
     <template v-else>
+      <!-- Contract balance -->
+      <CreditBalanceSection />
+
       <!-- Credit Account hero -->
       <CreditAccountHero />
 
@@ -105,6 +109,12 @@
         </div>
         <CreditHistoryTable @select="onHistorySelect" />
       </div>
+
+      <!-- On-chain transaction history -->
+      <CreditAccountTransactions
+        v-if="fixedReturnAddress"
+        :fixed-return-address="fixedReturnAddress"
+      />
     </template>
 
     <CreditLendModal :round="lendRound" @close="lendRound = null" @lent="lendRound = null" />
@@ -117,15 +127,19 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@nuxt/ui/composables'
 import { useCommunityCreditStore } from '@/stores'
 import type { CreditRound } from '@/types'
+import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
 import CreditAccountHero from '@/components/sections/CommunityCreditView/CreditAccountHero.vue'
 import CreditHistoryTable from '@/components/sections/CommunityCreditView/CreditHistoryTable.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
+import CreditBalanceSection from '@/components/sections/CommunityCreditView/CreditBalanceSection.vue'
+import CreditAccountTransactions from '@/components/sections/CommunityCreditView/CreditAccountTransactions.vue'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const store = useCommunityCreditStore()
+const fixedReturnAddress = useFixedReturnAddress()
 
 const teamId = computed(() => String(route.params.id))
 const lendRound = ref<CreditRound | null>(null)
@@ -142,9 +156,15 @@ function goRound(roundId: string) {
   router.push({ name: 'community-credit-round', params: { id: teamId.value, roundId } })
 }
 function goRepay(roundId: string) {
-  router.push({ name: 'community-credit-repay', params: { id: teamId.value, roundId } })
+  // Same behavior as the round page's own "Repay round" button — switch to the inline
+  // Repay layout variant rather than a separate route.
+  store.setVariant('repay')
+  goRound(roundId)
 }
 function onHistorySelect(round: CreditRound) {
   goRound(round.id)
+}
+function showLendHint() {
+  toast.add({ title: 'Pick an open round below to lend' })
 }
 </script>

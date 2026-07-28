@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import {ElectionTypes} from './ElectionTypes.sol';
-import {ElectionUtils} from './ElectionUtils.sol';
-import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
-import {IOfficer} from '../interfaces/IOfficer.sol';
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
+import {IOfficer} from "../interfaces/IOfficer.sol";
+import {ElectionTypes} from "./ElectionTypes.sol";
+import {ElectionUtils} from "./ElectionUtils.sol";
 
 /**
  * @title Elections
@@ -16,17 +16,22 @@ import {IOfficer} from '../interfaces/IOfficer.sol';
 contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   // State variables
   /// @dev Id assigned to the next election created.
-  uint256 private _nextElectionId;
-  /// @notice Address of the Officer contract used to locate BoardOfDirectors.
-  address public officerAddress;
+  uint256 private s_nextElectionId;
+  /// @dev Address of the Officer contract used to locate BoardOfDirectors.
+  address private s_officerAddress;
   /// @dev Stored election records keyed by election id.
-  mapping(uint256 => ElectionTypes.Election) private _elections;
+  mapping(uint256 electionId => ElectionTypes.Election election) private s_elections;
   /// @dev List of all election ids created so far.
-  uint256[] private _electionIds;
+  uint256[] private s_electionIds;
   /// @dev Per-election record of each voter's candidate choice.
-  mapping(uint256 => mapping(address => address)) private _votes;
-  /// @notice Vote count per candidate for each election.
-  mapping(uint256 => mapping(address => uint256)) public _voteCounts;
+  mapping(uint256 electionId => mapping(address voter => address candidate)) private s_votes;
+  /// @dev Vote count per candidate for each election.
+  mapping(uint256 electionId => mapping(address candidate => uint256 count)) private s_voteCounts;
+
+  /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
+  ///      new state variables above so the reserve stays constant and proxy slots don't shift.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
 
   /**
    * @notice Emitted when a new election is created.
@@ -63,46 +68,33 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
   // Custom errors
   /// @dev The election id does not exist.
-  error ElectionNotFound();
+  error Elections__ElectionNotFound();
   /// @dev The election is not currently accepting votes.
-  error ElectionNotActive();
+  error Elections__ElectionNotActive();
   /// @dev A previous election has not yet concluded.
-  error ElectionIsOngoing();
+  error Elections__ElectionIsOngoing();
   /// @dev The election has already ended.
-  error ElectionEnded();
+  error Elections__ElectionEnded();
   /// @dev The caller has already voted in this election.
-  error AlreadyVoted();
+  error Elections__AlreadyVoted();
   /// @dev The caller is not in the eligible voter list.
-  error NotEligibleVoter();
+  error Elections__NotEligibleVoter();
   /// @dev Election results have already been published.
-  error ResultsAlreadyPublished();
+  error Elections__ResultsAlreadyPublished();
   /// @dev Results cannot be published yet.
-  error ResultsNotReady();
+  error Elections__ResultsNotReady();
   /// @dev The caller is not authorized for this action.
-  error Unauthorized();
+  error Elections__Unauthorized();
   /// @dev The caller (msg.sender) was the zero address when initializing.
-  error ZeroSender();
+  error Elections__ZeroSender();
   /// @dev The officer contract address has not been configured.
-  error OfficerAddressNotSet();
+  error Elections__OfficerAddressNotSet();
   /// @dev The BoardOfDirectors contract could not be located via the Officer.
-  error BoardOfDirectorsNotFound();
+  error Elections__BoardOfDirectorsNotFound();
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
-  }
-
-  /**
-   * @notice Initializes the Elections contract.
-   * @param _owner Address that will own the contract.
-   */
-  function initialize(address _owner) public initializer {
-    __Ownable_init(_owner);
-    __Pausable_init();
-    _nextElectionId = 1;
-
-    if (msg.sender == address(0)) revert ZeroSender();
-    officerAddress = msg.sender;
   }
 
   /// @notice Pauses the contract.
@@ -135,17 +127,16 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     address[] memory candidates,
     address[] memory eligibleVoters
   ) external onlyOwner whenNotPaused returns (uint256 electionId) {
-    ElectionUtils.validateSeatCount(seatCount);
+    ElectionUtils._validateSeatCount(seatCount);
 
-    if (_nextElectionId > 1 && !_elections[_nextElectionId - 1].resultsPublished) {
-      revert ElectionIsOngoing();
-    }
-    ElectionUtils.validateDates(startDate, endDate);
-    ElectionUtils.validateCandidates(candidates, seatCount);
-    ElectionUtils.validateVoters(eligibleVoters);
+    if (s_nextElectionId > 1 && !s_elections[s_nextElectionId - 1].resultsPublished)
+      revert Elections__ElectionIsOngoing();
+    ElectionUtils._validateDates(startDate, endDate);
+    ElectionUtils._validateCandidates(candidates, seatCount);
+    ElectionUtils._validateVoters(eligibleVoters);
 
-    electionId = _nextElectionId++;
-    ElectionTypes.Election storage election = _elections[electionId];
+    electionId = s_nextElectionId++;
+    ElectionTypes.Election storage election = s_elections[electionId];
 
     election.id = electionId;
     election.title = title;
@@ -167,9 +158,16 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
       election.voterList.push(eligibleVoters[i]);
     }
 
-    _electionIds.push(electionId);
+    s_electionIds.push(electionId);
 
-    emit ElectionCreated(electionId, title, msg.sender, startDate, endDate, seatCount);
+    emit ElectionCreated({
+      electionId: electionId,
+      title: title,
+      createdBy: msg.sender,
+      startDate: startDate,
+      endDate: endDate,
+      seatCount: seatCount
+    });
 
     return electionId;
   }
@@ -180,49 +178,22 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
    * @param candidate The address of the candidate
    */
   function castVote(uint256 electionId, address candidate) external whenNotPaused {
-    ElectionTypes.Election storage election = _elections[electionId];
+    ElectionTypes.Election storage election = s_elections[electionId];
 
-    if (election.id == 0) revert ElectionNotFound();
+    if (election.id == 0) revert Elections__ElectionNotFound();
 
-    if (!ElectionUtils.isElectionActive(election.startDate, election.endDate)) {
-      revert ElectionNotActive();
-    }
-    if (!election.isEligibleVoter[msg.sender]) revert NotEligibleVoter();
-    if (election.hasVoted[msg.sender]) revert AlreadyVoted();
-    ElectionUtils.validateVote(election, candidate);
+    if (!ElectionUtils._isElectionActive(election.startDate, election.endDate))
+      revert Elections__ElectionNotActive();
+    if (!election.isEligibleVoter[msg.sender]) revert Elections__NotEligibleVoter();
+    if (election.hasVoted[msg.sender]) revert Elections__AlreadyVoted();
+    ElectionUtils._validateVote(election, candidate);
 
-    _votes[electionId][msg.sender] = candidate;
-    _voteCounts[electionId][candidate]++;
+    s_votes[electionId][msg.sender] = candidate;
+    s_voteCounts[electionId][candidate]++;
     election.voteCount++;
     election.hasVoted[msg.sender] = true;
 
     emit VoteSubmitted(electionId, msg.sender, candidate);
-  }
-
-  /**
-   * @dev Publishes election results (only callable by contract owner after election ends)
-   * @param electionId The election ID
-   */
-  function publishResults(uint256 electionId) public onlyOwner whenNotPaused {
-    ElectionTypes.Election storage election = _elections[electionId];
-
-    if (election.id == 0) revert ElectionNotFound();
-    if (
-      election.voteCount < election.voterList.length &&
-      !ElectionUtils.hasElectionEnded(election.endDate)
-    ) {
-      revert ResultsNotReady();
-    }
-    if (election.resultsPublished) revert ResultsAlreadyPublished();
-
-    election.winners = getElectionResults(electionId);
-    election.resultsPublished = true;
-    if (election.winners.length > 0) {
-      address bodAddress = _getBoardOfDirectorsAddress();
-      IBoardOfDirectors(bodAddress).setBoardOfDirectors(election.winners);
-    }
-
-    emit ResultsPublished(electionId, election.winners);
   }
 
   /**
@@ -232,8 +203,8 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
    * @return The address of the candidate voted for, or the zero address if they haven't voted.
    */
   function getVoterChoice(uint256 electionId, address voter) external view returns (address) {
-    if (_elections[electionId].id == 0) revert ElectionNotFound();
-    return _votes[electionId][voter];
+    if (s_elections[electionId].id == 0) revert Elections__ElectionNotFound();
+    return s_votes[electionId][voter];
   }
 
   /**
@@ -255,8 +226,8 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
       bool resultsPublished
     )
   {
-    ElectionTypes.Election storage election = _elections[electionId];
-    if (election.id == 0) revert ElectionNotFound();
+    ElectionTypes.Election storage election = s_elections[electionId];
+    if (election.id == 0) revert Elections__ElectionNotFound();
 
     return (
       election.id,
@@ -278,8 +249,8 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   function getElectionCandidates(
     uint256 electionId
   ) external view returns (address[] memory candidates) {
-    ElectionTypes.Election storage election = _elections[electionId];
-    if (election.id == 0) revert ElectionNotFound();
+    ElectionTypes.Election storage election = s_elections[electionId];
+    if (election.id == 0) revert Elections__ElectionNotFound();
 
     return election.candidateList;
   }
@@ -292,8 +263,8 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   function getElectionEligibleVoters(
     uint256 electionId
   ) external view returns (address[] memory voters) {
-    ElectionTypes.Election storage election = _elections[electionId];
-    if (election.id == 0) revert ElectionNotFound();
+    ElectionTypes.Election storage election = s_elections[electionId];
+    if (election.id == 0) revert Elections__ElectionNotFound();
 
     return election.voterList;
   }
@@ -304,11 +275,111 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
    * @return Array of winning candidate addresses.
    */
   function getElectionWinners(uint256 electionId) external view returns (address[] memory) {
-    ElectionTypes.Election storage election = _elections[electionId];
-    if (election.id == 0) revert ElectionNotFound();
-    if (!election.resultsPublished) revert ResultsNotReady();
+    ElectionTypes.Election storage election = s_elections[electionId];
+    if (election.id == 0) revert Elections__ElectionNotFound();
+    if (!election.resultsPublished) revert Elections__ResultsNotReady();
 
     return election.winners;
+  }
+
+  /**
+   * @notice Returns whether a voter has already voted in an election.
+   * @param electionId Id of the election.
+   * @param voter Voter address to check.
+   * @return True if the voter has already cast their vote.
+   */
+  function hasVoted(uint256 electionId, address voter) external view returns (bool) {
+    ElectionTypes.Election storage election = s_elections[electionId];
+    if (election.id == 0) revert Elections__ElectionNotFound();
+
+    return election.hasVoted[voter];
+  }
+
+  /**
+   * @notice Returns whether a voter is eligible in an election.
+   * @param electionId Id of the election.
+   * @param voter Voter address to check.
+   * @return True if the voter is eligible.
+   */
+  function isEligibleVoter(uint256 electionId, address voter) external view returns (bool) {
+    ElectionTypes.Election storage election = s_elections[electionId];
+    if (election.id == 0) revert Elections__ElectionNotFound();
+
+    return election.isEligibleVoter[voter];
+  }
+
+  /**
+   * @notice Returns the total votes cast in an election.
+   * @param electionId Id of the election.
+   * @return The number of votes cast.
+   */
+  function getVoteCount(uint256 electionId) external view returns (uint256) {
+    ElectionTypes.Election storage election = s_elections[electionId];
+    if (election.id == 0) revert Elections__ElectionNotFound();
+
+    return election.voteCount;
+  }
+
+  /// @notice Returns the id that will be assigned to the next election.
+  function getNextElectionId() external view returns (uint256) {
+    return s_nextElectionId;
+  }
+
+  /// @notice Returns the address of the Officer contract used to locate BoardOfDirectors.
+  function getOfficerAddress() external view returns (address) {
+    return s_officerAddress;
+  }
+
+  /// @notice Returns the list of all election ids created so far.
+  function getElectionIds() external view returns (uint256[] memory) {
+    return s_electionIds;
+  }
+
+  /**
+   * @notice Returns the vote count for a candidate in an election.
+   * @param electionId Id of the election.
+   * @param candidate Candidate address to look up.
+   * @return The number of votes recorded for the candidate.
+   */
+  function getVoteCounts(uint256 electionId, address candidate) external view returns (uint256) {
+    return s_voteCounts[electionId][candidate];
+  }
+
+  /**
+   * @notice Initializes the Elections contract.
+   * @param ownerAddress Address that will own the contract.
+   */
+  function initialize(address ownerAddress) public initializer {
+    __Ownable_init(ownerAddress);
+    __Pausable_init();
+    s_nextElectionId = 1;
+
+    if (msg.sender == address(0)) revert Elections__ZeroSender();
+    s_officerAddress = msg.sender;
+  }
+
+  /**
+   * @dev Publishes election results (only callable by contract owner after election ends)
+   * @param electionId The election ID
+   */
+  function publishResults(uint256 electionId) public onlyOwner whenNotPaused {
+    ElectionTypes.Election storage election = s_elections[electionId];
+
+    if (election.id == 0) revert Elections__ElectionNotFound();
+    if (
+      election.voteCount < election.voterList.length &&
+      !ElectionUtils._hasElectionEnded(election.endDate)
+    ) revert Elections__ResultsNotReady();
+    if (election.resultsPublished) revert Elections__ResultsAlreadyPublished();
+
+    election.winners = getElectionResults(electionId);
+    election.resultsPublished = true;
+    if (election.winners.length > 0) {
+      address bodAddress = _getBoardOfDirectorsAddress();
+      IBoardOfDirectors(bodAddress).setBoardOfDirectors(election.winners);
+    }
+
+    emit ResultsPublished(electionId, election.winners);
   }
 
   /**
@@ -317,7 +388,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
    * @return Array of winning candidate addresses sized to the seat count.
    */
   function getElectionResults(uint256 electionId) public view returns (address[] memory) {
-    ElectionTypes.Election storage election = _elections[electionId];
+    ElectionTypes.Election storage election = s_elections[electionId];
     address[] memory candidateList = election.candidateList;
     uint256 seatCount = election.seatCount;
 
@@ -330,7 +401,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     for (uint256 i = 0; i < candidateList.length; i++) {
       allCandidates[i] = ElectionUtils.CandidateResult({
         candidateAddress: candidateList[i],
-        voteCount: _voteCounts[electionId][candidateList[i]]
+        voteCount: s_voteCounts[electionId][candidateList[i]]
       });
     }
 
@@ -364,47 +435,9 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     return winners;
   }
 
-  /**
-   * @notice Returns whether a voter has already voted in an election.
-   * @param electionId Id of the election.
-   * @param voter Voter address to check.
-   * @return True if the voter has already cast their vote.
-   */
-  function hasVoted(uint256 electionId, address voter) external view returns (bool) {
-    ElectionTypes.Election storage election = _elections[electionId];
-    if (election.id == 0) revert ElectionNotFound();
-
-    return election.hasVoted[voter];
-  }
-
-  /**
-   * @notice Returns whether a voter is eligible in an election.
-   * @param electionId Id of the election.
-   * @param voter Voter address to check.
-   * @return True if the voter is eligible.
-   */
-  function isEligibleVoter(uint256 electionId, address voter) external view returns (bool) {
-    ElectionTypes.Election storage election = _elections[electionId];
-    if (election.id == 0) revert ElectionNotFound();
-
-    return election.isEligibleVoter[voter];
-  }
-
-  /**
-   * @notice Returns the total votes cast in an election.
-   * @param electionId Id of the election.
-   * @return The number of votes cast.
-   */
-  function getVoteCount(uint256 electionId) external view returns (uint256) {
-    ElectionTypes.Election storage election = _elections[electionId];
-    if (election.id == 0) revert ElectionNotFound();
-
-    return election.voteCount;
-  }
-
-  /// @notice Returns the id that will be assigned to the next election.
-  function getNextElectionId() external view returns (uint256) {
-    return _nextElectionId;
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
   }
 
   /**
@@ -412,9 +445,9 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
    * @return Address of the BoardOfDirectors contract
    */
   function _getBoardOfDirectorsAddress() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
-    if (bodAddress == address(0)) revert BoardOfDirectorsNotFound();
+    if (s_officerAddress == address(0)) revert Elections__OfficerAddressNotSet();
+    address bodAddress = IOfficer(s_officerAddress).findDeployedContract("BoardOfDirectors");
+    if (bodAddress == address(0)) revert Elections__BoardOfDirectorsNotFound();
     return bodAddress;
   }
 }

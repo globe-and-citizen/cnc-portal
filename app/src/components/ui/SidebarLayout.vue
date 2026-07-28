@@ -50,6 +50,7 @@
           link: 'text-md gap-3 px-4 py-3 rounded-xl',
           linkLeadingIcon: 'size-6'
         }"
+        @update:model-value="onMenuToggle"
       />
     </template>
 
@@ -99,14 +100,21 @@
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
 import { computed, ref } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
 import { formatAddress } from '@/utils/formatAddress'
-import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
+import { useSidebarNavItems, ACCOUNTING_MENU_KEY } from '@/composables/useSidebarNavItems'
 
 const userStore = useUserDataStore()
 
 const open = ref(false)
 
 const items = useSidebarNavItems()
+
+// Persist the Accounting menu's expanded state so it survives a reload. The
+const accountingExpanded = useLocalStorage(ACCOUNTING_MENU_KEY, false)
+function onMenuToggle(value: unknown): void {
+  if (Array.isArray(value)) accountingExpanded.value = value.includes('accounting')
+}
 
 const formatedUserAddress = computed(() => formatAddress(userStore.address))
 </script>

@@ -23,12 +23,27 @@ export function useFixedReturnLendFunds() {
   return useFixedReturnContractWrite('lendFunds')
 }
 
+// markAsRefundable / claimRefund no longer exist on-chain as of FixedReturn v1.3.0 —
+// refundLenders below replaces both with a single date-gated push refund. These two
+// composables are kept only because Issue Note's refund UI (OfferingIssuerActions.vue,
+// OfferingDetail.vue) still calls them; that flow reverts at runtime until it's
+// migrated too. Community Credit already uses useFixedReturnRefundLenders instead.
 export function useFixedReturnMarkAsRefundable() {
   return useFixedReturnContractWrite('markAsRefundable')
 }
 
 export function useFixedReturnClaimRefund() {
   return useFixedReturnContractWrite('claimRefund')
+}
+
+export function useFixedReturnRefundLenders() {
+  return useFixedReturnContractWrite('refundLenders')
+}
+
+// Alternative to refundLenders for a stalled offer (deadline passed, target not
+// reached): keeps whatever was raised instead of returning it to lenders.
+export function useFixedReturnAcceptPartialFunding() {
+  return useFixedReturnContractWrite('acceptPartialFunding')
 }
 
 // repayLenders is intentionally not exposed here — it's onlyBank on-chain now, so

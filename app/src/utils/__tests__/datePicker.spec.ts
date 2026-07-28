@@ -7,6 +7,7 @@ import {
   resolveAsOfDate,
   stepAnchor,
   isValidRange,
+  isAllTimeRange,
   formatAnchorLabel,
   formatAsOfLabel,
   formatRangeLabel,
@@ -95,6 +96,12 @@ describe('helpers', () => {
     const range = defaultValueForMode('range') as Range
     expect(range.start.getTime()).toBe(0)
     expect(defaultValueForMode('date')).toBeInstanceOf(Date)
+  })
+
+  it('isAllTimeRange flags the epoch-start (default) range but not a real one', () => {
+    expect(isAllTimeRange(defaultValueForMode('range') as Range)).toBe(true)
+    expect(isAllTimeRange({ start: new Date(2026, 0, 1) })).toBe(false)
+    expect(isAllTimeRange({ start: null })).toBe(true)
   })
 
   it('toUnixSeconds floors to whole seconds', () => {

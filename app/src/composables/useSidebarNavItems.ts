@@ -1,8 +1,12 @@
 import { computed, type ComputedRef } from 'vue'
 import { useRoute } from 'vue-router'
+import { useLocalStorage } from '@vueuse/core'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { useTeamStore } from '@/stores/teamStore'
 import { useUserDataStore } from '@/stores/user'
+
+/** localStorage key for the Accounting sidebar menu's expanded state. */
+export const ACCOUNTING_MENU_KEY = 'sidebar_accounting_expanded'
 
 /**
  * Builds the sidebar navigation as two groups:
@@ -20,6 +24,10 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
   const userStore = useUserDataStore()
   const teamStore = useTeamStore()
 
+  // Persisted expanded state of the Accounting menu — read to seed `defaultOpen`
+  // so a reload restores it; written from {@link SidebarLayout} on toggle.
+  const accountingExpanded = useLocalStorage(ACCOUNTING_MENU_KEY, false)
+
   /**
    * A company is selected when the route is scoped to one (`/teams/:id/…`) or
    * the store still holds the last selection. Mirrors the `activeTeamId`
@@ -32,12 +40,6 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
 
   return computed<NavigationMenuItem[][]>(() => {
     const disabled = !hasCompany.value
-
-    // Pages that demo the new contracts (Community Credit, Vesting, Debt
-    // Financing) are hidden from the sidebar by default so we don't showcase
-    // them in the production release. Set VITE_APP_ENABLE_EXPERIMENTAL_FEATURES
-    // to 'true' (e.g. in staging) to surface them for testing.
-    const showExperimental = import.meta.env.VITE_APP_ENABLE_EXPERIMENTAL_FEATURES === 'true'
 
     return [
       [
@@ -105,31 +107,32 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
             { label: 'Company Payroll', to: { name: 'team-payroll', params: teamParams() } }
           ]
         },
-        ...(showExperimental
-          ? [
-              {
-                label: 'Community Credit',
-                icon: 'heroicons:hand-raised',
-                active: String(route.name ?? '').startsWith('community-credit'),
-                disabled,
-                to: { name: 'community-credit', params: teamParams() },
-                defaultOpen: false,
-                children: [
-                  { label: 'Rounds', to: { name: 'community-credit', params: teamParams() } },
-                  {
-                    label: 'New credit call',
-                    to: { name: 'community-credit-new', params: teamParams() }
-                  }
-                ]
-              }
-            ]
-          : []),
+        {
+          label: 'Community Credit',
+          icon: 'heroicons:hand-raised',
+          active: String(route.name ?? '').startsWith('community-credit'),
+          disabled,
+          to: { name: 'community-credit', params: teamParams() },
+          defaultOpen: false,
+          children: [
+            { label: 'Rounds', to: { name: 'community-credit', params: teamParams() } },
+            {
+              label: 'New credit call',
+              to: { name: 'community-credit-new', params: teamParams() }
+            }
+          ]
+        },
         {
           label: 'Accounting',
+          // Stable accordion value so its open state can be tracked/persisted
+          // independently of its position in the list.
+          value: 'accounting',
           icon: 'heroicons:book-open',
           disabled,
           to: { name: 'accounting', params: teamParams() },
-          defaultOpen: false,
+          // Closed by default; the persisted "open" is only honoured inside a
+          // company, so on the companies list it collapses like the others.
+          defaultOpen: hasCompany.value && accountingExpanded.value,
           children: [
             { label: 'Summary', to: { name: 'accounting-summary', params: teamParams() } },
             { label: 'Income Statement', to: { name: 'accounting-income', params: teamParams() } },
@@ -160,30 +163,12 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
             { label: 'Proposals', to: { name: 'bod-proposals', params: teamParams() } }
           ]
         },
-        ...(showExperimental
-          ? [
-              {
-                label: 'Vesting',
-                icon: 'heroicons:lock-closed',
-                disabled,
-                to: { name: 'vesting', params: teamParams() }
-              },
-              {
-                label: 'Debt Financing',
-                icon: 'heroicons:banknotes',
-                disabled,
-                to: { name: 'fixed-return', params: teamParams() },
-                defaultOpen: hasCompany.value,
-                children: [
-                  { label: 'Fixed Return', to: { name: 'fixed-return', params: teamParams() } },
-                  {
-                    label: 'Browse & Lend',
-                    to: { name: 'lender-marketplace', params: teamParams() }
-                  }
-                ]
-              }
-            ]
-          : [])
+        {
+          label: 'Vesting',
+          icon: 'heroicons:lock-closed',
+          disabled,
+          to: { name: 'vesting', params: teamParams() }
+        }
       ]
     ]
   })

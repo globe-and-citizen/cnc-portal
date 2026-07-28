@@ -33,7 +33,15 @@ vi.mock('@nuxt/ui/components/Select.vue', () => ({
   }
 }))
 
-const bankQuery = createMockApolloQueryState()
+const mockBankQuery = createMockApolloQueryState()
+const mockBankAddr = { value: null as null | { value: string } }
+
+vi.mock('@/composables/bank/useBankEventsViaLogs', () => ({
+  useBankEventsViaLogs: (addr: { value: string }) => {
+    mockBankAddr.value = addr
+    return mockBankQuery
+  }
+}))
 const mockCurrencyStore = makeCurrencyStoreMock()
 const mockGetTokenPrice = mockCurrencyStore.getTokenPrice
 
@@ -53,11 +61,11 @@ describe('BankTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockApolloUseQuery(vi.mocked(useQuery), bankQuery)
+    mockApolloUseQuery(vi.mocked(useQuery), mockBankQuery)
     vi.mocked(useCurrencyStore).mockReturnValue(
       mockCurrencyStore as unknown as ReturnType<typeof useCurrencyStore>
     )
-    resetMockApolloQueryState(bankQuery, buildBankQueryResult())
+    resetMockApolloQueryState(mockBankQuery, buildBankQueryResult())
     mockCurrencyStore.supportedTokens = [
       { id: 'native', symbol: 'ETH', address: ZERO_ADDRESS },
       { id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }
@@ -81,7 +89,7 @@ describe('BankTransactions', () => {
   })
 
   it('passes loading state to UTable', () => {
-    bankQuery.loading.value = true
+    mockBankQuery.loading.value = true
 
     wrapper = createWrapper()
     expect(tableLoading(wrapper)).toBe(true)
@@ -112,22 +120,17 @@ describe('BankTransactions', () => {
     expect(tableData(wrapper)).toHaveLength(0)
   })
 
-  it('uses disabled query option when bank address is empty', () => {
+  it('passes an empty address to the events composable when bank address is empty', () => {
     wrapper = createWrapper('' as Address)
-
-    const queryVariables = vi.mocked(useQuery).mock.calls[0]?.[1] as {
-      contractAddress: { value: string }
-    }
-    const queryOptions = vi.mocked(useQuery).mock.calls[0]?.[2] as { enabled: { value: boolean } }
-
-    expect(queryVariables.contractAddress.value).toBe('')
-    expect(queryOptions.enabled.value).toBe(false)
+    // The getLogs composable receives the lower-cased address; empty stays '' and
+    // the composable keeps itself disabled.
+    expect(mockBankAddr.value?.value).toBe('')
   })
 
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    bankQuery.result.value = {
+    mockBankQuery.result.value = {
       bankDeposits: {
         items: [
           {
@@ -174,7 +177,7 @@ describe('BankTransactions', () => {
   })
 
   it('renders child value fallback for grouped zero-value events', () => {
-    bankQuery.result.value = {
+    mockBankQuery.result.value = {
       bankDeposits: {
         items: [
           {
@@ -212,7 +215,7 @@ describe('BankTransactions', () => {
   })
 
   it('maps token support and ownership transfer events with a — value', () => {
-    bankQuery.result.value = {
+    mockBankQuery.result.value = {
       ...buildBankQueryResult(),
       bankDeposits: { items: [] },
       bankTransfers: { items: [] },
@@ -265,7 +268,7 @@ describe('BankTransactions', () => {
   })
 
   it('shows the initial token support count for the deployment ownership transfer', () => {
-    bankQuery.result.value = {
+    mockBankQuery.result.value = {
       ...buildBankQueryResult(),
       bankDeposits: { items: [] },
       bankTransfers: { items: [] },
@@ -312,12 +315,12 @@ describe('BankTransactions', () => {
     wrapper = createWrapper()
 
     const error = new Error('bank query failed')
-    bankQuery.error.value = error
+    mockBankQuery.error.value = error
     await nextTick()
 
     expect(logErrorSpy).toHaveBeenCalledWith('Ponder bank transaction query error:', error)
 
-    bankQuery.error.value = null
+    mockBankQuery.error.value = null
     await nextTick()
 
     expect(logErrorSpy).toHaveBeenCalledTimes(1)

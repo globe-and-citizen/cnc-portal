@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NavigationMenuItem } from '@nuxt/ui'
-import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
+import { useSidebarNavItems, ACCOUNTING_MENU_KEY } from '@/composables/useSidebarNavItems'
 import { mockRoute } from '@/tests/mocks/router.mock'
 import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
 
@@ -15,30 +15,19 @@ const WORKSPACE_LABELS = [
   'Company',
   'Accounts',
   'Payroll',
+  'Community Credit',
   'Accounting',
   'Contract Management',
   'SHER Token',
-  'Administration'
+  'Administration',
+  'Vesting'
 ]
-
-/**
- * Pages that demo the new contracts. Hidden unless
- * VITE_APP_ENABLE_EXPERIMENTAL_FEATURES is 'true'.
- */
-const EXPERIMENTAL_LABELS = ['Community Credit', 'Vesting', 'Debt Financing']
 
 describe('useSidebarNavItems', () => {
   beforeEach(() => {
     mockRoute.name = undefined
     mockRoute.params = {}
     mockTeamStore.currentTeamId = null as unknown as string
-    // The experimental pages are opt-in; default the flag on so the
-    // workspace-gate assertions cover them too. Individual tests override it.
-    vi.stubEnv('VITE_APP_ENABLE_EXPERIMENTAL_FEATURES', 'true')
-  })
-
-  afterEach(() => {
-    vi.unstubAllEnvs()
   })
 
   it('exposes Companies as a standalone first group with the building icon', () => {
@@ -70,7 +59,7 @@ describe('useSidebarNavItems', () => {
     it('disables every workspace surface', () => {
       const items = useSidebarNavItems()
 
-      for (const label of [...WORKSPACE_LABELS, ...EXPERIMENTAL_LABELS]) {
+      for (const label of WORKSPACE_LABELS) {
         expect(findByLabel(items.value, label)?.disabled, label).toBe(true)
       }
     })
@@ -97,7 +86,7 @@ describe('useSidebarNavItems', () => {
     it('enables every workspace surface', () => {
       const items = useSidebarNavItems()
 
-      for (const label of [...WORKSPACE_LABELS, ...EXPERIMENTAL_LABELS]) {
+      for (const label of WORKSPACE_LABELS) {
         expect(findByLabel(items.value, label)?.disabled, label).toBe(false)
       }
     })
@@ -117,6 +106,35 @@ describe('useSidebarNavItems', () => {
 
       const items = useSidebarNavItems()
       expect(items.value[1][0].label).toBe('Company workspace')
+    })
+  })
+
+  describe('Accounting menu persistence', () => {
+    beforeEach(() => {
+      localStorage.clear()
+      // Default to a specific team context.
+      mockRoute.params = { id: '42' }
+    })
+
+    it('gives the Accounting item a stable accordion value', () => {
+      const accounting = findByLabel(useSidebarNavItems().value, 'Accounting')
+      expect(accounting?.value).toBe('accounting')
+    })
+
+    it('stays closed by default even when persisted open on the companies list', () => {
+      localStorage.setItem(ACCOUNTING_MENU_KEY, 'true')
+      mockRoute.params = {}
+      mockTeamStore.currentTeamId = null as unknown as string
+
+      expect(findByLabel(useSidebarNavItems().value, 'Accounting')?.defaultOpen).toBe(false)
+    })
+
+    it('restores the persisted open state inside a company', () => {
+      // No persistence → collapsed, like the other menus.
+      expect(findByLabel(useSidebarNavItems().value, 'Accounting')?.defaultOpen).toBe(false)
+
+      localStorage.setItem(ACCOUNTING_MENU_KEY, 'true')
+      expect(findByLabel(useSidebarNavItems().value, 'Accounting')?.defaultOpen).toBe(true)
     })
   })
 
@@ -160,39 +178,6 @@ describe('useSidebarNavItems', () => {
       const accounts = findByLabel(useSidebarNavItems().value, 'Accounts')
       const safe = accounts?.children?.find((c) => c.label === 'Safe Account')
       expect((safe?.to as { params: { address: string } }).params.address).toBe('0x')
-    })
-  })
-
-  describe('experimental new-contract pages', () => {
-    beforeEach(() => {
-      mockRoute.params = { id: '42' }
-    })
-
-    it('hides Community Credit, Vesting and Debt Financing by default', () => {
-      vi.stubEnv('VITE_APP_ENABLE_EXPERIMENTAL_FEATURES', '')
-
-      const items = useSidebarNavItems()
-      for (const label of EXPERIMENTAL_LABELS) {
-        expect(findByLabel(items.value, label), label).toBeUndefined()
-      }
-    })
-
-    it('surfaces them when the flag is enabled', () => {
-      vi.stubEnv('VITE_APP_ENABLE_EXPERIMENTAL_FEATURES', 'true')
-
-      const items = useSidebarNavItems()
-      for (const label of EXPERIMENTAL_LABELS) {
-        expect(findByLabel(items.value, label), label).toBeDefined()
-      }
-    })
-
-    it('keeps the workspace surfaces regardless of the flag', () => {
-      vi.stubEnv('VITE_APP_ENABLE_EXPERIMENTAL_FEATURES', '')
-
-      const items = useSidebarNavItems()
-      for (const label of WORKSPACE_LABELS) {
-        expect(findByLabel(items.value, label), label).toBeDefined()
-      }
     })
   })
 })

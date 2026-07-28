@@ -10,8 +10,17 @@
     </template>
 
     <template #action-cell="{ row: { original: row } }">
+      <!-- A fee leg reads as its own action ("Fee"), on the same footing as the
+           category pills (Expense / Transfer / …) — even on a continuation row. -->
       <span
-        v-if="row.isFirst && !row.isTotal"
+        v-if="row.isFee"
+        class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
+        :class="FEE_BADGE"
+      >
+        Fee
+      </span>
+      <span
+        v-else-if="row.isFirst && !row.isTotal"
         class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
         :class="row.catClass"
       >
@@ -60,6 +69,28 @@
       </span>
     </template>
 
+    <template #currency-cell="{ row: { original: row } }">
+      <span v-if="!row.isTotal" class="text-muted text-sm">{{ row.currency }}</span>
+    </template>
+
+    <template #quantity-header>
+      <div class="text-right">Quantity</div>
+    </template>
+    <template #quantity-cell="{ row: { original: row } }">
+      <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
+        {{ row.quantity }}
+      </div>
+    </template>
+
+    <template #rate-header>
+      <div class="text-right">Rate</div>
+    </template>
+    <template #rate-cell="{ row: { original: row } }">
+      <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
+        {{ row.rate }}
+      </div>
+    </template>
+
     <template #dr-header>
       <div class="text-right">Debit</div>
     </template>
@@ -106,6 +137,10 @@ const props = defineProps<{
 
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
 
+// Action-pill classes for a fee leg — amber, a peer of the category badges
+// (CATEGORY_BADGE in ledgerPresenter). A static string so Tailwind keeps it.
+const FEE_BADGE = 'bg-warning/10 text-warning'
+
 /** A cash pocket account rendered as a contract avatar (document icon + short name). */
 function pocketUser(account: string) {
   return { name: account.replace('Cash — ', ''), address: '', icon: 'heroicons:document-text' }
@@ -125,6 +160,9 @@ const tableRows = computed<LedgerTableRow[]>(() => [
     accountDimmed: false,
     dr: props.total,
     cr: props.total,
+    currency: '',
+    quantity: '',
+    rate: '',
     isTotal: true
   }
 ])
@@ -138,7 +176,10 @@ const COLUMN_DEFS: Record<LedgerColumnKey, TableColumn<LedgerTableRow>> = {
   activity: { id: 'activity', header: 'Activity' },
   account: { accessorKey: 'account', header: 'Account' },
   dr: { accessorKey: 'dr', header: 'Debit' },
-  cr: { accessorKey: 'cr', header: 'Credit' }
+  cr: { accessorKey: 'cr', header: 'Credit' },
+  currency: { accessorKey: 'currency', header: 'Currency' },
+  quantity: { accessorKey: 'quantity', header: 'Quantity' },
+  rate: { accessorKey: 'rate', header: 'Rate' }
 }
 
 const columns = computed<TableColumn<LedgerTableRow>[]>(() => {

@@ -18,6 +18,8 @@ export function useBankOwner() {
     address: bankAddress,
     abi: BANK_ABI,
     functionName: 'owner',
-    query: { enabled: !!bankAddress.value && isAddress(bankAddress.value) }
+    query: {
+      enabled: computed(() => !!bankAddress.value && isAddress(bankAddress.value))
+    }
   })
 }

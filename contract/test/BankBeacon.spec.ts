@@ -1,6 +1,7 @@
-import { ethers } from 'hardhat'
+import { ethers, initializeHardhat, loadFixture } from './hardhat-context.js'
 import { expect } from 'chai'
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
+
+before(initializeHardhat)
 
 describe('BankBeacon', () => {
   async function deployFixture() {

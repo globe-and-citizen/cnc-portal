@@ -8,7 +8,7 @@ type InvestorFunctionNames = ExtractAbiFunctionNames<typeof INVESTOR_ABI>
 
 function useInvestorContractWrite(functionName: InvestorFunctionNames) {
   const teamStore = useTeamStore()
-  const contractAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
+  const contractAddress = computed(() => teamStore.getInvestorAddress())
   return useContractWritesV3({
     contractAddress,
     abi: INVESTOR_ABI,

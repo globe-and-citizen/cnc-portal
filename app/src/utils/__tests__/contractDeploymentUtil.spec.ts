@@ -6,7 +6,7 @@ import {
   getDeploymentConfigs
 } from '../contractDeploymentUtil'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
+import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
 import {
   FIXED_RETURN_BEACON_ADDRESS,
   VESTING_BEACON_ADDRESS,
@@ -46,7 +46,7 @@ describe('getBeaconConfigs', () => {
       'Proposals',
       'ExpenseAccountEIP712',
       'CashRemunerationEIP712',
-      'InvestorV1',
+      'Investor',
       'Elections',
       'SafeDepositRouter',
       'Vesting',
@@ -67,7 +67,7 @@ describe('getDeploymentConfigs', () => {
     const configs = getDeploymentConfigs(CURRENT_USER, { name: 'Acme', symbol: 'ACM' })
     expect(configs.map((c) => c.contractType)).toEqual([
       'Bank',
-      'InvestorV1',
+      'Investor',
       'Proposals',
       'ExpenseAccountEIP712',
       'CashRemunerationEIP712',
@@ -88,11 +88,11 @@ describe('getDeploymentConfigs', () => {
     })
   })
 
-  it('encodes the InvestorV1 initializer with a zero default rewards token', () => {
+  it('encodes the Investor initializer with a zero default owner', () => {
     getDeploymentConfigs(CURRENT_USER, { name: 'Acme', symbol: 'ACM' })
 
     expect(encodeFunctionData).toHaveBeenCalledWith({
-      abi: INVESTOR_ABI,
+      abi: INVESTOR_V2_ABI,
       functionName: 'initialize',
       args: ['Acme', 'ACM', zeroAddress]
     })

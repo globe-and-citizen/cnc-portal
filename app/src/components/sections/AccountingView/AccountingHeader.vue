@@ -4,17 +4,7 @@
       <span class="text-2xl font-bold tracking-tight">Accounting</span>
       <div class="text-muted mt-1.5 text-sm">Double-entry books for every on-chain movement</div>
     </div>
-
-    <UButton
-      color="neutral"
-      variant="soft"
-      icon="i-heroicons-arrow-down-tray"
-      label="Export to Excel"
-      @click="emit('export')"
-    />
   </div>
 </template>
 
-<script setup lang="ts">
-const emit = defineEmits<{ export: [] }>()
-</script>
+<script setup lang="ts"></script>

@@ -63,7 +63,7 @@ export function useDeposit() {
     abi: SAFE_DEPOSIT_ROUTER_ABI,
     functionName: 'deposit',
     onSuccess: async () => {
-      const investor = teamStore.getContractAddressByType('InvestorV1')
+      const investor = teamStore.getInvestorAddress()
       if (!investor) return
       const investorLower = investor.toLowerCase()
       await queryClient.invalidateQueries({

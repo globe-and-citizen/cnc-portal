@@ -155,6 +155,68 @@ describe('Wage Controller', () => {
       expect(prisma.wage.create).toHaveBeenCalled();
     });
 
+    it('should default the daily cap to 8 hours when it is not provided', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
+      const createSpy = vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          maximumHoursPerWeek: 40,
+        });
+
+      expect(response.status).toBe(201);
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ maximumHoursPerDay: 8 }),
+        })
+      );
+    });
+
+    it('should persist the daily cap provided by the owner', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
+      const createSpy = vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          maximumHoursPerWeek: 40,
+          maximumHoursPerDay: 6,
+        });
+
+      expect(response.status).toBe(201);
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ maximumHoursPerDay: 6 }),
+        })
+      );
+    });
+
+    it('should reject a daily cap above 24 hours', async () => {
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          maximumHoursPerWeek: 40,
+          maximumHoursPerDay: 25,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid request body');
+    });
+
     it('should store DbNull when overtimeRatePerHour is explicitly null', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);

@@ -19,7 +19,10 @@ export const ADDR = {
   client: '0x7777777777777777777777777777777777777777',
   member: '0x8888888888888888888888888888888888888888',
   usdcToken: '0x9999999999999999999999999999999999999999',
-  sherToken: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  sherToken: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  /** The FixedReturn (Community Credit) pocket. */
+  credit: '0xdddddddddddddddddddddddddddddddddddddddd',
+  lender: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 } as const
 
 const POCKETS: Record<string, AccountName> = {
@@ -27,6 +30,7 @@ const POCKETS: Record<string, AccountName> = {
   [ADDR.safe]: 'Cash — Safe',
   [ADDR.payroll]: 'Cash — Payroll',
   [ADDR.expense]: 'Cash — Expense',
+  [ADDR.credit]: 'Cash — Credit',
   [ADDR.feeCollector]: 'Cash — FeeCollector'
 }
 

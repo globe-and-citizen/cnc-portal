@@ -1,20 +1,14 @@
-/**
- * View presentation for the Accounting screens — maps the live engine output
- * ({@link CncAccounting}, issues #2117/#2118) into the display shapes the cards
- * and tables render. Pure and unit-testable; replaces the former static
- * `accountingDemo` fixtures so every figure now comes from real data.
- *
- * The date-scoped helpers re-run the pure statement builders over a filtered
- * slice of the consolidated `entries`, so the income statement reports a period
- * and the balance sheet a point in time ("as of").
- */
 import dayjs from 'dayjs'
 import { classOf, type AccountClass, type AccountName } from './chartOfAccounts'
 import type { GeneralLedger } from './generalLedger'
 import { buildIncomeStatement, type IncomeStatement } from './incomeStatement'
-import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
+import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
 import type { AccountingSummary } from './buildLedger'
 import type { LedgerEntry } from './ledgerEntry'
+import { NETWORK, type TokenId } from '@/constant'
+
+/** The breakdown-line fields the display helpers read (subset of {@link CashCurrencyLine}). */
+type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount'>
 
 export type TrialNature = 'Asset' | 'Equity' | 'Income' | 'Liability' | 'Expense'
 
@@ -27,11 +21,15 @@ export const NATURE_BADGE: Record<TrialNature, string> = {
   Expense: 'bg-error/10 text-error'
 }
 
-/** `142.2` → `$142.20`. */
+/**
+ * `142.2` → `$142.20`. A sub-cent residue that rounds to zero (e.g. `−0.004`, or
+ * JS negative zero) is collapsed to a clean `$0.00` — never the misleading
+ * `$-0.00` that `toLocaleString` emits for `−0`.
+ */
 export function money(n: number): string {
-  return (
-    '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  )
+  const cents = Math.round(Number(n) * 100)
+  const value = cents === 0 ? 0 : cents / 100
+  return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 /** Unix-seconds → `Jan 8, 2026` (matches the dashboard ledger date style). */
@@ -53,6 +51,8 @@ export function fmtDateTime(timestamp: number): string {
 export interface StatementLineView {
   label: string
   value: string
+  account?: AccountName
+  accounts?: AccountName[]
 }
 
 export interface SummaryCard {
@@ -63,7 +63,6 @@ export interface SummaryCard {
   icon: string
   chipClass: string
   accent: boolean
-  /** Top-border accent colour, when `accent` is set. */
   accentClass?: string
   trend?: string
 }
@@ -90,7 +89,6 @@ export interface IncomeView {
   totalRevenue: string
   totalExpenses: string
   netIncome: string
-  /** True when net income is a loss (< 0) — drives the red deficit styling. */
   netNegative: boolean
 }
 
@@ -113,6 +111,41 @@ function natureOf(account: AccountName): TrialNature {
     EXPENSE: 'Expense'
   }
   return byClass[classOf(account)]
+}
+
+/**
+ * Human label for a reporting period, e.g. `"All time"`, `"Jan 1, 2026 – Feb 1,
+ * 2026"`, `"From Jan 1, 2026"`. Used in the ledger export context line.
+ */
+export function periodLabel(from?: Date | null, to?: Date | null): string {
+  const fmt = (d: Date) => dayjs(d).format('MMM D, YYYY')
+  if (from && to) return `${fmt(from)} – ${fmt(to)}`
+  if (from) return `From ${fmt(from)}`
+  if (to) return `Until ${fmt(to)}`
+  return 'All time'
+}
+
+/** A single calendar day at day granularity, e.g. `"Jul 8, 2026"`. */
+export function dayLabel(date: Date): string {
+  return dayjs(date).format('MMM D, YYYY')
+}
+
+/**
+ * The headings the statement exports (PDF page / Excel title row) print, spelling
+ * out the active reporting scope so a printed page is self-describing — mirroring
+ * {@link ledgerExportTitle}. The plain base name alone for the whole book, with
+ * the selected period / "as of" date appended when the page has one set.
+ */
+export function incomeExportTitle(from?: Date | null, to?: Date | null): string {
+  return from || to ? `Income Statement — ${periodLabel(from, to)}` : 'Income Statement'
+}
+
+export function balanceExportTitle(asOf?: Date | null): string {
+  return asOf ? `Balance Sheet — As of ${dayLabel(asOf)}` : 'Balance Sheet'
+}
+
+export function trialExportTitle(asOf?: Date | null): string {
+  return asOf ? `Trial Balance — As of ${dayLabel(asOf)}` : 'Trial Balance'
 }
 
 /** Keep entries inside an inclusive `[from, to]` window (nullish bound = open). */
@@ -145,12 +178,11 @@ export function presentSummaryCards(
   income: IncomeStatement,
   balance: BalanceSheet
 ): SummaryCard[] {
-  // Profit reads green (a gain); a loss reads red (a deficit) — never green.
-  const profitable = summary.netIncome >= 0
+  const profitable = income.netIncome >= 0
   return [
     {
       label: 'Net income',
-      value: money(summary.netIncome),
+      value: money(income.netIncome),
       valueClass: profitable ? 'text-primary' : 'text-error',
       sub: 'Profit · revenue − expenses',
       icon: 'i-heroicons-sparkles',
@@ -174,6 +206,13 @@ export function presentSummaryCards(
       'bg-warning/10 text-warning'
     ),
     metric(
+      'Total transaction fees',
+      money(summary.transactionFees),
+      'Bank protocol fee skimmed on transfers',
+      'i-heroicons-receipt-percent',
+      'bg-warning/10 text-warning'
+    ),
+    metric(
       'Total assets',
       money(balance.totalAssets),
       'Cash + trading account',
@@ -192,6 +231,7 @@ export function presentSummaryCards(
 
 /** The "books are balanced" banner copy from the live statements. */
 export function presentBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBanner {
+  // `totalEquity` is the balancing residual, so the three figures foot exactly.
   return {
     balanced: balance.balanced && ledger.balanced,
     identity: `${money(balance.totalAssets)} = ${money(balance.totalLiabilities)} + ${money(balance.totalEquity)}`,
@@ -207,8 +247,16 @@ export function presentIncome(
 ): IncomeView {
   const is = buildIncomeStatement(filterByPeriod(entries, from, to))
   return {
-    revLines: is.revenue.map((l) => ({ label: l.account, value: money(l.amount) })),
-    expLines: is.expenses.map((l) => ({ label: l.account, value: money(l.amount) })),
+    revLines: is.revenue.map((l) => ({
+      label: l.account,
+      value: money(l.amount),
+      account: l.account
+    })),
+    expLines: is.expenses.map((l) => ({
+      label: l.account,
+      value: money(l.amount),
+      account: l.account
+    })),
     totalRevenue: money(is.totalRevenue),
     totalExpenses: money(is.totalExpenses),
     netIncome: money(is.netIncome),
@@ -216,20 +264,64 @@ export function presentIncome(
   }
 }
 
+/** Ledger token id → display symbol (native uses the chain's currency symbol). */
+export function currencySymbol(token: TokenId): string {
+  if (token === 'native') return NETWORK.currencySymbol || 'POL'
+  if (token === 'usdc.e') return 'USDC.e'
+  return token.toUpperCase() // usdc → USDC, usdt → USDT, sher → SHER
+}
+
+/** Drop the `Cash — ` chart prefix for the compact breakdown label. */
+function pocketShortName(account: AccountName): string {
+  return account.replace(/^Cash — /, '')
+}
+
+/** `12.5` → `12.5 POL`; trims to at most 6 decimals so dust reads cleanly. */
+function tokenQuantity(amount: number, token: TokenId): string {
+  return `${amount.toLocaleString('en-US', { maximumFractionDigits: 6 })} ${currencySymbol(token)}`
+}
+
+/**
+ * One breakdown line's display value. A stablecoin shows its USD value directly;
+ * native (POL/ETH) shows its quantity *and* USD equivalent at the closing rate of
+ * record — `0.023953 POL ≈ $0.00` (spec §5) — so a holding worth a few cents is
+ * still legible as a POL balance.
+ */
+function cashCurrencyValue(line: CashLineData): string {
+  if (line.token !== 'native') return money(line.amountUsd)
+  return `${tokenQuantity(line.tokenAmount, line.token)} ≈ ${money(line.amountUsd)}`
+}
+
 /** Balance-sheet lines as of a point in time. */
 export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | null): BalanceView {
-  const bs = buildBalanceSheet(filterByPeriod(entries, null, asOf))
+  const scoped = filterByPeriod(entries, null, asOf)
+  const bs = buildBalanceSheet(scoped)
+  const is = buildIncomeStatement(scoped)
+  const retainedAccounts = [...is.revenue, ...is.expenses].map((l) => l.account)
   const assetLines: StatementLineView[] = [
     { label: 'Cash (all pockets)', value: money(bs.cash) },
-    ...bs.otherAssets.map((a) => ({ label: a.account, value: money(a.amount) }))
+    ...bs.cashByPocketCurrency.map((l) => ({
+      label: `• ${pocketShortName(l.account)} · ${currencySymbol(l.token)}`,
+      value: cashCurrencyValue(l),
+      account: l.account
+    })),
+    ...bs.otherAssets.map((a) => ({ label: a.account, value: money(a.amount), account: a.account }))
   ]
   const liabLines: StatementLineView[] = bs.liabilities.length
-    ? bs.liabilities.map((l) => ({ label: l.account, value: money(l.amount) }))
+    ? bs.liabilities.map((l) => ({ label: l.account, value: money(l.amount), account: l.account }))
     : [{ label: 'None (no debt)', value: money(0) }]
   const equityLines: StatementLineView[] = [
-    { label: 'Owner capital', value: money(bs.ownerCapital) },
-    { label: 'Investor equity (SHER)', value: money(bs.investorEquity) },
-    { label: 'Retained earnings (net profit)', value: money(bs.retainedEarnings) }
+    { label: 'Owner capital', value: money(bs.ownerCapital), account: 'Owner Capital' },
+    {
+      label: 'Investor equity (SHER)',
+      value: money(bs.investorEquity),
+      account: 'Investor Equity'
+    },
+    {
+      label: 'Retained earnings (net profit)',
+      value: money(bs.retainedEarnings),
+      accounts: retainedAccounts
+    }
   ]
   return {
     assetLines,
@@ -237,7 +329,7 @@ export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | nu
     equityLines,
     totalAssets: money(bs.totalAssets),
     totalEquity: money(bs.totalEquity),
-    liabilitiesPlusEquity: money(bs.totalLiabilities + bs.totalEquity)
+    liabilitiesPlusEquity: money(bs.totalLiabilitiesAndEquity)
   }
 }
 

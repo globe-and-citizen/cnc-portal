@@ -39,6 +39,7 @@ describe('SetMemberWageModal', () => {
     userAddress: string
     enableOvertimeRules: boolean
     maximumHoursPerWeek: number
+    maximumHoursPerDay: number
     ratePerHour: WageRate[]
     overtimeRatePerHour: WageRate[]
   }
@@ -211,6 +212,18 @@ describe('SetMemberWageModal', () => {
       userAddress: mockMember.address,
       overtimeRatePerHour: [{ type: 'usdc', amount: 20 }]
     })
+  })
+
+  it('submits the daily cap, defaulting it for wages saved before the cap existed', async () => {
+    const wrapper = createWrapper()
+    await openModal(wrapper)
+
+    expect(currentWageData(wrapper).maximumHoursPerDay).toBe(8)
+
+    await updateWageData(wrapper, { maximumHoursPerDay: 6 })
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+
+    expect(mutateSpy.mock.calls[0]?.[0].body).toMatchObject({ maximumHoursPerDay: 6 })
   })
 
   it('shows a success toast and closes the modal after mutation succeeds', async () => {

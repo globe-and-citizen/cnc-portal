@@ -9,7 +9,7 @@ The default shape for any write-side composable in this app is:
 Canonical examples:
 
 - `app/src/composables/contracts/useOfficerDeployment.ts` — `deployOfficer()` + `useDeployOfficer()`
-- `app/src/composables/investor/useShareholderMigration.ts` — `migrateShareholders()` + `useMigrateShareholders()` + `InconsistentSupplyError`
+- `app/src/composables/investor/useShareholderMigration.ts` — `migrateShareholders()` + `useMigrateShareholders()`
 - `app/src/composables/contracts/useOfficerRedeploy.ts` — orchestrator over the two above + `useCreateOfficerMutation`
 
 The rules below are the **review-time checklist**. The longer rationale lives in [#1776](https://github.com/globe-and-citizen/cnc-portal/issues/1776).
@@ -59,10 +59,10 @@ Callers reading this header should know, without opening `onSuccess`, what they 
 
 ## 5. Typed errors
 
-- Recoverable / actionable failures should be thrown as `class extends Error` subclasses (e.g. `InconsistentSupplyError`). Plain `new Error("msg")` is fine for "this is just an RPC failure" cases.
+- Recoverable / actionable failures should be thrown as `class extends Error` subclasses (e.g. `useSiwe.ts`'s typed errors). Plain `new Error("msg")` is fine for "this is just an RPC failure" cases.
 - **Never catch-and-rethrow a typed error as a plain `Error`.** Preserve the chain: `throw new WrapperError(msg, { cause: originalTypedError })`.
 - Consumers that branch on type should use `instanceof` — never message string matching.
-- Every typed error class needs a regression test proving `mutation.error.value instanceof TypedError` survives the wrapper. See `app/src/composables/investor/__tests__/useShareholderMigration.pipeline.spec.ts`.
+- Every typed error class needs a regression test proving `mutation.error.value instanceof TypedError` survives the wrapper (the global `useMutation` mock doesn't populate `error.value` — reach for the real `@tanstack/vue-query` export mounted against a fresh `QueryClient`, as a `*.pipeline.spec.ts` file, e.g. `git log -- '**/*.pipeline.spec.ts'` for a prior example to crib from).
 
 ## 6. Throw vs return
 

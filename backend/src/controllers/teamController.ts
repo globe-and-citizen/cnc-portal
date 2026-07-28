@@ -1,10 +1,15 @@
-import { TeamContract, TeamOfficer, User } from '@prisma/client';
+import { Prisma, TeamContract, TeamOfficer, User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
-import { CURRENT_OFFICER_VERSION } from './contractController';
+import { generateUniqueSlug } from '../utils/slug.util';
+import { getActiveOfficerVersion } from './contractController';
+
+// A slug is taken when some team already holds it.
+const isTeamSlugTaken = async (slug: string) =>
+  Boolean(await prisma.team.findUnique({ where: { slug }, select: { id: true } }));
 
 // Shared: include the immediate predecessor (id + address only) so clients
 // can walk one step back for copy-forward flows (e.g. shareholder migration)
@@ -54,13 +59,11 @@ export const serializeOfficer = (o: TeamOfficer | undefined | null) =>
       }
     : null;
 
-// True iff the current Officer was deployed with the CURRENT_OFFICER_VERSION
-// generation tag. Drives the frontend "team is on the previous contract
-// version" banner and freezes new-claim flows during the redeploy window
-// (issue #1825). Teams with no current Officer at all (never deployed)
-// surface `isMigrated: false`.
+// True iff the current Officer matches the active generation for the backend's
+// configured network. This keeps Hardhat V2 validation from marking Polygon
+// teams migrated before the Polygon deployment is complete.
 const deriveIsMigrated = (officer: { version?: string | null } | null | undefined) =>
-  officer?.version === CURRENT_OFFICER_VERSION;
+  officer?.version === getActiveOfficerVersion();
 
 // Pulls the head of the linked list out of an `include: currentOfficerInclude`
 // result and exposes it as `currentOfficer`. Removes the raw `teamOfficers`
@@ -135,33 +138,50 @@ const addTeam = async (req: Request, res: Response) => {
       });
     }
 
-    // Create the team with the members connected and membership tracking records
-    const team = await prisma.team.create({
-      data: {
-        name,
-        description,
-        isArchived: false,
-        ownerAddress: String(callerAddress),
-        members: {
-          connect: members.map((member: User) => ({
-            address: member.address,
-          })),
-        },
-        memberTeamsData: {
-          create: members.map((member: User) => ({
-            memberAddress: member.address,
-          })),
-        },
-      },
-      include: {
-        members: {
-          select: {
-            address: true,
-            name: true,
+    // Teams may share a name; the unique identifier is a slug auto-generated
+    // from the name (acme-corp, acme-corp-2, …).
+    const createTeamWithSlug = (slug: string) =>
+      prisma.team.create({
+        data: {
+          name,
+          slug,
+          description,
+          isArchived: false,
+          ownerAddress: String(callerAddress),
+          members: {
+            connect: members.map((member: User) => ({
+              address: member.address,
+            })),
+          },
+          memberTeamsData: {
+            create: members.map((member: User) => ({
+              memberAddress: member.address,
+            })),
           },
         },
-      },
-    });
+        include: {
+          members: {
+            select: {
+              address: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+    // Create the team with the members connected and membership tracking records.
+    let team;
+    try {
+      team = await createTeamWithSlug(await generateUniqueSlug(name, isTeamSlugTaken));
+    } catch (error: unknown) {
+      // Rare race: another team claimed the slug between the uniqueness check
+      // and the insert. Regenerate once and retry before giving up.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        team = await createTeamWithSlug(await generateUniqueSlug(name, isTeamSlugTaken));
+      } else {
+        throw error;
+      }
+    }
 
     addNotification(
       members.map((member: User) => member.address),

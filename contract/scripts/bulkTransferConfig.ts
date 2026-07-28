@@ -2,8 +2,8 @@
 // Recipients are loaded from recipients.json (not versioned)
 // Copy recipients.json.example to recipients.json and customize as needed
 
-import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 // Interface for recipients data structure
 interface RecipientsData {
@@ -13,7 +13,7 @@ interface RecipientsData {
 
 // Function to load recipients from JSON file
 function loadRecipients(): RecipientsData {
-  const recipientsPath = join(__dirname, 'recipients.json')
+  const recipientsPath = join(import.meta.dirname, 'recipients.json')
 
   if (!existsSync(recipientsPath)) {
     console.error('❌ Recipients file not found!')

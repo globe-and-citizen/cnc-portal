@@ -1,8 +1,9 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers, initializeHardhat, upgrades } from './hardhat-context.js'
 import { expect } from 'chai'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { ExpenseAccountEIP712 } from '../typechain-types'
-import { MockERC20 } from '../typechain-types'
+import type { SignerWithAddress } from './hardhat-context.js'
+import type { ExpenseAccountEIP712, MockERC20 } from '../typechain-types/index.js'
+
+before(initializeHardhat)
 
 describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
   let expenseAccount: ExpenseAccountEIP712
@@ -22,7 +23,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
     expenseAccount = (await upgrades.deployProxy(
       ExpenseAccountImplementation,
       [owner.address, [await mockUSDT.getAddress(), await mockUSDC.getAddress()]],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )) as unknown as ExpenseAccountEIP712
   }
 
@@ -50,7 +51,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         value: amount
       })
 
-      await expect(tx).to.changeEtherBalance(expenseAccount, amount)
+      await expect(tx).to.changeEtherBalance(ethers, expenseAccount, amount)
       await expect(tx).to.emit(expenseAccount, 'Deposited').withArgs(owner.address, amount)
     })
 
@@ -110,7 +111,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         .to.emit(expenseAccount, 'ApprovalDeactivated')
         .withArgs(signatureHash)
 
-      const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      const expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.state).to.equal(2) // Inactive state
     })
 
@@ -123,7 +124,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         .to.emit(expenseAccount, 'ApprovalActivated')
         .withArgs(signatureHash)
 
-      const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      const expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.state).to.equal(1) // Active state
     })
 
@@ -231,13 +232,13 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
 
         await expect(
           expenseAccount.connect(owner).depositToken(unsupportedToken, amount)
-        ).to.be.revertedWithCustomError(expenseAccount, 'TokenNotSupported')
+        ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__TokenNotSupported')
       })
 
       it('Should not allow zero amount deposits', async () => {
         await expect(
           expenseAccount.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
-        ).to.be.revertedWithCustomError(expenseAccount, 'ZeroAmount')
+        ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__ZeroAmount')
       })
 
       it('Should not allow non-owners to change token addresses', async () => {
@@ -252,13 +253,13 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       it('Should not allow changing to invalid token symbols', async () => {
         await expect(
           expenseAccount.addTokenSupport(ethers.ZeroAddress)
-        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupportZeroAddress')
+        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupport__ZeroAddress')
       })
 
       it('Should not allow setting zero address as token address', async () => {
         await expect(
           expenseAccount.removeTokenSupport(ethers.ZeroAddress)
-        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupportZeroAddress')
+        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupport__ZeroAddress')
       })
     })
   })

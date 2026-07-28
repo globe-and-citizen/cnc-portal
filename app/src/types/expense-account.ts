@@ -17,6 +17,8 @@ export interface BudgetLimit {
   endDate: number
   tokenAddress: Address
   approvedAddress: Address
+  signedAgainstContractAddress?: Address
+  chainId?: number
 }
 
 export interface ExpenseData {

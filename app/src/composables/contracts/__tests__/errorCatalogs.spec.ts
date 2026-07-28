@@ -95,24 +95,6 @@ describe('resolveRevertMessage', () => {
       ).toBe('Insufficient funded token balance — needs 50, only 10')
     })
 
-    it('formats Tips.TooManyTeamMembers', () => {
-      expect(resolveRevertMessage('TooManyTeamMembers', [30, 20], 'Tips')).toBe(
-        'Too many team members — provided 30, limit is 20'
-      )
-    })
-
-    it('formats Tips.LimitTooHigh', () => {
-      expect(resolveRevertMessage('LimitTooHigh', [100, 50], 'Tips')).toBe(
-        'Push limit 100 exceeds the maximum of 50'
-      )
-    })
-
-    it('formats Tips.InsufficientBalance (contract-balance shape)', () => {
-      expect(resolveRevertMessage('InsufficientBalance', [5n, 1n], 'Tips')).toBe(
-        'Insufficient contract balance — needs 5, only 1'
-      )
-    })
-
     it('formats AdCampaignManager.InsufficientContractBalance', () => {
       expect(
         resolveRevertMessage('InsufficientContractBalance', [100n, 50n], 'AdCampaignManager')
@@ -209,7 +191,6 @@ describe('resolveRevertMessage', () => {
       ['AdCampaignManager', 'Ad campaign action failed'],
       ['Vesting', 'Vesting action failed'],
       ['InvestorV1', 'Investor action failed'],
-      ['Tips', 'Tips action failed'],
       ['FeeCollector', 'Fee collector action failed'],
       ['TokenSupport', 'Token support update failed'],
       ['Elections', 'Election action failed'],
@@ -277,21 +258,6 @@ describe('resolveRevertMessage', () => {
         name: 'InsufficientFundedTokenBalance',
         contract: 'InvestorV1',
         expected: 'Insufficient funded token balance — needs undefined, only undefined'
-      },
-      {
-        name: 'TooManyTeamMembers',
-        contract: 'Tips',
-        expected: 'Too many team members — provided undefined, limit is undefined'
-      },
-      {
-        name: 'LimitTooHigh',
-        contract: 'Tips',
-        expected: 'Push limit undefined exceeds the maximum of undefined'
-      },
-      {
-        name: 'InsufficientBalance',
-        contract: 'Tips',
-        expected: 'Insufficient contract balance — needs undefined, only undefined'
       },
       {
         name: 'InsufficientBalance',

@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatAmount, formatNumber } from '@/utils'
+import { creditTermLabel, formatAmount, formatNumber } from '@/utils'
 import type { CreditCallForm } from '@/types'
 
 const props = defineProps<{ form: CreditCallForm; whitelistCount: number }>()
@@ -39,10 +39,27 @@ const accessLabel = computed(() =>
   props.form.access === 'everyone' ? 'Everyone' : `Restricted (${props.whitelistCount})`
 )
 
+/** 12-hour clock with AM/PM, e.g. `11:59 PM` — matches the native time input's own
+ *  browser-rendered format (and the calendar's date style) rather than a raw 24-hour
+ *  HH:mm, so the two don't visually disagree right next to each other. */
+function formatTime12h(timeStr: string): string {
+  const hour = Number(timeStr.split(':')[0])
+  const minute = Number(timeStr.split(':')[1])
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return timeStr
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return `${hour12}:${String(minute).padStart(2, '0')} ${period}`
+}
+
 const rows = computed(() => [
   { label: 'Interest', value: `${rate.value}% fixed` },
-  { label: 'Term', value: `${props.form.period} days` },
-  { label: 'Deadline', value: props.form.deadline || '—' },
+  { label: 'Term', value: creditTermLabel(props.form) },
+  {
+    label: 'Deadline',
+    value: props.form.deadline
+      ? `${props.form.deadline} ${formatTime12h(props.form.deadlineTime || '23:59')} UTC`
+      : '—'
+  },
   { label: 'Access', value: accessLabel.value },
   {
     label: 'Cap / lender',

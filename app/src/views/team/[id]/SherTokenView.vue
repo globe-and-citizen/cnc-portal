@@ -2,6 +2,7 @@
   <div class="flex flex-col gap-y-8">
     <InvestorsHeader />
     <ShareholderMigrationBanner />
+    <ShareholderClaimSection />
     <InvestorsActions />
     <ShareholderList />
   </div>
@@ -20,8 +21,9 @@ import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActio
 import ShareholderList from '@/components/sections/SherTokenView/ShareholderList.vue'
 import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
 import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
+import ShareholderClaimSection from '@/components/sections/SherTokenView/ShareholderClaimSection.vue'
 
 const teamStore = useTeamStore()
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
+const investorsAddress = computed(() => teamStore.getInvestorAddress())
 </script>

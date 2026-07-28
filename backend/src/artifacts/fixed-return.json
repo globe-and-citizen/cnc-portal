@@ -6,32 +6,114 @@
   },
   {
     "inputs": [],
-    "name": "AllocationSumExceedsFundingTarget",
+    "name": "FixedReturn__AllocationSumBelowFundingTarget",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "DeadlineNotPassed",
+    "name": "FixedReturn__BankContractNotFound",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "DepositExceedsAllocation",
+    "name": "FixedReturn__DeadlineNotPassed",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "DepositExceedsLenderCap",
+    "name": "FixedReturn__DepositExceedsAllocation",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "FundingTargetReached",
+    "name": "FixedReturn__DepositExceedsLenderCap",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvalidDeadline",
+    "name": "FixedReturn__DuplicateWhitelistAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__ExceedsRepaymentObligation",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__FundingTargetReached",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__InvalidDeadline",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__InvalidMaturityDate",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__LenderCapExceedsFundingTarget",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__NoFundsRaised",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "FixedReturn__NotBank",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__NotWhitelisted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__OfferNotFunded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__OfferNotOpen",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "FixedReturn__TokenNotSupportedByBank",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__WhitelistLengthMismatch",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FixedReturn__ZeroAmount",
     "type": "error"
   },
   {
@@ -41,42 +123,7 @@
   },
   {
     "inputs": [],
-    "name": "InvalidTermDuration",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "LenderCapExceedsFundingTarget",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotWhitelisted",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NothingToRefund",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OfferNotFunded",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OfferNotOpen",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OfferNotRefundable",
     "type": "error"
   },
   {
@@ -125,7 +172,7 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportAlreadyAdded",
+    "name": "TokenSupport__AlreadyAdded",
     "type": "error"
   },
   {
@@ -136,27 +183,12 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportNotFound",
+    "name": "TokenSupport__NotFound",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TokenSupportZeroAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "WhitelistLengthMismatch",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAmount",
+    "name": "TokenSupport__ZeroAddress",
     "type": "error"
   },
   {
@@ -326,6 +358,31 @@
         "type": "uint256"
       },
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "totalFunded",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "fundingTarget",
+        "type": "uint256"
+      }
+    ],
+    "name": "PartialFundingAccepted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
         "indexed": true,
         "internalType": "address",
         "name": "lender",
@@ -339,6 +396,25 @@
       }
     ],
     "name": "PrincipalRefunded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "totalAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "RefundsDistributed",
     "type": "event"
   },
   {
@@ -387,16 +463,16 @@
     "type": "event"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "UNCAPPED_ALLOCATION",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "_tokenAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
-    "name": "addTokenSupport",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -407,7 +483,20 @@
         "type": "uint256"
       }
     ],
-    "name": "claimRefund",
+    "name": "acceptPartialFunding",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "addTokenSupport",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -432,14 +521,9 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint16",
-            "name": "termDuration",
-            "type": "uint16"
-          },
-          {
-            "internalType": "enum FixedReturn.TermUnit",
-            "name": "termUnit",
-            "type": "uint8"
+            "internalType": "uint256",
+            "name": "maturityDate",
+            "type": "uint256"
           },
           {
             "internalType": "uint256",
@@ -499,6 +583,78 @@
         "internalType": "uint256",
         "name": "offerId",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "lender",
+        "type": "address"
+      }
+    ],
+    "name": "getHasDeposited",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "lender",
+        "type": "address"
+      }
+    ],
+    "name": "getLenderAllocation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "lender",
+        "type": "address"
+      }
+    ],
+    "name": "getLenderDeposits",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
       }
     ],
     "name": "getLendingOffer",
@@ -521,14 +677,9 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint16",
-            "name": "termDuration",
-            "type": "uint16"
-          },
-          {
-            "internalType": "enum FixedReturn.TermUnit",
-            "name": "termUnit",
-            "type": "uint8"
+            "internalType": "uint256",
+            "name": "maturityDate",
+            "type": "uint256"
           },
           {
             "internalType": "uint256",
@@ -600,6 +751,19 @@
   },
   {
     "inputs": [],
+    "name": "getOfficerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getSupportedTokenCount",
     "outputs": [
       {
@@ -625,24 +789,37 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "getTotalOfferings",
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "",
+        "name": "lender",
         "type": "address"
       }
     ],
-    "name": "hasDeposited",
+    "name": "getTotalPaidToLender",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint256",
         "name": "",
-        "type": "bool"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -652,12 +829,12 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_tokenAddresses",
+        "name": "tokenAddresses",
         "type": "address[]"
       },
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "ownerAddress",
         "type": "address"
       }
     ],
@@ -670,7 +847,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -704,67 +881,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "lenderAllocation",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "lenderDeposits",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "offerId",
-        "type": "uint256"
-      }
-    ],
-    "name": "markAsRefundable",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "owner",
     "outputs": [
@@ -780,8 +896,21 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "refundLenders",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],
@@ -829,19 +958,6 @@
       }
     ],
     "name": "totalEntitlementOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalOfferings",
     "outputs": [
       {
         "internalType": "uint256",

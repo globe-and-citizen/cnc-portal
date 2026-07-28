@@ -58,7 +58,6 @@ const SKIP_LIST = new Set([
   "PausableUpgradeable",
   "ReentrancyGuard",
   "ReentrancyGuardUpgradeable",
-  "Tips",
   "Voting",
 ]);
 

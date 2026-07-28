@@ -175,22 +175,6 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
       NativeTransferFailed: 'Native token transfer failed',
       InsufficientFundedTokenBalance: insufficientFundedTokenBalance
     },
-    Tips: {
-      NoTeamMembers: 'Must have at least one team member',
-      TooManyTeamMembers: (args) => {
-        const [provided, limit] = args ?? []
-        return `Too many team members — provided ${provided}, limit is ${limit}`
-      },
-      InsufficientBalance: insufficientContractBalance,
-      SendFailed: 'Failed to send native tokens',
-      NothingToWithdraw: 'No tips available to withdraw',
-      BalanceNotCleared: 'Failed to clear balance after withdraw',
-      SameLimit: 'New limit is the same as the old one',
-      LimitTooHigh: (args) => {
-        const [requested, maximum] = args ?? []
-        return `Push limit ${requested} exceeds the maximum of ${maximum}`
-      }
-    },
     FeeCollector: {
       EmptyContractType: 'Contract type cannot be empty',
       InvalidBps: 'Fee basis points value is invalid',
@@ -284,7 +268,6 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
     AdCampaignManager: 'Ad campaign action failed',
     Vesting: 'Vesting action failed',
     InvestorV1: 'Investor action failed',
-    Tips: 'Tips action failed',
     FeeCollector: 'Fee collector action failed',
     TokenSupport: 'Token support update failed',
     Elections: 'Election action failed',
