@@ -390,6 +390,37 @@ describe('Team Controller', () => {
       expect(response.body.currentOfficer?.version).toBe(getActiveOfficerVersion());
     });
 
+    it('exposes isMigrated=true for a point release of the active generation', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...teamMockResolve,
+        teamOfficers: [
+          {
+            id: 7,
+            address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            teamId: 1,
+            deployer: mockOwner.address,
+            deployBlockNumber: null,
+            deployedAt: null,
+            previousOfficerId: null,
+            // One minor above the generation floor: still V2, still migrated.
+            version: '2.1.0',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            previousOfficer: null,
+            contracts: [],
+          },
+        ],
+        teamContracts: [],
+      } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
+
+      const response = await request(app).get('/1');
+      expect(response.status).toBe(200);
+      expect(response.body.isMigrated).toBe(true);
+    });
+
     it('exposes isMigrated=false when current officer is legacy', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         ...teamMockResolve,

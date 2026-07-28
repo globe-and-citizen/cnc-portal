@@ -37,6 +37,7 @@ const pageTitle = computed(() => {
     'accounting': 'Polymarket Accounting',
     'contracts': 'Contracts',
     'contracts-history': 'Contract History',
+    'contracts-versions': 'Officer Version Sync',
     'settings': 'Settings',
     'settings-members': 'Members',
     'settings-notifications': 'Notifications',
@@ -131,6 +132,13 @@ const links = [
         {
           label: 'Contract History',
           to: '/contracts/history',
+          onSelect: () => {
+            open.value = false
+          }
+        },
+        {
+          label: 'Version Sync',
+          to: '/contracts/versions',
           onSelect: () => {
             open.value = false
           }

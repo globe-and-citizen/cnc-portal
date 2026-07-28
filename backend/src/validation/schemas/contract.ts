@@ -50,3 +50,10 @@ export const createOfficerBodySchema = z.object({
 export const getContractsQuerySchema = z.object({
   teamId: teamIdSchema,
 });
+
+// Bulk officer-version sync request body. `dryRun` resolves every Officer and
+// reports the plan without writing — the rehearsal an admin runs before
+// committing the realignment.
+export const syncOfficerVersionsBodySchema = z.object({
+  dryRun: z.boolean().optional(),
+});
