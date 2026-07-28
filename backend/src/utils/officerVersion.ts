@@ -7,17 +7,18 @@ import addressesV1 from '../artifacts/deployed_addresses/V1/chain-137.json';
 import addressesV2 from '../artifacts/deployed_addresses/V2/chain-137.json';
 import publicClient from './viem.config';
 
-// Active Officer generation per network. Hardhat can validate a new generation
-// before Polygon adopts it; keep these values independent until that deployment
-// is complete. Polygon is on '2.0.0' since the V2 rollout (Officer#FactoryBeacon
-// 0xF4265dC2236012C2Fd5bC771D0f6c3f30D210FFc, see contract/versions/README.md).
-export const ACTIVE_OFFICER_VERSION_BY_CHAIN: Record<number, string> = {
-  137: '2.0.0',
-  31337: '2.0.0',
+// Active Officer generation per network, named by registry folder. Hardhat can
+// validate a new generation before Polygon adopts it, so the mapping stays
+// per-chain even while both point at the same folder. Polygon is on V2 since
+// that rollout (Officer#FactoryBeacon 0xF4265dC2236012C2Fd5bC771D0f6c3f30D210FFc,
+// see contract/versions/README.md).
+export const ACTIVE_OFFICER_FOLDER_BY_CHAIN: Record<number, string> = {
+  137: 'V2',
+  31337: 'V2',
 };
 
-export const getActiveOfficerVersion = (chainId = publicClient.chain?.id ?? 137) =>
-  ACTIVE_OFFICER_VERSION_BY_CHAIN[chainId];
+export const getActiveOfficerFolder = (chainId: number = publicClient.chain?.id ?? 137) =>
+  ACTIVE_OFFICER_FOLDER_BY_CHAIN[chainId];
 
 // ERC-1967 beacon slot: bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1).
 // A team's Officer is a beacon proxy; this slot holds the FactoryBeacon that
@@ -38,6 +39,7 @@ const ADDRESSES_BY_CHAIN: Record<number, Record<string, Record<string, string>>>
 
 type RegistryFolder = {
   onchainVersionMin: string;
+  onchainVersionMax: string;
   beacons: Record<string, string>;
 };
 
@@ -51,6 +53,47 @@ const folders = registry.folders as Record<string, RegistryFolder>;
  */
 export const semverForVersionFolder = (folder: string): string | undefined =>
   folders[folder]?.onchainVersionMin;
+
+/** The floor of the active generation on a network, e.g. '2.0.0' on Polygon. */
+export const getActiveOfficerVersion = (chainId?: number): string | undefined =>
+  semverForVersionFolder(getActiveOfficerFolder(chainId));
+
+// Lenient on purpose: a stored tag is only ever compared, never rendered from
+// here. Non-numeric tags ('legacy', 'v0.10', 'unknown') and pre-release suffixes
+// return null and are simply treated as "not the active generation".
+const parseSemver = (value?: string | null): [number, number, number] | null => {
+  if (!value) return null;
+  const parts = value.split('.');
+  if (parts.length === 0 || parts.length > 3) return null;
+
+  const numbers = parts.map(Number);
+  if (numbers.some((n) => !Number.isInteger(n) || n < 0)) return null;
+
+  return [numbers[0], numbers[1] ?? 0, numbers[2] ?? 0];
+};
+
+const compareSemver = (a: [number, number, number], b: [number, number, number]) =>
+  a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+
+/**
+ * True when a stored Officer version falls inside the active generation's
+ * on-chain range (`onchainVersionMin`..`onchainVersionMax` in the registry).
+ *
+ * A range rather than an equality check: a generation ships point releases, so
+ * an Officer reporting '2.1.0' is still V2 and its team is still migrated. An
+ * `=== '2.0.0'` comparison would report every one of those teams as stale.
+ */
+export const isActiveOfficerVersion = (version?: string | null, chainId?: number): boolean => {
+  const config = folders[getActiveOfficerFolder(chainId)];
+  if (!config) return false;
+
+  const current = parseSemver(version);
+  const min = parseSemver(config.onchainVersionMin);
+  const max = parseSemver(config.onchainVersionMax);
+  if (!current || !min || !max) return false;
+
+  return compareSemver(current, min) >= 0 && compareSemver(current, max) <= 0;
+};
 
 // chainId -> (lowercased Officer FactoryBeacon -> semver). Each generation
 // deployed its own FactoryBeacon, so the beacon address behind a team's Officer
@@ -71,7 +114,7 @@ for (const [chainId, addressesByFolder] of Object.entries(ADDRESSES_BY_CHAIN)) {
  */
 export const semverForOfficerBeacon = (
   beacon: string | null | undefined,
-  chainId = publicClient.chain?.id ?? 137
+  chainId: number = publicClient.chain?.id ?? 137
 ): string | undefined =>
   beacon ? BEACON_TO_SEMVER_BY_CHAIN[chainId]?.[beacon.toLowerCase()] : undefined;
 
