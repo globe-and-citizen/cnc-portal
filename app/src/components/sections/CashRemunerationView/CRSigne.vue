@@ -145,7 +145,7 @@ const enableClaim = async (signature: `0x${string}`) => {
   const isDisabled = await readContract(config, {
     address: cashRemunerationAddress.value,
     abi: CASH_REMUNERATION_EIP712_ABI,
-    functionName: 'disabledWageClaims',
+    functionName: 'getDisabledWageClaim',
     args: [keccak256(signature)]
   })
 
