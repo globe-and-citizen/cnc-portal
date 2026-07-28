@@ -10,7 +10,9 @@
  * - `Infrastructure Expense` is intentionally **absent** — a Phase 2 gap with no
  *   data feed yet.
  * - `Interest Expense` **is** booked: the FixedReturn (Community Credit) feed
- *   supplies it, as the fixed return paid to lenders above their principal.
+ *   supplies it, as the fixed return paid to lenders above their principal. It is
+ *   recognised as the term runs (straight-line accrual), not when the cash leaves,
+ *   with the unpaid part parked in `Interest Payable`.
  * - `Network Fee Expense` (gas paid to validators) is likewise **absent**: gas is
  *   not indexed by any feed yet, so there is nothing to post.
  * - The Bank protocol fee (`FeePaid`) *is* booked, as a real cost leaving the
@@ -36,6 +38,7 @@ export const ACCOUNT_NAMES = [
   'Trading account',
   'Wage Payable',
   'Loan Payable',
+  'Interest Payable',
   'Shares to be issued',
   'Owner Capital',
   'Investor Equity',
@@ -69,6 +72,7 @@ export const CHART_OF_ACCOUNTS: Readonly<Record<AccountName, AccountClass>> = {
   'Trading account': 'ASSET',
   'Wage Payable': 'LIABILITY',
   'Loan Payable': 'LIABILITY',
+  'Interest Payable': 'LIABILITY',
   'Shares to be issued': 'LIABILITY',
   'Owner Capital': 'EQUITY',
   'Investor Equity': 'EQUITY',

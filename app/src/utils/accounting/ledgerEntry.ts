@@ -40,6 +40,9 @@ export type UseCase =
   | 'UC-CREDIT-03'
   /** Principal refunded to a lender when an offer missed its funding target. */
   | 'UC-CREDIT-04'
+  /** Interest earned by the lenders as the term runs, not yet paid — the
+   *  straight-line accrual between funding and maturity (no on-chain event). */
+  | 'UC-CREDIT-05'
   /** Wage earned — accrual booked when the weekly claim is submitted. */
   | 'UC-CASH-02'
   /** Wage withdrawal settlement (cash leg and/or share leg). */

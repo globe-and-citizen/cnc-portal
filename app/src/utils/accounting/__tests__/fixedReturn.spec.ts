@@ -1,8 +1,22 @@
 import { describe, it, expect } from 'vitest'
 import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
+import { txHashOf } from '@/utils/accounting/mergeBankFees'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { makeCtx, ADDR } from './fixtures'
 
 const ctx = makeCtx()
+
+/** Σ of an account's debit legs, in USD — what a cost account was charged. */
+const totalDebited = (entries: readonly LedgerEntry[], account: string): number =>
+  entries.reduce((sum, e) => sum + (e.debit === account ? e.amountUsd : 0), 0)
+
+/** A liability's net balance — what it still owes once every leg is booked. */
+const balanceOf = (entries: readonly LedgerEntry[], account: string): number =>
+  entries.reduce(
+    (sum, e) =>
+      sum + (e.credit === account ? e.amountUsd : 0) - (e.debit === account ? e.amountUsd : 0),
+    0
+  )
 
 /** One USDC offer, created at t=100 — the token index every other event needs. */
 const offer = (offerId = '1', timestamp = 100) => ({
@@ -96,7 +110,9 @@ describe('mapFixedReturnEvents', () => {
       ['rp1-principal', 'Loan Payable', 6],
       // The second installment retires the last 4 of principal; the rest is interest.
       ['rp2-principal', 'Loan Payable', 4],
-      ['rp2-interest', 'Interest Expense', 1]
+      // No offer terms here, so nothing was accrued: the whole fixed return is
+      // expensed on the day it is paid (the cash-basis fallback).
+      ['rp2-interest-unaccrued', 'Interest Expense', 1]
     ])
     repayments.forEach((e) => expect(e.credit).toBe('Cash — Bank'))
   })
@@ -157,9 +173,124 @@ describe('mapFixedReturnEvents', () => {
     expect(entries.at(-1)?.rawAmount).toBe('10000000')
   })
 
-  it('skips an offer whose creation event (and therefore its token) is missing', () => {
-    const entries = mapFixedReturnEvents({ fundsLents: [lent('fl1', '4000000', 200)] }, ctx)
-    expect(entries).toEqual([])
+  describe('interest accrual', () => {
+    const jan1 = Math.floor(Date.parse('2026-01-01T00:00:00Z') / 1000)
+    const apr1 = Math.floor(Date.parse('2026-04-01T00:00:00Z') / 1000)
+
+    /** 100 USDC raised on Jan 1, 12% flat, due Apr 1 — 12 USDC of fixed return. */
+    const round = (over: Record<string, unknown> = {}) => ({
+      lendingOfferCreateds: [offer('1', jan1 - 100)],
+      fundsLents: [lent('fl1', '100000000', jan1)],
+      lendingOfferFundeds: [
+        { id: 'fd1', contractAddress: ADDR.credit, offerId: '1', timestamp: jan1 }
+      ],
+      offerTerms: [{ offerId: '1', interestRateBps: 1200, maturityDate: apr1 }],
+      ...over
+    })
+
+    it('books the fixed return month by month instead of at payment', () => {
+      const entries = mapFixedReturnEvents(round({ asOf: new Date('2026-03-01T00:00:00Z') }), ctx)
+      const accruals = entries.filter((e) => e.useCase === 'UC-CREDIT-05')
+      // Jan 31, Feb 28 and the Mar 1 cutoff.
+      expect(accruals).toHaveLength(3)
+      accruals.forEach((e) =>
+        expect(e).toMatchObject({
+          debit: 'Interest Expense',
+          credit: 'Interest Payable',
+          token: 'usdc',
+          internal: false
+        })
+      )
+      // 59 of the term's 90 days have run, so 12 × 59/90 of the fixed return.
+      const booked = accruals.reduce((sum, e) => sum + e.amountUsd, 0)
+      expect(booked).toBeCloseTo(7.8667, 3)
+    })
+
+    it('settles the accrued interest against Interest Payable, not a fresh expense', () => {
+      const entries = mapFixedReturnEvents(
+        round({
+          asOf: new Date('2026-05-01T00:00:00Z'),
+          lenderRepaids: [repaid('rp1', '112000000', apr1)]
+        }),
+        ctx
+      )
+      const paid = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
+      expect(paid.map((e) => [e.debit, e.amountUsd])).toEqual([
+        ['Loan Payable', 100],
+        ['Interest Payable', 12]
+      ])
+      // The whole cost was recognised over the term, so nothing is left owing.
+      expect(balanceOf(entries, 'Interest Payable')).toBeCloseTo(0, 6)
+      expect(totalDebited(entries, 'Interest Expense')).toBeCloseTo(12, 6)
+    })
+
+    it('expenses the part never accrued when a round is settled early', () => {
+      // Repaid a month into a three-month term: only ~1/3 had accrued.
+      const feb1 = Math.floor(Date.parse('2026-02-01T00:00:00Z') / 1000)
+      const entries = mapFixedReturnEvents(
+        round({
+          asOf: new Date('2026-02-01T12:00:00Z'),
+          lenderRepaids: [repaid('rp1', '112000000', feb1)]
+        }),
+        ctx
+      )
+      const paid = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
+      expect(paid.map((e) => e.debit)).toEqual([
+        'Loan Payable',
+        'Interest Payable',
+        'Interest Expense'
+      ])
+      // However the 12 is split between the two interest legs, the cost booked is
+      // exactly what the lender was paid — and no interest is left outstanding.
+      expect(totalDebited(entries, 'Interest Expense')).toBeCloseTo(12, 6)
+      expect(balanceOf(entries, 'Interest Payable')).toBeCloseTo(0, 6)
+    })
+
+    it('stops accruing once the round has been settled', () => {
+      const feb1 = Math.floor(Date.parse('2026-02-01T00:00:00Z') / 1000)
+      const entries = mapFixedReturnEvents(
+        round({
+          asOf: new Date('2026-06-01T00:00:00Z'),
+          lenderRepaids: [repaid('rp1', '112000000', feb1)]
+        }),
+        ctx
+      )
+      // The schedule keeps running to maturity, but every later point finds the
+      // whole fixed return already expensed and books nothing.
+      expect(totalDebited(entries, 'Interest Expense')).toBeCloseTo(12, 6)
+    })
+
+    it('keeps both repayment legs pointing at the transaction that paid them', () => {
+      const txHash = `0x${'a'.repeat(64)}`
+      const entries = mapFixedReturnEvents(
+        round({
+          asOf: new Date('2026-05-01T00:00:00Z'),
+          lenderRepaids: [repaid(`${txHash}-4`, '112000000', apr1)]
+        }),
+        ctx
+      )
+      const legs = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
+      expect(legs).toHaveLength(2)
+      legs.forEach((e) => expect(txHashOf(e)).toBe(txHash))
+    })
+  })
+
+  it('flags an offer whose creation event (and therefore its token) is missing', () => {
+    const entries = mapFixedReturnEvents(
+      { fundsLents: [lent('fl1', '4000000', 200), lent('fl2', '5000000', 300)] },
+      ctx
+    )
+    // One memo for the whole round, not one per event — and no monetary legs, so
+    // the trial balance is untouched by a round nobody could value.
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toMatchObject({
+      id: 'credit-unvalued-1',
+      debit: null,
+      credit: null,
+      amountUsd: 0,
+      enrichment: 'needs-off-chain-data'
+    })
+    expect(entries[0]?.memo).toContain('could not be valued')
   })
 
   it('keeps two offers independent', () => {

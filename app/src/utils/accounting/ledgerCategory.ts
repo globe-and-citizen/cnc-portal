@@ -69,6 +69,7 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
     'UC-CREDIT-01': 'Credit',
     'UC-CREDIT-03': 'Credit',
     'UC-CREDIT-04': 'Credit',
+    'UC-CREDIT-05': 'Credit',
     'UC-BANK-02': 'Revenue',
     'CASH-IN': 'Revenue',
     'UC-CASH-02': 'Payroll',
@@ -102,6 +103,10 @@ const CREDIT_BADGE: Partial<Record<UseCase, string>> = {
   // Debt settled, cash out (principal and fixed return alike) — violet, so a
   // repayment can never be mistaken for a fresh loan on a busy journal page.
   'UC-CREDIT-03': 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+  // Interest earned by the lenders but not yet paid: the same violet as the
+  // repayment it anticipates, outlined instead of filled because no cash moved.
+  'UC-CREDIT-05':
+    'text-violet-600 ring-1 ring-violet-500/40 dark:text-violet-400 dark:ring-violet-400/40',
   // The offer missed its target and the deposit went straight back — slate, an
   // unwind rather than a real borrowing event.
   'UC-CREDIT-04': 'bg-slate-500/15 text-slate-600 dark:text-slate-300'
