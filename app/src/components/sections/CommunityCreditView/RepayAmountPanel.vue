@@ -5,7 +5,7 @@
       <span class="text-muted text-xs">
         Treasury:
         <span data-test="repay-treasury-balance">{{
-          treasuryBalance !== null ? formatAmount(treasuryBalance, token, 4) : '—'
+          treasuryBalance !== null ? formatAmount(treasuryBalance, token) : '—'
         }}</span>
       </span>
     </div>
