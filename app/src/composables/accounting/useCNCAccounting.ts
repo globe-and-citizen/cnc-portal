@@ -5,8 +5,9 @@
  * the three financial statements to the UI from a single composable:
  *
  *   - **On-chain (getLogs)** — events for the team's Bank, CashRemuneration,
- *     Expense, InvestorV1 and SafeDepositRouter contracts, reconstructed from the
- *     RPC via the shared `use*EventsViaLogs` composables (no indexer dependency).
+ *     Expense, FixedReturn (Community Credit), InvestorV1 and SafeDepositRouter
+ *     contracts, reconstructed from the RPC via the shared `use*EventsViaLogs`
+ *     composables (no indexer dependency).
  *   - **Safe** — the team Safe's incoming native / ERC-20 transfers (spec §3.1).
  *   - **Backend DB** — the team's contracts, signed weekly claims and approved
  *     expenses, the off-chain accrual + category context (spec §3.2).
@@ -27,6 +28,7 @@ import type { ContractType } from '@/types/teamContract'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
+import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedReturnEventsViaLogs'
 import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { useGetTeamQuery } from '@/queries/team.queries'
@@ -99,6 +101,7 @@ export function useCNCAccounting(
   const bankAddress = addressOf('Bank')
   const cashRemAddress = addressOf('CashRemunerationEIP712')
   const expenseAddress = addressOf('ExpenseAccountEIP712')
+  const fixedReturnAddress = addressOf('FixedReturn')
   const investorAddress = addressOfInvestor()
   const routerAddress = addressOf('SafeDepositRouter')
   const safeAddress = computed(
@@ -112,6 +115,7 @@ export function useCNCAccounting(
   const bank = useBankEventsViaLogs(bankAddress)
   const cashRem = useCashRemunerationEventsViaLogs(cashRemAddress)
   const expense = useExpenseEventsViaLogs(expenseAddress)
+  const fixedReturn = useFixedReturnEventsViaLogs(fixedReturnAddress)
   const investor = useInvestorEventsViaLogs(investorAddress)
   const router = useSafeDepositRouterEventsViaLogs(routerAddress)
 
@@ -179,6 +183,7 @@ export function useCNCAccounting(
     bankEvents: bank.result.value,
     cashRemunerationEvents: cashRem.result.value,
     expenseEvents: expense.result.value,
+    fixedReturnEvents: fixedReturn.result.value,
     investorEvents: investor.result.value,
     safeDepositRouterEvents: router.result.value,
     safeTransfers: safeTransfers.data.value,
@@ -226,6 +231,7 @@ export function useCNCAccounting(
       bank.loading.value ||
       cashRem.loading.value ||
       expense.loading.value ||
+      fixedReturn.loading.value ||
       investor.loading.value ||
       router.loading.value ||
       weeklyClaims.isLoading.value ||
@@ -242,6 +248,7 @@ export function useCNCAccounting(
         bank,
         cashRem,
         expense,
+        fixedReturn,
         investor,
         router,
         routerMultiplier,
