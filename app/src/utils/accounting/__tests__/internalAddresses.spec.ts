@@ -22,12 +22,13 @@ const contract = (type: TeamContract['type'], address: string): TeamContract => 
 })
 
 describe('INTERNAL_POCKET_CONTRACT_TYPES', () => {
-  it('lists the six money-pocket TeamContract types (FeeCollector excluded)', () => {
+  it('lists the seven money-pocket TeamContract types (FeeCollector excluded)', () => {
     expect([...INTERNAL_POCKET_CONTRACT_TYPES]).toEqual([
       'Safe',
       'Bank',
       'CashRemunerationEIP712',
       'ExpenseAccountEIP712',
+      'FixedReturn',
       'InvestorV1',
       'SafeDepositRouter'
     ])

@@ -22,6 +22,7 @@ import type { SafeIncomingTransfer } from '@/types/safe'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
 import type { ExpenseEventsQuery } from '@/types/ponder/expense'
+import type { FixedReturnEventsQuery } from '@/types/ponder/fixedReturn'
 import type {
   InvestorEventsQuery,
   SafeDepositRouterEventsQuery,
@@ -73,6 +74,7 @@ export interface CncAccountingInput {
   bankEvents?: BankEventsQuery | null
   cashRemunerationEvents?: CashRemunerationEventsQuery | null
   expenseEvents?: ExpenseEventsQuery | null
+  fixedReturnEvents?: FixedReturnEventsQuery | null
   investorEvents?: InvestorEventsQuery | null
   safeDepositRouterEvents?: SafeDepositRouterEventsQuery | null
   safeTransfers?: readonly SafeIncomingTransfer[] | null
@@ -210,6 +212,17 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
       tokenTransfers: items(e.expenseTokenTransfers),
       ownerTreasuryWithdrawNatives: items(e.expenseOwnerTreasuryWithdrawNatives),
       ownerTreasuryWithdrawTokens: items(e.expenseOwnerTreasuryWithdrawTokens)
+    }
+  }
+
+  if (input.fixedReturnEvents) {
+    const f = input.fixedReturnEvents
+    sources.fixedReturn = {
+      lendingOfferCreateds: items(f.fixedReturnLendingOfferCreateds),
+      lendingOfferFundeds: items(f.fixedReturnLendingOfferFundeds),
+      fundsLents: items(f.fixedReturnFundsLents),
+      lenderRepaids: items(f.fixedReturnLenderRepaids),
+      principalRefundeds: items(f.fixedReturnPrincipalRefundeds)
     }
   }
 
