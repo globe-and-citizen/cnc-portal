@@ -88,7 +88,7 @@ export function useBodAddAction() {
 
       const actionId = (await readContract(config, {
         address: bodAddress.value,
-        functionName: 'actionCount',
+        functionName: 'getActionCount',
         abi: BOD_ABI
       })) as bigint
 

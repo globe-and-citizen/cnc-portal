@@ -151,7 +151,7 @@ const fetchVotes = async () => {
           const count = await readContract(config, {
             address: electionsAddress.value || zeroAddress,
             abi: ELECTIONS_ABI,
-            functionName: '_voteCounts',
+            functionName: 'getVoteCounts',
             args: [props.electionId, candidate]
           })
           votesPerCandidate[candidate] = Number(count) || 0
