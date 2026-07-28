@@ -20,9 +20,10 @@ type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
 
 // Active Officer generation per network. Hardhat can validate a new generation
 // before Polygon adopts it; keep these values independent until that deployment
-// is complete. Polygon's value becomes '2.0.0' after the V2 rollout.
+// is complete. Polygon is on '2.0.0' since the V2 rollout (Officer#FactoryBeacon
+// 0xF4265dC2236012C2Fd5bC771D0f6c3f30D210FFc, see contract/versions/README.md).
 export const ACTIVE_OFFICER_VERSION_BY_CHAIN: Record<number, string> = {
-  137: 'V1',
+  137: '2.0.0',
   31337: '2.0.0',
 };
 
