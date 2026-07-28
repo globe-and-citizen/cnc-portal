@@ -4,14 +4,17 @@ import registry from '~/artifacts/version-registry.json'
 import addrV0 from '~/artifacts/deployed_addresses/V0/chain-137.json'
 import addrV01 from '~/artifacts/deployed_addresses/V0.1/chain-137.json'
 import addrV1 from '~/artifacts/deployed_addresses/V1/chain-137.json'
+import addrV2 from '~/artifacts/deployed_addresses/V2/chain-137.json'
 
 // Per-version module-name → address maps (Polygon). Keyed by version folder so
 // the registry's module references (e.g. "BankBeaconModule#Beacon") resolve to
-// the concrete address of *that* generation.
+// the concrete address of *that* generation. Every folder in the registry needs
+// an entry here — a missing one silently resolves that whole generation to null.
 const ADDRESSES: Record<string, Record<string, string>> = {
   'V0': addrV0,
   'V0.1': addrV01,
-  'V1': addrV1
+  'V1': addrV1,
+  'V2': addrV2
 }
 
 type Folder = {
@@ -29,7 +32,7 @@ const currentVersion = registry.current as string
 
 // Each generation's Officer FactoryBeacon resolves to a distinct address; this
 // lets us map a team's on-chain Officer beacon back to its registry version
-// (V0 / V0.1 / V1) — the concrete identifier the registry says a team maps to.
+// (V0 / V0.1 / V1 / V2) — the concrete identifier the registry says a team maps to.
 const OFFICER_BEACON_TO_VERSION: Record<string, string> = {}
 for (const [version, folder] of Object.entries(folders)) {
   const ref = folder.beacons.Officer
@@ -38,13 +41,26 @@ for (const [version, folder] of Object.entries(folders)) {
 }
 
 /**
- * Resolve the registry version (V0 / V0.1 / V1) an Officer belongs to from its
- * on-chain FactoryBeacon address. Returns null if the beacon isn't a known
+ * Resolve the registry version (V0 / V0.1 / V1 / V2) an Officer belongs to from
+ * its on-chain FactoryBeacon address. Returns null if the beacon isn't a known
  * generation.
  */
 export const registryVersionForOfficerBeacon = (
   beacon: string | null | undefined
 ): string | null => (beacon ? (OFFICER_BEACON_TO_VERSION[beacon.toLowerCase()] ?? null) : null)
+
+/**
+ * The semver a generation's Officers are recorded under. Generations predating
+ * the on-chain `version()` getter can't state it themselves, so the registry's
+ * floor stands in (V0 → 0.0.0, V0.1 → 0.1.0, V1 → 1.0.0).
+ *
+ * Mirrors backend/src/utils/officerVersion.ts — the two must agree, or a
+ * simulation would preview a different outcome from the one the sync writes.
+ */
+export const semverForOfficerBeacon = (beacon: string | null | undefined): string | null => {
+  const version = registryVersionForOfficerBeacon(beacon)
+  return version ? (folders[version]?.onchainVersionMin ?? null) : null
+}
 
 // Stable display order: Officer first, then the beacon-backed sub-contracts, then
 // the transparent-proxy contracts (no beacon). Any unlisted contract is appended.
