@@ -5,7 +5,7 @@ import { addNotification, prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { generateUniqueSlug } from '../utils/slug.util';
-import { getActiveOfficerVersion } from './contractController';
+import { isActiveOfficerVersion } from '../utils/officerVersion';
 
 // A slug is taken when some team already holds it.
 const isTeamSlugTaken = async (slug: string) =>
@@ -59,11 +59,13 @@ export const serializeOfficer = (o: TeamOfficer | undefined | null) =>
       }
     : null;
 
-// True iff the current Officer matches the active generation for the backend's
-// configured network. This keeps Hardhat V2 validation from marking Polygon
-// teams migrated before the Polygon deployment is complete.
+// True iff the current Officer belongs to the active generation for the
+// backend's configured network. This keeps Hardhat V2 validation from marking
+// Polygon teams migrated before the Polygon deployment is complete. It matches
+// the generation's whole version range, so a point release within the active
+// generation (2.1.0) still counts as migrated.
 const deriveIsMigrated = (officer: { version?: string | null } | null | undefined) =>
-  officer?.version === getActiveOfficerVersion();
+  isActiveOfficerVersion(officer?.version);
 
 // Pulls the head of the linked list out of an `include: currentOfficerInclude`
 // result and exposes it as `currentOfficer`. Removes the raw `teamOfficers`
