@@ -1,16 +1,18 @@
 /**
  * How the general-ledger journal folds several postings into one compound entry.
  *
- * A source event that produces more than one balanced pair — a wage paid across
- * several currencies, say — reads better as a single entry than as repeated
- * postings. Each such case has its own key and its own rendering shape (see
- * {@link ./payrollGrouping}); this module is only the dispatcher the presenter
- * calls, so no case has to know the others exist.
+ * Two source events produce more than one balanced pair — a wage paid across
+ * several currencies, and a lender's credit position — and both read better as a
+ * single entry than as repeated postings. Each has its own key and its own
+ * rendering shape ({@link ./payrollGrouping}, {@link ./creditGrouping}); this
+ * module is only the dispatcher the presenter calls, so neither has to know the
+ * other exists.
  *
  * Presentation-only: the canonical feed is untouched, so the statements and the
  * trial balance never see any of it.
  */
 import { payrollGroupKey, compoundLedgerRows } from './payrollGrouping'
+import { creditGroupKey, compoundCreditRows } from './creditGrouping'
 import type { LedgerEntry } from './ledgerEntry'
 import type { LedgerRow } from './ledgerPresenter'
 
@@ -21,13 +23,16 @@ type Compound = (
 ) => LedgerRow[]
 
 const RENDERERS: Record<string, Compound> = {
-  payroll: compoundLedgerRows
+  payroll: compoundLedgerRows,
+  credit: compoundCreditRows
 }
 
 /** The group an entry belongs to, or `null` when it always stands alone. */
 function groupOf(entry: LedgerEntry): { key: string; kind: string } | null {
   const payroll = payrollGroupKey(entry)
-  return payroll ? { key: `payroll:${payroll}`, kind: 'payroll' } : null
+  if (payroll) return { key: `payroll:${payroll}`, kind: 'payroll' }
+  const credit = creditGroupKey(entry)
+  return credit ? { key: `credit:${credit}`, kind: 'credit' } : null
 }
 
 /**
