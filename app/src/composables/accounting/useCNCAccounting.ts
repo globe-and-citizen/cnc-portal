@@ -43,7 +43,7 @@ import {
   type CncAccounting,
   type CncAccountingInput
 } from '@/utils/accounting/assemble'
-import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditAccrual'
+import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import type { AccountingSummary } from '@/utils/accounting/buildLedger'
 import type { GeneralLedger } from '@/utils/accounting/generalLedger'
@@ -140,19 +140,18 @@ export function useCNCAccounting(
     return Number.isFinite(whole) && whole > 0 ? whole : null
   })
 
-  // ── Contract read: each Community Credit round's rate and maturity date. The
-  // `LendingOfferCreated` event carries neither, and without them the fixed return
-  // can only be expensed on the day it is paid — so the offer structs are read
-  // straight from FixedReturn and handed to the mapper, which spreads the interest
-  // across the term (see mappers/creditAccrual). A failed read simply leaves the
-  // list empty and the books fall back to the cash-basis treatment. ──
+  // ── Contract read: each Community Credit round's rate. It does not reach the
+  // mapper through the event feed, and without it the fixed return can only be
+  // expensed on the day it is paid — so the offer structs are read straight from
+  // FixedReturn and handed to the mapper, which recognises the whole fee when the
+  // round funds (see mappers/creditTimeline). A failed read simply leaves the list
+  // empty and the books fall back to the cash-basis treatment. ──
   const fixedReturnOffers = useFixedReturnAllOffers(fixedReturnAddress)
 
   const fixedReturnOfferTerms = computed<CreditOfferTerms[]>(() =>
     (fixedReturnOffers.data.value ?? []).map(({ offerId, offer }) => ({
       offerId: String(offerId),
-      interestRateBps: Number(offer.interestRateBps),
-      maturityDate: Number(offer.maturityDate)
+      interestRateBps: Number(offer.interestRateBps)
     }))
   )
 

@@ -30,7 +30,7 @@ import type {
 } from '@/types/ponder/investor'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
-import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditAccrual'
+import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
 import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
 import { buildGeneralLedger, type GeneralLedger } from '@/utils/accounting/generalLedger'
