@@ -9,7 +9,7 @@ import GeneralLedger from '../GeneralLedger.vue'
 import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
 import StatementLine from '../StatementLine.vue'
 import TablePagination from '@/components/TablePagination.vue'
-import { entriesForAccount } from '@/utils/accounting/accountLedger'
+import { entriesForAccount, accountBalance } from '@/utils/accounting/accountLedger'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import type { StatementLineView } from '@/utils/accounting/presenter'
 
@@ -145,6 +145,55 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
     expect(wrapper.emitted('export')?.[0]).toEqual(['excel'])
     await wrapper.find('[data-test="drilldown-export-pdf"]').trigger('click')
     expect(wrapper.emitted('export')?.[1]).toEqual(['pdf'])
+    wrapper.unmount()
+  })
+
+  it('runs a Balance column after Credit when one account is drilled', async () => {
+    const wrapper = renderWithProviders(LedgerDrilldownModal, {
+      props: { open: true, account, total: '$138.00', entries, balanceAccount: account }
+    })
+    await flushPromises()
+    const headers = wrapper.findAll('th').map((th) => th.text())
+    expect(headers[headers.length - 1]).toBe('Balance')
+    expect(headers[headers.length - 2]).toBe('Credit')
+
+    const cells = wrapper.findAll('[data-test="ledger-balance"]').map((c) => c.text())
+    // Opening balance heads the ledger, the account balance closes it, and the
+    // foot repeats what the account is left standing at.
+    expect(cells[0]).toBe('$0.00')
+    expect(wrapper.text()).toContain('Opening balance')
+    expect(cells.filter(Boolean).at(-2)).toBe(accountBalance(entries, account))
+    expect(cells[cells.length - 1]).toBe('$138.00')
+    wrapper.unmount()
+  })
+
+  it('carries an opening balance into the ledger and closes on the remainder', async () => {
+    const opening = { debits: 100, credits: 0, balance: 100 }
+    const wrapper = renderWithProviders(LedgerDrilldownModal, {
+      props: {
+        open: true,
+        account,
+        total: '$138.00',
+        entries,
+        balanceAccount: account,
+        opening,
+        closing: '$238.00'
+      }
+    })
+    await flushPromises()
+    const cells = wrapper.findAll('[data-test="ledger-balance"]').map((c) => c.text())
+    expect(cells[0]).toBe('$100.00')
+    // Every posting builds on it, so the foot shows the remaining balance.
+    expect(cells[cells.length - 1]).toBe('$238.00')
+    wrapper.unmount()
+  })
+
+  it('drops the Balance column for an aggregate line', async () => {
+    const wrapper = renderWithProviders(LedgerDrilldownModal, {
+      props: { open: true, account: 'Retained earnings', total: '-$50.00', entries }
+    })
+    await flushPromises()
+    expect(wrapper.findAll('th').map((th) => th.text())).not.toContain('Balance')
     wrapper.unmount()
   })
 

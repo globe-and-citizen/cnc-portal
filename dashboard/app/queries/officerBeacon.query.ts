@@ -11,31 +11,42 @@ import { getAddress, isAddressEqual, zeroAddress, type Address } from 'viem'
 const BEACON_SLOT
   = '0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50'
 
+type Client = NonNullable<ReturnType<typeof useClient>['value']>
+
 /**
  * Read the FactoryBeacon address behind an Officer beacon proxy, straight from
  * its ERC-1967 beacon slot on-chain. Returns null if the slot is empty (e.g.
  * the address isn't a beacon proxy).
+ *
+ * Exported so aggregate views can spread the same read over `useQueries` while
+ * still landing in the cache under `officerBeaconQueryKey`.
  */
+export const fetchOfficerBeacon = async (
+  client: Client | undefined,
+  address: string | undefined
+): Promise<Address | null> => {
+  if (!client || !address) return null
+
+  const raw = await getStorageAt(client, { address: address as Address, slot: BEACON_SLOT })
+  if (!raw) return null
+
+  // Storage word is left-padded; the address is the low 20 bytes.
+  const beacon = getAddress(`0x${raw.slice(-40)}`)
+  return isAddressEqual(beacon, zeroAddress) ? null : beacon
+}
+
+export const officerBeaconQueryKey = (address: string | undefined) => [
+  'officer-beacon',
+  { address }
+]
+
 export const useOfficerBeaconQuery = (address: MaybeRefOrGetter<string | undefined>) => {
   const chainId = Number(useRuntimeConfig().public.chainId)
   const client = useClient({ chainId })
 
   return useQuery({
-    queryKey: ['officer-beacon', { address: toValue(address) }],
-    queryFn: async (): Promise<Address | null> => {
-      const officer = toValue(address)
-      if (!officer || !client.value) return null
-
-      const raw = await getStorageAt(client.value, {
-        address: officer as Address,
-        slot: BEACON_SLOT
-      })
-      if (!raw) return null
-
-      // Storage word is left-padded; the address is the low 20 bytes.
-      const beacon = getAddress(`0x${raw.slice(-40)}`)
-      return isAddressEqual(beacon, zeroAddress) ? null : beacon
-    },
+    queryKey: officerBeaconQueryKey(toValue(address)),
+    queryFn: async () => await fetchOfficerBeacon(client.value, toValue(address)),
     enabled: () => !!toValue(address),
     refetchOnWindowFocus: false,
     staleTime: Infinity // a proxy's beacon never changes

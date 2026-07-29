@@ -76,6 +76,37 @@ describe('useLedgerDrilldown', () => {
     expect(d.total.value).toBe('-$50.00')
   })
 
+  it('runs the balance column on a single account, never on an aggregate', () => {
+    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-balance')
+    d.openFor('Investor Equity', '$999.00')
+    expect(d.balanceAccount.value).toBe('Investor Equity')
+
+    d.openFor(['Payroll Expense', 'Share-based Compensation'], '-$50.00', 'Retained earnings')
+    // Mixed classes share no natural side, so there is no balance to run.
+    expect(d.balanceAccount.value).toBe('')
+  })
+
+  it('carries nothing in and closes on the account balance over an open window', () => {
+    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-opening')
+    d.openFor('Investor Equity', '$999.00')
+
+    expect(d.opening.value).toEqual({ debits: 0, credits: 0, balance: 0 })
+    expect(d.closing.value).toBe(d.total.value)
+  })
+
+  it('opens on what a dated window carries in, and closes on the remainder', () => {
+    const account = 'Cash — Safe'
+    const all = entriesForAccount(catalogueLedger, account)
+    // A window starting after the first posting leaves that posting behind it.
+    const from = new Date((all[1]!.timestamp + 1) * 1000)
+    const d = useLedgerDrilldown(entries, () => ({ from, to: null }), 'cnc-test-cols-opening-2')
+    d.openFor(account, '$1.00')
+
+    expect(d.opening.value.balance).not.toBe(0)
+    // Carried in + everything the window moves is the account's whole balance.
+    expect(d.closing.value).toBe(accountBalance(all, account))
+  })
+
   it('defaults the visible columns to the full set', () => {
     const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-5')
     expect(d.columns.value.length).toBeGreaterThan(0)
