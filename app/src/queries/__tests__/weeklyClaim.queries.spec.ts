@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { partialMatchKey } from '@tanstack/query-core'
 import type { Address } from 'viem'
 import type { Claim, WeeklyClaim } from '@/types'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
@@ -56,6 +57,9 @@ const createWeeklyClaimResponse = (
   ...overrides
 })
 
+const { team } = weeklyClaimQueries.weeklyClaimKeys
+const MEMBER_ADDRESS = '0x1234567890123456789012345678901234567890' as Address
+
 const mockQueryClient = (invalidateQueries = vi.fn().mockResolvedValue(undefined)) => {
   useQueryClientFn.mockReturnValue({
     invalidateQueries,
@@ -109,34 +113,20 @@ describe('weeklyClaim.queries', () => {
       })
 
       weeklyClaimQueries.useGetTeamWeeklyClaimsQuery({
-        queryParams: {
-          teamId: 'team-1',
-          userAddress: '0x1234567890123456789012345678901234567890' as Address,
-          status: 'pending'
-        }
+        queryParams: { teamId: 'team-1', userAddress: MEMBER_ADDRESS, status: 'pending' }
       })
 
-      const options = useQueryFn.mock.calls[useQueryFn.mock.calls.length - 1]?.[0] as {
+      const options = useQueryFn.mock.calls.at(-1)?.[0] as {
         queryKey: { value: unknown }
         enabled?: () => boolean
         queryFn: () => Promise<{ data: WeeklyClaim[]; total: number }>
       }
       const result = await options.queryFn()
 
-      expect(options.queryKey.value).toEqual(
-        weeklyClaimQueries.weeklyClaimKeys.team(
-          'team-1',
-          '0x1234567890123456789012345678901234567890' as Address,
-          'pending'
-        )
-      )
+      expect(options.queryKey.value).toEqual(team('team-1', MEMBER_ADDRESS, 'pending'))
       expect(options.enabled?.()).toBe(true)
       expect(apiClient.get).toHaveBeenCalledWith('weeklyClaim/', {
-        params: {
-          teamId: 'team-1',
-          userAddress: '0x1234567890123456789012345678901234567890',
-          status: 'pending'
-        }
+        params: { teamId: 'team-1', userAddress: MEMBER_ADDRESS, status: 'pending' }
       })
       expect(result.total).toBe(1)
       expect(result.data[0]?.minutesWorked).toBe(0)
@@ -295,10 +285,15 @@ describe('weeklyClaim.queries', () => {
       })
     })
 
-    it('surfaces backend errors when editing a claim with files', async () => {
-      vi.mocked(apiClient.put).mockRejectedValue({
-        response: { data: { message: 'Claim is locked' } }
-      })
+    it.each<[string, unknown, string]>([
+      [
+        'the backend message',
+        { response: { data: { message: 'Claim is locked' } } },
+        'Claim is locked'
+      ],
+      ['a generic fallback', new Error('network timeout'), 'Failed to update claim']
+    ])('surfaces %s when editing a claim with files fails', async (_label, rejection, expected) => {
+      vi.mocked(apiClient.put).mockRejectedValue(rejection)
 
       const mutation = weeklyClaimQueries.useEditClaimWithFilesMutation()
 
@@ -309,22 +304,26 @@ describe('weeklyClaim.queries', () => {
           memo: 'Should fail',
           dayWorked: '2024-01-08'
         })
-      ).rejects.toThrow('Claim is locked')
+      ).rejects.toThrow(expected)
     })
+  })
 
-    it('falls back to a generic message when the backend omits an error message', async () => {
-      vi.mocked(apiClient.put).mockRejectedValue(new Error('network timeout'))
+  describe('useSyncWeeklyClaimsMutation', () => {
+    // Payroll History reads a member-scoped key, Company Payroll a paginated one.
+    // Both must be reached, otherwise a withdrawn claim keeps rendering as "signed".
+    it.each([
+      ['member-scoped', team(99, MEMBER_ADDRESS)],
+      ['paginated', team(99, undefined, undefined, 1, 10)]
+    ])('invalidates a key that still reaches the %s claim query', async (_label, claimQueryKey) => {
+      const invalidateQueries = mockQueryClient()
+      vi.mocked(apiClient.post).mockResolvedValue({ data: { updated: [], skipped: [] } })
 
-      const mutation = weeklyClaimQueries.useEditClaimWithFilesMutation()
+      await weeklyClaimQueries.useSyncWeeklyClaimsMutation().mutateAsync({
+        queryParams: { teamId: 99 }
+      })
 
-      await expect(
-        mutation.mutateAsync({
-          claimId: 56,
-          minutesWorked: 60,
-          memo: 'Should also fail',
-          dayWorked: '2024-01-09'
-        })
-      ).rejects.toThrow('Failed to update claim')
+      const { queryKey } = invalidateQueries.mock.calls[0]?.[0] as { queryKey: unknown[] }
+      expect(partialMatchKey(claimQueryKey, queryKey)).toBe(true)
     })
   })
 })
