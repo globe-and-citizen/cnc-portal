@@ -1,0 +1,56 @@
+import { describe, it, expect } from 'vitest'
+import { money, presentSummaryCards, presentBanner } from '@/utils/accounting/presenter'
+import { sampleBooks } from './fixtures'
+
+describe('presentSummaryCards / presentBanner', () => {
+  const acc = sampleBooks()
+
+  it('derives the metric cards from the live roll-up', () => {
+    const cards = presentSummaryCards(acc.summary, acc.incomeStatement, acc.balanceSheet)
+    expect(cards.map((c) => c.label)).toEqual([
+      'Net income',
+      'Total revenue',
+      'Total expenses',
+      'Total transaction fees',
+      'Total assets',
+      'Total equity',
+      'Outstanding debt'
+    ])
+    expect(cards.find((c) => c.label === 'Total revenue')?.value).toBe('$100.00')
+    expect(cards.find((c) => c.label === 'Total expenses')?.value).toBe('$30.00')
+    expect(cards.find((c) => c.label === 'Total transaction fees')?.value).toBe(
+      money(acc.summary.transactionFees)
+    )
+    // These books carry no borrowing, so there is nothing outstanding.
+    expect(cards.find((c) => c.label === 'Outstanding debt')?.value).toBe('$0.00')
+  })
+
+  it('adds up the credit liabilities into the outstanding-debt card', () => {
+    const cards = presentSummaryCards(acc.summary, acc.incomeStatement, {
+      ...acc.balanceSheet,
+      liabilities: [
+        { account: 'Loan Payable', amount: 1000 },
+        { account: 'Interest Payable', amount: 100 },
+        // A liability outside the borrowing accounts stays out of the figure.
+        { account: 'Wage Payable', amount: 40 }
+      ]
+    })
+    expect(cards.find((c) => c.label === 'Outstanding debt')?.value).toBe('$1,100.00')
+  })
+
+  it('reports the balanced banner with the live identity figures', () => {
+    const banner = presentBanner(acc.balanceSheet, acc.generalLedger)
+    expect(banner.balanced).toBe(true)
+    expect(banner.identity).toContain('=')
+    expect(banner.trial).toMatch(/Dr .* = Cr/)
+  })
+
+  it('identity string foots exactly: Assets = Liabilities + Equity, to the cent', () => {
+    const banner = presentBanner(acc.balanceSheet, acc.generalLedger)
+    // Parse "$A = $L + $E" and assert L + E === A on the *displayed* cents.
+    const cents = (s: string): number => Math.round(parseFloat(s.replace(/[$,]/g, '')) * 100)
+    const [lhs, rhs] = banner.identity.split(' = ')
+    const [liab, equity] = rhs!.split(' + ')
+    expect(cents(liab!) + cents(equity!)).toBe(cents(lhs!))
+  })
+})

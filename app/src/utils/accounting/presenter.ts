@@ -172,6 +172,20 @@ function metric(
   return { label, value, sub, icon, chipClass: chip, valueClass: 'text-highlighted', accent: false }
 }
 
+/**
+ * What the team owes its Community Credit lenders right now: the principal still
+ * to be returned plus the fixed return recognised on top of it. Both accounts are
+ * cleared as a round is repaid, so the figure is what is genuinely outstanding —
+ * not what was ever borrowed.
+ */
+const DEBT_ACCOUNTS: ReadonlySet<string> = new Set(['Loan Payable', 'Interest Payable'])
+
+function outstandingDebt(balance: BalanceSheet): number {
+  return balance.liabilities
+    .filter((line) => DEBT_ACCOUNTS.has(line.account))
+    .reduce((sum, line) => sum + line.amount, 0)
+}
+
 /** The summary metric cards from the live roll-up + statements. */
 export function presentSummaryCards(
   summary: AccountingSummary,
@@ -225,6 +239,14 @@ export function presentSummaryCards(
       'Investors + retained earnings',
       'i-heroicons-user-group',
       'bg-primary/10 text-primary'
+    ),
+    // Violet, the credit lifecycle's colour in the ledger badges.
+    metric(
+      'Outstanding debt',
+      money(outstandingDebt(balance)),
+      'Principal + fixed return owed to lenders',
+      'i-heroicons-banknotes',
+      'bg-violet-500/10 text-violet-600 dark:text-violet-400'
     )
   ]
 }
