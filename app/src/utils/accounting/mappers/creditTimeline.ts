@@ -1,6 +1,6 @@
 /**
  * The Community Credit timeline — the four FixedReturn event feeds plus the
- * synthetic interest accruals, normalized into one list and replayed forwards.
+ * synthetic interest recognition, normalized into one list and replayed forwards.
  *
  * {@link ./fixedReturn} turns this timeline into postings; the running principal
  * and interest balances it keeps only hold if the lifecycle is walked in order,
@@ -14,7 +14,19 @@ import type {
   FixedReturnLenderRepaidRow,
   FixedReturnPrincipalRefundedRow
 } from '@/types/ponder/fixedReturn'
-import { accrualSchedule, type CreditOfferTerms } from './creditAccrual'
+
+/**
+ * A funded round's economics, read from `getLendingOffer`. Only the rate is
+ * needed: the contract's obligation is flat, so the maturity date changes nothing
+ * about what is owed — it is a display concern the credit views read for
+ * themselves, not an accounting input.
+ */
+export interface CreditOfferTerms {
+  /** Offer id, as the event feed spells it (decimal string). */
+  offerId: string
+  /** Flat rate over the whole term, in basis points (800 = 8%). */
+  interestRateBps: number
+}
 
 export interface FixedReturnMapperInput {
   /** Offer creations — the offer → token index every other event needs. */
@@ -23,26 +35,22 @@ export interface FixedReturnMapperInput {
   fundsLents?: readonly FixedReturnFundsLentRow[]
   lenderRepaids?: readonly FixedReturnLenderRepaidRow[]
   principalRefundeds?: readonly FixedReturnPrincipalRefundedRow[]
-  /** Rate + maturity per offer, read from the contract — enables the accrual. */
+  /** Rate per offer, read from the contract — what the interest is computed from. */
   offerTerms?: readonly CreditOfferTerms[]
-  /** "Now" for the accrual walk; defaults to the current time (injected in tests). */
-  asOf?: Date
 }
 
-/** `accrue` is synthetic — it has no on-chain event behind it. */
-export type CreditEventKind = 'lent' | 'funded' | 'accrue' | 'refunded' | 'repaid'
+/** `interest` is synthetic — it has no on-chain event behind it. */
+type CreditEventKind = 'lent' | 'funded' | 'interest' | 'refunded' | 'repaid'
 
 export interface CreditEvent {
   kind: CreditEventKind
   id: string
   offerId: string
   timestamp: number
-  /** Absent on `funded` / `accrue`, which carry only the offer id. */
+  /** Absent only on `funded`, which carries the whole round. */
   lender?: string
   /** Absent on `funded`, whose amount is the principal accumulated so far. */
   amount?: string
-  /** `accrue` only — interest owed cumulatively by this instant, base units. */
-  accrued?: bigint
 }
 
 /**
@@ -51,13 +59,13 @@ export interface CreditEvent {
  * emits every `PrincipalRefunded` in one call. Replaying in emission order keeps
  * the running principal correct (a deposit must be counted before the sweep that
  * moves it). Log index would say the same, but the row ids are strings and would
- * sort `10` before `9`. An accrual sorts before a repayment so a settlement can
- * draw down the interest earned up to that very instant.
+ * sort `10` before `9`. The interest lands right after the sweep that raised it,
+ * and before any repayment that could draw it down.
  */
 const KIND_ORDER: Record<CreditEventKind, number> = {
   lent: 0,
   funded: 1,
-  accrue: 2,
+  interest: 2,
   refunded: 3,
   repaid: 4
 }
@@ -72,30 +80,76 @@ export function toBigInt(raw: string | undefined): bigint {
 }
 
 /**
- * The synthetic accrual points of every funded round. The principal a round
- * carries is what its lenders had deposited by the time it funded — the exact
- * amount the sweep moves — so the schedule is built from the same figure the
- * replay will book, without having to run the replay first.
+ * Every lender's cumulative deposit on a round by the time it funded, in the order
+ * they first lent — the same order `s_offerLenders` keeps on-chain, which is what
+ * decides who absorbs the rounding remainder below.
  */
-function accrualEvents(input: FixedReturnMapperInput): CreditEvent[] {
+function depositsAtFunding(
+  input: FixedReturnMapperInput,
+  offerId: string,
+  fundedAt: number
+): Array<{ lender: string; deposit: bigint }> {
+  const byLender = new Map<string, { lender: string; deposit: bigint }>()
+  for (const row of input.fundsLents ?? []) {
+    if (row.offerId !== offerId || row.timestamp > fundedAt) continue
+    const key = row.lender.toLowerCase()
+    const seen = byLender.get(key)
+    if (seen) seen.deposit += toBigInt(row.amount)
+    else byLender.set(key, { lender: row.lender, deposit: toBigInt(row.amount) })
+  }
+  return [...byLender.values()]
+}
+
+/**
+ * The fixed return a funded round owes, booked at the instant it funds — one
+ * posting **per lender**, so the journal says who is owed what rather than
+ * carrying a single anonymous figure for the whole round.
+ *
+ * `FixedReturn.sol` fixes the obligation the moment the round closes —
+ * `totalObligation = totalFunded + totalFunded × interestRateBps / 10_000` — and
+ * never prorates it: repaying on day two still costs the full flat fee. So the
+ * whole return is a liability from that instant, not something earned as the term
+ * runs, and it is recognised there rather than spread across the term.
+ *
+ * The per-lender split mirrors `totalEntitlementOf` exactly: each share is
+ * `floor(totalObligation × deposit / totalFunded)` and the last lender in deposit
+ * order takes the remainder, so the shares foot to the flat fee to the base unit —
+ * the same figures the contract will actually pay out.
+ */
+function interestEvents(input: FixedReturnMapperInput): CreditEvent[] {
   const termsByOffer = new Map((input.offerTerms ?? []).map((t) => [t.offerId, t]))
   if (termsByOffer.size === 0) return []
-  const asOf = input.asOf ?? new Date()
 
   return (input.lendingOfferFundeds ?? []).flatMap((funded) => {
-    const principal = (input.fundsLents ?? [])
-      .filter((row) => row.offerId === funded.offerId && row.timestamp <= funded.timestamp)
-      .reduce((sum, row) => sum + toBigInt(row.amount), 0n)
+    const bps = termsByOffer.get(funded.offerId)?.interestRateBps
+    if (!bps || bps <= 0) return []
 
-    return accrualSchedule(principal, funded.timestamp, termsByOffer.get(funded.offerId), asOf).map(
-      (point) => ({
-        kind: 'accrue' as const,
-        id: `credit-accrual-${funded.offerId}-${point.timestamp}`,
-        offerId: funded.offerId,
-        timestamp: point.timestamp,
-        accrued: point.accrued
-      })
-    )
+    const lenders = depositsAtFunding(input, funded.offerId, funded.timestamp)
+    const totalFunded = lenders.reduce((sum, l) => sum + l.deposit, 0n)
+    if (totalFunded <= 0n) return []
+    const obligation = totalFunded + (totalFunded * BigInt(Math.round(bps))) / 10_000n
+
+    let allocated = 0n
+    return lenders.flatMap(({ lender, deposit }, i) => {
+      const last = i === lenders.length - 1
+      const entitlement = last ? obligation - allocated : (obligation * deposit) / totalFunded
+      allocated += entitlement
+      const interest = entitlement - deposit
+      if (interest <= 0n) return []
+
+      return [
+        {
+          kind: 'interest' as const,
+          // Keyed by the round and the lender alone — the id never moves, so the
+          // row keeps its identity across refetches, exports and drill-downs.
+          id: `credit-interest-${funded.offerId}-${lender.toLowerCase()}`,
+          offerId: funded.offerId,
+          timestamp: funded.timestamp,
+          lender,
+          amount: interest.toString()
+        }
+      ]
+    })
   })
 }
 
@@ -132,6 +186,6 @@ export function creditTimeline(input: FixedReturnMapperInput): CreditEvent[] {
       lender: row.lender,
       amount: row.amount
     })),
-    ...accrualEvents(input)
+    ...interestEvents(input)
   ].sort((a, b) => a.timestamp - b.timestamp || KIND_ORDER[a.kind] - KIND_ORDER[b.kind])
 }

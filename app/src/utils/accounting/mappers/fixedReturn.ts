@@ -6,7 +6,7 @@
  *
  *   `FundsLent`         UC-CREDIT-01  Dr Cash — Credit    · Cr Loan Payable
  *   `LendingOfferFunded`UC-CREDIT-02  Dr Cash — Bank      · Cr Cash — Credit   (internal)
- *   (no event)          UC-CREDIT-05  Dr Interest Expense · Cr Interest Payable (accrual)
+ *   (no event)          UC-CREDIT-05  Dr Interest Expense · Cr Interest Payable (the fee owed)
  *   `LenderRepaid`      UC-CREDIT-03  Dr Loan Payable     · Cr Cash — Bank     (principal leg)
  *                                     Dr Interest Payable · Cr Cash — Bank     (interest leg)
  *   `PrincipalRefunded` UC-CREDIT-04  Dr Loan Payable     · Cr Cash — Credit
@@ -25,17 +25,20 @@
  *   credits `Cash — Bank` directly — booking the intermediate hop as well would
  *   double-count the cash out.
  *
- * **Interest is recognised as the term runs, not when the cash leaves.** The
- * contract charges a flat rate over the whole term and moves nothing until the
- * issuer repays, so {@link ./creditAccrual} spreads the fixed return month by
- * month from the funding date to maturity (`UC-CREDIT-05`), parking the unpaid
- * part in `Interest Payable`. A repayment then draws that liability down first
- * and only expenses what was not accrued yet — a round settled early, before its
- * term has run, books the remainder as `Interest Expense` on the spot. Either way
- * the total cost booked is exactly what the lenders were paid. Accrual needs the
- * round's rate and maturity date, which travel on neither event, so it happens
- * only when `offerTerms` is supplied (see `assemble`); without it the mapper falls
- * back to expensing the fixed return at payment time.
+ * **Interest is recognised when the round funds, not when the cash leaves.** The
+ * contract fixes the whole obligation at that instant — `totalFunded × (1 + rate)`
+ * — and never prorates it: repaying on day two still costs the full flat fee. So
+ * the fixed return is a liability from the moment the round closes, booked against
+ * `Interest Payable` (`UC-CREDIT-05`) **one posting per lender**, so the journal
+ * reads who is owed what, and the balance sheet shows the real debt (principal
+ * *and* fee) for as long as it is outstanding. Spreading it across the term would
+ * understate what is owed every day until maturity.
+ *
+ * A repayment then draws that liability down; only a fee that was never recognised
+ * — because the round's rate was unavailable — falls through to `Interest Expense`
+ * at payment time. Either way the total cost booked is exactly what the lenders
+ * were paid. The rate travels on `LendingOfferCreated` but not through the mapper's
+ * feed, so recognition happens only when `offerTerms` is supplied (see `assemble`).
  *
  * Splitting a repayment installment: `repayLenders` distributes cumulatively and
  * makes no principal/interest distinction, so the split is reconstructed here —
@@ -60,8 +63,7 @@ import {
 } from './creditTimeline'
 import { atDate, type MapperContext } from './context'
 
-export type { CreditOfferTerms } from './creditAccrual'
-export type { FixedReturnMapperInput } from './creditTimeline'
+export type { CreditOfferTerms, FixedReturnMapperInput } from './creditTimeline'
 
 const CREDIT = 'Cash — Credit' as const
 const BANK = 'Cash — Bank' as const
@@ -103,10 +105,9 @@ export function mapFixedReturnEvents(
   const heldByOffer = new Map<string, bigint>()
   /** Principal a lender has outstanding on an offer — what repayment retires first. */
   const owedToLender = new Map<string, bigint>()
-  /** Interest already taken to expense for an offer (accrued + settled early). */
-  const expensedByOffer = new Map<string, bigint>()
-  /** The `Interest Payable` balance an offer currently carries. */
-  const payableByOffer = new Map<string, bigint>()
+  /** The `Interest Payable` a lender is still owed on an offer — what the interest
+   *  side of their repayment clears, the mirror of `owedToLender` for principal. */
+  const payableToLender = new Map<string, bigint>()
   /** Offers already flagged as unvaluable — one memo each, not one per event. */
   const unvalued = new Set<string>()
 
@@ -142,6 +143,7 @@ export function mapFixedReturnEvents(
             token,
             rawAmount: amount.toString(),
             counterparty: event.lender,
+            creditOfferId: event.offerId,
             memo: `Funds lent to Community Credit offer #${event.offerId}`
           })
         )
@@ -171,15 +173,13 @@ export function mapFixedReturnEvents(
         break
       }
 
-      case 'accrue': {
-        // The schedule states the interest owed *cumulatively* by this date, so a
-        // round settled ahead of its term simply has nothing left to book here.
-        const target = event.accrued ?? 0n
-        const expensed = expensedByOffer.get(event.offerId) ?? 0n
-        const delta = target - expensed
-        if (delta <= 0n) break
-        expensedByOffer.set(event.offerId, target)
-        bump(payableByOffer, event.offerId, delta)
+      case 'interest': {
+        // The round has closed, so the whole flat fee is owed from this instant —
+        // one posting per lender, at the funding date, for the share they will be
+        // paid on top of their principal.
+        const owed = toBigInt(event.amount)
+        if (owed <= 0n) break
+        bump(payableToLender, key, owed)
         entries.push(
           makeEntry({
             id: event.id,
@@ -187,10 +187,12 @@ export function mapFixedReturnEvents(
             useCase: 'UC-CREDIT-05',
             debit: INTEREST_EXPENSE,
             credit: INTEREST_PAYABLE,
-            amountUsd: usd(delta),
+            amountUsd: usd(owed),
             token,
-            rawAmount: delta.toString(),
-            memo: `Interest accrued on Community Credit offer #${event.offerId}`
+            rawAmount: owed.toString(),
+            counterparty: event.lender,
+            creditOfferId: event.offerId,
+            memo: `Fixed return owed to a lender on Community Credit offer #${event.offerId}`
           })
         )
         break
@@ -214,13 +216,12 @@ export function mapFixedReturnEvents(
               token,
               rawAmount: principal.toString(),
               counterparty: event.lender,
+              creditOfferId: event.offerId,
               memo: `Principal repaid on Community Credit offer #${event.offerId}`
             })
           )
         }
-        entries.push(
-          ...interestLegs(event, amount - principal, payableByOffer, expensedByOffer, token, usd)
-        )
+        entries.push(...interestLegs(event, amount - principal, key, payableToLender, token, usd))
         break
       }
 
@@ -242,6 +243,7 @@ export function mapFixedReturnEvents(
             token,
             rawAmount: amount.toString(),
             counterparty: event.lender,
+            creditOfferId: event.offerId,
             memo: `Principal refunded on unfunded Community Credit offer #${event.offerId}`
           })
         )
@@ -263,24 +265,24 @@ function legId(eventId: string, leg: string): string {
 }
 
 /**
- * The interest side of one repayment installment: it clears the `Interest Payable`
- * built up by the accrual first, and only what was never accrued — a round repaid
- * before its term has run — goes straight to `Interest Expense`. With no accrual
- * running at all (no offer terms), the payable is empty and every cent takes the
- * second leg, which is exactly the cash-basis treatment this mapper started with.
+ * The interest side of one repayment installment: it clears what **this lender**
+ * was recognised as owed when the round funded, and only a fee never recognised
+ * there — the round's rate was unavailable, so nothing was booked — falls through
+ * to `Interest Expense`. With no terms at all the payable is empty and every cent
+ * takes the second leg, which is the cash-basis treatment this mapper started with.
  */
 function interestLegs(
   event: CreditEvent,
   interest: bigint,
-  payableByOffer: Map<string, bigint>,
-  expensedByOffer: Map<string, bigint>,
+  key: string,
+  payableToLender: Map<string, bigint>,
   token: TokenId,
   usd: (raw: bigint) => number
 ): LedgerEntry[] {
   if (interest <= 0n) return []
-  const payable = payableByOffer.get(event.offerId) ?? 0n
+  const payable = payableToLender.get(key) ?? 0n
   const fromPayable = interest < payable ? interest : payable
-  const unaccrued = interest - fromPayable
+  const unrecognised = interest - fromPayable
   const legs: LedgerEntry[] = []
 
   const leg = (id: string, debit: typeof INTEREST_PAYABLE | typeof INTEREST_EXPENSE, raw: bigint) =>
@@ -294,17 +296,15 @@ function interestLegs(
       token,
       rawAmount: raw.toString(),
       counterparty: event.lender,
+      creditOfferId: event.offerId,
       memo: `Fixed return paid on Community Credit offer #${event.offerId}`
     })
 
   if (fromPayable > 0n) {
-    payableByOffer.set(event.offerId, payable - fromPayable)
+    payableToLender.set(key, payable - fromPayable)
     legs.push(leg('interest', INTEREST_PAYABLE, fromPayable))
   }
-  if (unaccrued > 0n) {
-    bump(expensedByOffer, event.offerId, unaccrued)
-    legs.push(leg('interest-unaccrued', INTEREST_EXPENSE, unaccrued))
-  }
+  if (unrecognised > 0n) legs.push(leg('interest-unrecognised', INTEREST_EXPENSE, unrecognised))
   return legs
 }
 

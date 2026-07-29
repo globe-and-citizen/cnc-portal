@@ -110,9 +110,9 @@ describe('mapFixedReturnEvents', () => {
       ['rp1-principal', 'Loan Payable', 6],
       // The second installment retires the last 4 of principal; the rest is interest.
       ['rp2-principal', 'Loan Payable', 4],
-      // No offer terms here, so nothing was accrued: the whole fixed return is
-      // expensed on the day it is paid (the cash-basis fallback).
-      ['rp2-interest-unaccrued', 'Interest Expense', 1]
+      // No offer terms here, so no fee was recognised at funding: the whole fixed
+      // return is expensed on the day it is paid (the cash-basis fallback).
+      ['rp2-interest-unrecognised', 'Interest Expense', 1]
     ])
     repayments.forEach((e) => expect(e.credit).toBe('Cash — Bank'))
   })
@@ -173,7 +173,7 @@ describe('mapFixedReturnEvents', () => {
     expect(entries.at(-1)?.rawAmount).toBe('10000000')
   })
 
-  describe('interest accrual', () => {
+  describe('the fixed return owed', () => {
     const jan1 = Math.floor(Date.parse('2026-01-01T00:00:00Z') / 1000)
     const apr1 = Math.floor(Date.parse('2026-04-01T00:00:00Z') / 1000)
 
@@ -184,34 +184,80 @@ describe('mapFixedReturnEvents', () => {
       lendingOfferFundeds: [
         { id: 'fd1', contractAddress: ADDR.credit, offerId: '1', timestamp: jan1 }
       ],
-      offerTerms: [{ offerId: '1', interestRateBps: 1200, maturityDate: apr1 }],
+      offerTerms: [{ offerId: '1', interestRateBps: 1200 }],
       ...over
     })
 
-    it('books the fixed return month by month instead of at payment', () => {
-      const entries = mapFixedReturnEvents(round({ asOf: new Date('2026-03-01T00:00:00Z') }), ctx)
-      const accruals = entries.filter((e) => e.useCase === 'UC-CREDIT-05')
-      // Jan 31, Feb 28 and the Mar 1 cutoff.
-      expect(accruals).toHaveLength(3)
-      accruals.forEach((e) =>
-        expect(e).toMatchObject({
-          debit: 'Interest Expense',
-          credit: 'Interest Payable',
-          token: 'usdc',
-          internal: false
-        })
-      )
-      // 59 of the term's 90 days have run, so 12 × 59/90 of the fixed return.
-      const booked = accruals.reduce((sum, e) => sum + e.amountUsd, 0)
-      expect(booked).toBeCloseTo(7.8667, 3)
+    it('books the whole fee when the round funds, in one posting', () => {
+      const entries = mapFixedReturnEvents(round(), ctx)
+      const owed = entries.filter((e) => e.useCase === 'UC-CREDIT-05')
+      expect(owed).toHaveLength(1)
+      expect(owed[0]).toMatchObject({
+        // Stable id: the round and the lender, so the row never changes identity.
+        id: `credit-interest-1-${ADDR.lender}`,
+        debit: 'Interest Expense',
+        credit: 'Interest Payable',
+        amountUsd: 12,
+        token: 'usdc',
+        // Dated the day the round closed, not the day it matures.
+        timestamp: jan1,
+        internal: false
+      })
+      expect(owed[0]?.counterparty?.toLowerCase()).toBe(ADDR.lender)
     })
 
-    it('settles the accrued interest against Interest Payable, not a fresh expense', () => {
+    it('names each lender on their own share of the fee', () => {
+      // 60 / 40 split of a 100 USDC round at 12% — 7.20 and 4.80 of fixed return.
       const entries = mapFixedReturnEvents(
         round({
-          asOf: new Date('2026-05-01T00:00:00Z'),
-          lenderRepaids: [repaid('rp1', '112000000', apr1)]
+          fundsLents: [lent('fl1', '60000000', jan1), lent('fl2', '40000000', jan1, ADDR.client)]
         }),
+        ctx
+      )
+      const owed = entries.filter((e) => e.useCase === 'UC-CREDIT-05')
+      expect(owed.map((e) => [e.counterparty?.toLowerCase(), e.amountUsd])).toEqual([
+        [ADDR.lender, 7.2],
+        [ADDR.client, 4.8]
+      ])
+      // The shares foot to the flat fee exactly — the last lender absorbs any
+      // rounding remainder, as `totalEntitlementOf` does on-chain.
+      expect(owed.reduce((sum, e) => sum + e.amountUsd, 0)).toBeCloseTo(12, 6)
+    })
+
+    it('clears each lender against their own share, not the round total', () => {
+      const entries = mapFixedReturnEvents(
+        round({
+          fundsLents: [lent('fl1', '60000000', jan1), lent('fl2', '40000000', jan1, ADDR.client)],
+          // Only the first lender is made whole: 60 principal + 7.20 interest.
+          lenderRepaids: [repaid('rp1', '67200000', apr1)]
+        }),
+        ctx
+      )
+      const paid = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
+      expect(paid.map((e) => [e.debit, e.amountUsd])).toEqual([
+        ['Loan Payable', 60],
+        ['Interest Payable', 7.2]
+      ])
+      // The second lender is still owed their principal and their share of the fee.
+      expect(balanceOf(entries, 'Loan Payable')).toBeCloseTo(40, 6)
+      expect(balanceOf(entries, 'Interest Payable')).toBeCloseTo(4.8, 6)
+    })
+
+    it('shows the full debt — principal and fee — from the day the round funds', () => {
+      const entries = mapFixedReturnEvents(round(), ctx)
+      expect(balanceOf(entries, 'Loan Payable')).toBeCloseTo(100, 6)
+      expect(balanceOf(entries, 'Interest Payable')).toBeCloseTo(12, 6)
+    })
+
+    it('is the same figure however late the books are read', () => {
+      const early = mapFixedReturnEvents(round(), ctx).filter((e) => e.useCase === 'UC-CREDIT-05')
+      const late = mapFixedReturnEvents(round(), ctx).filter((e) => e.useCase === 'UC-CREDIT-05')
+      expect(late).toEqual(early)
+    })
+
+    it('settles against Interest Payable rather than a fresh expense', () => {
+      const entries = mapFixedReturnEvents(
+        round({ lenderRepaids: [repaid('rp1', '112000000', apr1)] }),
         ctx
       )
       const paid = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
@@ -219,54 +265,41 @@ describe('mapFixedReturnEvents', () => {
         ['Loan Payable', 100],
         ['Interest Payable', 12]
       ])
-      // The whole cost was recognised over the term, so nothing is left owing.
+      // Both liabilities are cleared, and the cost was booked exactly once.
+      expect(balanceOf(entries, 'Loan Payable')).toBeCloseTo(0, 6)
       expect(balanceOf(entries, 'Interest Payable')).toBeCloseTo(0, 6)
       expect(totalDebited(entries, 'Interest Expense')).toBeCloseTo(12, 6)
     })
 
-    it('expenses the part never accrued when a round is settled early', () => {
-      // Repaid a month into a three-month term: only ~1/3 had accrued.
+    it('costs the same flat fee when the round is settled early', () => {
+      // The contract prorates nothing: repaying a month into a three-month term
+      // still owes the whole 12, and the books already said so on day one.
       const feb1 = Math.floor(Date.parse('2026-02-01T00:00:00Z') / 1000)
       const entries = mapFixedReturnEvents(
-        round({
-          asOf: new Date('2026-02-01T12:00:00Z'),
-          lenderRepaids: [repaid('rp1', '112000000', feb1)]
-        }),
+        round({ lenderRepaids: [repaid('rp1', '112000000', feb1)] }),
         ctx
       )
       const paid = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
-      expect(paid.map((e) => e.debit)).toEqual([
-        'Loan Payable',
-        'Interest Payable',
-        'Interest Expense'
-      ])
-      // However the 12 is split between the two interest legs, the cost booked is
-      // exactly what the lender was paid — and no interest is left outstanding.
+      expect(paid.map((e) => e.debit)).toEqual(['Loan Payable', 'Interest Payable'])
       expect(totalDebited(entries, 'Interest Expense')).toBeCloseTo(12, 6)
       expect(balanceOf(entries, 'Interest Payable')).toBeCloseTo(0, 6)
     })
 
-    it('stops accruing once the round has been settled', () => {
-      const feb1 = Math.floor(Date.parse('2026-02-01T00:00:00Z') / 1000)
+    it('falls back to expensing at payment when the round rate is unavailable', () => {
       const entries = mapFixedReturnEvents(
-        round({
-          asOf: new Date('2026-06-01T00:00:00Z'),
-          lenderRepaids: [repaid('rp1', '112000000', feb1)]
-        }),
+        round({ offerTerms: [], lenderRepaids: [repaid('rp1', '112000000', apr1)] }),
         ctx
       )
-      // The schedule keeps running to maturity, but every later point finds the
-      // whole fixed return already expensed and books nothing.
+      expect(entries.filter((e) => e.useCase === 'UC-CREDIT-05')).toHaveLength(0)
+      const paid = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
+      expect(paid.map((e) => e.debit)).toEqual(['Loan Payable', 'Interest Expense'])
       expect(totalDebited(entries, 'Interest Expense')).toBeCloseTo(12, 6)
     })
 
     it('keeps both repayment legs pointing at the transaction that paid them', () => {
       const txHash = `0x${'a'.repeat(64)}`
       const entries = mapFixedReturnEvents(
-        round({
-          asOf: new Date('2026-05-01T00:00:00Z'),
-          lenderRepaids: [repaid(`${txHash}-4`, '112000000', apr1)]
-        }),
+        round({ lenderRepaids: [repaid(`${txHash}-4`, '112000000', apr1)] }),
         ctx
       )
       const legs = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
