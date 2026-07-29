@@ -233,12 +233,10 @@ const v3WriteRestrictedImports = {
 
 export default [
   {
-    // TODO turn this rule into an error by march 2025
     name: 'app/files-to-lint',
     files: ['**/*.{ts,mts,tsx,vue}'],
     rules: {
       'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }]
-      // 'max-lines': ['warn', { max: 250, skipBlankLines: true, skipComments: true }]
     }
   },
   {
