@@ -17,9 +17,9 @@
       <div class="mb-2 flex items-baseline justify-between">
         <span class="text-sm">
           <strong class="text-lg font-extrabold tracking-tight">{{
-            formatAmount(round.raised, round.token, 4)
+            formatAmount(round.raised, round.token)
           }}</strong>
-          <span class="text-muted"> of {{ formatAmount(round.target, round.token, 4) }}</span>
+          <span class="text-muted"> of {{ formatAmount(round.target, round.token) }}</span>
         </span>
         <span class="text-primary text-xs font-bold">{{ pct }}%</span>
       </div>
@@ -107,10 +107,10 @@ const extraLenders = computed(() => props.round.lenders.length - 3)
 const progressNote = computed(() => {
   const remaining = props.round.target - props.round.raised
   if (props.round.status === 'open') {
-    return `${formatAmount(remaining, props.round.token, 4)} to go · closes ${props.round.deadline}`
+    return `${formatAmount(remaining, props.round.token)} to go · closes ${props.round.deadline}`
   }
   if (props.round.status === 'stalled') {
-    return `${formatAmount(remaining, props.round.token, 4)} short · deadline passed`
+    return `${formatAmount(remaining, props.round.token)} short · deadline passed`
   }
   if (props.round.status === 'refunded') {
     return 'Refunded — principal returned to lenders'
