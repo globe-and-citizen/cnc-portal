@@ -159,7 +159,7 @@ const globalMockReMockSelectors = bannedGlobalMockPaths.map((path) => ({
   message: globalMockMessage(path)
 }))
 
-// Legacy offenders — each of these spec files still carries at least one
+// Legacy offenders — these 34 spec files still carry at least one
 // `vi.mock(...)` call against a globally-mocked module path. The rule is
 // disabled for them so CI does not break on day one; each removal is a
 // follow-up to issue #2014.
@@ -171,7 +171,6 @@ const globalMockLegacyFiles = [
   'src/components/sections/CashRemunerationView/__tests__/CRSigne.spec.ts',
   'src/components/sections/CashRemunerationView/__tests__/CRWithdrawClaim.spec.ts',
   'src/components/sections/DashboardView/__tests__/MemberSection.spec.ts',
-  'src/components/sections/ExpenseAccountView/__tests__/ExpenseMonthSpent.spec.ts',
   'src/components/sections/ExpenseAccountView/__tests__/TransferAction.spec.ts',
   'src/components/sections/SafeView/__tests__/RemoveOwnerButton.spec.ts',
   'src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts',
@@ -188,20 +187,15 @@ const globalMockLegacyFiles = [
   'src/components/sections/SherTokenView/forms/__tests__/TwinAmountInputs.spec.ts',
   'src/components/sections/VestingView/__tests__/VestingFlow.spec.ts',
   'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
-  'src/components/sections/VestingView/forms/__tests__/CreateVestingSubmission.spec.ts',
   'src/components/sections/WeeklyClaimView/__tests__/WeeklyClaimActionDropdown.spec.ts',
   'src/components/sections/WeeklyClaimView/__tests__/WeeklyClaimActionEnable.spec.ts',
   'src/composables/__tests__/useFileUrl.spec.ts',
   'src/composables/__tests__/useSiwe.spec.ts',
-  'src/composables/contracts/__tests__/useOfficerDeployment.spec.ts',
-  'src/composables/contracts/__tests__/useOfficerRedeploy.spec.ts',
   'src/composables/safe/__tests__/useSafeSdk.spec.ts',
   'src/composables/safe/__tests__/useSafeTransactionActions.spec.ts',
   'src/queries/__tests__/contract.queries.spec.ts',
-  'src/queries/__tests__/weeklyClaim.queries.spec.ts',
   'src/router/__tests__/index.spec.ts',
   'src/stores/__tests__/teamStore.spec.ts',
-  'src/utils/__tests__/web3Util.spec.ts',
   'src/views/team/[[]id[]]/__tests__/BankView.spec.ts',
   'src/views/team/[[]id[]]/__tests__/BodElectionView.spec.ts'
 ]
@@ -239,12 +233,10 @@ const v3WriteRestrictedImports = {
 
 export default [
   {
-    // TODO turn this rule into an error by march 2025
     name: 'app/files-to-lint',
     files: ['**/*.{ts,mts,tsx,vue}'],
     rules: {
       'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }]
-      // 'max-lines': ['warn', { max: 250, skipBlankLines: true, skipComments: true }]
     }
   },
   {
@@ -285,8 +277,7 @@ export default [
     rules: {
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
-      // TODO: remove @typescript-eslint/no-empty-object-type
-      '@typescript-eslint/no-empty-object-type': 'off'
+      '@typescript-eslint/no-empty-object-type': 'error'
     }
   },
   {

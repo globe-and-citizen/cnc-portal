@@ -4,9 +4,10 @@ permissions:
 
 on:
   pull_request:
-    branches: ["**"]
+    branches: ['**']
     paths:
-      - "ponder/**"
+      - 'ponder/**'
+      - '.github/workflows/ponder-code-quality.yml'
   workflow_dispatch:
 
 jobs:
@@ -20,13 +21,21 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24.x
-          cache: "npm"
+          cache: npm
           cache-dependency-path: ./ponder/package-lock.json
 
       - name: ⚙️ NPM install
         run: npm ci
         working-directory: ./ponder
 
+      - name: ⚙️ Run lint
+        run: npm run lint
+        working-directory: ./ponder
+
       - name: 🧹 Format check
         run: npm run format-check
+        working-directory: ./ponder
+
+      - name: Type check
+        run: npm run typecheck
         working-directory: ./ponder

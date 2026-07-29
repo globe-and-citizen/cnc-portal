@@ -207,7 +207,7 @@ const approveUser = async (data: BudgetLimit) => {
   toast.add({ title: 'User approved successfully', color: 'success' })
 }
 
-const errorMessage = (error: {}, message: string) =>
+const errorMessage = (error: object, message: string) =>
   'reason' in error ? (error.reason as string) : message
 
 const isBodAction = () => false

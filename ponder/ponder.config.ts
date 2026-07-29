@@ -16,10 +16,6 @@ import { VESTING_ABI } from "./abis/vesting";
 import { EXPENSE_ACCOUNT_EIP712_ABI } from "./abis/expense-account-eip712";
 import { FEE_COLLECTOR_ABI } from "./abis/fee-collector";
 
-const CONTRACT_DEPLOYED_EVENT = parseAbiItem(
-  "event ContractDeployed(string contractType, address deployedAddress)",
-);
-
 // ─── Network selection ────────────────────────────────────────────────────────
 // Set NETWORK=hardhat in .env.local to index a local Hardhat node.
 // Default: polygon

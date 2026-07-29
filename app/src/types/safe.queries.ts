@@ -11,7 +11,7 @@ export interface GetSafeTransactionPathParams {
 /**
  * Query parameters for GET single transaction (none for this endpoint)
  */
-export interface GetSafeTransactionQueryParams {}
+export type GetSafeTransactionQueryParams = Record<string, never>
 
 /**
  * Path parameters for Safe incoming transfers endpoint
@@ -48,7 +48,7 @@ export interface GetSafeTransactionsPathParams {
 /**
  * Query parameters for Safe transactions (none for this endpoint)
  */
-export interface GetSafeTransactionsQueryParams {}
+export type GetSafeTransactionsQueryParams = Record<string, never>
 
 /**
  * Combined parameters for useGetSafeTransactionsQuery
@@ -69,7 +69,7 @@ export interface GetSafeInfoPathParams {
 /**
  * Query parameters for Safe info (none for this endpoint)
  */
-export interface GetSafeInfoQueryParams {}
+export type GetSafeInfoQueryParams = Record<string, never>
 
 /**
  * Combined parameters for useGetSafeInfoQuery
