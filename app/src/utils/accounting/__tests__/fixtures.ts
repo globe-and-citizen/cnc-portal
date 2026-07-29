@@ -4,7 +4,8 @@
  * mapper spec can exercise pure logic without Vue, the chain, or a price oracle.
  */
 import { formatUnits, type Address } from 'viem'
-import type { TokenId } from '@/constant'
+import { USDC_ADDRESS, type TokenId } from '@/constant'
+import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { MapperContext } from '@/utils/accounting/mappers/context'
 
@@ -58,4 +59,68 @@ export function makeCtx(overrides: Partial<MapperContext> = {}): MapperContext {
     pocketOf: (address) => (address ? (POCKETS[address.toLowerCase()] ?? null) : null),
     ...overrides
   }
+}
+
+/**
+ * A small live book run through the whole pipeline: a $100 client deposit into the
+ * Bank and a $30 expense payout. Shared by the specs that need real statements
+ * rather than hand-built entries.
+ */
+export function sampleBooks(): CncAccounting {
+  return assembleCncAccounting({
+    contracts: [
+      { type: 'Bank', address: ADDR.bank as Address, deployer: ADDR.bank as Address, admins: [] },
+      {
+        type: 'ExpenseAccountEIP712',
+        address: ADDR.expense as Address,
+        deployer: ADDR.bank as Address,
+        admins: []
+      }
+    ],
+    bankEvents: {
+      bankDeposits: { items: [] },
+      bankTokenDeposits: {
+        items: [
+          {
+            id: 'bd1',
+            contractAddress: ADDR.bank,
+            depositor: ADDR.client,
+            token: USDC_ADDRESS,
+            amount: '100000000', // 100 USDC, ts 100
+            timestamp: 100
+          }
+        ]
+      },
+      bankTransfers: { items: [] },
+      bankTokenTransfers: { items: [] },
+      bankDividendDistributionTriggereds: { items: [] },
+      bankFeePaids: { items: [] },
+      bankOwnershipTransferreds: { items: [] },
+      rawContractTokenTransfers: { items: [] }
+    },
+    expenseEvents: {
+      expenseDeposits: { items: [] },
+      expenseTokenDeposits: { items: [] },
+      expenseTransfers: { items: [] },
+      expenseTokenTransfers: {
+        items: [
+          {
+            id: 'et1',
+            contractAddress: ADDR.expense,
+            withdrawer: ADDR.expense,
+            to: ADDR.member,
+            token: USDC_ADDRESS,
+            amount: '30000000', // 30 USDC, ts 200
+            timestamp: 200
+          }
+        ]
+      },
+      expenseApprovals: { items: [] },
+      expenseOwnerTreasuryWithdrawNatives: { items: [] },
+      expenseOwnerTreasuryWithdrawTokens: { items: [] },
+      expenseTokenSupportAddeds: { items: [] },
+      expenseTokenSupportRemoveds: { items: [] },
+      expenseTokenAddressChangeds: { items: [] }
+    }
+  })
 }
