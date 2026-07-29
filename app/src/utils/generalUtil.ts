@@ -1,3 +1,5 @@
+import { formatAddress } from './format/address'
+
 const isDevelopment = import.meta.env.MODE === 'development'
 // const isVerbose = true
 
@@ -30,7 +32,8 @@ export const log = {
   }
 }
 
-export const shortenAddress = (address: string | undefined) => {
-  if (!address) return ''
-  return address.slice(0, 6) + '...' + address.slice(-4)
-}
+/**
+ * @deprecated Import `formatAddress` from `@/utils/format` instead — this is
+ * the same helper under an older name, kept while call sites migrate.
+ */
+export const shortenAddress = (address: string | undefined) => formatAddress(address)
