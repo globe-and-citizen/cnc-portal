@@ -103,7 +103,7 @@ const CREDIT_BADGE: Partial<Record<UseCase, string>> = {
   // Debt settled, cash out (principal and fixed return alike) — violet, so a
   // repayment can never be mistaken for a fresh loan on a busy journal page.
   'UC-CREDIT-03': 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  // Interest earned by the lenders but not yet paid: the same violet as the
+  // The fixed return owed to the lenders but not yet paid: the same violet as the
   // repayment it anticipates, outlined instead of filled because no cash moved.
   'UC-CREDIT-05':
     'text-violet-600 ring-1 ring-violet-500/40 dark:text-violet-400 dark:ring-violet-400/40',

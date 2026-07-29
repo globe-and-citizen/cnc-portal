@@ -10,9 +10,10 @@
  * - `Infrastructure Expense` is intentionally **absent** — a Phase 2 gap with no
  *   data feed yet.
  * - `Interest Expense` **is** booked: the FixedReturn (Community Credit) feed
- *   supplies it, as the fixed return paid to lenders above their principal. It is
- *   recognised as the term runs (straight-line accrual), not when the cash leaves,
- *   with the unpaid part parked in `Interest Payable`.
+ *   supplies it, as the fixed return paid to lenders above their principal. The
+ *   contract fixes that fee when the round funds and never prorates it, so it is
+ *   recognised in full there — not when the cash leaves — and sits in
+ *   `Interest Payable` until it is paid.
  * - `Network Fee Expense` (gas paid to validators) is likewise **absent**: gas is
  *   not indexed by any feed yet, so there is nothing to post.
  * - The Bank protocol fee (`FeePaid`) *is* booked, as a real cost leaving the

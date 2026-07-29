@@ -29,7 +29,7 @@ const ENTRY_LABEL: Record<UseCase, string> = {
   'UC-CREDIT-02': 'Credit principal to Bank',
   'UC-CREDIT-03': 'Credit repayment',
   'UC-CREDIT-04': 'Credit principal refund',
-  'UC-CREDIT-05': 'Credit interest accrual',
+  'UC-CREDIT-05': 'Credit interest owed',
   'UC-CASH-02': 'Wage accrual',
   'UC-CASH-03': 'Wage settlement',
   'UC-EXP-01': 'Operating expense',
@@ -75,6 +75,7 @@ const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'UC-CREDIT-01',
   'UC-CREDIT-03',
   'UC-CREDIT-04',
+  'UC-CREDIT-05',
   'UC-EXP-01',
   'UC-INV-01',
   'DEFAULT-D'
@@ -150,6 +151,8 @@ function predicate(entry: LedgerEntry): string {
         : `was paid ${amount} of interest on their loan`
     case 'UC-CREDIT-04':
       return `was refunded ${amount} of lent principal`
+    case 'UC-CREDIT-05':
+      return `is owed ${amount} of interest on their loan`
     case 'UC-EXP-01':
       return expensePredicate(entry, amount)
     case 'UC-INV-01':
@@ -193,6 +196,18 @@ export function activityOf(entry: LedgerEntry): ActivityCell {
 export function withSherTail(cell: ActivityCell, sherShares: number): ActivityCell {
   if (sherShares <= 0 || cell.kind !== 'actor' || /SHER/.test(cell.text)) return cell
   return { ...cell, text: `${cell.text} + ${sherShares} SHER` }
+}
+
+/**
+ * Append "· $X of interest" to an actor narration when a compound credit posting
+ * also carries the round's fixed return, so the grouped entry's single Activity
+ * names the interest part — "lent $800.00 to the community credit · $80.00 of
+ * interest owed". No-op when there is no interest or the cell names no actor.
+ */
+export function withInterestTail(cell: ActivityCell, interestUsd: number): ActivityCell {
+  if (interestUsd <= 0 || cell.kind !== 'actor' || /interest/.test(cell.text)) return cell
+  const owed = cell.text.startsWith('lent') ? ' owed' : ''
+  return { ...cell, text: `${cell.text} · ${money(interestUsd)} of interest${owed}` }
 }
 
 /** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */

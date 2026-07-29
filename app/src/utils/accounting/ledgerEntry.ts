@@ -40,8 +40,8 @@ export type UseCase =
   | 'UC-CREDIT-03'
   /** Principal refunded to a lender when an offer missed its funding target. */
   | 'UC-CREDIT-04'
-  /** Interest earned by the lenders as the term runs, not yet paid — the
-   *  straight-line accrual between funding and maturity (no on-chain event). */
+  /** The flat fixed return a funded round owes its lenders, recognised the moment
+   *  it funds — the contract never prorates it (no on-chain event). */
   | 'UC-CREDIT-05'
   /** Wage earned — accrual booked when the weekly claim is submitted. */
   | 'UC-CASH-02'
@@ -112,6 +112,13 @@ export interface LedgerEntry {
   memo: string
   /** Share count for equity / Default-D entries (whole SHER, not base units). */
   shares?: number
+  /**
+   * The Community Credit round (`FixedReturn` offer id) a `UC-CREDIT-*` posting
+   * belongs to. What lets a lender's principal and their fixed return be rendered
+   * as one compound posting (see {@link ./creditGrouping}) without confusing two
+   * rounds the same member lent into.
+   */
+  creditOfferId?: string
   /**
    * Minutes worked behind a payroll entry (UC-CASH-02 / UC-CASH-03), carried from
    * the weekly claim so the human-readable label can read "submitted 16h". Absent
