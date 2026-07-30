@@ -30,6 +30,14 @@ flows, not regular function calls, and are out of scope for this guide.
 settles before `mutateAsync` resolves. `cfg.onError` runs after the built-in
 error log.
 
+Step 4 is narrower than it looks: it matches only keys shaped
+`['readContract', { address: <the contract you wrote to> }]`. Native balances
+(`['balance', …]`), ERC-20 balances (keyed on the **token** address), the
+`*-events-logs` transaction feeds and every hand-rolled aggregate key are
+outside its reach and need an explicit `cfg.onSuccess`.
+[`INVALIDATION_MAP.md`](./INVALIDATION_MAP.md) maps each write to the reads it
+dirties and to what covers them today — read it before adding a write.
+
 ## 1. Shape of a write composable
 
 Every feature wraps `useContractWritesV3` behind a thin, ABI-typed factory.
