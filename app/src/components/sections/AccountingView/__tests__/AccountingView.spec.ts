@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
 import AccountingSummary from '../AccountingSummary.vue'
@@ -12,6 +12,23 @@ import TablePagination from '@/components/TablePagination.vue'
 import { entriesForAccount, accountBalance } from '@/utils/accounting/accountLedger'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import type { StatementLineView } from '@/utils/accounting/presenter'
+
+// Clicking an export button used to run the real writers: `exportTablesPdf`
+// ends on `doc.save(filename)`, and jsPDF — which only knows how to trigger a
+// browser download — falls back to writing the file to the process cwd once the
+// export settles after this file's jsdom window is gone, dropping real PDFs into
+// `app/` on every run. Stub the composable so the click stops at the boundary;
+// the builders behind it are covered by `accountingPdf.spec.ts` and the
+// filenames by `exportNaming.spec.ts`.
+const { exportPdf, exportExcel } = vi.hoisted(() => ({ exportPdf: vi.fn(), exportExcel: vi.fn() }))
+vi.mock('@/composables/accounting/useAccountingExport', () => ({
+  useAccountingExport: () => ({ exportPdf, exportExcel })
+}))
+
+beforeEach(() => {
+  exportPdf.mockClear()
+  exportExcel.mockClear()
+})
 
 // The cards now read live books via `useAccountingContext`. Rendered standalone
 // (no parent provider) they self-fetch through the globally-mocked queries, which
@@ -53,7 +70,10 @@ describe('TrialBalanceCard', () => {
     await wrapper.find('[data-test="export-excel"]').trigger('click')
     await wrapper.find('[data-test="export-pdf"]').trigger('click')
     await flushPromises()
-    expect(wrapper.find('[data-test="export-excel"]').exists()).toBe(true)
+    expect(exportExcel).toHaveBeenCalledTimes(1)
+    expect(exportExcel.mock.calls[0][1]).toMatch(/^Trial Balance .*\.xlsx$/)
+    expect(exportPdf).toHaveBeenCalledTimes(1)
+    expect(exportPdf.mock.calls[0][1].filename).toMatch(/^Trial Balance .*\.pdf$/)
     wrapper.unmount()
   })
 })
@@ -83,7 +103,8 @@ describe('IncomeStatementCard', () => {
     await wrapper.find('[data-test="export-excel"]').trigger('click')
     await wrapper.find('[data-test="export-pdf"]').trigger('click')
     await flushPromises()
-    expect(wrapper.find('[data-test="export-pdf"]').exists()).toBe(true)
+    expect(exportExcel.mock.calls[0][1]).toMatch(/^Income Statement .*\.xlsx$/)
+    expect(exportPdf.mock.calls[0][1].filename).toMatch(/^Income Statement .*\.pdf$/)
     wrapper.unmount()
   })
 })
@@ -115,7 +136,8 @@ describe('BalanceSheetCard', () => {
     await wrapper.find('[data-test="export-excel"]').trigger('click')
     await wrapper.find('[data-test="export-pdf"]').trigger('click')
     await flushPromises()
-    expect(wrapper.find('[data-test="export-excel"]').exists()).toBe(true)
+    expect(exportExcel.mock.calls[0][1]).toMatch(/^Balance Sheet .*\.xlsx$/)
+    expect(exportPdf.mock.calls[0][1].filename).toMatch(/^Balance Sheet .*\.pdf$/)
     wrapper.unmount()
   })
 })
