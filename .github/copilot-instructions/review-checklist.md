@@ -12,6 +12,7 @@ Before submitting code for review, ensure the following items are completed:
 - [ ] **Type Safety**: No `any` types used unless absolutely necessary
 - [ ] **Import Organization**: Imports are organized (external → internal → relative)
 - [ ] **Console Logs**: No unnecessary console.log statements in production code
+- [ ] **Display Formatting**: Values are rendered through `utils/format` — no `Intl.*`, `toLocaleString`, `toFixed`, or dayjs pattern string at the call site, and no on-chain amount rounded before `parseUnits`. See [`formatting-standards.md`](./formatting-standards.md)
 
 ### Vue.js Component Standards
 

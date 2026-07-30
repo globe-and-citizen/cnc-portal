@@ -117,6 +117,7 @@ Then ask whether to do it now (scoped to this PR), defer (open a tracking issue)
 - **Atomic commits** — commit each logical change as it lands. Don't squash an entire PR into one commit at the end.
 - Issues, PRs, commit messages, and user-facing UI strings/toasts are **English**.
 - Vue components: `<script setup lang="ts">` Composition API. Pinia for global state, TanStack Query for server state.
+- **Display formatting**: never format by hand. Money, token amounts, dates, addresses go through the canonical module — `@/utils/format` in `app/`, `~/utils/format` in `dashboard/`. `Intl.*`, `toLocaleString`, `toFixed` and dayjs pattern strings are ESLint errors outside it. See `.github/copilot-instructions/formatting-standards.md`.
 - TypeScript strict mode across frontend and backend.
 
 ## Public-repo hygiene
