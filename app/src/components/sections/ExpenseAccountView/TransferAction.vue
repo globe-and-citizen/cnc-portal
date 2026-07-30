@@ -76,17 +76,17 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 import { getTokens, log, parseError } from '@/utils'
 import {
   encodeFunctionData,
+  erc20Abi,
   parseEther,
   recoverTypedDataAddress,
   zeroAddress,
   type Address,
   type Hex
 } from 'viem'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import { estimateGas, readContract } from '@wagmi/core'
 import { useChainId } from '@wagmi/vue'
 import { config } from '@/wagmi.config'
-import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
 import { expenseKeys } from '@/queries'
@@ -197,7 +197,7 @@ const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
   try {
     const owner = (await readContract(config, {
       address: currentContract,
-      abi: EXPENSE_ACCOUNT_EIP712_ABI,
+      abi: expenseAccountEip712Abi,
       functionName: 'owner'
     })) as Address
 
@@ -237,7 +237,7 @@ const submitExpenseAccountTransfer = (args: readonly unknown[]) => {
         queryClient.invalidateQueries({ queryKey: expenseKeys.list(teamStore.currentTeamId) })
       },
       onError: (err) => {
-        log.error(parseError(err, EXPENSE_ACCOUNT_EIP712_ABI))
+        log.error(parseError(err, expenseAccountEip712Abi))
         errorMessage.value = 'Failed to transfer'
       }
     }
@@ -255,14 +255,14 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
 
   try {
     const data = encodeFunctionData({
-      abi: EXPENSE_ACCOUNT_EIP712_ABI,
+      abi: expenseAccountEip712Abi,
       functionName: 'transfer',
       args
     })
     await estimateGas(config, { to: expenseAccountEip712Address.value, data })
   } catch (error) {
-    log.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
-    errorMessage.value = parseError(error, EXPENSE_ACCOUNT_EIP712_ABI)
+    log.error('Error in transferNativeToken:', parseError(error, expenseAccountEip712Abi))
+    errorMessage.value = parseError(error, expenseAccountEip712Abi)
     return
   }
 
@@ -279,7 +279,7 @@ const transferErc20Token = async (to: string, amount: string, budgetLimit: Budge
   try {
     allowance = (await readContract(config, {
       address: tokenAddress,
-      abi: ERC20_ABI,
+      abi: erc20Abi,
       functionName: 'allowance',
       args: [userDataStore.address as Address, expenseAccountEip712Address.value]
     })) as bigint

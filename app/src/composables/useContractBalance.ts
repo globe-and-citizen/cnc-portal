@@ -1,7 +1,6 @@
 import { computed, unref, type Ref } from 'vue'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
-import { formatEther, formatUnits, type Address } from 'viem'
-import { ERC20_ABI } from '@/artifacts/abi/erc20'
+import { erc20Abi, formatEther, formatUnits, type Address } from 'viem'
 import { useCurrencyStore } from '@/stores'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
@@ -90,7 +89,7 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
     } else {
       const erc20 = useReadContract({
         address: token.address as Address,
-        abi: ERC20_ABI,
+        abi: erc20Abi,
         functionName: 'balanceOf' as const,
         args: [unref(address) as Address] as const,
         query: { refetchInterval: 300_000 }

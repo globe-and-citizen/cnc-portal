@@ -1,16 +1,16 @@
 import { computed } from 'vue'
 import type { ExtractAbiFunctionNames } from 'abitype'
-import { VESTING_ABI } from '@/artifacts/abi/vesting'
+import { vestingAbi } from '@/artifacts/abi/generated'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useVestingAddress } from './reads'
 
-type VestingFunctionNames = ExtractAbiFunctionNames<typeof VESTING_ABI>
+type VestingFunctionNames = ExtractAbiFunctionNames<typeof vestingAbi>
 
 function useVestingContractWrite(functionName: VestingFunctionNames) {
   const vestingAddress = useVestingAddress()
   return useContractWritesV3({
     contractAddress: computed(() => vestingAddress.value ?? undefined),
-    abi: VESTING_ABI,
+    abi: vestingAbi,
     functionName
   })
 }

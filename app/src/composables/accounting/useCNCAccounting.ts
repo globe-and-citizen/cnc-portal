@@ -21,7 +21,7 @@
 import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
-import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
+import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
 import { FEE_COLLECTOR_ADDRESS } from '@/constant'
 import type { ContractType } from '@/types/teamContract'
@@ -126,7 +126,7 @@ export function useCNCAccounting(
   // Stored fixed-point at SHER's 6 decimals; format to whole units (1e6 → 1x). ──
   const routerMultiplier = useReadContract({
     address: computed(() => (routerAddress.value ? (routerAddress.value as Address) : undefined)),
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: 'getMultiplier',
     query: { enabled: computed(() => Boolean(routerAddress.value)) }
   })

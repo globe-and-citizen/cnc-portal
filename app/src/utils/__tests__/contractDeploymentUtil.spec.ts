@@ -5,8 +5,7 @@ import {
   getBeaconConfigs,
   getDeploymentConfigs
 } from '../contractDeploymentUtil'
-import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
+import { fixedReturnAbi, investorAbi } from '@/artifacts/abi/generated'
 import {
   FIXED_RETURN_BEACON_ADDRESS,
   VESTING_BEACON_ADDRESS,
@@ -82,7 +81,7 @@ describe('getDeploymentConfigs', () => {
     getDeploymentConfigs(CURRENT_USER, { name: 'Acme', symbol: 'ACM' })
 
     expect(encodeFunctionData).toHaveBeenCalledWith({
-      abi: FIXED_RETURN_ABI,
+      abi: fixedReturnAbi,
       functionName: 'initialize',
       args: [[USDT_ADDRESS, USDC_ADDRESS, USDC_E_ADDRESS], CURRENT_USER]
     })
@@ -92,7 +91,7 @@ describe('getDeploymentConfigs', () => {
     getDeploymentConfigs(CURRENT_USER, { name: 'Acme', symbol: 'ACM' })
 
     expect(encodeFunctionData).toHaveBeenCalledWith({
-      abi: INVESTOR_V2_ABI,
+      abi: investorAbi,
       functionName: 'initialize',
       args: ['Acme', 'ACM', zeroAddress]
     })

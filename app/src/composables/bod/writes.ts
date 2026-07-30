@@ -5,7 +5,7 @@ import { readContract } from '@wagmi/core'
 import { useTeamStore } from '@/stores'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { config } from '@/wagmi.config'
-import { BOD_ABI } from '@/artifacts/abi/bod'
+import { boardOfDirectorsAbi } from '@/artifacts/abi/generated'
 import { log } from '@/utils'
 import { useCreateActionMutation, useUpdateActionMutation } from '@/queries/action.queries'
 import { useCreateBulkNotificationsMutation } from '@/queries/notification.queries'
@@ -37,7 +37,7 @@ export function useBodAddAction() {
 
   const mutation = useContractWritesV3({
     contractAddress: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: BOD_FUNCTION_NAMES.ADD_ACTION,
     onSuccess: async () => {
       if (action.value) {
@@ -50,7 +50,7 @@ export function useBodAddAction() {
         const members = bodAddress.value
           ? ((await readContract(config, {
               address: bodAddress.value,
-              abi: BOD_ABI,
+              abi: boardOfDirectorsAbi,
               functionName: 'getBoardOfDirectors'
             })) as Address[])
           : []
@@ -89,7 +89,7 @@ export function useBodAddAction() {
       const actionId = (await readContract(config, {
         address: bodAddress.value,
         functionName: 'getActionCount',
-        abi: BOD_ABI
+        abi: boardOfDirectorsAbi
       })) as bigint
 
       action.value = {
@@ -132,14 +132,14 @@ export function useBodApproveAction() {
 
   const mutation = useContractWritesV3({
     contractAddress: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: BOD_FUNCTION_NAMES.APPROVE,
     onSuccess: async () => {
       if (bodAddress.value && currentDbId.value) {
         try {
           const isActionExecuted = await readContract(config, {
             address: bodAddress.value,
-            abi: BOD_ABI,
+            abi: boardOfDirectorsAbi,
             functionName: 'isActionExecuted',
             args: [currentActionId.value]
           })
