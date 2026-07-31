@@ -81,7 +81,7 @@ import UserComponent from '@/components/UserComponent.vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { BOD_ABI } from '@/artifacts/abi/bod'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
@@ -138,7 +138,7 @@ const membersApprovals = async () => {
         : []
     )
   } catch (error) {
-    log.error('Error fetching members approvals: ', parseError(error))
+    log.error('Error fetching members approvals: ', error)
     return []
   }
 }

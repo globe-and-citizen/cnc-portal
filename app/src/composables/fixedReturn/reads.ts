@@ -7,7 +7,7 @@ import type { ExtractAbiFunctionNames } from 'abitype'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { config } from '@/wagmi.config'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { decimalsForFixedReturnToken, log, parseError } from '@/utils'
+import { decimalsForFixedReturnToken, log } from '@/utils'
 import type {
   FixedReturnLenderPosition,
   FixedReturnOfferLender,
@@ -186,12 +186,12 @@ export function useFixedReturnAllOffers(address?: MaybeRefOrGetter<string | unde
           })) as LendingOfferStruct
           offers.push({ offerId, offer, decimals: decimalsForFixedReturnToken(offer.token) ?? 6 })
         } catch (error) {
-          log.error(`Failed to fetch FixedReturn offer #${offerId}:`, parseError(error))
+          log.error(`Failed to fetch FixedReturn offer #${offerId}:`, error)
         }
       }
       return offers
     } catch (error) {
-      log.error('Failed to fetch FixedReturn offerings:', parseError(error))
+      log.error('Failed to fetch FixedReturn offerings:', error)
       return []
     }
   }
@@ -254,7 +254,7 @@ export function useFixedReturnOfferLenders(
         })
       )
     } catch (error) {
-      log.error('Failed to fetch FixedReturn offer lenders:', parseError(error))
+      log.error('Failed to fetch FixedReturn offer lenders:', error)
       return []
     }
   }
@@ -320,7 +320,7 @@ export function useFixedReturnMyLenderPositions() {
           ])
           return [offerId, { allocation, deposited }] as const
         } catch (error) {
-          log.error(`Failed to fetch lender position for offer #${offerId}:`, parseError(error))
+          log.error(`Failed to fetch lender position for offer #${offerId}:`, error)
           return [offerId, { allocation: 0n, deposited: 0n }] as const
         }
       })

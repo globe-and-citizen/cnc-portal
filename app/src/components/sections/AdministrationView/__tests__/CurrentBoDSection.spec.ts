@@ -5,7 +5,7 @@ import { ref, nextTick } from 'vue'
 import CurrentBoDSection from '../CurrentBoDSection.vue'
 import { useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 
 vi.mock('@/utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/utils')>()
@@ -14,8 +14,7 @@ vi.mock('@/utils', async (importOriginal) => {
     log: {
       ...actual.log,
       error: vi.fn()
-    },
-    parseError: vi.fn((error: unknown) => error)
+    }
   }
 })
 
@@ -201,8 +200,7 @@ describe('CurrentBoDSection', () => {
     errorRef.value = new Error('boom')
     await nextTick()
 
-    expect(parseError).toHaveBeenCalledWith(errorRef.value)
-    expect(log.error).toHaveBeenCalled()
+    expect(log.error).toHaveBeenCalledWith(expect.any(String), errorRef.value)
   })
 
   it('does not log when election winners error is cleared', async () => {

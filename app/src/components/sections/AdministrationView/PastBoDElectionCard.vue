@@ -56,7 +56,7 @@
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useTeamStore } from '@/stores'
 import type { Election } from '@/types'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { useReadContract } from '@wagmi/vue'
 import { useRouter } from 'vue-router'
 import { computed, watch } from 'vue'
@@ -96,12 +96,12 @@ const formatDate = (date: Date) => {
 
 watch(errorGetVoteCount, (newError) => {
   if (newError) {
-    log.error('Error fetching vote count:', parseError(newError))
+    log.error('Error fetching vote count:', newError)
   }
 })
 watch(errorGetElectionResults, (newError) => {
   if (newError) {
-    log.error('Error fetching election results:', parseError(newError))
+    log.error('Error fetching election results:', newError)
   }
 })
 </script>

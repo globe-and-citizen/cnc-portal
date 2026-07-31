@@ -59,7 +59,7 @@ import { useReadContract } from '@wagmi/vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import type { Address } from 'viem'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { useBoDElections } from '@/composables/elections'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
@@ -138,7 +138,7 @@ const isElectionWinner = computed(
 
 watch(errorHasVoted, (error) => {
   if (error) {
-    log.error('Error checking vote status:', parseError(error))
+    log.error('Error checking vote status:', error)
   }
 })
 

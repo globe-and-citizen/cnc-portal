@@ -73,7 +73,7 @@ import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { classifyError, getTokens, log, parseError } from '@/utils'
+import { classifyError, getTokens, log } from '@/utils'
 import {
   encodeFunctionData,
   parseEther,
@@ -219,7 +219,7 @@ const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
       return false
     }
   } catch (error) {
-    log.error('Error verifying expense approval signature:', parseError(error))
+    log.error('Error verifying expense approval signature:', error)
     errorMessage.value = 'Failed to verify expense approval signature'
     return false
   }
@@ -286,7 +286,7 @@ const transferErc20Token = async (to: string, amount: string, budgetLimit: Budge
       args: [userDataStore.address as Address, expenseAccountEip712Address.value]
     })) as bigint
   } catch (error) {
-    log.error('Error reading allowance:', parseError(error))
+    log.error('Error reading allowance:', error)
     errorMessage.value = 'Failed to read allowance'
     return
   }
@@ -303,7 +303,7 @@ const transferErc20Token = async (to: string, amount: string, budgetLimit: Budge
           submitExpenseAccountTransfer(buildArgs())
         },
         onError: (err) => {
-          log.error(parseError(err))
+          log.error('Token approval failed:', err)
           errorMessage.value = 'Failed to approve token spending'
         }
       }

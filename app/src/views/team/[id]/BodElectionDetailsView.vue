@@ -20,7 +20,7 @@ import { computed, watch, provide } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useRouter } from 'vue-router'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 
 provide('showPublishResultBtn', true)
 const teamStore = useTeamStore()
@@ -89,7 +89,7 @@ const formattedElection = computed(() => {
 
 watch(errorGetElection, (error) => {
   if (error) {
-    log.error('Error fetching current election: ', parseError(error))
+    log.error('Error fetching current election: ', error)
   }
 })
 </script>
