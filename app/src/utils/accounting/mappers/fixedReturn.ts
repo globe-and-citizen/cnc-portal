@@ -108,6 +108,10 @@ export function mapFixedReturnEvents(
   /** The `Interest Payable` a lender is still owed on an offer — what the interest
    *  side of their repayment clears, the mirror of `owedToLender` for principal. */
   const payableToLender = new Map<string, bigint>()
+  /** What a whole round still owes, every lender together: principal plus the
+   *  recognised fixed return, less what has been paid or refunded. It is what the
+   *  journal reads to say how much of a loan is left after an installment. */
+  const owedByRound = new Map<string, bigint>()
   /** Offers already flagged as unvaluable — one memo each, not one per event. */
   const unvalued = new Set<string>()
 
@@ -132,6 +136,7 @@ export function mapFixedReturnEvents(
         if (amount <= 0n) break
         bump(heldByOffer, event.offerId, amount)
         bump(owedToLender, key, amount)
+        bump(owedByRound, event.offerId, amount)
         entries.push(
           makeEntry({
             id: event.id,
@@ -180,6 +185,7 @@ export function mapFixedReturnEvents(
         const owed = toBigInt(event.amount)
         if (owed <= 0n) break
         bump(payableToLender, key, owed)
+        bump(owedByRound, event.offerId, owed)
         entries.push(
           makeEntry({
             id: event.id,
@@ -203,6 +209,7 @@ export function mapFixedReturnEvents(
         if (amount <= 0n) break
         const outstanding = owedToLender.get(key) ?? 0n
         const principal = amount < outstanding ? amount : outstanding
+        const creditRemainingUsd = drawRound(owedByRound, event.offerId, amount, usd)
         if (principal > 0n) {
           owedToLender.set(key, outstanding - principal)
           entries.push(
@@ -217,11 +224,22 @@ export function mapFixedReturnEvents(
               rawAmount: principal.toString(),
               counterparty: event.lender,
               creditOfferId: event.offerId,
+              creditRemainingUsd,
               memo: `Principal repaid on Community Credit offer #${event.offerId}`
             })
           )
         }
-        entries.push(...interestLegs(event, amount - principal, key, payableToLender, token, usd))
+        entries.push(
+          ...interestLegs({
+            event,
+            interest: amount - principal,
+            key,
+            payableToLender,
+            token,
+            usd,
+            creditRemainingUsd
+          })
+        )
         break
       }
 
@@ -244,6 +262,7 @@ export function mapFixedReturnEvents(
             rawAmount: amount.toString(),
             counterparty: event.lender,
             creditOfferId: event.offerId,
+            creditRemainingUsd: drawRound(owedByRound, event.offerId, amount, usd),
             memo: `Principal refunded on unfunded Community Credit offer #${event.offerId}`
           })
         )
@@ -265,20 +284,40 @@ function legId(eventId: string, leg: string): string {
 }
 
 /**
+ * Draw what a payment gave back off the round's running debt, and value what is
+ * left. The draw is capped at the balance: a fixed return that was never
+ * recognised — the round's rate was unavailable, so nothing was ever booked as
+ * owed — is still paid out, and must not push the round into a negative debt.
+ */
+function drawRound(
+  owedByRound: Map<string, bigint>,
+  offerId: string,
+  paid: bigint,
+  usd: (raw: bigint) => number
+): number {
+  const owed = owedByRound.get(offerId) ?? 0n
+  const drawn = paid < owed ? paid : owed
+  owedByRound.set(offerId, owed - drawn)
+  return usd(owed - drawn)
+}
+
+/**
  * The interest side of one repayment installment: it clears what **this lender**
  * was recognised as owed when the round funded, and only a fee never recognised
  * there — the round's rate was unavailable, so nothing was booked — falls through
  * to `Interest Expense`. With no terms at all the payable is empty and every cent
  * takes the second leg, which is the cash-basis treatment this mapper started with.
  */
-function interestLegs(
-  event: CreditEvent,
-  interest: bigint,
-  key: string,
-  payableToLender: Map<string, bigint>,
-  token: TokenId,
+function interestLegs(input: {
+  event: CreditEvent
+  interest: bigint
+  key: string
+  payableToLender: Map<string, bigint>
+  token: TokenId
   usd: (raw: bigint) => number
-): LedgerEntry[] {
+  creditRemainingUsd: number
+}): LedgerEntry[] {
+  const { event, interest, key, payableToLender, token, usd, creditRemainingUsd } = input
   if (interest <= 0n) return []
   const payable = payableToLender.get(key) ?? 0n
   const fromPayable = interest < payable ? interest : payable
@@ -297,6 +336,7 @@ function interestLegs(
       rawAmount: raw.toString(),
       counterparty: event.lender,
       creditOfferId: event.offerId,
+      creditRemainingUsd,
       memo: `Fixed return paid on Community Credit offer #${event.offerId}`
     })
 
