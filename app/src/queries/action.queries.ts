@@ -52,7 +52,7 @@ export const useGetBodActionsQuery = createQueryHook<ActionResponse, GetBodActio
 /**
  * Request body for creating an action
  */
-export interface CreateActionBody extends Partial<Action> {}
+export type CreateActionBody = Partial<Action>
 
 /**
  * Combined parameters for useCreateActionMutation

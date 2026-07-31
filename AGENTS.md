@@ -37,7 +37,8 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 - `npm run dev` — Vite dev server
 - `npm run build` — `type-check` + `build-only` in parallel
 - `npm run type-check` — `vue-tsc --build tsconfig.app.json --force`
-- `npm run lint` — `eslint . --fix`
+- `npm run lint` — check the codebase with ESLint
+- `npm run lint:fix` — fix auto-fixable ESLint violations
 - `npm run format` / `format-check`
 - `npm run test:unit` — Vitest. Single file: `npx vitest run path/to/file.spec.ts`. Single test: append `-t "name"`.
 - `npm run test:e2e` (`:headed`, `:ui`, `:debug`) — Playwright. Web3 flows use an in-browser wagmi mock connector (`VITE_E2E=true`); see `app/test/README.md`.
@@ -116,6 +117,7 @@ Then ask whether to do it now (scoped to this PR), defer (open a tracking issue)
 - **Atomic commits** — commit each logical change as it lands. Don't squash an entire PR into one commit at the end.
 - Issues, PRs, commit messages, and user-facing UI strings/toasts are **English**.
 - Vue components: `<script setup lang="ts">` Composition API. Pinia for global state, TanStack Query for server state.
+- **Display formatting**: never format by hand. Money, token amounts, dates, addresses go through the canonical module — `@/utils/format` in `app/`, `~/utils/format` in `dashboard/`. `Intl.*`, `toLocaleString`, `toFixed` and dayjs pattern strings are ESLint errors outside it. See `.github/copilot-instructions/formatting-standards.md`.
 - TypeScript strict mode across frontend and backend.
 
 ## Public-repo hygiene

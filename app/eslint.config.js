@@ -159,7 +159,7 @@ const globalMockReMockSelectors = bannedGlobalMockPaths.map((path) => ({
   message: globalMockMessage(path)
 }))
 
-// Legacy offenders — each of these spec files still carries at least one
+// Legacy offenders — these 34 spec files still carry at least one
 // `vi.mock(...)` call against a globally-mocked module path. The rule is
 // disabled for them so CI does not break on day one; each removal is a
 // follow-up to issue #2014.
@@ -171,7 +171,6 @@ const globalMockLegacyFiles = [
   'src/components/sections/CashRemunerationView/__tests__/CRSigne.spec.ts',
   'src/components/sections/CashRemunerationView/__tests__/CRWithdrawClaim.spec.ts',
   'src/components/sections/DashboardView/__tests__/MemberSection.spec.ts',
-  'src/components/sections/ExpenseAccountView/__tests__/ExpenseMonthSpent.spec.ts',
   'src/components/sections/ExpenseAccountView/__tests__/TransferAction.spec.ts',
   'src/components/sections/SafeView/__tests__/RemoveOwnerButton.spec.ts',
   'src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts',
@@ -188,20 +187,15 @@ const globalMockLegacyFiles = [
   'src/components/sections/SherTokenView/forms/__tests__/TwinAmountInputs.spec.ts',
   'src/components/sections/VestingView/__tests__/VestingFlow.spec.ts',
   'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
-  'src/components/sections/VestingView/forms/__tests__/CreateVestingSubmission.spec.ts',
   'src/components/sections/WeeklyClaimView/__tests__/WeeklyClaimActionDropdown.spec.ts',
   'src/components/sections/WeeklyClaimView/__tests__/WeeklyClaimActionEnable.spec.ts',
   'src/composables/__tests__/useFileUrl.spec.ts',
   'src/composables/__tests__/useSiwe.spec.ts',
-  'src/composables/contracts/__tests__/useOfficerDeployment.spec.ts',
-  'src/composables/contracts/__tests__/useOfficerRedeploy.spec.ts',
   'src/composables/safe/__tests__/useSafeSdk.spec.ts',
   'src/composables/safe/__tests__/useSafeTransactionActions.spec.ts',
   'src/queries/__tests__/contract.queries.spec.ts',
-  'src/queries/__tests__/weeklyClaim.queries.spec.ts',
   'src/router/__tests__/index.spec.ts',
   'src/stores/__tests__/teamStore.spec.ts',
-  'src/utils/__tests__/web3Util.spec.ts',
   'src/views/team/[[]id[]]/__tests__/BankView.spec.ts',
   'src/views/team/[[]id[]]/__tests__/BodElectionView.spec.ts'
 ]
@@ -237,14 +231,121 @@ const v3WriteRestrictedImports = {
   ]
 }
 
+// Formatting standardization (issue #2383).
+//
+// `src/utils/format/` is the single canonical implementation of every display
+// formatter (money, token amounts, dates, addresses). Everything else asks it
+// for a *named* style instead of re-deriving one from the raw primitives.
+//
+// The primitives below are banned outside that module because each one grew a
+// different convention in every file that reached for it: 14 dayjs pattern
+// strings for the same date, three `Intl.NumberFormat` precision policies for
+// the same amount, two ellipsis characters for the same address. #2376 is what
+// that costs in production — a `maximumFractionDigits: 0` default rounded every
+// fractional Community Credit amount to a whole number, so `0.2 USDC` displayed
+// as `0`.
+
+const formattingMessage =
+  'Use the canonical formatters from `@/utils/format` (formatUsd, formatToken, formatNumber, formatPercent, formatDate, formatDateTime, formatAddress, …) instead of formatting by hand. See .github/copilot-instructions/formatting-standards.md and issue #2383.'
+
+const bannedIntlFormatter = {
+  selector: "NewExpression[callee.object.name='Intl']",
+  message: formattingMessage
+}
+
+const bannedToLocale = {
+  selector: 'CallExpression[callee.property.name=/^toLocale(String|DateString|TimeString)$/]',
+  message: formattingMessage
+}
+
+// `toFixed` is banned for display *and* as an input to `parseUnits` — rounding a
+// value before converting it on-chain silently changes the amount transacted.
+const bannedToFixed = {
+  selector: "CallExpression[callee.property.name='toFixed']",
+  message: `${formattingMessage} For on-chain amounts, pass the unrounded value straight to \`parseUnits\` — never \`parseUnits(x.toFixed(d), d)\`.`
+}
+
+// `.format('MMM D, YYYY')` — a literal pattern string is the dayjs shape. Calls
+// like `formatter.format(value)` pass a value, not a literal, and stay allowed.
+const bannedDatePattern = {
+  selector: "CallExpression[callee.property.name='format'][arguments.0.type='Literal']",
+  message: formattingMessage
+}
+
+const formattingSelectors = [bannedIntlFormatter, bannedToLocale, bannedToFixed, bannedDatePattern]
+
+// Migration debt for the formatting guard — every file that still formats by
+// hand. This list only ever shrinks: PR 2 and PR 3 of #2383 drain it.
+//
+// If you're about to add an entry, you're adding a new convention to a codebase
+// that just spent a PR removing them. Either the canonical module covers your
+// case, or it should — extend `src/utils/format/` rather than whitelisting a
+// file here. The ceiling below fails `npm run lint` at config load if the list
+// grows; lower it as entries leave.
+const formattingLegacyFiles = [
+  'src/components/RateDotList.vue',
+  'src/components/TransactionChildRow.vue',
+  'src/components/TransactionDetailModal.vue',
+  'src/components/forms/ApproveExpenseSummaryForm.vue',
+  'src/components/forms/TokenAmount.vue',
+  'src/components/forms/TransferForm.vue',
+  'src/components/sections/AdministrationView/ElectionStats.vue',
+  'src/components/sections/AdministrationView/PastBoDElectionCard.vue',
+  'src/components/sections/CashRemunerationView/DeleteClaimModal.vue',
+  'src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue',
+  'src/components/sections/ClaimHistoryView/ClaimHistoryWeekNavigator.vue',
+  'src/components/sections/ClaimHistoryView/WeeklyRecap.vue',
+  'src/components/sections/CommunityCreditView/CreditCallTermsStep.vue',
+  'src/components/sections/CommunityCreditView/CreditRepayPanel.vue',
+  'src/components/sections/DashboardView/CompanyOverview.vue',
+  'src/components/sections/ExpenseAccountView/ExpenseAccountTable.vue',
+  'src/components/sections/ExpenseAccountView/ExpenseMonthSpent.vue',
+  'src/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue',
+  'src/components/sections/ProposalsView/ProposalsCard.vue',
+  'src/components/sections/SherTokenView/InvestorsTransactions.vue',
+  'src/components/sections/SherTokenView/forms/MintRecapCard.vue',
+  'src/components/sections/VestingView/VestingFlow.vue',
+  'src/components/sections/VestingView/VestingSummary.vue',
+  'src/components/sections/WeeklyClaimView/WeeklyClaim.vue',
+  'src/composables/useClaimForm.ts',
+  'src/composables/vesting/useVestingDateRange.ts',
+  'src/stores/communityCredit.ts',
+  'src/utils/abiDecodeUtil.ts',
+  'src/utils/accounting/ledgerPresenter.ts',
+  'src/utils/accounting/mappers/expenseAccount.ts',
+  'src/utils/accounting/presenter.ts',
+  'src/utils/accounting/toUsd.ts',
+  'src/utils/accountingPdf.ts',
+  'src/utils/bankTransactionUtil.ts',
+  'src/utils/cashRemunerationTransactionUtil.ts',
+  'src/utils/communityCreditUtil.ts',
+  'src/utils/contractManagementUtil.ts',
+  'src/utils/currencyUtil.ts',
+  'src/utils/datePicker.ts',
+  'src/utils/dayUtils.ts',
+  'src/utils/expenseTransactionUtil.ts',
+  'src/utils/fixedReturnTransactionUtil.ts',
+  'src/utils/generalUtil.ts',
+  'src/utils/investorsTransactionUtil.ts',
+  'src/utils/safe.ts',
+  'src/utils/safeDepositRouterUtil.ts'
+]
+
+const FORMATTING_LEGACY_MAX = 46
+if (formattingLegacyFiles.length > FORMATTING_LEGACY_MAX) {
+  throw new Error(
+    `formattingLegacyFiles has ${formattingLegacyFiles.length} entries (ceiling ${FORMATTING_LEGACY_MAX}). ` +
+      'Format through `@/utils/format` instead of whitelisting a new file — see ' +
+      '.github/copilot-instructions/formatting-standards.md.'
+  )
+}
+
 export default [
   {
-    // TODO turn this rule into an error by march 2025
     name: 'app/files-to-lint',
     files: ['**/*.{ts,mts,tsx,vue}'],
     rules: {
       'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }]
-      // 'max-lines': ['warn', { max: 250, skipBlankLines: true, skipComments: true }]
     }
   },
   {
@@ -285,8 +386,7 @@ export default [
     rules: {
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
-      // TODO: remove @typescript-eslint/no-empty-object-type
-      '@typescript-eslint/no-empty-object-type': 'off'
+      '@typescript-eslint/no-empty-object-type': 'error'
     }
   },
   {
@@ -372,6 +472,25 @@ export default [
     ],
     rules: {
       'no-restricted-imports': ['error', v3WriteRestrictedImports]
+    }
+  },
+  {
+    name: 'app/formatting-standards',
+    files: ['src/**/*.{ts,tsx,vue}'],
+    ignores: [
+      // The canonical implementation — the one place the primitives belong.
+      'src/utils/format/**',
+      // Specs may assert against natively formatted expectations.
+      '**/__tests__/**',
+      '**/*.spec.{ts,tsx}',
+      ...formattingLegacyFiles
+    ],
+    rules: {
+      // Two rules, one selector list: the core rule only walks `<script>`,
+      // `vue/no-restricted-syntax` covers `<template>` expressions — and a
+      // `{{ x.toFixed(2) }}` in a template is exactly the drift we're stopping.
+      'no-restricted-syntax': ['error', ...formattingSelectors],
+      'vue/no-restricted-syntax': ['error', ...formattingSelectors]
     }
   },
   skipFormatting

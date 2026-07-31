@@ -42,6 +42,7 @@
     "ethers": "^6.14.0",
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.8.0",
     "hardhat": "^3.11.1",
     "mocha": "^11.7.1",
     "prettier": "^3.9.6",
