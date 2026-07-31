@@ -73,7 +73,7 @@ import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { getTokens, log, parseError } from '@/utils'
+import { classifyError, getTokens, log, parseError } from '@/utils'
 import {
   encodeFunctionData,
   parseEther,
@@ -237,8 +237,10 @@ const submitExpenseAccountTransfer = (args: readonly unknown[]) => {
         queryClient.invalidateQueries({ queryKey: expenseKeys.list(teamStore.currentTeamId) })
       },
       onError: (err) => {
-        log.error(parseError(err, EXPENSE_ACCOUNT_EIP712_ABI))
-        errorMessage.value = 'Failed to transfer'
+        log.error('Expense account transfer failed:', err)
+        const classified = classifyError(err, { contract: 'ExpenseAccount' })
+        if (classified.category === 'user_rejected') return
+        errorMessage.value = classified.userMessage
       }
     }
   )
@@ -261,8 +263,8 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
     })
     await estimateGas(config, { to: expenseAccountEip712Address.value, data })
   } catch (error) {
-    log.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
-    errorMessage.value = parseError(error, EXPENSE_ACCOUNT_EIP712_ABI)
+    log.error('Error in transferNativeToken:', error)
+    errorMessage.value = classifyError(error, { contract: 'ExpenseAccount' }).userMessage
     return
   }
 

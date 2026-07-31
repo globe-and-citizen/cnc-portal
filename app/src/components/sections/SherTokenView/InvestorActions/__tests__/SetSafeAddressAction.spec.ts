@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { nextTick } from 'vue'
+import { BaseError, UserRejectedRequestError } from 'viem'
 import SetSafeAddressAction from '../SetSafeAddressAction.vue'
 import {
-  mockParseError,
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
@@ -20,7 +20,6 @@ describe('SetSafeAddressAction.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockParseError.mockReturnValue('Parsed error message')
 
     mockSafeDepositRouterAddress.value = TEAM_SAFE_ADDRESS
     mockSafeDepositRouterReads.owner.data.value = '0xAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa'
@@ -98,19 +97,20 @@ describe('SetSafeAddressAction.vue', () => {
     await nextTick()
 
     expect(mockToast.add).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Failed to update Safe address', color: 'error' })
+      expect.objectContaining({ title: 'boom', color: 'error' })
     )
     wrapper.unmount()
   })
 
   it('reports a user-rejected safe address update', async () => {
-    mockParseError.mockReturnValue('User denied signature')
     const wrapper = createWrapper()
-    mockSafeDepositRouterWrites.setSafeAddress.error.value = new Error('boom')
+    mockSafeDepositRouterWrites.setSafeAddress.error.value = new BaseError('rejected', {
+      cause: new UserRejectedRequestError(new Error('User denied signature'))
+    })
     await nextTick()
 
     expect(mockToast.add).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Transaction cancelled by user', color: 'error' })
+      expect.objectContaining({ title: 'Transaction was cancelled.', color: 'error' })
     )
     wrapper.unmount()
   })

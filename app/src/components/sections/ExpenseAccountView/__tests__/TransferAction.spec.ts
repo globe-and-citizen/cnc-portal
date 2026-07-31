@@ -7,9 +7,11 @@ import { recoverTypedDataAddress } from 'viem'
 import TransferAction from '../TransferAction.vue'
 import { mockExpenseAccountWrites, mockERC20Writes } from '@/tests/mocks'
 
-vi.mock('@/utils', () => ({
+// `classifyError` is left un-mocked so these tests assert the message the user
+// actually sees, rather than a stand-in string.
+vi.mock('@/utils', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   log: { error: vi.fn() },
-  parseError: vi.fn(() => 'Parsed error:'),
   getTokens: vi.fn(() => [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }])
 }))
 
@@ -139,7 +141,7 @@ describe('TransferAction.vue', () => {
     const wrapper = createComponent()
     await submitTransfer(wrapper)
 
-    expect(wrapper.text()).toContain('Failed to transfer')
+    expect(wrapper.text()).toContain('transfer failed')
   })
 
   it('estimates gas then transfers a native deposit', async () => {
@@ -165,14 +167,14 @@ describe('TransferAction.vue', () => {
     expect(wrapper.find('[data-test="transfer-form"]').exists()).toBe(false)
   })
 
-  it('shows the parsed error when estimateGas rejects on native transfer', async () => {
+  it('shows the classified error when estimateGas rejects on native transfer', async () => {
     vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
     vi.mocked(estimateGas).mockRejectedValueOnce(new Error('insufficient funds'))
     const wrapper = createComponent(NATIVE_BUDGET)
     await submitTransfer(wrapper)
 
     expect(transfer.mutate).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Parsed error:')
+    expect(wrapper.text()).toContain('insufficient funds')
   })
 
   it('surfaces "Failed to read allowance" when readContract rejects', async () => {
