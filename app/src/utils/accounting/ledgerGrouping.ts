@@ -2,7 +2,7 @@
  * How the general-ledger journal folds several postings into one compound entry.
  *
  * Two source events produce more than one balanced pair — a wage paid across
- * several currencies, and a lender's credit position — and both read better as a
+ * several currencies, and a Community Credit round — and both read better as a
  * single entry than as repeated postings. Each has its own key and its own
  * rendering shape ({@link ./payrollGrouping}, {@link ./creditGrouping}); this
  * module is only the dispatcher the presenter calls, so neither has to know the
@@ -22,9 +22,16 @@ type Compound = (
   rowsOf: (e: LedgerEntry) => LedgerRow[]
 ) => LedgerRow[]
 
-const RENDERERS: Record<string, Compound> = {
-  payroll: compoundLedgerRows,
-  credit: compoundCreditRows
+/**
+ * `solo` renders a one-entry group through the compound renderer too. Payroll
+ * needs no such thing — a single-currency wage already reads correctly on its
+ * own — but a credit posting is rewritten to the team's point of view, so an
+ * installment that happens to have one leg must not fall back to the per-lender
+ * narration and leave the journal telling the same story two ways.
+ */
+const RENDERERS: Record<string, { render: Compound; solo?: boolean }> = {
+  payroll: { render: compoundLedgerRows },
+  credit: { render: compoundCreditRows, solo: true }
 }
 
 /** The group an entry belongs to, or `null` when it always stands alone. */
@@ -68,9 +75,8 @@ export function flattenLedgerRows(
   rowsOf: (entry: LedgerEntry) => LedgerRow[]
 ): LedgerRow[] {
   return groupLedgerEntries(entries).flatMap((group) => {
-    const render = RENDERERS[group.kind]
-    return group.entries.length > 1 && render
-      ? render(group.entries, rowsOf)
-      : group.entries.flatMap(rowsOf)
+    const renderer = RENDERERS[group.kind]
+    const compound = renderer && (group.entries.length > 1 || renderer.solo)
+    return compound ? renderer.render(group.entries, rowsOf) : group.entries.flatMap(rowsOf)
   })
 }

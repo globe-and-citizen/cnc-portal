@@ -120,6 +120,14 @@ export interface LedgerEntry {
    */
   creditOfferId?: string
   /**
+   * What the whole round still owes its lenders — principal plus recognised fixed
+   * return — **after** this posting. Carried on the repayment and refund legs
+   * (`UC-CREDIT-03` / `UC-CREDIT-04`), where it lets the journal say how much an
+   * installment gave back and how much is left, rather than only naming the
+   * amount that just moved. `0` once the round is settled.
+   */
+  creditRemainingUsd?: number
+  /**
    * Minutes worked behind a payroll entry (UC-CASH-02 / UC-CASH-03), carried from
    * the weekly claim so the human-readable label can read "submitted 16h". Absent
    * for non-payroll entries.
