@@ -35,7 +35,10 @@ import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSaf
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
-import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
+import {
+  useGetSafeIncomingTransfersQuery,
+  useGetSafeOutgoingTransactionsQuery
+} from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransferInitiators } from './useTransferInitiators'
 import {
@@ -159,8 +162,12 @@ export function useCNCAccounting(
   const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
   const expenses = useGetExpensesQuery({ queryParams: { teamId } })
 
-  // ── Safe service: incoming transfers (optional / flaky — never blocks) ──
+  // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
   const safeTransfers = useGetSafeIncomingTransfersQuery({
+    pathParams: { safeAddress },
+    queryParams: { limit: EVENT_LIMIT }
+  })
+  const safeOutgoing = useGetSafeOutgoingTransactionsQuery({
     pathParams: { safeAddress },
     queryParams: { limit: EVENT_LIMIT }
   })
@@ -205,6 +212,7 @@ export function useCNCAccounting(
     investorEvents: investor.result.value,
     safeDepositRouterEvents: router.result.value,
     safeTransfers: safeTransfers.data.value,
+    safeOutgoingTransactions: safeOutgoing.data.value,
     weeklyClaims: weeklyClaims.data.value?.data,
     expenses: expenses.data.value
   }))
@@ -273,7 +281,8 @@ export function useCNCAccounting(
         routerMultiplier,
         weeklyClaims,
         expenses,
-        safeTransfers
+        safeTransfers,
+        safeOutgoing
       ].map(run)
     )
   }
