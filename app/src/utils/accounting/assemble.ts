@@ -18,7 +18,7 @@ import { getAddress, isAddress, type Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
-import type { SafeIncomingTransfer } from '@/types/safe'
+import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
 import type { ExpenseEventsQuery } from '@/types/ponder/expense'
@@ -82,6 +82,8 @@ export interface CncAccountingInput {
   investorEvents?: InvestorEventsQuery | null
   safeDepositRouterEvents?: SafeDepositRouterEventsQuery | null
   safeTransfers?: readonly SafeIncomingTransfer[] | null
+  /** Executed multisig transactions — outflows from the Safe. */
+  safeOutgoingTransactions?: readonly SafeTransaction[] | null
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
   weeklyClaims?: readonly WeeklyClaim[]
   expenses?: readonly ExpenseResponse[]
@@ -182,6 +184,52 @@ export function toSafeTransferRows(
   return rows
 }
 
+/**
+ * Convert executed Safe multisig transactions into {@link SafeTransferRow}s so the
+ * mapper can book outflows (Cr Cash — Safe). Handles native transfers (`value > 0`)
+ * and ERC-20 `transfer(to, amount)` calls (decoded by the Transaction Service).
+ */
+export function toSafeOutgoingTransferRows(
+  transactions: readonly SafeTransaction[] | null | undefined,
+  safeAddress: string
+): SafeTransferRow[] {
+  const rows: SafeTransferRow[] = []
+  for (const tx of transactions ?? []) {
+    if (!tx.isExecuted || tx.isSuccessful === false || !tx.executionDate) continue
+    const timestamp = Math.floor(new Date(tx.executionDate).getTime() / 1000)
+    const txHash = tx.transactionHash ?? tx.safeTxHash
+
+    if (tx.dataDecoded?.method === 'transfer' && tx.dataDecoded.parameters?.length >= 2) {
+      const recipient = tx.dataDecoded.parameters[0]?.value
+      const amount = tx.dataDecoded.parameters[1]?.value
+      if (recipient && amount && amount !== '0') {
+        rows.push({
+          id: `out-${txHash}-erc20`,
+          from: safeAddress,
+          to: recipient,
+          token: tx.to,
+          amount,
+          timestamp,
+          txHash
+        })
+      }
+    }
+
+    if (tx.value && tx.value !== '0') {
+      rows.push({
+        id: `out-${txHash}-native`,
+        from: safeAddress,
+        to: tx.to,
+        token: null,
+        amount: tx.value,
+        timestamp,
+        txHash
+      })
+    }
+  }
+  return rows
+}
+
 /** Build the {@link LedgerSources} the mappers consume from the raw query results. */
 function toLedgerSources(input: CncAccountingInput): LedgerSources {
   const sources: LedgerSources = {}
@@ -250,13 +298,18 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
   }
 
   if (input.safeAddress) {
+    const incomingRows = toSafeTransferRows(
+      input.safeTransfers,
+      input.safeDepositRouterAddress,
+      input.safeDepositRouterEvents?.safeDeposits?.items
+    )
+    const outgoingRows = toSafeOutgoingTransferRows(
+      input.safeOutgoingTransactions,
+      input.safeAddress
+    )
     sources.safe = {
       safeAddress: input.safeAddress,
-      transfers: toSafeTransferRows(
-        input.safeTransfers,
-        input.safeDepositRouterAddress,
-        input.safeDepositRouterEvents?.safeDeposits?.items
-      )
+      transfers: [...incomingRows, ...outgoingRows]
     }
   }
 
