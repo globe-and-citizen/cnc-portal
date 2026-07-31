@@ -7,6 +7,7 @@ import { formatUnits, type Address } from 'viem'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
 import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { MapperContext } from '@/utils/accounting/mappers/context'
 
 /** Lowercase addresses are always valid (no checksum to fail) — safe for tests. */
@@ -59,6 +60,47 @@ export function makeCtx(overrides: Partial<MapperContext> = {}): MapperContext {
     pocketOf: (address) => (address ? (POCKETS[address.toLowerCase()] ?? null) : null),
     ...overrides
   }
+}
+
+// ── FixedReturn (Community Credit) event builders ────────────────────────────
+
+/** One USDC lending offer — the creation event carrying the token every other
+ *  Community Credit event is valued from. */
+export function creditOffer(offerId = '1', timestamp = 100) {
+  return {
+    id: `created-${offerId}`,
+    contractAddress: ADDR.credit,
+    offerId,
+    token: ADDR.usdcToken,
+    fundingTarget: '10000000',
+    timestamp
+  }
+}
+
+/** A per-lender credit event row — `FundsLent`, `LenderRepaid` or
+ *  `PrincipalRefunded`, which share their shape. */
+export function creditEvent(
+  id: string,
+  amount: string,
+  timestamp: number,
+  lender: string = ADDR.lender,
+  offerId = '1'
+) {
+  return { id, contractAddress: ADDR.credit, offerId, lender, amount, timestamp }
+}
+
+/** Σ of an account's debit legs, in USD — what a cost account was charged. */
+export function totalDebited(entries: readonly LedgerEntry[], account: string): number {
+  return entries.reduce((sum, e) => sum + (e.debit === account ? e.amountUsd : 0), 0)
+}
+
+/** A liability's net balance — what it still owes once every leg is booked. */
+export function balanceOf(entries: readonly LedgerEntry[], account: string): number {
+  return entries.reduce(
+    (sum, e) =>
+      sum + (e.credit === account ? e.amountUsd : 0) - (e.debit === account ? e.amountUsd : 0),
+    0
+  )
 }
 
 /**

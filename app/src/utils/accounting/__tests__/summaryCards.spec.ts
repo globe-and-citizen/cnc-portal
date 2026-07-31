@@ -15,6 +15,7 @@ describe('presentSummaryCards / presentBanner', () => {
       'Total assets',
       'Total equity',
       'Outstanding debt'
+      // No "Debt repaid" card: these books never paid a lender back.
     ])
     expect(cards.find((c) => c.label === 'Total revenue')?.value).toBe('$100.00')
     expect(cards.find((c) => c.label === 'Total expenses')?.value).toBe('$30.00')
@@ -36,6 +37,17 @@ describe('presentSummaryCards / presentBanner', () => {
       ]
     })
     expect(cards.find((c) => c.label === 'Outstanding debt')?.value).toBe('$1,100.00')
+  })
+
+  it('shows the debt-repaid card only once a lender has been paid back', () => {
+    const cards = presentSummaryCards(
+      { ...acc.summary, debtRepaid: 880 },
+      acc.incomeStatement,
+      acc.balanceSheet
+    )
+    expect(cards.find((c) => c.label === 'Debt repaid')?.value).toBe('$880.00')
+    // Eight metrics — two full rows of four.
+    expect(cards).toHaveLength(8)
   })
 
   it('reports the balanced banner with the live identity figures', () => {

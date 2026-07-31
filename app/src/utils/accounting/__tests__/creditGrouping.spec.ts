@@ -67,31 +67,74 @@ const interestPaid = (over: Partial<LedgerEntry> = {}): LedgerEntry => ({
   ...over
 })
 
+const refund = (over: Partial<LedgerEntry> = {}): LedgerEntry => ({
+  ...base,
+  id: 'pr1',
+  timestamp: 500,
+  useCase: 'UC-CREDIT-04',
+  debit: 'Loan Payable',
+  credit: 'Cash — Credit',
+  amountUsd: 800,
+  rawAmount: '800000000',
+  counterparty: GEORGES,
+  ...over
+})
+
 /** `[account, debit, credit]` per rendered row — the shape of the posting. */
 const shape = (rows: ReturnType<typeof ledgerRows>) => rows.map((r) => [r.account, r.dr, r.cr])
 
 describe('credit grouping', () => {
-  it('renders a lender funding a round on four lines, one posting', () => {
+  it('renders a funded round on four lines, one posting', () => {
     const rows = ledgerRows([deposit(), interestOwed()])
     expect(shape(rows)).toEqual([
       ['Cash — Credit', '$800.00', ''],
-      ['Loan Payable', '', '$800.00'],
       ['Interest Expense', '$80.00', ''],
+      ['Loan Payable', '', '$800.00'],
       ['Interest Payable', '', '$80.00']
     ])
-    // A single head: the deposit's date, badge and label lead the posting.
+    // A single head: one date, one badge and one label for the whole round.
     expect(rows.filter((r) => r.isFirst)).toHaveLength(1)
-    expect(rows[0]?.label).toBe('Credit funds lent')
+    expect(rows[0]?.label).toBe('Credit loan received')
     expect(rows[0]?.cat).toBe('Credit')
   })
 
-  it('names both the loan and the interest in the funding narration', () => {
+  it('narrates a funded round from the team side, naming the interest', () => {
     const [head] = ledgerRows([deposit(), interestOwed()])
     expect(head?.activity).toEqual({
-      kind: 'actor',
-      actor: GEORGES,
-      text: 'lent $800.00 to the community credit · $80.00 of interest owed'
+      kind: 'plain',
+      text: 'Borrowed $800.00 from 1 lender · $80.00 of interest owed'
     })
+  })
+
+  it('merges every lender of one round into a single loan', () => {
+    const rows = ledgerRows([
+      deposit(),
+      interestOwed(),
+      deposit({ id: 'fl2', counterparty: RAVI, amountUsd: 200, rawAmount: '200000000' })
+    ])
+    expect(shape(rows)).toEqual([
+      ['Cash — Credit', '$1,000.00', ''],
+      ['Interest Expense', '$80.00', ''],
+      ['Loan Payable', '', '$1,000.00'],
+      ['Interest Payable', '', '$80.00']
+    ])
+    expect(rows[0]?.activity).toMatchObject({
+      text: 'Borrowed $1,000.00 from 2 lenders · $80.00 of interest owed'
+    })
+  })
+
+  it('keeps two rounds apart', () => {
+    const rows = ledgerRows([
+      deposit(),
+      deposit({ id: 'fl3', creditOfferId: '2', amountUsd: 500, rawAmount: '500000000' })
+    ])
+    expect(rows.filter((r) => r.isFirst)).toHaveLength(2)
+    expect(shape(rows)).toEqual([
+      ['Cash — Credit', '$800.00', ''],
+      ['Loan Payable', '', '$800.00'],
+      ['Cash — Credit', '$500.00', ''],
+      ['Loan Payable', '', '$500.00']
+    ])
   })
 
   it('renders a repayment on three lines, the two debits on one cash credit', () => {
@@ -109,24 +152,74 @@ describe('credit grouping', () => {
   it('leads a repayment with the principal even when the feed lists interest first', () => {
     const rows = ledgerRows([interestPaid(), principalBack()])
     expect(rows[0]?.account).toBe('Loan Payable')
-    expect(rows[0]?.activity).toMatchObject({
-      text: 'was repaid $800.00 of loan principal · $80.00 of interest'
+  })
+
+  it('says what an installment gave back and what is left to pay', () => {
+    const rows = ledgerRows([
+      principalBack({ amountUsd: 300, rawAmount: '300000000', creditRemainingUsd: 580 })
+    ])
+    expect(rows[0]?.activity).toEqual({
+      kind: 'plain',
+      text: 'Repaid $300.00 to 1 lender · $580.00 still owed'
     })
   })
 
-  it('keeps two lenders apart, and two rounds of the same lender apart', () => {
+  it('calls the loan settled once the last installment leaves nothing owed', () => {
     const rows = ledgerRows([
-      deposit(),
-      interestOwed(),
-      deposit({ id: 'fl2', counterparty: RAVI, amountUsd: 200, rawAmount: '200000000' }),
-      deposit({ id: 'fl3', creditOfferId: '2', amountUsd: 500, rawAmount: '500000000' })
+      principalBack({ creditRemainingUsd: 80 }),
+      interestPaid({ creditRemainingUsd: 0 })
     ])
-    // Georges' round #1 folds to four lines; the other two stay two lines each.
-    expect(rows).toHaveLength(8)
-    expect(rows.filter((r) => r.isFirst)).toHaveLength(3)
+    expect(rows[0]?.activity).toMatchObject({
+      text: 'Repaid $880.00 to 1 lender · loan fully repaid'
+    })
   })
 
-  it('leaves a leg that names no round or no lender as its own posting', () => {
+  it('folds a payment run to several lenders into one posting', () => {
+    const rows = ledgerRows([
+      principalBack({ creditRemainingUsd: 200 }),
+      principalBack({
+        id: 'rp2-principal',
+        counterparty: RAVI,
+        amountUsd: 200,
+        rawAmount: '200000000',
+        creditRemainingUsd: 0
+      })
+    ])
+    expect(shape(rows)).toEqual([
+      ['Loan Payable', '$1,000.00', ''],
+      ['Cash — Bank', '', '$1,000.00']
+    ])
+    expect(rows[0]?.activity).toMatchObject({
+      text: 'Repaid $1,000.00 to 2 lenders · loan fully repaid'
+    })
+  })
+
+  it('keeps two installments of one round apart', () => {
+    const rows = ledgerRows([
+      principalBack({ amountUsd: 300, rawAmount: '300000000', creditRemainingUsd: 580 }),
+      principalBack({
+        id: 'rp2-principal',
+        timestamp: 1000,
+        amountUsd: 500,
+        rawAmount: '500000000',
+        creditRemainingUsd: 80
+      })
+    ])
+    expect(rows.filter((r) => r.isFirst)).toHaveLength(2)
+  })
+
+  it('narrates a refund of a round that never funded', () => {
+    const rows = ledgerRows([refund({ creditRemainingUsd: 0 })])
+    expect(shape(rows)).toEqual([
+      ['Loan Payable', '$800.00', ''],
+      ['Cash — Credit', '', '$800.00']
+    ])
+    expect(rows[0]?.activity).toMatchObject({
+      text: 'Refunded $800.00 to 1 lender · every deposit returned'
+    })
+  })
+
+  it('leaves a leg that names no round as its own posting', () => {
     const orphan = interestOwed({ creditOfferId: undefined })
     const rows = ledgerRows([deposit(), orphan])
     expect(rows.filter((r) => r.isFirst)).toHaveLength(2)
