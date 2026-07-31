@@ -11,8 +11,7 @@ import type {
   GetSafeIncomingTransfersParams,
   GetSafeOutgoingTransactionsParams,
   SafeIncomingTransfersResponse,
-  SafeIncomingTransfer,
-  SafeTransaction
+  SafeIncomingTransfer
 } from '@/types'
 
 const chainId = currentChainId
