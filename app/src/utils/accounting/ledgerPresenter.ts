@@ -232,8 +232,8 @@ export function filterLedgerEntries(
 }
 
 /** Flatten postings into rows, folding a wage event's per-currency legs and a
- *  lender's credit legs into one compound posting each ({@link ./ledgerGrouping});
- *  every other entry stays two rows. */
+ *  credit round's per-lender legs into one compound posting each
+ *  ({@link ./ledgerGrouping}); every other entry stays two rows. */
 export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
   return flattenLedgerRows(entries, rowsOf)
 }

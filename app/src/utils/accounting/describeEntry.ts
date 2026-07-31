@@ -198,18 +198,6 @@ export function withSherTail(cell: ActivityCell, sherShares: number): ActivityCe
   return { ...cell, text: `${cell.text} + ${sherShares} SHER` }
 }
 
-/**
- * Append "· $X of interest" to an actor narration when a compound credit posting
- * also carries the round's fixed return, so the grouped entry's single Activity
- * names the interest part — "lent $800.00 to the community credit · $80.00 of
- * interest owed". No-op when there is no interest or the cell names no actor.
- */
-export function withInterestTail(cell: ActivityCell, interestUsd: number): ActivityCell {
-  if (interestUsd <= 0 || cell.kind !== 'actor' || /interest/.test(cell.text)) return cell
-  const owed = cell.text.startsWith('lent') ? ' owed' : ''
-  return { ...cell, text: `${cell.text} · ${money(interestUsd)} of interest${owed}` }
-}
-
 /** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */
 function shortAddress(value: string): string {
   return /^0x[0-9a-fA-F]{40}$/.test(value) ? `${value.slice(0, 6)}…${value.slice(-4)}` : value
