@@ -1,11 +1,13 @@
 import dayjs from 'dayjs'
 import { classOf, type AccountClass, type AccountName } from './chartOfAccounts'
 import type { GeneralLedger } from './generalLedger'
-import { buildIncomeStatement, type IncomeStatement } from './incomeStatement'
+import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
-import type { AccountingSummary } from './buildLedger'
 import type { LedgerEntry } from './ledgerEntry'
 import { NETWORK, type TokenId } from '@/constant'
+
+// The summary metric cards live in their own module — see ./summaryCards.
+export { presentSummaryCards, type SummaryCard } from './summaryCards'
 
 /** The breakdown-line fields the display helpers read (subset of {@link CashCurrencyLine}). */
 type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount'>
@@ -53,18 +55,6 @@ export interface StatementLineView {
   value: string
   account?: AccountName
   accounts?: AccountName[]
-}
-
-export interface SummaryCard {
-  label: string
-  value: string
-  valueClass: string
-  sub: string
-  icon: string
-  chipClass: string
-  accent: boolean
-  accentClass?: string
-  trend?: string
 }
 
 export interface SummaryBanner {
@@ -160,74 +150,6 @@ export function filterByPeriod(
 }
 
 // ── Presenters ──────────────────────────────────────────────────────────────
-
-/** A secondary metric card (highlighted value, no accent border). */
-function metric(
-  label: string,
-  value: string,
-  sub: string,
-  icon: string,
-  chip: string
-): SummaryCard {
-  return { label, value, sub, icon, chipClass: chip, valueClass: 'text-highlighted', accent: false }
-}
-
-/** The summary metric cards from the live roll-up + statements. */
-export function presentSummaryCards(
-  summary: AccountingSummary,
-  income: IncomeStatement,
-  balance: BalanceSheet
-): SummaryCard[] {
-  const profitable = income.netIncome >= 0
-  return [
-    {
-      label: 'Net income',
-      value: money(income.netIncome),
-      valueClass: profitable ? 'text-primary' : 'text-error',
-      sub: 'Profit · revenue − expenses',
-      icon: 'i-heroicons-sparkles',
-      chipClass: profitable ? 'bg-primary/10 text-primary' : 'bg-error/10 text-error',
-      accent: true,
-      accentClass: profitable ? 'border-t-primary' : 'border-t-error',
-      ...(profitable ? { trend: 'Profit' } : {})
-    },
-    metric(
-      'Total revenue',
-      money(income.totalRevenue),
-      'Service + trading gain',
-      'i-heroicons-arrow-trending-up',
-      'bg-success/10 text-success'
-    ),
-    metric(
-      'Total expenses',
-      money(income.totalExpenses),
-      'Payroll · ops · trading · dividend',
-      'i-heroicons-arrow-trending-down',
-      'bg-warning/10 text-warning'
-    ),
-    metric(
-      'Total transaction fees',
-      money(summary.transactionFees),
-      'Bank protocol fee skimmed on transfers',
-      'i-heroicons-receipt-percent',
-      'bg-warning/10 text-warning'
-    ),
-    metric(
-      'Total assets',
-      money(balance.totalAssets),
-      'Cash + trading account',
-      'i-heroicons-wallet',
-      'bg-info/10 text-info'
-    ),
-    metric(
-      'Total equity',
-      money(balance.totalEquity),
-      'Investors + retained earnings',
-      'i-heroicons-user-group',
-      'bg-primary/10 text-primary'
-    )
-  ]
-}
 
 /** The "books are balanced" banner copy from the live statements. */
 export function presentBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBanner {

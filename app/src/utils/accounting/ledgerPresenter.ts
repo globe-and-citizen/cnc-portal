@@ -8,7 +8,7 @@ import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from 
 import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { mergeBankFees } from './mergeBankFees'
-import { flattenLedgerRows } from './payrollGrouping'
+import { flattenLedgerRows } from './ledgerGrouping'
 import { filterLedgerByCurrency } from './ledgerCurrency'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import {
@@ -231,8 +231,9 @@ export function filterLedgerEntries(
   return currencies ? filterLedgerByCurrency(scoped, currencies, filter === FEE_FILTER) : scoped
 }
 
-/** Flatten postings into rows, folding each wage event's per-currency legs into one
- *  compound posting ({@link compoundLedgerRows}); other entries stay two rows each. */
+/** Flatten postings into rows, folding a wage event's per-currency legs and a
+ *  credit round's per-lender legs into one compound posting each
+ *  ({@link ./ledgerGrouping}); every other entry stays two rows. */
 export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
   return flattenLedgerRows(entries, rowsOf)
 }

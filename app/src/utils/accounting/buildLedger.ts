@@ -52,6 +52,12 @@ export interface AccountingSummary {
   expense: number
   /** Cumulative Bank protocol transaction fees skimmed to the FeeCollector (a subset of `expense`). */
   transactionFees: number
+  /**
+   * Cumulative cash actually returned to the Community Credit lenders — principal
+   * and fixed return alike (`UC-CREDIT-03`). The counterpart of the outstanding
+   * debt the balance sheet still carries: what is owed shrinks as this grows.
+   */
+  debtRepaid: number
   /** Contributed equity (Owner Capital + Investor Equity), excluding retained earnings. */
   equity: number
   /** Number of monetary postings counted (memo-only Default-D entries excluded). */
@@ -119,6 +125,7 @@ function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
   let income = 0
   let expense = 0
   let transactionFees = 0
+  let debtRepaid = 0
   let equity = 0
   let entryCount = 0
 
@@ -144,6 +151,7 @@ function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
     // `expense` above; track it separately here for the dedicated summary metric.
     if (entry.debit === 'Transaction Fee Expense') transactionFees += amount
     if (entry.credit === 'Transaction Fee Expense') transactionFees -= amount
+    if (entry.useCase === 'UC-CREDIT-03') debtRepaid += amount
   }
 
   return {
@@ -151,6 +159,7 @@ function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
     income: round2(income),
     expense: round2(expense),
     transactionFees: round2(transactionFees),
+    debtRepaid: round2(debtRepaid),
     equity: round2(equity),
     entryCount
   }

@@ -30,6 +30,7 @@ import type {
 } from '@/types/ponder/investor'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
+import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
 import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
 import { buildGeneralLedger, type GeneralLedger } from '@/utils/accounting/generalLedger'
@@ -75,6 +76,9 @@ export interface CncAccountingInput {
   cashRemunerationEvents?: CashRemunerationEventsQuery | null
   expenseEvents?: ExpenseEventsQuery | null
   fixedReturnEvents?: FixedReturnEventsQuery | null
+  /** Rate + maturity per Community Credit offer, read from the contract — what
+   *  lets the interest be accrued over the term instead of expensed at payment. */
+  fixedReturnOfferTerms?: readonly CreditOfferTerms[] | null
   investorEvents?: InvestorEventsQuery | null
   safeDepositRouterEvents?: SafeDepositRouterEventsQuery | null
   safeTransfers?: readonly SafeIncomingTransfer[] | null
@@ -222,7 +226,8 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
       lendingOfferFundeds: items(f.fixedReturnLendingOfferFundeds),
       fundsLents: items(f.fixedReturnFundsLents),
       lenderRepaids: items(f.fixedReturnLenderRepaids),
-      principalRefundeds: items(f.fixedReturnPrincipalRefundeds)
+      principalRefundeds: items(f.fixedReturnPrincipalRefundeds),
+      ...(input.fixedReturnOfferTerms ? { offerTerms: input.fixedReturnOfferTerms } : {})
     }
   }
 

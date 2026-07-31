@@ -152,8 +152,14 @@ export function useFixedReturnIsTokenSupported(token: MaybeRef<Address>) {
  * offer is read individually by id — so this is shared by every view that needs the
  * full list (OfferingsList, LenderMarketplace) rather than duplicated per-component.
  */
-export function useFixedReturnAllOffers() {
-  const fixedReturnAddress = useFixedReturnAddress()
+export function useFixedReturnAllOffers(address?: MaybeRefOrGetter<string | undefined>) {
+  // Defaults to the active team's contract; callers that resolve the team
+  // themselves (the accounting data layer) pass their own address instead of
+  // going through the store.
+  const fromStore = useFixedReturnAddress()
+  const fixedReturnAddress = computed(
+    () => (toValue(address) || fromStore.value || undefined) as Address | undefined
+  )
 
   async function fetchAllOffers(): Promise<FixedReturnRawOffer[]> {
     const address = fixedReturnAddress.value

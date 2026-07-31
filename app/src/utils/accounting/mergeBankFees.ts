@@ -12,11 +12,23 @@
  */
 import type { LedgerEntry } from './ledgerEntry'
 
+/** The `${txHash}` head of an indexed-event id, whatever follows it. */
+const EVENT_ID_TX_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
+
 /**
  * The on-chain transaction hash behind a posting, parsed from its indexed-event
- * id (`${txHash}-${logIndex}`). Falls back to the whole id when it has no suffix.
+ * id (`${txHash}-${logIndex}`).
+ *
+ * A mapper that emits several entries for one event suffixes the id further
+ * (`${txHash}-${logIndex}-principal`), so the hash is matched from the **front**
+ * rather than by cutting at the last dash — otherwise every extra leg reads as a
+ * transaction of its own and stops pairing with its siblings. An id that carries
+ * no hash at all (an off-chain accrual, a synthetic memo) falls back to the id
+ * up to its last dash, which keeps such entries grouping among themselves.
  */
 export function txHashOf(entry: LedgerEntry): string {
+  const matched = EVENT_ID_TX_HASH.exec(entry.id)
+  if (matched) return matched[1]!
   const dash = entry.id.lastIndexOf('-')
   return dash > 0 ? entry.id.slice(0, dash) : entry.id
 }

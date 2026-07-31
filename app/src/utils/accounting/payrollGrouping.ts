@@ -31,7 +31,7 @@ const NO_ACTIVITY: LedgerRow['activity'] = { kind: 'plain', text: '' }
  * Entries that fold into one compound posting share this key; `null` for entries
  * that always stand alone (everything non-payroll).
  */
-function payrollGroupKey(entry: LedgerEntry): string | null {
+export function payrollGroupKey(entry: LedgerEntry): string | null {
   switch (entry.useCase) {
     case 'UC-CASH-02':
       return `accrual|${entry.counterparty ?? ''}|${entry.timestamp}`
@@ -41,39 +41,6 @@ function payrollGroupKey(entry: LedgerEntry): string | null {
     default:
       return null
   }
-}
-
-/**
- * Partition entries into render groups, preserving feed order: a payroll event's
- * legs cluster at the first leg's position; every other entry is its own singleton.
- */
-export function groupPayrollEntries(entries: readonly LedgerEntry[]): LedgerEntry[][] {
-  const order: string[] = []
-  const groups = new Map<string, LedgerEntry[]>()
-  entries.forEach((entry, i) => {
-    const key = payrollGroupKey(entry) ?? `solo:${i}`
-    const bucket = groups.get(key)
-    if (bucket) bucket.push(entry)
-    else {
-      groups.set(key, [entry])
-      order.push(key)
-    }
-  })
-  return order.map((key) => groups.get(key)!)
-}
-
-/**
- * Flatten a feed into ledger rows, folding each payroll group into one compound
- * posting and leaving every other entry as its plain two-row posting. The single
- * entry point the presenter's `ledgerRows` delegates to.
- */
-export function flattenLedgerRows(
-  entries: readonly LedgerEntry[],
-  rowsOf: (entry: LedgerEntry) => LedgerRow[]
-): LedgerRow[] {
-  return groupPayrollEntries(entries).flatMap((group) =>
-    group.length > 1 ? compoundLedgerRows(group, rowsOf) : rowsOf(group[0]!)
-  )
 }
 
 /** Sort rank so cash legs render before the SHER pair (the head reads as the wage). */
