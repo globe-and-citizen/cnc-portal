@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { nextTick } from 'vue'
+import { BaseError, UserRejectedRequestError } from 'viem'
 import ToggleSherCompensationAction from '../ToggleSherCompensationAction.vue'
 import {
-  mockParseError,
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
+  mockToast,
   mockUseConnection,
   renderWithProviders
 } from '@/tests/mocks'
@@ -15,7 +16,6 @@ describe('ToggleSherCompensationAction.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockParseError.mockReturnValue('Parsed error message')
 
     mockSafeDepositRouterAddress.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     mockSafeDepositRouterReads.owner.data.value = '0xAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa'
@@ -112,20 +112,25 @@ describe('ToggleSherCompensationAction.vue', () => {
     expect(button.attributes('disabled')).toBeDefined()
   })
 
-  it('watch enable error path executes', async () => {
+  it('watch enable error path surfaces the classified message', async () => {
     const wrapper = createWrapper()
     mockSafeDepositRouterWrites.enableDeposits.error.value = new Error('boom')
     await nextTick()
-    expect(wrapper.exists()).toBe(true)
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'boom', color: 'error' })
+    )
     wrapper.unmount()
   })
 
-  it('watch enable error handles user rejected message', async () => {
-    mockParseError.mockReturnValue('User denied signature')
+  it('watch enable error reports a wallet rejection as cancelled', async () => {
     const wrapper = createWrapper()
-    mockSafeDepositRouterWrites.enableDeposits.error.value = new Error('boom')
+    mockSafeDepositRouterWrites.enableDeposits.error.value = new BaseError('rejected', {
+      cause: new UserRejectedRequestError(new Error('User denied signature'))
+    })
     await nextTick()
-    expect(wrapper.exists()).toBe(true)
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Transaction was cancelled.', color: 'error' })
+    )
     wrapper.unmount()
   })
 

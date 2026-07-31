@@ -53,7 +53,7 @@ export interface ExecuteWriteVariables {
  * can inspect gas used, logs, block number, etc. for debugging.
  *
  * Extends viem's `BaseError` and exposes the decoded revert reason via
- * `cause` so that `parseError(error, abi)` can `walk()` and extract the
+ * `cause` so that `classifyError(error)` can `walk()` and extract the
  * ABI-level error name (e.g. "InsufficientTokenBalance").
  */
 export class ContractWriteRevertedError extends BaseError {

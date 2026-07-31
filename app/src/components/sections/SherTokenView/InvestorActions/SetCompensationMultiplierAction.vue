@@ -102,6 +102,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { useToast } from '@nuxt/ui/composables'
 import { useConnection } from '@wagmi/vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'

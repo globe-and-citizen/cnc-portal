@@ -1,65 +1,64 @@
 import { describe, it, expect } from 'vitest'
-import { parseError } from '@/utils/errorUtil'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import type { EstimateContractGasErrorType, Abi } from 'viem'
+import {
+  getArchivedTeamConflictMessage,
+  getAxiosErrorMessage,
+  parseErrorV2
+} from '@/utils/errorUtil'
+import type { AxiosError } from 'axios'
 
-const mockAbi: Abi = [
-  {
-    type: 'error',
-    name: 'InsufficientBalance',
-    inputs: [
-      { name: 'available', type: 'uint256' },
-      { name: 'required', type: 'uint256' }
-    ]
-  }
-]
+const axiosErrorWith = (status: number, message?: string) =>
+  ({
+    response: { status, data: message ? { message } : {} }
+  }) as AxiosError<{ message?: string }>
 
-describe('parseError', () => {
-  it('should handle standard Error objects', () => {
-    const error = new Error('Something went wrong')
-    expect(parseError(error)).toBe('Something went wrong')
+describe('getAxiosErrorMessage', () => {
+  it('prefers the message the backend put in the response body', () => {
+    expect(getAxiosErrorMessage(axiosErrorWith(400, 'Wage must be positive'), 'fallback')).toBe(
+      'Wage must be positive'
+    )
   })
 
-  it('should handle non-Error objects', () => {
-    expect(parseError('oops')).toBe('App Error: Looks like something went wrong.')
-    expect(parseError(42)).toBe('App Error: Looks like something went wrong.')
-    expect(parseError(null)).toBe('App Error: Looks like something went wrong.')
+  it('falls back to the Error message when the body carries none', () => {
+    const error = Object.assign(new Error('Network Error'), { response: { status: 500, data: {} } })
+    expect(getAxiosErrorMessage(error, 'fallback')).toBe('Network Error')
   })
 
-  it('should parse MetaMask errors', () => {
-    const metamaskError = new Error('MetaMask error')
-    //@ts-expect-error: mimic MetaMask error structure
-    metamaskError.info = {
-      error: { code: 4001, message: 'Error: User denied transaction' },
-      payload: {
-        method: 'eth_sendTransaction',
-        params: ['0x123'],
-        jsonrpc: '2.0'
-      }
-    }
+  it('uses the caller fallback for a non-Error value', () => {
+    expect(getAxiosErrorMessage({ response: { data: {} } }, 'Failed to save')).toBe(
+      'Failed to save'
+    )
+  })
+})
 
-    expect(parseError(metamaskError)).toBe('Metamask Error: User denied transaction')
+describe('getArchivedTeamConflictMessage', () => {
+  it('returns the backend message on a 409', () => {
+    expect(getArchivedTeamConflictMessage(axiosErrorWith(409, 'Team is archived'))).toBe(
+      'Team is archived'
+    )
   })
 
-  it('should parse contract revert messages', () => {
-    const contractError = new Error('Some error') as EstimateContractGasErrorType
-    contractError.shortMessage = 'Error: revert: Not enough funds'
-
-    expect(parseError(contractError, mockAbi)).toBe('Some error')
+  it('returns the default archived message when the 409 body carries none', () => {
+    expect(getArchivedTeamConflictMessage(axiosErrorWith(409))).toBe(
+      'Team is archived and cannot be modified'
+    )
   })
 
-  it('should parse custom contract errors', () => {
-    const contractError = new Error('Some error') as EstimateContractGasErrorType
-    contractError.shortMessage =
-      'Execution reverted with reason: custom error 0x20435cc1: 0000000000000000000000000000000000000000000000000000000005f5e100.'
+  it('returns undefined for any status other than 409', () => {
+    expect(getArchivedTeamConflictMessage(axiosErrorWith(403, 'Forbidden'))).toBeUndefined()
+    expect(getArchivedTeamConflictMessage(new Error('boom'))).toBeUndefined()
+  })
+})
 
-    expect(parseError(contractError, EXPENSE_ACCOUNT_EIP712_ABI)).toBe('Some error')
+describe('parseErrorV2', () => {
+  it('renders name plus the first sentence of the message', () => {
+    expect(parseErrorV2(new Error('Boom happened. Then more detail.'))).toBe('Error: Boom happened')
   })
 
-  it('should handle unknown contract errors', () => {
-    const contractError = new Error('Some error') as EstimateContractGasErrorType
-    contractError.shortMessage = 'Error: some unknown error format'
+  it('keeps the whole message when there is no sentence break', () => {
+    expect(parseErrorV2(new Error('Boom happened'))).toBe('Error: Boom happened')
+  })
 
-    expect(parseError(contractError, mockAbi)).toBe('Some error')
+  it('labels an empty message as unknown', () => {
+    expect(parseErrorV2(new Error(''))).toBe('Error: Unknown error')
   })
 })
