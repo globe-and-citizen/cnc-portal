@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  getArchivedTeamConflictMessage,
-  getAxiosErrorMessage,
-  parseErrorV2
-} from '@/utils/errorUtil'
+import { getArchivedTeamConflictMessage, getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 import type { AxiosError } from 'axios'
 
 const axiosErrorWith = (status: number, message?: string) =>
@@ -46,19 +42,5 @@ describe('getArchivedTeamConflictMessage', () => {
   it('returns undefined for any status other than 409', () => {
     expect(getArchivedTeamConflictMessage(axiosErrorWith(403, 'Forbidden'))).toBeUndefined()
     expect(getArchivedTeamConflictMessage(new Error('boom'))).toBeUndefined()
-  })
-})
-
-describe('parseErrorV2', () => {
-  it('renders name plus the first sentence of the message', () => {
-    expect(parseErrorV2(new Error('Boom happened. Then more detail.'))).toBe('Error: Boom happened')
-  })
-
-  it('keeps the whole message when there is no sentence break', () => {
-    expect(parseErrorV2(new Error('Boom happened'))).toBe('Error: Boom happened')
-  })
-
-  it('labels an empty message as unknown', () => {
-    expect(parseErrorV2(new Error(''))).toBe('Error: Unknown error')
   })
 })

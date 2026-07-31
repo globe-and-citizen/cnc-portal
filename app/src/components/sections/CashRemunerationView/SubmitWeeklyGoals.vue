@@ -76,7 +76,7 @@ import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useTeamStore } from '@/stores'
 import { useSubmitWeeklyGoalsMutation } from '@/queries/weeklyClaim.queries'
 import type { WeeklyClaim } from '@/types'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

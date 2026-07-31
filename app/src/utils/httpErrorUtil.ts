@@ -1,3 +1,10 @@
+/**
+ * Messages for errors coming back over HTTP.
+ *
+ * The EVM-side counterpart is `classifyError` — an AxiosError is not a viem
+ * `BaseError`, so it would fall through there as `unknown` and surface
+ * "Request failed with status code 409". Keep the two apart.
+ */
 import type { AxiosError } from 'axios'
 
 const ARCHIVED_TEAM_CONFLICT_MESSAGE = 'Team is archived and cannot be modified'
@@ -18,15 +25,4 @@ export function getArchivedTeamConflictMessage(
 export function getAxiosErrorMessage(error: unknown, fallback: string): string {
   const axiosError = error as AxiosError<{ message?: string }>
   return axiosError.response?.data?.message ?? (error instanceof Error ? error.message : fallback)
-}
-
-/**
- * @description Parses an Error object to extract the name and first sentence of the message
- * @param error
- * @returns Error Name + First sentence of Error Message
- */
-export const parseErrorV2 = (error: Error) => {
-  const message = error.message || 'Unknown error'
-  const firstSentence = message.includes('.') ? message.split('.')[0] : message
-  return `${error.name}: ${firstSentence}`
 }
