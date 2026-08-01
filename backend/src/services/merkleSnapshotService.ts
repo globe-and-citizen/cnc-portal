@@ -96,10 +96,13 @@ export function buildMerkleProofSet(shareholders: readonly StoredShareholder[]):
   };
 }
 
-export async function generateMerkleSnapshot(investorV1Address: Address): Promise<MerkleSnapshot> {
-  // Read shareholders from v1 Investor
+export async function generateMerkleSnapshot(
+  previousInvestorAddress: Address
+): Promise<MerkleSnapshot> {
+  // Read the cap table from the previous Officer's share token. Every legacy
+  // generation exposes the same `getShareholders` ABI, so one read covers all.
   const shareHoldersRaw = (await publicClient.readContract({
-    address: investorV1Address,
+    address: previousInvestorAddress,
     abi: INVESTOR_ABI,
     functionName: 'getShareholders',
   })) as readonly { address: Address; amount: bigint }[];
@@ -111,7 +114,7 @@ export async function generateMerkleSnapshot(investorV1Address: Address): Promis
 
   // Read total supply to validate snapshot
   const totalSupply = (await publicClient.readContract({
-    address: investorV1Address,
+    address: previousInvestorAddress,
     abi: INVESTOR_ABI,
     functionName: 'totalSupply',
   })) as bigint;
