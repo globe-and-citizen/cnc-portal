@@ -54,7 +54,8 @@ export function useRemoveTokenSupport() {
 }
 
 /**
- * `deposit` mints SHER, so reads on InvestorV1 must also be invalidated.
+ * `deposit` mints SHER, so reads on the Investor share token must also be
+ * invalidated.
  * The router's own reads are flushed by `useContractWritesV3`.
  */
 export function useDeposit() {

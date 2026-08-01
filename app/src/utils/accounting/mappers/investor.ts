@@ -1,5 +1,5 @@
 /**
- * InvestorV1 source mapper — share mints, dividends (spec §4, UC-INV-01).
+ * Investor source mapper — share mints, dividends (spec §4, UC-INV-01).
  *
  * A bare `Minted` event is ambiguous (catalogue §5.4): it can back a capital
  * raise (SafeDepositRouter `Deposited`), a wage-in-shares (CashRemuneration
@@ -17,7 +17,7 @@
  *   permanently inflated.)
  *
  * `DividendPaid` → UC-INV-01 (Dr Dividend Expense · Cr Cash — Bank). The summary
- * events `InvestorV1 DividendDistributed` and `Bank DividendDistributionTriggered`
+ * events `Investor DividendDistributed` and `Bank DividendDistributionTriggered`
  * are **not** mapped — they describe the same money as the per-shareholder
  * `DividendPaid` rows and would double-count the dividend.
  */
@@ -59,7 +59,7 @@ function buildBackedMints(input: InvestorMapperInput, ctx: MapperContext): Map<s
   return counts
 }
 
-/** Map InvestorV1 events: backed mints drop out, the rest become memos/dividends. */
+/** Map Investor events: backed mints drop out, the rest become memos/dividends. */
 export function mapInvestorEvents(input: InvestorMapperInput, ctx: MapperContext): LedgerEntry[] {
   const backed = buildBackedMints(input, ctx)
   const entries: LedgerEntry[] = []

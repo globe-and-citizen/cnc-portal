@@ -8,7 +8,7 @@
  *        Cr Investor Equity
  *
  * The router event already carries both the deposited `tokenAmount` and the
- * `sherAmount`, so the equity is fully booked here. The matching `InvestorV1
+ * `sherAmount`, so the equity is fully booked here. The matching `Investor
  * Minted` is **not** re-booked by the investor mapper — see {@link mapInvestorEvents}.
  */
 import { formatUnits } from 'viem'
