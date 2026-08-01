@@ -58,7 +58,11 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 - `npm run compile`, `npm run test` (single file: `npx hardhat test test/Foo.test.ts`), `npm run coverage`
 - `npm run deploy` (localhost) / `npm run deploy:polygon`
 - `npm run validate-upgrade[:polygon|:local]` — OpenZeppelin upgrade safety check
-- `npm run update-abi` — copies ABIs into the frontend
+- `npm run generate-abi` — regenerates `app/src/artifacts/abi/generated.ts` from the compiled
+  artifacts via `@wagmi/cli` (config in `contract/wagmi.config.ts`). Run it after changing a
+  contract and commit the output — `contract/artifacts` is gitignored, so `app/` needs the
+  checked-in copy to type-check. The ABIs are emitted `as const` so viem can resolve write
+  `args` tuples and read return types; never hand-write an `as Abi` wrapper.
 - `npm run lint` (solhint + eslint), `npm run format`
 
 ### Whole stack

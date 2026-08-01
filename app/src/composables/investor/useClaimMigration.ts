@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/vue-query'
 import { type Address, type Hex } from 'viem'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
+import { investorAbi } from '@/artifacts/abi/generated'
 import {
   executeContractWrite,
   type ExecuteContractWriteResult
@@ -19,7 +19,7 @@ export interface ClaimArgs {
 export async function claimMigration(args: ClaimArgs) {
   const { receipt } = await executeContractWrite({
     address: args.investorV2Address,
-    abi: INVESTOR_V2_ABI,
+    abi: investorAbi,
     functionName: 'claim',
     args: [args.amount, args.proof]
   })

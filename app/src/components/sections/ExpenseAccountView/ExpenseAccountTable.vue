@@ -96,7 +96,7 @@ import { log, parseError, tokenSymbol, resolveUser } from '@/utils'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { keccak256 } from 'viem'
 import { useReadContract } from '@wagmi/vue'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import {
   useExpenseAccountActivateApproval,
   useExpenseAccountDeactivateApproval
@@ -185,7 +185,7 @@ const columns = [
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address,
-  abi: EXPENSE_ACCOUNT_EIP712_ABI
+  abi: expenseAccountEip712Abi
 })
 
 const { mutate: executeDeactivateApproval } = useExpenseAccountDeactivateApproval()

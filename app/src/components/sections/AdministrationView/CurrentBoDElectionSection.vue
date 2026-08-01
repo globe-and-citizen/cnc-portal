@@ -70,7 +70,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
@@ -132,7 +132,7 @@ const createElection = async (electionData: OldProposal) => {
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
   } catch (error) {
-    createElectionError.value = parseError(error, ELECTIONS_ABI)
+    createElectionError.value = parseError(error, electionsAbi)
     log.error('creatingElection error:', error)
   }
 }

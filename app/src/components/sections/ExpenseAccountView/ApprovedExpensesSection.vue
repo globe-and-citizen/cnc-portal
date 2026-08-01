@@ -85,7 +85,7 @@ import { useUserDataStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import type { User, BudgetLimit } from '@/types'
 import { getAxiosErrorMessage, log, parseError } from '@/utils'
 import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
@@ -120,7 +120,7 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address,
-  abi: EXPENSE_ACCOUNT_EIP712_ABI,
+  abi: expenseAccountEip712Abi,
   query: {
     staleTime: Infinity
   }

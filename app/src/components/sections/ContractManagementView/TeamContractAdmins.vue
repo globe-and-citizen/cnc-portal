@@ -74,7 +74,7 @@ import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3
 import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
+import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
 import type { Address } from 'viem'
 const toast = useToast()
 
@@ -96,7 +96,7 @@ const {
   isPending: loadingAddAdmin
 } = useContractWritesV3({
   contractAddress,
-  abi: AD_CAMPAIGN_MANAGER_ABI,
+  abi: adCampaignManagerAbi,
   functionName: 'addAdmin'
 })
 
@@ -106,7 +106,7 @@ const {
   isPending: loadingRemoveAdmin
 } = useContractWritesV3({
   contractAddress,
-  abi: AD_CAMPAIGN_MANAGER_ABI,
+  abi: adCampaignManagerAbi,
   functionName: 'removeAdmin'
 })
 
@@ -117,7 +117,7 @@ const {
 } = useReadContract({
   functionName: 'getAdminList',
   address: contractAddress,
-  abi: AD_CAMPAIGN_MANAGER_ABI
+  abi: adCampaignManagerAbi
 })
 
 const adminsList = computed<Address[]>(() => {

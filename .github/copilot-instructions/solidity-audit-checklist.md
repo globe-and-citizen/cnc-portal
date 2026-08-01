@@ -56,20 +56,21 @@ Slither cannot catch everything. Confirm each of these by hand:
 
 ## Outputs
 
-- [ ] **ABIs regenerated.** Run `npm run update-abi` (or `npm run compile`, which
-      runs the ABI exporter) and commit the refreshed ABIs mirrored into `app/`,
-      `dashboard/`, and `ponder/`.
+- [ ] **ABIs regenerated.** Run `npm run generate-abi` and commit the refreshed
+      `app/src/artifacts/abi/generated.ts`, plus the ABIs mirrored into `dashboard/`
+      and `ponder/`. A new or renamed function only reaches the frontend's types
+      through this step.
 - [ ] **`CHANGELOG.md` updated** for any deployed change.
 
 ## Local commands
 
 ```bash
 cd contract
-npm run compile             # also regenerates ABIs
+npm run build               # compile (Hardhat 3)
 npm run lint                # solhint + eslint
 npm run test
 npm run validate-upgrade:polygon
-npm run update-abi          # refresh ABIs into app/ dashboard/ ponder/
+npm run generate-abi        # regenerate app/src/artifacts/abi/generated.ts
 ```
 
 Slither itself is **not** required locally — CI runs it. To run it locally anyway:

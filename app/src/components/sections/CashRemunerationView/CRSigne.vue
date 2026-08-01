@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
 import { useToast } from '@nuxt/ui/composables'
 import { USDC_ADDRESS } from '@/constant'
 import { useTeamStore, useUserDataStore } from '@/stores'
@@ -88,7 +88,7 @@ const isLoad = computed(() => isLoading.value)
 const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress.value,
-  abi: CASH_REMUNERATION_EIP712_ABI
+  abi: cashRemunerationEip712Abi
 })
 
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
@@ -144,7 +144,7 @@ const enableClaim = async (signature: `0x${string}`) => {
 
   const isDisabled = await readContract(config, {
     address: cashRemunerationAddress.value,
-    abi: CASH_REMUNERATION_EIP712_ABI,
+    abi: cashRemunerationEip712Abi,
     functionName: 'getDisabledWageClaim',
     args: [keccak256(signature)]
   })

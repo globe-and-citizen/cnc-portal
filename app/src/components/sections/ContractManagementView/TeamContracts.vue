@@ -120,8 +120,7 @@ import TeamContractsDetail from './TeamContractsDetail.vue'
 import { getContractData } from '@/composables/useContractFunctions'
 import { useCampaignEventsByCode } from '@/composables/campaign/reads'
 
-import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
-
+import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
 const toast = useToast()
 import { useTeamStore } from '@/stores/'
 import type { Address } from 'viem'
@@ -190,7 +189,7 @@ const openEventsModal = async (contractAddress: Address) => {
 
 // Open Contract Data Modal
 const openContractDataModal = async (contractAddress: Address) => {
-  contractDataDialog.value.datas = await getContractData(contractAddress, AD_CAMPAIGN_MANAGER_ABI)
+  contractDataDialog.value.datas = await getContractData(contractAddress, adCampaignManagerAbi)
   contractDataDialog.value.address = contractAddress
   contractDataDialog.value.show = true
   contractDataDialog.value.key++

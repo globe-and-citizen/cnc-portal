@@ -155,7 +155,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
 import type { WeeklyClaim } from '@/types'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
@@ -211,7 +211,7 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress,
-  abi: CASH_REMUNERATION_EIP712_ABI
+  abi: cashRemunerationEip712Abi
 })
 
 const isCashRemunerationOwner = computed(() => userStore.address === cashRemunerationOwner.value)

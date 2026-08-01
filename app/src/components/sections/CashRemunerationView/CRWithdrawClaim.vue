@@ -47,7 +47,7 @@ import { recoverTypedDataAddress, zeroAddress, type Address } from 'viem'
 import { readContract } from '@wagmi/core'
 import { useChainId } from '@wagmi/vue'
 import { config } from '@/wagmi.config'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
 import { USDC_ADDRESS } from '@/constant'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
@@ -146,7 +146,7 @@ const withdrawClaim = async () => {
       }),
       readContract(config, {
         address: currentContract,
-        abi: CASH_REMUNERATION_EIP712_ABI,
+        abi: cashRemunerationEip712Abi,
         functionName: 'owner'
       }) as Promise<Address>
     ])

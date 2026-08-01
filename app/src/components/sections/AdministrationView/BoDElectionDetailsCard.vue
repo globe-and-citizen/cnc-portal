@@ -57,7 +57,7 @@ import { computed, watch, type PropType, ref } from 'vue'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import type { Address } from 'viem'
 import { log, parseError } from '@/utils'
 import { useBoDElections } from '@/composables/elections'
@@ -93,21 +93,21 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 const { data: hasVoted, error: errorHasVoted } = useReadContract({
   functionName: 'hasVoted',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   args: [props.election.id, userDataStore.address as Address]
 })
 
 const { data: voterChoice } = useReadContract({
   functionName: 'getVoterChoice',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   args: [props.election.id, userDataStore.address as Address]
 })
 
 const { data: electionResults } = useReadContract({
   functionName: 'getElectionResults',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   args: [props.election.id]
 })
 

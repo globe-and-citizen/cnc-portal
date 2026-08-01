@@ -15,16 +15,17 @@ import {
   USDT_ADDRESS,
   USDC_E_ADDRESS
 } from '@/constant'
-import { BANK_ABI } from '@/artifacts/abi/bank'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
-import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
-import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
-import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { VESTING_ABI } from '@/artifacts/abi/vesting'
-
+import {
+  bankAbi,
+  cashRemunerationEip712Abi,
+  electionsAbi,
+  expenseAccountEip712Abi,
+  fixedReturnAbi,
+  investorAbi,
+  proposalsAbi,
+  safeDepositRouterAbi,
+  vestingAbi
+} from '@/artifacts/abi/generated'
 /**
  * Beacon configuration type
  */
@@ -153,7 +154,7 @@ export const getDeploymentConfigs = (
   deployments.push({
     contractType: 'Bank',
     initializerData: encodeFunctionData({
-      abi: BANK_ABI,
+      abi: bankAbi,
       functionName: 'initialize',
       args: [[USDT_ADDRESS, USDC_ADDRESS, USDC_E_ADDRESS], currentUserAddress]
     })
@@ -163,7 +164,7 @@ export const getDeploymentConfigs = (
   deployments.push({
     contractType: 'Investor',
     initializerData: encodeFunctionData({
-      abi: INVESTOR_V2_ABI,
+      abi: investorAbi,
       functionName: 'initialize',
       args: [investorInput.name, investorInput.symbol, zeroAddress]
     })
@@ -173,7 +174,7 @@ export const getDeploymentConfigs = (
   deployments.push({
     contractType: 'Proposals',
     initializerData: encodeFunctionData({
-      abi: PROPOSALS_ABI,
+      abi: proposalsAbi,
       functionName: 'initialize',
       args: [currentUserAddress]
     })
@@ -183,7 +184,7 @@ export const getDeploymentConfigs = (
   deployments.push({
     contractType: 'ExpenseAccountEIP712',
     initializerData: encodeFunctionData({
-      abi: EXPENSE_ACCOUNT_EIP712_ABI,
+      abi: expenseAccountEip712Abi,
       functionName: 'initialize',
       args: [currentUserAddress, [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS]]
     })
@@ -193,7 +194,7 @@ export const getDeploymentConfigs = (
   deployments.push({
     contractType: 'CashRemunerationEIP712',
     initializerData: encodeFunctionData({
-      abi: CASH_REMUNERATION_EIP712_ABI,
+      abi: cashRemunerationEip712Abi,
       functionName: 'initialize',
       args: [zeroAddress, [USDC_ADDRESS, USDC_E_ADDRESS]]
     })
@@ -203,7 +204,7 @@ export const getDeploymentConfigs = (
   deployments.push({
     contractType: 'Elections',
     initializerData: encodeFunctionData({
-      abi: ELECTIONS_ABI,
+      abi: electionsAbi,
       functionName: 'initialize',
       args: [currentUserAddress]
     })
@@ -213,7 +214,7 @@ export const getDeploymentConfigs = (
   deployments.push({
     contractType: 'SafeDepositRouter',
     initializerData: encodeFunctionData({
-      abi: SAFE_DEPOSIT_ROUTER_ABI,
+      abi: safeDepositRouterAbi,
       functionName: 'initialize',
       args: [
         currentUserAddress, // safeAddress
@@ -233,7 +234,7 @@ export const getDeploymentConfigs = (
     deployments.push({
       contractType: 'Vesting',
       initializerData: encodeFunctionData({
-        abi: VESTING_ABI,
+        abi: vestingAbi,
         functionName: 'initialize',
         args: []
       })
@@ -245,7 +246,7 @@ export const getDeploymentConfigs = (
     deployments.push({
       contractType: 'FixedReturn',
       initializerData: encodeFunctionData({
-        abi: FIXED_RETURN_ABI,
+        abi: fixedReturnAbi,
         functionName: 'initialize',
         args: [[USDT_ADDRESS, USDC_ADDRESS, USDC_E_ADDRESS], currentUserAddress]
       })

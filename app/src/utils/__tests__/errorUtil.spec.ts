@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseError } from '@/utils/errorUtil'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import type { EstimateContractGasErrorType, Abi } from 'viem'
 
 const mockAbi: Abi = [
@@ -53,7 +53,7 @@ describe('parseError', () => {
     contractError.shortMessage =
       'Execution reverted with reason: custom error 0x20435cc1: 0000000000000000000000000000000000000000000000000000000005f5e100.'
 
-    expect(parseError(contractError, EXPENSE_ACCOUNT_EIP712_ABI)).toBe('Some error')
+    expect(parseError(contractError, expenseAccountEip712Abi)).toBe('Some error')
   })
 
   it('should handle unknown contract errors', () => {

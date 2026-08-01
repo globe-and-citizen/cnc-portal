@@ -29,14 +29,13 @@
   </UCard>
 </template>
 <script setup lang="ts">
-import { BOD_ABI } from '@/artifacts/abi/bod'
+import { boardOfDirectorsAbi, electionsAbi } from '@/artifacts/abi/generated'
 import UserComponentCol from '@/components/UserComponent.vue'
 import CurrentBoDSection404 from './CurrentBoDSection404.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import { computed, watch } from 'vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { log, parseError } from '@/utils'
 
 const props = defineProps<{
@@ -49,7 +48,7 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 
 const { data: boardOfDirectors, isFetching } = useReadContract({
   address: bodAddress.value,
-  abi: BOD_ABI,
+  abi: boardOfDirectorsAbi,
   functionName: 'getBoardOfDirectors',
   args: [],
   scopeKey: 'boardOfDirectors'
@@ -62,7 +61,7 @@ const normalizedBoardOfDirectors = computed<string[]>(() =>
 )
 const { data: electionWinners, error: errorGetElectionWinners } = useReadContract({
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   functionName: 'getElectionWinners',
   args: [BigInt(props.electionId || 0)], // Assuming 0 is the current election ID, adjust as necessary
   //scopeKey: 'electionWinners'

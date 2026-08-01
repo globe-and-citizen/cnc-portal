@@ -80,7 +80,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { BOD_ABI } from '@/artifacts/abi/bod'
+import { boardOfDirectorsAbi } from '@/artifacts/abi/generated'
 import { log, parseError } from '@/utils'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
@@ -109,7 +109,7 @@ const hasApproved = computed(() => {
 
 const { data: members } = useReadContract({
   address: bodAddress,
-  abi: BOD_ABI,
+  abi: boardOfDirectorsAbi,
   functionName: 'getBoardOfDirectors'
 })
 
@@ -120,7 +120,7 @@ const membersApprovals = async () => {
         ? members.value.map(async (member: Address) => {
             const isApproved = await readContract(config, {
               address: bodAddress.value as Address,
-              abi: BOD_ABI,
+              abi: boardOfDirectorsAbi,
               functionName: 'isApproved',
               args: [actionId.value, member]
             })

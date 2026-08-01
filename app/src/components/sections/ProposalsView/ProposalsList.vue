@@ -19,7 +19,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useTeamStore } from '@/stores'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
+import { proposalsAbi } from '@/artifacts/abi/generated'
 import type { Address } from 'viem'
 
 const teamStore = useTeamStore()
@@ -55,7 +55,7 @@ const fetchProposals = async () => {
       try {
         const proposal = (await readContract(config, {
           address: proposalsAddress.value,
-          abi: PROPOSALS_ABI,
+          abi: proposalsAbi,
           functionName: 'getProposal',
           args: [BigInt(proposalId)]
         })) as Proposal

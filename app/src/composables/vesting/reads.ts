@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
-import { VESTING_ABI } from '@/artifacts/abi/vesting'
+import { vestingAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 
 export const VESTING_FUNCTION_NAMES = {
@@ -25,7 +25,7 @@ export function useVestingGetVestingsWithMembers() {
 
   return useReadContract({
     address: vestingAddress,
-    abi: VESTING_ABI,
+    abi: vestingAbi,
     functionName: VESTING_FUNCTION_NAMES.GET_VESTINGS_WITH_MEMBERS,
     query: {
       enabled: computed(() => !!vestingAddress.value)
@@ -38,7 +38,7 @@ export function useVestingGetAllArchivedVestingsFlat() {
 
   return useReadContract({
     address: vestingAddress,
-    abi: VESTING_ABI,
+    abi: vestingAbi,
     functionName: VESTING_FUNCTION_NAMES.GET_ALL_ARCHIVED_VESTINGS_FLAT,
     query: {
       enabled: computed(() => !!vestingAddress.value)

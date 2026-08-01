@@ -76,7 +76,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
-import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
+import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 import type { Hex } from 'viem'
 import { useCreateContractMutation } from '@/queries/contract.queries'
@@ -134,7 +134,7 @@ const {
   isDeploying: loading,
   contractAddress,
   error: deployError
-} = useDeployContract(AD_CAMPAIGN_MANAGER_ABI, campaignBytecode)
+} = useDeployContract(adCampaignManagerAbi, campaignBytecode)
 
 const { mutateAsync: createContract } = useCreateContractMutation()
 

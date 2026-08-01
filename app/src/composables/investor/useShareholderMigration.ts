@@ -15,9 +15,7 @@ import { useMutation } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import { zeroHash, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { investorAbi, officerAbi } from '@/artifacts/abi/generated'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import {
   useCreateInvestorMigrationMutation,
@@ -51,7 +49,7 @@ export type MigrateShareholdersResult =
 const findPreviousInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
   const contracts = (await readContract(config, {
     address: officerAddress,
-    abi: OFFICER_ABI,
+    abi: officerAbi,
     functionName: 'getTeam'
   })) as readonly { contractType: string; contractAddress: Address }[]
   // Support both V2→V2 redeploy (finds 'Investor') and V1→V2 migration (finds 'InvestorV1')
@@ -79,7 +77,7 @@ export async function checkMigrationEligibility(
 
   const shareholders = (await readContract(config, {
     address: oldInvestor,
-    abi: INVESTOR_ABI,
+    abi: investorAbi,
     functionName: 'getShareholders'
   })) as readonly Shareholder[]
 
@@ -89,7 +87,7 @@ export async function checkMigrationEligibility(
 
   const existingRoot = (await readContract(config, {
     address: args.newInvestorAddress,
-    abi: INVESTOR_V2_ABI,
+    abi: investorAbi,
     functionName: 'getMigrationRoot'
   })) as Hex
 
@@ -150,7 +148,7 @@ export function useMigrateShareholders(options: UseMigrateShareholdersOptions = 
 
         const existingRoot = (await readContract(config, {
           address: args.newInvestorAddress,
-          abi: INVESTOR_V2_ABI,
+          abi: investorAbi,
           functionName: 'getMigrationRoot'
         })) as Hex
 
@@ -198,7 +196,7 @@ export function useMigrateShareholders(options: UseMigrateShareholdersOptions = 
       // Write root to new Investor v2
       await executeContractWrite({
         address: args.newInvestorAddress,
-        abi: INVESTOR_V2_ABI,
+        abi: investorAbi,
         functionName: 'setMigrationRoot',
         args: [snapshot.root]
       })
