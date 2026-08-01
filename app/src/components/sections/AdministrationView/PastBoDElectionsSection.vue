@@ -27,7 +27,7 @@ import { electionsAbi } from '@/artifacts/abi/generated'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import type { Election } from '@/types'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { useQuery } from '@tanstack/vue-query'
 
 const teamStore = useTeamStore()
@@ -85,7 +85,7 @@ const fetchElections = async (): Promise<Election[]> => {
 
     return electionsList.sort((a, b) => b.id - a.id)
   } catch (err) {
-    log.error('Error fetching elections: ', parseError(err))
+    log.error('Error fetching elections: ', err)
     return []
   }
 }

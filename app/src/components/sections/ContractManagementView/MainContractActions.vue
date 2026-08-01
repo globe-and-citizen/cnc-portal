@@ -97,7 +97,7 @@ import type { TableRow } from '@/types/table'
 import { ref, computed, watch } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
-import { filterAndFormatActions, log, parseError } from '@/utils'
+import { classifyError, filterAndFormatActions, log } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'
 import { useGetBodActionsQuery } from '@/queries'
@@ -278,24 +278,33 @@ watch(isActionApproved, (isApproved) => {
   }
 })
 
+// No `contract` key is passed: this table drives every team contract, and the
+// reverts these three actions raise (Ownable*, EnforcedPause, ExpectedPause)
+// all live in the catalog's shared `common` map.
 watch(errorTransferOwnership, (error) => {
   if (error) {
-    transferOwnershipErrorMessage.value = parseError(error, props.row.abi)
     log.error('errorTransferOwnership.value: ', error)
+    const classified = classifyError(error)
+    if (classified.category === 'user_rejected') return
+    transferOwnershipErrorMessage.value = classified.userMessage
   }
 })
 
 watch(errorPauseContract, (error) => {
   if (error) {
-    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
     log.error('errorPauseContract.value: ', error)
+    const classified = classifyError(error)
+    if (classified.category === 'user_rejected') return
+    toast.add({ title: classified.userMessage, color: 'error' })
   }
 })
 
 watch(errorUnpauseContract, (error) => {
   if (error) {
-    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
     log.error('errorUnpauseContract.value: ', error)
+    const classified = classifyError(error)
+    if (classified.category === 'user_rejected') return
+    toast.add({ title: classified.userMessage, color: 'error' })
   }
 })
 </script>

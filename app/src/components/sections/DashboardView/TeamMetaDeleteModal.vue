@@ -50,7 +50,7 @@ import type { Team } from '@/types/team'
 import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
 import { useDeleteTeamMutation } from '@/queries/team.queries'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
 defineProps<{
   currentTeam: Team | null | undefined

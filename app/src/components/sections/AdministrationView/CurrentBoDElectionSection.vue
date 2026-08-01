@@ -70,10 +70,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
-import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import type { OldProposal } from '@/types'
-import { log, parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from './ElectionActions.vue'
@@ -132,8 +131,10 @@ const createElection = async (electionData: OldProposal) => {
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
   } catch (error) {
-    createElectionError.value = parseError(error, electionsAbi)
     log.error('creatingElection error:', error)
+    const classified = classifyError(error, { contract: 'Elections' })
+    if (classified.category === 'user_rejected') return
+    createElectionError.value = classified.userMessage
   }
 }
 

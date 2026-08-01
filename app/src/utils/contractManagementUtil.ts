@@ -2,7 +2,7 @@ import type { Action, ActionResponse, TeamContract, User } from '@/types'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 
 export type FormattedAction = (Action & {
@@ -76,6 +76,6 @@ export const getTeamContracts = async (contracts: TeamContract[]) => {
       })
     )
   } catch (error) {
-    log.error('Error fetching contract owners: ', parseError(error))
+    log.error('Error fetching contract owners: ', error)
   }
 }

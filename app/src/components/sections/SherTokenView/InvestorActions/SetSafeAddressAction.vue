@@ -29,7 +29,7 @@ import {
   useSafeDepositRouterOwner
 } from '@/composables/safeDepositRouter/reads'
 import { useTeamStore } from '@/stores'
-import { parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
@@ -74,14 +74,9 @@ watch(
   () => setSafeAddressWrite.error.value,
   (error) => {
     if (error) {
-      console.error('Error setting safe address:', error)
-      const errorMessage = parseError(error)
-
-      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
-      } else {
-        toast.add({ title: 'Failed to update Safe address', color: 'error' })
-      }
+      log.error('Error setting safe address:', error)
+      const classified = classifyError(error, { contract: 'SafeDepositRouter' })
+      toast.add({ title: classified.userMessage, color: 'error' })
     }
   }
 )

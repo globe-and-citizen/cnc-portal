@@ -13,9 +13,8 @@ import { useTeamStore } from '@/stores'
 // Test constants
 const MOCK_ELECTIONS_ADDRESS = '0x1234567890123456789012345678901234567890'
 
-const { mockLog, mockParseError } = vi.hoisted(() => ({
-  mockLog: { error: vi.fn() },
-  mockParseError: vi.fn((error: Error) => error.message)
+const { mockLog } = vi.hoisted(() => ({
+  mockLog: { error: vi.fn() }
 }))
 
 // Reactive refs created after imports
@@ -24,8 +23,7 @@ const mockUseReadContractError = ref<Error | null>(null)
 const mockUseReadContractIsLoading = ref(false)
 
 vi.mock('@/utils', () => ({
-  log: mockLog,
-  parseError: mockParseError
+  log: mockLog
 }))
 vi.mock('@/artifacts/abi/elections', () => ({
   ELECTIONS_ABI: [

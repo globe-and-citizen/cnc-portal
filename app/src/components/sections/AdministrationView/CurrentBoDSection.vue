@@ -36,7 +36,7 @@ import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import { computed, watch } from 'vue'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 
 const props = defineProps<{
   electionId?: bigint
@@ -78,7 +78,7 @@ const _boardOfDirectors = computed(() => {
 
 watch(errorGetElectionWinners, (error) => {
   if (error) {
-    log.error('Error fetching election winners: ', parseError(error))
+    log.error('Error fetching election winners: ', error)
   }
 })
 </script>

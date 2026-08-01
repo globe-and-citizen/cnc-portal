@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { BaseError, UserRejectedRequestError } from 'viem'
 import SetCompensationMultiplierAction from '../SetCompensationMultiplierAction.vue'
 import {
-  mockParseError,
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
+  mockToast,
   mockUseConnection,
   renderWithProviders
 } from '@/tests/mocks'
@@ -21,7 +22,6 @@ describe('SetCompensationMultiplierAction.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockParseError.mockReturnValue('Parsed error message')
 
     mockSafeDepositRouterAddress.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     mockSafeDepositRouterReads.multiplier.data.value = 2500000n
@@ -186,14 +186,17 @@ describe('SetCompensationMultiplierAction.vue', () => {
     wrapper.unmount()
   })
 
-  it('watcher handles write error with user rejected message', async () => {
-    mockParseError.mockReturnValue('User rejected transaction')
+  it('watcher reports a wallet rejection as cancelled', async () => {
     const wrapper = createWrapper()
 
-    mockSafeDepositRouterWrites.setMultiplier.error.value = new Error('boom')
+    mockSafeDepositRouterWrites.setMultiplier.error.value = new BaseError('rejected', {
+      cause: new UserRejectedRequestError(new Error('User rejected transaction'))
+    })
     await nextTick()
 
-    expect(wrapper.exists()).toBe(true)
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Transaction was cancelled.', color: 'error' })
+    )
     wrapper.unmount()
   })
 

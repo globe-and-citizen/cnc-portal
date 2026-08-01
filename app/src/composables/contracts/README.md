@@ -173,16 +173,15 @@ Apply this everywhere:
 - **`UAlert` for in-context errors, `toast` for transient ones.** Use the
   alert when the user is mid-flow inside a modal/form (they need to see the
   message and decide what to do). Use the toast for fire-and-forget actions.
-- **Log with `parseErrorV2(error)` or `parseError(error, abi)` before
-  surfacing.** `useContractWritesV3` already logs via `parseErrorV2` on the
-  built-in `onError`, so additional logging in the component is only needed
-  when you want extra context.
+- **Log the raw error, classify for display.** `log.error('context:', error)`
+  keeps the cause chain and stack; only the message shown to the user goes
+  through `classifyError`. `useContractWritesV3` already logs on the built-in
+  `onError`, so extra logging in the component is only for extra context.
 
 For non-V3 paths that still need an error message — e.g. a `simulateContract`
-preflight or a `readContract` allowance check — use `parseError(error, abi)`
-which returns a plain string (see
-`src/components/sections/ExpenseAccountView/TransferAction.vue` for the
-pattern).
+preflight or a `readContract` allowance check — `classifyError` works just the
+same (see `src/components/sections/ExpenseAccountView/TransferAction.vue` for
+the pattern).
 
 ## 3. Testing recipe
 
@@ -259,15 +258,15 @@ Error()` falls into `category: 'unknown'`.
 
 ## API surface
 
-| Export                        | Where                         | Purpose                                                                                                              |
-| ----------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `useContractWritesV3`         | `useContractWritesV3.ts`      | TanStack mutation wrapper — what every feature `writes.ts` calls.                                                    |
-| `executeContractWrite`        | `useContractWritesV3.ts`      | Framework-agnostic simulate → write → wait. Use from services that have no Vue scope.                                |
-| `ContractWriteRevertedError`  | `useContractWritesV3.ts`      | Thrown when a tx mined but reverted. Carries `hash`, `receipt`, `simulation`, and the ABI-decoded revert as `cause`. |
-| `classifyError`               | `@/utils/classifyError`       | Buckets any viem/wagmi error into a category + resolves a user-facing message.                                       |
-| `parseError` / `parseErrorV2` | `@/utils/errorUtil`           | String formatters for logging or non-V3 paths.                                                                       |
-| `createContractWriteV3Mock`   | `@/tests/mocks/erc20.mock`    | TanStack-mutation-shaped mock factory.                                                                               |
-| `resetContractMocks`          | `@/tests/mocks/contract.mock` | Resets every pre-baked V3 write/read mock between tests.                                                             |
+| Export                       | Where                         | Purpose                                                                                                              |
+| ---------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `useContractWritesV3`        | `useContractWritesV3.ts`      | TanStack mutation wrapper — what every feature `writes.ts` calls.                                                    |
+| `executeContractWrite`       | `useContractWritesV3.ts`      | Framework-agnostic simulate → write → wait. Use from services that have no Vue scope.                                |
+| `ContractWriteRevertedError` | `useContractWritesV3.ts`      | Thrown when a tx mined but reverted. Carries `hash`, `receipt`, `simulation`, and the ABI-decoded revert as `cause`. |
+| `classifyError`              | `@/utils/classifyError`       | Buckets any viem/wagmi error into a category + resolves a user-facing message.                                       |
+| `parseErrorV2`               | `@/utils/generalUtil`         | Condenses an Error to one line for logging. Never for user-facing text.                                              |
+| `createContractWriteV3Mock`  | `@/tests/mocks/erc20.mock`    | TanStack-mutation-shaped mock factory.                                                                               |
+| `resetContractMocks`         | `@/tests/mocks/contract.mock` | Resets every pre-baked V3 write/read mock between tests.                                                             |
 
 ## Contract versioning (V0 / V0.1 / V1 / V2)
 

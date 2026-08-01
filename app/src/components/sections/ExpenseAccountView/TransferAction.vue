@@ -73,7 +73,7 @@ import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { getTokens, log, parseError } from '@/utils'
+import { classifyError, getTokens, log } from '@/utils'
 import {
   encodeFunctionData,
   erc20Abi,
@@ -220,7 +220,7 @@ const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
       return false
     }
   } catch (error) {
-    log.error('Error verifying expense approval signature:', parseError(error))
+    log.error('Error verifying expense approval signature:', error)
     errorMessage.value = 'Failed to verify expense approval signature'
     return false
   }
@@ -240,8 +240,10 @@ const submitExpenseAccountTransfer = (args: ExpenseTransferArgs) => {
         queryClient.invalidateQueries({ queryKey: expenseKeys.list(teamStore.currentTeamId) })
       },
       onError: (err) => {
-        log.error(parseError(err, expenseAccountEip712Abi))
-        errorMessage.value = 'Failed to transfer'
+        log.error('Expense account transfer failed:', err)
+        const classified = classifyError(err, { contract: 'ExpenseAccount' })
+        if (classified.category === 'user_rejected') return
+        errorMessage.value = classified.userMessage
       }
     }
   )
@@ -264,8 +266,8 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
     })
     await estimateGas(config, { to: expenseAccountEip712Address.value, data })
   } catch (error) {
-    log.error('Error in transferNativeToken:', parseError(error, expenseAccountEip712Abi))
-    errorMessage.value = parseError(error, expenseAccountEip712Abi)
+    log.error('Error in transferNativeToken:', error)
+    errorMessage.value = classifyError(error, { contract: 'ExpenseAccount' }).userMessage
     return
   }
 
@@ -287,7 +289,7 @@ const transferErc20Token = async (to: string, amount: string, budgetLimit: Budge
       args: [userDataStore.address as Address, expenseAccountEip712Address.value]
     })) as bigint
   } catch (error) {
-    log.error('Error reading allowance:', parseError(error))
+    log.error('Error reading allowance:', error)
     errorMessage.value = 'Failed to read allowance'
     return
   }
@@ -304,7 +306,7 @@ const transferErc20Token = async (to: string, amount: string, budgetLimit: Budge
           submitExpenseAccountTransfer(buildArgs())
         },
         onError: (err) => {
-          log.error(parseError(err))
+          log.error('Token approval failed:', err)
           errorMessage.value = 'Failed to approve token spending'
         }
       }

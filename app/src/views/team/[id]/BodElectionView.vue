@@ -13,7 +13,7 @@ import { useReadContract } from '@wagmi/vue'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import { computed, watch } from 'vue'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 
 const teamStore = useTeamStore()
@@ -46,7 +46,7 @@ const currentElectionId = computed(() => {
 
 watch(errorGetNextElectionId, (error) => {
   if (error) {
-    log.error('Error fetching next election ID: ', parseError(error))
+    log.error('Error fetching next election ID: ', error)
   }
 })
 </script>

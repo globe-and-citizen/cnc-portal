@@ -24,7 +24,7 @@ import { useElectionsCastVote } from '@/composables/elections/writes'
 import { estimateGas, readContract } from '@wagmi/core'
 import type { User } from '@/types'
 import { config } from '@/wagmi.config'
-import { log, parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 
 const props = defineProps<{ electionId: bigint }>()
 const teamStore = useTeamStore()
@@ -118,8 +118,11 @@ const castVote = async (candidateAddress: Address) => {
       data
     })
   } catch (error) {
-    toast.add({ title: parseError(error, electionsAbi), color: 'error' })
-    log.error('Error estimating gas:', parseError(error, electionsAbi))
+    log.error('Error estimating gas:', error)
+    toast.add({
+      title: classifyError(error, { contract: 'Elections' }).userMessage,
+      color: 'error'
+    })
     return
   }
 
@@ -131,8 +134,10 @@ const castVote = async (candidateAddress: Address) => {
         await fetchVotes()
       },
       onError: (error) => {
-        toast.add({ title: parseError(error, electionsAbi), color: 'error' })
-        log.error('Error casting vote:', parseError(error, electionsAbi))
+        log.error('Error casting vote:', error)
+        const classified = classifyError(error, { contract: 'Elections' })
+        if (classified.category === 'user_rejected') return
+        toast.add({ title: classified.userMessage, color: 'error' })
       }
     }
   )
@@ -159,8 +164,11 @@ const fetchVotes = async () => {
       )
     }
   } catch (error) {
-    toast.add({ title: parseError(error, electionsAbi), color: 'error' })
-    log.error('Error fetching votes:', parseError(error, electionsAbi))
+    log.error('Error fetching votes:', error)
+    toast.add({
+      title: classifyError(error, { contract: 'Elections' }).userMessage,
+      color: 'error'
+    })
   }
 }
 

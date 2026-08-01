@@ -16,7 +16,7 @@ import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getConnections } from '@wagmi/core'
 import { encodeFunctionData, parseEventLogs, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
-import { log, parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import { teamKeys } from '@/queries/team.queries'
 import { contractKeys } from '@/queries/contract.queries'
@@ -178,10 +178,10 @@ export function useDeployOfficer(options: UseDeployOfficerOptions = {}) {
 /**
  * Decodes an error from a deploy attempt into a human-readable message.
  * Templates use this when rendering `deployMutation.error.value` to show the
- * parsed ABI revert reason rather than the raw blockchain error.
+ * catalog-resolved revert reason rather than the raw blockchain error.
  */
 export function formatDeployError(error: unknown): string {
-  return parseError(error, factoryBeaconAbi)
+  return classifyError(error, { contract: 'Officer' }).userMessage
 }
 
 /**
