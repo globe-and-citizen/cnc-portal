@@ -42,7 +42,7 @@ import { computed } from 'vue'
 import dayjs from 'dayjs'
 import type { Claim } from '@/types'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 

@@ -37,13 +37,14 @@
       >
     </div>
 
-    <!-- Metric cards -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <!-- Metric cards — 4 per row; the last row stretches to fill the width when
+         "Debt repaid" is absent (7 cards → 4/3), and is a plain 4/4 when it shows. -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
       <div
-        v-for="card in summaryCards"
+        v-for="(card, index) in summaryCards"
         :key="card.label"
         class="border-default bg-default rounded-2xl border p-4.5 shadow-sm"
-        :class="card.accent ? [card.accentClass, 'border-t-[3px]'] : ''"
+        :class="[card.accent ? [card.accentClass, 'border-t-[3px]'] : '', cardSpan(index)]"
         :data-test="`summary-${card.label}`"
       >
         <div class="flex items-center justify-between">
@@ -82,6 +83,18 @@ const summaryCards = computed(() =>
   presentSummaryCards(acc.summary.value, acc.incomeStatement.value, acc.balanceSheet.value)
 )
 const banner = computed(() => presentBanner(acc.balanceSheet.value, acc.generalLedger.value))
+
+const LAST_ROW_SPAN: Record<number, string> = {
+  1: 'lg:col-span-12',
+  2: 'lg:col-span-6',
+  3: 'lg:col-span-4',
+  4: 'lg:col-span-3'
+}
+
+function cardSpan(index: number): string {
+  if (index < 4) return 'lg:col-span-3'
+  return LAST_ROW_SPAN[summaryCards.value.length - 4] ?? 'lg:col-span-3'
+}
 
 // Whole-book ledger size — surfaced in the modal so the user knows a full ledger
 // export may be long.

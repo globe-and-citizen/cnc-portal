@@ -252,9 +252,14 @@ export function computeRealizedTrades(
     }
 
     if (isSell || isRedeem || activity.type === 'MERGE') {
-      const kind: RealizedTradeKind = isRedeem ? 'REDEEM' : activity.type === 'MERGE' ? 'MERGE' : 'SELL'
+      const kind: RealizedTradeKind = isRedeem
+        ? 'REDEEM'
+        : activity.type === 'MERGE'
+          ? 'MERGE'
+          : 'SELL'
       bookDisposal(activity, asset, lot, size, usd, kind)
     }
+
     // CONVERSION and reward rows carry no trading P&L — skipped here.
   }
 

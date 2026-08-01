@@ -114,7 +114,7 @@ investorMigrationRoutes.get(
  *         schema:
  *           type: object
  *           properties:
- *             investorV1Address:
+ *             previousInvestorAddress:
  *               type: string
  *               description: Address of the Investor v1 contract to snapshot
  *             blockNumber:

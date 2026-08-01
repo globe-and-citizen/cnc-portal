@@ -10,10 +10,10 @@ import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentB
 import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
 import PastBoDElectionsSection from '@/components/sections/AdministrationView/PastBoDElectionsSection.vue'
 import { useReadContract } from '@wagmi/vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import { computed, watch } from 'vue'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 
 const teamStore = useTeamStore()
@@ -27,7 +27,7 @@ const {
 } = useReadContract({
   functionName: 'getNextElectionId',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   query: {
     enabled: computed(() => !!electionsAddress.value)
   }
@@ -46,7 +46,7 @@ const currentElectionId = computed(() => {
 
 watch(errorGetNextElectionId, (error) => {
   if (error) {
-    log.error('Error fetching next election ID: ', parseError(error))
+    log.error('Error fetching next election ID: ', error)
   }
 })
 </script>

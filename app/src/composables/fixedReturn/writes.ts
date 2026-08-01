@@ -1,16 +1,17 @@
 import { computed } from 'vue'
-import type { ExtractAbiFunctionNames } from 'abitype'
-import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
+import type { ContractFunctionName } from 'viem'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useFixedReturnAddress } from './reads'
 
-type FixedReturnFunctionNames = ExtractAbiFunctionNames<typeof FIXED_RETURN_ABI>
+/** State-changing names only. */
+type FixedReturnWriteNames = ContractFunctionName<typeof fixedReturnAbi, 'nonpayable' | 'payable'>
 
-function useFixedReturnContractWrite(functionName: FixedReturnFunctionNames) {
+function useFixedReturnContractWrite<F extends FixedReturnWriteNames>(functionName: F) {
   const fixedReturnAddress = useFixedReturnAddress()
   return useContractWritesV3({
     contractAddress: computed(() => fixedReturnAddress.value ?? undefined),
-    abi: FIXED_RETURN_ABI,
+    abi: fixedReturnAbi,
     functionName
   })
 }
@@ -23,19 +24,11 @@ export function useFixedReturnLendFunds() {
   return useFixedReturnContractWrite('lendFunds')
 }
 
-// markAsRefundable / claimRefund no longer exist on-chain as of FixedReturn v1.3.0 —
-// refundLenders below replaces both with a single date-gated push refund. These two
-// composables are kept only because Issue Note's refund UI (OfferingIssuerActions.vue,
-// OfferingDetail.vue) still calls them; that flow reverts at runtime until it's
-// migrated too. Community Credit already uses useFixedReturnRefundLenders instead.
-export function useFixedReturnMarkAsRefundable() {
-  return useFixedReturnContractWrite('markAsRefundable')
-}
-
-export function useFixedReturnClaimRefund() {
-  return useFixedReturnContractWrite('claimRefund')
-}
-
+// markAsRefundable / claimRefund were removed from FixedReturn in v1.3.0 —
+// useFixedReturnRefundLenders below replaces both with a single date-gated push
+// refund. The wrappers for them are gone: the typed ABI rejects the names, and the
+// Issue Note refund UI the previous comment pointed at (OfferingIssuerActions.vue,
+// OfferingDetail.vue) no longer exists in the repo.
 export function useFixedReturnRefundLenders() {
   return useFixedReturnContractWrite('refundLenders')
 }

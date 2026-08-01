@@ -82,6 +82,9 @@
       :account="drilldownAccount"
       :total="drilldownTotal"
       :entries="drilldownEntries"
+      :balance-account="drilldownBalanceAccount"
+      :opening="drilldownOpening"
+      :closing="drilldownClosing"
       @export="onDrilldownExport"
     />
   </div>
@@ -119,6 +122,9 @@ const {
   account: drilldownAccount,
   total: drilldownTotal,
   columns: drilldownColumns,
+  balanceAccount: drilldownBalanceAccount,
+  opening: drilldownOpening,
+  closing: drilldownClosing,
   drilldownEntries,
   openFor,
   onExport: onDrilldownExport

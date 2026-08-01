@@ -23,6 +23,7 @@ describe('chart of accounts', () => {
       'Trading account': 'ASSET',
       'Wage Payable': 'LIABILITY',
       'Loan Payable': 'LIABILITY',
+      'Interest Payable': 'LIABILITY',
       'Shares to be issued': 'LIABILITY',
       'Owner Capital': 'EQUITY',
       'Investor Equity': 'EQUITY',
@@ -60,6 +61,7 @@ describe('chart of accounts', () => {
   it('books the Community Credit accounts (FixedReturn feed)', () => {
     expect(classOf('Cash — Credit')).toBe('ASSET')
     expect(classOf('Loan Payable')).toBe('LIABILITY')
+    expect(classOf('Interest Payable')).toBe('LIABILITY')
     expect(classOf('Interest Expense')).toBe('EXPENSE')
   })
 

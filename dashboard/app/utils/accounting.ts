@@ -1,3 +1,4 @@
+import { formatUsd as canonicalFormatUsd } from '~/utils/format'
 import type { PolygonTokenTransfer } from '~/api/polygonscan'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import type { RealizedTrade } from '~/utils/incomeStatement'
@@ -514,20 +515,23 @@ export const CATEGORY_META: Record<LedgerCategory, { label: string, color: Ledge
   OTHER: { label: 'Other', color: 'neutral' }
 }
 
-/** Formats a USD amount, e.g. 1234.5 → "$1,234.50". */
+/**
+ * Formats a USD amount, e.g. 1234.5 → "$1,234.50".
+ *
+ * @deprecated Import `formatUsd` from `~/utils/format` instead — this wrapper
+ * exists so the auto-imported name keeps working while call sites migrate.
+ */
 export function formatUsd(value: number | undefined): string {
-  if (value == null || Number.isNaN(value)) {
-    return '—'
-  }
-  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return canonicalFormatUsd(value)
 }
 
-/** Formats a USD amount with full USDC precision (6 decimals). */
+/**
+ * Formats a USD amount with full USDC precision (6 decimals).
+ *
+ * @deprecated Call `formatUsd(value, { decimals: 6 })` from `~/utils/format`.
+ */
 export function formatUsd6(value: number | undefined): string {
-  if (value == null || Number.isNaN(value)) {
-    return '—'
-  }
-  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 6, maximumFractionDigits: 6 })}`
+  return canonicalFormatUsd(value, { decimals: 6 })
 }
 
 /** Formats a signed USD amount, e.g. -12 → "−$12.00". */

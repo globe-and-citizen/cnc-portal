@@ -92,7 +92,7 @@ export const useGetTeamQuery = createQueryHook<Team, GetTeamParams>({
 /**
  * Request body for creating a team
  */
-export interface CreateTeamBody extends Partial<Team> {}
+export type CreateTeamBody = Partial<Team>
 
 /**
  * Combined parameters for useCreateTeamMutation
@@ -122,7 +122,7 @@ export const useCreateTeamMutation = createMutationHook<Team, CreateTeamParams>(
 /**
  * Request body for updating a team
  */
-export interface UpdateTeamBody extends Partial<Team> {}
+export type UpdateTeamBody = Partial<Team>
 
 /**
  * Combined parameters for useUpdateTeamMutation

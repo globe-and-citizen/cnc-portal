@@ -26,7 +26,7 @@ export const healthKeys = {
  * Empty params for useGetBackendHealthQuery (no parameters needed)
  */
 
-export interface GetBackendHealthParams {}
+export type GetBackendHealthParams = Record<string, never>
 
 /**
  * Query for backend health check using Axios

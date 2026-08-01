@@ -65,7 +65,7 @@ import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { parseUnits } from 'viem/utils'
 import type { Address } from 'viem'
 
-import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
+import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 const toast = useToast()
 const props = defineProps<{
@@ -95,7 +95,7 @@ const {
   isPending: loadingSetCostPerClick
 } = useContractWritesV3({
   contractAddress,
-  abi: AD_CAMPAIGN_MANAGER_ABI,
+  abi: adCampaignManagerAbi,
   functionName: 'setCostPerClick'
 })
 
@@ -105,7 +105,7 @@ const {
   isPending: loadingSetCostPerImpression
 } = useContractWritesV3({
   contractAddress,
-  abi: AD_CAMPAIGN_MANAGER_ABI,
+  abi: adCampaignManagerAbi,
   functionName: 'setCostPerImpression'
 })
 

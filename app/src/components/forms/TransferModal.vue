@@ -52,7 +52,7 @@ import { ref, watch, computed, type Ref } from 'vue'
 import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
 import { useChainId, useReadContract } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { BANK_ABI } from '@/artifacts/abi/bank'
+import { bankAbi } from '@/artifacts/abi/generated'
 import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
@@ -80,7 +80,7 @@ const userStore = useUserDataStore()
 // get the current owner of the bank
 const { data: bankOwner } = useReadContract({
   address: props.bankAddress,
-  abi: BANK_ABI,
+  abi: bankAbi,
   functionName: 'owner'
 })
 
@@ -187,12 +187,12 @@ const handleTransfer = async (data: {
     // BOD Action path
     const encodedData = isNativeToken
       ? encodeFunctionData({
-          abi: BANK_ABI,
+          abi: bankAbi,
           functionName: 'transfer',
           args: [data.address.address, transferAmount]
         })
       : encodeFunctionData({
-          abi: BANK_ABI,
+          abi: bankAbi,
           functionName: 'transferToken',
           args: [tokenAddress as Address, data.address.address, transferAmount]
         })

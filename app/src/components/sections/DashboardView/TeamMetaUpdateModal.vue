@@ -79,7 +79,7 @@ import { useTeamStore } from '@/stores'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
 const showUpdateModal = ref(false)
 const updateTeamInput = ref({ name: '', description: '' })

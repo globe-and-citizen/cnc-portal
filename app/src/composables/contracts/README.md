@@ -30,6 +30,14 @@ flows, not regular function calls, and are out of scope for this guide.
 settles before `mutateAsync` resolves. `cfg.onError` runs after the built-in
 error log.
 
+Step 4 is narrower than it looks: it matches only keys shaped
+`['readContract', { address: <the contract you wrote to> }]`. Native balances
+(`['balance', …]`), ERC-20 balances (keyed on the **token** address), the
+`*-events-logs` transaction feeds and every hand-rolled aggregate key are
+outside its reach and need an explicit `cfg.onSuccess`.
+[`INVALIDATION_MAP.md`](./INVALIDATION_MAP.md) maps each write to the reads it
+dirties and to what covers them today — read it before adding a write.
+
 ## 1. Shape of a write composable
 
 Every feature wraps `useContractWritesV3` behind a thin, ABI-typed factory.
@@ -42,19 +50,19 @@ adding a new contract:
 
 ```ts
 import { computed } from 'vue'
-import { BANK_ABI } from '@/artifacts/abi/bank'
+import { bankAbi } from '@/artifacts/abi/generated'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
-import type { ExtractAbiFunctionNames } from 'abitype'
+import { type WriteFunctionName } from '@/composables/contracts/useContractWritesV3'
 
-type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
+type BankFunctionNames = WriteFunctionName<typeof bankAbi>
 
-function useBankContractWrite(functionName: BankFunctionNames) {
+function useBankContractWrite<F extends BankFunctionNames>(functionName: F) {
   const teamStore = useTeamStore()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
   return useContractWritesV3({
     contractAddress: bankAddress,
-    abi: BANK_ABI,
+    abi: bankAbi,
     functionName
   })
 }
@@ -75,8 +83,9 @@ Rules of thumb:
   one composable — callers need independent `isPending` / `error` states per
   call site.
 - **Pass refs, not values, for addresses.** `useContractWritesV3` accepts
-  `MaybeRef` for `contractAddress`, `abi`, `functionName`, and `chainId`. Keep
-  the address reactive so the mutation tracks store updates.
+  `MaybeRef` for `contractAddress` and `chainId`. Keep the address reactive so
+  the mutation tracks store updates. `abi` and `functionName` are plain values —
+  see below.
 - **Pin `chainId` only when you mean it.** Omitting `chainId` lets wagmi
   resolve the chain from the connected wallet at call time and invalidates
   reads across every chain in the cache. Pin it when the contract is single-
@@ -88,10 +97,24 @@ Rules of thumb:
   await transfer.mutateAsync({ args: [to, amount] })
   ```
 
-`abi` is widened to `Abi` inside `useContractWritesV3`, so `variables.args` is
-**not** structurally validated against the function signature. The
-`ExtractAbiFunctionNames` factory above gives you function-name safety; argument
-typing remains the caller's responsibility.
+`variables.args` **is** structurally validated against the function signature:
+`useContractWritesV3` is generic over `abi` and `functionName`, so viem resolves
+`args` to the exact tuple the ABI declares. Wrong order, a `string` where the ABI
+says `uint256`, and a missing argument are all compile errors.
+
+This is why `abi` and `functionName` are plain values, not `MaybeRef`: `args` is
+derived from them, and a reactive `functionName` would make that derivation the
+union of every function's tuple, which constrains nothing. No call site needs a
+reactive ABI — pass a different `abi`/`functionName` pair from a different
+composable instead.
+
+The tuple types are exported if you need to type a helper that forwards args:
+
+```ts
+import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
+
+type TransferArgs = WriteFunctionArgs<typeof bankAbi, 'transferToken'>
+```
 
 ## 2. Error handling
 
@@ -150,16 +173,15 @@ Apply this everywhere:
 - **`UAlert` for in-context errors, `toast` for transient ones.** Use the
   alert when the user is mid-flow inside a modal/form (they need to see the
   message and decide what to do). Use the toast for fire-and-forget actions.
-- **Log with `parseErrorV2(error)` or `parseError(error, abi)` before
-  surfacing.** `useContractWritesV3` already logs via `parseErrorV2` on the
-  built-in `onError`, so additional logging in the component is only needed
-  when you want extra context.
+- **Log the raw error, classify for display.** `log.error('context:', error)`
+  keeps the cause chain and stack; only the message shown to the user goes
+  through `classifyError`. `useContractWritesV3` already logs on the built-in
+  `onError`, so extra logging in the component is only for extra context.
 
 For non-V3 paths that still need an error message — e.g. a `simulateContract`
-preflight or a `readContract` allowance check — use `parseError(error, abi)`
-which returns a plain string (see
-`src/components/sections/ExpenseAccountView/TransferAction.vue` for the
-pattern).
+preflight or a `readContract` allowance check — `classifyError` works just the
+same (see `src/components/sections/ExpenseAccountView/TransferAction.vue` for
+the pattern).
 
 ## 3. Testing recipe
 
@@ -236,15 +258,15 @@ Error()` falls into `category: 'unknown'`.
 
 ## API surface
 
-| Export                        | Where                         | Purpose                                                                                                              |
-| ----------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `useContractWritesV3`         | `useContractWritesV3.ts`      | TanStack mutation wrapper — what every feature `writes.ts` calls.                                                    |
-| `executeContractWrite`        | `useContractWritesV3.ts`      | Framework-agnostic simulate → write → wait. Use from services that have no Vue scope.                                |
-| `ContractWriteRevertedError`  | `useContractWritesV3.ts`      | Thrown when a tx mined but reverted. Carries `hash`, `receipt`, `simulation`, and the ABI-decoded revert as `cause`. |
-| `classifyError`               | `@/utils/classifyError`       | Buckets any viem/wagmi error into a category + resolves a user-facing message.                                       |
-| `parseError` / `parseErrorV2` | `@/utils/errorUtil`           | String formatters for logging or non-V3 paths.                                                                       |
-| `createContractWriteV3Mock`   | `@/tests/mocks/erc20.mock`    | TanStack-mutation-shaped mock factory.                                                                               |
-| `resetContractMocks`          | `@/tests/mocks/contract.mock` | Resets every pre-baked V3 write/read mock between tests.                                                             |
+| Export                       | Where                         | Purpose                                                                                                              |
+| ---------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `useContractWritesV3`        | `useContractWritesV3.ts`      | TanStack mutation wrapper — what every feature `writes.ts` calls.                                                    |
+| `executeContractWrite`       | `useContractWritesV3.ts`      | Framework-agnostic simulate → write → wait. Use from services that have no Vue scope.                                |
+| `ContractWriteRevertedError` | `useContractWritesV3.ts`      | Thrown when a tx mined but reverted. Carries `hash`, `receipt`, `simulation`, and the ABI-decoded revert as `cause`. |
+| `classifyError`              | `@/utils/classifyError`       | Buckets any viem/wagmi error into a category + resolves a user-facing message.                                       |
+| `parseErrorV2`               | `@/utils/generalUtil`         | Condenses an Error to one line for logging. Never for user-facing text.                                              |
+| `createContractWriteV3Mock`  | `@/tests/mocks/erc20.mock`    | TanStack-mutation-shaped mock factory.                                                                               |
+| `resetContractMocks`         | `@/tests/mocks/contract.mock` | Resets every pre-baked V3 write/read mock between tests.                                                             |
 
 ## Contract versioning (V0 / V0.1 / V1 / V2)
 

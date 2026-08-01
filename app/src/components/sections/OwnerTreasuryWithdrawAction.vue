@@ -69,8 +69,7 @@ import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
 import { useOwnerWithdrawAllToBank as useCashOwnerWithdrawAll } from '@/composables/cashRemuneration/writes'
 import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
 import { useOwnerWithdrawAllToBank as useExpenseOwnerWithdrawAll } from '@/composables/expenseAccount/writes'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { cashRemunerationEip712Abi, expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { ContractType } from '@/types'
 import type { ContractKey } from '@/composables/contracts/errorCatalogs.types'
@@ -103,9 +102,7 @@ const contractAddress = computed(
   () => teamStore.getContractAddressByType(props.contractType) as Address | undefined
 )
 
-const abi = computed(() =>
-  isCash.value ? CASH_REMUNERATION_EIP712_ABI : EXPENSE_ACCOUNT_EIP712_ABI
-)
+const abi = computed(() => (isCash.value ? cashRemunerationEip712Abi : expenseAccountEip712Abi))
 
 const errorContract = computed<ContractKey>(() =>
   isCash.value ? 'CashRemuneration' : 'ExpenseAccount'

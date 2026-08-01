@@ -32,11 +32,19 @@ export const createTeam = async (payload: CreateTeamPayload) => {
   })
 }
 
+export interface GetAllTeamsParams {
+  // The backend hides archived teams by default; opt in when the caller needs
+  // every team on the platform (e.g. the Officer-version audit).
+  showArchived?: boolean
+}
+
 /**
  * Get all teams
  */
-export const getAllTeams = async () => {
-  return await apiFetch<Team[]>('/teams')
+export const getAllTeams = async (params: GetAllTeamsParams = {}) => {
+  return await apiFetch<Team[]>('/teams', {
+    query: params.showArchived ? { showArchived: true } : undefined
+  })
 }
 
 /**

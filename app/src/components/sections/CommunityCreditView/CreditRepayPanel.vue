@@ -262,7 +262,7 @@ async function confirmRepay() {
     toast.add({
       title: isFullRepay
         ? 'Round repaid — principal + interest returned'
-        : `Repaid ${formatAmount(numericAmount.value, round.value?.token, 4)} towards the outstanding balance`,
+        : `Repaid ${formatAmount(numericAmount.value, round.value?.token)} towards the outstanding balance`,
       color: 'success'
     })
     await Promise.all([

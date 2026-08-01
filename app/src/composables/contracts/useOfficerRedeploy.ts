@@ -22,13 +22,13 @@ import {
 } from '@/composables/contracts/useOfficerDeployment'
 import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { officerAbi } from '@/artifacts/abi/generated'
 import { log } from '@/utils'
 
 /**
  * Orchestrates the full "redeploy Officer" lifecycle: deploy on-chain,
  * register in the backend, then migrate shareholders from the previous
- * InvestorV1. The migration step is retriable — if it fails we hold the
+ * Officer's share token. The migration step is retriable — if it fails we hold the
  * addresses in `pendingMigration` so the caller can drive a retry UI.
  *
  * All async operations delegate to TanStack mutations (`useDeployOfficer`,
@@ -38,7 +38,7 @@ import { log } from '@/utils'
  *
  * Errors are **not** surfaced via toast from here. Each mutation's `error`
  * ref is exposed as-is plus a workflow-level `workflowError` for things that
- * don't belong to any single mutation (e.g. "new InvestorV1 not found in
+ * don't belong to any single mutation (e.g. "new Investor not found in
  * getTeam()"). The consumer template is expected to render them via reactive
  * UAlert components.
  */
@@ -78,7 +78,7 @@ export function useOfficerRedeploy() {
   const findInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
     const contracts = (await readContract(config, {
       address: officerAddress,
-      abi: OFFICER_ABI,
+      abi: officerAbi,
       functionName: 'getTeam'
     })) as readonly { contractType: string; contractAddress: Address }[]
     return contracts.find((c) => c.contractType === 'Investor')?.contractAddress ?? null
@@ -87,10 +87,11 @@ export function useOfficerRedeploy() {
   const findPreviousInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
     const contracts = (await readContract(config, {
       address: officerAddress,
-      abi: OFFICER_ABI,
+      abi: officerAbi,
       functionName: 'getTeam'
     })) as readonly { contractType: string; contractAddress: Address }[]
-    // Support both V1→V2 migration (finds 'InvestorV1') and V2→V2 redeploy (finds 'Investor')
+    // The previous Officer may be any generation: every legacy one (V0/V0.1/V1)
+    // registers its share token as 'InvestorV1', current ones as 'Investor'.
     return (
       contracts.find((c) => c.contractType === 'Investor' || c.contractType === 'InvestorV1')
         ?.contractAddress ?? null

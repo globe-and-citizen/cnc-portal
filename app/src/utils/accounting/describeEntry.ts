@@ -29,6 +29,7 @@ const ENTRY_LABEL: Record<UseCase, string> = {
   'UC-CREDIT-02': 'Credit principal to Bank',
   'UC-CREDIT-03': 'Credit repayment',
   'UC-CREDIT-04': 'Credit principal refund',
+  'UC-CREDIT-05': 'Credit interest owed',
   'UC-CASH-02': 'Wage accrual',
   'UC-CASH-03': 'Wage settlement',
   'UC-EXP-01': 'Operating expense',
@@ -74,6 +75,7 @@ const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'UC-CREDIT-01',
   'UC-CREDIT-03',
   'UC-CREDIT-04',
+  'UC-CREDIT-05',
   'UC-EXP-01',
   'UC-INV-01',
   'DEFAULT-D'
@@ -141,13 +143,16 @@ function predicate(entry: LedgerEntry): string {
     case 'UC-CREDIT-01':
       return `lent ${amount} to the community credit`
     case 'UC-CREDIT-03':
-      // The two legs of one installment read differently — the split is what the
-      // interest leg's `Interest Expense` debit marks (see the FixedReturn mapper).
-      return entry.debit === 'Interest Expense'
-        ? `was paid ${amount} of interest on their loan`
-        : `was repaid ${amount} of loan principal`
+      // The legs of one installment read differently — the debit is what marks the
+      // split (see the FixedReturn mapper): principal retires the loan, while both
+      // interest legs settle the fixed return, accrued or not.
+      return entry.debit === 'Loan Payable'
+        ? `was repaid ${amount} of loan principal`
+        : `was paid ${amount} of interest on their loan`
     case 'UC-CREDIT-04':
       return `was refunded ${amount} of lent principal`
+    case 'UC-CREDIT-05':
+      return `is owed ${amount} of interest on their loan`
     case 'UC-EXP-01':
       return expensePredicate(entry, amount)
     case 'UC-INV-01':

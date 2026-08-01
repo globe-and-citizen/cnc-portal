@@ -7,7 +7,7 @@
  *   memo).
  * - `WithdrawToken` where the token is **SHER**: the wage is paid in shares —
  *   Dr Shares to be issued · Cr Investor Equity (the equity leg of UC-CASH-03).
- *   The matching `InvestorV1 Minted` is therefore *not* re-booked by the investor
+ *   The matching `Investor Minted` is therefore *not* re-booked by the investor
  *   mapper (it would double-count the equity).
  * - `Deposited`: internal funding of the payroll pocket from Bank — internal move.
  * - `OwnerTreasuryWithdraw*` (the `ownerWithdrawAllToBank` sweep): internal move

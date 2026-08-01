@@ -85,9 +85,9 @@ import { useUserDataStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import type { User, BudgetLimit } from '@/types'
-import { getAxiosErrorMessage, log, parseError } from '@/utils'
+import { getAxiosErrorMessage, log } from '@/utils'
 import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
 import { useCreateExpenseMutation } from '@/queries/expense.queries'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
@@ -120,7 +120,7 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address,
-  abi: EXPENSE_ACCOUNT_EIP712_ABI,
+  abi: expenseAccountEip712Abi,
   query: {
     staleTime: Infinity
   }
@@ -207,7 +207,7 @@ const approveUser = async (data: BudgetLimit) => {
   toast.add({ title: 'User approved successfully', color: 'success' })
 }
 
-const errorMessage = (error: {}, message: string) =>
+const errorMessage = (error: object, message: string) =>
   'reason' in error ? (error.reason as string) : message
 
 const isBodAction = () => false
@@ -217,7 +217,7 @@ const isBodAction = () => false
 watch(errorAddExpenseData, (newVal) => {
   if (newVal) {
     approveErrorMessage.value = getAxiosErrorMessage(newVal, 'Error Adding Expense Data')
-    log.error('errorAddExpenseData.value', parseError(newVal))
+    log.error('errorAddExpenseData.value', newVal)
     loadingApprove.value = false
   }
 })
@@ -228,7 +228,7 @@ watch(errorGetOwner, (newVal) => {
 watch(signTypedDataError, async (newVal) => {
   if (newVal) {
     approveErrorMessage.value = 'Error signing expense data'
-    log.error('signTypedDataError.value', parseError(newVal))
+    log.error('signTypedDataError.value', newVal)
     loadingApprove.value = false
   }
 })

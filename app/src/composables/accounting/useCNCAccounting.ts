@@ -5,7 +5,7 @@
  * the three financial statements to the UI from a single composable:
  *
  *   - **On-chain (getLogs)** — events for the team's Bank, CashRemuneration,
- *     Expense, FixedReturn (Community Credit), InvestorV1 and SafeDepositRouter
+ *     Expense, FixedReturn (Community Credit), Investor and SafeDepositRouter
  *     contracts, reconstructed from the RPC via the shared `use*EventsViaLogs`
  *     composables (no indexer dependency).
  *   - **Safe** — the team Safe's incoming native / ERC-20 transfers (spec §3.1).
@@ -21,7 +21,7 @@
 import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
-import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
+import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
 import { FEE_COLLECTOR_ADDRESS } from '@/constant'
 import type { ContractType } from '@/types/teamContract'
@@ -29,12 +29,16 @@ import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
 import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedReturnEventsViaLogs'
+import { useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
 import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
-import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
+import {
+  useGetSafeIncomingTransfersQuery,
+  useGetSafeOutgoingTransactionsQuery
+} from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransferInitiators } from './useTransferInitiators'
 import {
@@ -42,6 +46,7 @@ import {
   type CncAccounting,
   type CncAccountingInput
 } from '@/utils/accounting/assemble'
+import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import type { AccountingSummary } from '@/utils/accounting/buildLedger'
 import type { GeneralLedger } from '@/utils/accounting/generalLedger'
@@ -126,7 +131,7 @@ export function useCNCAccounting(
   // Stored fixed-point at SHER's 6 decimals; format to whole units (1e6 → 1x). ──
   const routerMultiplier = useReadContract({
     address: computed(() => (routerAddress.value ? (routerAddress.value as Address) : undefined)),
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: 'getMultiplier',
     query: { enabled: computed(() => Boolean(routerAddress.value)) }
   })
@@ -138,12 +143,31 @@ export function useCNCAccounting(
     return Number.isFinite(whole) && whole > 0 ? whole : null
   })
 
+  // ── Contract read: each Community Credit round's rate. It does not reach the
+  // mapper through the event feed, and without it the fixed return can only be
+  // expensed on the day it is paid — so the offer structs are read straight from
+  // FixedReturn and handed to the mapper, which recognises the whole fee when the
+  // round funds (see mappers/creditTimeline). A failed read simply leaves the list
+  // empty and the books fall back to the cash-basis treatment. ──
+  const fixedReturnOffers = useFixedReturnAllOffers(fixedReturnAddress)
+
+  const fixedReturnOfferTerms = computed<CreditOfferTerms[]>(() =>
+    (fixedReturnOffers.data.value ?? []).map(({ offerId, offer }) => ({
+      offerId: String(offerId),
+      interestRateBps: Number(offer.interestRateBps)
+    }))
+  )
+
   // ── Backend DB: weekly claims + approved expenses (off-chain enrichment) ──
   const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
   const expenses = useGetExpensesQuery({ queryParams: { teamId } })
 
-  // ── Safe service: incoming transfers (optional / flaky — never blocks) ──
+  // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
   const safeTransfers = useGetSafeIncomingTransfersQuery({
+    pathParams: { safeAddress },
+    queryParams: { limit: EVENT_LIMIT }
+  })
+  const safeOutgoing = useGetSafeOutgoingTransactionsQuery({
     pathParams: { safeAddress },
     queryParams: { limit: EVENT_LIMIT }
   })
@@ -184,9 +208,11 @@ export function useCNCAccounting(
     cashRemunerationEvents: cashRem.result.value,
     expenseEvents: expense.result.value,
     fixedReturnEvents: fixedReturn.result.value,
+    fixedReturnOfferTerms: fixedReturnOfferTerms.value,
     investorEvents: investor.result.value,
     safeDepositRouterEvents: router.result.value,
     safeTransfers: safeTransfers.data.value,
+    safeOutgoingTransactions: safeOutgoing.data.value,
     weeklyClaims: weeklyClaims.data.value?.data,
     expenses: expenses.data.value
   }))
@@ -249,12 +275,14 @@ export function useCNCAccounting(
         cashRem,
         expense,
         fixedReturn,
+        fixedReturnOffers,
         investor,
         router,
         routerMultiplier,
         weeklyClaims,
         expenses,
-        safeTransfers
+        safeTransfers,
+        safeOutgoing
       ].map(run)
     )
   }

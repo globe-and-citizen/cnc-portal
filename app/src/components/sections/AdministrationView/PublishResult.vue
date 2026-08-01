@@ -12,9 +12,9 @@
   </UTooltip>
 </template>
 <script lang="ts" setup>
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
-import { log, parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useElectionsPublishResults } from '@/composables/elections/writes'
 import { estimateGas } from '@wagmi/core'
@@ -42,7 +42,7 @@ const handlePublishResults = async (electionId: number) => {
 
   try {
     const data = encodeFunctionData({
-      abi: ELECTIONS_ABI,
+      abi: electionsAbi,
       functionName: 'publishResults',
       args: [BigInt(electionId)]
     })
@@ -51,8 +51,8 @@ const handlePublishResults = async (electionId: number) => {
       data
     })
   } catch (err) {
-    toast.add({ title: parseError(err, ELECTIONS_ABI), color: 'error' })
-    log.error('Error estimating gas:', parseError(err, ELECTIONS_ABI))
+    log.error('Error estimating gas:', err)
+    toast.add({ title: classifyError(err, { contract: 'Elections' }).userMessage, color: 'error' })
     return
   }
 
@@ -64,8 +64,10 @@ const handlePublishResults = async (electionId: number) => {
         await queryClient.invalidateQueries({ queryKey: ['pastElections'] })
       },
       onError: (error) => {
-        console.error('Error publishing results:', parseError(error))
-        toast.add({ title: 'Failed to publish election results', color: 'error' })
+        log.error('Error publishing results:', error)
+        const classified = classifyError(error, { contract: 'Elections' })
+        if (classified.category === 'user_rejected') return
+        toast.add({ title: classified.userMessage, color: 'error' })
       }
     }
   )

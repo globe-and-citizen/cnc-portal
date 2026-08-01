@@ -9,8 +9,7 @@ import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
-  mockInvestorReads,
-  mockParseError
+  mockInvestorReads
 } from '@/tests/mocks'
 
 type MutateOptions = {
@@ -138,7 +137,6 @@ describe('SafeDepositRouterForm.vue', () => {
     const vm = getVm(wrapper)
 
     await setTokenAmount(wrapper, '1', 'usdc', true)
-    mockParseError.mockReturnValue('User rejected request')
     rejectOnError(mockERC20Writes.approve.mutateAsync, new Error('approve rejected'))
 
     await vm.submitForm()
@@ -154,7 +152,6 @@ describe('SafeDepositRouterForm.vue', () => {
 
     await setTokenAmount(wrapper, '1', 'usdc', true)
     mockERC20Reads.allowance.data.value = 1000000n // skip approval
-    mockParseError.mockReturnValue('Deposit failed')
     rejectOnError(mockSafeDepositRouterWrites.deposit.mutateAsync, new Error('deposit failed'))
 
     await vm.submitForm()

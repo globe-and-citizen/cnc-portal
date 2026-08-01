@@ -55,15 +55,15 @@ import { zeroHash, type Address } from 'viem'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import { useInvestorV2Address, useInvestorV2MigrationRoot } from '@/composables/investor/readsV2'
+import { useInvestorAddress, useInvestorMigrationRoot } from '@/composables/investor/reads'
 import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
 import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
 
-const currentInvestorAddress = useInvestorV2Address()
-const { data: currentMigrationRoot, refetch: refetchMigrationRoot } = useInvestorV2MigrationRoot()
+const currentInvestorAddress = useInvestorAddress()
+const { data: currentMigrationRoot, refetch: refetchMigrationRoot } = useInvestorMigrationRoot()
 const { data: migrationSnapshots } = useGetInvestorMigrationQuery({
   queryParams: { teamId: teamStore.currentTeamId as string | number }
 })

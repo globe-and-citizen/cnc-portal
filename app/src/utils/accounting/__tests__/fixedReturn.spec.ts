@@ -1,29 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
-import { makeCtx, ADDR } from './fixtures'
+import { makeCtx, ADDR, creditOffer, creditEvent } from './fixtures'
 
 const ctx = makeCtx()
-
-/** One USDC offer, created at t=100 — the token index every other event needs. */
-const offer = (offerId = '1', timestamp = 100) => ({
-  id: `created-${offerId}`,
-  contractAddress: ADDR.credit,
-  offerId,
-  token: ADDR.usdcToken,
-  fundingTarget: '10000000',
-  timestamp
-})
-
-const lent = (
-  id: string,
-  amount: string,
-  timestamp: number,
-  lender: string = ADDR.lender,
-  offerId = '1'
-) => ({ id, contractAddress: ADDR.credit, offerId, lender, amount, timestamp })
-
-const repaid = lent
-const refunded = lent
+// The three per-lender feeds share one row shape; the alias names the event.
+const offer = creditOffer
+const lent = creditEvent
+const repaid = creditEvent
+const refunded = creditEvent
 
 describe('mapFixedReturnEvents', () => {
   it('books a lender deposit as UC-CREDIT-01 (Cash — Credit → Loan Payable)', () => {
@@ -96,7 +80,9 @@ describe('mapFixedReturnEvents', () => {
       ['rp1-principal', 'Loan Payable', 6],
       // The second installment retires the last 4 of principal; the rest is interest.
       ['rp2-principal', 'Loan Payable', 4],
-      ['rp2-interest', 'Interest Expense', 1]
+      // No offer terms here, so no fee was recognised at funding: the whole fixed
+      // return is expensed on the day it is paid (the cash-basis fallback).
+      ['rp2-interest-unrecognised', 'Interest Expense', 1]
     ])
     repayments.forEach((e) => expect(e.credit).toBe('Cash — Bank'))
   })
@@ -157,9 +143,22 @@ describe('mapFixedReturnEvents', () => {
     expect(entries.at(-1)?.rawAmount).toBe('10000000')
   })
 
-  it('skips an offer whose creation event (and therefore its token) is missing', () => {
-    const entries = mapFixedReturnEvents({ fundsLents: [lent('fl1', '4000000', 200)] }, ctx)
-    expect(entries).toEqual([])
+  it('flags an offer whose creation event (and therefore its token) is missing', () => {
+    const entries = mapFixedReturnEvents(
+      { fundsLents: [lent('fl1', '4000000', 200), lent('fl2', '5000000', 300)] },
+      ctx
+    )
+    // One memo for the whole round, not one per event — and no monetary legs, so
+    // the trial balance is untouched by a round nobody could value.
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toMatchObject({
+      id: 'credit-unvalued-1',
+      debit: null,
+      credit: null,
+      amountUsd: 0,
+      enrichment: 'needs-off-chain-data'
+    })
+    expect(entries[0]?.memo).toContain('could not be valued')
   })
 
   it('keeps two offers independent', () => {

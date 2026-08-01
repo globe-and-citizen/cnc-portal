@@ -39,7 +39,7 @@ import {
   useSafeDepositRouterOwner
 } from '@/composables/safeDepositRouter/reads'
 import { useTeamStore } from '@/stores'
-import { parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const SAFE_ADDRESS_REQUIRED_MESSAGE = 'Set the Safe address on the deposit router first'
@@ -109,14 +109,9 @@ watch(
   () => enableDepositsWrite.error.value,
   (error) => {
     if (error) {
-      console.error('Error enabling deposits:', error)
-      const errorMessage = parseError(error)
-
-      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
-      } else {
-        toast.add({ title: 'Failed to enable SHER compensation', color: 'error' })
-      }
+      log.error('Error enabling deposits:', error)
+      const classified = classifyError(error, { contract: 'SafeDepositRouter' })
+      toast.add({ title: classified.userMessage, color: 'error' })
     }
   }
 )
@@ -136,14 +131,9 @@ watch(
   () => disableDepositsWrite.error.value,
   (error) => {
     if (error) {
-      console.error('Error disabling deposits:', error)
-      const errorMessage = parseError(error)
-
-      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
-      } else {
-        toast.add({ title: 'Failed to disable SHER compensation', color: 'error' })
-      }
+      log.error('Error disabling deposits:', error)
+      const classified = classifyError(error, { contract: 'SafeDepositRouter' })
+      toast.add({ title: classified.userMessage, color: 'error' })
     }
   }
 )

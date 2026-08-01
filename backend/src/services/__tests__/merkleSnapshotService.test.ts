@@ -21,7 +21,7 @@ const shareholders = [
   },
 ];
 
-const INVESTOR_V1_ADDRESS = '0x3333333333333333333333333333333333333333' as Address;
+const PREVIOUS_INVESTOR_ADDRESS = '0x3333333333333333333333333333333333333333' as Address;
 
 describe('buildMerkleProofSet', () => {
   it('rebuilds deterministic proofs from the persisted shareholder snapshot', () => {
@@ -56,7 +56,7 @@ describe('generateMerkleSnapshot', () => {
     });
     vi.mocked(publicClient.getBlockNumber).mockResolvedValue(42n);
 
-    const snapshot = await generateMerkleSnapshot(INVESTOR_V1_ADDRESS);
+    const snapshot = await generateMerkleSnapshot(PREVIOUS_INVESTOR_ADDRESS);
 
     expect(snapshot.shareholders).toEqual([
       { address: shareholders[0].shareholder.toLowerCase(), amount: '100' },
@@ -85,7 +85,7 @@ describe('generateMerkleSnapshot', () => {
     });
     vi.mocked(publicClient.getBlockNumber).mockResolvedValue(42n);
 
-    await expect(generateMerkleSnapshot(INVESTOR_V1_ADDRESS)).rejects.toThrow(
+    await expect(generateMerkleSnapshot(PREVIOUS_INVESTOR_ADDRESS)).rejects.toThrow(
       /does not match totalSupply/i
     );
   });

@@ -43,15 +43,18 @@ export function applyZodFieldErrors(
   return false
 }
 
-/** Format an amount with a token suffix, e.g. `23,400 USDC`. No decimals by default —
- *  pass `maximumFractionDigits` for amounts that can be fractional (e.g. a live on-chain
- *  remaining/cap figure), so a value like 0.5 doesn't silently round up to "1". */
-export function formatAmount(n: number, token = 'USDC', maximumFractionDigits = 0): string {
+/** Format an amount with a token suffix, e.g. `23,400.5 USDC`. Up to 4 decimals by
+ *  default, since every Community Credit amount (raised, cap, interest, a lender's
+ *  position, …) can be fractional — a value like 0.2 must not silently round to "0".
+ *  `toLocaleString` only caps fraction digits (no `minimumFractionDigits`), so trailing
+ *  zeros are trimmed and a value that's genuinely 0 still renders as "0", never
+ *  "0.0000". */
+export function formatAmount(n: number, token = 'USDC', maximumFractionDigits = 4): string {
   return `${formatNumber(n, maximumFractionDigits)} ${token}`
 }
 
-/** Format a number with thousands separators, no decimals by default. */
-export function formatNumber(n: number, maximumFractionDigits = 0): string {
+/** Format a number with thousands separators, up to 4 decimals by default (see formatAmount). */
+export function formatNumber(n: number, maximumFractionDigits = 4): string {
   return Number(n).toLocaleString('en-US', { maximumFractionDigits })
 }
 
@@ -452,10 +455,10 @@ export function getCreditWhitelistAllocationSummary(
         ? 'under'
         : 'exact'
   const tokenLabel = token ?? ''
-  const prefix = `Allocated ${committedTotal.toLocaleString('en-US')} / ${Math.round(principalTarget).toLocaleString('en-US')} ${tokenLabel}`
+  const prefix = `Allocated ${formatNumber(committedTotal)} / ${formatNumber(principalTarget)} ${tokenLabel}`
 
   if (status === 'over') {
-    const excess = (committedTotal - principalTarget).toLocaleString('en-US')
+    const excess = formatNumber(committedTotal - principalTarget)
     return {
       committedTotal,
       status,
@@ -463,7 +466,7 @@ export function getCreditWhitelistAllocationSummary(
     }
   }
   if (status === 'under') {
-    const shortfall = (principalTarget - committedTotal).toLocaleString('en-US')
+    const shortfall = formatNumber(principalTarget - committedTotal)
     return { committedTotal, status, description: `${prefix} — ${shortfall} ${tokenLabel} short` }
   }
   return { committedTotal, status, description: prefix }

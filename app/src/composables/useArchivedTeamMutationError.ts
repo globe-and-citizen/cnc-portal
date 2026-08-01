@@ -1,4 +1,4 @@
-import { getArchivedTeamConflictMessage } from '@/utils/errorUtil'
+import { getArchivedTeamConflictMessage } from '@/utils/httpErrorUtil'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 
 /**

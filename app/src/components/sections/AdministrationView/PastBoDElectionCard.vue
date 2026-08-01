@@ -53,10 +53,10 @@
 </template>
 
 <script setup lang="ts">
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import type { Election } from '@/types'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { useReadContract } from '@wagmi/vue'
 import { useRouter } from 'vue-router'
 import { computed, watch } from 'vue'
@@ -75,14 +75,14 @@ const {
 } = useReadContract({
   functionName: 'getVoteCount',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   args: [BigInt(election.id)] // Supply currentElectionId as an argument
 })
 
 const { data: electionResults, error: errorGetElectionResults } = useReadContract({
   functionName: 'getElectionResults',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   args: [BigInt(election.id)] // Supply currentElectionId as an argument
 })
 
@@ -96,12 +96,12 @@ const formatDate = (date: Date) => {
 
 watch(errorGetVoteCount, (newError) => {
   if (newError) {
-    log.error('Error fetching vote count:', parseError(newError))
+    log.error('Error fetching vote count:', newError)
   }
 })
 watch(errorGetElectionResults, (newError) => {
   if (newError) {
-    log.error('Error fetching election results:', parseError(newError))
+    log.error('Error fetching election results:', newError)
   }
 })
 </script>

@@ -1,6 +1,6 @@
 import type { MaybeRef } from 'vue'
 import type { Address } from 'viem'
-import { ERC20_ABI as erc20Abi } from '@/artifacts/abi/erc20'
+import { erc20Abi } from 'viem'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 
 export function useERC20Approve(tokenAddress: MaybeRef<Address | undefined>) {

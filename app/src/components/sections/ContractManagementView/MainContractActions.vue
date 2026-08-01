@@ -91,12 +91,13 @@
 </template>
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { encodeFunctionData, type Abi, type Address } from 'viem'
+import { encodeFunctionData, type Address } from 'viem'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 import type { TableRow } from '@/types/table'
 import { ref, computed, watch } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
-import { filterAndFormatActions, log, parseError } from '@/utils'
+import { classifyError, filterAndFormatActions, log } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'
 import { useGetBodActionsQuery } from '@/queries'
@@ -167,7 +168,6 @@ const formatedActions = computed(() => {
 })
 
 const rowAddress = computed(() => props.row.address as Address)
-const rowAbi = computed(() => props.row.abi as Abi)
 
 const {
   mutate: executeTransferOwnership,
@@ -175,7 +175,7 @@ const {
   error: errorTransferOwnership
 } = useContractWritesV3({
   contractAddress: rowAddress,
-  abi: rowAbi,
+  abi: ownablePausableAbi,
   functionName: 'transferOwnership'
 })
 
@@ -185,7 +185,7 @@ const {
   error: errorPauseContract
 } = useContractWritesV3({
   contractAddress: rowAddress,
-  abi: rowAbi,
+  abi: ownablePausableAbi,
   functionName: 'pause'
 })
 
@@ -195,7 +195,7 @@ const {
   error: errorUnpauseContract
 } = useContractWritesV3({
   contractAddress: rowAddress,
-  abi: rowAbi,
+  abi: ownablePausableAbi,
   functionName: 'unpause'
 })
 
@@ -278,24 +278,33 @@ watch(isActionApproved, (isApproved) => {
   }
 })
 
+// No `contract` key is passed: this table drives every team contract, and the
+// reverts these three actions raise (Ownable*, EnforcedPause, ExpectedPause)
+// all live in the catalog's shared `common` map.
 watch(errorTransferOwnership, (error) => {
   if (error) {
-    transferOwnershipErrorMessage.value = parseError(error, props.row.abi)
     log.error('errorTransferOwnership.value: ', error)
+    const classified = classifyError(error)
+    if (classified.category === 'user_rejected') return
+    transferOwnershipErrorMessage.value = classified.userMessage
   }
 })
 
 watch(errorPauseContract, (error) => {
   if (error) {
-    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
     log.error('errorPauseContract.value: ', error)
+    const classified = classifyError(error)
+    if (classified.category === 'user_rejected') return
+    toast.add({ title: classified.userMessage, color: 'error' })
   }
 })
 
 watch(errorUnpauseContract, (error) => {
   if (error) {
-    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
     log.error('errorUnpauseContract.value: ', error)
+    const classified = classifyError(error)
+    if (classified.category === 'user_rejected') return
+    toast.add({ title: classified.userMessage, color: 'error' })
   }
 })
 </script>

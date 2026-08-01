@@ -1,17 +1,19 @@
 import { computed } from 'vue'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
+import {
+  useContractWritesV3,
+  type WriteFunctionName
+} from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
-import type { ExtractAbiFunctionNames } from 'abitype'
 
-type ExpenseAccountFunctionNames = ExtractAbiFunctionNames<typeof EXPENSE_ACCOUNT_EIP712_ABI>
+type ExpenseAccountFunctionNames = WriteFunctionName<typeof expenseAccountEip712Abi>
 
-function useExpenseAccountContractWrite(functionName: ExpenseAccountFunctionNames) {
+function useExpenseAccountContractWrite<F extends ExpenseAccountFunctionNames>(functionName: F) {
   const teamStore = useTeamStore()
   const contractAddress = computed(() => teamStore.getContractAddressByType('ExpenseAccountEIP712'))
   return useContractWritesV3({
     contractAddress,
-    abi: EXPENSE_ACCOUNT_EIP712_ABI,
+    abi: expenseAccountEip712Abi,
     functionName
   })
 }

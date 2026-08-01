@@ -71,7 +71,15 @@ export function buildMerkleProofSet(shareholders: readonly StoredShareholder[]):
   );
   const tree = new MerkleTree(leafHashes, keccak256, {
     hashLeaves: false,
+    // Keep the snapshot order so `proofs` stays index-aligned with the list.
     sortLeaves: false,
+    // REQUIRED: Investor.sol verifies with OpenZeppelin's `MerkleProof.verify`,
+    // whose `_hashPair` is commutative (it sorts each pair before hashing).
+    // Without this the tree is internally consistent but every proof is
+    // rejected on-chain as soon as there are 3+ shareholders. Leaves are
+    // already double-hashed in `computeLeaf`, which is what makes sorted-pair
+    // hashing safe against second-preimage attacks here.
+    sortPairs: true,
   });
 
   const proofs: Record<string, string[]> = {};
@@ -88,10 +96,13 @@ export function buildMerkleProofSet(shareholders: readonly StoredShareholder[]):
   };
 }
 
-export async function generateMerkleSnapshot(investorV1Address: Address): Promise<MerkleSnapshot> {
-  // Read shareholders from v1 Investor
+export async function generateMerkleSnapshot(
+  previousInvestorAddress: Address
+): Promise<MerkleSnapshot> {
+  // Read the cap table from the previous Officer's share token. Every legacy
+  // generation exposes the same `getShareholders` ABI, so one read covers all.
   const shareHoldersRaw = (await publicClient.readContract({
-    address: investorV1Address,
+    address: previousInvestorAddress,
     abi: INVESTOR_ABI,
     functionName: 'getShareholders',
   })) as readonly { address: Address; amount: bigint }[];
@@ -103,7 +114,7 @@ export async function generateMerkleSnapshot(investorV1Address: Address): Promis
 
   // Read total supply to validate snapshot
   const totalSupply = (await publicClient.readContract({
-    address: investorV1Address,
+    address: previousInvestorAddress,
     abi: INVESTOR_ABI,
     functionName: 'totalSupply',
   })) as bigint;
