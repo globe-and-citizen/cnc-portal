@@ -1,13 +1,17 @@
 import { computed } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import {
+  useContractWritesV3,
+  type WriteFunctionName
+} from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
-import type { ExtractAbiFunctionNames } from 'abitype'
 
-type SafeDepositRouterFunctionNames = ExtractAbiFunctionNames<typeof safeDepositRouterAbi>
+type SafeDepositRouterFunctionNames = WriteFunctionName<typeof safeDepositRouterAbi>
 
-function useSafeDepositRouterContractWrite(functionName: SafeDepositRouterFunctionNames) {
+function useSafeDepositRouterContractWrite<F extends SafeDepositRouterFunctionNames>(
+  functionName: F
+) {
   const teamStore = useTeamStore()
   const contractAddress = computed(() => teamStore.getContractAddressByType('SafeDepositRouter'))
   return useContractWritesV3({

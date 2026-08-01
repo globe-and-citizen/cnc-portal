@@ -91,7 +91,8 @@
 </template>
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { encodeFunctionData, type Abi, type Address } from 'viem'
+import { encodeFunctionData, type Address } from 'viem'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 import type { TableRow } from '@/types/table'
 import { ref, computed, watch } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
@@ -167,7 +168,6 @@ const formatedActions = computed(() => {
 })
 
 const rowAddress = computed(() => props.row.address as Address)
-const rowAbi = computed(() => props.row.abi as Abi)
 
 const {
   mutate: executeTransferOwnership,
@@ -175,7 +175,7 @@ const {
   error: errorTransferOwnership
 } = useContractWritesV3({
   contractAddress: rowAddress,
-  abi: rowAbi,
+  abi: ownablePausableAbi,
   functionName: 'transferOwnership'
 })
 
@@ -185,7 +185,7 @@ const {
   error: errorPauseContract
 } = useContractWritesV3({
   contractAddress: rowAddress,
-  abi: rowAbi,
+  abi: ownablePausableAbi,
   functionName: 'pause'
 })
 
@@ -195,7 +195,7 @@ const {
   error: errorUnpauseContract
 } = useContractWritesV3({
   contractAddress: rowAddress,
-  abi: rowAbi,
+  abi: ownablePausableAbi,
   functionName: 'unpause'
 })
 

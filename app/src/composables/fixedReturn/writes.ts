@@ -7,7 +7,7 @@ import { useFixedReturnAddress } from './reads'
 /** State-changing names only. */
 type FixedReturnWriteNames = ContractFunctionName<typeof fixedReturnAbi, 'nonpayable' | 'payable'>
 
-function useFixedReturnContractWrite(functionName: FixedReturnWriteNames) {
+function useFixedReturnContractWrite<F extends FixedReturnWriteNames>(functionName: F) {
   const fixedReturnAddress = useFixedReturnAddress()
   return useContractWritesV3({
     contractAddress: computed(() => fixedReturnAddress.value ?? undefined),

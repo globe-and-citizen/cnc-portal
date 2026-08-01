@@ -89,6 +89,7 @@ import { useChainId } from '@wagmi/vue'
 import { config } from '@/wagmi.config'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
+import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
 import { expenseKeys } from '@/queries'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { TableRow } from '@/types/table'
@@ -227,7 +228,9 @@ const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
   return true
 }
 
-const submitExpenseAccountTransfer = (args: readonly unknown[]) => {
+type ExpenseTransferArgs = WriteFunctionArgs<typeof expenseAccountEip712Abi, 'transfer'>
+
+const submitExpenseAccountTransfer = (args: ExpenseTransferArgs) => {
   transferMutation.mutate(
     { args },
     {
