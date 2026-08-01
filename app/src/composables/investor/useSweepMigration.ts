@@ -7,7 +7,7 @@ import {
 } from '@/composables/contracts/useContractWritesV3'
 
 export interface SweepArgs {
-  investorV2Address: Address
+  investorAddress: Address
   holders: Address[]
   amounts: bigint[]
   proofs: Hex[][]
@@ -19,7 +19,7 @@ export interface SweepArgs {
  */
 export async function sweepMigration(args: SweepArgs) {
   const { receipt } = await executeContractWrite({
-    address: args.investorV2Address,
+    address: args.investorAddress,
     abi: investorAbi,
     functionName: 'bulkClaim',
     args: [args.holders, args.amounts, args.proofs]
@@ -32,9 +32,9 @@ export async function sweepMigration(args: SweepArgs) {
  * Close the migration after the owner has dispatched the remaining claims.
  * Once closed, no further shareholder claim is accepted by the contract.
  */
-export async function completeMigration(investorV2Address: Address) {
+export async function completeMigration(investorAddress: Address) {
   const { receipt } = await executeContractWrite({
-    address: investorV2Address,
+    address: investorAddress,
     abi: investorAbi,
     functionName: 'completeMigration',
     args: []

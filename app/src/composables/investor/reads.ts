@@ -4,7 +4,7 @@ import { isAddress, type Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import { investorAbi } from '@/artifacts/abi/generated'
 /**
- * InvestorV1 contract address helper
+ * Investor contract address helper
  */
 export function useInvestorAddress() {
   const teamStore = useTeamStore()
@@ -84,6 +84,30 @@ export function useInvestorShareholders() {
     address: investorsAddress,
     abi: investorAbi,
     functionName: 'getShareholders' as const,
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
+  })
+}
+
+export function useInvestorMigrationRoot() {
+  const investorsAddress = useInvestorAddress()
+  return useReadContract({
+    address: investorsAddress,
+    abi: investorAbi,
+    functionName: 'getMigrationRoot' as const,
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
+  })
+}
+
+export function useInvestorMigrationComplete() {
+  const investorsAddress = useInvestorAddress()
+  return useReadContract({
+    address: investorsAddress,
+    abi: investorAbi,
+    functionName: 'isMigrationComplete' as const,
     query: {
       enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
     }

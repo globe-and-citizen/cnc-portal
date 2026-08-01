@@ -52,7 +52,10 @@ const findPreviousInvestorAddress = async (officerAddress: Address): Promise<Add
     abi: officerAbi,
     functionName: 'getTeam'
   })) as readonly { contractType: string; contractAddress: Address }[]
-  // Support both V2→V2 redeploy (finds 'Investor') and V1→V2 migration (finds 'InvestorV1')
+  // The previous Officer may be any generation: every legacy one (V0/V0.1/V1)
+  // registers its share token as 'InvestorV1', current ones as 'Investor'. The
+  // `getShareholders` ABI is identical across all of them, so a single read
+  // path covers both.
   return (
     contracts.find((c) => c.contractType === 'Investor' || c.contractType === 'InvestorV1')
       ?.contractAddress ?? null
@@ -61,7 +64,7 @@ const findPreviousInvestorAddress = async (officerAddress: Address): Promise<Add
 
 /**
  * Guards before migration:
- *   - old Investor (V1 or V2) has 0 shareholders → noop-empty
+ *   - previous Investor (any generation) has 0 shareholders → noop-empty
  *   - new Investor already has a migration root set → noop-already-migrated
  *   - otherwise → proceed to generate & commit
  */
@@ -108,10 +111,11 @@ export interface UseMigrateShareholdersOptions {
 }
 
 /**
- * Orchestrates shareholder migration from v1 to v2:
+ * Orchestrates shareholder migration from the previous Officer's share token
+ * to the newly deployed one:
  *   1. Check eligibility (no previous root, shareholders exist)
  *   2. Generate Merkle snapshot with double hash via backend
- *   3. Write root to new Investor v2 contract
+ *   3. Write root to the new Investor contract
  *   4. Persist snapshot for shareholders' later claim proof fetches
  *
  * Side effects: emits a success toast describing the outcome.
@@ -193,7 +197,7 @@ export function useMigrateShareholders(options: UseMigrateShareholdersOptions = 
         throw new Error('Failed to generate Merkle snapshot')
       }
 
-      // Write root to new Investor v2
+      // Write root to the new Investor
       await executeContractWrite({
         address: args.newInvestorAddress,
         abi: investorAbi,

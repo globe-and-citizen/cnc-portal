@@ -71,7 +71,15 @@ export function buildMerkleProofSet(shareholders: readonly StoredShareholder[]):
   );
   const tree = new MerkleTree(leafHashes, keccak256, {
     hashLeaves: false,
+    // Keep the snapshot order so `proofs` stays index-aligned with the list.
     sortLeaves: false,
+    // REQUIRED: Investor.sol verifies with OpenZeppelin's `MerkleProof.verify`,
+    // whose `_hashPair` is commutative (it sorts each pair before hashing).
+    // Without this the tree is internally consistent but every proof is
+    // rejected on-chain as soon as there are 3+ shareholders. Leaves are
+    // already double-hashed in `computeLeaf`, which is what makes sorted-pair
+    // hashing safe against second-preimage attacks here.
+    sortPairs: true,
   });
 
   const proofs: Record<string, string[]> = {};

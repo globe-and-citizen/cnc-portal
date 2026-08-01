@@ -27,7 +27,7 @@ describe('sweepMigration', () => {
 
   it('bulk claims with proofs without closing the migration', async () => {
     await sweepMigration({
-      investorV2Address: INVESTOR,
+      investorAddress: INVESTOR,
       holders: [HOLDER],
       amounts: [100n],
       proofs: [PROOF]
