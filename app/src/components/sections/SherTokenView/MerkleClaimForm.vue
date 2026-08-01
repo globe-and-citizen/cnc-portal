@@ -62,7 +62,7 @@ import { useToast } from '@nuxt/ui/composables'
 import type { InvestorMigration } from '@/queries/investorMigration.queries'
 
 interface Props {
-  investorV2Address: Address
+  investorAddress: Address
   migrationData: InvestorMigration | undefined
   userAddress: Address | undefined
 }
@@ -104,7 +104,7 @@ const onClaim = async () => {
 
   claim.mutate(
     {
-      investorV2Address: props.investorV2Address,
+      investorAddress: props.investorAddress,
       amount,
       proof: userProof.value
     },

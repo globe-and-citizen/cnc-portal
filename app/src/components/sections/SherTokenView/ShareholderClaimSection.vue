@@ -13,14 +13,14 @@
       data-test="migration-status-alert"
     />
     <MerkleClaimForm
-      :investor-v2-address="investorAddressValue"
+      :investor-address="investorAddressValue"
       :migration-data="migrationData"
       :user-address="userAddress"
       data-test="merkle-claim-form-section"
     />
     <MigrationOwnerSweep
       v-if="isOwner && migrationComplete !== true"
-      :investor-v2-address="investorAddressValue"
+      :investor-address="investorAddressValue"
       :migration-data="migrationData"
       data-test="migration-owner-sweep-section"
     />

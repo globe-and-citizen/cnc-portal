@@ -7,18 +7,18 @@ import {
 } from '@/composables/contracts/useContractWritesV3'
 
 export interface ClaimArgs {
-  investorV2Address: Address
+  investorAddress: Address
   amount: bigint
   proof: Hex[]
 }
 
 /**
- * Claim migrated shares on Investor v2 via Merkle proof.
+ * Claim migrated shares on the Investor contract via Merkle proof.
  * Called after migration root is set and shareholder has their proof.
  */
 export async function claimMigration(args: ClaimArgs) {
   const { receipt } = await executeContractWrite({
-    address: args.investorV2Address,
+    address: args.investorAddress,
     abi: investorAbi,
     functionName: 'claim',
     args: [args.amount, args.proof]

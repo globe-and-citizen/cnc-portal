@@ -68,7 +68,7 @@ import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import type { InvestorMigration } from '@/queries/investorMigration.queries'
 
 interface Props {
-  investorV2Address: Address
+  investorAddress: Address
   migrationData: InvestorMigration | undefined
 }
 
@@ -101,7 +101,7 @@ const onDispatch = async () => {
 
   sweep.mutate(
     {
-      investorV2Address: props.investorV2Address,
+      investorAddress: props.investorAddress,
       holders: shareholdersWithProofs.value.map((sh) => sh.shareholder as Address),
       amounts: shareholdersWithProofs.value.map((sh) => BigInt(sh.amount)),
       proofs: shareholdersWithProofs.value.map(
@@ -121,7 +121,7 @@ const onDispatch = async () => {
 }
 
 const onComplete = () => {
-  completion.mutate(props.investorV2Address, {
+  completion.mutate(props.investorAddress, {
     onSuccess: () => {
       toast.add({
         title: 'Migration completed!',
