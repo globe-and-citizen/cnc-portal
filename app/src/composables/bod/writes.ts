@@ -5,11 +5,14 @@ import { readContract } from '@wagmi/core'
 import { useTeamStore } from '@/stores'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { config } from '@/wagmi.config'
-import { BOD_ABI } from '@/artifacts/abi/bod'
+import { boardOfDirectorsAbi } from '@/artifacts/abi/generated'
 import { log } from '@/utils'
 import { useCreateActionMutation, useUpdateActionMutation } from '@/queries/action.queries'
 import { useCreateBulkNotificationsMutation } from '@/queries/notification.queries'
 import type { Action } from '@/types'
+
+/** The fields `BoardOfDirectors.addAction` encodes, plus any extra Action metadata. */
+type AddActionInput = Pick<Action, 'targetAddress' | 'description' | 'data'> & Partial<Action>
 import { BOD_FUNCTION_NAMES } from './reads'
 
 /**
@@ -37,7 +40,7 @@ export function useBodAddAction() {
 
   const mutation = useContractWritesV3({
     contractAddress: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: BOD_FUNCTION_NAMES.ADD_ACTION,
     onSuccess: async () => {
       if (action.value) {
@@ -50,7 +53,7 @@ export function useBodAddAction() {
         const members = bodAddress.value
           ? ((await readContract(config, {
               address: bodAddress.value,
-              abi: BOD_ABI,
+              abi: boardOfDirectorsAbi,
               functionName: 'getBoardOfDirectors'
             })) as Address[])
           : []
@@ -75,7 +78,15 @@ export function useBodAddAction() {
     }
   })
 
-  const executeAddAction = async (data: Partial<Action>) => {
+  /**
+   * `targetAddress` / `description` / `data` are what `addAction` encodes, so
+   * they are required. They used to be optional (`Partial<Action>`) and the
+   * args tuple was cast to `readonly unknown[]`, so passing an incomplete
+   * action compiled — and viem encodes `undefined` without complaining, which
+   * would have submitted a governance action with an empty target and payload
+   * rather than failing. Every call site already passes all three.
+   */
+  const executeAddAction = async (data: AddActionInput) => {
     try {
       if (!bodAddress.value) {
         toast.add({ title: 'BOD address not found', color: 'error' })
@@ -89,7 +100,7 @@ export function useBodAddAction() {
       const actionId = (await readContract(config, {
         address: bodAddress.value,
         functionName: 'getActionCount',
-        abi: BOD_ABI
+        abi: boardOfDirectorsAbi
       })) as bigint
 
       action.value = {
@@ -99,7 +110,7 @@ export function useBodAddAction() {
       }
 
       return await mutation.mutateAsync({
-        args: [data.targetAddress, data.description, data.data] as readonly unknown[]
+        args: [data.targetAddress, data.description, data.data]
       })
     } catch (err) {
       console.error(err)
@@ -132,14 +143,14 @@ export function useBodApproveAction() {
 
   const mutation = useContractWritesV3({
     contractAddress: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: BOD_FUNCTION_NAMES.APPROVE,
     onSuccess: async () => {
       if (bodAddress.value && currentDbId.value) {
         try {
           const isActionExecuted = await readContract(config, {
             address: bodAddress.value,
-            abi: BOD_ABI,
+            abi: boardOfDirectorsAbi,
             functionName: 'isActionExecuted',
             args: [currentActionId.value]
           })
@@ -169,7 +180,7 @@ export function useBodApproveAction() {
   const executeApproveAction = async (actionId: number, dbId?: number) => {
     currentActionId.value = BigInt(actionId)
     currentDbId.value = dbId
-    return mutation.mutateAsync({ args: [BigInt(actionId)] as readonly unknown[] })
+    return mutation.mutateAsync({ args: [BigInt(actionId)] })
   }
 
   return {

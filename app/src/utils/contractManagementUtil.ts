@@ -3,7 +3,7 @@ import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { log } from '@/utils'
-import { OWNABLE_PAUSABLE_ABI } from '@/artifacts/abi/ownable-pausable'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 
 export type FormattedAction = (Action & {
   requestedBy: User
@@ -52,7 +52,7 @@ export const filterAndFormatActions = (
 // contract never blanks the whole table.
 const readContractField = async (address: Address, functionName: 'owner' | 'paused') => {
   try {
-    return await readContract(config, { address, abi: OWNABLE_PAUSABLE_ABI, functionName })
+    return await readContract(config, { address, abi: ownablePausableAbi, functionName })
   } catch {
     return null
   }
@@ -69,7 +69,7 @@ export const getTeamContracts = async (contracts: TeamContract[]) => {
 
         return {
           ...contract,
-          abi: OWNABLE_PAUSABLE_ABI,
+          abi: ownablePausableAbi,
           owner,
           paused
         }

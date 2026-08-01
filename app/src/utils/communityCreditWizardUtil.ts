@@ -51,9 +51,19 @@ export function creditCallDeadlineContext(): { today: string; now: Date } {
   return { today: now.toISOString().slice(0, 10), now }
 }
 
+/** How far ahead of today a brand-new wizard form pre-fills the subscription
+ *  deadline. Long enough for the issuer to circulate the round before it closes. */
+export const DEFAULT_CREDIT_DEADLINE_DAYS = 30
+
 /** Default field values for a brand-new Community Credit wizard form — pulled out of
- *  NewView.vue so the component doesn't have to inline the whole literal. */
+ *  NewView.vue so the component doesn't have to inline the whole literal.
+ *
+ *  The deadline is relative to today. It used to be the hard-coded date
+ *  `2026-07-31`, which meant that from 2026-08-01 every issuer opening the wizard
+ *  got a default deadline already in the past and could not publish without
+ *  noticing and editing the field. Any fixed date re-arms that trap. */
 export function createDefaultCreditCallForm(): CreditCallForm {
+  const deadline = new Date(Date.now() + DEFAULT_CREDIT_DEADLINE_DAYS * 24 * 60 * 60 * 1000)
   return {
     name: '',
     desc: '',
@@ -64,7 +74,7 @@ export function createDefaultCreditCallForm(): CreditCallForm {
     periodMode: 'preset',
     periodVal: '90',
     periodUnit: 'days',
-    deadline: '2026-07-31',
+    deadline: deadline.toISOString().slice(0, 10),
     deadlineTime: '23:59',
     access: 'everyone',
     whitelist: [],

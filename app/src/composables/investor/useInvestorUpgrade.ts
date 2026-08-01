@@ -24,8 +24,7 @@ import {
   type MigrateShareholdersResult
 } from '@/composables/investor/useShareholderMigration'
 import { useSyncContractsMutation } from '@/queries/contract.queries'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
+import { investorAbi, officerAbi } from '@/artifacts/abi/generated'
 import { INVESTOR_BEACON_ADDRESS } from '@/constant'
 import { log } from '@/utils'
 
@@ -60,20 +59,20 @@ export async function deployInvestorV2Proxy(
 
   await executeContractWrite({
     address: officerAddress,
-    abi: OFFICER_ABI,
+    abi: officerAbi,
     functionName: 'configureBeacon',
     args: ['Investor', INVESTOR_BEACON_ADDRESS]
   })
 
   const initializerData = encodeFunctionData({
-    abi: INVESTOR_V2_ABI,
+    abi: investorAbi,
     functionName: 'initialize',
     args: [args.name, args.symbol, zeroAddress]
   })
 
   const { receipt } = await executeContractWrite({
     address: officerAddress,
-    abi: OFFICER_ABI,
+    abi: officerAbi,
     functionName: 'deployBeaconProxy',
     args: ['Investor', initializerData]
   })

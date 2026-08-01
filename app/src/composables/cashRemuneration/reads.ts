@@ -2,8 +2,7 @@ import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { useTeamStore } from '@/stores'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-
+import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
 /**
  * CashRemunerationEIP712 contract address helper
  */
@@ -17,7 +16,7 @@ export function useCashRemunerationOwner() {
 
   return useReadContract({
     address: contractAddress,
-    abi: CASH_REMUNERATION_EIP712_ABI,
+    abi: cashRemunerationEip712Abi,
     functionName: 'owner',
     query: { enabled: !!contractAddress.value && isAddress(contractAddress.value) }
   })

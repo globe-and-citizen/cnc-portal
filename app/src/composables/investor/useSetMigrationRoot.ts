@@ -12,7 +12,7 @@
  */
 import { useMutation } from '@tanstack/vue-query'
 import { type Address, type Hex } from 'viem'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
+import { investorAbi } from '@/artifacts/abi/generated'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import { useToast } from '@nuxt/ui/composables'
 
@@ -36,7 +36,7 @@ export async function setMigrationRoot(
 ): Promise<SetMigrationRootResult> {
   await executeContractWrite({
     address: args.investorV2Address,
-    abi: INVESTOR_V2_ABI,
+    abi: investorAbi,
     functionName: 'setMigrationRoot',
     args: [args.root]
   })

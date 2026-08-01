@@ -76,19 +76,20 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 import { classifyError, getTokens, log } from '@/utils'
 import {
   encodeFunctionData,
+  erc20Abi,
   parseEther,
   recoverTypedDataAddress,
   zeroAddress,
   type Address,
   type Hex
 } from 'viem'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import { estimateGas, readContract } from '@wagmi/core'
 import { useChainId } from '@wagmi/vue'
 import { config } from '@/wagmi.config'
-import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
+import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
 import { expenseKeys } from '@/queries'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { TableRow } from '@/types/table'
@@ -197,7 +198,7 @@ const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
   try {
     const owner = (await readContract(config, {
       address: currentContract,
-      abi: EXPENSE_ACCOUNT_EIP712_ABI,
+      abi: expenseAccountEip712Abi,
       functionName: 'owner'
     })) as Address
 
@@ -227,7 +228,9 @@ const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
   return true
 }
 
-const submitExpenseAccountTransfer = (args: readonly unknown[]) => {
+type ExpenseTransferArgs = WriteFunctionArgs<typeof expenseAccountEip712Abi, 'transfer'>
+
+const submitExpenseAccountTransfer = (args: ExpenseTransferArgs) => {
   transferMutation.mutate(
     { args },
     {
@@ -257,7 +260,7 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
 
   try {
     const data = encodeFunctionData({
-      abi: EXPENSE_ACCOUNT_EIP712_ABI,
+      abi: expenseAccountEip712Abi,
       functionName: 'transfer',
       args
     })
@@ -281,7 +284,7 @@ const transferErc20Token = async (to: string, amount: string, budgetLimit: Budge
   try {
     allowance = (await readContract(config, {
       address: tokenAddress,
-      abi: ERC20_ABI,
+      abi: erc20Abi,
       functionName: 'allowance',
       args: [userDataStore.address as Address, expenseAccountEip712Address.value]
     })) as bigint

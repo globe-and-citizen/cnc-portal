@@ -3,7 +3,7 @@ import { getBalance, readContract } from '@wagmi/core'
 import type { Address } from 'viem'
 import { useQueryClient } from '@tanstack/vue-query'
 import { config as wagmiConfig } from '@/wagmi.config'
-import { ERC20_ABI } from '@/artifacts/abi/erc20'
+import { erc20Abi } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { classifyError } from '@/utils'
@@ -95,7 +95,7 @@ export function useCashOutAll() {
     for (const token of erc20s) {
       const balance = (await readContract(wagmiConfig, {
         address: token.address,
-        abi: ERC20_ABI,
+        abi: erc20Abi,
         functionName: 'balanceOf',
         args: [bank]
       })) as bigint

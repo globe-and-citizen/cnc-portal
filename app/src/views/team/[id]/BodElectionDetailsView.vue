@@ -18,7 +18,7 @@ import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentB
 import { useTeamStore } from '@/stores'
 import { computed, watch, provide } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { useRouter } from 'vue-router'
 import { log } from '@/utils'
 
@@ -34,7 +34,7 @@ const {
 } = useReadContract({
   functionName: 'getNextElectionId',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   query: {
     enabled: true
   }
@@ -57,7 +57,7 @@ const currentElectionId = computed(() => {
 const { data: currentElection, error: errorGetElection } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   args: [currentElectionId],
   query: {
     enabled: true

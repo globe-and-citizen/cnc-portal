@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import { formatUnits, isAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
-import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import { useFixedReturnAddress, useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
 import { useGetFixedReturnOfferingsQuery } from '@/queries/fixedReturnOffering.queries'
 import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
@@ -49,7 +49,7 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
     queryFn: () =>
       readContract(config, {
         address: fixedReturnAddress.value as Address,
-        abi: FIXED_RETURN_ABI,
+        abi: fixedReturnAbi,
         functionName: 'owner'
       }) as Promise<Address>,
     enabled: computed(() => !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value))

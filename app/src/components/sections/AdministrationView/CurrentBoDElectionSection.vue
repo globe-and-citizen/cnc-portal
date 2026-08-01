@@ -114,15 +114,15 @@ const createElection = async (electionData: OldProposal) => {
       electionData.title,
       electionData.description,
       dateToUnixTimestamp(electionData.startDate as Date) < dateNow
-        ? dateNow + 60 // Start in 1 minute if start date is in the past
-        : dateToUnixTimestamp(electionData.startDate as Date),
+        ? BigInt(dateNow + 60) // Start in 1 minute if start date is in the past
+        : BigInt(dateToUnixTimestamp(electionData.startDate as Date)),
       dateToUnixTimestamp(electionData.startDate as Date) < dateNow
-        ? dateNow + 60 + 60 // End 1 minute after adjusted start time if start date is in the past
-        : dateToUnixTimestamp(electionData.endDate as Date),
-      electionData.winnerCount,
+        ? BigInt(dateNow + 60 + 60) // End 1 minute after adjusted start time if start date is in the past
+        : BigInt(dateToUnixTimestamp(electionData.endDate as Date)),
+      BigInt(electionData.winnerCount),
       electionData.candidates?.map((c) => c.candidateAddress) || [],
       teamStore.currentTeam?.members.map((m) => m.address) || []
-    ] as readonly unknown[]
+    ] as const
 
     await writeCreateElection({ args })
 

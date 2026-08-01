@@ -12,7 +12,7 @@
   </UTooltip>
 </template>
 <script lang="ts" setup>
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import { classifyError, log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -42,7 +42,7 @@ const handlePublishResults = async (electionId: number) => {
 
   try {
     const data = encodeFunctionData({
-      abi: ELECTIONS_ABI,
+      abi: electionsAbi,
       functionName: 'publishResults',
       args: [BigInt(electionId)]
     })

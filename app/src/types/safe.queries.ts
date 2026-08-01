@@ -86,3 +86,18 @@ export interface GetSafeTransactionParams {
   pathParams: GetSafeTransactionPathParams
   queryParams?: GetSafeTransactionQueryParams
 }
+
+/**
+ * Query parameters for Safe outgoing (multisig) transactions
+ */
+export interface GetSafeOutgoingTransactionsQueryParams {
+  limit?: number
+}
+
+/**
+ * Combined parameters for useGetSafeOutgoingTransactionsQuery
+ */
+export interface GetSafeOutgoingTransactionsParams {
+  pathParams: { safeAddress: MaybeRefOrGetter<string | undefined> }
+  queryParams?: GetSafeOutgoingTransactionsQueryParams
+}

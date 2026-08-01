@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/vue-query'
 import { type Address, type Hex } from 'viem'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
+import { investorAbi } from '@/artifacts/abi/generated'
 import {
   executeContractWrite,
   type ExecuteContractWriteResult
@@ -20,7 +20,7 @@ export interface SweepArgs {
 export async function sweepMigration(args: SweepArgs) {
   const { receipt } = await executeContractWrite({
     address: args.investorV2Address,
-    abi: INVESTOR_V2_ABI,
+    abi: investorAbi,
     functionName: 'bulkClaim',
     args: [args.holders, args.amounts, args.proofs]
   })
@@ -35,7 +35,7 @@ export async function sweepMigration(args: SweepArgs) {
 export async function completeMigration(investorV2Address: Address) {
   const { receipt } = await executeContractWrite({
     address: investorV2Address,
-    abi: INVESTOR_V2_ABI,
+    abi: investorAbi,
     functionName: 'completeMigration',
     args: []
   })

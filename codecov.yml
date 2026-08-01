@@ -15,10 +15,21 @@ coverage:
         threshold: 0.5%
     patch:
       default:
-        # The app-e2e-tests flag only exercises the happy-path login flow,
-        # so patch coverage from e2e alone drags the patch % down. We keep
-        # the patch check informational with a 50% floor until the e2e
-        # suite grows to cover more flows.
+        # Scoped to the unit-test flags for the same reason as `project` above:
+        # the app-e2e-tests flag only exercises the happy-path login flow, so
+        # including it computes patch coverage over lines no e2e test could ever
+        # reach. Unscoped, a PR whose diff sits outside that one flow fails the
+        # check on the e2e number alone — e.g. #2393 measured 33% combined while
+        # the app-unit-tests flag reported 75% on the same diff.
+        #
+        # `patch` is a required check on develop, so this is a merge blocker
+        # rather than the "informational" signal the previous comment here
+        # claimed. Keep the 50% floor; just measure it against the suites that
+        # are actually meant to cover new lines.
+        flags:
+          - app-unit-tests
+          - api-unit-tests
+          - contract-unit-tests
         target: 50%
         threshold: 10%
 

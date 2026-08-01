@@ -22,7 +22,7 @@ import {
 } from '@/composables/contracts/useOfficerDeployment'
 import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { officerAbi } from '@/artifacts/abi/generated'
 import { log } from '@/utils'
 
 /**
@@ -78,7 +78,7 @@ export function useOfficerRedeploy() {
   const findInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
     const contracts = (await readContract(config, {
       address: officerAddress,
-      abi: OFFICER_ABI,
+      abi: officerAbi,
       functionName: 'getTeam'
     })) as readonly { contractType: string; contractAddress: Address }[]
     return contracts.find((c) => c.contractType === 'Investor')?.contractAddress ?? null
@@ -87,7 +87,7 @@ export function useOfficerRedeploy() {
   const findPreviousInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
     const contracts = (await readContract(config, {
       address: officerAddress,
-      abi: OFFICER_ABI,
+      abi: officerAbi,
       functionName: 'getTeam'
     })) as readonly { contractType: string; contractAddress: Address }[]
     // Support both V1→V2 migration (finds 'InvestorV1') and V2→V2 redeploy (finds 'Investor')

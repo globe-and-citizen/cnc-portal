@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import type { Election } from '@/types'
 import { log } from '@/utils'
@@ -75,14 +75,14 @@ const {
 } = useReadContract({
   functionName: 'getVoteCount',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   args: [BigInt(election.id)] // Supply currentElectionId as an argument
 })
 
 const { data: electionResults, error: errorGetElectionResults } = useReadContract({
   functionName: 'getElectionResults',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  abi: electionsAbi,
   args: [BigInt(election.id)] // Supply currentElectionId as an argument
 })
 
