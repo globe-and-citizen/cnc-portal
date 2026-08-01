@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { reactive } from 'vue'
 import { Time } from '@internationalized/date'
@@ -30,6 +30,18 @@ function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
 function mountStep(form: CreditCallForm) {
   return mount(CreditCallTermsStep, { props: { form } })
 }
+
+// The fixture deadline is fixed (several tests assert calendar arithmetic off it)
+// while the schema compares it against the real clock, so the suite silently
+// expired the day the wall clock passed it. Pin "now" ahead of the deadline
+// instead of bumping the date, which would only re-arm the same trap.
+beforeAll(() => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2026-07-01T09:00:00Z'))
+})
+afterAll(() => {
+  vi.useRealTimers()
+})
 
 describe('CreditCallTermsStep', () => {
   it('selects a preset term and stays in preset mode', async () => {
