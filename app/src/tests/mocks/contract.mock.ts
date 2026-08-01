@@ -130,14 +130,7 @@ export const mockInvestorReads = {
   totalInvested: createContractReadMock(0n),
   userInvestment: createContractReadMock(0n),
   dividendBalance: createContractReadMock(0n),
-  investorCount: createContractReadMock(0n)
-}
-
-/**
- * Investor v2 (Investor.sol) read mocks — distinct contractType from
- * InvestorV1, see composables/investor/readsV2.ts.
- */
-export const mockInvestorV2Reads = {
+  investorCount: createContractReadMock(0n),
   migrationRoot: createContractReadMock<`0x${string}`>(zeroHash),
   migrationComplete: createContractReadMock(false)
 }
@@ -198,7 +191,6 @@ export const resetContractMocks = () => {
     mockBankReads,
     mockBODReads,
     mockInvestorReads,
-    mockInvestorV2Reads,
     mockCashRemunerationReads,
     mockExpenseAccountReads,
     mockFixedReturnReads
