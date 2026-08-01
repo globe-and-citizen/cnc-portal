@@ -132,14 +132,14 @@ export const getInvestorMigration = async (req: Request, res: Response) => {
 };
 
 export const generateInvestorMerkleSnapshot = async (req: Request, res: Response) => {
-  const { investorV1Address } = req.body;
+  const { previousInvestorAddress } = req.body;
 
   try {
-    if (!investorV1Address) {
-      return errorResponse(400, 'investorV1Address is required', res);
+    if (!previousInvestorAddress) {
+      return errorResponse(400, 'previousInvestorAddress is required', res);
     }
 
-    const snapshot = await generateMerkleSnapshot(investorV1Address as Address);
+    const snapshot = await generateMerkleSnapshot(previousInvestorAddress as Address);
 
     return res.status(200).json(snapshot);
   } catch (error) {

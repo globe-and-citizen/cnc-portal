@@ -217,11 +217,11 @@ describe('InvestorMigration Controller', () => {
   });
 
   describe('POST: /generate', () => {
-    it('should return 400 if investorV1Address is missing', async () => {
+    it('should return 400 if previousInvestorAddress is missing', async () => {
       const response = await request(app).post('/generate').send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('investorV1Address is required');
+      expect(response.body.message).toBe('previousInvestorAddress is required');
     });
 
     it('should return the generated snapshot', async () => {
@@ -236,7 +236,7 @@ describe('InvestorMigration Controller', () => {
 
       const response = await request(app)
         .post('/generate')
-        .send({ investorV1Address: PREVIOUS_INVESTOR_ADDRESS });
+        .send({ previousInvestorAddress: PREVIOUS_INVESTOR_ADDRESS });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(snapshot);
@@ -250,7 +250,7 @@ describe('InvestorMigration Controller', () => {
 
       const response = await request(app)
         .post('/generate')
-        .send({ investorV1Address: PREVIOUS_INVESTOR_ADDRESS });
+        .send({ previousInvestorAddress: PREVIOUS_INVESTOR_ADDRESS });
 
       expect(response.status).toBe(500);
     });

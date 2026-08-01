@@ -98,7 +98,7 @@ describe('useMigrateShareholders', () => {
     })
 
     expect(generateMutation.mutateAsync).toHaveBeenCalledWith({
-      body: { investorV1Address: OLD_INVESTOR }
+      body: { previousInvestorAddress: OLD_INVESTOR }
     })
     expect(executeContractWrite).toHaveBeenCalledWith({
       address: NEW_INVESTOR,

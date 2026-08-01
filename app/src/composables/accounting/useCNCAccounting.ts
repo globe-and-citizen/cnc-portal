@@ -5,7 +5,7 @@
  * the three financial statements to the UI from a single composable:
  *
  *   - **On-chain (getLogs)** — events for the team's Bank, CashRemuneration,
- *     Expense, FixedReturn (Community Credit), InvestorV1 and SafeDepositRouter
+ *     Expense, FixedReturn (Community Credit), Investor and SafeDepositRouter
  *     contracts, reconstructed from the RPC via the shared `use*EventsViaLogs`
  *     composables (no indexer dependency).
  *   - **Safe** — the team Safe's incoming native / ERC-20 transfers (spec §3.1).

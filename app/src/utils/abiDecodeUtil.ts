@@ -21,8 +21,13 @@ export interface DecodedInputData {
   params: DecodedParam[]
 }
 
+// Keyed by `TeamContract.type`. Teams on legacy Officer generations still carry
+// the 'InvestorV1' type, so both keys must resolve — decoding a legacy call with
+// the current ABI is fine, since the selectors they share are unchanged and the
+// v2-only ones simply never appear in a legacy transaction.
 export const CONTRACT_ABI_MAP: Record<string, Abi> = {
   Bank: bankAbi,
+  Investor: investorAbi,
   InvestorV1: investorAbi,
   ExpenseAccountEIP712: expenseAccountEip712Abi,
   CashRemunerationEIP712: cashRemunerationEip712Abi,

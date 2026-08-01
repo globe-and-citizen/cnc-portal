@@ -216,7 +216,7 @@ const { data: allowance } = useErc20Allowance(
 // ERC20 Approve composable
 const approveWrite = useERC20Approve(selectedTokenAddress)
 
-// Deposit composable — handles cross-contract invalidation (router + InvestorV1)
+// Deposit composable — handles cross-contract invalidation (router + Investor)
 // internally on success. See useDeposit in safeDepositRouter/writes.ts.
 const depositWrite = useDeposit()
 

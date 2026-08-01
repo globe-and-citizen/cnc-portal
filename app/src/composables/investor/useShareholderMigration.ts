@@ -144,7 +144,7 @@ export function useMigrateShareholders(options: UseMigrateShareholdersOptions = 
         // persisting the snapshot. Rebuild the snapshot and repair the
         // backend record instead of treating the migration as complete.
         const snapshot = await generateSnapshotMutation.mutateAsync({
-          body: { investorV1Address: oldInvestor }
+          body: { previousInvestorAddress: oldInvestor }
         })
         if (!snapshot) {
           throw new Error('Failed to regenerate Merkle snapshot')
@@ -191,7 +191,7 @@ export function useMigrateShareholders(options: UseMigrateShareholdersOptions = 
 
       // Generate Merkle snapshot with double hash from backend
       const snapshot = await generateSnapshotMutation.mutateAsync({
-        body: { investorV1Address: oldInvestor }
+        body: { previousInvestorAddress: oldInvestor }
       })
       if (!snapshot) {
         throw new Error('Failed to generate Merkle snapshot')

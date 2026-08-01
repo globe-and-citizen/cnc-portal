@@ -12,7 +12,7 @@
  *
  * Not mapped here: `FeePaid` (handled by the fee mapper — spec §5.1) and
  * `DividendDistributionTriggered` (a summary event — booking it as well as the
- * per-shareholder `InvestorV1 DividendPaid` would double-count the dividend).
+ * per-shareholder `Investor DividendPaid` would double-count the dividend).
  */
 import type {
   BankDepositRow,
