@@ -9,6 +9,7 @@ import type {
   GetSafeInfoParams,
   GetSafeTransactionsParams,
   GetSafeIncomingTransfersParams,
+  GetSafeOutgoingTransactionsParams,
   SafeIncomingTransfersResponse,
   SafeIncomingTransfer
 } from '@/types'
@@ -32,6 +33,9 @@ export const safeKeys = {
   incomingTransferLists: () => [...safeKeys.all, 'incoming-transfers'] as const,
   incomingTransfers: (safeAddress: string | undefined, limit?: number) =>
     [...safeKeys.incomingTransferLists(), { safeAddress, limit }] as const,
+  outgoingTransactionLists: () => [...safeKeys.all, 'outgoing-transactions'] as const,
+  outgoingTransactions: (safeAddress: string | undefined, limit?: number) =>
+    [...safeKeys.outgoingTransactionLists(), { safeAddress, limit }] as const,
   balance: (address: string | undefined, chainId: number | undefined) =>
     ['balance', { address, chainId }] as const,
   tokenBalance: (
@@ -173,6 +177,36 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
       const queryString = params.toString() ? `?${params.toString()}` : ''
       const { data } = await externalApiClient.get<SafeIncomingTransfersResponse>(
         `${txService.url}/api/v1/safes/${address}/incoming-transfers/${queryString}`
+      )
+      return data.results || []
+    },
+    staleTime: 300_000,
+    refetchInterval: 300_000
+  })
+}
+
+// ============================================================================
+// GET /api/v1/safes/{safeAddress}/multisig-transactions - Executed outgoing txs
+// ============================================================================
+
+export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTransactionsParams) {
+  const { pathParams, queryParams } = params
+
+  return useQuery<SafeTransaction[]>({
+    queryKey: safeKeys.outgoingTransactions(toValue(pathParams.safeAddress), queryParams?.limit),
+    enabled: !!toValue(pathParams.safeAddress),
+    queryFn: async () => {
+      const address = toValue(pathParams.safeAddress)
+      if (!address) throw new Error('Missing Safe address')
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
+
+      const qp = new URLSearchParams({ executed: 'true' })
+      if (queryParams?.limit) {
+        qp.append('limit', queryParams.limit.toString())
+      }
+
+      const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
+        `${txService.url}/api/v1/safes/${address}/multisig-transactions/?${qp.toString()}`
       )
       return data.results || []
     },
