@@ -1,12 +1,16 @@
 import { computed } from 'vue'
 import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import {
+  useContractWritesV3,
+  type WriteFunctionName
+} from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
-import type { ExtractAbiFunctionNames } from 'abitype'
 
-type CashRemunerationFunctionNames = ExtractAbiFunctionNames<typeof cashRemunerationEip712Abi>
+type CashRemunerationFunctionNames = WriteFunctionName<typeof cashRemunerationEip712Abi>
 
-function useCashRemunerationContractWrite(functionName: CashRemunerationFunctionNames) {
+function useCashRemunerationContractWrite<F extends CashRemunerationFunctionNames>(
+  functionName: F
+) {
   const teamStore = useTeamStore()
   const contractAddress = computed(() =>
     teamStore.getContractAddressByType('CashRemunerationEIP712')

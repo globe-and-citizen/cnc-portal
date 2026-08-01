@@ -42,19 +42,19 @@ adding a new contract:
 
 ```ts
 import { computed } from 'vue'
-import { BANK_ABI } from '@/artifacts/abi/bank'
+import { bankAbi } from '@/artifacts/abi/generated'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
-import type { ExtractAbiFunctionNames } from 'abitype'
+import { type WriteFunctionName } from '@/composables/contracts/useContractWritesV3'
 
-type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
+type BankFunctionNames = WriteFunctionName<typeof bankAbi>
 
-function useBankContractWrite(functionName: BankFunctionNames) {
+function useBankContractWrite<F extends BankFunctionNames>(functionName: F) {
   const teamStore = useTeamStore()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
   return useContractWritesV3({
     contractAddress: bankAddress,
-    abi: BANK_ABI,
+    abi: bankAbi,
     functionName
   })
 }
@@ -75,8 +75,9 @@ Rules of thumb:
   one composable — callers need independent `isPending` / `error` states per
   call site.
 - **Pass refs, not values, for addresses.** `useContractWritesV3` accepts
-  `MaybeRef` for `contractAddress`, `abi`, `functionName`, and `chainId`. Keep
-  the address reactive so the mutation tracks store updates.
+  `MaybeRef` for `contractAddress` and `chainId`. Keep the address reactive so
+  the mutation tracks store updates. `abi` and `functionName` are plain values —
+  see below.
 - **Pin `chainId` only when you mean it.** Omitting `chainId` lets wagmi
   resolve the chain from the connected wallet at call time and invalidates
   reads across every chain in the cache. Pin it when the contract is single-
@@ -88,10 +89,24 @@ Rules of thumb:
   await transfer.mutateAsync({ args: [to, amount] })
   ```
 
-`abi` is widened to `Abi` inside `useContractWritesV3`, so `variables.args` is
-**not** structurally validated against the function signature. The
-`ExtractAbiFunctionNames` factory above gives you function-name safety; argument
-typing remains the caller's responsibility.
+`variables.args` **is** structurally validated against the function signature:
+`useContractWritesV3` is generic over `abi` and `functionName`, so viem resolves
+`args` to the exact tuple the ABI declares. Wrong order, a `string` where the ABI
+says `uint256`, and a missing argument are all compile errors.
+
+This is why `abi` and `functionName` are plain values, not `MaybeRef`: `args` is
+derived from them, and a reactive `functionName` would make that derivation the
+union of every function's tuple, which constrains nothing. No call site needs a
+reactive ABI — pass a different `abi`/`functionName` pair from a different
+composable instead.
+
+The tuple types are exported if you need to type a helper that forwards args:
+
+```ts
+import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
+
+type TransferArgs = WriteFunctionArgs<typeof bankAbi, 'transferToken'>
+```
 
 ## 2. Error handling
 
