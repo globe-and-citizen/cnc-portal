@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { makeCurrencyStoreMock, mockUserStore } from '@/tests/mocks'
+import { makeCurrencyStoreMock, mockUseContractBalance, mockUserStore } from '@/tests/mocks'
 import { UDropdownStub } from '@/tests/stubs/nuxt-ui.stubs'
 import type { Team } from '@/types'
 import type { Address } from 'viem'
@@ -111,9 +111,12 @@ describe('TeamCard', () => {
       expect(text).toContain('Cash 25%')
     })
 
-    // A team whose contracts the payload didn't carry has an unknown treasury,
-    // not an empty one — "$0.00" would read as a drained account.
+    // Before the first read lands — or when the team holds none of these
+    // accounts — the treasury is unknown, not empty. "$0.00" would read as a
+    // drained account.
     it('reports an unknown treasury rather than claiming zero', () => {
+      mockUseContractBalance.hasData.value = false
+
       const wrapper = mountCard(makeTeam({ teamContracts: [] }))
 
       expect(wrapper.find('[data-test="total-balance"]').text()).toBe('—')

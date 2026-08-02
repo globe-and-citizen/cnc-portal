@@ -168,9 +168,9 @@ const { data: bankOwner } = useBankOwner()
 
 const currencyCode = computed(() => currencyStore.localCurrency.code)
 const fiat = (balance: ReturnType<typeof useContractBalance>) =>
-  balance.total.value[currencyCode.value]?.value ?? 0
+  balance.data.value?.total.local.value ?? 0
 const fiatFormatted = (balance: ReturnType<typeof useContractBalance>) =>
-  balance.total.value[currencyCode.value]?.formated ?? '—'
+  balance.data.value?.total.local.formatted ?? '—'
 
 const isOwner = computed(() => {
   if (!bankOwner.value || !userStore.address) return false

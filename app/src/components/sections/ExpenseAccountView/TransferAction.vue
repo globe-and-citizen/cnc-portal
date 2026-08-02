@@ -100,9 +100,10 @@ const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const toast = useToast()
 const chainId = useChainId()
-const { balances } = useContractBalance(
+const { data: balance } = useContractBalance(
   ref(teamStore.getContractAddressByType('ExpenseAccountEIP712'))
 )
+const balances = computed(() => balance.value?.balances ?? [])
 const queryClient = useQueryClient()
 
 const showModal = ref({ mount: false, show: false })

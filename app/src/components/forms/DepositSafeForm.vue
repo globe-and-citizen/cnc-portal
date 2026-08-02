@@ -65,7 +65,7 @@ import { ref, computed } from 'vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { z } from 'zod'
 import { parseEther, zeroAddress, type Address } from 'viem'
-import { useContractBalance } from '@/composables/useContractBalance'
+import { useContractBalance, contractBalanceKeys } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
 import { useERC20Approve, useERC20Transfer } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
@@ -142,7 +142,8 @@ const errorMessage = computed(() => {
 })
 
 // Reactive state for balances
-const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
+const { data: balance, isLoading } = useContractBalance(userDataStore.address as Address)
+const balances = computed(() => balance.value?.balances ?? [])
 
 // Native token deposit using safe transaction handler
 const nativeDeposit = useSafeSendTransaction({
@@ -230,10 +231,11 @@ const submitForm = async () => {
         args: [props.safeAddress, bigIntAmount.value]
       })
 
-      // V3 invalidates `readContract` queries on the token address; the
-      // Safe's native balance lives on a separate key, so invalidate it here.
+      // V3 invalidates `readContract` queries on the token address; the Safe's
+      // own token balances live on their own key, so invalidate it here.
+      // `chainId` is a ref — it has to be unwrapped, or the key never matches.
       await queryClient.invalidateQueries({
-        queryKey: ['balance', { address: props.safeAddress, chainId }]
+        queryKey: contractBalanceKeys.detail(props.safeAddress, chainId.value)
       })
 
       submitting.value = false

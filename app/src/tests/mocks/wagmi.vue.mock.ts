@@ -114,7 +114,6 @@ export const mockUseAccount = {
  * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
  */
 export const useChainIdFn = vi.fn(() => mockUseChainId)
-export const useBalanceFn = vi.fn(() => ({ ...mockUseBalance }))
 export const useReadContractFn = vi.fn(() => ({ ...mockUseReadContract }))
 export const useSignTypedDataFn = vi.fn(() => ({ ...mockUseSignTypedData }))
 export const useAccountFn = vi.fn(() => ({ ...mockUseAccount }))
@@ -138,11 +137,6 @@ export const resetWagmiVueMocks = () => {
 
   mockUseReadContract.data.value = '0xData'
   mockUseReadContract.error.value = null
-
-  mockUseBalance.data.value = null
-  mockUseBalance.error.value = null
-  mockUseBalance.isLoading.value = false
-  useBalanceFn.mockClear()
 
   Object.values(mockWagmiCore).forEach((fn) => {
     if (vi.isMockFunction(fn)) fn.mockClear()

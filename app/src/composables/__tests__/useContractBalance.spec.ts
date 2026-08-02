@@ -1,77 +1,158 @@
-import { describe, expect, it, beforeEach, vi } from 'vitest'
-import { ref, toValue } from 'vue'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { ref, type Ref } from 'vue'
 import type { Address } from 'viem'
-import { useBalanceFn, useReadContractFn } from '@/tests/mocks/wagmi.vue.mock'
+import { useQueryFn } from '@/tests/mocks/composables.mock'
+import { mockWagmiCore, mockUseChainId } from '@/tests/mocks/wagmi.vue.mock'
+import { useCurrencyStore } from '@/stores'
+import { SUPPORTED_TOKENS } from '@/constant'
+import type { RawTokenBalances } from '@/lib/balances/tokenBalances'
 
-// `@/composables/useContractBalance` is globally mocked for component specs.
-// This file is the one place that exercises the real implementation, so it
-// reaches past the mock rather than replacing it.
-const { useContractBalance } = await vi.importActual<
-  typeof import('@/composables/useContractBalance')
->('@/composables/useContractBalance')
+// Globally mocked in composables.setup.ts — this spec exercises the real one.
+vi.unmock('@/composables/useContractBalance')
 
-const BANK = '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address
+import { useContractBalance, contractBalanceKeys } from '@/composables/useContractBalance'
 
-// wagmi is called with a config object whose fields may be refs; read them the
-// way wagmi does rather than assuming they are plain values.
-type BalanceConfig = { address?: unknown; query?: { enabled?: unknown } }
-type ReadConfig = { args?: unknown; query?: { enabled?: unknown } }
+const ADDRESS = '0x1234567890123456789012345678901234567890' as Address
 
-const balanceConfig = () => useBalanceFn.mock.calls[0]?.[0] as unknown as BalanceConfig
-const erc20Config = () => useReadContractFn.mock.calls[0]?.[0] as unknown as ReadConfig
+type CapturedConfig = {
+  queryKey: Ref<readonly unknown[]>
+  enabled: Ref<boolean>
+  refetchInterval: number
+  queryFn: () => Promise<RawTokenBalances>
+}
+
+const nativeToken = SUPPORTED_TOKENS.find((token) => token.id === 'native')!
+const erc20Tokens = SUPPORTED_TOKENS.filter((token) => token.id !== 'native')
 
 describe('useContractBalance', () => {
+  let captured: CapturedConfig
+  let data: Ref<RawTokenBalances | undefined>
+
   beforeEach(() => {
     vi.clearAllMocks()
+    data = ref<RawTokenBalances | undefined>(undefined)
+    useQueryFn.mockImplementation((cfg: unknown) => {
+      captured = cfg as CapturedConfig
+      return { data, isLoading: ref(false), error: ref(null), refetch: vi.fn() }
+    })
   })
 
-  // The address is almost never known at setup: it arrives with the team query,
-  // or changes when the user switches team. A snapshot taken during setup leaves
-  // the reads pointed at `undefined` for the lifetime of the component.
-  it('follows an address that only resolves after setup', () => {
-    const address = ref<Address | undefined>(undefined)
+  describe('query wiring', () => {
+    it('keys the query the way the invalidation call sites target it', () => {
+      useContractBalance(ADDRESS)
 
-    useContractBalance(address)
-    expect(toValue(balanceConfig().address)).toBeUndefined()
+      expect(captured.queryKey.value).toEqual(['balance', { address: ADDRESS, chainId: 1 }])
+      expect(captured.queryKey.value).toEqual(contractBalanceKeys.detail(ADDRESS, 1))
+    })
 
-    address.value = BANK
-    expect(toValue(balanceConfig().address)).toBe(BANK)
+    it('re-keys when the address ref changes', () => {
+      const address = ref<Address | undefined>(ADDRESS)
+      useContractBalance(address)
+
+      const other = '0x9999999999999999999999999999999999999999' as Address
+      address.value = other
+
+      expect(captured.queryKey.value).toEqual(['balance', { address: other, chainId: 1 }])
+    })
+
+    it('stays disabled until an address is available', () => {
+      const address = ref<Address | undefined>(undefined)
+      useContractBalance(address)
+
+      expect(captured.enabled.value).toBe(false)
+
+      address.value = ADDRESS
+      expect(captured.enabled.value).toBe(true)
+    })
+
+    it('reads every supported token in one pass', async () => {
+      mockWagmiCore.getBalance.mockResolvedValue({ value: 10n ** 18n })
+      mockWagmiCore.readContract.mockResolvedValue(1_000_000n)
+
+      useContractBalance(ADDRESS)
+      const raw = await captured.queryFn()
+
+      expect(mockWagmiCore.getBalance).toHaveBeenCalledTimes(1)
+      expect(mockWagmiCore.readContract).toHaveBeenCalledTimes(erc20Tokens.length)
+      expect(Object.keys(raw)).toEqual(SUPPORTED_TOKENS.map((token) => token.id))
+    })
   })
 
-  it('passes the resolved address through to the ERC20 reads too', () => {
-    const address = ref<Address | undefined>(undefined)
+  describe('data', () => {
+    it('is undefined until the first read lands, so loading is not read as a zero balance', () => {
+      const { data: derived } = useContractBalance(ADDRESS)
 
-    useContractBalance(address)
-    address.value = BANK
+      expect(derived.value).toBeUndefined()
+    })
 
-    expect(toValue(erc20Config().args)).toEqual([BANK])
+    it('prices the cached amounts once the read lands', () => {
+      const { data: derived } = useContractBalance(ADDRESS)
+
+      data.value = { [nativeToken.id]: 10n ** 18n }
+
+      const native = derived.value?.balances.find((balance) => balance.token.id === 'native')
+      expect(native?.amount).toBe(1)
+      expect(native?.raw).toBe(10n ** 18n)
+      // The store mock prices native at 2000 USD.
+      expect(native?.value.usd.value).toBe(2000)
+      expect(derived.value?.total.usd.value).toBe(2000)
+    })
+
+    it('exposes one entry per supported token, in configuration order', () => {
+      const { data: derived } = useContractBalance(ADDRESS)
+
+      data.value = {}
+
+      expect(derived.value?.balances.map((balance) => balance.token.id)).toEqual(
+        SUPPORTED_TOKENS.map((token) => token.id)
+      )
+      expect(derived.value?.balances.every((balance) => balance.amount === 0)).toBe(true)
+    })
+
+    it('re-prices when the currency changes, without refetching', () => {
+      const localPrice = ref(2)
+      const localCode = ref('USD')
+      vi.mocked(useCurrencyStore).mockReturnValue({
+        getTokenInfo: () => ({
+          prices: [
+            { id: 'local', price: localPrice.value, code: localCode.value, symbol: '$' },
+            { id: 'usd', price: 2, code: 'USD', symbol: '$' }
+          ]
+        })
+      } as never)
+
+      const { data: derived } = useContractBalance(ADDRESS)
+      data.value = { [nativeToken.id]: 10n ** 18n }
+
+      expect(derived.value?.total.local).toEqual({ value: 2, formatted: '$2' })
+
+      localPrice.value = 5
+      localCode.value = 'EUR'
+
+      expect(derived.value?.total.local).toEqual({ value: 5, formatted: '€5' })
+      // The USD side and the on-chain amount are untouched by the switch.
+      expect(derived.value?.total.usd.value).toBe(2)
+      expect(derived.value?.balances.find((b) => b.token.id === 'native')?.amount).toBe(1)
+      // Re-pricing is pure derivation: no new read was issued.
+      expect(mockWagmiCore.getBalance).not.toHaveBeenCalled()
+    })
   })
 
-  // Querying `balanceOf(undefined)` is a wasted RPC round-trip per token, per
-  // account, per card.
-  it('stays disabled while the address is unknown', () => {
-    const address = ref<Address | undefined>(undefined)
+  it('passes the connected chain through to the reads', async () => {
+    mockUseChainId.value = 31337
+    mockWagmiCore.getBalance.mockResolvedValue({ value: 0n })
+    mockWagmiCore.readContract.mockResolvedValue(0n)
 
-    useContractBalance(address)
+    useContractBalance(ADDRESS)
 
-    expect(toValue(balanceConfig().query?.enabled)).toBe(false)
-    expect(toValue(erc20Config().query?.enabled)).toBe(false)
-  })
+    expect(captured.queryKey.value).toEqual(['balance', { address: ADDRESS, chainId: 31337 }])
 
-  it('enables the reads once the address is known', () => {
-    const address = ref<Address | undefined>(undefined)
+    await captured.queryFn()
+    expect(mockWagmiCore.getBalance).toHaveBeenCalledWith(expect.anything(), {
+      address: ADDRESS,
+      chainId: 31337
+    })
 
-    useContractBalance(address)
-    address.value = BANK
-
-    expect(toValue(balanceConfig().query?.enabled)).toBe(true)
-    expect(toValue(erc20Config().query?.enabled)).toBe(true)
-  })
-
-  it('accepts a plain address, not just a ref', () => {
-    useContractBalance(BANK)
-
-    expect(toValue(balanceConfig().address)).toBe(BANK)
-    expect(toValue(balanceConfig().query?.enabled)).toBe(true)
+    mockUseChainId.value = 1
   })
 })

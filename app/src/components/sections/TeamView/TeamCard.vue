@@ -162,82 +162,54 @@ const isOnLegacyContracts = computed(
 )
 
 // --- Treasury -------------------------------------------------------------
-// The four money-holding accounts the card breaks the balance down by, in the
-// order the design stacks them. `useContractBalance` wraps wagmi hooks, so the
-// four calls have to be unconditional and in a stable order — a team missing an
-// account simply resolves to an undefined address and contributes nothing.
+// `useContractBalance` opens a query per address, so the four calls have to be
+// unconditional and in a stable order. An account the team does not have
+// resolves to an undefined address, which leaves that query disabled.
 const contractAddress = (type: ContractType) =>
   computed(() => props.team.teamContracts?.find((contract) => contract.type === type)?.address)
 
-const bankAddress = contractAddress('Bank')
-const safeAddress = contractAddress('Safe')
-const expenseAddress = contractAddress('ExpenseAccountEIP712')
-const cashAddress = contractAddress('CashRemunerationEIP712')
-
-const bankBalance = useContractBalance(bankAddress)
-const safeBalance = useContractBalance(safeAddress)
-const expenseBalance = useContractBalance(expenseAddress)
-const cashBalance = useContractBalance(cashAddress)
+const bankBalance = useContractBalance(contractAddress('Bank'))
+const safeBalance = useContractBalance(contractAddress('Safe'))
+const expenseBalance = useContractBalance(contractAddress('ExpenseAccountEIP712'))
+const cashBalance = useContractBalance(contractAddress('CashRemunerationEIP712'))
 
 const currencyCode = computed(() => currencyStore.localCurrency.code)
 
-const isLoadingBalances = computed(
-  () =>
-    bankBalance.isLoading.value ||
-    safeBalance.isLoading.value ||
-    expenseBalance.isLoading.value ||
-    cashBalance.isLoading.value
+const isLoadingBalances = computed(() =>
+  [bankBalance, safeBalance, expenseBalance, cashBalance].some((account) => account.isLoading.value)
 )
 
-const rawTotal = (balance: ReturnType<typeof useContractBalance>) =>
-  balance.total.value[currencyCode.value]?.value ?? 0
-
+// `data` stays undefined until a read lands, so an account still loading — or
+// one the team does not hold — is never folded in as a zero.
 const accounts = computed(() => [
   // Bank and Safe are both primary; the design separates them by weight, which
   // the theme expresses as opacity rather than a numeric colour scale.
-  {
-    label: 'Bank',
-    address: bankAddress.value,
-    amount: rawTotal(bankBalance),
-    barClass: 'bg-primary/40'
-  },
-  {
-    label: 'Safe',
-    address: safeAddress.value,
-    amount: rawTotal(safeBalance),
-    barClass: 'bg-primary'
-  },
+  { label: 'Bank', amount: bankBalance.data.value?.total.local.value, barClass: 'bg-primary/40' },
+  { label: 'Safe', amount: safeBalance.data.value?.total.local.value, barClass: 'bg-primary' },
   {
     label: 'Expense',
-    address: expenseAddress.value,
-    amount: rawTotal(expenseBalance),
+    amount: expenseBalance.data.value?.total.local.value,
     barClass: 'bg-accent'
   },
-  {
-    label: 'Cash',
-    address: cashAddress.value,
-    amount: rawTotal(cashBalance),
-    barClass: 'bg-warning'
-  }
+  { label: 'Cash', amount: cashBalance.data.value?.total.local.value, barClass: 'bg-warning' }
 ])
 
-// A team whose accounts we cannot see is not a team holding nothing. Until at
-// least one account address is known there is no balance to report, and a
-// confident "$0.00" would read as an empty treasury.
-const hasKnownAccounts = computed(() => accounts.value.some((account) => !!account.address))
+type ReadAccount = { label: string; amount: number; barClass: string }
 
-// Only accounts we can actually address contribute — an account with no known
-// address has no balance to add, whatever a stale read might still hold.
-const knownAccounts = computed(() => accounts.value.filter((account) => !!account.address))
-
-const totalBalance = computed(() =>
-  knownAccounts.value.reduce((sum, account) => sum + account.amount, 0)
+const readAccounts = computed(() =>
+  accounts.value.filter((account): account is ReadAccount => account.amount !== undefined)
 )
 
-// Balances are priced in the viewer's currency, so they must be formatted with
-// it too — `formatUsd` would stamp a `$` on a EUR figure.
+const totalBalance = computed(() =>
+  readAccounts.value.reduce((sum, account) => sum + account.amount, 0)
+)
+
+// A treasury we could not read is not a treasury holding nothing. Until at
+// least one account has landed, a confident "$0.00" would read as drained.
+// Balances are priced in the viewer's currency, so they are formatted with it
+// too — `formatUsd` would stamp a `$` on a EUR figure.
 const formattedTotal = computed(() =>
-  hasKnownAccounts.value
+  readAccounts.value.length > 0
     ? formatCurrency(totalBalance.value, { currency: currencyCode.value })
     : EMPTY_VALUE
 )
@@ -247,7 +219,7 @@ const formattedTotal = computed(() =>
 const accountShares = computed(() => {
   const total = totalBalance.value
   if (total <= 0) return []
-  return knownAccounts.value
+  return readAccounts.value
     .filter((account) => account.amount > 0)
     .map((account) => ({
       ...account,
