@@ -18,11 +18,13 @@ export { EMPTY_VALUE, FORMAT_LOCALE } from './shared'
 
 export {
   formatCompact,
+  formatCurrency,
   formatNumber,
   formatPercent,
   formatToken,
   formatUsd,
   type CompactOptions,
+  type CurrencyOptions,
   type DecimalOptions,
   type NumericInput,
   type PercentOptions,
