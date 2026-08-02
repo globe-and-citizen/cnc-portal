@@ -234,6 +234,23 @@ describe('TeamCard', () => {
       ])
     })
 
+    // The whole card is the navigation target, so a click meant for the menu
+    // must not also open the team.
+    it('keeps menu clicks from reaching the card underneath', async () => {
+      const onCardClick = vi.fn()
+      const wrapper = mount(TeamCard, {
+        props: { team: makeTeam() },
+        attrs: { onClick: onCardClick }
+      })
+
+      await wrapper.find('[data-test="u-dropdown"]').trigger('click')
+      expect(onCardClick).not.toHaveBeenCalled()
+
+      // …while a click anywhere else on the card still navigates.
+      await wrapper.trigger('click')
+      expect(onCardClick).toHaveBeenCalledTimes(1)
+    })
+
     it('emits the chosen action instead of mutating the team itself', () => {
       const wrapper = mountCard()
       const items = wrapper.findComponent(UDropdownStub).props('items') as Array<{
