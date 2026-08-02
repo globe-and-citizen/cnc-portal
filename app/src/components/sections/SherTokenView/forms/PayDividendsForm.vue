@@ -78,7 +78,9 @@ defineProps<{
 }>()
 
 const bankAddress = teamStore.getContractAddressByType('Bank')
-const { balances } = useContractBalance(bankAddress as Address)
+const { data: balance } = useContractBalance(bankAddress as Address)
+
+const balances = computed(() => balance.value?.balances ?? [])
 
 const getTokens = (): TokenOption[] =>
   balances.value
@@ -86,7 +88,7 @@ const getTokens = (): TokenOption[] =>
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.values['USD']?.price ?? 0,
+      price: b.price.usd.value,
       name: b.token.name,
       code: b.token.code
     }))

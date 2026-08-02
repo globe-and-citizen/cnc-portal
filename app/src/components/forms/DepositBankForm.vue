@@ -71,7 +71,7 @@ import { ref, computed } from 'vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { z } from 'zod'
 import { parseEther, zeroAddress, type Address } from 'viem'
-import { useContractBalance } from '@/composables/useContractBalance'
+import { useContractBalance, contractBalanceKeys } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
@@ -130,7 +130,8 @@ const userDataStore = useUserDataStore()
 const toast = useToast()
 
 // Reactive state for balances
-const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
+const { data: balance, isLoading } = useContractBalance(userDataStore.address as Address)
+const balances = computed(() => balance.value?.balances ?? [])
 
 // Native token deposit using safe transaction handler
 const nativeDeposit = useSafeSendTransaction({
@@ -235,20 +236,12 @@ const submitForm = async () => {
         args: [selectedTokenAddress.value, bigIntAmount.value]
       })
 
-      const invalidateErc20Balance = (tokenAddress: Address, target: Address) =>
-        queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            {
-              address: tokenAddress,
-              chainId,
-              functionName: 'balanceOf',
-              args: [target]
-            }
-          ]
-        })
-
-      invalidateErc20Balance(selectedTokenAddress.value, props.bankAddress)
+      // The Bank's native and ERC-20 amounts share one query per contract, so
+      // one key refreshes what the deposit changed. `chainId` is a ref — it has
+      // to be unwrapped, or the key never matches anything.
+      await queryClient.invalidateQueries({
+        queryKey: contractBalanceKeys.detail(props.bankAddress, chainId.value)
+      })
 
       submitting.value = false
       amount.value = ''
