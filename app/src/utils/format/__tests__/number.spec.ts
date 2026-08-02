@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   formatCompact,
+  formatCurrency,
   formatNumber,
   formatPercent,
   formatToken,
@@ -70,6 +71,30 @@ describe('formatToken', () => {
 
   it('does not append a symbol to a value it cannot display', () => {
     expect(formatToken(null, 'USDC')).toBe(EMPTY_VALUE)
+  })
+})
+
+describe('formatCurrency', () => {
+  it('defaults to USD, matching formatUsd', () => {
+    expect(formatCurrency(1234.5)).toBe('$1,234.50')
+    expect(formatCurrency(1234.5)).toBe(formatUsd(1234.5))
+  })
+
+  it('honours the requested currency', () => {
+    expect(formatCurrency(1234.5, { currency: 'EUR' })).toBe('€1,234.50')
+  })
+
+  it('honours the decimals option', () => {
+    expect(formatCurrency(1234.5, { decimals: 0 })).toBe('$1,235')
+  })
+
+  it('collapses a signed zero rather than alarming with -$0.00', () => {
+    expect(formatCurrency(-0.001)).toBe('$0.00')
+  })
+
+  it('renders the empty value for a non-number', () => {
+    expect(formatCurrency(null)).toBe(EMPTY_VALUE)
+    expect(formatCurrency(undefined)).toBe(EMPTY_VALUE)
   })
 })
 

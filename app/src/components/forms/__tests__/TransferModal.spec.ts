@@ -10,8 +10,11 @@ import {
   mockUserStore,
   mockUseContractBalance,
   mockBankWrites,
-  useQueryClientFn
+  useQueryClientFn,
+  makeTokenBalance,
+  mockUseChainId
 } from '@/tests/mocks'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 
 vi.mock('@/artifacts/abi/bank', () => ({
   BANK_ABI: [
@@ -47,20 +50,18 @@ describe('TransferModal', () => {
   const mockRecipientAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as const
 
   const setBalances = (balances?: Array<Record<string, unknown>>) => {
-    mockUseContractBalance.balances.value =
-      (balances as never) ??
-      ([
-        {
-          token: { id: 'native', symbol: NETWORK.currencySymbol, name: 'Native', code: 'ETH' },
-          amount: 10,
-          values: { USD: { price: 2000 } }
-        },
-        {
-          token: { id: 'usdc', symbol: 'USDC', name: 'USD Coin', code: 'USDC' },
-          amount: 5000,
-          values: { USD: { price: 1 } }
-        }
-      ] as never)
+    mockUseContractBalance.balances.value = (balances as never) ?? [
+      makeTokenBalance({
+        token: { id: 'native', symbol: NETWORK.currencySymbol, name: 'Native', code: 'ETH' },
+        amount: 10,
+        usdPrice: 2000
+      }),
+      makeTokenBalance({
+        token: { id: 'usdc', symbol: 'USDC', name: 'USD Coin', code: 'USDC', decimals: 6 },
+        amount: 5000,
+        usdPrice: 1
+      })
+    ]
   }
 
   const createQueryClient = () => {
@@ -222,7 +223,7 @@ describe('TransferModal', () => {
     expect(mockBankWrites.transferToken.mutate).not.toHaveBeenCalled()
   })
 
-  it('handles direct token transfers and invalidates the token balance query', async () => {
+  it('handles direct token transfers and invalidates the contract balance query', async () => {
     const { invalidateQueries } = createQueryClient()
     wrapper = mountComponent()
     await openModal(wrapper)
@@ -234,9 +235,11 @@ describe('TransferModal', () => {
     })
 
     expect(mockBankWrites.transferToken.mutate).toHaveBeenCalledOnce()
-    expect(invalidateQueries).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: expect.arrayContaining(['readContract']) })
-    )
+    // Native and ERC-20 amounts live on one key per contract, so the ERC-20
+    // path refreshes the Bank's balance query rather than a per-token read.
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: contractBalanceKeys.detail(mockBankAddress, mockUseChainId.value)
+    })
   })
 
   it('handles direct native transfers and surfaces errors from the mutation', async () => {

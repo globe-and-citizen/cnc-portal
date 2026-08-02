@@ -136,9 +136,10 @@ const formattedMultiplier = computed(() =>
 
 const multiplierNumber = computed(() => parseFloat(formattedMultiplier.value) || 0)
 
-const { balances, isLoading: isBalanceLoading } = useContractBalance(
+const { data: balance, isLoading: isBalanceLoading } = useContractBalance(
   userDataStore.address as Address
 )
+const balances = computed(() => balance.value?.balances ?? [])
 
 const ROUTER_SUPPORTED_TOKENS: TokenId[] = ['usdc']
 

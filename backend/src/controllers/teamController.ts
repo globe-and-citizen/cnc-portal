@@ -1,4 +1,4 @@
-import { Prisma, TeamContract, TeamOfficer, User } from '@prisma/client';
+import { Prisma, TeamContract, TeamOfficer, User, Wage } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
@@ -6,6 +6,8 @@ import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { generateUniqueSlug } from '../utils/slug.util';
 import { isActiveOfficerVersion } from '../utils/officerVersion';
+import { isAdmin } from '../utils/roleUtils';
+import { UserRoles } from '../types/roles';
 
 // A slug is taken when some team already holds it.
 const isTeamSlugTaken = async (slug: string) =>
@@ -22,18 +24,10 @@ const previousOfficerInclude = {
 // row that has no successor pointing back to it. This is the team's current
 // Officer. Returned as a single-element array because Prisma includes are
 // always relations; we flatten it to `currentOfficer` in the response.
-export const currentOfficerInclude = {
-  teamOfficers: {
-    where: { nextOfficer: { is: null } },
-    take: 1,
-    include: previousOfficerInclude,
-  },
-} as const;
-
-// Same as currentOfficerInclude, but also loads the contracts governed by the
-// current Officer. Use on endpoints that expose `teamContracts` on the team —
-// we want the live set (contracts of the current Officer), not the union of
-// every Officer's contracts across history.
+//
+// Also loads the contracts governed by the current Officer, so endpoints that
+// expose `teamContracts` see the live set (contracts of the current Officer),
+// not the union of every Officer's contracts across history.
 //
 // Safe and SafeDepositRouter are intentionally stored with officerId = NULL
 // because they survive Officer redeploys. Load them off the team relation
@@ -67,24 +61,14 @@ export const serializeOfficer = (o: TeamOfficer | undefined | null) =>
 const deriveIsMigrated = (officer: { version?: string | null } | null | undefined) =>
   isActiveOfficerVersion(officer?.version);
 
-// Pulls the head of the linked list out of an `include: currentOfficerInclude`
-// result and exposes it as `currentOfficer`. Removes the raw `teamOfficers`
-// array so consumers don't accidentally rely on the implementation detail.
-const withCurrentOfficer = <T extends { teamOfficers?: TeamOfficer[] }>(team: T) => {
-  const { teamOfficers, ...rest } = team;
-  const head = teamOfficers?.[0] ?? null;
-  return {
-    ...rest,
-    currentOfficer: serializeOfficer(head),
-    isMigrated: deriveIsMigrated(head),
-  };
-};
-
 const isTruthyQueryFlag = (value: unknown) => value === true || value === 'true';
 
-// Same as withCurrentOfficer but additionally surfaces the current Officer's
-// contracts as `teamContracts` on the team — scoping the contract list to the
-// currently active generation so archived contracts don't leak out.
+// Pulls the head of the linked list out of an
+// `include: currentOfficerWithContractsInclude` result and exposes it as
+// `currentOfficer`, and surfaces the current Officer's contracts as
+// `teamContracts` — scoping the contract list to the currently active
+// generation so archived contracts don't leak out. Removes the raw
+// `teamOfficers` array so consumers don't rely on the implementation detail.
 const withCurrentOfficerAndContracts = <
   T extends {
     teamOfficers?: (TeamOfficer & { contracts: TeamContract[] })[];
@@ -104,6 +88,24 @@ const withCurrentOfficerAndContracts = <
     // (Safe / SafeDepositRouter) so the client sees the full live set.
     teamContracts: [...contracts, ...(teamContracts ?? [])],
   };
+};
+
+// The team list card shows the viewer's own wage status ("Wage set" vs "No wage
+// set"), not the whole roster's. Fetch just the caller's active wage (the row
+// with no successor) across the listed teams in a single query and index it by
+// team, so the list stays one extra query rather than one per team.
+const findCallerWagesByTeamId = async (callerAddress: string, teamIds: number[]) => {
+  if (teamIds.length === 0) return new Map<number, Wage>();
+
+  const wages = await prisma.wage.findMany({
+    where: {
+      userAddress: callerAddress,
+      teamId: { in: teamIds },
+      nextWageId: null,
+    },
+  });
+
+  return new Map(wages.map((wage) => [wage.teamId, wage]));
 };
 
 // Create a new team
@@ -240,7 +242,10 @@ const getTeam = async (req: Request, res: Response) => {
       return errorResponse(404, 'Team not found', res);
     }
 
-    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
+    // Platform admins inspect teams they are not members of from the admin
+    // dashboard, so membership is only required for regular users.
+    const callerRoles = (req.user?.roles ?? []) as UserRoles;
+    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress) && !isAdmin(callerRoles)) {
       return errorResponse(403, 'Unauthorized', res);
     }
 
@@ -358,7 +363,16 @@ const getAllTeams = async (req: Request, res: Response) => {
               members: true,
             },
           },
-          ...currentOfficerInclude,
+          // The list card renders an initials-only avatar stack, so name +
+          // address is all it needs. Deliberately no imageUrl: resolving those
+          // means one storage presign per member per team.
+          members: {
+            select: {
+              address: true,
+              name: true,
+            },
+          },
+          ...currentOfficerWithContractsInclude,
         },
       });
 
@@ -372,11 +386,17 @@ const getAllTeams = async (req: Request, res: Response) => {
 
       const hiddenByTeamId = new Map(visibilityRows.map((row) => [row.teamId, row.isHidden]));
 
+      const callerWageByTeamId = await findCallerWagesByTeamId(
+        callerAddress,
+        memberTeams.map((team) => team.id)
+      );
+
       return res.status(200).json(
         memberTeams.map((team) => ({
-          ...withCurrentOfficer(team),
+          ...withCurrentOfficerAndContracts(team),
           isHidden: hiddenByTeamId.get(team.id) ?? false,
           isArchived: team.isArchived ?? false,
+          callerWage: callerWageByTeamId.get(team.id) ?? null,
         }))
       );
     }
@@ -392,15 +412,27 @@ const getAllTeams = async (req: Request, res: Response) => {
             members: true,
           },
         },
-        ...currentOfficerInclude,
+        members: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
+        ...currentOfficerWithContractsInclude,
       },
     });
 
+    const callerWageByTeamId = await findCallerWagesByTeamId(
+      callerAddress,
+      allTeams.map((team) => team.id)
+    );
+
     res.status(200).json(
       allTeams.map((team) => ({
-        ...withCurrentOfficer(team),
+        ...withCurrentOfficerAndContracts(team),
         isHidden: false,
         isArchived: team.isArchived ?? false,
+        callerWage: callerWageByTeamId.get(team.id) ?? null,
       }))
     );
   } catch (error: unknown) {

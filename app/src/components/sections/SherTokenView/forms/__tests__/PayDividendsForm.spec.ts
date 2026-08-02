@@ -3,73 +3,9 @@ import { mount } from '@vue/test-utils'
 import PayDividendsForm from '../PayDividendsForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types'
-import { mockUseContractBalance } from '@/tests/mocks'
+import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks'
 
-type BalanceEntry = {
-  amount: number
-  token: {
-    id: string
-    name: string
-    symbol: string
-    code: string
-    coingeckoId: string
-    decimals: number
-    address: string
-  }
-  values: {
-    USD: {
-      value: number
-      formated: string
-      id: string
-      code: string
-      symbol: string
-      price: number
-      formatedPrice: string
-    }
-  }
-}
-
-type BalanceEntryOverrides = Partial<Omit<BalanceEntry, 'token' | 'values'>> & {
-  token?: Partial<BalanceEntry['token']>
-  values?: {
-    USD?: Partial<BalanceEntry['values']['USD']>
-  }
-}
-
-const makeBalance = (overrides: BalanceEntryOverrides = {}): BalanceEntry => {
-  const base: BalanceEntry = {
-    amount: 0,
-    token: {
-      id: 'native',
-      name: 'Token',
-      symbol: 'TKN',
-      code: 'TKN',
-      coingeckoId: 'token',
-      decimals: 18,
-      address: '0x0000000000000000000000000000000000000000'
-    },
-    values: {
-      USD: {
-        value: 0,
-        formated: '$0',
-        id: 'usd',
-        code: 'USD',
-        symbol: '$',
-        price: 1,
-        formatedPrice: '$1'
-      }
-    }
-  }
-
-  return {
-    ...base,
-    ...overrides,
-    token: { ...base.token, ...(overrides.token ?? {}) },
-    values: {
-      USD: { ...base.values.USD, ...(overrides.values?.USD ?? {}) }
-    }
-  }
-}
+const makeBalance = makeTokenBalance
 
 const TokenAmountStub = {
   props: ['modelValue', 'tokens', 'loading'],
@@ -113,17 +49,7 @@ const defaultBalances = () => [
       decimals: 18,
       address: '0x0000000000000000000000000000000000000001'
     },
-    values: {
-      USD: {
-        value: 20000,
-        formated: '$20K',
-        id: 'usd',
-        code: 'USD',
-        symbol: '$',
-        price: 2000,
-        formatedPrice: '$2K'
-      }
-    }
+    usdPrice: 2000
   }),
   makeBalance({
     amount: 25,
@@ -135,17 +61,7 @@ const defaultBalances = () => [
       decimals: 6,
       address: '0x0000000000000000000000000000000000000002'
     },
-    values: {
-      USD: {
-        value: 25,
-        formated: '$25',
-        id: 'usd',
-        code: 'USD',
-        symbol: '$',
-        price: 1,
-        formatedPrice: '$1'
-      }
-    }
+    usdPrice: 1
   }),
   makeBalance({
     amount: 5,

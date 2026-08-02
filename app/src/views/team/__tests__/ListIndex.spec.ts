@@ -127,11 +127,13 @@ describe('ListIndex - Team List View', () => {
       expect(illustration.attributes('width')).toBe('300')
     })
 
-    it('should not display team list when teams array is empty', async () => {
+    // The grid itself still renders — it is what holds the create tile — but it
+    // holds no team cards.
+    it('should not display any team card when teams array is empty', async () => {
       const wrapper = createWrapper([])
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-test="team-list"]').exists()).toBe(false)
+      expect(wrapper.findAll('[data-test^="team-card-"]')).toHaveLength(0)
     })
 
     it('should display add team button when no teams and not loading', async () => {

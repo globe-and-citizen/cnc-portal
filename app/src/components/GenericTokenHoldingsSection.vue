@@ -3,20 +3,7 @@
   <UCard>
     <template #header>Token Holding</template>
     <UTable
-      :data="
-        balances.map((balance, index) => ({
-          ...balance,
-          rank: index + 1,
-          icon:
-            balance.token.symbol === 'USDC' || balance.token.symbol === 'USDCe'
-              ? USDCIcon
-              : balance.token.symbol === 'POL'
-                ? MaticIcon
-                : balance.token.symbol === 'ETH'
-                  ? EthereumIcon
-                  : null
-        }))
-      "
+      :data="rows"
       :loading="isLoading"
       :columns="[
         { accessorKey: 'rank', header: 'RANK' },
@@ -30,11 +17,11 @@
         {{ row.amount }} {{ row.token.symbol }}
       </template>
       <template #price-cell="{ row: { original: row } }">
-        {{ row.values[currency.code ?? 'USD']?.formatedPrice }} / {{ row.token.symbol }}
+        {{ row.priceLabel }} / {{ row.token.symbol }}
       </template>
 
       <template #balance-cell="{ row: { original: row } }">
-        {{ row.values[currency.code ?? 'USD']?.formated }}
+        {{ row.balanceLabel }}
       </template>
 
       <template #token-cell="{ row: { original: row } }">
@@ -57,22 +44,38 @@
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
+import { computed } from 'vue'
 import { useContractBalance } from '@/composables'
-import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 
 const props = defineProps<{
   address: Address
 }>()
 
-// const teamStore = useTeamStore()
-// const currencyStore = useCurrencyStore()
-
-const currency = useStorage('currency', {
-  code: 'USD',
-  name: 'US Dollar',
-  symbol: '$'
-})
 // Reactive state for balances: composable that fetches address balances
-const { balances, isLoading } = useContractBalance(props.address as Address)
+const { data: balance, isLoading } = useContractBalance(props.address as Address)
+
+const iconFor = (symbol: string) => {
+  if (symbol === 'USDC' || symbol === 'USDCe') return USDCIcon
+  if (symbol === 'POL') return MaticIcon
+  if (symbol === 'ETH') return EthereumIcon
+  return null
+}
+
+/**
+ * `price` and `balance` are flattened to plain numbers because the table sorts
+ * on the accessor value, and a `CurrencyPair` object would not compare. The
+ * display strings ride alongside as `*Label`.
+ */
+const rows = computed(() =>
+  (balance.value?.balances ?? []).map((entry, index) => ({
+    ...entry,
+    rank: index + 1,
+    icon: iconFor(entry.token.symbol),
+    price: entry.price.local.value,
+    priceLabel: entry.price.local.formatted,
+    balance: entry.value.local.value,
+    balanceLabel: entry.value.local.formatted
+  }))
+)
 </script>

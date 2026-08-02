@@ -61,7 +61,7 @@ import { useOfficerFeeBps } from '@/composables/officer/reads'
 import { useTransfer, useTransferToken } from '@/composables/bank/writes'
 import { classifyError, log } from '@/utils'
 import type { TokenOption } from '@/types'
-import { useContractBalance } from '@/composables'
+import { useContractBalance, contractBalanceKeys } from '@/composables'
 
 interface Props {
   bankAddress: Address
@@ -73,7 +73,8 @@ const chainId = useChainId()
 const queryClient = useQueryClient()
 const toast = useToast()
 
-const { balances } = useContractBalance(props.bankAddress)
+const { data: balance } = useContractBalance(props.bankAddress)
+const balances = computed(() => balance.value?.balances ?? [])
 
 const userStore = useUserDataStore()
 
@@ -120,7 +121,7 @@ const getTokens = (): TokenOption[] =>
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.values['USD']?.price ?? 0,
+      price: b.price.usd.value,
       name: b.token.name,
       code: b.token.code
     }))
@@ -218,17 +219,11 @@ const handleTransfer = async (data: {
   const onSuccess = async () => {
     toast.add({ title: 'Transferred successfully', color: 'success' })
 
-    const queryKey = isNativeToken
-      ? ['balance', { address: props.bankAddress, chainId: chainId.value }]
-      : [
-          'readContract',
-          {
-            address: tokenAddress,
-            args: [props.bankAddress],
-            chainId: chainId.value
-          }
-        ]
-    await queryClient.invalidateQueries({ queryKey })
+    // Native and ERC-20 amounts share one query per contract, so both transfer
+    // paths refresh through the same key.
+    await queryClient.invalidateQueries({
+      queryKey: contractBalanceKeys.detail(props.bankAddress, chainId.value)
+    })
 
     resetTransferValues()
   }

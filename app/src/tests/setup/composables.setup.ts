@@ -299,9 +299,15 @@ vi.mock('@/composables/useAuth', () => ({
 /**
  * Mock useContractBalance composable
  */
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
+// `importOriginal` keeps `contractBalanceKeys` real: specs assert on the key the
+// component invalidates, and a hand-written factory would leave it undefined.
+vi.mock('@/composables/useContractBalance', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useContractBalance: vi.fn(() => mockUseContractBalance)
+  }
+})
 
 /**
  * Mock useDeployContract composable
