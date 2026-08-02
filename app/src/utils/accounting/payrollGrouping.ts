@@ -101,6 +101,7 @@ export function compoundLedgerRows(
           date: '',
           label: '',
           activity: NO_ACTIVITY,
+          destination: null,
           cat: '',
           catClass: ''
         }

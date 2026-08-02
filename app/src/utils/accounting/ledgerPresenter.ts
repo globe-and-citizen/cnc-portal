@@ -7,6 +7,7 @@
 import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from './presenter'
 import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
+import { activityDestinationOf, type ActivityDestination } from './activityDestination'
 import { mergeBankFees } from './mergeBankFees'
 import { flattenLedgerRows } from './ledgerGrouping'
 import { filterLedgerByCurrency } from './ledgerCurrency'
@@ -23,6 +24,9 @@ import type { TokenId } from '@/constant'
 
 // Currency derivation / filtering lives in its own module, re-exported here.
 export { entryCurrency, ledgerCurrencies, filterLedgerByCurrency } from './ledgerCurrency'
+// So is the Activity's link target — see ./activityDestination.
+export { activityDestinationOf } from './activityDestination'
+export type { ActivityDestination, LedgerSection } from './activityDestination'
 // So do the category vocabulary and its badges — see ./ledgerCategory.
 export {
   badgeClassOf,
@@ -48,6 +52,9 @@ export interface LedgerRow {
   label: string
   /** The structured narration (the "Activity" column) — avatar(s) + predicate. */
   activity: ActivityCell
+  /** The section the Activity links to ({@link ./activityDestination}); absent on
+   *  a continuation row, and on a posting with no portal surface of its own. */
+  destination?: ActivityDestination | null
   cat: LedgerCategory | ''
   catClass: string
   account: string
@@ -128,6 +135,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
     activity: activityOf(entry),
+    destination: activityDestinationOf(entry),
     cat: categoryOf(entry),
     catClass: badgeClassOf(entry)
   }
@@ -254,7 +262,8 @@ export function ledgerFeeRows(entries: readonly LedgerEntry[]): LedgerRow[] {
     isFirst: true,
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
-    activity: activityOf(entry)
+    activity: activityOf(entry),
+    destination: activityDestinationOf(entry)
   }))
 }
 
