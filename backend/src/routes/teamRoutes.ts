@@ -412,7 +412,7 @@ teamRoutes.delete(
  *   tags: [Teams]
  *   security:
  *     - bearerAuth: []
- *   description: Retrieves team details including members and contracts. Caller must be a team member.
+ *   description: Retrieves team details including members and contracts. Caller must be a team member, or an admin (ROLE_ADMIN / ROLE_SUPER_ADMIN) inspecting the team from the admin dashboard.
  *   parameters:
  *     - in: path
  *       name: id
@@ -434,7 +434,7 @@ teamRoutes.delete(
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  *     403:
- *       description: Forbidden - caller is not a member of the team
+ *       description: Forbidden - caller is neither a member of the team nor an admin
  *       content:
  *         application/json:
  *           schema:
