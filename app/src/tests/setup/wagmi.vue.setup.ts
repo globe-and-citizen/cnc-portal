@@ -15,6 +15,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   return {
     ...actual,
     useChainId: mocks.useChainIdFn,
+    useBalance: mocks.useBalanceFn,
     useReadContract: mocks.useReadContractFn,
     useSignTypedData: mocks.useSignTypedDataFn,
     useConnection: vi.fn(() => ({ ...mocks.mockUseConnection })),

@@ -1,6 +1,6 @@
-import { computed, unref, type Ref } from 'vue'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
-import { erc20Abi, formatEther, formatUnits, type Address } from 'viem'
+import { erc20Abi, formatEther, formatUnits, isAddress, type Address } from 'viem'
 import { useCurrencyStore } from '@/stores'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
@@ -57,13 +57,12 @@ type ERC20TokenBalanceEntry = {
 }
 type TokenBalanceEntry = NativeTokenBalanceEntry | ERC20TokenBalanceEntry
 
-// TODO: support reactive address changes
 /**
  * @description Composable to fetch and compute balances for an address
  *
  * Supports both native and ERC20 tokens
  */
-export function useContractBalance(address: Address | Ref<Address | undefined>) {
+export function useContractBalance(address: MaybeRefOrGetter<Address | undefined>) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
   const supportedToken = computed(() => {
@@ -71,13 +70,20 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
     return tokens
   })
 
+  // Resolve the account reactively. The address is rarely known during setup —
+  // it arrives with the team query, or changes when the caller switches team —
+  // and a value read once here would leave every read pointed at `undefined`
+  // for the lifetime of the caller.
+  const account = computed(() => toValue(address))
+  const hasAccount = computed(() => !!account.value && isAddress(account.value))
+
   // Store for all token balances
   const tokenBalances: TokenBalanceEntry[] = supportedToken.value.map((token) => {
     if (token.id === 'native') {
       const native = useBalance({
-        address: unref(address),
+        address: account,
         chainId,
-        query: { refetchInterval: 300_000 }
+        query: { refetchInterval: 300_000, enabled: hasAccount }
       })
       return {
         token,
@@ -91,8 +97,8 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
         address: token.address as Address,
         abi: erc20Abi,
         functionName: 'balanceOf' as const,
-        args: [unref(address) as Address] as const,
-        query: { refetchInterval: 300_000 }
+        args: computed(() => [account.value as Address] as const),
+        query: { refetchInterval: 300_000, enabled: hasAccount }
       })
       return {
         token,
