@@ -73,6 +73,7 @@ vi.mock('../../utils', async () => {
       },
       wage: {
         deleteMany: vi.fn(),
+        findMany: vi.fn(),
       },
       expense: {
         deleteMany: vi.fn(),
@@ -529,6 +530,7 @@ describe('Team Controller', () => {
       ];
 
       vi.spyOn(prisma.team, 'findMany').mockResolvedValue(mockTeams);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([] as never);
 
       const response = await request(app).get('/');
 
@@ -540,17 +542,24 @@ describe('Team Controller', () => {
           isMigrated: false,
           isArchived: false,
           isHidden: false,
+          teamContracts: [],
+          callerWage: null,
         }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
         where: { isArchived: false },
         include: {
           _count: { select: { members: true } },
+          members: { select: { address: true, name: true } },
           teamOfficers: {
             where: { nextOfficer: { is: null } },
             take: 1,
-            include: { previousOfficer: { select: { id: true, address: true } } },
+            include: {
+              previousOfficer: { select: { id: true, address: true } },
+              contracts: true,
+            },
           },
+          teamContracts: { where: { officerId: null } },
         },
       });
     });
@@ -580,6 +589,7 @@ describe('Team Controller', () => {
         { teamId: 1, isHidden: false },
         { teamId: 2, isHidden: false },
       ] as never);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([] as never);
 
       const response = await request(app).get('/').query({ userAddress: mockOwner.address });
 
@@ -591,6 +601,8 @@ describe('Team Controller', () => {
           isMigrated: false,
           isArchived: false,
           isHidden: false,
+          teamContracts: [],
+          callerWage: null,
         }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
@@ -609,13 +621,56 @@ describe('Team Controller', () => {
         },
         include: {
           _count: { select: { members: true } },
+          members: { select: { address: true, name: true } },
           teamOfficers: {
             where: { nextOfficer: { is: null } },
             take: 1,
-            include: { previousOfficer: { select: { id: true, address: true } } },
+            include: {
+              previousOfficer: { select: { id: true, address: true } },
+              contracts: true,
+            },
           },
+          teamContracts: { where: { officerId: null } },
         },
       });
+    });
+
+    it("attaches the caller's own active wage to each team it belongs to", async () => {
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue([
+        { id: 1, name: 'Team 1', ownerAddress: mockOwner.address, teamOfficers: [] },
+        { id: 2, name: 'Team 2', ownerAddress: mockOwner.address, teamOfficers: [] },
+      ] as never);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([] as never);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
+        { id: 9, teamId: 2, userAddress: mockOwner.address, maximumHoursPerWeek: 40 },
+      ] as never);
+
+      const response = await request(app).get('/').query({ userAddress: mockOwner.address });
+
+      expect(response.status).toBe(200);
+      // Only the team the caller actually draws a wage on carries one.
+      expect(response.body[0].callerWage).toBeNull();
+      expect(response.body[1].callerWage).toMatchObject({ id: 9, teamId: 2 });
+      // A single query for the whole page, scoped to the caller's active wages.
+      expect(prisma.wage.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.wage.findMany).toHaveBeenCalledWith({
+        where: {
+          userAddress: mockOwner.address,
+          teamId: { in: [1, 2] },
+          nextWageId: null,
+        },
+      });
+    });
+
+    it('skips the wage lookup entirely when the caller has no teams', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue([] as never);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([] as never);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([] as never);
+
+      const response = await request(app).get('/').query({ userAddress: mockOwner.address });
+
+      expect(response.status).toBe(200);
+      expect(prisma.wage.findMany).not.toHaveBeenCalled();
     });
 
     it('includes non-archived hidden branch when showHidden is true', async () => {

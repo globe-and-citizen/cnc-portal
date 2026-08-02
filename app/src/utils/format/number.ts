@@ -81,6 +81,35 @@ export function formatToken(
   return formatted === EMPTY_VALUE ? EMPTY_VALUE : `${formatted} ${symbol}`
 }
 
+export interface CurrencyOptions extends UsdOptions {
+  /** ISO 4217 code driving the symbol. Default `'USD'`. */
+  currency?: string
+}
+
+/**
+ * `formatUsd` for a currency the user chose rather than one we hardcoded:
+ * `1234.5, { currency: 'EUR' }` → `€1,234.50`.
+ *
+ * Reach for this when the amount was already priced in
+ * `currencyStore.localCurrency` — pairing a local-currency *value* with a `$`
+ * from `formatUsd` misreports the number, which is worse than not converting at
+ * all. When the amount really is USD, prefer `formatUsd`: fewer moving parts.
+ */
+export function formatCurrency(
+  value: NumericInput,
+  { currency = 'USD', decimals = 2 }: CurrencyOptions = {}
+): string {
+  const amount = toFiniteNumber(value)
+  if (amount === null) return EMPTY_VALUE
+
+  return new Intl.NumberFormat(FORMAT_LOCALE, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(collapseSignedZero(amount, decimals))
+}
+
 export interface CompactOptions {
   /** ISO 4217 code driving the symbol. Default `'USD'`. */
   currency?: string
