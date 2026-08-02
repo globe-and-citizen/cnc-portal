@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/vue-query'
 import { toValue } from 'vue'
+import type { Address } from 'viem'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 import externalApiClient from '@/lib/external.axios.ts'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
@@ -36,13 +38,12 @@ export const safeKeys = {
   outgoingTransactionLists: () => [...safeKeys.all, 'outgoing-transactions'] as const,
   outgoingTransactions: (safeAddress: string | undefined, limit?: number) =>
     [...safeKeys.outgoingTransactionLists(), { safeAddress, limit }] as const,
+  /**
+   * The Safe's token holdings — native and ERC-20 alike — live on the one key
+   * `useContractBalance` owns, so this delegates rather than restating it.
+   */
   balance: (address: string | undefined, chainId: number | undefined) =>
-    ['balance', { address, chainId }] as const,
-  tokenBalance: (
-    tokenAddress: string | undefined,
-    safeAddress: string | undefined,
-    chainId: number | undefined
-  ) => ['readContract', { address: tokenAddress, args: [safeAddress], chainId }] as const
+    contractBalanceKeys.detail(address as Address | undefined, chainId)
 }
 
 // ============================================================================

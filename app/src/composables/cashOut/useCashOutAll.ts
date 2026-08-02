@@ -7,6 +7,7 @@ import { erc20Abi } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { classifyError } from '@/utils'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 import type { ContractKey } from '@/composables/contracts/errorCatalogs.types'
 import { useOwnerWithdrawAllToBank as useCashOwnerWithdrawAll } from '@/composables/cashRemuneration/writes'
 import { useOwnerWithdrawAllToBank as useExpenseOwnerWithdrawAll } from '@/composables/expenseAccount/writes'
@@ -123,17 +124,19 @@ export function useCashOutAll() {
   }
 
   /**
-   * One-shot refresh of every contract balance touched by the flow. The
-   * per-write invalidation in `useContractWritesV3` only covers reads keyed by
-   * the called contract's address, which misses the Bank's ERC-20 `balanceOf`
-   * reads (keyed by the token address) — so we sweep both query families once
-   * the sequence completes.
+   * One-shot refresh of every contract balance touched by the flow.
+   *
+   * The sequence moves funds between several contracts, so rather than name
+   * each one we sweep the whole `balance` family plus the contract reads that
+   * `useContractWritesV3` scopes to a single written address.
    */
   async function refreshBalances() {
     await queryClient.invalidateQueries({
       predicate: (query) => {
         const key = query.queryKey
-        return Array.isArray(key) && (key[0] === 'balance' || key[0] === 'readContract')
+        return (
+          Array.isArray(key) && (key[0] === contractBalanceKeys.all[0] || key[0] === 'readContract')
+        )
       }
     })
   }

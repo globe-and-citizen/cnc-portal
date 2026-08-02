@@ -16,7 +16,7 @@ vi.mock('@/utils', async (importOriginal) => ({
 }))
 
 vi.mock('@/composables', () => ({
-  useContractBalance: () => ({ balances: ref({}) })
+  useContractBalance: () => ({ data: ref({ balances: [], total: undefined }) })
 }))
 
 vi.mock('@wagmi/core', () => ({
