@@ -91,7 +91,7 @@
     <!-- Teams List -->
 
     <div
-      class="grid grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3"
+      class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] items-stretch gap-6"
       data-test="team-list"
       v-if="Array.isArray(teams) && teams.length > 0"
     >
@@ -100,7 +100,7 @@
         :key="team.id"
         :team="team"
         :data-test="`team-card-${team.id}`"
-        class="cursor-pointer transition duration-300 hover:scale-105"
+        class="cursor-pointer transition duration-300 hover:-translate-y-0.5 hover:shadow-md"
         @click="navigateToTeam(team.id)"
       />
     </div>
