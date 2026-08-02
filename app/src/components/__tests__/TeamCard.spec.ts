@@ -27,6 +27,16 @@ beforeEach(() => {
 const OWNER = '0x0000000000000000000000000000000000000001' as Address
 const OUTSIDER = '0x4b6Bf5cD91446408290725879F5666dcd9785F62' as Address
 
+// The four money-holding accounts the card breaks the treasury down by. Every
+// address resolves to the same shared useContractBalance mock, so each account
+// reports $50.5K and the four split the total evenly.
+const TEAM_CONTRACTS = [
+  { type: 'Bank', address: '0x1111111111111111111111111111111111111111' },
+  { type: 'Safe', address: '0x2222222222222222222222222222222222222222' },
+  { type: 'ExpenseAccountEIP712', address: '0x3333333333333333333333333333333333333333' },
+  { type: 'CashRemunerationEIP712', address: '0x4444444444444444444444444444444444444444' }
+] as unknown as Team['teamContracts']
+
 const makeTeam = (overrides: Partial<Team> = {}): Team =>
   ({
     id: '1',
@@ -37,7 +47,7 @@ const makeTeam = (overrides: Partial<Team> = {}): Team =>
     isArchived: false,
     members: [],
     ownerAddress: OWNER,
-    teamContracts: [],
+    teamContracts: TEAM_CONTRACTS,
     ...overrides
   }) as Team
 
@@ -99,6 +109,15 @@ describe('TeamCard', () => {
       expect(text).toContain('Safe 25%')
       expect(text).toContain('Expense 25%')
       expect(text).toContain('Cash 25%')
+    })
+
+    // A team whose contracts the payload didn't carry has an unknown treasury,
+    // not an empty one — "$0.00" would read as a drained account.
+    it('reports an unknown treasury rather than claiming zero', () => {
+      const wrapper = mountCard(makeTeam({ teamContracts: [] }))
+
+      expect(wrapper.find('[data-test="total-balance"]').text()).toBe('—')
+      expect(wrapper.text()).not.toContain('Bank')
     })
 
     it('renders a bar segment per funded account', () => {

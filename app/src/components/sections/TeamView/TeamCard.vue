@@ -128,11 +128,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Address } from 'viem'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { useUserDataStore, useCurrencyStore } from '@/stores'
 import { useContractBalance } from '@/composables/useContractBalance'
-import { formatCurrency, formatPercent } from '@/utils/format'
+import { EMPTY_VALUE, formatCurrency, formatPercent } from '@/utils/format'
 import type { TokenId } from '@/constant'
 import type { Team } from '@/types'
 import type { ContractType } from '@/types/teamContract'
@@ -168,14 +167,17 @@ const isOnLegacyContracts = computed(
 // four calls have to be unconditional and in a stable order — a team missing an
 // account simply resolves to an undefined address and contributes nothing.
 const contractAddress = (type: ContractType) =>
-  computed(
-    () => props.team.teamContracts?.find((contract) => contract.type === type)?.address
-  ) as unknown as Address
+  computed(() => props.team.teamContracts?.find((contract) => contract.type === type)?.address)
 
-const bankBalance = useContractBalance(contractAddress('Bank'))
-const safeBalance = useContractBalance(contractAddress('Safe'))
-const expenseBalance = useContractBalance(contractAddress('ExpenseAccountEIP712'))
-const cashBalance = useContractBalance(contractAddress('CashRemunerationEIP712'))
+const bankAddress = contractAddress('Bank')
+const safeAddress = contractAddress('Safe')
+const expenseAddress = contractAddress('ExpenseAccountEIP712')
+const cashAddress = contractAddress('CashRemunerationEIP712')
+
+const bankBalance = useContractBalance(bankAddress)
+const safeBalance = useContractBalance(safeAddress)
+const expenseBalance = useContractBalance(expenseAddress)
+const cashBalance = useContractBalance(cashAddress)
 
 const currencyCode = computed(() => currencyStore.localCurrency.code)
 
@@ -193,20 +195,51 @@ const rawTotal = (balance: ReturnType<typeof useContractBalance>) =>
 const accounts = computed(() => [
   // Bank and Safe are both primary; the design separates them by weight, which
   // the theme expresses as opacity rather than a numeric colour scale.
-  { label: 'Bank', amount: rawTotal(bankBalance), barClass: 'bg-primary/40' },
-  { label: 'Safe', amount: rawTotal(safeBalance), barClass: 'bg-primary' },
-  { label: 'Expense', amount: rawTotal(expenseBalance), barClass: 'bg-accent' },
-  { label: 'Cash', amount: rawTotal(cashBalance), barClass: 'bg-warning' }
+  {
+    label: 'Bank',
+    address: bankAddress.value,
+    amount: rawTotal(bankBalance),
+    barClass: 'bg-primary/40'
+  },
+  {
+    label: 'Safe',
+    address: safeAddress.value,
+    amount: rawTotal(safeBalance),
+    barClass: 'bg-primary'
+  },
+  {
+    label: 'Expense',
+    address: expenseAddress.value,
+    amount: rawTotal(expenseBalance),
+    barClass: 'bg-accent'
+  },
+  {
+    label: 'Cash',
+    address: cashAddress.value,
+    amount: rawTotal(cashBalance),
+    barClass: 'bg-warning'
+  }
 ])
 
+// A team whose accounts we cannot see is not a team holding nothing. Until at
+// least one account address is known there is no balance to report, and a
+// confident "$0.00" would read as an empty treasury.
+const hasKnownAccounts = computed(() => accounts.value.some((account) => !!account.address))
+
+// Only accounts we can actually address contribute — an account with no known
+// address has no balance to add, whatever a stale read might still hold.
+const knownAccounts = computed(() => accounts.value.filter((account) => !!account.address))
+
 const totalBalance = computed(() =>
-  accounts.value.reduce((sum, account) => sum + account.amount, 0)
+  knownAccounts.value.reduce((sum, account) => sum + account.amount, 0)
 )
 
 // Balances are priced in the viewer's currency, so they must be formatted with
 // it too — `formatUsd` would stamp a `$` on a EUR figure.
 const formattedTotal = computed(() =>
-  formatCurrency(totalBalance.value, { currency: currencyCode.value })
+  hasKnownAccounts.value
+    ? formatCurrency(totalBalance.value, { currency: currencyCode.value })
+    : EMPTY_VALUE
 )
 
 // Only funded accounts get a segment, so an empty account never renders a
@@ -214,7 +247,7 @@ const formattedTotal = computed(() =>
 const accountShares = computed(() => {
   const total = totalBalance.value
   if (total <= 0) return []
-  return accounts.value
+  return knownAccounts.value
     .filter((account) => account.amount > 0)
     .map((account) => ({
       ...account,
