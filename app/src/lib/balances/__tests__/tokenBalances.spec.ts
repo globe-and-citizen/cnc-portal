@@ -3,9 +3,9 @@ import { erc20Abi, type Address } from 'viem'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import { config as wagmiConfig } from '@/wagmi.config'
 import type { TokenConfig } from '@/constant'
-import type { TokenBalance } from '@/types'
 import {
   fetchTokenBalances,
+  toContractBalances,
   toTokenBalances,
   sumTokenBalances,
   type GetTokenInfo
@@ -36,13 +36,15 @@ const usdcToken: TokenConfig = {
 
 const TOKENS = [usdcToken, nativeToken]
 
-/** Two currencies so the per-code fan-out is actually exercised. */
+/** Local currency is EUR, so the two rows are genuinely distinct. */
 const getTokenInfo: GetTokenInfo = (tokenId) => ({
   prices: [
-    { id: 'usd', price: tokenId === 'native' ? 2000 : 1, code: 'USD', symbol: '$' },
-    { id: 'local', price: tokenId === 'native' ? 1800 : 0.9, code: 'EUR', symbol: '€' }
+    { id: 'local', price: tokenId === 'native' ? 1800 : 0.9, code: 'EUR', symbol: '€' },
+    { id: 'usd', price: tokenId === 'native' ? 2000 : 1, code: 'USD', symbol: '$' }
   ]
 })
+
+const USD_CODES = { usd: 'USD', local: 'USD' }
 
 describe('fetchTokenBalances', () => {
   beforeEach(() => {
@@ -83,76 +85,104 @@ describe('fetchTokenBalances', () => {
 })
 
 describe('toTokenBalances', () => {
-  it('applies each token decimals and prices every currency the store exposes', () => {
+  const codes = { usd: 'USD', local: 'EUR' }
+
+  it('keeps the exact on-chain amount alongside the lossy decimal one', () => {
+    const balances = toTokenBalances(TOKENS, { usdc: 12_500_000n }, getTokenInfo, codes)
+
+    expect(balances[0]?.raw).toBe(12_500_000n)
+    expect(balances[0]?.amount).toBe(12.5)
+  })
+
+  it('prices the holding in both currencies from the matching store rows', () => {
     const balances = toTokenBalances(
       TOKENS,
       { usdc: 12_500_000n, native: 10n ** 18n },
-      getTokenInfo
+      getTokenInfo,
+      codes
     )
 
-    expect(balances.map((b) => b.amount)).toEqual([12.5, 1])
-    expect(balances[0]?.values.USD).toMatchObject({ value: 12.5, price: 1, code: 'USD' })
-    expect(balances[0]?.values.EUR).toMatchObject({ value: 11.25, price: 0.9, code: 'EUR' })
-    expect(balances[1]?.values.USD).toMatchObject({ value: 2000, price: 2000 })
+    expect(balances[0]?.value.usd.value).toBe(12.5)
+    expect(balances[0]?.value.local.value).toBe(11.25)
+    expect(balances[0]?.price).toEqual({
+      usd: { value: 1, formatted: '$1' },
+      local: { value: 0.9, formatted: '€0.9' }
+    })
+    expect(balances[1]?.value.usd.value).toBe(2000)
   })
 
   it('returns one entry per token in order, defaulting a missing balance to zero', () => {
-    const balances = toTokenBalances(TOKENS, { native: 10n ** 18n }, getTokenInfo)
+    const balances = toTokenBalances(TOKENS, { native: 10n ** 18n }, getTokenInfo, codes)
 
     expect(balances).toHaveLength(2)
-    expect(balances[0]).toMatchObject({ amount: 0, token: usdcToken })
-    expect(balances[0]?.values.USD?.value).toBe(0)
+    expect(balances[0]).toMatchObject({ raw: 0n, amount: 0, token: usdcToken })
+    expect(balances[0]?.value.usd.value).toBe(0)
   })
 
   it('treats an unpriced token as zero-valued without dropping it', () => {
-    const balances = toTokenBalances(TOKENS, { usdc: 12_500_000n }, (tokenId) =>
-      tokenId === 'usdc' ? { prices: [{ id: 'usd', price: null, code: 'USD', symbol: '$' }] } : null
-    )
+    const balances = toTokenBalances(TOKENS, { usdc: 12_500_000n }, () => null, codes)
 
-    expect(balances[0]?.values.USD).toMatchObject({ value: 0, price: 0 })
-    expect(balances[1]?.values).toEqual({})
+    expect(balances).toHaveLength(2)
+    expect(balances[0]?.amount).toBe(12.5)
+    expect(balances[0]?.value.usd.value).toBe(0)
+    expect(balances[0]?.price.usd.value).toBe(0)
   })
 })
 
 describe('sumTokenBalances', () => {
-  it('sums every token per currency code', () => {
+  it('sums the held value of every token, in both currencies', () => {
+    const codes = { usd: 'USD', local: 'EUR' }
     const balances = toTokenBalances(
       TOKENS,
       { usdc: 12_500_000n, native: 10n ** 18n },
-      getTokenInfo
+      getTokenInfo,
+      codes
     )
 
-    const total = sumTokenBalances(balances)
-
-    expect(total.USD?.value).toBe(2012.5)
-    expect(total.EUR?.value).toBe(1811.25)
-    expect(total.USD?.symbol).toBe('$')
+    expect(sumTokenBalances(balances, codes)).toEqual({
+      usd: { value: 2012.5, formatted: '$2.01K' },
+      local: { value: 1811.25, formatted: '€1.81K' }
+    })
   })
 
-  it('returns an empty record when there is nothing to sum', () => {
-    expect(sumTokenBalances([])).toEqual({})
+  it('returns a zeroed pair when there is nothing to sum', () => {
+    expect(sumTokenBalances([], USD_CODES)).toEqual({
+      usd: { value: 0, formatted: '$0' },
+      local: { value: 0, formatted: '$0' }
+    })
+  })
+})
+
+describe('toContractBalances', () => {
+  it('formats the local side with the store currency, not USD', () => {
+    const { total } = toContractBalances(TOKENS, { native: 10n ** 18n }, getTokenInfo)
+
+    expect(total.usd.formatted).toBe('$2K')
+    expect(total.local.formatted).toBe('€1.8K')
   })
 
-  it('ignores a currency a later token does not carry', () => {
-    const balances: TokenBalance[] = [
-      {
-        amount: 1,
-        token: usdcToken,
-        values: {
-          USD: {
-            value: 1,
-            formated: '$1',
-            id: 'usd',
-            code: 'USD',
-            symbol: '$',
-            price: 1,
-            formatedPrice: '$1'
-          }
-        }
-      },
-      { amount: 2, token: nativeToken, values: {} }
-    ]
+  it('keeps both sides distinct when the local currency IS usd', () => {
+    const usdOnly: GetTokenInfo = () => ({
+      prices: [
+        { id: 'local', price: 2, code: 'USD', symbol: '$' },
+        { id: 'usd', price: 2, code: 'USD', symbol: '$' }
+      ]
+    })
 
-    expect(sumTokenBalances(balances).USD?.value).toBe(1)
+    const { total } = toContractBalances(TOKENS, { native: 10n ** 18n }, usdOnly)
+
+    // A code-keyed map collapsed these two rows into one entry.
+    expect(total.usd.value).toBe(2)
+    expect(total.local.value).toBe(2)
+  })
+
+  it('falls back to USD formatting before prices have loaded', () => {
+    const { balances, total } = toContractBalances(TOKENS, {}, () => null)
+
+    expect(balances).toHaveLength(2)
+    expect(total).toEqual({
+      usd: { value: 0, formatted: '$0' },
+      local: { value: 0, formatted: '$0' }
+    })
   })
 })

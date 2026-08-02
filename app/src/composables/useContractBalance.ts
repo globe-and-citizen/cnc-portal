@@ -5,10 +5,10 @@ import type { Address } from 'viem'
 import { config as wagmiConfig } from '@/wagmi.config'
 import { useCurrencyStore } from '@/stores'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import { fetchTokenBalances, sumTokenBalances, toTokenBalances } from '@/lib/balances/tokenBalances'
-import type { TokenBalance } from '@/types'
+import { fetchTokenBalances, toContractBalances } from '@/lib/balances/tokenBalances'
+import type { ContractBalances } from '@/types'
 
-export type { TokenBalance, TokenBalanceValue } from '@/types'
+export type { ContractBalances, TokenBalance, CurrencyPair, Money } from '@/types'
 
 /** Refresh cadence for a balance that nothing on screen just changed. */
 const REFETCH_INTERVAL = 300_000
@@ -36,14 +36,12 @@ export const contractBalanceKeys = {
  * exposed by the currency store.
  *
  * Returns the TanStack query itself — `status`, `isLoading`, `error`,
- * `refetch`, `dataUpdatedAt`… are all the standard ones — with two additions:
- *
- * - `data` is the **priced** balances, not the raw payload. The query caches
- *   raw bigints; `data` is a `computed` over them, so it re-derives when the
- *   user switches currency or prices refresh, with no refetch. It is
- *   `undefined` until the first successful read, per TanStack semantics — a
- *   balance still loading is now distinguishable from a balance of 0.
- * - `total` sums those balances per currency code.
+ * `refetch`, `dataUpdatedAt`… are all the standard ones — with one twist:
+ * `data` holds the **priced** balances (`{ balances, total }`), not the raw
+ * payload. The query caches raw bigints; `data` is a `computed` over them, so
+ * it re-derives when the user switches currency or prices refresh, with no
+ * refetch. It is `undefined` until the first successful read, per TanStack
+ * semantics — a balance still loading is distinguishable from a balance of 0.
  *
  * One query covers every token: the reads are issued through `@wagmi/core` in
  * a single tick, so they cost one JSON-RPC round-trip and share a single
@@ -70,19 +68,13 @@ export function useContractBalance(address: MaybeRefOrGetter<Address | undefined
       })
   })
 
-  const balances = computed<TokenBalance[] | undefined>(() => {
+  const data = computed<ContractBalances | undefined>(() => {
     const raw = query.data.value
     if (!raw) return undefined
-    return toTokenBalances(SUPPORTED_TOKENS, raw, (tokenId: TokenId) =>
+    return toContractBalances(SUPPORTED_TOKENS, raw, (tokenId: TokenId) =>
       currencyStore.getTokenInfo(tokenId)
     )
   })
 
-  const total = computed(() => sumTokenBalances(balances.value ?? []))
-
-  return {
-    ...query,
-    data: balances,
-    total
-  }
+  return { ...query, data }
 }

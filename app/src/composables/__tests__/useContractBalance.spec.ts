@@ -80,55 +80,59 @@ describe('useContractBalance', () => {
 
   describe('data', () => {
     it('is undefined until the first read lands, so loading is not read as a zero balance', () => {
-      const { data: balances, total } = useContractBalance(ADDRESS)
+      const { data: derived } = useContractBalance(ADDRESS)
 
-      expect(balances.value).toBeUndefined()
-      expect(total.value).toEqual({})
+      expect(derived.value).toBeUndefined()
     })
 
     it('prices the cached amounts once the read lands', () => {
-      const { data: balances, total } = useContractBalance(ADDRESS)
+      const { data: derived } = useContractBalance(ADDRESS)
 
       data.value = { [nativeToken.id]: 10n ** 18n }
 
-      const native = balances.value?.find((balance) => balance.token.id === 'native')
+      const native = derived.value?.balances.find((balance) => balance.token.id === 'native')
       expect(native?.amount).toBe(1)
+      expect(native?.raw).toBe(10n ** 18n)
       // The store mock prices native at 2000 USD.
-      expect(native?.values.USD?.value).toBe(2000)
-      expect(total.value.USD?.value).toBe(2000)
+      expect(native?.value.usd.value).toBe(2000)
+      expect(derived.value?.total.usd.value).toBe(2000)
     })
 
     it('exposes one entry per supported token, in configuration order', () => {
-      const { data: balances } = useContractBalance(ADDRESS)
+      const { data: derived } = useContractBalance(ADDRESS)
 
       data.value = {}
 
-      expect(balances.value?.map((balance) => balance.token.id)).toEqual(
+      expect(derived.value?.balances.map((balance) => balance.token.id)).toEqual(
         SUPPORTED_TOKENS.map((token) => token.id)
       )
-      expect(balances.value?.every((balance) => balance.amount === 0)).toBe(true)
+      expect(derived.value?.balances.every((balance) => balance.amount === 0)).toBe(true)
     })
 
     it('re-prices when the currency changes, without refetching', () => {
-      const price = ref(2)
-      const code = ref('USD')
+      const localPrice = ref(2)
+      const localCode = ref('USD')
       vi.mocked(useCurrencyStore).mockReturnValue({
         getTokenInfo: () => ({
-          prices: [{ id: 'local', price: price.value, code: code.value, symbol: '$' }]
+          prices: [
+            { id: 'local', price: localPrice.value, code: localCode.value, symbol: '$' },
+            { id: 'usd', price: 2, code: 'USD', symbol: '$' }
+          ]
         })
       } as never)
 
-      const { data: balances, total } = useContractBalance(ADDRESS)
+      const { data: derived } = useContractBalance(ADDRESS)
       data.value = { [nativeToken.id]: 10n ** 18n }
 
-      expect(total.value.USD?.value).toBe(2)
+      expect(derived.value?.total.local).toEqual({ value: 2, formatted: '$2' })
 
-      price.value = 5
-      code.value = 'EUR'
+      localPrice.value = 5
+      localCode.value = 'EUR'
 
-      expect(total.value.USD).toBeUndefined()
-      expect(total.value.EUR?.value).toBe(5)
-      expect(balances.value?.find((balance) => balance.token.id === 'native')?.amount).toBe(1)
+      expect(derived.value?.total.local).toEqual({ value: 5, formatted: '€5' })
+      // The USD side and the on-chain amount are untouched by the switch.
+      expect(derived.value?.total.usd.value).toBe(2)
+      expect(derived.value?.balances.find((b) => b.token.id === 'native')?.amount).toBe(1)
       // Re-pricing is pure derivation: no new read was issued.
       expect(mockWagmiCore.getBalance).not.toHaveBeenCalled()
     })

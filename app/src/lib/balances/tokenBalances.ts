@@ -2,7 +2,7 @@ import { erc20Abi, formatUnits, type Address } from 'viem'
 import { getBalance, readContract, type Config } from '@wagmi/core'
 import { SUPPORTED_TOKENS, type TokenConfig, type TokenId } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
-import type { TokenBalance, TokenBalanceValue } from '@/types'
+import type { ContractBalances, CurrencyPair, Money, TokenBalance } from '@/types'
 
 /**
  * On-chain balances for one address, in each token's smallest unit, keyed by
@@ -67,9 +67,38 @@ export async function fetchTokenBalances(
   return Object.fromEntries(entries)
 }
 
+/** Currency codes to format each side of a `CurrencyPair` with. */
+interface PairCodes {
+  usd: string
+  local: string
+}
+
+const money = (value: number, code: string): Money => ({
+  value,
+  formatted: formatCurrencyShort(value, code)
+})
+
+const pair = (usd: number, local: number, codes: PairCodes): CurrencyPair => ({
+  usd: money(usd, codes.usd),
+  local: money(local, codes.local)
+})
+
 /**
- * Turn raw on-chain amounts into display balances, one entry per supported
- * token in `tokens` order.
+ * The store prices every token in the same two currencies, so the local code is
+ * the same whichever token we ask about. Falls back to USD when prices have not
+ * loaded yet — the amounts are 0 then anyway.
+ */
+function resolveCodes(tokens: readonly TokenConfig[], getTokenInfo: GetTokenInfo): PairCodes {
+  for (const token of tokens) {
+    const local = getTokenInfo(token.id)?.prices?.find((row) => row.id === 'local')
+    if (local?.code) return { usd: 'USD', local: local.code }
+  }
+  return { usd: 'USD', local: 'USD' }
+}
+
+/**
+ * Turn raw on-chain amounts into priced balances, one entry per token in
+ * `tokens` order.
  *
  * Kept separate from the fetch so that switching currency re-prices the cached
  * amounts instead of triggering a new round of RPC reads.
@@ -77,58 +106,50 @@ export async function fetchTokenBalances(
 export function toTokenBalances(
   tokens: readonly TokenConfig[],
   raw: RawTokenBalances,
-  getTokenInfo: GetTokenInfo
+  getTokenInfo: GetTokenInfo,
+  codes: PairCodes
 ): TokenBalance[] {
   return tokens.map((token) => {
-    const amount = Number(formatUnits(raw[token.id] ?? 0n, token.decimals ?? 18))
+    const rawAmount = raw[token.id] ?? 0n
+    const amount = Number(formatUnits(rawAmount, token.decimals ?? 18))
 
-    const values: Record<string, TokenBalanceValue> = {}
-    for (const price of getTokenInfo(token.id)?.prices ?? []) {
-      const value = amount * (price.price ?? 0)
-      values[price.code] = {
-        value,
-        formated: formatCurrencyShort(value, price.code),
-        id: price.id,
-        code: price.code,
-        symbol: price.symbol,
-        price: price.price ?? 0,
-        formatedPrice: formatCurrencyShort(price.price ?? 0, price.code)
-      }
+    const rows = getTokenInfo(token.id)?.prices ?? []
+    const usdPrice = rows.find((row) => row.id === 'usd')?.price ?? 0
+    const localPrice = rows.find((row) => row.id === 'local')?.price ?? 0
+
+    return {
+      token,
+      raw: rawAmount,
+      amount,
+      price: pair(usdPrice, localPrice, codes),
+      value: pair(amount * usdPrice, amount * localPrice, codes)
     }
-
-    return { amount, token, values }
   })
 }
 
-/**
- * Sum every token balance per currency code.
- *
- * The currency set is taken from the first balance — all tokens are priced by
- * the same store call, so they carry the same codes. `price` / `formatedPrice`
- * are carried over from that first entry: a total spans several tokens, so it
- * has no unit price of its own.
- */
+/** Sum the held value of every token, in both currencies. */
 export function sumTokenBalances(
-  balances: readonly TokenBalance[]
-): Record<string, TokenBalanceValue> {
-  const totals: Record<string, TokenBalanceValue> = {}
-  const first = balances[0]
-  if (!first) return totals
+  balances: readonly TokenBalance[],
+  codes: PairCodes
+): CurrencyPair {
+  const usd = balances.reduce((acc, balance) => acc + balance.value.usd.value, 0)
+  const local = balances.reduce((acc, balance) => acc + balance.value.local.value, 0)
+  return pair(usd, local, codes)
+}
 
-  for (const code of Object.keys(first.values)) {
-    const reference = first.values[code]
-    if (!reference) continue
-    const sum = balances.reduce((acc, balance) => acc + (balance.values[code]?.value ?? 0), 0)
-    totals[code] = {
-      value: sum,
-      formated: formatCurrencyShort(sum, code),
-      id: reference.id,
-      code: reference.code,
-      symbol: reference.symbol,
-      price: reference.price,
-      formatedPrice: formatCurrencyShort(reference.price, code)
-    }
-  }
-
-  return totals
+/**
+ * Full derivation: priced balances plus the aggregate across tokens.
+ *
+ * This is what `useContractBalance` exposes as `data`; it is a pure function of
+ * the cached amounts and the current prices, so it re-runs on a currency switch
+ * without any refetch.
+ */
+export function toContractBalances(
+  tokens: readonly TokenConfig[],
+  raw: RawTokenBalances,
+  getTokenInfo: GetTokenInfo
+): ContractBalances {
+  const codes = resolveCodes(tokens, getTokenInfo)
+  const balances = toTokenBalances(tokens, raw, getTokenInfo, codes)
+  return { balances, total: sumTokenBalances(balances, codes) }
 }
