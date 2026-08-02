@@ -1,6 +1,6 @@
 import { erc20Abi, formatUnits, type Address } from 'viem'
 import { getBalance, readContract, type Config } from '@wagmi/core'
-import { SUPPORTED_TOKENS, type TokenConfig, type TokenId } from '@/constant'
+import type { TokenConfig, TokenId } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { ContractBalances, CurrencyPair, Money, TokenBalance } from '@/types'
 
@@ -42,10 +42,10 @@ export async function fetchTokenBalances(
   params: {
     address: Address
     chainId?: number
-    tokens?: readonly TokenConfig[]
+    tokens: readonly TokenConfig[]
   }
 ): Promise<RawTokenBalances> {
-  const { address, chainId, tokens = SUPPORTED_TOKENS } = params
+  const { address, chainId, tokens } = params
 
   const entries = await Promise.all(
     tokens.map(async (token): Promise<[string, bigint]> => {
@@ -111,7 +111,7 @@ export function toTokenBalances(
 ): TokenBalance[] {
   return tokens.map((token) => {
     const rawAmount = raw[token.id] ?? 0n
-    const amount = Number(formatUnits(rawAmount, token.decimals ?? 18))
+    const amount = Number(formatUnits(rawAmount, token.decimals))
 
     const rows = getTokenInfo(token.id)?.prices ?? []
     const usdPrice = rows.find((row) => row.id === 'usd')?.price ?? 0
