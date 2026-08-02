@@ -16,7 +16,9 @@ import { UserRole, UserRoles, ROLE_HIERARCHY } from '../types/roles';
  */
 export const hasRole = (userRoles: UserRoles, requiredRole: UserRole): boolean => {
   for (const userRole of userRoles) {
-    const roleHierarchy = ROLE_HIERARCHY[userRole];
+    // `User.roles` is a plain string column, so a value outside the enum has no
+    // hierarchy entry — treat it as granting nothing rather than throwing.
+    const roleHierarchy = ROLE_HIERARCHY[userRole] ?? [];
     if (roleHierarchy.includes(requiredRole)) {
       return true;
     }
