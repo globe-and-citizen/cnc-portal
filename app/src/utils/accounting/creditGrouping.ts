@@ -180,6 +180,9 @@ function lineRow(line: NetLine, source: LedgerEntry, rowsOf: RowsOf): LedgerRow 
       token: line.token,
       rawAmount: abs(line.raw).toString(),
       ...(line.rate != null ? { rate: line.rate } : {}),
+      // Kept so the netted line still knows which round it belongs to — it is
+      // what lets its Activity link back to that round (see ./activityDestination).
+      ...(source.creditOfferId != null ? { creditOfferId: source.creditOfferId } : {}),
       memo: source.memo
     })
   )[0]
@@ -284,6 +287,7 @@ export function compoundCreditRows(group: readonly LedgerEntry[], rowsOf: RowsOf
           date: '',
           label: '',
           activity: NO_ACTIVITY,
+          destination: null,
           cat: '',
           catClass: ''
         }
