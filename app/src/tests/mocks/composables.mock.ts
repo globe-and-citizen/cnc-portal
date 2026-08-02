@@ -1,14 +1,59 @@
 import { vi } from 'vitest'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import type { TokenConfig } from '@/constant'
+import type { CurrencyPair, Money, TokenBalance } from '@/types'
+
+const FALLBACK_TOKEN: TokenConfig = {
+  id: 'native',
+  name: 'Ether',
+  symbol: 'ETH',
+  code: 'ETH',
+  coingeckoId: 'ethereum',
+  decimals: 18,
+  address: '0x0000000000000000000000000000000000000000'
+}
+
+const fixtureMoney = (value: number): Money => ({ value, formatted: `$${value}` })
+
+/**
+ * Build a `TokenBalance` fixture.
+ *
+ * Give it the amount and the unit prices — `raw` and the derived `value` side
+ * are computed, so a spec can never leave them contradicting each other. Only
+ * the fields a spec actually asserts on need overriding.
+ */
+export const makeTokenBalance = (
+  input: {
+    token?: Partial<TokenConfig>
+    amount?: number
+    raw?: bigint
+    usdPrice?: number
+    localPrice?: number
+  } = {}
+): TokenBalance => {
+  const token = { ...FALLBACK_TOKEN, ...input.token }
+  const amount = input.amount ?? 0
+  const usdPrice = input.usdPrice ?? 0
+  const localPrice = input.localPrice ?? usdPrice
+
+  return {
+    token,
+    amount,
+    raw: input.raw ?? BigInt(Math.round(amount * 10 ** token.decimals)),
+    price: { usd: fixtureMoney(usdPrice), local: fixtureMoney(localPrice) },
+    value: { usd: fixtureMoney(amount * usdPrice), local: fixtureMoney(amount * localPrice) }
+  }
+}
 
 /**
  * Default builders for the contract-balance mock state. Exposed as functions so
  * that `resetComposableMocks()` can restore a FRESH copy on every test, even
  * after a spec has mutated `balances.value` / `total.value` in place.
  */
-const defaultContractBalances = () => [
+const defaultContractBalances = (): TokenBalance[] => [
   {
     amount: 0.5,
+    raw: 500_000_000_000_000_000n,
     token: {
       id: 'native',
       name: 'SepoliaETH',
@@ -18,20 +63,12 @@ const defaultContractBalances = () => [
       decimals: 18,
       address: '0x0000000000000000000000000000000000000000'
     },
-    values: {
-      USD: {
-        value: 500,
-        formated: '$500',
-        id: 'usd',
-        code: 'USD',
-        symbol: '$',
-        price: 1000,
-        formatedPrice: '$1K'
-      }
-    }
+    price: { usd: { value: 1000, formatted: '$1K' }, local: { value: 1000, formatted: '$1K' } },
+    value: { usd: { value: 500, formatted: '$500' }, local: { value: 500, formatted: '$500' } }
   },
   {
     amount: 50,
+    raw: 50_000_000n,
     token: {
       id: 'usdc',
       name: 'USD Coin',
@@ -41,54 +78,47 @@ const defaultContractBalances = () => [
       decimals: 6,
       address: '0xA3492D046095AFFE351cFac15de9b86425E235dB'
     },
-    values: {
-      USD: {
-        value: 50000,
-        formated: '$50K',
-        id: 'usd',
-        code: 'USD',
-        symbol: '$',
-        price: 1000,
-        formatedPrice: '$1K'
-      }
-    }
+    price: { usd: { value: 1000, formatted: '$1K' }, local: { value: 1000, formatted: '$1K' } },
+    value: { usd: { value: 50000, formatted: '$50K' }, local: { value: 50000, formatted: '$50K' } }
   }
 ]
 
-const defaultContractTotal = () => ({
-  USD: {
-    value: 50500,
-    formated: '$50.5K',
-    id: 'usd',
-    code: 'USD',
-    symbol: '$',
-    price: 1000,
-    formatedPrice: '$1K'
-  }
-})
-
-const defaultDividendsTotal = () => ({
-  USD: {
-    value: 100,
-    formated: '$100',
-    id: 'usd',
-    code: 'USD',
-    symbol: '$',
-    price: 1000,
-    formatedPrice: '$1K'
-  }
+const defaultContractTotal = (): CurrencyPair => ({
+  usd: { value: 50500, formatted: '$50.5K' },
+  local: { value: 50500, formatted: '$50.5K' }
 })
 
 /**
- * Mock useContractBalance composable
+ * Mock useContractBalance composable.
+ *
+ * The composable returns a TanStack query whose `data` holds `{ balances,
+ * total }`. Specs steer it through the `balances` / `total` refs — `data` is
+ * derived from them, so setting either one is picked up by the component under
+ * test without rebuilding the whole payload.
+ *
+ * Set `hasData` to false to reproduce the pre-first-read state, where the real
+ * composable leaves `data` undefined.
  */
-export const mockUseContractBalance = {
+const contractBalanceState = {
   balances: ref(defaultContractBalances()),
   total: ref(defaultContractTotal()),
-  dividendsTotal: ref(defaultDividendsTotal()),
-  dividends: ref([]),
+  hasData: ref(true),
   isLoading: ref(false),
-  error: ref(null)
+  error: ref(null),
+  isFetching: ref(false),
+  refetch: vi.fn()
+}
+
+export const mockUseContractBalance = {
+  ...contractBalanceState,
+  data: computed(() =>
+    contractBalanceState.hasData.value
+      ? {
+          balances: contractBalanceState.balances.value,
+          total: contractBalanceState.total.value
+        }
+      : undefined
+  )
 }
 
 /**
@@ -211,10 +241,11 @@ export const resetComposableMocks = () => {
   // Reset contract balance state (fresh copies so in-place mutations don't leak)
   mockUseContractBalance.balances.value = defaultContractBalances()
   mockUseContractBalance.total.value = defaultContractTotal()
-  mockUseContractBalance.dividendsTotal.value = defaultDividendsTotal()
+  mockUseContractBalance.hasData.value = true
   mockUseContractBalance.isLoading.value = false
   mockUseContractBalance.error.value = null
-  mockUseContractBalance.dividends.value = []
+  mockUseContractBalance.isFetching.value = false
+  mockUseContractBalance.refetch.mockClear()
 
   // Reset native transaction states
   mockUseSafeSendTransaction.isPending.value = false

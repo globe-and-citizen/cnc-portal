@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { encodeFunctionData, type Address } from 'viem'
-import { useContractBalance } from '@/composables'
+import { useContractBalance, contractBalanceKeys } from '@/composables'
 import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
 import { useOwnerWithdrawAllToBank as useCashOwnerWithdrawAll } from '@/composables/cashRemuneration/writes'
 import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
@@ -125,8 +125,10 @@ const isOwner = computed(() => {
 
 const hasTheRight = computed(() => isOwner.value || isBodAction.value)
 
-const { balances } = useContractBalance(contractAddress)
-const hasWithdrawableBalance = computed(() => balances.value.some((b) => b.amount > 0))
+const { data: balance } = useContractBalance(contractAddress)
+const hasWithdrawableBalance = computed(() =>
+  (balance.value?.balances ?? []).some((b) => b.raw > 0n)
+)
 
 const cashWithdraw = useCashOwnerWithdrawAll()
 const expenseWithdraw = useExpenseOwnerWithdrawAll()
@@ -145,14 +147,11 @@ const resetWithdrawState = () => {
 const refreshContractBalances = async () => {
   if (!contractAddress.value) return
 
-  await Promise.all([
-    queryClient.invalidateQueries({
-      queryKey: ['balance', { address: contractAddress.value, chainId: chainId.value }]
-    }),
-    queryClient.invalidateQueries({
-      queryKey: ['readContract', { args: [contractAddress.value], chainId: chainId.value }]
-    })
-  ])
+  // Native and ERC-20 amounts share one query per contract now, so a single key
+  // covers what used to take a `balance` plus a `readContract` invalidation.
+  await queryClient.invalidateQueries({
+    queryKey: contractBalanceKeys.detail(contractAddress.value, chainId.value)
+  })
 }
 
 const openWithdrawModal = () => {
