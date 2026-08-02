@@ -8,14 +8,20 @@ import { authorizeUser } from '../../middleware/authMiddleware';
 import teamRoutes from '../../routes/teamRoutes';
 import { addNotification, prisma } from '../../utils';
 
-const { mockGetPresignedDownloadUrl } = vi.hoisted(() => ({
+const { mockGetPresignedDownloadUrl, mockCaller } = vi.hoisted(() => ({
   mockGetPresignedDownloadUrl: vi.fn((key: string) => `https://signed.example.com/${key}`),
+  // Mutable so a test can sign the caller in as an admin.
+  mockCaller: { roles: ['ROLE_USER'] as string[] },
 }));
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
     req.address = '0x1234567890123456789012345678901234567890';
+    req.user = {
+      address: '0x1234567890123456789012345678901234567890',
+      roles: mockCaller.roles,
+    } as unknown as User;
     next();
   }),
 }));
@@ -317,6 +323,7 @@ describe('Team Controller', () => {
   describe('getTeam', () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      mockCaller.roles = ['ROLE_USER'];
     });
 
     it('should return 403 if user is not part of the team', async () => {
@@ -334,6 +341,32 @@ describe('Team Controller', () => {
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Unauthorized');
     });
+
+    it.each([['ROLE_ADMIN'], ['ROLE_SUPER_ADMIN']])(
+      'should return 200 for a %s who is not part of the team',
+      async (role) => {
+        mockCaller.roles = [role];
+        vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+          ...teamMockResolve,
+          members: [
+            {
+              address: '0x2222222222222222222222222222222222222222',
+              name: 'Member 1',
+              imageUrl: null,
+              Wage: [],
+            },
+          ],
+        } as unknown as Team);
+        // Non-members have no MemberTeamsData row for the team.
+        vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(null);
+
+        const response = await request(app).get('/1');
+
+        expect(response.status).toBe(200);
+        expect(response.body.name).toBe('Test Team');
+        expect(response.body.isHidden).toBe(false);
+      }
+    );
 
     it('should return 404 if team is not found', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);

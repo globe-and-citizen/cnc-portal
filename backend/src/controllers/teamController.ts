@@ -6,6 +6,8 @@ import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { generateUniqueSlug } from '../utils/slug.util';
 import { isActiveOfficerVersion } from '../utils/officerVersion';
+import { isAdmin } from '../utils/roleUtils';
+import { UserRoles } from '../types/roles';
 
 // A slug is taken when some team already holds it.
 const isTeamSlugTaken = async (slug: string) =>
@@ -240,7 +242,10 @@ const getTeam = async (req: Request, res: Response) => {
       return errorResponse(404, 'Team not found', res);
     }
 
-    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
+    // Platform admins inspect teams they are not members of from the admin
+    // dashboard, so membership is only required for regular users.
+    const callerRoles = (req.user?.roles ?? []) as UserRoles;
+    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress) && !isAdmin(callerRoles)) {
       return errorResponse(403, 'Unauthorized', res);
     }
 
