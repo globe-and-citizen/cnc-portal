@@ -34,27 +34,13 @@
     </template>
 
     <template #activity-cell="{ row: { original: row } }">
-      <div v-if="!row.isTotal && row.isFirst" class="flex items-center gap-1.5 text-sm">
-        <template v-if="row.activity.kind === 'actor'">
-          <UserComponent compact size="sm" hide-address :user="resolveUser(row.activity.actor)" />
-          <span class="text-muted">{{ row.activity.text }}</span>
-        </template>
-        <template v-else-if="row.activity.kind === 'transfer'">
-          <template v-if="row.activity.actor">
-            <UserComponent compact size="sm" hide-address :user="resolveUser(row.activity.actor)" />
-            <span class="text-muted">transferred money from</span>
-            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.from)" />
-            <span class="text-muted">to</span>
-            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.to)" />
-          </template>
-          <template v-else>
-            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.from)" />
-            <span class="text-muted">transferred money to</span>
-            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.to)" />
-          </template>
-        </template>
-        <span v-else-if="row.activity.text" class="text-muted">{{ row.activity.text }}</span>
-      </div>
+      <LedgerActivityCell
+        v-if="!row.isTotal && row.isFirst"
+        :activity="row.activity"
+        :destination="row.destination"
+        :linkable="!!routeFor(row.destination)"
+        @open="open(row.destination)"
+      />
     </template>
 
     <template #account-cell="{ row: { original: row } }">
@@ -133,8 +119,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import UserComponent from '@/components/UserComponent.vue'
-import { resolveUser } from '@/utils/transactionHistoryUtil'
+import LedgerActivityCell from './LedgerActivityCell.vue'
+import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
 import {
   LEDGER_COLUMNS,
   type LedgerRow,
@@ -159,10 +145,9 @@ type LedgerTableRow = LedgerRow & { isTotal: boolean }
 // (CATEGORY_BADGE in ledgerPresenter). A static string so Tailwind keeps it.
 const FEE_BADGE = 'bg-warning/10 text-warning'
 
-/** A cash pocket account rendered as a contract avatar (document icon + short name). */
-function pocketUser(account: string) {
-  return { name: account.replace('Cash — ', ''), address: '', icon: 'heroicons:document-text' }
-}
+// "Where did this happen?" — resolved once for the table, so each Activity cell
+// only has to say whether it is clickable.
+const { routeFor, open } = useActivityDestination()
 
 const tableRows = computed<LedgerTableRow[]>(() => [
   ...props.rows.map((r) => ({ ...r, isTotal: false })),
