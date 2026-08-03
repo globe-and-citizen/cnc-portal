@@ -6,7 +6,7 @@
         size="sm"
         :disabled="!hasWithdrawableBalance || isLoadingAction || archivedDisabled"
         data-test="owner-withdraw-button"
-        label="Withdraw"
+        label="Return Transfer to Bank  "
         @click="openWithdrawModal"
       />
     </TeamArchivedTooltip>
@@ -14,7 +14,7 @@
     <UModal
       v-if="withdrawModal.mount"
       v-model:open="withdrawModal.show"
-      title="Confirm Treasury Withdraw"
+      title="Confirm Return Transfer"
       description="Review this action before signing the transaction in MetaMask."
       :close="{ onClick: resetWithdrawState }"
     >
@@ -32,7 +32,7 @@
             color="warning"
             variant="soft"
             icon="i-heroicons-exclamation-triangle"
-            title="You are about to withdraw all available funds to the Bank."
+            title="You are about to return transfer all available funds to the Bank."
             description="By continuing, MetaMask will open and you will be asked to confirm the transaction."
           />
 
@@ -51,7 +51,7 @@
               :loading="isLoadingAction"
               :disabled="!hasWithdrawableBalance || isLoadingAction"
               data-test="owner-withdraw-modal-confirm-button"
-              label="Withdraw"
+              label="Return Transfer"
               @click="confirmWithdrawFromModal"
             />
           </div>
@@ -183,7 +183,7 @@ const confirmWithdrawFromModal = async () => {
     }
 
     await withdrawTx.value.mutateAsync({ args: [] })
-    toast.add({ title: 'Withdraw successful', color: 'success' })
+    toast.add({ title: ' Return Transfer successful', color: 'success' })
     resetWithdrawState()
     await refreshContractBalances()
   } catch (error: unknown) {
