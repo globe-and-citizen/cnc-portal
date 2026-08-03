@@ -163,6 +163,50 @@ describe('TeamMetaUpdateModal.vue', () => {
     expect(wrapper.text()).toContain('10 / 200')
   })
 
+  // Opened from the teams list there is no trigger click to prefill on, and the
+  // store's "current team" is not the card that was acted on.
+  describe('driven by a parent', () => {
+    const currentTeam = {
+      ...mockTeamData,
+      id: '99',
+      name: 'Card Name',
+      description: 'Description carried in on the prop'
+    }
+
+    const mountControlled = () =>
+      mount(TeamMetaUpdateModal, {
+        props: { currentTeam, teamId: '99', withTrigger: false, open: false },
+        global: { stubs: formStubs }
+      })
+
+    it('prefills from the supplied team when the parent opens it', async () => {
+      const wrapper = mountControlled()
+      expect(wrapper.find('[data-test="team-meta-update-open"]').exists()).toBe(false)
+
+      await wrapper.setProps({ open: true })
+
+      expect((wrapper.find('input').element as HTMLInputElement).value).toBe('Card Name')
+      expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe(
+        'Description carried in on the prop'
+      )
+    })
+
+    it('submits against the supplied team rather than the store’s current one', async () => {
+      const wrapper = mountControlled()
+      await wrapper.setProps({ open: true })
+      await wrapper.get('form.flex.flex-col.gap-5').trigger('submit')
+      await flushPromises()
+
+      expect(mutateSpy).toHaveBeenCalledWith(
+        {
+          pathParams: { id: '99' },
+          body: { name: 'Card Name', description: 'Description carried in on the prop' }
+        },
+        expect.any(Object)
+      )
+    })
+  })
+
   it('disables save while pending', async () => {
     vi.mocked(useUpdateTeamMutation).mockReturnValueOnce({
       mutate: mutateSpy,
