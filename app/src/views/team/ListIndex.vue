@@ -102,6 +102,10 @@
         :data-test="`team-card-${team.id}`"
         class="cursor-pointer transition duration-300 hover:-translate-y-0.5 hover:shadow-md"
         @click="navigateToTeam(team.id)"
+        @update="openAction(team, 'update')"
+        @archive="openAction(team, 'archive')"
+        @hide="openAction(team, 'hide')"
+        @delete="openAction(team, 'delete')"
       />
 
       <div class="flex" data-test="add-team-button">
@@ -123,6 +127,34 @@
         </UModal>
       </div>
     </div>
+
+    <!-- Card actions. One modal per action, retargeted at whichever card raised
+         it: these are the dashboard's own modals, which default to the open
+         team — a list has none, so the team is passed explicitly. -->
+    <TeamMetaUpdateModal
+      v-model:open="updateIsOpen"
+      :current-team="actionTeam"
+      :team-id="actionTeam?.id"
+      :with-trigger="false"
+    />
+    <TeamMetaArchiveModal
+      v-model:open="archiveIsOpen"
+      :current-team="actionTeam"
+      :team-id="actionTeam?.id"
+      :with-trigger="false"
+    />
+    <TeamMetaVisibilityModal
+      v-model:open="visibilityIsOpen"
+      :current-team="actionTeam"
+      :team-id="actionTeam?.id"
+      :with-trigger="false"
+    />
+    <TeamMetaDeleteModal
+      v-model:open="deleteIsOpen"
+      :current-team="actionTeam"
+      :team-id="actionTeam?.id"
+      :with-trigger="false"
+    />
   </div>
 </template>
 
@@ -131,7 +163,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserDataStore } from '@/stores'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
+import TeamMetaArchiveModal from '@/components/sections/DashboardView/TeamMetaArchiveModal.vue'
+import TeamMetaDeleteModal from '@/components/sections/DashboardView/TeamMetaDeleteModal.vue'
+import TeamMetaUpdateModal from '@/components/sections/DashboardView/TeamMetaUpdateModal.vue'
+import TeamMetaVisibilityModal from '@/components/sections/DashboardView/TeamMetaVisibilityModal.vue'
 import { useGetTeamsQuery } from '@/queries/team.queries'
+import type { Team } from '@/types/team'
 import { computed, ref, watch } from 'vue'
 
 const openModal = ref(false)
@@ -179,4 +216,32 @@ watch(
 const navigateToTeam = (id: number | string) => {
   router.push(`/teams/${id}`)
 }
+
+// --- Card actions ---------------------------------------------------------
+// The cards only announce what was chosen; the list owns the modals so they
+// sit outside the card and their clicks never reach its navigation handler.
+type TeamAction = 'update' | 'archive' | 'hide' | 'delete'
+
+const actionTeam = ref<Team | null>(null)
+const activeAction = ref<TeamAction | null>(null)
+
+const openAction = (team: Team, action: TeamAction) => {
+  actionTeam.value = team
+  activeAction.value = action
+}
+
+// One shared `activeAction` rather than a flag per modal, so opening one action
+// cannot leave another still open behind it.
+const actionIsOpen = (action: TeamAction) =>
+  computed({
+    get: () => activeAction.value === action,
+    set: (isOpen: boolean) => {
+      activeAction.value = isOpen ? action : null
+    }
+  })
+
+const updateIsOpen = actionIsOpen('update')
+const archiveIsOpen = actionIsOpen('archive')
+const visibilityIsOpen = actionIsOpen('hide')
+const deleteIsOpen = actionIsOpen('delete')
 </script>

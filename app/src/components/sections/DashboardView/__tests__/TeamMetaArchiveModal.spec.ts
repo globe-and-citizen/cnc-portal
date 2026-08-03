@@ -154,6 +154,40 @@ describe('TeamMetaArchiveModal.vue', () => {
     expect(wrapper.find('[data-test="archive-team-button"]').exists()).toBe(false)
   })
 
+  // The teams list reuses this modal per card, where the store's "current team"
+  // is either absent or a different team entirely.
+  describe('driven by a parent', () => {
+    const mountControlled = (team: Team = teamProps()) =>
+      mount(TeamMetaArchiveModal, {
+        props: { currentTeam: team, teamId: '99', withTrigger: false, open: true }
+      })
+
+    it('acts on the supplied team rather than the store’s current one', async () => {
+      const wrapper = mountControlled()
+      await wrapper.find('[data-test="archive-team-button"]').trigger('click')
+
+      expect(mutateSpy).toHaveBeenCalledWith(
+        { pathParams: { id: '99' }, body: { isArchived: true } },
+        expect.any(Object)
+      )
+    })
+
+    it('renders no trigger of its own', () => {
+      expect(mountControlled().find('[data-test="team-meta-archive-open"]').exists()).toBe(false)
+    })
+
+    it('reports closing back to the parent', async () => {
+      mutateSpy.mockImplementationOnce((_payload, options) => {
+        options?.onSuccess?.()
+      })
+
+      const wrapper = mountControlled()
+      await wrapper.find('[data-test="archive-team-button"]').trigger('click')
+
+      expect(wrapper.emitted('update:open')).toContainEqual([false])
+    })
+  })
+
   it('disables archive action while pending', async () => {
     vi.mocked(useUpdateTeamMutation).mockReturnValueOnce({
       mutate: mutateSpy,

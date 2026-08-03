@@ -256,6 +256,37 @@ describe('TeamCard', () => {
       ])
     })
 
+    // An action that has already been taken has to offer the way back out,
+    // otherwise a hidden or archived team is stranded in that state.
+    it('offers the reverse action once the team is hidden or archived', () => {
+      expect(menuItems(makeTeam({ isHidden: true })).map((item) => item.label)).toEqual([
+        'Update',
+        'Archive',
+        'Show',
+        'Delete'
+      ])
+      expect(menuItems(makeTeam({ isArchived: true })).map((item) => item.label)).toEqual([
+        'Update',
+        'Unarchive',
+        'Hide',
+        'Delete'
+      ])
+      expect(menuItems(makeTeam({ isHidden: true, ownerAddress: OUTSIDER })).map((i) => i.label)) //
+        .toEqual(['Show'])
+    })
+
+    // The backend answers a metadata write on an archived team with a 409, so
+    // the card must not offer it as a live action.
+    it('disables Update while the team is archived', () => {
+      const disabledOf = (team: Team) =>
+        (menuItems(team) as Array<{ label: string; disabled?: boolean }>).find(
+          (item) => item.label === 'Update'
+        )?.disabled
+
+      expect(disabledOf(makeTeam({ isArchived: true }))).toBe(true)
+      expect(disabledOf(makeTeam())).toBe(false)
+    })
+
     // The whole card is the navigation target, so a click meant for the menu
     // must not also open the team.
     it('keeps menu clicks from reaching the card underneath', async () => {

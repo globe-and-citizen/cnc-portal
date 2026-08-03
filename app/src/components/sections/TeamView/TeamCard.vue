@@ -300,17 +300,26 @@ const wage = computed(() => {
 
 // --- Actions --------------------------------------------------------------
 // Owners manage the team; everyone else can only drop it from their own list.
+// Each entry names the transition it performs, so a team that is already
+// hidden or archived offers the way back out rather than a no-op.
 const menuItems = computed<DropdownMenuItem[]>(() => {
-  const hide: DropdownMenuItem = {
-    label: 'Hide',
-    icon: 'i-heroicons-eye-slash',
-    onSelect: () => emit('hide')
-  }
-  if (!isOwner.value) return [hide]
+  const visibility: DropdownMenuItem = props.team.isHidden
+    ? { label: 'Show', icon: 'i-heroicons-eye', onSelect: () => emit('hide') }
+    : { label: 'Hide', icon: 'i-heroicons-eye-slash', onSelect: () => emit('hide') }
+  if (!isOwner.value) return [visibility]
   return [
-    { label: 'Update', icon: 'i-heroicons-pencil-square', onSelect: () => emit('update') },
-    { label: 'Archive', icon: 'i-heroicons-archive-box', onSelect: () => emit('archive') },
-    hide,
+    {
+      label: 'Update',
+      icon: 'i-heroicons-pencil-square',
+      // The backend rejects metadata writes on an archived team (409), so the
+      // entry stays visible but inert until the team is unarchived.
+      disabled: props.team.isArchived,
+      onSelect: () => emit('update')
+    },
+    props.team.isArchived
+      ? { label: 'Unarchive', icon: 'i-lucide-archive-restore', onSelect: () => emit('archive') }
+      : { label: 'Archive', icon: 'i-heroicons-archive-box', onSelect: () => emit('archive') },
+    visibility,
     {
       label: 'Delete',
       icon: 'i-heroicons-trash',
