@@ -1,49 +1,60 @@
 <template>
-  <section class="flex flex-col gap-4" aria-labelledby="current-contracts-title">
-    <div>
-      <h2 id="current-contracts-title" class="text-highlighted text-lg font-semibold">
-        Current contracts
-      </h2>
-      <p class="text-muted mt-1 text-sm">Contracts managed by the active Officer generation.</p>
+  <section class="space-y-6" aria-labelledby="current-contracts-title">
+    <h2 id="current-contracts-title" class="sr-only">Current contracts</h2>
+
+    <div v-if="teamStore.currentTeamMeta.isPending" class="flex justify-center py-10">
+      <UIcon name="i-lucide-loader-circle" class="text-primary size-10 animate-spin" />
     </div>
 
-    <div v-if="teamStore.currentTeamMeta.isPending" class="flex justify-center">
-      <UIcon name="i-lucide-loader-circle" class="text-primary h-10 w-10 animate-spin" />
-    </div>
-
-    <UCard v-else-if="generation" class="w-full">
-      <template #header>
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="text-highlighted font-medium">Active Officer</span>
-            <UBadge color="primary" variant="subtle" size="sm">
-              {{ generation.version || 'Unknown version' }}
-            </UBadge>
-            <UBadge color="success" variant="soft" size="sm">Current</UBadge>
-            <AddressToolTip :address="generation.officerAddress" :slice="true" class="text-xs" />
+    <template v-else-if="generation">
+      <UCard
+        class="overflow-hidden"
+        :ui="{ body: 'bg-gradient-to-r from-primary/10 via-primary/5 to-transparent' }"
+      >
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="bg-success size-2 rounded-full" aria-hidden="true" />
+              <span class="text-success text-xs font-semibold tracking-wide uppercase">
+                Current generation
+              </span>
+              <UBadge color="primary" variant="subtle" size="sm">
+                {{ generation.version || 'Unknown version' }}
+              </UBadge>
+            </div>
+            <div class="mt-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+              <p class="text-highlighted text-xl font-semibold">Active Officer</p>
+              <AddressToolTip :address="generation.officerAddress" :slice="true" class="text-xs" />
+            </div>
+            <p class="text-muted mt-2 text-sm">
+              This generation currently controls {{ currentContracts.length }} workspace contracts.
+            </p>
           </div>
 
           <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
             <UButton
               color="primary"
               icon="i-lucide-refresh-cw"
+              label="Redeploy contracts"
               :disabled="
                 teamStore.currentTeam?.ownerAddress !== userStore.address || archivedDisabled
               "
               data-test="createAddCampaign"
               @click="openRedeployModal"
-            >
-              Redeploy Contracts
-            </UButton>
+            />
           </TeamArchivedTooltip>
         </div>
-      </template>
+      </UCard>
 
       <MainContractTable :contracts="currentContracts" :version="generation.version" />
-    </UCard>
+    </template>
 
-    <UCard v-else class="w-full">
-      <div class="text-muted py-8 text-center text-sm">No active deployment found.</div>
+    <UCard v-else>
+      <div class="py-8 text-center">
+        <UIcon name="i-lucide-file-warning" class="text-muted mx-auto size-8" />
+        <p class="text-highlighted mt-3 font-medium">No active deployment found</p>
+        <p class="text-muted mt-1 text-sm">Deploy an Officer generation to manage contracts.</p>
+      </div>
     </UCard>
 
     <RedeployOfficerModal v-model:open="showModal" />

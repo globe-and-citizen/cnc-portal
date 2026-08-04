@@ -51,6 +51,7 @@ const DEFAULT_ROW: TableRow = {
   ],
   paused: false,
   owner: '0xOwner0000000000000000000000000000000001',
+  deployer: '0xDeployer0000000000000000000000000000001',
   type: 'Treasury'
 }
 
@@ -84,6 +85,11 @@ const stubs = {
     name: 'UAlert',
     props: ['color', 'title', 'description', 'variant', 'icon'],
     template: '<div data-test="u-alert">{{ title }}{{ description }}</div>'
+  },
+  Slideover: {
+    name: 'USlideover',
+    props: ['open', 'title', 'description'],
+    template: '<aside v-if="open" data-test="contract-details"><slot name="body" /></aside>'
   }
 }
 
@@ -95,6 +101,24 @@ function mountComponent(rowOverrides: Partial<TableRow> = {}) {
       stubs
     }
   })
+}
+
+type MenuItem = {
+  label?: string
+  color?: string
+  disabled?: boolean
+  onSelect?: () => void
+}
+
+function getMenuItems(wrapper: ReturnType<typeof mountComponent>): MenuItem[] {
+  const dropdown = wrapper.findComponent({ name: 'UDropdown' })
+  return (dropdown.props('items') as MenuItem[][]).flat()
+}
+
+function selectMenuItem(wrapper: ReturnType<typeof mountComponent>, label: string) {
+  const item = getMenuItems(wrapper).find((candidate) => candidate.label === label)
+  expect(item, `Menu item "${label}"`).toBeDefined()
+  item?.onSelect?.()
 }
 
 const resetMutationMocks = () => {
@@ -132,27 +156,45 @@ describe('MainContractActions.vue', () => {
     vi.unstubAllGlobals()
   })
 
-  it('renders and toggles action button state from paused flag', () => {
+  it('renders the contextual actions for active and paused contracts', () => {
     const active = mountComponent({ paused: false })
     const paused = mountComponent({ paused: true })
 
-    expect(active.text()).toContain('Transfer Ownership')
-    expect(active.text()).toContain('Pending Actions')
-    expect(active.findAllComponents({ name: 'UButton' })[0]?.props('color')).toBe('error')
-    expect(paused.findAllComponents({ name: 'UButton' })[0]?.props('color')).toBe('info')
+    expect(getMenuItems(active).map((item) => item.label)).toContain('Transfer ownership')
+    expect(getMenuItems(active).map((item) => item.label)).toContain('Pause contract')
+    expect(getMenuItems(paused).map((item) => item.label)).toContain('Resume contract')
+    expect(getMenuItems(active).find((item) => item.label === 'Pause contract')?.color).toBe(
+      'error'
+    )
+    expect(getMenuItems(paused).find((item) => item.label === 'Resume contract')?.color).toBe(
+      'success'
+    )
+  })
+
+  it('opens the contract details slideover from the contextual menu', async () => {
+    const wrapper = mountComponent()
+
+    selectMenuItem(wrapper, 'View contract details')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="contract-details"]').exists()).toBe(true)
   })
 
   it('disables privileged actions for non-owner non-BOD user', () => {
     const wrapper = mountComponent()
-    expect(wrapper.findAll('button')[0]?.attributes('disabled')).toBeDefined()
-    expect(wrapper.findAll('button')[1]?.attributes('disabled')).toBeDefined()
+    expect(
+      getMenuItems(wrapper).find((item) => item.label === 'Transfer ownership')?.disabled
+    ).toBe(true)
+    expect(getMenuItems(wrapper).find((item) => item.label === 'Pause contract')?.disabled).toBe(
+      true
+    )
   })
 
   it('calls pause write when contract is active', async () => {
     mockBodIsBodAction.isBodAction.value = true
 
     const wrapper = mountComponent({ paused: false })
-    await wrapper.findAll('button')[0]?.trigger('click')
+    selectMenuItem(wrapper, 'Pause contract')
     expect(mutationByFn.pause.mutate).toHaveBeenCalled()
   })
 
@@ -160,13 +202,14 @@ describe('MainContractActions.vue', () => {
     mockBodIsBodAction.isBodAction.value = true
 
     const wrapper = mountComponent({ paused: true })
-    await wrapper.findAll('button')[0]?.trigger('click')
+    selectMenuItem(wrapper, 'Resume contract')
     expect(mutationByFn.unpause.mutate).toHaveBeenCalled()
   })
 
   it('opens transfer modal and executes transfer directly when not BOD', async () => {
     const wrapper = mountComponent({ owner: mockUserStore.address })
-    await wrapper.findAll('button')[1]?.trigger('click')
+    selectMenuItem(wrapper, 'Transfer ownership')
+    await wrapper.vm.$nextTick()
     await wrapper.find('[data-test="emit-transfer"]')?.trigger('click')
 
     expect(mutationByFn.transferOwnership.mutate).toHaveBeenCalled()
@@ -176,7 +219,8 @@ describe('MainContractActions.vue', () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = mountComponent()
 
-    await wrapper.findAll('button')[1]?.trigger('click')
+    selectMenuItem(wrapper, 'Transfer ownership')
+    await wrapper.vm.$nextTick()
     await wrapper.find('[data-test="emit-transfer"]')?.trigger('click')
     await flushPromises()
 
@@ -188,7 +232,8 @@ describe('MainContractActions.vue', () => {
 
   it('shows transfer error alert and logs error when transfer write fails', async () => {
     const wrapper = mountComponent({ owner: mockUserStore.address })
-    await wrapper.findAll('button')[1]?.trigger('click')
+    selectMenuItem(wrapper, 'Transfer ownership')
+    await wrapper.vm.$nextTick()
     await wrapper.find('[data-test="emit-transfer"]')?.trigger('click')
 
     mutationByFn.transferOwnership.error.value = new Error('reverted')
@@ -202,7 +247,8 @@ describe('MainContractActions.vue', () => {
     vi.spyOn(utils, 'filterAndFormatActions').mockReturnValue([{ id: 1 } as never])
     const wrapper = mountComponent()
 
-    await wrapper.findAll('button')[2]?.trigger('click')
+    selectMenuItem(wrapper, 'Review pending actions (1)')
+    await wrapper.vm.$nextTick()
     await wrapper.findComponent({ name: 'PendingEventsList' }).vm.$emit('view-details', { id: 1 })
     await wrapper.find('[data-test="emit-approve"]')?.trigger('click')
 
@@ -214,7 +260,8 @@ describe('MainContractActions.vue', () => {
     vi.spyOn(utils, 'filterAndFormatActions').mockReturnValue([{ id: 1 } as never])
     const wrapper = mountComponent()
 
-    await wrapper.findAll('button')[2]?.trigger('click')
+    selectMenuItem(wrapper, 'Review pending actions (1)')
+    await wrapper.vm.$nextTick()
     await wrapper.findComponent({ name: 'PendingEventsList' }).vm.$emit('view-details', { id: 1 })
     await wrapper.find('[data-test="emit-close"]')?.trigger('click')
 
@@ -226,11 +273,9 @@ describe('MainContractActions.vue', () => {
     vi.spyOn(utils, 'filterAndFormatActions').mockReturnValue([{ id: 1 } as never])
     const wrapper = mountComponent()
 
-    await wrapper.findAll('button')[1]?.trigger('click')
     mockBodAddAction.isSuccess.value = true
     await wrapper.vm.$nextTick()
 
-    await wrapper.findAll('button')[2]?.trigger('click')
     mockBodApproveAction.isSuccess.value = true
     await wrapper.vm.$nextTick()
 
@@ -243,7 +288,8 @@ describe('MainContractActions.vue', () => {
       (_vars: unknown, opts?: MutateOpts) => opts?.onSuccess?.()
     )
     const wrapper = mountComponent({ owner: mockUserStore.address })
-    await wrapper.findAll('button')[1]?.trigger('click')
+    selectMenuItem(wrapper, 'Transfer ownership')
+    await wrapper.vm.$nextTick()
     await wrapper.find('[data-test="emit-transfer"]')?.trigger('click')
     await flushPromises()
 
@@ -259,7 +305,7 @@ describe('MainContractActions.vue', () => {
       opts?.onSuccess?.()
     )
     const pauseWrapper = mountComponent({ paused: false })
-    await pauseWrapper.findAll('button')[0]?.trigger('click')
+    selectMenuItem(pauseWrapper, 'Pause contract')
     await flushPromises()
     expect(pauseWrapper.emitted('contract-status-changed')).toBeTruthy()
 
@@ -267,7 +313,7 @@ describe('MainContractActions.vue', () => {
       opts?.onSuccess?.()
     )
     const unpauseWrapper = mountComponent({ paused: true })
-    await unpauseWrapper.findAll('button')[0]?.trigger('click')
+    selectMenuItem(unpauseWrapper, 'Resume contract')
     await flushPromises()
     expect(unpauseWrapper.emitted('contract-status-changed')).toBeTruthy()
   })

@@ -51,7 +51,7 @@ describe('ContractManagementView.vue', () => {
     const wrapper = renderWithProviders(ContractManagementView, { pinia: false })
 
     expect(wrapper.text()).toContain('Contract Management')
-    expect(wrapper.text()).toContain('Archived generations')
+    expect(wrapper.text()).toContain('Deployment history')
     expect(wrapper.find('[data-test="current-panel"]').exists()).toBe(true)
 
     const campaignsButton = wrapper
