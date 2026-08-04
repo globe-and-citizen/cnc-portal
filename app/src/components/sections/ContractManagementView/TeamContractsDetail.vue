@@ -3,18 +3,19 @@
     <UTable :data="rows" :columns="columns">
       <template #value-cell="{ row: { original: row } }">
         <template v-if="row.key.startsWith('cost')">
-          <div class="flex items-center gap-2">
-            <UInput
-              type="number"
-              step="any"
-              size="sm"
-              :model-value="row.value"
-              :required="true"
-              class="w-24"
-              @update:model-value="updateCost(row.key, $event)"
-            />
-            <span class="text-muted text-sm">ETH</span>
-          </div>
+          <UInput
+            type="number"
+            step="any"
+            size="sm"
+            :model-value="row.value"
+            :required="true"
+            class="w-32"
+            @update:model-value="updateCost(row.key, $event)"
+          >
+            <template #trailing>
+              <span class="text-muted text-xs">ETH</span>
+            </template>
+          </UInput>
         </template>
         <AddressToolTip
           v-else-if="isAddressField(row.key)"

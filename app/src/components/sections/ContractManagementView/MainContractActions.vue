@@ -11,7 +11,7 @@
       @click="openPendingActions"
     />
     <span v-else class="text-muted hidden items-center gap-1 text-xs lg:inline-flex">
-      <span class="bg-muted inline-grid size-6 place-items-center rounded-md">0</span>
+      <UBadge color="neutral" variant="subtle" size="sm" label="0" />
       None
     </span>
 
