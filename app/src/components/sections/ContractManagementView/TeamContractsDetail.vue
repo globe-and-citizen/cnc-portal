@@ -1,124 +1,84 @@
 <template>
   <div id="admins-table" class="overflow-x-auto">
-    <UTable
-      :data="
-        datas.map((data, index) => ({
-          ...data,
-          index: index + 1
-        }))
-      "
-      :columns="[
-        { accessorKey: 'index', header: '#' },
-        { accessorKey: 'key', header: 'Name' },
-        { accessorKey: 'value', header: 'Value' }
-      ]"
-    >
+    <UTable :data="rows" :columns="columns">
       <template #value-cell="{ row: { original: row } }">
         <template v-if="row.key.startsWith('cost')">
-          <UInput
-            type="number"
-            step="any"
-            size="sm"
-            :model-value="row.value"
-            :required="true"
-            class="w-24"
-            @update:model-value="
-              (v: string | number) =>
-                updateValue(
-                  datas.findIndex((d) => d.key === row.key),
-                  Math.abs(parseFloat(String(v)) || 0)
-                )
-            "
-          />
-          ETH
+          <div class="flex items-center gap-2">
+            <UInput
+              type="number"
+              step="any"
+              size="sm"
+              :model-value="row.value"
+              :required="true"
+              class="w-24"
+              @update:model-value="updateCost(row.key, $event)"
+            />
+            <span class="text-muted text-sm">ETH</span>
+          </div>
         </template>
-        <template
-          v-else-if="row.key.includes('Address') || row.key.toLowerCase().includes('owner')"
-        >
-          <AddressToolTip :address="row.value" class="text-xs" />
-        </template>
-        <template v-else>
-          {{ row.value }}
-        </template>
+        <AddressToolTip
+          v-else-if="isAddressField(row.key)"
+          :address="row.value"
+          :slice="true"
+          class="text-xs"
+        />
+        <template v-else>{{ row.value }}</template>
       </template>
     </UTable>
-    <div class="mt-4">
+
+    <div class="mt-4 flex justify-end">
       <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
         <UButton
-          @click="submit"
           color="primary"
+          icon="i-lucide-save"
+          label="Save changes"
           :loading="isLoading"
           :disabled="isLoading || archivedDisabled"
-        >
-          save changes
-        </UButton>
+          @click="submit"
+        />
       </TeamArchivedTooltip>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed, toRef } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import {
+  useCampaignContractDetails,
+  type CampaignContractDatum
+} from '@/composables/contracts/useCampaignContractDetails'
 
-import { parseUnits } from 'viem/utils'
-import type { Address } from 'viem'
-
-import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-const toast = useToast()
 const props = defineProps<{
-  datas: Array<{ key: string; value: string }>
+  datas: CampaignContractDatum[]
   contractAddress: string
   reset: boolean
 }>()
+const emit = defineEmits<{
+  (event: 'update:datas', value: CampaignContractDatum[]): void
+  (event: 'closeContractDataDialog'): void
+}>()
 
-const pendingTransactions = ref(0)
-
-const originalCostPerClick = ref<number>(0)
-const originalCostPerImpression = ref<number>(0)
-
-const isLoading = computed(() => loadingSetCostPerClick.value || loadingSetCostPerImpression.value)
-
-const originalValues = ref<Record<string, number>>({})
-
-const getOriginalValue = (key: string) => originalValues.value[key] ?? 0
-
-const initialized = ref<boolean>(false)
-
-const contractAddress = computed(() => props.contractAddress as Address)
-
+const columns = [
+  { accessorKey: 'index', header: '#' },
+  { accessorKey: 'key', header: 'Name' },
+  { accessorKey: 'value', header: 'Value' }
+]
+const rows = computed(() => props.datas.map((data, index) => ({ ...data, index: index + 1 })))
 const {
-  mutate: setCostPerClick,
-  error: errorSetCostPerClick,
-  isPending: loadingSetCostPerClick
-} = useContractWritesV3({
-  contractAddress,
-  abi: adCampaignManagerAbi,
-  functionName: 'setCostPerClick'
-})
-
-const {
-  mutate: setCostPerImpression,
-  error: errorSetCostPerImpression,
-  isPending: loadingSetCostPerImpression
-} = useContractWritesV3({
-  contractAddress,
-  abi: adCampaignManagerAbi,
-  functionName: 'setCostPerImpression'
-})
-
-watch(errorSetCostPerClick, () => {
-  if (errorSetCostPerClick.value) {
-    toast.add({ title: 'Set cost per click failed', color: 'error' })
-  }
-})
-
-watch(errorSetCostPerImpression, () => {
-  if (errorSetCostPerImpression.value) {
-    toast.add({ title: 'Set cost per impression failed', color: 'error' })
-  }
+  initialized,
+  originalValues,
+  originalCostPerClick,
+  originalCostPerImpression,
+  pendingTransactions,
+  isLoading,
+  submit
+} = useCampaignContractDetails({
+  datas: toRef(props, 'datas'),
+  contractAddress: toRef(props, 'contractAddress'),
+  reset: toRef(props, 'reset'),
+  onClose: () => emit('closeContractDataDialog')
 })
 
 defineExpose({
@@ -129,96 +89,16 @@ defineExpose({
   pendingTransactions
 })
 
-watch(
-  () => props.reset,
-  (resetValue) => {
-    if (resetValue) {
-      initialized.value = false
-    }
-  }
-)
-
-watch(
-  () => props.datas,
-  (newDatas: Array<{ key: string; value: string }>) => {
-    if (!initialized.value && newDatas?.length) {
-      originalValues.value = Object.fromEntries(
-        newDatas.map((data) => [data.key, parseFloat(data.value || '0')])
-      )
-
-      originalCostPerClick.value = getOriginalValue('costPerClick')
-      originalCostPerImpression.value = getOriginalValue('costPerImpression')
-      initialized.value = true
-    }
-  },
-  { deep: true }
-)
-
-async function submit() {
-  try {
-    originalCostPerClick.value = getOriginalValue('costPerClick')
-    originalCostPerImpression.value = getOriginalValue('costPerImpression')
-    const updatedDatas = [...props.datas]
-    const costPerClick = updatedDatas.find((data) => data.key === 'costPerClick')?.value
-    const costPerImpression = updatedDatas.find((data) => data.key === 'costPerImpression')?.value
-
-    if (costPerClick && costPerImpression && originalCostPerClick && originalCostPerImpression) {
-      if (originalCostPerClick.value != parseFloat(costPerClick)) {
-        if (parseFloat(costPerClick) <= 0) {
-          toast.add({ title: 'Cost per click should be greater than 0', color: 'error' })
-          return
-        }
-        pendingTransactions.value++
-        setCostPerClick(
-          { args: [parseUnits(String(costPerClick), 18)] },
-          {
-            onSuccess: () => {
-              pendingTransactions.value--
-              toast.add({ title: 'Cost per click updated successfully', color: 'success' })
-              originalCostPerClick.value = getOriginalValue('costPerClick')
-              if (pendingTransactions.value === 0) emit('closeContractDataDialog')
-            }
-          }
-        )
-      }
-      if (originalCostPerImpression.value != parseFloat(costPerImpression)) {
-        if (parseFloat(costPerImpression) <= 0) {
-          toast.add({ title: 'Cost per impression should be greater than 0', color: 'error' })
-          return
-        }
-        pendingTransactions.value++
-        setCostPerImpression(
-          { args: [parseUnits(String(costPerImpression), 18)] },
-          {
-            onSuccess: () => {
-              pendingTransactions.value--
-              toast.add({ title: 'Cost per impression updated successfully', color: 'success' })
-              originalCostPerImpression.value = getOriginalValue('costPerImpression')
-              if (pendingTransactions.value === 0) emit('closeContractDataDialog')
-            }
-          }
-        )
-      }
-    }
-  } catch (error) {
-    toast.add({
-      title: 'An error occurred while updating the costs. Please try again.',
-      color: 'error'
-    })
-    console.error('Error:', error)
-  }
+function isAddressField(key: string) {
+  return key.includes('Address') || key.toLowerCase().includes('owner')
 }
 
-const emit = defineEmits<{
-  (e: 'update:datas', value: Array<{ key: string; value: string }>): void
-  (e: 'closeContractDataDialog'): void
-}>()
-
-function updateValue(index: number, value: number) {
-  const updatedDatas = [...props.datas]
-  if (updatedDatas[index]) {
-    updatedDatas[index].value = value.toString()
-    emit('update:datas', updatedDatas)
-  }
+function updateCost(key: string, value: string | number) {
+  const updatedDatas = props.datas.map((data) =>
+    data.key === key
+      ? { ...data, value: String(Math.abs(Number.parseFloat(String(value)) || 0)) }
+      : data
+  )
+  emit('update:datas', updatedDatas)
 }
 </script>
