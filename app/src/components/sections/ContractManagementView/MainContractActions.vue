@@ -1,47 +1,45 @@
 <template>
-  <div class="flex items-center gap-2">
-    <UTooltip :text="archivedTooltip">
+  <div class="flex flex-wrap items-center gap-2">
+    <UTooltip :text="archivedTooltip || (row.paused ? 'Resume contract' : 'Pause contract')">
       <UButton
         :color="row.paused ? 'info' : 'error'"
         size="sm"
+        :aria-label="row.paused ? 'Resume contract' : 'Pause contract'"
+        :loading="isLoadingStatus"
+        :disabled="actionsDisabled"
         @click="changeContractStatus(row.paused)"
-        :loading="isLoadingPauseContract || isLoadingUnpauseContract"
-        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
       >
         <IconifyIcon
-          v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
+          v-if="!isLoadingStatus"
           :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
         />
       </UButton>
     </UTooltip>
+
     <UTooltip :text="archivedTooltip">
       <UButton
         color="success"
         variant="outline"
         size="sm"
-        @click="showModal = true"
-        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
         label="Transfer Ownership"
+        :disabled="actionsDisabled"
+        @click="showTransferModal = true"
       />
     </UTooltip>
+
     <UTooltip :text="archivedTooltip">
       <UButton
-        :disabled="isWriteDisabled || !isBodAction || formatedActions.length <= 0"
         color="success"
         variant="outline"
         size="sm"
-        @click="
-          () => {
-            showApprovalModal = true
-            currentStep = 1
-          }
-        "
         label="Pending Actions"
+        :disabled="pendingActionsDisabled"
+        @click="openPendingActions"
       />
     </UTooltip>
 
     <UModal
-      v-model:open="showModal"
+      v-model:open="showTransferModal"
       title="Transfer Ownership"
       description="Transfer contract ownership to a Board of Directors member or an individual team member."
     >
@@ -54,13 +52,14 @@
           class="mb-4"
         />
         <TransferOwnershipForm
-          v-if="showModal"
+          v-if="showTransferModal"
           :is-bod-action="isBodAction"
+          :loading="isLoadingTransfer"
           @transfer-ownership="transferOwnership"
-          :loading="isLoadingTransferOwnership || isLoadingAddAction"
         />
       </template>
     </UModal>
+
     <UModal
       v-model:open="showApprovalModal"
       :ui="{ content: modalWidth }"
@@ -69,242 +68,57 @@
     >
       <template #body>
         <PendingEventsList
-          :pending-actions="formatedActions"
-          @view-details="
-            (row) => {
-              selectedRow = row
-              currentStep = 2
-            }
-          "
           v-if="showApprovalModal && currentStep === 1"
+          :pending-actions="formattedActions"
+          @view-details="viewPendingAction"
         />
         <BodApprovalModal
           v-if="showApprovalModal && currentStep === 2"
           :row="selectedRow"
-          @approve-action="approveAction"
           :loading="isLoadingApproveAction"
+          @approve-action="approveAction"
           @close="showApprovalModal = false"
         />
       </template>
     </UModal>
   </div>
 </template>
+
 <script setup lang="ts">
+import { toRef } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { encodeFunctionData, type Address } from 'viem'
-import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 import type { TableRow } from '@/types/table'
-import { ref, computed, watch } from 'vue'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
-import { classifyError, filterAndFormatActions, log } from '@/utils'
-import PendingEventsList from './PendingEventsList.vue'
+import { useMainContractActions } from '@/composables/contracts/useMainContractActions'
 import BodApprovalModal from './BodApprovalModal.vue'
-import { useGetBodActionsQuery } from '@/queries'
-import { useBodAddAction, useBodApproveAction } from '@/composables/bod/writes'
-import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-import { useQueryClient } from '@tanstack/vue-query'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import PendingEventsList from './PendingEventsList.vue'
+import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 
 const props = defineProps<{
   row: TableRow
 }>()
-
-const emits = defineEmits(['contract-status-changed'])
-
-const teamStore = useTeamStore()
-const toast = useToast()
-const userDataStore = useUserDataStore()
-const queryClient = useQueryClient()
-const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
-
-// BOD action composables
-const addActionComposable = useBodAddAction()
-const approveActionComposable = useBodApproveAction()
-
-const { isBodAction } = useBodIsBodAction(props.row.address as Address)
-
-// Destructure addAction properties
-const {
-  executeAddAction,
-  isPending: isLoadingAddAction,
-  isSuccess: isActionAdded
-} = addActionComposable
-
-// Destructure approveAction properties
-const {
-  executeApproveAction,
-  isPending: isLoadingApproveAction,
-  isSuccess: isActionApproved
-} = approveActionComposable
-
-// Create wrapper functions for template usage
-const addAction = executeAddAction
-const approveAction = executeApproveAction
-
-const showModal = ref(false)
-const showApprovalModal = ref(false)
-const transferOwnershipErrorMessage = ref('')
-const selectedRow = ref<TableRow>({})
-const currentStep = ref<0 | 1 | 2>(0)
-
-const { data: bodActions } = useGetBodActionsQuery({
-  queryParams: {
-    teamId: computed(() => teamStore.currentTeamId),
-    isExecuted: false
-  }
-})
-
-const modalWidth = computed(() => {
-  return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : 'w-1/3 max-w-4xl'
-})
-const formatedActions = computed(() => {
-  return filterAndFormatActions(
-    props.row.address,
-    bodActions.value,
-    teamStore.currentTeam?.members || []
-  )
-})
-
-const rowAddress = computed(() => props.row.address as Address)
+const emit = defineEmits<{
+  (event: 'contract-status-changed'): void
+}>()
 
 const {
-  mutate: executeTransferOwnership,
-  isPending: isLoadingTransferOwnership,
-  error: errorTransferOwnership
-} = useContractWritesV3({
-  contractAddress: rowAddress,
-  abi: ownablePausableAbi,
-  functionName: 'transferOwnership'
-})
-
-const {
-  mutate: executePauseContract,
-  isPending: isLoadingPauseContract,
-  error: errorPauseContract
-} = useContractWritesV3({
-  contractAddress: rowAddress,
-  abi: ownablePausableAbi,
-  functionName: 'pause'
-})
-
-const {
-  mutate: executeUnpauseContract,
-  isPending: isLoadingUnpauseContract,
-  error: errorUnpauseContract
-} = useContractWritesV3({
-  contractAddress: rowAddress,
-  abi: ownablePausableAbi,
-  functionName: 'unpause'
-})
-
-const transferOwnership = async (address: Address) => {
-  if (isBodAction.value) {
-    const data = encodeFunctionData({
-      abi: props.row.abi,
-      functionName: 'transferOwnership',
-      args: [address]
-    })
-    const description = JSON.stringify({
-      text: `Transfer ownership of ${props.row.type} to ${address}`,
-      title: `Ownership Transfer Request`
-    })
-
-    await addAction({
-      targetAddress: props.row.address,
-      description,
-      data
-    })
-    return
-  }
-
-  executeTransferOwnership(
-    { args: [address] },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ['readContract', { functionName: 'isMember' }],
-          exact: false
-        })
-        queryClient.invalidateQueries({
-          queryKey: ['readContract', { functionName: 'owner' }],
-          exact: false
-        })
-        showModal.value = false
-        transferOwnershipErrorMessage.value = ''
-        toast.add({ title: 'Ownership transferred successfully!', color: 'success' })
-        emits('contract-status-changed')
-      }
-    }
-  )
-}
-
-const changeContractStatus = (paused: boolean) => {
-  if (paused) {
-    executeUnpauseContract(
-      { args: [] },
-      {
-        onSuccess: () => {
-          toast.add({ title: 'Contract resumed successfully!', color: 'success' })
-          emits('contract-status-changed')
-        }
-      }
-    )
-  } else {
-    executePauseContract(
-      { args: [] },
-      {
-        onSuccess: () => {
-          toast.add({ title: 'Contract paused successfully!', color: 'success' })
-          emits('contract-status-changed')
-        }
-      }
-    )
-  }
-}
-
-watch(isActionAdded, (isAdded) => {
-  if (isAdded) {
-    showModal.value = false
-    emits('contract-status-changed')
-  }
-})
-
-watch(isActionApproved, (isApproved) => {
-  if (isApproved) {
-    showApprovalModal.value = false
-    emits('contract-status-changed')
-  }
-})
-
-// No `contract` key is passed: this table drives every team contract, and the
-// reverts these three actions raise (Ownable*, EnforcedPause, ExpectedPause)
-// all live in the catalog's shared `common` map.
-watch(errorTransferOwnership, (error) => {
-  if (error) {
-    log.error('errorTransferOwnership.value: ', error)
-    const classified = classifyError(error)
-    if (classified.category === 'user_rejected') return
-    transferOwnershipErrorMessage.value = classified.userMessage
-  }
-})
-
-watch(errorPauseContract, (error) => {
-  if (error) {
-    log.error('errorPauseContract.value: ', error)
-    const classified = classifyError(error)
-    if (classified.category === 'user_rejected') return
-    toast.add({ title: classified.userMessage, color: 'error' })
-  }
-})
-
-watch(errorUnpauseContract, (error) => {
-  if (error) {
-    log.error('errorUnpauseContract.value: ', error)
-    const classified = classifyError(error)
-    if (classified.category === 'user_rejected') return
-    toast.add({ title: classified.userMessage, color: 'error' })
-  }
-})
+  actionsDisabled,
+  pendingActionsDisabled,
+  archivedTooltip,
+  isBodAction,
+  formattedActions,
+  modalWidth,
+  showTransferModal,
+  showApprovalModal,
+  transferOwnershipErrorMessage,
+  selectedRow,
+  currentStep,
+  isLoadingStatus,
+  isLoadingTransfer,
+  isLoadingApproveAction,
+  approveAction,
+  openPendingActions,
+  viewPendingAction,
+  transferOwnership,
+  changeContractStatus
+} = useMainContractActions(toRef(props, 'row'), () => emit('contract-status-changed'))
 </script>
