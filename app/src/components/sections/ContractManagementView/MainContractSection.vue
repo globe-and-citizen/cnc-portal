@@ -51,6 +51,14 @@
                 Redeploy Contracts
               </UButton>
             </TeamArchivedTooltip>
+
+            <!-- Funds left behind by an archived generation are unreachable from
+                 the rest of the UI — this is the only way back to them. -->
+            <LegacyGenerationWithdrawAction
+              v-else
+              :officer-address="gen.officerAddress"
+              :contracts="gen.contracts"
+            />
           </div>
         </template>
 
@@ -67,6 +75,7 @@ import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 import MainContractTable from './MainContractTable.vue'
 import RedeployOfficerModal from './RedeployOfficerModal.vue'
+import LegacyGenerationWithdrawAction from './LegacyGenerationWithdrawAction.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
