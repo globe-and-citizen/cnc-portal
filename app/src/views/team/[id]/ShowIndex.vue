@@ -27,7 +27,9 @@
       <TeamMeta />
       <CompanyOverview />
     </div>
-    <RouterView v-if="teamStore.currentTeamId" :key="teamOutletKey" />
+    <RouterView v-if="teamStore.currentTeamId" v-slot="{ Component }">
+      <component :is="Component" :key="teamOutletKey" />
+    </RouterView>
   </div>
 </template>
 <script setup lang="ts">

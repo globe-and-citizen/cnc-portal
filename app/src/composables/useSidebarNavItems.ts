@@ -156,10 +156,15 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
         {
           label: 'Administration',
           icon: 'heroicons:chart-bar',
+          active: String(route.name ?? '').startsWith('bod-'),
           disabled,
           to: { name: 'bod-elections', params: teamParams() },
           children: [
-            { label: 'Board Election', to: { name: 'bod-elections', params: teamParams() } },
+            {
+              label: 'Board Election',
+              active: route.name === 'bod-elections' || route.name === 'bod-elections-details',
+              to: { name: 'bod-elections', params: teamParams() }
+            },
             { label: 'Proposals', to: { name: 'bod-proposals', params: teamParams() } }
           ]
         },
