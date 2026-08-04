@@ -49,7 +49,7 @@
         }"
       >
         <template #contract-cell="{ row: { original: contract } }">
-          <div class="flex min-w-56 items-center gap-3">
+          <div class="flex min-w-96 items-center gap-3">
             <div
               class="bg-primary/10 text-primary grid size-10 shrink-0 place-items-center rounded-xl"
             >
@@ -57,11 +57,10 @@
             </div>
             <div class="min-w-0">
               <p class="text-highlighted font-medium">{{ presentation(contract.type).label }}</p>
-              <div class="text-muted mt-1 flex items-center gap-1.5 text-xs">
-                <span>{{ contract.type }}</span>
-                <span>·</span>
-                <AddressToolTip :address="contract.address" :slice="true" />
-              </div>
+              <AddressToolTip
+                :address="contract.address"
+                class="text-muted mt-1 font-mono text-xs whitespace-nowrap"
+              />
             </div>
           </div>
         </template>
