@@ -13,6 +13,12 @@ const TooltipStub = {
     '<div data-test="tooltip"><slot /><div data-test="tooltip-content">{{ text }}<slot name="content" /></div></div>'
 }
 
+const PopoverStub = {
+  name: 'UPopover',
+  props: ['mode', 'openDelay', 'closeDelay'],
+  template: '<div data-test="popover"><slot /><slot name="content" /></div>'
+}
+
 function mountComponent() {
   return mount(MainContractBalanceCell, {
     props: { address: ADDRESS },
@@ -20,6 +26,8 @@ function mountComponent() {
       stubs: {
         UTooltip: TooltipStub as Component,
         Tooltip: TooltipStub as Component,
+        UPopover: PopoverStub as Component,
+        Popover: PopoverStub as Component,
         USkeleton: { template: '<span data-test="skeleton" />' }
       }
     }
@@ -76,7 +84,7 @@ describe('MainContractBalanceCell', () => {
     expect(wrapper.text()).not.toContain('$0')
   })
 
-  it('shows the aggregate value and token breakdown in the tooltip', () => {
+  it('shows the aggregate value and token breakdown in a hover popover', () => {
     mockUseContractBalance.balances.value = [
       makeTokenBalance({
         amount: 12.5,
@@ -91,6 +99,7 @@ describe('MainContractBalanceCell', () => {
 
     const wrapper = mountComponent()
 
+    expect(wrapper.findComponent({ name: 'UPopover' }).props('mode')).toBe('hover')
     expect(wrapper.find('[data-test="contract-balance-value"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="contract-balance-details"]').text()).toContain(
       'Balance breakdown'

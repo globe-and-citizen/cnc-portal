@@ -28,11 +28,14 @@
     </span>
   </UTooltip>
 
-  <UTooltip
+  <UPopover
     v-else
+    mode="hover"
+    :open-delay="150"
+    :close-delay="100"
     :content="{ side: 'top', align: 'center' }"
-    :delay-duration="150"
     :ui="{ content: 'w-72 p-3' }"
+    arrow
   >
     <span
       class="decoration-muted cursor-help font-medium underline decoration-dotted underline-offset-4"
@@ -67,7 +70,7 @@
         </div>
       </div>
     </template>
-  </UTooltip>
+  </UPopover>
 </template>
 
 <script setup lang="ts">
