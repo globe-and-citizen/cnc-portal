@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { useGetTeamOfficersQuery, type TeamOfficerWithContracts } from '@/queries/contract.queries'
-import { mockTeamStore, renderWithProviders } from '@/tests/mocks'
+import { mockRouterReplace, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
 
 vi.mock('@/components/sections/ContractManagementView/MainContractSection.vue', () => ({
@@ -47,7 +47,7 @@ describe('ContractManagementView.vue', () => {
     } as unknown as ReturnType<typeof useGetTeamOfficersQuery>)
   })
 
-  it('shows real team counts and opens each management view', async () => {
+  it('shows real team counts and stores the active management view in the route', async () => {
     const wrapper = renderWithProviders(ContractManagementView, { pinia: false })
 
     expect(wrapper.text()).toContain('Contract Management')
@@ -56,14 +56,36 @@ describe('ContractManagementView.vue', () => {
 
     const campaignsButton = wrapper
       .findAll('button')
-      .find((button) => button.text().includes('Campaigns'))
+      .find((button) => button.text().includes('Manage campaigns'))
     await campaignsButton?.trigger('click')
+    await nextTick()
+    expect(mockRouterReplace).toHaveBeenLastCalledWith({ query: { tab: 'campaigns' } })
     expect(wrapper.find('[data-test="campaigns-panel"]').exists()).toBe(true)
 
-    const historyButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('Deployment history'))
-    await historyButton?.trigger('click')
-    expect(wrapper.find('[data-test="history-panel"]').exists()).toBe(true)
+    wrapper.findComponent({ name: 'Tabs' }).vm.$emit('update:modelValue', 'history')
+    await nextTick()
+    expect(mockRouterReplace).toHaveBeenLastCalledWith({ query: { tab: 'history' } })
+  })
+
+  it.each([
+    ['campaigns', 'campaigns-panel'],
+    ['history', 'history-panel']
+  ])('restores the %s management view from the route after a reload', (tab, panel) => {
+    const wrapper = renderWithProviders(ContractManagementView, {
+      pinia: false,
+      route: { query: { tab } }
+    })
+
+    expect(wrapper.find(`[data-test="${panel}"]`).exists()).toBe(true)
+    expect(wrapper.find('[data-test="current-panel"]').exists()).toBe(false)
+  })
+
+  it('falls back to current contracts when the route tab is invalid', () => {
+    const wrapper = renderWithProviders(ContractManagementView, {
+      pinia: false,
+      route: { query: { tab: 'unknown' } }
+    })
+
+    expect(wrapper.find('[data-test="current-panel"]').exists()).toBe(true)
   })
 })

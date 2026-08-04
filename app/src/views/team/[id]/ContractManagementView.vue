@@ -1,18 +1,17 @@
 <template>
   <div class="space-y-6">
-    <header class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div class="max-w-2xl">
-        <p class="text-primary mb-2 text-xs font-semibold tracking-widest uppercase">
-          On-chain infrastructure
-        </p>
-        <h1 class="text-highlighted text-2xl font-bold sm:text-3xl">Contract Management</h1>
-        <p class="text-muted mt-2">
-          Monitor the active contract suite, resolve governance actions and manage campaign
-          contracts safely.
-        </p>
-      </div>
-
-      <div class="flex flex-col gap-2 sm:flex-row">
+    <UPageHeader
+      headline="On-chain infrastructure"
+      title="Contract Management"
+      description="Monitor the active contract suite, resolve governance actions and manage campaign contracts safely."
+      :ui="{
+        root: 'border-0 py-0',
+        headline: 'mb-2 text-xs tracking-widest uppercase',
+        title: 'text-2xl sm:text-3xl',
+        description: 'mt-2 max-w-2xl text-base'
+      }"
+    >
+      <template #links>
         <UButton
           color="neutral"
           variant="outline"
@@ -27,8 +26,8 @@
           label="Manage campaigns"
           @click="activeView = 'campaigns'"
         />
-      </div>
-    </header>
+      </template>
+    </UPageHeader>
 
     <UAlert
       v-if="isError"
@@ -39,35 +38,33 @@
       description="Current team contracts remain available. Refresh to try loading Officer generations again."
     />
 
-    <nav class="border-default overflow-x-auto border-b" aria-label="Contract management views">
-      <div class="flex min-w-max gap-1" role="tablist">
-        <UButton
-          v-for="item in navigationItems"
-          :key="item.value"
-          :icon="item.icon"
-          color="neutral"
-          :variant="activeView === item.value ? 'soft' : 'ghost'"
-          :aria-selected="activeView === item.value"
-          role="tab"
-          class="rounded-b-none"
-          @click="activeView = item.value"
-        >
-          {{ item.label }}
-          <UBadge v-if="item.count !== undefined" color="neutral" variant="subtle" size="sm">
-            {{ item.count }}
-          </UBadge>
-        </UButton>
-      </div>
-    </nav>
-
-    <MainContractSection v-if="activeView === 'current'" :generation="currentGeneration" />
-    <AdvertiseContractSection v-else-if="activeView === 'campaigns'" />
-    <DeploymentHistorySection v-else :generations="legacyGenerations" />
+    <UTabs
+      v-model="activeView"
+      :items="navigationItems"
+      variant="link"
+      aria-label="Contract management views"
+      :ui="{
+        root: 'items-stretch gap-6',
+        list: 'overflow-x-auto',
+        trigger: 'min-w-max justify-start'
+      }"
+    >
+      <template #current>
+        <MainContractSection :generation="currentGeneration" />
+      </template>
+      <template #campaigns>
+        <AdvertiseContractSection />
+      </template>
+      <template #history>
+        <DeploymentHistorySection :generations="legacyGenerations" />
+      </template>
+    </UTabs>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AdvertiseContractSection from '@/components/sections/ContractManagementView/AdvertiseContractSection.vue'
 import DeploymentHistorySection from '@/components/sections/ContractManagementView/DeploymentHistorySection.vue'
 import MainContractSection from '@/components/sections/ContractManagementView/MainContractSection.vue'
@@ -77,9 +74,23 @@ import { useTeamStore } from '@/stores'
 type ContractManagementView = 'current' | 'campaigns' | 'history'
 
 const teamStore = useTeamStore()
-const activeView = ref<ContractManagementView>('current')
+const route = useRoute()
+const router = useRouter()
 const { currentGeneration, legacyGenerations, isPending, isError, refetch } =
   useContractManagementGenerations()
+
+const isContractManagementView = (value: unknown): value is ContractManagementView =>
+  typeof value === 'string' && ['current', 'campaigns', 'history'].includes(value)
+
+const activeView = computed<ContractManagementView>({
+  get: () => {
+    const tab = Array.isArray(route.query.tab) ? route.query.tab[0] : route.query.tab
+    return isContractManagementView(tab) ? tab : 'current'
+  },
+  set: (tab) => {
+    void router.replace({ query: { ...route.query, tab } })
+  }
+})
 
 const campaignCount = computed(
   () =>
@@ -96,20 +107,23 @@ const navigationItems = computed(() => [
   {
     label: 'Current contracts',
     value: 'current' as const,
+    slot: 'current' as const,
     icon: 'i-lucide-file-code-2',
-    count: currentContractCount.value
+    badge: currentContractCount.value
   },
   {
     label: 'Campaigns',
     value: 'campaigns' as const,
+    slot: 'campaigns' as const,
     icon: 'i-lucide-megaphone',
-    count: campaignCount.value
+    badge: campaignCount.value
   },
   {
     label: 'Deployment history',
     value: 'history' as const,
+    slot: 'history' as const,
     icon: 'i-lucide-history',
-    count: legacyGenerations.value.length
+    badge: legacyGenerations.value.length
   }
 ])
 
