@@ -23,8 +23,8 @@
     <UProgress
       class="my-4"
       color="success"
-      :value="election.currentVotes"
-      :max="election.totalVotes"
+      :model-value="election.currentVotes"
+      :max="Math.max(election.totalVotes, 1)"
     />
 
     <!-- Conditional Button/Indicator -->
