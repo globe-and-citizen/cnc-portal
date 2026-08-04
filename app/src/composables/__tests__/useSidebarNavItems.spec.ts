@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NavigationMenuItem } from '@nuxt/ui'
-import { useSidebarNavItems, ACCOUNTING_MENU_KEY } from '@/composables/useSidebarNavItems'
+import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
 import { mockRoute } from '@/tests/mocks/router.mock'
 import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
 
@@ -109,32 +109,52 @@ describe('useSidebarNavItems', () => {
     })
   })
 
-  describe('Accounting menu persistence', () => {
+  describe('uniform accordion open/close logic', () => {
     beforeEach(() => {
-      localStorage.clear()
-      // Default to a specific team context.
       mockRoute.params = { id: '42' }
     })
 
-    it('gives the Accounting item a stable accordion value', () => {
-      const accounting = findByLabel(useSidebarNavItems().value, 'Accounting')
-      expect(accounting?.value).toBe('accounting')
+    it('gives every parent menu a stable accordion value', () => {
+      const groups = useSidebarNavItems().value
+      for (const [label, value] of [
+        ['Accounts', 'accounts'],
+        ['Payroll', 'payroll'],
+        ['Community Credit', 'community-credit'],
+        ['Accounting', 'accounting'],
+        ['Administration', 'administration']
+      ] as const) {
+        expect(findByLabel(groups, label)?.value, label).toBe(value)
+      }
     })
 
-    it('stays closed by default even when persisted open on the companies list', () => {
-      localStorage.setItem(ACCOUNTING_MENU_KEY, 'true')
+    it('auto-expands only the section the current route belongs to', () => {
+      mockRoute.name = 'accounting-balance'
+
+      const groups = useSidebarNavItems().value
+      expect(findByLabel(groups, 'Accounting')?.defaultOpen).toBe(true)
+      expect(findByLabel(groups, 'Accounting')?.active).toBe(true)
+      // Every other section stays collapsed.
+      for (const label of ['Accounts', 'Payroll', 'Community Credit', 'Administration']) {
+        expect(findByLabel(groups, label)?.defaultOpen, label).toBe(false)
+      }
+    })
+
+    it('highlights the exact active child of the open section', () => {
+      mockRoute.name = 'accounting-balance'
+
+      const accounting = findByLabel(useSidebarNavItems().value, 'Accounting')
+      const balance = accounting?.children?.find((c) => c.label === 'Balance Sheet')
+      const ledger = accounting?.children?.find((c) => c.label === 'General Ledger')
+      expect(balance?.active).toBe(true)
+      expect(ledger?.active).toBe(false)
+    })
+
+    it('keeps sections collapsed when no company is selected', () => {
+      mockRoute.name = 'bank-account'
       mockRoute.params = {}
       mockTeamStore.currentTeamId = null as unknown as string
 
-      expect(findByLabel(useSidebarNavItems().value, 'Accounting')?.defaultOpen).toBe(false)
-    })
-
-    it('restores the persisted open state inside a company', () => {
-      // No persistence → collapsed, like the other menus.
-      expect(findByLabel(useSidebarNavItems().value, 'Accounting')?.defaultOpen).toBe(false)
-
-      localStorage.setItem(ACCOUNTING_MENU_KEY, 'true')
-      expect(findByLabel(useSidebarNavItems().value, 'Accounting')?.defaultOpen).toBe(true)
+      expect(findByLabel(useSidebarNavItems().value, 'Accounts')?.defaultOpen).toBe(false)
     })
   })
 
@@ -145,7 +165,7 @@ describe('useSidebarNavItems', () => {
 
     const payrollHistoryChild = () => {
       const payroll = findByLabel(useSidebarNavItems().value, 'Payroll')
-      return payroll?.children?.find((c) => c.active !== undefined)
+      return payroll?.children?.find((c) => (c.to as { name?: string })?.name === 'payroll-history')
     }
 
     it('labels the payroll-history entry "Member" for another member', () => {
