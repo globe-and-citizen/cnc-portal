@@ -45,6 +45,7 @@
         :collapsed="collapsed"
         :items="items"
         orientation="vertical"
+        :model-value="openSections"
         :ui="{
           list: 'flex flex-col gap-2',
           link: 'text-md gap-3 px-4 py-3 rounded-xl',
@@ -99,10 +100,9 @@
 
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
-import { computed, ref } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
+import { computed, ref, watch } from 'vue'
 import { formatAddress } from '@/utils/formatAddress'
-import { useSidebarNavItems, ACCOUNTING_MENU_KEY } from '@/composables/useSidebarNavItems'
+import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
 
 const userStore = useUserDataStore()
 
@@ -110,10 +110,27 @@ const open = ref(false)
 
 const items = useSidebarNavItems()
 
-// Persist the Accounting menu's expanded state so it survives a reload. The
-const accountingExpanded = useLocalStorage(ACCOUNTING_MENU_KEY, false)
+// Controlled accordion so every parent menu follows one rule: the section of
+// the page you're on is open, the others are closed. `defaultOpen` on the items
+// marks that active section; navigating re-asserts it, and a manual click opens
+// only the clicked section (one open at a time).
+const activeOpen = computed<string[]>(() =>
+  items.value
+    .flat()
+    .filter((item) => item.defaultOpen && typeof item.value === 'string')
+    .map((item) => item.value as string)
+)
+
+const openSections = ref<string[]>(activeOpen.value)
+watch(activeOpen, (value) => {
+  openSections.value = value
+})
+
 function onMenuToggle(value: unknown): void {
-  if (Array.isArray(value)) accountingExpanded.value = value.includes('accounting')
+  if (!Array.isArray(value)) return
+  // Keep only the newly expanded section so a single one stays open at a time.
+  const added = (value as string[]).find((v) => !openSections.value.includes(v))
+  openSections.value = added ? [added] : []
 }
 
 const formatedUserAddress = computed(() => formatAddress(userStore.address))

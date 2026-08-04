@@ -1,12 +1,8 @@
 import { computed, type ComputedRef } from 'vue'
 import { useRoute } from 'vue-router'
-import { useLocalStorage } from '@vueuse/core'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { useTeamStore } from '@/stores/teamStore'
 import { useUserDataStore } from '@/stores/user'
-
-/** localStorage key for the Accounting sidebar menu's expanded state. */
-export const ACCOUNTING_MENU_KEY = 'sidebar_accounting_expanded'
 
 /**
  * Builds the sidebar navigation as two groups:
@@ -17,16 +13,23 @@ export const ACCOUNTING_MENU_KEY = 'sidebar_accounting_expanded'
  *    have no team to operate on; the group label then shows the active
  *    company's name.
  *
+ * ## Uniform open/close & highlight logic
+ *
+ * Every parent that has children follows the **same** rule, so the menu reads
+ * consistently everywhere:
+ *
+ * - `value` — a stable accordion key, used by {@link SidebarLayout} to drive the
+ *   controlled "one section open at a time" accordion.
+ * - `active` — the parent is highlighted when the current route belongs to its
+ *   section, and `defaultOpen` mirrors it so that section auto-expands.
+ * - each child carries its own `active` for the exact-route highlight.
+ *
  * Kept in a composable so {@link SidebarLayout} stays focused on layout markup.
  */
 export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
   const route = useRoute()
   const userStore = useUserDataStore()
   const teamStore = useTeamStore()
-
-  // Persisted expanded state of the Accounting menu — read to seed `defaultOpen`
-  // so a reload restores it; written from {@link SidebarLayout} on toggle.
-  const accountingExpanded = useLocalStorage(ACCOUNTING_MENU_KEY, false)
 
   /**
    * A company is selected when the route is scoped to one (`/teams/:id/…`) or
@@ -40,6 +43,20 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
 
   return computed<NavigationMenuItem[][]>(() => {
     const disabled = !hasCompany.value
+    const name = String(route.name ?? '')
+
+    // Which parent section the current route belongs to. Drives both the active
+    // highlight and the auto-expand, uniformly for every menu with children.
+    const inAccounts = ['bank-account', 'safe-account', 'expense-account'].includes(name)
+    const inPayroll = [
+      'payroll-account',
+      'payroll-history',
+      'team-payroll',
+      'cash-remunerations-member'
+    ].includes(name)
+    const inCommunity = name.startsWith('community-credit')
+    const inAccounting = name.startsWith('accounting')
+    const inAdministration = name.startsWith('bod-')
 
     return [
       [
@@ -67,13 +84,20 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
         {
           label: 'Accounts',
           icon: 'heroicons:currency-dollar',
+          value: 'accounts',
+          active: inAccounts,
           disabled,
           to: { name: 'bank-account', params: teamParams() },
-          defaultOpen: hasCompany.value,
+          defaultOpen: hasCompany.value && inAccounts,
           children: [
-            { label: 'Bank Account', to: { name: 'bank-account', params: teamParams() } },
+            {
+              label: 'Bank Account',
+              active: name === 'bank-account',
+              to: { name: 'bank-account', params: teamParams() }
+            },
             {
               label: 'Safe Account',
+              active: name === 'safe-account',
               to: {
                 name: 'safe-account',
                 params: {
@@ -82,17 +106,27 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
                 }
               }
             },
-            { label: 'Expense Account', to: { name: 'expense-account', params: teamParams() } }
+            {
+              label: 'Expense Account',
+              active: name === 'expense-account',
+              to: { name: 'expense-account', params: teamParams() }
+            }
           ]
         },
         {
           label: 'Payroll',
           icon: 'heroicons:currency-dollar',
+          value: 'payroll',
+          active: inPayroll,
           disabled,
           to: { name: 'payroll-account', params: teamParams() },
-          defaultOpen: hasCompany.value,
+          defaultOpen: hasCompany.value && inPayroll,
           children: [
-            { label: 'Payroll Account', to: { name: 'payroll-account', params: teamParams() } },
+            {
+              label: 'Payroll Account',
+              active: name === 'payroll-account',
+              to: { name: 'payroll-account', params: teamParams() }
+            },
             {
               label:
                 route.name === 'payroll-history' && route.params.memberAddress !== userStore.address
@@ -104,68 +138,109 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
                 params: { id: teamStore.currentTeamId || '1', memberAddress: userStore.address }
               }
             },
-            { label: 'Company Payroll', to: { name: 'team-payroll', params: teamParams() } }
+            {
+              label: 'Company Payroll',
+              active: name === 'team-payroll',
+              to: { name: 'team-payroll', params: teamParams() }
+            }
           ]
         },
         {
           label: 'Community Credit',
           icon: 'heroicons:hand-raised',
-          active: String(route.name ?? '').startsWith('community-credit'),
+          value: 'community-credit',
+          active: inCommunity,
           disabled,
           to: { name: 'community-credit', params: teamParams() },
-          defaultOpen: false,
+          defaultOpen: hasCompany.value && inCommunity,
           children: [
-            { label: 'Rounds', to: { name: 'community-credit', params: teamParams() } },
+            {
+              label: 'Rounds',
+              active: name === 'community-credit',
+              to: { name: 'community-credit', params: teamParams() }
+            },
             {
               label: 'New credit call',
+              active: name === 'community-credit-new',
               to: { name: 'community-credit-new', params: teamParams() }
             }
           ]
         },
         {
           label: 'Accounting',
-          // Stable accordion value so its open state can be tracked/persisted
-          // independently of its position in the list.
           value: 'accounting',
           icon: 'heroicons:book-open',
+          active: inAccounting,
           disabled,
           to: { name: 'accounting', params: teamParams() },
-          // Closed by default; the persisted "open" is only honoured inside a
-          // company, so on the companies list it collapses like the others.
-          defaultOpen: hasCompany.value && accountingExpanded.value,
+          defaultOpen: hasCompany.value && inAccounting,
           children: [
-            { label: 'Summary', to: { name: 'accounting-summary', params: teamParams() } },
-            { label: 'Income Statement', to: { name: 'accounting-income', params: teamParams() } },
-            { label: 'Balance Sheet', to: { name: 'accounting-balance', params: teamParams() } },
-            { label: 'Trial Balance', to: { name: 'accounting-trial', params: teamParams() } },
-            { label: 'General Ledger', to: { name: 'accounting-ledger', params: teamParams() } }
+            {
+              label: 'Summary',
+              active: name === 'accounting-summary',
+              to: { name: 'accounting-summary', params: teamParams() }
+            },
+            {
+              label: 'Income Statement',
+              active: name === 'accounting-income',
+              to: { name: 'accounting-income', params: teamParams() }
+            },
+            {
+              label: 'Balance Sheet',
+              active: name === 'accounting-balance',
+              to: { name: 'accounting-balance', params: teamParams() }
+            },
+            {
+              label: 'Trial Balance',
+              active: name === 'accounting-trial',
+              to: { name: 'accounting-trial', params: teamParams() }
+            },
+            {
+              label: 'General Ledger',
+              active: name === 'accounting-ledger',
+              to: { name: 'accounting-ledger', params: teamParams() }
+            }
           ]
         },
         {
           label: 'Contract Management',
           icon: 'heroicons:wrench',
+          active: route.name === 'contract-management',
           disabled,
           to: { name: 'contract-management', params: teamParams() }
         },
         {
           label: 'SHER Token',
           icon: 'heroicons:chart-pie',
+          active: route.name === 'sher-token',
           disabled,
           to: { name: 'sher-token', params: teamParams() }
         },
         {
           label: 'Administration',
           icon: 'heroicons:chart-bar',
+          value: 'administration',
+          active: inAdministration,
           disabled,
           to: { name: 'bod-elections', params: teamParams() },
+          defaultOpen: hasCompany.value && inAdministration,
           children: [
-            { label: 'Board Election', to: { name: 'bod-elections', params: teamParams() } },
-            { label: 'Proposals', to: { name: 'bod-proposals', params: teamParams() } }
+            {
+              label: 'Board Election',
+              active: name === 'bod-elections' || name === 'bod-elections-details',
+              to: { name: 'bod-elections', params: teamParams() }
+            },
+            {
+              label: 'Proposals',
+              active: name === 'bod-proposals' || name === 'proposal-detail',
+              to: { name: 'bod-proposals', params: teamParams() }
+            }
           ]
         },
         {
           label: 'Vesting',
           icon: 'heroicons:lock-closed',
+          active: route.name === 'vesting',
           disabled,
           to: { name: 'vesting', params: teamParams() }
         }
