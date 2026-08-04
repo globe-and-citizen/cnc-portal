@@ -35,7 +35,7 @@ export const filterAndFormatActions = (
   actions: ActionResponse | undefined,
   members: User[]
 ) => {
-  if (!actions) return []
+  if (!actions?.data) return []
   return actions.data
     .filter((action) => action.targetAddress === address && action.isExecuted === false)
     .map((action) => ({
