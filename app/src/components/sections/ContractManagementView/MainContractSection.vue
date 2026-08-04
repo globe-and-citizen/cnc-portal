@@ -49,13 +49,12 @@
       <MainContractTable :contracts="currentContracts" :version="generation.version" />
     </template>
 
-    <UCard v-else>
-      <div class="py-8 text-center">
-        <UIcon name="i-lucide-file-warning" class="text-muted mx-auto size-8" />
-        <p class="text-highlighted mt-3 font-medium">No active deployment found</p>
-        <p class="text-muted mt-1 text-sm">Deploy an Officer generation to manage contracts.</p>
-      </div>
-    </UCard>
+    <UEmpty
+      v-else
+      icon="i-lucide-file-warning"
+      title="No active deployment found"
+      description="Deploy an Officer generation to manage contracts."
+    />
 
     <RedeployOfficerModal v-model:open="showModal" />
   </section>

@@ -1,6 +1,15 @@
 <template>
   <div id="team-contracts">
+    <UEmpty
+      v-if="!campaignRows.length"
+      variant="naked"
+      icon="i-lucide-megaphone-off"
+      title="No campaigns deployed yet"
+      description="Deploy a campaign to start managing its administrators, details and events."
+    />
+
     <UTable
+      v-else
       class="hidden md:table"
       :data="campaignRows"
       :columns="[
@@ -59,7 +68,7 @@
       </template>
     </UTable>
 
-    <div class="space-y-3 md:hidden">
+    <div v-if="campaignRows.length" class="space-y-3 md:hidden">
       <UCard v-for="campaign in campaignRows" :key="campaign.address" variant="subtle">
         <div class="space-y-4">
           <div class="flex items-start justify-between gap-3">
@@ -98,10 +107,6 @@
           </div>
         </div>
       </UCard>
-
-      <div v-if="!campaignRows.length" class="text-muted py-8 text-center text-sm">
-        No campaigns deployed yet.
-      </div>
     </div>
 
     <!-- Admin Modal -->

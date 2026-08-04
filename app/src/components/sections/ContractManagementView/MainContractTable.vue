@@ -38,6 +38,7 @@
 
     <UCard :ui="{ body: 'p-0 sm:p-0' }">
       <UTable
+        v-if="displayedContracts.length || isRefreshing"
         class="hidden md:block"
         :data="displayedContracts"
         :columns="columns"
@@ -98,7 +99,7 @@
         </template>
       </UTable>
 
-      <div class="divide-default divide-y md:hidden">
+      <div v-if="displayedContracts.length" class="divide-default divide-y md:hidden">
         <article v-for="contract in displayedContracts" :key="contract.address" class="p-4">
           <div class="flex items-start justify-between gap-3">
             <div class="flex min-w-0 items-center gap-3">
@@ -142,13 +143,15 @@
             />
           </div>
         </article>
-
-        <div v-if="!displayedContracts.length && !isRefreshing" class="px-4 py-10 text-center">
-          <UIcon name="i-lucide-file-search" class="text-muted mx-auto size-8" />
-          <p class="text-highlighted mt-3 font-medium">No contracts match this filter</p>
-          <p class="text-muted mt-1 text-sm">Choose another status to see the full suite.</p>
-        </div>
       </div>
+
+      <UEmpty
+        v-if="!displayedContracts.length && !isRefreshing"
+        variant="naked"
+        icon="i-lucide-file-search"
+        title="No contracts match this filter"
+        description="Choose another status to see the full suite."
+      />
     </UCard>
   </div>
 </template>

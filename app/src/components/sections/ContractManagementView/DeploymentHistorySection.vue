@@ -50,19 +50,12 @@
       />
     </UCard>
 
-    <UCard v-if="!generations.length">
-      <div class="flex flex-col items-center gap-3 py-8 text-center">
-        <div class="bg-muted flex size-12 items-center justify-center rounded-full">
-          <UIcon name="i-lucide-history" class="text-muted size-6" />
-        </div>
-        <div>
-          <p class="text-highlighted font-medium">No archived deployments</p>
-          <p class="text-muted mt-1 text-sm">
-            Previous Officer generations will appear here after a redeployment.
-          </p>
-        </div>
-      </div>
-    </UCard>
+    <UEmpty
+      v-if="!generations.length"
+      icon="i-lucide-history"
+      title="No archived deployments"
+      description="Previous Officer generations will appear here after a redeployment."
+    />
   </section>
 </template>
 
