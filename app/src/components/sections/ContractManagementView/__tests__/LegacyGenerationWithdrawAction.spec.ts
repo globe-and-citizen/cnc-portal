@@ -119,12 +119,55 @@ describe('LegacyGenerationWithdrawAction', () => {
     expect(blockedReason(wrapper)).toBeUndefined()
   })
 
-  it('blocks generations that predate ownerWithdrawAllToBank', () => {
+  it('offers a Bank-only withdrawal on generations that predate ownerWithdrawAllToBank', async () => {
     mockBeaconFolder.folder.value = 'V0.1'
     const wrapper = createWrapper()
 
+    expect(wrapper.get(BUTTON).attributes('disabled')).toBeUndefined()
+    await wrapper.get(BUTTON).trigger('click')
+    await wrapper.get(CONFIRM).trigger('click')
+    await flushPromises()
+
+    const plan = mockCashOut.start.mock.calls[0][0] as { key: string }[]
+    expect(plan.map((s) => s.key)).toEqual(['bank'])
+  })
+
+  it('never hands a non-sweeping generation its source accounts', () => {
+    mockBeaconFolder.folder.value = 'V0'
+    createWrapper()
+
+    const { sources } = vi.mocked(useCashOutAll).mock.calls[0][0] as {
+      sources: Record<string, { value?: string }>
+    }
+    expect(sources.bank.value).toBe(LEGACY_BANK)
+    expect(sources.expense.value).toBeUndefined()
+    expect(sources.cashRemuneration.value).toBeUndefined()
+  })
+
+  it('warns which accounts a non-sweeping generation leaves behind', async () => {
+    mockBeaconFolder.folder.value = 'V0'
+    const wrapper = createWrapper()
+    await wrapper.get(BUTTON).trigger('click')
+
+    expect(wrapper.find('[data-test="legacy-withdraw-bank-only-notice"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="legacy-withdraw-stranded-expense"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="legacy-withdraw-stranded-cashRemuneration"]').exists()).toBe(
+      true
+    )
+    // The source accounts are not presented as things this run withdraws.
+    expect(wrapper.find('[data-test="legacy-withdraw-review-expense"]').exists()).toBe(false)
+  })
+
+  it('blocks a non-sweeping generation whose Bank is already empty', () => {
+    mockBeaconFolder.folder.value = 'V0'
+    mockUseContractBalance.total.value = {
+      usd: { value: 0, formatted: '$0' },
+      local: { value: 0, formatted: '$0' }
+    }
+    const wrapper = createWrapper()
+
     expect(wrapper.get(BUTTON).attributes('disabled')).toBeDefined()
-    expect(blockedReason(wrapper)).toContain('predate automated withdrawal')
+    expect(blockedReason(wrapper)).toContain('can only have their Bank emptied')
   })
 
   it('blocks while the generation is still being resolved', () => {

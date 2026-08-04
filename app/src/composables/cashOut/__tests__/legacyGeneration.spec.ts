@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { legacyGenerationAddresses, supportsOwnerWithdrawAll } from '../legacyGeneration'
+import {
+  buildLegacyWithdrawPlan,
+  legacyGenerationAddresses,
+  supportsOwnerWithdrawAll
+} from '../legacyGeneration'
 
 describe('supportsOwnerWithdrawAll', () => {
   it('rejects the generations that predate ownerWithdrawAllToBank', () => {
@@ -14,6 +18,37 @@ describe('supportsOwnerWithdrawAll', () => {
 
   it('rejects an unresolved generation rather than assuming support', () => {
     expect(supportsOwnerWithdrawAll(undefined)).toBe(false)
+  })
+})
+
+describe('buildLegacyWithdrawPlan', () => {
+  const keys = (
+    balances: Parameters<typeof buildLegacyWithdrawPlan>[0],
+    canSweepSources: boolean
+  ) => buildLegacyWithdrawPlan(balances, { canSweepSources }).map((step) => step.key)
+
+  it('runs the full sequence for a generation that can sweep its sources', () => {
+    expect(keys({ cashRemuneration: 5, expense: 5, bank: 5 }, true)).toEqual([
+      'cashRemuneration',
+      'expense',
+      'bank'
+    ])
+  })
+
+  it('drains only the Bank for a generation that cannot', () => {
+    expect(keys({ cashRemuneration: 5, expense: 5, bank: 5 }, false)).toEqual(['bank'])
+  })
+
+  it('skips the Bank step entirely when a non-sweeping generation has an empty Bank', () => {
+    // Nothing consolidates into it, so running it would be a guaranteed no-op.
+    expect(keys({ cashRemuneration: 9, expense: 9, bank: 0 }, false)).toEqual([])
+  })
+
+  it('still consolidates into an empty Bank when the sources can be swept', () => {
+    expect(keys({ cashRemuneration: 9, expense: 0, bank: 0 }, true)).toEqual([
+      'cashRemuneration',
+      'bank'
+    ])
   })
 })
 

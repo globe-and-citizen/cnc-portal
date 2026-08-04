@@ -27,11 +27,21 @@
       <!-- Review phase -->
       <div v-if="phase === 'review'" class="space-y-4" data-test="legacy-withdraw-review">
         <UAlert
+          v-if="canSweepSources"
           color="warning"
           variant="soft"
           icon="i-heroicons-exclamation-triangle"
           title="This empties the archived accounts into your current Bank."
           description="The old Cash Remuneration and Expense Account first sweep into the Bank of their own generation, then that Bank forwards everything to the Bank this team uses today. You will sign one transaction per account (the Bank may need one signature per token)."
+        />
+        <UAlert
+          v-else
+          color="warning"
+          variant="soft"
+          icon="i-heroicons-exclamation-triangle"
+          title="Only this generation's Bank can be emptied automatically."
+          :description="`Contracts from generation ${folder} predate the owner withdrawal added in V1, so the Expense Account and Cash Remuneration can only be emptied by hand — with a budget approval and a signed wage claim. The Bank forwards to the Bank this team uses today (one signature per token).`"
+          data-test="legacy-withdraw-bank-only-notice"
         />
 
         <div
@@ -52,6 +62,27 @@
           >
             <span class="font-medium">Old Bank → current Bank</span>
             <span class="font-semibold">~{{ projectedFormatted }}</span>
+          </div>
+        </div>
+
+        <!-- What this run will NOT reach, so the owner does not read a green
+             "complete" as "the generation is empty now". -->
+        <div
+          v-if="strandedRows.length"
+          class="rounded-lg border border-dashed border-gray-300 px-3 py-2 dark:border-gray-700"
+          data-test="legacy-withdraw-stranded"
+        >
+          <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+            Stays behind — move these by hand
+          </p>
+          <div
+            v-for="row in strandedRows"
+            :key="row.key"
+            class="flex items-center justify-between py-1 text-sm"
+            :data-test="`legacy-withdraw-stranded-${row.key}`"
+          >
+            <span class="text-gray-500 dark:text-gray-400">{{ row.label }}</span>
+            <span class="font-medium">{{ row.value }}</span>
           </div>
         </div>
 
@@ -85,32 +116,7 @@
 
       <!-- Progress phase -->
       <div v-else class="space-y-4" data-test="legacy-withdraw-progress">
-        <ul class="space-y-2">
-          <li
-            v-for="step in cashOut.steps.value"
-            :key="step.key"
-            class="flex items-start gap-3 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-800"
-            :data-test="`legacy-withdraw-step-${step.key}`"
-          >
-            <UIcon
-              :name="stepIcon(step.status)"
-              :class="['mt-0.5 size-5 shrink-0', stepIconClass(step.status)]"
-            />
-            <div class="min-w-0 flex-1">
-              <p class="font-medium">{{ step.label }}</p>
-              <p v-if="step.status === 'active' && step.detail" class="text-xs text-gray-500">
-                {{ step.detail }}
-              </p>
-              <p
-                v-if="step.status === 'failed' && step.error"
-                class="text-error text-xs"
-                :data-test="`legacy-withdraw-error-${step.key}`"
-              >
-                {{ step.error }}
-              </p>
-            </div>
-          </li>
-        </ul>
+        <CashOutStepList :steps="cashOut.steps.value" test-prefix="legacy-withdraw" />
 
         <UAlert
           v-if="cashOut.isComplete.value"
@@ -118,7 +124,7 @@
           variant="soft"
           icon="i-heroicons-check-circle"
           title="Withdrawal complete"
-          description="Everything this generation still held is now in the team's current Bank."
+          :description="completionDescription"
           data-test="legacy-withdraw-complete"
         />
 
@@ -150,14 +156,14 @@ import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import CashOutStepList from '@/components/CashOutStepList.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useBankOwner } from '@/composables/bank/reads'
 import {
-  buildCashOutPlan,
+  buildLegacyWithdrawPlan,
   legacyGenerationAddresses,
   supportsOwnerWithdrawAll,
-  useCashOutAll,
-  type CashOutStepStatus
+  useCashOutAll
 } from '@/composables/cashOut'
 import { useOfficerBeaconFolderQuery } from '@/composables/contracts/useOfficerBeaconFolder'
 import { TEAM_ARCHIVED_TOOLTIP, useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
@@ -194,12 +200,14 @@ const destination = computed(
 
 // `ownerWithdrawAllToBank` only exists from V1 on, and a generation's proxies
 // sit behind frozen beacons — so the generation, not the team, decides whether
-// the automated drain is possible.
+// the source accounts can be swept. The Bank hop works on every generation.
 const {
   folder,
   isPending: isResolvingVersion,
   isError: versionResolutionFailed
 } = useOfficerBeaconFolderQuery(computed(() => props.officerAddress))
+
+const canSweepSources = computed(() => supportsOwnerWithdrawAll(folder.value))
 
 const bankBalance = useContractBalance(bankAddress)
 const expenseBalance = useContractBalance(expenseAddress)
@@ -224,7 +232,9 @@ const balancesFiat = computed(() => ({
   bank: fiat(bankBalance)
 }))
 
-const plan = computed(() => buildCashOutPlan(balancesFiat.value))
+const plan = computed(() =>
+  buildLegacyWithdrawPlan(balancesFiat.value, { canSweepSources: canSweepSources.value })
+)
 const hasAnyBalance = computed(() => plan.value.length > 0)
 
 /**
@@ -239,19 +249,23 @@ const blockedReason = computed(() => {
     return 'This generation already holds the current Bank'
   if (isResolvingVersion.value) return 'Checking which contract generation this is…'
   if (versionResolutionFailed.value) return 'Could not read this generation from the chain'
-  if (!supportsOwnerWithdrawAll(folder.value))
-    return `Contracts from generation ${folder.value ?? 'unknown'} predate automated withdrawal — move the funds manually from the addresses below`
   if (!isOwner.value) return 'Only the owner of these contracts can withdraw'
   if (isWriteDisabled.value) return TEAM_ARCHIVED_TOOLTIP
-  if (!hasAnyBalance.value) return 'These contracts hold no funds'
+  if (!hasAnyBalance.value)
+    return canSweepSources.value
+      ? 'These contracts hold no funds'
+      : `Contracts from generation ${folder.value} can only have their Bank emptied, and it is empty`
   return undefined
 })
 
 const cashOut = useCashOutAll({
   sources: {
     bank: bankAddress,
-    expense: expenseAddress,
-    cashRemuneration: cashRemAddress
+    // A generation that cannot sweep its source accounts must not be handed
+    // their addresses: the sequence would call a function their proxies do not
+    // implement.
+    expense: computed(() => (canSweepSources.value ? expenseAddress.value : undefined)),
+    cashRemuneration: computed(() => (canSweepSources.value ? cashRemAddress.value : undefined))
   },
   to: destination
 })
@@ -259,27 +273,54 @@ const cashOut = useCashOutAll({
 const modal = ref({ mount: false, show: false })
 const phase = ref<'review' | 'progress'>('review')
 
-const projectedFormatted = computed(() =>
-  formatCurrencyShort(
-    balancesFiat.value.cashRemuneration + balancesFiat.value.expense + balancesFiat.value.bank,
-    currencyCode.value
-  )
-)
-
-const reviewRows = computed(() => {
-  const rows: { key: string; label: string; value: string }[] = []
+/** The source accounts, whether or not this generation can sweep them. */
+const sourceRows = computed(() => {
+  const rows: { key: string; label: string; value: string; amount: number }[] = []
   if (balancesFiat.value.cashRemuneration > 0)
     rows.push({
       key: 'cashRemuneration',
       label: 'Cash Remuneration',
-      value: fiatFormatted(cashRemBalance)
+      value: fiatFormatted(cashRemBalance),
+      amount: balancesFiat.value.cashRemuneration
     })
   if (balancesFiat.value.expense > 0)
-    rows.push({ key: 'expense', label: 'Expense Account', value: fiatFormatted(expenseBalance) })
-  if (balancesFiat.value.bank > 0)
-    rows.push({ key: 'bank', label: 'Bank', value: fiatFormatted(bankBalance) })
+    rows.push({
+      key: 'expense',
+      label: 'Expense Account',
+      value: fiatFormatted(expenseBalance),
+      amount: balancesFiat.value.expense
+    })
   return rows
 })
+
+/** What this run moves — the Bank always, the source accounts when sweepable. */
+const reviewRows = computed(() => {
+  const rows = canSweepSources.value ? [...sourceRows.value] : []
+  if (balancesFiat.value.bank > 0)
+    rows.push({
+      key: 'bank',
+      label: 'Bank',
+      value: fiatFormatted(bankBalance),
+      amount: balancesFiat.value.bank
+    })
+  return rows
+})
+
+/** What this run leaves on-chain, so a green "complete" is never misread. */
+const strandedRows = computed(() => (canSweepSources.value ? [] : sourceRows.value))
+
+const completionDescription = computed(() =>
+  strandedRows.value.length
+    ? "This generation's Bank is now empty. Its Expense Account and Cash Remuneration still hold funds — move those by hand."
+    : "Everything this generation still held is now in the team's current Bank."
+)
+
+const projectedFormatted = computed(() =>
+  formatCurrencyShort(
+    reviewRows.value.reduce((total, row) => total + row.amount, 0),
+    currencyCode.value
+  )
+)
 
 const openModal = () => {
   if (blockedReason.value) return
@@ -303,20 +344,4 @@ const confirm = async () => {
 }
 
 const retry = () => cashOut.retry()
-
-const stepIcon = (status: CashOutStepStatus) =>
-  ({
-    pending: 'i-heroicons-clock',
-    active: 'i-heroicons-arrow-path',
-    success: 'i-heroicons-check-circle',
-    failed: 'i-heroicons-x-circle'
-  })[status]
-
-const stepIconClass = (status: CashOutStepStatus) =>
-  ({
-    pending: 'text-gray-400',
-    active: 'animate-spin text-warning',
-    success: 'text-success',
-    failed: 'text-error'
-  })[status]
 </script>
