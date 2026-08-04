@@ -1,14 +1,8 @@
 <template>
-  <div id="team-contracts" class="overflow-x-auto">
+  <div id="team-contracts">
     <UTable
-      :data="
-        teamStore.currentTeam?.teamContracts
-          .filter((contract) => contract.type === 'Campaign')
-          .map((contract, index) => ({
-            ...contract,
-            index: index + 1
-          }))
-      "
+      class="hidden md:table"
+      :data="campaignRows"
       :columns="[
         { accessorKey: 'index', header: '#' },
         { accessorKey: 'type', header: 'Type' },
@@ -64,6 +58,51 @@
         />
       </template>
     </UTable>
+
+    <div class="space-y-3 md:hidden">
+      <UCard v-for="campaign in campaignRows" :key="campaign.address" variant="subtle">
+        <div class="space-y-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-highlighted font-medium">Campaign {{ campaign.index }}</p>
+              <AddressToolTip :address="campaign.address" :slice="true" class="mt-1 text-xs" />
+            </div>
+            <UBadge color="primary" variant="subtle" size="sm">Active</UBadge>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              icon="i-lucide-users"
+              label="Admins"
+              @click="openAdminsModal(campaign, campaign.index)"
+            />
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              icon="i-lucide-settings-2"
+              label="Details"
+              @click="openContractDataModal(campaign.address)"
+            />
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              icon="i-lucide-activity"
+              label="Events"
+              @click="openEventsModal(campaign.address)"
+            />
+          </div>
+        </div>
+      </UCard>
+
+      <div v-if="!campaignRows.length" class="text-muted py-8 text-center text-sm">
+        No campaigns deployed yet.
+      </div>
+    </div>
 
     <!-- Admin Modal -->
     <UModal
@@ -128,6 +167,11 @@ import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 const teamStore = useTeamStore()
+const campaignRows = computed(() =>
+  (teamStore.currentTeam?.teamContracts ?? [])
+    .filter((contract) => contract.type === 'Campaign')
+    .map((contract, index) => ({ ...contract, index: index + 1 }))
+)
 
 // Modal for showing contract admins
 const contractAdminDialog = ref({

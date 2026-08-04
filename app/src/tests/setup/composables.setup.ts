@@ -229,6 +229,12 @@ vi.mock('@/queries/auth.queries', () => ({
  */
 vi.mock('@/queries/contract.queries', () => ({
   contractKeys: { all: ['contracts'] as const },
+  useGetTeamOfficersQuery: vi.fn(() => ({
+    data: ref([]),
+    isPending: ref(false),
+    isError: ref(false),
+    refetch: vi.fn()
+  })),
   useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation),
   useSyncContractsMutation: vi.fn(queryMocks.useSyncContractsMutation),
   useCreateOfficerMutation: vi.fn(queryMocks.useCreateOfficerMutation)

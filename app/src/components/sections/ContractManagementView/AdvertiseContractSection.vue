@@ -11,18 +11,22 @@
     >
       <UCard class="w-full">
         <template #header>
-          <div class="flex items-center justify-between">
-            <span>Advertise Contract</span>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-highlighted font-semibold">Campaigns</h2>
+              <p class="text-muted mt-1 text-sm">Manage campaign contracts and their activity.</p>
+            </div>
             <div>
               <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
                 <UButton
                   color="primary"
+                  icon="i-lucide-plus"
                   :disabled="
                     teamStore.currentTeam?.ownerAddress != userStore.address || archivedDisabled
                   "
                   data-test="createAddCampaign"
                   @click="openAdCampaignModal"
-                  label="Deploy Advertise Contract"
+                  label="Deploy Campaign"
                 />
               </TeamArchivedTooltip>
             </div>
