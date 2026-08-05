@@ -84,10 +84,10 @@
       </span>
       <p
         class="mt-1.5 max-w-full text-gray-400"
-        :class="isDetailedView ? 'font-mono text-xs break-all' : 'text-sm'"
+        :class="isDetailedView ? 'font-mono text-sm' : 'text-sm'"
         data-test="formatted-address"
       >
-        {{ isDetailedView ? user.address : formatedUserAddress }}
+        {{ formatedUserAddress }}
       </p>
     </div>
   </div>
