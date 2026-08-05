@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getContractPresentation } from '../contractPresentation'
+import { formatContractFunctionLabel, getContractPresentation } from '../contractPresentation'
 
 describe('getContractPresentation', () => {
   it.each([
@@ -16,5 +16,12 @@ describe('getContractPresentation', () => {
       label: 'Custom Treasury',
       icon: 'i-lucide-file-code-2'
     })
+  })
+
+  it('formats contract read function names for display', () => {
+    expect(formatContractFunctionLabel('getSupportedTokens')).toBe('Get Supported Tokens')
+    expect(formatContractFunctionLabel('UPGRADE_INTERFACE_VERSION')).toBe(
+      'UPGRADE INTERFACE VERSION'
+    )
   })
 })
