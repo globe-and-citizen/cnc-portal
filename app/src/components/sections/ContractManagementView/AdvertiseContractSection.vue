@@ -13,11 +13,16 @@
         <template #header>
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 class="text-highlighted font-semibold">Campaigns</h2>
-              <p class="text-muted mt-1 text-sm">Manage campaign contracts and their activity.</p>
+              <h2 class="text-highlighted font-semibold">Advertising campaigns</h2>
+              <p class="text-muted mt-1 text-sm">
+                Configure advertising rates, fund campaigns and recover unused budgets.
+              </p>
             </div>
             <div>
-              <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+              <TeamArchivedTooltip
+                v-if="!hasCampaignManager"
+                v-slot="{ disabled: archivedDisabled }"
+              >
                 <UButton
                   color="primary"
                   icon="i-lucide-plus"
@@ -26,7 +31,7 @@
                   "
                   data-test="createAddCampaign"
                   @click="openAdCampaignModal"
-                  label="Deploy Campaign"
+                  label="Set up Campaign Manager"
                 />
               </TeamArchivedTooltip>
             </div>
@@ -37,8 +42,8 @@
       <UModal
         v-if="showAdCampaignModal.mount"
         v-model:open="showAdCampaignModal.show"
-        title="Deploy Advertising Campaign"
-        description="Deploy a new campaign contract to advertise your team’s work and attract contributors."
+        title="Set up Campaign Manager"
+        description="Configure the on-chain service that creates and settles funded advertising campaigns."
       >
         <template #body>
           <CreateAddCampaign
@@ -50,7 +55,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import TeamContracts from '@/components/sections/ContractManagementView/TeamContracts.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
@@ -62,6 +67,10 @@ import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const { isWriteDisabled } = useTeamWriteGuard()
+
+const hasCampaignManager = computed(() =>
+  (teamStore.currentTeam?.teamContracts ?? []).some((contract) => contract.type === 'Campaign')
+)
 
 const showAdCampaignModal = ref({ mount: false, show: false })
 

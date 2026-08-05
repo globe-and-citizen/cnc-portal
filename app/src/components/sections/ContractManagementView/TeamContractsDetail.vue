@@ -1,40 +1,66 @@
 <template>
-  <div id="admins-table" class="overflow-x-auto">
-    <UTable :data="rows" :columns="columns">
-      <template #value-cell="{ row: { original: row } }">
-        <template v-if="row.key.startsWith('cost')">
-          <UInput
-            type="number"
-            step="any"
-            size="sm"
-            :model-value="row.value"
-            :required="true"
-            class="w-32"
-            @update:model-value="updateCost(row.key, $event)"
-          >
-            <template #trailing>
-              <span class="text-muted text-xs">ETH</span>
-            </template>
-          </UInput>
-        </template>
-        <AddressToolTip
-          v-else-if="isAddressField(row.key)"
-          :address="row.value"
-          :slice="true"
-          class="text-xs"
-        />
-        <template v-else>{{ row.value }}</template>
-      </template>
-    </UTable>
+  <div class="space-y-5">
+    <UAlert
+      color="info"
+      variant="subtle"
+      icon="i-lucide-info"
+      title="Rates apply to every funded campaign"
+      description="Changing a rate affects how future validated clicks and impressions are valued."
+    />
 
-    <div class="mt-4 flex justify-end">
+    <div class="border-default rounded-lg border p-3">
+      <p class="text-muted text-xs">Advertising revenue destination</p>
+      <AddressToolTip
+        v-if="bankAddress"
+        :address="bankAddress"
+        :slice="false"
+        class="mt-1 text-sm"
+      />
+      <p v-else class="text-muted mt-1 text-sm">Not configured</p>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <UFormField label="Cost per click" description="Charged for each validated click." required>
+        <UInput
+          type="number"
+          min="0"
+          step="any"
+          :model-value="costPerClick"
+          class="w-full"
+          data-test="manager-cost-per-click"
+          @update:model-value="updateCost('costPerClick', $event)"
+        >
+          <template #trailing><span class="text-muted text-xs">POL</span></template>
+        </UInput>
+      </UFormField>
+
+      <UFormField
+        label="Cost per impression"
+        description="Charged for each validated impression."
+        required
+      >
+        <UInput
+          type="number"
+          min="0"
+          step="any"
+          :model-value="costPerImpression"
+          class="w-full"
+          data-test="manager-cost-per-impression"
+          @update:model-value="updateCost('costPerImpression', $event)"
+        >
+          <template #trailing><span class="text-muted text-xs">POL</span></template>
+        </UInput>
+      </UFormField>
+    </div>
+
+    <div class="flex justify-end">
       <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
         <UButton
           color="primary"
           icon="i-lucide-save"
           label="Save changes"
           :loading="isLoading"
-          :disabled="isLoading || archivedDisabled"
+          :disabled="isLoading || !hasChanges || archivedDisabled"
           @click="submit"
         />
       </TeamArchivedTooltip>
@@ -61,12 +87,6 @@ const emit = defineEmits<{
   (event: 'closeContractDataDialog'): void
 }>()
 
-const columns = [
-  { accessorKey: 'index', header: '#' },
-  { accessorKey: 'key', header: 'Name' },
-  { accessorKey: 'value', header: 'Value' }
-]
-const rows = computed(() => props.datas.map((data, index) => ({ ...data, index: index + 1 })))
 const {
   initialized,
   originalValues,
@@ -82,6 +102,21 @@ const {
   onClose: () => emit('closeContractDataDialog')
 })
 
+const costPerClick = computed(
+  () => props.datas.find((data) => data.key === 'costPerClick')?.value ?? ''
+)
+const costPerImpression = computed(
+  () => props.datas.find((data) => data.key === 'costPerImpression')?.value ?? ''
+)
+const bankAddress = computed(
+  () => props.datas.find((data) => data.key === 'bankAddress')?.value ?? ''
+)
+const hasChanges = computed(
+  () =>
+    Number.parseFloat(costPerClick.value || '0') !== originalCostPerClick.value ||
+    Number.parseFloat(costPerImpression.value || '0') !== originalCostPerImpression.value
+)
+
 defineExpose({
   initialized,
   originalValues,
@@ -89,10 +124,6 @@ defineExpose({
   originalCostPerImpression,
   pendingTransactions
 })
-
-function isAddressField(key: string) {
-  return key.includes('Address') || key.toLowerCase().includes('owner')
-}
 
 function updateCost(key: string, value: string | number) {
   const updatedDatas = props.datas.map((data) =>
