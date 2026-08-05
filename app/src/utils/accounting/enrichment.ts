@@ -15,8 +15,10 @@
  * mappers never flagged (deposits, internal moves, dividends, …) are untouched.
  */
 import { getAddress, isAddress, type Address } from 'viem'
+import type { TokenId } from '@/constant'
 import type { Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
+import { buildClaimRatesWithOvertime } from '@/utils/wageUtil'
 import type { LedgerEntry } from './ledgerEntry'
 
 export interface EnrichmentSources {
@@ -58,6 +60,59 @@ function nearest<T>(
   )
 }
 
+/**
+ * The claim's signed payout total, in base units, for the token a withdrawal
+ * settled — the reliable key for pairing a settlement to its claim. Reuses the
+ * canonical wage calc (the one the claim is signed and paid with), so it equals
+ * the on-chain amount exactly. `null` when the claim has no rate in that token.
+ */
+function claimTokenTotal(claim: WeeklyClaim, token: TokenId): bigint | null {
+  const rates = claim.wage?.ratePerHour
+  if (!rates?.length) return null
+  try {
+    const totals = buildClaimRatesWithOvertime({
+      totalMinutesWorked: claim.minutesWorked,
+      maximumHoursPerWeek: claim.wage.maximumHoursPerWeek,
+      ratePerHour: rates,
+      overtimeRatePerHour: claim.wage.overtimeRatePerHour
+    })
+    return totals.find((r) => (r.type as TokenId) === token)?.totalAmount ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Take the claim that backs a payroll settlement out of the member's pool, so it
+ * can never match a second withdrawal. Several claims often settle on the same
+ * day, so date proximity alone collapses them onto the most recent one; we prefer
+ * the claim whose signed total in the withdrawn token equals the amount actually
+ * withdrawn, and only fall back to the nearest by week when no amount matches.
+ */
+function takePayrollClaim(
+  pool: WeeklyClaim[] | undefined,
+  entry: LedgerEntry
+): WeeklyClaim | undefined {
+  if (!pool?.length) return undefined
+  let amount: bigint | null = null
+  try {
+    amount = BigInt(entry.rawAmount)
+  } catch {
+    amount = null
+  }
+  const exact =
+    amount != null && amount > 0n
+      ? pool.filter((c) => claimTokenTotal(c, entry.token) === amount)
+      : []
+  const candidates = exact.length ? exact : pool
+  const chosen = nearest(candidates, entry.timestamp, (c) => new Date(c.weekStart).getTime())
+  if (chosen) {
+    const idx = pool.indexOf(chosen)
+    if (idx >= 0) pool.splice(idx, 1)
+  }
+  return chosen
+}
+
 /** Human label for a wage rate, e.g. "12 usdc/h". */
 function rateLabel(wage: Wage | undefined): string | null {
   const rate = wage?.ratePerHour?.[0]
@@ -92,11 +147,15 @@ function enrichExpense(entry: LedgerEntry, expense: ExpenseResponse | undefined)
 
 /**
  * Enrich the flagged payroll/expense entries against the portal records. Returns a
- * new array; entries that need no off-chain data pass through unchanged.
+ * new array; entries that need no off-chain data pass through unchanged. When a
+ * `tokenIdOf` resolver is supplied, expense candidates are narrowed to budgets in
+ * the entry's own token before picking the nearest by date — a same-member budget
+ * in another token can't be the payout's backing record.
  */
 export function enrichEntries(
   entries: readonly LedgerEntry[],
-  sources: EnrichmentSources
+  sources: EnrichmentSources,
+  tokenIdOf?: (tokenAddress: string | null | undefined) => TokenId
 ): LedgerEntry[] {
   const claimsByMember = indexByAddress(sources.weeklyClaims, (c) => c.memberAddress)
   const expensesByUser = indexByAddress(sources.expenses, (e) => e.userAddress)
@@ -107,13 +166,15 @@ export function enrichEntries(
     if (!member) return entry
 
     if (entry.useCase === 'UC-CASH-03') {
-      const claim = nearest(claimsByMember.get(member), entry.timestamp, (c) =>
-        new Date(c.weekStart).getTime()
-      )
+      const claim = takePayrollClaim(claimsByMember.get(member), entry)
       return enrichPayroll(entry, claim)
     }
     if (entry.useCase === 'UC-EXP-01') {
-      const expense = nearest(expensesByUser.get(member), entry.timestamp, (e) =>
+      const candidates = expensesByUser.get(member)
+      const sameToken = tokenIdOf
+        ? candidates?.filter((e) => tokenIdOf(e.data?.tokenAddress) === entry.token)
+        : candidates
+      const expense = nearest(sameToken?.length ? sameToken : candidates, entry.timestamp, (e) =>
         new Date(e.createdAt).getTime()
       )
       return enrichExpense(entry, expense)

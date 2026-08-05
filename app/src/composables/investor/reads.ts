@@ -2,23 +2,24 @@ import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { useTeamStore } from '@/stores'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-
+import { investorAbi } from '@/artifacts/abi/generated'
 /**
- * InvestorV1 contract address helper
+ * Investor contract address helper
  */
 export function useInvestorAddress() {
   const teamStore = useTeamStore()
-  return computed(() => teamStore.getContractAddressByType('InvestorV1'))
+  return computed(() => teamStore.getInvestorAddress())
 }
 
 export function useInvestorName() {
   const investorsAddress = useInvestorAddress()
   return useReadContract({
     address: investorsAddress,
-    abi: INVESTOR_ABI,
+    abi: investorAbi,
     functionName: 'name' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
@@ -26,9 +27,11 @@ export function useInvestorSymbol() {
   const investorsAddress = useInvestorAddress()
   return useReadContract({
     address: investorsAddress,
-    abi: INVESTOR_ABI,
+    abi: investorAbi,
     functionName: 'symbol' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
@@ -36,9 +39,11 @@ export function useInvestorTotalSupply() {
   const investorsAddress = useInvestorAddress()
   return useReadContract({
     address: investorsAddress,
-    abi: INVESTOR_ABI,
+    abi: investorAbi,
     functionName: 'totalSupply' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
@@ -46,9 +51,11 @@ export function useInvestorOwner() {
   const investorsAddress = useInvestorAddress()
   return useReadContract({
     address: investorsAddress,
-    abi: INVESTOR_ABI,
+    abi: investorAbi,
     functionName: 'owner' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
@@ -57,7 +64,7 @@ export function useInvestorBalanceOf(account: MaybeRef<Address>) {
   const accountValue = computed(() => unref(account))
   return useReadContract({
     address: investorsAddress,
-    abi: INVESTOR_ABI,
+    abi: investorAbi,
     functionName: 'balanceOf' as const,
     args: [accountValue],
     query: {
@@ -75,9 +82,35 @@ export function useInvestorShareholders() {
   const investorsAddress = useInvestorAddress()
   return useReadContract({
     address: investorsAddress,
-    abi: INVESTOR_ABI,
+    abi: investorAbi,
     functionName: 'getShareholders' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
+  })
+}
+
+export function useInvestorMigrationRoot() {
+  const investorsAddress = useInvestorAddress()
+  return useReadContract({
+    address: investorsAddress,
+    abi: investorAbi,
+    functionName: 'getMigrationRoot' as const,
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
+  })
+}
+
+export function useInvestorMigrationComplete() {
+  const investorsAddress = useInvestorAddress()
+  return useReadContract({
+    address: investorsAddress,
+    abi: investorAbi,
+    functionName: 'isMigrationComplete' as const,
+    query: {
+      enabled: computed(() => !!investorsAddress.value && isAddress(investorsAddress.value))
+    }
   })
 }
 
@@ -87,7 +120,7 @@ export function useInvestorPaused() {
   const investorsAddress = useInvestorAddress()
   return useReadContract({
     address: investorsAddress,
-    abi: INVESTOR_ABI,
+    abi: investorAbi,
     functionName: 'paused' as const,
     query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
   })

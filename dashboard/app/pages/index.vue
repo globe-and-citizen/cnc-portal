@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import type { StatsPeriod } from '~/types'
+import { useTeamsQuery } from '~/queries/team.query'
+import { useTeamsBalanceRecaps } from '~/composables/useTeamsBalanceRecaps'
+
+// Project-wide TVL, aggregated on-chain across every team's contracts.
+const { data: allTeams } = useTeamsQuery()
+const { totals: tvl } = useTeamsBalanceRecaps(() => allTeams.value ?? [])
 
 definePageMeta({
   title: 'Statistics',
@@ -153,6 +159,9 @@ const refreshAll = async () => {
       title="Error loading statistics"
       :description="error.message"
     />
+
+    <!-- Project-wide Total Value Locked -->
+    <ProjectTvlCard :tvl="tvl" />
 
     <!-- Tabs Navigation -->
     <div class="space-y-6">

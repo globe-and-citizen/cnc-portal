@@ -11,13 +11,13 @@
           <span class="text-4xl font-bold">
             <span class="inline-block h-10 min-w-16">
               <USkeleton v-if="isLoading" class="h-10 w-16" data-test="loading-spinner" />
-              <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
+              <span v-else>{{ balance?.total.usd.formatted ?? 0 }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
         </div>
         <div class="mt-1 text-sm text-gray-500">
-          ≈ {{ total[currency.code]?.formated ?? 0 }} {{ currency.code }}
+          ≈ {{ balance?.total.local.formatted ?? 0 }} {{ currency.code }}
         </div>
       </div>
       <div class="flex flex-col items-end gap-4">
@@ -53,5 +53,5 @@ const currency = useStorage('currency', {
 })
 
 // Use the contract balance composable
-const { total, isLoading } = useContractBalance(props.bankAddress)
+const { data: balance, isLoading } = useContractBalance(props.bankAddress)
 </script>

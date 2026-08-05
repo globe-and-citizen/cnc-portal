@@ -43,7 +43,6 @@ graph TD
     end
 
     subgraph STANDALONE["🔧 Standalone Tools"]
-        TIPS["🎁 Tips"]
         VEST["⏳ Vesting"]
         ADS["📣 AdCampaignManager"]
         ADS -->|revenue| BANK
@@ -66,7 +65,6 @@ timeline
     Week 1   : 👩‍💼 Alice creates TechDAO — sole owner of all contracts
     Month 1  : 💸 First mixed ETH+SHER salaries paid
              : 🧾 Expense account funded and used
-             : 🎁 First tips distributed
              : ⏳ Vesting schedules set up
              : 🔀 Investment gateway opened
     Month 2  : 🗳️ Elections organized and held
@@ -173,18 +171,15 @@ sequenceDiagram
     Note over Alice: Alice is sole owner of every contract
 ```
 
-After deployment, Alice adds USDT to the Bank (not included in the initial list) and raises the Tips push limit for her larger team.
+After deployment, Alice adds USDT to the Bank (not included in the initial list).
 
 ```mermaid
 sequenceDiagram
     actor Alice as 👩‍💼 Alice
     participant Bank as 🏦 Bank
-    participant Tips as 🎁 Tips
     participant Vest as ⏳ Vesting
 
     Alice->>Bank: addTokenSupport(USDT)
-    Alice->>Tips: updatePushLimit(20)
-    Note over Tips: Raised from 10 to 20 to accommodate team size
 
     Alice->>Vest: createTeam(teamId: 1, owner: alice, token: SHER)
     Note over Vest: Team 1 created explicitly before adding vestings
@@ -352,63 +347,7 @@ sequenceDiagram
 
 ---
 
-## Act IV — 🎁 Community tips
-
-### Two modes of tipping
-
-```mermaid
-flowchart TD
-    subgraph PUSH["Push Mode — Instant delivery"]
-        C1["👤 Client\n0.3 ETH"] -->|pushTip| TIPS1["🎁 Tips"]
-        TIPS1 -->|"0.15 ETH instantly"| Bob1["👨‍💻 Bob"]
-        TIPS1 -->|"0.15 ETH instantly"| Charlie1["🧑‍💻 Charlie"]
-    end
-
-    subgraph SEND["Send Mode — Deferred withdrawal"]
-        C2["👤 Client 2\n0.2 ETH"] -->|sendTip| TIPS2["🎁 Tips"]
-        TIPS2 -->|"balance +0.10 ETH"| Bob2["👨‍💻 Bob"]
-        TIPS2 -->|"balance +0.10 ETH"| Charlie2["🧑‍💻 Charlie"]
-        Bob2 -->|"withdraw() anytime"| ETH["💸 0.1 ETH"]
-    end
-```
-
-Bob checks his pending balance before withdrawing. Alice checks the total contract balance.
-
-```mermaid
-sequenceDiagram
-    actor Bob as 👨‍💻 Bob
-    actor Alice as 👩‍💼 Alice
-    participant Tips as 🎁 Tips
-
-    Bob->>Tips: getBalance(Bob) → 0.10 ETH
-    Alice->>Tips: getContractBalance() → 0.10 ETH (Bob's undrawn portion)
-    Bob->>Tips: withdraw()
-    Bob-->>Bob: 0.10 ETH received
-```
-
----
-
-### Tips management
-
-```mermaid
-sequenceDiagram
-    actor Alice as 👩‍💼 Alice
-    participant Tips as 🎁 Tips
-
-    Note over Alice: TechDAO grows to 25 members
-    Alice->>Tips: updatePushLimit(25)
-
-    Note over Alice: Emergency — suspicious transactions
-    Alice->>Tips: pause()
-    Note over Tips: pushTip and sendTip blocked
-
-    Alice->>Tips: unpause()
-    Note over Tips: Resumed after investigation
-```
-
----
-
-## Act V — ⏳ Vesting
+## Act IV — ⏳ Vesting
 
 ### Setting up Bob's long-term commitment
 
@@ -481,7 +420,7 @@ sequenceDiagram
 
 ---
 
-## Act VI — 🔀 Investment Gateway
+## Act V — 🔀 Investment Gateway
 
 ### Investor1 deposits with slippage protection
 
@@ -543,7 +482,7 @@ sequenceDiagram
 
 ---
 
-## Act VII — 🗳️ Elections & Birth of the Board
+## Act VI — 🗳️ Elections & Birth of the Board
 
 ### Alice creates the election
 
@@ -625,7 +564,7 @@ sequenceDiagram
 
 ---
 
-## Act VIII — 🎩 The Board governs
+## Act VII — 🎩 The Board governs
 
 ### A revoked action (Diana submits a mistake)
 
@@ -698,7 +637,7 @@ sequenceDiagram
 
 ---
 
-## Act IX — 📋 Proposals
+## Act VIII — 📋 Proposals
 
 ### The Board votes on a remote work policy
 
@@ -750,7 +689,7 @@ sequenceDiagram
 
 ---
 
-## Act X — 🏦 Bank Operations
+## Act IX — 🏦 Bank Operations
 
 ### Clients deposit, Board manages the treasury
 
@@ -809,7 +748,7 @@ sequenceDiagram
 
 ---
 
-## Act XI — 📈 Dividends for SHER holders
+## Act X — 📈 Dividends for SHER holders
 
 ### The Board distributes profits
 
@@ -828,7 +767,7 @@ flowchart TD
 
 ---
 
-## Act XII — 📣 Ad Campaigns
+## Act XI — 📣 Ad Campaigns
 
 ### Advertiser lifecycle with admin management
 
@@ -869,7 +808,7 @@ sequenceDiagram
 
 ---
 
-## Act XIII — ⚙️ Platform-level governance
+## Act XII — ⚙️ Platform-level governance
 
 ### The Board adjusts platform fees
 
@@ -910,7 +849,6 @@ sequenceDiagram
 | 🧾 **ExpenseAccount**    | initialize, receive, depositToken, transfer, validateTransfer, getCurrentPeriod, isNewPeriod, deactivateApproval, activateApproval, addTokenSupport, removeTokenSupport, getBalance, getTokenBalance, pause, unpause                                    |
 | 🗳️ **Elections**         | initialize, createElection, castVote, publishResults, getElection, getElectionCandidates, getElectionEligibleVoters, getElectionWinners, getElectionResults, getVoterChoice, hasVoted, isEligibleVoter, getVoteCount, getNextElectionId, pause, unpause |
 | 📋 **Proposals**         | initialize, createProposal, castVote (Yes/No/Abstain), getProposal, tallyResults, getBoardOfDirectors, hasVoted                                                                                                                                         |
-| 🎁 **Tips**              | initialize, pushTip, sendTip, withdraw, getBalance, getContractBalance, updatePushLimit, pause, unpause                                                                                                                                                 |
 | ⏳ **Vesting**           | initialize, createTeam, addVesting, stopVesting, vestedAmount, releasable, release, getTeamMembers, getUserTeams, getTeamVestingsWithMembers, getTeamAllArchivedVestingsFlat, getCurrentTimestamp, pause, unpause                                       |
 | 📣 **AdCampaignManager** | constructor, createAdCampaign, claimPayment, requestAndApproveWithdrawal, addAdmin, removeAdmin, setBankContractAddress, setCostPerClick, setCostPerImpression, getAdCampaignByCode, getAdminList, pause, unpause, receive                              |
 
@@ -946,9 +884,6 @@ flowchart TD
     EXP -->|"ETH"| Diana
 
     Vest["⏳ Vesting"] -->|"SHER gradually"| Bob
-
-    Tips["🎁 Tips"] -->|"ETH"| Bob
-    Tips -->|"ETH"| Charlie
 ```
 
 ---

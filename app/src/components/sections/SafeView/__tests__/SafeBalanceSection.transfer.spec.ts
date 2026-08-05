@@ -4,7 +4,7 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-import { mockUseContractBalance } from '@/tests/mocks'
+import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
 
 const {
@@ -88,10 +88,10 @@ const MOCK_DATA = {
   safeAddress: '0x1234567890123456789012345678901234567890' as Address,
   safeInfo: { owners: ['0x1111111111111111111111111111111111111111' as Address], threshold: 2 },
   balances: [
-    {
+    makeTokenBalance({
       token: {
         symbol: 'ETH',
-        id: 'ethereum',
+        id: 'native',
         name: 'Ethereum',
         code: 'ETH',
         coingeckoId: 'ethereum',
@@ -99,19 +99,9 @@ const MOCK_DATA = {
         address: '0x0000000000000000000000000000000000000000'
       },
       amount: 1.5,
-      values: {
-        USD: {
-          value: 3000,
-          formated: '$3,000',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 2000,
-          formatedPrice: '$2K'
-        }
-      }
-    },
-    {
+      usdPrice: 2000
+    }),
+    makeTokenBalance({
       token: {
         symbol: 'SHER',
         id: 'sher',
@@ -122,29 +112,12 @@ const MOCK_DATA = {
         address: '0x1234567890123456789012345678901234567890'
       },
       amount: 100,
-      values: {
-        USD: {
-          value: 500,
-          formated: '$500',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 5,
-          formatedPrice: '$5'
-        }
-      }
-    }
+      usdPrice: 5
+    })
   ],
   total: {
-    USD: {
-      value: 4500,
-      formated: '$4,500',
-      id: 'usd',
-      code: 'USD',
-      symbol: '$',
-      price: 1,
-      formatedPrice: '$1'
-    }
+    usd: { value: 4500, formatted: '$4,500' },
+    local: { value: 4500, formatted: '$4,500' }
   },
   defaultCurrency: { code: 'USD', name: 'US Dollar', symbol: '$' },
   team: {
@@ -241,7 +214,7 @@ describe('SafeBalanceSection', () => {
             options: {
               to: '0x3333333333333333333333333333333333333333',
               amount: '1',
-              tokenId: 'ethereum'
+              tokenId: 'native'
             }
           }
         },

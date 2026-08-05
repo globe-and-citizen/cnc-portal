@@ -3,17 +3,20 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { ref } from 'vue'
 import { readContract, estimateGas } from '@wagmi/core'
+import { recoverTypedDataAddress } from 'viem'
 import TransferAction from '../TransferAction.vue'
 import { mockExpenseAccountWrites, mockERC20Writes } from '@/tests/mocks'
 
-vi.mock('@/utils', () => ({
+// `classifyError` is left un-mocked so these tests assert the message the user
+// actually sees, rather than a stand-in string.
+vi.mock('@/utils', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   log: { error: vi.fn() },
-  parseError: vi.fn(() => 'Parsed error:'),
   getTokens: vi.fn(() => [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }])
 }))
 
 vi.mock('@/composables', () => ({
-  useContractBalance: () => ({ balances: ref({}) })
+  useContractBalance: () => ({ data: ref({ balances: [], total: undefined }) })
 }))
 
 vi.mock('@wagmi/core', () => ({
@@ -31,6 +34,8 @@ const MockTransferForm = {
 type MutationOpts = { onSuccess?: () => void; onError?: (e: unknown) => void }
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+const OWNER_ADDRESS = '0x1234567890123456789012345678901234567890'
+const CURRENT_EXPENSE_ACCOUNT = '0x5555555555555555555555555555555555555555'
 const NATIVE_BUDGET = {
   tokenAddress: ZERO_ADDRESS,
   approvedAddress: '0xApprovedAddress',
@@ -38,7 +43,9 @@ const NATIVE_BUDGET = {
   frequencyType: 3,
   startDate: 1,
   endDate: 2,
-  customFrequency: 0
+  customFrequency: 0,
+  signedAgainstContractAddress: CURRENT_EXPENSE_ACCOUNT,
+  chainId: 1
 }
 const ERC20_BUDGET = {
   ...NATIVE_BUDGET,
@@ -82,10 +89,13 @@ describe('TransferAction.vue', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     vi.mocked(estimateGas).mockResolvedValue(21000n)
+    vi.mocked(recoverTypedDataAddress).mockResolvedValue(OWNER_ADDRESS)
   })
 
   it('invokes transfer when ERC20 allowance is sufficient', async () => {
-    vi.mocked(readContract).mockResolvedValueOnce(BigInt(200 * 1e6))
+    vi.mocked(readContract)
+      .mockResolvedValueOnce(OWNER_ADDRESS)
+      .mockResolvedValueOnce(BigInt(200 * 1e6))
 
     const wrapper = createComponent()
     await submitTransfer(wrapper)
@@ -95,7 +105,7 @@ describe('TransferAction.vue', () => {
   })
 
   it('approves then transfers when allowance is insufficient', async () => {
-    vi.mocked(readContract).mockResolvedValueOnce(0n)
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS).mockResolvedValueOnce(0n)
     approve.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
       opts?.onSuccess?.()
     })
@@ -108,7 +118,7 @@ describe('TransferAction.vue', () => {
   })
 
   it('shows approve error in the alert and skips the transfer', async () => {
-    vi.mocked(readContract).mockResolvedValueOnce(0n)
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS).mockResolvedValueOnce(0n)
     approve.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
       opts?.onError?.(new Error('approve failed'))
     })
@@ -121,7 +131,9 @@ describe('TransferAction.vue', () => {
   })
 
   it('shows transfer error in the alert', async () => {
-    vi.mocked(readContract).mockResolvedValueOnce(BigInt(200 * 1e6))
+    vi.mocked(readContract)
+      .mockResolvedValueOnce(OWNER_ADDRESS)
+      .mockResolvedValueOnce(BigInt(200 * 1e6))
     transfer.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
       opts?.onError?.(new Error('transfer failed'))
     })
@@ -129,10 +141,11 @@ describe('TransferAction.vue', () => {
     const wrapper = createComponent()
     await submitTransfer(wrapper)
 
-    expect(wrapper.text()).toContain('Failed to transfer')
+    expect(wrapper.text()).toContain('transfer failed')
   })
 
   it('estimates gas then transfers a native deposit', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
     const wrapper = createComponent(NATIVE_BUDGET)
     await submitTransfer(wrapper)
 
@@ -141,7 +154,9 @@ describe('TransferAction.vue', () => {
   })
 
   it('closes the modal when the transfer mutation resolves', async () => {
-    vi.mocked(readContract).mockResolvedValueOnce(BigInt(200 * 1e6))
+    vi.mocked(readContract)
+      .mockResolvedValueOnce(OWNER_ADDRESS)
+      .mockResolvedValueOnce(BigInt(200 * 1e6))
     transfer.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) =>
       opts?.onSuccess?.()
     )
@@ -152,22 +167,37 @@ describe('TransferAction.vue', () => {
     expect(wrapper.find('[data-test="transfer-form"]').exists()).toBe(false)
   })
 
-  it('shows the parsed error when estimateGas rejects on native transfer', async () => {
+  it('shows the classified error when estimateGas rejects on native transfer', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
     vi.mocked(estimateGas).mockRejectedValueOnce(new Error('insufficient funds'))
     const wrapper = createComponent(NATIVE_BUDGET)
     await submitTransfer(wrapper)
 
     expect(transfer.mutate).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Parsed error:')
+    expect(wrapper.text()).toContain('insufficient funds')
   })
 
   it('surfaces "Failed to read allowance" when readContract rejects', async () => {
-    vi.mocked(readContract).mockRejectedValueOnce(new Error('rpc error'))
+    vi.mocked(readContract)
+      .mockResolvedValueOnce(OWNER_ADDRESS)
+      .mockRejectedValueOnce(new Error('rpc error'))
     const wrapper = createComponent()
     await submitTransfer(wrapper)
 
     expect(transfer.mutate).not.toHaveBeenCalled()
     expect(approve.mutate).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('Failed to read allowance')
+  })
+
+  it('blocks transfers when the approval was signed for another expense account', async () => {
+    const wrapper = createComponent({
+      ...ERC20_BUDGET,
+      signedAgainstContractAddress: '0x6666666666666666666666666666666666666666'
+    })
+    await submitTransfer(wrapper)
+
+    expect(readContract).not.toHaveBeenCalled()
+    expect(transfer.mutate).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Signature issued for a different ExpenseAccount contract')
   })
 })

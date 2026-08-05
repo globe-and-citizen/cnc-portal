@@ -1,16 +1,18 @@
 <template>
   <UModal
-    v-model:open="showDeleteTeamConfirmModal"
+    v-model:open="open"
     title="Confirmation"
     description="This action cannot be undone. Please confirm that you want to permanently delete this company."
   >
-    <UButton
-      size="sm"
-      color="error"
-      icon="i-lucide-trash"
-      label="Delete"
-      data-test="team-meta-delete-open"
-    />
+    <template v-if="withTrigger" #default>
+      <UButton
+        size="sm"
+        color="error"
+        icon="i-lucide-trash"
+        label="Delete"
+        data-test="team-meta-delete-open"
+      />
+    </template>
     <template #body>
       <UAlert
         v-if="deleteTeamError"
@@ -33,30 +35,34 @@
           :disabled="teamIsDeleting"
           label="Delete"
         />
-        <UButton
-          color="primary"
-          variant="outline"
-          @click="showDeleteTeamConfirmModal = false"
-          label="Cancel"
-        />
+        <UButton color="primary" variant="outline" @click="open = false" label="Cancel" />
       </div>
     </template>
   </UModal>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { Team } from '@/types/team'
 import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
 import { useDeleteTeamMutation } from '@/queries/team.queries'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
-defineProps<{
-  currentTeam: Team | null | undefined
-}>()
+const props = withDefaults(
+  defineProps<{
+    currentTeam: Team | null | undefined
+    /**
+     * Team to act on when it is not the one the dashboard has open — the teams
+     * list drives this modal per card, where `teamStore.currentTeamId` is stale.
+     */
+    teamId?: string | number | null
+    /** Clear it when the parent opens the modal itself and owns the trigger. */
+    withTrigger?: boolean
+  }>(),
+  { teamId: null, withTrigger: true }
+)
 
-const showDeleteTeamConfirmModal = ref(false)
+const open = defineModel<boolean>('open', { default: false })
 const teamStore = useTeamStore()
 const router = useRouter()
 const toast = useToast()
@@ -68,7 +74,7 @@ const {
 } = useDeleteTeamMutation()
 
 function getRequiredTeamId(): string | null {
-  const teamId = teamStore.currentTeamId
+  const teamId = props.teamId ?? teamStore.currentTeamId
   if (!teamId) {
     toast.add({ title: 'Company ID is required', color: 'error' })
     return null
@@ -84,7 +90,7 @@ function deleteTeam() {
     {
       onSuccess: async () => {
         toast.add({ title: 'Company deleted successfully', color: 'success' })
-        showDeleteTeamConfirmModal.value = false
+        open.value = false
         await router.push('/teams')
       }
     }

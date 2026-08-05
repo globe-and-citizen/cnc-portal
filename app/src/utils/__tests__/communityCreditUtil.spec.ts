@@ -1,30 +1,30 @@
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import {
-  CREDIT_FIELD_CLASS,
+  applyZodFieldErrors,
   avatarStyle,
-  creditAccessRowClass,
-  creditCheckClass,
-  creditChipClass,
   creditInitials,
-  creditRadioClass,
+  formatCalendarBreakdown,
+  creditTermLabel,
   formatAmount,
+  formatCreditPeriod,
   formatNumber,
-  gradientForAddress,
-  lendingOfferToCreditRound,
-  offerLenderToCreditLender,
-  offerMaturityDate,
-  offerStateToRoundStatus,
+  formatRoundTerm,
+  MINUTES_PER_DAY,
+  reachedFundingTarget,
+  repayableCeiling,
+  roundToDisplayPrecision,
   roundInterest,
   roundTotalDue,
   statusMeta
 } from '../communityCreditUtil'
-import type {
-  FixedReturnOfferLender,
-  FixedReturnRawOffer,
-  LendingOfferStruct,
-  RoundStatus
-} from '@/types'
-import type { Address } from 'viem'
+import {
+  CREDIT_FIELD_CLASS,
+  creditAccessRowClass,
+  creditChipClass,
+  creditRadioClass
+} from '../communityCreditWizardUtil'
+import type { RoundStatus } from '@/types'
 
 describe('communityCreditUtil', () => {
   describe('formatting', () => {
@@ -33,6 +33,172 @@ describe('communityCreditUtil', () => {
       expect(formatAmount(1000, 'POL')).toBe('1,000 POL')
       expect(formatNumber(1234567)).toBe('1,234,567')
       expect(formatNumber(0)).toBe('0')
+    })
+
+    it('keeps requested fractional precision for display amounts', () => {
+      expect(formatAmount(0.123456, 'USDC', 4)).toBe('0.1235 USDC')
+      expect(formatNumber(1234.5678, 2)).toBe('1,234.57')
+    })
+  })
+
+  describe('repayment display helpers', () => {
+    it('rounds floating-point noise to display precision without collapsing small amounts', () => {
+      expect(roundToDisplayPrecision(0.1 + 0.2)).toBe(0.3)
+      expect(roundToDisplayPrecision(0.00004)).toBe(0)
+      expect(roundToDisplayPrecision(0.00005)).toBe(0.0001)
+    })
+
+    it('caps repayable amount at the treasury balance when loaded', () => {
+      expect(repayableCeiling(1000, 400.123456)).toBe(400.1235)
+    })
+
+    it('uses the outstanding amount when the treasury balance has not loaded yet', () => {
+      expect(repayableCeiling(1000.123456, null)).toBe(1000.1235)
+    })
+  })
+
+  describe('creditTermLabel', () => {
+    it('humanizes singular minute, hour and day periods without plural suffixes', () => {
+      expect(formatCreditPeriod(1)).toBe('1 minute')
+      expect(formatCreditPeriod(60)).toBe('1 hour')
+      expect(formatCreditPeriod(MINUTES_PER_DAY)).toBe('1 day')
+    })
+
+    it('falls back to plain period labels when calendar anchors are missing or unchanged', () => {
+      expect(formatCalendarBreakdown('', '', 45)).toBe('45 minutes')
+      expect(formatCalendarBreakdown('2026-07-31', '', 60)).toBe('1 hour')
+      expect(formatCalendarBreakdown('2026-07-31', '23:59', 0)).toBe('0 minutes')
+      expect(formatRoundTerm(1_700_000_000n, 1_700_000_000n, 0)).toBe('0 minutes')
+    })
+
+    it('shows a plain day count for a preset, regardless of the deadline', () => {
+      expect(
+        creditTermLabel({
+          period: 90 * MINUTES_PER_DAY,
+          periodMode: 'preset',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('90 days')
+    })
+
+    it('breaks any custom term down into its real calendar equivalent, whichever unit built it', () => {
+      // 2026-07-31 + 90 months = 2034-01-31 exactly (7 years, 6 months, no remainder) —
+      // the exact scenario a flat "2741 days (from 90 months)" used to render as.
+      const ninetyMonthsMinutes = Math.round(
+        (Date.UTC(2034, 0, 31) - Date.UTC(2026, 6, 31)) / 1000 / 60
+      )
+      expect(
+        creditTermLabel({
+          period: ninetyMonthsMinutes,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '00:00'
+        })
+      ).toBe('7 years, 6 months')
+
+      // Built from "2 weeks" (a days/weeks unit, not months/years) — still broken down,
+      // not left as a flat "14 days", since it's still a custom entry.
+      expect(
+        creditTermLabel({
+          period: 14 * MINUTES_PER_DAY,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('2 weeks')
+
+      // The exact "8000 days" scenario reported live — reads far better as years/
+      // months/weeks/days than as a bare four-digit day count.
+      expect(
+        creditTermLabel({
+          period: 8000 * MINUTES_PER_DAY,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('21 years, 10 months, 3 weeks, 4 days')
+    })
+
+    it('includes a remainder-days term when the span is not a round number of months', () => {
+      // 2026-01-01 + (6 calendar months + 3 days) worth of minutes → "6 months, 3 days".
+      const sixMonthsMinutes = Math.round((Date.UTC(2026, 6, 1) - Date.UTC(2026, 0, 1)) / 1000 / 60)
+      expect(
+        creditTermLabel({
+          period: sixMonthsMinutes + 3 * MINUTES_PER_DAY,
+          periodMode: 'custom',
+          deadline: '2026-01-01',
+          deadlineTime: '00:00'
+        })
+      ).toBe('6 months, 3 days')
+    })
+
+    it('includes hours and minutes for a custom minutes term that is not a whole day', () => {
+      // 8000 minutes = 5 days, 13h 20m — the day-only cascade used to silently drop
+      // the sub-day remainder and show a flat "5 days", 800 minutes short of reality.
+      expect(
+        creditTermLabel({
+          period: 8000,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('5 days, 13 hours, 20 minutes')
+    })
+
+    it('breaks a wildly-over-cap custom days entry into a readable calendar span', () => {
+      // A mistyped "10,000,000 days" is still a valid *number*, but a bare day count
+      // doesn't communicate the scale of the mistake nearly as clearly as years does.
+      expect(
+        creditTermLabel({
+          period: 10_000_000 * MINUTES_PER_DAY,
+          periodMode: 'custom',
+          deadline: '2026-07-31',
+          deadlineTime: '23:59'
+        })
+      ).toBe('27379 years, 3 weeks, 5 days')
+    })
+
+    it('falls back to formatCreditPeriod when no deadline is set yet', () => {
+      expect(
+        creditTermLabel({
+          period: 90,
+          periodMode: 'custom',
+          deadline: '',
+          deadlineTime: ''
+        })
+      ).toBe('2 hours') // formatCreditPeriod(90) rounds 90 minutes up to the nearest hour
+    })
+  })
+
+  describe('applyZodFieldErrors', () => {
+    const schema = z.object({ name: z.string().min(3, 'Too short') })
+
+    it('clears the errors record and returns true on a successful parse', () => {
+      const errors: Record<string, string> = { stale: 'leftover from a previous attempt' }
+      const result = schema.safeParse({ name: 'Alice' })
+
+      expect(applyZodFieldErrors(result, errors)).toBe(true)
+      expect(errors).toEqual({})
+    })
+
+    it('populates the errors record by field and returns false on a failed parse', () => {
+      const errors: Record<string, string> = {}
+      const result = schema.safeParse({ name: 'AB' })
+
+      expect(applyZodFieldErrors(result, errors)).toBe(false)
+      expect(errors).toEqual({ name: 'Too short' })
+    })
+
+    it('keeps only the first issue per field', () => {
+      const multiIssueSchema = z.object({
+        name: z.string().min(3, 'Too short').startsWith('Z', 'Must start with Z')
+      })
+      const errors: Record<string, string> = {}
+      const result = multiIssueSchema.safeParse({ name: 'AB' })
+
+      applyZodFieldErrors(result, errors)
+      expect(errors.name).toBe('Too short')
     })
   })
 
@@ -44,6 +210,9 @@ describe('communityCreditUtil', () => {
     it('handles a single name and the "(you)" suffix', () => {
       expect(creditInitials('You')).toBe('Y')
       expect(creditInitials('Hela E. (you)')).toBe('HE')
+    })
+    it('returns an empty string for a blank name', () => {
+      expect(creditInitials('   ')).toBe('')
     })
   })
 
@@ -63,14 +232,29 @@ describe('communityCreditUtil', () => {
     })
   })
 
+  describe('reachedFundingTarget', () => {
+    it('is true once raised meets or exceeds the target', () => {
+      expect(reachedFundingTarget({ raised: 1000, target: 1000 })).toBe(true)
+      expect(reachedFundingTarget({ raised: 1200, target: 1000 })).toBe(true)
+    })
+
+    it('is false for a round accepted via acceptPartialFunding, short of its target', () => {
+      // A Funded/Repaying round doesn't always mean the target was actually hit —
+      // acceptPartialFunding can move a stalled round straight there with less raised.
+      expect(reachedFundingTarget({ raised: 400, target: 1000 })).toBe(false)
+    })
+  })
+
   describe('statusMeta', () => {
     it('maps every status to a label and badge colour', () => {
       const cases: Record<RoundStatus, { label: string; color: string }> = {
         open: { label: 'Open', color: 'primary' },
+        stalled: { label: 'Action needed', color: 'warning' },
         funded: { label: 'Funded', color: 'info' },
         active: { label: 'In repayment', color: 'warning' },
+        overdue: { label: 'Overdue', color: 'error' },
         repaid: { label: 'Repaid', color: 'success' },
-        refundable: { label: 'Refundable', color: 'warning' }
+        refunded: { label: 'Refunded', color: 'neutral' }
       }
       for (const [status, expected] of Object.entries(cases)) {
         expect(statusMeta(status as RoundStatus)).toEqual(expected)
@@ -86,143 +270,12 @@ describe('communityCreditUtil', () => {
     it.each([
       ['chip', creditChipClass],
       ['access row', creditAccessRowClass],
-      ['radio', creditRadioClass],
-      ['check', creditCheckClass]
+      ['radio', creditRadioClass]
     ])('toggles the active branch for the %s style', (_label, fn) => {
       const active = fn(true)
       const inactive = fn(false)
       expect(active.some((c) => c.includes('primary'))).toBe(true)
       expect(active).not.toEqual(inactive)
-    })
-  })
-
-  describe('on-chain mappers', () => {
-    const baseOffer: LendingOfferStruct = {
-      token: '0x0000000000000000000000000000000000000abc' as Address,
-      fundingTarget: 40_000_000000n,
-      interestRateBps: 500n, // 5%
-      termDuration: 3,
-      termUnit: 1, // months → 90 days
-      startDate: 1_700_000_000n,
-      subscriptionDeadline: 1_700_500_000n,
-      fundingAccess: 1, // whitelist
-      isCapEnabled: true,
-      lenderCap: 10_000_000000n,
-      totalFunded: 23_400_000000n,
-      totalRepaidByIssuer: 0n,
-      state: 0 // Open
-    }
-    const makeOffer = (over: Partial<LendingOfferStruct> = {}): LendingOfferStruct => ({
-      ...baseOffer,
-      ...over
-    })
-    const raw: FixedReturnRawOffer = { offerId: 7, decimals: 6, offer: baseOffer }
-
-    describe('offerStateToRoundStatus', () => {
-      it('maps Open / Funded / Refundable', () => {
-        expect(offerStateToRoundStatus(makeOffer({ state: 0 }))).toBe('open')
-        expect(offerStateToRoundStatus(makeOffer({ state: 1 }))).toBe('funded')
-        expect(offerStateToRoundStatus(makeOffer({ state: 2 }))).toBe('refundable')
-      })
-      it('treats Repaying as active until principal + interest is fully repaid', () => {
-        // totalFunded 1_000_000 @ 10% → expected 1_100_000
-        const repaying = makeOffer({ state: 3, totalFunded: 1_000_000n, interestRateBps: 1000n })
-        expect(offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 500_000n })).toBe(
-          'active'
-        )
-        expect(offerStateToRoundStatus({ ...repaying, totalRepaidByIssuer: 1_100_000n })).toBe(
-          'repaid'
-        )
-      })
-    })
-
-    describe('lendingOfferToCreditRound', () => {
-      it('scales amounts by decimals and maps rate, term and access', () => {
-        const round = lendingOfferToCreditRound(raw, 'Q3 bridge', 'Payroll')
-        expect(round.id).toBe('7')
-        expect(round.name).toBe('Q3 bridge')
-        expect(round.desc).toBe('Payroll')
-        expect(round.target).toBe(40000)
-        expect(round.raised).toBe(23400)
-        expect(round.rate).toBe(5)
-        expect(round.period).toBe(90) // 3 months × 30
-        expect(round.restricted).toBe(true)
-        expect(round.cap).toBe(10000)
-        expect(round.status).toBe('open')
-        expect(round.lenders).toEqual([])
-      })
-      it('falls back to generic title/purpose and null cap', () => {
-        const round = lendingOfferToCreditRound({
-          ...raw,
-          offer: makeOffer({ isCapEnabled: false, fundingAccess: 0 })
-        })
-        expect(round.name).toBe('Round #7')
-        expect(round.desc).toContain('fixed-return')
-        expect(round.cap).toBeNull()
-        expect(round.restricted).toBe(false)
-      })
-
-      it('renders unset dates as — and stamps repaidOn only when repaid', () => {
-        const noDeadline = lendingOfferToCreditRound({
-          ...raw,
-          offer: makeOffer({ subscriptionDeadline: 0n })
-        })
-        expect(noDeadline.deadline).toBe('—')
-        expect(noDeadline.repaidOn).toBeUndefined()
-
-        const repaid = lendingOfferToCreditRound({
-          ...raw,
-          offer: makeOffer({
-            state: 3,
-            totalFunded: 1_000_000n,
-            interestRateBps: 1000n,
-            totalRepaidByIssuer: 1_100_000n
-          })
-        })
-        expect(repaid.status).toBe('repaid')
-        expect(repaid.repaidOn).toBe(repaid.maturity)
-      })
-    })
-
-    describe('offerLenderToCreditLender', () => {
-      const lender: FixedReturnOfferLender = {
-        address: '0xABCDEF0000000000000000000000000000000001' as Address,
-        principal: 5000,
-        expected: 5250
-      }
-      it('resolves the name, shortens the address and flags the connected lender', () => {
-        const mapped = offerLenderToCreditLender(
-          lender,
-          () => 'Alice',
-          '0xabcdef0000000000000000000000000000000001'
-        )
-        expect(mapped.name).toBe('Alice')
-        expect(mapped.amount).toBe(5000)
-        expect(mapped.you).toBe(true) // case-insensitive match
-        expect(mapped.addr).toContain('...')
-        expect(mapped.gradient).toMatch(/^#[0-9a-f]+,#[0-9a-f]+$/i)
-      })
-      it('is not "you" for a different connected address', () => {
-        expect(offerLenderToCreditLender(lender, () => 'Bob', '0xdead').you).toBe(false)
-      })
-    })
-
-    describe('gradientForAddress', () => {
-      it('is deterministic and yields two distinct hex stops', () => {
-        const address = '0x1234567890abcdef1234567890abcdef12345678'
-        const [a, b] = gradientForAddress(address).split(',')
-        expect(gradientForAddress(address)).toBe(`${a},${b}`)
-        expect(a).not.toBe(b)
-      })
-    })
-
-    describe('offerMaturityDate', () => {
-      it('adds the term (in days) to the start date', () => {
-        const date = offerMaturityDate(
-          makeOffer({ startDate: 1_700_000_000n, termDuration: 30, termUnit: 0 })
-        )
-        expect(date.getTime()).toBe((1_700_000_000 + 30 * 86_400) * 1000)
-      })
     })
   })
 })

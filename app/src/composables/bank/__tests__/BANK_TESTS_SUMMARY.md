@@ -13,7 +13,7 @@ This document outlines the comprehensive test suite created for all Bank composa
 **Coverage**:
 
 - ✅ Bank address management and validation
-- ✅ All read function calls (`useBankPaused`, `useBankOwner`, `useBankTipsAddress`, etc.)
+- ✅ All read function calls (`useBankPaused`, `useBankOwner`, etc.)
 - ✅ Query enablement logic based on address validity
 - ✅ Parameter passing and return interface validation
 - ✅ Error handling for invalid addresses
@@ -110,7 +110,7 @@ describe('useBankWrites', () => {
 
 **Coverage**:
 
-- ✅ Admin functions (pause, unpause, ownership, tips address)
+- ✅ Admin functions (pause, unpause, ownership)
 - ✅ Transfer functions (ETH, tokens, deposits)
 - ✅ Validation integration
 - ✅ Amount conversion to Wei

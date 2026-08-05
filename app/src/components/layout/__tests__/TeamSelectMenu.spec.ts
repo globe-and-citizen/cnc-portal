@@ -60,11 +60,35 @@ describe('TeamSelectMenu', () => {
   })
 
   describe('actions', () => {
-    it('selects a team: sets the current team and navigates to it', async () => {
+    it('selects a team and preserves the current team-scoped route', async () => {
+      setMockRoute({
+        name: 'proposal-detail',
+        params: { id: '1', proposalId: '9' },
+        query: { tab: 'votes' },
+        hash: '#result',
+        path: '/teams/1/administration/bod-proposals/9'
+      })
       const wrapper = mountMenu()
       await wrapper.find('[data-test="team-option-1"]').trigger('click')
       expect(mockTeamStore.setCurrentTeamId).toHaveBeenCalledWith('1')
-      expect(mockRouterPush).toHaveBeenCalledWith('/teams/1')
+      expect(mockRouterPush).toHaveBeenCalledWith({
+        name: 'proposal-detail',
+        params: { id: '1', proposalId: '9' },
+        query: { tab: 'votes' },
+        hash: '#result'
+      })
+    })
+
+    it('falls back to the company overview from the companies list', async () => {
+      setMockRoute({ name: 'teams', params: {}, query: {}, path: '/teams' })
+
+      const wrapper = mountMenu()
+      await wrapper.find('[data-test="team-option-1"]').trigger('click')
+
+      expect(mockRouterPush).toHaveBeenCalledWith({
+        name: 'show-team',
+        params: { id: '1' }
+      })
     })
 
     it('navigates to the companies list from "All companies"', async () => {

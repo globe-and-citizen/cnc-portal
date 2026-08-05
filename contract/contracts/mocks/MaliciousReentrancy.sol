@@ -13,8 +13,20 @@ interface IFeeCollectorForAttack {
  *         call to reach the guarded path.
  */
 contract MaliciousReentrancy {
-  address public target;
-  bool private attacking;
+  address private s_target;
+  bool private s_attacking;
+
+  /// @notice Returns the current attack target address.
+  function getTarget() external view returns (address) {
+    return s_target;
+  }
+
+  receive() external payable {
+    if (s_attacking) {
+      // Attempt a re-entrant call. Will bubble up the revert.
+      IFeeCollectorForAttack(s_target).withdraw();
+    }
+  }
 
   /**
    * @notice Kicks off the attack by calling withdraw on the fee collector.
@@ -22,17 +34,10 @@ contract MaliciousReentrancy {
    *         we attempt to call withdraw again, which should revert with
    *         ReentrancyGuardReentrantCall.
    */
-  function attack(address _target) external {
-    target = _target;
-    attacking = true;
-    IFeeCollectorForAttack(_target).withdraw();
-    attacking = false;
-  }
-
-  receive() external payable {
-    if (attacking) {
-      // Attempt a re-entrant call. Will bubble up the revert.
-      IFeeCollectorForAttack(target).withdraw();
-    }
+  function attack(address target) external {
+    s_target = target;
+    s_attacking = true;
+    IFeeCollectorForAttack(target).withdraw();
+    s_attacking = false;
   }
 }

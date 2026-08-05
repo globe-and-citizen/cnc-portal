@@ -14,11 +14,16 @@ import {
   mockUseFetch,
   mockUseSubmitRestriction,
   mockUseDeployContract,
+  mockBlockTimestamp,
   resetComposableMocks,
   resetDeployState
 } from '@/tests/mocks/composables.mock'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
-import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
+import {
+  mockGetBalance,
+  mockGetLogs,
+  mockReadContractAction
+} from '@/tests/mocks/viem.actions.mock'
 import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock'
 
 // Restore all shared composable mocks to their defaults before every test so
@@ -228,9 +233,28 @@ vi.mock('@/queries/auth.queries', () => ({
  */
 vi.mock('@/queries/contract.queries', () => ({
   contractKeys: { all: ['contracts'] as const },
+  useGetTeamOfficersQuery: vi.fn(() => ({
+    data: ref([]),
+    isPending: ref(false),
+    isError: ref(false),
+    refetch: vi.fn()
+  })),
   useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation),
   useSyncContractsMutation: vi.fn(queryMocks.useSyncContractsMutation),
   useCreateOfficerMutation: vi.fn(queryMocks.useCreateOfficerMutation)
+}))
+
+/**
+ * Mock Investor Migration Queries (investorMigration.queries.ts)
+ */
+vi.mock('@/queries/investorMigration.queries', () => ({
+  investorMigrationKeys: {
+    all: ['investorMigration'] as const,
+    team: (teamId: string | number) => ['investorMigration', String(teamId)] as const
+  },
+  useCreateInvestorMigrationMutation: vi.fn(queryMocks.useCreateInvestorMigrationMutation),
+  useGetInvestorMigrationQuery: vi.fn(queryMocks.useGetInvestorMigrationQuery),
+  useGenerateMerkleSnapshotMutation: vi.fn(queryMocks.useGenerateMerkleSnapshotMutation)
 }))
 
 /**
@@ -285,9 +309,15 @@ vi.mock('@/composables/useAuth', () => ({
 /**
  * Mock useContractBalance composable
  */
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
+// `importOriginal` keeps `contractBalanceKeys` real: specs assert on the key the
+// component invalidates, and a hand-written factory would leave it undefined.
+vi.mock('@/composables/useContractBalance', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useContractBalance: vi.fn(() => mockUseContractBalance)
+  }
+})
 
 /**
  * Mock useDeployContract composable
@@ -319,6 +349,13 @@ vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
 }))
 
 /**
+ * Mock useBlockTimestamp composable — the chain's own clock.
+ */
+vi.mock('@/composables/useBlockTimestamp', () => ({
+  useBlockTimestamp: vi.fn(() => mockBlockTimestamp)
+}))
+
+/**
  * Mock viem/actions getBalance
  */
 vi.mock('viem/actions', async (importOriginal) => {
@@ -326,7 +363,8 @@ vi.mock('viem/actions', async (importOriginal) => {
   return {
     ...actual,
     getBalance: mockGetBalance,
-    getLogs: mockGetLogs
+    getLogs: mockGetLogs,
+    readContract: mockReadContractAction
   }
 })
 

@@ -1,18 +1,22 @@
 import { computed } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
+import {
+  useContractWritesV3,
+  type WriteFunctionName
+} from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
-import type { ExtractAbiFunctionNames } from 'abitype'
 
-type SafeDepositRouterFunctionNames = ExtractAbiFunctionNames<typeof SAFE_DEPOSIT_ROUTER_ABI>
+type SafeDepositRouterFunctionNames = WriteFunctionName<typeof safeDepositRouterAbi>
 
-function useSafeDepositRouterContractWrite(functionName: SafeDepositRouterFunctionNames) {
+function useSafeDepositRouterContractWrite<F extends SafeDepositRouterFunctionNames>(
+  functionName: F
+) {
   const teamStore = useTeamStore()
   const contractAddress = computed(() => teamStore.getContractAddressByType('SafeDepositRouter'))
   return useContractWritesV3({
     contractAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName
   })
 }
@@ -50,7 +54,8 @@ export function useRemoveTokenSupport() {
 }
 
 /**
- * `deposit` mints SHER, so reads on InvestorV1 must also be invalidated.
+ * `deposit` mints SHER, so reads on the Investor share token must also be
+ * invalidated.
  * The router's own reads are flushed by `useContractWritesV3`.
  */
 export function useDeposit() {
@@ -60,10 +65,10 @@ export function useDeposit() {
 
   return useContractWritesV3({
     contractAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: 'deposit',
     onSuccess: async () => {
-      const investor = teamStore.getContractAddressByType('InvestorV1')
+      const investor = teamStore.getInvestorAddress()
       if (!investor) return
       const investorLower = investor.toLowerCase()
       await queryClient.invalidateQueries({

@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { nextTick } from 'vue'
+import { BaseError, UserRejectedRequestError } from 'viem'
 import ToggleSherCompensationAction from '../ToggleSherCompensationAction.vue'
 import {
-  mockParseError,
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
-  mockTeamStore,
+  mockToast,
   mockUseConnection,
   renderWithProviders
 } from '@/tests/mocks'
@@ -15,9 +15,7 @@ describe('ToggleSherCompensationAction.vue', () => {
   const createWrapper = () => renderWithProviders(ToggleSherCompensationAction)
 
   beforeEach(() => {
-    vi.useRealTimers()
     vi.clearAllMocks()
-    mockParseError.mockReturnValue('Parsed error message')
 
     mockSafeDepositRouterAddress.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     mockSafeDepositRouterReads.owner.data.value = '0xAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa'
@@ -28,11 +26,6 @@ describe('ToggleSherCompensationAction.vue', () => {
 
     mockSafeDepositRouterWrites.enableDeposits.mutateAsync.mockResolvedValue(undefined)
     mockSafeDepositRouterWrites.disableDeposits.mutateAsync.mockResolvedValue(undefined)
-    mockSafeDepositRouterWrites.setSafeAddress.mutateAsync.mockResolvedValue(undefined)
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
   })
 
   it('does not render when safe deposit router address is missing', () => {
@@ -87,7 +80,7 @@ describe('ToggleSherCompensationAction.vue', () => {
     expect(mockSafeDepositRouterWrites.disableDeposits.mutateAsync).toHaveBeenCalledTimes(1)
   })
 
-  it('enables deposits directly when safe address is correct', async () => {
+  it('enables deposits when safe address is already set', async () => {
     mockSafeDepositRouterReads.depositsEnabled.data.value = false
     mockSafeDepositRouterReads.safeAddress.data.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     const wrapper = createWrapper()
@@ -98,81 +91,52 @@ describe('ToggleSherCompensationAction.vue', () => {
     expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).toHaveBeenCalledTimes(1)
   })
 
-  it('updates safe address before enabling when safe address mismatches', async () => {
+  it('never writes the safe address itself when it mismatches', async () => {
     mockSafeDepositRouterReads.depositsEnabled.data.value = false
     mockSafeDepositRouterReads.safeAddress.data.value = '0x1111111111111111111111111111111111111111'
     const wrapper = createWrapper()
 
-    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
-    await nextTick()
-
-    expect(mockSafeDepositRouterWrites.setSafeAddress.mutateAsync).toHaveBeenCalledTimes(1)
-    expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).not.toHaveBeenCalled()
-  })
-
-  it('updateSafeAddress returns early when safe address is missing', async () => {
-    mockTeamStore.getContractAddressByType = vi.fn(
-      () => ''
-    ) as unknown as typeof mockTeamStore.getContractAddressByType
-    mockSafeDepositRouterReads.depositsEnabled.data.value = false
-    mockSafeDepositRouterReads.safeAddress.data.value = '0x1111111111111111111111111111111111111111'
-    const wrapper = createWrapper()
-
-    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await nextTick()
 
     expect(mockSafeDepositRouterWrites.setSafeAddress.mutateAsync).not.toHaveBeenCalled()
-    expect(wrapper.exists()).toBe(true)
+    expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it('setSafeAddress success while setting triggers delayed enable', async () => {
-    vi.useFakeTimers()
+  it('disables the button while the safe address is not set', () => {
     mockSafeDepositRouterReads.depositsEnabled.data.value = false
     mockSafeDepositRouterReads.safeAddress.data.value = '0x1111111111111111111111111111111111111111'
-
     const wrapper = createWrapper()
 
-    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
-    await nextTick()
-    mockSafeDepositRouterWrites.setSafeAddress.isSuccess.value = true
-    await nextTick()
-
-    vi.runAllTimers()
-    await nextTick()
-
-    expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).toHaveBeenCalled()
-    wrapper.unmount()
+    const button = wrapper.find('[data-test="toggle-sher-compensation-button"]')
+    expect(button.attributes('disabled')).toBeDefined()
   })
 
-  it('watch enable error path executes', async () => {
+  it('watch enable error path surfaces the classified message', async () => {
     const wrapper = createWrapper()
     mockSafeDepositRouterWrites.enableDeposits.error.value = new Error('boom')
     await nextTick()
-    expect(wrapper.exists()).toBe(true)
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'boom', color: 'error' })
+    )
     wrapper.unmount()
   })
 
-  it('watch enable error handles user rejected message', async () => {
-    mockParseError.mockReturnValue('User denied signature')
+  it('watch enable error reports a wallet rejection as cancelled', async () => {
     const wrapper = createWrapper()
-    mockSafeDepositRouterWrites.enableDeposits.error.value = new Error('boom')
+    mockSafeDepositRouterWrites.enableDeposits.error.value = new BaseError('rejected', {
+      cause: new UserRejectedRequestError(new Error('User denied signature'))
+    })
     await nextTick()
-    expect(wrapper.exists()).toBe(true)
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Transaction was cancelled.', color: 'error' })
+    )
     wrapper.unmount()
   })
 
   it('watch disable error path executes', async () => {
     const wrapper = createWrapper()
     mockSafeDepositRouterWrites.disableDeposits.error.value = new Error('boom')
-    await nextTick()
-    expect(wrapper.exists()).toBe(true)
-    wrapper.unmount()
-  })
-
-  it('watch setSafeAddress error path executes', async () => {
-    const wrapper = createWrapper()
-    mockSafeDepositRouterWrites.setSafeAddress.error.value = new Error('boom')
     await nextTick()
     expect(wrapper.exists()).toBe(true)
     wrapper.unmount()

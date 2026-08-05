@@ -3,7 +3,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_member",
+        "name": "member",
         "type": "address"
       }
     ],
@@ -13,19 +13,13 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "boardMembers",
+    "inputs": [],
+    "name": "getBoardMembers",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "address[]",
         "name": "",
-        "type": "address"
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -48,7 +42,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_owners",
+        "name": "owners",
         "type": "address[]"
       }
     ],
@@ -61,7 +55,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_address",
+        "name": "account",
         "type": "address"
       }
     ],
@@ -80,7 +74,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_member",
+        "name": "member",
         "type": "address"
       }
     ],
@@ -93,7 +87,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_members",
+        "name": "members",
         "type": "address[]"
       }
     ],

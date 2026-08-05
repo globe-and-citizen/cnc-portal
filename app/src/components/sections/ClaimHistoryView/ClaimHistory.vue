@@ -26,6 +26,8 @@
           :is-restricted="isRestricted"
           @quick-submit="handleQuickSubmit"
         />
+
+        <WeeklyGoalsDisplay :weekly-claim="selectWeekWeelyClaim" />
       </div>
     </div>
   </div>
@@ -48,6 +50,7 @@ import ClaimHistoryMemberHeader from './ClaimHistoryMemberHeader.vue'
 import ClaimHistoryWeekNavigator from './ClaimHistoryWeekNavigator.vue'
 import ClaimHistoryActionAlerts from './ClaimHistoryActionAlerts.vue'
 import ClaimHistoryDailyBreakdown from './ClaimHistoryDailyBreakdown.vue'
+import WeeklyGoalsDisplay from './WeeklyGoalsDisplay.vue'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

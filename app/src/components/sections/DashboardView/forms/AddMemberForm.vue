@@ -37,7 +37,7 @@
 import { computed, ref } from 'vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import type { Member } from '@/types'
 import { useAddMembersMutation, type MemberInput } from '@/queries/member.queries'

@@ -9,6 +9,7 @@ import { addressSchema, teamIdSchema } from './common';
 const contractTypes = [
   'Bank',
   'InvestorV1',
+  'Investor',
   'Voting',
   'BoardOfDirectors',
   'ExpenseAccount',
@@ -48,4 +49,11 @@ export const createOfficerBodySchema = z.object({
 // Get contracts query parameters
 export const getContractsQuerySchema = z.object({
   teamId: teamIdSchema,
+});
+
+// Bulk officer-version sync request body. `dryRun` resolves every Officer and
+// reports the plan without writing — the rehearsal an admin runs before
+// committing the realignment.
+export const syncOfficerVersionsBodySchema = z.object({
+  dryRun: z.boolean().optional(),
 });

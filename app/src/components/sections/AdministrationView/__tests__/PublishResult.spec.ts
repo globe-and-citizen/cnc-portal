@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import PublishResult from '../PublishResult.vue'
 import { mockElectionsWrites, useQueryClientFn, mockWagmiCore } from '@/tests/mocks'
+import { mockLog } from '@/tests/mocks/utils.mock'
 import { useTeamStore } from '@/stores'
 
 vi.mock('@/constant', async (importOriginal) => ({
@@ -78,7 +79,6 @@ describe('PublishResult.vue', () => {
   })
 
   it('runs the onError path without scheduling a mutation re-run', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     publish.mutate.mockImplementationOnce((_v: unknown, opts?: PublishOptions) => {
       opts?.onError?.(new Error('mutation failed'))
     })
@@ -86,8 +86,7 @@ describe('PublishResult.vue', () => {
 
     await wrapper.find('[data-test="create-election-button"]').trigger('click')
     await nextTick()
-    expect(consoleErrorSpy).toHaveBeenCalled()
-    consoleErrorSpy.mockRestore()
+    expect(mockLog.error).toHaveBeenCalled()
   })
 
   it('short-circuits before mutation when estimateGas rejects', async () => {

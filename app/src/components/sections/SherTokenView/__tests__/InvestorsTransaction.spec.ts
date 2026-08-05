@@ -84,6 +84,34 @@ vi.mock('@vue/apollo-composable', async () => {
   return { useQuery: mockUseQuery }
 })
 
+vi.mock('@/composables/investor/useInvestorEventsViaLogs', async () => {
+  const { ref } = await import('vue')
+  apolloState.investorResult = ref()
+  apolloState.investorError = ref<Error | null>(null)
+  apolloState.investorLoading = ref(false)
+  return {
+    useInvestorEventsViaLogs: () => ({
+      result: apolloState.investorResult,
+      error: apolloState.investorError,
+      loading: apolloState.investorLoading
+    })
+  }
+})
+
+vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => {
+  const { ref } = await import('vue')
+  apolloState.safeResult = ref()
+  apolloState.safeError = ref<Error | null>(null)
+  apolloState.safeLoading = ref(false)
+  return {
+    useSafeDepositRouterEventsViaLogs: () => ({
+      result: apolloState.safeResult,
+      error: apolloState.safeError,
+      loading: apolloState.safeLoading
+    })
+  }
+})
+
 vi.mock('@/stores', () => ({
   useTeamStore: () => ({
     getContractAddressByType: mockGetContractAddressByType

@@ -24,6 +24,7 @@ export interface Wage {
   tokenRatePerHour?: number //@deprecated use ratePerHour instead
   usdcRatePerHour?: number //@deprecated use ratePerHour instead
   maximumHoursPerWeek: number
+  maximumHoursPerDay?: number
   disabled: boolean
   nextWageId: number | null
   createdAt: string // ISO date string
@@ -72,6 +73,8 @@ export interface WeeklyClaim {
   weekStart: string // ISO date string
   data: {
     ownerAddress?: Address
+    contractAddress?: Address
+    chainId?: number
   }
   memberAddress: Address
   teamId: number
@@ -83,6 +86,11 @@ export interface WeeklyClaim {
    * rows signed before this column existed.
    */
   signedAgainstContractAddress: Address | null
+  /**
+   * Free-form Markdown memo of the member's goals for the week. One per weekly
+   * claim; null when no goals have been set. Upserted via PUT /weeklyclaim/goals.
+   */
+  weeklyGoals: string | null
   wageId: number
   createdAt: string // ISO date string
   updatedAt: string // ISO date string
@@ -104,4 +112,5 @@ export type WageWithForm = Omit<Wage, 'ratePerHour' | 'overtimeRatePerHour'> & {
   enableOvertimeRules: boolean
   ratePerHour: RatePerHourWithEnabled[]
   overtimeRatePerHour: RatePerHourWithEnabled[]
+  maximumHoursPerDay: number
 }

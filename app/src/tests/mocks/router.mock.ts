@@ -6,6 +6,7 @@ export interface MockRoute {
   query: Record<string, string>
   path: string
   fullPath: string
+  hash: string
   name: string | undefined
   meta: Record<string, unknown>
 }
@@ -15,6 +16,7 @@ const defaultRoute = (): MockRoute => ({
   query: {},
   path: '/teams/1',
   fullPath: '/teams/1',
+  hash: '',
   name: undefined,
   meta: { name: 'Team View' }
 })

@@ -4,7 +4,7 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-import { mockUseContractBalance, mockUseAccount } from '@/tests/mocks'
+import { mockUseContractBalance, mockUseAccount, makeTokenBalance } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
 
 // Mock @iconify/vue
@@ -87,10 +87,10 @@ const MOCK_DATA = {
     threshold: 2
   },
   balances: [
-    {
+    makeTokenBalance({
       token: {
         symbol: 'ETH',
-        id: 'ethereum',
+        id: 'native',
         name: 'Ethereum',
         code: 'ETH',
         coingeckoId: 'ethereum',
@@ -98,19 +98,9 @@ const MOCK_DATA = {
         address: '0x0000000000000000000000000000000000000000'
       },
       amount: 1.5,
-      values: {
-        USD: {
-          value: 3000,
-          formated: '$3,000',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 2000,
-          formatedPrice: '$2K'
-        }
-      }
-    },
-    {
+      usdPrice: 2000
+    }),
+    makeTokenBalance({
       token: {
         symbol: 'SHER',
         id: 'sher',
@@ -121,29 +111,12 @@ const MOCK_DATA = {
         address: '0x1234567890123456789012345678901234567890'
       },
       amount: 100,
-      values: {
-        USD: {
-          value: 500,
-          formated: '$500',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 5,
-          formatedPrice: '$5'
-        }
-      }
-    }
+      usdPrice: 5
+    })
   ],
   total: {
-    USD: {
-      value: 4500,
-      formated: '$4,500',
-      id: 'usd',
-      code: 'USD',
-      symbol: '$',
-      price: 1,
-      formatedPrice: '$1'
-    }
+    usd: { value: 4500, formatted: '$4,500' },
+    local: { value: 4500, formatted: '$4,500' }
   },
   defaultCurrency: {
     code: 'USD',
@@ -254,14 +227,12 @@ describe('SafeBalanceSection', () => {
 
   describe('Tokens Computation', () => {
     it('should handle missing USD price gracefully', async () => {
+      // An unpriced token still lists, at a value of 0 — it must not vanish
+      // from the picker just because the price feed has nothing for it.
       const sourceBalance = mockUseContractBalance.balances.value[0]!
-      const balanceWithoutUsd = {
-        ...sourceBalance,
-        token: { ...sourceBalance.token },
-        values: { ...sourceBalance.values }
-      }
-      delete (balanceWithoutUsd.values as Record<string, unknown>).USD
-      mockUseContractBalance.balances.value = [balanceWithoutUsd]
+      mockUseContractBalance.balances.value = [
+        makeTokenBalance({ token: sourceBalance.token, amount: sourceBalance.amount })
+      ]
       wrapper = createWrapper()
 
       // Open transfer modal so TransferForm receives `tokens` as a prop

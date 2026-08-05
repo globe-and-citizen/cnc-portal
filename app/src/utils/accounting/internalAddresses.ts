@@ -25,7 +25,13 @@ export const INTERNAL_POCKET_CONTRACT_TYPES = [
   'Bank',
   'CashRemunerationEIP712',
   'ExpenseAccountEIP712',
+  'FixedReturn',
+  // Both share-token generations: teams on legacy Officers carry 'InvestorV1',
+  // current ones 'Investor'. Omitting either makes that team's share token read
+  // as an EXTERNAL counterparty, so its transfers get booked as third-party
+  // movements instead of internal ones.
   'InvestorV1',
+  'Investor',
   'SafeDepositRouter'
 ] as const satisfies readonly ContractType[]
 

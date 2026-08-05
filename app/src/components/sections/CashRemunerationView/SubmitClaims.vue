@@ -50,7 +50,7 @@ import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
 import { startOfWeek } from '@/utils/dayUtils'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
 dayjs.extend(utc)
 

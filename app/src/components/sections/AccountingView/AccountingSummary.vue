@@ -1,5 +1,10 @@
 <template>
   <div class="flex flex-col gap-5">
+    <!-- Report export: pick the sections, then generate PDF or Excel from the modal. -->
+    <div class="flex items-center justify-end">
+      <ExportReportModal :ledger-entry-count="ledgerEntryCount" @generate="onGenerate" />
+    </div>
+
     <!-- Balance-check banner -->
     <div
       class="flex flex-wrap items-center gap-3 rounded-xl px-4 py-3"
@@ -32,13 +37,14 @@
       >
     </div>
 
-    <!-- Metric cards -->
-    <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
+    <!-- Metric cards — 4 per row; the last row stretches to fill the width when
+         "Debt repaid" is absent (7 cards → 4/3), and is a plain 4/4 when it shows. -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
       <div
-        v-for="card in summaryCards"
+        v-for="(card, index) in summaryCards"
         :key="card.label"
         class="border-default bg-default rounded-2xl border p-4.5 shadow-sm"
-        :class="card.accent ? [card.accentClass, 'border-t-[3px]'] : ''"
+        :class="[card.accent ? [card.accentClass, 'border-t-[3px]'] : '', cardSpan(index)]"
         :data-test="`summary-${card.label}`"
       >
         <div class="flex items-center justify-between">
@@ -64,8 +70,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import ExportReportModal, { type ExportFormat } from './ExportReportModal.vue'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { presentSummaryCards, presentBanner } from '@/utils/accounting/presenter'
+import { presentLedger } from '@/utils/accounting/ledgerPresenter'
+import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 
 const acc = useAccountingContext()
 
@@ -73,4 +83,38 @@ const summaryCards = computed(() =>
   presentSummaryCards(acc.summary.value, acc.incomeStatement.value, acc.balanceSheet.value)
 )
 const banner = computed(() => presentBanner(acc.balanceSheet.value, acc.generalLedger.value))
+
+const LAST_ROW_SPAN: Record<number, string> = {
+  1: 'lg:col-span-12',
+  2: 'lg:col-span-6',
+  3: 'lg:col-span-4',
+  4: 'lg:col-span-3'
+}
+
+function cardSpan(index: number): string {
+  if (index < 4) return 'lg:col-span-3'
+  return LAST_ROW_SPAN[summaryCards.value.length - 4] ?? 'lg:col-span-3'
+}
+
+// Whole-book ledger size — surfaced in the modal so the user knows a full ledger
+// export may be long.
+const ledgerEntryCount = computed(() => presentLedger(acc.entries.value, 'All').entryCount)
+
+// The Summary report exports the whole book (no per-page filters) for the
+// sections picked in the modal — as a PDF (one section per page) or an Excel
+// workbook (one section per sheet), whichever button the user hits.
+const { exportPdf, exportExcel } = useAccountingExport()
+
+function onGenerate({ format, keys }: { format: ExportFormat; keys: SectionKey[] }): void {
+  const specs = keys.map((key): SectionSpec => ({ key }))
+  if (format === 'pdf') {
+    exportPdf(
+      specs,
+      { filename: 'cnc-accounting.pdf', pageBreak: true },
+      'Accounting report exported to PDF'
+    )
+  } else {
+    exportExcel(specs, 'cnc-accounting.xlsx', 'Accounting report exported to Excel')
+  }
+}
 </script>

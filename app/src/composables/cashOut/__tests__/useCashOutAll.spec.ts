@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { BaseError, UserRejectedRequestError } from 'viem'
 import { useCashOutAll } from '../useCashOutAll'
+import { useTransfer, useTransferToken } from '@/composables/bank/writes'
+import { useOwnerWithdrawAllToBank as useExpenseOwnerWithdrawAll } from '@/composables/expenseAccount/writes'
+import { useOwnerWithdrawAllToBank as useCashOwnerWithdrawAll } from '@/composables/cashRemuneration/writes'
 import {
   mockBankWrites,
   mockCashRemunerationWrites,
@@ -14,6 +17,9 @@ import { buildCashOutPlan } from '../plan'
 
 const BANK_ADDRESS = '0x1111111111111111111111111111111111111111'
 const RECIPIENT = '0x00000000000000000000000000000000000000aa'
+const LEGACY_BANK = '0x00000000000000000000000000000000000000b1'
+const LEGACY_EXPENSE = '0x00000000000000000000000000000000000000b2'
+const LEGACY_CASH_REM = '0x00000000000000000000000000000000000000b3'
 
 const fullPlan = () => buildCashOutPlan({ cashRemuneration: 5, expense: 5, bank: 5 })
 
@@ -150,5 +156,57 @@ describe('useCashOutAll', () => {
     expect(flow.steps.value).toEqual([])
     expect(flow.currentIndex.value).toBe(0)
     expect(flow.isRunning.value).toBe(false)
+  })
+
+  describe('with an explicit generation and recipient', () => {
+    const legacyFlow = () =>
+      useCashOutAll({
+        sources: {
+          bank: LEGACY_BANK,
+          expense: LEGACY_EXPENSE,
+          cashRemuneration: LEGACY_CASH_REM
+        },
+        to: BANK_ADDRESS
+      })
+
+    it('points every contract write at the supplied generation', () => {
+      legacyFlow()
+
+      const addressOf = (mock: { mock: { calls: unknown[][] } }) => mock.mock.calls[0][0]
+      expect(addressOf(vi.mocked(useCashOwnerWithdrawAll))).toBe(LEGACY_CASH_REM)
+      expect(addressOf(vi.mocked(useExpenseOwnerWithdrawAll))).toBe(LEGACY_EXPENSE)
+      // Bank writes resolve the address through a computed, so assert its value.
+      expect(vi.mocked(useTransfer).mock.calls[0][0]).toHaveProperty('value', LEGACY_BANK)
+      expect(vi.mocked(useTransferToken).mock.calls[0][0]).toHaveProperty('value', LEGACY_BANK)
+    })
+
+    it('reads the supplied Bank balances and forwards them to the recipient', async () => {
+      await legacyFlow().start(fullPlan())
+
+      expect(mockWagmiCore.getBalance).toHaveBeenCalledWith(expect.anything(), {
+        address: LEGACY_BANK
+      })
+      expect(mockWagmiCore.readContract).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ functionName: 'balanceOf', args: [LEGACY_BANK] })
+      )
+      expect(mockBankWrites.transfer.mutateAsync).toHaveBeenCalledWith({
+        args: [BANK_ADDRESS, 5n]
+      })
+      expect(mockBankWrites.transferToken.mutateAsync).toHaveBeenCalledWith({
+        args: [expect.any(String), BANK_ADDRESS, 1000n]
+      })
+    })
+
+    it('never touches the current generation or the connected wallet', async () => {
+      await legacyFlow().start(fullPlan())
+
+      expect(mockWagmiCore.getBalance).not.toHaveBeenCalledWith(expect.anything(), {
+        address: BANK_ADDRESS
+      })
+      expect(mockBankWrites.transfer.mutateAsync).not.toHaveBeenCalledWith({
+        args: [RECIPIENT, 5n]
+      })
+    })
   })
 })

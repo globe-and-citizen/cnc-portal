@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   useFixedReturnCreateLendingOffer,
   useFixedReturnLendFunds,
-  useFixedReturnMarkAsRefundable,
-  useFixedReturnClaimRefund,
+  useFixedReturnRefundLenders,
+  useFixedReturnAcceptPartialFunding,
   useFixedReturnAddTokenSupport,
   useFixedReturnRemoveTokenSupport
 } from '../writes'
@@ -24,12 +24,12 @@ describe('FixedReturn Contract Writes', () => {
     expect(useFixedReturnLendFunds()).toBe(mockFixedReturnWrites.lendFunds)
   })
 
-  it('useFixedReturnMarkAsRefundable returns its mutation', () => {
-    expect(useFixedReturnMarkAsRefundable()).toBe(mockFixedReturnWrites.markAsRefundable)
+  it('useFixedReturnRefundLenders returns its mutation', () => {
+    expect(useFixedReturnRefundLenders()).toBe(mockFixedReturnWrites.refundLenders)
   })
 
-  it('useFixedReturnClaimRefund returns its mutation', () => {
-    expect(useFixedReturnClaimRefund()).toBe(mockFixedReturnWrites.claimRefund)
+  it('useFixedReturnAcceptPartialFunding returns its mutation', () => {
+    expect(useFixedReturnAcceptPartialFunding()).toBe(mockFixedReturnWrites.acceptPartialFunding)
   })
 
   it('useFixedReturnAddTokenSupport returns its mutation', () => {

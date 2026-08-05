@@ -18,10 +18,11 @@ import { getAddress, isAddress, type Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
-import type { SafeIncomingTransfer } from '@/types/safe'
+import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
 import type { ExpenseEventsQuery } from '@/types/ponder/expense'
+import type { FixedReturnEventsQuery } from '@/types/ponder/fixedReturn'
 import type {
   InvestorEventsQuery,
   SafeDepositRouterEventsQuery,
@@ -29,14 +30,21 @@ import type {
 } from '@/types/ponder/investor'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
+import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
 import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
 import { buildGeneralLedger, type GeneralLedger } from '@/utils/accounting/generalLedger'
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import { buildSherMultiplierTimeline, makeSherUsdRate } from '@/utils/accounting/sherRate'
+import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
+import {
+  buildSherMultiplierTimeline,
+  makeSherUsdRate,
+  currentSherUsdRate
+} from '@/utils/accounting/sherRate'
+import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
+import { atDate } from '@/utils/accounting/mappers/context'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
@@ -67,9 +75,15 @@ export interface CncAccountingInput {
   bankEvents?: BankEventsQuery | null
   cashRemunerationEvents?: CashRemunerationEventsQuery | null
   expenseEvents?: ExpenseEventsQuery | null
+  fixedReturnEvents?: FixedReturnEventsQuery | null
+  /** Rate + maturity per Community Credit offer, read from the contract — what
+   *  lets the interest be accrued over the term instead of expensed at payment. */
+  fixedReturnOfferTerms?: readonly CreditOfferTerms[] | null
   investorEvents?: InvestorEventsQuery | null
   safeDepositRouterEvents?: SafeDepositRouterEventsQuery | null
   safeTransfers?: readonly SafeIncomingTransfer[] | null
+  /** Executed multisig transactions — outflows from the Safe. */
+  safeOutgoingTransactions?: readonly SafeTransaction[] | null
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
   weeklyClaims?: readonly WeeklyClaim[]
   expenses?: readonly ExpenseResponse[]
@@ -170,6 +184,52 @@ export function toSafeTransferRows(
   return rows
 }
 
+/**
+ * Convert executed Safe multisig transactions into {@link SafeTransferRow}s so the
+ * mapper can book outflows (Cr Cash — Safe). Handles native transfers (`value > 0`)
+ * and ERC-20 `transfer(to, amount)` calls (decoded by the Transaction Service).
+ */
+export function toSafeOutgoingTransferRows(
+  transactions: readonly SafeTransaction[] | null | undefined,
+  safeAddress: string
+): SafeTransferRow[] {
+  const rows: SafeTransferRow[] = []
+  for (const tx of transactions ?? []) {
+    if (!tx.isExecuted || tx.isSuccessful === false || !tx.executionDate) continue
+    const timestamp = Math.floor(new Date(tx.executionDate).getTime() / 1000)
+    const txHash = tx.transactionHash ?? tx.safeTxHash
+
+    if (tx.dataDecoded?.method === 'transfer' && tx.dataDecoded.parameters?.length >= 2) {
+      const recipient = tx.dataDecoded.parameters[0]?.value
+      const amount = tx.dataDecoded.parameters[1]?.value
+      if (recipient && amount && amount !== '0') {
+        rows.push({
+          id: `out-${txHash}-erc20`,
+          from: safeAddress,
+          to: recipient,
+          token: tx.to,
+          amount,
+          timestamp,
+          txHash
+        })
+      }
+    }
+
+    if (tx.value && tx.value !== '0') {
+      rows.push({
+        id: `out-${txHash}-native`,
+        from: safeAddress,
+        to: tx.to,
+        token: null,
+        amount: tx.value,
+        timestamp,
+        txHash
+      })
+    }
+  }
+  return rows
+}
+
 /** Build the {@link LedgerSources} the mappers consume from the raw query results. */
 function toLedgerSources(input: CncAccountingInput): LedgerSources {
   const sources: LedgerSources = {}
@@ -207,6 +267,18 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
     }
   }
 
+  if (input.fixedReturnEvents) {
+    const f = input.fixedReturnEvents
+    sources.fixedReturn = {
+      lendingOfferCreateds: items(f.fixedReturnLendingOfferCreateds),
+      lendingOfferFundeds: items(f.fixedReturnLendingOfferFundeds),
+      fundsLents: items(f.fixedReturnFundsLents),
+      lenderRepaids: items(f.fixedReturnLenderRepaids),
+      principalRefundeds: items(f.fixedReturnPrincipalRefundeds),
+      ...(input.fixedReturnOfferTerms ? { offerTerms: input.fixedReturnOfferTerms } : {})
+    }
+  }
+
   if (input.safeDepositRouterEvents) {
     sources.safeDepositRouter = { deposits: items(input.safeDepositRouterEvents.safeDeposits) }
   }
@@ -226,13 +298,18 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
   }
 
   if (input.safeAddress) {
+    const incomingRows = toSafeTransferRows(
+      input.safeTransfers,
+      input.safeDepositRouterAddress,
+      input.safeDepositRouterEvents?.safeDeposits?.items
+    )
+    const outgoingRows = toSafeOutgoingTransferRows(
+      input.safeOutgoingTransactions,
+      input.safeAddress
+    )
     sources.safe = {
       safeAddress: input.safeAddress,
-      transfers: toSafeTransferRows(
-        input.safeTransfers,
-        input.safeDepositRouterAddress,
-        input.safeDepositRouterEvents?.safeDeposits?.items
-      )
+      transfers: [...incomingRows, ...outgoingRows]
     }
   }
 
@@ -240,20 +317,17 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
 }
 
 /**
- * Assemble a team's consolidated ledger and the three statements from its raw
- * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ * The USD rate-of-record resolver for a team's feeds: the caller's price source
+ * for native (POL/ETH), overlaid with the SHER price.
+ *
+ * SHER has no market price, so it is valued from the router's compensation
+ * multiplier (1 SHER = 1/multiplier USD) — that is what makes a wage paid in SHER
+ * increase Investor Equity. Here each SHER leg is stamped at the multiplier of its
+ * **own date** (historised timeline), so a withdrawal / mint freezes at its
+ * realization-date rate. {@link settleWithdrawnSher} then re-values the *pending*
+ * (un-withdrawn) accruals to the current multiplier — see {@link buildRawCncEntries}.
  */
-export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
-  const internalAddresses = collectInternalAddresses(
-    input.contracts,
-    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
-  )
-
-  // SHER has no market price; value it from the router's compensation multiplier
-  // (1 SHER = 1/multiplier USD, historised over the multiplier changes) so
-  // wage-in-SHER increases Investor Equity. With no change events we use the
-  // router's live multiplier (read from the contract) or, failing that, the
-  // contract's 1x default (1 SHER = $1) — no longer the Phase-1 $0.
+function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
   const sherRate = makeSherUsdRate(
     buildSherMultiplierTimeline(
@@ -262,9 +336,22 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
       input.currentSherMultiplier
     )
   )
-  const rateOfRecord: UsdRateOfRecord = sherRate
+  return sherRate
     ? (tokenId, at) => (tokenId === 'sher' ? sherRate(at) : baseRate(tokenId, at))
     : baseRate
+}
+
+/**
+ * Run the source mappers and stamp each posting with its rate of record, yielding
+ * the raw, pre-consolidation feed: Devise (`token`), Quantité (`rawAmount`), Taux
+ * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
+ */
+export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
+  const internalAddresses = collectInternalAddresses(
+    input.contracts,
+    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
+  )
+  const rateOfRecord = buildRateOfRecord(input)
 
   const ctx = buildMapperContext({
     contracts: input.contracts,
@@ -281,6 +368,33 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     expenses: input.expenses
   })
 
+  // The rate is a pure function of (token, timestamp), so it is resolved once here
+  // rather than threaded through every mapper — with the same resolver the mappers
+  // valued `amountUsd` with, so amountUsd = Quantité × rate. Each SHER leg lands at
+  // its own-date rate, so a withdrawal / mint is frozen at its realization value.
+  const stamped = rawEntries.map((entry) => ({
+    ...entry,
+    rate: tokenUsdRate(entry.token, atDate(entry.timestamp), rateOfRecord)
+  }))
+
+  // Freeze the withdrawn SHER at its realization rate and float the pending accruals
+  // at the current multiplier: matched accrual quantity cancels its issuance in
+  // `Shares to be issued`, the rest floats until it is taken.
+  const currentRate = currentSherUsdRate(
+    input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
+    input.safeDepositRouterEvents?.safeDeposits?.items,
+    input.currentSherMultiplier
+  )
+  return settleWithdrawnSher(stamped, currentRate).sort((a, b) => a.timestamp - b.timestamp)
+}
+
+/**
+ * Consolidate a raw feed into the ledger and the three statements. Split from
+ * {@link assembleCncAccounting} so a caller that already holds the raw entries
+ * (the composable, which derives the price-fetch days from them) doesn't run the
+ * whole mapper pipeline a second time.
+ */
+export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
   const { entries, summary } = buildLedger(rawEntries)
 
   return {
@@ -290,6 +404,14 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     incomeStatement: buildIncomeStatement(entries),
     balanceSheet: buildBalanceSheet(entries)
   }
+}
+
+/**
+ * Assemble a team's consolidated ledger and the three statements from its raw
+ * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ */
+export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
+  return assembleFromRawEntries(buildRawCncEntries(input))
 }
 
 /** An empty accounting result — used before any data has loaded. */

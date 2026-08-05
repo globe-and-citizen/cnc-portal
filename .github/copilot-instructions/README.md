@@ -22,9 +22,13 @@ For every feature create documentation in the `/docs` folder using Markdown file
 
 Try to keep each feature documentation short, and use mermaid for diagrams where applicable.
 
+### Display Formatting
+
+Never format a value for display by hand — no `Intl.*`, `toLocaleString`, `toFixed`, or dayjs pattern strings outside the canonical module. Ask `@/utils/format` (app) / `~/utils/format` (dashboard) for a named style. ESLint enforces it. See [`formatting-standards.md`](./formatting-standards.md).
+
 ### Date Manipulation
 
-For Date Manipulation, always use dayjs library.
+For Date Manipulation, always use dayjs library — and for *displaying* a date, through the named helpers in [`formatting-standards.md`](./formatting-standards.md) rather than a pattern string at the call site.
 
 ### Context7 MCP Integration
 
@@ -83,6 +87,7 @@ Make all interfaces accessible for everyone, including users with disabilities
 ### Core Development Guidelines
 
 - [`vue-component-standards.md`](./vue-component-standards.md) - Vue.js component development standards
+- [`formatting-standards.md`](./formatting-standards.md) - Canonical display formatting (money, tokens, dates, addresses)
 
 ### Testing Guidelines
 

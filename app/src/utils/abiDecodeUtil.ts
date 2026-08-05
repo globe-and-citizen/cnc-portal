@@ -1,10 +1,19 @@
-import { BANK_ABI } from '@/artifacts/abi/bank'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
+import {
+  adCampaignManagerAbi,
+  bankAbi,
+  boardOfDirectorsAbi,
+  cashRemunerationEip712Abi,
+  electionsAbi,
+  expenseAccountEip712Abi,
+  fixedReturnAbi,
+  investorAbi,
+  proposalsAbi,
+  safeDepositRouterAbi,
+  vestingAbi
+} from '@/artifacts/abi/generated'
+import votingAbiJson from '@/artifacts/abi/V2/json/Voting.json'
+import { SAFE_VERSION } from '@/types/safe'
+import { getSafeSingletonDeployment } from '@safe-global/safe-deployments'
 import type { Abi } from 'viem'
 
 export interface DecodedParam {
@@ -19,14 +28,27 @@ export interface DecodedInputData {
   params: DecodedParam[]
 }
 
+// Keyed by `TeamContract.type`. Teams on legacy Officer generations still carry
+// the 'InvestorV1' type, so both keys must resolve — decoding a legacy call with
+// the current ABI is fine, since the selectors they share are unchanged and the
+// v2-only ones simply never appear in a legacy transaction.
+const safeAbi = (getSafeSingletonDeployment({ version: SAFE_VERSION })?.abi ?? []) as Abi
+
 export const CONTRACT_ABI_MAP: Record<string, Abi> = {
-  Bank: BANK_ABI,
-  InvestorV1: INVESTOR_ABI,
-  ExpenseAccountEIP712: EXPENSE_ACCOUNT_EIP712_ABI,
-  CashRemunerationEIP712: CASH_REMUNERATION_EIP712_ABI,
-  SafeDepositRouter: SAFE_DEPOSIT_ROUTER_ABI,
-  Elections: ELECTIONS_ABI,
-  Proposals: PROPOSALS_ABI
+  Bank: bankAbi,
+  BoardOfDirectors: boardOfDirectorsAbi,
+  Investor: investorAbi,
+  InvestorV1: investorAbi,
+  ExpenseAccountEIP712: expenseAccountEip712Abi,
+  CashRemunerationEIP712: cashRemunerationEip712Abi,
+  SafeDepositRouter: safeDepositRouterAbi,
+  Safe: safeAbi,
+  Elections: electionsAbi,
+  Proposals: proposalsAbi,
+  Voting: votingAbiJson as Abi,
+  Campaign: adCampaignManagerAbi,
+  FixedReturn: fixedReturnAbi,
+  Vesting: vestingAbi
 }
 
 export const formatDecodedValue = (

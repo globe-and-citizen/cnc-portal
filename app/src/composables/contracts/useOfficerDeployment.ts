@@ -16,7 +16,7 @@ import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getConnections } from '@wagmi/core'
 import { encodeFunctionData, parseEventLogs, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
-import { log, parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import { teamKeys } from '@/queries/team.queries'
 import { contractKeys } from '@/queries/contract.queries'
@@ -26,9 +26,7 @@ import {
   getDeploymentConfigs
 } from '@/utils/contractDeploymentUtil'
 import { OFFICER_BEACON, validateAddresses } from '@/constant'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
-import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
-
+import { factoryBeaconAbi, officerAbi } from '@/artifacts/abi/generated'
 export interface OfficerDeploymentMetadata {
   officerAddress: Address
   deployBlockNumber: number
@@ -81,14 +79,14 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
   const deployments = getDeploymentConfigs(address, args.investorInput)
 
   const encodedFunction = encodeFunctionData({
-    abi: OFFICER_ABI,
+    abi: officerAbi,
     functionName: 'initialize',
     args: [address, beaconConfigs, deployments, true] as const
   })
 
   const { hash, receipt } = await executeContractWrite({
     address: OFFICER_BEACON,
-    abi: FACTORY_BEACON_ABI,
+    abi: factoryBeaconAbi,
     functionName: 'createBeaconProxy',
     args: [encodedFunction]
   })
@@ -180,10 +178,10 @@ export function useDeployOfficer(options: UseDeployOfficerOptions = {}) {
 /**
  * Decodes an error from a deploy attempt into a human-readable message.
  * Templates use this when rendering `deployMutation.error.value` to show the
- * parsed ABI revert reason rather than the raw blockchain error.
+ * catalog-resolved revert reason rather than the raw blockchain error.
  */
 export function formatDeployError(error: unknown): string {
-  return parseError(error, FACTORY_BEACON_ABI)
+  return classifyError(error, { contract: 'Officer' }).userMessage
 }
 
 /**

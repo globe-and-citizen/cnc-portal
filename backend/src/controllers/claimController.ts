@@ -16,7 +16,7 @@ import {
   z,
   type FileAttachmentData,
 } from '../validation';
-import { formatMinutesAsDuration } from '../utils/wageUtil';
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY, formatMinutesAsDuration } from '../utils/wageUtil';
 import {
   getEffectiveStatus,
   isDayWithinSubmitWindow,
@@ -53,6 +53,48 @@ const buildWeeklyHoursExceededMessage = ({
       `Already submitted: ${formatMinutesAsDuration(submittedMinutes)}. Remaining to submit: ${formatMinutesAsDuration(remainingMinutes)}.`,
   };
 };
+
+/**
+ * Daily ceiling of a wage, in minutes. Falls back to the default when the wage
+ * carries no usable value (legacy rows created before the column existed).
+ */
+const dailyLimitMinutes = (maximumHoursPerDay?: number | null) => {
+  const hours =
+    typeof maximumHoursPerDay === 'number' && maximumHoursPerDay > 0
+      ? maximumHoursPerDay
+      : DEFAULT_MAXIMUM_HOURS_PER_DAY;
+  return hours * 60;
+};
+
+const buildDailyHoursExceededMessage = ({
+  action,
+  maxDailyMinutes,
+  alreadyClaimedMinutes,
+}: {
+  action: 'submit' | 'update';
+  maxDailyMinutes: number;
+  alreadyClaimedMinutes: number;
+}) => {
+  const remainingMinutes = Math.max(0, maxDailyMinutes - alreadyClaimedMinutes);
+
+  return (
+    `Unable to ${action} this claim: your daily hours limit would be exceeded. ` +
+    `Daily allowance: ${formatMinutesAsDuration(maxDailyMinutes)}. ` +
+    `Already submitted for that day: ${formatMinutesAsDuration(alreadyClaimedMinutes)}. ` +
+    `Remaining to submit: ${formatMinutesAsDuration(remainingMinutes)}.`
+  );
+};
+
+/** Minutes already claimed for a given day, optionally ignoring one claim (edit case). */
+const minutesClaimedOnDay = (
+  claims: { dayWorked: Date | null; minutesWorked: number; id: number }[],
+  dayWorked: Date,
+  excludeClaimId?: number
+) =>
+  claims
+    .filter((claim) => excludeClaimId === undefined || claim.id !== excludeClaimId)
+    .filter((claim) => claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime())
+    .reduce((sum, claim) => sum + Number(claim.minutesWorked), 0);
 
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
@@ -143,6 +185,23 @@ export const addClaim = async (req: Request, res: Response) => {
       return errorResponse(409, message, res);
     }
 
+    // Check the daily cap: hours beyond it are not claimable even when the
+    // weekly allowance still has room (issue: cap hours worked in a single day).
+    const maxDailyMinutes = dailyLimitMinutes(wage.maximumHoursPerDay);
+    const alreadyClaimedThatDay = minutesClaimedOnDay(weeklyClaim?.claims ?? [], dayWorked);
+
+    if (alreadyClaimedThatDay + Number(minutesWorked) > maxDailyMinutes) {
+      return errorResponse(
+        409,
+        buildDailyHoursExceededMessage({
+          action: 'submit',
+          maxDailyMinutes,
+          alreadyClaimedMinutes: alreadyClaimedThatDay,
+        }),
+        res
+      );
+    }
+
     if (!weeklyClaim) {
       weeklyClaim = await prisma.weeklyClaim.create({
         data: {
@@ -157,20 +216,6 @@ export const addClaim = async (req: Request, res: Response) => {
           claims: true,
         },
       });
-    }
-
-    if (
-      (weeklyClaim?.claims
-        .filter((claim) => claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime())
-        .reduce((sum, claim) => sum + Number(claim.minutesWorked), 0) ?? 0) +
-        Number(minutesWorked) >
-      1440
-    ) {
-      return errorResponse(
-        400,
-        'Submission failed: the total number of hours for this day would exceed 24 hours (1440 minutes).',
-        res
-      );
     }
 
     // Validate pre-uploaded attachments count
@@ -318,6 +363,30 @@ export const updateClaim = async (req: Request, res: Response) => {
         });
         return errorResponse(409, message, res);
       }
+
+      // Same daily cap as on submission, ignoring the claim being edited.
+      // Legacy claims with no dayWorked can't be attributed to a day, so they
+      // only go through the weekly check above.
+      if (claim.dayWorked) {
+        const maxDailyMinutes = dailyLimitMinutes(wage.maximumHoursPerDay);
+        const alreadyClaimedThatDay = minutesClaimedOnDay(
+          weeklyClaim?.claims ?? [],
+          claim.dayWorked,
+          claim.id
+        );
+
+        if (alreadyClaimedThatDay + newMinutes > maxDailyMinutes) {
+          return errorResponse(
+            409,
+            buildDailyHoursExceededMessage({
+              action: 'update',
+              maxDailyMinutes,
+              alreadyClaimedMinutes: alreadyClaimedThatDay,
+            }),
+            res
+          );
+        }
+      }
     }
 
     // Build file attachments from uploaded files and merge with existing ones.
@@ -416,7 +485,9 @@ export const deleteClaim = async (req: Request, res: Response) => {
 
     if (weeklyClaim) {
       const remainingClaims = (weeklyClaim.claims ?? []).filter((c) => c.id !== claimId);
-      if (remainingClaims.length === 0) {
+      // Keep a claim-less weekly claim alive when it still carries a goals memo —
+      // deleting it here would silently wipe the member's weekly goals.
+      if (remainingClaims.length === 0 && !weeklyClaim.weeklyGoals) {
         await prisma.weeklyClaim.delete({
           where: { id: weeklyClaim.id },
         });

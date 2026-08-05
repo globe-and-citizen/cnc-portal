@@ -7,7 +7,7 @@
  *   memo).
  * - `WithdrawToken` where the token is **SHER**: the wage is paid in shares —
  *   Dr Shares to be issued · Cr Investor Equity (the equity leg of UC-CASH-03).
- *   The matching `InvestorV1 Minted` is therefore *not* re-booked by the investor
+ *   The matching `Investor Minted` is therefore *not* re-booked by the investor
  *   mapper (it would double-count the equity).
  * - `Deposited`: internal funding of the payroll pocket from Bank — internal move.
  * - `OwnerTreasuryWithdraw*` (the `ownerWithdrawAllToBank` sweep): internal move
@@ -23,6 +23,7 @@ import type {
 } from '@/types/ponder/cash-remuneration'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import { isNegligibleAmount } from '@/utils/accounting/toUsd'
 import { atDate, type MapperContext } from './context'
 
 export interface CashRemunerationMapperInput {
@@ -118,12 +119,16 @@ export function mapCashRemunerationEvents(
   }
 
   for (const row of input.withdraws ?? []) {
+    if (isNegligibleAmount(BigInt(row.amount), ctx.tokenIdOf(null))) continue
     entries.push(cashSettlement(row, null, ctx))
   }
 
   for (const row of input.withdrawTokens ?? []) {
-    const isSher = ctx.tokenIdOf(row.tokenAddress) === 'sher'
-    entries.push(isSher ? shareSettlement(row, ctx) : cashSettlement(row, row.tokenAddress, ctx))
+    const tokenId = ctx.tokenIdOf(row.tokenAddress)
+    if (isNegligibleAmount(BigInt(row.amount), tokenId)) continue
+    entries.push(
+      tokenId === 'sher' ? shareSettlement(row, ctx) : cashSettlement(row, row.tokenAddress, ctx)
+    )
   }
 
   for (const row of input.ownerTreasuryWithdrawNatives ?? []) {

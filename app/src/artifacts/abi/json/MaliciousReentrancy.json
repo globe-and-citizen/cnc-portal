@@ -3,7 +3,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_target",
+        "name": "target",
         "type": "address"
       }
     ],
@@ -14,7 +14,7 @@
   },
   {
     "inputs": [],
-    "name": "target",
+    "name": "getTarget",
     "outputs": [
       {
         "internalType": "address",

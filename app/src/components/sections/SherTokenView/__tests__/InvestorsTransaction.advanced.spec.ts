@@ -38,6 +38,7 @@ const tableData = (wrapper: VueWrapper) =>
 
 const {
   apolloState,
+  capture,
   mockUseQuery,
   mockGetTokenPrice,
   mockInvestorSymbolData,
@@ -51,6 +52,11 @@ const {
     safeError: null as unknown as { value: Error | null },
     safeLoading: null as unknown as { value: boolean }
   }
+  // Records the address ref passed to each getLogs composable.
+  const capture = {
+    investor: null as unknown as { value: string },
+    safe: null as unknown as { value: string }
+  }
   const mockUseQuery = vi.fn()
   const mockGetTokenPrice = vi.fn(() => 1)
   const mockInvestorSymbolData = { value: 'SHER' }
@@ -61,6 +67,7 @@ const {
   })
   return {
     apolloState,
+    capture,
     mockUseQuery,
     mockGetTokenPrice,
     mockInvestorSymbolData,
@@ -79,9 +86,45 @@ vi.mock('@vue/apollo-composable', async () => {
   return { useQuery: mockUseQuery }
 })
 
+vi.mock('@/composables/investor/useInvestorEventsViaLogs', async () => {
+  const { ref } = await import('vue')
+  apolloState.investorResult = ref()
+  apolloState.investorError = ref<Error | null>(null)
+  apolloState.investorLoading = ref(false)
+  return {
+    useInvestorEventsViaLogs: (addr: { value: string }) => {
+      capture.investor = addr
+      return {
+        result: apolloState.investorResult,
+        error: apolloState.investorError,
+        loading: apolloState.investorLoading
+      }
+    }
+  }
+})
+
+vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => {
+  const { ref } = await import('vue')
+  apolloState.safeResult = ref()
+  apolloState.safeError = ref<Error | null>(null)
+  apolloState.safeLoading = ref(false)
+  return {
+    useSafeDepositRouterEventsViaLogs: (addr: { value: string }) => {
+      capture.safe = addr
+      return {
+        result: apolloState.safeResult,
+        error: apolloState.safeError,
+        loading: apolloState.safeLoading
+      }
+    }
+  }
+})
+
 vi.mock('@/stores', () => ({
   useTeamStore: () => ({
-    getContractAddressByType: mockGetContractAddressByType
+    getContractAddressByType: mockGetContractAddressByType,
+    getInvestorAddress: () =>
+      mockGetContractAddressByType('Investor') || mockGetContractAddressByType('InvestorV1')
   }),
   useCurrencyStore: () => ({
     localCurrency: { code: 'USD' },
@@ -143,15 +186,10 @@ describe('InvestorsTransactions advanced', () => {
   it('uses fallback defaults when addresses are missing', () => {
     mockGetContractAddressByType.mockReturnValue(null)
     wrapper = createWrapper()
-    const [investorCall, safeCall] = mockUseQuery.mock.calls
-    const investorVariables = investorCall?.[1] as { contractAddress: { value: string } }
-    const investorOptions = investorCall?.[2] as { enabled: { value: boolean } }
-    const safeVariables = safeCall?.[1] as { contractAddress: { value: string } }
-    const safeOptions = safeCall?.[2] as { enabled: { value: boolean } }
-    expect(investorVariables.contractAddress.value).toBe('')
-    expect(investorOptions.enabled.value).toBe(false)
-    expect(safeVariables.contractAddress.value).toBe('')
-    expect(safeOptions.enabled.value).toBe(false)
+    // The getLogs composables receive the address computeds, which fall back to
+    // '' when no contract is deployed (the composable then stays disabled).
+    expect(capture.investor.value).toBe('')
+    expect(capture.safe.value).toBe('')
   })
 
   it('handles parse failures and usd price fallbacks', () => {

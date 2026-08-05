@@ -155,6 +155,7 @@
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useGetTeamsQuery } from '@/queries/team.queries'
 import type { Team } from '@/types/team'
+import { routeForSelectedTeam } from '@/utils/teamNavigation'
 import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -230,7 +231,7 @@ const closeMenu = () => {
 
 const selectTeam = (team: Team) => {
   teamStore.setCurrentTeamId(team.id)
-  router.push(`/teams/${team.id}`)
+  router.push(routeForSelectedTeam(route, team.id))
   closeMenu()
 }
 

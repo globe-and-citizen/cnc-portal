@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { ref } from 'vue'
+import { zeroHash } from 'viem'
 import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
 import type { LendingOfferStruct } from '@/types'
 
@@ -129,7 +130,9 @@ export const mockInvestorReads = {
   totalInvested: createContractReadMock(0n),
   userInvestment: createContractReadMock(0n),
   dividendBalance: createContractReadMock(0n),
-  investorCount: createContractReadMock(0n)
+  investorCount: createContractReadMock(0n),
+  migrationRoot: createContractReadMock<`0x${string}`>(zeroHash),
+  migrationComplete: createContractReadMock(false)
 }
 
 export const mockInvestorWrites = {
@@ -173,8 +176,8 @@ export const mockFixedReturnReads = {
 export const mockFixedReturnWrites = {
   createLendingOffer: createContractWriteV3Mock(),
   lendFunds: createContractWriteV3Mock(),
-  markAsRefundable: createContractWriteV3Mock(),
-  claimRefund: createContractWriteV3Mock(),
+  refundLenders: createContractWriteV3Mock(),
+  acceptPartialFunding: createContractWriteV3Mock(),
   addTokenSupport: createContractWriteV3Mock(),
   removeTokenSupport: createContractWriteV3Mock()
 }

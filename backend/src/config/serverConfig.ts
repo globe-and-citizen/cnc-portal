@@ -18,6 +18,7 @@ import claimRoutes from '../routes/claimRoute';
 import weeklyClaimRoutes from '../routes/weeklyClaimRoute';
 import expenseRoutes from '../routes/expenseRoute';
 import fixedReturnOfferingRoutes from '../routes/fixedReturnOfferingRoute';
+import investorMigrationRoutes from '../routes/investorMigrationRoute';
 import uploadRoute from '../routes/uploadRoute';
 import storageRoute from '../routes/storageRoute';
 import contractRoutes from '../routes/contractRoutes';
@@ -26,6 +27,7 @@ import devRoutes from '../routes/devRoutes';
 import statsRoutes from '../routes/statsRoute';
 import healthRoutes from '../routes/healthRoutes';
 import featureRoutes from '../routes/featureRoutes';
+import officerVersionRoutes from '../routes/officerVersionRoutes';
 import sentryTunnelRoute from '../routes/sentryTunnelRoute';
 
 //#endregion routing modules
@@ -81,6 +83,10 @@ const options = {
       { name: 'Upload', description: 'File and asset uploads' },
       { name: 'Statistics', description: 'Platform statistics (admin only)' },
       { name: 'Features', description: 'Feature flags (admin only)' },
+      {
+        name: 'Officer Versions',
+        description: 'Bulk realignment of stored Officer versions (admin only)',
+      },
       { name: 'Health', description: 'Service health checks' },
       { name: 'Development', description: 'Development-only helpers' },
     ],
@@ -112,6 +118,7 @@ class Server {
       weeklyClaim: '/api/weeklyclaim/',
       expense: '/api/expense/',
       fixedReturnOffering: '/api/fixed-return-offering/',
+      investorMigration: '/api/investor-migration/',
       claim: '/api/claim/',
       upload: '/api/upload/',
       file: '/api/file/',
@@ -121,6 +128,7 @@ class Server {
       dev: '/api/dev/',
       health: '/api/health/',
       features: '/api/admin/features/',
+      officerVersions: '/api/admin/officer-versions/',
       sentryTunnel: '/api/sentry-tunnel',
     };
     const limiter = rateLimit({
@@ -202,12 +210,14 @@ class Server {
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
     this.app.use(this.paths.fixedReturnOffering, authorizeUser, fixedReturnOfferingRoutes);
+    this.app.use(this.paths.investorMigration, authorizeUser, investorMigrationRoutes);
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.file, authorizeUser, storageRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use(this.paths.stats, authorizeUser, requireAdmin, statsRoutes);
     this.app.use(this.paths.features, authorizeUser, requireAdmin, featureRoutes);
+    this.app.use(this.paths.officerVersions, authorizeUser, requireAdmin, officerVersionRoutes);
 
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {

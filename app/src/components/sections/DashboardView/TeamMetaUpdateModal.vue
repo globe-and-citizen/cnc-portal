@@ -1,20 +1,21 @@
 <template>
   <UModal
-    v-model:open="showUpdateModal"
+    v-model:open="open"
     title="Update Company Details"
     description="Update your company name and description to keep your profile current and accurate"
   >
-    <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
-      <UButton
-        size="sm"
-        color="secondary"
-        icon="i-lucide-edit"
-        label="Update"
-        data-test="team-meta-update-open"
-        :disabled="archivedDisabled"
-        @click="prefillUpdateForm"
-      />
-    </TeamArchivedTooltip>
+    <template v-if="withTrigger" #default>
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          size="sm"
+          color="secondary"
+          icon="i-lucide-edit"
+          label="Update"
+          data-test="team-meta-update-open"
+          :disabled="archivedDisabled"
+        />
+      </TeamArchivedTooltip>
+    </template>
     <template #body>
       <UAlert
         v-if="archivedTeamErrorMessage"
@@ -73,15 +74,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { z } from 'zod'
+import type { Team } from '@/types/team'
 import { useTeamStore } from '@/stores'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
-const showUpdateModal = ref(false)
+const props = withDefaults(
+  defineProps<{
+    /** Team to edit; falls back to the one the dashboard has open. */
+    currentTeam?: Team | null
+    /**
+     * Team to act on when it is not the one the dashboard has open — the teams
+     * list drives this modal per card, where `teamStore.currentTeamId` is stale.
+     */
+    teamId?: string | number | null
+    /** Clear it when the parent opens the modal itself and owns the trigger. */
+    withTrigger?: boolean
+  }>(),
+  { currentTeam: null, teamId: null, withTrigger: true }
+)
+
+const open = defineModel<boolean>('open', { default: false })
 const updateTeamInput = ref({ name: '', description: '' })
 const teamStore = useTeamStore()
 const toast = useToast()
@@ -101,7 +118,7 @@ const {
 const archivedTeamErrorMessage = useArchivedTeamMutationError(() => updateTeamError.value)
 
 function getRequiredTeamId(): string | null {
-  const teamId = teamStore.currentTeamId
+  const teamId = props.teamId ?? teamStore.currentTeamId
   if (!teamId) {
     toast.add({ title: 'Company ID is required', color: 'error' })
     return null
@@ -117,7 +134,7 @@ function executeUpdateTeam() {
     {
       onSuccess: () => {
         toast.add({ title: 'Company updated successfully', color: 'success' })
-        showUpdateModal.value = false
+        open.value = false
         reset()
       }
     }
@@ -125,8 +142,14 @@ function executeUpdateTeam() {
 }
 
 function prefillUpdateForm() {
-  const meta = teamStore.currentTeamMeta.data
+  const meta = props.currentTeam ?? teamStore.currentTeamMeta.data
   updateTeamInput.value.name = meta?.name || ''
   updateTeamInput.value.description = meta?.description || ''
 }
+
+// Prefill off the open state rather than the trigger's click: the teams list
+// opens this modal programmatically, so there is no click to hang it on.
+watch(open, (isOpen) => {
+  if (isOpen) prefillUpdateForm()
+})
 </script>

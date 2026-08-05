@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
-import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
+import { mockReadContractAction, mockWagmiCore } from '@/tests/mocks'
 import { fetchCampaignLogs } from '@/lib/campaign/events'
 import type { Address } from 'viem'
 
@@ -10,7 +10,11 @@ vi.mock('@/lib/campaign/events', async (importOriginal) => {
   return { ...actual, fetchCampaignLogs: vi.fn() }
 })
 
-import { useCampaignEventsByCode } from '../reads'
+import {
+  fetchAdvertisingCampaigns,
+  fetchCampaignManagerSettings,
+  useCampaignEventsByCode
+} from '../reads'
 
 const ADDRESS = '0x1234567890123456789012345678901234567890' as Address
 
@@ -70,5 +74,56 @@ describe('useCampaignEventsByCode', () => {
     expect(result.X).toHaveLength(2)
     expect(result.X![0]).toMatchObject({ eventName: 'AdCampaignCreated', budget: 42n })
     expect(result.X![1]).toMatchObject({ eventName: 'PaymentReleased', paymentAmount: 7n })
+  })
+})
+
+describe('campaign contract reads', () => {
+  beforeEach(() => {
+    mockReadContractAction.mockReset()
+  })
+
+  it('loads and presents every funded campaign from the manager', async () => {
+    mockReadContractAction
+      .mockResolvedValueOnce(2n)
+      .mockResolvedValueOnce({
+        budget: 10n,
+        amountSpent: 4n,
+        status: 0,
+        campaignCode: 'CAMPAIGN-1',
+        advertiser: ADDRESS
+      })
+      .mockResolvedValueOnce({
+        budget: 5n,
+        amountSpent: 5n,
+        status: 1,
+        campaignCode: 'CAMPAIGN-2',
+        advertiser: ADDRESS
+      })
+
+    const campaigns = await fetchAdvertisingCampaigns({} as never, ADDRESS)
+
+    expect(campaigns).toEqual([
+      expect.objectContaining({ code: 'CAMPAIGN-1', remainingBudget: 6n, status: 'active' }),
+      expect.objectContaining({ code: 'CAMPAIGN-2', remainingBudget: 0n, status: 'completed' })
+    ])
+  })
+
+  it('returns an empty list without making campaign detail reads', async () => {
+    mockReadContractAction.mockResolvedValueOnce(0n)
+    await expect(fetchAdvertisingCampaigns({} as never, ADDRESS)).resolves.toEqual([])
+    expect(mockReadContractAction).toHaveBeenCalledTimes(1)
+  })
+
+  it('loads exact manager rates and the Bank destination', async () => {
+    mockReadContractAction
+      .mockResolvedValueOnce(100_000_000_000_000_000n)
+      .mockResolvedValueOnce(10_000_000_000_000_000n)
+      .mockResolvedValueOnce(ADDRESS)
+
+    await expect(fetchCampaignManagerSettings({} as never, ADDRESS)).resolves.toEqual({
+      costPerClick: '0.1',
+      costPerImpression: '0.01',
+      bankAddress: ADDRESS
+    })
   })
 })

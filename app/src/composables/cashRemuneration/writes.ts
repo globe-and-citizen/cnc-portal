@@ -1,19 +1,34 @@
-import { computed } from 'vue'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import type { Address } from 'viem'
+import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
+import {
+  useContractWritesV3,
+  type WriteFunctionName
+} from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
-import type { ExtractAbiFunctionNames } from 'abitype'
 
-type CashRemunerationFunctionNames = ExtractAbiFunctionNames<typeof CASH_REMUNERATION_EIP712_ABI>
+type CashRemunerationFunctionNames = WriteFunctionName<typeof cashRemunerationEip712Abi>
 
-function useCashRemunerationContractWrite(functionName: CashRemunerationFunctionNames) {
+/**
+ * A Cash Remuneration other than the team's current one — used to drain the one
+ * belonging to an archived Officer generation. Omit it and the write targets
+ * the current generation.
+ */
+export type CashRemunerationAddressOverride = MaybeRefOrGetter<Address | undefined>
+
+function useCashRemunerationContractWrite<F extends CashRemunerationFunctionNames>(
+  functionName: F,
+  address?: CashRemunerationAddressOverride
+) {
   const teamStore = useTeamStore()
-  const contractAddress = computed(() =>
-    teamStore.getContractAddressByType('CashRemunerationEIP712')
+  const contractAddress = computed(
+    () =>
+      toValue(address) ??
+      (teamStore.getContractAddressByType('CashRemunerationEIP712') as Address | undefined)
   )
   return useContractWritesV3({
     contractAddress,
-    abi: CASH_REMUNERATION_EIP712_ABI,
+    abi: cashRemunerationEip712Abi,
     functionName
   })
 }
@@ -22,8 +37,8 @@ export function useWithdraw() {
   return useCashRemunerationContractWrite('withdraw')
 }
 
-export function useOwnerWithdrawAllToBank() {
-  return useCashRemunerationContractWrite('ownerWithdrawAllToBank')
+export function useOwnerWithdrawAllToBank(address?: CashRemunerationAddressOverride) {
+  return useCashRemunerationContractWrite('ownerWithdrawAllToBank', address)
 }
 
 export function useEnableClaim() {

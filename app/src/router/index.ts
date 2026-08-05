@@ -116,58 +116,38 @@ const router = createRouter({
         },
         {
           path: '/teams/:id/accounting',
-          meta: { name: 'Accounting' },
-          component: () => import('@/views/team/[id]/AccountingView.vue'),
-          children: [
-            {
-              path: '',
-              name: 'accounting',
-              redirect: { name: 'accounting-summary' }
-            },
-            {
-              path: 'summary',
-              name: 'accounting-summary',
-              meta: { name: 'Summary' },
-              component: () => import('@/components/sections/AccountingView/AccountingSummary.vue')
-            },
-            {
-              path: 'income',
-              name: 'accounting-income',
-              meta: { name: 'Income Statement' },
-              component: () =>
-                import('@/components/sections/AccountingView/IncomeStatementCard.vue')
-            },
-            {
-              path: 'balance',
-              name: 'accounting-balance',
-              meta: { name: 'Balance Sheet' },
-              component: () => import('@/components/sections/AccountingView/BalanceSheetCard.vue')
-            },
-            {
-              path: 'trial',
-              name: 'accounting-trial',
-              meta: { name: 'Trial Balance' },
-              component: () => import('@/components/sections/AccountingView/TrialBalanceCard.vue')
-            },
-            {
-              path: 'ledger',
-              name: 'accounting-ledger',
-              meta: { name: 'General Ledger' },
-              component: () => import('@/components/sections/AccountingView/GeneralLedger.vue')
-            }
-          ]
+          name: 'accounting',
+          redirect: { name: 'accounting-summary' }
         },
         {
-          path: '/teams/:id/debt-financing/fixed-return',
-          name: 'fixed-return',
-          meta: { name: 'Fixed Return' },
-          component: () => import('@/views/team/[id]/FixedReturnView.vue')
+          path: '/teams/:id/accounting/summary',
+          name: 'accounting-summary',
+          meta: { name: 'Summary' },
+          component: () => import('@/views/team/[id]/Accounting/SummaryView.vue')
         },
         {
-          path: '/teams/:id/debt-financing/lender-marketplace',
-          name: 'lender-marketplace',
-          meta: { name: 'Lender Marketplace' },
-          component: () => import('@/views/team/[id]/LenderMarketplaceView.vue')
+          path: '/teams/:id/accounting/income',
+          name: 'accounting-income',
+          meta: { name: 'Income Statement' },
+          component: () => import('@/views/team/[id]/Accounting/IncomeStatementView.vue')
+        },
+        {
+          path: '/teams/:id/accounting/balance',
+          name: 'accounting-balance',
+          meta: { name: 'Balance Sheet' },
+          component: () => import('@/views/team/[id]/Accounting/BalanceSheetView.vue')
+        },
+        {
+          path: '/teams/:id/accounting/trial',
+          name: 'accounting-trial',
+          meta: { name: 'Trial Balance' },
+          component: () => import('@/views/team/[id]/Accounting/TrialBalanceView.vue')
+        },
+        {
+          path: '/teams/:id/accounting/ledger',
+          name: 'accounting-ledger',
+          meta: { name: 'General Ledger' },
+          component: () => import('@/views/team/[id]/Accounting/GeneralLedgerView.vue')
         },
         {
           path: '/teams/:id/community-credit',
@@ -180,12 +160,6 @@ const router = createRouter({
           name: 'community-credit-new',
           meta: { name: 'New Credit Call' },
           component: () => import('@/views/team/[id]/CommunityCredit/NewView.vue')
-        },
-        {
-          path: '/teams/:id/community-credit/:roundId/repay',
-          name: 'community-credit-repay',
-          meta: { name: 'Repay Round' },
-          component: () => import('@/views/team/[id]/CommunityCredit/RepayView.vue')
         },
         {
           path: '/teams/:id/community-credit/:roundId',

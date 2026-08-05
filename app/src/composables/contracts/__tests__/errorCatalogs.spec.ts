@@ -83,33 +83,40 @@ describe('resolveRevertMessage', () => {
       )
     })
 
-    it('formats InvestorV1.InvalidNativeFunding', () => {
-      expect(resolveRevertMessage('InvalidNativeFunding', [1000n, 999n], 'InvestorV1')).toBe(
+    it('formats Investor.InvalidNativeFunding', () => {
+      expect(resolveRevertMessage('InvalidNativeFunding', [1000n, 999n], 'Investor')).toBe(
         'Invalid native funding — expected 1000, got 999'
       )
     })
 
-    it('formats InvestorV1.InsufficientFundedTokenBalance', () => {
+    it('formats Investor.InsufficientFundedTokenBalance', () => {
       expect(
-        resolveRevertMessage('InsufficientFundedTokenBalance', ['0xT', 50n, 10n], 'InvestorV1')
+        resolveRevertMessage('InsufficientFundedTokenBalance', ['0xT', 50n, 10n], 'Investor')
       ).toBe('Insufficient funded token balance — needs 50, only 10')
     })
 
-    it('formats Tips.TooManyTeamMembers', () => {
-      expect(resolveRevertMessage('TooManyTeamMembers', [30, 20], 'Tips')).toBe(
-        'Too many team members — provided 30, limit is 20'
-      )
+    // Migration reverts reach the shareholder claim page, where an unmapped
+    // name degrades to the generic 'Transaction failed' and tells a stuck
+    // holder nothing about why their claim bounced.
+    it.each([
+      ['MigrationRootNotSet', 'No migration has been committed on this share token yet'],
+      ['MigrationAlreadyComplete', 'The migration is closed — no further claim is accepted'],
+      ['InvalidProof', 'The migration proof does not match this account and amount'],
+      ['LengthMismatch', 'Shareholders, amounts and proofs must have the same length'],
+      [
+        'DividendsFrozenDuringMigration',
+        'Dividends are frozen until the migration is marked complete'
+      ]
+    ])('resolves Investor.%s', (name, expected) => {
+      expect(resolveRevertMessage(name, undefined, 'Investor')).toBe(expected)
     })
 
-    it('formats Tips.LimitTooHigh', () => {
-      expect(resolveRevertMessage('LimitTooHigh', [100, 50], 'Tips')).toBe(
-        'Push limit 100 exceeds the maximum of 50'
+    it('formats Investor.AlreadyMigrated with and without the account arg', () => {
+      expect(resolveRevertMessage('AlreadyMigrated', ['0xabc'], 'Investor')).toBe(
+        '0xabc has already claimed their migrated shares'
       )
-    })
-
-    it('formats Tips.InsufficientBalance (contract-balance shape)', () => {
-      expect(resolveRevertMessage('InsufficientBalance', [5n, 1n], 'Tips')).toBe(
-        'Insufficient contract balance — needs 5, only 1'
+      expect(resolveRevertMessage('AlreadyMigrated', undefined, 'Investor')).toBe(
+        'These migrated shares have already been claimed'
       )
     })
 
@@ -208,8 +215,7 @@ describe('resolveRevertMessage', () => {
       ['Bank', 'Bank action failed'],
       ['AdCampaignManager', 'Ad campaign action failed'],
       ['Vesting', 'Vesting action failed'],
-      ['InvestorV1', 'Investor action failed'],
-      ['Tips', 'Tips action failed'],
+      ['Investor', 'Investor action failed'],
       ['FeeCollector', 'Fee collector action failed'],
       ['TokenSupport', 'Token support update failed'],
       ['Elections', 'Election action failed'],
@@ -270,28 +276,13 @@ describe('resolveRevertMessage', () => {
       },
       {
         name: 'InvalidNativeFunding',
-        contract: 'InvestorV1',
+        contract: 'Investor',
         expected: 'Invalid native funding — expected undefined, got undefined'
       },
       {
         name: 'InsufficientFundedTokenBalance',
-        contract: 'InvestorV1',
+        contract: 'Investor',
         expected: 'Insufficient funded token balance — needs undefined, only undefined'
-      },
-      {
-        name: 'TooManyTeamMembers',
-        contract: 'Tips',
-        expected: 'Too many team members — provided undefined, limit is undefined'
-      },
-      {
-        name: 'LimitTooHigh',
-        contract: 'Tips',
-        expected: 'Push limit undefined exceeds the maximum of undefined'
-      },
-      {
-        name: 'InsufficientBalance',
-        contract: 'Tips',
-        expected: 'Insufficient contract balance — needs undefined, only undefined'
       },
       {
         name: 'InsufficientBalance',

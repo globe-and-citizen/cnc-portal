@@ -164,7 +164,7 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
       InvestorContractNotFound: 'Investor contract could not be located',
       InsufficientMinterRole: 'Vesting is missing minter role on the investor token'
     },
-    InvestorV1: {
+    Investor: {
       NotBank: 'Only the Bank contract can call this function',
       InvalidNativeFunding: (args) => {
         const [expected, actual] = args ?? []
@@ -173,23 +173,21 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
       NoTokensMinted: 'No tokens have been minted',
       NoShareholders: 'No shareholders to distribute to',
       NativeTransferFailed: 'Native token transfer failed',
-      InsufficientFundedTokenBalance: insufficientFundedTokenBalance
-    },
-    Tips: {
-      NoTeamMembers: 'Must have at least one team member',
-      TooManyTeamMembers: (args) => {
-        const [provided, limit] = args ?? []
-        return `Too many team members — provided ${provided}, limit is ${limit}`
+      InsufficientFundedTokenBalance: insufficientFundedTokenBalance,
+
+      // Merkle-pull migration. These surface on the shareholder claim page, so
+      // a bare 'Transaction failed' there is what a stuck holder would see.
+      MigrationRootNotSet: 'No migration has been committed on this share token yet',
+      MigrationAlreadyComplete: 'The migration is closed — no further claim is accepted',
+      InvalidProof: 'The migration proof does not match this account and amount',
+      AlreadyMigrated: (args) => {
+        const [account] = args ?? []
+        return account
+          ? `${account} has already claimed their migrated shares`
+          : 'These migrated shares have already been claimed'
       },
-      InsufficientBalance: insufficientContractBalance,
-      SendFailed: 'Failed to send native tokens',
-      NothingToWithdraw: 'No tips available to withdraw',
-      BalanceNotCleared: 'Failed to clear balance after withdraw',
-      SameLimit: 'New limit is the same as the old one',
-      LimitTooHigh: (args) => {
-        const [requested, maximum] = args ?? []
-        return `Push limit ${requested} exceeds the maximum of ${maximum}`
-      }
+      LengthMismatch: 'Shareholders, amounts and proofs must have the same length',
+      DividendsFrozenDuringMigration: 'Dividends are frozen until the migration is marked complete'
     },
     FeeCollector: {
       EmptyContractType: 'Contract type cannot be empty',
@@ -283,8 +281,7 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
     Bank: 'Bank action failed',
     AdCampaignManager: 'Ad campaign action failed',
     Vesting: 'Vesting action failed',
-    InvestorV1: 'Investor action failed',
-    Tips: 'Tips action failed',
+    Investor: 'Investor action failed',
     FeeCollector: 'Fee collector action failed',
     TokenSupport: 'Token support update failed',
     Elections: 'Election action failed',

@@ -1,11 +1,15 @@
 /**
- * Fee source mapper — a fee on a Bank transfer is an **internal move**, not an
- * expense (spec §5.1): cash shifts from the Bank pocket to the FeeCollector
- * pocket, both CNC-owned. It nets out of the income statement; it only
- * redistributes cash.
+ * Fee source mapper — the Bank protocol fee is a real **expense** leaving the
+ * treasury: it is skimmed to the protocol-wide FeeCollector (not a team pocket),
+ * so it is a cost, not a cash-to-cash internal move.
  *
- *     Dr Cash — FeeCollector   (fee)
- *        Cr Cash — Bank        (fee)
+ *     Dr Transaction Fee Expense   (fee)
+ *        Cr Cash — Bank            (fee)
+ *
+ * It therefore surfaces in the general ledger, trial balance and income
+ * statement, and rolls up into the Summary's total expenses. (Network / gas fees
+ * paid to validators are a separate cost with no data feed yet — see
+ * `chartOfAccounts` scope notes — so they are not booked here.)
  *
  * The same fee is written twice on-chain — once by Bank (`FeePaid`) and once by
  * FeeCollector (`FeePaid`). We dedup the dual-write on (token, amount, timestamp)
@@ -52,13 +56,12 @@ export function mapFees(input: FeeMapperInput, ctx: MapperContext): LedgerEntry[
         id: row.id,
         timestamp: row.timestamp,
         useCase: 'FEE',
-        debit: 'Cash — FeeCollector',
+        debit: 'Transaction Fee Expense',
         credit: 'Cash — Bank',
         amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
         token: tokenId,
         rawAmount: row.amount,
-        internal: true,
-        memo: 'Fee skim Bank → FeeCollector (internal move)'
+        memo: 'Transaction fee skimmed from Bank'
       })
     )
   }

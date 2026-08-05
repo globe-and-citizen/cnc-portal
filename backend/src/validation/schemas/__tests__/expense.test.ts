@@ -15,6 +15,8 @@ describe('expense schemas', () => {
       const validData = {
         teamId: '1',
         signature: '0xsignature',
+        signedAgainstContractAddress: '0x2222222222222222222222222222222222222222',
+        chainId: 1,
         data: {
           approvedAddress: '0x1234567890123456789012345678901234567890',
           amount: 150,
@@ -40,6 +42,8 @@ describe('expense schemas', () => {
       const invalidData = {
         teamId: '1',
         signature: '0xsignature',
+        signedAgainstContractAddress: '0x2222222222222222222222222222222222222222',
+        chainId: 1,
         data: {
           approvedAddress: '0x1234567890123456789012345678901234567890',
           // Missing budgetData, tokenAddress, and expiry
@@ -53,6 +57,8 @@ describe('expense schemas', () => {
       const invalidData = {
         teamId: '1',
         signature: '',
+        signedAgainstContractAddress: '0x2222222222222222222222222222222222222222',
+        chainId: 1,
         data: {
           approvedAddress: '0x1234567890123456789012345678901234567890',
           budgetData: [{ budgetType: 0, value: 100 }],
@@ -68,6 +74,8 @@ describe('expense schemas', () => {
       const invalidData = {
         teamId: '1',
         signature: '0xsignature',
+        signedAgainstContractAddress: '0x2222222222222222222222222222222222222222',
+        chainId: 1,
         data: {
           approvedAddress: '0x1234567890123456789012345678901234567890',
           budgetData: [{ budgetType: 0, value: -100 }], // Negative value should fail
@@ -83,6 +91,8 @@ describe('expense schemas', () => {
       const invalidData = {
         teamId: '1',
         signature: '0xsignature',
+        signedAgainstContractAddress: '0x2222222222222222222222222222222222222222',
+        chainId: 1,
         data: {
           approvedAddress: '', // Empty string should fail
           budgetData: [{ budgetType: 0, value: 100 }],

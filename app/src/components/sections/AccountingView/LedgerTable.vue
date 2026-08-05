@@ -10,8 +10,17 @@
     </template>
 
     <template #action-cell="{ row: { original: row } }">
+      <!-- A fee leg reads as its own action ("Fee"), on the same footing as the
+           category pills (Expense / Transfer / …) — even on a continuation row. -->
       <span
-        v-if="row.isFirst && !row.isTotal"
+        v-if="row.isFee"
+        class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
+        :class="FEE_BADGE"
+      >
+        Fee
+      </span>
+      <span
+        v-else-if="row.isFirst && !row.isTotal"
         class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
         :class="row.catClass"
       >
@@ -25,27 +34,13 @@
     </template>
 
     <template #activity-cell="{ row: { original: row } }">
-      <div v-if="!row.isTotal && row.isFirst" class="flex items-center gap-1.5 text-sm">
-        <template v-if="row.activity.kind === 'actor'">
-          <UserComponent compact size="sm" hide-address :user="resolveUser(row.activity.actor)" />
-          <span class="text-muted">{{ row.activity.text }}</span>
-        </template>
-        <template v-else-if="row.activity.kind === 'transfer'">
-          <template v-if="row.activity.actor">
-            <UserComponent compact size="sm" hide-address :user="resolveUser(row.activity.actor)" />
-            <span class="text-muted">transferred money from</span>
-            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.from)" />
-            <span class="text-muted">to</span>
-            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.to)" />
-          </template>
-          <template v-else>
-            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.from)" />
-            <span class="text-muted">transferred money to</span>
-            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.to)" />
-          </template>
-        </template>
-        <span v-else-if="row.activity.text" class="text-muted">{{ row.activity.text }}</span>
-      </div>
+      <LedgerActivityCell
+        v-if="!row.isTotal && row.isFirst"
+        :activity="row.activity"
+        :destination="row.destination"
+        :linkable="!!routeFor(row.destination)"
+        @open="open(row.destination)"
+      />
     </template>
 
     <template #account-cell="{ row: { original: row } }">
@@ -58,6 +53,28 @@
       >
         {{ row.account }}
       </span>
+    </template>
+
+    <template #currency-cell="{ row: { original: row } }">
+      <span v-if="!row.isTotal" class="text-muted text-sm">{{ row.currency }}</span>
+    </template>
+
+    <template #quantity-header>
+      <div class="text-right">Quantity</div>
+    </template>
+    <template #quantity-cell="{ row: { original: row } }">
+      <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
+        {{ row.quantity }}
+      </div>
+    </template>
+
+    <template #rate-header>
+      <div class="text-right">Rate</div>
+    </template>
+    <template #rate-cell="{ row: { original: row } }">
+      <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
+        {{ row.rate }}
+      </div>
     </template>
 
     <template #dr-header>
@@ -83,14 +100,27 @@
         {{ row.cr }}
       </div>
     </template>
+
+    <template #balance-header>
+      <div class="text-right">Balance</div>
+    </template>
+    <template #balance-cell="{ row: { original: row } }">
+      <div
+        class="text-right text-sm tabular-nums"
+        :class="row.isTotal ? 'text-highlighted font-extrabold' : 'text-muted font-semibold'"
+        data-test="ledger-balance"
+      >
+        {{ row.isTotal ? (closingBalance ?? total) : row.balance }}
+      </div>
+    </template>
   </UTable>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import UserComponent from '@/components/ui/UserComponent.vue'
-import { resolveUser } from '@/utils/transactionHistoryUtil'
+import LedgerActivityCell from './LedgerActivityCell.vue'
+import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
 import {
   LEDGER_COLUMNS,
   type LedgerRow,
@@ -102,14 +132,22 @@ const props = defineProps<{
   total: string
   /** Column keys to show; omit to show them all. */
   visibleColumns?: LedgerColumnKey[]
+  /** Append the running "Balance" column after Credit (single-account ledgers). */
+  showBalance?: boolean
+  /** What the account is left standing at — the foot of the Balance column.
+   *  Defaults to `total` when the ledger carries nothing forward. */
+  closingBalance?: string
 }>()
 
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
 
-/** A cash pocket account rendered as a contract avatar (document icon + short name). */
-function pocketUser(account: string) {
-  return { name: account.replace('Cash — ', ''), address: '', icon: 'heroicons:document-text' }
-}
+// Action-pill classes for a fee leg — amber, a peer of the category badges
+// (CATEGORY_BADGE in ledgerPresenter). A static string so Tailwind keeps it.
+const FEE_BADGE = 'bg-warning/10 text-warning'
+
+// "Where did this happen?" — resolved once for the table, so each Activity cell
+// only has to say whether it is clickable.
+const { routeFor, open } = useActivityDestination()
 
 const tableRows = computed<LedgerTableRow[]>(() => [
   ...props.rows.map((r) => ({ ...r, isTotal: false })),
@@ -125,6 +163,9 @@ const tableRows = computed<LedgerTableRow[]>(() => [
     accountDimmed: false,
     dr: props.total,
     cr: props.total,
+    currency: '',
+    quantity: '',
+    rate: '',
     isTotal: true
   }
 ])
@@ -138,11 +179,22 @@ const COLUMN_DEFS: Record<LedgerColumnKey, TableColumn<LedgerTableRow>> = {
   activity: { id: 'activity', header: 'Activity' },
   account: { accessorKey: 'account', header: 'Account' },
   dr: { accessorKey: 'dr', header: 'Debit' },
-  cr: { accessorKey: 'cr', header: 'Credit' }
+  cr: { accessorKey: 'cr', header: 'Credit' },
+  currency: { accessorKey: 'currency', header: 'Currency' },
+  quantity: { accessorKey: 'quantity', header: 'Quantity' },
+  rate: { accessorKey: 'rate', header: 'Rate' }
 }
+
+// The running balance closes the table, right after Credit. It isn't a
+// LEDGER_COLUMNS entry: it only exists for a single account's ledger (the
+// drill-down), so it's neither toggleable nor exported.
+const BALANCE_COLUMN: TableColumn<LedgerTableRow> = { accessorKey: 'balance', header: 'Balance' }
 
 const columns = computed<TableColumn<LedgerTableRow>[]>(() => {
   const visible = props.visibleColumns ?? LEDGER_COLUMNS.map((c) => c.value)
-  return LEDGER_COLUMNS.filter((c) => visible.includes(c.value)).map((c) => COLUMN_DEFS[c.value])
+  const shown = LEDGER_COLUMNS.filter((c) => visible.includes(c.value)).map(
+    (c) => COLUMN_DEFS[c.value]
+  )
+  return props.showBalance ? [...shown, BALANCE_COLUMN] : shown
 })
 </script>

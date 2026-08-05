@@ -20,7 +20,7 @@
       "
     >
       <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
-        <USkeleton v-for="i in 6" :key="i" class="h-20 rounded-lg" :data-test="`skeleton-${i}`" />
+        <USkeleton v-for="i in 7" :key="i" class="h-20 rounded-lg" :data-test="`skeleton-${i}`" />
       </div>
     </template>
     <template v-else>
@@ -39,6 +39,7 @@
           :investors-address="investorAddress"
           :bank-address="bankAddress"
         />
+        <SetSafeAddressAction />
         <ToggleSherCompensationAction />
         <SetCompensationMultiplierAction />
         <InvestInSafeAction />
@@ -55,6 +56,7 @@ import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
 import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'
+import SetSafeAddressAction from './InvestorActions/SetSafeAddressAction.vue'
 import ToggleSherCompensationAction from './InvestorActions/ToggleSherCompensationAction.vue'
 import SetCompensationMultiplierAction from './InvestorActions/SetCompensationMultiplierAction.vue'
 import InvestInSafeAction from './InvestorActions/InvestInSafeAction.vue'
@@ -71,7 +73,7 @@ defineEmits<{
 const toast = useToast()
 const teamStore = useTeamStore()
 
-const investorAddress = teamStore.getContractAddressByType('InvestorV1')
+const investorAddress = computed(() => teamStore.getInvestorAddress())
 const bankAddress = teamStore.getContractAddressByType('Bank')
 
 const {

@@ -19,7 +19,7 @@ export function setupApp() {
     defaultOptions: {
       queries: {
         // Refetch every 20 seconds (20,000 ms)
-        refetchInterval: 20000,
+        refetchInterval: 200000,
         // Optional: only refetch when the window is focused
         refetchOnWindowFocus: true,
         // Optional: retry on failure

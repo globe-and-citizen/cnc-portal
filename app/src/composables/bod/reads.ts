@@ -2,8 +2,7 @@ import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { BOD_ABI } from '@/artifacts/abi/bod'
-
+import { boardOfDirectorsAbi } from '@/artifacts/abi/generated'
 /**
  * BOD contract types and constants
  */
@@ -46,7 +45,7 @@ export function useBodOwner(contractAddress: MaybeRef<Address>) {
 
   return useReadContract({
     address: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: 'getOwners',
     query: { enabled: isAddressValid },
     args: []
@@ -64,7 +63,7 @@ export function useBodIsActionExecuted(actionId: MaybeRef<number>) {
 
   return useReadContract({
     address: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: 'isActionExecuted',
     args: [BigInt(actionIdValue.value)] as const,
     query: { enabled: isBodAddressValid }
@@ -82,7 +81,7 @@ export function useBodIsApproved(actionId: MaybeRef<number>, memberAddress: Mayb
 
   return useReadContract({
     address: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: 'isApproved',
     args: [BigInt(actionIdValue.value), memberAddressValue.value] as const,
     query: {
@@ -98,7 +97,7 @@ export function useBodGetBoardOfDirectors() {
 
   return useReadContract({
     address: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: 'getBoardOfDirectors',
     query: { enabled: isBodAddressValid }
   })
@@ -116,7 +115,7 @@ export function useBodIsMember(memberAddress: MaybeRef<Address>) {
 
   return useReadContract({
     address: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: 'isMember',
     args: [memberAddressValue.value] as const,
     query: {
@@ -134,7 +133,7 @@ export function useBodApprovalCount() {
 
   return useReadContract({
     address: bodAddress,
-    abi: BOD_ABI,
+    abi: boardOfDirectorsAbi,
     functionName: 'approvalCount',
     query: { enabled: isBodAddressValid }
   })

@@ -108,6 +108,26 @@ vi.mock('@/views/LockedView.vue', () => ({
   default: { name: 'LockedView', template: '<div>Locked View</div>' }
 }))
 
+vi.mock('@/views/team/[id]/Accounting/SummaryView.vue', () => ({
+  default: { name: 'SummaryView', template: '<div>Accounting Summary</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/IncomeStatementView.vue', () => ({
+  default: { name: 'IncomeStatementView', template: '<div>Income Statement</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/BalanceSheetView.vue', () => ({
+  default: { name: 'BalanceSheetView', template: '<div>Balance Sheet</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/TrialBalanceView.vue', () => ({
+  default: { name: 'TrialBalanceView', template: '<div>Trial Balance</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/GeneralLedgerView.vue', () => ({
+  default: { name: 'GeneralLedgerView', template: '<div>General Ledger</div>' }
+}))
+
 import router from '@/router/index'
 
 describe('Router Configuration', () => {
@@ -231,6 +251,28 @@ describe('Router Configuration', () => {
       await router.push('/teams/123/accounts/safe-account/0xabcdef')
       await nextTick()
       expect(router.currentRoute.value.name).toBe('safe-account')
+    })
+
+    it('redirects /accounting to the summary page and loads each accounting view', async () => {
+      mockIsAuth.value = true
+
+      await router.push('/teams/123/accounting')
+      await nextTick()
+      expect(router.currentRoute.value.name).toBe('accounting-summary')
+      expect(router.currentRoute.value.path).toBe('/teams/123/accounting/summary')
+
+      const accountingRoutes = [
+        { path: '/teams/123/accounting/income', name: 'accounting-income' },
+        { path: '/teams/123/accounting/balance', name: 'accounting-balance' },
+        { path: '/teams/123/accounting/trial', name: 'accounting-trial' },
+        { path: '/teams/123/accounting/ledger', name: 'accounting-ledger' }
+      ]
+      for (const { path, name } of accountingRoutes) {
+        await router.push(path)
+        await nextTick()
+        expect(router.currentRoute.value.name).toBe(name)
+        expect(router.currentRoute.value.params.id).toBe('123')
+      }
     })
   })
 

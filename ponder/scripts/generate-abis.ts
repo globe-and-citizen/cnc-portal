@@ -58,7 +58,6 @@ const SKIP_LIST = new Set([
   "PausableUpgradeable",
   "ReentrancyGuard",
   "ReentrancyGuardUpgradeable",
-  "Tips",
   "Voting",
 ]);
 
@@ -75,6 +74,15 @@ function toScreamingSnakeCase(name: string): string {
     .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
     .replace(/([a-z\d])([A-Z])/g, "$1_$2")
     .toUpperCase();
+}
+
+function isEventAbiEntry(entry: unknown): boolean {
+  return (
+    typeof entry === "object" &&
+    entry !== null &&
+    "type" in entry &&
+    entry.type === "event"
+  );
 }
 
 function formatValue(val: unknown, indent: number): string {
@@ -107,7 +115,7 @@ function generateFile(
   eventsOnly: boolean,
 ): string {
   const exportName = `${toScreamingSnakeCase(contractName)}_ABI`;
-  const entries = eventsOnly ? abi.filter((e: any) => e.type === "event") : abi;
+  const entries = eventsOnly ? abi.filter(isEventAbiEntry) : abi;
 
   const items = entries
     .map((entry) => `  ${formatValue(entry, 1)}`)
@@ -146,7 +154,7 @@ for (const file of jsonFiles) {
   }
 
   const abi = JSON.parse(readFileSync(join(ABIS_JSON_DIR, file), "utf8"));
-  const entries = eventsOnly ? abi.filter((e: any) => e.type === "event") : abi;
+  const entries = eventsOnly ? abi.filter(isEventAbiEntry) : abi;
 
   if (entries.length === 0) {
     console.log(

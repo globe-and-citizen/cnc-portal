@@ -111,7 +111,11 @@ const errorMessage = computed(() => {
       <UTabs :items="tabs" variant="link" class="w-full">
         <template #summary>
           <div v-if="hasAddress" class="mt-4 space-y-6">
-            <AccountingSummary :summary="summary" />
+            <AccountingSummary
+              :summary="summary"
+              :ledger-entries="entries"
+              :realized-trades="realizedTrades"
+            />
             <!-- Live audit: each line proves one of the 8 accounting equations
                  over the loaded data. A non-zero gap points at the failing source
                  (truncated history, missing market, lot-accounting regression). -->

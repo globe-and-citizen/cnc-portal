@@ -1,6 +1,7 @@
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
-import { time } from '@nomicfoundation/hardhat-network-helpers'
+import { ethers, initializeHardhat, time, upgrades } from './hardhat-context.js'
+
+before(initializeHardhat)
 
 describe('Vesting', () => {
   const DECIMALS = 6
@@ -9,9 +10,9 @@ describe('Vesting', () => {
   const DURATION = 60 * 60 * 24 * 30 // 30 days
 
   // Deploy Vesting per-team through a MockOfficer, exactly like SafeDepositRouter:
-  // - InvestorV1 is the team share token, registered on the officer
+  // - Investor is the team share token, registered on the officer
   // - Vesting is a BeaconProxy whose officerAddress is the officer (set from msg.sender)
-  // - the team owner owns the Vesting; the Vesting holds MINTER_ROLE on InvestorV1
+  // - the team owner owns the Vesting; the Vesting holds MINTER_ROLE on Investor
   async function deployFixture(grantMinter = true) {
     const [teamOwner, member, member2, nonOwner] = await ethers.getSigners()
 
@@ -19,21 +20,21 @@ describe('Vesting', () => {
     const mockOfficer = await MockOfficerFactory.deploy()
     await mockOfficer.waitForDeployment()
 
-    const InvestorFactory = await ethers.getContractFactory('InvestorV1')
+    const InvestorFactory = await ethers.getContractFactory('Investor')
     const investor = await upgrades.deployProxy(
       InvestorFactory,
       ['Share', 'SHARE', teamOwner.address],
-      { initializer: 'initialize' }
+      { initializer: 'initialize', unsafeAllow: ['constructor'] }
     )
     await investor.waitForDeployment()
     const investorAddress = await investor.getAddress()
-    await mockOfficer.setDeployedContract('InvestorV1', investorAddress)
+    await mockOfficer.setDeployedContract('Investor', investorAddress)
 
     const VestingFactory = await ethers.getContractFactory('Vesting')
     const vestingImplementation = await VestingFactory.connect(teamOwner).deploy()
     await vestingImplementation.waitForDeployment()
 
-    const encodedInitialize = vestingImplementation.interface.encodeFunctionData('initialize', [])
+    const encodedInitialize = VestingFactory.interface.encodeFunctionData('initialize', [])
 
     const BeaconFactory = await ethers.getContractFactory('Beacon')
     const beacon = await BeaconFactory.connect(teamOwner).deploy(
@@ -68,7 +69,7 @@ describe('Vesting', () => {
       const { teamOwner, mockOfficer, vesting } = await deployFixture()
 
       expect(await vesting.owner()).to.equal(teamOwner.address)
-      expect(await vesting.officerAddress()).to.equal(await mockOfficer.getAddress())
+      expect(await vesting.getOfficerAddress()).to.equal(await mockOfficer.getAddress())
     })
   })
 
@@ -82,7 +83,7 @@ describe('Vesting', () => {
         .to.emit(vesting, 'VestingCreated')
         .withArgs(member.address, 0, VEST_AMOUNT)
 
-      const v = await vesting.vestings(member.address, 0)
+      const v = (await vesting.getVestings(member.address))[0]
       expect(v.totalAmount).to.equal(VEST_AMOUNT)
       expect(v.released).to.equal(0)
       expect(v.active).to.be.true
@@ -129,7 +130,7 @@ describe('Vesting', () => {
 
       await expect(
         vesting.connect(teamOwner).addVesting(member.address, start, CLIFF, DURATION, VEST_AMOUNT)
-      ).to.be.revertedWithCustomError(vesting, 'CliffExceedsDuration')
+      ).to.be.revertedWithCustomError(vesting, 'Vesting__CliffExceedsDuration')
     })
 
     it('reverts on the zero address member', async () => {
@@ -139,7 +140,7 @@ describe('Vesting', () => {
         vesting
           .connect(teamOwner)
           .addVesting(ethers.ZeroAddress, start, DURATION, CLIFF, VEST_AMOUNT)
-      ).to.be.revertedWithCustomError(vesting, 'ZeroAddress')
+      ).to.be.revertedWithCustomError(vesting, 'Vesting__ZeroAddress')
     })
   })
 
@@ -157,7 +158,7 @@ describe('Vesting', () => {
         .withArgs(member.address, 0, VEST_AMOUNT)
 
       expect(await investor.balanceOf(member.address)).to.equal(VEST_AMOUNT)
-      expect((await vesting.vestings(member.address, 0)).released).to.equal(VEST_AMOUNT)
+      expect((await vesting.getVestings(member.address))[0].released).to.equal(VEST_AMOUNT)
     })
 
     it('mints only the vested portion after the cliff', async () => {
@@ -193,7 +194,7 @@ describe('Vesting', () => {
 
       await vesting.connect(member).release(0)
       expect(await investor.balanceOf(member.address)).to.equal(VEST_AMOUNT)
-      expect((await vesting.vestings(member.address, 1)).released).to.equal(0)
+      expect((await vesting.getVestings(member.address))[1].released).to.equal(0)
     })
 
     it('reverts before the cliff (nothing releasable)', async () => {
@@ -206,7 +207,7 @@ describe('Vesting', () => {
 
       await expect(vesting.connect(member).release(0)).to.be.revertedWithCustomError(
         vesting,
-        'NothingToRelease'
+        'Vesting__NothingToRelease'
       )
     })
 
@@ -221,7 +222,7 @@ describe('Vesting', () => {
       await vesting.connect(member).release(0)
       await expect(vesting.connect(member).release(0)).to.be.revertedWithCustomError(
         vesting,
-        'NothingToRelease'
+        'Vesting__NothingToRelease'
       )
     })
 
@@ -230,7 +231,7 @@ describe('Vesting', () => {
 
       await expect(vesting.connect(member2).release(0)).to.be.revertedWithCustomError(
         vesting,
-        'IndexOutOfBounds'
+        'Vesting__IndexOutOfBounds'
       )
     })
 
@@ -244,7 +245,7 @@ describe('Vesting', () => {
 
       await expect(vesting.connect(member).release(0)).to.be.revertedWithCustomError(
         vesting,
-        'InsufficientMinterRole'
+        'Vesting__InsufficientMinterRole'
       )
     })
   })
@@ -266,7 +267,7 @@ describe('Vesting', () => {
       expect(minted).to.be.gt(0)
       expect(minted).to.be.lt(VEST_AMOUNT) // unvested remainder is never minted
 
-      expect((await vesting.vestings(member.address, 0)).active).to.be.false
+      expect((await vesting.getVestings(member.address))[0].active).to.be.false
       const [members, indices, infos] = await vesting.getAllArchivedVestingsFlat()
       expect(members).to.deep.equal([member.address])
       expect(indices).to.deep.equal([0n])
@@ -311,7 +312,7 @@ describe('Vesting', () => {
 
       await expect(
         vesting.connect(teamOwner).stopVesting(member.address, 0)
-      ).to.be.revertedWithCustomError(vesting, 'VestingNotActive')
+      ).to.be.revertedWithCustomError(vesting, 'Vesting__VestingNotActive')
     })
 
     it('reverts on an out-of-range index', async () => {
@@ -319,7 +320,7 @@ describe('Vesting', () => {
 
       await expect(
         vesting.connect(teamOwner).stopVesting(member.address, 0)
-      ).to.be.revertedWithCustomError(vesting, 'IndexOutOfBounds')
+      ).to.be.revertedWithCustomError(vesting, 'Vesting__IndexOutOfBounds')
     })
   })
 
@@ -363,7 +364,7 @@ describe('Vesting', () => {
 
       await expect(
         vesting.connect(teamOwner).addVesting(member.address, start, DURATION, CLIFF, VEST_AMOUNT)
-      ).to.not.be.reverted
+      ).to.not.be.revert(ethers)
     })
   })
 })

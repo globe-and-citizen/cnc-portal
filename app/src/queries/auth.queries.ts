@@ -16,7 +16,7 @@ export const authKeys = {
  * Empty params for useGetValidateTokenQuery (no parameters needed)
  */
 
-export interface GetValidateTokenParams {}
+export type GetValidateTokenParams = Record<string, never>
 
 /**
  * Validate the current authentication token

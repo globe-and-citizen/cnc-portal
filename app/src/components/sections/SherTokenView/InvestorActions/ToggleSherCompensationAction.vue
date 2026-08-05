@@ -18,7 +18,7 @@
             : 'border-violet-200 bg-violet-50/60 hover:border-violet-300 hover:bg-violet-100/70 disabled:border-violet-200 disabled:bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/30 dark:hover:border-violet-800 dark:hover:bg-violet-900/40 dark:disabled:border-violet-900 dark:disabled:bg-violet-950/30'
         "
         :loading="isLoading"
-        :disabled="isWriteDisabled || !canManageDeposits || isLoading"
+        :disabled="isWriteDisabled || !canManageDeposits || isEnableBlocked || isLoading"
         data-test="toggle-sher-compensation-button"
         @click="handleToggleCompensation"
       />
@@ -27,14 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useConnection } from '@wagmi/vue'
+import { useToast } from '@nuxt/ui/composables'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import {
-  useEnableDeposits,
-  useDisableDeposits,
-  useSetSafeAddress
-} from '@/composables/safeDepositRouter/writes'
+import { useEnableDeposits, useDisableDeposits } from '@/composables/safeDepositRouter/writes'
 import {
   useSafeDepositRouterAddress,
   useSafeDepositRouterSafeAddress,
@@ -42,19 +39,16 @@ import {
   useSafeDepositRouterOwner
 } from '@/composables/safeDepositRouter/reads'
 import { useTeamStore } from '@/stores'
-import { parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+
+const SAFE_ADDRESS_REQUIRED_MESSAGE = 'Set the Safe address on the deposit router first'
 
 const teamStore = useTeamStore()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 
-const toggleCompensationTooltip = computed(() => archivedTooltip.value)
 const connection = useConnection()
-
-// Track if we're in the process of setting safe address before enabling
-const isSettingSafeAddress = ref(false)
-const safeAddressErrorShown = ref(false)
 
 // Get SafeDepositRouter address
 const safeDepositRouterAddress = useSafeDepositRouterAddress()
@@ -69,7 +63,6 @@ const { data: contractSafeAddress, isLoading: isSafeAddressLoading } =
 // Write functions
 const enableDepositsWrite = useEnableDeposits()
 const disableDepositsWrite = useDisableDeposits()
-const setSafeAddressWrite = useSetSafeAddress()
 
 // Combined loading state
 const isReadLoading = computed(
@@ -77,11 +70,7 @@ const isReadLoading = computed(
 )
 
 const isWriteLoading = computed(() => {
-  return (
-    enableDepositsWrite.isPending.value ||
-    disableDepositsWrite.isPending.value ||
-    setSafeAddressWrite.isPending.value
-  )
+  return enableDepositsWrite.isPending.value || disableDepositsWrite.isPending.value
 })
 
 const isLoading = computed(() => isReadLoading.value || isWriteLoading.value)
@@ -101,6 +90,16 @@ const isSafeAddressCorrect = computed(() => {
   return (contractSafeAddress.value as string).toLowerCase() === safeAddress.toLowerCase()
 })
 
+// Enabling requires the Safe address to be set first (see SetSafeAddressAction).
+// Disabling stays available regardless.
+const isEnableBlocked = computed(() => !depositsEnabled.value && !isSafeAddressCorrect.value)
+
+const toggleCompensationTooltip = computed(() => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  if (isEnableBlocked.value) return SAFE_ADDRESS_REQUIRED_MESSAGE
+  return undefined
+})
+
 // ============================================================================
 // WATCH PATTERNS - Following established patterns
 // ============================================================================
@@ -110,15 +109,9 @@ watch(
   () => enableDepositsWrite.error.value,
   (error) => {
     if (error) {
-      console.error('Error enabling deposits:', error)
-      const errorMessage = parseError(error)
-
-      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
-      } else {
-        toast.add({ title: 'Failed to enable SHER compensation', color: 'error' })
-      }
-      isSettingSafeAddress.value = false
+      log.error('Error enabling deposits:', error)
+      const classified = classifyError(error, { contract: 'SafeDepositRouter' })
+      toast.add({ title: classified.userMessage, color: 'error' })
     }
   }
 )
@@ -129,7 +122,6 @@ watch(
   (success) => {
     if (success) {
       toast.add({ title: 'SHER compensation enabled successfully', color: 'success' })
-      isSettingSafeAddress.value = false
     }
   }
 )
@@ -139,14 +131,9 @@ watch(
   () => disableDepositsWrite.error.value,
   (error) => {
     if (error) {
-      console.error('Error disabling deposits:', error)
-      const errorMessage = parseError(error)
-
-      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
-      } else {
-        toast.add({ title: 'Failed to disable SHER compensation', color: 'error' })
-      }
+      log.error('Error disabling deposits:', error)
+      const classified = classifyError(error, { contract: 'SafeDepositRouter' })
+      toast.add({ title: classified.userMessage, color: 'error' })
     }
   }
 )
@@ -160,59 +147,6 @@ watch(
     }
   }
 )
-
-// Watch for set safe address errors
-watch(
-  () => setSafeAddressWrite.error.value,
-  (error) => {
-    if (error) {
-      console.error('Error setting safe address:', error)
-      const errorMessage = parseError(error)
-
-      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
-      } else {
-        toast.add({ title: 'Failed to update Safe address', color: 'error' })
-      }
-      isSettingSafeAddress.value = false
-    }
-  }
-)
-
-// Watch for set safe address success - automatically enable deposits after
-watch(
-  () => setSafeAddressWrite.isSuccess.value,
-  (success) => {
-    if (success && isSettingSafeAddress.value) {
-      toast.add({ title: 'Safe address updated successfully', color: 'success' })
-
-      // Auto-enable deposits after successful Safe address update
-      setTimeout(() => {
-        handleEnableDeposits()
-      }, 1000)
-    }
-  }
-)
-
-/**
- * Update Safe address in contract
- */
-async function updateSafeAddress() {
-  const safeAddress = teamStore.getContractAddressByType('Safe')
-
-  if (!safeAddress) {
-    if (!safeAddressErrorShown.value) {
-      toast.add({ title: 'Safe address not found', color: 'error' })
-      safeAddressErrorShown.value = true
-    }
-    isSettingSafeAddress.value = false
-    return
-  }
-
-  safeAddressErrorShown.value = false
-  toast.add({ title: 'Updating Safe address...', color: 'info' })
-  await setSafeAddressWrite.mutateAsync({ args: [safeAddress] })
-}
 
 /**
  * Enable deposits
@@ -229,8 +163,8 @@ async function handleDisableDeposits() {
 }
 
 /**
- * Toggle SHER token compensation
- * If enabling and Safe address is not set, automatically set it first
+ * Toggle SHER token compensation.
+ * Enabling requires the Safe address to already be set on the router.
  */
 async function handleToggleCompensation() {
   if (isWriteDisabled.value) return
@@ -251,15 +185,11 @@ async function handleToggleCompensation() {
     return
   }
 
-  // If enabling and Safe address is not correct, set it first
   if (!isSafeAddressCorrect.value) {
-    isSettingSafeAddress.value = true
-    await updateSafeAddress()
-    // The watch on setSafeAddress success will automatically call handleEnableDeposits
+    toast.add({ title: SAFE_ADDRESS_REQUIRED_MESSAGE, color: 'error' })
     return
   }
 
-  // If Safe address is already correct, enable directly
   await handleEnableDeposits()
 }
 </script>

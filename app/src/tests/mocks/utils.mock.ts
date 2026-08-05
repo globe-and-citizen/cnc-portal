@@ -7,12 +7,9 @@ export const mockLog = {
   debug: vi.fn()
 }
 
-export const mockParseError = vi.fn(() => 'Parsed error message')
-
 export const resetUtilsMocks = () => {
   mockLog.error.mockClear()
   mockLog.warn.mockClear()
   mockLog.info.mockClear()
   mockLog.debug.mockClear()
-  mockParseError.mockClear()
 }

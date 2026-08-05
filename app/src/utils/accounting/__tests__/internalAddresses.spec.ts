@@ -22,13 +22,15 @@ const contract = (type: TeamContract['type'], address: string): TeamContract => 
 })
 
 describe('INTERNAL_POCKET_CONTRACT_TYPES', () => {
-  it('lists the six money-pocket TeamContract types (FeeCollector excluded)', () => {
+  it('lists the eight money-pocket TeamContract types (FeeCollector excluded)', () => {
     expect([...INTERNAL_POCKET_CONTRACT_TYPES]).toEqual([
       'Safe',
       'Bank',
       'CashRemunerationEIP712',
       'ExpenseAccountEIP712',
+      'FixedReturn',
       'InvestorV1',
+      'Investor',
       'SafeDepositRouter'
     ])
   })
@@ -44,6 +46,13 @@ describe('collectInternalAddresses', () => {
       contract('BoardOfDirectors', EXTERNAL)
     ])
     expect(set).toEqual(new Set([getAddress(BANK), getAddress(INVESTOR), getAddress(SAFE)]))
+  })
+
+  // A team on a current Officer carries 'Investor', not 'InvestorV1'. Before
+  // both were listed, its share token fell through as an external counterparty.
+  it('treats the current-generation Investor as an internal pocket too', () => {
+    const set = collectInternalAddresses([contract('Investor', INVESTOR), contract('Bank', BANK)])
+    expect(set).toEqual(new Set([getAddress(INVESTOR), getAddress(BANK)]))
   })
 
   it('folds in extra protocol-wide addresses (e.g. the global FeeCollector)', () => {

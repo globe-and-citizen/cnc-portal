@@ -1,16 +1,15 @@
-import boardOfDirectorsBeaconModule from './BoardOfDirectorsBeaconModule'
+import boardOfDirectorsBeaconModule from './BoardOfDirectorsBeaconModule.js'
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
-import bankBeaconModule from './BankBeaconModule'
-// import ExpenseAccountModule from './ExpenseAccountModule'
-import ExpenseAccountEIP712Module from './ExpenseAccountEIP712Module'
-import investorsV1BeaconModule from './InvestorsV1BeaconModule'
-import CashRemunerationEIP712Module from './CashRemunerationEIP712Module'
-import SafeDepositRouterBeaconModule from './SafeDepositRouterBeaconModule'
-import vestingBeaconModule from './VestingBeaconModule'
-import proposalBeaconModule from './ProposalModule'
-import electionsBeaconModule from './ElectionsModule'
-import FeeCollectorModule from './FeeCollectorModule'
-import fixedReturnBeaconModule from './FixedReturnBeaconModule'
+import bankBeaconModule from './BankBeaconModule.js'
+import ExpenseAccountEIP712Module from './ExpenseAccountEIP712Module.js'
+import investorBeaconModule from './InvestorBeaconModule.js'
+import CashRemunerationEIP712Module from './CashRemunerationEIP712Module.js'
+import SafeDepositRouterBeaconModule from './SafeDepositRouterBeaconModule.js'
+import vestingBeaconModule from './VestingBeaconModule.js'
+import proposalBeaconModule from './ProposalModule.js'
+import electionsBeaconModule from './ElectionsModule.js'
+import FeeCollectorModule from './FeeCollectorModule.js'
+import fixedReturnBeaconModule from './FixedReturnBeaconModule.js'
 
 export default buildModule('Officer', (m) => {
   const beaconAdmin = m.getAccount(0)
@@ -25,8 +24,7 @@ export default buildModule('Officer', (m) => {
   m.useModule(boardOfDirectorsBeaconModule)
   m.useModule(proposalBeaconModule)
   m.useModule(electionsBeaconModule)
-  m.useModule(investorsV1BeaconModule)
-  // m.useModule(ExpenseAccountModule)
+  m.useModule(investorBeaconModule)
   m.useModule(ExpenseAccountEIP712Module)
   m.useModule(CashRemunerationEIP712Module)
   m.useModule(SafeDepositRouterBeaconModule)

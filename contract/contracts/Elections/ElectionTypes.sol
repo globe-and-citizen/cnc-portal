@@ -33,12 +33,12 @@ library ElectionTypes {
     uint256 startDate; // Block timestamp
     uint256 endDate; // Block timestamp
     uint256 seatCount; // Number of BOD seats (must be odd)
-    mapping(address => bool) isEligibleVoter;
-    mapping(address => bool) isCandidate;
+    mapping(address voter => bool eligible) isEligibleVoter;
+    mapping(address candidate => bool registered) isCandidate;
     address[] candidateList;
     address[] voterList;
     // Vote tracking
-    mapping(address => bool) hasVoted;
+    mapping(address voter => bool voted) hasVoted;
     // Results
     address[] winners;
     bool resultsPublished;

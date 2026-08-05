@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import type { SafeIncomingTransfer } from '@/types/safe'
-import { toSafeTransferRows } from '@/utils/accounting/assemble'
+import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
+import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/assemble'
 import { ADDR } from './fixtures'
 
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
@@ -90,5 +90,78 @@ describe('toSafeTransferRows', () => {
 
     const withDeposits = toSafeTransferRows([investorDeposit], ROUTER, deposits)
     expect(withDeposits).toHaveLength(0) // matched the router deposit → excluded
+  })
+})
+
+describe('toSafeOutgoingTransferRows', () => {
+  const baseTx: SafeTransaction = {
+    safe: ADDR.safe,
+    to: ADDR.client,
+    value: '1000000000000000000',
+    operation: 0,
+    safeTxGas: '0',
+    baseGas: '0',
+    gasPrice: '0',
+    gasToken: '0x0000000000000000000000000000000000000000',
+    nonce: 1,
+    executionDate: '2026-04-01T12:00:00Z',
+    submissionDate: '2026-04-01T11:00:00Z',
+    modified: '2026-04-01T12:00:00Z',
+    blockNumber: 100,
+    transactionHash: '0xoutHash1',
+    safeTxHash: '0xsafeTxHash1',
+    executor: ADDR.founder,
+    isExecuted: true,
+    isSuccessful: true,
+    confirmationsRequired: 1,
+    confirmations: []
+  }
+
+  it('converts a native outflow to a SafeTransferRow', () => {
+    const rows = toSafeOutgoingTransferRows([baseTx], ADDR.safe)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      from: ADDR.safe,
+      to: ADDR.client,
+      token: null,
+      amount: '1000000000000000000',
+      txHash: '0xoutHash1'
+    })
+    expect(rows[0].timestamp).toBe(Math.floor(Date.parse('2026-04-01T12:00:00Z') / 1000))
+  })
+
+  it('converts an ERC20 transfer call to a SafeTransferRow', () => {
+    const erc20Tx: SafeTransaction = {
+      ...baseTx,
+      to: ADDR.usdcToken,
+      value: '0',
+      transactionHash: '0xoutHash2',
+      dataDecoded: {
+        method: 'transfer',
+        parameters: [
+          { name: 'to', type: 'address', value: ADDR.member },
+          { name: 'value', type: 'uint256', value: '5000000' }
+        ]
+      }
+    }
+    const rows = toSafeOutgoingTransferRows([erc20Tx], ADDR.safe)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      from: ADDR.safe,
+      to: ADDR.member,
+      token: ADDR.usdcToken,
+      amount: '5000000'
+    })
+  })
+
+  it('skips unexecuted or failed transactions', () => {
+    const notExecuted = { ...baseTx, isExecuted: false, executionDate: null }
+    const failed = { ...baseTx, isSuccessful: false }
+    const rows = toSafeOutgoingTransferRows([notExecuted, failed], ADDR.safe)
+    expect(rows).toHaveLength(0)
+  })
+
+  it('tolerates a null transaction list', () => {
+    expect(toSafeOutgoingTransferRows(null, ADDR.safe)).toEqual([])
   })
 })
