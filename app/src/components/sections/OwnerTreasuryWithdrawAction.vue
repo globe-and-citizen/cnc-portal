@@ -6,7 +6,7 @@
         size="sm"
         :disabled="!hasWithdrawableBalance || isLoadingAction || archivedDisabled"
         data-test="owner-withdraw-button"
-        label="Withdraw"
+        label="Return Transfer to Bank  "
         @click="openWithdrawModal"
       />
     </TeamArchivedTooltip>
@@ -14,7 +14,7 @@
     <UModal
       v-if="withdrawModal.mount"
       v-model:open="withdrawModal.show"
-      title="Confirm Treasury Withdraw"
+      title="Confirm Return Transfer"
       description="Review this action before signing the transaction in MetaMask."
       :close="{ onClick: resetWithdrawState }"
     >
@@ -32,7 +32,7 @@
             color="warning"
             variant="soft"
             icon="i-heroicons-exclamation-triangle"
-            title="You are about to withdraw all available funds to the Bank."
+            title="You are about to return transfer all available funds to the Bank."
             description="By continuing, MetaMask will open and you will be asked to confirm the transaction."
           />
 
@@ -51,7 +51,7 @@
               :loading="isLoadingAction"
               :disabled="!hasWithdrawableBalance || isLoadingAction"
               data-test="owner-withdraw-modal-confirm-button"
-              label="Withdraw"
+              label="Return Transfer"
               @click="confirmWithdrawFromModal"
             />
           </div>
@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { encodeFunctionData, type Address } from 'viem'
-import { useContractBalance } from '@/composables'
+import { useContractBalance, contractBalanceKeys } from '@/composables'
 import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
 import { useOwnerWithdrawAllToBank as useCashOwnerWithdrawAll } from '@/composables/cashRemuneration/writes'
 import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
@@ -125,8 +125,10 @@ const isOwner = computed(() => {
 
 const hasTheRight = computed(() => isOwner.value || isBodAction.value)
 
-const { balances } = useContractBalance(contractAddress)
-const hasWithdrawableBalance = computed(() => balances.value.some((b) => b.amount > 0))
+const { data: balance } = useContractBalance(contractAddress)
+const hasWithdrawableBalance = computed(() =>
+  (balance.value?.balances ?? []).some((b) => b.raw > 0n)
+)
 
 const cashWithdraw = useCashOwnerWithdrawAll()
 const expenseWithdraw = useExpenseOwnerWithdrawAll()
@@ -145,14 +147,11 @@ const resetWithdrawState = () => {
 const refreshContractBalances = async () => {
   if (!contractAddress.value) return
 
-  await Promise.all([
-    queryClient.invalidateQueries({
-      queryKey: ['balance', { address: contractAddress.value, chainId: chainId.value }]
-    }),
-    queryClient.invalidateQueries({
-      queryKey: ['readContract', { args: [contractAddress.value], chainId: chainId.value }]
-    })
-  ])
+  // Native and ERC-20 amounts share one query per contract now, so a single key
+  // covers what used to take a `balance` plus a `readContract` invalidation.
+  await queryClient.invalidateQueries({
+    queryKey: contractBalanceKeys.detail(contractAddress.value, chainId.value)
+  })
 }
 
 const openWithdrawModal = () => {
@@ -184,7 +183,7 @@ const confirmWithdrawFromModal = async () => {
     }
 
     await withdrawTx.value.mutateAsync({ args: [] })
-    toast.add({ title: 'Withdraw successful', color: 'success' })
+    toast.add({ title: ' Return Transfer successful', color: 'success' })
     resetWithdrawState()
     await refreshContractBalances()
   } catch (error: unknown) {

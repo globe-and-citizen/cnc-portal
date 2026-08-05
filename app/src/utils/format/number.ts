@@ -6,6 +6,7 @@
  * enforces it. See `.github/copilot-instructions/formatting-standards.md`.
  */
 
+import { formatUnits } from 'viem'
 import { collapseSignedZero, EMPTY_VALUE, FORMAT_LOCALE, toFiniteNumber } from './shared'
 
 /** Value accepted by every amount formatter — on-chain amounts arrive as decimal strings. */
@@ -79,6 +80,46 @@ export function formatToken(
 ): string {
   const formatted = formatNumber(value, { maxDecimals })
   return formatted === EMPTY_VALUE ? EMPTY_VALUE : `${formatted} ${symbol}`
+}
+
+/** Format an integer amount returned by a token contract using its declared decimals. */
+export function formatTokenUnits(
+  value: bigint | null | undefined,
+  decimals: number,
+  symbol: string,
+  options?: Pick<DecimalOptions, 'maxDecimals'>
+): string {
+  if (value === null || value === undefined) return EMPTY_VALUE
+  return formatToken(formatUnits(value, decimals), symbol, options)
+}
+
+export interface CurrencyOptions extends UsdOptions {
+  /** ISO 4217 code driving the symbol. Default `'USD'`. */
+  currency?: string
+}
+
+/**
+ * `formatUsd` for a currency the user chose rather than one we hardcoded:
+ * `1234.5, { currency: 'EUR' }` → `€1,234.50`.
+ *
+ * Reach for this when the amount was already priced in
+ * `currencyStore.localCurrency` — pairing a local-currency *value* with a `$`
+ * from `formatUsd` misreports the number, which is worse than not converting at
+ * all. When the amount really is USD, prefer `formatUsd`: fewer moving parts.
+ */
+export function formatCurrency(
+  value: NumericInput,
+  { currency = 'USD', decimals = 2 }: CurrencyOptions = {}
+): string {
+  const amount = toFiniteNumber(value)
+  if (amount === null) return EMPTY_VALUE
+
+  return new Intl.NumberFormat(FORMAT_LOCALE, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(collapseSignedZero(amount, decimals))
 }
 
 export interface CompactOptions {

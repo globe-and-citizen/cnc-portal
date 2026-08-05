@@ -2,6 +2,7 @@ import type { Address } from 'viem'
 import type { FolderVersion } from '@/artifacts/registry'
 import type { Member } from './member'
 import type { TeamContract } from './teamContract'
+import type { Wage } from './cash-remuneration'
 
 export interface PreviousOfficerRef {
   id: number
@@ -66,4 +67,11 @@ export interface Team {
   safeAddress?: Address
   teamContracts: TeamContract[]
   _count?: { members: number }
+  /**
+   * The requesting user's own active wage on this team, or null when they have
+   * none. Only returned by the teams *list* endpoint, which shows a per-viewer
+   * wage badge on each card; the single-team endpoint exposes wages per member
+   * via `members[].currentWage` instead.
+   */
+  callerWage?: Wage | null
 }

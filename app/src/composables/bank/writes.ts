@@ -1,4 +1,5 @@
-import { computed } from 'vue'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import type { Address } from 'viem'
 import { bankAbi } from '@/artifacts/abi/generated'
 import {
   useContractWritesV3,
@@ -8,9 +9,21 @@ import { useTeamStore } from '@/stores/teamStore'
 
 type BankFunctionNames = WriteFunctionName<typeof bankAbi>
 
-function useBankContractWrite<F extends BankFunctionNames>(functionName: F) {
+/**
+ * A Bank other than the team's current one — used to drain a Bank belonging to
+ * an archived Officer generation. Omit it and the write targets the current
+ * generation, which is what every regular call site wants.
+ */
+export type BankAddressOverride = MaybeRefOrGetter<Address | undefined>
+
+function useBankContractWrite<F extends BankFunctionNames>(
+  functionName: F,
+  address?: BankAddressOverride
+) {
   const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+  const bankAddress = computed(
+    () => toValue(address) ?? (teamStore.getContractAddressByType('Bank') as Address | undefined)
+  )
   return useContractWritesV3({
     contractAddress: bankAddress,
     abi: bankAbi,
@@ -30,12 +43,12 @@ export function useDistributeTokenDividends() {
   return useBankContractWrite('distributeTokenDividends')
 }
 
-export function useTransfer() {
-  return useBankContractWrite('transfer')
+export function useTransfer(address?: BankAddressOverride) {
+  return useBankContractWrite('transfer', address)
 }
 
-export function useTransferToken() {
-  return useBankContractWrite('transferToken')
+export function useTransferToken(address?: BankAddressOverride) {
+  return useBankContractWrite('transferToken', address)
 }
 
 export function useFundFixedReturnRepayment() {

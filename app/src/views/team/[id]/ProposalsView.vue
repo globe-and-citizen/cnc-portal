@@ -53,26 +53,31 @@ import { ref } from 'vue'
 const createProposalModal = ref({ mount: false, show: false })
 const proposalsListRef = ref<InstanceType<typeof ProposalsList> | null>(null)
 
+// reka-ui (Nuxt UI's Select engine) throws when a SelectItem value is an empty
+// string, which corrupts the component tree and crashes on unmount. Use a
+// non-empty "all" sentinel for the catch-all options instead.
+const ALL = 'all'
+
 const types = [
-  { label: 'All Types', value: '' },
+  { label: 'All Types', value: ALL },
   { label: 'Financial', value: 'Financial' },
   { label: 'Technical', value: 'Technical' },
   { label: 'Operational', value: 'Operational' }
 ]
 
-const creators = [{ label: 'All Creators', value: '' }]
+const creators = [{ label: 'All Creators', value: ALL }]
 
 const statuses = [
-  { label: 'All Status', value: '' },
+  { label: 'All Status', value: ALL },
   { label: 'Active', value: 0 },
   { label: 'Approved', value: 1 },
   { label: 'Rejected', value: 2 },
   { label: 'Tied', value: 3 }
 ]
 
-const selectedType = ref<string>('')
-const selectedCreator = ref<string>('')
-const selectedStatus = ref<string | number>('')
+const selectedType = ref<string>(ALL)
+const selectedCreator = ref<string>(ALL)
+const selectedStatus = ref<string | number>(ALL)
 
 const handleProposalCreated = () => {
   // Close the modal

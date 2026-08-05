@@ -8,6 +8,7 @@ import {
 } from '@wagmi/core'
 import { getAddress, type Address } from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 import { log, parseErrorV2 } from '@/utils'
 
 type WagmiConfig = typeof wagmiConfigType
@@ -122,7 +123,7 @@ export function useSafeSendTransaction(cfg: SendTransactionConfig) {
       await Promise.all(
         addresses.map((address) =>
           queryClient.invalidateQueries({
-            queryKey: ['balance', { address, chainId: chainId ?? receipt.chainId }]
+            queryKey: contractBalanceKeys.detail(address, chainId ?? receipt.chainId)
           })
         )
       )

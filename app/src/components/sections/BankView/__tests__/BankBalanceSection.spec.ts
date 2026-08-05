@@ -19,15 +19,8 @@ vi.mock('@iconify/vue', () => ({
 }))
 
 const baseTotal = {
-  USD: {
-    value: 50500,
-    formated: '$50.5K',
-    id: 'usd',
-    code: 'USD',
-    symbol: '$',
-    price: 1000,
-    formatedPrice: '$1K'
-  }
+  usd: { value: 50500, formatted: '$50.5K' },
+  local: { value: 50500, formatted: '$50.5K' }
 }
 
 describe('BankBalanceSection', () => {
@@ -50,15 +43,17 @@ describe('BankBalanceSection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseContractBalance.total.value = {
-      USD: { ...baseTotal.USD }
+      usd: { ...baseTotal.usd },
+      local: { ...baseTotal.local }
     }
+    mockUseContractBalance.hasData.value = true
     mockUseContractBalance.isLoading.value = false
   })
 
   it('renders total balance', () => {
     const wrapper = createWrapper()
 
-    expect(wrapper.text()).toContain(mockUseContractBalance.total.value.USD.formated)
+    expect(wrapper.text()).toContain(mockUseContractBalance.total.value.usd.formatted)
     expect(wrapper.text()).toContain('USD')
   })
 

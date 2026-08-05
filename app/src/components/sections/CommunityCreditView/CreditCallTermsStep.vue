@@ -42,7 +42,9 @@
               <UCalendar
                 :model-value="deadlineCalendarDate"
                 :min-value="minDeadlineDate"
-                @update:model-value="(val) => onSelectDeadlineDate(val as CalendarDate | null)"
+                @update:model-value="
+                  (val: unknown) => onSelectDeadlineDate(val as CalendarDate | null)
+                "
               />
             </template>
           </UPopover>
@@ -50,7 +52,7 @@
             :model-value="localDeadlineTime"
             class="w-40 shrink-0"
             data-test="cc-deadline-time"
-            @update:model-value="(val) => onLocalTimeInput(timeValueToStr(val))"
+            @update:model-value="(val: unknown) => onLocalTimeInput(timeValueToStr(val))"
           >
             <template #trailing><span class="text-muted text-xs font-bold">Local</span></template>
           </UInputTime>

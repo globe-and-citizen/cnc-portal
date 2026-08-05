@@ -19,7 +19,11 @@ import {
   resetDeployState
 } from '@/tests/mocks/composables.mock'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
-import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
+import {
+  mockGetBalance,
+  mockGetLogs,
+  mockReadContractAction
+} from '@/tests/mocks/viem.actions.mock'
 import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock'
 
 // Restore all shared composable mocks to their defaults before every test so
@@ -229,6 +233,12 @@ vi.mock('@/queries/auth.queries', () => ({
  */
 vi.mock('@/queries/contract.queries', () => ({
   contractKeys: { all: ['contracts'] as const },
+  useGetTeamOfficersQuery: vi.fn(() => ({
+    data: ref([]),
+    isPending: ref(false),
+    isError: ref(false),
+    refetch: vi.fn()
+  })),
   useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation),
   useSyncContractsMutation: vi.fn(queryMocks.useSyncContractsMutation),
   useCreateOfficerMutation: vi.fn(queryMocks.useCreateOfficerMutation)
@@ -299,9 +309,15 @@ vi.mock('@/composables/useAuth', () => ({
 /**
  * Mock useContractBalance composable
  */
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
+// `importOriginal` keeps `contractBalanceKeys` real: specs assert on the key the
+// component invalidates, and a hand-written factory would leave it undefined.
+vi.mock('@/composables/useContractBalance', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useContractBalance: vi.fn(() => mockUseContractBalance)
+  }
+})
 
 /**
  * Mock useDeployContract composable
@@ -347,7 +363,8 @@ vi.mock('viem/actions', async (importOriginal) => {
   return {
     ...actual,
     getBalance: mockGetBalance,
-    getLogs: mockGetLogs
+    getLogs: mockGetLogs,
+    readContract: mockReadContractAction
   }
 })
 

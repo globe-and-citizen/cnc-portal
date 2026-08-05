@@ -55,7 +55,7 @@ export const getTokens = (
           balance: Number(balance),
           spendableBalance: spendableBalance,
           tokenId: tokenId as TokenId,
-          price: balances.find((b) => b.token.id === tokenId)?.values['USD']?.price || 0,
+          price: balances.find((b) => b.token.id === tokenId)?.price.usd.value || 0,
           code: balances.find((b) => b.token.id === tokenId)?.token.code || ''
         }
       ]

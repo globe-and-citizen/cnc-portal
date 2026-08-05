@@ -9,7 +9,8 @@ import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
-  mockInvestorReads
+  mockInvestorReads,
+  makeTokenBalance
 } from '@/tests/mocks'
 
 type MutateOptions = {
@@ -66,8 +67,9 @@ describe('SafeDepositRouterForm.vue', () => {
     vi.clearAllMocks()
     mockInvestorReads.symbol.data.value = 'SHER'
     mockUseContractBalance.balances.value = [
-      {
+      makeTokenBalance({
         amount: 50,
+        usdPrice: 1,
         token: {
           id: 'usdc',
           name: 'USD Coin',
@@ -76,19 +78,8 @@ describe('SafeDepositRouterForm.vue', () => {
           coingeckoId: 'usd-coin',
           decimals: 6,
           address: '0xA3492D046095AFFE351cFac15de9b86425E235dB'
-        },
-        values: {
-          USD: {
-            value: 50,
-            formated: '$50',
-            id: 'usd',
-            code: 'USD',
-            symbol: '$',
-            price: 1,
-            formatedPrice: '$1'
-          }
         }
-      }
+      })
     ]
     mockERC20Reads.allowance.data.value = 0n
   })

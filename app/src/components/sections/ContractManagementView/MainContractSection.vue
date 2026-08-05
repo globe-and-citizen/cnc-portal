@@ -1,99 +1,86 @@
 <template>
-  <div class="flex flex-col gap-6">
-    <div v-if="teamStore.currentTeamMeta.isPending" class="flex justify-center">
-      <UIcon name="i-lucide-loader-circle" class="text-primary h-10 w-10 animate-spin" />
+  <section class="space-y-6" aria-labelledby="current-contracts-title">
+    <h2 id="current-contracts-title" class="sr-only">Current contracts</h2>
+
+    <div v-if="teamStore.currentTeamMeta.isPending" class="flex justify-center py-10">
+      <UIcon name="i-lucide-loader-circle" class="text-primary size-10 animate-spin" />
     </div>
-    <div
-      v-if="!teamStore.currentTeamMeta.isPending && teamStore"
-      class="flex w-full flex-col items-center gap-6"
-    >
-      <div
-        v-if="officersQuery.isError.value"
-        class="text-error flex w-full items-center gap-2 text-sm"
+
+    <template v-else-if="generation">
+      <UCard
+        class="overflow-hidden"
+        :ui="{ body: 'bg-gradient-to-r from-primary/10 via-primary/5 to-transparent' }"
       >
-        <UIcon name="i-lucide-triangle-alert" class="h-4 w-4" />
-        Failed to load Officer generations
-      </div>
-
-      <!-- One card per Officer generation (current first), each rendered with the
-           same rich table — the current card keeps the "Main contract" title +
-           Redeploy, legacy cards show their version + Officer address. -->
-      <UCard v-for="gen in generations" :key="gen.key" class="w-full">
-        <template #header>
-          <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div>
             <div class="flex flex-wrap items-center gap-2">
-              <template v-if="gen.isCurrent">
-                <span>Main contract</span>
-                <UBadge color="primary" variant="subtle" size="sm">
-                  {{ gen.version || 'unknown' }}
-                </UBadge>
-                <UBadge color="success" variant="soft" size="sm">current</UBadge>
-              </template>
-              <template v-else>
-                <UBadge color="neutral" variant="subtle" size="sm">
-                  {{ gen.version || 'unknown' }}
-                </UBadge>
-                <UBadge color="neutral" variant="soft" size="sm">legacy</UBadge>
-              </template>
-              <span class="text-sm text-gray-500">Officer</span>
-              <AddressToolTip :address="gen.officerAddress" class="text-xs" />
+              <span class="bg-success size-2 rounded-full" aria-hidden="true" />
+              <span class="text-success text-xs font-semibold tracking-wide uppercase">
+                Current generation
+              </span>
+              <UBadge color="primary" variant="subtle" size="sm">
+                {{ generation.version || 'Unknown version' }}
+              </UBadge>
             </div>
-
-            <TeamArchivedTooltip v-if="gen.isCurrent" v-slot="{ disabled: archivedDisabled }">
-              <UButton
-                color="primary"
-                :disabled="
-                  teamStore.currentTeam?.ownerAddress !== userStore.address || archivedDisabled
-                "
-                @click="openRedeployModal"
-                data-test="createAddCampaign"
-              >
-                Redeploy Contracts
-              </UButton>
-            </TeamArchivedTooltip>
+            <div class="mt-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+              <p class="text-highlighted text-xl font-semibold">Active Officer</p>
+              <AddressToolTip :address="generation.officerAddress" :slice="true" class="text-xs" />
+            </div>
+            <p class="text-muted mt-2 text-sm">
+              This generation currently controls {{ currentContracts.length }} workspace contracts.
+            </p>
           </div>
-        </template>
 
-        <MainContractTable :contracts="gen.contracts" :version="gen.version" />
+          <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+            <UButton
+              color="primary"
+              icon="i-lucide-refresh-cw"
+              label="Redeploy contracts"
+              :disabled="
+                teamStore.currentTeam?.ownerAddress !== userStore.address || archivedDisabled
+              "
+              data-test="createAddCampaign"
+              @click="openRedeployModal"
+            />
+          </TeamArchivedTooltip>
+        </div>
       </UCard>
-    </div>
+
+      <MainContractTable :contracts="currentContracts" :version="generation.version" />
+    </template>
+
+    <UEmpty
+      v-else
+      icon="i-lucide-file-warning"
+      title="No active deployment found"
+      description="Deploy an Officer generation to manage contracts."
+    />
+
     <RedeployOfficerModal v-model:open="showModal" />
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useUserDataStore } from '@/stores/user'
+import AddressToolTip from '@/components/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import type { ContractGeneration } from '@/composables/contracts/useContractManagementGenerations'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore } from '@/stores'
+import { useUserDataStore } from '@/stores/user'
 import MainContractTable from './MainContractTable.vue'
 import RedeployOfficerModal from './RedeployOfficerModal.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
+
+const props = defineProps<{
+  generation?: ContractGeneration
+}>()
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const { isWriteDisabled } = useTeamWriteGuard()
-
 const showModal = ref(false)
-
-// Officer generations of the team (newest first), each with its contracts.
-const officersQuery = useGetTeamOfficersQuery({
-  queryParams: { teamId: () => teamStore.currentTeamId ?? '' }
-})
-
-// The current generation uses the team's merged `teamContracts` (which includes
-// the officer-less Safe / SafeDepositRouter); legacy generations use the
-// contracts returned per officer.
-const generations = computed(() =>
-  (officersQuery.data.value ?? []).map((officer) => ({
-    key: officer.id,
-    version: officer.version,
-    officerAddress: officer.address,
-    isCurrent: officer.isCurrent,
-    contracts: officer.isCurrent ? (teamStore.currentTeam?.teamContracts ?? []) : officer.contracts
-  }))
+const currentContracts = computed(
+  () => props.generation?.contracts.filter((contract) => contract.type !== 'Campaign') ?? []
 )
 
 function openRedeployModal() {

@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
 import { getBalance, readContract } from '@wagmi/core'
 import type { Address } from 'viem'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -7,6 +7,7 @@ import { erc20Abi } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { classifyError } from '@/utils'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 import type { ContractKey } from '@/composables/contracts/errorCatalogs.types'
 import { useOwnerWithdrawAllToBank as useCashOwnerWithdrawAll } from '@/composables/cashRemuneration/writes'
 import { useOwnerWithdrawAllToBank as useExpenseOwnerWithdrawAll } from '@/composables/expenseAccount/writes'
@@ -37,6 +38,28 @@ const CONTRACT_KEY: Record<CashOutStepKey, ContractKey> = {
 }
 
 /**
+ * The three accounts the sequence drains. Each defaults to the team's CURRENT
+ * generation; pass explicit addresses to run the same sequence over the
+ * contracts of an archived Officer generation.
+ */
+export interface CashOutSources {
+  bank?: MaybeRefOrGetter<Address | undefined>
+  cashRemuneration?: MaybeRefOrGetter<Address | undefined>
+  expense?: MaybeRefOrGetter<Address | undefined>
+}
+
+export interface CashOutOptions {
+  sources?: CashOutSources
+  /**
+   * Where the Bank step forwards the consolidated funds. Defaults to the
+   * connected wallet (the "cash out to me" case); the legacy-generation flow
+   * points it at the current generation's Bank instead, so the money stays in
+   * the team treasury.
+   */
+  to?: MaybeRefOrGetter<Address | undefined>
+}
+
+/**
  * Orchestrates the "Cash out all" sequence.
  *
  * It is a state machine on top of the existing single-purpose contract
@@ -50,17 +73,30 @@ const CONTRACT_KEY: Record<CashOutStepKey, ContractKey> = {
  *    the Bank step re-reads live balances so already-emptied tokens are skipped.
  *  - The Bank step reads RAW on-chain balances at execution time (after the
  *    source accounts have consolidated into it) and forwards native + each held
- *    ERC-20 to the connected owner via `transfer` / `transferToken`.
+ *    ERC-20 to `options.to` via `transfer` / `transferToken`.
+ *
+ * The source sweeps always land in the Bank of THEIR OWN generation: on-chain,
+ * `ownerWithdrawAllToBank` resolves the Bank through the Officer the contract
+ * was deployed by. Only the final Bank → recipient hop is configurable.
  */
-export function useCashOutAll() {
+export function useCashOutAll(options: CashOutOptions = {}) {
   const teamStore = useTeamStore()
   const userStore = useUserDataStore()
   const queryClient = useQueryClient()
 
-  const cashWithdraw = useCashOwnerWithdrawAll()
-  const expenseWithdraw = useExpenseOwnerWithdrawAll()
-  const bankTransfer = useTransfer()
-  const bankTransferToken = useTransferToken()
+  const bankAddress = computed(
+    () =>
+      toValue(options.sources?.bank) ??
+      (teamStore.getContractAddressByType('Bank') as Address | undefined)
+  )
+  const recipient = computed(
+    () => toValue(options.to) ?? (userStore.address as Address | undefined)
+  )
+
+  const cashWithdraw = useCashOwnerWithdrawAll(options.sources?.cashRemuneration)
+  const expenseWithdraw = useExpenseOwnerWithdrawAll(options.sources?.expense)
+  const bankTransfer = useTransfer(bankAddress)
+  const bankTransferToken = useTransferToken(bankAddress)
 
   const steps = ref<CashOutRunStep[]>([])
   const currentIndex = ref(0)
@@ -73,13 +109,13 @@ export function useCashOutAll() {
   const hasFailed = computed(() => failedStep.value !== null)
 
   /**
-   * Bank step: forward everything the Bank now holds to the connected owner.
-   * Reads happen here (not up front) so they include what the source accounts
-   * just consolidated.
+   * Bank step: forward everything the Bank now holds to the recipient. Reads
+   * happen here (not up front) so they include what the source accounts just
+   * consolidated.
    */
   async function executeBankStep(step: CashOutRunStep) {
-    const bank = teamStore.getContractAddressByType('Bank') as Address | undefined
-    const to = userStore.address as Address | undefined
+    const bank = bankAddress.value
+    const to = recipient.value
     if (!bank) throw new Error('Bank address is undefined')
     if (!to) throw new Error('Recipient address is undefined')
 
@@ -123,17 +159,19 @@ export function useCashOutAll() {
   }
 
   /**
-   * One-shot refresh of every contract balance touched by the flow. The
-   * per-write invalidation in `useContractWritesV3` only covers reads keyed by
-   * the called contract's address, which misses the Bank's ERC-20 `balanceOf`
-   * reads (keyed by the token address) — so we sweep both query families once
-   * the sequence completes.
+   * One-shot refresh of every contract balance touched by the flow.
+   *
+   * The sequence moves funds between several contracts, so rather than name
+   * each one we sweep the whole `balance` family plus the contract reads that
+   * `useContractWritesV3` scopes to a single written address.
    */
   async function refreshBalances() {
     await queryClient.invalidateQueries({
       predicate: (query) => {
         const key = query.queryKey
-        return Array.isArray(key) && (key[0] === 'balance' || key[0] === 'readContract')
+        return (
+          Array.isArray(key) && (key[0] === contractBalanceKeys.all[0] || key[0] === 'readContract')
+        )
       }
     })
   }

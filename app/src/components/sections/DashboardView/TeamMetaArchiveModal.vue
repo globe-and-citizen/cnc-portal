@@ -1,6 +1,6 @@
 <template>
   <UModal
-    v-model:open="showArchiveTeamConfirmModal"
+    v-model:open="open"
     :title="isArchived ? 'Unarchive Company' : 'Archive Company'"
     :description="
       isArchived
@@ -8,13 +8,15 @@
         : 'This action will remove the company from the dashboard and prevent it from being used.'
     "
   >
-    <UButton
-      size="sm"
-      :color="isArchived ? 'success' : 'warning'"
-      :icon="isArchived ? 'i-lucide-archive-restore' : 'i-lucide-archive'"
-      :label="isArchived ? 'Unarchive' : 'Archive'"
-      data-test="team-meta-archive-open"
-    />
+    <template v-if="withTrigger" #default>
+      <UButton
+        size="sm"
+        :color="isArchived ? 'success' : 'warning'"
+        :icon="isArchived ? 'i-lucide-archive-restore' : 'i-lucide-archive'"
+        :label="isArchived ? 'Unarchive' : 'Archive'"
+        data-test="team-meta-archive-open"
+      />
+    </template>
     <template #body>
       <UAlert
         v-if="updateTeamError"
@@ -37,28 +39,33 @@
           :disabled="teamIsUpdating"
           :label="isArchived ? 'Unarchive' : 'Archive'"
         />
-        <UButton
-          color="primary"
-          variant="outline"
-          @click="showArchiveTeamConfirmModal = false"
-          label="Cancel"
-        />
+        <UButton color="primary" variant="outline" @click="open = false" label="Cancel" />
       </div>
     </template>
   </UModal>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { Team } from '@/types/team'
 import { useTeamStore } from '@/stores'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
 
-const props = defineProps<{
-  currentTeam: Team | null | undefined
-}>()
+const props = withDefaults(
+  defineProps<{
+    currentTeam: Team | null | undefined
+    /**
+     * Team to act on when it is not the one the dashboard has open — the teams
+     * list drives this modal per card, where `teamStore.currentTeamId` is stale.
+     */
+    teamId?: string | number | null
+    /** Clear it when the parent opens the modal itself and owns the trigger. */
+    withTrigger?: boolean
+  }>(),
+  { teamId: null, withTrigger: true }
+)
 
-const showArchiveTeamConfirmModal = ref(false)
+const open = defineModel<boolean>('open', { default: false })
 const teamStore = useTeamStore()
 const toast = useToast()
 
@@ -72,7 +79,7 @@ const {
 const isArchived = computed(() => props.currentTeam?.isArchived ?? false)
 
 function getRequiredTeamId(): string | null {
-  const teamId = teamStore.currentTeamId
+  const teamId = props.teamId ?? teamStore.currentTeamId
   if (!teamId) {
     toast.add({ title: 'Company ID is required', color: 'error' })
     return null
@@ -88,7 +95,7 @@ function archiveTeam() {
     {
       onSuccess: () => {
         toast.add({ title: 'Company archived successfully', color: 'success' })
-        showArchiveTeamConfirmModal.value = false
+        open.value = false
         reset()
       }
     }
@@ -103,7 +110,7 @@ function unarchiveTeam() {
     {
       onSuccess: () => {
         toast.add({ title: 'Company unarchived successfully', color: 'success' })
-        showArchiveTeamConfirmModal.value = false
+        open.value = false
         reset()
       }
     }

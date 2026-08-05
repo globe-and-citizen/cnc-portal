@@ -38,5 +38,26 @@ describe('AdvertiseContractSection.vue', () => {
     const wrapper = mountSection()
     expect(wrapper.find('[data-icon="i-lucide-loader-circle"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="createAddCampaign"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Advertising campaigns')
+  })
+
+  it('hides manager setup once a Campaign Manager exists', () => {
+    vi.mocked(useTeamStore).mockReturnValue({
+      ...mockTeamStore,
+      currentTeamMeta: { isPending: false, data: mockTeamStore.currentTeam },
+      currentTeam: {
+        ...mockTeamStore.currentTeam,
+        teamContracts: [
+          {
+            address: '0xAAaaaaAAAAaaAAAaaaaAaaAAAAAaaaaaAAAaaaA1',
+            admins: [],
+            type: 'Campaign',
+            deployer: '0xDeployerAddress'
+          }
+        ]
+      }
+    } as unknown as ReturnType<typeof useTeamStore>)
+    const wrapper = mountSection()
+    expect(wrapper.find('[data-test="createAddCampaign"]').exists()).toBe(false)
   })
 })
