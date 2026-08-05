@@ -1,37 +1,42 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import TeamContracts from '@/components/sections/ContractManagementView/TeamContracts.vue'
-import { useCampaignEventsByCode } from '@/composables/campaign/reads'
+import { useCampaignManagerSettings } from '@/composables/campaign/reads'
 import { mockTeamStore } from '@/tests/mocks'
 import { useTeamStore } from '@/stores'
 
 vi.mock('@/composables/campaign/reads', () => ({
-  useCampaignEventsByCode: vi.fn()
+  useCampaignManagerSettings: vi.fn()
 }))
-vi.mock('@/composables/useContractFunctions', () => ({
-  getContractData: vi.fn().mockResolvedValue([])
+vi.mock('@/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue', () => ({
+  default: {
+    props: ['managerAddress'],
+    template: '<div data-test="campaign-workspace">{{ managerAddress }}</div>'
+  }
 }))
 
 const CAMPAIGN_ADDR = '0xAAaaaaAAAAaaAAAaaaaAaaAAAAAaaaaaAAAaaaA1'
 
 describe('TeamContracts.vue', () => {
-  const refetch = vi.fn().mockResolvedValue(undefined)
-  const data = ref({})
-  const isError = ref(false)
+  const settingsEnabled = ref(false)
 
   beforeEach(() => {
     vi.clearAllMocks()
-    data.value = {}
-    isError.value = false
-    vi.mocked(useCampaignEventsByCode).mockReturnValue({
-      data,
-      isError,
-      error: ref(null),
-      refetch
-    } as unknown as ReturnType<typeof useCampaignEventsByCode>)
-
+    vi.mocked(useCampaignManagerSettings).mockImplementation((_address, options) => {
+      settingsEnabled.value = (options?.enabled as { value: boolean }).value
+      return {
+        data: ref({
+          costPerClick: '0.1',
+          costPerImpression: '0.01',
+          bankAddress: '0x1111111111111111111111111111111111111111'
+        }),
+        isPending: ref(false),
+        isError: ref(false),
+        refetch: vi.fn()
+      } as unknown as ReturnType<typeof useCampaignManagerSettings>
+    })
     vi.mocked(useTeamStore).mockReturnValue({
       ...mockTeamStore,
       currentTeam: {
@@ -54,29 +59,32 @@ describe('TeamContracts.vue', () => {
     })
   }
 
-  it('wires useCampaignEventsByCode with a disabled query until the modal opens', () => {
-    mountComponent()
-    expect(useCampaignEventsByCode).toHaveBeenCalledTimes(1)
-    const [, opts] = vi.mocked(useCampaignEventsByCode).mock.calls[0]
-    expect((opts!.enabled as unknown as { value: boolean }).value).toBe(false)
+  it('separates the Campaign Manager from the funded campaign workspace', () => {
+    const wrapper = mountComponent()
+    expect(wrapper.text()).toContain('Campaign Manager')
+    expect(wrapper.find('[data-test="campaign-workspace"]').text()).toContain(CAMPAIGN_ADDR)
   })
 
-  it('opens the events modal and refetches when "View Events" is clicked', async () => {
+  it('shows the manager setup state when no Campaign Manager exists', () => {
+    vi.mocked(useTeamStore).mockReturnValue({
+      ...mockTeamStore,
+      currentTeam: { ...mockTeamStore.currentTeam, teamContracts: [] }
+    } as ReturnType<typeof useTeamStore>)
     const wrapper = mountComponent()
-    const viewEventsBtn = wrapper.findAll('button').find((b) => b.text() === 'View Events')
-    expect(viewEventsBtn).toBeTruthy()
-
-    await viewEventsBtn!.trigger('click')
-    await flushPromises()
-
-    expect(refetch).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('[data-test="campaign-manager-empty"]').exists()).toBe(true)
   })
 
-  it('shows an error toast when the events query reports an error', async () => {
+  it('keeps manager settings reads disabled until the settings panel opens', async () => {
     const wrapper = mountComponent()
-    isError.value = true
-    await flushPromises()
-    // The component subscribes via `watch` — triggering isError should not throw
-    expect(wrapper.exists()).toBe(true)
+    const enabled = vi.mocked(useCampaignManagerSettings).mock.calls[0]![1]!.enabled as ReturnType<
+      typeof computed<boolean>
+    >
+    expect(enabled.value).toBe(false)
+    const settingsButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Manager settings'))
+    expect(settingsButton).toBeDefined()
+    await settingsButton!.trigger('click')
+    expect(enabled.value).toBe(true)
   })
 })

@@ -1,197 +1,184 @@
-<template>
-  <div id="team-contracts" class="overflow-x-auto">
-    <UTable
-      :data="
-        teamStore.currentTeam?.teamContracts
-          .filter((contract) => contract.type === 'Campaign')
-          .map((contract, index) => ({
-            ...contract,
-            index: index + 1
-          }))
-      "
-      :columns="[
-        { accessorKey: 'index', header: '#' },
-        { accessorKey: 'type', header: 'Type' },
-        { accessorKey: 'address', header: 'Contract Address' },
-        { accessorKey: 'admins', header: 'Admins' },
-        { accessorKey: 'details', header: 'Details' },
-        { accessorKey: 'events', header: 'Events' }
-      ]"
-    >
-      <template #address-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.address" class="text-xs" />
-      </template>
-
-      <template #admins-cell="{ row: { original: row } }">
-        <UButton
-          :disabled="row.type !== 'Campaign'"
-          @click="
-            openAdminsModal(
-              {
-                address: row.address,
-                type: row.type,
-                deployer: row.deployer,
-                admins: row.admins
-              },
-              row.index
-            )
-          "
-          color="secondary"
-          size="xs"
-          data-test="open-admin-modal-btn"
-          icon="material-symbols:person"
-        />
-      </template>
-
-      <template #details-cell="{ row: { original: row } }">
-        <UButton
-          :disabled="row.type !== 'Campaign'"
-          @click="openContractDataModal(row.address)"
-          variant="ghost"
-          color="neutral"
-          size="xs"
-          label="View Details"
-        />
-      </template>
-
-      <template #events-cell="{ row: { original: row } }">
-        <UButton
-          @click="openEventsModal(row.address)"
-          variant="ghost"
-          color="neutral"
-          size="xs"
-          label="View Events"
-        />
-      </template>
-    </UTable>
-
-    <!-- Admin Modal -->
-    <UModal
-      v-model:open="contractAdminDialog.show"
-      title="Contract Admins"
-      description="View and manage contract administrators for this campaign."
-    >
-      <template #body>
-        <div class="max-w-lg">
-          <TeamContractAdmins
-            :contract="contractAdminDialog.contract"
-            :range="contractAdminDialog.range"
-          />
-        </div>
-      </template>
-    </UModal>
-
-    <!-- Contract Data Modal -->
-    <UModal
-      v-model:open="contractDataDialog.show"
-      title="Contract Details"
-      description="View the details of the selected campaign contract."
-    >
-      <template #body>
-        <div class="max-w-lg">
-          <TeamContractsDetail
-            :contract-address="contractDataDialog.address"
-            :datas="contractDataDialog.datas"
-            :reset="contractDetailReset"
-            @closeContractDataDialog="contractDataDialog.show = false"
-          />
-        </div>
-      </template>
-    </UModal>
-
-    <UModal
-      v-model:open="contractEventsDialog.show"
-      title="Contract Events"
-      description="Review events emitted by the contract to track actions and state changes."
-    >
-      <template #body>
-        <div class="max-w-lg">
-          <TeamContractEventList :eventsByCampaignCode="campaignEvents ?? {}" />
-        </div>
-      </template>
-    </UModal>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import type { Address } from 'viem'
+import { useTeamStore } from '@/stores'
+import type { TeamContract } from '@/types'
+import { useCampaignManagerSettings } from '@/composables/campaign/reads'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
-import { getContractData } from '@/composables/useContractFunctions'
-import { useCampaignEventsByCode } from '@/composables/campaign/reads'
+import AdvertisingCampaignWorkspace from './AdvertisingCampaignWorkspace.vue'
 
-import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
-const toast = useToast()
-import { useTeamStore } from '@/stores/'
-import type { Address } from 'viem'
-import TeamContractEventList from './TeamContractEventList.vue'
-import { type TeamContract } from '@/types'
-import AddressToolTip from '@/components/AddressToolTip.vue'
 const teamStore = useTeamStore()
-
-// Modal for showing contract admins
-const contractAdminDialog = ref({
-  show: false,
-  contract: {} as TeamContract,
-  range: 0 as number
-})
-
-const contractDataDialog = ref({
-  show: false,
-  datas: [] as Array<{ key: string; value: string }>, // Properly define as an array of key-value pairs
-  address: '',
-  key: 0
-})
-const contractDetailReset = ref(false)
-
-watch(
-  () => contractDataDialog.value.show,
-  (newVal) => {
-    if (!newVal) {
-      contractDetailReset.value = true
-    } else {
-      contractDetailReset.value = false
-    }
-  }
+const managers = computed(() =>
+  (teamStore.currentTeam?.teamContracts ?? []).filter((contract) => contract.type === 'Campaign')
+)
+const selectedManagerAddress = ref<Address | undefined>(managers.value[0]?.address)
+const selectedManager = computed(
+  () => managers.value.find((manager) => manager.address === selectedManagerAddress.value) ?? null
+)
+const managerOptions = computed(() =>
+  managers.value.map((manager, index) => ({
+    label: `Campaign Manager ${index + 1} · ${manager.address.slice(0, 6)}…${manager.address.slice(-4)}`,
+    value: manager.address
+  }))
 )
 
-const contractEventsDialog = ref({
-  show: false,
-  address: undefined as Address | undefined
-})
+watch(
+  managers,
+  (nextManagers) => {
+    if (!nextManagers.some((manager) => manager.address === selectedManagerAddress.value)) {
+      selectedManagerAddress.value = nextManagers[0]?.address
+    }
+  },
+  { deep: true }
+)
 
-const selectedEventsAddress = computed(() => contractEventsDialog.value.address)
-const {
-  data: campaignEvents,
-  isError: campaignEventsError,
-  refetch: refetchCampaignEvents
-} = useCampaignEventsByCode(selectedEventsAddress, {
-  enabled: computed(() => contractEventsDialog.value.show)
+const adminsOpen = ref(false)
+const settingsOpen = ref(false)
+const managerSettings = useCampaignManagerSettings(selectedManagerAddress, {
+  enabled: computed(() => settingsOpen.value)
 })
+const editableSettings = ref<Array<{ key: string; value: string }>>([])
 
-watch(campaignEventsError, (hasError) => {
-  if (hasError) toast.add({ title: 'Failed to fetch events', color: 'error' })
-})
+watch(
+  () => managerSettings.data.value,
+  (settings) => {
+    if (!settings) return
+    editableSettings.value = [
+      { key: 'costPerClick', value: settings.costPerClick },
+      { key: 'costPerImpression', value: settings.costPerImpression },
+      { key: 'bankAddress', value: settings.bankAddress }
+    ]
+  },
+  { immediate: true }
+)
 
-// Open Admins Modal
-const openAdminsModal = (contract: TeamContract, range: number) => {
-  contractAdminDialog.value.contract = contract
-  contractAdminDialog.value.show = true
-  contractAdminDialog.value.range = range
+function openAdmins(manager: TeamContract) {
+  selectedManagerAddress.value = manager.address
+  adminsOpen.value = true
 }
 
-// Open Events Modal
-const openEventsModal = async (contractAddress: Address) => {
-  contractEventsDialog.value.address = contractAddress
-  contractEventsDialog.value.show = true
-  await refetchCampaignEvents()
-}
-
-// Open Contract Data Modal
-const openContractDataModal = async (contractAddress: Address) => {
-  contractDataDialog.value.datas = await getContractData(contractAddress, adCampaignManagerAbi)
-  contractDataDialog.value.address = contractAddress
-  contractDataDialog.value.show = true
-  contractDataDialog.value.key++
+function openSettings(manager: TeamContract) {
+  selectedManagerAddress.value = manager.address
+  settingsOpen.value = true
 }
 </script>
+
+<template>
+  <UEmpty
+    v-if="!managers.length"
+    variant="naked"
+    icon="i-lucide-server-cog"
+    title="Campaign Manager is not configured"
+    description="Set up the on-chain manager before creating and funding advertising campaigns."
+    data-test="campaign-manager-empty"
+  />
+
+  <div v-else class="space-y-5">
+    <div v-if="managers.length > 1" class="flex justify-end">
+      <USelect
+        v-model="selectedManagerAddress"
+        :items="managerOptions"
+        aria-label="Select Campaign Manager"
+        class="w-full sm:w-80"
+      />
+    </div>
+
+    <UCard v-if="selectedManager" variant="subtle">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-start gap-3">
+          <div class="bg-primary/10 text-primary rounded-lg p-2.5">
+            <UIcon name="i-lucide-server-cog" class="size-5" />
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-highlighted font-semibold">Campaign Manager</h3>
+              <UBadge color="success" variant="subtle" size="sm">Ready</UBadge>
+            </div>
+            <AddressToolTip
+              :address="selectedManager.address"
+              :slice="false"
+              class="mt-1 text-xs"
+            />
+            <p class="text-muted mt-2 text-sm">
+              Defines advertising rates and routes validated spend to the company Bank.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <UButton
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-users"
+            label="Administrators"
+            @click="openAdmins(selectedManager)"
+          />
+          <UButton
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-settings-2"
+            label="Manager settings"
+            @click="openSettings(selectedManager)"
+          />
+        </div>
+      </div>
+    </UCard>
+
+    <AdvertisingCampaignWorkspace
+      v-if="selectedManagerAddress"
+      :manager-address="selectedManagerAddress"
+    />
+
+    <UModal
+      v-model:open="adminsOpen"
+      title="Campaign Manager administrators"
+      description="Manage the addresses allowed to validate advertising spend."
+    >
+      <template #body>
+        <TeamContractAdmins
+          v-if="selectedManager"
+          :contract="selectedManager"
+          :range="managers.indexOf(selectedManager) + 1"
+        />
+      </template>
+    </UModal>
+
+    <USlideover
+      v-model:open="settingsOpen"
+      title="Campaign Manager settings"
+      description="Review the Bank destination and update click or impression rates."
+      :ui="{ content: 'sm:max-w-xl' }"
+    >
+      <template #body>
+        <div v-if="managerSettings.isPending.value" class="space-y-3">
+          <USkeleton v-for="index in 4" :key="index" class="h-12 w-full" />
+        </div>
+        <UAlert
+          v-else-if="managerSettings.isError.value"
+          color="error"
+          variant="soft"
+          title="Manager settings could not be loaded"
+          description="Check the selected network and retry."
+          :actions="[
+            {
+              label: 'Retry',
+              color: 'error',
+              variant: 'outline',
+              onClick: async () => {
+                await managerSettings.refetch()
+              }
+            }
+          ]"
+        />
+        <TeamContractsDetail
+          v-else-if="selectedManagerAddress"
+          v-model:datas="editableSettings"
+          :contract-address="selectedManagerAddress"
+          :reset="!settingsOpen"
+          @closeContractDataDialog="settingsOpen = false"
+        />
+      </template>
+    </USlideover>
+  </div>
+</template>

@@ -1,12 +1,19 @@
 import {
+  adCampaignManagerAbi,
   bankAbi,
+  boardOfDirectorsAbi,
   cashRemunerationEip712Abi,
   electionsAbi,
   expenseAccountEip712Abi,
+  fixedReturnAbi,
   investorAbi,
   proposalsAbi,
-  safeDepositRouterAbi
+  safeDepositRouterAbi,
+  vestingAbi
 } from '@/artifacts/abi/generated'
+import votingAbiJson from '@/artifacts/abi/V2/json/Voting.json'
+import { SAFE_VERSION } from '@/types/safe'
+import { getSafeSingletonDeployment } from '@safe-global/safe-deployments'
 import type { Abi } from 'viem'
 
 export interface DecodedParam {
@@ -25,15 +32,23 @@ export interface DecodedInputData {
 // the 'InvestorV1' type, so both keys must resolve — decoding a legacy call with
 // the current ABI is fine, since the selectors they share are unchanged and the
 // v2-only ones simply never appear in a legacy transaction.
+const safeAbi = (getSafeSingletonDeployment({ version: SAFE_VERSION })?.abi ?? []) as Abi
+
 export const CONTRACT_ABI_MAP: Record<string, Abi> = {
   Bank: bankAbi,
+  BoardOfDirectors: boardOfDirectorsAbi,
   Investor: investorAbi,
   InvestorV1: investorAbi,
   ExpenseAccountEIP712: expenseAccountEip712Abi,
   CashRemunerationEIP712: cashRemunerationEip712Abi,
   SafeDepositRouter: safeDepositRouterAbi,
+  Safe: safeAbi,
   Elections: electionsAbi,
-  Proposals: proposalsAbi
+  Proposals: proposalsAbi,
+  Voting: votingAbiJson as Abi,
+  Campaign: adCampaignManagerAbi,
+  FixedReturn: fixedReturnAbi,
+  Vesting: vestingAbi
 }
 
 export const formatDecodedValue = (
