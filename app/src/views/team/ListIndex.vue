@@ -99,9 +99,9 @@
         v-for="team in teams"
         :key="team.id"
         :team="team"
+        :to="{ name: 'show-team', params: { id: team.id } }"
         :data-test="`team-card-${team.id}`"
         class="cursor-pointer transition duration-300 hover:-translate-y-0.5 hover:shadow-md"
-        @click="navigateToTeam(team.id)"
         @update="openAction(team, 'update')"
         @archive="openAction(team, 'archive')"
         @hide="openAction(team, 'hide')"
@@ -212,10 +212,6 @@ watch(
   },
   { immediate: true }
 )
-
-const navigateToTeam = (id: number | string) => {
-  router.push(`/teams/${id}`)
-}
 
 // --- Card actions ---------------------------------------------------------
 // The cards only announce what was chosen; the list owns the modals so they

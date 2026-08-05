@@ -1,11 +1,18 @@
 <template>
   <UCard
     :ui="{
-      root: 'flex flex-col overflow-visible border-t-3',
+      root: 'relative flex flex-col overflow-visible border-t-3',
       body: 'flex flex-1 flex-col gap-3.5 p-5'
     }"
     :class="isOwner ? 'border-t-primary' : 'border-t-secondary'"
   >
+    <RouterLink
+      :to="to"
+      :aria-label="`Open ${team.name}`"
+      class="focus-visible:ring-primary absolute inset-0 z-10 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      data-test="team-link"
+    />
+
     <!-- Identity -->
     <div class="flex items-start justify-between gap-2.5">
       <div class="min-w-0">
@@ -14,7 +21,7 @@
           {{ team.description }}
         </p>
       </div>
-      <div class="flex shrink-0 items-center gap-1.5">
+      <div class="relative z-20 flex shrink-0 items-center gap-1.5">
         <UBadge v-if="isOwner" size="sm" color="primary" variant="solid">Owner</UBadge>
         <UBadge v-else size="sm" color="secondary" variant="solid">Employee</UBadge>
         <UDropdownMenu :items="menuItems" @click.stop>
@@ -129,6 +136,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { DropdownMenuItem } from '@nuxt/ui'
+import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import { useUserDataStore, useCurrencyStore } from '@/stores'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { EMPTY_VALUE, formatCurrency, formatPercent } from '@/utils/format'
@@ -138,6 +146,7 @@ import type { ContractType } from '@/types/teamContract'
 
 interface Props {
   team: Team
+  to: RouteLocationRaw
 }
 
 const props = defineProps<Props>()

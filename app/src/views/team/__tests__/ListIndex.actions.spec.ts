@@ -3,7 +3,7 @@ import ListIndex from '@/views/team/ListIndex.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-import { mockTeamData, mockRouterPush } from '@/tests/mocks'
+import { mockTeamData } from '@/tests/mocks'
 import type { Team } from '@/types'
 import { useRoute } from 'vue-router'
 
@@ -46,7 +46,7 @@ describe('ListIndex - card actions', () => {
           AddTeamForm: true,
           TeamCard: {
             name: 'TeamCard',
-            props: ['team'],
+            props: ['team', 'to'],
             template: '<div :data-test="`team-card-${team.id}`" />'
           },
           ...Object.fromEntries(Object.values(MODAL_FOR).map((name) => [name, modalStub(name)]))
@@ -113,14 +113,5 @@ describe('ListIndex - card actions', () => {
     await wrapper.vm.$nextTick()
 
     expect(modal.props('open')).toBe(false)
-  })
-
-  // Opening a card's menu must never also open the team behind it.
-  it('does not navigate when a card raises an action', async () => {
-    const wrapper = mountWithActions([TEAM])
-    cardFor(wrapper, '42').vm.$emit('update')
-    await wrapper.vm.$nextTick()
-
-    expect(mockRouterPush).not.toHaveBeenCalled()
   })
 })

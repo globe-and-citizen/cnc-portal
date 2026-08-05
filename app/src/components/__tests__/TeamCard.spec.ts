@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, RouterLinkStub } from '@vue/test-utils'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { makeCurrencyStoreMock, mockUseContractBalance, mockUserStore } from '@/tests/mocks'
@@ -51,10 +51,22 @@ const makeTeam = (overrides: Partial<Team> = {}): Team =>
     ...overrides
   }) as Team
 
-const mountCard = (team: Team = makeTeam()) => mount(TeamCard, { props: { team } })
+const mountCard = (team: Team = makeTeam()) =>
+  mount(TeamCard, {
+    props: { team, to: { name: 'show-team', params: { id: team.id } } },
+    global: { stubs: { RouterLink: RouterLinkStub } }
+  })
 
 describe('TeamCard', () => {
   describe('Identity', () => {
+    it('exposes the whole company card as an accessible router link', () => {
+      const wrapper = mountCard()
+      const link = wrapper.findComponent(RouterLinkStub)
+
+      expect(link.props('to')).toEqual({ name: 'show-team', params: { id: '1' } })
+      expect(link.attributes('aria-label')).toBe('Open Team A')
+    })
+
     it('renders the team name and description', () => {
       const wrapper = mountCard()
 
@@ -287,21 +299,14 @@ describe('TeamCard', () => {
       expect(disabledOf(makeTeam())).toBe(false)
     })
 
-    // The whole card is the navigation target, so a click meant for the menu
-    // must not also open the team.
-    it('keeps menu clicks from reaching the card underneath', async () => {
-      const onCardClick = vi.fn()
-      const wrapper = mount(TeamCard, {
-        props: { team: makeTeam() },
-        attrs: { onClick: onCardClick }
-      })
+    // The menu is a sibling of the overlay link, avoiding invalid nested
+    // interactive controls and keeping card actions independent from navigation.
+    it('keeps the action menu outside the company link', () => {
+      const wrapper = mountCard()
+      const link = wrapper.find('[data-test="team-link"]')
+      const menu = wrapper.find('[data-test="team-menu"]')
 
-      await wrapper.find('[data-test="u-dropdown"]').trigger('click')
-      expect(onCardClick).not.toHaveBeenCalled()
-
-      // …while a click anywhere else on the card still navigates.
-      await wrapper.trigger('click')
-      expect(onCardClick).toHaveBeenCalledTimes(1)
+      expect(link.element.contains(menu.element)).toBe(false)
     })
 
     it('emits the chosen action instead of mutating the team itself', () => {
