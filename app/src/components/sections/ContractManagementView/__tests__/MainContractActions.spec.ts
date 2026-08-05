@@ -81,6 +81,11 @@ const stubs = {
       '<button data-test="emit-close" @click="$emit(\'close\')">Close</button>' +
       '</div>'
   },
+  ContractReadDataSection: {
+    name: 'ContractReadDataSection',
+    props: ['address', 'abi', 'contractType', 'enabled'],
+    template: '<section data-test="contract-read-data-section" />'
+  },
   UAlert: {
     name: 'UAlert',
     props: ['color', 'title', 'description', 'variant', 'icon'],
@@ -178,6 +183,13 @@ describe('MainContractActions.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-test="contract-details"]').exists()).toBe(true)
+    const contractData = wrapper.getComponent({ name: 'ContractReadDataSection' })
+    expect(contractData.props()).toMatchObject({
+      address: DEFAULT_ROW.address,
+      abi: DEFAULT_ROW.abi,
+      contractType: DEFAULT_ROW.type,
+      enabled: true
+    })
   })
 
   it('disables privileged actions for non-owner non-BOD user', () => {

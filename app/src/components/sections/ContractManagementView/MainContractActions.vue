@@ -30,6 +30,7 @@
       v-model:open="showDetails"
       title="Contract details"
       description="Technical identifiers and current on-chain state."
+      :ui="{ content: 'w-full sm:max-w-xl' }"
     >
       <template #body>
         <div class="space-y-6">
@@ -75,6 +76,15 @@
               <dd class="text-highlighted mt-2">{{ version || 'Unknown' }}</dd>
             </div>
           </dl>
+
+          <USeparator />
+
+          <ContractReadDataSection
+            :address="contractAddress"
+            :abi="contractAbi"
+            :contract-type="row.type"
+            :enabled="showDetails"
+          />
         </div>
       </template>
     </USlideover>
@@ -129,12 +139,14 @@
 import { computed, ref, toRef } from 'vue'
 import { useClipboard } from '@vueuse/core'
 import type { DropdownMenuItem } from '@nuxt/ui'
+import type { Abi, Address } from 'viem'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { NETWORK } from '@/constant'
 import { useMainContractActions } from '@/composables/contracts/useMainContractActions'
 import type { TableRow } from '@/types/table'
 import { getContractPresentation } from '@/utils'
 import BodApprovalModal from './BodApprovalModal.vue'
+import ContractReadDataSection from './ContractReadDataSection.vue'
 import PendingEventsList from './PendingEventsList.vue'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 
@@ -149,6 +161,8 @@ const toast = useToast()
 const { copy } = useClipboard()
 const showDetails = ref(false)
 const presentation = computed(() => getContractPresentation(props.row.type))
+const contractAddress = computed(() => props.row.address as Address)
+const contractAbi = computed<Abi>(() => props.row.abi ?? [])
 
 const {
   actionsDisabled,
