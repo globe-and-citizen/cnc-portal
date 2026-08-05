@@ -53,30 +53,21 @@ describe('TeamContractsDetail.vue', () => {
     isPendingSetCostPerImpression.value = false
   })
 
-  it('renders table headers and  rows correctly based on key types', () => {
+  it('renders business-friendly rate fields and the Bank destination', () => {
     const datas = [
       { key: 'costPerClick', value: '0.1' }, // should render input
       { key: 'bankAddress', value: '0xABC' }, // should render AddressToolTip
-      { key: 'status', value: 'active' } // should render plain text
+      { key: 'status', value: 'active' }
     ]
     const wrapper = mount(TeamContractsDetail, {
       props: { datas, contractAddress, reset: true }
     })
-    // Check that table headers exist and are correct
-    const headers = wrapper.findAll('th')
-    expect(headers[0].text()).toBe('#')
-    expect(headers[1].text()).toBe('Name')
-    expect(headers[2].text()).toBe('Value')
-    const rows = wrapper.findAll('tbody tr')
-    // Ligne costPerClick
-    const inputCell = rows[0].find('input')
-    expect(inputCell.exists()).toBe(true)
-    expect(rows[0].text()).toContain('ETH')
-    // Ligne bankAddress
-    const addressCell = rows[1].findComponent({ name: 'AddressToolTip' })
+    expect(wrapper.text()).toContain('Cost per click')
+    expect(wrapper.text()).toContain('Cost per impression')
+    expect(wrapper.text()).toContain('POL')
+    expect(wrapper.findAll('input[type="number"]')).toHaveLength(2)
+    const addressCell = wrapper.findComponent({ name: 'AddressToolTip' })
     expect(addressCell.exists()).toBe(true)
-    // Ligne status
-    expect(rows[2].text()).toContain('active')
   })
 
   it('calls submit and reads props.datas', async () => {

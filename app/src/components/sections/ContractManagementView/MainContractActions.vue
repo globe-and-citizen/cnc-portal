@@ -1,47 +1,96 @@
 <template>
-  <div class="flex items-center gap-2">
-    <UTooltip :text="archivedTooltip">
+  <div class="flex items-center justify-end gap-2">
+    <UButton
+      v-if="formattedActions.length"
+      color="warning"
+      variant="subtle"
+      size="sm"
+      :label="`${formattedActions.length} Review`"
+      icon="i-lucide-clock-3"
+      :disabled="pendingActionsDisabled"
+      @click="openPendingActions"
+    />
+    <span v-else class="text-muted hidden items-center gap-1 text-xs lg:inline-flex">
+      <UBadge color="neutral" variant="subtle" size="sm" label="0" />
+      None
+    </span>
+
+    <UDropdownMenu :items="menuItems" :content="{ align: 'end' }">
       <UButton
-        :color="row.paused ? 'info' : 'error'"
+        color="neutral"
+        variant="ghost"
         size="sm"
-        @click="changeContractStatus(row.paused)"
-        :loading="isLoadingPauseContract || isLoadingUnpauseContract"
-        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
-      >
-        <IconifyIcon
-          v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
-          :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
-        />
-      </UButton>
-    </UTooltip>
-    <UTooltip :text="archivedTooltip">
-      <UButton
-        color="success"
-        variant="outline"
-        size="sm"
-        @click="showModal = true"
-        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
-        label="Transfer Ownership"
+        icon="i-lucide-ellipsis"
+        aria-label="Contract actions"
+        data-test="contract-actions-menu"
       />
-    </UTooltip>
-    <UTooltip :text="archivedTooltip">
-      <UButton
-        :disabled="isWriteDisabled || !isBodAction || formatedActions.length <= 0"
-        color="success"
-        variant="outline"
-        size="sm"
-        @click="
-          () => {
-            showApprovalModal = true
-            currentStep = 1
-          }
-        "
-        label="Pending Actions"
-      />
-    </UTooltip>
+    </UDropdownMenu>
+
+    <USlideover
+      v-model:open="showDetails"
+      title="Contract details"
+      description="Technical identifiers and current on-chain state."
+      :ui="{ content: 'w-full sm:max-w-xl' }"
+    >
+      <template #body>
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="bg-primary/10 text-primary grid size-11 place-items-center rounded-xl">
+              <UIcon :name="presentation.icon" class="size-5" />
+            </div>
+            <div>
+              <p class="text-highlighted font-semibold">{{ presentation.label }}</p>
+              <p class="text-muted text-sm">{{ row.type }}</p>
+            </div>
+          </div>
+
+          <dl class="divide-default divide-y text-sm">
+            <div class="py-4">
+              <dt class="text-muted">Status</dt>
+              <dd class="mt-2">
+                <UBadge :color="row.paused ? 'warning' : 'success'" variant="subtle">
+                  {{ row.paused ? 'Paused' : 'Active' }}
+                </UBadge>
+              </dd>
+            </div>
+            <div class="py-4">
+              <dt class="text-muted">Contract address</dt>
+              <dd class="mt-2"><AddressToolTip :address="row.address" :slice="true" /></dd>
+            </div>
+            <div class="py-4">
+              <dt class="text-muted">Owner</dt>
+              <dd class="mt-2">
+                <AddressToolTip v-if="row.owner" :address="row.owner" :slice="true" />
+                <span v-else class="text-muted">Not available</span>
+              </dd>
+            </div>
+            <div class="py-4">
+              <dt class="text-muted">Deployer</dt>
+              <dd class="mt-2">
+                <AddressToolTip v-if="row.deployer" :address="row.deployer" :slice="true" />
+                <span v-else class="text-muted">Not available</span>
+              </dd>
+            </div>
+            <div class="py-4">
+              <dt class="text-muted">Officer version</dt>
+              <dd class="text-highlighted mt-2">{{ version || 'Unknown' }}</dd>
+            </div>
+          </dl>
+
+          <USeparator />
+
+          <ContractReadDataSection
+            :address="contractAddress"
+            :abi="contractAbi"
+            :contract-type="row.type"
+            :enabled="showDetails"
+          />
+        </div>
+      </template>
+    </USlideover>
 
     <UModal
-      v-model:open="showModal"
+      v-model:open="showTransferModal"
       title="Transfer Ownership"
       description="Transfer contract ownership to a Board of Directors member or an individual team member."
     >
@@ -54,13 +103,14 @@
           class="mb-4"
         />
         <TransferOwnershipForm
-          v-if="showModal"
+          v-if="showTransferModal"
           :is-bod-action="isBodAction"
+          :loading="isLoadingTransfer"
           @transfer-ownership="transferOwnership"
-          :loading="isLoadingTransferOwnership || isLoadingAddAction"
         />
       </template>
     </UModal>
+
     <UModal
       v-model:open="showApprovalModal"
       :ui="{ content: modalWidth }"
@@ -69,242 +119,112 @@
     >
       <template #body>
         <PendingEventsList
-          :pending-actions="formatedActions"
-          @view-details="
-            (row) => {
-              selectedRow = row
-              currentStep = 2
-            }
-          "
           v-if="showApprovalModal && currentStep === 1"
+          :pending-actions="formattedActions"
+          @view-details="viewPendingAction"
         />
         <BodApprovalModal
           v-if="showApprovalModal && currentStep === 2"
           :row="selectedRow"
-          @approve-action="approveAction"
           :loading="isLoadingApproveAction"
+          @approve-action="approveAction"
           @close="showApprovalModal = false"
         />
       </template>
     </UModal>
   </div>
 </template>
+
 <script setup lang="ts">
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { encodeFunctionData, type Address } from 'viem'
-import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import { computed, ref, toRef } from 'vue'
+import { useClipboard } from '@vueuse/core'
+import type { DropdownMenuItem } from '@nuxt/ui'
+import type { Abi, Address } from 'viem'
+import AddressToolTip from '@/components/AddressToolTip.vue'
+import { NETWORK } from '@/constant'
+import { useMainContractActions } from '@/composables/contracts/useMainContractActions'
 import type { TableRow } from '@/types/table'
-import { ref, computed, watch } from 'vue'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
-import { classifyError, filterAndFormatActions, log } from '@/utils'
-import PendingEventsList from './PendingEventsList.vue'
+import { getContractPresentation } from '@/utils'
 import BodApprovalModal from './BodApprovalModal.vue'
-import { useGetBodActionsQuery } from '@/queries'
-import { useBodAddAction, useBodApproveAction } from '@/composables/bod/writes'
-import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-import { useQueryClient } from '@tanstack/vue-query'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import ContractReadDataSection from './ContractReadDataSection.vue'
+import PendingEventsList from './PendingEventsList.vue'
+import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 
 const props = defineProps<{
   row: TableRow
+  version?: string | null
 }>()
-
-const emits = defineEmits(['contract-status-changed'])
-
-const teamStore = useTeamStore()
+const emit = defineEmits<{
+  (event: 'contract-status-changed'): void
+}>()
 const toast = useToast()
-const userDataStore = useUserDataStore()
-const queryClient = useQueryClient()
-const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
-
-// BOD action composables
-const addActionComposable = useBodAddAction()
-const approveActionComposable = useBodApproveAction()
-
-const { isBodAction } = useBodIsBodAction(props.row.address as Address)
-
-// Destructure addAction properties
-const {
-  executeAddAction,
-  isPending: isLoadingAddAction,
-  isSuccess: isActionAdded
-} = addActionComposable
-
-// Destructure approveAction properties
-const {
-  executeApproveAction,
-  isPending: isLoadingApproveAction,
-  isSuccess: isActionApproved
-} = approveActionComposable
-
-// Create wrapper functions for template usage
-const addAction = executeAddAction
-const approveAction = executeApproveAction
-
-const showModal = ref(false)
-const showApprovalModal = ref(false)
-const transferOwnershipErrorMessage = ref('')
-const selectedRow = ref<TableRow>({})
-const currentStep = ref<0 | 1 | 2>(0)
-
-const { data: bodActions } = useGetBodActionsQuery({
-  queryParams: {
-    teamId: computed(() => teamStore.currentTeamId),
-    isExecuted: false
-  }
-})
-
-const modalWidth = computed(() => {
-  return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : 'w-1/3 max-w-4xl'
-})
-const formatedActions = computed(() => {
-  return filterAndFormatActions(
-    props.row.address,
-    bodActions.value,
-    teamStore.currentTeam?.members || []
-  )
-})
-
-const rowAddress = computed(() => props.row.address as Address)
+const { copy } = useClipboard()
+const showDetails = ref(false)
+const presentation = computed(() => getContractPresentation(props.row.type))
+const contractAddress = computed(() => props.row.address as Address)
+const contractAbi = computed<Abi>(() => props.row.abi ?? [])
 
 const {
-  mutate: executeTransferOwnership,
-  isPending: isLoadingTransferOwnership,
-  error: errorTransferOwnership
-} = useContractWritesV3({
-  contractAddress: rowAddress,
-  abi: ownablePausableAbi,
-  functionName: 'transferOwnership'
-})
+  actionsDisabled,
+  pendingActionsDisabled,
+  isBodAction,
+  formattedActions,
+  modalWidth,
+  showTransferModal,
+  showApprovalModal,
+  transferOwnershipErrorMessage,
+  selectedRow,
+  currentStep,
+  isLoadingTransfer,
+  isLoadingApproveAction,
+  approveAction,
+  openPendingActions,
+  viewPendingAction,
+  transferOwnership,
+  changeContractStatus
+} = useMainContractActions(toRef(props, 'row'), () => emit('contract-status-changed'))
 
-const {
-  mutate: executePauseContract,
-  isPending: isLoadingPauseContract,
-  error: errorPauseContract
-} = useContractWritesV3({
-  contractAddress: rowAddress,
-  abi: ownablePausableAbi,
-  functionName: 'pause'
-})
+function copyAddress() {
+  void copy(props.row.address)
+  toast.add({ title: 'Contract address copied', color: 'success', icon: 'i-lucide-check' })
+}
 
-const {
-  mutate: executeUnpauseContract,
-  isPending: isLoadingUnpauseContract,
-  error: errorUnpauseContract
-} = useContractWritesV3({
-  contractAddress: rowAddress,
-  abi: ownablePausableAbi,
-  functionName: 'unpause'
-})
+function openInExplorer() {
+  window.open(`${NETWORK.blockExplorerUrl}/address/${props.row.address}`, '_blank')
+}
 
-const transferOwnership = async (address: Address) => {
-  if (isBodAction.value) {
-    const data = encodeFunctionData({
-      abi: props.row.abi,
-      functionName: 'transferOwnership',
-      args: [address]
-    })
-    const description = JSON.stringify({
-      text: `Transfer ownership of ${props.row.type} to ${address}`,
-      title: `Ownership Transfer Request`
-    })
-
-    await addAction({
-      targetAddress: props.row.address,
-      description,
-      data
-    })
-    return
-  }
-
-  executeTransferOwnership(
-    { args: [address] },
+const menuItems = computed<DropdownMenuItem[][]>(() => [
+  [
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ['readContract', { functionName: 'isMember' }],
-          exact: false
-        })
-        queryClient.invalidateQueries({
-          queryKey: ['readContract', { functionName: 'owner' }],
-          exact: false
-        })
-        showModal.value = false
-        transferOwnershipErrorMessage.value = ''
-        toast.add({ title: 'Ownership transferred successfully!', color: 'success' })
-        emits('contract-status-changed')
-      }
+      label: 'View contract details',
+      icon: 'i-lucide-panel-right-open',
+      onSelect: () => (showDetails.value = true)
+    },
+    { label: 'Copy contract address', icon: 'i-lucide-copy', onSelect: copyAddress },
+    { label: 'Open in explorer', icon: 'i-lucide-external-link', onSelect: openInExplorer }
+  ],
+  [
+    {
+      label: formattedActions.value.length
+        ? `Review pending actions (${formattedActions.value.length})`
+        : 'No pending actions',
+      icon: 'i-lucide-clock-3',
+      disabled: pendingActionsDisabled.value,
+      onSelect: openPendingActions
+    },
+    {
+      label: 'Transfer ownership',
+      icon: 'i-lucide-arrow-left-right',
+      disabled: actionsDisabled.value,
+      onSelect: () => (showTransferModal.value = true)
+    },
+    {
+      label: props.row.paused ? 'Resume contract' : 'Pause contract',
+      icon: props.row.paused ? 'i-lucide-play' : 'i-lucide-pause',
+      color: props.row.paused ? 'success' : 'error',
+      disabled: actionsDisabled.value,
+      onSelect: () => changeContractStatus(props.row.paused)
     }
-  )
-}
-
-const changeContractStatus = (paused: boolean) => {
-  if (paused) {
-    executeUnpauseContract(
-      { args: [] },
-      {
-        onSuccess: () => {
-          toast.add({ title: 'Contract resumed successfully!', color: 'success' })
-          emits('contract-status-changed')
-        }
-      }
-    )
-  } else {
-    executePauseContract(
-      { args: [] },
-      {
-        onSuccess: () => {
-          toast.add({ title: 'Contract paused successfully!', color: 'success' })
-          emits('contract-status-changed')
-        }
-      }
-    )
-  }
-}
-
-watch(isActionAdded, (isAdded) => {
-  if (isAdded) {
-    showModal.value = false
-    emits('contract-status-changed')
-  }
-})
-
-watch(isActionApproved, (isApproved) => {
-  if (isApproved) {
-    showApprovalModal.value = false
-    emits('contract-status-changed')
-  }
-})
-
-// No `contract` key is passed: this table drives every team contract, and the
-// reverts these three actions raise (Ownable*, EnforcedPause, ExpectedPause)
-// all live in the catalog's shared `common` map.
-watch(errorTransferOwnership, (error) => {
-  if (error) {
-    log.error('errorTransferOwnership.value: ', error)
-    const classified = classifyError(error)
-    if (classified.category === 'user_rejected') return
-    transferOwnershipErrorMessage.value = classified.userMessage
-  }
-})
-
-watch(errorPauseContract, (error) => {
-  if (error) {
-    log.error('errorPauseContract.value: ', error)
-    const classified = classifyError(error)
-    if (classified.category === 'user_rejected') return
-    toast.add({ title: classified.userMessage, color: 'error' })
-  }
-})
-
-watch(errorUnpauseContract, (error) => {
-  if (error) {
-    log.error('errorUnpauseContract.value: ', error)
-    const classified = classifyError(error)
-    if (classified.category === 'user_rejected') return
-    toast.add({ title: classified.userMessage, color: 'error' })
-  }
-})
+  ]
+])
 </script>

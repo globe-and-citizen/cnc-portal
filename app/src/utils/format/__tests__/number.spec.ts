@@ -5,6 +5,7 @@ import {
   formatNumber,
   formatPercent,
   formatToken,
+  formatTokenUnits,
   formatUsd
 } from '@/utils/format/number'
 import { EMPTY_VALUE } from '@/utils/format/shared'
@@ -71,6 +72,17 @@ describe('formatToken', () => {
 
   it('does not append a symbol to a value it cannot display', () => {
     expect(formatToken(null, 'USDC')).toBe(EMPTY_VALUE)
+  })
+})
+
+describe('formatTokenUnits', () => {
+  it('formats an on-chain integer amount with its symbol', () => {
+    expect(formatTokenUnits(1_250_000_000_000_000_000n, 18, 'POL')).toBe('1.25 POL')
+  })
+
+  it('keeps missing amounts distinct from zero', () => {
+    expect(formatTokenUnits(null, 18, 'POL')).toBe('—')
+    expect(formatTokenUnits(0n, 18, 'POL')).toBe('0 POL')
   })
 })
 

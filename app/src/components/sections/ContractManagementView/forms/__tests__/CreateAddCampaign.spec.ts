@@ -18,8 +18,9 @@ describe('CreateAddCampaign.vue', () => {
   describe('rendering', () => {
     it('renders the title and description', () => {
       const wrapper = mountComponent()
-      expect(wrapper.find('h4').text()).toBe('Deploy Advertisement Campaign contract')
-      expect(wrapper.find('h3').text()).toContain('By clicking "Deploy Advertisement Contract"')
+      expect(wrapper.text()).toContain('One-time company setup')
+      expect(wrapper.text()).toContain('Configure rates')
+      expect(wrapper.text()).toContain('Create funded campaigns')
     })
 
     it('pre-fills the bank address input from the team store', () => {
@@ -122,6 +123,27 @@ describe('CreateAddCampaign.vue', () => {
       )
     })
 
+    it('normalizes numeric input values before deploying', async () => {
+      const wrapper = mountComponent()
+      const setupState = wrapper.getCurrentComponent().setupState as Record<string, unknown>
+      const formState = setupState.formState as {
+        costPerClick: string | number
+        costPerImpression: string | number
+      }
+      formState.costPerClick = 1
+      formState.costPerImpression = 1
+
+      await wrapper.vm.$nextTick()
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(mockDeployState.deploy).toHaveBeenCalledWith(
+        mockTeamStore.getContractAddressByType('Bank'),
+        '1',
+        '1'
+      )
+    })
+
     it('sets submissionError and skips deploy when bankAddress is missing', async () => {
       vi.mocked(useTeamStore).mockReturnValueOnce({
         ...mockTeamStore,
@@ -141,14 +163,20 @@ describe('CreateAddCampaign.vue', () => {
 
     it('does not call deploy when costPerClick is invalid (empty)', async () => {
       const wrapper = mountComponent()
-      await wrapper.find('[data-test="confirm-button"]').trigger('click')
+      await wrapper.find('form').trigger('submit')
       await flushPromises()
       expect(mockDeployState.deploy).not.toHaveBeenCalled()
+      expect(wrapper.text()).toContain('Required')
+      expect(wrapper.text()).not.toContain('Invalid input')
     })
   })
 
   describe('contractAddress watcher', () => {
     it('emits closeAddCampaignModal and shows toast on successful contract creation', async () => {
+      vi.mocked(useCreateContractMutation).mockReturnValueOnce({
+        ...createMockMutationResponse(),
+        mutate: vi.fn((_variables, options) => options?.onSuccess?.(undefined))
+      } as unknown as ReturnType<typeof useCreateContractMutation>)
       const wrapper = mountComponent()
       mockDeployState.contractAddress.value = '0xDeployedContract'
       await flushPromises()
@@ -158,7 +186,7 @@ describe('CreateAddCampaign.vue', () => {
     it('stays open and shows error toast when createContract mutation fails', async () => {
       vi.mocked(useCreateContractMutation).mockReturnValueOnce({
         ...createMockMutationResponse(),
-        mutateAsync: vi.fn().mockRejectedValue(new Error('backend down'))
+        mutate: vi.fn((_variables, options) => options?.onError?.(new Error('backend down')))
       } as unknown as ReturnType<typeof useCreateContractMutation>)
 
       const wrapper = mountComponent()
@@ -204,20 +232,20 @@ describe('CreateAddCampaign.vue', () => {
       })
       const wrapper = mount(ParentHarness)
 
-      await wrapper.find('input[placeholder="cost per click in matic"]').setValue('1')
-      await wrapper.find('input[placeholder="cost per in matic"]').setValue('2')
+      const inputs = wrapper.findAll('input[type="number"]')
+      await inputs[0]!.setValue('1')
+      await inputs[1]!.setValue('2')
 
       // `callReset` is provided by the harness and triggers the exposed reset()
       ;(wrapper.vm.callReset as () => void)()
       await wrapper.vm.$nextTick()
 
-      expect(
-        (wrapper.find('input[placeholder="cost per click in matic"]').element as HTMLInputElement)
-          .value
-      ).toBe('')
-      expect(
-        (wrapper.find('input[placeholder="cost per in matic"]').element as HTMLInputElement).value
-      ).toBe('')
+      expect((wrapper.findAll('input[type="number"]')[0]!.element as HTMLInputElement).value).toBe(
+        ''
+      )
+      expect((wrapper.findAll('input[type="number"]')[1]!.element as HTMLInputElement).value).toBe(
+        ''
+      )
     })
   })
 
@@ -225,12 +253,13 @@ describe('CreateAddCampaign.vue', () => {
     it('opens the correct URL in a new tab', async () => {
       const openSpy = vi.spyOn(window, 'open').mockImplementation(vi.fn())
       const wrapper = mountComponent()
-      // The "view code" button is the UButton in the h3 description (no data-test, label="view code")
-      const viewCodeBtn = wrapper.findAll('button').find((b) => b.text() === 'view code')
+      const viewCodeBtn = wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Review contract source')
       expect(viewCodeBtn).toBeDefined()
       await viewCodeBtn!.trigger('click')
       expect(openSpy).toHaveBeenCalledWith(
-        'https://polygonscan.com/address/0x30625FE0E430C3cCc27A60702B79dE7824BE7fD5#code',
+        'https://github.com/globe-and-citizen/cnc-portal/blob/develop/contract/contracts/AdCampaignManager.sol',
         '_blank'
       )
       openSpy.mockRestore()

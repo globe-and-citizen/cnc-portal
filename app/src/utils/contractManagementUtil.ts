@@ -4,6 +4,7 @@ import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { log } from '@/utils'
 import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import { CONTRACT_ABI_MAP } from '@/utils/abiDecodeUtil'
 
 export type FormattedAction = (Action & {
   requestedBy: User
@@ -35,7 +36,7 @@ export const filterAndFormatActions = (
   actions: ActionResponse | undefined,
   members: User[]
 ) => {
-  if (!actions) return []
+  if (!actions?.data) return []
   return actions.data
     .filter((action) => action.targetAddress === address && action.isExecuted === false)
     .map((action) => ({
@@ -69,7 +70,7 @@ export const getTeamContracts = async (contracts: TeamContract[]) => {
 
         return {
           ...contract,
-          abi: ownablePausableAbi,
+          abi: CONTRACT_ABI_MAP[contract.type] ?? ownablePausableAbi,
           owner,
           paused
         }
