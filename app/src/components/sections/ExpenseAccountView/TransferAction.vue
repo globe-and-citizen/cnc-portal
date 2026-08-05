@@ -16,11 +16,7 @@
       v-model:open="showModal.show"
       data-test="transfer-modal"
       title="Transfer from Expenses Contract"
-      :description="
-        expenseBalance
-          ? `Spendable balance: ${tokens[0]?.spendableBalance ?? tokens[0]?.balance ?? 0} ${transferData.token.symbol}`
-          : undefined
-      "
+      :description="spendableBalanceLabel"
       :close="{
         onClick: () => {
           showModal = { mount: false, show: false }
@@ -36,8 +32,33 @@
           :description="errorMessage"
           class="mb-4"
         />
+        <div
+          v-if="bodyState === 'loading'"
+          class="flex items-center justify-center gap-2 py-6 text-sm text-gray-500"
+          data-test="balance-loading"
+        >
+          <UIcon name="i-lucide-loader-circle" class="animate-spin" />
+          <span>Loading contract balance…</span>
+        </div>
+
+        <UAlert
+          v-else-if="bodyState === 'error'"
+          color="error"
+          variant="soft"
+          description="Failed to read the Expenses Contract balance. Close this dialog and try again."
+          data-test="balance-error"
+        />
+
+        <UAlert
+          v-else-if="bodyState === 'unsupported'"
+          color="warning"
+          variant="soft"
+          description="This expense is denominated in a token that is not supported."
+          data-test="balance-unsupported"
+        />
+
         <TransferForm
-          v-if="showModal.mount && tokens.length > 0"
+          v-else
           v-model="transferData"
           :tokens="tokens"
           :loading="transferMutation.isPending.value || approveMutation.isPending.value"
@@ -100,9 +121,19 @@ const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const toast = useToast()
 const chainId = useChainId()
-const { data: balance } = useContractBalance(
-  ref(teamStore.getContractAddressByType('ExpenseAccountEIP712'))
+
+// A getter, not `ref(teamStore.getContractAddressByType(...))`: the address comes
+// from the team query, and this row can mount before that query resolves. A ref
+// would snapshot `undefined` and leave the balance query disabled forever.
+const expenseAccountEip712Address = computed(() =>
+  teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
+
+const {
+  data: balance,
+  isLoading: isBalanceLoading,
+  error: balanceError
+} = useContractBalance(expenseAccountEip712Address)
 const balances = computed(() => balance.value?.balances ?? [])
 const queryClient = useQueryClient()
 
@@ -123,19 +154,29 @@ const createDefaultTransferData = (): TransferData => ({
 })
 
 const transferData = ref(createDefaultTransferData())
-const expenseBalance = computed(() => {
-  const maxAmountData = props.row.data.amount
-  const amountTransferred = props.row.balances[1]
-  return maxAmountData && amountTransferred
-    ? Number(maxAmountData) - Number(amountTransferred)
-    : null
-})
-
-const expenseAccountEip712Address = computed(() =>
-  teamStore.getContractAddressByType('ExpenseAccountEIP712')
-)
 
 const tokens = computed(() => getTokens([props.row], props.row.signature, balances.value))
+const spendableToken = computed(() => tokens.value[0])
+
+/**
+ * What the modal body shows. `getTokens` yields nothing until the contract
+ * balance has been read, so an empty `tokens` is ambiguous on its own: the
+ * balance may still be in flight, the read may have failed, or the expense may
+ * be denominated in a token we do not support. Rendering the form only, with no
+ * `v-else`, turned all three into a blank modal.
+ */
+const bodyState = computed(() => {
+  if (spendableToken.value) return 'ready'
+  if (!expenseAccountEip712Address.value || isBalanceLoading.value) return 'loading'
+  if (balanceError.value) return 'error'
+  return 'unsupported'
+})
+
+const spendableBalanceLabel = computed(() => {
+  const token = spendableToken.value
+  if (!token) return undefined
+  return `Spendable balance: ${token.spendableBalance ?? token.balance} ${token.symbol}`
+})
 
 const transferMutation = useExpenseAccountTransfer()
 const approveMutation = useERC20Approve(computed(() => USDC_ADDRESS as Address))

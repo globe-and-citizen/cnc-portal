@@ -1,22 +1,43 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { ref } from 'vue'
+import { nextTick, ref, toValue } from 'vue'
 import { readContract, estimateGas } from '@wagmi/core'
 import { recoverTypedDataAddress } from 'viem'
 import TransferAction from '../TransferAction.vue'
-import { mockExpenseAccountWrites, mockERC20Writes } from '@/tests/mocks'
+import { mockExpenseAccountWrites, mockERC20Writes, mockTeamStore } from '@/tests/mocks'
+
+// Hoisted so the module factory below can read it, and mutable so a test can
+// model the window where the contract balance has not been read yet and
+// `getTokens` therefore yields nothing.
+const { mockTokens } = vi.hoisted(() => ({
+  mockTokens: { value: [] as unknown[] }
+}))
+const DEFAULT_TOKENS = [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }]
 
 // `classifyError` is left un-mocked so these tests assert the message the user
 // actually sees, rather than a stand-in string.
 vi.mock('@/utils', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   log: { error: vi.fn() },
-  getTokens: vi.fn(() => [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }])
+  getTokens: vi.fn(() => mockTokens.value)
 }))
 
+// Kept as a spy so a test can assert *what* the balance query was keyed on:
+// the address arrives with the team query, so the argument has to stay a live
+// source rather than a value read once during setup.
+const contractBalanceState = {
+  data: ref<{ balances: unknown[]; total: undefined } | undefined>({
+    balances: [],
+    total: undefined
+  }),
+  isLoading: ref(false),
+  error: ref<Error | null>(null)
+}
+const useContractBalanceSpy = vi.fn((_address: unknown) => contractBalanceState)
+
 vi.mock('@/composables', () => ({
-  useContractBalance: () => ({ data: ref({ balances: [], total: undefined }) })
+  useContractBalance: (address: unknown) => useContractBalanceSpy(address)
 }))
 
 vi.mock('@wagmi/core', () => ({
@@ -88,8 +109,80 @@ describe('TransferAction.vue', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    mockTokens.value = DEFAULT_TOKENS
+    contractBalanceState.isLoading.value = false
+    contractBalanceState.error.value = null
     vi.mocked(estimateGas).mockResolvedValue(21000n)
     vi.mocked(recoverTypedDataAddress).mockResolvedValue(OWNER_ADDRESS)
+  })
+
+  describe('contract balance', () => {
+    const openModal = async (wrapper: VueWrapper) => {
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await flushPromises()
+    }
+
+    it('keys the balance query on a live address, not one read at setup', async () => {
+      // The address comes from the team query, which routinely resolves after
+      // this row has mounted. Passing `ref(store.getContractAddressByType(...))`
+      // froze `undefined` in place, leaving the query disabled forever: no
+      // balance, a spendable balance of 0, and no transfer form. The ref here
+      // stands in for the query data the real store reads.
+      const teamAddress = ref<string | undefined>(undefined)
+      mockTeamStore.getContractAddressByType = vi.fn(() => teamAddress.value)
+      createComponent()
+
+      const [addressSource] = useContractBalanceSpy.mock.calls[0]!
+      expect(toValue(addressSource)).toBeUndefined()
+
+      teamAddress.value = CURRENT_EXPENSE_ACCOUNT
+      await nextTick()
+
+      expect(toValue(addressSource)).toBe(CURRENT_EXPENSE_ACCOUNT)
+    })
+
+    it('explains itself while the balance is still loading', async () => {
+      mockTokens.value = []
+      contractBalanceState.isLoading.value = true
+
+      const wrapper = createComponent()
+      await openModal(wrapper)
+
+      expect(wrapper.find('[data-test="balance-loading"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="transfer-form"]').exists()).toBe(false)
+    })
+
+    it('reports a failed balance read instead of an empty dialog', async () => {
+      mockTokens.value = []
+      contractBalanceState.error.value = new Error('rpc down')
+
+      const wrapper = createComponent()
+      await openModal(wrapper)
+
+      expect(wrapper.find('[data-test="balance-error"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="transfer-form"]').exists()).toBe(false)
+    })
+
+    it('labels the spendable balance with the expense token symbol', async () => {
+      // The symbol used to come from the empty form model, so the dialog opened
+      // on a bare, unitless number.
+      const wrapper = createComponent()
+      await openModal(wrapper)
+
+      expect(wrapper.findComponent({ name: 'UModal' }).props('description')).toBe(
+        'Spendable balance: 100 USDC'
+      )
+    })
+
+    it('omits the balance label entirely when there is no token to describe', async () => {
+      mockTokens.value = []
+      contractBalanceState.isLoading.value = true
+
+      const wrapper = createComponent()
+      await openModal(wrapper)
+
+      expect(wrapper.findComponent({ name: 'UModal' }).props('description')).toBeUndefined()
+    })
   })
 
   it('invokes transfer when ERC20 allowance is sufficient', async () => {
