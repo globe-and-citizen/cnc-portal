@@ -28,8 +28,12 @@
 
   <div
     v-else
-    class="flex flex-row justify-start gap-4 transition-all duration-300"
-    :class="{ 'flex-col items-center justify-center': isCollapsed || isDetailedView }"
+    class="flex gap-4 transition-all duration-300"
+    :class="
+      isCollapsed || isDetailedView
+        ? 'flex-col items-center justify-center text-center'
+        : 'flex-row justify-start'
+    "
   >
     <div role="button" class="group relative">
       <div
@@ -54,7 +58,12 @@
         />
       </div>
     </div>
-    <div v-if="!isCollapsed" data-test="user-info-container" class="flex flex-col text-gray-600">
+    <div
+      v-if="!isCollapsed"
+      data-test="user-info-container"
+      class="flex min-w-0 flex-col text-gray-600"
+      :class="{ 'items-center text-center': isDetailedView }"
+    >
       <p
         class="font-bold"
         :class="{ 'text-lg': isDetailedView, 'text-sm': !isDetailedView }"
@@ -66,15 +75,18 @@
             : props.user.name || 'User'
         }}
       </p>
-      <p
+      <span
         v-if="isDetailedView"
-        class="mt-2 font-bold text-gray-400"
-        :class="{ 'text-sm': isDetailedView, 'text-xs': !isDetailedView }"
+        class="mt-2 inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700"
         data-test="user-role"
       >
         {{ user.role || 'Member' }}
-      </p>
-      <p class="text-sm" data-test="formatted-address">
+      </span>
+      <p
+        class="mt-1.5 max-w-full text-gray-400"
+        :class="isDetailedView ? 'font-mono text-xs break-all' : 'text-sm'"
+        data-test="formatted-address"
+      >
         {{ isDetailedView ? user.address : formatedUserAddress }}
       </p>
     </div>
