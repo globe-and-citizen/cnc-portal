@@ -1,8 +1,39 @@
-import type { ExpenseResponse, TokenBalance, TokenOption } from '@/types'
+import type { BudgetLimit, ExpenseResponse, TokenBalance, TokenOption } from '@/types'
 import { tokenSymbol } from './constantUtil'
-import { zeroAddress } from 'viem'
+import { parseEther, zeroAddress } from 'viem'
 import type { TokenId } from '@/constant'
 import type { TableRow } from '@/types/table'
+
+/**
+ * EIP-712 struct definition of a budget limit. Must stay byte-for-byte in step
+ * with `BudgetLimit` in `ExpenseAccountEIP712.sol` — the field order is part of
+ * the type hash, so reordering here silently breaks signature recovery.
+ */
+export const budgetLimitTypes = {
+  BudgetLimit: [
+    { name: 'amount', type: 'uint256' },
+    { name: 'frequencyType', type: 'uint8' },
+    { name: 'customFrequency', type: 'uint256' },
+    { name: 'startDate', type: 'uint256' },
+    { name: 'endDate', type: 'uint256' },
+    { name: 'tokenAddress', type: 'address' },
+    { name: 'approvedAddress', type: 'address' }
+  ]
+} as const
+
+/** A budget limit in the units the contract expects: wei for native, 6-decimal for ERC-20. */
+export const buildContractBudgetLimit = (budgetLimit: BudgetLimit) => ({
+  amount:
+    budgetLimit.tokenAddress === zeroAddress
+      ? parseEther(`${budgetLimit.amount}`)
+      : BigInt(Number(budgetLimit.amount) * 1e6),
+  frequencyType: Number(budgetLimit.frequencyType),
+  customFrequency: BigInt(Number(budgetLimit.customFrequency)),
+  startDate: BigInt(Number(budgetLimit.startDate)),
+  endDate: BigInt(Number(budgetLimit.endDate)),
+  tokenAddress: budgetLimit.tokenAddress,
+  approvedAddress: budgetLimit.approvedAddress
+})
 
 // Frequency types mapping
 export const frequencyTypes = [

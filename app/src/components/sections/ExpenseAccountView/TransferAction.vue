@@ -94,7 +94,7 @@ import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { classifyError, getTokens, log } from '@/utils'
+import { budgetLimitTypes, buildContractBudgetLimit, classifyError, getTokens, log } from '@/utils'
 import {
   encodeFunctionData,
   erc20Abi,
@@ -194,31 +194,6 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
     await transferErc20Token(to, amount, budgetLimit)
   }
 }
-
-const budgetLimitTypes = {
-  BudgetLimit: [
-    { name: 'amount', type: 'uint256' },
-    { name: 'frequencyType', type: 'uint8' },
-    { name: 'customFrequency', type: 'uint256' },
-    { name: 'startDate', type: 'uint256' },
-    { name: 'endDate', type: 'uint256' },
-    { name: 'tokenAddress', type: 'address' },
-    { name: 'approvedAddress', type: 'address' }
-  ]
-} as const
-
-const buildContractBudgetLimit = (budgetLimit: BudgetLimit) => ({
-  amount:
-    budgetLimit.tokenAddress === zeroAddress
-      ? parseEther(`${budgetLimit.amount}`)
-      : BigInt(Number(budgetLimit.amount) * 1e6),
-  frequencyType: Number(budgetLimit.frequencyType),
-  customFrequency: BigInt(Number(budgetLimit.customFrequency)),
-  startDate: BigInt(Number(budgetLimit.startDate)),
-  endDate: BigInt(Number(budgetLimit.endDate)),
-  tokenAddress: budgetLimit.tokenAddress,
-  approvedAddress: budgetLimit.approvedAddress
-})
 
 const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
   const currentContract = expenseAccountEip712Address.value

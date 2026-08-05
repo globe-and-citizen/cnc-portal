@@ -34,7 +34,7 @@ const contractBalanceState = {
   isLoading: ref(false),
   error: ref<Error | null>(null)
 }
-const useContractBalanceSpy = vi.fn((_address: unknown) => contractBalanceState)
+const useContractBalanceSpy = vi.fn(() => contractBalanceState)
 
 vi.mock('@/composables', () => ({
   useContractBalance: (address: unknown) => useContractBalanceSpy(address)
