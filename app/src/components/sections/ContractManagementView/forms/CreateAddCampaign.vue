@@ -26,12 +26,15 @@ const formState = reactive({
   costPerImpression: ''
 })
 
-const positiveAmount = z
-  .string()
-  .trim()
-  .min(1, 'Required')
-  .refine((value) => /^(?:\d+\.?\d*|\.\d+)$/.test(value), 'Enter a valid amount')
-  .refine((value) => Number(value) > 0, 'Must be greater than 0')
+const positiveAmount = z.preprocess(
+  (value) => (value == null ? '' : String(value)),
+  z
+    .string()
+    .trim()
+    .min(1, 'Required')
+    .refine((value) => /^(?:\d+\.?\d*|\.\d+)$/.test(value), 'Enter a valid amount')
+    .refine((value) => Number(value) > 0, 'Must be greater than 0')
+)
 const formSchema = z.object({
   bankAddress: z.string().optional(),
   costPerClick: positiveAmount,
@@ -173,7 +176,7 @@ function viewContractCode() {
       <UFormField
         name="costPerClick"
         label="Cost per click"
-        description="Charged for each validated click."
+        help="Charged for each validated click."
         required
       >
         <UInput
@@ -191,7 +194,7 @@ function viewContractCode() {
       <UFormField
         name="costPerImpression"
         label="Cost per impression"
-        description="Charged for each validated impression."
+        help="Charged for each validated impression."
         required
       >
         <UInput

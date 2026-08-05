@@ -20,7 +20,7 @@
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2">
-      <UFormField label="Cost per click" description="Charged for each validated click." required>
+      <UFormField label="Cost per click" help="Charged for each validated click." required>
         <UInput
           type="number"
           min="0"
@@ -36,7 +36,7 @@
 
       <UFormField
         label="Cost per impression"
-        description="Charged for each validated impression."
+        help="Charged for each validated impression."
         required
       >
         <UInput

@@ -123,6 +123,27 @@ describe('CreateAddCampaign.vue', () => {
       )
     })
 
+    it('normalizes numeric input values before deploying', async () => {
+      const wrapper = mountComponent()
+      const setupState = wrapper.getCurrentComponent().setupState as Record<string, unknown>
+      const formState = setupState.formState as {
+        costPerClick: string | number
+        costPerImpression: string | number
+      }
+      formState.costPerClick = 1
+      formState.costPerImpression = 1
+
+      await wrapper.vm.$nextTick()
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(mockDeployState.deploy).toHaveBeenCalledWith(
+        mockTeamStore.getContractAddressByType('Bank'),
+        '1',
+        '1'
+      )
+    })
+
     it('sets submissionError and skips deploy when bankAddress is missing', async () => {
       vi.mocked(useTeamStore).mockReturnValueOnce({
         ...mockTeamStore,
@@ -142,9 +163,11 @@ describe('CreateAddCampaign.vue', () => {
 
     it('does not call deploy when costPerClick is invalid (empty)', async () => {
       const wrapper = mountComponent()
-      await wrapper.find('[data-test="confirm-button"]').trigger('click')
+      await wrapper.find('form').trigger('submit')
       await flushPromises()
       expect(mockDeployState.deploy).not.toHaveBeenCalled()
+      expect(wrapper.text()).toContain('Required')
+      expect(wrapper.text()).not.toContain('Invalid input')
     })
   })
 
