@@ -19,7 +19,11 @@ import {
   resetDeployState
 } from '@/tests/mocks/composables.mock'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
-import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
+import {
+  mockGetBalance,
+  mockGetLogs,
+  mockReadContractAction
+} from '@/tests/mocks/viem.actions.mock'
 import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock'
 
 // Restore all shared composable mocks to their defaults before every test so
@@ -359,7 +363,8 @@ vi.mock('viem/actions', async (importOriginal) => {
   return {
     ...actual,
     getBalance: mockGetBalance,
-    getLogs: mockGetLogs
+    getLogs: mockGetLogs,
+    readContract: mockReadContractAction
   }
 })
 
