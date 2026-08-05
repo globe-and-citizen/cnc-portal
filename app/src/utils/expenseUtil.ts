@@ -67,18 +67,27 @@ const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
 }
 
 /**
- * Calculate remaining spendable balance for an expense
+ * Calculate remaining spendable balance for an expense.
+ *
+ * The cap is whichever runs out first: the budget the owner approved, or what
+ * the contract actually holds — an ERC-20 transfer pays from the contract's own
+ * balance, so a funded budget on an empty contract is not spendable.
+ *
  * @param expense The expense row data
- * @returns The remaining balance that can be spent, or null if no budget data found
+ * @param contractBalance Contract holdings of the expense's token
+ * @returns The remaining balance that can be spent, never negative
  */
 const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
-  const maxAmountData = expense.data.amount // budgetData.find((item) => item.budgetType === 1)?.value
-  const amountTransferred = expense.balances[1]
+  // Both are 0 on a never-used expense, and `balances` is absent on rows the
+  // backend short-circuits. Truthiness checks here read those as "no budget"
+  // and collapse the whole approval to 0 — coerce instead.
+  const maxAmount = Number(expense.data?.amount ?? 0)
+  const amountTransferred = Number(expense.balances?.[1] ?? 0)
 
-  // Calculate remaining spendable amount
   const remainingBudget =
-    maxAmountData && amountTransferred ? Number(maxAmountData) - Number(amountTransferred) : 0
+    Number.isFinite(maxAmount) && Number.isFinite(amountTransferred)
+      ? Math.max(maxAmount - amountTransferred, 0)
+      : 0
 
-  // Return the minimum between contract balance and remaining budget
   return Math.min(contractBalance, remainingBudget)
 }
