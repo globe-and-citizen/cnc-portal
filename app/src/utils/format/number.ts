@@ -6,6 +6,7 @@
  * enforces it. See `.github/copilot-instructions/formatting-standards.md`.
  */
 
+import { formatUnits } from 'viem'
 import { collapseSignedZero, EMPTY_VALUE, FORMAT_LOCALE, toFiniteNumber } from './shared'
 
 /** Value accepted by every amount formatter — on-chain amounts arrive as decimal strings. */
@@ -79,6 +80,17 @@ export function formatToken(
 ): string {
   const formatted = formatNumber(value, { maxDecimals })
   return formatted === EMPTY_VALUE ? EMPTY_VALUE : `${formatted} ${symbol}`
+}
+
+/** Format an integer amount returned by a token contract using its declared decimals. */
+export function formatTokenUnits(
+  value: bigint | null | undefined,
+  decimals: number,
+  symbol: string,
+  options?: Pick<DecimalOptions, 'maxDecimals'>
+): string {
+  if (value === null || value === undefined) return EMPTY_VALUE
+  return formatToken(formatUnits(value, decimals), symbol, options)
 }
 
 export interface CurrencyOptions extends UsdOptions {

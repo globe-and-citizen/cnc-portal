@@ -22,6 +22,7 @@ export {
   formatNumber,
   formatPercent,
   formatToken,
+  formatTokenUnits,
   formatUsd,
   type CompactOptions,
   type CurrencyOptions,

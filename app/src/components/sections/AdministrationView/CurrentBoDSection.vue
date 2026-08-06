@@ -8,7 +8,7 @@
       <div
         v-for="(memberAddress, index) in _boardOfDirectors"
         :key="index"
-        class="to-emarald-50 mt-4 overflow-hidden rounded-xl bg-linear-to-t from-emerald-100 shadow-xs transition-all hover:shadow-md"
+        class="overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-t from-emerald-100 to-emerald-50 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
       >
         <UserComponentCol
           :user="
