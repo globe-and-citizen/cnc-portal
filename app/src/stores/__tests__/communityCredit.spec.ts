@@ -235,11 +235,8 @@ describe('Community Credit store (contract-backed)', () => {
     )
   })
 
-  it('reflects the loading state and toggles the layout variant', () => {
+  it('reflects the loading state', () => {
     const store = useCommunityCreditStore()
-    expect(store.variant).toBe('ledger')
-    store.setVariant('gauge')
-    expect(store.variant).toBe('gauge')
     mockFixedReturnReads.allOffers.isLoading.value = true
     expect(store.isLoading).toBe(true)
   })

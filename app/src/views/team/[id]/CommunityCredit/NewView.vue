@@ -146,11 +146,10 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { readContract } from '@wagmi/core'
+import { parseEventLogs } from 'viem'
 import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
-import { config } from '@/wagmi.config'
 import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import {
   useFixedReturnAddress,
@@ -160,6 +159,7 @@ import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writ
 import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffering.queries'
 import {
   applyZodFieldErrors,
+  buildCreditOfferingForm,
   classifyError,
   creditCallDeadlineContext,
   creditChipClass,
@@ -170,8 +170,7 @@ import {
 import {
   createCreditCallTermsSchema,
   creditCallBasicsSchema,
-  type CreditCallForm,
-  type CreditOfferForm
+  type CreditCallForm
 } from '@/types'
 import StepIndicator from '@/components/ui/StepIndicator.vue'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'
@@ -222,9 +221,16 @@ const isPublishing = computed(
   () => createOfferResult.isPending.value || createMetadataResult.isPending.value
 )
 const submitError = ref<string | null>(null)
-const publishLabel = computed(() =>
-  isLastStep.value ? (isPublishing.value ? 'Publishing…' : 'Publish credit call') : 'Continue'
-)
+// Set once createLendingOffer's tx is mined, so a retry after a metadata POST
+// failure repairs just that instead of re-sending the on-chain tx. Cleared by
+// back(), since editing Terms/Access afterwards would otherwise attach this id to
+// silently different round parameters.
+const createdOfferId = ref<number | null>(null)
+const publishLabel = computed(() => {
+  if (!isLastStep.value) return 'Continue'
+  if (isPublishing.value) return 'Publishing…'
+  return createdOfferId.value !== null ? 'Retry saving details' : 'Publish credit call'
+})
 
 const basicsErrors = reactive<Record<string, string>>({})
 
@@ -235,7 +241,10 @@ function validateBasics(): boolean {
 }
 
 function back() {
-  if (step.value > 0) step.value--
+  if (step.value > 0) {
+    step.value--
+    createdOfferId.value = null
+  }
 }
 
 /** Re-checks the Terms step's deadline directly against `form` — CreditCallTermsStep
@@ -278,44 +287,33 @@ async function publish() {
   }
 
   try {
-    // A Community Credit round has a single date: lending closes and the loan starts on
-    // the subscription deadline. FixedReturn.sol requires subscriptionDeadline to be
-    // strictly in the future (reverts InvalidDeadline otherwise). The term is already
-    // resolved to canonical whole minutes, so termUnit: 'minutes' below is exact —
-    // toFixedReturnOfferParams adds it straight onto the deadline to get maturityDate.
-    const offeringForm: CreditOfferForm = {
-      title: form.name.trim(),
-      purpose: form.desc.trim(),
-      principal: Number(form.target) || 0,
-      rate: Number(form.rate) || 0,
-      termValue: form.period,
-      termUnit: 'minutes',
-      deadline: form.deadline,
-      deadlineTime: form.deadlineTime,
-      access: form.access === 'restricted' ? 'whitelist' : 'general',
-      capOn: form.capOn,
-      cap: Number(form.cap) || 0,
-      token: form.token
+    // A retry after a metadata-only failure skips straight to that instead of
+    // sending a second createLendingOffer tx that would orphan the first one.
+    let offerId = createdOfferId.value
+
+    if (offerId === null) {
+      const params = toCreditCallOfferParams(buildCreditOfferingForm(form), form.whitelist)
+      const { receipt } = await createOfferResult.mutateAsync({ args: [params] })
+
+      // Decoded from this tx's own receipt, not a getTotalOfferings() re-read — a
+      // concurrent create landing in between would otherwise hand us its offer id.
+      const [event] = parseEventLogs({
+        abi: fixedReturnAbi,
+        eventName: 'LendingOfferCreated',
+        logs: receipt.logs
+      })
+      if (!event) throw new Error('LendingOfferCreated event not found in transaction receipt')
+      offerId = Number(event.args.offerId)
+      createdOfferId.value = offerId
     }
 
-    const params = toCreditCallOfferParams(offeringForm, form.whitelist)
-    await createOfferResult.mutateAsync({ args: [params] })
-
-    // Offers are 1-indexed and sequential, so the new offer's id is the post-write count.
-    const total = (await readContract(config, {
-      address: fixedReturnAddress.value,
-      abi: fixedReturnAbi,
-      functionName: 'getTotalOfferings'
-    })) as bigint
-    const offerId = Number(total)
-
-    if (offeringForm.title) {
+    if (form.name.trim()) {
       await createMetadataResult.mutateAsync({
         body: {
           teamId: Number(teamId.value),
           offerId,
-          title: offeringForm.title,
-          purpose: offeringForm.purpose || undefined
+          title: form.name.trim(),
+          purpose: form.desc.trim() || undefined
         }
       })
     }
@@ -324,7 +322,11 @@ async function publish() {
     toast.add({ title: 'Credit call published — now Open', color: 'success' })
     goList()
   } catch (error) {
-    submitError.value = classifyError(error, { contract: 'FixedReturn' }).userMessage
+    const message = classifyError(error, { contract: 'FixedReturn' }).userMessage
+    submitError.value =
+      createdOfferId.value !== null
+        ? `Round #${createdOfferId.value} was created on-chain, but saving its title and purpose failed (${message}). Click "Retry saving details" to try again — this will not create another on-chain round.`
+        : message
   }
 }
 
