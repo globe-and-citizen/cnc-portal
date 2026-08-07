@@ -123,7 +123,7 @@ export const useGetTeamWeeklyClaimsQuery = createQueryHook<
     ...queryPresets.stable,
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: true
   }
 })
 

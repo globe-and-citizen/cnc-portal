@@ -77,6 +77,8 @@ describe('WeeklyClaimActionDropdown', () => {
       },
       global: {
         stubs: {
+          // Render the teleported menu inline so `wrapper.find('ul')` can see it.
+          teleport: true,
           CRWithdrawClaim: {
             name: 'CRWithdrawClaim',
             template:
@@ -247,7 +249,7 @@ describe('WeeklyClaimActionDropdown', () => {
     const queryClient =
       useQueryClientFn.mock.results[useQueryClientFn.mock.results.length - 1]?.value
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['weekly-claims', '1']
+      queryKey: ['weeklyClaims', 'team']
     })
 
     expect(wrapper.find('ul').exists()).toBe(false)
