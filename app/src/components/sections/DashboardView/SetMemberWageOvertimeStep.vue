@@ -149,15 +149,6 @@ defineProps<{
 }>()
 
 watch(
-  () => wageData.value.overtimeRatePerHour.map((r) => Number(r.amount)),
-  (amounts) => {
-    wageData.value.overtimeRatePerHour.forEach((rate, i) => {
-      if (amounts[i] === 0 && rate.enabled) rate.enabled = false
-    })
-  }
-)
-
-watch(
   () => wageData.value.overtimeRatePerHour.map((r) => r.enabled),
   (enabled) => {
     wageData.value.overtimeRatePerHour.forEach((rate, i) => {
