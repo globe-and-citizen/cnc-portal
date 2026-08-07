@@ -124,12 +124,13 @@ export const ROUND_STATUS_META: Record<RoundStatus, StatusMeta> = {
 }
 
 /** UTabs `items` for the round-detail Ledger/Gauge/Timeline/Repay switcher. */
-export const ROUND_VARIANT_TAB_ITEMS: { label: string; value: RoundDetailVariant; slot: string }[] = [
-  { label: 'Ledger', value: 'ledger', slot: 'ledger' },
-  { label: 'Gauge', value: 'gauge', slot: 'gauge' },
-  { label: 'Timeline', value: 'timeline', slot: 'timeline' },
-  { label: 'Repay', value: 'repay', slot: 'repay' }
-]
+export const ROUND_VARIANT_TAB_ITEMS: { label: string; value: RoundDetailVariant; slot: string }[] =
+  [
+    { label: 'Ledger', value: 'ledger', slot: 'ledger' },
+    { label: 'Gauge', value: 'gauge', slot: 'gauge' },
+    { label: 'Timeline', value: 'timeline', slot: 'timeline' },
+    { label: 'Repay', value: 'repay', slot: 'repay' }
+  ]
 
 export function statusMeta(status: RoundStatus): StatusMeta {
   return ROUND_STATUS_META[status]

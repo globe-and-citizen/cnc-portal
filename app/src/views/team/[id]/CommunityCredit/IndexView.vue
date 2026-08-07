@@ -156,7 +156,10 @@ function goRound(roundId: string) {
   router.push({ name: 'community-credit-round', params: { id: teamId.value, roundId } })
 }
 function goRepay(roundId: string) {
-  router.push({ name: 'community-credit-round', params: { id: teamId.value, roundId, view: 'repay' } })
+  router.push({
+    name: 'community-credit-round',
+    params: { id: teamId.value, roundId, view: 'repay' }
+  })
 }
 function onHistorySelect(round: CreditRound) {
   goRound(round.id)

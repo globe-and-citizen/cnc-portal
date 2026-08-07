@@ -167,11 +167,7 @@ import {
   getSupportedCreditTokenOptions,
   toCreditCallOfferParams
 } from '@/utils'
-import {
-  createCreditCallTermsSchema,
-  creditCallBasicsSchema,
-  type CreditCallForm
-} from '@/types'
+import { createCreditCallTermsSchema, creditCallBasicsSchema, type CreditCallForm } from '@/types'
 import StepIndicator from '@/components/ui/StepIndicator.vue'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'
 import CreditCallTermsStep from '@/components/sections/CommunityCreditView/CreditCallTermsStep.vue'
