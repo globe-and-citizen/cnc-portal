@@ -185,48 +185,25 @@ describe('TransferAction.vue', () => {
     })
   })
 
-  it('invokes transfer when ERC20 allowance is sufficient', async () => {
-    vi.mocked(readContract)
-      .mockResolvedValueOnce(OWNER_ADDRESS)
-      .mockResolvedValueOnce(BigInt(200 * 1e6))
+  // `ExpenseAccountEIP712.transfer` spends the contract's own token balance, so
+  // the member's allowance is irrelevant: no allowance read, no approval.
+  it('transfers ERC20 without reading an allowance or requesting an approval', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
 
     const wrapper = createComponent()
-    await submitTransfer(wrapper)
+    await submitTransfer(wrapper, { to: '0xRecipient', amount: '1' })
 
     expect(approve.mutate).not.toHaveBeenCalled()
-    expect(transfer.mutate).toHaveBeenCalled()
-  })
-
-  it('approves then transfers when allowance is insufficient', async () => {
-    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS).mockResolvedValueOnce(0n)
-    approve.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
-      opts?.onSuccess?.()
-    })
-
-    const wrapper = createComponent()
-    await submitTransfer(wrapper)
-
-    expect(approve.mutate).toHaveBeenCalled()
-    expect(transfer.mutate).toHaveBeenCalled()
-  })
-
-  it('shows approve error in the alert and skips the transfer', async () => {
-    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS).mockResolvedValueOnce(0n)
-    approve.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
-      opts?.onError?.(new Error('approve failed'))
-    })
-
-    const wrapper = createComponent()
-    await submitTransfer(wrapper)
-
-    expect(transfer.mutate).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Failed to approve token spending')
+    // The only on-chain read is the owner lookup used to verify the signature.
+    expect(readContract).toHaveBeenCalledTimes(1)
+    expect(transfer.mutate).toHaveBeenCalledWith(
+      { args: ['0xRecipient', BigInt(1e6), expect.anything(), '0xSignature'] },
+      expect.anything()
+    )
   })
 
   it('shows transfer error in the alert', async () => {
-    vi.mocked(readContract)
-      .mockResolvedValueOnce(OWNER_ADDRESS)
-      .mockResolvedValueOnce(BigInt(200 * 1e6))
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
     transfer.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
       opts?.onError?.(new Error('transfer failed'))
     })
@@ -247,9 +224,7 @@ describe('TransferAction.vue', () => {
   })
 
   it('closes the modal when the transfer mutation resolves', async () => {
-    vi.mocked(readContract)
-      .mockResolvedValueOnce(OWNER_ADDRESS)
-      .mockResolvedValueOnce(BigInt(200 * 1e6))
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
     transfer.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) =>
       opts?.onSuccess?.()
     )
@@ -270,16 +245,14 @@ describe('TransferAction.vue', () => {
     expect(wrapper.text()).toContain('insufficient funds')
   })
 
-  it('surfaces "Failed to read allowance" when readContract rejects', async () => {
-    vi.mocked(readContract)
-      .mockResolvedValueOnce(OWNER_ADDRESS)
-      .mockRejectedValueOnce(new Error('rpc error'))
+  it('surfaces a verification failure when the owner lookup rejects', async () => {
+    vi.mocked(readContract).mockRejectedValueOnce(new Error('rpc error'))
     const wrapper = createComponent()
     await submitTransfer(wrapper)
 
     expect(transfer.mutate).not.toHaveBeenCalled()
     expect(approve.mutate).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Failed to read allowance')
+    expect(wrapper.text()).toContain('Failed to verify expense approval signature')
   })
 
   it('blocks transfers when the approval was signed for another expense account', async () => {

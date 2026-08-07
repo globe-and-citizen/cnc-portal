@@ -61,7 +61,7 @@
           v-else
           v-model="transferData"
           :tokens="tokens"
-          :loading="transferMutation.isPending.value || approveMutation.isPending.value"
+          :loading="transferMutation.isPending.value"
           @transfer="
             async (data) => {
               await transferFromExpenseAccount(data.address.address, data.amount)
@@ -90,14 +90,13 @@
 import { ref, computed } from 'vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
-import { USDC_ADDRESS, type TokenId } from '@/constant'
+import { type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
-import { useTeamStore, useUserDataStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { budgetLimitTypes, buildContractBudgetLimit, classifyError, getTokens, log } from '@/utils'
 import {
   encodeFunctionData,
-  erc20Abi,
   parseEther,
   recoverTypedDataAddress,
   zeroAddress,
@@ -108,7 +107,6 @@ import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import { estimateGas, readContract } from '@wagmi/core'
 import { useChainId } from '@wagmi/vue'
 import { config } from '@/wagmi.config'
-import { useERC20Approve } from '@/composables/erc20/writes'
 import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
 import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
 import { expenseKeys } from '@/queries'
@@ -118,7 +116,6 @@ import type { TransferData } from '@/types'
 const props = defineProps<{ row: TableRow }>()
 
 const teamStore = useTeamStore()
-const userDataStore = useUserDataStore()
 const toast = useToast()
 const chainId = useChainId()
 
@@ -179,7 +176,6 @@ const spendableBalanceLabel = computed(() => {
 })
 
 const transferMutation = useExpenseAccountTransfer()
-const approveMutation = useERC20Approve(computed(() => USDC_ADDRESS as Address))
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   errorMessage.value = ''
@@ -191,7 +187,7 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (budgetLimit.tokenAddress === zeroAddress) {
     await transferNativeToken(to, amount, budgetLimit)
   } else {
-    await transferErc20Token(to, amount, budgetLimit)
+    transferErc20Token(to, amount, budgetLimit)
   }
 }
 
@@ -291,46 +287,16 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
   submitExpenseAccountTransfer(args)
 }
 
-const transferErc20Token = async (to: string, amount: string, budgetLimit: BudgetLimit) => {
+// `transfer` pays out of the expense contract's own token balance — it never
+// calls `transferFrom` on the caller — so no ERC20 allowance is needed here.
+const transferErc20Token = (to: string, amount: string, budgetLimit: BudgetLimit) => {
   if (!expenseAccountEip712Address.value) return
 
-  const _amount = BigInt(Number(amount) * 1e6)
-  const tokenAddress = USDC_ADDRESS as Address
-
-  let allowance: bigint
-  try {
-    allowance = (await readContract(config, {
-      address: tokenAddress,
-      abi: erc20Abi,
-      functionName: 'allowance',
-      args: [userDataStore.address as Address, expenseAccountEip712Address.value]
-    })) as bigint
-  } catch (error) {
-    log.error('Error reading allowance:', error)
-    errorMessage.value = 'Failed to read allowance'
-    return
-  }
-
-  const buildArgs = () =>
-    [to, _amount, buildContractBudgetLimit(budgetLimit), props.row.signature] as const
-
-  if (allowance < _amount) {
-    approveMutation.mutate(
-      { args: [expenseAccountEip712Address.value, _amount] },
-      {
-        onSuccess: () => {
-          toast.add({ title: 'Approval granted successfully', color: 'success' })
-          submitExpenseAccountTransfer(buildArgs())
-        },
-        onError: (err) => {
-          log.error('Token approval failed:', err)
-          errorMessage.value = 'Failed to approve token spending'
-        }
-      }
-    )
-    return
-  }
-
-  submitExpenseAccountTransfer(buildArgs())
+  submitExpenseAccountTransfer([
+    to,
+    BigInt(Number(amount) * 1e6),
+    buildContractBudgetLimit(budgetLimit),
+    props.row.signature
+  ] as const)
 }
 </script>

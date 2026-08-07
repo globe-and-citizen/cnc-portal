@@ -81,6 +81,7 @@ Implement on-chain logic:
 - [Authentication](./auth/README.md) — SIWE, JWT, user management
 - [Statistics Feature](./features/stats/functional-specification.md) — Platform analytics implementation
 - [API Reference](./features/stats/stats-api.md) — Statistics API endpoints
+- [Community Credit — User Flow Analysis](./features/community-credit/user-flow-analysis.md) — FixedReturn lending rounds: state machine, custody model, flows, findings
 
 ### Developer Support
 
