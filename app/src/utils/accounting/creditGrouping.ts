@@ -10,16 +10,16 @@
  *
  * So the journal reads the round from the team's side. Every leg of a phase is
  * netted per account and rendered once:
- *   - **funding** — the deposits and the fixed return of one round
+ *   - **funding** — the loan a round raised and the fixed return it owes
  *     (`UC-CREDIT-01` + `UC-CREDIT-05`), however many lenders and days it took:
- *     Dr Cash — Credit · Dr Interest Expense · Cr Loan Payable · Cr Interest
- *     Payable. The sweep of the principal out to the Bank (`UC-CREDIT-02`) keeps
- *     its own posting — that is the line naming the money actually arriving.
+ *     Dr Cash — Bank · Dr Interest Expense · Cr Loan Payable · Cr Interest
+ *     Payable. The principal is recognised straight to Bank, so a funded round is
+ *     one posting — there is no separate internal sweep to fold in.
  *   - **repayment** — the principal and interest legs of one `repayLenders` call
  *     (`UC-CREDIT-03`), whatever number of lenders it paid: Dr Loan Payable ·
  *     Dr Interest Payable · Cr Cash — Bank (gross).
- *   - **refund** — the deposits handed back when a round missed its target
- *     (`UC-CREDIT-04`).
+ * A round that never funds and is refunded to its lenders produces no posting at
+ * all — the deposits were never the team's money.
  * Installments are separate events, so their timestamp keeps them apart; two
  * rounds never merge either.
  *
@@ -42,28 +42,26 @@ import type { TokenId } from '@/constant'
 /** The empty activity carried by a compound posting's continuation rows. */
 const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
 
-/** The lifecycle phase a round-level posting reports. */
-type CreditPhase = 'funded' | 'repaid' | 'refunded'
+/** The lifecycle phase a round-level posting reports. A round that never funds
+ *  and is refunded produces no posting, so there is no `refunded` phase. */
+type CreditPhase = 'funded' | 'repaid'
 
 const PHASE_OF: Partial<Record<UseCase, CreditPhase>> = {
   'UC-CREDIT-01': 'funded',
   'UC-CREDIT-05': 'funded',
-  'UC-CREDIT-03': 'repaid',
-  'UC-CREDIT-04': 'refunded'
+  'UC-CREDIT-03': 'repaid'
 }
 
 /** The leg whose Action badge a phase's posting takes (see `./ledgerCategory`). */
 const HEADLINE_LEG: Record<CreditPhase, UseCase> = {
   funded: 'UC-CREDIT-01',
-  repaid: 'UC-CREDIT-03',
-  refunded: 'UC-CREDIT-04'
+  repaid: 'UC-CREDIT-03'
 }
 
 /** The "Transaction" label of a round-level posting — the team's side of it. */
 const PHASE_LABEL: Record<CreditPhase, string> = {
   funded: 'Credit loan received',
-  repaid: 'Credit repayment',
-  refunded: 'Credit principal refund'
+  repaid: 'Credit repayment'
 }
 
 /**
@@ -240,15 +238,13 @@ function fundingActivity(group: readonly LedgerEntry[]): ActivityCell {
   }
 }
 
-/** The narration of a payment run: what went back, and what is left to pay. */
-function paymentActivity(group: readonly LedgerEntry[], phase: CreditPhase): ActivityCell {
+/** The narration of a repayment run: what went back, and what is left to pay. */
+function paymentActivity(group: readonly LedgerEntry[]): ActivityCell {
   const paid = group.reduce((sum, entry) => sum + entry.amountUsd, 0)
-  const verb = phase === 'repaid' ? 'Repaid' : 'Refunded'
-  const settled = phase === 'repaid' ? 'loan fully repaid' : 'every deposit returned'
   const to = lenders(lenderCount(group))
   return {
     kind: 'plain',
-    text: `${verb} ${money(paid)}${to ? ` to ${to}` : ''}${remainingTail(group, settled)}`
+    text: `Repaid ${money(paid)}${to ? ` to ${to}` : ''}${remainingTail(group, 'loan fully repaid')}`
   }
 }
 
@@ -277,7 +273,7 @@ export function compoundCreditRows(group: readonly LedgerEntry[], rowsOf: RowsOf
     .map((line) => lineRow(line, source, rowsOf))
     .filter((row): row is LedgerRow => row != null)
 
-  const activity = phase === 'funded' ? fundingActivity(group) : paymentActivity(group, phase)
+  const activity = phase === 'funded' ? fundingActivity(group) : paymentActivity(group)
   return rows.map((row, i) =>
     i === 0
       ? { ...row, isFirst: true, label: PHASE_LABEL[phase], activity }
