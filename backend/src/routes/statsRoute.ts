@@ -9,6 +9,7 @@ import {
   getContractsStats,
   getActionsStats,
   getRecentActivity,
+  getTvlStats,
 } from '../controllers/statsController';
 import { validateQuery } from '../validation/middleware/validate';
 import {
@@ -21,6 +22,7 @@ import {
   contractsStatsQuerySchema,
   actionsStatsQuerySchema,
   recentActivityQuerySchema,
+  tvlStatsQuerySchema,
 } from '../validation/schemas/stats';
 
 const statsRoutes = express.Router();
@@ -638,5 +640,85 @@ statsRoutes.get('/actions', validateQuery(actionsStatsQuerySchema), getActionsSt
  *       description: Internal server error
  */
 statsRoutes.get('/activity/recent', validateQuery(recentActivityQuerySchema), getRecentActivity);
+
+/**
+ * @openapi
+ * /stats/tvl:
+ *  get:
+ *   summary: Get Total Value Locked and platform-wide transfer volume
+ *   description: >
+ *     Returns the current Total Value Locked across all team treasuries (read
+ *     on-chain from each team's Bank contracts) and the platform-wide transfer
+ *     volume (from ponder's indexed Bank transfer events), both global and per
+ *     team. Amounts are raw on-chain integers (strings) keyed by token; clients
+ *     value them in USD.
+ *   tags:
+ *     - Statistics
+ *   responses:
+ *     200:
+ *       description: TVL statistics retrieved successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               chainId:
+ *                 type: integer
+ *               tokens:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     key:
+ *                       type: string
+ *                     symbol:
+ *                       type: string
+ *                     decimals:
+ *                       type: integer
+ *                     address:
+ *                       type: string
+ *                       nullable: true
+ *               totals:
+ *                 type: object
+ *                 properties:
+ *                   tvlRaw:
+ *                     type: object
+ *                     additionalProperties:
+ *                       type: string
+ *                   transferredRaw:
+ *                     type: object
+ *                     additionalProperties:
+ *                       type: string
+ *               transferredAvailable:
+ *                 type: boolean
+ *               teams:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     teamId:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     bankAddresses:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     tvlRaw:
+ *                       type: object
+ *                       additionalProperties:
+ *                         type: string
+ *                     transferredRaw:
+ *                       type: object
+ *                       additionalProperties:
+ *                         type: string
+ *               generatedAt:
+ *                 type: string
+ *     400:
+ *       description: Bad request
+ *     500:
+ *       description: Internal server error
+ */
+statsRoutes.get('/tvl', validateQuery(tvlStatsQuerySchema), getTvlStats);
 
 export default statsRoutes;
