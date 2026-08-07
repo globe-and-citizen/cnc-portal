@@ -2,7 +2,10 @@
   <a
     v-if="isDropDown"
     data-test="withdraw-action"
-    :class="['text-sm', { disabled: withdrawTx.isPending.value || isTeamArchived }]"
+    :class="[
+      'block w-full cursor-pointer px-3 py-1.5 text-sm',
+      { disabled: withdrawTx.isPending.value || isTeamArchived }
+    ]"
     :aria-disabled="withdrawTx.isPending.value || isTeamArchived"
     :tabindex="withdrawTx.isPending.value || isTeamArchived ? -1 : 0"
     :style="{ pointerEvents: withdrawTx.isPending.value || isTeamArchived ? 'none' : undefined }"
