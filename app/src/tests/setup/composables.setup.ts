@@ -267,17 +267,23 @@ vi.mock('@/queries/health.queries', () => ({
 /**
  * Mock Weekly Claim Queries (weeklyClaim.queries.ts)
  */
-vi.mock('@/queries/weeklyClaim.queries', () => ({
-  useGetTeamWeeklyClaimsQuery: vi.fn(queryMocks.useGetTeamWeeklyClaimsQuery),
-  useGetWeeklyClaimByIdQuery: vi.fn(queryMocks.useGetWeeklyClaimByIdQuery),
-  useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
-  useEditClaimMutation: vi.fn(queryMocks.useEditClaimMutation),
-  // useEditClaimMutation: vi.fn(() => queryMocks.useEditClaimMutation),
-  useEditClaimWithFilesMutation: vi.fn(queryMocks.useEditClaimWithFilesMutation),
-  useSubmitClaimMutation: vi.fn(queryMocks.useSubmitClaimMutation),
-  useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation),
-  useDeleteClaimMutation: vi.fn(queryMocks.useDeleteClaimMutation)
-}))
+vi.mock('@/queries/weeklyClaim.queries', async (importOriginal) => {
+  // Keep real non-hook exports (e.g. `weeklyClaimKeys`, response normalizers)
+  // so components that reference them at runtime still work; only the query /
+  // mutation hooks are swapped for mocks.
+  const actual = await importOriginal<typeof import('@/queries/weeklyClaim.queries')>()
+  return {
+    ...actual,
+    useGetTeamWeeklyClaimsQuery: vi.fn(queryMocks.useGetTeamWeeklyClaimsQuery),
+    useGetWeeklyClaimByIdQuery: vi.fn(queryMocks.useGetWeeklyClaimByIdQuery),
+    useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
+    useEditClaimMutation: vi.fn(queryMocks.useEditClaimMutation),
+    useEditClaimWithFilesMutation: vi.fn(queryMocks.useEditClaimWithFilesMutation),
+    useSubmitClaimMutation: vi.fn(queryMocks.useSubmitClaimMutation),
+    useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation),
+    useDeleteClaimMutation: vi.fn(queryMocks.useDeleteClaimMutation)
+  }
+})
 
 /**
  * Mock Safe Queries (safe.queries.ts)

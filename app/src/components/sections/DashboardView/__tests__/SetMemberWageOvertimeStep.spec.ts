@@ -156,7 +156,7 @@ describe('SetMemberWageOvertimeStep.vue', () => {
     expect(validWrapper.find('[data-test="save-overtime-wage-button"]').exists()).toBe(true)
   })
 
-  it('auto-disables the overtime toggle when the rate amount is cleared to 0', async () => {
+  it('keeps the overtime toggle on regardless of the amount value (0, decimal, or blank)', async () => {
     const wageData = createWageData({
       overtimeRatePerHour: [
         { type: 'native', amount: 15, enabled: true },
@@ -167,10 +167,17 @@ describe('SetMemberWageOvertimeStep.vue', () => {
     const wrapper = createWrapper(wageData)
     const overtimeAmountInputs = wrapper.findAll('input[type="number"]')
 
+    // The amount must never flip the toggle off — otherwise the transient "0"
+    // and empty "0." states while typing "0.01" would lock the input.
     await overtimeAmountInputs[1]?.setValue('0')
+    expect(wageData.overtimeRatePerHour[0]?.enabled).toBe(true)
 
-    expect(wageData.overtimeRatePerHour[0]?.enabled).toBe(false)
-    expect(Number(wageData.overtimeRatePerHour[0]?.amount)).toBe(0)
+    await overtimeAmountInputs[1]?.setValue('0.01')
+    expect(wageData.overtimeRatePerHour[0]?.enabled).toBe(true)
+    expect(Number(wageData.overtimeRatePerHour[0]?.amount)).toBe(0.01)
+
+    await overtimeAmountInputs[1]?.setValue('')
+    expect(wageData.overtimeRatePerHour[0]?.enabled).toBe(true)
   })
 
   it('auto-zeroes the overtime rate amount when the toggle is turned off', async () => {

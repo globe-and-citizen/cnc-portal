@@ -22,7 +22,10 @@
   >
     <div
       data-test="sign-action"
-      :class="['text-sm', { disabled: isLoad || isSignFrozen }]"
+      :class="[
+        'block w-full cursor-pointer px-3 py-1.5 text-sm',
+        { disabled: isLoad || isSignFrozen }
+      ]"
       :aria-disabled="isLoad || isSignFrozen"
       :tabindex="isLoad || isSignFrozen ? -1 : 0"
       :style="{ pointerEvents: isLoad ? 'none' : undefined }"
