@@ -2,23 +2,31 @@
  * FixedReturn (Community Credit) source mapper — the team **borrows** from its
  * lenders and repays them principal + a fixed return.
  *
- * The money-moving events of the contract, in lifecycle order:
+ * The credit contract is treated as **external** to the team's books: a lender's
+ * deposit is not the team's money while the offer is still filling, so it raises
+ * no asset and no liability. The loan is recognised only when the round **funds**
+ * and the principal actually lands in the Bank — the way a business records a loan
+ * when it receives the proceeds, not when each lender pledges. This keeps one
+ * posting where the old model wrote two (a deposit into a `Cash — Credit` pocket,
+ * then an internal sweep of that same money out to Bank).
  *
- *   `FundsLent`         UC-CREDIT-01  Dr Cash — Credit    · Cr Loan Payable
- *   `LendingOfferFunded`UC-CREDIT-02  Dr Cash — Bank      · Cr Cash — Credit   (internal)
- *   (no event)          UC-CREDIT-05  Dr Interest Expense · Cr Interest Payable (the fee owed)
- *   `LenderRepaid`      UC-CREDIT-03  Dr Loan Payable     · Cr Cash — Bank     (principal leg)
- *                                     Dr Interest Payable · Cr Cash — Bank     (interest leg)
- *   `PrincipalRefunded` UC-CREDIT-04  Dr Loan Payable     · Cr Cash — Credit
+ *   `FundsLent`          (tracked, no entry)  — a pledge, still the lender's money
+ *   `LendingOfferFunded` UC-CREDIT-01  Dr Cash — Bank      · Cr Loan Payable
+ *   (no event)           UC-CREDIT-05  Dr Interest Expense · Cr Interest Payable (the fee owed)
+ *   `LenderRepaid`       UC-CREDIT-03  Dr Loan Payable     · Cr Cash — Bank     (principal leg)
+ *                                      Dr Interest Payable · Cr Cash — Bank     (interest leg)
+ *   `PrincipalRefunded`  (no entry)          — an unfunded pledge handed back, never booked
  *
  * Why each side is what it is:
- * - Lender deposits accumulate **in the FixedReturn contract** while the offer is
- *   Open, so they land in that contract's own cash pocket (`Cash — Credit`) and
- *   raise a liability — borrowed money is never revenue.
+ * - Deposits accumulate **in the FixedReturn contract** while the offer is Open.
+ *   Because that contract is external, they are only tracked (to know each
+ *   lender's share of the round), not posted — so an offer that never funds and
+ *   refunds its lenders leaves the books entirely untouched.
  * - On the deposit that hits the funding target (or on `acceptPartialFunding`,
  *   which emits `LendingOfferFunded` too) the whole principal is swept to Bank
- *   with a raw `safeTransfer`, which emits **no Bank event** — so the internal
- *   move is booked here, from the credit side, and has no Bank-side twin.
+ *   with a raw `safeTransfer`, which emits **no Bank event** — so the loan is
+ *   booked here, straight to Bank, one posting per lender so the journal still
+ *   reads who the team owes.
  * - Repayment runs `Bank → FixedReturn → lender` inside a single transaction
  *   (`Bank.fundFixedReturnRepayment`, whose `FixedReturnRepaymentFunded` is not in
  *   the Bank feed). The contract keeps no balance across it, so each `LenderRepaid`
@@ -65,11 +73,13 @@ import { atDate, type MapperContext } from './context'
 
 export type { CreditOfferTerms, FixedReturnMapperInput } from './creditTimeline'
 
-const CREDIT = 'Cash — Credit' as const
 const BANK = 'Cash — Bank' as const
 const LOAN_PAYABLE = 'Loan Payable' as const
 const INTEREST_PAYABLE = 'Interest Payable' as const
 const INTEREST_EXPENSE = 'Interest Expense' as const
+
+/** A lender's cumulative deposit on one offer, kept in first-lent order. */
+type OfferDeposits = Map<string, { lender: string; amount: bigint }>
 
 /** `${offerId}|${lender}` — keys a lender's position within one offer. */
 function positionKey(offerId: string, lender: string): string {
@@ -79,6 +89,24 @@ function positionKey(offerId: string, lender: string): string {
 /** Read-modify-write helper for the running per-key bigint balances. */
 function bump(balances: Map<string, bigint>, key: string, delta: bigint): void {
   balances.set(key, (balances.get(key) ?? 0n) + delta)
+}
+
+/** Accumulate a lender's deposit on an offer, preserving first-lent order. */
+function addDeposit(
+  byOffer: Map<string, OfferDeposits>,
+  offerId: string,
+  lender: string,
+  amount: bigint
+): void {
+  let deposits = byOffer.get(offerId)
+  if (!deposits) {
+    deposits = new Map()
+    byOffer.set(offerId, deposits)
+  }
+  const key = lender.toLowerCase()
+  const seen = deposits.get(key)
+  if (seen) seen.amount += amount
+  else deposits.set(key, { lender, amount })
 }
 
 /**
@@ -103,6 +131,9 @@ export function mapFixedReturnEvents(
 
   /** Principal sitting in the contract for an offer, not yet swept or refunded. */
   const heldByOffer = new Map<string, bigint>()
+  /** Per-lender deposits an offer has taken, replayed into its funding posting so
+   *  the recognised loan names each lender's share. */
+  const depositsByOffer = new Map<string, OfferDeposits>()
   /** Principal a lender has outstanding on an offer — what repayment retires first. */
   const owedToLender = new Map<string, bigint>()
   /** The `Interest Payable` a lender is still owed on an offer — what the interest
@@ -132,49 +163,43 @@ export function mapFixedReturnEvents(
 
     switch (event.kind) {
       case 'lent': {
+        // A pledge into an offer still filling: the contract is external, so the
+        // deposit is only tracked (per lender, and against the round) — not posted.
         const amount = toBigInt(event.amount)
-        if (amount <= 0n) break
+        if (amount <= 0n || !event.lender) break
         bump(heldByOffer, event.offerId, amount)
         bump(owedToLender, key, amount)
         bump(owedByRound, event.offerId, amount)
-        entries.push(
-          makeEntry({
-            id: event.id,
-            timestamp: event.timestamp,
-            useCase: 'UC-CREDIT-01',
-            debit: CREDIT,
-            credit: LOAN_PAYABLE,
-            amountUsd: usd(amount),
-            token,
-            rawAmount: amount.toString(),
-            counterparty: event.lender,
-            creditOfferId: event.offerId,
-            memo: `Funds lent to Community Credit offer #${event.offerId}`
-          })
-        )
+        addDeposit(depositsByOffer, event.offerId, event.lender, amount)
         break
       }
 
       case 'funded': {
-        // The whole principal raised so far leaves the contract for Bank in the
-        // same transaction — both sides are CNC pockets, so it is an internal move.
-        const swept = heldByOffer.get(event.offerId) ?? 0n
-        if (swept <= 0n) break
+        // The round closed: the whole principal raised is swept to Bank in the
+        // same transaction and is now the team's money. Recognise the loan here,
+        // straight to Bank — one leg per lender, so the journal reads who is owed.
+        const deposits = depositsByOffer.get(event.offerId)
         heldByOffer.set(event.offerId, 0n)
-        entries.push(
-          makeEntry({
-            id: event.id,
-            timestamp: event.timestamp,
-            useCase: 'UC-CREDIT-02',
-            debit: BANK,
-            credit: CREDIT,
-            amountUsd: usd(swept),
-            token,
-            rawAmount: swept.toString(),
-            internal: true,
-            memo: `Community Credit offer #${event.offerId} principal swept to Bank`
-          })
-        )
+        depositsByOffer.delete(event.offerId)
+        if (!deposits) break
+        for (const { lender, amount } of deposits.values()) {
+          if (amount <= 0n) continue
+          entries.push(
+            makeEntry({
+              id: `credit-principal-${event.offerId}-${lender.toLowerCase()}`,
+              timestamp: event.timestamp,
+              useCase: 'UC-CREDIT-01',
+              debit: BANK,
+              credit: LOAN_PAYABLE,
+              amountUsd: usd(amount),
+              token,
+              rawAmount: amount.toString(),
+              counterparty: lender,
+              creditOfferId: event.offerId,
+              memo: `Loan received from a lender on Community Credit offer #${event.offerId}`
+            })
+          )
+        }
         break
       }
 
@@ -244,28 +269,15 @@ export function mapFixedReturnEvents(
       }
 
       case 'refunded': {
-        // The offer missed its target: the principal never left the contract, so
-        // it goes straight back to the lender and clears the liability.
+        // The offer missed its target and its deposits are handed back. Nothing
+        // was ever booked (the deposits were the lenders' money, held in the
+        // external contract), so the refund leaves the books untouched too. The
+        // trackers for the round are simply unwound.
         const amount = toBigInt(event.amount)
         if (amount <= 0n) break
         bump(heldByOffer, event.offerId, -amount)
         bump(owedToLender, key, -amount)
-        entries.push(
-          makeEntry({
-            id: event.id,
-            timestamp: event.timestamp,
-            useCase: 'UC-CREDIT-04',
-            debit: LOAN_PAYABLE,
-            credit: CREDIT,
-            amountUsd: usd(amount),
-            token,
-            rawAmount: amount.toString(),
-            counterparty: event.lender,
-            creditOfferId: event.offerId,
-            creditRemainingUsd: drawRound(owedByRound, event.offerId, amount, usd),
-            memo: `Principal refunded on unfunded Community Credit offer #${event.offerId}`
-          })
-        )
+        bump(owedByRound, event.offerId, -amount)
         break
       }
     }

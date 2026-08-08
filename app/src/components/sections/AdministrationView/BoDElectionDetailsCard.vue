@@ -1,5 +1,8 @@
 <template>
-  <UCard class="relative flex flex-col" :class="{ 'border-warning': isElectionWinner }">
+  <UCard
+    class="relative flex flex-col !overflow-visible"
+    :class="{ 'border-warning': isElectionWinner }"
+  >
     <!-- Winner Badge (aligned to straddle border) -->
     <UBadge
       v-if="isElectionWinner"

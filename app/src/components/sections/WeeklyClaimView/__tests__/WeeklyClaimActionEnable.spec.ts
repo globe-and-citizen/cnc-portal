@@ -118,7 +118,7 @@ describe('WeeklyClaimActionEnable', () => {
     const queryClient =
       useQueryClientFn.mock.results[useQueryClientFn.mock.results.length - 1]?.value
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['weekly-claims', '1']
+      queryKey: ['weeklyClaims', 'team']
     })
 
     expect(wrapper.emitted('close')).toBeTruthy()
@@ -135,7 +135,7 @@ describe('WeeklyClaimActionEnable', () => {
 
     expect(mutateAsync).toHaveBeenCalled()
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['weekly-claims', '1']
+      queryKey: ['weeklyClaims', 'team']
     })
   })
 
