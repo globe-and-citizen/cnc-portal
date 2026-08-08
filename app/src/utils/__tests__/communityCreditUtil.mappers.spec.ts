@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
 import {
-  gradientForAddress,
   lendingOfferToCreditRound,
   offerLenderToCreditLender,
   offerMaturityDate,
   offerStateToRoundStatus
 } from '../communityCreditUtil'
+import { gradientForAddress } from '../communityCreditOfferUtil'
+import { shortenAddress } from '../generalUtil'
 import type { FixedReturnOfferLender, FixedReturnRawOffer, LendingOfferStruct } from '@/types'
 
 describe('communityCreditUtil on-chain mappers', () => {
@@ -27,7 +28,16 @@ describe('communityCreditUtil on-chain mappers', () => {
     ...baseOffer,
     ...over
   })
-  const raw: FixedReturnRawOffer = { offerId: 7, decimals: 6, offer: baseOffer }
+  const lenderAddresses = [
+    '0x1111111111111111111111111111111111aaaa',
+    '0x2222222222222222222222222222222222bbbb'
+  ] as Address[]
+  const raw: FixedReturnRawOffer = {
+    offerId: 7,
+    decimals: 6,
+    offer: baseOffer,
+    lenderAddresses
+  }
 
   describe('offerStateToRoundStatus', () => {
     // baseOffer.subscriptionDeadline is a fixed unix timestamp — pass `now` explicitly
@@ -104,7 +114,14 @@ describe('communityCreditUtil on-chain mappers', () => {
       expect(round.cap).toBe(10000)
       expect(round.status).toBe('open')
       expect(round.fundable).toBe(true)
-      expect(round.lenders).toEqual([])
+      // Regression: the round-card list showed "0 lenders" for every round because this
+      // used to hardcode `lenders: []` — it now carries one lightweight entry per
+      // getOfferLenders address (no principal/expected, those need the per-lender reads
+      // the detail view does on demand), enough for an accurate count and avatar stack.
+      expect(round.lenders).toHaveLength(2)
+      expect(round.lenders[0].addr).toBe(shortenAddress(lenderAddresses[0]))
+      expect(round.lenders[0].gradient).toBe(gradientForAddress(lenderAddresses[0]))
+      expect(round.lenders[0].amount).toBe(0)
     })
 
     it('maps to stalled and not fundable once the deadline has passed without reaching target', () => {

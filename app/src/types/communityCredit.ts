@@ -63,6 +63,9 @@ export interface FixedReturnRawOffer {
   offerId: number
   offer: LendingOfferStruct
   decimals: number
+  /** Addresses only (getOfferLenders) — cheap enough to fetch for the whole list, unlike
+   *  the full per-lender principal/expected breakdown (see useFixedReturnOfferLenders). */
+  lenderAddresses: Address[]
 }
 
 /** A single lender's position on one offer, as returned by useFixedReturnOfferLenders. */
