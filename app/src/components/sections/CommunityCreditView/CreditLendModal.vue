@@ -320,7 +320,8 @@ async function confirm() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
       queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] })
+      queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] }),
+      queryClient.invalidateQueries({ queryKey: ['fixed-return-events-logs'] })
     ])
     emit('lent')
   } catch (error) {

@@ -15,6 +15,7 @@ import type {
   FixedReturnOfferParams,
   FixedReturnRawOffer,
   LendingOfferStruct,
+  RoundDetailVariant,
   RoundStatus,
   StatusMeta
 } from '@/types'
@@ -102,6 +103,15 @@ export function reachedFundingTarget(round: Pick<CreditRound, 'raised' | 'target
   return round.raised >= round.target
 }
 
+/** Whether the connected wallet is Bank's owner — used to gate Repay, which calls
+ *  Bank.fundFixedReturnRepayment (onlyOwner on Bank's own Ownable, a separate owner
+ *  slot from FixedReturn's). Same pattern as CashOutAllAction.vue /
+ *  LegacyGenerationWithdrawAction.vue, just shared instead of re-inlined. */
+export function isBankOwner(bankOwner: unknown, userAddress: string | undefined): boolean {
+  if (!bankOwner || !userAddress) return false
+  return String(bankOwner).toLowerCase() === userAddress.toLowerCase()
+}
+
 /** Display label + badge color for every round status. */
 export const ROUND_STATUS_META: Record<RoundStatus, StatusMeta> = {
   open: { label: 'Open', color: 'primary' },
@@ -112,6 +122,15 @@ export const ROUND_STATUS_META: Record<RoundStatus, StatusMeta> = {
   repaid: { label: 'Repaid', color: 'success' },
   refunded: { label: 'Refunded', color: 'neutral' }
 }
+
+/** UTabs `items` for the round-detail Ledger/Gauge/Timeline/Repay switcher. */
+export const ROUND_VARIANT_TAB_ITEMS: { label: string; value: RoundDetailVariant; slot: string }[] =
+  [
+    { label: 'Ledger', value: 'ledger', slot: 'ledger' },
+    { label: 'Gauge', value: 'gauge', slot: 'gauge' },
+    { label: 'Timeline', value: 'timeline', slot: 'timeline' },
+    { label: 'Repay', value: 'repay', slot: 'repay' }
+  ]
 
 export function statusMeta(status: RoundStatus): StatusMeta {
   return ROUND_STATUS_META[status]

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import dayjs from 'dayjs'
 import { useQuery } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
@@ -18,26 +18,21 @@ import {
   offerStateToRoundStatus,
   roundInterest
 } from '@/utils'
-import type { CreditMember, CreditRound, RoundDetailVariant } from '@/types'
+import type { CreditMember, CreditRound } from '@/types'
 
 /**
  * Community Credit is the member-facing UI for a team's on-chain FixedReturn contract:
  * each "round" is a FixedReturn lending offer. This store surfaces the read side —
  * the offer list (useFixedReturnAllOffers), their off-chain title/purpose metadata and
- * the contract owner — mapped into the CreditRound shape the views render, plus the
- * `variant` layout toggle. Writes (lend / repay / create / refund) live in the views and
- * modals, since they need ERC20 approvals and toasts that only make sense in a component.
+ * the contract owner — mapped into the CreditRound shape the views render. Writes
+ * (lend / repay / create / refund) live in the views and modals, since they need ERC20
+ * approvals and toasts that only make sense in a component. The round-detail tab
+ * (ledger/gauge/timeline/repay) is a route param owned by RoundView.vue, not store state.
  */
 export const useCommunityCreditStore = defineStore('communityCredit', () => {
   const teamStore = useTeamStore()
   const userStore = useUserDataStore()
   const fixedReturnAddress = useFixedReturnAddress()
-
-  // ───────── view-only UI state ─────────
-  const variant = ref<RoundDetailVariant>('ledger')
-  function setVariant(next: RoundDetailVariant) {
-    variant.value = next
-  }
 
   // ───────── on-chain reads ─────────
   const offersQuery = useFixedReturnAllOffers()
@@ -156,9 +151,6 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
   }
 
   return {
-    // ui state
-    variant,
-    setVariant,
     // status
     hasContract,
     isLoading,
