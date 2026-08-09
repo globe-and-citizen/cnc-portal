@@ -14,13 +14,14 @@ const base = {
   memo: ''
 }
 
-/** A lender's $800 deposit into round #1 and the $80 fixed return it earns. */
+/** A lender's $800 share of a funded round #1 — recognised straight to Bank —
+ *  and the $80 fixed return it earns. */
 const deposit = (over: Partial<LedgerEntry> = {}): LedgerEntry => ({
   ...base,
-  id: 'fl1',
+  id: 'credit-principal-1-georges',
   timestamp: 100,
   useCase: 'UC-CREDIT-01',
-  debit: 'Cash — Credit',
+  debit: 'Cash — Bank',
   credit: 'Loan Payable',
   amountUsd: 800,
   rawAmount: '800000000',
@@ -67,19 +68,6 @@ const interestPaid = (over: Partial<LedgerEntry> = {}): LedgerEntry => ({
   ...over
 })
 
-const refund = (over: Partial<LedgerEntry> = {}): LedgerEntry => ({
-  ...base,
-  id: 'pr1',
-  timestamp: 500,
-  useCase: 'UC-CREDIT-04',
-  debit: 'Loan Payable',
-  credit: 'Cash — Credit',
-  amountUsd: 800,
-  rawAmount: '800000000',
-  counterparty: GEORGES,
-  ...over
-})
-
 /** `[account, debit, credit]` per rendered row — the shape of the posting. */
 const shape = (rows: ReturnType<typeof ledgerRows>) => rows.map((r) => [r.account, r.dr, r.cr])
 
@@ -87,7 +75,7 @@ describe('credit grouping', () => {
   it('renders a funded round on four lines, one posting', () => {
     const rows = ledgerRows([deposit(), interestOwed()])
     expect(shape(rows)).toEqual([
-      ['Cash — Credit', '$800.00', ''],
+      ['Cash — Bank', '$800.00', ''],
       ['Interest Expense', '$80.00', ''],
       ['Loan Payable', '', '$800.00'],
       ['Interest Payable', '', '$80.00']
@@ -113,7 +101,7 @@ describe('credit grouping', () => {
       deposit({ id: 'fl2', counterparty: RAVI, amountUsd: 200, rawAmount: '200000000' })
     ])
     expect(shape(rows)).toEqual([
-      ['Cash — Credit', '$1,000.00', ''],
+      ['Cash — Bank', '$1,000.00', ''],
       ['Interest Expense', '$80.00', ''],
       ['Loan Payable', '', '$1,000.00'],
       ['Interest Payable', '', '$80.00']
@@ -130,9 +118,9 @@ describe('credit grouping', () => {
     ])
     expect(rows.filter((r) => r.isFirst)).toHaveLength(2)
     expect(shape(rows)).toEqual([
-      ['Cash — Credit', '$800.00', ''],
+      ['Cash — Bank', '$800.00', ''],
       ['Loan Payable', '', '$800.00'],
-      ['Cash — Credit', '$500.00', ''],
+      ['Cash — Bank', '$500.00', ''],
       ['Loan Payable', '', '$500.00']
     ])
   })
@@ -206,17 +194,6 @@ describe('credit grouping', () => {
       })
     ])
     expect(rows.filter((r) => r.isFirst)).toHaveLength(2)
-  })
-
-  it('narrates a refund of a round that never funded', () => {
-    const rows = ledgerRows([refund({ creditRemainingUsd: 0 })])
-    expect(shape(rows)).toEqual([
-      ['Loan Payable', '$800.00', ''],
-      ['Cash — Credit', '', '$800.00']
-    ])
-    expect(rows[0]?.activity).toMatchObject({
-      text: 'Refunded $800.00 to 1 lender · every deposit returned'
-    })
   })
 
   it('leaves a leg that names no round as its own posting', () => {

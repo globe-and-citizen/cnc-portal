@@ -176,15 +176,6 @@ const dailyCapLabel = computed(() => {
 })
 
 watch(
-  () => wageData.value.ratePerHour.map((r) => Number(r.amount)),
-  (amounts) => {
-    wageData.value.ratePerHour.forEach((rate, i) => {
-      if (amounts[i] === 0 && rate.enabled) rate.enabled = false
-    })
-  }
-)
-
-watch(
   () => wageData.value.ratePerHour.map((r) => r.enabled),
   (enabled) => {
     wageData.value.ratePerHour.forEach((rate, i) => {

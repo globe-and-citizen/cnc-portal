@@ -179,7 +179,7 @@ describe('SetMemberWageStandardStep.vue', () => {
     expect(validWrapper.find('[data-test="add-wage-button"]').exists()).toBe(true)
   })
 
-  it('auto-disables the toggle when the rate amount is cleared to 0', async () => {
+  it('keeps the toggle on regardless of the amount value (0, decimal, or blank)', async () => {
     const wageData = createWageData({
       ratePerHour: [
         { type: 'native', amount: 10, enabled: true },
@@ -191,10 +191,17 @@ describe('SetMemberWageStandardStep.vue', () => {
     // Index 2: the two cap inputs (weekly, daily) come first
     const firstAmountInput = wrapper.findAll('input[type="number"]')[2]
 
+    // The amount must never flip the toggle off — otherwise the transient "0"
+    // and empty "0." states while typing "0.01" would lock the input.
     await firstAmountInput?.setValue('0')
+    expect(wageData.ratePerHour[0]?.enabled).toBe(true)
 
-    expect(wageData.ratePerHour[0]?.enabled).toBe(false)
-    expect(Number(wageData.ratePerHour[0]?.amount)).toBe(0)
+    await firstAmountInput?.setValue('0.01')
+    expect(wageData.ratePerHour[0]?.enabled).toBe(true)
+    expect(Number(wageData.ratePerHour[0]?.amount)).toBe(0.01)
+
+    await firstAmountInput?.setValue('')
+    expect(wageData.ratePerHour[0]?.enabled).toBe(true)
   })
 
   it('auto-zeroes the rate amount when the toggle is turned off', async () => {
