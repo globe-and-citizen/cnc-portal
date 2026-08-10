@@ -194,6 +194,21 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       expect(await expenseAccount.getTokenBalance(await mockUSDT.getAddress())).to.equal(amount)
     })
 
+    it('Should allow deposits from tokens that do not return a boolean', async () => {
+      const NoReturnToken = await ethers.getContractFactory('MockNoReturnERC20')
+      const noReturnToken = await NoReturnToken.deploy()
+      const tokenAddress = await noReturnToken.getAddress()
+      const amount = ethers.parseEther('100')
+
+      await expenseAccount.addTokenSupport(tokenAddress)
+      await noReturnToken.mint(owner.address, amount)
+      await noReturnToken.connect(owner).approve(await expenseAccount.getAddress(), amount)
+
+      await expenseAccount.connect(owner).depositToken(tokenAddress, amount)
+
+      expect(await noReturnToken.balanceOf(await expenseAccount.getAddress())).to.equal(amount)
+    })
+
     it('Should allow owner to add and remove token support', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = await MockToken.deploy('NEW', 'NEW')

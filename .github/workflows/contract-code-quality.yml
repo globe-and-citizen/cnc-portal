@@ -47,6 +47,19 @@ jobs:
           fi
         working-directory: ./contract
 
+      - name: 🚫 Guard against raw ERC20 transfers in production contracts
+        run: |
+          matches=$(grep -rnE '\.(transfer|transferFrom)\(' contracts \
+            --include="*.sol" \
+            --exclude-dir=mocks \
+            --exclude-dir=test || true)
+          if [ -n "$matches" ]; then
+            echo "::error::Use SafeERC20 safeTransfer or safeTransferFrom in production contracts"
+            echo "$matches"
+            exit 1
+          fi
+        working-directory: ./contract
+
       - name: </> Run Solidity Linter
         run: npm run lint:sol
         working-directory: ./contract
