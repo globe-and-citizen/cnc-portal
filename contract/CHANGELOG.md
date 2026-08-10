@@ -43,6 +43,7 @@ Each entry should answer:
 ## CashRemunerationEIP712
 
 ### CashRemunerationEIP712 2.0.1 — unreleased
+
 - What: use SafeERC20 for salary payouts and treasury token withdrawals.
 - Storage: none.
 - Shipped via: pending upgrade in place.
@@ -53,6 +54,7 @@ Each entry should answer:
 ## ExpenseAccountEIP712
 
 ### ExpenseAccountEIP712 2.0.1 — unreleased
+
 - What: use SafeERC20 for expense payouts, deposits, and treasury token withdrawals.
 - Storage: none.
 - Shipped via: pending upgrade in place.
