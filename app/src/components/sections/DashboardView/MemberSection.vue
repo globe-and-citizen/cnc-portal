@@ -81,11 +81,11 @@
             <span
               v-if="row.original.currentWage.maximumHoursPerDay"
               class="inline-flex items-center gap-1 rounded-full bg-[#FAEEDA] px-2 py-0.5 text-[11px] leading-none font-medium text-[#854F0B]"
-              :title="`Daily limit : ${row.original.currentWage.maximumHoursPerDay} heures`"
+              :title="`Daily limit: ${row.original.currentWage.maximumHoursPerDay} hours`"
               data-test="daily-cap-badge"
             >
               <UIcon name="i-heroicons-clock" aria-hidden="true" class="size-3" />
-              {{ row.original.currentWage.maximumHoursPerDay + 'h/j' }}
+              {{ row.original.currentWage.maximumHoursPerDay + 'h/d' }}
             </span>
           </div>
         </div>

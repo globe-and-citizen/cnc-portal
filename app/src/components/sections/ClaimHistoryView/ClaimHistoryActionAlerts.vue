@@ -16,6 +16,7 @@
               :weekly-claim="weeklyClaim"
               :signed-week-starts="signedWeekStarts"
               :selected-week-start="selectedWeekStart"
+              :maximum-hours-per-day="userWage?.maximumHoursPerDay"
             />
             <SubmitWeeklyGoals
               :weekly-claim="weeklyClaim"
@@ -138,12 +139,11 @@ const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
   }
 })
 
-const hasWage = computed(() => {
-  const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)
-  if (!userWage) return false
+const userWage = computed(() =>
+  teamWageData.value?.find((wage) => wage.userAddress === userStore.address)
+)
 
-  return true
-})
+const hasWage = computed(() => !!userWage.value)
 
 watch(teamWageDataError, (newVal) => {
   if (newVal) {

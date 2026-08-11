@@ -193,8 +193,8 @@ describe('MemberSection.vue', () => {
     const badge = firstRow.find('[data-test="daily-cap-badge"]')
 
     expect(badge.exists()).toBe(true)
-    expect(badge.text()).toContain('8h/j')
-    expect(badge.attributes('title')).toBe('Limite journalière : 8 heures')
+    expect(badge.text()).toContain('8h/d')
+    expect(badge.attributes('title')).toBe('Daily limit: 8 hours')
   })
 
   it('hides daily cap badge when maximumHoursPerDay is not set', () => {
