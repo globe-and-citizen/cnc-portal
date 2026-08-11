@@ -30,6 +30,7 @@
           :is-loading="isWageClaimAdding"
           :disabled-week-starts="props.signedWeekStarts"
           :restrict-submit="isRestricted"
+          :maximum-hours-per-day="props.maximumHoursPerDay"
           :error-message="addWageClaimError && errorMessage ? errorMessage.message : ''"
           error-title="Failed to submit claim"
           @submit="handleSubmit"
@@ -89,6 +90,7 @@ const props = defineProps<{
   }
   signedWeekStarts?: string[]
   selectedWeekStart?: string
+  maximumHoursPerDay?: number
 }>()
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))

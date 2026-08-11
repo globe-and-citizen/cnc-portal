@@ -160,6 +160,7 @@ interface Props {
   deletingFileIndex?: number | null
   errorMessage?: string
   errorTitle?: string
+  maximumHoursPerDay?: number
 }
 
 const toast = useToast()
@@ -201,6 +202,7 @@ const {
   existingFiles: toRef(props, 'existingFiles'),
   disabledWeekStarts: toRef(props, 'disabledWeekStarts'),
   restrictSubmit: toRef(props, 'restrictSubmit'),
+  maximumHoursPerDay: toRef(props, 'maximumHoursPerDay'),
   toast
 })
 
