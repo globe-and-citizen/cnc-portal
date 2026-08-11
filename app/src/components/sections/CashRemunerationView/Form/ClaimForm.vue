@@ -145,7 +145,11 @@ import { ref, toRef } from 'vue'
 import type { ClaimFormData } from '@/types'
 import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
-import { useClaimForm, type ClaimFormFileData } from '@/composables/useClaimForm'
+import {
+  useClaimForm,
+  type ClaimFormFileData,
+  type DailyClaimEntry
+} from '@/composables/useClaimForm'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
@@ -161,6 +165,7 @@ interface Props {
   errorMessage?: string
   errorTitle?: string
   maximumHoursPerDay?: number
+  existingClaims?: DailyClaimEntry[]
 }
 
 const toast = useToast()
@@ -203,6 +208,7 @@ const {
   disabledWeekStarts: toRef(props, 'disabledWeekStarts'),
   restrictSubmit: toRef(props, 'restrictSubmit'),
   maximumHoursPerDay: toRef(props, 'maximumHoursPerDay'),
+  existingClaims: toRef(props, 'existingClaims'),
   toast
 })
 

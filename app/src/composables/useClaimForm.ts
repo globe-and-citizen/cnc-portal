@@ -23,6 +23,11 @@ interface UseClaimFormToast {
   }) => void
 }
 
+export interface DailyClaimEntry {
+  minutesWorked: number
+  dayWorked: string
+}
+
 interface UseClaimFormOptions {
   initialData: Ref<Partial<ClaimFormData> | undefined>
   existingFiles: Ref<Partial<ClaimFormFileData>[] | null | undefined>
@@ -31,6 +36,7 @@ interface UseClaimFormOptions {
   toast: UseClaimFormToast
   maxFiles?: number
   maximumHoursPerDay?: Ref<number | undefined>
+  existingClaims?: Ref<DailyClaimEntry[] | undefined>
 }
 
 export type CalendarSelectionValue =
@@ -72,9 +78,19 @@ export const formatUTC = (value: Date | string | null | undefined): string => {
   return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
 }
 
-const buildClaimSchema = (dailyCap?: number) => {
-  const maxMinutes = dailyCap && dailyCap > 0 ? dailyCap * 60 : 1440
-  const maxHoursLabel = dailyCap && dailyCap > 0 ? dailyCap : 24
+const alreadyClaimedForDay = (claims: DailyClaimEntry[], dayWorked: string): number =>
+  claims.filter((c) => c.dayWorked === dayWorked).reduce((sum, c) => sum + c.minutesWorked, 0)
+
+const formatMinutes = (minutes: number): string => {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m > 0 ? `${h}h${m}min` : `${h}h`
+}
+
+const buildClaimSchema = (dailyCap?: number, existingClaims?: DailyClaimEntry[]) => {
+  const hasCap = typeof dailyCap === 'number' && dailyCap > 0
+  const maxMinutes = hasCap ? dailyCap * 60 : 1440
+  const maxHoursLabel = hasCap ? dailyCap : 24
 
   return z
     .object({
@@ -104,11 +120,27 @@ const buildClaimSchema = (dailyCap?: number) => {
       path: ['hoursWorked']
     })
     .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) <= maxMinutes, {
-      message:
-        dailyCap && dailyCap > 0
-          ? `Cannot exceed daily cap of ${dailyCap} hours`
-          : 'Total duration cannot exceed 24 hours (1440 minutes)',
+      message: hasCap
+        ? `Cannot exceed daily cap of ${dailyCap} hours`
+        : 'Total duration cannot exceed 24 hours (1440 minutes)',
       path: ['hoursWorked']
+    })
+    .superRefine((data, ctx) => {
+      if (!hasCap || !existingClaims?.length) return
+      const inputMinutes = Number(data.hoursWorked) * 60 + Number(data.minutesWorked)
+      const claimed = alreadyClaimedForDay(existingClaims, data.dayWorked)
+      if (inputMinutes + claimed <= maxMinutes) return
+
+      const remaining = Math.max(0, maxMinutes - claimed)
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          `Daily limit would be exceeded. ` +
+          `Allowance: ${formatMinutes(maxMinutes)}. ` +
+          `Already claimed: ${formatMinutes(claimed)}. ` +
+          `Remaining: ${formatMinutes(remaining)}.`,
+        path: ['hoursWorked']
+      })
     })
 }
 
@@ -118,7 +150,9 @@ export function useClaimForm(options: UseClaimFormOptions) {
   const datePickerOpen = ref(false)
   const minutesOptions = ['0', '10', '20', '30', '40', '50']
 
-  const claimSchema = computed(() => buildClaimSchema(options.maximumHoursPerDay?.value))
+  const claimSchema = computed(() =>
+    buildClaimSchema(options.maximumHoursPerDay?.value, options.existingClaims?.value)
+  )
 
   const formData = ref<ClaimFormData>(createDefaultFormData(options.initialData.value))
 

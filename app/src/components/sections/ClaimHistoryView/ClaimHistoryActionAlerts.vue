@@ -17,6 +17,7 @@
               :signed-week-starts="signedWeekStarts"
               :selected-week-start="selectedWeekStart"
               :maximum-hours-per-day="userWage?.maximumHoursPerDay"
+              :existing-claims="weeklyClaim?.claims"
             />
             <SubmitWeeklyGoals
               :weekly-claim="weeklyClaim"
