@@ -108,4 +108,51 @@ describe('useClaimForm', () => {
     expect(formatUTC(new Date(Date.UTC(2024, 0, 20, 5, 30, 0)))).toBe('2024-01-20 UTC')
     expect(formatUTC('2024-02-15T12:00:00.000Z')).toBe('2024-02-15 UTC')
   })
+
+  it('enforces daily cap when maximumHoursPerDay is provided', () => {
+    const options = createOptions()
+    const { claimSchema } = useClaimForm({
+      ...options,
+      maximumHoursPerDay: ref(6)
+    })
+
+    const validResult = claimSchema.value.safeParse({
+      hoursWorked: '5',
+      minutesWorked: '30',
+      memo: 'ok',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(validResult.success).toBe(true)
+
+    const overHoursResult = claimSchema.value.safeParse({
+      hoursWorked: '7',
+      minutesWorked: '0',
+      memo: 'too many hours',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(overHoursResult.success).toBe(false)
+    expect(overHoursResult.error?.issues.some((i) => i.message.includes('6'))).toBe(true)
+
+    const overTotalResult = claimSchema.value.safeParse({
+      hoursWorked: '6',
+      minutesWorked: '10',
+      memo: 'total exceeds cap',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(overTotalResult.success).toBe(false)
+    expect(overTotalResult.error?.issues.some((i) => i.message.includes('daily cap'))).toBe(true)
+  })
+
+  it('falls back to 24h limit when no daily cap is set', () => {
+    const options = createOptions()
+    const { claimSchema } = useClaimForm(options)
+
+    const validResult = claimSchema.value.safeParse({
+      hoursWorked: '23',
+      minutesWorked: '50',
+      memo: 'long day',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(validResult.success).toBe(true)
+  })
 })

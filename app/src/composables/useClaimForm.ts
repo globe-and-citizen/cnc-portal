@@ -30,6 +30,7 @@ interface UseClaimFormOptions {
   restrictSubmit: Ref<boolean>
   toast: UseClaimFormToast
   maxFiles?: number
+  maximumHoursPerDay?: Ref<number | undefined>
 }
 
 export type CalendarSelectionValue =
@@ -71,39 +72,53 @@ export const formatUTC = (value: Date | string | null | undefined): string => {
   return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
 }
 
-const claimSchema = z
-  .object({
-    hoursWorked: z
-      .union([z.string(), z.number()])
-      .refine((val) => String(val).trim() !== '', { message: 'Hours is required' })
-      .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' })
-      .refine((val) => Number(val) >= 0, { message: 'Hours cannot be negative' })
-      .refine((val) => Number(val) <= 24, { message: 'Cannot exceed 24 hours' })
-      .refine((val) => Number.isInteger(Number(val)), { message: 'Hours must be a whole number' }),
-    minutesWorked: z
-      .union([z.string(), z.number()])
-      .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' }),
-    memo: z.string().min(1, 'Memo is required').max(3000, 'Memo must not exceed 3000 characters'),
-    dayWorked: z.string().min(1, 'Date is required')
-  })
-  .refine((data) => [0, 10, 20, 30, 40, 50].includes(Number(data.minutesWorked)), {
-    message: 'Minutes must be 0, 10, 20, 30, 40, or 50',
-    path: ['hoursWorked']
-  })
-  .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) > 0, {
-    message: 'Duration must be greater than 0',
-    path: ['hoursWorked']
-  })
-  .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) <= 1440, {
-    message: 'Total duration cannot exceed 24 hours (1440 minutes)',
-    path: ['hoursWorked']
-  })
+const buildClaimSchema = (dailyCap?: number) => {
+  const maxMinutes = dailyCap && dailyCap > 0 ? dailyCap * 60 : 1440
+  const maxHoursLabel = dailyCap && dailyCap > 0 ? dailyCap : 24
+
+  return z
+    .object({
+      hoursWorked: z
+        .union([z.string(), z.number()])
+        .refine((val) => String(val).trim() !== '', { message: 'Hours is required' })
+        .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' })
+        .refine((val) => Number(val) >= 0, { message: 'Hours cannot be negative' })
+        .refine((val) => Number(val) <= maxHoursLabel, {
+          message: `Cannot exceed ${maxHoursLabel} hours`
+        })
+        .refine((val) => Number.isInteger(Number(val)), {
+          message: 'Hours must be a whole number'
+        }),
+      minutesWorked: z
+        .union([z.string(), z.number()])
+        .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' }),
+      memo: z.string().min(1, 'Memo is required').max(3000, 'Memo must not exceed 3000 characters'),
+      dayWorked: z.string().min(1, 'Date is required')
+    })
+    .refine((data) => [0, 10, 20, 30, 40, 50].includes(Number(data.minutesWorked)), {
+      message: 'Minutes must be 0, 10, 20, 30, 40, or 50',
+      path: ['hoursWorked']
+    })
+    .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) > 0, {
+      message: 'Duration must be greater than 0',
+      path: ['hoursWorked']
+    })
+    .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) <= maxMinutes, {
+      message:
+        dailyCap && dailyCap > 0
+          ? `Cannot exceed daily cap of ${dailyCap} hours`
+          : 'Total duration cannot exceed 24 hours (1440 minutes)',
+      path: ['hoursWorked']
+    })
+}
 
 export function useClaimForm(options: UseClaimFormOptions) {
   const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES
   const uploadedFiles = ref<File[]>([])
   const datePickerOpen = ref(false)
   const minutesOptions = ['0', '10', '20', '30', '40', '50']
+
+  const claimSchema = computed(() => buildClaimSchema(options.maximumHoursPerDay?.value))
 
   const formData = ref<ClaimFormData>(createDefaultFormData(options.initialData.value))
 
