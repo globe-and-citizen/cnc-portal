@@ -61,6 +61,7 @@ const teamStoreState = {
             id: 11,
             disabled: false,
             maximumHoursPerWeek: 40,
+            maximumHoursPerDay: 8,
             maximumOvertimeHoursPerWeek: 10,
             ratePerHour: [{ type: 'native', amount: 20 }],
             overtimeRatePerHour: [{ type: 'native', amount: 25 }]
@@ -184,6 +185,24 @@ describe('MemberSection.vue', () => {
     expect(secondRowText).toContain('30h/wk')
     expect(secondRowText).toContain('0h/wk')
     expect(thirdRowText).toContain('—')
+  })
+
+  it('shows daily cap badge when maximumHoursPerDay is set', () => {
+    const wrapper = makeWrapper()
+    const firstRow = wrapper.find('[data-test="row-0xAAA"]')
+    const badge = firstRow.find('[data-test="daily-cap-badge"]')
+
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toContain('8h/j')
+    expect(badge.attributes('title')).toBe('Limite journalière : 8 heures')
+  })
+
+  it('hides daily cap badge when maximumHoursPerDay is not set', () => {
+    const wrapper = makeWrapper()
+    const secondRow = wrapper.find('[data-test="row-0xBBB"]')
+    const badge = secondRow.find('[data-test="daily-cap-badge"]')
+
+    expect(badge.exists()).toBe(false)
   })
 
   it('disables toggle button when member has no current wage', () => {

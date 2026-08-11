@@ -74,7 +74,20 @@
       <template #standard-cell="{ row }">
         <div v-if="row.original.currentWage">
           <RateDotList :rates="row.original.currentWage.ratePerHour" />
-          {{ row.original.currentWage.maximumHoursPerWeek + 'h/wk' }}
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span v-if="row.original.currentWage.maximumHoursPerWeek">
+              {{ row.original.currentWage.maximumHoursPerWeek + 'h/wk' }}
+            </span>
+            <span
+              v-if="row.original.currentWage.maximumHoursPerDay"
+              class="inline-flex items-center gap-1 rounded-full bg-[#FAEEDA] px-2 py-0.5 text-[11px] leading-none font-medium text-[#854F0B]"
+              :title="`Daily limit : ${row.original.currentWage.maximumHoursPerDay} heures`"
+              data-test="daily-cap-badge"
+            >
+              <UIcon name="i-heroicons-clock" aria-hidden="true" class="size-3" />
+              {{ row.original.currentWage.maximumHoursPerDay + 'h/j' }}
+            </span>
+          </div>
         </div>
         <div v-else>—</div>
       </template>
