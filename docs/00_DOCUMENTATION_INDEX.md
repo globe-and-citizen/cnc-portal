@@ -148,6 +148,7 @@ Implement on-chain logic:
 - [Project Charter § 5.1](./01_PROJECT_CHARTER.md#51-core-features) — Feature overview
 - [User Stories: Payroll & Claims](./02_USER_STORIES.md#payroll--cash-remuneration) — Requirements
 - [Implementation Status: Financial](./03_IMPLEMENTATION_STATUS.md#financial-management) — What's built
+- [Daily cap](./features/cash-remuneration/daily-cap.md) — Wage daily hour limit: badge display and claim form validation
 
 **Governance (Proposals, BOD Elections, Voting):**
 

@@ -112,4 +112,10 @@
 
 ---
 
+## Related
+
+- [Daily cap — wage daily hour limit](../../cash-remuneration/daily-cap.md) — badge in the Team Members table + frontend validation against the daily cap
+
+---
+
 _[← Back to index](../README.md)_
