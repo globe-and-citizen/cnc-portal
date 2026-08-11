@@ -11,11 +11,11 @@
 
 | User Story | Title                                                   | Contract | Frontend | Effort |
 | ---------- | ------------------------------------------------------- | :------: | :------: | ------ |
-| US-CR-001  | Withdraw wages with an owner-signed claim (EIP-712)     | ✅       | 🚫       | L      |
-| US-CR-002  | Pay wages in multiple tokens in a single transaction    | ✅       | 🚫       | M      |
-| US-CR-003  | Mint equity (InvestorV1) tokens as part of compensation | ✅       | 🚫       | M      |
-| US-CR-004  | Prevent double payment via claim hash                   | ✅       | 🚫       | S      |
-| US-CR-005  | Disable/enable a wage claim before it is submitted      | ✅       | 🚫       | S      |
+| US-CR-001  | Withdraw wages with an owner-signed claim (EIP-712)     |    ✅    |    🚫    | L      |
+| US-CR-002  | Pay wages in multiple tokens in a single transaction    |    ✅    |    🚫    | M      |
+| US-CR-003  | Mint equity (InvestorV1) tokens as part of compensation |    ✅    |    🚫    | M      |
+| US-CR-004  | Prevent double payment via claim hash                   |    ✅    |    🚫    | S      |
+| US-CR-005  | Disable/enable a wage claim before it is submitted      |    ✅    |    🚫    | S      |
 
 **Contract: 5 / 5 — Frontend: 0 / 5**
 
@@ -109,12 +109,6 @@
 - [x] `enableClaim(signatureHash)` re-enables a previously disabled claim (owner only)
 - [x] `withdraw` reverts with `ClaimDisabled` if the claim's hash is in the disabled set
 - [x] Disabling is immediate — the employee cannot submit the claim after this point
-
----
-
-## Related
-
-- [Daily cap — wage daily hour limit](../../cash-remuneration/daily-cap.md) — badge in the Team Members table + frontend validation against the daily cap
 
 ---
 

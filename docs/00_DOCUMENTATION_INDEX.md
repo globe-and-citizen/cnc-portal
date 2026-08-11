@@ -122,16 +122,16 @@ Implement on-chain logic:
 
 ## 📊 Documentation Status
 
-| Document                                            | Version | Updated          | Status |
-| --------------------------------------------------- | ------- | ---------------- | ------ |
+| Document                                               | Version | Updated          | Status |
+| ------------------------------------------------------ | ------- | ---------------- | ------ |
 | [Project Charter](./01_PROJECT_CHARTER.md)             | 1.0.0   | March 11, 2026   | Active |
 | [User Stories](./02_USER_STORIES.md)                   | 1.0.0   | March 12, 2026   | Active |
 | [Implementation Status](./03_IMPLEMENTATION_STATUS.md) | 1.0.0   | March 12, 2026   | Active |
-| [Architecture Overview](./platform/architecture.md) | 1.0.0   | December 7, 2025 | Active |
-| [Testing Strategy](./platform/testing-strategy.md)  | 1.0.0   | December 7, 2025 | Active |
-| [Security Standards](./platform/security.md)        | 1.0.0   | TBD              | Draft  |
-| [Performance Standards](./platform/performance.md)  | 1.0.0   | TBD              | Draft  |
-| [Deployment Guide](./platform/deployment.md)        | 1.0.0   | TBD              | Draft  |
+| [Architecture Overview](./platform/architecture.md)    | 1.0.0   | December 7, 2025 | Active |
+| [Testing Strategy](./platform/testing-strategy.md)     | 1.0.0   | December 7, 2025 | Active |
+| [Security Standards](./platform/security.md)           | 1.0.0   | TBD              | Draft  |
+| [Performance Standards](./platform/performance.md)     | 1.0.0   | TBD              | Draft  |
+| [Deployment Guide](./platform/deployment.md)           | 1.0.0   | TBD              | Draft  |
 
 ---
 
@@ -148,7 +148,6 @@ Implement on-chain logic:
 - [Project Charter § 5.1](./01_PROJECT_CHARTER.md#51-core-features) — Feature overview
 - [User Stories: Payroll & Claims](./02_USER_STORIES.md#payroll--cash-remuneration) — Requirements
 - [Implementation Status: Financial](./03_IMPLEMENTATION_STATUS.md#financial-management) — What's built
-- [Daily cap](./features/cash-remuneration/daily-cap.md) — Wage daily hour limit: badge display and claim form validation
 
 **Governance (Proposals, BOD Elections, Voting):**
 
