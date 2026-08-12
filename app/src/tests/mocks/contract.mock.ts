@@ -88,6 +88,7 @@ export const mockCashRemunerationReads = {
 }
 
 export const mockCashRemunerationWrites = {
+  withdraw: createContractWriteV3Mock(),
   ownerWithdrawAllToBank: createContractWriteV3Mock(),
   enableClaim: createContractWriteV3Mock(),
   disableClaim: createContractWriteV3Mock()

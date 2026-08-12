@@ -17,13 +17,6 @@ import {
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
 
-vi.mock('@/composables/cashRemuneration/writes', () => ({
-  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
-  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim),
-  useWithdraw: vi.fn(() => mockCashRemunerationWrites.ownerWithdrawAllToBank),
-  useOwnerWithdrawAllToBank: vi.fn(() => mockCashRemunerationWrites.ownerWithdrawAllToBank)
-}))
-
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 
