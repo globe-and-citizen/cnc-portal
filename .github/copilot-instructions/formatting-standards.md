@@ -24,10 +24,9 @@ Before this module, `app/src` alone carried:
 - **five** address truncations, two using `…` where the rest used `...`, so the same address looked
   like two different values in two tables.
 
-That is not a tidiness problem. [#2376](https://github.com/globe-and-citizen/cnc-portal/pull/2376)
-shipped to production: a `maximumFractionDigits: 0` default plus raw `toLocaleString` at the call
-sites rounded every fractional Community Credit amount to a whole number, so a `0.2 USDC` position
-displayed as `0`.
+That is not a tidiness problem. A `maximumFractionDigits: 0` default plus raw `toLocaleString` at
+the call sites can round every fractional Community Credit amount to a whole number, so a `0.2 USDC`
+position displays as `0`.
 
 A formatter is a **product decision** — how much precision a user is trusted with, whether zero
 means zero or unknown, whether a figure is reconcilable against a block explorer. Decisions like
@@ -129,10 +128,9 @@ never to prepare one for a contract.
 when to reach for it. Then use it in both front-ends.
 
 Do **not** add a file to the `formattingLegacyFiles` allowlist in `eslint.config.js` /
-`eslint.config.mjs`. That list is migration debt from
-[#2383](https://github.com/globe-and-citizen/cnc-portal/issues/2383) and only ever shrinks — a
-ceiling constant fails lint at config load if it grows. A new entry means the codebase gained a
-convention in the same week it spent a PR removing them.
+`eslint.config.mjs`. That list is intentional migration debt and only ever shrinks — a ceiling
+constant fails lint at config load if it grows. A new entry means the codebase gained a convention
+in the same week it spent a PR removing them.
 
 If a one-off truly is one-off, a scoped
 `// eslint-disable-next-line no-restricted-syntax -- <reason>` on the line itself is the escape
