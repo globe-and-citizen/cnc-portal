@@ -76,16 +76,6 @@ vi.mock('@/composables/safe', () => ({
   openSafeAppUrl: mockOpenSafeAppUrl
 }))
 
-// Mock utils
-vi.mock('@/utils', () => ({
-  log: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn()
-  }
-}))
-
 // Component stubs
 const SELECTORS = {
   card: '[data-test="card-component"]',

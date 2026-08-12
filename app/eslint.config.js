@@ -129,7 +129,7 @@ const globalMockReMockSelectors = bannedGlobalMockPaths.map((path) => ({
   message: globalMockMessage(path)
 }))
 
-// Legacy offenders — these 34 spec files still carry at least one
+// Legacy offenders — these 26 spec files still carry at least one
 // `vi.mock(...)` call against a globally-mocked module path. The rule is
 // disabled for them so CI does not break on day one; each removal is a
 // follow-up to issue #2014.
@@ -142,12 +142,6 @@ const globalMockLegacyFiles = [
   'src/components/sections/CashRemunerationView/__tests__/CRWithdrawClaim.spec.ts',
   'src/components/sections/DashboardView/__tests__/MemberSection.spec.ts',
   'src/components/sections/ExpenseAccountView/__tests__/TransferAction.spec.ts',
-  'src/components/sections/SafeView/__tests__/RemoveOwnerButton.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeBalanceSection.transfer.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeOwnersCard.spec.ts',
-  'src/components/sections/SafeView/forms/__tests__/AddSignerModal.spec.ts',
-  'src/components/sections/SafeView/forms/__tests__/UpdateThresholdModal.spec.ts',
   'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts',
   'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts',
   'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.test-utils.ts',
@@ -161,8 +155,6 @@ const globalMockLegacyFiles = [
   'src/components/sections/WeeklyClaimView/__tests__/WeeklyClaimActionEnable.spec.ts',
   'src/composables/__tests__/useFileUrl.spec.ts',
   'src/composables/__tests__/useSiwe.spec.ts',
-  'src/composables/safe/__tests__/useSafeSdk.spec.ts',
-  'src/composables/safe/__tests__/useSafeTransactionActions.spec.ts',
   'src/queries/__tests__/contract.queries.spec.ts',
   'src/router/__tests__/index.spec.ts',
   'src/stores/__tests__/teamStore.spec.ts',
