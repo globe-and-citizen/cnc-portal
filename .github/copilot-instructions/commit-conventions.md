@@ -1,6 +1,6 @@
 # Commit Message Conventions
 
-> Authoritative source: [`AGENTS.md`](../../AGENTS.md). This file expands the rationale.
+> [`AGENTS.md`](../../AGENTS.md) contains the repository-level workflow. This file contains the commit-specific convention and examples.
 
 ## Format
 

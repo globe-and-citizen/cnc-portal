@@ -2,11 +2,24 @@
 
 > **Canonical reference**: `app/src/components/__tests__/SelectComponent.spec.ts` shows the props/emits/data-test contract from the test side.
 >
-> See [`AGENTS.md`](../../AGENTS.md) §"Frontend authoring" for the leanness rule (extract logic into utils + composables, search before creating).
+> See [the frontend-change skill](../../.agents/skills/cnc-frontend-change/SKILL.md) for the workflow that routes frontend changes to these standards.
 
 ## Composition API only
 
 `<script setup lang="ts">` for every new component. No Options API, no JS-only files.
+
+## Scope and maintainability
+
+Keep the requested change scoped. A component should describe what it renders:
+
+- Put pure data shaping in an existing or new utility under `app/src/utils/`.
+- Put reactive or stateful behaviour in a focused `useXxx` composable.
+- Search `utils/` and `composables/` before adding a near-duplicate helper.
+- Keep server data in its query cache instead of mirroring it into Pinia.
+
+If adjacent code materially risks correctness, security, or the behaviour being
+edited, report it and create or use a follow-up issue. Do not expand a focused
+change into opportunistic component refactoring.
 
 ## Props
 
@@ -78,7 +91,7 @@ toast.add({ title: "Saved", color: "success" });
 <UAlert v-if="errorMessage" color="error" :description="errorMessage" />
 ```
 
-For mutations, surface `mutation.error` reactively via `<UAlert />` rather than wrapping `mutateAsync` in `try/catch` — this composes with the documented mutation pattern in [`AGENTS.md`](../../AGENTS.md):
+For mutations, surface `mutation.error` reactively via `<UAlert />` rather than wrapping `mutateAsync` in `try/catch`; see the [query guide](../../app/src/queries/README.md) for the mutation architecture:
 
 ```vue
 <script setup lang="ts">
@@ -113,5 +126,5 @@ Minimum for a custom dropdown / disclosure:
 
 - **`v-if` + `v-for` on the same element.** Use a `computed` filtered list, or `<template v-for>` wrapping a `<li v-if>`.
 - **Watchers as substitutes for `computed`.** If a watcher only sets one value from another, it's a `computed`.
-- **Inline business logic.** If the script block grows past ~50 lines or you have multiple unrelated `try/catch`, extract a composable. See [`AGENTS.md`](../../AGENTS.md) §"Frontend authoring".
+- **Inline business logic.** If the script block grows past ~50 lines or you have multiple unrelated `try/catch`, extract a composable.
 - **`wrapper.vm.foo` in tests.** Test the rendered DOM, not internals.

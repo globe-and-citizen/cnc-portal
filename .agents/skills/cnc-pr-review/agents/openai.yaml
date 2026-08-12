@@ -1,0 +1,4 @@
+interface:
+  display_name: "CNC PR Review"
+  short_description: "Review CNC pull requests against requirements and code."
+  default_prompt: "Use $cnc-pr-review to review this CNC Portal pull request."
