@@ -2,7 +2,7 @@
 
 > **Canonical reference**: `app/src/components/__tests__/SelectComponent.spec.ts` shows the props/emits/data-test contract from the test side.
 >
-> See [`AGENTS.md`](../../AGENTS.md) §"Frontend authoring" for the leanness rule (extract logic into utils + composables, search before creating).
+> See [the frontend-change skill](../../.agents/skills/cnc-frontend-change/SKILL.md) for the workflow that routes frontend changes to these standards.
 
 ## Composition API only
 

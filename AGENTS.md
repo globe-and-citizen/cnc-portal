@@ -8,6 +8,19 @@ Operational guidance for AI coding agents working in this repository. Human cont
 2. Work in the subproject you touch. This monorepo has no workspace tool: each subproject owns its `package.json` and dependencies.
 3. Read the specialised guide for the affected area. Do not treat this file as a replacement for the implementation guides.
 
+## Repository skills
+
+Task-specific workflows are versioned under `.agents/skills/`. Use only the one that matches the work:
+
+- `cnc-work-orchestrator` — plan dependencies and bounded multi-agent work.
+- `cnc-github-flow` — issues, Sprint hierarchy, PRs, reviews, and publishing.
+- `cnc-pr-review` — issue conformance and code-quality review.
+- `cnc-docs-governance` — agent and implementation documentation.
+- `cnc-frontend-change` — Vue client and Nuxt dashboard changes.
+- `cnc-contract-change` — Solidity and ABI changes.
+
+`AGENTS.md` remains the universal contract. Skills contain procedures; detailed standards remain in their specialised guides.
+
 ## Repository map
 
 - `app/` — Vue 3 SPA, the main product.
