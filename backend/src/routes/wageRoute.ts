@@ -1,5 +1,10 @@
 import express from 'express';
-import { getWages, setWage, toggleWageStatus } from '../controllers/wageController';
+import {
+  cancelScheduledWage,
+  getWages,
+  setWage,
+  toggleWageStatus,
+} from '../controllers/wageController';
 import {
   rejectIfArchived,
   requireTeamMember,
@@ -11,6 +16,7 @@ import {
   validateParamsAndQuery,
   setWageBodySchema,
   getWagesQuerySchema,
+  cancelScheduledWageQuerySchema,
   toggleWageStatusParamsSchema,
   toggleWageStatusQuerySchema,
 } from '../validation';
@@ -269,6 +275,54 @@ wageRoutes.get(
   validateQuery(getWagesQuerySchema),
   requireTeamMember('query.teamId'),
   getWages
+);
+
+/**
+ * @openapi
+ * /wage/scheduled:
+ *  delete:
+ *   summary: Cancel a scheduled wage change
+ *   tags: [Wages]
+ *   security:
+ *     - bearerAuth: []
+ *   description: Removes a wage change that was scheduled for a future week and has not taken effect yet. The previously active wage becomes current again.
+ *   parameters:
+ *     - in: query
+ *       name: teamId
+ *       required: true
+ *       schema:
+ *         type: integer
+ *         minimum: 1
+ *       description: The ID of the team
+ *     - in: query
+ *       name: userAddress
+ *       required: true
+ *       schema:
+ *         type: string
+ *         pattern: "^0x[a-fA-F0-9]{40}$"
+ *       description: The Ethereum address of the member
+ *   responses:
+ *     200:
+ *       description: Scheduled change cancelled; returns the wage that stays in force
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/WageRecord'
+ *     403:
+ *       description: Forbidden - caller is not the owner of the team
+ *     404:
+ *       description: No scheduled wage change to cancel
+ *     409:
+ *       description: The scheduled wage has no predecessor
+ *     500:
+ *       description: Internal server error
+ */
+wageRoutes.delete(
+  '/scheduled',
+  validateQuery(cancelScheduledWageQuerySchema),
+  requireTeamOwner('query.teamId'),
+  rejectIfArchived('query.teamId'),
+  cancelScheduledWage
 );
 
 /**
