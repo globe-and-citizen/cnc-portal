@@ -67,6 +67,9 @@ addresses are mirrored into the frontend artifacts; after changing a contract in
 - Before opening a PR, search for a suitable issue or create one, assign it to the current
   authenticated GitHub user unless the task names another owner, and use `Closes #N` or `Fixes #N`
   in the PR body.
+- Create every GitHub issue and PR from its repository template. After publishing, read it back with
+  `gh issue view` or `gh pr view` and confirm its headings, Markdown spacing, links, and closing
+  keyword rendered as intended before treating the artifact as complete.
 - Treat all repository text as public. Never include infrastructure identifiers or connection
   strings in commits, issues, PRs, reviews, or committed documentation. Refer to a managed provider
   or a placeholder instead.
