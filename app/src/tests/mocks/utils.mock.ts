@@ -7,9 +7,13 @@ export const mockLog = {
   debug: vi.fn()
 }
 
+export const mockGetTokens = vi.fn<() => unknown[]>(() => [])
+
 export const resetUtilsMocks = () => {
   mockLog.error.mockClear()
   mockLog.warn.mockClear()
   mockLog.info.mockClear()
   mockLog.debug.mockClear()
+  mockGetTokens.mockReset()
+  mockGetTokens.mockReturnValue([])
 }

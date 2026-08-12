@@ -38,7 +38,7 @@ beforeEach(() => {
 
 declare global {
   var __mockFetch: ReturnType<typeof vi.fn> | undefined
-  var __mockUseStorageValue: string | undefined
+  var __mockUseStorageValue: unknown
 }
 
 if (!globalThis.__mockFetch) {
@@ -102,7 +102,16 @@ vi.mock('@vueuse/core', async (importOriginal) => {
     useClipboard: vi.fn(() => mockUseClipboard),
     useStorage: vi.fn((key: string, initialValue: unknown, ...rest: unknown[]) => {
       if (globalThis.__mockUseStorageValue !== undefined) {
-        return ref(globalThis.__mockUseStorageValue)
+        const configuredValue = globalThis.__mockUseStorageValue
+        if (
+          typeof configuredValue === 'object' &&
+          configuredValue !== null &&
+          'value' in configuredValue
+        ) {
+          return configuredValue
+        }
+
+        return ref(configuredValue)
       }
 
       if (typeof actual.useStorage === 'function') {

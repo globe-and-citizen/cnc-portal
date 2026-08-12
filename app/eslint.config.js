@@ -134,32 +134,12 @@ const globalMockReMockSelectors = bannedGlobalMockPaths.map((path) => ({
 // disabled for them so CI does not break on day one; each removal is a
 // follow-up to issue #2014.
 const globalMockLegacyFiles = [
-  'src/components/sections/AdministrationView/__tests__/CurrentBoDSection.spec.ts',
-  'src/components/sections/AdministrationView/__tests__/PastBoDElectionCard.spec.ts',
-  'src/components/sections/AdministrationView/__tests__/PublishResult.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/CRSigne.migration.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/CRSigne.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/CRWithdrawClaim.spec.ts',
-  'src/components/sections/DashboardView/__tests__/MemberSection.spec.ts',
   'src/components/sections/ExpenseAccountView/__tests__/TransferAction.spec.ts',
   'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts',
   'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts',
   'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.test-utils.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/MintRecapCard.spec.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/MintStakeSection.spec.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/TwinAmountInputs.spec.ts',
-  'src/components/sections/VestingView/__tests__/VestingFlow.spec.ts',
-  'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
-  'src/components/sections/WeeklyClaimView/__tests__/WeeklyClaimActionDropdown.spec.ts',
-  'src/components/sections/WeeklyClaimView/__tests__/WeeklyClaimActionEnable.spec.ts',
-  'src/composables/__tests__/useFileUrl.spec.ts',
   'src/composables/__tests__/useSiwe.spec.ts',
-  'src/queries/__tests__/contract.queries.spec.ts',
-  'src/router/__tests__/index.spec.ts',
-  'src/stores/__tests__/teamStore.spec.ts',
-  'src/views/team/[[]id[]]/__tests__/BankView.spec.ts',
-  'src/views/team/[[]id[]]/__tests__/BodElectionView.spec.ts'
+  'src/router/__tests__/index.spec.ts'
 ]
 
 // Contract-writes V3 enforcement (issues #1798, #1926).
