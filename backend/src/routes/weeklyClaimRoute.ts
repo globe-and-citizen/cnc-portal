@@ -314,7 +314,11 @@ weeklyClaimRoutes.put(
  *   tags: [Weekly Claims]
  *   security:
  *     - bearerAuth: []
- *   description: Performs an action on a weekly claim (sign, withdraw, enable, or disable). Requires appropriate permissions.
+ *   description: |
+ *     Performs an action on a weekly claim (sign, withdraw, enable, or disable).
+ *     The caller must be a member of the claim's team. Beyond that, `sign`,
+ *     `disable` and `enable` require the Cash Remuneration owner or the team
+ *     owner, while `withdraw` is restricted to the member the claim belongs to.
  *   parameters:
  *     - in: path
  *       name: id
@@ -392,7 +396,9 @@ weeklyClaimRoutes.put(
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  *     403:
- *       description: Forbidden - caller is not the Cash Remuneration owner or team owner
+ *       description: |
+ *         Forbidden - the caller is not a member of the claim's team, or (for
+ *         `action=withdraw`) is not the member the claim belongs to.
  *       content:
  *         application/json:
  *           schema:
@@ -413,6 +419,7 @@ weeklyClaimRoutes.put(
 weeklyClaimRoutes.put(
   '/:id',
   validateRequest(updateWeeklyClaimRequestSchema),
+  requireTeamMember('params.weeklyClaimId'),
   rejectIfArchived('params.weeklyClaimId'),
   updateWeeklyClaims
 );

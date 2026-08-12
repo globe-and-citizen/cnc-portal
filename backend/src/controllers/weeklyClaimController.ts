@@ -255,6 +255,17 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         break;
       }
       case 'withdraw': {
+        // Only the member the claim belongs to may mark it withdrawn. The
+        // on-chain withdrawal pays `employeeAddress`, so the claim owner is
+        // the only party the action can legitimately come from — unlike
+        // sign/disable/enable, which are owner actions. Without this check any
+        // authenticated user could flip an arbitrary claim to `withdrawn`, and
+        // because syncWeeklyClaims only re-reads `signed`/`disabled` rows the
+        // wrong status would never be reconciled back (issue #2471).
+        if (weeklyClaim.memberAddress.toLowerCase() !== callerAddress.toLowerCase()) {
+          return errorResponse(403, 'Caller is not the owner of this weekly claim', res);
+        }
+
         // Check if the weekly claim is already signed
         if (weeklyClaim.status !== 'signed') {
           let withdrawErrorMsg = 'Weekly claim must be signed before it can be withdrawn';
