@@ -17,6 +17,9 @@ Keep each rule in one authoritative place and link to it from the entry points t
 Do not copy detailed guidance into a skill or `AGENTS.md`; point to its owner. Remove obsolete
 backlinks when ownership moves.
 
+Keep operating rules self-contained. Cite current code, configuration, or CI behaviour as evidence;
+do not use historical issues or pull requests as their authority or rationale.
+
 ## Change safely
 
 1. Inspect the affected source, linked guides, and the runtime or test evidence before editing.
