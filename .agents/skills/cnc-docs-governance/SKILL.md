@@ -21,7 +21,7 @@ Do not copy detailed guidance into a skill or `AGENTS.md`; point to its owner. R
 1. Inspect the affected source, linked guides, and the runtime or test evidence before editing.
 2. Keep current behaviour separate from historical issue and PR context.
 3. Use compact navigation in entry points; put variants and examples in their specialised guide.
-4. Run `npm run lint:md`, `npm run format:md:check`, and `bash scripts/audit-doc-drift.sh` after changing agent instructions, skills, or linked guides. The format check covers Markdown changed since `origin/develop`; CI supplies its pull-request base SHA.
+4. Run `npm run lint:md`, `npm run format:md:check`, and `bash scripts/audit-doc-drift.sh` after changing agent instructions, skills, or linked guides. The format check covers Markdown changed since `origin/develop`; subproject format checks exclude Markdown. CI supplies its pull-request base SHA.
 
 ## Skill maintenance
 

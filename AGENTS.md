@@ -84,7 +84,7 @@ For `dashboard/`, `ponder/`, and `the-graph/`, run every relevant lint, format, 
 
 ```bash
 npm run lint:md
-# Checks Markdown files changed since origin/develop; override with BASE_SHA in CI.
+# Checks Markdown changed since origin/develop; subproject format checks exclude Markdown.
 npm run format:md:check
 bash scripts/audit-doc-drift.sh
 ```
