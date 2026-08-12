@@ -58,6 +58,15 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
   getCashRemunerationOwner: vi.fn(),
 }));
 
+// Mock the wage resolution utility so addClaim's resolveWageForWeek call
+// returns whatever we set up per-test via mockResolveWageForWeek.
+const { mockResolveWageForWeek } = vi.hoisted(() => ({
+  mockResolveWageForWeek: vi.fn(),
+}));
+vi.mock('../../utils/wageResolution', () => ({
+  resolveWageForWeek: mockResolveWageForWeek,
+}));
+
 // Mock the storage service
 const { mockGetPublicFileUrl, mockDeleteFile } = vi.hoisted(() => ({
   mockGetPublicFileUrl: vi.fn((key: string) => `https://storage.railway.app/test-bucket/${key}`),
@@ -241,7 +250,7 @@ describe('Claim Controller', () => {
     });
 
     it("should return 400 if user doesn't have wage", async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      mockResolveWageForWeek.mockResolvedValue(null);
       const response = await request(app)
         .post('/')
         .send({ teamId: 1, minutesWorked: 300, memo: 'memo' });
@@ -256,9 +265,7 @@ describe('Claim Controller', () => {
         { id: 1, dayWorked: testDate, hoursWorked: 5, minutesWorked: 300 },
       ];
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(
-        createMockWage({ maximumHoursPerDay: 6 })
-      );
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ maximumHoursPerDay: 6 }));
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
 
       const response = await request(app).post('/').send({
@@ -281,7 +288,7 @@ describe('Claim Controller', () => {
         { id: 1, dayWorked: testDate, hoursWorked: 7, minutesWorked: 420 },
       ];
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
+      mockResolveWageForWeek.mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
 
       const response = await request(app).post('/').send({
@@ -302,9 +309,7 @@ describe('Claim Controller', () => {
         { id: 1, dayWorked: testDate, hoursWorked: 4, minutesWorked: 240 },
       ];
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(
-        createMockWage({ maximumHoursPerDay: 8 })
-      );
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ maximumHoursPerDay: 8 }));
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
 
@@ -320,7 +325,7 @@ describe('Claim Controller', () => {
 
     it('should return 400 when SUBMIT_RESTRICTION is active and dayWorked is outside the allowed window', async () => {
       vi.mocked(getEffectiveStatus).mockResolvedValueOnce('enabled');
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
+      mockResolveWageForWeek.mockResolvedValue(createMockWage());
 
       const outOfWindow = dayjs.utc().subtract(10, 'day').startOf('day').toISOString();
       const response = await request(app)
@@ -333,7 +338,7 @@ describe('Claim Controller', () => {
 
     it('should allow submission outside the window when SUBMIT_RESTRICTION is disabled', async () => {
       vi.mocked(getEffectiveStatus).mockResolvedValueOnce('disabled');
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
+      mockResolveWageForWeek.mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.weeklyClaim, 'create').mockResolvedValue(createMockWeeklyClaim());
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
@@ -351,7 +356,7 @@ describe('Claim Controller', () => {
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.weeklyClaim, 'create').mockResolvedValue(mockWeeklyClaims);
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
@@ -376,7 +381,7 @@ describe('Claim Controller', () => {
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 
@@ -398,7 +403,7 @@ describe('Claim Controller', () => {
     it('should return 409 if the claim is already signed', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'signed', signature: '0xabc' });
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const response = await request(app)
         .post('/')
@@ -410,7 +415,7 @@ describe('Claim Controller', () => {
     it('should return 409 if the claim is already disabled', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'disabled' });
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const response = await request(app)
         .post('/')
@@ -422,7 +427,7 @@ describe('Claim Controller', () => {
     it('should return 409 if the claim is already withdrawn', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'withdrawn' });
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const response = await request(app)
         .post('/')
@@ -436,7 +441,7 @@ describe('Claim Controller', () => {
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 
@@ -455,7 +460,7 @@ describe('Claim Controller', () => {
     });
 
     it('should return 500 if internal server error occurs', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockRejectedValue(new Error('DB error'));
+      mockResolveWageForWeek.mockRejectedValue(new Error('DB error'));
 
       const response = await request(app)
         .post('/')
@@ -481,7 +486,7 @@ describe('Claim Controller', () => {
           ],
         });
 
-        vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+        mockResolveWageForWeek.mockResolvedValue(mockWage);
         vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaim);
         const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 

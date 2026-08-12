@@ -18,6 +18,7 @@ vi.mock('../../utils', async () => {
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
   };
   prismaMock.$transaction = vi.fn(async (cb: (tx: unknown) => unknown) => cb(prismaMock));
@@ -71,6 +72,9 @@ const mockWage = {
   createdAt: new Date(),
   updatedAt: new Date(),
 } as unknown as Wage;
+
+/** A date comfortably inside the next ISO week, so the wage reads as scheduled. */
+const futureDate = () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
 describe('Wage Controller', () => {
   describe('PUT: /setWage', () => {
@@ -477,6 +481,124 @@ describe('Wage Controller', () => {
 
       expect(response.status).toBe(201);
     });
+
+    const validBody = {
+      teamId: 1,
+      userAddress: '0x1234567890123456789012345678901234567890',
+      ratePerHour: [{ type: 'cash', amount: 60 }],
+      maximumHoursPerWeek: 40,
+    };
+
+    it('should defer a change to an existing wage to the next Monday', async () => {
+      // A wage boundary must never fall mid-week, otherwise two WeeklyClaims can
+      // cover the same week under different wages (issue #2479).
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      const createSpy = vi.spyOn(prisma.wage, 'create').mockResolvedValue({
+        ...mockWage,
+        id: 2,
+      } as Wage);
+      vi.spyOn(prisma.wage, 'update').mockResolvedValue(mockWage);
+
+      const response = await request(app).put('/setWage').send(validBody);
+
+      expect(response.status).toBe(201);
+      const effectiveFrom = createSpy.mock.calls[0][0].data.effectiveFrom as Date;
+      expect(effectiveFrom.getUTCDay()).toBe(1);
+      expect(effectiveFrom.getUTCHours()).toBe(0);
+      expect(effectiveFrom.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it('should apply the very first wage immediately', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
+      const createSpy = vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
+
+      const response = await request(app).put('/setWage').send(validBody);
+
+      expect(response.status).toBe(201);
+      expect(createSpy.mock.calls[0][0].data).not.toHaveProperty('effectiveFrom');
+    });
+
+    it('should rewrite a scheduled wage in place without moving its effective date', async () => {
+      // Correcting a typo before Monday must not push the change back a week,
+      // nor leave a dead link in the chain.
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst')
+        .mockResolvedValueOnce({ ...mockWage, id: 2, effectiveFrom: futureDate() } as Wage)
+        .mockResolvedValueOnce({ ...mockWage, id: 1, nextWageId: 2 } as Wage);
+      const updateSpy = vi.spyOn(prisma.wage, 'update').mockResolvedValue(mockWage);
+      const createSpy = vi.spyOn(prisma.wage, 'create');
+
+      const response = await request(app).put('/setWage').send(validBody);
+
+      expect(response.status).toBe(200);
+      expect(createSpy).not.toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 2 } }));
+      expect(updateSpy.mock.calls[0][0].data).not.toHaveProperty('effectiveFrom');
+    });
+
+    it('should refuse to rewrite a scheduled wage when the active one is disabled', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst')
+        .mockResolvedValueOnce({ ...mockWage, id: 2, effectiveFrom: futureDate() } as Wage)
+        .mockResolvedValueOnce({ ...mockWage, id: 1, nextWageId: 2, disabled: true } as Wage);
+
+      const response = await request(app).put('/setWage').send(validBody);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Cannot set wage: the current wage is disabled');
+    });
+  });
+
+  describe('DELETE: /scheduled', () => {
+    const query = { teamId: 1, userAddress: '0x1234567890123456789012345678901234567890' };
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        req.address = '0x1234567890123456789012345678901234567890';
+        next();
+      });
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({ ...mockTeam, isArchived: false });
+    });
+
+    it('should unlink and delete the scheduled wage, leaving the predecessor in force', async () => {
+      const predecessor = { ...mockWage, id: 1, nextWageId: 2 } as Wage;
+      vi.spyOn(prisma.wage, 'findFirst')
+        .mockResolvedValueOnce({ ...mockWage, id: 2, effectiveFrom: futureDate() } as Wage)
+        .mockResolvedValueOnce(predecessor);
+      const updateSpy = vi.spyOn(prisma.wage, 'update').mockResolvedValue(predecessor);
+      const deleteSpy = vi.spyOn(prisma.wage, 'delete').mockResolvedValue(mockWage);
+
+      const response = await request(app).delete('/scheduled').query(query);
+
+      expect(response.status).toBe(200);
+      expect(updateSpy).toHaveBeenCalledWith({ where: { id: 1 }, data: { nextWageId: null } });
+      expect(deleteSpy).toHaveBeenCalledWith({ where: { id: 2 } });
+      expect(response.body).toMatchObject({ id: 1 });
+    });
+
+    it('should return 404 when the leaf wage is already in force', async () => {
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+        ...mockWage,
+        effectiveFrom: null,
+      } as Wage);
+
+      const response = await request(app).delete('/scheduled').query(query);
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('No scheduled wage change to cancel');
+    });
+
+    it('should return 404 when the member has no wage at all', async () => {
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+
+      const response = await request(app).delete('/scheduled').query(query);
+
+      expect(response.status).toBe(404);
+    });
   });
 
   describe('GET: /', () => {
@@ -538,6 +660,49 @@ describe('Wage Controller', () => {
 
       expect(response.status).toBe(500);
       expect(response.body.message).toContain('Internal server error');
+    });
+
+    it('should surface the active wage, not the scheduled one, when a change is pending', async () => {
+      // The claim form validates against this payload, so it must carry the
+      // rates and caps that apply right now — never the upcoming ones.
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+
+      const activeWage = {
+        ...mockWage,
+        id: 1,
+        maximumHoursPerWeek: 40,
+        effectiveFrom: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        nextWageId: 2,
+      };
+      const scheduledLeaf = {
+        ...mockWage,
+        id: 2,
+        maximumHoursPerWeek: 45,
+        effectiveFrom: futureDate(),
+      };
+
+      // The endpoint reads the whole chain and splits it in memory.
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([activeWage, scheduledLeaf] as never);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      expect(response.body[0]).toMatchObject({ id: 1, maximumHoursPerWeek: 40 });
+      expect(response.body[0].scheduledWage).toMatchObject({ id: 2, maximumHoursPerWeek: 45 });
+    });
+
+    it('should return the leaf with a null scheduledWage when no change is pending', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
+        { ...mockWage, effectiveFrom: null, createdAt: new Date('2026-01-01') } as never,
+      ]);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      expect(response.body[0]).toMatchObject({ id: 1 });
+      expect(response.body[0].scheduledWage).toBeNull();
     });
 
     it('should return wages with null maximumOvertimeHoursPerWeek for legacy records', async () => {

@@ -72,6 +72,14 @@ vi.mock('../../utils/viem.config', () => ({
   default: { readContract: readContractMock },
 }));
 
+// Mock the wage resolution utility used by submitWeeklyGoals.
+const { mockResolveWageForWeek } = vi.hoisted(() => ({
+  mockResolveWageForWeek: vi.fn(),
+}));
+vi.mock('../../utils/wageResolution', () => ({
+  resolveWageForWeek: mockResolveWageForWeek,
+}));
+
 // Mock viem's recoverTypedDataAddress so tests can drive the recovery result
 // (matching CALLER vs mismatch vs throw) without producing real signatures.
 // vi.mock is hoisted; the inline 0x1234...7890 mirrors the CALLER constant.
@@ -1028,7 +1036,7 @@ describe('Weekly Claim Controller', () => {
     const currentWage = { id: 7, teamId: 1, userAddress: CALLER, nextWageId: null };
 
     it('creates a claim-less weekly claim when none exists yet', async () => {
-      vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
+      mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null as never);
       vi.mocked(prisma.weeklyClaim.create).mockResolvedValue(
         weeklyClaimFactory({ id: 42, weeklyGoals: GOALS_BODY.weeklyGoals }) as never
@@ -1052,7 +1060,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('updates the memo on an existing pending weekly claim', async () => {
-      vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
+      mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
         weeklyClaimFactory({ id: 5, status: 'pending', signature: null }) as never
       );
@@ -1071,7 +1079,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('rejects with 409 when the week is already signed', async () => {
-      vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
+      mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
         weeklyClaimFactory({ id: 5, status: 'signed', signature: '0xabc' }) as never
       );
@@ -1084,7 +1092,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('returns 400 when the caller has no current wage', async () => {
-      vi.mocked(prisma.wage.findFirst).mockResolvedValue(null as never);
+      mockResolveWageForWeek.mockResolvedValue(null);
 
       const response = await request(app).put('/goals').send(GOALS_BODY);
 
