@@ -108,4 +108,90 @@ describe('useClaimForm', () => {
     expect(formatUTC(new Date(Date.UTC(2024, 0, 20, 5, 30, 0)))).toBe('2024-01-20 UTC')
     expect(formatUTC('2024-02-15T12:00:00.000Z')).toBe('2024-02-15 UTC')
   })
+
+  it('enforces daily cap when maximumHoursPerDay is provided', () => {
+    const options = createOptions()
+    const { claimSchema } = useClaimForm({
+      ...options,
+      maximumHoursPerDay: ref(6)
+    })
+
+    const validResult = claimSchema.value.safeParse({
+      hoursWorked: '5',
+      minutesWorked: '30',
+      memo: 'ok',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(validResult.success).toBe(true)
+
+    const overHoursResult = claimSchema.value.safeParse({
+      hoursWorked: '7',
+      minutesWorked: '0',
+      memo: 'too many hours',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(overHoursResult.success).toBe(false)
+    expect(overHoursResult.error?.issues.some((i) => i.message.includes('6'))).toBe(true)
+
+    const overTotalResult = claimSchema.value.safeParse({
+      hoursWorked: '6',
+      minutesWorked: '10',
+      memo: 'total exceeds cap',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(overTotalResult.success).toBe(false)
+    expect(overTotalResult.error?.issues.some((i) => i.message.includes('daily cap'))).toBe(true)
+  })
+
+  it('falls back to 24h limit when no daily cap is set', () => {
+    const options = createOptions()
+    const { claimSchema } = useClaimForm(options)
+
+    const validResult = claimSchema.value.safeParse({
+      hoursWorked: '23',
+      minutesWorked: '50',
+      memo: 'long day',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(validResult.success).toBe(true)
+  })
+
+  it('rejects when input plus already-claimed minutes exceed the daily cap', () => {
+    const options = createOptions()
+    const { claimSchema } = useClaimForm({
+      ...options,
+      maximumHoursPerDay: ref(8),
+      existingClaims: ref([{ minutesWorked: 420, dayWorked: '2024-01-10T00:00:00.000Z' }])
+    })
+
+    // 7h already claimed + 2h new = 9h > 8h cap
+    const overResult = claimSchema.value.safeParse({
+      hoursWorked: '2',
+      minutesWorked: '0',
+      memo: 'over remaining',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(overResult.success).toBe(false)
+    const message = overResult.error?.issues.find((i) => i.path.includes('hoursWorked'))?.message
+    expect(message).toContain('Already claimed: 7h')
+    expect(message).toContain('Remaining: 1h')
+
+    // Same input on a different day with no prior claims → passes
+    const otherDayResult = claimSchema.value.safeParse({
+      hoursWorked: '2',
+      minutesWorked: '0',
+      memo: 'different day',
+      dayWorked: '2024-01-11T00:00:00.000Z'
+    })
+    expect(otherDayResult.success).toBe(true)
+
+    // 7h already claimed + 1h new = 8h = exactly at cap → passes
+    const exactResult = claimSchema.value.safeParse({
+      hoursWorked: '1',
+      minutesWorked: '0',
+      memo: 'exactly at limit',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(exactResult.success).toBe(true)
+  })
 })

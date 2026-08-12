@@ -7,6 +7,7 @@
       :is-loading="isUpdating"
       :restrict-submit="isRestricted"
       :existing-files="existingFiles"
+      :maximum-hours-per-day="props.claim.wage?.maximumHoursPerDay"
       :error-message="updateClaimErrorMessage"
       error-title="Failed to update claim"
       @submit="updateClaim"
