@@ -17,14 +17,14 @@
           'bg-purple-500': !['native', 'usdc', 'usdt'].includes(rate.type)
         }"
       />
-      {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
+      {{ rateSymbol(rate.type) }}
       {{ formatRateAmount(rate.amount) }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { NETWORK } from '@/constant'
+import { rateSymbol } from '@/utils/wageUtil'
 
 interface RateItem {
   type: string

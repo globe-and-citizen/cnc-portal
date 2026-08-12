@@ -27,6 +27,8 @@ export interface Wage {
   maximumHoursPerDay?: number
   disabled: boolean
   nextWageId: number | null
+  effectiveFrom?: string | null // ISO date string
+  scheduledWage?: Wage | null
   createdAt: string // ISO date string
   updatedAt: string // ISO date string
   user?: User

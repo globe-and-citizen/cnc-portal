@@ -96,6 +96,36 @@ export const useSetMemberWageMutation = createMutationHook<void, SetMemberWagePa
 })
 
 // ============================================================================
+// DELETE /wage/scheduled - Cancel a wage change that has not taken effect yet
+// ============================================================================
+
+export interface CancelScheduledWageParams {
+  queryParams: {
+    /** Team ID */
+    teamId: string | number
+    /** User wallet address */
+    userAddress: string
+  }
+}
+
+/**
+ * Cancel a scheduled wage change, leaving the current wage in force
+ *
+ * @endpoint DELETE /wage/scheduled
+ * @pathParams none
+ * @queryParams { teamId: string | number, userAddress: string }
+ * @body none
+ */
+export const useCancelScheduledWageMutation = createMutationHook<void, CancelScheduledWageParams>({
+  method: 'DELETE',
+  endpoint: 'wage/scheduled',
+  invalidateKeys: (params) => [
+    wageKeys.team(params.queryParams.teamId),
+    teamKeys.detail(String(params.queryParams.teamId))
+  ]
+})
+
+// ============================================================================
 // PUT /wage/{wageId} - Toggle wage status (disable / enable)
 // ============================================================================
 

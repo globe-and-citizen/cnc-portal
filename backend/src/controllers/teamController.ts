@@ -7,6 +7,7 @@ import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { generateUniqueSlug } from '../utils/slug.util';
 import { isActiveOfficerVersion } from '../utils/officerVersion';
 import { isAdmin } from '../utils/roleUtils';
+import { splitCurrentAndScheduled } from '../utils/wageResolution';
 import { UserRoles } from '../types/roles';
 
 // A slug is taken when some team already holds it.
@@ -91,13 +92,13 @@ const withCurrentOfficerAndContracts = <
 };
 
 // The team list card shows the viewer's own wage status ("Wage set" vs "No wage
-// set"), not the whole roster's. Fetch just the caller's active wage (the row
-// with no successor) across the listed teams in a single query and index it by
-// team, so the list stays one extra query rather than one per team.
+// set"), not the whole roster's. Fetch the caller's leaf wages across the
+// listed teams in a single query, then resolve to the active wage when a
+// scheduled change exists (effectiveFrom in the future).
 const findCallerWagesByTeamId = async (callerAddress: string, teamIds: number[]) => {
   if (teamIds.length === 0) return new Map<number, Wage>();
 
-  const wages = await prisma.wage.findMany({
+  const leafWages = await prisma.wage.findMany({
     where: {
       userAddress: callerAddress,
       teamId: { in: teamIds },
@@ -105,7 +106,30 @@ const findCallerWagesByTeamId = async (callerAddress: string, teamIds: number[])
     },
   });
 
-  return new Map(wages.map((wage) => [wage.teamId, wage]));
+  const now = new Date();
+  const scheduledLeafIds = leafWages
+    .filter((w) => w.effectiveFrom && w.effectiveFrom > now)
+    .map((w) => w.id);
+
+  // When some leaves are scheduled, batch-fetch their predecessors.
+  let predecessorMap = new Map<number, Wage>();
+  if (scheduledLeafIds.length > 0) {
+    const predecessors = await prisma.wage.findMany({
+      where: {
+        userAddress: callerAddress,
+        nextWageId: { in: scheduledLeafIds },
+      },
+    });
+    predecessorMap = new Map(predecessors.map((p) => [p.nextWageId!, p]));
+  }
+
+  const result = new Map<number, Wage>();
+  for (const leaf of leafWages) {
+    const isScheduled = leaf.effectiveFrom && leaf.effectiveFrom > now;
+    const activeWage = isScheduled ? (predecessorMap.get(leaf.id) ?? leaf) : leaf;
+    result.set(activeWage.teamId, activeWage);
+  }
+  return result;
 };
 
 // Create a new team
@@ -226,10 +250,11 @@ const getTeam = async (req: Request, res: Response) => {
             imageUrl: true,
             Wage: {
               where: {
-                teamId: Number(id), // wage de cette équipe uniquement
-                nextWageId: null, // nextWageId null = wage actuel (pas de successeur)
+                teamId: Number(id),
               },
-              take: 1,
+              orderBy: {
+                id: 'asc',
+              },
             },
           },
         },
@@ -249,13 +274,18 @@ const getTeam = async (req: Request, res: Response) => {
       return errorResponse(403, 'Unauthorized', res);
     }
 
+    const now = new Date();
     const membersWithResolvedImages = await Promise.all(
-      team.members.map(async (member) => ({
-        ...member,
-        imageUrl: await resolveStorageImageUrl(member.imageUrl),
-        currentWage: member.Wage[0] ?? null, // aplatir le tableau
-        Wage: undefined, // retirer le tableau brut
-      }))
+      team.members.map(async (member) => {
+        const { current, scheduled } = splitCurrentAndScheduled(member.Wage, now);
+        return {
+          ...member,
+          imageUrl: await resolveStorageImageUrl(member.imageUrl),
+          currentWage: current,
+          scheduledWage: scheduled,
+          Wage: undefined,
+        };
+      })
     );
 
     const callerMemberData = await prisma.memberTeamsData.findUnique({

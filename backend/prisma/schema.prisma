@@ -100,6 +100,7 @@ model Wage {
   maximumHoursPerWeek         Int
   maximumHoursPerDay          Int           @default(8)
   disabled                    Boolean       @default(false)
+  effectiveFrom               DateTime?
   nextWageId                  Int?          @unique
   nextWage                    Wage?         @relation("wageRelated", fields: [nextWageId], references: [id], onDelete: SetNull)
   previousWage                Wage?         @relation("wageRelated")
@@ -112,6 +113,7 @@ model Wage {
   // Enforced by a deferrable EXCLUDE constraint (Wage_active_unique) in
   // migration 20260428_wage_active_deferrable. Deferrable so chained
   // create-and-relink can run inside a single transaction.
+  @@index([teamId, userAddress])
 }
 
 model Claim {

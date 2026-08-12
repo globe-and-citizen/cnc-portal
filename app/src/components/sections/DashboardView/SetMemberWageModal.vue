@@ -27,6 +27,21 @@
 
       <template #body>
         <div class="mt-1 space-y-4">
+          s
+          <UAlert
+            v-if="props.wage"
+            icon="i-heroicons-information-circle"
+            color="info"
+            variant="soft"
+            data-test="wage-effective-date-notice"
+            :title="`This change takes effect on ${effectiveDateLabel}.`"
+            :description="
+              scheduledWageNotice
+                ? `A change is already scheduled for that date (${scheduledWageNotice}). Saving replaces it without pushing the date back.`
+                : 'The current rate stays in force until then, including for claims backdated to earlier weeks.'
+            "
+          />
+
           <UStepper :items="items" v-model="currentStep" />
 
           <SetMemberWageStandardStep
@@ -62,6 +77,7 @@ import { useSetMemberWageMutation } from '@/queries/wage.queries'
 import type { Member, Wage, WageWithForm } from '@/types'
 import type { AxiosError } from 'axios'
 import { normalizeRatePerHour, buildRatePayload, DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
+import { formatScheduledWageNotice, nextEffectiveDateLabel } from '@/utils/wageUtil'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 import type { StepperItem } from '@nuxt/ui'
@@ -104,6 +120,9 @@ const initialWage = (): WageWithForm => {
 }
 
 const wageData = ref<WageWithForm>(initialWage())
+
+const effectiveDateLabel = computed(() => nextEffectiveDateLabel())
+const scheduledWageNotice = computed(() => formatScheduledWageNotice(props.wage?.scheduledWage))
 
 const items = computed<StepperItem[]>(() =>
   wageData.value.enableOvertimeRules

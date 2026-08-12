@@ -14,6 +14,7 @@ import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { signWeeklyClaimBodySchema, z } from '../validation';
+import { resolveWageForWeek } from '../utils/wageResolution';
 
 type SignWeeklyClaimBody = z.infer<typeof signWeeklyClaimBodySchema>;
 
@@ -255,6 +256,17 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         break;
       }
       case 'withdraw': {
+        // Only the member the claim belongs to may mark it withdrawn. The
+        // on-chain withdrawal pays `employeeAddress`, so the claim owner is
+        // the only party the action can legitimately come from — unlike
+        // sign/disable/enable, which are owner actions. Without this check any
+        // authenticated user could flip an arbitrary claim to `withdrawn`, and
+        // because syncWeeklyClaims only re-reads `signed`/`disabled` rows the
+        // wrong status would never be reconciled back (issue #2471).
+        if (weeklyClaim.memberAddress.toLowerCase() !== callerAddress.toLowerCase()) {
+          return errorResponse(403, 'Caller is not the owner of this weekly claim', res);
+        }
+
         // Check if the weekly claim is already signed
         if (weeklyClaim.status !== 'signed') {
           let withdrawErrorMsg = 'Weekly claim must be signed before it can be withdrawn';
@@ -585,11 +597,10 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
   const weekStart = dayjs.utc(weekStartInput).startOf('isoWeek').toDate();
 
   try {
-    // A WeeklyClaim requires a wageId, so the member needs a current wage
-    // before any goals can be recorded (mirrors addClaim).
-    const wage = await prisma.wage.findFirst({
-      where: { userAddress: callerAddress, nextWageId: null, teamId },
-    });
+    // A WeeklyClaim requires a wageId, so the member needs a wage before any
+    // goals can be recorded. Resolved against the target week so goals land on
+    // the same row as that week's claims (mirrors addClaim).
+    const wage = await resolveWageForWeek(teamId, callerAddress, weekStart);
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
@@ -597,7 +608,7 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
 
     const existing = await prisma.weeklyClaim.findFirst({
       where: {
-        wage: { teamId, nextWageId: null },
+        wageId: wage.id,
         weekStart,
         memberAddress: callerAddress,
         teamId,

@@ -4,9 +4,12 @@ import type { CalendarDate, DateValue } from '@internationalized/date'
 import { z } from 'zod'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
 import type { ClaimFormData } from '@/types'
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
 
 dayjs.extend(utc)
+dayjs.extend(isoWeek)
 
 export interface ClaimFormFileData {
   fileName?: string
@@ -88,9 +91,11 @@ const formatMinutes = (minutes: number): string => {
 }
 
 const buildClaimSchema = (dailyCap?: number, existingClaims?: DailyClaimEntry[]) => {
+  // Wages created before the daily-cap column existed carry no value; fall back to the
+  // same default the server applies so both sides accept exactly the same claims.
   const hasCap = typeof dailyCap === 'number' && dailyCap > 0
-  const maxMinutes = hasCap ? dailyCap * 60 : 1440
-  const maxHoursLabel = hasCap ? dailyCap : 24
+  const effectiveCap = hasCap ? dailyCap : DEFAULT_MAXIMUM_HOURS_PER_DAY
+  const maxMinutes = effectiveCap * 60
 
   return z
     .object({
@@ -99,8 +104,8 @@ const buildClaimSchema = (dailyCap?: number, existingClaims?: DailyClaimEntry[])
         .refine((val) => String(val).trim() !== '', { message: 'Hours is required' })
         .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' })
         .refine((val) => Number(val) >= 0, { message: 'Hours cannot be negative' })
-        .refine((val) => Number(val) <= maxHoursLabel, {
-          message: `Cannot exceed ${maxHoursLabel} hours`
+        .refine((val) => Number(val) <= effectiveCap, {
+          message: `Cannot exceed ${effectiveCap} hours`
         })
         .refine((val) => Number.isInteger(Number(val)), {
           message: 'Hours must be a whole number'
@@ -120,13 +125,11 @@ const buildClaimSchema = (dailyCap?: number, existingClaims?: DailyClaimEntry[])
       path: ['hoursWorked']
     })
     .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) <= maxMinutes, {
-      message: hasCap
-        ? `Cannot exceed daily cap of ${dailyCap} hours`
-        : 'Total duration cannot exceed 24 hours (1440 minutes)',
+      message: `Cannot exceed daily cap of ${effectiveCap} hours`,
       path: ['hoursWorked']
     })
     .superRefine((data, ctx) => {
-      if (!hasCap || !existingClaims?.length) return
+      if (!existingClaims?.length) return
       const inputMinutes = Number(data.hoursWorked) * 60 + Number(data.minutesWorked)
       const claimed = alreadyClaimedForDay(existingClaims, data.dayWorked)
       if (inputMinutes + claimed <= maxMinutes) return

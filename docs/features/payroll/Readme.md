@@ -1,7 +1,7 @@
 # Payroll & Cash Remuneration — User Stories
 
 **Format:** User Story | Acceptance Criteria (tester checklist) | Priority (P1–P5) | Effort
-(XS/S/M/L/XL) **Last updated:** 2026-08-11
+(XS/S/M/L/XL) **Last updated:** 2026-08-12
 
 These stories describe the **whole payroll feature** as it is actually built. The acceptance
 criteria are written as a **testing checklist**: once every box in every story is ticked, all use
@@ -47,6 +47,10 @@ cases and edge cases of payroll are covered.
 > **Daily hour cap** is not a story of its own — it is exercised inside US-PAYROLL-001 (configure)
 > and US-PAYROLL-005 / US-PAYROLL-006 (enforce). Criteria that touch it are tagged _(daily cap)_.
 
+> Criteria tagged _(API)_ describe a server response a UI tester cannot observe from the screen.
+> Verify them with a direct API call — e.g. a request added to the Bruno collection in
+> `backend/bruno/CNCPortal` — rather than through the portal.
+
 ---
 
 ## US-PAYROLL-001: Set a Member's Wage
@@ -75,7 +79,22 @@ submit claims for fair, bounded compensation
 - [ ] _(daily cap)_ The table shows the weekly cap as "40h/wk" and the daily cap as an amber badge
       "8h/d" (tooltip "Daily limit: N hours"); the cell shows "—" when the member has no wage
 - [ ] Editing a member with an existing wage pre-fills the current values; saving creates a new wage
-      **version** (the old one is superseded, one active wage per member)
+      **version** (one active wage per member)
+- [ ] _(scheduling)_ Changing an existing wage takes effect at the **start of the next ISO week**,
+      not immediately; the current rates and caps hold until then, including for claims backdated to
+      earlier weeks. A member's **first** wage is the only one that applies immediately
+- [ ] _(scheduling)_ The modal states the effective date before saving ("This change takes effect on
+      Aug 17, 2026")
+- [ ] _(scheduling)_ The member row shows a badge for the pending change ("Changes to SHER 10/h,
+      15h/wk, 8h/d on Aug 17, 2026"); it disappears once the change takes effect, without a page
+      reload
+- [ ] _(scheduling)_ Saving again before the effective date **rewrites** the pending change and does
+      **not** push its date back; the chain gains no extra version
+- [ ] _(scheduling)_ A pending change can be cancelled, leaving the current wage in force
+      (`DELETE /wage/scheduled`)
+
+> Full behaviour, edge cases and API shapes: [Wage scheduling](./wage-scheduling.md).
+
 - [ ] "Set Wage" is disabled with a tooltip when the current wage is disabled ("Resume this wage
       before making changes") — also blocked server-side (400 "Cannot set wage: the current wage is
       disabled")
@@ -298,6 +317,12 @@ my wallet
 - [ ] The Withdraw button is disabled once the claim is withdrawn, and while the team is archived
 - [ ] Only a signed claim can be withdrawn (server "Weekly claim must be signed before it can be
       withdrawn")
+- [ ] _(API)_ Withdrawing someone else's weekly claim is refused — a user outside the team gets 403
+      "Caller is not a member of the team", and a teammate who is not the claim's member gets 403
+      "Caller is not the owner of this weekly claim". The claim keeps its "signed" status and the
+      real member keeps their Withdraw button.
+- [ ] _(API)_ The team owner / Cash Remuneration owner cannot withdraw on a member's behalf either —
+      approving and being paid are separate rights
 - [ ] Withdrawal is blocked when the signature was issued for a different contract ("Signature
       issued for a different CashRemuneration contract") or a different network ("… different
       network")
