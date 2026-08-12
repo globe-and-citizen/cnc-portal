@@ -117,6 +117,11 @@ export const mockVestingWrites = {
   release: createContractWriteV3Mock()
 }
 
+export const mockVestingReads = {
+  vestingsWithMembers: createContractReadMock<unknown>([[], [], []]),
+  archivedVestingsFlat: createContractReadMock<unknown>([[], [], []])
+}
+
 /**
  * Investor Contract Mocks
  */
@@ -194,6 +199,7 @@ export const resetContractMocks = () => {
     mockInvestorReads,
     mockCashRemunerationReads,
     mockExpenseAccountReads,
+    mockVestingReads,
     mockFixedReturnReads
   ]
 
