@@ -83,7 +83,22 @@ every story is ticked, all use cases and edge cases of payroll are covered.
       an amber badge "8h/d" (tooltip "Daily limit: N hours"); the cell shows "—"
       when the member has no wage
 - [ ] Editing a member with an existing wage pre-fills the current values; saving
-      creates a new wage **version** (the old one is superseded, one active wage per member)
+      creates a new wage **version** (one active wage per member)
+- [ ] _(scheduling)_ Changing an existing wage takes effect at the **start of the
+      next ISO week**, not immediately; the current rates and caps hold until then,
+      including for claims backdated to earlier weeks. A member's **first** wage is
+      the only one that applies immediately
+- [ ] _(scheduling)_ The modal states the effective date before saving
+      ("This change takes effect on Aug 17, 2026")
+- [ ] _(scheduling)_ The member row shows a badge for the pending change
+      ("Changes to SHER 10/h, 15h/wk, 8h/d on Aug 17, 2026"); it disappears once the
+      change takes effect, without a page reload
+- [ ] _(scheduling)_ Saving again before the effective date **rewrites** the pending
+      change and does **not** push its date back; the chain gains no extra version
+- [ ] _(scheduling)_ A pending change can be cancelled, leaving the current wage in
+      force (`DELETE /wage/scheduled`)
+
+> Full behaviour, edge cases and API shapes: [Wage scheduling](./wage-scheduling.md).
 - [ ] "Set Wage" is disabled with a tooltip when the current wage is disabled
       ("Resume this wage before making changes") — also blocked server-side
       (400 "Cannot set wage: the current wage is disabled")
