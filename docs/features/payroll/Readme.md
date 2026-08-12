@@ -1,7 +1,7 @@
 # Payroll & Cash Remuneration — User Stories
 
 **Format:** User Story | Acceptance Criteria (tester checklist) | Priority (P1–P5) | Effort (XS/S/M/L/XL)
-**Last updated:** 2026-08-11
+**Last updated:** 2026-08-12
 
 These stories describe the **whole payroll feature** as it is actually built.
 The acceptance criteria are written as a **testing checklist**: once every box in
@@ -47,6 +47,11 @@ every story is ticked, all use cases and edge cases of payroll are covered.
 > **Daily hour cap** is not a story of its own — it is exercised inside
 > US-PAYROLL-001 (configure) and US-PAYROLL-005 / US-PAYROLL-006 (enforce).
 > Criteria that touch it are tagged _(daily cap)_.
+
+> Criteria tagged _(API)_ describe a server response a UI tester cannot observe
+> from the screen. Verify them with a direct API call — e.g. a request added to
+> the Bruno collection in `backend/bruno/CNCPortal` — rather than through the
+> portal.
 
 ---
 
@@ -319,6 +324,13 @@ every story is ticked, all use cases and edge cases of payroll are covered.
       team is archived
 - [ ] Only a signed claim can be withdrawn (server "Weekly claim must be signed
       before it can be withdrawn")
+- [ ] _(API)_ Withdrawing someone else's weekly claim is refused — a user outside
+      the team gets 403 "Caller is not a member of the team", and a teammate who
+      is not the claim's member gets 403 "Caller is not the owner of this weekly
+      claim". The claim keeps its "signed" status and the real member keeps their
+      Withdraw button.
+- [ ] _(API)_ The team owner / Cash Remuneration owner cannot withdraw on a
+      member's behalf either — approving and being paid are separate rights
 - [ ] Withdrawal is blocked when the signature was issued for a different contract
       ("Signature issued for a different CashRemuneration contract") or a different
       network ("… different network")
