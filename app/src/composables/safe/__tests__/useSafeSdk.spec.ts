@@ -1,36 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSafeSDK } from '../useSafeSdk'
+import { mockUseConnection } from '@/tests/mocks'
 
-const { mockSafeInit, mockUseConnection, mockIsAddress, mockGetInjectedProvider } = vi.hoisted(
-  () => ({
-    mockSafeInit: vi.fn(),
-    mockUseConnection: vi.fn(),
-    mockIsAddress: vi.fn(),
-    mockGetInjectedProvider: vi.fn()
-  })
-)
+const { mockSafeInit, mockGetInjectedProvider } = vi.hoisted(() => ({
+  mockSafeInit: vi.fn(),
+  mockGetInjectedProvider: vi.fn()
+}))
 
 vi.mock('@safe-global/protocol-kit', () => ({
   default: {
     init: mockSafeInit
   }
 }))
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@wagmi/vue')>()
-  return {
-    ...actual,
-    useConnection: mockUseConnection
-  }
-})
-
-vi.mock('viem', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('viem')>()
-  return {
-    ...actual,
-    isAddress: mockIsAddress
-  }
-})
 
 vi.mock('@/utils/safe', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/utils/safe')>()
@@ -40,28 +21,19 @@ vi.mock('@/utils/safe', async (importOriginal) => {
   }
 })
 
-const createConnection = (isConnected: boolean, address: string | null) => ({
-  isConnected: { value: isConnected },
-  address: { value: address }
-})
-
 describe('useSafeSDK', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseConnection.mockReturnValue(
-      createConnection(true, '0x1111111111111111111111111111111111111111')
-    )
+    mockUseConnection.isConnected.value = true
+    mockUseConnection.address.value = '0x1111111111111111111111111111111111111111'
     mockGetInjectedProvider.mockReturnValue('mock-provider')
-    mockIsAddress.mockImplementation(
-      (address: string) => /^0x[a-fA-F0-9]{40}$/.test(address) || address === '0xSafe'
-    )
     mockSafeInit.mockResolvedValue({ sdk: 'safe' })
     useSafeSDK().clearCache()
   })
 
   describe('createPredictedSafeSdk', () => {
     it('throws when wallet is not connected', async () => {
-      mockUseConnection.mockReturnValue(createConnection(false, null))
+      mockUseConnection.isConnected.value = false
       const { createPredictedSafeSdk } = useSafeSDK()
 
       await expect(

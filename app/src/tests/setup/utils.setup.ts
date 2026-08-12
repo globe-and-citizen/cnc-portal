@@ -1,5 +1,5 @@
 import { beforeEach, vi } from 'vitest'
-import { mockLog, resetUtilsMocks } from '../mocks/utils.mock'
+import { mockGetTokens, mockLog, resetUtilsMocks } from '../mocks/utils.mock'
 
 // Clear the shared log spies before every test (call history only;
 // implementations are preserved).
@@ -18,6 +18,7 @@ vi.mock('@/utils', async (importOriginal) => {
     log: {
       ...actualLog,
       ...mockLog
-    }
+    },
+    getTokens: mockGetTokens
   }
 })

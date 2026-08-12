@@ -15,7 +15,10 @@ vi.mock('@/composables/expenseAccount/reads', () => ({
 }))
 
 vi.mock('@/composables/cashRemuneration/writes', () => ({
-  useOwnerWithdrawAllToBank: vi.fn(() => mockCashRemunerationWrites.ownerWithdrawAllToBank)
+  useWithdraw: vi.fn(() => mockCashRemunerationWrites.withdraw),
+  useOwnerWithdrawAllToBank: vi.fn(() => mockCashRemunerationWrites.ownerWithdrawAllToBank),
+  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
+  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim)
 }))
 
 vi.mock('@/composables/expenseAccount/writes', () => ({

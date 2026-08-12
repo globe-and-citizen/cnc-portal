@@ -3,30 +3,16 @@ import { ref } from 'vue'
 import type { Address } from 'viem'
 import type { SafeTransaction } from '@/types/safe'
 import { useSafeTransactionActions } from '../useSafeTransactionActions'
+import { mockLog, mockUseChainId } from '@/tests/mocks'
 
-const {
-  mockApproveMutate,
-  mockExecuteMutate,
-  mockApprovePending,
-  mockExecutePending,
-  mockChainId,
-  mockLogError
-} = vi.hoisted(() => ({
-  mockApproveMutate: vi.fn(),
-  mockExecuteMutate: vi.fn(),
-  mockApprovePending: { value: false },
-  mockExecutePending: { value: false },
-  mockChainId: { value: 137 },
-  mockLogError: vi.fn()
-}))
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@wagmi/vue')>()
-  return {
-    ...actual,
-    useChainId: vi.fn(() => mockChainId)
-  }
-})
+const { mockApproveMutate, mockExecuteMutate, mockApprovePending, mockExecutePending } = vi.hoisted(
+  () => ({
+    mockApproveMutate: vi.fn(),
+    mockExecuteMutate: vi.fn(),
+    mockApprovePending: { value: false },
+    mockExecutePending: { value: false }
+  })
+)
 
 vi.mock('@/queries/safe.mutations', () => ({
   useApproveTransactionMutation: () => ({
@@ -37,12 +23,6 @@ vi.mock('@/queries/safe.mutations', () => ({
     mutate: mockExecuteMutate,
     isPending: mockExecutePending
   })
-}))
-
-vi.mock('@/utils', () => ({
-  log: {
-    error: mockLogError
-  }
 }))
 
 const baseTransaction: SafeTransaction = {
@@ -88,6 +68,7 @@ const createActions = (options?: {
 describe('useSafeTransactionActions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseChainId.value = 137
     mockApprovePending.value = false
     mockExecutePending.value = false
   })
@@ -133,10 +114,10 @@ describe('useSafeTransactionActions', () => {
     expect(actions.isTransactionLoading(baseTransaction.safeTxHash, 'approve')).toBe(true)
 
     callbacks?.onSuccess?.()
-    expect(mockLogError).not.toHaveBeenCalled()
+    expect(mockLog.error).not.toHaveBeenCalled()
 
     callbacks?.onError?.(new Error('User rejected signature'))
-    expect(mockLogError).toHaveBeenCalledWith('Failed to approve transaction:', expect.any(Error))
+    expect(mockLog.error).toHaveBeenCalledWith('Failed to approve transaction:', expect.any(Error))
 
     mockApprovePending.value = false
     callbacks?.onSettled?.()
@@ -172,10 +153,10 @@ describe('useSafeTransactionActions', () => {
     expect(actions.isTransactionLoading(baseTransaction.safeTxHash, 'execute')).toBe(true)
 
     callbacks?.onSuccess?.()
-    expect(mockLogError).not.toHaveBeenCalled()
+    expect(mockLog.error).not.toHaveBeenCalled()
 
     callbacks?.onError?.({})
-    expect(mockLogError).toHaveBeenCalledWith('Failed to execute transaction:', {})
+    expect(mockLog.error).toHaveBeenCalledWith('Failed to execute transaction:', {})
 
     mockExecutePending.value = false
     callbacks?.onSettled?.()

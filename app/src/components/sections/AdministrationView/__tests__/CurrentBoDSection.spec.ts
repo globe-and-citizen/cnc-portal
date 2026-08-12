@@ -7,17 +7,6 @@ import { useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
 import { log } from '@/utils'
 
-vi.mock('@/utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/utils')>()
-  return {
-    ...actual,
-    log: {
-      ...actual.log,
-      error: vi.fn()
-    }
-  }
-})
-
 const NotFoundStub = { template: '<div data-test="not-found">no-members</div>' }
 
 // Stub for UserComponentCol to expose passed props via attributes

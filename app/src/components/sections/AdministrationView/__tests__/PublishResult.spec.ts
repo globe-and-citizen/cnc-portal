@@ -15,14 +15,6 @@ vi.mock('@/constant', async (importOriginal) => ({
   ELECTIONS_BEACON_ADDRESS: '0x0000000000000000000000000000000000000003',
   ELECTIONS_IMPL_ADDRESS: '0x0000000000000000000000000000000000000004'
 }))
-vi.mock('viem', async () => {
-  const actual = await vi.importActual('viem')
-  return {
-    ...actual,
-    encodeFunctionData: vi.fn(() => '0xdeadbeef')
-  }
-})
-
 type PublishOptions = {
   onSuccess?: () => void
   onError?: (e: unknown) => void

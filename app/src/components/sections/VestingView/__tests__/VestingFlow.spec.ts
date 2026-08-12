@@ -4,7 +4,13 @@ import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
-import { mockVestingWrites, mockTeamStore, mockUserStore } from '@/tests/mocks'
+import {
+  mockInvestorReads,
+  mockVestingReads,
+  mockVestingWrites,
+  mockTeamStore,
+  mockUserStore
+} from '@/tests/mocks'
 
 const mockReloadKey = ref(0)
 const MEMBER = mockUserStore.address
@@ -12,39 +18,6 @@ const MEMBER = mockUserStore.address
 // Active vesting tuple shaped like the on-chain return: [members, indices, infos].
 // The single schedule lives at on-chain array index 3 for this member.
 const SCHEDULE_INDEX = 3n
-const activeVestings = ref([
-  [MEMBER],
-  [SCHEDULE_INDEX],
-  [
-    {
-      start: BigInt(Math.floor(Date.now() / 1000) - 3600),
-      duration: BigInt(30 * 86400),
-      cliff: 0n,
-      totalAmount: BigInt(10e18),
-      released: BigInt(2e18),
-      active: true
-    }
-  ]
-])
-
-vi.mock('@/composables/vesting/reads', () => ({
-  useVestingAddress: vi.fn(() => ref('0x1000000000000000000000000000000000000001')),
-  useVestingGetVestingsWithMembers: vi.fn(() => ({
-    data: activeVestings,
-    error: ref(null),
-    refetch: vi.fn()
-  })),
-  useVestingGetAllArchivedVestingsFlat: vi.fn(() => ({
-    data: ref(null),
-    error: ref(null),
-    refetch: vi.fn()
-  }))
-}))
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: vi.fn(() => ({ data: ref('SHR') }))
-}))
-
 type MutateOptions = {
   onSuccess?: () => void | Promise<void>
   onError?: (err: Error) => void | Promise<void>
@@ -65,6 +38,22 @@ describe('VestingFlow.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockInvestorReads.symbol.data.value = 'SHR'
+    mockVestingReads.vestingsWithMembers.data.value = [
+      [MEMBER],
+      [SCHEDULE_INDEX],
+      [
+        {
+          start: BigInt(Math.floor(Date.now() / 1000) - 3600),
+          duration: BigInt(30 * 86400),
+          cliff: 0n,
+          totalAmount: BigInt(10e18),
+          released: BigInt(2e18),
+          active: true
+        }
+      ]
+    ]
+    mockVestingReads.archivedVestingsFlat.data.value = [[], [], []]
     mockVestingWrites.stopVesting.mutate.mockReset()
     mockVestingWrites.release.mutate.mockReset()
     mockTeamStore.currentTeam = {

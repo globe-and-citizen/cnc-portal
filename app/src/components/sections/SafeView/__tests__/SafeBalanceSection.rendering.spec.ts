@@ -4,7 +4,12 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-import { mockUseContractBalance, mockUseAccount, makeTokenBalance } from '@/tests/mocks'
+import {
+  mockUseContractBalance,
+  mockUseAccount,
+  makeTokenBalance,
+  useQueryClientFn
+} from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
 
 // Mock @iconify/vue
@@ -24,7 +29,6 @@ const {
   mockUseTeamStore,
   mockUseCurrencyStore,
   mockuseGetSafeInfoQuery,
-  mockQueryClient,
   mockUseTransferFromSafeMutation
 } = vi.hoisted(() => ({
   mockGetSafeHomeUrl: vi.fn(),
@@ -33,12 +37,6 @@ const {
   mockUseTeamStore: vi.fn(),
   mockUseCurrencyStore: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
-  mockQueryClient: {
-    invalidateQueries: vi.fn(async () => undefined),
-    getQueryData: vi.fn(() => undefined),
-    setQueryData: vi.fn(() => undefined),
-    removeQueries: vi.fn(() => undefined)
-  },
   mockUseTransferFromSafeMutation: vi.fn(() => ({
     mutate: vi.fn(),
     isPending: ref(false),
@@ -56,24 +54,12 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
-vi.mock('@vueuse/core', async () => {
-  const actual = await vi.importActual<typeof import('@vueuse/core')>('@vueuse/core')
-  return {
-    ...actual,
-    useStorage: vi.fn()
-  }
-})
-
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
 
 vi.mock('@/queries/safe.mutations', () => ({
   useTransferFromSafeMutation: mockUseTransferFromSafeMutation
-}))
-
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: () => mockQueryClient
 }))
 
 // Test constants
@@ -194,6 +180,12 @@ describe('SafeBalanceSection', () => {
     mockUserStore.address = MOCK_DATA.safeInfo.owners[0]!
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
+    useQueryClientFn.mockReturnValue({
+      invalidateQueries: vi.fn(async () => undefined),
+      getQueryData: vi.fn(() => undefined),
+      setQueryData: vi.fn(() => undefined),
+      removeQueries: vi.fn(() => undefined)
+    })
 
     mockGetSafeHomeUrl.mockReturnValue(
       'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'

@@ -1,11 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useFileUrl, getPresignedUrl } from '../useFileUrl'
-
-const mockGetFileUrlApi = vi.fn()
-
-vi.mock('@/api', () => ({
-  getFileUrlApi: (...args: unknown[]) => mockGetFileUrlApi(...args)
-}))
+import { mockGetFileUrlApi } from '@/tests/mocks'
 
 describe('useFileUrl', () => {
   beforeEach(() => {

@@ -2,34 +2,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import RemoveOwnerButton from '../RemoveOwnerButton.vue'
+import { mockLog, mockUseChainId } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
 
-const { mockChainId, mockIsPending, mockLogError, mockUpdateOwnersMutate } = vi.hoisted(() => ({
-  mockChainId: { value: 137 },
+const { mockIsPending, mockUpdateOwnersMutate } = vi.hoisted(() => ({
   mockIsPending: { value: false },
-  mockLogError: vi.fn(),
   mockUpdateOwnersMutate: vi.fn()
 }))
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@wagmi/vue')>()
-  return {
-    ...actual,
-    useChainId: vi.fn(() => mockChainId)
-  }
-})
 
 vi.mock('@/queries/safe.mutations', () => ({
   useUpdateSafeOwnersMutation: () => ({
     mutate: mockUpdateOwnersMutate,
     isPending: mockIsPending
   })
-}))
-
-vi.mock('@/utils', () => ({
-  log: {
-    error: mockLogError
-  }
 }))
 
 vi.mock('@iconify/vue', () => ({
@@ -67,7 +52,7 @@ const mountComponent = (props = {}) =>
 describe('RemoveOwnerButton', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockChainId.value = 137
+    mockUseChainId.value = 137
     mockIsPending.value = false
     mockUserStore.address = '0x1111111111111111111111111111111111111111'
     mockUpdateOwnersMutate.mockImplementation(() => undefined)
@@ -120,7 +105,7 @@ describe('RemoveOwnerButton', () => {
     callbacks?.onSuccess?.()
     await nextTick()
 
-    expect(mockLogError).not.toHaveBeenCalled()
+    expect(mockLog.error).not.toHaveBeenCalled()
   })
 
   it('shows loading state from mutation pending ref', async () => {
@@ -155,7 +140,7 @@ describe('RemoveOwnerButton', () => {
     callbacks?.onError?.(new Error('RPC failed'))
     await nextTick()
 
-    expect(mockLogError).toHaveBeenCalledWith('Failed to remove owner:', expect.any(Error))
+    expect(mockLog.error).toHaveBeenCalledWith('Failed to remove owner:', expect.any(Error))
     expect(wrapper.find('[data-test="remove-owner-button"]').attributes('data-loading')).toBe(
       'false'
     )
