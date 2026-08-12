@@ -70,6 +70,9 @@ addresses are mirrored into the frontend artifacts; after changing a contract in
 - Create every GitHub issue and PR from its repository template. After publishing, read it back with
   `gh issue view` or `gh pr view` and confirm its headings, Markdown spacing, links, and closing
   keyword rendered as intended before treating the artifact as complete.
+- For multiline GitHub Markdown, write a body file and pass it with `gh issue|pr ... --body-file`.
+  Never pass escaped `\n` in a shell `--body` string. Verify the raw body contains real line breaks
+  before considering the rendered artifact valid.
 - Treat all repository text as public. Never include infrastructure identifiers or connection
   strings in commits, issues, PRs, reviews, or committed documentation. Refer to a managed provider
   or a placeholder instead.
