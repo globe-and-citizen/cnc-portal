@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { useClaimForm, formatUTC } from '@/composables/useClaimForm'
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
 
 const createOptions = () => {
   const toast = { add: vi.fn() }
@@ -143,17 +144,50 @@ describe('useClaimForm', () => {
     expect(overTotalResult.error?.issues.some((i) => i.message.includes('daily cap'))).toBe(true)
   })
 
-  it('falls back to 24h limit when no daily cap is set', () => {
+  it('falls back to the server default cap when no daily cap is set', () => {
     const options = createOptions()
     const { claimSchema } = useClaimForm(options)
 
     const validResult = claimSchema.value.safeParse({
-      hoursWorked: '23',
-      minutesWorked: '50',
-      memo: 'long day',
+      hoursWorked: String(DEFAULT_MAXIMUM_HOURS_PER_DAY),
+      minutesWorked: '0',
+      memo: 'full day',
       dayWorked: '2024-01-10T00:00:00.000Z'
     })
     expect(validResult.success).toBe(true)
+
+    const overResult = claimSchema.value.safeParse({
+      hoursWorked: String(DEFAULT_MAXIMUM_HOURS_PER_DAY),
+      minutesWorked: '10',
+      memo: 'over the default cap',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(overResult.success).toBe(false)
+    expect(
+      overResult.error?.issues.some((i) =>
+        i.message.includes(`daily cap of ${DEFAULT_MAXIMUM_HOURS_PER_DAY} hours`)
+      )
+    ).toBe(true)
+  })
+
+  it('counts already-claimed minutes against the default cap for legacy wages', () => {
+    const options = createOptions()
+    const { claimSchema } = useClaimForm({
+      ...options,
+      existingClaims: ref([{ minutesWorked: 420, dayWorked: '2024-01-10T00:00:00.000Z' }])
+    })
+
+    // 7h already claimed + 2h new = 9h > 8h default cap
+    const overResult = claimSchema.value.safeParse({
+      hoursWorked: '2',
+      minutesWorked: '0',
+      memo: 'over remaining',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    })
+    expect(overResult.success).toBe(false)
+    const message = overResult.error?.issues.find((i) => i.path.includes('hoursWorked'))?.message
+    expect(message).toContain('Already claimed: 7h')
+    expect(message).toContain('Remaining: 1h')
   })
 
   it('rejects when input plus already-claimed minutes exceed the daily cap', () => {
