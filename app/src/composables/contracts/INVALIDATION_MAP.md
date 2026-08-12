@@ -210,16 +210,22 @@ The pattern that already works is **per-domain invalidation helpers**, in the sh
 ```ts
 // composables/bank/invalidate.ts
 export function useInvalidateBankQueries() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return async (bank: Address, tokens: Address[] = []) => {
-    await queryClient.invalidateQueries({ queryKey: ['balance', { address: bank }] })
+    await queryClient.invalidateQueries({
+      queryKey: ["balance", { address: bank }],
+    });
     await Promise.all(
       tokens.map((t) =>
-        queryClient.invalidateQueries({ queryKey: ['readContract', { address: t, args: [bank] }] })
-      )
-    )
-    await queryClient.invalidateQueries({ queryKey: ['bank-events-logs', bank.toLowerCase()] })
-  }
+        queryClient.invalidateQueries({
+          queryKey: ["readContract", { address: t, args: [bank] }],
+        }),
+      ),
+    );
+    await queryClient.invalidateQueries({
+      queryKey: ["bank-events-logs", bank.toLowerCase()],
+    });
+  };
 }
 ```
 

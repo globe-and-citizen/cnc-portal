@@ -11,9 +11,9 @@
 
 | User Story   | Title                                               | Contract | Frontend | Effort |
 | ------------ | --------------------------------------------------- | :------: | :------: | ------ |
-| US-INFRA-001 | Deploy a new Officer instance via FactoryBeacon     | ✅       | —        | M      |
-| US-INFRA-002 | Upgrade all proxies atomically by updating a Beacon | ✅       | —        | M      |
-| US-INFRA-003 | Delegate calls transparently via UserBeaconProxy    | ✅       | —        | S      |
+| US-INFRA-001 | Deploy a new Officer instance via FactoryBeacon     |    ✅    |    —     | M      |
+| US-INFRA-002 | Upgrade all proxies atomically by updating a Beacon |    ✅    |    —     | M      |
+| US-INFRA-003 | Delegate calls transparently via UserBeaconProxy    |    ✅    |    —     | S      |
 
 **Contract: 3 / 3 — Frontend: n/a (infrastructure layer)**
 

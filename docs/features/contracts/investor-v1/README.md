@@ -11,12 +11,12 @@
 
 | User Story | Title                                                                | Contract | Frontend | Effort |
 | ---------- | -------------------------------------------------------------------- | :------: | :------: | ------ |
-| US-INV-001 | Bulk mint equity tokens to shareholders (distributeMint)             | ✅       | 🚫       | M      |
-| US-INV-002 | Mint equity tokens to an individual (individualMint via MINTER_ROLE) | ✅       | 🚫       | S      |
-| US-INV-003 | Automatically track shareholders on token transfer                   | ✅       | 🚫       | M      |
-| US-INV-004 | Receive and push ETH dividends to all shareholders                   | ✅       | 🚫       | M      |
-| US-INV-005 | Receive and push ERC20 dividends to all shareholders                 | ✅       | 🚫       | M      |
-| US-INV-006 | View current shareholder list with balances                          | ✅       | 🚫       | XS     |
+| US-INV-001 | Bulk mint equity tokens to shareholders (distributeMint)             |    ✅    |    🚫    | M      |
+| US-INV-002 | Mint equity tokens to an individual (individualMint via MINTER_ROLE) |    ✅    |    🚫    | S      |
+| US-INV-003 | Automatically track shareholders on token transfer                   |    ✅    |    🚫    | M      |
+| US-INV-004 | Receive and push ETH dividends to all shareholders                   |    ✅    |    🚫    | M      |
+| US-INV-005 | Receive and push ERC20 dividends to all shareholders                 |    ✅    |    🚫    | M      |
+| US-INV-006 | View current shareholder list with balances                          |    ✅    |    🚫    | XS     |
 
 **Contract: 6 / 6 — Frontend: 0 / 6**
 

@@ -11,10 +11,10 @@
 
 | User Story | Title                                                     | Contract | Frontend | Effort |
 | ---------- | --------------------------------------------------------- | :------: | :------: | ------ |
-| US-VOT-001 | Create a directive proposal (Yes/No/Abstain)              | ✅       | 🚫       | M      |
-| US-VOT-002 | Create an election proposal (candidates with vote counts) | ✅       | 🚫       | M      |
-| US-VOT-003 | Conclude a proposal and auto-process results              | ✅       | 🚫       | M      |
-| US-VOT-004 | Resolve a tie via one of four tie-break options           | ✅       | 🚫       | L      |
+| US-VOT-001 | Create a directive proposal (Yes/No/Abstain)              |    ✅    |    🚫    | M      |
+| US-VOT-002 | Create an election proposal (candidates with vote counts) |    ✅    |    🚫    | M      |
+| US-VOT-003 | Conclude a proposal and auto-process results              |    ✅    |    🚫    | M      |
+| US-VOT-004 | Resolve a tie via one of four tie-break options           |    ✅    |    🚫    | L      |
 
 **Contract: 4 / 4 — Frontend: 0 / 4**
 

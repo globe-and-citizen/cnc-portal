@@ -42,6 +42,7 @@ This feature encompasses:
 **Description:** Display platform-wide aggregate statistics
 
 **User Story:**
+
 > As a platform administrator, I want to view overall platform statistics so that I can monitor platform health and growth.
 
 **Acceptance Criteria:**
@@ -59,6 +60,7 @@ This feature encompasses:
 **Description:** Provide detailed analytics for teams
 
 **User Story:**
+
 > As a platform administrator, I want to see team-specific statistics so that I can identify active and inactive teams.
 
 **Acceptance Criteria:**
@@ -76,6 +78,7 @@ This feature encompasses:
 **Description:** Analyze user engagement and activity
 
 **User Story:**
+
 > As a platform administrator, I want to understand user engagement so that I can improve user retention.
 
 **Acceptance Criteria:**
@@ -93,6 +96,7 @@ This feature encompasses:
 **Description:** Track claim submission and processing metrics
 
 **User Story:**
+
 > As a team owner, I want to monitor claim statistics so that I can ensure timely processing.
 
 **Acceptance Criteria:**
@@ -111,6 +115,7 @@ This feature encompasses:
 **Description:** Analyze wage distribution and rates
 
 **User Story:**
+
 > As a financial analyst, I want to see wage statistics so that I can understand compensation patterns.
 
 **Acceptance Criteria:**
@@ -128,6 +133,7 @@ This feature encompasses:
 **Description:** Monitor expense submissions and approvals
 
 **User Story:**
+
 > As a financial controller, I want to track expenses so that I can manage platform costs.
 
 **Acceptance Criteria:**
@@ -145,6 +151,7 @@ This feature encompasses:
 **Description:** Track smart contract deployments and types
 
 **User Story:**
+
 > As a blockchain administrator, I want to monitor contract usage so that I can optimize deployments.
 
 **Acceptance Criteria:**
@@ -162,6 +169,7 @@ This feature encompasses:
 **Description:** Monitor governance actions and execution rates
 
 **User Story:**
+
 > As a governance coordinator, I want to track board actions so that I can ensure effective governance.
 
 **Acceptance Criteria:**
@@ -179,6 +187,7 @@ This feature encompasses:
 **Description:** Display chronological feed of recent platform activities
 
 **User Story:**
+
 > As a platform administrator, I want to see recent activities so that I can monitor real-time platform usage.
 
 **Acceptance Criteria:**
@@ -196,17 +205,17 @@ This feature encompasses:
 
 All endpoints are prefixed with `/api/stats` and require JWT authentication.
 
-| Endpoint | Method | Description | Query Parameters |
-|----------|--------|-------------|------------------|
-| `/overview` | GET | Platform overview statistics | `period`, `teamId` |
-| `/teams` | GET | Team-level statistics | `period`, `page`, `limit` |
-| `/users` | GET | User engagement statistics | `period` |
-| `/claims` | GET | Claims analytics | `period`, `teamId` |
-| `/wages` | GET | Wage distribution statistics | `period` |
-| `/expenses` | GET | Expense analytics | `period` |
-| `/contracts` | GET | Smart contract statistics | `period` |
-| `/actions` | GET | Board action statistics | `period` |
-| `/activity/recent` | GET | Recent activity feed | `limit`, `teamId` |
+| Endpoint           | Method | Description                  | Query Parameters          |
+| ------------------ | ------ | ---------------------------- | ------------------------- |
+| `/overview`        | GET    | Platform overview statistics | `period`, `teamId`        |
+| `/teams`           | GET    | Team-level statistics        | `period`, `page`, `limit` |
+| `/users`           | GET    | User engagement statistics   | `period`                  |
+| `/claims`          | GET    | Claims analytics             | `period`, `teamId`        |
+| `/wages`           | GET    | Wage distribution statistics | `period`                  |
+| `/expenses`        | GET    | Expense analytics            | `period`                  |
+| `/contracts`       | GET    | Smart contract statistics    | `period`                  |
+| `/actions`         | GET    | Board action statistics      | `period`                  |
+| `/activity/recent` | GET    | Recent activity feed         | `limit`, `teamId`         |
 
 **Common Query Parameters:**
 
@@ -406,7 +415,7 @@ All endpoints are prefixed with `/api/stats` and require JWT authentication.
 ### 5.2 Growth Calculation
 
 ```typescript
-growth = ((current - previous) / previous) * 100
+growth = ((current - previous) / previous) * 100;
 
 // Special cases:
 // - If previous = 0: growth = current > 0 ? 100 : 0
@@ -438,10 +447,10 @@ growth = ((current - previous) / previous) * 100
 ```typescript
 // Manual calculation (not using database aggregate)
 const teams = await prisma.team.findMany({
-  include: { members: true }
-})
-const totalMembers = teams.reduce((sum, team) => sum + team.members.length, 0)
-const avgMembers = teams.length > 0 ? totalMembers / teams.length : 0
+  include: { members: true },
+});
+const totalMembers = teams.reduce((sum, team) => sum + team.members.length, 0);
+const avgMembers = teams.length > 0 ? totalMembers / teams.length : 0;
 ```
 
 **Most Active Users:**

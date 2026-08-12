@@ -42,10 +42,10 @@ Comprehensive guides for developing features in the CNC Portal project.
    ```bash
    # Unit tests
    npm run test:unit
-   
+
    # Watch mode
    npm run test:watch
-   
+
    # Coverage report
    npm run test:coverage
    ```
@@ -55,7 +55,7 @@ Comprehensive guides for developing features in the CNC Portal project.
    ```bash
    # Type checking
    npm run type-check
-   
+
    # Linting
    npm run lint
    ```

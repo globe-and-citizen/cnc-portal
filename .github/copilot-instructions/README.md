@@ -28,7 +28,7 @@ Never format a value for display by hand — no `Intl.*`, `toLocaleString`, `toF
 
 ### Date Manipulation
 
-For Date Manipulation, always use dayjs library — and for *displaying* a date, through the named helpers in [`formatting-standards.md`](./formatting-standards.md) rather than a pattern string at the call site.
+For Date Manipulation, always use dayjs library — and for _displaying_ a date, through the named helpers in [`formatting-standards.md`](./formatting-standards.md) rather than a pattern string at the call site.
 
 ### Context7 MCP Integration
 

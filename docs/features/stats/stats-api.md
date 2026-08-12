@@ -32,10 +32,10 @@ Get comprehensive platform-wide statistics including teams, members, claims, exp
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
 
 ### Response
 
@@ -108,11 +108,11 @@ Get detailed statistics about teams including member counts, activity levels, an
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `page` | integer | No | `1` | Page number for pagination |
-| `limit` | integer | No | `10` | Items per page (max: 100) |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `page`    | integer | No       | `1`     | Page number for pagination             |
+| `limit`   | integer | No       | `10`    | Items per page (max: 100)              |
 
 ### Response
 
@@ -159,12 +159,12 @@ Get statistics about users including activity levels and team participation.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
-| `page` | integer | No | `1` | Page number for pagination |
-| `limit` | integer | No | `10` | Items per page (max: 100) |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
+| `page`    | integer | No       | `1`     | Page number for pagination             |
+| `limit`   | integer | No       | `10`    | Items per page (max: 100)              |
 
 ### Response
 
@@ -199,10 +199,10 @@ Get statistics about claims and hours worked across teams.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
 
 ### Response
 
@@ -240,10 +240,10 @@ Get statistics about wage rates and distribution across the platform.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
 
 ### Response
 
@@ -251,9 +251,9 @@ Get statistics about wage rates and distribution across the platform.
 {
   "totalWages": 145,
   "averageRates": {
-    "cash": 25.50,
+    "cash": 25.5,
     "token": 0.015,
-    "usdc": 22.00
+    "usdc": 22.0
   },
   "wageDistribution": {
     "cash": 78,
@@ -287,12 +287,12 @@ Get statistics about expenses including status distribution and team breakdown.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
-| `page` | integer | No | `1` | Page number for pagination |
-| `limit` | integer | No | `10` | Items per page (max: 100) |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
+| `page`    | integer | No       | `1`     | Page number for pagination             |
+| `limit`   | integer | No       | `10`    | Items per page (max: 100)              |
 
 ### Response
 
@@ -337,10 +337,10 @@ Get statistics about team contracts including types and distribution.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
 
 ### Response
 
@@ -372,12 +372,12 @@ Get statistics about board of director actions including execution rates.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
-| `page` | integer | No | `1` | Page number for pagination |
-| `limit` | integer | No | `10` | Items per page (max: 100) |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
+| `page`    | integer | No       | `1`     | Page number for pagination             |
+| `limit`   | integer | No       | `10`    | Items per page (max: 100)              |
 
 ### Response
 
@@ -392,7 +392,7 @@ Get statistics about board of director actions including execution rates.
       "teamName": "Development Team",
       "actionCount": 25,
       "executedCount": 22,
-      "executionRate": 88.00
+      "executionRate": 88.0
     }
   ],
   "period": "30d",
@@ -420,10 +420,10 @@ Get a feed of recent activities across the platform including claims, expenses, 
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `limit` | integer | No | `20` | Number of activities to return (max: 100) |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                               |
+| --------- | ------- | -------- | ------- | ----------------------------------------- |
+| `limit`   | integer | No       | `20`    | Number of activities to return (max: 100) |
+| `teamId`  | integer | No       | -       | Filter by specific team ID                |
 
 ### Response
 
@@ -559,11 +559,14 @@ Server-side error occurred.
 
 ```javascript
 // Get overview statistics for the last 30 days
-const response = await fetch('http://localhost:3000/api/stats/overview?period=30d', {
-  headers: {
-    'Authorization': `Bearer ${token}`
-  }
-});
+const response = await fetch(
+  "http://localhost:3000/api/stats/overview?period=30d",
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  },
+);
 const data = await response.json();
 console.log(data);
 ```
@@ -582,7 +585,7 @@ curl -X GET "http://localhost:3000/api/stats/teams?period=90d&page=1&limit=20" \
 // Using the useStats composable
 const { getOverviewStats } = useStats();
 
-const stats = await getOverviewStats('30d', teamId);
+const stats = await getOverviewStats("30d", teamId);
 console.log(stats);
 ```
 

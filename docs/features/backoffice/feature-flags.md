@@ -25,7 +25,7 @@ The Feature Flags system enables dynamic feature toggling at runtime without cod
 **Key Benefits:**
 
 - �� Enable/disable features without deployment
-- 🔐 Granular team-level control  
+- 🔐 Granular team-level control
 - 🧪 Beta testing with specific teams
 - 🚀 Gradual feature rollouts
 - ⚡ Instant feature activation/deactivation
@@ -68,7 +68,8 @@ model TeamFunctionOverride {
 ### Feature Status Values
 
 ```typescript
-type FeatureStatus = 'enabled' | 'disabled' | 'beta' | 'deprecated' | 'maintenance'
+type FeatureStatus =
+  "enabled" | "disabled" | "beta" | "deprecated" | "maintenance";
 ```
 
 ---
@@ -177,17 +178,17 @@ Authorization: Bearer <token>
 // backend/src/utils/featureFlags.ts
 export async function isFeatureEnabledForTeam(
   functionName: string,
-  teamId: number
+  teamId: number,
 ): Promise<boolean> {
   const override = await prisma.teamFunctionOverride.findUnique({
-    where: { unique_team_function: { teamId, functionName } }
-  })
+    where: { unique_team_function: { teamId, functionName } },
+  });
 
   if (override) {
-    return ['enabled', 'beta'].includes(override.status)
+    return ["enabled", "beta"].includes(override.status);
   }
 
-  return isFeatureEnabledGlobally(functionName)
+  return isFeatureEnabledGlobally(functionName);
 }
 ```
 
@@ -196,9 +197,9 @@ export async function isFeatureEnabledForTeam(
 ## Frontend Usage
 
 ```typescript
-import { useFeatureFlag } from '@/composables/useFeatureFlag'
+import { useFeatureFlag } from "@/composables/useFeatureFlag";
 
-const { isEnabled } = useFeatureFlag('NEW_DASHBOARD')
+const { isEnabled } = useFeatureFlag("NEW_DASHBOARD");
 ```
 
 ```vue
@@ -228,31 +229,31 @@ npx prisma generate
 Create `backend/prisma/seeds/featureFlags.ts`:
 
 ```typescript
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export async function seedFeatureFlags() {
   const features = [
     {
-      functionName: 'NEW_DASHBOARD',
-      status: 'beta'
+      functionName: "NEW_DASHBOARD",
+      status: "beta",
     },
     {
-      functionName: 'CLAIM_SUBMISSION',
-      status: 'enabled'
-    }
-  ]
+      functionName: "CLAIM_SUBMISSION",
+      status: "enabled",
+    },
+  ];
 
   for (const feature of features) {
     await prisma.globalSetting.upsert({
       where: { functionName: feature.functionName },
       update: feature,
-      create: feature
-    })
+      create: feature,
+    });
   }
 
-  console.log('✅ Feature flags seeded')
+  console.log("✅ Feature flags seeded");
 }
 ```
 
@@ -277,23 +278,35 @@ Implement `backend/src/controllers/featureFlagController.ts` with CRUD operation
 Create `backend/src/routes/featureFlagRoutes.ts`:
 
 ```typescript
-import express from 'express'
-import * as controller from '../controllers/featureFlagController'
-import { authenticateAdmin } from '../middleware/auth'
+import express from "express";
+import * as controller from "../controllers/featureFlagController";
+import { authenticateAdmin } from "../middleware/auth";
 
-const router = express.Router()
+const router = express.Router();
 
 // Admin routes
-router.get('/admin/features', authenticateAdmin, controller.getAllFeatures)
-router.post('/admin/features', authenticateAdmin, controller.createFeature)
-router.get('/admin/features/:functionName', authenticateAdmin, controller.getFeature)
-router.put('/admin/features/:functionName', authenticateAdmin, controller.updateFeature)
-router.delete('/admin/features/:functionName', authenticateAdmin, controller.deleteFeature)
+router.get("/admin/features", authenticateAdmin, controller.getAllFeatures);
+router.post("/admin/features", authenticateAdmin, controller.createFeature);
+router.get(
+  "/admin/features/:functionName",
+  authenticateAdmin,
+  controller.getFeature,
+);
+router.put(
+  "/admin/features/:functionName",
+  authenticateAdmin,
+  controller.updateFeature,
+);
+router.delete(
+  "/admin/features/:functionName",
+  authenticateAdmin,
+  controller.deleteFeature,
+);
 
 // Public route
-router.get('/features/check/:functionName', controller.checkFeatureAccess)
+router.get("/features/check/:functionName", controller.checkFeatureAccess);
 
-export default router
+export default router;
 ```
 
 ### 7. Frontend Integration
@@ -307,56 +320,56 @@ Create the composable as shown in the Frontend Usage section.
 ### Backend Tests
 
 ```typescript
-describe('Feature Flags', () => {
-  it('should check global feature', async () => {
-    const enabled = await isFeatureEnabledGlobally('NEW_DASHBOARD')
-    expect(enabled).toBe(false) // Globally restricted
-  })
+describe("Feature Flags", () => {
+  it("should check global feature", async () => {
+    const enabled = await isFeatureEnabledGlobally("NEW_DASHBOARD");
+    expect(enabled).toBe(false); // Globally restricted
+  });
 
-  it('should respect team override', async () => {
+  it("should respect team override", async () => {
     // Create override
     await prisma.teamFunctionOverride.create({
       data: {
         teamId: 5,
-        functionName: 'NEW_DASHBOARD',
-        status: 'enabled'
-      }
-    })
+        functionName: "NEW_DASHBOARD",
+        status: "enabled",
+      },
+    });
 
-    const enabled = await isFeatureEnabledForTeam('NEW_DASHBOARD', 5)
-    expect(enabled).toBe(true)
-  })
-})
+    const enabled = await isFeatureEnabledForTeam("NEW_DASHBOARD", 5);
+    expect(enabled).toBe(true);
+  });
+});
 ```
 
 ### Frontend Tests
 
 ```typescript
-import { mount } from '@vue/test-utils'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
+import { mount } from "@vue/test-utils";
+import { VueQueryPlugin, QueryClient } from "@tanstack/vue-query";
 
-describe('useFeatureFlag', () => {
-  it('should check feature flag', async () => {
-    const queryClient = new QueryClient()
-    
+describe("useFeatureFlag", () => {
+  it("should check feature flag", async () => {
+    const queryClient = new QueryClient();
+
     const TestComponent = {
       setup() {
-        const { isEnabled } = useFeatureFlag('NEW_DASHBOARD')
-        return { isEnabled }
+        const { isEnabled } = useFeatureFlag("NEW_DASHBOARD");
+        return { isEnabled };
       },
-      template: '<div>{{ isEnabled }}</div>'
-    }
+      template: "<div>{{ isEnabled }}</div>",
+    };
 
     const wrapper = mount(TestComponent, {
       global: {
-        plugins: [[VueQueryPlugin, { queryClient }]]
-      }
-    })
+        plugins: [[VueQueryPlugin, { queryClient }]],
+      },
+    });
 
-    await flushPromises()
-    expect(wrapper.vm.isEnabled).toBe(true)
-  })
-})
+    await flushPromises();
+    expect(wrapper.vm.isEnabled).toBe(true);
+  });
+});
 ```
 
 ---
@@ -367,38 +380,38 @@ Use SCREAMING_SNAKE_CASE for feature names:
 
 ```typescript
 // Dashboard & UI
-NEW_DASHBOARD
-STATS_DASHBOARD
-ADVANCED_ANALYTICS
-EXPERIMENTAL_UI
+NEW_DASHBOARD;
+STATS_DASHBOARD;
+ADVANCED_ANALYTICS;
+EXPERIMENTAL_UI;
 
 // Team Features
-TEAM_CREATION
-TEAM_DELETION
-TEAM_SETTINGS
-TEAM_TRANSFER
+TEAM_CREATION;
+TEAM_DELETION;
+TEAM_SETTINGS;
+TEAM_TRANSFER;
 
 // Claim Features
-CLAIM_SUBMISSION
-WEEKLY_CLAIMS
-CLAIM_APPROVAL
-CLAIM_BULK_EDIT
+CLAIM_SUBMISSION;
+WEEKLY_CLAIMS;
+CLAIM_APPROVAL;
+CLAIM_BULK_EDIT;
 
 // Wage Features
-WAGE_MANAGEMENT
-CASH_REMUNERATION
-WAGE_HISTORY
+WAGE_MANAGEMENT;
+CASH_REMUNERATION;
+WAGE_HISTORY;
 
 // Admin Features
-ADMIN_PANEL
-USER_MANAGEMENT
-AUDIT_LOGS
-FEATURE_FLAGS_UI
+ADMIN_PANEL;
+USER_MANAGEMENT;
+AUDIT_LOGS;
+FEATURE_FLAGS_UI;
 
 // Beta/Experimental
-BETA_FEATURE_X
-EXPERIMENTAL_CHARTS
-NEW_NOTIFICATION_SYSTEM
+BETA_FEATURE_X;
+EXPERIMENTAL_CHARTS;
+NEW_NOTIFICATION_SYSTEM;
 ```
 
 ---

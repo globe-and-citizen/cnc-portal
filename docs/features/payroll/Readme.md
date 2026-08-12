@@ -29,20 +29,20 @@ every story is ticked, all use cases and edge cases of payroll are covered.
 
 ## Status Overview
 
-| User Story    | Title                                        | Actor         | Status | Priority | Effort |
-| ------------- | -------------------------------------------- | ------------- | :----: | :------: | ------ |
-| US-PAYROLL-001 | Set a member's wage                         | Owner         |   ✅   |    P1    | M      |
-| US-PAYROLL-002 | Disable / re-enable a member's wage         | Owner         |   ✅   |    P2    | S      |
-| US-PAYROLL-003 | Fund the payroll contract (Bank transferFrom) | Owner       |   🔗   |    P1    | —      |
-| US-PAYROLL-004 | Set weekly goals                            | Member        |   ✅   |    P3    | S      |
-| US-PAYROLL-005 | Submit a daily claim                        | Member        |   ✅   |    P1    | M      |
-| US-PAYROLL-006 | Edit a daily claim                          | Member        |   ✅   |    P2    | S      |
-| US-PAYROLL-007 | Delete a daily claim                        | Member        |   ✅   |    P2    | S      |
-| US-PAYROLL-008 | Approve (sign) a weekly claim               | Owner         |   ✅   |    P1    | L      |
-| US-PAYROLL-009 | Disable / re-enable a signed weekly claim   | Owner         |   ✅   |    P2    | M      |
-| US-PAYROLL-010 | Withdraw an approved weekly claim           | Member        |   ✅   |    P1    | M      |
-| US-PAYROLL-011 | Sync weekly-claim status with the chain     | System        |   ✅   |    P2    | M      |
-| US-PAYROLL-012 | View claim history & payroll overview       | Member/Owner  |   ✅   |    P2    | M      |
+| User Story     | Title                                         | Actor        | Status | Priority | Effort |
+| -------------- | --------------------------------------------- | ------------ | :----: | :------: | ------ |
+| US-PAYROLL-001 | Set a member's wage                           | Owner        |   ✅   |    P1    | M      |
+| US-PAYROLL-002 | Disable / re-enable a member's wage           | Owner        |   ✅   |    P2    | S      |
+| US-PAYROLL-003 | Fund the payroll contract (Bank transferFrom) | Owner        |   🔗   |    P1    | —      |
+| US-PAYROLL-004 | Set weekly goals                              | Member       |   ✅   |    P3    | S      |
+| US-PAYROLL-005 | Submit a daily claim                          | Member       |   ✅   |    P1    | M      |
+| US-PAYROLL-006 | Edit a daily claim                            | Member       |   ✅   |    P2    | S      |
+| US-PAYROLL-007 | Delete a daily claim                          | Member       |   ✅   |    P2    | S      |
+| US-PAYROLL-008 | Approve (sign) a weekly claim                 | Owner        |   ✅   |    P1    | L      |
+| US-PAYROLL-009 | Disable / re-enable a signed weekly claim     | Owner        |   ✅   |    P2    | M      |
+| US-PAYROLL-010 | Withdraw an approved weekly claim             | Member       |   ✅   |    P1    | M      |
+| US-PAYROLL-011 | Sync weekly-claim status with the chain       | System       |   ✅   |    P2    | M      |
+| US-PAYROLL-012 | View claim history & payroll overview         | Member/Owner |   ✅   |    P2    | M      |
 
 > **Daily hour cap** is not a story of its own — it is exercised inside
 > US-PAYROLL-001 (configure) and US-PAYROLL-005 / US-PAYROLL-006 (enforce).

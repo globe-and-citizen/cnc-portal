@@ -11,10 +11,10 @@
 
 | User Story | Title                                                | Contract | Frontend | Effort |
 | ---------- | ---------------------------------------------------- | :------: | :------: | ------ |
-| US-FEE-001 | Configure fee rates per contract type (basis points) | ✅       | ✅       | S      |
-| US-FEE-002 | Accept ETH and ERC20 fee payments                    | ✅       | 🚫       | S      |
-| US-FEE-003 | Query fee rate for a contract type                   | ✅       | ✅       | XS     |
-| US-FEE-004 | Withdraw accumulated fees (ETH or ERC20)             | ✅       | ✅       | S      |
+| US-FEE-001 | Configure fee rates per contract type (basis points) |    ✅    |    ✅    | S      |
+| US-FEE-002 | Accept ETH and ERC20 fee payments                    |    ✅    |    🚫    | S      |
+| US-FEE-003 | Query fee rate for a contract type                   |    ✅    |    ✅    | XS     |
+| US-FEE-004 | Withdraw accumulated fees (ETH or ERC20)             |    ✅    |    ✅    | S      |
 
 **Contract: 4 / 4 — Frontend: 3 / 4**
 

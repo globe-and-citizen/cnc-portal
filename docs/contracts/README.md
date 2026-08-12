@@ -2,24 +2,24 @@
 
 ## All Contracts
 
-| Contract                                          | File                                                 | Upgradeable       | Purpose                              |
-| ------------------------------------------------- | ---------------------------------------------------- | ----------------- | ------------------------------------ |
-| [Officer](#officer)                               | `contracts/Officer.sol`                              | Yes (Beacon)      | Central orchestrator & factory       |
-| [Bank](#bank)                                     | `contracts/Bank.sol`                                 | Yes (Beacon)      | Treasury & dividend management       |
-| [InvestorV1](#investorv1)                         | `contracts/Investor/InvestorV1.sol`                  | Yes (Beacon)      | Equity token (ERC20/shares)          |
-| [Elections](#elections)                           | `contracts/Elections/Elections.sol`                  | Yes (Beacon)      | Board of Directors elections         |
-| [BoardOfDirectors](#boardofdirectors)             | `contracts/BoardOfDirectors.sol`                     | Yes (Beacon)      | Multi-sig governance                 |
-| [Proposals](#proposals)                           | `contracts/Proposals/Proposals.sol`                  | Yes (Beacon)      | Board proposal voting                |
-| [ExpenseAccountEIP712](#expenseaccounteip712)     | `contracts/expense-account/ExpenseAccountEIP712.sol` | Yes (Beacon)      | Expense reimbursement                |
-| [CashRemunerationEIP712](#cashremunerationeip712) | `contracts/CashRemunerationEIP712.sol`               | Yes (Beacon)      | Wage payment with equity             |
-| [Vesting](#vesting)                               | `contracts/Vesting.sol`                              | Yes (Beacon)      | Per-team share vesting (mint-on-release) |
-| [AdCampaignManager](#adcampaignmanager)           | `contracts/AdCampaignManager.sol`                    | No                | Ad campaign & payment                |
-| [SafeDepositRouter](#safedepositrouter)           | `contracts/SafeDepositRouter.sol`                    | Yes               | Token deposit → SHER minting         |
-| [FeeCollector](#feecollector)                     | `contracts/FeeCollector.sol`                         | Yes               | Global fee vault                     |
-| [Voting](#voting-contract)                        | `contracts/Voting/Voting.sol`                        | Yes (Beacon)      | Combined directive + election voting |
-| [FactoryBeacon](#factorybeacon)                   | `contracts/beacons/FactoryBeacon.sol`                | —                 | Officer instance factory             |
-| [Beacon](#beacon)                                 | `contracts/beacons/Beacon.sol`                       | —                 | Implementation pointer               |
-| [UserBeaconProxy](#userbeaconproxy)               | `contracts/beacons/UserBeaconProxy.sol`              | —                 | Beacon proxy instance                |
+| Contract                                          | File                                                 | Upgradeable  | Purpose                                  |
+| ------------------------------------------------- | ---------------------------------------------------- | ------------ | ---------------------------------------- |
+| [Officer](#officer)                               | `contracts/Officer.sol`                              | Yes (Beacon) | Central orchestrator & factory           |
+| [Bank](#bank)                                     | `contracts/Bank.sol`                                 | Yes (Beacon) | Treasury & dividend management           |
+| [InvestorV1](#investorv1)                         | `contracts/Investor/InvestorV1.sol`                  | Yes (Beacon) | Equity token (ERC20/shares)              |
+| [Elections](#elections)                           | `contracts/Elections/Elections.sol`                  | Yes (Beacon) | Board of Directors elections             |
+| [BoardOfDirectors](#boardofdirectors)             | `contracts/BoardOfDirectors.sol`                     | Yes (Beacon) | Multi-sig governance                     |
+| [Proposals](#proposals)                           | `contracts/Proposals/Proposals.sol`                  | Yes (Beacon) | Board proposal voting                    |
+| [ExpenseAccountEIP712](#expenseaccounteip712)     | `contracts/expense-account/ExpenseAccountEIP712.sol` | Yes (Beacon) | Expense reimbursement                    |
+| [CashRemunerationEIP712](#cashremunerationeip712) | `contracts/CashRemunerationEIP712.sol`               | Yes (Beacon) | Wage payment with equity                 |
+| [Vesting](#vesting)                               | `contracts/Vesting.sol`                              | Yes (Beacon) | Per-team share vesting (mint-on-release) |
+| [AdCampaignManager](#adcampaignmanager)           | `contracts/AdCampaignManager.sol`                    | No           | Ad campaign & payment                    |
+| [SafeDepositRouter](#safedepositrouter)           | `contracts/SafeDepositRouter.sol`                    | Yes          | Token deposit → SHER minting             |
+| [FeeCollector](#feecollector)                     | `contracts/FeeCollector.sol`                         | Yes          | Global fee vault                         |
+| [Voting](#voting-contract)                        | `contracts/Voting/Voting.sol`                        | Yes (Beacon) | Combined directive + election voting     |
+| [FactoryBeacon](#factorybeacon)                   | `contracts/beacons/FactoryBeacon.sol`                | —            | Officer instance factory                 |
+| [Beacon](#beacon)                                 | `contracts/beacons/Beacon.sol`                       | —            | Implementation pointer                   |
+| [UserBeaconProxy](#userbeaconproxy)               | `contracts/beacons/UserBeaconProxy.sol`              | —            | Beacon proxy instance                    |
 
 ---
 

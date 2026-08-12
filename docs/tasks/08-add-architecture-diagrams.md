@@ -86,17 +86,17 @@ graph TB
         Dashboard[Nuxt Dashboard]
         App[Vue.js App]
     end
-    
+
     subgraph "Backend Layer"
         API[Express.js API]
         DB[(PostgreSQL)]
     end
-    
+
     subgraph "Blockchain Layer"
         Contracts[Smart Contracts]
         Subgraph[The Graph]
     end
-    
+
     User([User]) --> Dashboard
     User --> App
     Dashboard --> API
@@ -112,7 +112,7 @@ graph TB
 
 After completion, verify:
 
-```bash
+````bash
 # Check if diagrams were added to architecture.md
 grep -c "```mermaid" /Users/test/Documents/data/gc/cnc-portal/docs/platform/architecture.md
 # Should show 3-4 mermaid diagrams
@@ -120,7 +120,7 @@ grep -c "```mermaid" /Users/test/Documents/data/gc/cnc-portal/docs/platform/arch
 # View the diagrams
 # Open the file in VS Code with Mermaid preview extension, or
 # View on GitHub where Mermaid renders automatically
-```
+````
 
 ## Manual Verification
 

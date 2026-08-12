@@ -254,8 +254,8 @@ flowchart TB
 ```typescript
 function createQueryHook<
   TResponse, // API response type
-  TParams extends BaseQueryParams // Hook parameters type (with inline pathParams/queryParams)
->(config: QueryConfig): (params: TParams) => UseQueryReturnType
+  TParams extends BaseQueryParams, // Hook parameters type (with inline pathParams/queryParams)
+>(config: QueryConfig): (params: TParams) => UseQueryReturnType;
 ```
 
 ### createMutationHook
@@ -294,8 +294,8 @@ flowchart TB
 ```typescript
 function createMutationHook<
   TResponse, // API response type
-  TParams extends BaseMutationParams // Mutation parameters type (with inline pathParams/queryParams/body)
->(config: MutationConfig): () => UseMutationReturnType
+  TParams extends BaseMutationParams, // Mutation parameters type (with inline pathParams/queryParams/body)
+>(config: MutationConfig): () => UseMutationReturnType;
 ```
 
 ---
@@ -440,10 +440,10 @@ flowchart TB
 ```typescript
 // health.queries.ts
 export const useGetBackendHealthQuery = createQueryHook<HealthResponse, {}>({
-  endpoint: 'health',
+  endpoint: "health",
   queryKey: () => healthKeys.all,
-  options: queryPresets.once
-})
+  options: queryPresets.once,
+});
 ```
 
 ### Query with Path Parameters
@@ -452,15 +452,15 @@ export const useGetBackendHealthQuery = createQueryHook<HealthResponse, {}>({
 // team.queries.ts
 // Define params with inline types - no separate interface needed
 interface GetTeamParams {
-  pathParams: { teamId: MaybeRefOrGetter<number | null> }
+  pathParams: { teamId: MaybeRefOrGetter<number | null> };
 }
 
 export const useGetTeamQuery = createQueryHook<Team, GetTeamParams>({
-  endpoint: 'teams/{teamId}',
+  endpoint: "teams/{teamId}",
   queryKey: (params) => teamKeys.detail(toValue(params.pathParams?.teamId)),
   enabled: (params) => !!toValue(params.pathParams?.teamId),
-  options: queryPresets.stable
-})
+  options: queryPresets.stable,
+});
 ```
 
 ### Query with Query Parameters
@@ -470,18 +470,21 @@ export const useGetTeamQuery = createQueryHook<Team, GetTeamParams>({
 // Define params with inline types
 interface GetActionsParams {
   queryParams: {
-    teamId: MaybeRefOrGetter<string | null>
-    isExecuted?: MaybeRefOrGetter<boolean>
-  }
+    teamId: MaybeRefOrGetter<string | null>;
+    isExecuted?: MaybeRefOrGetter<boolean>;
+  };
 }
 
 export const useGetActionsQuery = createQueryHook<Action[], GetActionsParams>({
-  endpoint: 'actions',
+  endpoint: "actions",
   queryKey: (params) =>
-    actionKeys.list(toValue(params.queryParams?.teamId), toValue(params.queryParams?.isExecuted)),
+    actionKeys.list(
+      toValue(params.queryParams?.teamId),
+      toValue(params.queryParams?.isExecuted),
+    ),
   enabled: (params) => !!toValue(params.queryParams?.teamId),
-  options: queryPresets.moderate
-})
+  options: queryPresets.moderate,
+});
 ```
 
 ### Mutation with Cache Invalidation
@@ -490,15 +493,20 @@ export const useGetActionsQuery = createQueryHook<Action[], GetActionsParams>({
 // team.queries.ts
 // Define params with inline types - simpler!
 interface UpdateTeamParams {
-  pathParams: { id: number }
-  body: { name?: string; description?: string }
+  pathParams: { id: number };
+  body: { name?: string; description?: string };
 }
 
-export const useUpdateTeamMutation = createMutationHook<Team, UpdateTeamParams>({
-  method: 'PUT',
-  endpoint: 'teams/{id}',
-  invalidateKeys: (params) => [teamKeys.detail(params.pathParams.id), teamKeys.all]
-})
+export const useUpdateTeamMutation = createMutationHook<Team, UpdateTeamParams>(
+  {
+    method: "PUT",
+    endpoint: "teams/{id}",
+    invalidateKeys: (params) => [
+      teamKeys.detail(params.pathParams.id),
+      teamKeys.all,
+    ],
+  },
+);
 ```
 
 ### Mutation with Dynamic Endpoint
@@ -506,14 +514,17 @@ export const useUpdateTeamMutation = createMutationHook<Team, UpdateTeamParams>(
 ```typescript
 // contract.queries.ts
 interface CreateContractParams {
-  body: { teamId: number; contractType: string; address: string }
+  body: { teamId: number; contractType: string; address: string };
 }
 
-export const useCreateContractMutation = createMutationHook<void, CreateContractParams>({
-  method: 'POST',
+export const useCreateContractMutation = createMutationHook<
+  void,
+  CreateContractParams
+>({
+  method: "POST",
   endpoint: (params) => `teams/${params.body?.teamId}/contracts`,
-  invalidateKeys: [contractKeys.all, ['teams']]
-})
+  invalidateKeys: [contractKeys.all, ["teams"]],
+});
 ```
 
 ---
@@ -524,22 +535,22 @@ export const useCreateContractMutation = createMutationHook<void, CreateContract
 
 ```typescript
 export const useGetTeamQuery = (params: GetTeamParams) => {
-  const { pathParams } = params
+  const { pathParams } = params;
 
   return useQuery<Team, AxiosError>({
     queryKey: teamKeys.detail(toValue(pathParams.teamId)),
     queryFn: async () => {
-      const teamId = toValue(pathParams.teamId)
-      const { data } = await apiClient.get<Team>(`teams/${teamId}`)
-      return data
+      const teamId = toValue(pathParams.teamId);
+      const { data } = await apiClient.get<Team>(`teams/${teamId}`);
+      return data;
     },
     enabled: () => !!toValue(pathParams.teamId),
     staleTime: 180000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false
-  })
-}
+    refetchOnMount: false,
+  });
+};
 ```
 
 ### After (Factory Hook)
@@ -547,15 +558,15 @@ export const useGetTeamQuery = (params: GetTeamParams) => {
 ```typescript
 // Only 2 generics needed: Response type and Params type
 interface GetTeamParams {
-  pathParams: { teamId: MaybeRefOrGetter<number | null> }
+  pathParams: { teamId: MaybeRefOrGetter<number | null> };
 }
 
 export const useGetTeamQuery = createQueryHook<Team, GetTeamParams>({
-  endpoint: 'teams/{teamId}',
+  endpoint: "teams/{teamId}",
   queryKey: (params) => teamKeys.detail(toValue(params.pathParams?.teamId)),
   enabled: (params) => !!toValue(params.pathParams?.teamId),
-  options: queryPresets.stable
-})
+  options: queryPresets.stable,
+});
 ```
 
 ### Migration Checklist

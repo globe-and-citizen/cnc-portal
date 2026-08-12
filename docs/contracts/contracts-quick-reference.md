@@ -2,21 +2,21 @@
 
 ## Contract Summary Table
 
-| Contract                   | Purpose                            | Key Functions                                                                      | Dependencies               |
-| -------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------- | -------------------------- |
-| **Officer**                | Central orchestrator & factory     | `deployBeaconProxy()`, `deployAllContracts()`, `findDeployedContract()`            | All beacons                |
-| **Bank**                   | Treasury & dividend management     | `depositToken()`, `transfer()`, `transferToken()`, `distributeNativeDividends()`, `distributeTokenDividends()` | InvestorV1 (via Officer)   |
-| **InvestorV1**             | Equity token (ERC20)               | `distributeMint()`, `individualMint()`, `getShareholders()`                        | None                       |
-| **Elections**              | BoD election system                | `createElection()`, `castVote()`, `publishResults()`                               | BoardOfDirectors           |
-| **BoardOfDirectors**       | Multi-sig governance               | `addAction()`, `approve()`, `setBoardOfDirectors()`                                | Elections                  |
-| **Proposals**              | Proposal voting                    | `createProposal()`, `castVote()`, `tallyResults()`                                 | BoardOfDirectors           |
-| **ExpenseAccountEIP712**   | Expense payments                   | `submitExpense()`, `addTokenSupport()`                                             | None                       |
-| **CashRemunerationEIP712** | Wage payments with equity          | `withdraw()`, `enableClaim()`, `disableClaim()`                                    | InvestorV1 (via Officer)   |
-| **Vesting**                | Per-team share vesting (mint-on-release) | `addVesting()`, `release()`, `stopVesting()`, `vestedAmount()`, `releasable()`     | Officer, InvestorV1        |
-| **AdCampaignManager**      | Ad campaign & payment routing      | `createAdCampaign()`, `claimPayment()`, `requestAndApproveWithdrawal()`            | Bank (external address)    |
-| **SafeDepositRouter**      | Token deposit → SHER minting       | `deposit()`, `depositWithSlippage()`, `calculateCompensation()`, `setMultiplier()` | InvestorV1 (via Officer)   |
-| **FeeCollector**           | Global protocol fee vault          | `getFeeFor()`, `setFee()`, `withdraw()`, `withdrawToken()`                         | None                       |
-| **Voting**                 | Combined directive/election voting | `addProposal()`, `voteDirective()`, `voteElection()`, `concludeProposal()`         | BoardOfDirectors (Officer) |
+| Contract                   | Purpose                                  | Key Functions                                                                                                  | Dependencies               |
+| -------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **Officer**                | Central orchestrator & factory           | `deployBeaconProxy()`, `deployAllContracts()`, `findDeployedContract()`                                        | All beacons                |
+| **Bank**                   | Treasury & dividend management           | `depositToken()`, `transfer()`, `transferToken()`, `distributeNativeDividends()`, `distributeTokenDividends()` | InvestorV1 (via Officer)   |
+| **InvestorV1**             | Equity token (ERC20)                     | `distributeMint()`, `individualMint()`, `getShareholders()`                                                    | None                       |
+| **Elections**              | BoD election system                      | `createElection()`, `castVote()`, `publishResults()`                                                           | BoardOfDirectors           |
+| **BoardOfDirectors**       | Multi-sig governance                     | `addAction()`, `approve()`, `setBoardOfDirectors()`                                                            | Elections                  |
+| **Proposals**              | Proposal voting                          | `createProposal()`, `castVote()`, `tallyResults()`                                                             | BoardOfDirectors           |
+| **ExpenseAccountEIP712**   | Expense payments                         | `submitExpense()`, `addTokenSupport()`                                                                         | None                       |
+| **CashRemunerationEIP712** | Wage payments with equity                | `withdraw()`, `enableClaim()`, `disableClaim()`                                                                | InvestorV1 (via Officer)   |
+| **Vesting**                | Per-team share vesting (mint-on-release) | `addVesting()`, `release()`, `stopVesting()`, `vestedAmount()`, `releasable()`                                 | Officer, InvestorV1        |
+| **AdCampaignManager**      | Ad campaign & payment routing            | `createAdCampaign()`, `claimPayment()`, `requestAndApproveWithdrawal()`                                        | Bank (external address)    |
+| **SafeDepositRouter**      | Token deposit → SHER minting             | `deposit()`, `depositWithSlippage()`, `calculateCompensation()`, `setMultiplier()`                             | InvestorV1 (via Officer)   |
+| **FeeCollector**           | Global protocol fee vault                | `getFeeFor()`, `setFee()`, `withdraw()`, `withdrawToken()`                                                     | None                       |
+| **Voting**                 | Combined directive/election voting       | `addProposal()`, `voteDirective()`, `voteElection()`, `concludeProposal()`                                     | BoardOfDirectors (Officer) |
 
 ---
 
@@ -448,17 +448,17 @@ event WageClaimDisabled(bytes32 indexed signatureHash);
 
 ### Common Errors
 
-| Error                                            | Meaning                             | Solution                     |
-| ------------------------------------------------ | ----------------------------------- | ---------------------------- |
-| `"Beacon not configured for this contract type"` | Officer doesn't have beacon address | Configure beacon first       |
-| `"Invalid beacon address"`                       | Zero address provided               | Use valid beacon address     |
-| `"Insufficient balance"`                         | ETH balance too low for transfer    | Ensure Bank holds enough ETH |
-| `"Unsupported token"`                            | Token not in supported list         | Add token support first      |
+| Error                                            | Meaning                             | Solution                      |
+| ------------------------------------------------ | ----------------------------------- | ----------------------------- |
+| `"Beacon not configured for this contract type"` | Officer doesn't have beacon address | Configure beacon first        |
+| `"Invalid beacon address"`                       | Zero address provided               | Use valid beacon address      |
+| `"Insufficient balance"`                         | ETH balance too low for transfer    | Ensure Bank holds enough ETH  |
+| `"Unsupported token"`                            | Token not in supported list         | Add token support first       |
 | `"Nothing to release"`                           | No vested tokens available to claim | Wait for vesting cliff/period |
-| `"Already approved"`                             | Trying to approve twice             | Already approved this action |
-| `"Only board of directors can call"`             | Non-member trying BoD function      | Must be board member         |
-| `"Invalid signature"`                            | EIP-712 signature invalid           | Check signer and data match  |
-| `"Already paid"`                                 | Wage claim resubmitted              | Cannot pay same claim twice  |
+| `"Already approved"`                             | Trying to approve twice             | Already approved this action  |
+| `"Only board of directors can call"`             | Non-member trying BoD function      | Must be board member          |
+| `"Invalid signature"`                            | EIP-712 signature invalid           | Check signer and data match   |
+| `"Already paid"`                                 | Wage claim resubmitted              | Cannot pay same claim twice   |
 
 ### Elections Errors
 
@@ -519,11 +519,11 @@ error BoardOfDirectorAddressNotSet();  // BoD address not configured
 
 ### App Frontend
 
-| Component        | Path                                                                    |
-| ---------------- | ----------------------------------------------------------------------- |
+| Component        | Path                                                                   |
+| ---------------- | ---------------------------------------------------------------------- |
 | Deploy Contracts | `/app/src/components/sections/TeamView/forms/InvestorContractStep.vue` |
-| Constants        | `/app/src/constant.ts`                                                  |
-| ABIs             | `/app/src/artifacts/abi/`                                               |
+| Constants        | `/app/src/constant.ts`                                                 |
+| ABIs             | `/app/src/artifacts/abi/`                                              |
 
 ### Tests
 

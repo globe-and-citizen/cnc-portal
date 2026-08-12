@@ -64,21 +64,21 @@ available in-page via the mock connector, so you only drive the UI and stub
 the backend:
 
 ```ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
-test('does something', async ({ page }) => {
-  await page.route('**/api/teams**', (route) =>
+test("does something", async ({ page }) => {
+  await page.route("**/api/teams**", (route) =>
     route.fulfill({
       status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ teams: [] })
-    })
-  )
+      contentType: "application/json",
+      body: JSON.stringify({ teams: [] }),
+    }),
+  );
 
-  await page.goto('/')
-  await page.getByTestId('sign-in').click()
-  await expect(page).toHaveURL(/\/teams$/)
-})
+  await page.goto("/");
+  await page.getByTestId("sign-in").click();
+  await expect(page).toHaveURL(/\/teams$/);
+});
 ```
 
 ### Conventions

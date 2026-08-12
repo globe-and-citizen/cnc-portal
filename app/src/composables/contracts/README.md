@@ -49,30 +49,32 @@ compile-time errors for typos.
 adding a new contract:
 
 ```ts
-import { computed } from 'vue'
-import { bankAbi } from '@/artifacts/abi/generated'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-import { useTeamStore } from '@/stores/teamStore'
-import { type WriteFunctionName } from '@/composables/contracts/useContractWritesV3'
+import { computed } from "vue";
+import { bankAbi } from "@/artifacts/abi/generated";
+import { useContractWritesV3 } from "@/composables/contracts/useContractWritesV3";
+import { useTeamStore } from "@/stores/teamStore";
+import { type WriteFunctionName } from "@/composables/contracts/useContractWritesV3";
 
-type BankFunctionNames = WriteFunctionName<typeof bankAbi>
+type BankFunctionNames = WriteFunctionName<typeof bankAbi>;
 
 function useBankContractWrite<F extends BankFunctionNames>(functionName: F) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+  const teamStore = useTeamStore();
+  const bankAddress = computed(() =>
+    teamStore.getContractAddressByType("Bank"),
+  );
   return useContractWritesV3({
     contractAddress: bankAddress,
     abi: bankAbi,
-    functionName
-  })
+    functionName,
+  });
 }
 
 export function useTransfer() {
-  return useBankContractWrite('transfer')
+  return useBankContractWrite("transfer");
 }
 
 export function useTransferToken() {
-  return useBankContractWrite('transferToken')
+  return useBankContractWrite("transferToken");
 }
 ```
 
@@ -93,8 +95,8 @@ Rules of thumb:
 - **No `args` / `value` at composable construction.** They are per-call:
 
   ```ts
-  const transfer = useTransfer()
-  await transfer.mutateAsync({ args: [to, amount] })
+  const transfer = useTransfer();
+  await transfer.mutateAsync({ args: [to, amount] });
   ```
 
 `variables.args` **is** structurally validated against the function signature:
@@ -111,9 +113,9 @@ composable instead.
 The tuple types are exported if you need to type a helper that forwards args:
 
 ```ts
-import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
+import type { WriteFunctionArgs } from "@/composables/contracts/useContractWritesV3";
 
-type TransferArgs = WriteFunctionArgs<typeof bankAbi, 'transferToken'>
+type TransferArgs = WriteFunctionArgs<typeof bankAbi, "transferToken">;
 ```
 
 ## 2. Error handling
@@ -126,35 +128,42 @@ the per-contract revert catalog.
 
 ```vue
 <template>
-  <UAlert v-if="errorMessage" color="error" variant="soft" :description="errorMessage" />
-  <UButton :loading="withdraw.isPending.value" @click="onWithdraw">Withdraw</UButton>
+  <UAlert
+    v-if="errorMessage"
+    color="error"
+    variant="soft"
+    :description="errorMessage"
+  />
+  <UButton :loading="withdraw.isPending.value" @click="onWithdraw"
+    >Withdraw</UButton
+  >
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { classifyError } from '@/utils'
-import { useOwnerWithdrawAllToBank } from '@/composables/cashRemuneration/writes'
+import { ref } from "vue";
+import { classifyError } from "@/utils";
+import { useOwnerWithdrawAllToBank } from "@/composables/cashRemuneration/writes";
 
-const errorMessage = ref('')
-const withdraw = useOwnerWithdrawAllToBank()
-const toast = useToast()
+const errorMessage = ref("");
+const withdraw = useOwnerWithdrawAllToBank();
+const toast = useToast();
 
 const onWithdraw = async () => {
-  errorMessage.value = ''
+  errorMessage.value = "";
   try {
-    await withdraw.mutateAsync({ args: [] })
-    toast.add({ title: 'Withdraw successful', color: 'success' })
+    await withdraw.mutateAsync({ args: [] });
+    toast.add({ title: "Withdraw successful", color: "success" });
   } catch (error) {
-    const classified = classifyError(error, { contract: 'CashRemuneration' })
+    const classified = classifyError(error, { contract: "CashRemuneration" });
 
-    if (classified.category === 'user_rejected') {
-      errorMessage.value = 'You rejected the request.'
-      return
+    if (classified.category === "user_rejected") {
+      errorMessage.value = "You rejected the request.";
+      return;
     }
 
-    toast.add({ title: classified.userMessage, color: 'error' })
+    toast.add({ title: classified.userMessage, color: "error" });
   }
-}
+};
 </script>
 ```
 
@@ -197,43 +206,49 @@ the mocks during tests.
 Standard pattern:
 
 ```ts
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { UserRejectedRequestError, BaseError } from 'viem'
-import { mockCashRemunerationWrites, resetContractMocks } from '@/tests/mocks'
-import OwnerTreasuryWithdrawAction from '../OwnerTreasuryWithdrawAction.vue'
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { mount, flushPromises } from "@vue/test-utils";
+import { UserRejectedRequestError, BaseError } from "viem";
+import { mockCashRemunerationWrites, resetContractMocks } from "@/tests/mocks";
+import OwnerTreasuryWithdrawAction from "../OwnerTreasuryWithdrawAction.vue";
 
-describe('OwnerTreasuryWithdrawAction', () => {
+describe("OwnerTreasuryWithdrawAction", () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    resetContractMocks()
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue({
-      hash: '0xhash'
-    })
-  })
+    vi.clearAllMocks();
+    resetContractMocks();
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue(
+      {
+        hash: "0xhash",
+      },
+    );
+  });
 
-  it('toasts success and refreshes balances', async () => {
+  it("toasts success and refreshes balances", async () => {
     const wrapper = mount(OwnerTreasuryWithdrawAction, {
-      props: { contractType: 'CashRemunerationEIP712' }
-    })
-    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await wrapper.get('[data-test="owner-withdraw-modal-confirm-button"]').trigger('click')
-    await flushPromises()
+      props: { contractType: "CashRemunerationEIP712" },
+    });
+    await wrapper.get('[data-test="owner-withdraw-button"]').trigger("click");
+    await wrapper
+      .get('[data-test="owner-withdraw-modal-confirm-button"]')
+      .trigger("click");
+    await flushPromises();
 
-    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledWith({
-      args: []
-    })
-  })
+    expect(
+      mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync,
+    ).toHaveBeenCalledWith({
+      args: [],
+    });
+  });
 
-  it('surfaces the rejection warning when the user rejects', async () => {
+  it("surfaces the rejection warning when the user rejects", async () => {
     mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockRejectedValueOnce(
-      new BaseError('reject', {
-        cause: new UserRejectedRequestError(new Error('rejected'))
-      })
-    )
+      new BaseError("reject", {
+        cause: new UserRejectedRequestError(new Error("rejected")),
+      }),
+    );
     // …mount, click, assert warning rendered without a toast.
-  })
-})
+  });
+});
 ```
 
 Practical notes:

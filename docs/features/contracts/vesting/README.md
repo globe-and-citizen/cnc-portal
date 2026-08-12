@@ -11,11 +11,11 @@
 
 | User Story  | Title                                                        | Contract | Frontend | Effort |
 | ----------- | ------------------------------------------------------------ | :------: | :------: | ------ |
-| US-VEST-001 | Create a vesting team with a token                           | ✅       | 🚫       | S      |
-| US-VEST-002 | Add a linear vesting schedule with cliff for a member        | ✅       | 🚫       | M      |
-| US-VEST-003 | Release vested tokens to the member                          | ✅       | 🚫       | M      |
-| US-VEST-004 | Stop vesting early (releasable to member, unvested to owner) | ✅       | 🚫       | M      |
-| US-VEST-005 | View vested and releasable amounts                           | ✅       | 🚫       | S      |
+| US-VEST-001 | Create a vesting team with a token                           |    ✅    |    🚫    | S      |
+| US-VEST-002 | Add a linear vesting schedule with cliff for a member        |    ✅    |    🚫    | M      |
+| US-VEST-003 | Release vested tokens to the member                          |    ✅    |    🚫    | M      |
+| US-VEST-004 | Stop vesting early (releasable to member, unvested to owner) |    ✅    |    🚫    | M      |
+| US-VEST-005 | View vested and releasable amounts                           |    ✅    |    🚫    | S      |
 
 **Contract: 5 / 5 — Frontend: 0 / 5**
 

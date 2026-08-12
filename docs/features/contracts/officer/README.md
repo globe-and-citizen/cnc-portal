@@ -11,11 +11,11 @@
 
 | User Story     | Title                                        | Contract | Frontend | Effort |
 | -------------- | -------------------------------------------- | :------: | :------: | ------ |
-| US-OFFICER-001 | Deploy all team contracts in one transaction | ✅       | 🚫       | L      |
-| US-OFFICER-002 | Configure beacons per contract type          | ✅       | 🚫       | S      |
-| US-OFFICER-003 | Look up a deployed contract by type          | ✅       | 🚫       | XS     |
-| US-OFFICER-004 | Query fee configuration via Officer          | ✅       | 🚫       | S      |
-| US-OFFICER-005 | Pause/unpause team operations                | ✅       | 🚫       | S      |
+| US-OFFICER-001 | Deploy all team contracts in one transaction |    ✅    |    🚫    | L      |
+| US-OFFICER-002 | Configure beacons per contract type          |    ✅    |    🚫    | S      |
+| US-OFFICER-003 | Look up a deployed contract by type          |    ✅    |    🚫    | XS     |
+| US-OFFICER-004 | Query fee configuration via Officer          |    ✅    |    🚫    | S      |
+| US-OFFICER-005 | Pause/unpause team operations                |    ✅    |    🚫    | S      |
 
 **Contract: 5 / 5 — Frontend: 0 / 5**
 

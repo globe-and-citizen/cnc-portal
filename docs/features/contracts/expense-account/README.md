@@ -11,12 +11,12 @@
 
 | User Story | Title                                                                           | Contract | Frontend | Effort |
 | ---------- | ------------------------------------------------------------------------------- | :------: | :------: | ------ |
-| US-EXP-001 | Submit an expense with an owner-signed budget (EIP-712)                         | ✅       | 🚫       | L      |
-| US-EXP-002 | Enforce budget constraints (amount per transaction, amount per period)          | ✅       | 🚫       | M      |
-| US-EXP-003 | Reset budget usage after period expires                                         | ✅       | 🚫       | M      |
-| US-EXP-004 | Deactivate / reactivate a budget approval                                       | ✅       | 🚫       | S      |
-| US-EXP-005 | Deposit ETH/ERC20 into the expense account                                      | ✅       | 🚫       | S      |
-| US-EXP-006 | Support multiple budget period types (one-time, daily, weekly, monthly, custom) | ✅       | 🚫       | M      |
+| US-EXP-001 | Submit an expense with an owner-signed budget (EIP-712)                         |    ✅    |    🚫    | L      |
+| US-EXP-002 | Enforce budget constraints (amount per transaction, amount per period)          |    ✅    |    🚫    | M      |
+| US-EXP-003 | Reset budget usage after period expires                                         |    ✅    |    🚫    | M      |
+| US-EXP-004 | Deactivate / reactivate a budget approval                                       |    ✅    |    🚫    | S      |
+| US-EXP-005 | Deposit ETH/ERC20 into the expense account                                      |    ✅    |    🚫    | S      |
+| US-EXP-006 | Support multiple budget period types (one-time, daily, weekly, monthly, custom) |    ✅    |    🚫    | M      |
 
 **Contract: 6 / 6 — Frontend: 0 / 6**
 

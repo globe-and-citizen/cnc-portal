@@ -8,15 +8,13 @@ The Vitest setup files under [`setup/`](./setup) call `vi.mock(...)` once for ev
 
 ```typescript
 // ❌ Don't — already mocked in src/tests/setup/wagmi.vue.setup.ts
-vi.mock('@wagmi/vue', () => ({
-  /* … */
-}))
+vi.mock("@wagmi/vue", () => ({/* … */}));
 
 // ✅ Do — override the per-test value on the shared mock
-import { mockERC20Reads, resetERC20Mocks } from '@/tests/mocks'
+import { mockERC20Reads, resetERC20Mocks } from "@/tests/mocks";
 
-beforeEach(() => resetERC20Mocks())
-mockERC20Reads.balanceOf.data.value = 1000n
+beforeEach(() => resetERC20Mocks());
+mockERC20Reads.balanceOf.data.value = 1000n;
 ```
 
 ESLint enforces this via `no-restricted-syntax`: any `vi.mock('<globally-mocked-path>')` call in a spec file is an error. The list of banned paths and the legacy-offender allow-list live in [`app/eslint.config.js`](../../eslint.config.js) under `bannedGlobalMockPaths` / `globalMockLegacyFiles`. The full mock system is documented in [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md).
@@ -29,22 +27,22 @@ If you need to mock a module that **isn't** yet globally mocked but you're reach
 
 ```typescript
 // ❌ Before — every spec hand-rolls the same plugins block
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { mount } from "@vue/test-utils";
+import { createTestingPinia } from "@pinia/testing";
 
 const wrapper = mount(MyComponent, {
   props: { loading: false },
   global: {
-    plugins: [createTestingPinia({ createSpy: vi.fn })]
-  }
-})
+    plugins: [createTestingPinia({ createSpy: vi.fn })],
+  },
+});
 
 // ✅ After — providers are installed for you
-import { renderWithProviders } from '@/tests/mocks'
+import { renderWithProviders } from "@/tests/mocks";
 
 const wrapper = renderWithProviders(MyComponent, {
-  props: { loading: false }
-})
+  props: { loading: false },
+});
 ```
 
 The returned wrapper targets the component itself, so `props`, `emitted()`, `setProps`, `find`, `findComponent`, etc. all behave exactly as with `mount`. Any `mount` option you pass through (`props`, `attrs`, `slots`, `global.stubs`, …) is forwarded — the helper only **adds** to `global.plugins`, it never clobbers your `global` block:
@@ -53,8 +51,8 @@ The returned wrapper targets the component itself, so `props`, `emitted()`, `set
 // Compose with local stubs — the helper merges them with the global ones
 renderWithProviders(RedeployOfficerModal, {
   props: { open: true },
-  global: { stubs: { UForm, UFormField, UInput } }
-})
+  global: { stubs: { UForm, UFormField, UInput } },
+});
 ```
 
 ### Options
@@ -70,7 +68,7 @@ All [`mount` options](https://test-utils.vuejs.org/api/#mount) are accepted, plu
 
 ```typescript
 // Opt out of Pinia and point the route at a different team
-renderWithProviders(MyView, { pinia: false, route: { params: { id: '42' } } })
+renderWithProviders(MyView, { pinia: false, route: { params: { id: "42" } } });
 ```
 
 > **Pinia note:** `createTestingPinia` is installed by default, but the global `vi.mock('@/stores/*')` still wins for the stores it mocks (see [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md)). Pass `pinia: false` when a spec relies entirely on the mocked stores and you want to make that explicit.
@@ -82,15 +80,15 @@ renderWithProviders(MyView, { pinia: false, route: { params: { id: '42' } } })
 **Most Nuxt UI components are already stubbed globally.** Just `mount()` your component — no extra setup needed for `UButton`, `UIcon`, `UModal`, `UTooltip`, `USelectMenu`, `UDropdownMenu`, or `UCalendar`.
 
 ```typescript
-import { mount } from '@vue/test-utils'
-import MyComponent from '@/components/MyComponent.vue'
+import { mount } from "@vue/test-utils";
+import MyComponent from "@/components/MyComponent.vue";
 
-describe('MyComponent', () => {
-  it('renders', () => {
-    const wrapper = mount(MyComponent)
-    expect(wrapper.text()).toContain('hello')
-  })
-})
+describe("MyComponent", () => {
+  it("renders", () => {
+    const wrapper = mount(MyComponent);
+    expect(wrapper.text()).toContain("hello");
+  });
+});
 ```
 
 ### Globally Stubbed Components
@@ -123,13 +121,13 @@ Tests that assert on framework-specific class names break on every styling refac
 
 ```typescript
 // ❌ Don't
-expect(wrapper.classes()).toContain('bg-teal-50')
-expect(badge.classes()).toContain('badge-warning')
+expect(wrapper.classes()).toContain("bg-teal-50");
+expect(badge.classes()).toContain("badge-warning");
 
 // ✅ Prefer behavioral assertions
-expect(wrapper.find('[data-test="confirm-button"]').exists()).toBe(true)
-expect(wrapper.text()).toContain('Pending')
-expect(wrapper.emitted('confirm')).toBeTruthy()
+expect(wrapper.find('[data-test="confirm-button"]').exists()).toBe(true);
+expect(wrapper.text()).toContain("Pending");
+expect(wrapper.emitted("confirm")).toBeTruthy();
 ```
 
 If a class genuinely encodes domain semantics (rare), use a `data-test`/`data-state` attribute on the element instead and assert against that.
@@ -140,13 +138,16 @@ If a class genuinely encodes domain semantics (rare), use a `data-test`/`data-st
 
 ```typescript
 // ❌ Don't
-const vm = wrapper.vm as unknown as { handleSelect: (id: string) => void; isOpen: boolean }
-vm.handleSelect('usdc')
-expect(vm.isOpen).toBe(true)
+const vm = wrapper.vm as unknown as {
+  handleSelect: (id: string) => void;
+  isOpen: boolean;
+};
+vm.handleSelect("usdc");
+expect(vm.isOpen).toBe(true);
 
 // ✅ Drive the component through its public surface
-await wrapper.find('[data-test="token-select"]').setValue('usdc')
-expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual('usdc')
+await wrapper.find('[data-test="token-select"]').setValue("usdc");
+expect(wrapper.emitted("update:modelValue")?.at(-1)?.[0]).toEqual("usdc");
 ```
 
 Use:
@@ -171,16 +172,18 @@ Find the input bound to that field (`v-model="..."`) and drive it through its re
 - **Native input** — `wrapper.find('input[data-test="..."]').setValue('foo')`
 - **Nuxt UI auto-imported component not in the global stub list** (`UInput`, `USelect`, `UTable`, …) — register a local mock to expose the stub under a queryable `name`, then emit `update:modelValue`:
   ```ts
-  vi.mock('@nuxt/ui/components/Input.vue', () => ({
+  vi.mock("@nuxt/ui/components/Input.vue", () => ({
     default: defineComponent({
-      name: 'UInput',
-      props: ['modelValue'],
-      emits: ['update:modelValue'],
-      template: '<input />'
-    })
-  }))
+      name: "UInput",
+      props: ["modelValue"],
+      emits: ["update:modelValue"],
+      template: "<input />",
+    }),
+  }));
   // …
-  await wrapper.findComponent({ name: 'UInput' }).vm.$emit('update:modelValue', 'foo')
+  await wrapper
+    .findComponent({ name: "UInput" })
+    .vm.$emit("update:modelValue", "foo");
   ```
   Auto-imports bypass `global.stubs`; `vi.mock` is the reliable hook. See "Adding a New Global Stub" above for the canonical recipe.
 - **Local child form component** — `wrapper.findComponent({ name: 'SelectMember' }).vm.$emit('update:modelValue', { address: '0x...' })`
@@ -193,16 +196,18 @@ The parent listens to a child's emit (e.g. `@submit="handleSubmit"`). Drive the 
 
 ```ts
 // Drive the child form's submit emit
-await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', payload)
+await wrapper
+  .findComponent({ name: "PayDividendsForm" })
+  .vm.$emit("submit", payload);
 
 // Or click the button that calls handleSubmit / openModal in the template
-await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+await wrapper.find('[data-test="pay-dividends-button"]').trigger("click");
 ```
 
 If a button carries `:disabled` (e.g. a `coming soon` feature flag) and a DOM click is suppressed, emit the click on the component to bypass the HTML disabled while preserving the `@click` binding:
 
 ```ts
-await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+await wrapper.findComponent({ name: "ActionButton" }).vm.$emit("click");
 ```
 
 ### Cast type 3 — state read
@@ -225,14 +230,14 @@ If a component does `defineExpose({ reset, openModalForDay })`, those methods ar
 const ParentHarness = defineComponent({
   components: { CreateAddCampaign },
   setup() {
-    const child = ref<InstanceType<typeof CreateAddCampaign>>()
-    return { child, callReset: () => child.value?.reset() }
+    const child = ref<InstanceType<typeof CreateAddCampaign>>();
+    return { child, callReset: () => child.value?.reset() };
   },
-  template: '<CreateAddCampaign ref="child" />'
-})
+  template: '<CreateAddCampaign ref="child" />',
+});
 
-const wrapper = mount(ParentHarness)
-wrapper.vm.callReset() // accesses the harness's own surface — not a cast
+const wrapper = mount(ParentHarness);
+wrapper.vm.callReset(); // accesses the harness's own surface — not a cast
 ```
 
 `app/src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts` is the reference example.
@@ -241,7 +246,7 @@ wrapper.vm.callReset() // accesses the harness's own surface — not a cast
 
 ```ts
 // eslint-disable-next-line no-restricted-syntax -- defineExpose'd public API, no UI event triggers it
-const vm = wrapper.vm as unknown as { openModalForDay: (day: Date) => void }
+const vm = wrapper.vm as unknown as { openModalForDay: (day: Date) => void };
 ```
 
 ### When `eslint-disable` is acceptable
@@ -271,13 +276,15 @@ Code review will quote the `--` reason, so make it specific.
 
 ```typescript
 // UButton with icon prop
-expect(wrapper.find('[data-test="edit-button"]').exists()).toBe(true)
-expect(wrapper.find('[data-test="u-icon"][data-icon="heroicons:pencil-square"]').exists()).toBe(
-  true
-)
+expect(wrapper.find('[data-test="edit-button"]').exists()).toBe(true);
+expect(
+  wrapper
+    .find('[data-test="u-icon"][data-icon="heroicons:pencil-square"]')
+    .exists(),
+).toBe(true);
 
 // UIcon (standalone)
-expect(wrapper.find('[data-test="u-icon"]').exists()).toBe(true)
+expect(wrapper.find('[data-test="u-icon"]').exists()).toBe(true);
 ```
 
 **Do not** search for `svg` elements — the stubs render `<span>`, not SVG.
@@ -286,25 +293,25 @@ expect(wrapper.find('[data-test="u-icon"]').exists()).toBe(true)
 
 ```typescript
 // Modal body is rendered even when closed (stub renders the default slot unconditionally)
-await wrapper.find('[data-test="open-modal"]').trigger('click')
-await nextTick()
-expect(wrapper.find('[role="dialog"]').exists()).toBe(false) // stub has no role="dialog"
-expect(wrapper.findComponent({ name: 'MyModalContent' }).exists()).toBe(true)
+await wrapper.find('[data-test="open-modal"]').trigger("click");
+await nextTick();
+expect(wrapper.find('[role="dialog"]').exists()).toBe(false); // stub has no role="dialog"
+expect(wrapper.findComponent({ name: "MyModalContent" }).exists()).toBe(true);
 
 // Close via built-in stub close button
-await wrapper.find('[data-test="close-wage-modal-button"]').trigger('click')
+await wrapper.find('[data-test="close-wage-modal-button"]').trigger("click");
 ```
 
 ### Testing USelectMenu
 
 ```typescript
 // Open the menu
-await wrapper.find('[data-test="select-trigger"]').trigger('click')
-await nextTick()
+await wrapper.find('[data-test="select-trigger"]').trigger("click");
+await nextTick();
 
 // Click an item
-const items = wrapper.findAll('li')
-await items[0].trigger('click')
+const items = wrapper.findAll("li");
+await items[0].trigger("click");
 // emits update:modelValue and update:open
 ```
 
@@ -313,21 +320,21 @@ await items[0].trigger('click')
 If your test specifically exercises the real Nuxt UI component's behavior (e.g. testing `USelectMenu`'s search/filter logic), override the stub locally:
 
 ```typescript
-import { mount } from '@vue/test-utils'
-import { vi } from 'vitest'
+import { mount } from "@vue/test-utils";
+import { vi } from "vitest";
 
 // Unmock the vi.mock() at the module level
-vi.unmock('@nuxt/ui/components/SelectMenu.vue')
+vi.unmock("@nuxt/ui/components/SelectMenu.vue");
 
 const wrapper = mount(MyComponent, {
   global: {
     stubs: {
       // Override the config.global.stubs entries
       USelectMenu: false,
-      SelectMenu: false
-    }
-  }
-})
+      SelectMenu: false,
+    },
+  },
+});
 ```
 
 Both steps are required: `vi.unmock()` restores the real module, and `stubs: { X: false }` disables the name-based global stubs.
@@ -337,9 +344,9 @@ Both steps are required: `vi.unmock()` restores the real module, and `stubs: { X
 Some reka-ui primitives require a `TooltipProvider` ancestor. `UTooltip` is already globally mocked, so you normally don't need this. But if you test a component that uses reka-ui primitives directly, pass `tooltipProvider: true` to `renderWithProviders`:
 
 ```typescript
-import { renderWithProviders } from '@/tests/mocks'
+import { renderWithProviders } from "@/tests/mocks";
 
-const wrapper = renderWithProviders(MyComponent, { tooltipProvider: true })
+const wrapper = renderWithProviders(MyComponent, { tooltipProvider: true });
 ```
 
 When `tooltipProvider` is enabled the returned wrapper targets the inner component, so `setProps` is unavailable — drive props through the DOM or the initial `props` option instead.
@@ -352,30 +359,31 @@ If you find yourself stubbing the same Nuxt UI component in many tests, add it t
 
    ```typescript
    export const UMyComponentStub = defineComponent({
-     name: 'UMyComponent',
-     props: ['modelValue', 'label'],
-     emits: ['update:modelValue'],
+     name: "UMyComponent",
+     props: ["modelValue", "label"],
+     emits: ["update:modelValue"],
      setup(props, { slots }) {
-       return () => h('div', { 'data-test': 'u-my-component' }, slots.default?.())
-     }
-   })
+       return () =>
+         h("div", { "data-test": "u-my-component" }, slots.default?.());
+     },
+   });
    ```
 
 2. **Register it** in `src/tests/setup/nuxt-ui.setup.ts`:
 
    ```typescript
    // For reliability, use vi.mock for the module path
-   vi.mock('@nuxt/ui/components/MyComponent.vue', async () => {
-     const { UMyComponentStub } = await import('../stubs/nuxt-ui.stubs')
-     return { default: UMyComponentStub }
-   })
+   vi.mock("@nuxt/ui/components/MyComponent.vue", async () => {
+     const { UMyComponentStub } = await import("../stubs/nuxt-ui.stubs");
+     return { default: UMyComponentStub };
+   });
 
    // Also add to config.global.stubs under BOTH keys (with and without U prefix)
    config.global.stubs = {
      ...config.global.stubs,
      UMyComponent: UMyComponentStub,
-     MyComponent: UMyComponentStub
-   }
+     MyComponent: UMyComponentStub,
+   };
    ```
 
 **Why both?** Auto-imported components may be registered internally by filename (e.g. `MyComponent`) rather than by the auto-import alias (`UMyComponent`). Registering both keys ensures the stub is always matched.

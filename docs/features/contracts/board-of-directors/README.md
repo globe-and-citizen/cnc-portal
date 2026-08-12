@@ -11,12 +11,12 @@
 
 | User Story | Title                                            | Contract | Frontend | Effort |
 | ---------- | ------------------------------------------------ | :------: | :------: | ------ |
-| US-BOD-001 | Set board membership (from Elections results)    | ✅       | 🚫       | S      |
-| US-BOD-002 | Create a multi-sig action targeting any contract | ✅       | 🚫       | M      |
-| US-BOD-003 | Approve a pending action                         | ✅       | 🚫       | S      |
-| US-BOD-004 | Revoke approval of a pending action              | ✅       | 🚫       | S      |
-| US-BOD-005 | Auto-execute an action on majority approval      | ✅       | 🚫       | M      |
-| US-BOD-006 | Manage contract owners via self-approved action  | ✅       | 🚫       | M      |
+| US-BOD-001 | Set board membership (from Elections results)    |    ✅    |    🚫    | S      |
+| US-BOD-002 | Create a multi-sig action targeting any contract |    ✅    |    🚫    | M      |
+| US-BOD-003 | Approve a pending action                         |    ✅    |    🚫    | S      |
+| US-BOD-004 | Revoke approval of a pending action              |    ✅    |    🚫    | S      |
+| US-BOD-005 | Auto-execute an action on majority approval      |    ✅    |    🚫    | M      |
+| US-BOD-006 | Manage contract owners via self-approved action  |    ✅    |    🚫    | M      |
 
 **Contract: 6 / 6 — Frontend: 0 / 6**
 

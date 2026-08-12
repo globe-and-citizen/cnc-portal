@@ -54,7 +54,7 @@ Helper functions that create consistent response structures:
 export const createMockQueryResponse = <T>(
   data: T,
   isLoading: boolean = false,
-  error: Error | null = null
+  error: Error | null = null,
 ): Record<string, unknown> => ({
   data: ref(data),
   isLoading: ref(isLoading),
@@ -243,7 +243,7 @@ describe("TeamsComponent - Custom Data", () => {
     const customTeams: Team[] = [];
 
     vi.mocked(useTeamsQuery).mockReturnValue(
-      createMockQueryResponse(customTeams)
+      createMockQueryResponse(customTeams),
     );
 
     const wrapper = mount(TeamsComponent, {
@@ -265,7 +265,7 @@ describe("TeamsComponent - Custom Data", () => {
 ```typescript
 it("should show loading spinner", () => {
   vi.mocked(useTeamsQuery).mockReturnValue(
-    createMockQueryResponse([], true, null) // isLoading = true
+    createMockQueryResponse([], true, null), // isLoading = true
   );
 
   const wrapper = mount(TeamsComponent, {
@@ -288,7 +288,7 @@ it("should display error message", () => {
   const error = new Error("Failed to fetch teams");
 
   vi.mocked(useTeamsQuery).mockReturnValue(
-    createMockQueryResponse(null, false, error)
+    createMockQueryResponse(null, false, error),
   );
 
   const wrapper = mount(TeamsComponent, {
@@ -408,7 +408,7 @@ const testData = [{ id: "1", name: "Test" }];
 ```typescript
 // ✅ Good: Override specific test case
 vi.mocked(useTeamsQuery).mockReturnValue(
-  createMockQueryResponse([]) // Just override this test
+  createMockQueryResponse([]), // Just override this test
 );
 
 // ❌ Avoid: Modifying global mock data

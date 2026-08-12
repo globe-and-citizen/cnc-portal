@@ -11,11 +11,11 @@
 
 | User Story | Title                                                     | Contract | Frontend | Effort |
 | ---------- | --------------------------------------------------------- | :------: | :------: | ------ |
-| US-SDR-001 | Deposit a whitelisted token and receive SHER (InvestorV1) | ✅       | 🚫       | L      |
-| US-SDR-002 | Deposit with slippage protection (minimum SHER out)       | ✅       | 🚫       | M      |
-| US-SDR-003 | Calculate expected SHER compensation before depositing    | ✅       | 🚫       | S      |
-| US-SDR-004 | Enable/disable deposits                                   | ✅       | 🚫       | S      |
-| US-SDR-005 | Recover accidentally sent tokens                          | ✅       | 🚫       | S      |
+| US-SDR-001 | Deposit a whitelisted token and receive SHER (InvestorV1) |    ✅    |    🚫    | L      |
+| US-SDR-002 | Deposit with slippage protection (minimum SHER out)       |    ✅    |    🚫    | M      |
+| US-SDR-003 | Calculate expected SHER compensation before depositing    |    ✅    |    🚫    | S      |
+| US-SDR-004 | Enable/disable deposits                                   |    ✅    |    🚫    | S      |
+| US-SDR-005 | Recover accidentally sent tokens                          |    ✅    |    🚫    | S      |
 
 **Contract: 5 / 5 — Frontend: 0 / 5**
 

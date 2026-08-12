@@ -6,7 +6,7 @@ The description of the issue (in the kanban board) that this PR addresses. Pleas
 
 > Link to the issue in the kanban board
 > If no issue exists, please create one and link it here.
-Fixes # (issue)
+> Fixes # (issue)
 
 ## Issues introduced and fixed (Optional)
 

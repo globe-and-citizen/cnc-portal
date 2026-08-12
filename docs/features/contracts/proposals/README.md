@@ -11,10 +11,10 @@
 
 | User Story  | Title                                                | Contract | Frontend | Effort |
 | ----------- | ---------------------------------------------------- | :------: | :------: | ------ |
-| US-PROP-001 | Create a proposal (board members only)               | ✅       | 🚫       | S      |
-| US-PROP-002 | Vote Yes/No/Abstain on a proposal                    | ✅       | 🚫       | S      |
-| US-PROP-003 | Auto-tally results when all board members have voted | ✅       | 🚫       | M      |
-| US-PROP-004 | Manually tally results after voting period ends      | ✅       | 🚫       | S      |
+| US-PROP-001 | Create a proposal (board members only)               |    ✅    |    🚫    | S      |
+| US-PROP-002 | Vote Yes/No/Abstain on a proposal                    |    ✅    |    🚫    | S      |
+| US-PROP-003 | Auto-tally results when all board members have voted |    ✅    |    🚫    | M      |
+| US-PROP-004 | Manually tally results after voting period ends      |    ✅    |    🚫    | S      |
 
 **Contract: 4 / 4 — Frontend: 0 / 4**
 

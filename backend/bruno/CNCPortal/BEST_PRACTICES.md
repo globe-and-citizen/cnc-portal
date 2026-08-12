@@ -227,8 +227,8 @@ Create a dedicated endpoint in your backend that handles the complex operation:
 export const performComplexOperation = async (req: Request, res: Response) => {
   try {
     // Only allow in development environment
-    if (process.env.NODE_ENV !== 'development') {
-      return res.status(404).json({ message: 'Not found' });
+    if (process.env.NODE_ENV !== "development") {
+      return res.status(404).json({ message: "Not found" });
     }
 
     const { inputData, parameters } = req.body;
@@ -238,9 +238,9 @@ export const performComplexOperation = async (req: Request, res: Response) => {
 
     res.json(result);
   } catch (error) {
-    console.error('Dev endpoint error:', error);
+    console.error("Dev endpoint error:", error);
     res.status(500).json({
-      message: error.message || 'Internal server error',
+      message: error.message || "Internal server error",
     });
   }
 };
@@ -445,8 +445,8 @@ body:json {
 
 ```typescript
 // Always check environment
-if (process.env.NODE_ENV !== 'development') {
-  return res.status(404).json({ message: 'Not found' });
+if (process.env.NODE_ENV !== "development") {
+  return res.status(404).json({ message: "Not found" });
 }
 ```
 
@@ -454,14 +454,14 @@ if (process.env.NODE_ENV !== 'development') {
 
 ```typescript
 const devModeOnly = (req: Request, res: Response, next: NextFunction) => {
-  if (process.env.NODE_ENV !== 'development') {
-    return res.status(404).json({ message: 'Not found' });
+  if (process.env.NODE_ENV !== "development") {
+    return res.status(404).json({ message: "Not found" });
   }
   next();
 };
 
 // Apply to all dev routes
-router.use('/dev', devModeOnly);
+router.use("/dev", devModeOnly);
 ```
 
 ### Request Validation
@@ -545,9 +545,9 @@ When Bruno's runtime limitations prevent you from implementing complex operation
 
 ```javascript
 // These will fail in Bruno
-const response = await fetch('...');
-const crypto = require('crypto');
-const axios = require('axios');
+const response = await fetch("...");
+const crypto = require("crypto");
+const axios = require("axios");
 ```
 
 ### ✅ Use Instead
