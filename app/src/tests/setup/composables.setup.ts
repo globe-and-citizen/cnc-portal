@@ -18,7 +18,7 @@ import {
   resetComposableMocks,
   resetDeployState
 } from '@/tests/mocks/composables.mock'
-import { mockUploadFileApi } from '@/tests/mocks/api.mock'
+import { mockGetFileUrlApi, mockUploadFileApi } from '@/tests/mocks/api.mock'
 import {
   mockGetBalance,
   mockGetLogs,
@@ -71,7 +71,8 @@ vi.mock('@/api', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    uploadFileApi: mockUploadFileApi
+    uploadFileApi: mockUploadFileApi,
+    getFileUrlApi: mockGetFileUrlApi
   }
 })
 

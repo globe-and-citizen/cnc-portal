@@ -8,16 +8,6 @@ import { useUserDataStore } from '@/stores/user'
 import { useToggleWageStatusMutation } from '@/queries/wage.queries'
 import MemberSection from '../MemberSection.vue'
 
-vi.mock('@/queries/team.queries', async (importOriginal) => {
-  const actual = (await importOriginal()) as object
-  return {
-    ...actual,
-    teamKeys: {
-      detail: (id: string) => ['team', id]
-    }
-  }
-})
-
 vi.mock('@nuxt/ui/components/Table.vue', () => ({
   default: {
     name: 'UTable',
