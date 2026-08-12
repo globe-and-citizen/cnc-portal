@@ -7,7 +7,6 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import {
-  mockCashRemunerationWrites,
   mockTeamStore,
   mockUserStore,
   mockUseReadContract,

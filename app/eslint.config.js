@@ -129,19 +129,6 @@ const globalMockReMockSelectors = bannedGlobalMockPaths.map((path) => ({
   message: globalMockMessage(path)
 }))
 
-// Legacy offenders — these 26 spec files still carry at least one
-// `vi.mock(...)` call against a globally-mocked module path. The rule is
-// disabled for them so CI does not break on day one; each removal is a
-// follow-up to issue #2014.
-const globalMockLegacyFiles = [
-  'src/components/sections/ExpenseAccountView/__tests__/TransferAction.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.test-utils.ts',
-  'src/composables/__tests__/useSiwe.spec.ts',
-  'src/router/__tests__/index.spec.ts'
-]
-
 // Contract-writes V3 enforcement (issues #1798, #1926).
 //
 // All on-chain writes must go through `useContractWritesV3` from
@@ -343,21 +330,6 @@ export default [
         tailwindClassIncludes,
         vmCast,
         ...globalMockReMockSelectors
-      ]
-    }
-  },
-  {
-    name: 'app/test-fragility-bans-global-mock-legacy',
-    files: globalMockLegacyFiles,
-    rules: {
-      // Allow local `vi.mock(...)` of globally-mocked paths in these files
-      // only — they predate issue #2014. Tailwind and wrapper.vm-cast bans still apply.
-      'no-restricted-syntax': [
-        'error',
-        tailwindClassAssertion,
-        tailwindClassAssertionOptional,
-        tailwindClassIncludes,
-        vmCast
       ]
     }
   },
