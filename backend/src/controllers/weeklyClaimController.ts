@@ -14,6 +14,7 @@ import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { signWeeklyClaimBodySchema, z } from '../validation';
+import { resolveWageForWeek } from '../utils/wageResolution';
 
 type SignWeeklyClaimBody = z.infer<typeof signWeeklyClaimBodySchema>;
 
@@ -596,11 +597,10 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
   const weekStart = dayjs.utc(weekStartInput).startOf('isoWeek').toDate();
 
   try {
-    // A WeeklyClaim requires a wageId, so the member needs a current wage
-    // before any goals can be recorded (mirrors addClaim).
-    const wage = await prisma.wage.findFirst({
-      where: { userAddress: callerAddress, nextWageId: null, teamId },
-    });
+    // A WeeklyClaim requires a wageId, so the member needs a wage before any
+    // goals can be recorded. Resolved against the target week so goals land on
+    // the same row as that week's claims (mirrors addClaim).
+    const wage = await resolveWageForWeek(teamId, callerAddress, weekStart);
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
@@ -608,7 +608,7 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
 
     const existing = await prisma.weeklyClaim.findFirst({
       where: {
-        wage: { teamId, nextWageId: null },
+        wageId: wage.id,
         weekStart,
         memberAddress: callerAddress,
         teamId,

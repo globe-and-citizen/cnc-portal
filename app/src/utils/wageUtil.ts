@@ -6,6 +6,14 @@ import type {
   WeeklyClaim
 } from '@/types'
 import { parseEther, parseUnits, type Address } from 'viem'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import utc from 'dayjs/plugin/utc'
+import { formatDate, type DateInput } from '@/utils/format'
+import { NETWORK } from '@/constant'
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
 
 const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
 
@@ -20,6 +28,77 @@ export const formatMinutesAsDuration = (totalMinutes: number): string => {
   if (m === 0) return `${h}h`
   if (h === 0) return `${m}min`
   return `${h}h ${m}min`
+}
+
+/**
+ * Ticker shown for a rate. The `native` type is stored generically but has to be
+ * displayed as the chain's own symbol — "NATIVE" is a database value, not
+ * something a user recognises.
+ */
+export const rateSymbol = (type: string): string =>
+  type === 'native' ? NETWORK.currencySymbol : type.toUpperCase()
+
+/**
+ * Summarises a pending wage change for display, e.g.
+ * "Changes to SHER 10/h, 20h/wk, 8h/d on Aug 17, 2026".
+ *
+ * Covers the hour ceilings as well as the rate: a scheduled wage carries its own
+ * weekly and daily caps, and showing only the rate hides half of what is about
+ * to change.
+ *
+ * Worded as a replacement — the badge sits next to the wage in force, and
+ * "from <date>" alone reads as something being added rather than the current
+ * terms being superseded. Symbol precedes the amount to match `RateDotList`,
+ * the other place rates are displayed.
+ *
+ * Returns null when nothing is scheduled, so callers can `v-if` on the result.
+ */
+export const formatScheduledWageNotice = (scheduledWage?: Wage | null): string | null => {
+  if (!scheduledWage?.effectiveFrom) return null
+
+  const effectiveDate = dayjs(scheduledWage.effectiveFrom)
+  if (!effectiveDate.isValid()) return null
+
+  const rates = (scheduledWage.ratePerHour ?? [])
+    .filter((rate) => rate.amount > 0)
+    .map((rate) => `${rateSymbol(rate.type)} ${rate.amount}`)
+    .join(' + ')
+
+  const parts = [
+    rates ? `${rates}/h` : null,
+    scheduledWage.maximumHoursPerWeek ? `${scheduledWage.maximumHoursPerWeek}h/wk` : null,
+    scheduledWage.maximumHoursPerDay ? `${scheduledWage.maximumHoursPerDay}h/d` : null
+  ].filter(Boolean)
+
+  const day = formatDate(effectiveDate)
+
+  return parts.length ? `Changes to ${parts.join(', ')} on ${day}` : `Wage changes on ${day}`
+}
+
+/**
+ * The Monday a change made now would take effect on, formatted for display.
+ * Mirrors the server's `nextMondayUtc`, which anchors every wage change to the
+ * start of the next ISO week so a wage boundary never falls mid-week.
+ */
+export const nextEffectiveDateLabel = (now: DateInput = new Date()): string =>
+  formatDate(dayjs(now).utc().add(1, 'week').startOf('isoWeek'))
+
+/**
+ * Milliseconds until a scheduled wage takes effect, or null when there is
+ * nothing to wait for. Used to refresh the UI the moment the change lands
+ * instead of polling.
+ */
+export const msUntilWageEffective = (
+  scheduledWage?: Wage | null,
+  now: number = Date.now()
+): number | null => {
+  if (!scheduledWage?.effectiveFrom) return null
+
+  const effectiveAt = new Date(scheduledWage.effectiveFrom).getTime()
+  if (Number.isNaN(effectiveAt)) return null
+
+  const delay = effectiveAt - now
+  return delay > 0 ? delay : null
 }
 
 export const normalizeRatePerHour = (rates?: RatePerHour[] | null): RatePerHourWithEnabled[] => {

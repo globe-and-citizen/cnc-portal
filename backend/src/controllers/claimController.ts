@@ -23,6 +23,7 @@ import {
   isSubmitRestricted,
   SUBMIT_RESTRICTION_MAX_DAYS_BACK,
 } from '../utils/featureUtils';
+import { resolveWageForWeek } from '../utils/wageResolution';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -114,10 +115,7 @@ export const addClaim = async (req: Request, res: Response) => {
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
   try {
-    // Get user current
-    const wage = await prisma.wage.findFirst({
-      where: { userAddress: callerAddress, nextWageId: null, teamId: teamId },
-    });
+    const wage = await resolveWageForWeek(teamId, callerAddress, weekStart);
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
@@ -139,14 +137,10 @@ export const addClaim = async (req: Request, res: Response) => {
       );
     }
 
-    // get the member current wage
-
+    // Find the weekly claim for the active wage and current week.
     let weeklyClaim = await prisma.weeklyClaim.findFirst({
       where: {
-        wage: {
-          teamId: teamId,
-          nextWageId: null,
-        },
+        wageId: wage.id,
         weekStart: weekStart,
         memberAddress: callerAddress,
         teamId: teamId,

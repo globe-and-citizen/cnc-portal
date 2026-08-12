@@ -4,10 +4,12 @@ import type { CalendarDate, DateValue } from '@internationalized/date'
 import { z } from 'zod'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
 import type { ClaimFormData } from '@/types'
 import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
 
 dayjs.extend(utc)
+dayjs.extend(isoWeek)
 
 export interface ClaimFormFileData {
   fileName?: string
