@@ -270,12 +270,12 @@ Each team deploys their own set of contract instances:
 
 ### Deployment Code Locations
 
-| Component       | Path                                                                    |
-| --------------- | ----------------------------------------------------------------------- |
-| Beacon Modules  | `/contract/ignition/modules/*BeaconModule.ts`                           |
-| Officer Module  | `/contract/ignition/modules/OfficerModule.ts`                           |
+| Component       | Path                                                                   |
+| --------------- | ---------------------------------------------------------------------- |
+| Beacon Modules  | `/contract/ignition/modules/*BeaconModule.ts`                          |
+| Officer Module  | `/contract/ignition/modules/OfficerModule.ts`                          |
 | Frontend Deploy | `/app/src/components/sections/TeamView/forms/InvestorContractStep.vue` |
-| Constants       | `/app/src/constant.ts`                                                  |
+| Constants       | `/app/src/constant.ts`                                                 |
 
 ---
 
@@ -1085,10 +1085,10 @@ CashRemunerationBeacon:  0x... (TBD)
 
 ### Useful Links
 
-- **Repository**: https://github.com/globe-and-citizen/cnc-portal
-- **OpenZeppelin Docs**: https://docs.openzeppelin.com/contracts
-- **EIP-712**: https://eips.ethereum.org/EIPS/eip-712
-- **Beacon Proxy Pattern**: https://docs.openzeppelin.com/contracts/api/proxy#beacon
+- [Repository](https://github.com/globe-and-citizen/cnc-portal)
+- [OpenZeppelin documentation](https://docs.openzeppelin.com/contracts)
+- [EIP-712](https://eips.ethereum.org/EIPS/eip-712)
+- [Beacon proxy pattern](https://docs.openzeppelin.com/contracts/api/proxy#beacon)
 
 ---
 

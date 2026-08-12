@@ -83,5 +83,8 @@ npm run test
 For `dashboard/`, `ponder/`, and `the-graph/`, run every relevant lint, format, type-check, build, and test script exposed by that subproject. Contract PRs also require the [Solidity audit checklist](./.github/copilot-instructions/solidity-audit-checklist.md). When changing agent-instruction Markdown, run:
 
 ```bash
+npm run lint:md
+# Checks Markdown files changed since origin/develop; override with BASE_SHA in CI.
+npm run format:md:check
 bash scripts/audit-doc-drift.sh
 ```
