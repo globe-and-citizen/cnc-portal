@@ -1,6 +1,7 @@
 # Unit Testing Guide
 
-Comprehensive guide for writing unit tests in the CNC Portal project using Vitest, Vue Test Utils, and TanStack Vue Query.
+Comprehensive guide for writing unit tests in the CNC Portal project using Vitest, Vue Test Utils,
+and TanStack Vue Query.
 
 ## Overview
 
@@ -180,7 +181,7 @@ describe("Teams Component", () => {
     ];
 
     vi.mocked(useTeamsQuery).mockReturnValue(
-      createMockQueryResponse(customTeams)
+      createMockQueryResponse(customTeams),
     );
 
     const wrapper = mount(TeamsComponent, {
@@ -200,7 +201,7 @@ describe("Teams Component", () => {
     const queryClient = new QueryClient();
 
     vi.mocked(useTeamsQuery).mockReturnValue(
-      createMockQueryResponse([], true) // isLoading = true
+      createMockQueryResponse([], true), // isLoading = true
     );
 
     const wrapper = mount(TeamsComponent, {
@@ -220,7 +221,7 @@ describe("Teams Component", () => {
     const error = new Error("Failed to fetch teams");
 
     vi.mocked(useTeamsQuery).mockReturnValue(
-      createMockQueryResponse([], false, error)
+      createMockQueryResponse([], false, error),
     );
 
     const wrapper = mount(TeamsComponent, {
@@ -389,7 +390,7 @@ it("should validate required fields", async () => {
 
   expect(wrapper.find('[data-test="email-error"]').exists()).toBe(true);
   expect(wrapper.find('[data-test="email-error"]').text()).toContain(
-    "required"
+    "required",
   );
 });
 ```

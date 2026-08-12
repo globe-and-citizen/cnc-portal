@@ -1,10 +1,12 @@
 # Global Mocks Setup Guide
 
-Comprehensive guide for understanding and using the centralized mock system for TanStack Vue Query and Axios.
+Comprehensive guide for understanding and using the centralized mock system for TanStack Vue Query
+and Axios.
 
 ## Overview
 
-The CNC Portal uses a centralized mocking system that provides consistent, reusable mocks for all query and mutation hooks. This ensures:
+The CNC Portal uses a centralized mocking system that provides consistent, reusable mocks for all
+query and mutation hooks. This ensures:
 
 - **Consistency** - All tests use the same mock data structure
 - **Maintainability** - Mock data is defined in one place
@@ -54,7 +56,7 @@ Helper functions that create consistent response structures:
 export const createMockQueryResponse = <T>(
   data: T,
   isLoading: boolean = false,
-  error: Error | null = null
+  error: Error | null = null,
 ): Record<string, unknown> => ({
   data: ref(data),
   isLoading: ref(isLoading),
@@ -243,7 +245,7 @@ describe("TeamsComponent - Custom Data", () => {
     const customTeams: Team[] = [];
 
     vi.mocked(useTeamsQuery).mockReturnValue(
-      createMockQueryResponse(customTeams)
+      createMockQueryResponse(customTeams),
     );
 
     const wrapper = mount(TeamsComponent, {
@@ -265,7 +267,7 @@ describe("TeamsComponent - Custom Data", () => {
 ```typescript
 it("should show loading spinner", () => {
   vi.mocked(useTeamsQuery).mockReturnValue(
-    createMockQueryResponse([], true, null) // isLoading = true
+    createMockQueryResponse([], true, null), // isLoading = true
   );
 
   const wrapper = mount(TeamsComponent, {
@@ -288,7 +290,7 @@ it("should display error message", () => {
   const error = new Error("Failed to fetch teams");
 
   vi.mocked(useTeamsQuery).mockReturnValue(
-    createMockQueryResponse(null, false, error)
+    createMockQueryResponse(null, false, error),
   );
 
   const wrapper = mount(TeamsComponent, {
@@ -408,7 +410,7 @@ const testData = [{ id: "1", name: "Test" }];
 ```typescript
 // ✅ Good: Override specific test case
 vi.mocked(useTeamsQuery).mockReturnValue(
-  createMockQueryResponse([]) // Just override this test
+  createMockQueryResponse([]), // Just override this test
 );
 
 // ❌ Avoid: Modifying global mock data

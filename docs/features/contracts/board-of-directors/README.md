@@ -1,8 +1,7 @@
 # Contract: BoardOfDirectors
 
-**Epic Goal:** Provide multi-signature governance so board decisions require majority approval before execution.
-**Contract File:** `contracts/BoardOfDirectors.sol`
-**Upgradeable:** Yes (Beacon)
+**Epic Goal:** Provide multi-signature governance so board decisions require majority approval
+before execution. **Contract File:** `contracts/BoardOfDirectors.sol` **Upgradeable:** Yes (Beacon)
 **Last updated:** 2026-03-16
 
 ---
@@ -11,12 +10,12 @@
 
 | User Story | Title                                            | Contract | Frontend | Effort |
 | ---------- | ------------------------------------------------ | :------: | :------: | ------ |
-| US-BOD-001 | Set board membership (from Elections results)    | ✅       | 🚫       | S      |
-| US-BOD-002 | Create a multi-sig action targeting any contract | ✅       | 🚫       | M      |
-| US-BOD-003 | Approve a pending action                         | ✅       | 🚫       | S      |
-| US-BOD-004 | Revoke approval of a pending action              | ✅       | 🚫       | S      |
-| US-BOD-005 | Auto-execute an action on majority approval      | ✅       | 🚫       | M      |
-| US-BOD-006 | Manage contract owners via self-approved action  | ✅       | 🚫       | M      |
+| US-BOD-001 | Set board membership (from Elections results)    |    ✅    |    🚫    | S      |
+| US-BOD-002 | Create a multi-sig action targeting any contract |    ✅    |    🚫    | M      |
+| US-BOD-003 | Approve a pending action                         |    ✅    |    🚫    | S      |
+| US-BOD-004 | Revoke approval of a pending action              |    ✅    |    🚫    | S      |
+| US-BOD-005 | Auto-execute an action on majority approval      |    ✅    |    🚫    | M      |
+| US-BOD-006 | Manage contract owners via self-approved action  |    ✅    |    🚫    | M      |
 
 **Contract: 6 / 6 — Frontend: 0 / 6**
 
@@ -25,16 +24,20 @@
 ## Implementation Notes
 
 - **Contract:** `contracts/BoardOfDirectors.sol`
-- **Key functions:** `addAction`, `approve`, `revoke`, `setBoardOfDirectors`, `getBoardOfDirectors`, `isMember`
-- **Access roles:** Board members only for `addAction`, `approve`, `revoke`; Elections contract for `setBoardOfDirectors`; `onlySelf` for ownership management
+- **Key functions:** `addAction`, `approve`, `revoke`, `setBoardOfDirectors`, `getBoardOfDirectors`,
+  `isMember`
+- **Access roles:** Board members only for `addAction`, `approve`, `revoke`; Elections contract for
+  `setBoardOfDirectors`; `onlySelf` for ownership management
 - **Dependencies:** Elections (sets board membership via `setBoardOfDirectors`)
-- **Pattern:** Majority >50% required; auto-executes on the approval that crosses the threshold; encoded ABI calls against any target contract
+- **Pattern:** Majority >50% required; auto-executes on the approval that crosses the threshold;
+  encoded ABI calls against any target contract
 
 ---
 
 ## US-BOD-001: Set Board Membership (from Elections Results)
 
-> **As an** elections contract, **I want to** update the board member list after results are published, **so that** governance is always controlled by the elected members.
+> **As an** elections contract, **I want to** update the board member list after results are
+> published, **so that** governance is always controlled by the elected members.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
 
@@ -51,7 +54,8 @@
 
 ## US-BOD-002: Create a Multi-Sig Action Targeting Any Contract
 
-> **As a** board member, **I want to** propose an encoded on-chain action against any target contract, **so that** board decisions can trigger any function call upon majority approval.
+> **As a** board member, **I want to** propose an encoded on-chain action against any target
+> contract, **so that** board decisions can trigger any function call upon majority approval.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BOD-001
 
@@ -67,7 +71,8 @@
 
 ## US-BOD-003: Approve a Pending Action
 
-> **As a** board member, **I want to** approve a pending action, **so that** my vote is counted toward the majority threshold.
+> **As a** board member, **I want to** approve a pending action, **so that** my vote is counted
+> toward the majority threshold.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** US-BOD-002
 
@@ -83,7 +88,8 @@
 
 ## US-BOD-004: Revoke Approval of a Pending Action
 
-> **As a** board member, **I want to** revoke my approval before an action executes, **so that** I can change my vote if new information comes to light.
+> **As a** board member, **I want to** revoke my approval before an action executes, **so that** I
+> can change my vote if new information comes to light.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** US-BOD-003
 
@@ -99,7 +105,8 @@
 
 ## US-BOD-005: Auto-Execute an Action on Majority Approval
 
-> **As a** board, **I want to** have approved actions execute automatically once majority is reached, **so that** no additional transaction is needed after the deciding approval.
+> **As a** board, **I want to** have approved actions execute automatically once majority is
+> reached, **so that** no additional transaction is needed after the deciding approval.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BOD-003
 
@@ -115,7 +122,8 @@
 
 ## US-BOD-006: Manage Contract Owners via Self-Approved Action
 
-> **As a** board, **I want to** change ownership of any team contract via a board-approved action, **so that** ownership management is subject to the same multi-sig governance as other decisions.
+> **As a** board, **I want to** change ownership of any team contract via a board-approved action,
+> **so that** ownership management is subject to the same multi-sig governance as other decisions.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** M | **Dependencies:** US-BOD-005
 

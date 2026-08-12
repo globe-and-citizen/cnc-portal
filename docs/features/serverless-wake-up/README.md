@@ -9,16 +9,16 @@
 
 ## Overview
 
-Addresses cold start delays in Railway's serverless architecture by proactively waking backend services and database connections before user interactions.
+Addresses cold start delays in Railway's serverless architecture by proactively waking backend
+services and database connections before user interactions.
 
 **Problem:**
 
 - Database sleeps → Migration failures during deployment
-- Backend sleeps → 1-3s delays on first requests  
+- Backend sleeps → 1-3s delays on first requests
 - Poor UX on critical actions (login, data loading)
 
-**Solution:**
-Multi-layered wake-up system ensures services are ready before users need them.
+**Solution:** Multi-layered wake-up system ensures services are ready before users need them.
 
 ---
 
@@ -44,10 +44,10 @@ curl https://your-backend.railway.app/api/health
 
 ```vue
 <script setup>
-import { useBackendWake } from '@/composables/useBackendWake'
+import { useBackendWake } from "@/composables/useBackendWake";
 
 // Wakes backend when app mounts/reloads
-useBackendWake()
+useBackendWake();
 </script>
 ```
 
@@ -55,11 +55,11 @@ useBackendWake()
 
 ```vue
 <script setup>
-import { useBackendWake } from '@/composables/useBackendWake'
+import { useBackendWake } from "@/composables/useBackendWake";
 
 // Wakes backend when this component mounts
 // (Shares cache with App.vue - won't duplicate requests)
-useBackendWake()
+useBackendWake();
 </script>
 ```
 
@@ -98,14 +98,14 @@ useBackendWake()
 
 ```md
 User Opens App
-     │
-     ├─> App.vue: wakeBackend() [background]
-     │         └─> GET /api/health → Backend wakes
-     │
-     ├─> Navigate to /login
-     │         └─> Router: wakeBackend() [if needed]
-     │
-     └─> User clicks login → Backend already warm ✓
+│
+├─> App.vue: wakeBackend() [background]
+│ └─> GET /api/health → Backend wakes
+│
+├─> Navigate to /login
+│ └─> Router: wakeBackend() [if needed]
+│
+└─> User clicks login → Backend already warm ✓
 ```
 
 ---
@@ -175,7 +175,7 @@ Database wake-up happens through:
 All wake calls run in background without blocking page render:
 
 ```typescript
-wakeBackend() // No await - optimization, not requirement
+wakeBackend(); // No await - optimization, not requirement
 ```
 
 **Route Selection**
@@ -200,7 +200,8 @@ wakeBackend() // No await - optimization, not requirement
 - [Platform Deployment](../../platform/deployment.md) - Full deployment guide
 - [Platform Security](../../platform/security.md) - Security standards
 - [Platform Performance](../../platform/performance.md) - Performance targets
-- [Railway Docs](https://docs.railway.app/reference/deployment#serverless) - Serverless configuration
+- [Railway Docs](https://docs.railway.app/reference/deployment#serverless) - Serverless
+  configuration
 
 ---
 

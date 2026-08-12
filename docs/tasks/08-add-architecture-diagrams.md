@@ -6,11 +6,14 @@
 
 ## Problem
 
-The platform documentation (especially architecture.md) mentions diagrams and architecture overviews but may lack actual visual diagrams. Visual representations help developers understand the system structure more quickly than text descriptions.
+The platform documentation (especially architecture.md) mentions diagrams and architecture overviews
+but may lack actual visual diagrams. Visual representations help developers understand the system
+structure more quickly than text descriptions.
 
 ## Solution
 
-Create or enhance visual diagrams for key architectural concepts using Mermaid (markdown-compatible) or include links to external diagrams.
+Create or enhance visual diagrams for key architectural concepts using Mermaid (markdown-compatible)
+or include links to external diagrams.
 
 ## AI Prompt
 
@@ -86,17 +89,17 @@ graph TB
         Dashboard[Nuxt Dashboard]
         App[Vue.js App]
     end
-    
+
     subgraph "Backend Layer"
         API[Express.js API]
         DB[(PostgreSQL)]
     end
-    
+
     subgraph "Blockchain Layer"
         Contracts[Smart Contracts]
         Subgraph[The Graph]
     end
-    
+
     User([User]) --> Dashboard
     User --> App
     Dashboard --> API
@@ -112,7 +115,7 @@ graph TB
 
 After completion, verify:
 
-```bash
+````bash
 # Check if diagrams were added to architecture.md
 grep -c "```mermaid" /Users/test/Documents/data/gc/cnc-portal/docs/platform/architecture.md
 # Should show 3-4 mermaid diagrams
@@ -120,7 +123,7 @@ grep -c "```mermaid" /Users/test/Documents/data/gc/cnc-portal/docs/platform/arch
 # View the diagrams
 # Open the file in VS Code with Mermaid preview extension, or
 # View on GitHub where Mermaid renders automatically
-```
+````
 
 ## Manual Verification
 

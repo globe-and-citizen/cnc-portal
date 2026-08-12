@@ -128,22 +128,22 @@ rm -rf playwright-report/
 
 ## 📊 Test File Quick Reference
 
-| Test File | Description | Status |
-|-----------|-------------|--------|
-| `dashboard.spec.ts` | Dashboard page tests | Simple ✓ |
-| `login.spec.ts` | SIWE authentication | Needs MetaMask flow |
-| `navbar.spec.ts` | Navigation and profile | Multiple tests |
-| `teams.spec.ts` | Team management | Complex, many commented |
+| Test File           | Description            | Status                  |
+| ------------------- | ---------------------- | ----------------------- |
+| `dashboard.spec.ts` | Dashboard page tests   | Simple ✓                |
+| `login.spec.ts`     | SIWE authentication    | Needs MetaMask flow     |
+| `navbar.spec.ts`    | Navigation and profile | Multiple tests          |
+| `teams.spec.ts`     | Team management        | Complex, many commented |
 
 ## 🔧 Configuration Files
 
-| File | Purpose |
-|------|---------|
-| `playwright.config.ts` | Playwright configuration |
-| `.env.e2e` | Test environment variables |
-| `test/wallet-setup/connected.setup.ts` | MetaMask wallet setup |
-| `.cache-synpress/` | Synpress cache directory |
-| `.github/workflows/app-e2e.yml` | CI/CD workflow |
+| File                                   | Purpose                    |
+| -------------------------------------- | -------------------------- |
+| `playwright.config.ts`                 | Playwright configuration   |
+| `.env.e2e`                             | Test environment variables |
+| `test/wallet-setup/connected.setup.ts` | MetaMask wallet setup      |
+| `.cache-synpress/`                     | Synpress cache directory   |
+| `.github/workflows/app-e2e.yml`        | CI/CD workflow             |
 
 ## 📝 Environment Variables
 

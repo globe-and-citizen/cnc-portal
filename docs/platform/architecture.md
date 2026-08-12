@@ -7,7 +7,8 @@
 
 ## Overview
 
-The CNC Portal is a multi-component decentralized application that enables financial recognition of micro contributions in open-source projects and promotes effective governance tools.
+The CNC Portal is a multi-component decentralized application that enables financial recognition of
+micro contributions in open-source projects and promotes effective governance tools.
 
 ## System Architecture
 
@@ -102,10 +103,10 @@ The CNC Portal is a multi-component decentralized application that enables finan
 // Example API call
 const response = await fetch(`${BACKEND_URL}/api/stats/overview`, {
   headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
-})
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+});
 ```
 
 ### Backend → Database
@@ -118,8 +119,8 @@ const response = await fetch(`${BACKEND_URL}/api/stats/overview`, {
 // Example Prisma query
 const users = await prisma.user.findMany({
   where: { createdAt: { gte: startDate } },
-  include: { teams: true }
-})
+  include: { teams: true },
+});
 ```
 
 ### Frontend → Smart Contracts
@@ -133,9 +134,9 @@ const users = await prisma.user.findMany({
 const { data } = await readContract(config, {
   address: contractAddress,
   abi: contractABI,
-  functionName: 'balanceOf',
-  args: [userAddress]
-})
+  functionName: "balanceOf",
+  args: [userAddress],
+});
 ```
 
 ## Data Flow

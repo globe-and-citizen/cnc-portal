@@ -1,10 +1,12 @@
 # GitHub Copilot Instructions for CNC Portal
 
-This directory contains comprehensive coding guidelines and instructions for the CNC Portal project. Each file focuses on specific aspects of development to maintain consistency and quality.
+This directory contains comprehensive coding guidelines and instructions for the CNC Portal project.
+Each file focuses on specific aspects of development to maintain consistency and quality.
 
 ## Project Overview
 
-> Repo-wide orientation lives in [`AGENTS.md`](../../AGENTS.md). This folder holds deeper area-specific guides.
+> Repo-wide orientation lives in [`AGENTS.md`](../../AGENTS.md). This folder holds deeper
+> area-specific guides.
 
 CNC Portal is a Crypto Native Corporation Portal built with:
 
@@ -18,21 +20,29 @@ CNC Portal is a Crypto Native Corporation Portal built with:
 
 ### Docs
 
-For every feature create documentation in the `/docs` folder using Markdown files. Follow the existing structure and naming conventions.
+For every feature create documentation in the `/docs` folder using Markdown files. Follow the
+existing structure and naming conventions.
 
 Try to keep each feature documentation short, and use mermaid for diagrams where applicable.
 
 ### Display Formatting
 
-Never format a value for display by hand — no `Intl.*`, `toLocaleString`, `toFixed`, or dayjs pattern strings outside the canonical module. Ask `@/utils/format` (app) / `~/utils/format` (dashboard) for a named style. ESLint enforces it. See [`formatting-standards.md`](./formatting-standards.md).
+Never format a value for display by hand — no `Intl.*`, `toLocaleString`, `toFixed`, or dayjs
+pattern strings outside the canonical module. Ask `@/utils/format` (app) / `~/utils/format`
+(dashboard) for a named style. ESLint enforces it. See
+[`formatting-standards.md`](./formatting-standards.md).
 
 ### Date Manipulation
 
-For Date Manipulation, always use dayjs library — and for *displaying* a date, through the named helpers in [`formatting-standards.md`](./formatting-standards.md) rather than a pattern string at the call site.
+For Date Manipulation, always use dayjs library — and for _displaying_ a date, through the named
+helpers in [`formatting-standards.md`](./formatting-standards.md) rather than a pattern string at
+the call site.
 
 ### Context7 MCP Integration
 
-Always use Context7 when you need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP tools to resolve library IDs and get library documentation without requiring explicit requests.
+Always use Context7 when you need code generation, setup or configuration steps, or library/API
+documentation. This means you should automatically use the Context7 MCP tools to resolve library IDs
+and get library documentation without requiring explicit requests.
 
 **When to use Context7:**
 
@@ -86,8 +96,10 @@ Make all interfaces accessible for everyone, including users with disabilities
 
 ### Core Development Guidelines
 
-- [`vue-component-standards.md`](./vue-component-standards.md) - Vue.js component development standards
-- [`formatting-standards.md`](./formatting-standards.md) - Canonical display formatting (money, tokens, dates, addresses)
+- [`vue-component-standards.md`](./vue-component-standards.md) - Vue.js component development
+  standards
+- [`formatting-standards.md`](./formatting-standards.md) - Canonical display formatting (money,
+  tokens, dates, addresses)
 
 ### Testing Guidelines
 
@@ -99,17 +111,22 @@ Make all interfaces accessible for everyone, including users with disabilities
 ### Project Specific
 
 - [`review-checklist.md`](./review-checklist.md) - Code review checklist
-- [`solidity-audit-checklist.md`](./solidity-audit-checklist.md) - Pre-merge Solidity audit checklist for `contract/` PRs (Slither + manual review)
+- [`solidity-audit-checklist.md`](./solidity-audit-checklist.md) - Pre-merge Solidity audit
+  checklist for `contract/` PRs (Slither + manual review)
 - [`commit-conventions.md`](./commit-conventions.md) - Commit message format and conventions
 
 ## Usage
 
-When working on the CNC Portal project, GitHub Copilot will automatically reference these instructions to provide contextually appropriate suggestions that follow the established patterns and best practices.
+When working on the CNC Portal project, GitHub Copilot will automatically reference these
+instructions to provide contextually appropriate suggestions that follow the established patterns
+and best practices.
 
 ## Contributing
 
-These instructions should be updated as the project evolves and new patterns emerge. When adding new patterns or updating existing ones, ensure they are documented with clear examples and rationale.
+These instructions should be updated as the project evolves and new patterns emerge. When adding new
+patterns or updating existing ones, ensure they are documented with clear examples and rationale.
 
 ## Quick Reference
 
-For immediate reference, see the [`review-checklist.md`](./review-checklist.md) for a comprehensive list of what to check before submitting code.
+For immediate reference, see the [`review-checklist.md`](./review-checklist.md) for a comprehensive
+list of what to check before submitting code.

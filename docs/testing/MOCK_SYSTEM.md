@@ -2,7 +2,8 @@
 
 ## Overview
 
-The CNC Portal has a comprehensive centralized mock system that provides consistent, maintainable testing infrastructure. The system covers:
+The CNC Portal has a comprehensive centralized mock system that provides consistent, maintainable
+testing infrastructure. The system covers:
 
 - **TanStack Query Operations** - All API queries and mutations
 - **Web3/Blockchain Interactions** - ERC20 tokens, contract operations, wagmi
@@ -322,9 +323,7 @@ The system is designed for easy extension. Here's how to add different types of 
 1. **Add mock data** (`query.mock.ts`):
 
 ```typescript
-export const mockMyNewData: MyType = {
-  /* realistic data */
-};
+export const mockMyNewData: MyType = {/* realistic data */};
 ```
 
 2. **Add to queryMocks object** (`query.mock.ts`):

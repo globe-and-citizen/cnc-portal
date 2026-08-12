@@ -6,11 +6,11 @@
 
 ## 🎯 Roles
 
-| Role | Level | Permissions |
-|------|-------|-------------|
-| `ROLE_USER` | 1 (default) | Basic platform access |
-| `ROLE_ADMIN` | 2 | Admin dashboard, reports |
-| `ROLE_SUPER_ADMIN` | 3 | Full system access |
+| Role               | Level       | Permissions              |
+| ------------------ | ----------- | ------------------------ |
+| `ROLE_USER`        | 1 (default) | Basic platform access    |
+| `ROLE_ADMIN`       | 2           | Admin dashboard, reports |
+| `ROLE_SUPER_ADMIN` | 3           | Full system access       |
 
 **Hierarchy:** SUPER_ADMIN → ADMIN → USER (each inherits from lower level)
 
@@ -36,27 +36,36 @@ model User {
 ### Protect Routes
 
 ```typescript
-import { authorizeUser } from '../middleware/authMiddleware'
-import { requireAdmin } from '../middleware/roleMiddleware'
+import { authorizeUser } from "../middleware/authMiddleware";
+import { requireAdmin } from "../middleware/roleMiddleware";
 
-router.get('/admin/stats', authorizeUser, requireAdmin, controller)
+router.get("/admin/stats", authorizeUser, requireAdmin, controller);
 ```
 
 ### Check Roles
 
 ```typescript
-import { hasRole, isAdmin, isSuperAdmin } from '../utils/roleUtils'
+import { hasRole, isAdmin, isSuperAdmin } from "../utils/roleUtils";
 
-if (hasRole(req.roles, UserRole.ROLE_ADMIN)) { /* ... */ }
-if (isAdmin(req.roles)) { /* ... */ }
+if (hasRole(req.roles, UserRole.ROLE_ADMIN)) {
+  /* ... */
+}
+if (isAdmin(req.roles)) {
+  /* ... */
+}
 ```
 
 ### Multiple Roles
 
 ```typescript
-import { requireAnyRole } from '../middleware/roleMiddleware'
+import { requireAnyRole } from "../middleware/roleMiddleware";
 
-router.post('/sensitive', authorizeUser, requireAnyRole([ROLE_ADMIN, ROLE_SUPER_ADMIN]), controller)
+router.post(
+  "/sensitive",
+  authorizeUser,
+  requireAnyRole([ROLE_ADMIN, ROLE_SUPER_ADMIN]),
+  controller,
+);
 ```
 
 ---
@@ -66,12 +75,16 @@ router.post('/sensitive', authorizeUser, requireAnyRole([ROLE_ADMIN, ROLE_SUPER_
 ### Check Roles in Component
 
 ```typescript
-import { useRoleStore } from '~/stores/useRoleStore'
+import { useRoleStore } from "~/stores/useRoleStore";
 
-const roleStore = useRoleStore()
+const roleStore = useRoleStore();
 
-if (roleStore.isAdmin) { /* show admin UI */ }
-if (roleStore.isSuperAdmin) { /* show super admin UI */ }
+if (roleStore.isAdmin) {
+  /* show admin UI */
+}
+if (roleStore.isSuperAdmin) {
+  /* show super admin UI */
+}
 ```
 
 ### Conditional Rendering
@@ -83,18 +96,18 @@ if (roleStore.isSuperAdmin) { /* show super admin UI */ }
 </template>
 
 <script setup>
-const roleStore = useRoleStore()
+const roleStore = useRoleStore();
 </script>
 ```
 
 ### Role Store Methods
 
 ```typescript
-roleStore.isAdmin                      // boolean
-roleStore.isSuperAdmin                 // boolean
-roleStore.hasRole(role)                // boolean
-roleStore.hasAnyRole([roles])          // boolean
-roleStore.highestRole                  // string
+roleStore.isAdmin; // boolean
+roleStore.isSuperAdmin; // boolean
+roleStore.hasRole(role); // boolean
+roleStore.hasAnyRole([roles]); // boolean
+roleStore.highestRole; // string
 ```
 
 ---
@@ -125,11 +138,11 @@ roleStore.highestRole                  // string
 ✅ Roles in signed JWT tokens  
 ✅ Frontend checks for UX only  
 ✅ Use HTTPS in production  
-✅ Tokens expire after 24 hours  
+✅ Tokens expire after 24 hours
 
 ❌ Don't rely on frontend checks for security  
 ❌ Don't allow users to set own roles  
-❌ Don't skip `authorizeUser` middleware  
+❌ Don't skip `authorizeUser` middleware
 
 ---
 
@@ -162,13 +175,13 @@ Add `authorizeUser, requireAdmin` to sensitive endpoints
 
 ## 📊 Permissions Matrix
 
-| | User | Admin | Super Admin |
-|---|:---:|:---:|:---:|
-| Access Platform | ✅ | ✅ | ✅ |
-| View Dashboard | ❌ | ✅ | ✅ |
-| View All Users | ❌ | ✅ | ✅ |
-| Assign Roles | ❌ | ❌ | ✅ |
-| System Config | ❌ | ❌ | ✅ |
+|                 | User | Admin | Super Admin |
+| --------------- | :--: | :---: | :---------: |
+| Access Platform |  ✅  |  ✅   |     ✅      |
+| View Dashboard  |  ❌  |  ✅   |     ✅      |
+| View All Users  |  ❌  |  ✅   |     ✅      |
+| Assign Roles    |  ❌  |  ❌   |     ✅      |
+| System Config   |  ❌  |  ❌   |     ✅      |
 
 ---
 

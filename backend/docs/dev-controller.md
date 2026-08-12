@@ -1,6 +1,7 @@
 # Dev Controller Documentation
 
-The Dev Controller provides development-only endpoints for generating SIWE (Sign-In with Ethereum) messages and signatures. These endpoints are only available when `NODE_ENV=development`.
+The Dev Controller provides development-only endpoints for generating SIWE (Sign-In with Ethereum)
+messages and signatures. These endpoints are only available when `NODE_ENV=development`.
 
 ## Endpoints
 
@@ -112,29 +113,33 @@ curl -X POST http://localhost:3000/api/dev/generate-siwe-signature \
 
 ```javascript
 const generateTestSignature = async () => {
-  const response = await fetch('http://localhost:3000/api/dev/generate-siwe-signature', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      messageParams: {
-        nonce: Math.floor(Math.random() * 1000000).toString(),
-        address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        domain: 'localhost',
-        chainId: 1337,
-        statement: 'Test authentication',
-        uri: 'http://localhost:3000',
+  const response = await fetch(
+    "http://localhost:3000/api/dev/generate-siwe-signature",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      privateKey: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
-    }),
-  });
+      body: JSON.stringify({
+        messageParams: {
+          nonce: Math.floor(Math.random() * 1000000).toString(),
+          address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          domain: "localhost",
+          chainId: 1337,
+          statement: "Test authentication",
+          uri: "http://localhost:3000",
+        },
+        privateKey:
+          "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+      }),
+    },
+  );
 
   const result = await response.json();
 
   if (result.success) {
-    console.log('Generated SIWE message:', result.message);
-    console.log('Signature:', result.signature);
+    console.log("Generated SIWE message:", result.message);
+    console.log("Signature:", result.signature);
 
     // Use the message and signature for testing authentication
     return {
@@ -142,7 +147,7 @@ const generateTestSignature = async () => {
       signature: result.signature,
     };
   } else {
-    console.error('Error generating signature:', result.error);
+    console.error("Error generating signature:", result.error);
     throw new Error(result.error);
   }
 };
@@ -160,7 +165,8 @@ const generateTestSignature = async () => {
 
 ## Common Test Private Keys (Hardhat Default Accounts)
 
-These are well-known test private keys from Hardhat's default accounts. **Never use these in production!**
+These are well-known test private keys from Hardhat's default accounts. **Never use these in
+production!**
 
 ```
 Account #0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
@@ -175,7 +181,8 @@ Private Key: 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 
 ## Integration with Bruno/API Testing
 
-You can use this endpoint in your Bruno API tests to generate valid SIWE signatures for authentication testing:
+You can use this endpoint in your Bruno API tests to generate valid SIWE signatures for
+authentication testing:
 
 1. First, generate a signature using the dev endpoint
 2. Use the returned message and signature to test the `/api/auth/siwe` endpoint

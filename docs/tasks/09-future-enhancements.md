@@ -6,7 +6,8 @@
 
 ## Overview
 
-This document outlines optional enhancements to make over time as the documentation evolves. These are not urgent but would provide additional value.
+This document outlines optional enhancements to make over time as the documentation evolves. These
+are not urgent but would provide additional value.
 
 ## Enhancement Ideas
 
@@ -86,7 +87,7 @@ Examples:
 **Why**: Maintain documentation quality over time  
 **How**:
 
-```
+````
 Implement automated documentation checks:
 - Link checker in CI/CD (markdown-link-check)
 - Documentation coverage for new features
@@ -102,19 +103,19 @@ Add to CI/CD pipeline:
     npm run docs:lint
     npm run docs:check-links
     npm run docs:spellcheck
-```
+````
 
 ```
 
-**Estimated Time**: 2-3 hours  
+**Estimated Time**: 2-3 hours
 **Priority**: Medium - good for large teams
 
 ---
 
 ### 5. API Documentation Generator
 
-**When**: API becomes more complex with many endpoints  
-**Why**: Keep API docs in sync with code automatically  
+**When**: API becomes more complex with many endpoints
+**Why**: Keep API docs in sync with code automatically
 **How**:
 
 ```
@@ -138,15 +139,15 @@ Output to /docs/api/ folder with generated documentation.
 
 ```
 
-**Estimated Time**: 3-5 hours  
+**Estimated Time**: 3-5 hours
 **Priority**: Medium - valuable for API-heavy projects
 
 ---
 
 ### 6. Documentation Search
 
-**When**: Documentation exceeds 50-100 pages  
-**Why**: Help users find information quickly  
+**When**: Documentation exceeds 50-100 pages
+**Why**: Help users find information quickly
 **How**:
 
 ```
@@ -166,15 +167,15 @@ If converting docs to a static site (Docusaurus, VitePress, etc.):
 
 ```
 
-**Estimated Time**: 4-8 hours (if using static site generator)  
+**Estimated Time**: 4-8 hours (if using static site generator)
 **Priority**: Low - only for very large documentation sets
 
 ---
 
 ### 7. Contribution Guidelines in Docs
 
-**When**: When onboarding new contributors regularly  
-**Why**: Make it easier for external contributors  
+**When**: When onboarding new contributors regularly
+**Why**: Make it easier for external contributors
 **How**:
 
 ```
@@ -192,15 +193,15 @@ Link from main README and root CONTRIBUTING.md.
 
 ```
 
-**Estimated Time**: 1-2 hours  
+**Estimated Time**: 1-2 hours
 **Priority**: Medium - good for open source projects
 
 ---
 
 ### 8. Troubleshooting Guide
 
-**When**: After collecting common issues from team/users  
-**Why**: Help developers solve problems independently  
+**When**: After collecting common issues from team/users
+**Why**: Help developers solve problems independently
 **How**:
 
 ```
@@ -231,15 +232,15 @@ Each entry includes:
 
 ```
 
-**Estimated Time**: 2-3 hours initially, ongoing maintenance  
+**Estimated Time**: 2-3 hours initially, ongoing maintenance
 **Priority**: Medium - very valuable for reducing support burden
 
 ---
 
 ### 9. Video Tutorials
 
-**When**: When documentation is stable and team has time  
-**Why**: Some people learn better from videos  
+**When**: When documentation is stable and team has time
+**Why**: Some people learn better from videos
 **How**:
 
 ```
@@ -263,15 +264,15 @@ Link from relevant documentation pages.
 
 ```
 
-**Estimated Time**: 1-2 hours per video + editing  
+**Estimated Time**: 1-2 hours per video + editing
 **Priority**: Low - nice to have but significant time investment
 
 ---
 
 ### 10. Documentation Versioning
 
-**When**: When maintaining multiple release versions  
-**Why**: Keep docs in sync with code versions  
+**When**: When maintaining multiple release versions
+**Why**: Keep docs in sync with code versions
 **How**:
 
 ```
@@ -283,11 +284,7 @@ Implement documentation versioning:
 - Add version selector in documentation
 - Maintain docs for current + previous 2 versions
 
-Structure:
-/docs/
-  /current/ (or /v4.x/)
-  /v3.x/
-  /v2.x/
+Structure: /docs/ /current/ (or /v4.x/) /v3.x/ /v2.x/
 
 Or use documentation platform with built-in versioning:
 
@@ -297,7 +294,7 @@ Or use documentation platform with built-in versioning:
 
 ```
 
-**Estimated Time**: 4-6 hours + ongoing maintenance  
+**Estimated Time**: 4-6 hours + ongoing maintenance
 **Priority**: Low - only necessary for projects with multiple maintained versions
 
 ---
@@ -360,3 +357,4 @@ This step is complete when:
 ---
 
 **Remember**: Good documentation is never "done" - it's an ongoing process of refinement and improvement. Focus on keeping what exists maintained before adding new features.
+```

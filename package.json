@@ -2,6 +2,9 @@
   "scripts": {
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "changelog:first": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "format:md": "prettier --config .prettier-markdown.json --write \"**/*.md\"",
+    "format:md:check": "node scripts/check-markdown-format.mjs",
+    "lint:md": "markdownlint-cli2",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -13,6 +16,8 @@
     "conventional-changelog-cli": "^5.0.0",
     "danger": "^13.0.7",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.5"
+    "lint-staged": "^17.0.5",
+    "markdownlint-cli2": "^0.23.2",
+    "prettier": "^3.9.6"
   }
 }

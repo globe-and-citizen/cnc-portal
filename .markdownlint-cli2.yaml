@@ -1,0 +1,15 @@
+config:
+  default: false
+  MD009: true # No trailing spaces.
+  MD010: true # No hard tabs.
+  MD011: true # Do not reverse link syntax.
+  MD034: true # Bare URLs are harder to read and maintain.
+  MD042: true # Links and images must have a destination.
+  MD045: true # Images need accessible alternative text.
+  MD047: true # Files end with one newline.
+globs:
+  - "**/*.md"
+ignores:
+  - ".claude/worktrees/**"
+  - "**/node_modules/**"
+  - "**/coverage/**"
