@@ -69,7 +69,8 @@ createOfficer({
 
 ### 2. Distribute Dividends
 
-Distribution is **push-based**: one owner transaction immediately transfers funds to all shareholders. There is no separate claim step.
+Distribution is **push-based**: one owner transaction immediately transfers funds to all
+shareholders. There is no separate claim step.
 
 **ETH Dividends**:
 
@@ -652,6 +653,4 @@ npx prisma studio
 
 ---
 
-_Document Version: 1.1_
-_Last Updated: March 2026_
-_Maintained by: CNC Portal Team_
+_Document Version: 1.1_ _Last Updated: March 2026_ _Maintained by: CNC Portal Team_

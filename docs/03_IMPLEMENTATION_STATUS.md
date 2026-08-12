@@ -75,9 +75,8 @@
 
 ## 3. Smart Contracts
 
-**Milestone:** M1–M4
-**Status:** ✅ Complete
-**Progress:** 15/15 contract groups done (74/74 stories)
+**Milestone:** M1–M4 **Status:** ✅ Complete **Progress:** 15/15 contract groups done (74/74
+stories)
 
 | Contract          | Stories | Contract | Frontend | Notes                                              |
 | ----------------- | ------- | -------- | -------- | -------------------------------------------------- |
@@ -96,9 +95,9 @@
 | Voting            | 4/4     | ✅       | 🚫       | Combined directive and election voting             |
 | Infrastructure    | 3/3     | ✅       | —        | FactoryBeacon, Beacon, UserBeaconProxy             |
 
-**Coverage:** 95%+ line coverage ✅
-**Frontend:** 1/14 contracts have UI (FeeCollector). Remaining frontends tracked per feature module above.
-**Next Steps:** Security audit in M7; Safe wallet integration in M7; production deployment in M8
+**Coverage:** 95%+ line coverage ✅ **Frontend:** 1/14 contracts have UI (FeeCollector). Remaining
+frontends tracked per feature module above. **Next Steps:** Security audit in M7; Safe wallet
+integration in M7; production deployment in M8
 
 ---
 

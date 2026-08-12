@@ -23,7 +23,7 @@ if (markdownFiles.length === 0) {
 const prettier = fileURLToPath(new URL('../node_modules/prettier/bin/prettier.cjs', import.meta.url))
 const result = spawnSync(
   process.execPath,
-  [prettier, '--no-config', '--prose-wrap', 'preserve', '--check', ...markdownFiles],
+  [prettier, '--config', '.prettier-markdown.json', '--check', ...markdownFiles],
   { stdio: 'inherit' },
 )
 

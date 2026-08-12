@@ -6,7 +6,8 @@
 
 ## Overview
 
-This document outlines optional enhancements to make over time as the documentation evolves. These are not urgent but would provide additional value.
+This document outlines optional enhancements to make over time as the documentation evolves. These
+are not urgent but would provide additional value.
 
 ## Enhancement Ideas
 
@@ -283,11 +284,7 @@ Implement documentation versioning:
 - Add version selector in documentation
 - Maintain docs for current + previous 2 versions
 
-Structure:
-/docs/
-/current/ (or /v4.x/)
-/v3.x/
-/v2.x/
+Structure: /docs/ /current/ (or /v4.x/) /v3.x/ /v2.x/
 
 Or use documentation platform with built-in versioning:
 

@@ -20,7 +20,8 @@
 
 ## Overview
 
-The Feature Flags system enables dynamic feature toggling at runtime without code deployments. Features can be controlled globally or overridden per team for granular access control.
+The Feature Flags system enables dynamic feature toggling at runtime without code deployments.
+Features can be controlled globally or overridden per team for granular access control.
 
 **Key Benefits:**
 

@@ -7,7 +7,8 @@
 
 ## Testing Philosophy
 
-The CNC Portal follows a comprehensive testing strategy prioritizing behavior-driven testing over implementation details. All features should have proper test coverage before deployment.
+The CNC Portal follows a comprehensive testing strategy prioritizing behavior-driven testing over
+implementation details. All features should have proper test coverage before deployment.
 
 ## Testing Framework Stack
 

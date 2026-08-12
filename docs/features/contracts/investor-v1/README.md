@@ -1,9 +1,8 @@
 # Contract: InvestorV1
 
 **Epic Goal:** Issue equity tokens to shareholders and execute push-based dividend distributions.
-**Contract File:** `contracts/Investor/InvestorV1.sol`
-**Upgradeable:** Yes (Beacon)
-**Last updated:** 2026-03-16
+**Contract File:** `contracts/Investor/InvestorV1.sol` **Upgradeable:** Yes (Beacon) **Last
+updated:** 2026-03-16
 
 ---
 
@@ -25,17 +24,22 @@
 ## Implementation Notes
 
 - **Contract:** `contracts/Investor/InvestorV1.sol`
-- **Key functions:** `distributeMint`, `individualMint`, `getShareholders`, `distributeNativeDividends`, `distributeTokenDividends`
-- **Access roles:** `onlyOwner` for `distributeMint`; `MINTER_ROLE` for `individualMint`; `onlyBank` for dividend distribution
-- **Dependencies:** Officer (runtime Bank address resolution for `onlyBank` modifier), MINTER_ROLE granted to CashRemunerationEIP712
+- **Key functions:** `distributeMint`, `individualMint`, `getShareholders`,
+  `distributeNativeDividends`, `distributeTokenDividends`
+- **Access roles:** `onlyOwner` for `distributeMint`; `MINTER_ROLE` for `individualMint`; `onlyBank`
+  for dividend distribution
+- **Dependencies:** Officer (runtime Bank address resolution for `onlyBank` modifier), MINTER_ROLE
+  granted to CashRemunerationEIP712
 - **Token:** ERC20, 6 decimals (USDC-style precision)
-- **Pattern:** Shareholder set maintained automatically via `_update` hook on every ERC20 transfer; lossless distribution (last shareholder gets remainder)
+- **Pattern:** Shareholder set maintained automatically via `_update` hook on every ERC20 transfer;
+  lossless distribution (last shareholder gets remainder)
 
 ---
 
 ## US-INV-001: Bulk Mint Equity Tokens to Shareholders
 
-> **As a** team owner, **I want to** mint equity tokens to a list of shareholders in one call, **so that** initial equity distribution is done efficiently.
+> **As a** team owner, **I want to** mint equity tokens to a list of shareholders in one call, **so
+> that** initial equity distribution is done efficiently.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** none
 
@@ -51,7 +55,8 @@
 
 ## US-INV-002: Mint Equity Tokens to an Individual (individualMint via MINTER_ROLE)
 
-> **As a** compensation contract (CashRemuneration), **I want to** mint equity tokens to a single employee as part of their wage, **so that** equity compensation is settled on-chain automatically.
+> **As a** compensation contract (CashRemuneration), **I want to** mint equity tokens to a single
+> employee as part of their wage, **so that** equity compensation is settled on-chain automatically.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
 
@@ -66,7 +71,8 @@
 
 ## US-INV-003: Automatically Track Shareholders on Token Transfer
 
-> **As a** system, **I want to** maintain an up-to-date shareholder list on every token transfer, **so that** dividend calculations always reflect current equity ownership.
+> **As a** system, **I want to** maintain an up-to-date shareholder list on every token transfer,
+> **so that** dividend calculations always reflect current equity ownership.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** none
 
@@ -82,7 +88,8 @@
 
 ## US-INV-004: Receive and Push ETH Dividends to All Shareholders
 
-> **As a** bank contract, **I want to** trigger ETH dividend distribution to all shareholders at once, **so that** profit-sharing is settled in a single transaction.
+> **As a** bank contract, **I want to** trigger ETH dividend distribution to all shareholders at
+> once, **so that** profit-sharing is settled in a single transaction.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-INV-003
 
@@ -99,7 +106,8 @@
 
 ## US-INV-005: Receive and Push ERC20 Dividends to All Shareholders
 
-> **As a** bank contract, **I want to** trigger ERC20 dividend distribution to all shareholders at once, **so that** token-denominated profits are distributed proportionally.
+> **As a** bank contract, **I want to** trigger ERC20 dividend distribution to all shareholders at
+> once, **so that** token-denominated profits are distributed proportionally.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-INV-003
 
@@ -115,7 +123,8 @@
 
 ## US-INV-006: View Current Shareholder List with Balances
 
-> **As a** team member, **I want to** query the full shareholder list with each holder's balance, **so that** equity ownership is transparent without off-chain indexing.
+> **As a** team member, **I want to** query the full shareholder list with each holder's balance,
+> **so that** equity ownership is transparent without off-chain indexing.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** XS | **Dependencies:** US-INV-003
 

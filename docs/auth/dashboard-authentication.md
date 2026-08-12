@@ -1,10 +1,12 @@
 # Dashboard Authentication (Nuxt)
 
-This document describes the SIWE authentication implementation in the CNC Portal Admin Dashboard (Nuxt frontend).
+This document describes the SIWE authentication implementation in the CNC Portal Admin Dashboard
+(Nuxt frontend).
 
 ## Overview
 
-The admin dashboard uses SIWE (Sign-In with Ethereum) to authenticate administrators. The implementation is SSR-compatible, with wagmi composables loaded only on the client side.
+The admin dashboard uses SIWE (Sign-In with Ethereum) to authenticate administrators. The
+implementation is SSR-compatible, with wagmi composables loaded only on the client side.
 
 ## Key Files
 
@@ -155,7 +157,8 @@ authStore.setAuth(token, address.value);
 
 ## SSR Compatibility
 
-The dashboard is built with Nuxt, which requires special handling for client-only code. The wagmi composables are loaded dynamically on the client side:
+The dashboard is built with Nuxt, which requires special handling for client-only code. The wagmi
+composables are loaded dynamically on the client side:
 
 ### Login Page
 

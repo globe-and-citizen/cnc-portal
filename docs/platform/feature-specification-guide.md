@@ -8,7 +8,9 @@
 
 ## Overview
 
-This guide provides instructions for creating feature functional specifications in the CNC Portal project. A well-written functional specification focuses on **feature-specific information only** and references platform-wide standards instead of duplicating them.
+This guide provides instructions for creating feature functional specifications in the CNC Portal
+project. A well-written functional specification focuses on **feature-specific information only**
+and references platform-wide standards instead of duplicating them.
 
 ---
 
@@ -65,9 +67,9 @@ See [Security Standards](../../platform/security.md) for details.
 ````markdown
 # [Feature Name] - Functional Specification
 
-**Version:** 1.0.0  
-**Date:** YYYY-MM-DD  
-**Status:** Draft | In Progress | Implemented  
+**Version:** 1.0.0
+**Date:** YYYY-MM-DD
+**Status:** Draft | In Progress | Implemented
 **Feature Branch:** feature/[feature-name]
 
 ---
@@ -104,7 +106,7 @@ See [Security Standards](../../platform/security.md) for details.
 
 #### FR-1: [Requirement Name]
 
-**Priority:** High | Medium | Low  
+**Priority:** High | Medium | Low
 **Description:** [Brief description of the requirement]
 
 **User Story:**
@@ -150,7 +152,7 @@ All endpoints are prefixed with `/api/[feature]` and require JWT authentication.
 
 ### 4.1 Dashboard Layout
 
-**Location:** [Where in the app]  
+**Location:** [Where in the app]
 **Components:** [List of components]
 
 **Display:**

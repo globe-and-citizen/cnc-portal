@@ -1,6 +1,7 @@
 # Ignition Modules
 
-This directory contains Hardhat Ignition modules for deploying the Officer and its sub-contracts (beacons).
+This directory contains Hardhat Ignition modules for deploying the Officer and its sub-contracts
+(beacons).
 
 ## Current Modules
 
@@ -48,7 +49,8 @@ To add a new beacon to Officer deployments:
    m.useModule(newContractBeaconModule);
    ```
 
-4. **Register the beacon type in Officer.configureBeacon()** during deployment via script or manual call.
+4. **Register the beacon type in Officer.configureBeacon()** during deployment via script or manual
+   call.
 
 ## Test-Only Modules
 

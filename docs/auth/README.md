@@ -1,10 +1,13 @@
 # CNC Portal Authentication
 
-This documentation covers the authentication system used across the CNC Portal platform. All components use **Sign-In with Ethereum (SIWE)** for secure, wallet-based authentication.
+This documentation covers the authentication system used across the CNC Portal platform. All
+components use **Sign-In with Ethereum (SIWE)** for secure, wallet-based authentication.
 
 ## Overview
 
-CNC Portal uses SIWE (EIP-4361) to authenticate users across all frontend applications. This approach allows users to prove ownership of their Ethereum wallet without exposing private keys, providing a secure and decentralized authentication mechanism.
+CNC Portal uses SIWE (EIP-4361) to authenticate users across all frontend applications. This
+approach allows users to prove ownership of their Ethereum wallet without exposing private keys,
+providing a secure and decentralized authentication mechanism.
 
 ## Architecture
 
@@ -75,7 +78,8 @@ The backend provides the following authentication endpoints:
 
 ## Security Features
 
-1. **Nonce-based Protection** - Each authentication requires a fresh nonce, preventing replay attacks
+1. **Nonce-based Protection** - Each authentication requires a fresh nonce, preventing replay
+   attacks
 2. **Wallet Signature** - Only the private key holder can produce a valid signature
 3. **JWT Expiration** - Tokens expire after 24 hours
 4. **Domain Binding** - SIWE messages include the domain to prevent phishing
@@ -84,7 +88,8 @@ The backend provides the following authentication endpoints:
 ## Detailed Documentation
 
 - **[App Authentication](./app-authentication.md)** - Vue.js frontend authentication implementation
-- **[Dashboard Authentication](./dashboard-authentication.md)** - Nuxt dashboard authentication implementation
+- **[Dashboard Authentication](./dashboard-authentication.md)** - Nuxt dashboard authentication
+  implementation
 
 ## Quick Start
 

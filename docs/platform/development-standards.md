@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document establishes code quality standards, best practices, and development guidelines for the CNC Portal project. Following these standards ensures code consistency, maintainability, and collaboration effectiveness across the team.
+This document establishes code quality standards, best practices, and development guidelines for the
+CNC Portal project. Following these standards ensures code consistency, maintainability, and
+collaboration effectiveness across the team.
 
 ## Code Quality Standards
 
@@ -955,7 +957,8 @@ Before committing code:
 
 ### Review Checklist
 
-See [review-checklist.md](../../.github/copilot-instructions/review-checklist.md) for comprehensive checklist.
+See [review-checklist.md](../../.github/copilot-instructions/review-checklist.md) for comprehensive
+checklist.
 
 ## Tools and Configuration
 
@@ -1060,7 +1063,9 @@ If you believe a standard should be modified or need an exception:
 
 ---
 
-**Remember**: These standards exist to maintain code quality, readability, and maintainability. They make collaboration easier and reduce technical debt. When in doubt, follow the standards. When standards are unclear, ask the team.
+**Remember**: These standards exist to maintain code quality, readability, and maintainability. They
+make collaboration easier and reduce technical debt. When in doubt, follow the standards. When
+standards are unclear, ask the team.
 
 ---
 

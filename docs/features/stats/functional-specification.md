@@ -11,7 +11,9 @@
 
 ### 1.1 Purpose
 
-The Statistics Feature provides comprehensive analytics and metrics for the CNC Portal platform, enabling stakeholders to monitor platform health, track user engagement, analyze financial data, and make data-driven decisions for platform governance.
+The Statistics Feature provides comprehensive analytics and metrics for the CNC Portal platform,
+enabling stakeholders to monitor platform health, track user engagement, analyze financial data, and
+make data-driven decisions for platform governance.
 
 ### 1.2 Scope
 
@@ -43,11 +45,13 @@ This feature encompasses:
 
 **User Story:**
 
-> As a platform administrator, I want to view overall platform statistics so that I can monitor platform health and growth.
+> As a platform administrator, I want to view overall platform statistics so that I can monitor
+> platform health and growth.
 
 **Acceptance Criteria:**
 
-- [x] Display total number of teams, members, claims, wages, expenses, contracts, actions, and notifications
+- [x] Display total number of teams, members, claims, wages, expenses, contracts, actions, and
+      notifications
 - [x] Show count of active teams and members
 - [x] Calculate total hours worked across all claims
 - [x] Provide growth metrics comparing current period to previous period
@@ -61,7 +65,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a platform administrator, I want to see team-specific statistics so that I can identify active and inactive teams.
+> As a platform administrator, I want to see team-specific statistics so that I can identify active
+> and inactive teams.
 
 **Acceptance Criteria:**
 
@@ -79,7 +84,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a platform administrator, I want to understand user engagement so that I can improve user retention.
+> As a platform administrator, I want to understand user engagement so that I can improve user
+> retention.
 
 **Acceptance Criteria:**
 
@@ -116,7 +122,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a financial analyst, I want to see wage statistics so that I can understand compensation patterns.
+> As a financial analyst, I want to see wage statistics so that I can understand compensation
+> patterns.
 
 **Acceptance Criteria:**
 
@@ -152,7 +159,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a blockchain administrator, I want to monitor contract usage so that I can optimize deployments.
+> As a blockchain administrator, I want to monitor contract usage so that I can optimize
+> deployments.
 
 **Acceptance Criteria:**
 
@@ -170,7 +178,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a governance coordinator, I want to track board actions so that I can ensure effective governance.
+> As a governance coordinator, I want to track board actions so that I can ensure effective
+> governance.
 
 **Acceptance Criteria:**
 
@@ -188,7 +197,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a platform administrator, I want to see recent activities so that I can monitor real-time platform usage.
+> As a platform administrator, I want to see recent activities so that I can monitor real-time
+> platform usage.
 
 **Acceptance Criteria:**
 
@@ -471,8 +481,7 @@ const avgMembers = teams.length > 0 ? totalMembers / teams.length : 0;
 
 ### 5.5 Data Filtering
 
-**Team-Specific Filtering:**
-When `teamId` query parameter is provided:
+**Team-Specific Filtering:** When `teamId` query parameter is provided:
 
 - Claims: Filter by `teamId`
 - Expenses: Filter by `teamId`
@@ -615,15 +624,20 @@ When `teamId` query parameter is provided:
 
 **Stats-Specific Documentation:**
 
-- [Stats API Reference](./stats-api.md) - Complete REST API documentation with request/response examples
-- [Dashboard Integration Guide](./stats-dashboard-integration.md) - Frontend integration patterns and component usage
+- [Stats API Reference](./stats-api.md) - Complete REST API documentation with request/response
+  examples
+- [Dashboard Integration Guide](./stats-dashboard-integration.md) - Frontend integration patterns
+  and component usage
 
 **Platform Documentation:**
 
 - [Architecture](../../platform/architecture.md) - System architecture and technology stack
-- [Security Standards](../../platform/security.md) - Authentication, authorization, and security requirements
-- [Performance Standards](../../platform/performance.md) - Performance targets and optimization strategies
-- [Testing Strategy](../../platform/testing-strategy.md) - Testing approach and coverage requirements
+- [Security Standards](../../platform/security.md) - Authentication, authorization, and security
+  requirements
+- [Performance Standards](../../platform/performance.md) - Performance targets and optimization
+  strategies
+- [Testing Strategy](../../platform/testing-strategy.md) - Testing approach and coverage
+  requirements
 
 **Code References:**
 

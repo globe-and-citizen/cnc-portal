@@ -1,9 +1,8 @@
 # Contract: FeeCollector
 
-**Epic Goal:** Collect protocol fees from all team contracts and allow the protocol owner to configure rates and withdraw accumulated funds.
-**Contract File:** `contracts/FeeCollector.sol`
-**Upgradeable:** Yes
-**Last updated:** 2026-03-16
+**Epic Goal:** Collect protocol fees from all team contracts and allow the protocol owner to
+configure rates and withdraw accumulated funds. **Contract File:** `contracts/FeeCollector.sol`
+**Upgradeable:** Yes **Last updated:** 2026-03-16
 
 ---
 
@@ -23,24 +22,29 @@
 ## Implementation Notes
 
 - **Contract:** `contracts/FeeCollector.sol`
-- **Key functions:** `setFee`, `getFeeFor`, `getAllFeeConfigs`, `withdraw`, `withdrawToken`, `addTokenSupport`, `removeTokenSupport`, `getBalance`, `getTokenBalance`
+- **Key functions:** `setFee`, `getFeeFor`, `getAllFeeConfigs`, `withdraw`, `withdrawToken`,
+  `addTokenSupport`, `removeTokenSupport`, `getBalance`, `getTokenBalance`
 - **Access roles:** `onlyOwner` for all write operations; `getFeeFor` and balance queries are public
 - **Fee unit:** Basis points (bps); 50 bps = 0.5%; 10000 bps = 100%
-- **Dependencies:** Officer stores FeeCollector address and delegates fee queries; Bank uses `getFeeFor("BANK")` and `isFeeCollectorToken(token)` before charging fees
+- **Dependencies:** Officer stores FeeCollector address and delegates fee queries; Bank uses
+  `getFeeFor("BANK")` and `isFeeCollectorToken(token)` before charging fees
 - **Protections:** `ReentrancyGuard` on withdrawals
-- **Frontend:** ✅ Management UI at `/micropayments` — `FeeCollectorManagement.vue`, `FeeConfigList.vue`, `FeeConfigFormModal.vue`, `WithdrawModal.vue`, `TokenHoldingsTable.vue`
+- **Frontend:** ✅ Management UI at `/micropayments` — `FeeCollectorManagement.vue`,
+  `FeeConfigList.vue`, `FeeConfigFormModal.vue`, `WithdrawModal.vue`, `TokenHoldingsTable.vue`
 
 ---
 
 ## US-FEE-001: Configure Fee Rates per Contract Type (Basis Points)
 
-> **As a** protocol owner, **I want to** set a fee rate for each contract type, **so that** a consistent protocol fee is charged across all team transactions of that type.
+> **As a** protocol owner, **I want to** set a fee rate for each contract type, **so that** a
+> consistent protocol fee is charged across all team transactions of that type.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
 
 ### Acceptance Criteria
 
-- [x] `setFee(contractType, feeBps)` stores or updates the fee for a named contract type (e.g. `"BANK"`)
+- [x] `setFee(contractType, feeBps)` stores or updates the fee for a named contract type (e.g.
+      `"BANK"`)
 - [x] Restricted to `onlyOwner`
 - [x] `feeBps` must be ≤ 10000 (100%); reverts otherwise
 - [x] Setting `feeBps = 0` effectively disables the fee for that type
@@ -50,14 +54,16 @@
 
 ## US-FEE-002: Accept ETH and ERC20 Fee Payments
 
-> **As a** team contract (e.g. Bank), **I want to** send protocol fees to FeeCollector, **so that** fees accumulate in one place for the protocol owner to withdraw.
+> **As a** team contract (e.g. Bank), **I want to** send protocol fees to FeeCollector, **so that**
+> fees accumulate in one place for the protocol owner to withdraw.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
 
 ### Acceptance Criteria
 
 - [x] `receive()` accepts plain ETH transfers from any address (team contracts send fee ETH here)
-- [x] ERC20 fee tokens transferred directly to FeeCollector via `safeTransfer` by the paying contract
+- [x] ERC20 fee tokens transferred directly to FeeCollector via `safeTransfer` by the paying
+      contract
 - [x] No explicit deposit function needed — ERC20 balances tracked via `IERC20.balanceOf`
 - [x] `addTokenSupport(token)` whitelists an ERC20 as a supported fee token (owner only)
 - [x] `removeTokenSupport(token)` removes a token from the whitelist (owner only)
@@ -66,7 +72,8 @@
 
 ## US-FEE-003: Query Fee Rate for a Contract Type
 
-> **As a** team contract, **I want to** look up the fee rate for my type, **so that** I can compute the correct fee amount before charging a user.
+> **As a** team contract, **I want to** look up the fee rate for my type, **so that** I can compute
+> the correct fee amount before charging a user.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** XS | **Dependencies:** US-FEE-001
 
@@ -81,7 +88,8 @@
 
 ## US-FEE-004: Withdraw Accumulated Fees (ETH or ERC20)
 
-> **As a** protocol owner, **I want to** withdraw accumulated ETH and ERC20 fees from FeeCollector, **so that** protocol revenue is accessible.
+> **As a** protocol owner, **I want to** withdraw accumulated ETH and ERC20 fees from FeeCollector,
+> **so that** protocol revenue is accessible.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** US-FEE-002
 

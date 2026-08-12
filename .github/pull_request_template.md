@@ -2,10 +2,10 @@
 
 ## Intial Issue Description
 
-The description of the issue (in the kanban board) that this PR addresses. Please include the issue number in the title of the PR.
+The description of the issue (in the kanban board) that this PR addresses. Please include the issue
+number in the title of the PR.
 
-> Link to the issue in the kanban board
-> If no issue exists, please create one and link it here.
+> Link to the issue in the kanban board If no issue exists, please create one and link it here.
 > Fixes # (issue)
 
 ## Issues introduced and fixed (Optional)
@@ -14,7 +14,9 @@ If exit: The description of issues you find and fix in this PR.
 
 ## PR Summary Or Solution description
 
-The summary should be a short description of the change, what you have done to fixe the issue. Please include the motivation for the change and how it was implemented. If applicable, please include screenshots or code snippets to illustrate the changes.
+The summary should be a short description of the change, what you have done to fixe the issue.
+Please include the motivation for the change and how it was implemented. If applicable, please
+include screenshots or code snippets to illustrate the changes.
 
 ## Contribution
 
@@ -26,7 +28,8 @@ Please delete options that are not relevant.
 
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as
+      expected)
 - [ ] This change requires a documentation update
 
 - **Please check if the PR fulfills these requirements**
@@ -37,4 +40,5 @@ Please delete options that are not relevant.
 
 ## Contribution checklist
 
-Before submitting the PR, please make sure you have applied the rules in [CONTRIBUTION.md](./../CONTRIBUTION.md)
+Before submitting the PR, please make sure you have applied the rules in
+[CONTRIBUTION.md](./../CONTRIBUTION.md)

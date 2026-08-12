@@ -1,9 +1,8 @@
 # Contract: Vesting
 
-**Epic Goal:** Provide linear ERC20 token vesting schedules with cliff periods, organized into teams.
-**Contract File:** `contracts/Vesting.sol`
-**Upgradeable:** Yes (Beacon)
-**Last updated:** 2026-03-16
+**Epic Goal:** Provide linear ERC20 token vesting schedules with cliff periods, organized into
+teams. **Contract File:** `contracts/Vesting.sol` **Upgradeable:** Yes (Beacon) **Last updated:**
+2026-03-16
 
 ---
 
@@ -24,16 +23,20 @@
 ## Implementation Notes
 
 - **Contract:** `contracts/Vesting.sol`
-- **Key functions:** `createTeam`, `addVesting`, `release`, `stopVesting`, `vestedAmount`, `releasable`, `getTeamVestingsWithMembers`, `getTeamAllArchivedVestingsFlat`
-- **Access roles:** `onlyOwner` for `createTeam`, `addVesting`, `stopVesting`; `release` callable by the vesting member themselves
-- **Pattern:** Team-based — each team has an owner and a token; cliff prevents any release until elapsed; linear vesting after cliff; stopped vestings archived per member/team
+- **Key functions:** `createTeam`, `addVesting`, `release`, `stopVesting`, `vestedAmount`,
+  `releasable`, `getTeamVestingsWithMembers`, `getTeamAllArchivedVestingsFlat`
+- **Access roles:** `onlyOwner` for `createTeam`, `addVesting`, `stopVesting`; `release` callable by
+  the vesting member themselves
+- **Pattern:** Team-based — each team has an owner and a token; cliff prevents any release until
+  elapsed; linear vesting after cliff; stopped vestings archived per member/team
 - **Protections:** `PausableUpgradeable`, `ReentrancyGuard`
 
 ---
 
 ## US-VEST-001: Create a Vesting Team with a Token
 
-> **As a** team owner, **I want to** create a vesting group (team) associated with a specific ERC20 token, **so that** I can organize multiple members' vesting schedules under one umbrella.
+> **As a** team owner, **I want to** create a vesting group (team) associated with a specific ERC20
+> token, **so that** I can organize multiple members' vesting schedules under one umbrella.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
 
@@ -49,25 +52,30 @@
 
 ## US-VEST-002: Add a Linear Vesting Schedule with Cliff for a Member
 
-> **As a** vesting team owner, **I want to** assign a linear vesting schedule with a cliff period to a team member, **so that** they earn tokens proportionally over time after a lock-up period.
+> **As a** vesting team owner, **I want to** assign a linear vesting schedule with a cliff period to
+> a team member, **so that** they earn tokens proportionally over time after a lock-up period.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-VEST-001
 
 ### Acceptance Criteria
 
-- [x] `addVesting(teamId, member, start, duration, cliff, totalAmount, token)` creates a new vesting schedule
+- [x] `addVesting(teamId, member, start, duration, cliff, totalAmount, token)` creates a new vesting
+      schedule
 - [x] Restricted to the team owner for that `teamId`
 - [x] `cliff` ≤ `duration`; reverts otherwise
 - [x] `start` can be in the past (supports retro-active vesting for existing agreements)
 - [x] No tokens releasable before `start + cliff` elapses
-- [x] After cliff: tokens vest linearly; `vestedAmount = totalAmount × (elapsed - cliff) / (duration - cliff)`
-- [x] Team owner must pre-fund the Vesting contract with `totalAmount` of the token before adding the schedule
+- [x] After cliff: tokens vest linearly;
+      `vestedAmount = totalAmount × (elapsed - cliff) / (duration - cliff)`
+- [x] Team owner must pre-fund the Vesting contract with `totalAmount` of the token before adding
+      the schedule
 
 ---
 
 ## US-VEST-003: Release Vested Tokens to the Member
 
-> **As a** vesting member, **I want to** claim my vested (and not yet released) tokens, **so that** I receive the tokens I have earned up to now.
+> **As a** vesting member, **I want to** claim my vested (and not yet released) tokens, **so that**
+> I receive the tokens I have earned up to now.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-VEST-002
 
@@ -85,7 +93,9 @@
 
 ## US-VEST-004: Stop Vesting Early (Releasable to Member, Unvested to Owner)
 
-> **As a** vesting team owner, **I want to** terminate a member's vesting schedule before it completes, **so that** the member receives tokens vested so far and unvested tokens are returned to the owner.
+> **As a** vesting team owner, **I want to** terminate a member's vesting schedule before it
+> completes, **so that** the member receives tokens vested so far and unvested tokens are returned
+> to the owner.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-VEST-002
 
@@ -102,14 +112,17 @@
 
 ## US-VEST-005: View Vested and Releasable Amounts
 
-> **As a** team member, **I want to** check how much I have vested and how much I can release right now, **so that** I can decide when to call `release`.
+> **As a** team member, **I want to** check how much I have vested and how much I can release right
+> now, **so that** I can decide when to call `release`.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** US-VEST-002
 
 ### Acceptance Criteria
 
-- [x] `vestedAmount(member, teamId)` returns total tokens vested to date (including already released)
-- [x] `releasable(member, teamId)` returns tokens available for immediate release (`vestedAmount - released`)
+- [x] `vestedAmount(member, teamId)` returns total tokens vested to date (including already
+      released)
+- [x] `releasable(member, teamId)` returns tokens available for immediate release
+      (`vestedAmount - released`)
 - [x] Both functions return `0` if cliff has not elapsed
 - [x] Both are `view` — no gas cost when called off-chain
 - [x] `getTeamVestingsWithMembers(teamId)` returns full vesting data for all members in a team

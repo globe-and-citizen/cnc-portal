@@ -1,10 +1,12 @@
 # App Authentication (Vue.js)
 
-This document describes the SIWE authentication implementation in the CNC Portal main application (Vue.js frontend).
+This document describes the SIWE authentication implementation in the CNC Portal main application
+(Vue.js frontend).
 
 ## Overview
 
-The app uses SIWE (Sign-In with Ethereum) via the `useSiwe` composable to authenticate users. After successful authentication, the user is redirected to the teams page.
+The app uses SIWE (Sign-In with Ethereum) via the `useSiwe` composable to authenticate users. After
+successful authentication, the user is redirected to the teams page.
 
 ## Key Files
 

@@ -14,6 +14,7 @@ on:
       - ".github/copilot-instructions/**"
       - "**/*.md"
       - ".markdownlint-cli2.yaml"
+      - ".prettier-markdown.json"
       - ".prettierignore"
       - "package.json"
       - "package-lock.json"

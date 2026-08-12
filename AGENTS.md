@@ -1,16 +1,22 @@
 # AGENTS.md
 
-Operational guidance for AI coding agents working in this repository. Human contributors should start with [README.md](./README.md) and [CONTRIBUTION.md](./CONTRIBUTION.md).
+Operational guidance for AI coding agents working in this repository. Human contributors should
+start with [README.md](./README.md) and [CONTRIBUTION.md](./CONTRIBUTION.md).
 
 ## Start here
 
-1. Read the gitignored root `todolist.md`. Keep it accurate while working; use `(in_progress)` for active work and `[x]` only when it is complete. Do not commit it. Do not start work marked `(blocked by: …)` until its blocker is complete.
-2. Work in the subproject you touch. This monorepo has no workspace tool: each subproject owns its `package.json` and dependencies.
-3. Read the specialised guide for the affected area. Do not treat this file as a replacement for the implementation guides.
+1. Read the gitignored root `todolist.md`. Keep it accurate while working; use `(in_progress)` for
+   active work and `[x]` only when it is complete. Do not commit it. Do not start work marked
+   `(blocked by: …)` until its blocker is complete.
+2. Work in the subproject you touch. This monorepo has no workspace tool: each subproject owns its
+   `package.json` and dependencies.
+3. Read the specialised guide for the affected area. Do not treat this file as a replacement for the
+   implementation guides.
 
 ## Repository skills
 
-Task-specific workflows are versioned under `.agents/skills/`. Use only the one that matches the work:
+Task-specific workflows are versioned under `.agents/skills/`. Use only the one that matches the
+work:
 
 - `cnc-work-orchestrator` — plan dependencies and bounded multi-agent work.
 - `cnc-github-flow` — issues, Sprint hierarchy, PRs, reviews, and publishing.
@@ -19,7 +25,8 @@ Task-specific workflows are versioned under `.agents/skills/`. Use only the one 
 - `cnc-frontend-change` — Vue client and Nuxt dashboard changes.
 - `cnc-contract-change` — Solidity and ABI changes.
 
-`AGENTS.md` remains the universal contract. Skills contain procedures; detailed standards remain in their specialised guides.
+`AGENTS.md` remains the universal contract. Skills contain procedures; detailed standards remain in
+their specialised guides.
 
 ## Repository map
 
@@ -29,22 +36,40 @@ Task-specific workflows are versioned under `.agents/skills/`. Use only the one 
 - `contract/` — Hardhat and Solidity contracts.
 - `ponder/` and `the-graph/` — indexers.
 
-The frontend uses REST for backend data and wagmi/viem for chain interactions. Contract deployment addresses are mirrored into the frontend artifacts; after changing a contract interface, run `npm run generate-abi` in `contract/` and commit the generated frontend ABI.
+The frontend uses REST for backend data and wagmi/viem for chain interactions. Contract deployment
+addresses are mirrored into the frontend artifacts; after changing a contract interface, run
+`npm run generate-abi` in `contract/` and commit the generated frontend ABI.
 
 ## Implementation rules
 
-- Keep a change scoped to the requested outcome. Report adjacent drift that materially affects correctness, security, or the edited behaviour; track it separately unless it blocks the current work.
-- Use the [query guide](./app/src/queries/README.md) for frontend API queries and mutations. In particular, mutations are pure async functions wrapped by a `useXxxMutation` composable, and one hook serves one endpoint rather than each UI action.
-- Use the [Vue component standards](./.github/copilot-instructions/vue-component-standards.md) when editing Vue components: components describe UI, utilities own pure shaping, composables own reactive logic, and server state remains in its query cache.
-- All feature on-chain writes use `useContractWritesV3`. Read the [contract-write guide](./app/src/composables/contracts/README.md) before adding or changing a write.
-- Read the [testing overview](./.github/copilot-instructions/testing-overview.md) before adding frontend tests; its global mocks must be reused, not re-declared in individual specs.
-- All display formatting goes through the canonical modules documented in [formatting standards](./.github/copilot-instructions/formatting-standards.md).
+- Keep a change scoped to the requested outcome. Report adjacent drift that materially affects
+  correctness, security, or the edited behaviour; track it separately unless it blocks the current
+  work.
+- Use the [query guide](./app/src/queries/README.md) for frontend API queries and mutations. In
+  particular, mutations are pure async functions wrapped by a `useXxxMutation` composable, and one
+  hook serves one endpoint rather than each UI action.
+- Use the [Vue component standards](./.github/copilot-instructions/vue-component-standards.md) when
+  editing Vue components: components describe UI, utilities own pure shaping, composables own
+  reactive logic, and server state remains in its query cache.
+- All feature on-chain writes use `useContractWritesV3`. Read the
+  [contract-write guide](./app/src/composables/contracts/README.md) before adding or changing a
+  write.
+- Read the [testing overview](./.github/copilot-instructions/testing-overview.md) before adding
+  frontend tests; its global mocks must be reused, not re-declared in individual specs.
+- All display formatting goes through the canonical modules documented in
+  [formatting standards](./.github/copilot-instructions/formatting-standards.md).
 
 ## Workflow and public hygiene
 
-- Use Conventional Commits with the matching gitmoji. Keep commits atomic. GitHub artifacts and user-facing UI strings are in English; see [commit conventions](./.github/copilot-instructions/commit-conventions.md).
-- Before opening a PR, search for a suitable issue or create one, assign it to the current authenticated GitHub user unless the task names another owner, and use `Closes #N` or `Fixes #N` in the PR body.
-- Treat all repository text as public. Never include infrastructure identifiers or connection strings in commits, issues, PRs, reviews, or committed documentation. Refer to a managed provider or a placeholder instead.
+- Use Conventional Commits with the matching gitmoji. Keep commits atomic. GitHub artifacts and
+  user-facing UI strings are in English; see
+  [commit conventions](./.github/copilot-instructions/commit-conventions.md).
+- Before opening a PR, search for a suitable issue or create one, assign it to the current
+  authenticated GitHub user unless the task names another owner, and use `Closes #N` or `Fixes #N`
+  in the PR body.
+- Treat all repository text as public. Never include infrastructure identifiers or connection
+  strings in commits, issues, PRs, reviews, or committed documentation. Refer to a managed provider
+  or a placeholder instead.
 
 ## Required validation before pushing
 
@@ -80,11 +105,14 @@ npm run compile
 npm run test
 ```
 
-For `dashboard/`, `ponder/`, and `the-graph/`, run every relevant lint, format, type-check, build, and test script exposed by that subproject. Contract PRs also require the [Solidity audit checklist](./.github/copilot-instructions/solidity-audit-checklist.md). When changing agent-instruction Markdown, run:
+For `dashboard/`, `ponder/`, and `the-graph/`, run every relevant lint, format, type-check, build,
+and test script exposed by that subproject. Contract PRs also require the
+[Solidity audit checklist](./.github/copilot-instructions/solidity-audit-checklist.md). When
+changing agent-instruction Markdown, run:
 
 ```bash
 npm run lint:md
-# Checks Markdown changed since origin/develop; subproject format checks exclude Markdown.
+# Markdown style lives in .prettier-markdown.json. Checks changed Markdown since origin/develop; subproject format checks exclude Markdown.
 npm run format:md:check
 bash scripts/audit-doc-drift.sh
 ```

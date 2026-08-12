@@ -1,6 +1,7 @@
 # Unit Testing Guide
 
-Comprehensive guide for writing unit tests in the CNC Portal project using Vitest, Vue Test Utils, and TanStack Vue Query.
+Comprehensive guide for writing unit tests in the CNC Portal project using Vitest, Vue Test Utils,
+and TanStack Vue Query.
 
 ## Overview
 

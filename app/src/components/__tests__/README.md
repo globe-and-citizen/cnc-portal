@@ -2,7 +2,8 @@
 
 ## Overview
 
-The SelectComponent test suite has been significantly improved for better readability, maintainability, and comprehensiveness.
+The SelectComponent test suite has been significantly improved for better readability,
+maintainability, and comprehensiveness.
 
 ## Key Improvements Made
 
@@ -97,4 +98,5 @@ Run the tests using:
 npx vitest SelectComponent --run
 ```
 
-The improved test suite provides comprehensive coverage while being much easier to read, understand, and maintain.
+The improved test suite provides comprehensive coverage while being much easier to read, understand,
+and maintain.

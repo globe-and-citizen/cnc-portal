@@ -9,7 +9,8 @@
 
 ## Overview
 
-Addresses cold start delays in Railway's serverless architecture by proactively waking backend services and database connections before user interactions.
+Addresses cold start delays in Railway's serverless architecture by proactively waking backend
+services and database connections before user interactions.
 
 **Problem:**
 
@@ -17,8 +18,7 @@ Addresses cold start delays in Railway's serverless architecture by proactively 
 - Backend sleeps → 1-3s delays on first requests
 - Poor UX on critical actions (login, data loading)
 
-**Solution:**
-Multi-layered wake-up system ensures services are ready before users need them.
+**Solution:** Multi-layered wake-up system ensures services are ready before users need them.
 
 ---
 
@@ -200,7 +200,8 @@ wakeBackend(); // No await - optimization, not requirement
 - [Platform Deployment](../../platform/deployment.md) - Full deployment guide
 - [Platform Security](../../platform/security.md) - Security standards
 - [Platform Performance](../../platform/performance.md) - Performance targets
-- [Railway Docs](https://docs.railway.app/reference/deployment#serverless) - Serverless configuration
+- [Railway Docs](https://docs.railway.app/reference/deployment#serverless) - Serverless
+  configuration
 
 ---
 

@@ -16,7 +16,8 @@
 
 ## Overview
 
-The CNC Portal smart contract system is a comprehensive organizational governance and financial management platform built on Ethereum. It enables decentralized teams to manage:
+The CNC Portal smart contract system is a comprehensive organizational governance and financial
+management platform built on Ethereum. It enables decentralized teams to manage:
 
 - **Financial Operations**: Banking, dividends, expense accounts, and cash remuneration
 - **Governance**: Elections, proposals, and board of directors management
@@ -145,7 +146,8 @@ graph TB
 
 - **Direction**: Elections → BoD (updates)
 - **Type**: Updater
-- **Purpose**: Elections updates BoD membership after publishing results; BoD address resolved at runtime via Officer
+- **Purpose**: Elections updates BoD membership after publishing results; BoD address resolved at
+  runtime via Officer
 - **Data**: Winner addresses become board members
 
 #### 3. BoardOfDirectors ↔ Proposals
@@ -283,7 +285,8 @@ Each team deploys their own set of contract instances:
 
 ### 1. Dividend Distribution Flow
 
-Distribution is **push-based**: a single transaction by the owner funds InvestorV1, which immediately sends each shareholder their proportional share. There is no claim step.
+Distribution is **push-based**: a single transaction by the owner funds InvestorV1, which
+immediately sends each shareholder their proportional share. There is no claim step.
 
 **ETH Dividends**:
 
@@ -962,7 +965,8 @@ require(initializerData.length > 0, "Missing initializer");
 
 ### Issue: Dividend Distribution Fails or Is Incorrect
 
-**Symptoms**: `distributeNativeDividends` or `distributeTokenDividends` reverts, or shareholders receive wrong amounts
+**Symptoms**: `distributeNativeDividends` or `distributeTokenDividends` reverts, or shareholders
+receive wrong amounts
 
 **Possible Causes**:
 
@@ -1112,6 +1116,4 @@ CashRemunerationBeacon:  0x... (TBD)
 
 ---
 
-_Document Version: 1.1_
-_Last Updated: March 2026_
-_Maintained by: CNC Portal Team_
+_Document Version: 1.1_ _Last Updated: March 2026_ _Maintained by: CNC Portal Team_

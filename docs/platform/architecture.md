@@ -7,7 +7,8 @@
 
 ## Overview
 
-The CNC Portal is a multi-component decentralized application that enables financial recognition of micro contributions in open-source projects and promotes effective governance tools.
+The CNC Portal is a multi-component decentralized application that enables financial recognition of
+micro contributions in open-source projects and promotes effective governance tools.
 
 ## System Architecture
 

@@ -1,6 +1,7 @@
 # Global Mocks System
 
-This directory contains centralized mock definitions that provide consistent testing infrastructure across the application.
+This directory contains centralized mock definitions that provide consistent testing infrastructure
+across the application.
 
 ## Key Components
 
@@ -34,7 +35,8 @@ it("should handle token operations", () => {
 
 ## Philosophy
 
-**"Mock Once, Use Everywhere"** - All mocks are centralized and globally available. Most tests work automatically without any mock setup.
+**"Mock Once, Use Everywhere"** - All mocks are centralized and globally available. Most tests work
+automatically without any mock setup.
 
 ## Complete Documentation
 

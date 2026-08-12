@@ -7,7 +7,8 @@
 
 ## Overview
 
-This document defines security standards and requirements for all features in the CNC Portal platform.
+This document defines security standards and requirements for all features in the CNC Portal
+platform.
 
 ## Authentication
 
@@ -406,4 +407,5 @@ When implementing new features, ensure:
 
 ---
 
-For feature-specific security considerations, see individual feature specifications in `/docs/features/`.
+For feature-specific security considerations, see individual feature specifications in
+`/docs/features/`.

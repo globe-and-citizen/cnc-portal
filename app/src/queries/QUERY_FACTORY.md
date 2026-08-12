@@ -1,6 +1,7 @@
 # Query Factory Documentation
 
-This document explains the Query Factory pattern used in CNC Portal for creating standardized TanStack Query hooks.
+This document explains the Query Factory pattern used in CNC Portal for creating standardized
+TanStack Query hooks.
 
 ## Table of Contents
 
@@ -17,7 +18,8 @@ This document explains the Query Factory pattern used in CNC Portal for creating
 
 ## Overview
 
-The Query Factory provides generic builder functions that reduce boilerplate when creating TanStack Query hooks while maintaining full type safety and Vue reactivity support.
+The Query Factory provides generic builder functions that reduce boilerplate when creating TanStack
+Query hooks while maintaining full type safety and Vue reactivity support.
 
 ### Benefits
 

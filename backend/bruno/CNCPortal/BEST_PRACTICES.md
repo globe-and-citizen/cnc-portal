@@ -4,7 +4,9 @@
 
 ### Overview
 
-Our Bruno test files follow a structured naming convention to clearly differentiate between different types of tests and their purposes. This ensures consistency, maintainability, and easy navigation across our test suite.
+Our Bruno test files follow a structured naming convention to clearly differentiate between
+different types of tests and their purposes. This ensures consistency, maintainability, and easy
+navigation across our test suite.
 
 ### Naming Format
 
@@ -39,7 +41,8 @@ Claim - 03 - Claims - Get Claims History.bru
 [Domain] - [Seq] - Dev Helper - [Operation] - [Description]
 ```
 
-**Purpose**: Call development endpoints to perform complex operations that cannot be executed in Bruno pre-request scripts due to runtime limitations.
+**Purpose**: Call development endpoints to perform complex operations that cannot be executed in
+Bruno pre-request scripts due to runtime limitations.
 
 **Examples:**
 
@@ -206,15 +209,20 @@ npx bru run . --env CNCURI
 
 ### Problem Statement
 
-Bruno's runtime environment has limitations when it comes to executing complex operations in pre-request or post-response scripts. Specifically:
+Bruno's runtime environment has limitations when it comes to executing complex operations in
+pre-request or post-response scripts. Specifically:
 
-- **No HTTP requests available**: `fetch()`, `axios`, or similar HTTP libraries are not available in Bruno scripts
+- **No HTTP requests available**: `fetch()`, `axios`, or similar HTTP libraries are not available in
+  Bruno scripts
 - **Limited Node.js APIs**: Many Node.js modules and APIs are restricted
-- **Runtime constraints**: Complex cryptographic operations, external library calls, or heavy computations may fail
+- **Runtime constraints**: Complex cryptographic operations, external library calls, or heavy
+  computations may fail
 
 ### Recommended Solution: Dev Endpoint Pattern
 
-When you need to perform complex operations (like cryptographic signing, external API calls, or data transformations), instead of trying to implement them directly in Bruno scripts, create a dedicated development endpoint and use a two-step approach.
+When you need to perform complex operations (like cryptographic signing, external API calls, or data
+transformations), instead of trying to implement them directly in Bruno scripts, create a dedicated
+development endpoint and use a two-step approach.
 
 ## Implementation Pattern
 
@@ -535,7 +543,10 @@ Use this pattern when you encounter:
 
 ## Conclusion
 
-When Bruno's runtime limitations prevent you from implementing complex operations directly in scripts, the dev endpoint pattern provides a reliable, maintainable alternative. This approach keeps your test logic simple while leveraging the full power of your backend infrastructure for complex operations.
+When Bruno's runtime limitations prevent you from implementing complex operations directly in
+scripts, the dev endpoint pattern provides a reliable, maintainable alternative. This approach keeps
+your test logic simple while leveraging the full power of your backend infrastructure for complex
+operations.
 
 **Remember: Keep it simple in Bruno, handle complexity in your backend.**
 
@@ -564,4 +575,5 @@ post {
 }
 ```
 
-This approach has been successfully implemented in our SIWE authentication flow and provides a robust foundation for complex testing scenarios.
+This approach has been successfully implemented in our SIWE authentication flow and provides a
+robust foundation for complex testing scenarios.

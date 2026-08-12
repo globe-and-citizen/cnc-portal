@@ -1,9 +1,9 @@
 # Contract: AdCampaignManager
 
-**Epic Goal:** Let advertisers fund on-chain ad campaigns and allow admins to claim per-click/impression payments against those budgets.
-**Contract File:** `contracts/AdCampaignManager.sol`
-**Upgradeable:** No (standard Ownable)
-**Last updated:** 2026-03-16
+**Epic Goal:** Let advertisers fund on-chain ad campaigns and allow admins to claim
+per-click/impression payments against those budgets. **Contract File:**
+`contracts/AdCampaignManager.sol` **Upgradeable:** No (standard Ownable) **Last updated:**
+2026-03-16
 
 ---
 
@@ -24,8 +24,11 @@
 ## Implementation Notes
 
 - **Contract:** `contracts/AdCampaignManager.sol`
-- **Key functions:** `createAdCampaign`, `claimPayment`, `requestAndApproveWithdrawal`, `addAdmin`, `removeAdmin`, `setBankContractAddress`, `setCostPerClick`, `setCostPerImpression`, `getAdCampaignByCode`
-- **Access roles:** Anyone can create a campaign (with ETH); admins/owner claim payments; advertiser or admin can withdraw remainder
+- **Key functions:** `createAdCampaign`, `claimPayment`, `requestAndApproveWithdrawal`, `addAdmin`,
+  `removeAdmin`, `setBankContractAddress`, `setCostPerClick`, `setCostPerImpression`,
+  `getAdCampaignByCode`
+- **Access roles:** Anyone can create a campaign (with ETH); admins/owner claim payments; advertiser
+  or admin can withdraw remainder
 - **Dependencies:** Bank contract (payment claims forwarded as ETH to Bank)
 - **Protections:** `PausableUpgradeable` (despite not being proxy-upgradeable), `ReentrancyGuard`
 - **Note:** Not upgradeable — no proxy; owner deploys and configures directly
@@ -34,7 +37,8 @@
 
 ## US-ADC-001: Create an Ad Campaign with ETH Budget
 
-> **As an** advertiser, **I want to** create an on-chain ad campaign by depositing ETH, **so that** payments can be claimed against my budget in a trustless way.
+> **As an** advertiser, **I want to** create an on-chain ad campaign by depositing ETH, **so that**
+> payments can be claimed against my budget in a trustless way.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** none
 
@@ -51,7 +55,8 @@
 
 ## US-ADC-002: Claim Payment for Clicks/Impressions
 
-> **As an** admin, **I want to** claim payment from a campaign's budget based on reported clicks or impressions, **so that** the platform is compensated for traffic delivered.
+> **As an** admin, **I want to** claim payment from a campaign's budget based on reported clicks or
+> impressions, **so that** the platform is compensated for traffic delivered.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-ADC-001, US-ADC-004
 
@@ -69,7 +74,8 @@
 
 ## US-ADC-003: Withdraw Remaining Campaign Budget
 
-> **As an** advertiser, **I want to** stop my campaign and withdraw the unspent ETH budget, **so that** I can recover funds if the campaign is no longer needed.
+> **As an** advertiser, **I want to** stop my campaign and withdraw the unspent ETH budget, **so
+> that** I can recover funds if the campaign is no longer needed.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-ADC-001
 
@@ -86,7 +92,8 @@
 
 ## US-ADC-004: Configure Cost-per-Click and Cost-per-Impression
 
-> **As an** owner, **I want to** set the global cost-per-click and cost-per-impression rates, **so that** all campaigns use the same pricing without per-campaign configuration.
+> **As an** owner, **I want to** set the global cost-per-click and cost-per-impression rates, **so
+> that** all campaigns use the same pricing without per-campaign configuration.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** none
 
@@ -101,7 +108,8 @@
 
 ## US-ADC-005: Manage Admin List
 
-> **As an** owner, **I want to** add or remove admin addresses, **so that** I can delegate campaign payment claims without giving full ownership.
+> **As an** owner, **I want to** add or remove admin addresses, **so that** I can delegate campaign
+> payment claims without giving full ownership.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** none
 
