@@ -30,7 +30,7 @@ The frontend uses REST for backend data and wagmi/viem for chain interactions. C
 ## Workflow and public hygiene
 
 - Use Conventional Commits with the matching gitmoji. Keep commits atomic. GitHub artifacts and user-facing UI strings are in English; see [commit conventions](./.github/copilot-instructions/commit-conventions.md).
-- Before opening a PR, search for a suitable issue or create one, assign it to `hermannleboss`, and use `Closes #N` or `Fixes #N` in the PR body.
+- Before opening a PR, search for a suitable issue or create one, assign it to the current authenticated GitHub user unless the task names another owner, and use `Closes #N` or `Fixes #N` in the PR body.
 - Treat all repository text as public. Never include infrastructure identifiers or connection strings in commits, issues, PRs, reviews, or committed documentation. Refer to a managed provider or a placeholder instead.
 
 ## Required validation before pushing

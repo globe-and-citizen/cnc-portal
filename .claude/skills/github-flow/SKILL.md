@@ -41,7 +41,8 @@ skills rather than duplicating them:
   comments, UI strings. Chat can be French; the artifact is English.
 - **Issue ↔ PR linking is mandatory.** Every PR references an issue via a closing keyword in the
   **body** (`Closes #N` / `Fixes #N`), not via a commit trailer. Even typos/chores get a tracking
-  issue. New issues are **assigned to `hermannleboss`**.
+  issue. Assign a new issue to the current authenticated GitHub user unless the task names
+  another owner; resolve the login with `gh api user --jq .login` rather than hard-coding it.
 - **Tooling: `gh` CLI**, not `mcp__github__*` (the MCP server is unreliable). Repo is
   `globe-and-citizen/cnc-portal`; default base branch is `develop`.
 - **Never** add `Co-Authored-By` trailers or a "🤖 Generated with Claude Code" footer to any
@@ -62,10 +63,11 @@ skills rather than duplicating them:
    `sprint_planning`. Match the body structure the template implies (repro steps for bugs;
    problem + solution + **Acceptance Criteria** for features).
 2. **Write the title** per the shared rulebook (Conventional + gitmoji).
-3. **Create it, assigned to `hermannleboss`**:
+3. **Create it, assigned to the current authenticated GitHub user**:
    ```bash
+   CURRENT_USER=$(gh api user --jq .login)
    gh issue create --title "feat: ✨ …" --body-file <(printf '%s' "$BODY") \
-     --assignee hermannleboss --label enhancement
+     --assignee "$CURRENT_USER" --label enhancement
    ```
 4. **Place it in the hierarchy.** Issues form a sub-issue tree; `[Group]` container issues only
    at **3+ children**. Sprint plans follow `[Sprint] → [Goals] → concrete tickets`, never a flat
@@ -89,8 +91,9 @@ skills rather than duplicating them:
    Run `prettier --write` on touched `app/`/`backend/` files; use `eslint --fix` in `dashboard/`.
 3. **Commit atomically** — one commit per logical change, Conventional + gitmoji, committed as
    each piece lands. Don't squash the whole PR into one commit at the end.
-4. **Ensure a linked issue exists** and is assigned to `hermannleboss`. If none fits, create one
-   first (Mode 1). The issue is the *why*, the PR is the *how*.
+4. **Ensure a linked issue exists** and is assigned to the current authenticated GitHub user
+   unless the task names another owner. If none fits, create one first (Mode 1). The issue is the
+   *why*, the PR is the *how*.
 5. **Push** the feature branch, then **open the PR** against `develop`, filling
    `.github/pull_request_template.md` and adding `Closes #N` in the body:
    ```bash
