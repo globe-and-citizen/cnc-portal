@@ -39,10 +39,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import dayjs from 'dayjs'
 import type { Claim } from '@/types'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
 import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
+import { formatDate } from '@/utils/format'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
@@ -57,7 +57,7 @@ const emit = defineEmits<{
 const toast = useToast()
 
 const formattedDate = computed(() => {
-  return props.claim ? dayjs(props.claim.dayWorked).format('MMM DD, YYYY') : ''
+  return props.claim ? formatDate(props.claim.dayWorked) : ''
 })
 
 const {

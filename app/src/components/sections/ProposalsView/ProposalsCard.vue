@@ -30,21 +30,9 @@
           <IconifyIcon icon="heroicons:user" />
           <div>{{ creator }}</div>
           <IconifyIcon icon="heroicons:calendar" />
-          {{
-            new Date(Number(startDate) * 1000).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-            })
-          }}
+          {{ formatDate(fromUnix(Number(startDate))) }}
           -
-          {{
-            new Date(Number(endDate) * 1000).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-            })
-          }}
+          {{ formatDate(fromUnix(Number(endDate))) }}
         </div>
       </div>
     </div>
@@ -76,6 +64,7 @@
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { ProposalState, type Proposal } from '@/types'
 import { useRouter } from 'vue-router'
+import { formatDate, fromUnix } from '@/utils/format'
 
 const router = useRouter()
 const props = defineProps<Proposal>()

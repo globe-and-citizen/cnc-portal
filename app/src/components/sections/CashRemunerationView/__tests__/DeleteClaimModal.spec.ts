@@ -124,7 +124,7 @@ describe('DeleteClaimModal', () => {
         claim: { ...defaultClaim, dayWorked: testDate }
       })
 
-      expect(wrapper.text()).toContain('Jan 01, 2024')
+      expect(wrapper.text()).toContain('Jan 1, 2024')
     })
 
     it('should handle different date formats', () => {
