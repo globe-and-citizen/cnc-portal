@@ -212,13 +212,9 @@ const formattingSelectors = [bannedIntlFormatter, bannedToLocale, bannedToFixed,
 // file here. The ceiling below fails `npm run lint` at config load if the list
 // grows; lower it as entries leave.
 const formattingLegacyFiles = [
-  'src/components/RateDotList.vue',
-  'src/components/TransactionChildRow.vue',
-  'src/components/TransactionDetailModal.vue',
   'src/components/forms/ApproveExpenseSummaryForm.vue',
   'src/components/forms/TokenAmount.vue',
   'src/components/forms/TransferForm.vue',
-  'src/components/sections/AdministrationView/ElectionStats.vue',
   'src/components/sections/AdministrationView/PastBoDElectionCard.vue',
   'src/components/sections/CashRemunerationView/DeleteClaimModal.vue',
   'src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue',
