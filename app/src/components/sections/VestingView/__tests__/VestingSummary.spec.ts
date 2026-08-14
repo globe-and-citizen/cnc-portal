@@ -43,7 +43,7 @@ describe('VestingSummary.vue', () => {
 
     it('displays dates correctly', () => {
       const dateInfo = wrapper.find('.grid > div:nth-child(3)')
-      expect(dateInfo.text()).toContain('13/06/2025')
+      expect(dateInfo.text()).toContain('Jun 13, 2025')
     })
 
     it('displays duration correctly', () => {

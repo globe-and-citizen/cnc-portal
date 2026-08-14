@@ -22,7 +22,7 @@
     >
       <template #vestablePerDay-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
-          {{ Number((row.totalAmount / row.durationDays).toFixed(2)) }}
+          {{ formatNumber(row.totalAmount / row.durationDays, { maxDecimals: 2 }) }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </span>
       </template>
@@ -34,7 +34,7 @@
       </template>
       <template #released-cell="{ row: { original: row } }">
         <UBadge color="info" variant="subtle" class="flex items-center gap-1">
-          {{ row.released.toFixed(2) }}
+          {{ formatNumber(row.released, { maxDecimals: 2 }) }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </UBadge>
       </template>
@@ -97,6 +97,7 @@ import {
 } from '@/composables/vesting/reads'
 import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { formatDate, formatNumber, fromUnix } from '@/utils/format'
 
 const toast = useToast()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
@@ -212,13 +213,7 @@ const vestings = computed<VestingRow[]>(() => {
       return {
         member,
         index,
-        startDate: (() => {
-          const date = new Date(Number(v.start) * 1000)
-          const day = String(date.getDate()).padStart(2, '0')
-          const month = String(date.getMonth() + 1).padStart(2, '0')
-          const year = date.getFullYear()
-          return `${day}/${month}/${year}`
-        })(),
+        startDate: formatDate(fromUnix(v.start)),
         isStarted,
         durationDays: Math.floor(Number(v.duration) / 86400),
         cliffDays: Math.floor(Number(v.cliff) / 86400),
