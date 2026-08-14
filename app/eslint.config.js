@@ -203,34 +203,6 @@ const bannedDatePattern = {
 
 const formattingSelectors = [bannedIntlFormatter, bannedToLocale, bannedToFixed, bannedDatePattern]
 
-// Migration debt for the formatting guard — every file that still formats by
-// hand. This list only ever shrinks: PR 2 and PR 3 of #2383 drain it.
-//
-// If you're about to add an entry, you're adding a new convention to a codebase
-// that just spent a PR removing them. Either the canonical module covers your
-// case, or it should — extend `src/utils/format/` rather than whitelisting a
-// file here. The ceiling below fails `npm run lint` at config load if the list
-// grows; lower it as entries leave.
-const formattingLegacyFiles = [
-  'src/utils/accounting/ledgerPresenter.ts',
-  'src/utils/accounting/presenter.ts',
-  'src/utils/accounting/toUsd.ts',
-  'src/utils/accountingPdf.ts',
-  'src/utils/communityCreditUtil.ts',
-  'src/utils/dayUtils.ts',
-  'src/utils/safe.ts',
-  'src/utils/safeDepositRouterUtil.ts'
-]
-
-const FORMATTING_LEGACY_MAX = 46
-if (formattingLegacyFiles.length > FORMATTING_LEGACY_MAX) {
-  throw new Error(
-    `formattingLegacyFiles has ${formattingLegacyFiles.length} entries (ceiling ${FORMATTING_LEGACY_MAX}). ` +
-      'Format through `@/utils/format` instead of whitelisting a new file — see ' +
-      '.github/copilot-instructions/formatting-standards.md.'
-  )
-}
-
 export default [
   {
     name: 'app/files-to-lint',
@@ -319,8 +291,7 @@ export default [
       'src/utils/format/**',
       // Specs may assert against natively formatted expectations.
       '**/__tests__/**',
-      '**/*.spec.{ts,tsx}',
-      ...formattingLegacyFiles
+      '**/*.spec.{ts,tsx}'
     ],
     rules: {
       // Two rules, one selector list: the core rule only walks `<script>`,

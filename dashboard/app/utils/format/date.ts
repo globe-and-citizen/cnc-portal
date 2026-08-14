@@ -56,6 +56,16 @@ export function formatDateShort(value: DateInput | null | undefined): string {
   return toDayjs(value)?.format('MMM D') ?? EMPTY_VALUE
 }
 
+/** `Mon` — compact weekday label for chart axes. */
+export function formatWeekdayShort(value: DateInput | null | undefined): string {
+  return toDayjs(value)?.format('ddd') ?? EMPTY_VALUE
+}
+
+/** `Mon, Jan 8` — compact weekday and date for a daily activity row. */
+export function formatDateWeekdayShort(value: DateInput | null | undefined): string {
+  return toDayjs(value)?.format('ddd, MMM D') ?? EMPTY_VALUE
+}
+
 /** `January 2026` — period headers. */
 export function formatMonthYear(value: DateInput | null | undefined): string {
   return toDayjs(value)?.format('MMMM YYYY') ?? EMPTY_VALUE

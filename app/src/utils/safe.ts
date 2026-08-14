@@ -12,6 +12,7 @@ import { NETWORK } from '@/constant'
 import { formatEtherUtil, tokenSymbol } from '@/utils/constantUtil'
 import { type DecodedCall } from '@/types'
 import type { SafeIncomingTransfer } from '@/types'
+import { formatToken } from '@/utils/format'
 
 /**
  * Get Safe transaction service URL for a given chain ID
@@ -146,8 +147,7 @@ export const formatSafeTransactionValue = (
 
         if (symbol) {
           const formattedAmount = formatEtherUtil(BigInt(transferAmount), tokenAddress)
-          const numericValue = parseFloat(formattedAmount)
-          return `${numericValue.toFixed(4)} ${symbol}`
+          return formatToken(formattedAmount, symbol, { maxDecimals: 4 })
         }
       }
     }
@@ -158,8 +158,7 @@ export const formatSafeTransactionValue = (
     }
 
     const formattedAmount = formatEtherUtil(parsedValue, zeroAddress)
-    const numericValue = parseFloat(formattedAmount)
-    return `${numericValue.toFixed(4)} ${NETWORK.currencySymbol}`
+    return formatToken(formattedAmount, NETWORK.currencySymbol, { maxDecimals: 4 })
   } catch (error) {
     console.warn('Error formatting transaction value:', error, { value, data, transactionTo })
     // Fallback to basic formatting
@@ -213,11 +212,11 @@ export const formatSafeTransferAmount = (transfer: SafeIncomingTransfer): string
   }
   if (transfer.type === 'ERC20_TRANSFER' && transfer.tokenInfo) {
     const amount = formatUnits(BigInt(transfer.value), transfer.tokenInfo.decimals)
-    return `${parseFloat(amount).toFixed(4)} ${transfer.tokenInfo.symbol}`
+    return formatToken(amount, transfer.tokenInfo.symbol, { maxDecimals: 4 })
   }
   // ETHER_TRANSFER - Use existing formatEtherUtil from constantUtil
   const formatted = formatEtherUtil(BigInt(transfer.value), zeroAddress)
-  return `${parseFloat(formatted).toFixed(6)} ${NETWORK.currencySymbol}`
+  return formatToken(formatted, NETWORK.currencySymbol, { maxDecimals: 6 })
 }
 
 export const formatSafeTransferType = (type: string): string => {

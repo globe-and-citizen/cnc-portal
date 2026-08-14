@@ -50,17 +50,19 @@ Same surface in both front-ends (`app/src/utils/format/`, `dashboard/app/utils/f
 
 ### Dates
 
-| Helper                      | Renders                 | Use for                                                                    |
-| --------------------------- | ----------------------- | -------------------------------------------------------------------------- |
-| `formatDate(value)`         | `Jan 8, 2026`           | The default for a date shown on its own.                                   |
-| `formatDateTime(value)`     | `Jan 8, 2026, 14:05:32` | Chronologically ordered rows — same-day entries must stay distinguishable. |
-| `formatDateShort(value)`    | `Jan 8`                 | Chart axes, dense tables where the year is established.                    |
-| `formatMonthYear(value)`    | `January 2026`          | Period headers.                                                            |
-| `formatDateIso(value)`      | `2026-01-08`            | Filenames, CSV columns, API payloads — never UI copy.                      |
-| `formatDateUtc(value)`      | `2026-01-08 14:05 UTC`  | Anything a user lines up against a block explorer or a deadline.           |
-| `formatDateRelative(value)` | `3 min ago`             | Freshness cues. Falls back to `formatDate` past a week.                    |
-| `formatDuration(minutes)`   | `1 h 30 min`            | Elapsed spans. Never `01:30`, which reads as a clock time.                 |
-| `fromUnix(seconds)`         | a `Dayjs`               | On-chain timestamps. **Use this instead of `* 1000`.**                     |
+| Helper                          | Renders                 | Use for                                                                    |
+| ------------------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| `formatDate(value)`             | `Jan 8, 2026`           | The default for a date shown on its own.                                   |
+| `formatDateTime(value)`         | `Jan 8, 2026, 14:05:32` | Chronologically ordered rows — same-day entries must stay distinguishable. |
+| `formatDateShort(value)`        | `Jan 8`                 | Chart axes, dense tables where the year is established.                    |
+| `formatWeekdayShort(value)`     | `Mon`                   | Compact weekday labels, such as a chart axis.                              |
+| `formatDateWeekdayShort(value)` | `Mon, Jan 8`            | Daily activity rows where the weekday adds context.                        |
+| `formatMonthYear(value)`        | `January 2026`          | Period headers.                                                            |
+| `formatDateIso(value)`          | `2026-01-08`            | Filenames, CSV columns, API payloads — never UI copy.                      |
+| `formatDateUtc(value)`          | `2026-01-08 14:05 UTC`  | Anything a user lines up against a block explorer or a deadline.           |
+| `formatDateRelative(value)`     | `3 min ago`             | Freshness cues. Falls back to `formatDate` past a week.                    |
+| `formatDuration(minutes)`       | `1 h 30 min`            | Elapsed spans. Never `01:30`, which reads as a clock time.                 |
+| `fromUnix(seconds)`             | a `Dayjs`               | On-chain timestamps. **Use this instead of `* 1000`.**                     |
 
 A bare `number` passed to a date formatter is **milliseconds** (the JavaScript convention). Contract
 timestamps are seconds — `formatDate(fromUnix(ts))`, not `formatDate(ts * 1000)`.
@@ -127,10 +129,8 @@ never to prepare one for a contract.
 **Extend it.** Add the named style to `utils/format/`, with a test and a one-line doc comment saying
 when to reach for it. Then use it in both front-ends.
 
-Do **not** add a file to the `formattingLegacyFiles` allowlist in `eslint.config.js` /
-`eslint.config.mjs`. That list is intentional migration debt and only ever shrinks — a ceiling
-constant fails lint at config load if it grows. A new entry means the codebase gained a convention
-in the same week it spent a PR removing them.
+Do **not** add a formatting allowlist. The guard is intentionally applied to every application
+source file outside `utils/format/`; a new convention belongs in the canonical module instead.
 
 If a one-off truly is one-off, a scoped
 `// eslint-disable-next-line no-restricted-syntax -- <reason>` on the line itself is the escape
@@ -148,4 +148,4 @@ change lands in both.
 - [ ] On-chain amounts reach `parseUnits` unrounded
 - [ ] Unknown / loading values render `—`, not `0`
 - [ ] A new named style landed in **both** front-ends, with a test
-- [ ] `formattingLegacyFiles` did not grow
+- [ ] The formatting guard applies without a per-file allowlist
