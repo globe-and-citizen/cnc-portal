@@ -247,7 +247,6 @@ const formattingLegacyFiles = [
   'src/utils/accountingPdf.ts',
   'src/utils/communityCreditUtil.ts',
   'src/utils/contractManagementUtil.ts',
-  'src/utils/currencyUtil.ts',
   'src/utils/datePicker.ts',
   'src/utils/dayUtils.ts',
   'src/utils/generalUtil.ts',
