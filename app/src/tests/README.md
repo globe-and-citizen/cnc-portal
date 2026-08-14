@@ -24,10 +24,9 @@ mockERC20Reads.balanceOf.data.value = 1000n;
 ```
 
 ESLint enforces this via `no-restricted-syntax`: any `vi.mock('<globally-mocked-path>')` call in a
-spec file is an error. The list of banned paths and the legacy-offender allow-list live in
-[`app/eslint.config.js`](../../eslint.config.js) under `bannedGlobalMockPaths` /
-`globalMockLegacyFiles`. The full mock system is documented in
-[`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md).
+spec file is an error. The banned-path list lives in
+[`app/eslint.config.js`](../../eslint.config.js) under `bannedGlobalMockPaths`. The full mock system
+is documented in [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md).
 
 If you need to mock a module that **isn't** yet globally mocked but you're reaching for it across
 several specs, add it to `src/tests/setup/` and re-export the override hook from
@@ -188,11 +187,10 @@ Use:
 
 `app/src/components/forms/__tests__/TokenAmount.spec.ts` is the reference example for the pattern.
 
-## Migrating Legacy Specs Off `wrapper.vm as X`
+## Replacing `wrapper.vm as X`
 
-When you touch an existing spec that's whitelisted in `vmCastLegacyFiles` / `vmCastLegacyExtraFiles`
-(in [`app/eslint.config.js`](../../eslint.config.js)), drain the casts as part of your change —
-don't leave them. Here's the recipe per cast type.
+`wrapper.vm` casts are rejected in every spec. Replace a cast with the observable interaction that
+would drive the component in production. Here is the recipe per cast type.
 
 ### Cast type 1 — state mutation
 

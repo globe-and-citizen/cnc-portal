@@ -53,11 +53,8 @@ const vmCast = {
 //   - The `bannedGlobalMockPaths` list mirrors the `vi.mock(...)` first
 //     arguments found in `src/tests/setup/*.setup.ts`. Anything globally
 //     mocked there must appear here, and vice-versa.
-//   - `globalMockLegacyFiles` is the migration debt — each file in it
-//     still carries one or more local `vi.mock(...)` calls that should
-//     move onto the global helpers. Remove a file from this list once
-//     its local re-mocks are gone; the rule then enforces the contract
-//     for that file going forward.
+//   - The guard applies to every spec. Add shared mocks to the setup files and
+//     their override hooks to `@/tests/mocks`; do not create per-file exemptions.
 
 const bannedGlobalMockPaths = [
   // store.setup.ts
