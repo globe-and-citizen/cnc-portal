@@ -227,16 +227,13 @@ const formattingLegacyFiles = [
   'src/composables/useClaimForm.ts',
   'src/composables/vesting/useVestingDateRange.ts',
   'src/stores/communityCredit.ts',
-  'src/utils/abiDecodeUtil.ts',
   'src/utils/accounting/ledgerPresenter.ts',
   'src/utils/accounting/presenter.ts',
   'src/utils/accounting/toUsd.ts',
   'src/utils/accountingPdf.ts',
   'src/utils/communityCreditUtil.ts',
-  'src/utils/contractManagementUtil.ts',
   'src/utils/datePicker.ts',
   'src/utils/dayUtils.ts',
-  'src/utils/generalUtil.ts',
   'src/utils/safe.ts',
   'src/utils/safeDepositRouterUtil.ts'
 ]
