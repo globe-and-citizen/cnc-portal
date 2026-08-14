@@ -1,11 +1,10 @@
-import { formatAddress } from './format/address'
+import { formatAddress, formatDateTime } from './format'
 
 const isDevelopment = import.meta.env.MODE === 'development'
 // const isVerbose = true
 
 const getTimestamp = (): string => {
-  const now = new Date()
-  return `${now.toLocaleString()}`
+  return formatDateTime(new Date())
 }
 
 export const log = {

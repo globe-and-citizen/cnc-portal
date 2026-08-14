@@ -38,10 +38,12 @@ export {
   formatDateIso,
   formatDateRelative,
   formatDateShort,
+  formatDateWeekdayShort,
   formatDateTime,
   formatDateUtc,
   formatDuration,
   formatMonthYear,
+  formatWeekdayShort,
   fromUnix,
   type DateInput
 } from './date'

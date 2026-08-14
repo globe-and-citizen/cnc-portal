@@ -103,7 +103,7 @@ export interface ExpenseDrawInfo {
 function toBaseUnits(amount: number, decimals: number): bigint | null {
   if (!Number.isFinite(amount) || amount < 0) return null
   try {
-    return parseUnits(amount.toFixed(decimals), decimals)
+    return parseUnits(String(amount), decimals)
   } catch {
     return null
   }

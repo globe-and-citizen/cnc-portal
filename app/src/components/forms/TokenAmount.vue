@@ -177,17 +177,17 @@ const useMaxBalance = () => {
   const bps = props.feeBps ?? 0
 
   if (bps <= 0) {
-    amount.value = String(balance.toFixed(6))
+    amount.value = String(balance)
     return
   }
 
   // Convert gross max balance to net amount so fees are included.
   const netMaxAmount = (balance * (10000 - bps)) / 10000
-  amount.value = String(Math.max(netMaxAmount, 0).toFixed(6))
+  amount.value = String(Math.max(netMaxAmount, 0))
 }
 
 const usePercentageOfBalance = (percentage: number) => {
-  amount.value = ((availableBalance.value * percentage) / 100).toFixed(4)
+  amount.value = String((availableBalance.value * percentage) / 100)
 }
 
 const handleAmountInput = (event: Event) => {

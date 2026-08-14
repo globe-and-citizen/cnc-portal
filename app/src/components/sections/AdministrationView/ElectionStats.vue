@@ -44,6 +44,7 @@
 </template>
 <script setup lang="ts">
 import ElectionStatsCard from '@/components/sections/AdministrationView/ElectionStatsCard.vue'
+import { formatDateTime } from '@/utils/format'
 
 const { formattedElection } = defineProps<{
   formattedElection: {
@@ -61,15 +62,7 @@ const { formattedElection } = defineProps<{
   }
 }>()
 
-// Format date as "Dec 15, 2023"
-const formatDate = (date: Date) => {
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+const formatDate = (date: Date) => formatDateTime(date)
 </script>
 
 <style scoped>

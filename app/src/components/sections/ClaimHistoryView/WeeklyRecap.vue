@@ -63,7 +63,8 @@
           <RateDotList :rates="effectiveWage?.ratePerHour || []" :text-class="'text-center'" />
         </div>
         <div class="mt-1 text-center text-sm text-gray-500">
-          ≃ ${{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}/h
+          ≃ {{ formatCurrency(hourlyRateInUserCurrency, localCurrencyFormatOptions) }}
+          {{ currencyStore.localCurrency.code }}/h
         </div>
       </div>
 
@@ -78,7 +79,7 @@
         </div>
 
         <div class="mt-1 text-center text-sm text-gray-500">
-          ≃ ${{ overtimeHourlyRateInUserCurrency.toFixed(2) }}
+          ≃ {{ formatCurrency(overtimeHourlyRateInUserCurrency, localCurrencyFormatOptions) }}
           {{ currencyStore.localCurrency.code }}/h
         </div>
       </div>
@@ -98,7 +99,8 @@
         </div>
         <div class="mt-1 flex gap-2 text-center text-sm text-gray-500">
           <template v-if="props.weeklyClaim">
-            ≃ ${{ totalAmount }} {{ currencyStore.localCurrency.code }}
+            ≃ {{ formatCurrency(totalAmount, localCurrencyFormatOptions) }}
+            {{ currencyStore.localCurrency.code }}
           </template>
           <!-- <template v-else>Submit hours to calculate</template> -->
         </div>
@@ -110,6 +112,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
+import { formatCurrency } from '@/utils/format'
 import type { RatePerHour, Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import RateDotList from '@/components/RateDotList.vue'
 import {
@@ -124,6 +127,7 @@ const props = defineProps<{
 }>()
 
 const currencyStore = useCurrencyStore()
+const localCurrencyFormatOptions = computed(() => ({ currency: currencyStore.localCurrency.code }))
 
 const effectiveWage = computed(() => props.weeklyClaim?.wage ?? props.wage)
 const submittedTime = computed(() => props.weeklyClaim?.minutesWorked ?? 0)
@@ -173,6 +177,6 @@ const combinedTokenAmounts = computed(() =>
 const totalAmount = computed(() => {
   const regularTotal = (regularMinutesWorked.value / 60) * hourlyRateInUserCurrency.value
   const overtimeTotal = (overtimeMinutesWorked.value / 60) * overtimeHourlyRateInUserCurrency.value
-  return (regularTotal + overtimeTotal).toFixed(2)
+  return regularTotal + overtimeTotal
 })
 </script>

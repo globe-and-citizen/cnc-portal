@@ -53,11 +53,8 @@ const vmCast = {
 //   - The `bannedGlobalMockPaths` list mirrors the `vi.mock(...)` first
 //     arguments found in `src/tests/setup/*.setup.ts`. Anything globally
 //     mocked there must appear here, and vice-versa.
-//   - `globalMockLegacyFiles` is the migration debt — each file in it
-//     still carries one or more local `vi.mock(...)` calls that should
-//     move onto the global helpers. Remove a file from this list once
-//     its local re-mocks are gone; the rule then enforces the contract
-//     for that file going forward.
+//   - The guard applies to every spec. Add shared mocks to the setup files and
+//     their override hooks to `@/tests/mocks`; do not create per-file exemptions.
 
 const bannedGlobalMockPaths = [
   // store.setup.ts
@@ -203,72 +200,6 @@ const bannedDatePattern = {
 
 const formattingSelectors = [bannedIntlFormatter, bannedToLocale, bannedToFixed, bannedDatePattern]
 
-// Migration debt for the formatting guard — every file that still formats by
-// hand. This list only ever shrinks: PR 2 and PR 3 of #2383 drain it.
-//
-// If you're about to add an entry, you're adding a new convention to a codebase
-// that just spent a PR removing them. Either the canonical module covers your
-// case, or it should — extend `src/utils/format/` rather than whitelisting a
-// file here. The ceiling below fails `npm run lint` at config load if the list
-// grows; lower it as entries leave.
-const formattingLegacyFiles = [
-  'src/components/RateDotList.vue',
-  'src/components/TransactionChildRow.vue',
-  'src/components/TransactionDetailModal.vue',
-  'src/components/forms/ApproveExpenseSummaryForm.vue',
-  'src/components/forms/TokenAmount.vue',
-  'src/components/forms/TransferForm.vue',
-  'src/components/sections/AdministrationView/ElectionStats.vue',
-  'src/components/sections/AdministrationView/PastBoDElectionCard.vue',
-  'src/components/sections/CashRemunerationView/DeleteClaimModal.vue',
-  'src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue',
-  'src/components/sections/ClaimHistoryView/ClaimHistoryWeekNavigator.vue',
-  'src/components/sections/ClaimHistoryView/WeeklyRecap.vue',
-  'src/components/sections/CommunityCreditView/CreditCallTermsStep.vue',
-  'src/components/sections/CommunityCreditView/CreditRepayPanel.vue',
-  'src/components/sections/DashboardView/CompanyOverview.vue',
-  'src/components/sections/ExpenseAccountView/ExpenseAccountTable.vue',
-  'src/components/sections/ExpenseAccountView/ExpenseMonthSpent.vue',
-  'src/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue',
-  'src/components/sections/ProposalsView/ProposalsCard.vue',
-  'src/components/sections/SherTokenView/InvestorsTransactions.vue',
-  'src/components/sections/SherTokenView/forms/MintRecapCard.vue',
-  'src/components/sections/VestingView/VestingFlow.vue',
-  'src/components/sections/VestingView/VestingSummary.vue',
-  'src/components/sections/WeeklyClaimView/WeeklyClaim.vue',
-  'src/composables/useClaimForm.ts',
-  'src/composables/vesting/useVestingDateRange.ts',
-  'src/stores/communityCredit.ts',
-  'src/utils/abiDecodeUtil.ts',
-  'src/utils/accounting/ledgerPresenter.ts',
-  'src/utils/accounting/mappers/expenseAccount.ts',
-  'src/utils/accounting/presenter.ts',
-  'src/utils/accounting/toUsd.ts',
-  'src/utils/accountingPdf.ts',
-  'src/utils/bankTransactionUtil.ts',
-  'src/utils/cashRemunerationTransactionUtil.ts',
-  'src/utils/communityCreditUtil.ts',
-  'src/utils/contractManagementUtil.ts',
-  'src/utils/currencyUtil.ts',
-  'src/utils/datePicker.ts',
-  'src/utils/dayUtils.ts',
-  'src/utils/expenseTransactionUtil.ts',
-  'src/utils/fixedReturnTransactionUtil.ts',
-  'src/utils/generalUtil.ts',
-  'src/utils/investorsTransactionUtil.ts',
-  'src/utils/safe.ts',
-  'src/utils/safeDepositRouterUtil.ts'
-]
-
-const FORMATTING_LEGACY_MAX = 46
-if (formattingLegacyFiles.length > FORMATTING_LEGACY_MAX) {
-  throw new Error(
-    `formattingLegacyFiles has ${formattingLegacyFiles.length} entries (ceiling ${FORMATTING_LEGACY_MAX}). ` +
-      'Format through `@/utils/format` instead of whitelisting a new file — see ' +
-      '.github/copilot-instructions/formatting-standards.md.'
-  )
-}
-
 export default [
   {
     name: 'app/files-to-lint',
@@ -357,8 +288,7 @@ export default [
       'src/utils/format/**',
       // Specs may assert against natively formatted expectations.
       '**/__tests__/**',
-      '**/*.spec.{ts,tsx}',
-      ...formattingLegacyFiles
+      '**/*.spec.{ts,tsx}'
     ],
     rules: {
       // Two rules, one selector list: the core rule only walks `<script>`,

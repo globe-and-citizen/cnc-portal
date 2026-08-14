@@ -161,6 +161,7 @@ import {
   MINUTES_PER_DAY
 } from '@/utils'
 import { createCreditCallTermsSchema, type CreditCallForm, type CreditTermUnit } from '@/types'
+import { formatDate } from '@/utils/format'
 
 const form = defineModel<CreditCallForm>('form', { required: true })
 
@@ -256,7 +257,7 @@ const localDeadlineTime = computed(() => timeStrToTime(localDeadline.value.time)
 const deadlineLabel = computed(() => {
   const cd = deadlineCalendarDate.value
   if (!cd) return 'Select a date'
-  return `${cd.toDate(getLocalTimeZone()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  return formatDate(cd.toDate(getLocalTimeZone()))
 })
 
 function onSelectDeadlineDate(value: CalendarDate | null | undefined) {
