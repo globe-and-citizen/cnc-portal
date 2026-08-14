@@ -245,17 +245,12 @@ const formattingLegacyFiles = [
   'src/utils/accounting/presenter.ts',
   'src/utils/accounting/toUsd.ts',
   'src/utils/accountingPdf.ts',
-  'src/utils/bankTransactionUtil.ts',
-  'src/utils/cashRemunerationTransactionUtil.ts',
   'src/utils/communityCreditUtil.ts',
   'src/utils/contractManagementUtil.ts',
   'src/utils/currencyUtil.ts',
   'src/utils/datePicker.ts',
   'src/utils/dayUtils.ts',
-  'src/utils/expenseTransactionUtil.ts',
-  'src/utils/fixedReturnTransactionUtil.ts',
   'src/utils/generalUtil.ts',
-  'src/utils/investorsTransactionUtil.ts',
   'src/utils/safe.ts',
   'src/utils/safeDepositRouterUtil.ts'
 ]
