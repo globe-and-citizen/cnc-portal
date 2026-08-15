@@ -61,6 +61,13 @@ export const setWage = async (req: Request, res: Response) => {
     });
 
     if (leafWage) {
+      // A change only waits for next Monday when the member has already
+      // submitted hours for this week — those hours are priced against the
+      // current wage and cannot be repriced without splitting the week. A week
+      // with no hours in it takes the change whole, from its own Monday.
+      const weekIsSubmitted = await weekHasClaims(teamId, userAddress, currentWeekStart());
+      const effectiveFrom = effectiveFromForChange(weekIsSubmitted);
+
       if (isScheduledWage(leafWage)) {
         const activePredecessor = await prisma.wage.findFirst({
           where: { teamId, userAddress, nextWageId: leafWage.id },
@@ -70,9 +77,15 @@ export const setWage = async (req: Request, res: Response) => {
           return errorResponse(400, 'Cannot set wage: the current wage is disabled', res);
         }
 
+        // The date is recomputed, not preserved. A change queued while the week
+        // held hours must stop waiting once it no longer does — otherwise the
+        // wait outlives its reason and there is no way to call it off. This can
+        // only pull the date forward to the current Monday: for a week that
+        // still holds hours the rule returns the same next Monday it did
+        // before, so a correction never pushes the change back a week.
         const updatedWage = await prisma.wage.update({
           where: { id: leafWage.id },
-          data: wagePayload,
+          data: { ...wagePayload, effectiveFrom },
         });
         return res.status(200).json(updatedWage);
       }
@@ -83,13 +96,6 @@ export const setWage = async (req: Request, res: Response) => {
       if (activeWage.disabled) {
         return errorResponse(400, 'Cannot set wage: the current wage is disabled', res);
       }
-
-      // A change only waits for next Monday when the member has already
-      // submitted hours for this week — those hours are priced against the
-      // current wage and cannot be repriced without splitting the week. A week
-      // with no hours in it takes the change whole, from its own Monday.
-      const weekIsSubmitted = await weekHasClaims(teamId, userAddress, currentWeekStart());
-      const effectiveFrom = effectiveFromForChange(weekIsSubmitted);
 
       // Create wage and chain it to the previous wage. Done in a transaction
       // so the deferrable Wage_active_unique constraint is checked at COMMIT,

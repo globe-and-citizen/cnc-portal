@@ -575,22 +575,45 @@ describe('Wage Controller', () => {
       expect(effectiveFrom.getTime()).toBeLessThanOrEqual(Date.now());
     });
 
-    it('should rewrite a scheduled wage in place without moving its effective date', async () => {
-      // Correcting a typo before Monday must not push the change back a week,
-      // nor leave a dead link in the chain.
+    /** Arranges a correction on top of a change that is still waiting. */
+    const arrangeRewrite = (weekIsSubmitted: boolean) => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst')
         .mockResolvedValueOnce({ ...mockWage, id: 2, effectiveFrom: futureDate() } as Wage)
         .mockResolvedValueOnce({ ...mockWage, id: 1, nextWageId: 2 } as Wage);
-      const updateSpy = vi.spyOn(prisma.wage, 'update').mockResolvedValue(mockWage);
-      const createSpy = vi.spyOn(prisma.wage, 'create');
+      mockWeekHasClaims.mockResolvedValue(weekIsSubmitted);
+      vi.spyOn(prisma.wage, 'create');
+
+      return vi.spyOn(prisma.wage, 'update').mockResolvedValue(mockWage);
+    };
+
+    it('should rewrite a scheduled wage in place without pushing its date back', async () => {
+      // Correcting a typo before Monday must not push the change back a week,
+      // nor leave a dead link in the chain.
+      const updateSpy = arrangeRewrite(true);
 
       const response = await request(app).put('/setWage').send(validBody);
 
       expect(response.status).toBe(200);
-      expect(createSpy).not.toHaveBeenCalled();
+      expect(prisma.wage.create).not.toHaveBeenCalled();
       expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 2 } }));
-      expect(updateSpy.mock.calls[0][0].data).not.toHaveProperty('effectiveFrom');
+      const effectiveFrom = updateSpy.mock.calls[0][0].data.effectiveFrom as Date;
+      expect(effectiveFrom.getUTCDay()).toBe(1);
+      expect(effectiveFrom.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it('should stop a queued change from waiting once the week holds no hours', async () => {
+      // The wait outlives its reason when the hours that justified it are gone
+      // — a withdrawn week, or a change queued under the old always-defer rule.
+      // Saving again has to release it, otherwise nothing can.
+      const updateSpy = arrangeRewrite(false);
+
+      const response = await request(app).put('/setWage').send(validBody);
+
+      expect(response.status).toBe(200);
+      const effectiveFrom = updateSpy.mock.calls[0][0].data.effectiveFrom as Date;
+      expect(effectiveFrom.getUTCDay()).toBe(1);
+      expect(effectiveFrom.getTime()).toBeLessThanOrEqual(Date.now());
     });
 
     it('should refuse to rewrite a scheduled wage when the active one is disabled', async () => {
