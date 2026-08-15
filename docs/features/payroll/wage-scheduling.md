@@ -161,12 +161,19 @@ measured against.
 | --------------------------------- | -------------------------------------------------------------------------------------------- |
 | Corrects before Monday            | The scheduled row is **rewritten in place** — no new link in the chain                       |
 | Corrects several times            | Still one rewrite each time; the chain stays two links long                                  |
-| Effective date after a correction | **Unchanged** — fixing a typo does not push the change back a week                           |
+| Effective date after a correction | **Recomputed** — see below                                                                   |
 | Wants to call it off              | `DELETE /wage/scheduled` removes the row and restores `nextWageId = null` on the predecessor |
 | Corrects after it took effect     | Normal path: a new wage scheduled for the following Monday                                   |
 
 Rewriting in place is safe precisely because a scheduled wage has never been operative — no claim,
 no `WeeklyClaim`, no signature references it.
+
+The effective date is recomputed on every save rather than preserved, because the reason a change
+waits can disappear: the week's hours can be withdrawn, or the change can have been queued under an
+older rule. A wait that outlives its reason cannot be released by any other route, since the change
+is not visible as an editable row anywhere. Recomputing can only pull the date **forward** to the
+current Monday — a week that still holds hours yields the same next Monday it did before — so a
+correction never pushes the change back a week.
 
 ### D — Boundaries
 
