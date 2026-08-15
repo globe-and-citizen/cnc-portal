@@ -5,8 +5,8 @@
 
 ## The rule, in one line
 
-**A week that has been opened keeps the wage it was opened with; a week nobody has touched takes the
-change whole.**
+**A week that holds submitted hours keeps the wage they were priced against; a week with no hours in
+it takes the change whole.**
 
 Everything below follows from that.
 
@@ -35,32 +35,34 @@ The consequences were the interesting part:
 
 ## The rule in practice
 
-Three mechanisms, and they only work together.
+Four mechanisms, and they only work together.
 
-### 1. The week's own row decides which wage prices it
+### 1. One week, one row
 
-A claim finds its week by `[teamId, memberAddress, weekStart]` — not by wage. When that row exists
-it already carries a `wageId`, and that is the wage the claim is priced and capped against, whatever
-the owner has saved since.
+A claim finds its week by `[teamId, memberAddress, weekStart]` — never by wage. One week therefore
+always has one row, and the split that produced this issue has nowhere to happen. No invariant about
+Mondays is needed for that to hold. Weekly goals use the same lookup.
 
-This is what makes a second `WeeklyClaim` for one week impossible, and it holds on its own: no
-invariant about Mondays is needed for it to be true. Weekly goals follow the same lookup, because a
-goals-only row opens a week just as claims do.
+### 2. Submitted hours commit a week to a wage; nothing else does
 
-Resolution is only consulted for a week nobody has opened yet.
+When the row already holds claims, the wage recorded on it is what prices and caps the week,
+whatever the owner has saved since.
 
-### 2. A change waits only when it has to
+When it holds no claims — an empty week, or a row carrying only weekly goals — nothing has been
+priced yet, so the week follows the change like any untouched week: the first hours are priced at
+the wage in force and the row moves onto it. Goals are a note to self, not a commitment.
+
+This is the whole of the reviewed rule: a member who had not submitted their hours before the change
+is impacted by it, and that is left to them and the owner to sort out.
+
+### 3. A change waits only when it has to
 
 `setWage` looks at the member's current week:
 
-| State of the current week            | `effectiveFrom`                  |
-| ------------------------------------ | -------------------------------- |
-| Already opened (claims **or** goals) | Next Monday 00:00 UTC            |
-| Untouched                            | **This** week's Monday 00:00 UTC |
-
-The second branch is the one that matters: the change covers the whole current week, including days
-the member has worked but not yet submitted. That is deliberate — the owner who does not want it
-waits for their members to submit first, and the modal says which of the two is about to happen.
+| State of the current week | `effectiveFrom`                  |
+| ------------------------- | -------------------------------- |
+| Holds submitted hours     | Next Monday 00:00 UTC            |
+| No hours in it            | **This** week's Monday 00:00 UTC |
 
 Note what `effectiveFrom` is **not** in the immediate case: it is not "now". Resolution compares the
 effective date against the _start_ of the week (below), so a mid-week timestamp would exclude the
@@ -69,11 +71,11 @@ new wage from the very week it is meant to cover.
 Both branches return a Monday, so a wage boundary is always a week boundary and exactly one wage
 covers any week. A member's **first** wage follows the same rule and lands on the current Monday.
 
-The consequence to be aware of: **a wrong rate cannot be corrected in-week once the week is open.**
-If the owner saves 2.5 instead of 25 and someone has already submitted, that member is paid at 2.5
+The consequence to be aware of: **a wrong rate cannot be corrected in-week once hours are in.** If
+the owner saves 2.5 instead of 25 and someone has already submitted, that member is paid at 2.5
 until Sunday. Members who have submitted nothing are corrected right away.
 
-### 3. Resolution is done per week, not per "now"
+### 4. Resolution is done per week, not per "now"
 
 `resolveWageForWeek(teamId, userAddress, weekStart)` walks the chain and returns the last wage whose
 effective date is at or before `weekStart`, where
@@ -91,15 +93,15 @@ backdated claim at today's rate — see [Case B](#b--backdating-into-an-earlier-
 
 ### One rule, one implementation
 
-`pickWageForWeek` is the pure function that decides, for weeks that are not open yet. Everything
+`pickWageForWeek` is the pure function that decides, for weeks with no hours in them yet. Everything
 else calls it:
 
-| Caller              | Purpose                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------ |
-| `addClaim`          | Wage a daily claim is priced and capped against, **if the week is not already open** |
-| `submitWeeklyGoals` | Wage the goals row is attached to, under the same condition                          |
-| `GET /wage`         | Rates and caps the claim form validates against                                      |
-| `GET /team/:id`     | `currentWage` in the member table                                                    |
+| Caller              | Purpose                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| `addClaim`          | Wage a daily claim is priced and capped against, **unless the week already holds hours** |
+| `submitWeeklyGoals` | Wage a goals row is created with, when the week does not exist yet                       |
+| `GET /wage`         | Rates and caps the claim form validates against                                          |
+| `GET /team/:id`     | `currentWage` in the member table                                                        |
 
 This matters more than it looks. Deriving the displayed wage as "the leaf, unless scheduled" _seems_
 equivalent, and it is for rows written by this feature — but not for legacy rows, where
@@ -116,18 +118,20 @@ from that same function, so the two cannot drift.
 
 ### A — The current week
 
-| Situation                                    | Behaviour                                                       |
-| -------------------------------------------- | --------------------------------------------------------------- |
-| No change                                    | The chain's only operative wage applies                         |
-| Change saved, member has already submitted   | Scheduled for next Monday; **this week keeps the current wage** |
-| Change saved, member has submitted nothing   | Applies from this week's Monday, to the whole week              |
-| Member submits **after** an immediate change | Their week opens on the new wage, days already worked included  |
-| Member's first wage ever                     | Applies from this week's Monday                                 |
-| Wage is disabled                             | `setWage` refused (400); claims refused                         |
+| Situation                                     | Behaviour                                                          |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| No change                                     | The chain's only operative wage applies                            |
+| Change saved, member has submitted hours      | Scheduled for next Monday; **this week keeps the current wage**    |
+| Change saved, member has submitted no hours   | Applies from this week's Monday, to the whole week                 |
+| Change saved, member has only set their goals | Same: goals commit nothing, the week takes the change              |
+| Member submits **after** an immediate change  | Their week is priced at the new wage, days already worked included |
+| Member's first wage ever                      | Applies from this week's Monday                                    |
+| Wage is disabled                              | `setWage` refused (400); claims refused                            |
 
-The third and fourth rows are the same event seen from each side, and they are the deliberate cost
-of the rule: the owner who changes a wage before their member submits repriced that member's week.
-Waiting for the submission is the way out, and the modal says so before the owner saves.
+Rows three to five are the deliberate cost of the rule: the owner who changes a wage before their
+member submits repriced that member's week. Waiting for the submission is the way out. Nothing is
+announced when it happens — the week is simply priced at the new wage, and there is no pending state
+to describe.
 
 ### B — Backdating into an earlier week
 
@@ -148,8 +152,8 @@ to catch up, and that is indistinguishable from "reopening" a week at the data l
 follows the normal cycle: the owner still approves it.
 
 What makes this safe is that the claim lands on the week's existing row instead of opening a rival
-one, and is priced by that row — so caps and rates are the ones that were in force when the week was
-opened.
+one, and is priced by that row — so caps and rates are the ones the hours already in it were
+measured against.
 
 ### C — The owner made a mistake
 
@@ -183,10 +187,10 @@ the earliest wage is used instead.
 ## What changes with the daily cap
 
 `maximumHoursPerDay` is a field on the wage like the rate, so it follows exactly the same rule.
-Tightening it does **not** touch a week the member has already opened — the old ceiling holds until
-Sunday and the new one applies from Monday — while a week they have not opened is measured against
-the new ceiling from its own Monday. A backdated claim is measured against the ceiling carried by
-the week it targets.
+Tightening it does **not** touch a week the member has already submitted hours for — the old ceiling
+holds until Sunday and the new one applies from Monday — while a week with no hours in it is
+measured against the new ceiling from its own Monday. A backdated claim is measured against the
+ceiling carried by the week it targets.
 
 The same holds for `maximumHoursPerWeek` and the overtime settings.
 
@@ -207,7 +211,7 @@ Returns the wage **in force now** per member, with any pending change attached:
     "maximumHoursPerDay": 8,
     "effectiveFrom": null,
     // The Monday a change saved right now would take effect on. This week's
-    // when the member has not opened it, next week's when they have.
+    // when the member has submitted no hours, next week's when they have.
     "nextChangeEffectiveFrom": "2026-08-17T00:00:00.000Z",
     "scheduledWage": {
       // null when nothing is pending
@@ -224,14 +228,14 @@ Returns the wage **in force now** per member, with any pending change attached:
 The top-level object is what the claim form must validate against. Returning the scheduled wage
 there would make the form accept hours the server then rejects.
 
-`nextChangeEffectiveFrom` exists so the set-wage modal never announces a date the server would not
-honour: the front end cannot know whether a member has opened their week, and a rule implemented
-twice is a rule that drifts.
+`nextChangeEffectiveFrom` is what tells the modal whether to warn at all, and with which date. The
+front end cannot know whether a member has submitted hours, and a rule implemented twice is a rule
+that drifts.
 
 ### `PUT /wage/setWage`
 
 - `201` with the new wage — scheduled for next Monday, or effective from this week's Monday when the
-  member has not opened the week; `effectiveFrom` on the response says which
+  member has submitted no hours; `effectiveFrom` on the response says which
 - `200` with the rewritten wage when a scheduled change is corrected in place
 - `400` when the operative wage is disabled
 
@@ -249,17 +253,18 @@ Each member carries `currentWage` and `scheduledWage`, resolved the same way.
 
 ## What the user sees
 
-| Surface              | Content                                                                      |
-| -------------------- | ---------------------------------------------------------------------------- |
-| Member table (owner) | Badge under the rate: `Changes to SHER 10/h, 15h/wk, 8h/d on Aug 17, 2026`   |
-| Set-wage modal       | Banner stating **which** of the two outcomes applies, before the owner saves |
-| Claim view (member)  | Same notice, **only on weeks that predate the change**                       |
+| Surface              | Content                                                                    |
+| -------------------- | -------------------------------------------------------------------------- |
+| Member table (owner) | Badge under the rate: `Changes to SHER 10/h, 15h/wk, 8h/d on Aug 17, 2026` |
+| Set-wage modal       | Banner **only when the change has to wait**, stating the date              |
+| Claim view (member)  | Same notice, **only on weeks that predate the change**                     |
 
-The modal has two states, and the distinction is the point of it:
+Nothing is shown when the change takes effect straight away, and that is on purpose. There is no
+pending state to describe: the member's week is simply priced at the new wage. Announcing it would
+put a notice on the common path to say that saving a wage saved the wage.
 
-- the member has not opened the week — an amber banner naming them: the change is immediate and
-  covers hours they have already worked, so the owner can still choose to wait
-- the member has opened it — the date, and the fact that this week keeps the current rate
+Every surface here therefore describes the same single thing — a change that is waiting — which is
+also why they all key off `scheduledWage` being present.
 
 The last condition matters: on the week the change takes effect, that week already runs on the new
 wage, so announcing it as upcoming — and saying the week keeps the current rate — would be false.
@@ -315,11 +320,14 @@ wage has `effectiveFrom = null` and keeps behaving as it did.
   is `[wageId, weekStart]`, and it is the lookup in `addClaim` that makes a second row unreachable.
   A `[teamId, memberAddress, weekStart]` unique index would make it structural, but the migration
   has to dedupe rows the original bug may already have created in production.
-- A week the member never opened is priced by resolution, so a forgotten past week is paid at the
-  wage that covered it — not at the wage in force when they finally submit. That is the intended
-  reading of "the week worked determines the wage", but it is worth knowing it is a choice.
-- `WeeklyClaim.status` is nullable on legacy rows. `isWeekOpen` counts rows rather than filtering on
-  `status: 'pending'` for that reason; a status filter added later would silently miss them.
+- A week with no hours in it is priced by resolution, so a forgotten past week is paid at the wage
+  that covered it — not at the wage in force when they finally submit. That is the intended reading
+  of "the week worked determines the wage", but it is worth knowing it is a choice.
+- `WeeklyClaim.status` is nullable on legacy rows. `weekHasClaims` counts rows holding claims rather
+  than filtering on `status: 'pending'`; a status filter added later would silently miss them.
+- A goals-only row keeps pointing at its original wage until the first hours arrive. Nothing is
+  priced against it in the meantime, so this is invisible — but a screen reading the wage off a
+  goals-only week would show a superseded one.
 
 ---
 

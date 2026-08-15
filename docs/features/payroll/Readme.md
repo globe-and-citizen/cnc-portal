@@ -80,15 +80,16 @@ submit claims for fair, bounded compensation
       "8h/d" (tooltip "Daily limit: N hours"); the cell shows "—" when the member has no wage
 - [ ] Editing a member with an existing wage pre-fills the current values; saving creates a new wage
       **version** (one active wage per member)
-- [ ] _(scheduling)_ Changing a wage for a member who has **already submitted** something this week
-      (hours or goals) takes effect at the **start of the next ISO week**: that week is already
-      priced by the wage it was opened with and keeps it
-- [ ] _(scheduling)_ Changing a wage for a member who has **submitted nothing** this week applies
+- [ ] _(scheduling)_ Changing a wage for a member who has **already submitted hours** this week
+      takes effect at the **start of the next ISO week**: those hours are priced against the current
+      wage and the week keeps it
+- [ ] _(scheduling)_ Changing a wage for a member who has **submitted no hours** this week applies
       **immediately, to the whole week** — including the days they have already worked but not yet
-      submitted. Waiting for them to submit is how the owner avoids that
-- [ ] _(scheduling)_ The modal says which of the two is about to happen, before saving ("This change
-      takes effect immediately, for the whole current week." / "This change takes effect on Aug 17,
-      2026.")
+      submitted. Nothing is announced in that case: the week is simply priced at the new wage.
+      Waiting for the member to submit is how the owner avoids it
+- [ ] _(scheduling)_ Weekly goals alone do not hold a week to its wage — only submitted hours do
+- [ ] _(scheduling)_ The modal warns **only** when the change has to wait ("This change takes effect
+      on Aug 17, 2026."), and says nothing when it applies straight away
 - [ ] _(scheduling)_ The member row shows a badge for a change that waits ("Changes to SHER 10/h,
       15h/wk, 8h/d on Aug 17, 2026"); it disappears once the change takes effect, without a page
       reload
