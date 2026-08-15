@@ -76,12 +76,31 @@ export const formatScheduledWageNotice = (scheduledWage?: Wage | null): string |
 }
 
 /**
- * The Monday a change made now would take effect on, formatted for display.
- * Mirrors the server's `nextMondayUtc`, which anchors every wage change to the
- * start of the next ISO week so a wage boundary never falls mid-week.
+ * When a change saved right now would take effect, for the set-wage modal.
+ *
+ * A change only waits for next Monday when the member has already opened the
+ * current week; otherwise it applies to this week whole. Only the server knows
+ * which, so the date is read from `nextChangeEffectiveFrom` rather than
+ * recomputed here — a rule implemented twice is a rule that drifts.
+ *
+ * The fallback to next Monday covers payloads that predate the field. It errs
+ * the cautious way: announcing a later date than the server applies is a
+ * smaller mistake than promising an immediate change that never happens.
  */
-export const nextEffectiveDateLabel = (now: DateInput = new Date()): string =>
-  formatDate(dayjs(now).utc().add(1, 'week').startOf('isoWeek'))
+export const describeWageChangeTiming = (
+  wage?: Wage | null,
+  now: DateInput = new Date()
+): { immediate: boolean; label: string } => {
+  const weekStart = dayjs(now).utc().startOf('isoWeek')
+  const announced = wage?.nextChangeEffectiveFrom ? dayjs(wage.nextChangeEffectiveFrom).utc() : null
+
+  const effective = announced?.isValid() ? announced : weekStart.add(1, 'week')
+
+  return {
+    immediate: !effective.isAfter(weekStart),
+    label: formatDate(effective)
+  }
+}
 
 /**
  * Milliseconds until a scheduled wage takes effect, or null when there is
