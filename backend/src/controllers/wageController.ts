@@ -7,9 +7,9 @@ import {
   currentWeekStart,
   effectiveFromForChange,
   isScheduledWage,
-  isWeekOpen,
-  membersWithOpenWeek,
+  membersWithClaimsThisWeek,
   splitCurrentAndScheduled,
+  weekHasClaims,
 } from '../utils/wageResolution';
 import {
   cancelScheduledWageQuerySchema,
@@ -84,12 +84,12 @@ export const setWage = async (req: Request, res: Response) => {
         return errorResponse(400, 'Cannot set wage: the current wage is disabled', res);
       }
 
-      // A change only waits for next Monday when the member has already opened
-      // this week — that week is priced by the wage it was opened with and
-      // cannot be repriced without splitting it. When the week is still
-      // untouched the change applies to it whole, from its own Monday.
-      const weekIsOpen = await isWeekOpen(teamId, userAddress, currentWeekStart());
-      const effectiveFrom = effectiveFromForChange(weekIsOpen);
+      // A change only waits for next Monday when the member has already
+      // submitted hours for this week — those hours are priced against the
+      // current wage and cannot be repriced without splitting the week. A week
+      // with no hours in it takes the change whole, from its own Monday.
+      const weekIsSubmitted = await weekHasClaims(teamId, userAddress, currentWeekStart());
+      const effectiveFrom = effectiveFromForChange(weekIsSubmitted);
 
       // Create wage and chain it to the previous wage. Done in a transaction
       // so the deferrable Wage_active_unique constraint is checked at COMMIT,
@@ -156,11 +156,12 @@ export const getWages = async (req: Request, res: Response) => {
       else chainsByMember.set(wage.userAddress, [wage]);
     }
 
-    // Which members have already opened this week decides when a change saved
-    // now would take effect, so the owner is told the real date instead of the
-    // front end guessing it — the two would drift the moment the rule changes.
+    // Which members have already submitted this week decides when a change
+    // saved now would take effect, so the owner is told the real date instead
+    // of the front end guessing it — the two would drift the moment the rule
+    // changes.
     const now = new Date();
-    const openWeeks = await membersWithOpenWeek(teamId, now);
+    const submittedThisWeek = await membersWithClaimsThisWeek(teamId, now);
 
     const wages = Array.from(chainsByMember.values()).flatMap((chain) => {
       const { current, scheduled } = splitCurrentAndScheduled(chain, now);
@@ -170,7 +171,10 @@ export const getWages = async (req: Request, res: Response) => {
         {
           ...current,
           scheduledWage: scheduled,
-          nextChangeEffectiveFrom: effectiveFromForChange(openWeeks.has(current.userAddress), now),
+          nextChangeEffectiveFrom: effectiveFromForChange(
+            submittedThisWeek.has(current.userAddress),
+            now
+          ),
         },
       ];
     });
