@@ -136,56 +136,54 @@ export function isScheduledWage(
 }
 
 /**
- * Has the member already opened the given week?
+ * Has the member submitted hours for the given week?
  *
- * "Opened" means a `WeeklyClaim` row exists for that member and week — whether
- * it holds daily claims or only weekly goals. Goals count: a goals-only row is
- * keyed `[wageId, weekStart]` like any other, so letting a wage change land on
- * a week that already carries one would split that week in two exactly as
- * claims would.
+ * Claims are what commits a week to a wage. A `WeeklyClaim` row holding only
+ * weekly goals does not: nothing has been priced against it yet, so a change
+ * still applies to that week — the member had not submitted their hours, which
+ * is exactly the case the rule leaves to them.
  */
-export async function isWeekOpen(
+export async function weekHasClaims(
   teamId: number,
   userAddress: string,
   weekStart: Date
 ): Promise<boolean> {
-  const opened = await prisma.weeklyClaim.count({
-    where: { teamId, memberAddress: userAddress, weekStart },
+  const submitted = await prisma.weeklyClaim.count({
+    where: { teamId, memberAddress: userAddress, weekStart, claims: { some: {} } },
   });
 
-  return opened > 0;
+  return submitted > 0;
 }
 
 /**
  * The date a wage change saved now takes effect on.
  *
- * A week the member has already opened keeps the wage it was opened with, so
- * the change is anchored to next Monday. A week nobody has touched yet takes
- * the change whole, from its own Monday: days already worked but not yet
- * submitted are then paid at the new rate. That is the trade-off the owner
- * makes by not waiting for their members to submit, and it is deliberate.
+ * A week the member has already submitted hours for keeps the wage those hours
+ * were priced against, so the change is anchored to next Monday. A week with no
+ * hours in it takes the change whole, from its own Monday: days already worked
+ * but not yet submitted are then paid at the new rate. That is the trade-off
+ * the owner makes by not waiting for their members to submit.
  *
  * Both branches return a Monday. That is what keeps a wage boundary and a week
- * boundary the same instant, so exactly one wage still covers any week and two
- * `WeeklyClaim` rows for one week remain impossible.
+ * boundary the same instant, so exactly one wage still covers any week.
  *
  * Returning "now" for the immediate case would be wrong: resolution compares
  * the effective date against the *start* of the week, so a mid-week timestamp
  * would exclude the new wage from the very week it is meant to apply to.
  */
-export function effectiveFromForChange(weekIsOpen: boolean, now?: Date): Date {
-  return weekIsOpen ? nextMondayUtc(now) : currentWeekStart(now);
+export function effectiveFromForChange(weekIsSubmitted: boolean, now?: Date): Date {
+  return weekIsSubmitted ? nextMondayUtc(now) : currentWeekStart(now);
 }
 
 /**
- * Members of a team who have already opened the current week, in one query.
+ * Members of a team who have submitted hours for the current week, in one query.
  *
  * Used to tell the owner, per member, when a change would take effect, without
  * issuing a query per row.
  */
-export async function membersWithOpenWeek(teamId: number, now?: Date): Promise<Set<string>> {
+export async function membersWithClaimsThisWeek(teamId: number, now?: Date): Promise<Set<string>> {
   const rows = await prisma.weeklyClaim.findMany({
-    where: { teamId, weekStart: currentWeekStart(now) },
+    where: { teamId, weekStart: currentWeekStart(now), claims: { some: {} } },
     select: { memberAddress: true },
     distinct: ['memberAddress'],
   });
