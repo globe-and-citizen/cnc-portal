@@ -27,19 +27,14 @@
 
       <template #body>
         <div class="mt-1 space-y-4">
-          s
           <UAlert
             v-if="props.wage"
             icon="i-heroicons-information-circle"
-            color="info"
+            :color="changeTiming.immediate ? 'warning' : 'info'"
             variant="soft"
             data-test="wage-effective-date-notice"
-            :title="`This change takes effect on ${effectiveDateLabel}.`"
-            :description="
-              scheduledWageNotice
-                ? `A change is already scheduled for that date (${scheduledWageNotice}). Saving replaces it without pushing the date back.`
-                : 'The current rate stays in force until then, including for claims backdated to earlier weeks.'
-            "
+            :title="effectiveDateTitle"
+            :description="effectiveDateDescription"
           />
 
           <UStepper :items="items" v-model="currentStep" />
@@ -77,7 +72,7 @@ import { useSetMemberWageMutation } from '@/queries/wage.queries'
 import type { Member, Wage, WageWithForm } from '@/types'
 import type { AxiosError } from 'axios'
 import { normalizeRatePerHour, buildRatePayload, DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
-import { formatScheduledWageNotice, nextEffectiveDateLabel } from '@/utils/wageUtil'
+import { describeWageChangeTiming, formatScheduledWageNotice } from '@/utils/wageUtil'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 import type { StepperItem } from '@nuxt/ui'
@@ -121,8 +116,29 @@ const initialWage = (): WageWithForm => {
 
 const wageData = ref<WageWithForm>(initialWage())
 
-const effectiveDateLabel = computed(() => nextEffectiveDateLabel())
+const changeTiming = computed(() => describeWageChangeTiming(props.wage))
 const scheduledWageNotice = computed(() => formatScheduledWageNotice(props.wage?.scheduledWage))
+
+// Two genuinely different situations, and the owner has to be able to tell
+// them apart before saving. The member has not opened this week yet: the new
+// rate covers the days they have already worked but not yet submitted, which
+// is the case worth a warning. They have: this week is settled at the current
+// rate and only the next one moves.
+const effectiveDateTitle = computed(() =>
+  changeTiming.value.immediate
+    ? 'This change takes effect immediately, for the whole current week.'
+    : `This change takes effect on ${changeTiming.value.label}.`
+)
+
+const effectiveDateDescription = computed(() => {
+  if (changeTiming.value.immediate) {
+    return `${props.member.name ?? 'This member'} has not submitted any hours for this week yet, so hours they have already worked will be paid at the new rate. Wait for them to submit to leave this week untouched.`
+  }
+
+  return scheduledWageNotice.value
+    ? `A change is already scheduled for that date (${scheduledWageNotice.value}). Saving replaces it without pushing the date back.`
+    : 'Hours are already submitted for this week, so the current rate stays in force until then.'
+})
 
 const items = computed<StepperItem[]>(() =>
   wageData.value.enableOvertimeRules

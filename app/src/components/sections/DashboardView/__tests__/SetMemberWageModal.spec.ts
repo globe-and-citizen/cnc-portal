@@ -278,4 +278,43 @@ describe('SetMemberWageModal', () => {
     await wrapper.find('[data-test="add-wage-button"]').trigger('click')
     expect(mutateSpy.mock.calls[0]?.[0].body.userAddress).toBe('')
   })
+
+  describe('effective date notice', () => {
+    const noticeText = async (nextChangeEffectiveFrom: string | null) => {
+      const wrapper = createWrapper({ wage: { ...mockWage, nextChangeEffectiveFrom } })
+      await openModal(wrapper)
+
+      return wrapper.find('[data-test="wage-effective-date-notice"]').text()
+    }
+
+    /** The server only ever answers with a Monday, so the fixtures are too. */
+    const mondayUtc = (weeksAhead = 0) => {
+      const today = new Date()
+      const daysSinceMonday = (today.getUTCDay() + 6) % 7
+
+      return new Date(
+        Date.UTC(
+          today.getUTCFullYear(),
+          today.getUTCMonth(),
+          today.getUTCDate() - daysSinceMonday + weeksAhead * 7
+        )
+      ).toISOString()
+    }
+
+    it('warns that an untouched week takes the change whole', async () => {
+      // The member has submitted nothing yet, so hours they have already worked
+      // are repriced. That is the case the owner has to see before saving.
+      const text = await noticeText(mondayUtc())
+
+      expect(text).toContain('immediately')
+      expect(text).toContain('Alice')
+    })
+
+    it('announces the date when the member has already opened this week', async () => {
+      const text = await noticeText(mondayUtc(1))
+
+      expect(text).not.toContain('immediately')
+      expect(text).toContain('current rate stays in force')
+    })
+  })
 })
