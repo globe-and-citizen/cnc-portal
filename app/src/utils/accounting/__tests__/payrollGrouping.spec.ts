@@ -63,11 +63,11 @@ function settle(
 // ── accrual legs ──
 const accUsdc = accrual('usdc', 'Payroll Expense', 'Wage Payable')
 const accPol = accrual('pol', 'Payroll Expense', 'Wage Payable')
-const accSher = accrual('sher', 'Share-based Compensation', 'Shares to be issued')
+const accSher = accrual('sher', 'Deferred SHER Compensation', 'SHERS To Be Issued')
 // ── settlement legs (SHER issuance minted in the same tx → DEFAULT-D) ──
 const setUsdc = settle('usdc', 'Wage Payable', 'Cash — Payroll', 'UC-CASH-03', 0)
 const setPol = settle('pol', 'Wage Payable', 'Cash — Payroll', 'UC-CASH-03', 1)
-const setSher = settle('sher', 'Shares to be issued', 'Investor Equity', 'DEFAULT-D', 2)
+const setSher = settle('sher', 'SHERS To Be Issued', 'Investor Equity', 'DEFAULT-D', 2)
 
 /** Debit/credit strings of the rows, for compact assertions. */
 const drs = (rows: { dr: string }[]) => rows.map((r) => r.dr).filter(Boolean)
@@ -84,7 +84,7 @@ describe('payroll grouping — compound postings', () => {
     expect(rows[0].currency).not.toBe('') // USDC leg carries movement
     expect(rows[1].currency).not.toBe('') // POL leg carries movement
 
-    // Credits aggregated: one Wage Payable ($40.80), one Shares to be issued ($10).
+    // Credits aggregated: one Wage Payable ($40.80), one SHERS To Be Issued ($10).
     expect(crs(rows)).toEqual([money(40.8), money(10)])
     const wagePayable = rows.find((r) => r.account === 'Wage Payable' && r.cr)
     expect(wagePayable?.currency).toBe('') // aggregated line has no single currency
@@ -133,7 +133,7 @@ describe('payroll grouping — compound postings', () => {
       id: '0xmint-0',
       timestamp: 2_000,
       useCase: 'DEFAULT-D',
-      debit: 'Shares to be issued',
+      debit: 'SHERS To Be Issued',
       credit: 'Investor Equity',
       amountUsd: 25,
       token: 'sher',

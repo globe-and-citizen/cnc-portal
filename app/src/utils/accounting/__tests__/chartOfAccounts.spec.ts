@@ -3,7 +3,9 @@ import {
   ACCOUNTS,
   ACCOUNT_NAMES,
   CHART_OF_ACCOUNTS,
+  CONTRA_ACCOUNTS,
   classOf,
+  isContraAccount,
   isDebitNormal,
   isDebitNormalClass,
   normalBalance,
@@ -24,14 +26,14 @@ describe('chart of accounts', () => {
       'Wage Payable': 'LIABILITY',
       'Loan Payable': 'LIABILITY',
       'Interest Payable': 'LIABILITY',
-      'Shares to be issued': 'LIABILITY',
       'Owner Capital': 'EQUITY',
       'Investor Equity': 'EQUITY',
+      'SHERS To Be Issued': 'EQUITY',
+      'Deferred SHER Compensation': 'EQUITY',
       'Retained Earnings': 'EQUITY',
       'Service Revenue': 'INCOME',
       'Trading Gain': 'INCOME',
       'Payroll Expense': 'EXPENSE',
-      'Share-based Compensation': 'EXPENSE',
       'Operating Expense': 'EXPENSE',
       'Interest Expense': 'EXPENSE',
       'Dividend Expense': 'EXPENSE',
@@ -90,7 +92,9 @@ describe('chart of accounts', () => {
         ['Payroll Expense', true],
         ['Wage Payable', false],
         ['Investor Equity', false],
-        ['Service Revenue', false]
+        ['Service Revenue', false],
+        // Contra-equity: sits in EQUITY but carries a debit balance.
+        ['Deferred SHER Compensation', true]
       ]
       expectations.forEach(([account, debit]) => {
         expect(isDebitNormal(account)).toBe(debit)
@@ -98,11 +102,27 @@ describe('chart of accounts', () => {
       })
     })
 
-    it('keeps every account internally consistent with its class', () => {
+    it('keeps every account consistent with its class, contra accounts flipped', () => {
       ACCOUNT_NAMES.forEach((name) => {
-        const expectedDebit = classOf(name) === 'ASSET' || classOf(name) === 'EXPENSE'
+        const byClass = classOf(name) === 'ASSET' || classOf(name) === 'EXPENSE'
+        const expectedDebit = isContraAccount(name) ? !byClass : byClass
         expect(isDebitNormal(name)).toBe(expectedDebit)
       })
+    })
+  })
+
+  describe('contra accounts', () => {
+    it('declares Deferred SHER Compensation as the only contra account', () => {
+      expect([...CONTRA_ACCOUNTS]).toEqual(['Deferred SHER Compensation'])
+    })
+
+    it('keeps the SHER pair inside equity so it never reaches the income statement', () => {
+      // Both legs of a SHER wage accrual are equity: the debit is contra, the
+      // credit is a normal equity claim, so the pair nets to zero (issue #2458).
+      expect(classOf('Deferred SHER Compensation')).toBe('EQUITY')
+      expect(classOf('SHERS To Be Issued')).toBe('EQUITY')
+      expect(isContraAccount('Deferred SHER Compensation')).toBe(true)
+      expect(isContraAccount('SHERS To Be Issued')).toBe(false)
     })
   })
 })

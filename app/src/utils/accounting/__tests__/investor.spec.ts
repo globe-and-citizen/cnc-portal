@@ -62,7 +62,7 @@ describe('mapInvestorEvents', () => {
     expect(entries).toHaveLength(0)
   })
 
-  it('books an unbacked mint as a share issuance (Dr Shares to be issued · Cr Investor Equity)', () => {
+  it('books an unbacked mint as a share issuance (Dr SHERS To Be Issued · Cr Investor Equity)', () => {
     const [entry] = mapInvestorEvents(
       {
         mints: [
@@ -77,12 +77,12 @@ describe('mapInvestorEvents', () => {
       },
       ctx
     )
-    // The SHER were accrued into Shares to be issued (the wage accrual) and are now
+    // The SHER were accrued into SHERS To Be Issued (the wage accrual) and are now
     // formally issued, so the liability clears into equity — valued at the SHER
     // rate of record ($0.50 in the fixture → 3 SHER = $1.50).
     expect(entry).toMatchObject({
       useCase: 'DEFAULT-D',
-      debit: 'Shares to be issued',
+      debit: 'SHERS To Be Issued',
       credit: 'Investor Equity',
       amountUsd: 1.5,
       shares: 3

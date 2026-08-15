@@ -131,8 +131,8 @@ export const catalogueLedger: LedgerEntry[] = [
   post({
     day: 13,
     useCase: 'UC-CASH-02',
-    debit: 'Share-based Compensation',
-    credit: 'Shares to be issued',
+    debit: 'Deferred SHER Compensation',
+    credit: 'SHERS To Be Issued',
     usd: 10,
     token: 'sher',
     category: 'Payroll'
@@ -149,7 +149,7 @@ export const catalogueLedger: LedgerEntry[] = [
   post({
     day: 15,
     useCase: 'UC-CASH-03',
-    debit: 'Shares to be issued',
+    debit: 'SHERS To Be Issued',
     credit: 'Investor Equity',
     usd: 10,
     token: 'sher',

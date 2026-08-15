@@ -19,26 +19,65 @@ describe('buildBalanceSheet — catalogue §6.6', () => {
     expect(bs.cash).toBeCloseTo(142.2, 2)
     expect(bs.investorEquity).toBeCloseTo(138, 2)
     expect(bs.ownerCapital).toBeCloseTo(0, 2)
-    expect(bs.retainedEarnings).toBeCloseTo(4.2, 2)
+    // 14.20, not 4.20: the $10 SHER wage no longer runs through the result.
+    expect(bs.retainedEarnings).toBeCloseTo(14.2, 2)
   })
 
-  it('shows no open liabilities once Wage Payable & Shares to be issued settle', () => {
+  it('shows no open liabilities once Wage Payable settles', () => {
     expect(bs.liabilities).toHaveLength(0)
   })
 
-  it('surfaces open liabilities when a claim is accrued without a withdrawal', () => {
+  it('carries the settled SHER wage as a permanent contra-equity offset', () => {
+    // The claim was withdrawn, so SHERS To Be Issued cleared into Investor Equity
+    // — but Deferred SHER Compensation stays, because the cost is never expensed
+    // (issue #2458). Equity is unchanged overall: −10 contra vs +10 retained.
+    expect(bs.sherToBeIssued).toBeCloseTo(0, 2)
+    expect(bs.deferredSherCompensation).toBeCloseTo(-10, 2)
+    expect(bs.totalEquity).toBeCloseTo(142.2, 2)
+  })
+
+  it('holds the SHER claim in equity — not as a liability — when it is only accrued', () => {
     // Only the accrual legs of transaction #9 (claim), no withdrawal #10.
     const claimOnly = catalogueLedger.filter((e) => e.useCase === 'UC-CASH-02')
     const bs = buildBalanceSheet(claimOnly)
     const wagePayable = bs.liabilities.find((l) => l.account === 'Wage Payable')?.amount ?? 0
-    const sharesToIssue =
-      bs.liabilities.find((l) => l.account === 'Shares to be issued')?.amount ?? 0
     expect(wagePayable).toBeCloseTo(40.8, 2)
-    expect(sharesToIssue).toBeCloseTo(10, 2)
-    // The accrual books Payroll Expense against the liabilities — still balances.
-    expect(bs.totalLiabilities).toBeCloseTo(50.8, 2)
-    expect(bs.retainedEarnings).toBeCloseTo(-50.8, 2)
+    // Only the cash part of the wage is a debt; the SHER part is an equity claim.
+    expect(bs.totalLiabilities).toBeCloseTo(40.8, 2)
+    expect(bs.liabilities.map((l) => l.account)).not.toContain('SHERS To Be Issued')
+    expect(bs.sherToBeIssued).toBeCloseTo(10, 2)
+    expect(bs.deferredSherCompensation).toBeCloseTo(-10, 2)
+    // Only the cash wage hit the result — the SHER pair nets to zero in equity.
+    expect(bs.retainedEarnings).toBeCloseTo(-40.8, 2)
     expect(bs.balanced).toBe(true)
+  })
+
+  it('stays balanced across the whole SHER lifecycle, before and after issuance', () => {
+    const sherAccrual = catalogueLedger.filter(
+      (e) => e.useCase === 'UC-CASH-02' && e.token === 'sher'
+    )
+    const sherIssuance = catalogueLedger.filter(
+      (e) => e.useCase === 'UC-CASH-03' && e.token === 'sher'
+    )
+    expect(sherAccrual).not.toHaveLength(0)
+    expect(sherIssuance).not.toHaveLength(0)
+
+    // Accrued only: the claim sits in SHERS To Be Issued, offset by the contra.
+    const accrued = buildBalanceSheet(sherAccrual)
+    expect(accrued.balanced).toBe(true)
+    expect(accrued.sherToBeIssued).toBeCloseTo(10, 2)
+    expect(accrued.deferredSherCompensation).toBeCloseTo(-10, 2)
+    expect(accrued.totalEquity).toBeCloseTo(0, 2)
+
+    // Issued: the claim clears into Investor Equity, the contra remains.
+    const issued = buildBalanceSheet([...sherAccrual, ...sherIssuance])
+    expect(issued.balanced).toBe(true)
+    expect(issued.sherToBeIssued).toBeCloseTo(0, 2)
+    expect(issued.investorEquity).toBeCloseTo(10, 2)
+    expect(issued.deferredSherCompensation).toBeCloseTo(-10, 2)
+    // Net equity effect of paying a wage in shares is nil: no asset ever moved.
+    expect(issued.totalEquity).toBeCloseTo(0, 2)
+    expect(issued.retainedEarnings).toBeCloseTo(0, 2)
   })
 
   it('stays balanced when per-account rounding would drift a cent', () => {

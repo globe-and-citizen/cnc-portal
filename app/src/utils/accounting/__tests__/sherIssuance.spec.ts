@@ -9,15 +9,15 @@ function raw(sher: number): string {
   return String(BigInt(Math.round(sher * 1e6)))
 }
 
-/** A SHER wage accrual (UC-CASH-02): Cr Shares to be issued. Its stamped USD is a
+/** A SHER wage accrual (UC-CASH-02): Cr SHERS To Be Issued. Its stamped USD is a
  *  placeholder — settleWithdrawnSher recomputes it. */
 function accrual(sher: number, over: Partial<LedgerEntry> = {}) {
   return makeEntry({
     id: `accrual-${over.id ?? sher}`,
     timestamp: 100,
     useCase: 'UC-CASH-02',
-    debit: 'Share-based Compensation',
-    credit: 'Shares to be issued',
+    debit: 'Deferred SHER Compensation',
+    credit: 'SHERS To Be Issued',
     amountUsd: 0,
     token: 'sher',
     rawAmount: raw(sher),
@@ -33,7 +33,7 @@ function withdrawal(sher: number, rate: number, over: Partial<LedgerEntry> = {})
     id: `withdraw-${over.id ?? sher}`,
     timestamp: 200,
     useCase: 'UC-CASH-03',
-    debit: 'Shares to be issued',
+    debit: 'SHERS To Be Issued',
     credit: 'Investor Equity',
     amountUsd: round6(sher * rate),
     rate,
@@ -45,12 +45,12 @@ function withdrawal(sher: number, rate: number, over: Partial<LedgerEntry> = {})
   })
 }
 
-/** Open `Shares to be issued` liability (credit-normal): Σ credits − Σ debits. */
+/** Open `SHERS To Be Issued` equity claim (credit-normal): Σ credits − Σ debits. */
 function sharesToBeIssuedNet(entries: readonly LedgerEntry[]): number {
   let net = 0
   for (const e of entries) {
-    if (e.credit === 'Shares to be issued') net += e.amountUsd
-    if (e.debit === 'Shares to be issued') net -= e.amountUsd
+    if (e.credit === 'SHERS To Be Issued') net += e.amountUsd
+    if (e.debit === 'SHERS To Be Issued') net -= e.amountUsd
   }
   return round6(net)
 }
@@ -82,7 +82,7 @@ describe('settleWithdrawnSher', () => {
     const a = find(settled, 'accrual-100')
     expect(a.amountUsd).toBe(38) // 40×0.20 (frozen) + 60×0.50 (current)
     expect(a.rate).toBe(0.38)
-    // Shares to be issued left open = the pending 60 SHER at the current rate.
+    // SHERS To Be Issued left open = the pending 60 SHER at the current rate.
     expect(sharesToBeIssuedNet(settled)).toBe(30)
   })
 

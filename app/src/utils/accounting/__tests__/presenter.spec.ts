@@ -74,6 +74,8 @@ describe('presentBalance', () => {
     expect(balance.equityLines.map((l) => l.label)).toEqual([
       'Owner capital',
       'Investor equity (SHER)',
+      'SHERs to be issued',
+      'Deferred SHER compensation (contra)',
       'Retained earnings (net profit)'
     ])
     expect(balance.liabLines).toContainEqual({ label: 'None (no debt)', value: '$0.00' })
