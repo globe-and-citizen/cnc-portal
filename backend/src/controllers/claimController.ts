@@ -115,7 +115,21 @@ export const addClaim = async (req: Request, res: Response) => {
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
   try {
-    const wage = await resolveWageForWeek(teamId, callerAddress, weekStart);
+    // The week's own row decides which wage prices it. A week the member has
+    // already opened keeps the wage it was opened with, whatever the owner has
+    // saved since, so a mid-week change can never split one week across two
+    // rows — the failure that let hour caps restart from zero (issue #2479).
+    // Resolution only speaks for weeks nobody has opened yet.
+    let weeklyClaim = await prisma.weeklyClaim.findFirst({
+      where: {
+        teamId: teamId,
+        memberAddress: callerAddress,
+        weekStart: weekStart,
+      },
+      include: { claims: true, wage: true },
+    });
+
+    const wage = weeklyClaim?.wage ?? (await resolveWageForWeek(teamId, callerAddress, weekStart));
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
@@ -136,17 +150,6 @@ export const addClaim = async (req: Request, res: Response) => {
         res
       );
     }
-
-    // Find the weekly claim for the active wage and current week.
-    let weeklyClaim = await prisma.weeklyClaim.findFirst({
-      where: {
-        wageId: wage.id,
-        weekStart: weekStart,
-        memberAddress: callerAddress,
-        teamId: teamId,
-      },
-      include: { claims: true },
-    });
 
     if (weeklyClaim) {
       if (weeklyClaim.status === 'disabled') {
@@ -206,9 +209,7 @@ export const addClaim = async (req: Request, res: Response) => {
           data: {},
           status: 'pending',
         },
-        include: {
-          claims: true,
-        },
+        include: { claims: true, wage: true },
       });
     }
 
