@@ -19,6 +19,9 @@
  * - The Bank protocol fee (`FeePaid`) *is* booked, as a real cost leaving the
  *   treasury: `Transaction Fee Expense`. The fee is skimmed to the protocol-wide
  *   FeeCollector (not a team pocket), so it is an expense, not an internal move.
+ * - SHER paid as wages is **not** an expense: it runs entirely through equity
+ *   (`Deferred SHER Compensation` / `SHERS To Be Issued`) — see
+ *   {@link CONTRA_ACCOUNTS} and issue #2458.
  */
 
 /** The five fundamental account classes of double-entry bookkeeping. */
@@ -40,14 +43,14 @@ export const ACCOUNT_NAMES = [
   'Wage Payable',
   'Loan Payable',
   'Interest Payable',
-  'Shares to be issued',
   'Owner Capital',
   'Investor Equity',
+  'SHERS To Be Issued',
+  'Deferred SHER Compensation',
   'Retained Earnings',
   'Service Revenue',
   'Trading Gain',
   'Payroll Expense',
-  'Share-based Compensation',
   'Operating Expense',
   'Interest Expense',
   'Dividend Expense',
@@ -74,14 +77,14 @@ export const CHART_OF_ACCOUNTS: Readonly<Record<AccountName, AccountClass>> = {
   'Wage Payable': 'LIABILITY',
   'Loan Payable': 'LIABILITY',
   'Interest Payable': 'LIABILITY',
-  'Shares to be issued': 'LIABILITY',
   'Owner Capital': 'EQUITY',
   'Investor Equity': 'EQUITY',
+  'SHERS To Be Issued': 'EQUITY',
+  'Deferred SHER Compensation': 'EQUITY',
   'Retained Earnings': 'EQUITY',
   'Service Revenue': 'INCOME',
   'Trading Gain': 'INCOME',
   'Payroll Expense': 'EXPENSE',
-  'Share-based Compensation': 'EXPENSE',
   'Operating Expense': 'EXPENSE',
   'Interest Expense': 'EXPENSE',
   'Dividend Expense': 'EXPENSE',
@@ -109,12 +112,38 @@ export function isDebitNormalClass(accountClass: AccountClass): boolean {
 }
 
 /**
+ * **Contra accounts** — accounts that sit in a class but carry the *opposite*
+ * normal balance, reducing their class instead of adding to it.
+ *
+ * `Deferred SHER Compensation` is the book's only one: SHER earned by a member is
+ * booked straight into equity (Dr `Deferred SHER Compensation` · Cr
+ * `SHERS To Be Issued`) rather than expensed, so the debit side has to live in
+ * equity as a contra — the same device US GAAP uses for unearned/deferred
+ * compensation at a restricted-stock grant. The pair nets to zero, which is the
+ * whole point: share-based pay never reaches the income statement (issue #2458).
+ *
+ * A contra account flips every sign the books derive from an account's normal
+ * side — trial-balance column, net balance, running balance in the drill-down —
+ * so {@link isDebitNormal} is the single place that resolves it.
+ */
+export const CONTRA_ACCOUNTS: ReadonlySet<AccountName> = new Set<AccountName>([
+  'Deferred SHER Compensation'
+])
+
+/** Whether an account reduces its own class rather than adding to it. */
+export function isContraAccount(account: AccountName): boolean {
+  return CONTRA_ACCOUNTS.has(account)
+}
+
+/**
  * Whether an account's normal balance is on the **debit** side.
  * ASSET and EXPENSE accounts are debit-normal; LIABILITY, EQUITY and INCOME
- * accounts are credit-normal.
+ * accounts are credit-normal — except a {@link CONTRA_ACCOUNTS} account, which
+ * carries the opposite side of its own class.
  */
 export function isDebitNormal(account: AccountName): boolean {
-  return isDebitNormalClass(classOf(account))
+  const byClass = isDebitNormalClass(classOf(account))
+  return isContraAccount(account) ? !byClass : byClass
 }
 
 /** The normal-balance side of an account, as a literal. */

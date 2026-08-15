@@ -6,8 +6,9 @@
  * **Retained Earnings**:
  *
  *  - Assets       cash pockets (rolled up) + Trading account + any other asset
- *  - Liabilities  Wage Payable + Loan Payable + Shares to be issued (net; 0 once settled)
- *  - Equity       Owner Capital + Investor Equity + Retained Earnings (net income)
+ *  - Liabilities  Wage Payable + Loan Payable + Interest Payable
+ *  - Equity       Owner Capital + Investor Equity + SHERS To Be Issued
+ *                 − Deferred SHER Compensation (contra) + Retained Earnings
  *
  * The identity holds by construction: every posting is balanced and net income
  * is exactly Σincome − Σexpense, so contributed-equity + retained-earnings +
@@ -15,7 +16,7 @@
  * 142.20 (Investor Equity 138 + Retained Earnings 4.20), liabilities 0.
  */
 import { formatUnits } from 'viem'
-import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
+import { ACCOUNT_NAMES, classOf, isContraAccount, type AccountName } from './chartOfAccounts'
 import { netBalanceByAccount, netBalanceByAccountRaw } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import type { LedgerEntry } from './ledgerEntry'
@@ -58,11 +59,20 @@ export interface BalanceSheet {
   /** Non-cash assets (Trading account, …) with non-zero balance. */
   otherAssets: StatementLine[]
   totalAssets: number
-  /** Liability accounts with non-zero balance (Wage Payable, Shares to be issued). */
+  /** Liability accounts with non-zero balance (Wage Payable, Loan Payable, …). */
   liabilities: StatementLine[]
   totalLiabilities: number
   ownerCapital: number
   investorEquity: number
+  /** SHER earned by members but not yet minted — an equity claim, not a debt. */
+  sherToBeIssued: number
+  /**
+   * The contra-equity offset of that claim, as its **signed contribution to
+   * equity** — i.e. negative (the account itself carries a debit balance). SHER
+   * wages never touch the income statement, so this is what keeps the books
+   * balanced in its place (issue #2458).
+   */
+  deferredSherCompensation: number
   /** Period net income closed into equity. */
   retainedEarnings: number
   totalEquity: number
@@ -88,10 +98,11 @@ function round2(value: number): number {
 /**
  * The full-precision (unrounded) side totals of the balance-sheet identity.
  * Net income closes into equity, so income accounts add and expense accounts
- * subtract into `equityAndResult`. Summed from the raw net balances so the
- * grand totals are rounded exactly **once** — summing already-rounded
- * per-account balances (multi-currency values rounded before summation) drifts a
- * cent and would break `Assets = Liabilities + Equity`.
+ * subtract into `equityAndResult`. A **contra-equity** account (Deferred SHER
+ * Compensation) carries a debit balance, so it subtracts too. Summed from the raw
+ * net balances so the grand totals are rounded exactly **once** — summing
+ * already-rounded per-account balances (multi-currency values rounded before
+ * summation) drifts a cent and would break `Assets = Liabilities + Equity`.
  */
 function rawSideTotals(entries: readonly LedgerEntry[]): {
   assets: number
@@ -113,6 +124,9 @@ function rawSideTotals(entries: readonly LedgerEntry[]): {
         liabilities += value
         break
       case 'EQUITY':
+        // A contra-equity balance is debit-normal: it reduces equity.
+        equityAndResult += isContraAccount(account) ? -value : value
+        break
       case 'INCOME':
         equityAndResult += value
         break
@@ -197,6 +211,9 @@ export function buildBalanceSheet(entries: readonly LedgerEntry[]): BalanceSheet
 
   const ownerCapital = balanceOf('Owner Capital')
   const investorEquity = balanceOf('Investor Equity')
+  const sherToBeIssued = balanceOf('SHERS To Be Issued')
+  // Held as its signed equity contribution, so the equity lines add up on screen.
+  const deferredSherCompensation = -balanceOf('Deferred SHER Compensation')
   const retainedEarnings = buildIncomeStatement(entries).netIncome
 
   // Grand totals: sum at full precision, round exactly once. The identity is
@@ -226,6 +243,8 @@ export function buildBalanceSheet(entries: readonly LedgerEntry[]): BalanceSheet
     totalLiabilities,
     ownerCapital,
     investorEquity,
+    sherToBeIssued,
+    deferredSherCompensation,
     retainedEarnings,
     totalEquity,
     totalLiabilitiesAndEquity,

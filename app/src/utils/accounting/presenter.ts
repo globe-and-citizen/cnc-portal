@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { classOf, type AccountClass, type AccountName } from './chartOfAccounts'
+import { classOf, isDebitNormal, type AccountClass, type AccountName } from './chartOfAccounts'
 import type { GeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
@@ -232,12 +232,26 @@ export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | nu
   const liabLines: StatementLineView[] = bs.liabilities.length
     ? bs.liabilities.map((l) => ({ label: l.account, value: money(l.amount), account: l.account }))
     : [{ label: 'None (no debt)', value: money(0) }]
+  // SHER wages run entirely through equity (issue #2458): the claim members have
+  // earned sits in `SHERS To Be Issued`, and `Deferred SHER Compensation` is the
+  // contra-equity offset that keeps it off the income statement. Both are shown so
+  // the reader can see the pair, and the contra line reads negative.
   const equityLines: StatementLineView[] = [
     { label: 'Owner capital', value: money(bs.ownerCapital), account: 'Owner Capital' },
     {
       label: 'Investor equity (SHER)',
       value: money(bs.investorEquity),
       account: 'Investor Equity'
+    },
+    {
+      label: 'SHERs to be issued',
+      value: money(bs.sherToBeIssued),
+      account: 'SHERS To Be Issued'
+    },
+    {
+      label: 'Deferred SHER compensation (contra)',
+      value: money(bs.deferredSherCompensation),
+      account: 'Deferred SHER Compensation'
     },
     {
       label: 'Retained earnings (net profit)',
@@ -262,7 +276,9 @@ export function presentTrial(ledger: GeneralLedger): {
   balanced: boolean
 } {
   const rows: TrialRow[] = ledger.trialBalance.map((r) => {
-    const debitSide = r.accountClass === 'ASSET' || r.accountClass === 'EXPENSE'
+    // Resolved per **account**, not per class: a contra account (Deferred SHER
+    // Compensation) sits in equity but belongs in the debit column.
+    const debitSide = isDebitNormal(r.account)
     return {
       account: r.account,
       nature: natureOf(r.account),
