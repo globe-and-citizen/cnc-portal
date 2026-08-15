@@ -597,9 +597,10 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
   const weekStart = dayjs.utc(weekStartInput).startOf('isoWeek').toDate();
 
   try {
-    // Looked up by week rather than by wage, exactly as addClaim does: an open
-    // week keeps the wage it was opened with, so goals never open a second row
-    // for a week whose wage has changed since.
+    // Looked up by week rather than by wage, exactly as addClaim does, so goals
+    // never open a second row for a week whose wage has changed since. When the
+    // week holds no hours yet, the first claim moves the row onto the wage that
+    // prices it; goals alone never commit a week to a wage.
     const existing = await prisma.weeklyClaim.findFirst({
       where: {
         teamId,
