@@ -7,6 +7,9 @@ import {
   resolveCurrentWage,
   nextMondayUtc,
   isScheduledWage,
+  isWeekOpen,
+  effectiveFromForChange,
+  membersWithOpenWeek,
   pickWageForWeek,
   splitCurrentAndScheduled,
 } from '../wageResolution';
@@ -17,6 +20,10 @@ dayjs.extend(isoWeek);
 vi.mock('../dependenciesUtil', () => ({
   prisma: {
     wage: {
+      findMany: vi.fn(),
+    },
+    weeklyClaim: {
+      count: vi.fn(),
       findMany: vi.fn(),
     },
   },
@@ -160,6 +167,67 @@ describe('wageResolution', () => {
 
     it('is false for a missing wage', () => {
       expect(isScheduledWage(null, now)).toBe(false);
+    });
+  });
+
+  describe('isWeekOpen', () => {
+    it('counts a week with goals but no claims as open', async () => {
+      // A goals-only row is keyed by wage like any other, so a change landing
+      // on that week would split it in two exactly as claims would.
+      vi.mocked(prisma.weeklyClaim.count).mockResolvedValue(1);
+
+      expect(await isWeekOpen(1, '0xabc', week('2026-08-12'))).toBe(true);
+    });
+
+    it('is false when the member has not touched the week', async () => {
+      vi.mocked(prisma.weeklyClaim.count).mockResolvedValue(0);
+
+      expect(await isWeekOpen(1, '0xabc', week('2026-08-12'))).toBe(false);
+    });
+  });
+
+  describe('effectiveFromForChange', () => {
+    // Wednesday.
+    const now = at('2026-08-12T15:00:00.000Z');
+
+    it('waits for next Monday when the week is already open', () => {
+      expect(effectiveFromForChange(true, now).toISOString()).toBe('2026-08-17T00:00:00.000Z');
+    });
+
+    it('covers the current week whole when nothing is submitted yet', () => {
+      // Not "now": resolution compares the effective date against the start of
+      // the week, so a mid-week timestamp would skip the week it targets.
+      expect(effectiveFromForChange(false, now).toISOString()).toBe('2026-08-10T00:00:00.000Z');
+    });
+
+    it('always lands on a Monday, so a wage boundary is always a week boundary', () => {
+      expect(effectiveFromForChange(true, now).getUTCDay()).toBe(1);
+      expect(effectiveFromForChange(false, now).getUTCDay()).toBe(1);
+    });
+
+    it('applies to the week just worked when saved on a Sunday', () => {
+      const sunday = at('2026-08-16T22:00:00.000Z');
+
+      expect(effectiveFromForChange(false, sunday).toISOString()).toBe('2026-08-10T00:00:00.000Z');
+    });
+  });
+
+  describe('membersWithOpenWeek', () => {
+    it('returns the members who have already opened the current week', async () => {
+      vi.mocked(prisma.weeklyClaim.findMany).mockResolvedValue([
+        { memberAddress: '0xabc' },
+        { memberAddress: '0xdef' },
+      ] as never);
+
+      const members = await membersWithOpenWeek(1, at('2026-08-12T15:00:00.000Z'));
+
+      expect(members).toEqual(new Set(['0xabc', '0xdef']));
+    });
+
+    it('is empty when nobody has submitted anything', async () => {
+      vi.mocked(prisma.weeklyClaim.findMany).mockResolvedValue([]);
+
+      expect((await membersWithOpenWeek(1)).size).toBe(0);
     });
   });
 });

@@ -134,3 +134,61 @@ export function isScheduledWage(
   if (!wage?.effectiveFrom) return false;
   return wage.effectiveFrom > (now ?? new Date());
 }
+
+/**
+ * Has the member already opened the given week?
+ *
+ * "Opened" means a `WeeklyClaim` row exists for that member and week — whether
+ * it holds daily claims or only weekly goals. Goals count: a goals-only row is
+ * keyed `[wageId, weekStart]` like any other, so letting a wage change land on
+ * a week that already carries one would split that week in two exactly as
+ * claims would.
+ */
+export async function isWeekOpen(
+  teamId: number,
+  userAddress: string,
+  weekStart: Date
+): Promise<boolean> {
+  const opened = await prisma.weeklyClaim.count({
+    where: { teamId, memberAddress: userAddress, weekStart },
+  });
+
+  return opened > 0;
+}
+
+/**
+ * The date a wage change saved now takes effect on.
+ *
+ * A week the member has already opened keeps the wage it was opened with, so
+ * the change is anchored to next Monday. A week nobody has touched yet takes
+ * the change whole, from its own Monday: days already worked but not yet
+ * submitted are then paid at the new rate. That is the trade-off the owner
+ * makes by not waiting for their members to submit, and it is deliberate.
+ *
+ * Both branches return a Monday. That is what keeps a wage boundary and a week
+ * boundary the same instant, so exactly one wage still covers any week and two
+ * `WeeklyClaim` rows for one week remain impossible.
+ *
+ * Returning "now" for the immediate case would be wrong: resolution compares
+ * the effective date against the *start* of the week, so a mid-week timestamp
+ * would exclude the new wage from the very week it is meant to apply to.
+ */
+export function effectiveFromForChange(weekIsOpen: boolean, now?: Date): Date {
+  return weekIsOpen ? nextMondayUtc(now) : currentWeekStart(now);
+}
+
+/**
+ * Members of a team who have already opened the current week, in one query.
+ *
+ * Used to tell the owner, per member, when a change would take effect, without
+ * issuing a query per row.
+ */
+export async function membersWithOpenWeek(teamId: number, now?: Date): Promise<Set<string>> {
+  const rows = await prisma.weeklyClaim.findMany({
+    where: { teamId, weekStart: currentWeekStart(now) },
+    select: { memberAddress: true },
+    distinct: ['memberAddress'],
+  });
+
+  return new Set(rows.map((row) => row.memberAddress));
+}
