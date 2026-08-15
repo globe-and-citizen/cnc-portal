@@ -280,11 +280,11 @@ describe('SetMemberWageModal', () => {
   })
 
   describe('effective date notice', () => {
-    const noticeText = async (nextChangeEffectiveFrom: string | null) => {
+    const notice = async (nextChangeEffectiveFrom: string | null) => {
       const wrapper = createWrapper({ wage: { ...mockWage, nextChangeEffectiveFrom } })
       await openModal(wrapper)
 
-      return wrapper.find('[data-test="wage-effective-date-notice"]').text()
+      return wrapper.find('[data-test="wage-effective-date-notice"]')
     }
 
     /** The server only ever answers with a Monday, so the fixtures are too. */
@@ -301,20 +301,17 @@ describe('SetMemberWageModal', () => {
       ).toISOString()
     }
 
-    it('warns that an untouched week takes the change whole', async () => {
-      // The member has submitted nothing yet, so hours they have already worked
-      // are repriced. That is the case the owner has to see before saving.
-      const text = await noticeText(mondayUtc())
-
-      expect(text).toContain('immediately')
-      expect(text).toContain('Alice')
+    it('says nothing when the change simply takes effect', async () => {
+      // No hours submitted this week, so the new wage is what the week will be
+      // priced at. There is no change to announce — only a delay would be news.
+      expect((await notice(mondayUtc())).exists()).toBe(false)
     })
 
-    it('announces the date when the member has already opened this week', async () => {
-      const text = await noticeText(mondayUtc(1))
+    it('announces the date when hours are already submitted for this week', async () => {
+      const alert = await notice(mondayUtc(1))
 
-      expect(text).not.toContain('immediately')
-      expect(text).toContain('current rate stays in force')
+      expect(alert.exists()).toBe(true)
+      expect(alert.text()).toContain('current rate stays in force')
     })
   })
 })

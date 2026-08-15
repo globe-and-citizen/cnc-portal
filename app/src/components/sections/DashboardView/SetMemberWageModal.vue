@@ -27,13 +27,18 @@
 
       <template #body>
         <div class="mt-1 space-y-4">
+          <!--
+            Shown only when the change has to wait. A change that simply takes
+            effect is not news: the new wage is what the member's week will be
+            priced at, and saying so would be noise on the common path.
+          -->
           <UAlert
-            v-if="props.wage"
+            v-if="showEffectiveDateNotice"
             icon="i-heroicons-information-circle"
-            :color="changeTiming.immediate ? 'warning' : 'info'"
+            color="info"
             variant="soft"
             data-test="wage-effective-date-notice"
-            :title="effectiveDateTitle"
+            :title="`This change takes effect on ${changeTiming.label}.`"
             :description="effectiveDateDescription"
           />
 
@@ -119,26 +124,17 @@ const wageData = ref<WageWithForm>(initialWage())
 const changeTiming = computed(() => describeWageChangeTiming(props.wage))
 const scheduledWageNotice = computed(() => formatScheduledWageNotice(props.wage?.scheduledWage))
 
-// Two genuinely different situations, and the owner has to be able to tell
-// them apart before saving. The member has not opened this week yet: the new
-// rate covers the days they have already worked but not yet submitted, which
-// is the case worth a warning. They have: this week is settled at the current
-// rate and only the next one moves.
-const effectiveDateTitle = computed(() =>
-  changeTiming.value.immediate
-    ? 'This change takes effect immediately, for the whole current week.'
-    : `This change takes effect on ${changeTiming.value.label}.`
-)
+// There is only one thing worth telling the owner before they save: that this
+// change will not apply straight away. It cannot, once the member has hours in
+// the week — those are already priced against the current wage. Everywhere
+// else the change just takes effect, and announcing it would say nothing.
+const showEffectiveDateNotice = computed(() => Boolean(props.wage) && !changeTiming.value.immediate)
 
-const effectiveDateDescription = computed(() => {
-  if (changeTiming.value.immediate) {
-    return `${props.member.name ?? 'This member'} has not submitted any hours for this week yet, so hours they have already worked will be paid at the new rate. Wait for them to submit to leave this week untouched.`
-  }
-
-  return scheduledWageNotice.value
+const effectiveDateDescription = computed(() =>
+  scheduledWageNotice.value
     ? `A change is already scheduled for that date (${scheduledWageNotice.value}). Saving replaces it without pushing the date back.`
     : 'Hours are already submitted for this week, so the current rate stays in force until then.'
-})
+)
 
 const items = computed<StepperItem[]>(() =>
   wageData.value.enableOvertimeRules
