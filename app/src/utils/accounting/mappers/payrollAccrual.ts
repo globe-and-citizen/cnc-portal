@@ -5,12 +5,16 @@
  *
  * For each rate in the member's wage it books one balanced posting:
  *
- *     Dr Payroll Expense            Cr Wage Payable          (cash rates: native / USDC)
- *     Dr Share-based Compensation   Cr Shares to be issued   (the SHER rate)
+ *     Dr Payroll Expense               Cr Wage Payable        (cash rates: native / USDC)
+ *     Dr Deferred SHER Compensation    Cr SHERS To Be Issued  (the SHER rate)
  *
- * The SHER leg is a **non-cash** cost (shares, not treasury), so it is booked to
- * its own `Share-based Compensation` expense account rather than mixed into the
- * cash `Payroll Expense` line.
+ * The SHER leg **never reaches the income statement** (issue #2458). Nothing
+ * leaves the treasury when a member works for shares, so the whole lifecycle stays
+ * inside equity: the claim they have earned is credited to `SHERS To Be Issued`,
+ * and `Deferred SHER Compensation` — a contra-equity account — carries the
+ * balancing debit. The pair nets to zero, exactly as a restricted-stock grant does
+ * under US GAAP before any vesting is recognised. The later mint (UC-CASH-03 /
+ * DEFAULT-D) then clears `SHERS To Be Issued` into `Investor Equity`.
  *
  * The accrual lands only once the week has **ended**: while a week is still in
  * progress the member may keep submitting daily claims, so booking mid-week would
@@ -106,8 +110,8 @@ export function mapPayrollAccruals(
           id: `accrual-${claim.id}-${tokenId}`,
           timestamp: at,
           useCase: 'UC-CASH-02',
-          debit: isShare ? 'Share-based Compensation' : 'Payroll Expense',
-          credit: isShare ? 'Shares to be issued' : 'Wage Payable',
+          debit: isShare ? 'Deferred SHER Compensation' : 'Payroll Expense',
+          credit: isShare ? 'SHERS To Be Issued' : 'Wage Payable',
           amountUsd: ctx.toUsd(base, tokenId, atDate(at)),
           token: tokenId,
           rawAmount: base.toString(),

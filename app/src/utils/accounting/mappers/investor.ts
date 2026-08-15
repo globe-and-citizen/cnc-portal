@@ -10,10 +10,10 @@
  *   → emit nothing: the Investor Equity was booked by UC-SDR-01 / UC-CASH-03.
  *   Re-booking it here would double-count the equity.
  * - **unbacked** mint → **Default D**: a direct share issuance. The SHER were
- *   accrued into `Shares to be issued` (the wage accrual, UC-CASH-02) and are now
- *   formally issued, so we clear that liability into equity —
- *   Dr Shares to be issued · Cr Investor Equity — valued at the SHER rate of
- *   record. (It no longer emits a value-0 memo, which left `Shares to be issued`
+ *   accrued into `SHERS To Be Issued` (the wage accrual, UC-CASH-02) and are now
+ *   formally issued, so we clear that equity claim into contributed equity —
+ *   Dr SHERS To Be Issued · Cr Investor Equity — valued at the SHER rate of
+ *   record. (It no longer emits a value-0 memo, which left `SHERS To Be Issued`
  *   permanently inflated.)
  *
  * `DividendPaid` → UC-INV-01 (Dr Dividend Expense · Cr Cash — Bank). The summary
@@ -76,7 +76,7 @@ export function mapInvestorEvents(input: InvestorMapperInput, ctx: MapperContext
         id: row.id,
         timestamp: row.timestamp,
         useCase: 'DEFAULT-D',
-        debit: 'Shares to be issued',
+        debit: 'SHERS To Be Issued',
         credit: 'Investor Equity',
         amountUsd: ctx.toUsd(BigInt(row.amount), 'sher', atDate(row.timestamp)),
         token: 'sher',
