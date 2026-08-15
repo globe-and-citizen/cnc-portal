@@ -115,11 +115,9 @@ export const addClaim = async (req: Request, res: Response) => {
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
   try {
-    // The week's own row decides which wage prices it. A week the member has
-    // already opened keeps the wage it was opened with, whatever the owner has
-    // saved since, so a mid-week change can never split one week across two
-    // rows — the failure that let hour caps restart from zero (issue #2479).
-    // Resolution only speaks for weeks nobody has opened yet.
+    // A week is found by member and week, never by wage, so one week always has
+    // one row — the split that let hour caps restart from zero (issue #2479)
+    // has nowhere to happen.
     let weeklyClaim = await prisma.weeklyClaim.findFirst({
       where: {
         teamId: teamId,
@@ -129,7 +127,15 @@ export const addClaim = async (req: Request, res: Response) => {
       include: { claims: true, wage: true },
     });
 
-    const wage = weeklyClaim?.wage ?? (await resolveWageForWeek(teamId, callerAddress, weekStart));
+    // Hours are what commit a week to a wage. Once the week holds claims it
+    // keeps the wage they were priced against, whatever the owner has saved
+    // since. A week holding only goals has committed to nothing, so it follows
+    // the change like an empty week would — the member had not submitted their
+    // hours, which is precisely the case the rule leaves to them.
+    const weekIsSubmitted = (weeklyClaim?.claims.length ?? 0) > 0;
+    const wage = weekIsSubmitted
+      ? weeklyClaim!.wage
+      : await resolveWageForWeek(teamId, callerAddress, weekStart);
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
@@ -209,6 +215,15 @@ export const addClaim = async (req: Request, res: Response) => {
           data: {},
           status: 'pending',
         },
+        include: { claims: true, wage: true },
+      });
+    } else if (weeklyClaim.wageId !== wage.id) {
+      // Only reachable on a goals-only week whose wage changed since: these are
+      // the first hours in it, so the row moves to the wage that prices them
+      // instead of leaving the week pointing at the superseded one.
+      weeklyClaim = await prisma.weeklyClaim.update({
+        where: { id: weeklyClaim.id },
+        data: { wageId: wage.id },
         include: { claims: true, wage: true },
       });
     }
