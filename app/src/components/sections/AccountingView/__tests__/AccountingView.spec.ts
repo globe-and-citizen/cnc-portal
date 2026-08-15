@@ -254,7 +254,7 @@ describe('StatementLine', () => {
     const aggregate: StatementLineView = {
       label: 'Retained earnings',
       value: '-$50.00',
-      accounts: ['Payroll Expense', 'Share-based Compensation']
+      accounts: ['Payroll Expense', 'Deferred SHER Compensation']
     }
     const wrapper = renderWithProviders(StatementLine, { props: { line: aggregate } })
     await wrapper.find('[data-test="statement-drilldown-aggregate"]').trigger('click')

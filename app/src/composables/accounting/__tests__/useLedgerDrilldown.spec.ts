@@ -48,7 +48,7 @@ describe('useLedgerDrilldown', () => {
 
   it('opens an aggregate drill-down, keeping the line figure as the total', () => {
     const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-3')
-    const group = ['Payroll Expense', 'Share-based Compensation']
+    const group = ['Payroll Expense', 'Deferred SHER Compensation']
     d.openFor(group, '-$50.00', 'Retained earnings')
 
     expect(d.account.value).toBe('Retained earnings')
@@ -59,7 +59,7 @@ describe('useLedgerDrilldown', () => {
 
   it('exports an aggregate with its label and total', () => {
     const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-4')
-    d.openFor(['Payroll Expense', 'Share-based Compensation'], '-$50.00', 'Retained earnings')
+    d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00', 'Retained earnings')
     d.onExport('pdf')
 
     expect(exportPdf).toHaveBeenCalledTimes(1)
@@ -71,7 +71,7 @@ describe('useLedgerDrilldown', () => {
   it('labels an unlabelled aggregate "Aggregate"', () => {
     const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-agg')
     // A list of accounts with no explicit label falls back to the generic name.
-    d.openFor(['Payroll Expense', 'Share-based Compensation'], '-$50.00')
+    d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00')
     expect(d.account.value).toBe('Aggregate')
     expect(d.total.value).toBe('-$50.00')
   })
@@ -81,7 +81,7 @@ describe('useLedgerDrilldown', () => {
     d.openFor('Investor Equity', '$999.00')
     expect(d.balanceAccount.value).toBe('Investor Equity')
 
-    d.openFor(['Payroll Expense', 'Share-based Compensation'], '-$50.00', 'Retained earnings')
+    d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00', 'Retained earnings')
     // Mixed classes share no natural side, so there is no balance to run.
     expect(d.balanceAccount.value).toBe('')
   })
