@@ -80,18 +80,24 @@ submit claims for fair, bounded compensation
       "8h/d" (tooltip "Daily limit: N hours"); the cell shows "—" when the member has no wage
 - [ ] Editing a member with an existing wage pre-fills the current values; saving creates a new wage
       **version** (one active wage per member)
-- [ ] _(scheduling)_ Changing an existing wage takes effect at the **start of the next ISO week**,
-      not immediately; the current rates and caps hold until then, including for claims backdated to
-      earlier weeks. A member's **first** wage is the only one that applies immediately
-- [ ] _(scheduling)_ The modal states the effective date before saving ("This change takes effect on
-      Aug 17, 2026")
-- [ ] _(scheduling)_ The member row shows a badge for the pending change ("Changes to SHER 10/h,
+- [ ] _(scheduling)_ Changing a wage for a member who has **already submitted** something this week
+      (hours or goals) takes effect at the **start of the next ISO week**: that week is already
+      priced by the wage it was opened with and keeps it
+- [ ] _(scheduling)_ Changing a wage for a member who has **submitted nothing** this week applies
+      **immediately, to the whole week** — including the days they have already worked but not yet
+      submitted. Waiting for them to submit is how the owner avoids that
+- [ ] _(scheduling)_ The modal says which of the two is about to happen, before saving ("This change
+      takes effect immediately, for the whole current week." / "This change takes effect on Aug 17,
+      2026.")
+- [ ] _(scheduling)_ The member row shows a badge for a change that waits ("Changes to SHER 10/h,
       15h/wk, 8h/d on Aug 17, 2026"); it disappears once the change takes effect, without a page
       reload
 - [ ] _(scheduling)_ Saving again before the effective date **rewrites** the pending change and does
       **not** push its date back; the chain gains no extra version
 - [ ] _(scheduling)_ A pending change can be cancelled, leaving the current wage in force
       (`DELETE /wage/scheduled`)
+- [ ] _(scheduling)_ A week that is already open never gains a second `WeeklyClaim`: a claim finds
+      its week by member and week, so hour caps keep counting on the same row
 
 > Full behaviour, edge cases and API shapes: [Wage scheduling](./wage-scheduling.md).
 
