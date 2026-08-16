@@ -51,6 +51,17 @@ export function formatDateTime(value: DateInput | null | undefined): string {
   return toDayjs(value)?.format('MMM D, YYYY, HH:mm:ss') ?? EMPTY_VALUE
 }
 
+/**
+ * `14:05` — a **time of day** on a date the reader already knows.
+ *
+ * For a deadline the user is about to set or watch tick down, where repeating
+ * the day would only add noise. A span of time is not a clock time: reach for
+ * {@link formatDuration} instead.
+ */
+export function formatTimeOfDay(value: DateInput | null | undefined): string {
+  return toDayjs(value)?.format('HH:mm') ?? EMPTY_VALUE
+}
+
 /** `Jan 8` — for chart axes and dense tables where the year is already established. */
 export function formatDateShort(value: DateInput | null | undefined): string {
   return toDayjs(value)?.format('MMM D') ?? EMPTY_VALUE

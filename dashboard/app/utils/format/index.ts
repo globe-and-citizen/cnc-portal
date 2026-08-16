@@ -43,6 +43,7 @@ export {
   formatDateUtc,
   formatDuration,
   formatMonthYear,
+  formatTimeOfDay,
   formatWeekdayShort,
   fromUnix,
   type DateInput
