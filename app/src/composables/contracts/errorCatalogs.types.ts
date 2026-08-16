@@ -36,8 +36,21 @@ function applyEntry(
 }
 
 /**
+ * Our Solidity errors are declared the house way — `Elections__ElectionNotActive`,
+ * `ElectionUtils__InvalidSeatCount` — while the catalog is keyed by the meaning
+ * alone. Without dropping the prefix every one of those reverts resolves to
+ * nothing and reaches the user as the contract's shrug of a fallback, which is
+ * how "Election is not currently active" became "Election action failed".
+ */
+function withoutContractPrefix(revertName: string): string {
+  const separator = revertName.indexOf('__')
+  return separator === -1 ? revertName : revertName.slice(separator + 2)
+}
+
+/**
  * Resolves a revert name to a user-facing message using the unified catalog.
- * Resolution order: perContract[contract][name] → common[name] → fallbacks[contract] → fallbacks.default.
+ * Resolution order: perContract[contract][name] → common[name] → fallbacks[contract] → fallbacks.default,
+ * each name tried as declared and again with its `Contract__` prefix removed.
  */
 export function resolveFromCatalog(
   catalog: ContractErrorCatalog,
@@ -45,12 +58,17 @@ export function resolveFromCatalog(
   revertArgs?: readonly unknown[],
   contract?: ContractKey
 ): string {
-  if (contract) {
-    const override = applyEntry(catalog.perContract[contract]?.[revertName], revertArgs)
-    if (override !== undefined) return override
+  const names = [revertName, withoutContractPrefix(revertName)]
+
+  for (const name of names) {
+    if (contract) {
+      const override = applyEntry(catalog.perContract[contract]?.[name], revertArgs)
+      if (override !== undefined) return override
+    }
+    const shared = applyEntry(catalog.common[name], revertArgs)
+    if (shared !== undefined) return shared
   }
-  const shared = applyEntry(catalog.common[revertName], revertArgs)
-  if (shared !== undefined) return shared
+
   if (contract && catalog.fallbacks[contract]) return catalog.fallbacks[contract] as string
   return catalog.fallbacks.default
 }
