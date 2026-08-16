@@ -18,10 +18,10 @@ import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
 import { computed, reactive, watch } from 'vue'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
-import { encodeFunctionData, zeroAddress, type Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 import { useReadContract } from '@wagmi/vue'
 import { useElectionsCastVote } from '@/composables/elections/writes'
-import { estimateGas, readContract } from '@wagmi/core'
+import { readContract, simulateContract } from '@wagmi/core'
 import type { User } from '@/types'
 import { config } from '@/wagmi.config'
 import { classifyError, log } from '@/utils'
@@ -107,18 +107,19 @@ const castVote = async (candidateAddress: Address) => {
   }
   const args: readonly [bigint, Address] = [electionId.value, candidateAddress]
 
+  // Simulated through the ABI, not as raw call data: a raw gas estimate leaves
+  // viem nothing to decode the revert with, and every refusal the contract has
+  // a name for — closed ballot, voter not registered, already voted — reaches
+  // the user as the same shrug of an "Election action failed".
   try {
-    const data = encodeFunctionData({
+    await simulateContract(config, {
+      address: electionsAddress.value,
       abi: electionsAbi,
       functionName: 'castVote',
       args
     })
-    await estimateGas(config, {
-      to: electionsAddress.value,
-      data
-    })
   } catch (error) {
-    log.error('Error estimating gas:', error)
+    log.error('Error simulating vote:', error)
     toast.add({
       title: classifyError(error, { contract: 'Elections' }).userMessage,
       color: 'error'
