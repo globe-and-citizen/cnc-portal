@@ -13,6 +13,7 @@ import {
 } from '@/artifacts/abi/generated'
 import votingAbiJson from '@/artifacts/abi/V2/json/Voting.json'
 import { SAFE_VERSION } from '@/types/safe'
+import { formatNumber } from '@/utils/format'
 import { getSafeSingletonDeployment } from '@safe-global/safe-deployments'
 import type { Abi } from 'viem'
 
@@ -57,7 +58,8 @@ export const formatDecodedValue = (
 ): { display: string; isAddress: boolean } => {
   if (value === null || value === undefined) return { display: '-', isAddress: false }
   if (type === 'address') return { display: String(value), isAddress: true }
-  if (typeof value === 'bigint') return { display: value.toLocaleString(), isAddress: false }
+  if (typeof value === 'bigint')
+    return { display: formatNumber(value.toString()), isAddress: false }
   if (Array.isArray(value)) {
     const innerType = type.replace(/\[\d*\]$/, '')
     const items = value.map((v) => formatDecodedValue(innerType, v).display)
@@ -69,7 +71,7 @@ export const formatDecodedValue = (
         Object.entries(value as Record<string, unknown>).filter(([k]) => isNaN(Number(k)))
       )
       const serialized = JSON.stringify(filtered, (_k, v) =>
-        typeof v === 'bigint' ? v.toLocaleString() : v
+        typeof v === 'bigint' ? formatNumber(v.toString()) : v
       )
       return { display: serialized ?? '-', isAddress: false }
     } catch {

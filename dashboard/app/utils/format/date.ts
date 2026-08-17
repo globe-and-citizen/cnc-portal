@@ -51,9 +51,30 @@ export function formatDateTime(value: DateInput | null | undefined): string {
   return toDayjs(value)?.format('MMM D, YYYY, HH:mm:ss') ?? EMPTY_VALUE
 }
 
+/**
+ * `14:05` — a **time of day** on a date the reader already knows.
+ *
+ * For a deadline the user is about to set or watch tick down, where repeating
+ * the day would only add noise. A span of time is not a clock time: reach for
+ * {@link formatDuration} instead.
+ */
+export function formatTimeOfDay(value: DateInput | null | undefined): string {
+  return toDayjs(value)?.format('HH:mm') ?? EMPTY_VALUE
+}
+
 /** `Jan 8` — for chart axes and dense tables where the year is already established. */
 export function formatDateShort(value: DateInput | null | undefined): string {
   return toDayjs(value)?.format('MMM D') ?? EMPTY_VALUE
+}
+
+/** `Mon` — compact weekday label for chart axes. */
+export function formatWeekdayShort(value: DateInput | null | undefined): string {
+  return toDayjs(value)?.format('ddd') ?? EMPTY_VALUE
+}
+
+/** `Mon, Jan 8` — compact weekday and date for a daily activity row. */
+export function formatDateWeekdayShort(value: DateInput | null | undefined): string {
+  return toDayjs(value)?.format('ddd, MMM D') ?? EMPTY_VALUE
 }
 
 /** `January 2026` — period headers. */

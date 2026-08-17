@@ -35,6 +35,7 @@ import { presentAccountLedger, accountLedgerTitle } from '@/utils/accounting/acc
 import { activityText } from '@/utils/accounting/describeEntry'
 import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
+import { formatDateTime } from '@/utils/format'
 
 type Cell = string | number
 type Align = 'left' | 'right'
@@ -280,7 +281,7 @@ export async function exportTablesPdf(
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.setTextColor(120, 120, 120)
-  doc.text(`Generated ${new Date().toLocaleString()}`, marginX, 62)
+  doc.text(`Generated ${formatDateTime(new Date())}`, marginX, 62)
 
   let cursorY = 84
   tables.forEach((table, index) => {

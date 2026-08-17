@@ -129,6 +129,7 @@ import { computed } from 'vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import CashOutAllAction from '@/components/sections/DashboardView/CashOutAllAction.vue'
 import type { Address } from 'viem'
+import { formatCurrency } from '@/utils/format'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
@@ -167,8 +168,7 @@ const totalBalance = computed(() => {
     getRawTotal(safeBalance) +
     getRawTotal(expenseBalance) +
     getRawTotal(cashRemBalance)
-  const symbol = currencyStore.localCurrency.symbol
-  return `${symbol}${sum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatCurrency(sum, { currency: currencyStore.localCurrency.code })
 })
 
 const accountBalances = computed(() => {

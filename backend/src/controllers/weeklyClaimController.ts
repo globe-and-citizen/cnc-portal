@@ -592,26 +592,20 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
     weeklyGoals: string;
   };
 
-  // Normalize to Monday 00:00 UTC the same way addClaim does, so the row lines
-  // up with the [wageId, weekStart] uniqueness used by daily claims.
+  // Normalize to Monday 00:00 UTC the same way addClaim does, so goals and
+  // daily claims land on the same row for a given week.
   const weekStart = dayjs.utc(weekStartInput).startOf('isoWeek').toDate();
 
   try {
-    // A WeeklyClaim requires a wageId, so the member needs a wage before any
-    // goals can be recorded. Resolved against the target week so goals land on
-    // the same row as that week's claims (mirrors addClaim).
-    const wage = await resolveWageForWeek(teamId, callerAddress, weekStart);
-
-    if (!wage) {
-      return errorResponse(400, 'No wage found for the user', res);
-    }
-
+    // Looked up by week rather than by wage, exactly as addClaim does, so goals
+    // never open a second row for a week whose wage has changed since. When the
+    // week holds no hours yet, the first claim moves the row onto the wage that
+    // prices it; goals alone never commit a week to a wage.
     const existing = await prisma.weeklyClaim.findFirst({
       where: {
-        wageId: wage.id,
-        weekStart,
-        memberAddress: callerAddress,
         teamId,
+        memberAddress: callerAddress,
+        weekStart,
       },
     });
 
@@ -631,6 +625,15 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
         data: { weeklyGoals },
       });
       return res.status(200).json(updated);
+    }
+
+    // A WeeklyClaim requires a wageId, so the member needs a wage before any
+    // goals can be recorded. Only reached for a week nobody has opened yet,
+    // which is priced by resolution like a first claim would be.
+    const wage = await resolveWageForWeek(teamId, callerAddress, weekStart);
+
+    if (!wage) {
+      return errorResponse(400, 'No wage found for the user', res);
     }
 
     const created = await prisma.weeklyClaim.create({

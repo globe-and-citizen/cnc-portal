@@ -29,6 +29,25 @@ vi.mock('../../utils', async () => {
 });
 vi.mock('../../utils/viem.config');
 
+// Only the two helpers that read WeeklyClaim rows are stubbed; the rule that
+// turns "has this member submitted hours?" into an effective date stays real,
+// so these tests exercise it rather than restate it.
+const { mockWeekHasClaims, mockMembersWithClaimsThisWeek } = vi.hoisted(() => ({
+  mockWeekHasClaims: vi.fn(),
+  mockMembersWithClaimsThisWeek: vi.fn(),
+}));
+
+vi.mock('../../utils/wageResolution', async () => {
+  const actual = await vi.importActual<typeof import('../../utils/wageResolution')>(
+    '../../utils/wageResolution'
+  );
+  return {
+    ...actual,
+    weekHasClaims: mockWeekHasClaims,
+    membersWithClaimsThisWeek: mockMembersWithClaimsThisWeek,
+  };
+});
+
 // Mock the authorization middleware with proper hoisting
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
@@ -90,6 +109,8 @@ describe('Wage Controller', () => {
         ...mockTeam,
         isArchived: false,
       });
+      // Default: the member has not opened the current week.
+      mockWeekHasClaims.mockResolvedValue(false);
     });
 
     it('should return 400 if required parameters are missing', async () => {
@@ -489,16 +510,20 @@ describe('Wage Controller', () => {
       maximumHoursPerWeek: 40,
     };
 
-    it('should defer a change to an existing wage to the next Monday', async () => {
-      // A wage boundary must never fall mid-week, otherwise two WeeklyClaims can
-      // cover the same week under different wages (issue #2479).
+    /** Arranges a change on top of an existing wage, hours submitted or not. */
+    const arrangeChange = (weekIsSubmitted: boolean) => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
-      const createSpy = vi.spyOn(prisma.wage, 'create').mockResolvedValue({
-        ...mockWage,
-        id: 2,
-      } as Wage);
+      mockWeekHasClaims.mockResolvedValue(weekIsSubmitted);
       vi.spyOn(prisma.wage, 'update').mockResolvedValue(mockWage);
+
+      return vi.spyOn(prisma.wage, 'create').mockResolvedValue({ ...mockWage, id: 2 } as Wage);
+    };
+
+    it('should defer a change to the next Monday when hours are already submitted', async () => {
+      // Those hours are priced against the current wage and cannot be repriced
+      // without splitting the week across two WeeklyClaims (issue #2479).
+      const createSpy = arrangeChange(true);
 
       const response = await request(app).put('/setWage').send(validBody);
 
@@ -509,7 +534,34 @@ describe('Wage Controller', () => {
       expect(effectiveFrom.getTime()).toBeGreaterThan(Date.now());
     });
 
-    it('should apply the very first wage immediately', async () => {
+    it('should apply a change to the current week when no hours are submitted', async () => {
+      // Nothing is submitted yet, so the whole week can take the new terms —
+      // the owner chose not to wait for their member to submit.
+      const createSpy = arrangeChange(false);
+
+      const response = await request(app).put('/setWage').send(validBody);
+
+      expect(response.status).toBe(201);
+      const effectiveFrom = createSpy.mock.calls[0][0].data.effectiveFrom as Date;
+      expect(effectiveFrom.getUTCDay()).toBe(1);
+      expect(effectiveFrom.getTime()).toBeLessThanOrEqual(Date.now());
+    });
+
+    it('should anchor the effective date to a Monday even when applied immediately', async () => {
+      // Resolution compares the effective date against the *start* of the week,
+      // so a mid-week timestamp would exclude the new wage from the very week
+      // it is meant to cover.
+      const createSpy = arrangeChange(false);
+
+      await request(app).put('/setWage').send(validBody);
+
+      const effectiveFrom = createSpy.mock.calls[0][0].data.effectiveFrom as Date;
+      expect(effectiveFrom.getUTCHours()).toBe(0);
+      expect(effectiveFrom.getUTCMinutes()).toBe(0);
+      expect(effectiveFrom.getUTCSeconds()).toBe(0);
+    });
+
+    it('should apply the very first wage from the current Monday', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
@@ -518,25 +570,50 @@ describe('Wage Controller', () => {
       const response = await request(app).put('/setWage').send(validBody);
 
       expect(response.status).toBe(201);
-      expect(createSpy.mock.calls[0][0].data).not.toHaveProperty('effectiveFrom');
+      const effectiveFrom = createSpy.mock.calls[0][0].data.effectiveFrom as Date;
+      expect(effectiveFrom.getUTCDay()).toBe(1);
+      expect(effectiveFrom.getTime()).toBeLessThanOrEqual(Date.now());
     });
 
-    it('should rewrite a scheduled wage in place without moving its effective date', async () => {
-      // Correcting a typo before Monday must not push the change back a week,
-      // nor leave a dead link in the chain.
+    /** Arranges a correction on top of a change that is still waiting. */
+    const arrangeRewrite = (weekIsSubmitted: boolean) => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst')
         .mockResolvedValueOnce({ ...mockWage, id: 2, effectiveFrom: futureDate() } as Wage)
         .mockResolvedValueOnce({ ...mockWage, id: 1, nextWageId: 2 } as Wage);
-      const updateSpy = vi.spyOn(prisma.wage, 'update').mockResolvedValue(mockWage);
-      const createSpy = vi.spyOn(prisma.wage, 'create');
+      mockWeekHasClaims.mockResolvedValue(weekIsSubmitted);
+      vi.spyOn(prisma.wage, 'create');
+
+      return vi.spyOn(prisma.wage, 'update').mockResolvedValue(mockWage);
+    };
+
+    it('should rewrite a scheduled wage in place without pushing its date back', async () => {
+      // Correcting a typo before Monday must not push the change back a week,
+      // nor leave a dead link in the chain.
+      const updateSpy = arrangeRewrite(true);
 
       const response = await request(app).put('/setWage').send(validBody);
 
       expect(response.status).toBe(200);
-      expect(createSpy).not.toHaveBeenCalled();
+      expect(prisma.wage.create).not.toHaveBeenCalled();
       expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 2 } }));
-      expect(updateSpy.mock.calls[0][0].data).not.toHaveProperty('effectiveFrom');
+      const effectiveFrom = updateSpy.mock.calls[0][0].data.effectiveFrom as Date;
+      expect(effectiveFrom.getUTCDay()).toBe(1);
+      expect(effectiveFrom.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it('should stop a queued change from waiting once the week holds no hours', async () => {
+      // The wait outlives its reason when the hours that justified it are gone
+      // — a withdrawn week, or a change queued under the old always-defer rule.
+      // Saving again has to release it, otherwise nothing can.
+      const updateSpy = arrangeRewrite(false);
+
+      const response = await request(app).put('/setWage').send(validBody);
+
+      expect(response.status).toBe(200);
+      const effectiveFrom = updateSpy.mock.calls[0][0].data.effectiveFrom as Date;
+      expect(effectiveFrom.getUTCDay()).toBe(1);
+      expect(effectiveFrom.getTime()).toBeLessThanOrEqual(Date.now());
     });
 
     it('should refuse to rewrite a scheduled wage when the active one is disabled', async () => {
@@ -611,6 +688,8 @@ describe('Wage Controller', () => {
         req.address = '0x1234567890123456789012345678901234567890';
         next();
       });
+      // Default: nobody has opened the current week yet.
+      mockMembersWithClaimsThisWeek.mockResolvedValue(new Set<string>());
     });
 
     it('should return 400 if teamId is invalid', async () => {
@@ -690,6 +769,37 @@ describe('Wage Controller', () => {
       expect(response.status).toBe(200);
       expect(response.body[0]).toMatchObject({ id: 1, maximumHoursPerWeek: 40 });
       expect(response.body[0].scheduledWage).toMatchObject({ id: 2, maximumHoursPerWeek: 45 });
+    });
+
+    it('should tell the caller when a change saved now would take effect', async () => {
+      // The set-wage modal announces this date, so it has to come from the same
+      // rule the server applies rather than being recomputed on the front end.
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
+        { ...mockWage, effectiveFrom: new Date('2026-01-05T00:00:00.000Z') } as never,
+      ]);
+      mockMembersWithClaimsThisWeek.mockResolvedValue(new Set([mockWage.userAddress]));
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      const announced = new Date(response.body[0].nextChangeEffectiveFrom);
+      expect(announced.getUTCDay()).toBe(1);
+      expect(announced.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it('should date an immediate change to this week for a member with no hours in', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
+        { ...mockWage, effectiveFrom: new Date('2026-01-05T00:00:00.000Z') } as never,
+      ]);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      const announced = new Date(response.body[0].nextChangeEffectiveFrom);
+      expect(announced.getUTCDay()).toBe(1);
+      expect(announced.getTime()).toBeLessThanOrEqual(Date.now());
     });
 
     it('should return the leaf with a null scheduledWage when no change is pending', async () => {

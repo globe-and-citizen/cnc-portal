@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
 import ElectionStats from '../ElectionStats.vue'
+import { formatDateTime } from '@/utils/format'
 
 // Lightweight stub to capture props passed to the child cards
 const CardStub = {
@@ -42,20 +43,12 @@ describe('ElectionStats', () => {
     expect(seatData).toBe(`${formattedElection.seatCount} / ${formattedElection.candidates}`)
 
     // Start Date (second card)
-    const formatDate = (date: Date) =>
-      date.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-
     const startData = cards[1].attributes('data-data')
-    expect(startData).toBe(formatDate(formattedElection.startDate))
+    expect(startData).toBe(formatDateTime(formattedElection.startDate))
 
     // End Date (third card)
     const endData = cards[2].attributes('data-data')
-    expect(endData).toBe(formatDate(formattedElection.endDate))
+    expect(endData).toBe(formatDateTime(formattedElection.endDate))
 
     // Votes Cast / Voters (fourth card)
     const votesData = cards[3].attributes('data-data')

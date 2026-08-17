@@ -7,6 +7,7 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import type { ClaimFormData } from '@/types'
 import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
+import { formatDateIso } from '@/utils/format'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -76,9 +77,9 @@ export const formatUTC = (value: Date | string | null | undefined): string => {
     const year = value.getFullYear()
     const month = value.getMonth()
     const day = value.getDate()
-    return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
+    return `${formatDateIso(dayjs.utc(Date.UTC(year, month, day)))} UTC`
   }
-  return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
+  return `${formatDateIso(dayjs.utc(value))} UTC`
 }
 
 const alreadyClaimedForDay = (claims: DailyClaimEntry[], dayWorked: string): number =>
@@ -211,9 +212,9 @@ export function useClaimForm(options: UseClaimFormOptions) {
       const today = dayjs.utc().startOf('day')
 
       const disabledWeekKeys = (options.disabledWeekStarts.value ?? []).map((w) =>
-        dayjs.utc(w).startOf('isoWeek').format('YYYY-MM-DD')
+        formatDateIso(dayjs.utc(w).startOf('isoWeek'))
       )
-      const dateWeekKey = d.startOf('isoWeek').format('YYYY-MM-DD')
+      const dateWeekKey = formatDateIso(d.startOf('isoWeek'))
 
       if (disabledWeekKeys.includes(dateWeekKey)) return true
 

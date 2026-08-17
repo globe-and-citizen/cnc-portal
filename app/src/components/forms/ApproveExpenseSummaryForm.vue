@@ -20,13 +20,11 @@
     </div>
     <div v-if="budgetLimit.startDate" class="flex justify-between">
       <span class="text-gray-500">Start Date</span>
-      <span class="font-semibold">{{
-        new Date(budgetLimit.startDate * 1000).toLocaleString()
-      }}</span>
+      <span class="font-semibold">{{ formatDateTime(fromUnix(budgetLimit.startDate)) }}</span>
     </div>
     <div v-if="budgetLimit.endDate" class="flex justify-between">
       <span class="text-gray-500">End Date</span>
-      <span class="font-semibold">{{ new Date(budgetLimit.endDate * 1000).toLocaleString() }}</span>
+      <span class="font-semibold">{{ formatDateTime(fromUnix(budgetLimit.endDate)) }}</span>
     </div>
   </div>
 
@@ -55,6 +53,7 @@
 import type { BudgetLimit } from '@/types'
 import { tokenSymbol } from '@/utils'
 import { getFrequencyType } from '@/utils'
+import { formatDateTime, fromUnix } from '@/utils/format'
 
 defineEmits(['submit', 'close'])
 

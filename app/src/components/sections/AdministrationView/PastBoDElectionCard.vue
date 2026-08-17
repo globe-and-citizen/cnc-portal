@@ -57,6 +57,7 @@ import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import type { Election } from '@/types'
 import { log } from '@/utils'
+import { formatDate } from '@/utils/format'
 import { useReadContract } from '@wagmi/vue'
 import { useRouter } from 'vue-router'
 import { computed, watch } from 'vue'
@@ -74,25 +75,17 @@ const {
   error: errorGetVoteCount
 } = useReadContract({
   functionName: 'getVoteCount',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [BigInt(election.id)] // Supply currentElectionId as an argument
 })
 
 const { data: electionResults, error: errorGetElectionResults } = useReadContract({
   functionName: 'getElectionResults',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [BigInt(election.id)] // Supply currentElectionId as an argument
 })
-
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
 
 watch(errorGetVoteCount, (newError) => {
   if (newError) {

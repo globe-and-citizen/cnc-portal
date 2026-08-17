@@ -1,5 +1,6 @@
 import type { FixedReturnEventsQuery, RawFixedReturnTransaction } from '@/types/ponder/fixedReturn'
 import { zeroAddress } from 'viem'
+import { formatDateTime, fromUnix } from '@/utils/format'
 import { buildRawTransactions, extractTxHashFromId } from './rawTransactionsUtil'
 
 export const buildRawFixedReturnTransactions = (
@@ -151,4 +152,4 @@ export const buildRawFixedReturnTransactions = (
 }
 
 export const formatFixedReturnTransactionDate = (timestamp: number): string =>
-  new Date(timestamp * 1000).toLocaleString('en-US')
+  formatDateTime(fromUnix(timestamp))

@@ -1,10 +1,10 @@
-import dayjs from 'dayjs'
 import { classOf, type AccountClass, type AccountName } from './chartOfAccounts'
 import type { GeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
 import type { LedgerEntry } from './ledgerEntry'
 import { NETWORK, type TokenId } from '@/constant'
+import { formatDate, formatDateTime, formatToken, formatUsd, fromUnix } from '@/utils/format'
 
 // The summary metric cards live in their own module — see ./summaryCards.
 export { presentSummaryCards, type SummaryCard } from './summaryCards'
@@ -26,17 +26,15 @@ export const NATURE_BADGE: Record<TrialNature, string> = {
 /**
  * `142.2` → `$142.20`. A sub-cent residue that rounds to zero (e.g. `−0.004`, or
  * JS negative zero) is collapsed to a clean `$0.00` — never the misleading
- * `$-0.00` that `toLocaleString` emits for `−0`.
+ * `$-0.00` that a hand-rolled currency formatter can emit for `−0`.
  */
 export function money(n: number): string {
-  const cents = Math.round(Number(n) * 100)
-  const value = cents === 0 ? 0 : cents / 100
-  return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return formatUsd(n)
 }
 
 /** Unix-seconds → `Jan 8, 2026` (matches the dashboard ledger date style). */
 export function fmtDate(timestamp: number): string {
-  return dayjs(timestamp * 1000).format('MMM D, YYYY')
+  return formatDate(fromUnix(timestamp))
 }
 
 /**
@@ -45,7 +43,7 @@ export function fmtDate(timestamp: number): string {
  * distinguishable and read in true chronological order).
  */
 export function fmtDateTime(timestamp: number): string {
-  return dayjs(timestamp * 1000).format('MMM D, YYYY, HH:mm:ss')
+  return formatDateTime(fromUnix(timestamp))
 }
 
 // ── Display shapes ──────────────────────────────────────────────────────────
@@ -108,7 +106,7 @@ function natureOf(account: AccountName): TrialNature {
  * 2026"`, `"From Jan 1, 2026"`. Used in the ledger export context line.
  */
 export function periodLabel(from?: Date | null, to?: Date | null): string {
-  const fmt = (d: Date) => dayjs(d).format('MMM D, YYYY')
+  const fmt = formatDate
   if (from && to) return `${fmt(from)} – ${fmt(to)}`
   if (from) return `From ${fmt(from)}`
   if (to) return `Until ${fmt(to)}`
@@ -117,7 +115,7 @@ export function periodLabel(from?: Date | null, to?: Date | null): string {
 
 /** A single calendar day at day granularity, e.g. `"Jul 8, 2026"`. */
 export function dayLabel(date: Date): string {
-  return dayjs(date).format('MMM D, YYYY')
+  return formatDate(date)
 }
 
 /**
@@ -200,7 +198,7 @@ function pocketShortName(account: AccountName): string {
 
 /** `12.5` → `12.5 POL`; trims to at most 6 decimals so dust reads cleanly. */
 function tokenQuantity(amount: number, token: TokenId): string {
-  return `${amount.toLocaleString('en-US', { maximumFractionDigits: 6 })} ${currencySymbol(token)}`
+  return formatToken(amount, currencySymbol(token), { maxDecimals: 6 })
 }
 
 /**

@@ -17,8 +17,7 @@ for every commonly used dependency (wagmi, viem, TanStack Query, Apollo, Pinia s
 **Do not declare a `vi.mock('<same-path>', …)` block in a spec for any of those paths.** Re-mocking
 shadows the global setup, duplicates `vi.hoisted` boilerplate, and drifts from the canonical mock
 shape. It is enforced by ESLint (`no-restricted-syntax` in `app/eslint.config.js`); the banned-path
-list lives in `bannedGlobalMockPaths`, and the temporary `globalMockLegacyFiles` allow-list
-identifies specs still being migrated.
+list lives in `bannedGlobalMockPaths` and applies to every spec.
 
 ❌ **Bad: re-mocking `@wagmi/vue` per spec**
 

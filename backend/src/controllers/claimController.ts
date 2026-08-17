@@ -115,7 +115,27 @@ export const addClaim = async (req: Request, res: Response) => {
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
   try {
-    const wage = await resolveWageForWeek(teamId, callerAddress, weekStart);
+    // A week is found by member and week, never by wage, so one week always has
+    // one row — the split that let hour caps restart from zero (issue #2479)
+    // has nowhere to happen.
+    let weeklyClaim = await prisma.weeklyClaim.findFirst({
+      where: {
+        teamId: teamId,
+        memberAddress: callerAddress,
+        weekStart: weekStart,
+      },
+      include: { claims: true, wage: true },
+    });
+
+    // Hours are what commit a week to a wage. Once the week holds claims it
+    // keeps the wage they were priced against, whatever the owner has saved
+    // since. A week holding only goals has committed to nothing, so it follows
+    // the change like an empty week would — the member had not submitted their
+    // hours, which is precisely the case the rule leaves to them.
+    const weekIsSubmitted = (weeklyClaim?.claims.length ?? 0) > 0;
+    const wage = weekIsSubmitted
+      ? weeklyClaim!.wage
+      : await resolveWageForWeek(teamId, callerAddress, weekStart);
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
@@ -136,17 +156,6 @@ export const addClaim = async (req: Request, res: Response) => {
         res
       );
     }
-
-    // Find the weekly claim for the active wage and current week.
-    let weeklyClaim = await prisma.weeklyClaim.findFirst({
-      where: {
-        wageId: wage.id,
-        weekStart: weekStart,
-        memberAddress: callerAddress,
-        teamId: teamId,
-      },
-      include: { claims: true },
-    });
 
     if (weeklyClaim) {
       if (weeklyClaim.status === 'disabled') {
@@ -206,9 +215,16 @@ export const addClaim = async (req: Request, res: Response) => {
           data: {},
           status: 'pending',
         },
-        include: {
-          claims: true,
-        },
+        include: { claims: true, wage: true },
+      });
+    } else if (weeklyClaim.wageId !== wage.id) {
+      // Only reachable on a goals-only week whose wage changed since: these are
+      // the first hours in it, so the row moves to the wage that prices them
+      // instead of leaving the week pointing at the superseded one.
+      weeklyClaim = await prisma.weeklyClaim.update({
+        where: { id: weeklyClaim.id },
+        data: { wageId: wage.id },
+        include: { claims: true, wage: true },
       });
     }
 
