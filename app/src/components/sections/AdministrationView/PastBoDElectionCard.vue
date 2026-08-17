@@ -75,14 +75,14 @@ const {
   error: errorGetVoteCount
 } = useReadContract({
   functionName: 'getVoteCount',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [BigInt(election.id)] // Supply currentElectionId as an argument
 })
 
 const { data: electionResults, error: errorGetElectionResults } = useReadContract({
   functionName: 'getElectionResults',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [BigInt(election.id)] // Supply currentElectionId as an argument
 })

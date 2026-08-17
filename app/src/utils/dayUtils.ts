@@ -170,6 +170,28 @@ export function ensureFutureDate(selectedDate: Date, minDate: Date): Date {
   return selectedDate < minDate ? new Date(minDate) : selectedDate
 }
 
+/**
+ * Put a day picked on a calendar and a time of day typed as `hh:mm` back
+ * together into a single local instant.
+ *
+ * A calendar gives midnight, which is never the moment the user meant when a
+ * deadline is at stake. Returns `null` when the time cannot be read, so the
+ * caller can complain rather than silently deciding an hour on the user's
+ * behalf.
+ */
+export function combineDayAndTime(day: Date, timeOfDay: string): Date | null {
+  const parts = /^(\d{1,2}):(\d{2})$/.exec(timeOfDay.trim())
+  if (!parts) return null
+
+  const hours = Number(parts[1])
+  const minutes = Number(parts[2])
+  if (hours > 23 || minutes > 59) return null
+
+  const combined = new Date(day)
+  combined.setHours(hours, minutes, 0, 0)
+  return combined
+}
+
 export function format(date: Date, formatStr: string): string {
   const day = date.getDate().toString().padStart(2, '0')
   const month = (date.getMonth() + 1).toString().padStart(2, '0')

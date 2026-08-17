@@ -47,11 +47,14 @@ const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDir
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 const { data: boardOfDirectors, isFetching } = useReadContract({
-  address: bodAddress.value,
+  // Ref, not `.value`: on a page reload the team contracts land after setup
+  // has already run, and a frozen `undefined` address never recovers.
+  address: bodAddress,
   abi: boardOfDirectorsAbi,
   functionName: 'getBoardOfDirectors',
   args: [],
-  scopeKey: 'boardOfDirectors'
+  scopeKey: 'boardOfDirectors',
+  query: { enabled: computed(() => !!bodAddress.value) }
 })
 
 const normalizedBoardOfDirectors = computed<string[]>(() =>
@@ -59,13 +62,14 @@ const normalizedBoardOfDirectors = computed<string[]>(() =>
     ? boardOfDirectors.value.filter((member): member is string => typeof member === 'string')
     : []
 )
+const winnersArgs = computed(() => [BigInt(props.electionId || 0)] as const)
 const { data: electionWinners, error: errorGetElectionWinners } = useReadContract({
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   functionName: 'getElectionWinners',
-  args: [BigInt(props.electionId || 0)], // Assuming 0 is the current election ID, adjust as necessary
+  args: winnersArgs,
   //scopeKey: 'electionWinners'
-  query: { enabled: computed(() => !!props.electionId) }
+  query: { enabled: computed(() => !!props.electionId && !!electionsAddress.value) }
 })
 
 const _boardOfDirectors = computed(() => {
