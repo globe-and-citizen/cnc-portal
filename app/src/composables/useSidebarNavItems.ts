@@ -57,6 +57,7 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
     const inCommunity = name.startsWith('community-credit')
     const inAccounting = name.startsWith('accounting')
     const inAdministration = name.startsWith('bod-')
+    const inPaymentGate = name.startsWith('payment-gate')
 
     return [
       [
@@ -215,6 +216,32 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
           active: route.name === 'sher-token',
           disabled,
           to: { name: 'sher-token', params: teamParams() }
+        },
+        {
+          label: 'Payment Gate',
+          icon: 'heroicons:credit-card',
+          value: 'payment-gate',
+          active: inPaymentGate,
+          disabled,
+          to: { name: 'payment-gate', params: teamParams() },
+          defaultOpen: hasCompany.value && inPaymentGate,
+          children: [
+            {
+              label: 'Setup',
+              active: name === 'payment-gate',
+              to: { name: 'payment-gate', params: teamParams() }
+            },
+            {
+              label: 'Preview',
+              active: name === 'payment-gate-preview',
+              to: { name: 'payment-gate-preview', params: teamParams() }
+            },
+            {
+              label: 'Reference',
+              active: name === 'payment-gate-reference',
+              to: { name: 'payment-gate-reference', params: teamParams() }
+            }
+          ]
         },
         {
           label: 'Administration',

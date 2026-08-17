@@ -1,0 +1,518 @@
+<!doctype html>
+<!-- Static design reference, not part of the Vite/Vue build. Open directly in a browser. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CNC Pay — Checkout Widget (design reference)</title>
+<style>
+  /* Tokens copied from app/src/assets/main.css @theme default */
+  :root {
+    --color-base-100: #ffffff;
+    --color-base-200: #f3fcf9;
+    --color-base-300: #e6f7f0;
+    --color-base-content: #333333;
+    --color-primary: #00bf7a;
+    --color-primary-content: #000;
+    --color-secondary: #3366ff;
+    --color-accent: #00b8d9;
+    --color-neutral: #0f3d2e;
+    --color-info: #00b8d9;
+    --color-success: #36b37e;
+    --color-success-content: #000;
+    --color-warning: #ffab00;
+    --color-error: #ff5630;
+
+    --radius-selector: 1rem;
+    --radius-field: 0.5rem;
+    --radius-box: 1rem;
+    --border: 1px;
+
+    /* practical border tone: base-300 reads as near-invisible on white, so this is
+       a slightly deeper step in the same mint hue rather than a different palette */
+    --border-c: #d7e8de;
+
+    /* host app (Aurorify) is a deliberately different, non-CNC storefront —
+       kept visually distinct on purpose, see checkout-grid below */
+    --host-bg: #fbf9f5;
+    --host-ink: #2b2420;
+    --host-soft: #6b6058;
+    --host-accent: #7c5cbf;
+    --host-rule: #e6e0d6;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--color-base-200);
+    color: var(--color-base-content);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .page { max-width: 980px; margin: 0 auto; padding: 2.6rem 1.25rem 4rem; }
+
+  .top {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+    flex-wrap: wrap; margin-bottom: 1.6rem;
+  }
+  .top .eyebrow {
+    font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--color-primary); font-weight: 700; margin: 0 0 0.3rem;
+  }
+  .top h1 { font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--color-neutral); }
+  .top .sub { font-size: 0.85rem; color: #667; max-width: 34ch; text-align: right; }
+
+  /* browser chrome */
+  .chrome {
+    background: var(--host-bg); border: var(--border) solid var(--host-rule);
+    border-radius: var(--radius-box); overflow: hidden;
+  }
+  .chrome-bar {
+    display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.8rem;
+    background: #f3efe8; border-bottom: 1px solid var(--host-rule);
+  }
+  .chrome-dots { display: flex; gap: 0.32rem; }
+  .chrome-dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--host-rule); }
+  .chrome-url {
+    flex: 1; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 0.74rem;
+    color: var(--host-soft); background: var(--host-bg); border: 1px solid var(--host-rule);
+    border-radius: 6px; padding: 0.3rem 0.6rem;
+  }
+
+  /* host storefront */
+  .host-page { padding: 1.8rem 1.9rem 2.1rem; }
+  .host-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.6rem; }
+  .host-brand { font-family: Georgia, "Iowan Old Style", serif; font-size: 1.15rem; color: var(--host-ink); }
+  .host-brand .dot { color: var(--host-accent); }
+  .host-nav .step { font-size: 0.72rem; color: var(--host-soft); letter-spacing: 0.04em; text-transform: uppercase; }
+
+  .checkout-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 1.8rem; align-items: start; }
+
+  .product { display: flex; flex-direction: column; gap: 0.9rem; }
+  .product-shot {
+    aspect-ratio: 4/3; border-radius: var(--radius-box);
+    background:
+      radial-gradient(120% 140% at 25% 15%, color-mix(in srgb, var(--host-accent) 30%, transparent), transparent 60%),
+      linear-gradient(155deg, color-mix(in srgb, var(--host-accent) 55%, var(--host-bg)) 0%, color-mix(in srgb, var(--host-accent) 15%, var(--host-bg)) 100%);
+    border: 1px solid var(--host-rule);
+  }
+  .product h2 { font-family: Georgia, serif; font-weight: 400; font-size: 1.2rem; color: var(--host-ink); margin: 0; }
+  .product .maker { font-size: 0.82rem; color: var(--host-soft); margin: -0.5rem 0 0; }
+  .product .desc { font-size: 0.82rem; color: var(--host-soft); line-height: 1.6; }
+
+  .seam-tag {
+    display: inline-flex; align-items: center; gap: 0.4rem; font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.68rem; color: var(--host-soft); background: color-mix(in srgb, var(--host-accent) 12%, var(--host-bg));
+    border: 1px dashed color-mix(in srgb, var(--host-accent) 45%, var(--host-rule)); border-radius: 5px;
+    padding: 0.3rem 0.55rem; width: fit-content;
+  }
+  .seam-tag b { color: var(--host-accent); font-weight: 600; }
+
+  /* ---- CNC Pay widget mount: real CNC Portal tokens from here down ---- */
+  .widget-mount {
+    background: var(--color-base-100); border: var(--border) solid var(--border-c);
+    border-radius: var(--radius-box); overflow: hidden; color: var(--color-base-content);
+  }
+  .widget-head {
+    display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.1rem;
+    background: var(--color-base-200); border-bottom: 1px solid var(--border-c);
+  }
+  .wordmark { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.92rem; color: var(--color-neutral); }
+  .wordmark .sq { width: 18px; height: 18px; border-radius: 5px; background: var(--color-primary); display: inline-block; }
+  .chain-badge {
+    font-size: 0.68rem; color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, white);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 30%, white); padding: 0.18rem 0.5rem; border-radius: 20px;
+  }
+
+  .widget-tabs { display: flex; gap: 0; padding: 0 1.1rem; background: var(--color-base-100); border-bottom: 1px solid var(--border-c); }
+  .widget-tabs button {
+    font: inherit; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
+    color: #94a3a0; background: none; border: none; padding: 0.65rem 0.2rem;
+    margin-right: 1.3rem; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .widget-tabs button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  .widget-tabs button.active { color: var(--color-neutral); border-bottom-color: var(--color-primary); }
+
+  .widget-body { padding: 1.1rem 1.1rem 1.3rem; }
+  .pane { display: none; }
+  .pane.active { display: block; }
+
+  .line { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.86rem; padding: 0.55rem 0; border-bottom: 1px solid var(--border-c); }
+  .line:first-child { padding-top: 0; }
+  .line .l { color: #667; }
+  .line .r { font-variant-numeric: tabular-nums; color: var(--color-base-content); }
+  .line.total .l, .line.total .r { color: var(--color-neutral); font-weight: 700; font-size: 0.98rem; }
+  .line.total { border-bottom: none; padding-top: 0.7rem; }
+
+  .mode-row { margin: 0.9rem 0 0.2rem; }
+  .mode-label { font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: #94a3a0; margin-bottom: 0.4rem; }
+  .segmented { display: flex; background: var(--color-base-200); border: 1px solid var(--border-c); border-radius: var(--radius-field); padding: 3px; }
+  .segmented button {
+    flex: 1; font: inherit; font-size: 0.74rem; font-weight: 600; padding: 0.42rem 0.3rem;
+    border: none; border-radius: calc(var(--radius-field) - 2px); background: none; color: #667; cursor: pointer;
+  }
+  .segmented button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+  .segmented button.active { background: var(--color-base-100); color: var(--color-neutral); box-shadow: 0 1px 0 rgba(0,0,0,0.04); }
+  .mode-note { font-size: 0.76rem; color: #667; margin: 0.5rem 0 0; }
+
+  .chips { display: flex; gap: 0.5rem; margin: 0.7rem 0 0.9rem; }
+  .chip {
+    flex: 1; text-align: center; padding: 0.4rem 0.3rem; border: 1px solid var(--border-c); border-radius: var(--radius-field);
+    font-size: 0.8rem; font-weight: 600; background: var(--color-base-200); color: #667; cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .chip:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+  .chip.active { background: var(--color-primary); color: var(--color-primary-content); border-color: var(--color-primary); }
+
+  .wallet-row {
+    display: flex; align-items: center; justify-content: space-between; margin: 1rem 0;
+    padding: 0.6rem 0.7rem; background: var(--color-base-200); border: 1px solid var(--border-c);
+    border-radius: var(--radius-field); font-size: 0.82rem;
+  }
+  .wallet-row .addr { font-family: ui-monospace, monospace; color: var(--color-base-content); }
+  .wallet-row .bal { color: #667; font-variant-numeric: tabular-nums; }
+  .dotpulse { width: 7px; height: 7px; border-radius: 50%; background: var(--color-primary); display: inline-block; margin-right: 0.45rem; }
+
+  .cta {
+    width: 100%; font: inherit; font-size: 0.94rem; font-weight: 700; padding: 0.75rem;
+    border: none; border-radius: var(--radius-field); background: var(--color-primary); color: var(--color-primary-content);
+    cursor: pointer; margin-top: 0.3rem;
+  }
+  .cta:focus-visible { outline: 2px solid var(--color-neutral); outline-offset: 2px; }
+  .cta.ghost { background: none; border: 1px solid var(--border-c); color: var(--color-base-content); }
+  .fee-note { font-size: 0.72rem; color: #94a3a0; text-align: center; margin-top: 0.6rem; }
+
+  /* paying pane */
+  .steps { display: flex; flex-direction: column; gap: 0.9rem; margin: 0.6rem 0 1.3rem; }
+  .step { display: flex; align-items: center; gap: 0.7rem; font-size: 0.86rem; color: #667; }
+  .step .mark {
+    width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-c);
+    display: flex; align-items: center; justify-content: center; font-size: 0.68rem; flex-shrink: 0; color: #94a3a0;
+  }
+  .step.done .mark { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-primary-content); }
+  .step.done { color: var(--color-base-content); }
+  .step.now .mark { border-color: var(--color-primary); color: var(--color-neutral); }
+  .step.now { color: var(--color-base-content); font-weight: 600; }
+  .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border-c); border-top-color: var(--color-primary); animation: spin 0.8s linear infinite; }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* confirmed / receipt */
+  .confirm-mark {
+    width: 46px; height: 46px; border-radius: 50%; background: var(--color-primary); color: var(--color-primary-content);
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0.4rem auto 0.9rem;
+  }
+  .confirm-title { text-align: center; font-weight: 700; font-size: 1.02rem; color: var(--color-neutral); margin-bottom: 0.15rem; }
+  .confirm-sub { text-align: center; font-size: 0.82rem; color: #667; margin-bottom: 1.1rem; }
+  .receipt { background: var(--color-base-200); border: 1px solid var(--border-c); border-radius: var(--radius-field); padding: 0.75rem 0.85rem; font-size: 0.8rem; }
+  .receipt .rline { display: flex; justify-content: space-between; padding: 0.22rem 0; }
+  .receipt .rline .l { color: #94a3a0; }
+  .receipt .rline .r { font-family: ui-monospace, monospace; color: var(--color-base-content); }
+
+  /* meter (pay as you go) */
+  .meter-balance { text-align: center; margin: 0.1rem 0 0.7rem; }
+  .meter-balance .amt { font-variant-numeric: tabular-nums; font-size: 2.15rem; font-weight: 700; color: var(--color-neutral); }
+  .meter-balance .of { font-size: 0.78rem; color: #94a3a0; margin-top: 0.15rem; }
+  .meter-bar { height: 6px; border-radius: 4px; background: var(--border-c); overflow: hidden; margin-bottom: 0.6rem; }
+  .meter-bar > span { display: block; height: 100%; background: var(--color-primary); width: 100%; transition: width 0.6s ease; }
+  @media (prefers-reduced-motion: reduce) { .meter-bar > span { transition: none; } }
+  .meter-rate { text-align: center; font-size: 0.78rem; color: #94a3a0; margin-bottom: 1rem; }
+  .meter-log { display: flex; flex-direction: column; gap: 0.4rem; min-height: 190px; }
+  .meter-row {
+    display: flex; justify-content: space-between; font-size: 0.78rem; font-family: ui-monospace, monospace;
+    color: #667; background: var(--color-base-200); border: 1px solid var(--border-c); border-radius: var(--radius-field);
+    padding: 0.42rem 0.6rem; opacity: 0; animation: rowIn 0.3s ease forwards;
+  }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .meter-row { animation: none; opacity: 1; } }
+  .meter-row .r { color: var(--color-neutral); }
+  .meter-refill { font-size: 0.74rem; color: #94a3a0; text-align: center; margin-top: 0.8rem; }
+
+  /* backend log */
+  .backend { margin-top: 1.8rem; display: grid; grid-template-columns: 1fr; }
+  .backend-label { display: flex; align-items: center; gap: 0.6rem; font-size: 0.76rem; color: #667; margin-bottom: 0.6rem; flex-wrap: wrap; }
+  .backend-label .tag {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--color-warning); background: color-mix(in srgb, var(--color-warning) 18%, white); padding: 0.15rem 0.45rem; border-radius: 4px;
+  }
+  .term {
+    background: var(--color-neutral); border-radius: var(--radius-box); padding: 1rem 1.15rem;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 0.78rem; color: #7fa595;
+    line-height: 1.85; max-height: 210px; overflow: hidden;
+  }
+  .term .ln { opacity: 0.35; transition: opacity 0.25s ease; }
+  @media (prefers-reduced-motion: reduce) { .term .ln { transition: none; } }
+  .term .ln.lit { opacity: 1; color: #dff5ec; }
+  .term .ln.lit .ok { color: #4ee0ae; font-weight: 600; }
+  .term .caret { color: #4ee0ae; }
+
+  .foot { margin-top: 2rem; font-size: 0.76rem; color: #667; text-align: center; }
+  .foot code { font-family: ui-monospace, monospace; }
+
+  @media (max-width: 760px) {
+    .checkout-grid { grid-template-columns: 1fr; }
+    .top { flex-direction: column; align-items: flex-start; }
+    .top .sub { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <div>
+      <p class="eyebrow">Widget mockup, not code</p>
+      <h1>What "CNC Pay" looks like inside somebody else's app</h1>
+    </div>
+    <p class="sub">Same widget, three settlement modes — pick "Pay as you go" to see the metered version.</p>
+  </div>
+
+  <div class="chrome">
+    <div class="chrome-bar">
+      <div class="chrome-dots"><span></span><span></span><span></span></div>
+      <div class="chrome-url">aurorify.shop/checkout/8842</div>
+    </div>
+
+    <div class="host-page">
+      <div class="host-nav">
+        <div class="host-brand">Aurorify<span class="dot">.</span></div>
+        <div class="step">Checkout</div>
+      </div>
+
+      <div class="checkout-grid">
+        <div class="product">
+          <div class="product-shot"></div>
+          <h2>Studio Ceramics Slot</h2>
+          <p class="maker">Aurorify — third-party storefront</p>
+          <p class="desc">This card is Aurorify's own page. Everything inside the panel on the right is dropped in by one script tag — Aurorify never touches wallets, balances, or chain calls.</p>
+          <span class="seam-tag"><b>&lt;script&gt;</b> pay.cncportal.io/widget.js</span>
+        </div>
+
+        <div>
+          <div class="widget-mount" id="mount">
+            <div class="widget-head">
+              <div class="wordmark"><span class="sq"></span>CNC Pay</div>
+              <span class="chain-badge">Polygon · USDC</span>
+            </div>
+
+            <div class="widget-tabs" role="tablist" aria-label="Widget state">
+              <button class="active" onclick="showPane('review', this)">1 · Review</button>
+              <button onclick="showPane('paying', this)">2 · <span id="tab2-label">Paying</span></button>
+              <button onclick="showPane('done', this)">3 · <span id="tab3-label">Confirmed</span></button>
+            </div>
+
+            <div class="widget-body">
+
+              <div class="pane active" id="pane-review">
+
+                <div id="checkout-review">
+                  <div class="line"><span class="l">One-time commission</span><span class="r">$128.00</span></div>
+                  <div class="line"><span class="l">Gate fee 0.6%</span><span class="r">$0.77</span></div>
+                  <div class="line total"><span class="l">Total due</span><span class="r">$128.77</span></div>
+                </div>
+
+                <div id="metered-review" style="display:none">
+                  <div class="line"><span class="l">Rate</span><span class="r">$0.08 / click</span></div>
+                  <div class="line"><span class="l">Gate fee</span><span class="r">0.6% per click</span></div>
+                  <div class="line total"><span class="l">Fund balance</span><span class="r" id="fund-total">$50.00</span></div>
+                  <div class="chips">
+                    <button class="chip" onclick="setFund(25, this)">$25</button>
+                    <button class="chip active" onclick="setFund(50, this)">$50</button>
+                    <button class="chip" onclick="setFund(100, this)">$100</button>
+                  </div>
+                </div>
+
+                <div class="mode-row">
+                  <div class="mode-label">Settlement mode</div>
+                  <div class="segmented" role="tablist" aria-label="Settlement mode">
+                    <button class="active" id="mode-instant" onclick="setMode('instant')">Pay now</button>
+                    <button id="mode-escrow" onclick="setMode('escrow')">Hold until delivery</button>
+                    <button id="mode-metered" onclick="setMode('metered')">Pay as you go</button>
+                  </div>
+                  <p class="mode-note" id="mode-note">Funds settle to Aurorify immediately on confirmation — <code>Bank.sol</code></p>
+                </div>
+
+                <div class="wallet-row">
+                  <span><span class="dotpulse"></span>Connected</span>
+                  <span class="addr">0x71C…9e2</span>
+                  <span class="bal">312.40 USDC</span>
+                </div>
+
+                <button class="cta" id="review-cta" onclick="showPane('paying', document.querySelectorAll('.widget-tabs button')[1])">Pay $128.77</button>
+                <p class="fee-note" id="fee-note">Gate splits the fee to <code>FeeCollector.sol</code> before forwarding the rest — <code>Bank.sol</code> itself doesn't fee-adjust deposits</p>
+              </div>
+
+              <div class="pane" id="pane-paying">
+                <div class="steps">
+                  <div class="step done"><span class="mark">✓</span> Wallet signature approved</div>
+                  <div class="step done"><span class="mark">✓</span> Transaction submitted to Polygon</div>
+                  <div class="step now"><span class="spin"></span> <span id="paying-label">Waiting for confirmation…</span></div>
+                </div>
+                <div class="receipt">
+                  <div class="rline"><span class="l" id="paying-amount-label">Amount</span><span class="r" id="paying-amount">128.77 USDC</span></div>
+                  <div class="rline"><span class="l">Tx</span><span class="r">0x4f2a…c91b</span></div>
+                </div>
+                <button class="cta ghost" style="margin-top:1rem" onclick="showPane('done', document.querySelectorAll('.widget-tabs button')[2])">Simulate confirmation →</button>
+              </div>
+
+              <div class="pane" id="pane-done">
+
+                <div id="checkout-done">
+                  <div class="confirm-mark">✓</div>
+                  <div class="confirm-title" id="done-title">Payment captured</div>
+                  <div class="confirm-sub" id="done-sub">Aurorify has been notified — order 8842 is paid</div>
+                  <div class="receipt">
+                    <div class="rline"><span class="l">Amount</span><span class="r">128.77 USDC</span></div>
+                    <div class="rline"><span class="l">Network</span><span class="r">polygon</span></div>
+                    <div class="rline"><span class="l">Tx</span><span class="r">0x4f2a…c91b</span></div>
+                    <div class="rline"><span class="l">Time</span><span class="r">14:02:37 UTC</span></div>
+                  </div>
+                </div>
+
+                <div id="metered-done" style="display:none">
+                  <div class="meter-balance">
+                    <div class="amt" id="meter-amt">$50.00</div>
+                    <div class="of">of $50.00 funded</div>
+                  </div>
+                  <div class="meter-bar"><span id="meter-bar-fill"></span></div>
+                  <div class="meter-rate">$0.08 per click · draining live while this tab is open</div>
+                  <div class="meter-log" id="meter-log"></div>
+                  <div class="meter-refill">Auto-refill triggers under $10.00 — <code>createAdCampaign()</code> called again automatically</div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="backend">
+    <div class="backend-label">
+      What Aurorify's own backend receives, once step 3 fires
+      <span class="tag">proposed — dispatcher not built yet</span>
+    </div>
+    <div class="term" id="term">
+      <div class="ln" id="log-1">$ listening on /webhooks/cnc-pay <span class="caret">▍</span></div>
+      <div class="ln" id="log-2">POST /webhooks/cnc-pay</div>
+      <div class="ln" id="log-3">&nbsp;&nbsp;event: <span id="log-event">payment.captured</span>  order: 8842  amount: 128.77 USDC</div>
+      <div class="ln" id="log-4">&nbsp;&nbsp;tx: 0x4f2a…c91b  chain: polygon</div>
+      <div class="ln" id="log-5"><span class="ok">200 OK</span> — order 8842 marked paid</div>
+    </div>
+  </div>
+
+  <p class="foot">Every field above is illustrative. "Pay as you go" mirrors <code>AdCampaignManager.sol</code>'s real <code>costPerClick</code> / <code>claimPayment</code> mechanics — a prepaid balance drawn down per usage event, not a single lump-sum transfer. Colors, radii and type here are pulled from <code>app/src/assets/main.css</code>; the widget itself is what would render inside another site.</p>
+</div>
+
+<script>
+  var mode = 'instant';
+  var fundAmount = 50;
+  var meterTimer = null;
+  var meterBalance = 50;
+  var clickN = 0;
+
+  function showPane(name, tabEl) {
+    document.querySelectorAll('.pane').forEach(function (p) { p.classList.remove('active'); });
+    document.getElementById('pane-' + name).classList.add('active');
+    document.querySelectorAll('.widget-tabs button').forEach(function (b) { b.classList.remove('active'); });
+    if (tabEl) tabEl.classList.add('active');
+
+    stopMeter();
+    var lit = 0;
+    if (name === 'paying') lit = 2;
+    if (name === 'done') { lit = mode === 'metered' ? 3 : 5; if (mode === 'metered') startMeter(); }
+    for (var i = 1; i <= 5; i++) {
+      var el = document.getElementById('log-' + i);
+      if (el) el.classList.toggle('lit', i <= lit);
+    }
+  }
+
+  function setFund(amount, chipEl) {
+    fundAmount = amount;
+    document.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('active'); });
+    chipEl.classList.add('active');
+    document.getElementById('fund-total').textContent = '$' + amount.toFixed(2);
+    document.getElementById('review-cta').textContent = 'Fund $' + amount.toFixed(2) + ' balance';
+  }
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('mode-instant').classList.toggle('active', m === 'instant');
+    document.getElementById('mode-escrow').classList.toggle('active', m === 'escrow');
+    document.getElementById('mode-metered').classList.toggle('active', m === 'metered');
+
+    var note = document.getElementById('mode-note');
+    var isMetered = m === 'metered';
+
+    document.getElementById('checkout-review').style.display = isMetered ? 'none' : 'block';
+    document.getElementById('metered-review').style.display = isMetered ? 'block' : 'none';
+    document.getElementById('checkout-done').style.display = isMetered ? 'none' : 'block';
+    document.getElementById('metered-done').style.display = isMetered ? 'block' : 'none';
+
+    document.getElementById('tab2-label').textContent = isMetered ? 'Funding' : 'Paying';
+    document.getElementById('tab3-label').textContent = isMetered ? 'Metering' : 'Confirmed';
+    document.getElementById('fee-note').style.display = isMetered ? 'none' : 'block';
+
+    if (m === 'instant') {
+      note.innerHTML = 'Funds settle to Aurorify immediately on confirmation — <code>Bank.sol</code>';
+      document.getElementById('review-cta').textContent = 'Pay $128.77';
+      document.getElementById('paying-label').textContent = 'Waiting for confirmation…';
+      document.getElementById('paying-amount-label').textContent = 'Amount';
+      document.getElementById('paying-amount').textContent = '128.77 USDC';
+    } else if (m === 'escrow') {
+      note.innerHTML = 'Funds held in escrow until Aurorify confirms delivery — <code>AdCampaignManager.sol</code>';
+      document.getElementById('review-cta').textContent = 'Pay $128.77';
+      document.getElementById('paying-label').textContent = 'Waiting for confirmation…';
+      document.getElementById('paying-amount-label').textContent = 'Amount';
+      document.getElementById('paying-amount').textContent = '128.77 USDC';
+    } else {
+      note.innerHTML = 'A balance is preloaded, then drawn down per click as it’s used — <code>AdCampaignManager.sol</code> (<code>costPerClick</code>, <code>claimPayment</code>)';
+      document.getElementById('review-cta').textContent = 'Fund $' + fundAmount.toFixed(2) + ' balance';
+      document.getElementById('paying-label').textContent = 'Confirming top-up on Polygon…';
+      document.getElementById('paying-amount-label').textContent = 'Top-up';
+      document.getElementById('paying-amount').textContent = fundAmount.toFixed(2) + ' USDC';
+    }
+  }
+
+  function startMeter() {
+    meterBalance = fundAmount;
+    clickN = 0;
+    document.getElementById('meter-log').innerHTML = '';
+    document.getElementById('meter-amt').textContent = '$' + meterBalance.toFixed(2);
+    document.querySelector('.meter-balance .of').textContent = 'of $' + fundAmount.toFixed(2) + ' funded';
+    document.getElementById('meter-bar-fill').style.width = '100%';
+
+    meterTimer = setInterval(function () {
+      if (meterBalance <= 0.08) { stopMeter(); return; }
+      clickN += 1;
+      meterBalance = Math.max(0, meterBalance - 0.08);
+      document.getElementById('meter-amt').textContent = '$' + meterBalance.toFixed(2);
+      document.getElementById('meter-bar-fill').style.width = (100 * meterBalance / fundAmount) + '%';
+
+      var row = document.createElement('div');
+      row.className = 'meter-row';
+      row.innerHTML = '<span>click #' + clickN + ' charged</span><span class="r">−$0.08 · bal $' + meterBalance.toFixed(2) + '</span>';
+      var log = document.getElementById('meter-log');
+      log.insertBefore(row, log.firstChild);
+      while (log.children.length > 5) log.removeChild(log.lastChild);
+
+      appendUsageLog(clickN, meterBalance);
+    }, 1400);
+  }
+
+  function stopMeter() {
+    if (meterTimer) { clearInterval(meterTimer); meterTimer = null; }
+  }
+
+  function appendUsageLog(n, bal) {
+    var term = document.getElementById('term');
+    var row = document.createElement('div');
+    row.className = 'ln lit';
+    row.innerHTML = '<span class="ok">usage.charged</span>  click #' + n + '  −$0.08  balance $' + bal.toFixed(2);
+    term.appendChild(row);
+    while (term.children.length > 7) term.removeChild(term.children[1]);
+  }
+</script>
+</body>
+</html>
