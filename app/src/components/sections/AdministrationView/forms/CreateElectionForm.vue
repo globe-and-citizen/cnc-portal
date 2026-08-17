@@ -19,7 +19,7 @@
         <UFormField
           name="winnerCount"
           label="Number of Board Of Directors"
-          help="An odd number — 3, 5, 7 … — so a vote can never end in a tie."
+          help="An odd number — 3, 5, 7 … -- so a vote can never end in a tie."
         >
           <UInput
             type="number"
@@ -205,7 +205,7 @@ const opensAt = computed(() => new Date(now.value + START_DELAY_MS))
 const openingHelp = computed(() =>
   state.startDay
     ? 'The ballot opens exactly then.'
-    : `Opens at ${formatTimeOfDay(opensAt.value)}, in ${formatDuration(START_DELAY_MINUTES)} — ` +
+    : `Opens at ${formatTimeOfDay(opensAt.value)}, in ${formatDuration(START_DELAY_MINUTES)} -- ` +
       'pick a day to open it later instead.'
 )
 
