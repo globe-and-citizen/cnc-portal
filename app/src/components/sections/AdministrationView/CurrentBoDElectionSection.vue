@@ -108,17 +108,16 @@ const createElection = async (electionData: OldProposal) => {
     }
 
     const dateToUnixTimestamp = (date: Date) => Math.floor(date.getTime() / 1000)
-    const dateNow = dateToUnixTimestamp(new Date())
 
+    // The dates come from the form as they were decided there — the opening a
+    // couple of minutes out, the closing at the hour the owner picked. Nothing
+    // is adjusted here: an election rewritten on the way to the chain is an
+    // election the owner never agreed to.
     const args = [
       electionData.title,
       electionData.description,
-      dateToUnixTimestamp(electionData.startDate as Date) < dateNow
-        ? BigInt(dateNow + 60) // Start in 1 minute if start date is in the past
-        : BigInt(dateToUnixTimestamp(electionData.startDate as Date)),
-      dateToUnixTimestamp(electionData.startDate as Date) < dateNow
-        ? BigInt(dateNow + 60 + 60) // End 1 minute after adjusted start time if start date is in the past
-        : BigInt(dateToUnixTimestamp(electionData.endDate as Date)),
+      BigInt(dateToUnixTimestamp(electionData.startDate as Date)),
+      BigInt(dateToUnixTimestamp(electionData.endDate as Date)),
       BigInt(electionData.winnerCount),
       electionData.candidates?.map((c) => c.candidateAddress) || [],
       teamStore.currentTeam?.members.map((m) => m.address) || []

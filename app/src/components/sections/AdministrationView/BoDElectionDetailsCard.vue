@@ -95,21 +95,21 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 
 const { data: hasVoted, error: errorHasVoted } = useReadContract({
   functionName: 'hasVoted',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [props.election.id, userDataStore.address as Address]
 })
 
 const { data: voterChoice } = useReadContract({
   functionName: 'getVoterChoice',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [props.election.id, userDataStore.address as Address]
 })
 
 const { data: electionResults } = useReadContract({
   functionName: 'getElectionResults',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [props.election.id]
 })

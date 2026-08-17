@@ -9,6 +9,7 @@ import {
   formatDateUtc,
   formatDuration,
   formatMonthYear,
+  formatTimeOfDay,
   formatWeekdayShort,
   fromUnix
 } from '@/utils/format/date'
@@ -34,6 +35,7 @@ describe('date styles', () => {
     expect(formatMonthYear(ISO)).toBe('January 2026')
     expect(formatDateIso(ISO)).toBe('2026-01-08')
     expect(formatDateUtc(ISO)).toBe('2026-01-08 14:05 UTC')
+    expect(formatTimeOfDay(ISO)).toBe('14:05')
   })
 
   it('keeps the time of day so same-day rows stay ordered', () => {
