@@ -37,7 +37,7 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 
 const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [electionId],
   query: { enabled: true }
@@ -45,7 +45,7 @@ const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useRea
 
 const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getElection',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [electionId],
   query: { enabled: computed(() => !!electionId.value) }
@@ -56,7 +56,7 @@ const {
   // isLoading: isLoadingVoteCount,
 } = useReadContract({
   functionName: 'getVoteCount',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   args: [electionId], // Supply currentElectionId as an argument
   query: {

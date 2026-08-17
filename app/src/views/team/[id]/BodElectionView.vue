@@ -26,7 +26,7 @@ const {
   // isLoading: isLoadingNextElectionId,
 } = useReadContract({
   functionName: 'getNextElectionId',
-  address: electionsAddress.value,
+  address: electionsAddress,
   abi: electionsAbi,
   query: {
     enabled: computed(() => !!electionsAddress.value)
