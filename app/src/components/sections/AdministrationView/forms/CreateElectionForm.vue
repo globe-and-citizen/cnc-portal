@@ -41,8 +41,9 @@
               <UButton
                 variant="outline"
                 color="neutral"
+                icon="i-lucide-calendar"
                 class="w-full justify-start font-normal"
-                :label="state.startDay ? formatDate(state.startDay) : 'As soon as possible'"
+                :label="state.startDay ? formatDate(state.startDay) : 'Pick a day'"
                 data-test="startDayButton"
               />
               <template #content>
@@ -79,6 +80,7 @@
               <UButton
                 variant="outline"
                 color="neutral"
+                icon="i-lucide-calendar"
                 class="w-full justify-start font-normal"
                 :label="state.endDay ? formatDate(state.endDay) : 'Pick a day'"
                 data-test="endDayButton"
