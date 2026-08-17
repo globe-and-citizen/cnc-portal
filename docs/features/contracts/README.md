@@ -1,6 +1,6 @@
 # Contract Features Index
 
-**Last updated:** 2026-03-16
+**Last updated:** 2026-08-17
 
 ---
 
@@ -11,7 +11,7 @@
 | [Officer](./officer/README.md)                       | Deploy and orchestrate all team contracts          | 5 / 5   | ✅       | 🚫       |
 | [Bank](./bank/README.md)                             | Hold treasury funds and distribute dividends       | 7 / 7   | ✅       | 🚫       |
 | [InvestorV1](./investor-v1/README.md)                | Issue and track equity tokens with push dividends  | 6 / 6   | ✅       | 🚫       |
-| [Elections](./elections/README.md)                   | Run formal board elections                         | 5 / 5   | ✅       | 🚫       |
+| [Elections](./elections/README.md)                   | Run formal board elections                         | 6 / 6   | ✅       | ⚠️       |
 | [BoardOfDirectors](./board-of-directors/README.md)   | Multi-sig governance for board decisions           | 6 / 6   | ✅       | 🚫       |
 | [Proposals](./proposals/README.md)                   | Board proposal creation and voting                 | 4 / 4   | ✅       | 🚫       |
 | [ExpenseAccount](./expense-account/README.md)        | EIP-712 signed expense budgets for employees       | 6 / 6   | ✅       | 🚫       |
@@ -23,7 +23,8 @@
 | [Voting](./voting/README.md)                         | Combined directive and election voting             | 4 / 4   | ✅       | 🚫       |
 | [Infrastructure](./infrastructure/README.md)         | FactoryBeacon, Beacon, UserBeaconProxy             | 3 / 3   | ✅       | —        |
 
-**Contract: 74 / 74 stories complete — Frontend: 1 / 14 contracts with UI**
+**Contract: 75 / 75 stories complete — Frontend: 2 / 14 contracts with UI** (⚠️ = UI built, with
+known defects — see the feature's user stories)
 
 ---
 

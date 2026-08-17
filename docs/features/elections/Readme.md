@@ -1,7 +1,7 @@
 # Board of Directors Elections — User Stories
 
 **Format:** User Story | Acceptance Criteria (tester checklist) | Priority (P1–P5) | Effort
-(XS/S/M/L/XL) **Last updated:** 2026-08-15 **Issue:** #1415 — _[Perf] Review Election feature_
+(XS/S/M/L/XL) **Last updated:** 2026-08-17 **Issue:** #1415 — _[Perf] Review Election feature_
 
 These stories describe the **whole election feature as it is actually built today**, front to back:
 the two pages, the contract behind them, and the notification the backend sends. The acceptance
@@ -33,16 +33,15 @@ or the "New Election Created" notification.
 6. The owner **publishes the results**: the top candidates are seated as the **Board of Directors**.
 7. The published election moves to **Past elections**, and a new election becomes possible.
 
-### Terminology (corrections vs. the earlier contract-level draft)
+### Terminology
 
 The contract-level document ([`../contracts/elections/README.md`](../contracts/elections/README.md))
-predates the frontend and contains three statements that are no longer true. This document is the
-authority; that one should be corrected.
+is the authority on what the chain does; this document is the authority on what the screens do. It
+was corrected on 2026-08-17 to match the points below, which are the ones most often misread.
 
 - **Publishing is restricted to the owner.** `publishResults` is `onlyOwner`, not "callable by
   anyone once conditions are met". The owner is the person who deployed the team's contracts, not
   the board.
-- **The frontend exists.** The contract doc reports "Frontend: 0 / 5"; both pages have been built.
 - **"One election at a time" is stricter than it sounds.** A new election is refused until the
   previous one's **results have been published** — not merely until it ends. An election that ran
   out and was never published blocks the team forever.
