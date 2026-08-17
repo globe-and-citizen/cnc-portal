@@ -12,9 +12,9 @@ export interface CreateElectionFormVm {
     endTime: string
   }
   errors: {
-    startDate: string
-    endDate: string
-    candidates: string
+    startDate?: string
+    endDate?: string
+    candidates?: string
   }
   formData: Array<{ address: string; name: string }>
   newProposalInput: { isElection?: boolean }

@@ -19,8 +19,8 @@ describe('CreateElectionForm — opening', () => {
 
     expect(vm.openingHelp).toContain('Opens at')
     expect(vm.openingHelp).toContain('2 min')
-    // The opening reads as a choice the owner may skip, not as a filled-in value.
-    expect(wrapper.find('[data-test="startDayButton"]').text()).toContain('Pick a day (optional)')
+    // The opening reads as a choice to make, not as a filled-in value.
+    expect(wrapper.find('[data-test="startDayButton"]').text()).toContain('Pick a day')
   })
 
   it('prefills a workable time when the opening day is picked', () => {

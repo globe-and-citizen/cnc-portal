@@ -179,7 +179,8 @@ withDefaults(defineProps<{ isLoading: boolean; errorMessage?: string }>(), {
 })
 
 const formData = ref<Array<Pick<User, 'address' | 'name'>>>([])
-const errors = reactive({ startDate: '', endDate: '', candidates: '' })
+
+const errors = reactive<{ startDate?: string; endDate?: string; candidates?: string }>({})
 
 const newProposalInput = ref<Partial<OldProposal>>({
   isElection: true
@@ -240,9 +241,9 @@ const schema = z.object({
 })
 
 const submitForm = () => {
-  errors.startDate = ''
-  errors.endDate = ''
-  errors.candidates = ''
+  errors.startDate = undefined
+  errors.endDate = undefined
+  errors.candidates = undefined
 
   // No day picked means "as soon as possible", worked out now rather than when
   // the form was built. A day that was picked is used exactly as it was given —
