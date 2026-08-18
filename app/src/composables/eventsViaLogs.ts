@@ -12,6 +12,10 @@
  * Optionally, `extraLogs` fetches a second, already-filtered log set (e.g. the
  * global FeeCollector's FeePaid for this contract) that's mapped via `mapExtra`
  * and folded into the same timestamp batch.
+ *
+ * The address input accepts a single address or an array of {@link ScanTarget}s
+ * (one per contract generation, each with its own deploy boundary); logs from
+ * every generation are merged and deduplicated on `txHash-logIndex` (#2456).
  */
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
@@ -25,6 +29,19 @@ import { currentChainId } from '@/constant'
 // so scan from block 0; a Polygon-only start block there yields an empty range.
 const POLYGON_START_BLOCK = 79743826n
 export const START_BLOCK = currentChainId === 137 ? POLYGON_START_BLOCK : 0n
+
+/**
+ * One contract generation to scan: its address plus the block its deployment
+ * boundary starts at. `fromBlock` defaults to {@link START_BLOCK} when omitted
+ * (e.g. a legacy Officer with no recorded deploy block).
+ */
+export interface ScanTarget {
+  address: string
+  fromBlock?: bigint
+}
+
+/** What a feed accepts as its address input: one address, or many generations. */
+export type ContractAddressInput = string | undefined | readonly ScanTarget[]
 
 /**
  * Shared block-number → Unix-seconds cache. A mined block's timestamp never
@@ -82,7 +99,8 @@ export interface EventMapContext<T> {
 }
 
 export interface EventsViaLogsOptions<T> {
-  contractAddress: MaybeRefOrGetter<string | undefined>
+  /** A single contract address, or one {@link ScanTarget} per generation. */
+  contractAddress: MaybeRefOrGetter<ContractAddressInput>
   /** Cache-key prefix, e.g. 'bank-events-logs'. */
   queryKey: string
   /** Union of the contract's event fragments across versions. */
@@ -97,33 +115,84 @@ export interface EventsViaLogsOptions<T> {
   mapExtra?: (ctx: EventMapContext<T>) => void
 }
 
+/** Normalize the address input to a deduped list of lower-cased scan targets. */
+function normalizeTargets(input: ContractAddressInput): ScanTarget[] {
+  const raw: readonly ScanTarget[] =
+    typeof input === 'string' ? [{ address: input }] : Array.isArray(input) ? input : []
+  const byAddress = new Map<string, ScanTarget>()
+  for (const target of raw) {
+    const address = target.address?.toLowerCase()
+    if (!address) continue
+    const existing = byAddress.get(address)
+    const fromBlock = target.fromBlock ?? START_BLOCK
+    if (!existing || fromBlock < (existing.fromBlock ?? START_BLOCK)) {
+      byAddress.set(address, { address, fromBlock })
+    }
+  }
+  return [...byAddress.values()]
+}
+
+/**
+ * A decoded log tagged with the generation address it was fetched for, so
+ * `extraLogs` entries (emitted by another contract, e.g. the FeeCollector) still
+ * know which scanned contract they belong to.
+ */
+interface TaggedLog {
+  log: DecodedLogLike
+  contract: Address
+}
+
 export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
-  const address = computed(() => toValue(opts.contractAddress)?.toLowerCase())
+  const targets = computed(() => normalizeTargets(toValue(opts.contractAddress)))
+  const addressKey = computed(() =>
+    targets.value
+      .map((t) => t.address)
+      .sort()
+      .join(',')
+  )
 
   const query = useQuery({
-    queryKey: computed(() => [opts.queryKey, address.value]),
-    enabled: computed(() => !!address.value),
+    queryKey: computed(() => [opts.queryKey, addressKey.value]),
+    enabled: computed(() => targets.value.length > 0),
     staleTime: 30_000,
     queryFn: async (): Promise<T> => {
-      const contract = address.value as Address
+      const scanTargets = targets.value
       const client = getPublicClient(config, { chainId: currentChainId })
-      if (!client || !contract) return opts.empty()
+      if (!client || scanTargets.length === 0) return opts.empty()
 
-      const rawLogs = await client.getLogs({
-        address: contract,
-        fromBlock: START_BLOCK,
-        toBlock: 'latest'
-      })
-      const decoded = parseEventLogs({ abi: opts.eventAbi, logs: rawLogs, strict: false })
-      const extra = opts.extraLogs ? await opts.extraLogs(client, contract) : []
+      const mainById = new Map<string, TaggedLog>()
+      const extraById = new Map<string, TaggedLog>()
 
-      // Timestamps for each unique block the logs touch (logs carry none). Only
-      // blocks missing from the shared cache are fetched; with the transport's
-      // batching those `getBlock` calls collapse into a single JSON-RPC POST.
+      await Promise.all(
+        scanTargets.map(async ({ address, fromBlock }) => {
+          const contract = address as Address
+          const rawLogs = await client.getLogs({
+            address: contract,
+            fromBlock: fromBlock ?? START_BLOCK,
+            toBlock: 'latest'
+          })
+          const decoded = parseEventLogs({
+            abi: opts.eventAbi,
+            logs: rawLogs,
+            strict: false
+          }) as unknown as DecodedLogLike[]
+          for (const log of decoded) {
+            mainById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
+          }
+
+          if (opts.extraLogs) {
+            const extra = await opts.extraLogs(client, contract)
+            for (const log of extra) {
+              extraById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
+            }
+          }
+        })
+      )
+
+      const allTagged = [...mainById.values(), ...extraById.values()]
+
       const blockNumbers = [
-        ...new Set(
-          [...decoded, ...extra].map((l) => l.blockNumber).filter((b): b is bigint => b != null)
-        )
+        ...new Set(allTagged.map((t) => t.log.blockNumber).filter((b): b is bigint => b != null))
       ]
       const uncached = blockNumbers.filter((n) => !blockTimestampCache.has(blockCacheKey(n)))
       const fetched = await Promise.all(
@@ -137,7 +206,7 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
 
       const out = opts.empty()
 
-      for (const log of decoded as unknown as DecodedLogLike[]) {
+      for (const { log, contract } of mainById.values()) {
         opts.mapEvent({
           out,
           id: `${log.transactionHash}-${log.logIndex}`,
@@ -150,7 +219,7 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
       }
 
       if (opts.mapExtra) {
-        for (const log of extra) {
+        for (const { log, contract } of extraById.values()) {
           opts.mapExtra({
             out,
             id: `${log.transactionHash}-${log.logIndex}`,

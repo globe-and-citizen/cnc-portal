@@ -89,14 +89,11 @@ export function useCNCAccounting(
   teamId: MaybeRefOrGetter<string | null>,
   options: UseCNCAccountingOptions = {}
 ): UseCNCAccountingReturn {
-  // Ask for the full per-generation contract history so the books survive
-  // contract migrations: after a redeploy the current-generation `teamContracts`
+  /** Full per-generation contract history so the books survive migrations (issue #2456). */
   const team = useGetTeamWithHistoryQuery({ pathParams: { teamId } })
   const contracts = computed(() => team.data.value?.teamContracts ?? [])
 
-  // Every generation across the team's migration history. Falls back to the
-  // current-generation contracts as a single boundary-less generation when the
-  // backend does not send `contractHistory` (older API / graceful degradation).
+  /** Every generation; falls back to the current contracts when the API omits history. */
   const generations = computed<ContractGeneration[]>(() => {
     const history = team.data.value?.contractHistory
     if (history?.length) return history
@@ -114,12 +111,7 @@ export function useCNCAccounting(
     generations.value.flatMap((generation) => generation.contracts)
   )
 
-  /**
-   * Scan targets for a contract type across every generation: each matching
-   * contract paired with its generation's deploy block, so the on-chain feed
-   * scans each one from its own deployment boundary. Addresses are lower-cased
-   * (logs/args compare lowercase).
-   */
+  /** Scan targets for a contract type across every generation, each with its deploy block. */
   const targetsOf = (...types: ContractType[]): ComputedRef<ScanTarget[]> =>
     computed(() => {
       const targets: ScanTarget[] = []
@@ -149,9 +141,6 @@ export function useCNCAccounting(
           ?.address?.toLowerCase() ?? ''
     )
 
-  // Current-generation addresses for live contract reads (SHER multiplier,
-  // credit offers, share-token tagging). These reflect state, not history, so
-  // they intentionally resolve one address.
   const fixedReturnAddress = addressOf('FixedReturn')
   const investorAddress = addressOfInvestor()
   const routerAddress = addressOf('SafeDepositRouter')
@@ -159,8 +148,6 @@ export function useCNCAccounting(
     () => team.data.value?.safeAddress ?? contracts.value.find((c) => c.type === 'Safe')?.address
   )
 
-  // Multi-generation scan targets for the on-chain event feeds: every generation
-  // of each contract type, each tagged with its own deploy boundary.
   const bankTargets = targetsOf('Bank')
   const cashRemTargets = targetsOf('CashRemunerationEIP712')
   const expenseTargets = targetsOf('ExpenseAccountEIP712')
@@ -246,7 +233,7 @@ export function useCNCAccounting(
   // The raw feeds + the live-price fallback — everything the ledger needs except
   // the resolved historical rate.
   const baseInput = computed<CncAccountingInput>(() => ({
-    contracts: allContracts.value, // migration sweep (old Bank → new Bank) as an internal move, not revenue.
+    contracts: allContracts.value,
     safeAddress: safeAddress.value,
     founderAddresses: founderAddresses.value,
     memberAddresses: memberAddresses.value,
