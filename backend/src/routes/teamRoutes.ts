@@ -22,6 +22,7 @@ import {
   addTeamBodySchema,
   updateTeamBodySchema,
   getAllTeamsQuerySchema,
+  getTeamQuerySchema,
   addMembersBodySchema,
   deleteMemberParamsSchema,
   teamIdParamsSchema,
@@ -452,7 +453,12 @@ teamRoutes.delete(
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-teamRoutes.get('/:id', validateParams(teamIdParamsSchema), getTeam);
+teamRoutes.get(
+  '/:id',
+  validateParams(teamIdParamsSchema),
+  validateQuery(getTeamQuerySchema),
+  getTeam
+);
 
 /**
  * @openapi

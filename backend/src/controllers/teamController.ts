@@ -91,6 +91,52 @@ const withCurrentOfficerAndContracts = <
   };
 };
 
+/**
+ * One deployment generation of a team's contracts, tagged with the deploy block
+ * the accounting scan starts from. Officer-less pockets (Safe / SafeDepositRouter)
+ * survive redeploys and come back as a single generation with null deploy fields.
+ */
+export type ContractGeneration = {
+  officerAddress: string | null;
+  deployBlockNumber: string | null;
+  deployedAt: Date | null;
+  contracts: TeamContract[];
+};
+
+/**
+ * Load every generation of a team's contracts across the full Officer history,
+ * so the accounting layer keeps pre-migration transactions after a redeploy
+ * (issue #2456). A migration never deletes old rows, so this union is complete.
+ */
+export const loadContractHistory = async (teamId: number): Promise<ContractGeneration[]> => {
+  const officers = await prisma.teamOfficer.findMany({
+    where: { teamId },
+    include: { contracts: true },
+    orderBy: [{ deployBlockNumber: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }],
+  });
+
+  const generations: ContractGeneration[] = officers.map((officer) => ({
+    officerAddress: officer.address,
+    deployBlockNumber: officer.deployBlockNumber?.toString() ?? null,
+    deployedAt: officer.deployedAt,
+    contracts: officer.contracts,
+  }));
+
+  const officerless = await prisma.teamContract.findMany({
+    where: { teamId, officerId: null },
+  });
+  if (officerless.length > 0) {
+    generations.push({
+      officerAddress: null,
+      deployBlockNumber: null,
+      deployedAt: null,
+      contracts: officerless,
+    });
+  }
+
+  return generations;
+};
+
 // The team list card shows the viewer's own wage status ("Wage set" vs "No wage
 // set"), not the whole roster's. Fetch the caller's leaf wages across the
 // listed teams in a single query, then resolve to the active wage when a
@@ -298,8 +344,13 @@ const getTeam = async (req: Request, res: Response) => {
       select: { isHidden: true },
     });
 
+    const contractHistory = isTruthyQueryFlag(req.query.includeContractHistory)
+      ? await loadContractHistory(Number(id))
+      : undefined;
+
     res.status(200).json({
       ...withCurrentOfficerAndContracts(team),
+      ...(contractHistory ? { contractHistory } : {}),
       isHidden: callerMemberData?.isHidden ?? false,
       members: membersWithResolvedImages,
     });
