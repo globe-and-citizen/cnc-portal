@@ -13,7 +13,8 @@ import {
   str,
   unionEventAbi,
   useContractEventsViaLogs,
-  type EventMapContext
+  type EventMapContext,
+  type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
 const FIXED_RETURN_EVENT_ABI = unionEventAbi([FixedReturnAbi, FixedReturnV2Abi])
@@ -153,7 +154,9 @@ const mapEvent = ({
   }
 }
 
-export function useFixedReturnEventsViaLogs(contractAddress: MaybeRefOrGetter<string | undefined>) {
+export function useFixedReturnEventsViaLogs(
+  contractAddress: MaybeRefOrGetter<ContractAddressInput>
+) {
   return useContractEventsViaLogs<FixedReturnEventsQuery>({
     contractAddress,
     queryKey: 'fixed-return-events-logs',

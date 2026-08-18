@@ -12,7 +12,8 @@ import {
   str,
   unionEventAbi,
   useContractEventsViaLogs,
-  type EventMapContext
+  type EventMapContext,
+  type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
 const SAFE_ROUTER_EVENT_ABI = unionEventAbi([SafeRouterV1, SafeRouterV01, SafeRouterV0])
@@ -83,7 +84,7 @@ const mapEvent = ({
 }
 
 export function useSafeDepositRouterEventsViaLogs(
-  contractAddress: MaybeRefOrGetter<string | undefined>
+  contractAddress: MaybeRefOrGetter<ContractAddressInput>
 ) {
   return useContractEventsViaLogs<SafeDepositRouterEventsQuery>({
     contractAddress,
