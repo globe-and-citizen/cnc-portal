@@ -168,7 +168,7 @@ vi.mock('@/queries/team.queries', () => {
     teamKeys,
     useGetTeamsQuery: vi.fn(queryMocks.useGetTeamsQuery),
     useGetTeamQuery: vi.fn(queryMocks.useGetTeamQuery),
-    useGetTeamWithHistoryQuery: vi.fn(queryMocks.useGetTeamWithHistoryQuery),
+    useGetTeamWithHistoryQuery: vi.fn(queryMocks.useGetTeamQuery),
     useCreateTeamMutation: vi.fn(queryMocks.useCreateTeamMutation),
     useUpdateTeamMutation: vi.fn(queryMocks.useUpdateTeamMutation),
     useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation),
