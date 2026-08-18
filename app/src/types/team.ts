@@ -33,6 +33,18 @@ export interface CurrentOfficer {
   updatedAt: string
 }
 
+/**
+ * One deployment generation of a team's contracts, from
+ * `GET /teams/:id?includeContractHistory=true`. The accounting layer scans each
+ * one from its `deployBlockNumber` so pre-migration transactions survive (#2456).
+ */
+export interface ContractGeneration {
+  officerAddress: Address | null
+  deployBlockNumber: string | null
+  deployedAt: string | null
+  contracts: TeamContract[]
+}
+
 export interface Team {
   id: string
   name: string
@@ -66,6 +78,8 @@ export interface Team {
   contractVersion?: FolderVersion
   safeAddress?: Address
   teamContracts: TeamContract[]
+  /** Per-generation contract history; only present with `includeContractHistory=true`. */
+  contractHistory?: ContractGeneration[]
   _count?: { members: number }
   /**
    * The requesting user's own active wage on this team, or null when they have

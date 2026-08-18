@@ -12,7 +12,10 @@ export const teamKeys = {
   list: (userAddress?: string | null, filters?: { showHidden?: boolean; showArchived?: boolean }) =>
     [...teamKeys.lists(), { userAddress, ...filters }] as const,
   details: () => [...teamKeys.all, 'detail'] as const,
-  detail: (teamId: string | null) => [...teamKeys.details(), { teamId }] as const
+  detail: (teamId: string | null) => [...teamKeys.details(), { teamId }] as const,
+  /** Separate key so the accounting variant never shares a cache entry with the plain query. */
+  detailWithHistory: (teamId: string | null) =>
+    [...teamKeys.detail(teamId), 'contractHistory'] as const
 }
 
 // ============================================================================
@@ -78,6 +81,20 @@ export interface GetTeamParams {
 export const useGetTeamQuery = createQueryHook<Team, GetTeamParams>({
   endpoint: 'teams/{teamId}',
   queryKey: (params) => teamKeys.detail(toValue(params.pathParams.teamId)),
+  enabled: (params) => !!toValue(params.pathParams.teamId),
+  options: {
+    ...queryPresets.stable,
+    retry: false
+  }
+})
+
+/**
+ * Fetch a single team with its per-generation contract history, so the
+ * accounting books survive contract migrations (issue #2456).
+ */
+export const useGetTeamWithHistoryQuery = createQueryHook<Team, GetTeamParams>({
+  endpoint: (params) => `teams/${toValue(params.pathParams.teamId)}?includeContractHistory=true`,
+  queryKey: (params) => teamKeys.detailWithHistory(toValue(params.pathParams.teamId)),
   enabled: (params) => !!toValue(params.pathParams.teamId),
   options: {
     ...queryPresets.stable,
