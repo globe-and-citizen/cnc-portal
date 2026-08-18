@@ -142,6 +142,84 @@ interface TaggedLog {
   contract: Address
 }
 
+/**
+ * Scan every target from its deploy boundary, merge and deduplicate the logs on
+ * `txHash-logIndex`, resolve block timestamps, and fold each into the accumulator
+ * via `mapEvent` / `mapExtra`. Pure over its injected client so it is unit-tested
+ * without Vue or a live RPC (issue #2456).
+ */
+export async function scanContractLogs<T>(
+  client: ChainClient,
+  targets: readonly ScanTarget[],
+  opts: Pick<EventsViaLogsOptions<T>, 'eventAbi' | 'empty' | 'mapEvent' | 'extraLogs' | 'mapExtra'>
+): Promise<T> {
+  if (targets.length === 0) return opts.empty()
+
+  const mainById = new Map<string, TaggedLog>()
+  const extraById = new Map<string, TaggedLog>()
+
+  await Promise.all(
+    targets.map(async ({ address, fromBlock }) => {
+      const contract = address as Address
+      const rawLogs = await client.getLogs({
+        address: contract,
+        fromBlock: fromBlock ?? START_BLOCK,
+        toBlock: 'latest'
+      })
+      const decoded = parseEventLogs({
+        abi: opts.eventAbi,
+        logs: rawLogs,
+        strict: false
+      }) as unknown as DecodedLogLike[]
+      for (const log of decoded) {
+        mainById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
+      }
+
+      if (opts.extraLogs) {
+        const extra = await opts.extraLogs(client, contract)
+        for (const log of extra) {
+          extraById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
+        }
+      }
+    })
+  )
+
+  const allTagged = [...mainById.values(), ...extraById.values()]
+
+  const blockNumbers = [
+    ...new Set(allTagged.map((t) => t.log.blockNumber).filter((b): b is bigint => b != null))
+  ]
+  const uncached = blockNumbers.filter((n) => !blockTimestampCache.has(blockCacheKey(n)))
+  const fetched = await Promise.all(uncached.map((blockNumber) => client.getBlock({ blockNumber })))
+  for (const block of fetched) {
+    blockTimestampCache.set(blockCacheKey(block.number), Number(block.timestamp))
+  }
+  const tsOf = (blockNumber: bigint | null) =>
+    blockNumber == null ? 0 : (blockTimestampCache.get(blockCacheKey(blockNumber)) ?? 0)
+
+  const out = opts.empty()
+
+  const fold = (map: Map<string, TaggedLog>, mapFn?: (ctx: EventMapContext<T>) => void) => {
+    if (!mapFn) return
+    for (const { log, contract } of map.values()) {
+      mapFn({
+        out,
+        id: `${log.transactionHash}-${log.logIndex}`,
+        timestamp: tsOf(log.blockNumber),
+        contract,
+        eventName: log.eventName ?? '',
+        args: log.args ?? {},
+        log
+      })
+    }
+  }
+
+  fold(mainById, opts.mapEvent)
+  fold(extraById, opts.mapExtra)
+
+  return out
+}
+
 export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
   const targets = computed(() => normalizeTargets(toValue(opts.contractAddress)))
   const addressKey = computed(() =>
@@ -156,83 +234,9 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
     enabled: computed(() => targets.value.length > 0),
     staleTime: 30_000,
     queryFn: async (): Promise<T> => {
-      const scanTargets = targets.value
       const client = getPublicClient(config, { chainId: currentChainId })
-      if (!client || scanTargets.length === 0) return opts.empty()
-
-      const mainById = new Map<string, TaggedLog>()
-      const extraById = new Map<string, TaggedLog>()
-
-      await Promise.all(
-        scanTargets.map(async ({ address, fromBlock }) => {
-          const contract = address as Address
-          const rawLogs = await client.getLogs({
-            address: contract,
-            fromBlock: fromBlock ?? START_BLOCK,
-            toBlock: 'latest'
-          })
-          const decoded = parseEventLogs({
-            abi: opts.eventAbi,
-            logs: rawLogs,
-            strict: false
-          }) as unknown as DecodedLogLike[]
-          for (const log of decoded) {
-            mainById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
-          }
-
-          if (opts.extraLogs) {
-            const extra = await opts.extraLogs(client, contract)
-            for (const log of extra) {
-              extraById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
-            }
-          }
-        })
-      )
-
-      const allTagged = [...mainById.values(), ...extraById.values()]
-
-      const blockNumbers = [
-        ...new Set(allTagged.map((t) => t.log.blockNumber).filter((b): b is bigint => b != null))
-      ]
-      const uncached = blockNumbers.filter((n) => !blockTimestampCache.has(blockCacheKey(n)))
-      const fetched = await Promise.all(
-        uncached.map((blockNumber) => client.getBlock({ blockNumber }))
-      )
-      for (const block of fetched) {
-        blockTimestampCache.set(blockCacheKey(block.number), Number(block.timestamp))
-      }
-      const tsOf = (blockNumber: bigint | null) =>
-        blockNumber == null ? 0 : (blockTimestampCache.get(blockCacheKey(blockNumber)) ?? 0)
-
-      const out = opts.empty()
-
-      for (const { log, contract } of mainById.values()) {
-        opts.mapEvent({
-          out,
-          id: `${log.transactionHash}-${log.logIndex}`,
-          timestamp: tsOf(log.blockNumber),
-          contract,
-          eventName: log.eventName ?? '',
-          args: log.args ?? {},
-          log
-        })
-      }
-
-      if (opts.mapExtra) {
-        for (const { log, contract } of extraById.values()) {
-          opts.mapExtra({
-            out,
-            id: `${log.transactionHash}-${log.logIndex}`,
-            timestamp: tsOf(log.blockNumber),
-            contract,
-            eventName: log.eventName ?? '',
-            args: log.args ?? {},
-            log
-          })
-        }
-      }
-
-      return out
+      if (!client) return opts.empty()
+      return scanContractLogs(client, targets.value, opts)
     }
   })
 

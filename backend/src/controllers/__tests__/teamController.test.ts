@@ -64,6 +64,10 @@ vi.mock('../../utils', async () => {
       },
       teamContract: {
         deleteMany: vi.fn(),
+        findMany: vi.fn(),
+      },
+      teamOfficer: {
+        findMany: vi.fn(),
       },
       weeklyClaim: {
         deleteMany: vi.fn(),
@@ -391,6 +395,62 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(200);
       // expect(response.body).toEqual(teamMockResolve);
+    });
+
+    it('includes the full contract history when ?includeContractHistory=true', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
+      vi.spyOn(prisma.teamOfficer, 'findMany').mockResolvedValue([
+        {
+          address: '0xOfficerOld',
+          deployBlockNumber: 100n,
+          deployedAt: null,
+          contracts: [{ address: '0xOldBank', type: 'Bank' }],
+        },
+        {
+          address: '0xOfficerNew',
+          deployBlockNumber: 200n,
+          deployedAt: null,
+          contracts: [{ address: '0xNewBank', type: 'Bank' }],
+        },
+      ] as never);
+      vi.spyOn(prisma.teamContract, 'findMany').mockResolvedValue([
+        { address: '0xSafe', type: 'Safe' },
+      ] as never);
+
+      const response = await request(app)
+        .get('/1')
+        .query({ includeContractHistory: 'true' })
+        .set('Authorization', 'Bearer mock-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.contractHistory).toHaveLength(3);
+      expect(response.body.contractHistory[0]).toMatchObject({
+        officerAddress: '0xOfficerOld',
+        deployBlockNumber: '100',
+      });
+      expect(response.body.contractHistory[0].contracts[0].address).toBe('0xOldBank');
+      // The officer-less pocket (Safe) comes last as a boundary-less generation.
+      expect(response.body.contractHistory[2]).toMatchObject({
+        officerAddress: null,
+        deployBlockNumber: null,
+      });
+    });
+
+    it('omits contract history by default and does not query the officer history', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
+      const officersSpy = vi.spyOn(prisma.teamOfficer, 'findMany');
+
+      const response = await request(app).get('/1').set('Authorization', 'Bearer mock-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.contractHistory).toBeUndefined();
+      expect(officersSpy).not.toHaveBeenCalled();
     });
 
     it('exposes isMigrated=true when current officer matches the active network version', async () => {
