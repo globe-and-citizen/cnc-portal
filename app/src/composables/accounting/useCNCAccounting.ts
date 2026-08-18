@@ -24,7 +24,9 @@ import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
 import { FEE_COLLECTOR_ADDRESS } from '@/constant'
-import type { ContractType } from '@/types/teamContract'
+import type { ContractType, TeamContract } from '@/types/teamContract'
+import type { ContractGeneration } from '@/types/team'
+import type { ScanTarget } from '@/composables/eventsViaLogs'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
@@ -32,7 +34,7 @@ import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedR
 import { useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
 import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
-import { useGetTeamQuery } from '@/queries/team.queries'
+import { useGetTeamWithHistoryQuery } from '@/queries/team.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 import {
@@ -87,10 +89,54 @@ export function useCNCAccounting(
   teamId: MaybeRefOrGetter<string | null>,
   options: UseCNCAccountingOptions = {}
 ): UseCNCAccountingReturn {
-  const team = useGetTeamQuery({ pathParams: { teamId } })
+  // Ask for the full per-generation contract history so the books survive
+  // contract migrations: after a redeploy the current-generation `teamContracts`
+  const team = useGetTeamWithHistoryQuery({ pathParams: { teamId } })
   const contracts = computed(() => team.data.value?.teamContracts ?? [])
 
-  /** Resolve a contract's lower-cased address by type (logs/args compare lowercase). */
+  // Every generation across the team's migration history. Falls back to the
+  // current-generation contracts as a single boundary-less generation when the
+  // backend does not send `contractHistory` (older API / graceful degradation).
+  const generations = computed<ContractGeneration[]>(() => {
+    const history = team.data.value?.contractHistory
+    if (history?.length) return history
+    return [
+      {
+        officerAddress: null,
+        deployBlockNumber: null,
+        deployedAt: null,
+        contracts: contracts.value
+      }
+    ]
+  })
+
+  const allContracts = computed<TeamContract[]>(() =>
+    generations.value.flatMap((generation) => generation.contracts)
+  )
+
+  /**
+   * Scan targets for a contract type across every generation: each matching
+   * contract paired with its generation's deploy block, so the on-chain feed
+   * scans each one from its own deployment boundary. Addresses are lower-cased
+   * (logs/args compare lowercase).
+   */
+  const targetsOf = (...types: ContractType[]): ComputedRef<ScanTarget[]> =>
+    computed(() => {
+      const targets: ScanTarget[] = []
+      for (const generation of generations.value) {
+        const fromBlock = generation.deployBlockNumber
+          ? BigInt(generation.deployBlockNumber)
+          : undefined
+        for (const contract of generation.contracts) {
+          if (types.includes(contract.type)) {
+            targets.push({ address: contract.address.toLowerCase(), fromBlock })
+          }
+        }
+      }
+      return targets
+    })
+
+  /** Current-generation address for reads that reflect live contract state. */
   const addressOf = (type: ContractType): ComputedRef<string> =>
     computed(() => contracts.value.find((c) => c.type === type)?.address?.toLowerCase() ?? '')
 
@@ -103,9 +149,9 @@ export function useCNCAccounting(
           ?.address?.toLowerCase() ?? ''
     )
 
-  const bankAddress = addressOf('Bank')
-  const cashRemAddress = addressOf('CashRemunerationEIP712')
-  const expenseAddress = addressOf('ExpenseAccountEIP712')
+  // Current-generation addresses for live contract reads (SHER multiplier,
+  // credit offers, share-token tagging). These reflect state, not history, so
+  // they intentionally resolve one address.
   const fixedReturnAddress = addressOf('FixedReturn')
   const investorAddress = addressOfInvestor()
   const routerAddress = addressOf('SafeDepositRouter')
@@ -113,16 +159,21 @@ export function useCNCAccounting(
     () => team.data.value?.safeAddress ?? contracts.value.find((c) => c.type === 'Safe')?.address
   )
 
-  // ── On-chain events via getLogs: one composable per deployed contract, each
-  // enabled only when its address resolves from the team. Every composable scans
-  // the contract from its deploy block and returns the exact same shape the Ponder
-  // queries did, so everything downstream (mappers, assemble) is unchanged. ──
-  const bank = useBankEventsViaLogs(bankAddress)
-  const cashRem = useCashRemunerationEventsViaLogs(cashRemAddress)
-  const expense = useExpenseEventsViaLogs(expenseAddress)
-  const fixedReturn = useFixedReturnEventsViaLogs(fixedReturnAddress)
-  const investor = useInvestorEventsViaLogs(investorAddress)
-  const router = useSafeDepositRouterEventsViaLogs(routerAddress)
+  // Multi-generation scan targets for the on-chain event feeds: every generation
+  // of each contract type, each tagged with its own deploy boundary.
+  const bankTargets = targetsOf('Bank')
+  const cashRemTargets = targetsOf('CashRemunerationEIP712')
+  const expenseTargets = targetsOf('ExpenseAccountEIP712')
+  const fixedReturnTargets = targetsOf('FixedReturn')
+  const investorTargets = targetsOf('Investor', 'InvestorV1')
+  const routerTargets = targetsOf('SafeDepositRouter')
+
+  const bank = useBankEventsViaLogs(bankTargets)
+  const cashRem = useCashRemunerationEventsViaLogs(cashRemTargets)
+  const expense = useExpenseEventsViaLogs(expenseTargets)
+  const fixedReturn = useFixedReturnEventsViaLogs(fixedReturnTargets)
+  const investor = useInvestorEventsViaLogs(investorTargets)
+  const router = useSafeDepositRouterEventsViaLogs(routerTargets)
 
   // ── Contract read: the router's live SHER multiplier. The `MultiplierUpdated`
   // events historise *changes*, but the initial multiplier is set in the
@@ -195,7 +246,7 @@ export function useCNCAccounting(
   // The raw feeds + the live-price fallback — everything the ledger needs except
   // the resolved historical rate.
   const baseInput = computed<CncAccountingInput>(() => ({
-    contracts: contracts.value,
+    contracts: allContracts.value, // migration sweep (old Bank → new Bank) as an internal move, not revenue.
     safeAddress: safeAddress.value,
     founderAddresses: founderAddresses.value,
     memberAddresses: memberAddresses.value,
