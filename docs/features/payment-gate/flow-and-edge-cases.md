@@ -36,3 +36,91 @@ que ce soit, tant que le mécanisme du cas limite 2 n'existe pas.
 Ce lien n'existe que dans notre base — pas récupérable en cas de perte. Solutions possibles :
 contrat intermédiaire, ou fonction dédiée ajoutée directement à `Bank.sol`, qui émettent la
 facture ID dans un événement on-chain. **Non tranché.**
+
+## Précisions pour le contrat d'intégration (#2461)
+
+### Répartition des responsabilités
+
+| Côté CNC Pay | Côté marchand |
+|---|---|
+| Contrats de règlement (`Bank.sol`, `AdCampaignManager.sol`) | Détermine et affiche le prix à payer |
+| Widget : connexion wallet, soumission de la transaction | Génère la facture ID (référence de commande) |
+| Vérification de secours (`Recheck`) si le callback direct échoue | Héberge la page de checkout, y monte le widget |
+| Ne stocke jamais de donnée personnelle du client | Traite le callback, remplit la commande |
+
+### Quote vs Charge — pas d'objet « quote » séparé
+
+Le prix affiché dans Review est déterminé et affiché par le marchand lui-même, avant même que
+le widget ne charge quoi que ce soit — ce n'est pas quelque chose que CNC Pay calcule ou sert.
+Le widget ne va jamais chercher un prix auprès de notre backend : le montant vient du marchand
+(attribut au montage), et c'est ce montant qui est directement soumis comme transaction.
+
+Donc pas de « quote » séparé avec sa propre expiration à gérer — le prix appartient entièrement
+au marchand, comme n'importe quel autre champ de son propre catalogue. Ce qui existe côté
+CNC Pay, c'est uniquement la transaction déjà soumise (le « charge »), jamais un devis
+préalable. Pour « Pay as you go », même logique : pas de prix fixe, un taux (`$0.08/clic`),
+jamais un devis.
+
+### Signature du callback
+
+Montage du widget, avec la facture ID et le montant fournis par le marchand. L'adresse Bank
+reste sur le `<script>` (une fois par page, voir cas nominal étape 1) ; le reste est propre à
+cette commande précise et vient sur la `<div>` de montage :
+
+```html
+<div
+  id="cnc-pay"
+  data-facture-id="order_8842"
+  data-amount="128.00"
+  data-token="USDC"
+  data-on-status="handlePaymentStatus"
+></div>
+```
+
+`data-on-status` référence une fonction déjà définie dans la portée globale de la page du
+marchand — pas de bundler ni de module requis pour l'intégrer :
+
+```js
+function handlePaymentStatus(event) {
+  // event = {
+  //   factureId: "order_8842",
+  //   status: "paid",       // pending | paid | held | released | funding | active | depleted | refilled
+  //   amount: "128.00",
+  //   token: "USDC",
+  //   mode: "instant",      // instant | escrow | metered
+  //   tx: "0x4f2a…c91b"
+  // }
+}
+```
+
+### Minimisation des données
+
+Ce qui transite par CNC Pay : adresse Bank, facture ID (fournie par le marchand), montant,
+token, mode, adresse wallet du client, `txHash` — tout est déjà public on-chain, sauf la
+facture ID elle-même.
+
+Ce que CNC Pay ne demande ni ne stocke jamais : nom, email, adresse de livraison, ou toute
+autre donnée personnelle du client. Recommandation pour le marchand : ne pas mettre
+d'information identifiable dans la facture ID elle-même (par ex. un email plutôt qu'un
+identifiant opaque type `order_8842`), puisqu'elle est transmise en clair et peut être
+journalisée.
+
+### Schéma de configuration
+
+Forme cible une fois qu'il y a un backend derrière la page Setup — aujourd'hui c'est de l'état
+local dans le mockup, rien n'est encore persisté ni lu on-chain :
+
+```json
+{
+  "bank": "0x8f21…4Ac9",
+  "modes": {
+    "instant": true,
+    "escrow": true,
+    "metered": false
+  },
+  "tokens": ["MATIC", "USDC", "USDT"]
+}
+```
+
+`instant` est toujours `true` — c'est la seule valeur non modifiable du schéma, au même titre
+que le mode ne pouvant pas être désactivé dans l'UI aujourd'hui.

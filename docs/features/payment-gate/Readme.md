@@ -40,8 +40,28 @@ verified behaviour.
   callback doesn't land — not the primary path.
 - **There is no platform fee today.** Payments settle directly into the merchant's existing
   `Bank.sol`, unmodified.
-- **Status here means implementation status, not design status.** A story marked 🎨 has a
-  finished, reviewed design (see `flow-and-edge-cases.md`) but no backend or on-chain code yet.
+- **Status here means implementation status, not design status.** 🎨 UI mockup = real Vue
+  components exist (see `app/src/views/team/[id]/PaymentGate/`), no backend or on-chain code.
+  📝 Design only = the decision is made and written down, but nothing is built yet, not even UI.
+  🔲 Not started = no design and no code. ❓ Open question = not decided at all.
+- **CNC Pay owns settlement, not pricing.** The merchant determines and displays the price
+  themselves, before the widget even loads; CNC Pay never fetches or serves a "quote." The
+  amount the merchant supplies is what gets submitted as the transaction — there's no separate
+  quote object with its own expiry to manage.
+- **No customer data is collected beyond what's already on-chain.** Bank address, facture ID,
+  amount, token, mode, the customer's wallet address, and the `txHash` are what flow through
+  CNC Pay — everything except the facture ID is already public on-chain. CNC Pay never asks for
+  or stores a customer's name, email, or shipping address. Merchants should avoid putting
+  identifiable information in the facture ID itself, since it's transmitted in the clear.
+
+### Responsibilities
+
+| CNC Pay | Merchant |
+| --- | --- |
+| Settlement contracts (`Bank.sol`, `AdCampaignManager.sol`) | Determines and displays the price |
+| Widget: wallet connection, submitting the transaction | Generates the facture ID (order reference) |
+| Fallback verification (`Recheck`) if the direct callback fails | Hosts the checkout page, mounts the widget on it |
+| Never stores customer PII | Handles the callback, fulfils the order |
 
 ---
 
@@ -57,6 +77,28 @@ verified behaviour.
 | US-PAYGATE-006 | Recheck a payment by facture ID and Bank address (fallback) | Merchant |   🎨 UI mockup   |    P2    | M      |
 | US-PAYGATE-007 | Meter usage for "Pay as you go"                     | Merchant |   🔲 Not started |    P3    | M      |
 | US-PAYGATE-008 | Recover a lost facture ID ↔ transaction link         | System   | ❓ Open question |    P3    | —      |
+| US-PAYGATE-009 | Handle rejection, timeout, and retry                | Customer |   📝 Design only |    P1    | M      |
+| US-PAYGATE-010 | Prevent duplicate charges (idempotency)             | System   | ❓ Open question |    P1    | M      |
+| US-PAYGATE-011 | Define callback and Recheck payloads                | Merchant |   📝 Design only |    P2    | S      |
+| US-PAYGATE-012 | Validate the embed origin                           | Merchant |   📝 Design only |    P2    | M      |
+| US-PAYGATE-013 | Define the refund flow                              | Merchant | ❓ Open question |    P3    | —      |
+| US-PAYGATE-014 | Sandbox example and test fixtures                   | Integrator |  🔲 Not started |    P2    | M      |
+
+---
+
+## Open Items (tracked in #2502)
+
+US-PAYGATE-009 through 014 above are the design write-up for what #2502 is still tracking.
+None of them are validated yet — every box in this range is intentionally left unchecked.
+
+| Topic | Story | Still open |
+| --- | --- | --- |
+| Rejection / timeout / retry | US-PAYGATE-009 | Timeout threshold; whether the callback fires on rejection/timeout, and with what payload |
+| Idempotency | US-PAYGATE-010 | Backend duplicate-submission check; on-chain enforcement (shares the #2461 contract decision with US-PAYGATE-008) |
+| Callback & Recheck payloads | US-PAYGATE-011 | Rejected/timeout payload shape; not-found/error shape; observability and versioning policy |
+| Embed origin, CSP, CORS, clickjacking | US-PAYGATE-012 | CSP requirements; clickjacking protection (depends on the undecided DOM vs. iframe embed question); CORS policy |
+| Refund flow | US-PAYGATE-013 | Refund mechanism itself; named owner and decision deadline |
+| Sandbox & test fixtures | US-PAYGATE-014 | Testnet environment; example integration code; mock fixtures for automated testing |
 
 ---
 
@@ -68,8 +110,10 @@ customers can pay without me building any payment infrastructure
 **Acceptance Criteria:**
 
 - [ ] The Setup page shows the team's Bank address in a read-only field with a Copy button
-- [ ] An embed snippet is shown (`<script src="https://pay.cncportal.io/widget.js" data-bank="{address}" async>` + a mount `<div id="cnc-pay">`), with its own Copy button
+- [ ] An embed snippet is shown (`<script src="https://pay.cncportal.io/widget.js" data-bank="{address}" async>`, once per page), with its own Copy button
+- [ ] For a specific order, the merchant mounts a `<div id="cnc-pay">` with that order's own attributes: `data-facture-id`, `data-amount`, `data-token`, and `data-on-status` (the name of a global JS function the merchant defines to receive the payment status — see US-PAYGATE-005)
 - [ ] No separate publishable key is issued anywhere — the Bank address is the only identifier a merchant needs
+- [ ] No "quote" is fetched from CNC Pay — the merchant determines and displays the price themselves, before the widget ever loads; the amount they supply is what gets submitted as the transaction
 - [ ] 🔲 `widget.js` itself does not exist yet — this story documents the intended integration surface
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🔲 Not started · **Dependencies:** —
@@ -88,6 +132,7 @@ accept **So that** the gate matches how my business actually operates
 - [ ] Accepted tokens default to MATIC (locked, cannot be removed), USDC, USDT; more can be added by symbol and removed again
 - [ ] Turning off a settlement mode immediately removes it from the Preview page's mode picker and from the Reference page's status-flow list — no page reload needed
 - [ ] 🔲 Toggling a mode or editing tokens does not call any contract yet (`Bank.addTokenSupport`, admin management, etc. are not wired) — state is local to the browser session only, reset on reload
+- [ ] 🔲 Target config shape once a backend exists: `{ bank, modes: { instant: true, escrow, metered }, tokens: string[] }` — `instant` is always `true`, the only non-editable field
 
 **Priority:** P1 (Critical) · **Effort:** S · **Status:** 🎨 UI mockup · **Dependencies:** US-PAYGATE-001
 
@@ -135,8 +180,8 @@ callback I control, the instant it's known **So that** I can act on it without p
 
 **Acceptance Criteria:**
 
-- [ ] 🔲 Not started — prerequisite: the merchant's page passes that order's facture ID to the widget when mounting it (data attribute or init call) — without it, the widget has no facture ID to report or call back with
-- [ ] Once a transaction confirms in the customer's browser, the widget calls a JS callback the merchant provides, passing it the payment status
+- [ ] 🔲 Not started — prerequisite: the merchant's page passes that order's facture ID to the widget when mounting it (`data-facture-id`, see US-PAYGATE-001) — without it, the widget has no facture ID to report or call back with
+- [ ] Once a transaction confirms in the customer's browser, the widget calls the global function named in `data-on-status`, passing it `{ factureId, status, amount, token, mode, tx }`
 - [ ] What the merchant does with that status is entirely up to them — save it, display it, trigger fulfillment. CNC Pay's backend is not involved in this path at all
 - [ ] Optionally, the widget also reports the `txHash` with the facture ID to CNC Pay — this is what makes US-PAYGATE-006 possible later
 - [ ] Fallback if that report never reaches CNC Pay: embed the facture ID directly in the on-chain contract call itself, the same mechanism as US-PAYGATE-008 — the transaction becomes self-describing instead of depending on a separate off-chain report
@@ -192,6 +237,108 @@ merchant's money
 - [ ] `receive()` cannot carry any extra data at all — non-empty calldata on a plain transfer fails outright, since `Bank.sol` has no `fallback()`
 
 **Priority:** P3 (Medium) · **Effort:** — · **Status:** ❓ Open question · **Dependencies:** US-PAYGATE-006
+
+---
+
+## US-PAYGATE-009: Handle Rejection, Timeout, and Retry
+
+**As a** customer **I want to** get a clear response when my payment doesn't go through cleanly
+**So that** I know whether it's safe to try again
+
+**Acceptance Criteria:**
+
+- [ ] Rejection (wallet declined): detected client-side, nothing ever broadcasts. Widget returns to Review with "Payment cancelled — nothing was charged," retry allowed immediately with the same facture ID
+- [ ] Timeout: after a threshold, the widget shows an explicit "taking longer than usual" state with the `txHash` shown/linked to a block explorer, instead of spinning forever
+- [ ] Retry is blocked while a timeout is unresolved — a second submission risks both eventually confirming (a double payment)
+- [ ] Exact timeout threshold — not decided
+- [ ] Whether the callback fires for rejection or timeout, and with what payload — see US-PAYGATE-011
+
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 📝 Design only · **Dependencies:** US-PAYGATE-004
+
+---
+
+## US-PAYGATE-010: Prevent Duplicate Charges (Idempotency)
+
+**As a** system **I want to** prevent the same facture ID from producing more than one charge
+**So that** a retry or an accidental double-click never double-charges a customer
+
+**Acceptance Criteria:**
+
+- [ ] Client-side: disable the Pay button after first click — catches an accidental double-click in the same tab
+- [ ] Client-side protection does **not** survive a page reload or a second tab — known gap, not a fix
+- [ ] Backend check by facture ID before allowing a new submission — mechanism not decided
+- [ ] On-chain enforcement (a "used facture IDs" mapping that reverts a duplicate) — the only real guarantee, and the same contract decision as US-PAYGATE-008
+
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** ❓ Open question · **Dependencies:** US-PAYGATE-008
+
+---
+
+## US-PAYGATE-011: Define Callback and Recheck Payloads
+
+**As a** merchant **I want** a documented payload shape for every outcome **So that** I can
+write one error-handling path instead of guessing per case
+
+**Acceptance Criteria:**
+
+- [ ] Callback (`data-on-status`), paid: `{ factureId, status: "paid", amount, token, mode, tx }`
+- [ ] Callback, failed (on-chain revert): `{ factureId, status: "failed", tx }`
+- [ ] Callback, rejected — payload shape, and whether it fires at all — open
+- [ ] Callback, timeout — payload shape, and whether it fires at all — open
+- [ ] Recheck, found: `{ factureId, status, amount, token, mode, tx }`
+- [ ] Recheck, not-found / malformed-input error shape — open
+- [ ] Observability (logging/monitoring) and an API versioning policy — open
+
+**Priority:** P2 (High) · **Effort:** S · **Status:** 📝 Design only · **Dependencies:** US-PAYGATE-005, US-PAYGATE-006
+
+---
+
+## US-PAYGATE-012: Validate the Embed Origin
+
+**As a** merchant **I want to** restrict which sites can load my widget **So that** the
+integration can't be silently cloned onto another domain
+
+**Acceptance Criteria:**
+
+- [ ] Setup page accepts one or more allowed origins (a list — e.g. `localhost:3000` and the
+      production domain together, no separate dev/prod mode)
+- [ ] Requests are checked against the browser-set `Origin` header, which the embedding page's
+      own JavaScript cannot forge
+- [ ] CSP requirements — open
+- [ ] Clickjacking protection — open, and depends on an undecided question: is the widget
+      DOM-injected or iframe-embedded?
+- [ ] CORS policy for CNC Pay's own endpoints — open
+
+**Priority:** P2 (High) · **Effort:** M · **Status:** 📝 Design only · **Dependencies:** US-PAYGATE-001
+
+---
+
+## US-PAYGATE-013: Define the Refund Flow
+
+**As a** merchant **I want** a way to return funds to a customer **So that** I'm not stuck if
+an order can't be fulfilled after payment
+
+**Acceptance Criteria:**
+
+- [ ] Refund path for instant settlement (funds already in the merchant's own Bank) — open, likely a
+      merchant-initiated transfer rather than a CNC Pay action, but not decided
+- [ ] Named owner and decision deadline — open
+
+**Priority:** P3 (Medium) · **Effort:** — · **Status:** ❓ Open question · **Dependencies:** US-PAYGATE-004
+
+---
+
+## US-PAYGATE-014: Sandbox Example and Test Fixtures
+
+**As an** integrator **I want** a working example I can run and test against **So that** I
+don't have to reverse-engineer the contract from prose alone
+
+**Acceptance Criteria:**
+
+- [ ] A real test environment (testnet Bank address) — open
+- [ ] Example integration code — open
+- [ ] Mock responses / test fixtures for automated testing — open
+
+**Priority:** P2 (High) · **Effort:** M · **Status:** 🔲 Not started · **Dependencies:** US-PAYGATE-011
 
 ---
 

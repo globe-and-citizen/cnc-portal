@@ -34,10 +34,20 @@
 
       <div>
         <label class="text-muted mb-1 block text-xs font-medium uppercase">Embed snippet</label>
+        <p class="text-muted mb-2 text-xs">
+          The Bank address goes on the script tag, once per page. The facture ID, amount, and
+          callback are per order — set them on the mount `&lt;div&gt;` for that checkout.
+        </p>
         <pre
           class="bg-elevated border-default overflow-x-auto rounded-md border p-3 text-xs"
         ><code>&lt;script src="https://pay.cncportal.io/widget.js" data-bank="{{ bankAddress }}" async&gt;&lt;/script&gt;
-&lt;div id="cnc-pay"&gt;&lt;/div&gt;</code></pre>
+&lt;div
+  id="cnc-pay"
+  data-facture-id="order_8842"
+  data-amount="128.00"
+  data-token="USDC"
+  data-on-status="handlePaymentStatus"
+&gt;&lt;/div&gt;</code></pre>
         <div class="mt-2 flex justify-end">
           <UButton
             color="neutral"
@@ -63,7 +73,7 @@ const teamStore = useTeamStore()
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank') ?? '0x…')
 const snippet = computed(
   () =>
-    `<script src="https://pay.cncportal.io/widget.js" data-bank="${bankAddress.value}" async><\/script>\n<div id="cnc-pay"><\/div>`
+    `<script src="https://pay.cncportal.io/widget.js" data-bank="${bankAddress.value}" async><\/script>\n<div\n  id="cnc-pay"\n  data-facture-id="order_8842"\n  data-amount="128.00"\n  data-token="USDC"\n  data-on-status="handlePaymentStatus"\n><\/div>`
 )
 
 const copiedAddress = ref(false)
