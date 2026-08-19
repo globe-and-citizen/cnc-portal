@@ -74,9 +74,9 @@ describe('scanContractLogs', () => {
       opts
     )
 
-    expect(out.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x2-0'])
-    expect(out.items.find((i) => i.id === '0x1-0')?.contract).toBe(OLD)
-    expect(out.items.find((i) => i.id === '0x2-0')?.contract).toBe(NEW)
+    expect(out.data.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x2-0'])
+    expect(out.data.items.find((i) => i.id === '0x1-0')?.contract).toBe(OLD)
+    expect(out.data.items.find((i) => i.id === '0x2-0')?.contract).toBe(NEW)
   })
 
   it('scans each generation from its own deploy boundary', async () => {
@@ -119,8 +119,8 @@ describe('scanContractLogs', () => {
 
     const out = await scanContractLogs(client as unknown as ChainClient, [{ address: OLD }], opts)
 
-    expect(out.items).toHaveLength(1)
-    expect(out.items[0].id).toBe('0x1-0')
+    expect(out.data.items).toHaveLength(1)
+    expect(out.data.items[0].id).toBe('0x1-0')
   })
 
   it('keeps every event regardless of input order and resolves timestamps', async () => {
@@ -137,9 +137,9 @@ describe('scanContractLogs', () => {
       opts
     )
 
-    expect(out.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x3-1'])
-    expect(out.items.find((i) => i.id === '0x1-0')?.timestamp).toBe(1010)
-    expect(out.items.find((i) => i.id === '0x3-1')?.timestamp).toBe(1030)
+    expect(out.data.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x3-1'])
+    expect(out.data.items.find((i) => i.id === '0x1-0')?.timestamp).toBe(1010)
+    expect(out.data.items.find((i) => i.id === '0x3-1')?.timestamp).toBe(1030)
   })
 
   it('preserves the loaded generations when another returns no logs', async () => {
@@ -154,14 +154,37 @@ describe('scanContractLogs', () => {
       opts
     )
 
-    expect(out.items.map((i) => i.id)).toEqual(['0x1-0'])
+    expect(out.data.items.map((i) => i.id)).toEqual(['0x1-0'])
+  })
+
+  it('records a gap and keeps the other generations when one scan fails', async () => {
+    const client = {
+      getLogs: vi.fn(async ({ address }: { address: string; fromBlock: bigint }) => {
+        if (address.toLowerCase() === OLD) throw new Error('RPC boom')
+        return [log({ transactionHash: '0x2', logIndex: 0, blockNumber: 20n })]
+      }),
+      getBlock: vi.fn(async ({ blockNumber }: { blockNumber: bigint }) => ({
+        number: blockNumber,
+        timestamp: 1020n
+      }))
+    }
+
+    const out = await scanContractLogs(
+      client as unknown as ChainClient,
+      [{ address: OLD }, { address: NEW }],
+      opts
+    )
+
+    expect(out.data.items.map((i) => i.id)).toEqual(['0x2-0'])
+    expect(out.gaps).toHaveLength(1)
+    expect(out.gaps[0].address).toBe(OLD)
   })
 
   it('returns the empty shape when there are no targets', async () => {
     const client = makeClient({})
     const out = await scanContractLogs(client as unknown as ChainClient, [], opts)
 
-    expect(out.items).toEqual([])
+    expect(out.data.items).toEqual([])
     expect(client.getLogs).not.toHaveBeenCalled()
   })
 
@@ -188,7 +211,7 @@ describe('scanContractLogs', () => {
       withExtra
     )
 
-    const fee = out.items.find((i) => i.eventName === 'FeePaid')
+    const fee = out.data.items.find((i) => i.eventName === 'FeePaid')
     expect(fee?.contract).toBe(OLD)
   })
 })
