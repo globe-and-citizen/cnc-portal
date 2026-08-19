@@ -44,6 +44,22 @@ export interface ScanTarget {
 export type ContractAddressInput = string | undefined | readonly ScanTarget[]
 
 /**
+ * A generation whose scan failed (e.g. the RPC rejected). Surfaced so the
+ * accounting UI can flag a reconciliation gap instead of silently dropping a
+ * whole contract type (issue #2456).
+ */
+export interface ScanGap {
+  address: string
+  error: unknown
+}
+
+/** What {@link scanContractLogs} returns: the merged feed plus any failed generations. */
+export interface ScanResult<T> {
+  data: T
+  gaps: ScanGap[]
+}
+
+/**
  * Shared block-number → Unix-seconds cache. A mined block's timestamp never
  * changes, so it is memoised process-wide and reused across every contract feed
  * and every refetch: a block that several feeds touch (or the same feed re-scans)
@@ -147,39 +163,48 @@ interface TaggedLog {
  * `txHash-logIndex`, resolve block timestamps, and fold each into the accumulator
  * via `mapEvent` / `mapExtra`. Pure over its injected client so it is unit-tested
  * without Vue or a live RPC (issue #2456).
+ *
+ * Each generation is scanned in isolation: a target whose RPC scan fails is
+ * recorded as a {@link ScanGap} and skipped, so the generations that did load are
+ * still returned rather than the whole feed being lost.
  */
 export async function scanContractLogs<T>(
   client: ChainClient,
   targets: readonly ScanTarget[],
   opts: Pick<EventsViaLogsOptions<T>, 'eventAbi' | 'empty' | 'mapEvent' | 'extraLogs' | 'mapExtra'>
-): Promise<T> {
-  if (targets.length === 0) return opts.empty()
+): Promise<ScanResult<T>> {
+  if (targets.length === 0) return { data: opts.empty(), gaps: [] }
 
   const mainById = new Map<string, TaggedLog>()
   const extraById = new Map<string, TaggedLog>()
+  const gaps: ScanGap[] = []
 
   await Promise.all(
     targets.map(async ({ address, fromBlock }) => {
       const contract = address as Address
-      const rawLogs = await client.getLogs({
-        address: contract,
-        fromBlock: fromBlock ?? START_BLOCK,
-        toBlock: 'latest'
-      })
-      const decoded = parseEventLogs({
-        abi: opts.eventAbi,
-        logs: rawLogs,
-        strict: false
-      }) as unknown as DecodedLogLike[]
-      for (const log of decoded) {
-        mainById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
-      }
-
-      if (opts.extraLogs) {
-        const extra = await opts.extraLogs(client, contract)
-        for (const log of extra) {
-          extraById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
+      try {
+        const rawLogs = await client.getLogs({
+          address: contract,
+          fromBlock: fromBlock ?? START_BLOCK,
+          toBlock: 'latest'
+        })
+        const decoded = parseEventLogs({
+          abi: opts.eventAbi,
+          logs: rawLogs,
+          strict: false
+        }) as unknown as DecodedLogLike[]
+        for (const log of decoded) {
+          mainById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
         }
+
+        if (opts.extraLogs) {
+          const extra = await opts.extraLogs(client, contract)
+          for (const log of extra) {
+            extraById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
+          }
+        }
+      } catch (error) {
+        gaps.push({ address, error })
       }
     })
   )
@@ -190,9 +215,13 @@ export async function scanContractLogs<T>(
     ...new Set(allTagged.map((t) => t.log.blockNumber).filter((b): b is bigint => b != null))
   ]
   const uncached = blockNumbers.filter((n) => !blockTimestampCache.has(blockCacheKey(n)))
-  const fetched = await Promise.all(uncached.map((blockNumber) => client.getBlock({ blockNumber })))
-  for (const block of fetched) {
-    blockTimestampCache.set(blockCacheKey(block.number), Number(block.timestamp))
+  const fetched = await Promise.allSettled(
+    uncached.map((blockNumber) => client.getBlock({ blockNumber }))
+  )
+  for (const result of fetched) {
+    if (result.status === 'fulfilled') {
+      blockTimestampCache.set(blockCacheKey(result.value.number), Number(result.value.timestamp))
+    }
   }
   const tsOf = (blockNumber: bigint | null) =>
     blockNumber == null ? 0 : (blockTimestampCache.get(blockCacheKey(blockNumber)) ?? 0)
@@ -217,7 +246,7 @@ export async function scanContractLogs<T>(
   fold(mainById, opts.mapEvent)
   fold(extraById, opts.mapExtra)
 
-  return out
+  return { data: out, gaps }
 }
 
 export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
@@ -233,18 +262,19 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
     queryKey: computed(() => [opts.queryKey, addressKey.value]),
     enabled: computed(() => targets.value.length > 0),
     staleTime: 30_000,
-    queryFn: async (): Promise<T> => {
+    queryFn: async (): Promise<ScanResult<T>> => {
       const client = getPublicClient(config, { chainId: currentChainId })
-      if (!client) return opts.empty()
+      if (!client) return { data: opts.empty(), gaps: [] }
       return scanContractLogs(client, targets.value, opts)
     }
   })
 
   // Mirror @vue/apollo-composable's shape so it drops into the *Transactions.vue.
-  // `refetch` is exposed so consumers (e.g. useCNCAccounting's refresh) can force
+  // `gaps` surfaces generations whose scan failed; `refetch` lets consumers force
   // a re-scan the same way they did with the Apollo queries.
   return {
-    result: query.data,
+    result: computed(() => query.data.value?.data ?? null),
+    gaps: computed<ScanGap[]>(() => query.data.value?.gaps ?? []),
     loading: query.isPending,
     error: query.error,
     refetch: query.refetch
