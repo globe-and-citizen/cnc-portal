@@ -43,11 +43,6 @@ export const getAllTeamsQuerySchema = z.object({
   showArchived: booleanQueryParamSchema,
 });
 
-/** `includeContractHistory` opts into the per-generation contract history (issue #2456). */
-export const getTeamQuerySchema = z.object({
-  includeContractHistory: booleanQueryParamSchema,
-});
-
 // Add members request body
 export const addMembersBodySchema = z
   .array(
