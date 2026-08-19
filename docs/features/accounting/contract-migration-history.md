@@ -39,9 +39,9 @@ use cases and edge cases are covered.
 | US-ACCTMIG-001 | History survives a single migration             | Viewer |   ✅   |    P1    | L      |
 | US-ACCTMIG-002 | History survives multiple successive migrations | Viewer |   ✅   |    P1    | M      |
 | US-ACCTMIG-003 | Cross-generation treasury sweeps stay internal  | Viewer |   ✅   |    P1    | M      |
-| US-ACCTMIG-004 | Closing balances reconcile across generations   | Viewer |   ✅   |    P2    | M      |
+| US-ACCTMIG-004 | Closing balances reconcile across generations   | Viewer |   🔜   |    P2    | M      |
 | US-ACCTMIG-005 | Robust, order-independent event handling        | System |   ✅   |    P1    | M      |
-| US-ACCTMIG-006 | Expose the full contract history (API)          | System |   ✅   |    P1    | M      |
+| US-ACCTMIG-006 | Consume the existing Officer-history endpoint   | System |   ✅   |    P1    | M      |
 | US-ACCTMIG-007 | Documentation & manual verification             | —      |   ✅   |    P3    | S      |
 
 > Criteria tagged _(API)_ describe a server response a UI tester cannot observe from the screen.
@@ -112,7 +112,13 @@ match what is actually held on-chain
       the corresponding contracts, summed across all generations
 - [ ] A sweep leaves the total cash unchanged (it only moves between pockets)
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** ✅ Done · **Dependencies:** US-ACCTMIG-003
+> **🔜 Not implemented in this PR.** This PR scans events and reads the SHER multiplier, but does
+> not yet read on-chain token balances and compare them against `balanceSheet`. Full reconciliation
+> is tracked as a follow-up (see Known Limitations); until then the sweep half (second box) holds,
+> but the on-chain balance comparison does not.
+
+**Priority:** P2 (High) · **Effort:** M · **Status:** 🔜 Follow-up · **Dependencies:**
+US-ACCTMIG-003
 
 ---
 
@@ -128,30 +134,28 @@ or reordered events never corrupt the books
 - [ ] The result is **order-independent** — the same set of events yields the same books regardless
       of the order the chain returns them
 - [ ] A generation that returns **no events** does not drop the others (partial history is kept)
-- [ ] When the contract history is unavailable (older API), the page **degrades gracefully** to the
+- [ ] When the Officer history is unavailable (older data), the page **degrades gracefully** to the
       current generation instead of erroring
-- [ ] _(follow-up)_ A generation that **fails to load** is currently absent silently — surfacing
-      reconciliation gaps in the UI is a known follow-up (see below)
+- [ ] A generation whose RPC scan **fails** is isolated: the other generations still load, and the
+      failed one is surfaced as a **reconciliation-gap warning** in the Accounting view
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** ✅ Done · **Dependencies:** US-ACCTMIG-006
 
 ---
 
-## US-ACCTMIG-006: Expose the Full Contract History (API)
+## US-ACCTMIG-006: Consume the Existing Officer-History Endpoint
 
-**As a** system **I want to** serve every contract generation to the accounting layer **So that**
-the frontend can scan them all
+**As a** system **I want to** get every contract generation from the endpoint that already serves it
+**So that** the accounting layer scans them all without a duplicate API
 
 **Acceptance Criteria:**
 
-- [ ] _(API)_ `GET /teams/:id?includeContractHistory=true` returns a `contractHistory` array — one
-      entry per generation — each with its `officerAddress`, `deployBlockNumber`/`deployedAt`, and
-      its `contracts`
-- [ ] _(API)_ The officer-less pockets (Safe / SafeDepositRouter) come back as a single
-      boundary-less generation (null deploy fields)
-- [ ] _(API)_ **Without** the flag, the response is unchanged (`teamContracts` = current generation
-      only) — no other screen is affected
-- [ ] _(API)_ Old contract rows are **never deleted** on redeploy, so the history is complete
+- [ ] _(API)_ Accounting reads generations from the existing `GET /contract/officers?teamId=`
+      (`useGetTeamOfficersQuery`) — each Officer with its `contracts` and `deployBlockNumber` —
+      rather than a new team-endpoint variant
+- [ ] The officer-less pockets (Safe / SafeDepositRouter) are added as a single boundary-less
+      generation, taken from the ordinary team response
+- [ ] Old contract rows are **never deleted** on redeploy, so the history is complete
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** ✅ Done · **Dependencies:** US-TEAM-001
 
@@ -181,8 +185,8 @@ on-chain history and invalidates the test).
 2. **Redeploy** the Officer on the **same** running node (new contract addresses).
 3. Re-open **Accounting**: the pre-migration transactions must still be there, exactly once, next to
    any new ones.
-4. _(API check)_ `GET /teams/<id>?includeContractHistory=true` returns a `contractHistory` with **at
-   least two** generations, including the **old** Bank address.
+4. _(API check)_ `GET /contract/officers?teamId=<id>` returns **at least two** Officer generations,
+   including the one governing the **old** Bank address, each with its `deployBlockNumber`.
 5. Do a **treasury sweep** (old Bank → new Bank): it must appear as an internal move — the income
    statement must not change.
 6. Repeat steps 2–3 a second time to confirm **multiple** migrations keep the full history.
@@ -195,9 +199,9 @@ on-chain history and invalidates the test).
 
 ## Known Limitations / Follow-ups
 
-- **Reconciliation gaps are not surfaced** — if one generation fails to load, its history is absent
-  silently (no UI warning). Surfacing gaps is planned (issue AC "expose reconciliation gaps
-  clearly").
+- **Balance reconciliation (US-ACCTMIG-004) is not implemented** — the books are built from event
+  scans, but the closing balances are not yet read from on-chain token balances and compared against
+  `balanceSheet`. Tracked as a follow-up.
 - **V2-only events** — the event decoders union the V0/V0.1/V1 ABIs; a money-moving event introduced
   only in V2 would need its ABI fragment + mapper added.
 - **Current-generation reads** — Community-credit interest terms and SHER valuation are still read
@@ -207,14 +211,14 @@ on-chain history and invalidates the test).
 
 ## How It Works (pointers)
 
-- **Backend** — `loadContractHistory()` and the `includeContractHistory` flag in
-  `backend/src/controllers/teamController.ts`; query schema in
-  `backend/src/validation/schemas/team.ts`.
-- **Frontend** — `useCNCAccounting` builds one scan target per generation
-  (`app/src/composables/accounting/useCNCAccounting.ts`); `scanContractLogs` merges and deduplicates
-  across generations (`app/src/composables/eventsViaLogs.ts`); the internal-address registry
-  (`app/src/utils/accounting/internalAddresses.ts`) is fed every generation so sweeps read as
-  internal.
+- **Backend** — no new endpoint: accounting reuses the existing `GET /contract/officers`
+  (`getTeamOfficers` in `backend/src/controllers/contractController.ts`).
+- **Frontend** — `useCNCAccounting` composes `useGetTeamQuery` + `useGetTeamOfficersQuery` to build
+  one scan target per generation (`app/src/composables/accounting/useCNCAccounting.ts`);
+  `scanContractLogs` scans each generation in isolation, merges and deduplicates across generations,
+  and returns any failed generations as gaps (`app/src/composables/eventsViaLogs.ts`); the
+  internal-address registry (`app/src/utils/accounting/internalAddresses.ts`) is fed every
+  generation so sweeps read as internal.
 
 ---
 
