@@ -12,6 +12,16 @@
       data-test="accounting-error"
     />
 
+    <UAlert
+      v-if="reconciliationGaps.length"
+      color="warning"
+      variant="soft"
+      icon="i-heroicons-exclamation-triangle"
+      title="History may be incomplete"
+      :description="gapsDescription"
+      data-test="accounting-gaps"
+    />
+
     <slot />
   </div>
 </template>
@@ -28,4 +38,10 @@ const route = useRoute()
 // `useAccountingContext` (its export bar included) instead of re-fetching.
 const accounting = provideAccounting(() => (route.params.id as string) ?? null)
 const error = computed(() => accounting.error.value)
+
+const reconciliationGaps = computed(() => accounting.reconciliationGaps.value)
+const gapsDescription = computed(() => {
+  const sources = [...new Set(reconciliationGaps.value.map((gap) => gap.source))]
+  return `Some contract generations couldn't be loaded (${sources.join(', ')}). Pre-migration history for these may be missing.`
+})
 </script>
