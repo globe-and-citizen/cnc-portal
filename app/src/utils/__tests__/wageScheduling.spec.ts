@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  describeWageChangeTiming,
   formatScheduledWageNotice,
-  msUntilWageEffective,
-  nextEffectiveDateLabel
+  msUntilWageEffective
 } from '@/utils/wageUtil'
 import type { Wage } from '@/types'
 import { NETWORK } from '@/constant'
@@ -137,19 +137,42 @@ describe('msUntilWageEffective', () => {
   })
 })
 
-describe('nextEffectiveDateLabel', () => {
-  it('points at the next Monday when called mid-week', () => {
-    // Wednesday 12 Aug 2026 -> Monday 17 Aug
-    expect(nextEffectiveDateLabel(new Date('2026-08-12T15:00:00.000Z'))).toContain('17')
+describe('describeWageChangeTiming', () => {
+  // Wednesday 12 Aug 2026, in the week starting Monday 10 Aug.
+  const now = new Date('2026-08-12T15:00:00.000Z')
+
+  it('reads the date from the server rather than recomputing it', () => {
+    const timing = describeWageChangeTiming(
+      wage({ nextChangeEffectiveFrom: '2026-08-17T00:00:00.000Z' }),
+      now
+    )
+
+    expect(timing.immediate).toBe(false)
+    expect(timing.label).toContain('17')
   })
 
-  it('points at the following Monday when called on a Monday', () => {
-    // A change made on Monday still lands on the *next* week's Monday, matching
-    // the server so the two never disagree.
-    expect(nextEffectiveDateLabel(new Date('2026-08-17T09:00:00.000Z'))).toContain('24')
+  it('reports a change landing on the current week as immediate', () => {
+    const timing = describeWageChangeTiming(
+      wage({ nextChangeEffectiveFrom: '2026-08-10T00:00:00.000Z' }),
+      now
+    )
+
+    expect(timing.immediate).toBe(true)
   })
 
-  it('points at the next day when called on a Sunday', () => {
-    expect(nextEffectiveDateLabel(new Date('2026-08-16T09:00:00.000Z'))).toContain('17')
+  it('falls back to next Monday when the server said nothing', () => {
+    // Older payloads carry no date. Announcing a later change than the server
+    // applies is a smaller mistake than promising an immediate one.
+    const timing = describeWageChangeTiming(wage({}), now)
+
+    expect(timing.immediate).toBe(false)
+    expect(timing.label).toContain('17')
+  })
+
+  it('ignores an unparseable date', () => {
+    const timing = describeWageChangeTiming(wage({ nextChangeEffectiveFrom: 'not-a-date' }), now)
+
+    expect(timing.immediate).toBe(false)
+    expect(timing.label).toContain('17')
   })
 })

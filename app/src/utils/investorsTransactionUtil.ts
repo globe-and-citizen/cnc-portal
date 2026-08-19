@@ -8,6 +8,7 @@ import type { TokenId } from '@/constant'
 import type { UBadgeColor } from '@/types/ui'
 import { NETWORK } from '@/constant'
 import { zeroAddress } from 'viem'
+import { formatDateTime, fromUnix } from '@/utils/format'
 import { buildRawTransactions, extractTxHashFromId } from './rawTransactionsUtil'
 import { tokenSymbol, formatEtherUtil, resolveTokenIdByAddress } from './constantUtil'
 import { parseBigIntOrZero } from './transactionHistoryUtil'
@@ -117,7 +118,7 @@ export const buildRawInvestorTransactions = (
 }
 
 export const formatInvestorTransactionDate = (timestamp: number): string =>
-  new Date(timestamp * 1000).toLocaleString('en-US')
+  formatDateTime(fromUnix(timestamp))
 
 export const mapRawInvestorTransaction = (
   tx: RawInvestorTransaction,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
+import { formatDateTime, fromUnix } from '@/utils/format'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import {
   buildRawBankTransactions,
@@ -211,7 +212,7 @@ describe('bankTransactionUtil', () => {
   })
 
   it('formats bank transaction dates from unix timestamps', () => {
-    expect(formatBankTransactionDate(0)).toBe(new Date(0).toLocaleString('en-US'))
+    expect(formatBankTransactionDate(0)).toBe(formatDateTime(fromUnix(0)))
   })
 
   it('maps transaction type to badge colors', () => {

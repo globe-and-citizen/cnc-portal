@@ -29,6 +29,10 @@ export interface Wage {
   nextWageId: number | null
   effectiveFrom?: string | null // ISO date string
   scheduledWage?: Wage | null
+  // The Monday a change saved right now would take effect on: this week's when
+  // the member has not opened it yet, next week's when they have. Computed by
+  // the server so the owner is never shown a date the server would not honour.
+  nextChangeEffectiveFrom?: string | null // ISO date string
   createdAt: string // ISO date string
   updatedAt: string // ISO date string
   user?: User

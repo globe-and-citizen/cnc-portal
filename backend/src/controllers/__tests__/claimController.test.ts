@@ -151,6 +151,9 @@ const createMockWeeklyClaim = (overrides: Partial<WeeklyClaim> = {}): WeeklyClai
     signature: null,
     claims: [{ hoursWorked: 30, minutesWorked: 1800 }],
     wageId: 1,
+    // addClaim always loads the week with its wage: once a week holds hours,
+    // that wage is what prices and caps them.
+    wage: createMockWage(),
 
     status: 'pending',
     ...overrides,
@@ -258,14 +261,77 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
+    it('should price a week that already holds hours with their own wage', async () => {
+      // The owner raised the cap mid-week. Hours are already priced against the
+      // old wage, so the week keeps it: repricing would mean a second
+      // WeeklyClaim for the same week, hour counters restarting from zero.
+      const testDate = dayjs.utc().startOf('day').toDate();
+      const submittedWeek = createMockWeeklyClaim({
+        wageId: 1,
+        wage: createMockWage({ id: 1, maximumHoursPerDay: 6 }),
+      } as Partial<WeeklyClaim>);
+      (submittedWeek as any).claims = [
+        { id: 1, dayWorked: testDate, hoursWorked: 5, minutesWorked: 300 },
+      ];
+
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(submittedWeek);
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ id: 2, maximumHoursPerDay: 12 }));
+
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        minutesWorked: 120, // 5h + 2h is under the new 12h cap, over the old 6h one
+        memo: 'memo',
+        dayWorked: testDate.toISOString(),
+      });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Daily allowance: 6h');
+      expect(mockResolveWageForWeek).not.toHaveBeenCalled();
+    });
+
+    it('should move a goals-only week onto the wage in force when hours arrive', async () => {
+      // Goals commit nothing: the member had not submitted their hours when the
+      // wage changed, so the first hours are priced at the new wage and the
+      // week's row follows them instead of pointing at the superseded one.
+      const testDate = dayjs.utc().startOf('day').toDate();
+      const goalsOnlyWeek = createMockWeeklyClaim({
+        id: 7,
+        wageId: 1,
+        wage: createMockWage({ id: 1, maximumHoursPerDay: 6 }),
+        weeklyGoals: 'ship the thing',
+      } as Partial<WeeklyClaim>);
+      (goalsOnlyWeek as any).claims = [];
+
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(goalsOnlyWeek);
+      const updateSpy = vi
+        .spyOn(prisma.weeklyClaim, 'update')
+        .mockResolvedValue(createMockWeeklyClaim({ id: 7, wageId: 2 }));
+      vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ id: 2, maximumHoursPerDay: 12 }));
+
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        minutesWorked: 600, // 10h: over the old 6h cap, within the new 12h one
+        memo: 'memo',
+        dayWorked: testDate.toISOString(),
+      });
+
+      expect(response.status).toBe(201);
+      expect(prisma.weeklyClaim.create).not.toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 7 }, data: { wageId: 2 } })
+      );
+    });
+
     it('should return 409 if the day total exceeds the wage daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
-      const modifiedWeeklyClaims = createMockWeeklyClaim();
+      const modifiedWeeklyClaims = createMockWeeklyClaim({
+        wage: createMockWage({ maximumHoursPerDay: 6 }),
+      } as Partial<WeeklyClaim>);
       (modifiedWeeklyClaims as any).claims = [
         { id: 1, dayWorked: testDate, hoursWorked: 5, minutesWorked: 300 },
       ];
 
-      mockResolveWageForWeek.mockResolvedValue(createMockWage({ maximumHoursPerDay: 6 }));
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
 
       const response = await request(app).post('/').send({
@@ -288,7 +354,6 @@ describe('Claim Controller', () => {
         { id: 1, dayWorked: testDate, hoursWorked: 7, minutesWorked: 420 },
       ];
 
-      mockResolveWageForWeek.mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
 
       const response = await request(app).post('/').send({
@@ -304,12 +369,13 @@ describe('Claim Controller', () => {
 
     it('should allow a claim that stays within the daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
-      const modifiedWeeklyClaims = createMockWeeklyClaim();
+      const modifiedWeeklyClaims = createMockWeeklyClaim({
+        wage: createMockWage({ maximumHoursPerDay: 8 }),
+      } as Partial<WeeklyClaim>);
       (modifiedWeeklyClaims as any).claims = [
         { id: 1, dayWorked: testDate, hoursWorked: 4, minutesWorked: 240 },
       ];
 
-      mockResolveWageForWeek.mockResolvedValue(createMockWage({ maximumHoursPerDay: 8 }));
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
 
@@ -460,6 +526,8 @@ describe('Claim Controller', () => {
     });
 
     it('should return 500 if internal server error occurs', async () => {
+      // An untouched week, so the wage is resolved — and that is what fails.
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
       mockResolveWageForWeek.mockRejectedValue(new Error('DB error'));
 
       const response = await request(app)

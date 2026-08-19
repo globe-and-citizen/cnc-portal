@@ -11,7 +11,6 @@ import { activityDestinationOf, type ActivityDestination } from './activityDesti
 import { mergeBankFees } from './mergeBankFees'
 import { flattenLedgerRows } from './ledgerGrouping'
 import { filterLedgerByCurrency } from './ledgerCurrency'
-import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import {
   badgeClassOf,
   categoryOf,
@@ -21,6 +20,7 @@ import {
 } from './ledgerCategory'
 import type { LedgerEntry } from './ledgerEntry'
 import type { TokenId } from '@/constant'
+import { formatNumber } from '@/utils/format'
 
 // Currency derivation / filtering lives in its own module, re-exported here.
 export { entryCurrency, ledgerCurrencies, filterLedgerByCurrency } from './ledgerCurrency'
@@ -97,11 +97,9 @@ function movementOf(rawAmount: string, token: TokenId, rate?: number): Movement 
   }
   return {
     currency: currencySymbol(token),
-    quantity: whole.toLocaleString('en-US', { maximumFractionDigits: 6 }),
-    // Reuse the shared amount formatter (as Bank / Payroll do) so trailing zeros
-    // are trimmed — `1.000000` reads `1`, `0.200000` reads `0.2` — while a value
-    // with real decimals keeps them, capped at 6 dp.
-    rate: rate == null ? '' : '$' + formatAmountWithPrecision(rate, 0, 6)
+    quantity: formatNumber(whole, { maxDecimals: 6 }),
+    // Rates remain compact while preserving real fractional precision up to 6 dp.
+    rate: rate == null ? '' : `$${formatNumber(rate, { maxDecimals: 6 })}`
   }
 }
 

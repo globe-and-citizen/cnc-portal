@@ -1092,6 +1092,9 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('returns 400 when the caller has no current wage', async () => {
+      // Only reachable on a week nobody has opened: an open week already
+      // carries the wage that prices it, so no resolution is needed.
+      vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null);
       mockResolveWageForWeek.mockResolvedValue(null);
 
       const response = await request(app).put('/goals').send(GOALS_BODY);

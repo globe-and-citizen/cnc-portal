@@ -111,20 +111,20 @@ describe('TokenAmount.vue', () => {
       const wrapper = createWrapper()
       await wrapper.find('[data-test="maxButton"]').trigger('click')
 
-      expect(lastModelValue(wrapper)).toEqual({ amount: '100.000000', tokenId: 'native' })
+      expect(lastModelValue(wrapper)).toEqual({ amount: '100', tokenId: 'native' })
     })
 
     it('fills input with 25/50/75% of balance when percent buttons are clicked', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="percentButton-25"]').trigger('click')
-      expect(lastModelValue(wrapper)?.amount).toBe('25.0000')
+      expect(lastModelValue(wrapper)?.amount).toBe('25')
 
       await wrapper.find('[data-test="percentButton-50"]').trigger('click')
-      expect(lastModelValue(wrapper)?.amount).toBe('50.0000')
+      expect(lastModelValue(wrapper)?.amount).toBe('50')
 
       await wrapper.find('[data-test="percentButton-75"]').trigger('click')
-      expect(lastModelValue(wrapper)?.amount).toBe('75.0000')
+      expect(lastModelValue(wrapper)?.amount).toBe('75')
     })
 
     it('uses spendableBalance for max balance when present', async () => {
@@ -143,7 +143,7 @@ describe('TokenAmount.vue', () => {
 
       await wrapper.find('[data-test="maxButton"]').trigger('click')
 
-      expect(lastModelValue(wrapper)?.amount).toBe('40.000000')
+      expect(lastModelValue(wrapper)?.amount).toBe('40')
     })
 
     it('applies feeBps to max balance when fee is configured', async () => {
@@ -151,7 +151,7 @@ describe('TokenAmount.vue', () => {
 
       await wrapper.find('[data-test="maxButton"]').trigger('click')
 
-      expect(lastModelValue(wrapper)?.amount).toBe('99.000000')
+      expect(lastModelValue(wrapper)?.amount).toBe('99')
     })
   })
 

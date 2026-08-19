@@ -92,8 +92,6 @@
         :disabled="loading"
         data-test="transferButton"
       >
-        <!-- {{ `Transfer${showFees ? ` ${totalToSend.toFixed(2)} ${model.token.symbol}` : ''}` }} -->
-
         {{
           `Transfer${showFees ? ` ${formatTransferAmount(totalToSend)} ${model.token.symbol}` : ''}`
         }}

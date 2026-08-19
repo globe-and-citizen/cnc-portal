@@ -34,7 +34,9 @@
         <span class="text-xs text-gray-500">Vesting Rate</span>
         <span class="font-medium"
           >{{
-            (props.vesting.totalAmount / props.vesting.durationInDays).toFixed(2)
+            formatNumber(props.vesting.totalAmount / props.vesting.durationInDays, {
+              maxDecimals: 2
+            })
           }}
           tokens/day</span
         >
@@ -57,18 +59,14 @@
 </template>
 
 <script setup lang="ts">
-import { format } from '@/utils/dayUtils'
 import { type VestingCreation } from '@/types/vesting'
+import { formatDate, formatNumber } from '@/utils/format'
 const props = defineProps<{
   vesting: VestingCreation
   loading: boolean
 }>()
 
 defineEmits(['back', 'confirm'])
-
-function formatDate(date: Date) {
-  return format(date, 'dd/MM/yyyy')
-}
 
 function formatDuration() {
   const parts = []

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
+import { formatDateTime, fromUnix } from '@/utils/format'
 import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
 import {
   buildRawInvestorTransactions,
@@ -159,7 +160,7 @@ describe('investorsTransactionUtil', () => {
   })
 
   it('formats investor transaction dates from unix timestamps', () => {
-    expect(formatInvestorTransactionDate(0)).toBe(new Date(0).toLocaleString('en-US'))
+    expect(formatInvestorTransactionDate(0)).toBe(formatDateTime(fromUnix(0)))
   })
 
   it('maps investor transaction type to badge colors', () => {
