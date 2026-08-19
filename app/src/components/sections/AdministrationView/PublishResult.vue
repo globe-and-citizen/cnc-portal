@@ -1,12 +1,12 @@
 <template>
-  <UTooltip :text="archivedTooltip">
+  <UTooltip :text="tooltip">
     <UButton
       color="primary"
       size="md"
       @click="handlePublishResults(electionId)"
       :loading="isPending"
-      :disabled="isWriteDisabled"
-      data-test="create-election-button"
+      :disabled="isPublishDisabled"
+      data-test="publish-results-button"
       label="Publish Results"
     />
   </UTooltip>
@@ -33,12 +33,28 @@ const electionsAddress = computed(() => {
   const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
   return address as Address
 })
-const { electionId } = defineProps<{
+const {
+  electionId,
+  disabled = false,
+  disabledReason
+} = defineProps<{
   electionId: number
+  // Set by the caller when this viewer may not publish — the reason is shown
+  // instead of leaving a dead button with no explanation.
+  disabled?: boolean
+  disabledReason?: string
 }>()
 
+const isPublishDisabled = computed(() => isWriteDisabled.value || disabled)
+
+const tooltip = computed(() => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  if (disabled) return disabledReason
+  return undefined
+})
+
 const handlePublishResults = async (electionId: number) => {
-  if (isWriteDisabled.value) return
+  if (isPublishDisabled.value) return
 
   try {
     const data = encodeFunctionData({

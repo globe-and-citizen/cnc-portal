@@ -16,13 +16,12 @@ import CurrentBoDElectionSection from '@/components/sections/AdministrationView/
 import ElectionDetailsSection from '@/components/sections/AdministrationView/BoDElectionDetailsSection.vue'
 import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
 import { useTeamStore } from '@/stores'
-import { computed, watch, provide } from 'vue'
+import { computed, watch } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useRouter } from 'vue-router'
 import { log } from '@/utils'
 
-provide('showPublishResultBtn', true)
 const teamStore = useTeamStore()
 const router = useRouter()
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
