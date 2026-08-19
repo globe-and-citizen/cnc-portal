@@ -86,9 +86,9 @@ verified behaviour.
 
 ---
 
-## Open Items (tracked in #2502)
+## Open Items (tracked in #2500)
 
-US-PAYGATE-009 through 014 above are the design write-up for what #2502 is still tracking.
+US-PAYGATE-009 through 014 above are the design write-up for what's still open on #2461.
 None of them are validated yet — every box in this range is intentionally left unchecked.
 
 | Topic | Story | Still open |
