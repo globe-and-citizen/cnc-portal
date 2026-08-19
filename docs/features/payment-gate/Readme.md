@@ -91,14 +91,17 @@ verified behaviour.
 US-PAYGATE-009 through 014 above are the design write-up for what's still open on #2461.
 None of them are validated yet — every box in this range is intentionally left unchecked.
 
-| Topic | Story | Still open |
-| --- | --- | --- |
-| Rejection / timeout / retry | US-PAYGATE-009 | Timeout threshold; whether the callback fires on rejection/timeout, and with what payload |
-| Idempotency | US-PAYGATE-010 | Backend duplicate-submission check; on-chain enforcement (shares the #2461 contract decision with US-PAYGATE-008) |
-| Callback & Recheck payloads | US-PAYGATE-011 | Rejected/timeout payload shape; not-found/error shape; observability and versioning policy |
-| Embed origin, CSP, CORS, clickjacking | US-PAYGATE-012 | CSP requirements; clickjacking protection (depends on the undecided DOM vs. iframe embed question); CORS policy |
-| Refund flow | US-PAYGATE-013 | Refund mechanism itself; named owner and decision deadline |
-| Sandbox & test fixtures | US-PAYGATE-014 | Testnet environment; example integration code; mock fixtures for automated testing |
+| Item | What it means | Consideration | Status |
+| --- | --- | --- | --- |
+| Rejection, timeout, retry (US-PAYGATE-009) | Customer's payment doesn't go through cleanly — wallet declines, or it just takes too long | Rejection is detected client-side, safe to retry immediately. Timeout needs an explicit threshold, and retry must stay blocked until it resolves — a second submission risks both eventually confirming | 📝 Design only — threshold undecided |
+| Idempotency (US-PAYGATE-010) | Same facture ID producing more than one charge | Client-side button-disable only catches a same-tab double-click. The real guarantee needs a backend check by facture ID, plus an on-chain "used facture IDs" mapping | ❓ Open question |
+| Refund flow (US-PAYGATE-013) | Returning money after it's already been captured | Funds already reached the merchant on payment — a refund would be the merchant manually sending money back, not a CNC Pay action | ❓ Open question |
+| CSP, CORS, clickjacking, origin validation (US-PAYGATE-012) | Security around where the widget can run and which requests are trusted | Origin validation is solved (allowed-origins field on Setup, checked against the browser-set `Origin` header). CSP and clickjacking are still open, and clickjacking depends on an undecided DOM-injected vs. iframe-embedded question | 📝 Design only — partially resolved |
+| ↳ Client payment (`data-on-status`) | Payload the widget passes to the merchant's callback | Paid: `{ factureId, status: "paid", amount, token, mode, tx }`. Failed: `{ factureId, status: "failed", tx }`. Rejected/timeout: still open | 📝 Design only |
+| ↳ Recheck (`GET /v1/payments/{facture-id}`) | Payload the fallback endpoint returns | Found: `{ factureId, status, amount, token, mode, tx }`. Not-found / malformed-input error shapes undefined | 📝 Design only |
+| ↳ Observability, versioning | Logging/monitoring, API versioning policy | Untouched — `/v1/...` implies versioning exists, but there's no actual policy for it | ❓ Open question |
+| Sandbox + test fixtures (US-PAYGATE-014) | A working example Layer8 can actually run against | Needs a real test environment, example integration code, and mock responses — none of that exists yet | 🔲 Not started |
+| Named owners & deadlines | Who's responsible for each open item above, and by when | Nothing above has an owner or a date yet, including the items just written up here | ❓ Open question |
 
 ---
 
