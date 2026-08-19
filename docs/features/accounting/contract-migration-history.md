@@ -25,8 +25,8 @@ use cases and edge cases are covered.
   `deployBlockNumber` (its scan boundary).
 - **Officer-less pocket** — the **Safe** and **SafeDepositRouter** survive redeploys and keep the
   same address across generations (no deploy boundary of their own).
-- **Treasury sweep** — a transfer that moves funds from an old contract to its replacement (e.g.
-  old Bank → new Bank) during/after a migration. It is an **internal move**, not revenue or expense.
+- **Treasury sweep** — a transfer that moves funds from an old contract to its replacement (e.g. old
+  Bank → new Bank) during/after a migration. It is an **internal move**, not revenue or expense.
 - **On-chain identity** — an event's `txHash`-`logIndex`. Used to deduplicate; never display
   metadata.
 
@@ -198,8 +198,8 @@ on-chain history and invalidates the test).
 - **Reconciliation gaps are not surfaced** — if one generation fails to load, its history is absent
   silently (no UI warning). Surfacing gaps is planned (issue AC "expose reconciliation gaps
   clearly").
-- **V2-only events** — the event decoders union the V0/V0.1/V1 ABIs; a money-moving event
-  introduced only in V2 would need its ABI fragment + mapper added.
+- **V2-only events** — the event decoders union the V0/V0.1/V1 ABIs; a money-moving event introduced
+  only in V2 would need its ABI fragment + mapper added.
 - **Current-generation reads** — Community-credit interest terms and SHER valuation are still read
   from the current generation only; pre-migration credit rounds fall back to cash-basis.
 

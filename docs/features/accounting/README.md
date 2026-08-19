@@ -1,8 +1,10 @@
 # CNC Accounting
 
-Treat the CNC as a **company** and keep its books: general ledger, income statement, and balance sheet.
+Treat the CNC as a **company** and keep its books: general ledger, income statement, and balance
+sheet.
 
-This folder catalogues **every way money moves** across the CNC contracts, maps each one to a journal entry, and runs a **full worked example** end to end so the numbers can be trusted.
+This folder catalogues **every way money moves** across the CNC contracts, maps each one to a
+journal entry, and runs a **full worked example** end to end so the numbers can be trusted.
 
 | Document                                                         | What's inside                                                                                                                                                                                                                                      |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -10,10 +12,17 @@ This folder catalogues **every way money moves** across the CNC contracts, maps 
 | [cnc-accounting-spec.md](./cnc-accounting-spec.md)               | Phase 1 scope & spec · reusing the Sprint 15 pipeline · inventory of the on-chain + portal data we already have · source → statement-line mapping · how fees and expenses (Ponder/payroll/debt) are booked · the gaps to close in phase 2          |
 | [contract-migration-history.md](./contract-migration-history.md) | Keeping the books across contract migrations · user stories + tester checklist · manual verification steps · known limitations ([#2456](https://github.com/globe-and-citizen/cnc-portal/issues/2456))                                              |
 
-**Tracking:** [#1887](https://github.com/globe-and-citizen/cnc-portal/issues/1887) (goal) · [#2078](https://github.com/globe-and-citizen/cnc-portal/issues/2078) (sprint plan) · [#2126](https://github.com/globe-and-citizen/cnc-portal/issues/2126) (catalogue) · [#1890](https://github.com/globe-and-citizen/cnc-portal/issues/1890) (this spec).
+**Tracking:** [#1887](https://github.com/globe-and-citizen/cnc-portal/issues/1887) (goal) ·
+[#2078](https://github.com/globe-and-citizen/cnc-portal/issues/2078) (sprint plan) ·
+[#2126](https://github.com/globe-and-citizen/cnc-portal/issues/2126) (catalogue) ·
+[#1890](https://github.com/globe-and-citizen/cnc-portal/issues/1890) (this spec).
 
 ### At a glance
 
-- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter — the contracts the CNC actually uses.
-- **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares** booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); each team books CNC usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue.
+- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712,
+  InvestorV1, SafeDepositRouter — the contracts the CNC actually uses.
+- **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash
+  basis**; investing returns **SHER shares** booked to `Investor Equity`; a direct mint with nothing
+  behind it is **memo only** (tracked in shares, not value); each team books CNC usage fees as an
+  expense, while the global FeeCollector books the same payments as protocol-fee revenue.
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
