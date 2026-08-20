@@ -386,6 +386,27 @@ describe('contractController', () => {
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
     });
+
+    it('should return 200 and register a Safe deployed through the ABI-based deployment path', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.teamContract, 'create').mockResolvedValue({
+        id: 1,
+        teamId: 1,
+        address: '0xSafeAddress',
+        type: 'Safe',
+        deployer: mockTeam.ownerAddress,
+        officerId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        contractAddress: faker.finance.ethereumAddress(),
+        contractType: 'Safe',
+      });
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ type: 'Safe', officerId: null });
+    });
   });
 
   describe('POST: /officer', () => {
