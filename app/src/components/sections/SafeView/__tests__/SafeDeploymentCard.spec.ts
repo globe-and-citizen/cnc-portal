@@ -68,6 +68,15 @@ describe('SafeDeploymentCard', () => {
     expect(button.attributes('disabled')).toBeDefined()
   })
 
+  it('shows the full owner address in the deployment details', () => {
+    mockUserStore.address = mockTeamData.ownerAddress
+    mockTeamStore.currentTeam = mockTeamData
+
+    const wrapper = mountCard()
+
+    expect(wrapper.text()).toContain(mockTeamData.ownerAddress)
+  })
+
   it('deploys and registers the Safe, then emits safeDeployed on success', async () => {
     mockUserStore.address = mockTeamData.ownerAddress
     mockTeamStore.currentTeam = mockTeamData

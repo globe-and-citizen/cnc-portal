@@ -21,6 +21,7 @@
     <UFormField class="mt-4" label="Safe address" name="safeAddress" required>
       <UInput
         v-model="safeAddressInput"
+        class="w-full"
         placeholder="0x..."
         :disabled="isInspecting || isRegistering"
         data-test="safe-import-address-input"

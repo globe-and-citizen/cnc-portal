@@ -10,9 +10,13 @@
 
     <div class="bg-elevated mb-4 rounded-lg p-4">
       <div class="space-y-2 text-sm">
-        <div class="flex justify-between">
+        <div class="flex flex-col gap-1">
           <span class="text-gray-500">Owner:</span>
-          <AddressToolTip v-if="userDataStore.address" :address="userDataStore.address" slice />
+          <AddressToolTip
+            v-if="userDataStore.address"
+            :address="userDataStore.address"
+            class="max-w-full font-mono text-xs break-all"
+          />
         </div>
         <div class="flex justify-between">
           <span class="text-gray-500">Threshold:</span>
