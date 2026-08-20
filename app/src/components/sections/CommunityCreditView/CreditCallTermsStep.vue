@@ -42,7 +42,9 @@
               <UCalendar
                 :model-value="deadlineCalendarDate"
                 :min-value="minDeadlineDate"
-                @update:model-value="(val) => onSelectDeadlineDate(val as CalendarDate | null)"
+                @update:model-value="
+                  (val: unknown) => onSelectDeadlineDate(val as CalendarDate | null)
+                "
               />
             </template>
           </UPopover>
@@ -50,7 +52,7 @@
             :model-value="localDeadlineTime"
             class="w-40 shrink-0"
             data-test="cc-deadline-time"
-            @update:model-value="(val) => onLocalTimeInput(timeValueToStr(val))"
+            @update:model-value="(val: unknown) => onLocalTimeInput(timeValueToStr(val))"
           >
             <template #trailing><span class="text-muted text-xs font-bold">Local</span></template>
           </UInputTime>
@@ -159,6 +161,7 @@ import {
   MINUTES_PER_DAY
 } from '@/utils'
 import { createCreditCallTermsSchema, type CreditCallForm, type CreditTermUnit } from '@/types'
+import { formatDate } from '@/utils/format'
 
 const form = defineModel<CreditCallForm>('form', { required: true })
 
@@ -254,7 +257,7 @@ const localDeadlineTime = computed(() => timeStrToTime(localDeadline.value.time)
 const deadlineLabel = computed(() => {
   const cd = deadlineCalendarDate.value
   if (!cd) return 'Select a date'
-  return `${cd.toDate(getLocalTimeZone()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  return formatDate(cd.toDate(getLocalTimeZone()))
 })
 
 function onSelectDeadlineDate(value: CalendarDate | null | undefined) {

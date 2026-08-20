@@ -6,7 +6,7 @@
  * **Retained Earnings**:
  *
  *  - Assets       cash pockets (rolled up) + Trading account + any other asset
- *  - Liabilities  Wage Payable + Shares to be issued (net; 0 once settled)
+ *  - Liabilities  Wage Payable + Loan Payable + Shares to be issued (net; 0 once settled)
  *  - Equity       Owner Capital + Investor Equity + Retained Earnings (net income)
  *
  * The identity holds by construction: every posting is balanced and net income
@@ -23,12 +23,13 @@ import type { StatementLine } from './incomeStatement'
 import type { TokenId } from '@/constant'
 import { getTokenDecimals } from '@/utils/constantUtil'
 
-/** The five on-chain cash pockets that roll up into the single Cash line. */
+/** The on-chain cash pockets that roll up into the single Cash line. */
 const CASH_ACCOUNTS: ReadonlySet<AccountName> = new Set<AccountName>([
   'Cash — Bank',
   'Cash — Safe',
   'Cash — Payroll',
   'Cash — Expense',
+  'Cash — Credit',
   'Cash — FeeCollector'
 ])
 

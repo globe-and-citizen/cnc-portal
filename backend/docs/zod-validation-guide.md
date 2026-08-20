@@ -4,7 +4,9 @@ This document provides guidelines on how to use Zod validation schemas in the CN
 
 ## Overview
 
-We've upgraded to **Zod v4.1.11** and replaced manual validation with Zod schemas for better type safety, consistency, and maintainability. All request validation is now handled through reusable schemas and middleware.
+We've upgraded to **Zod v4.1.11** and replaced manual validation with Zod schemas for better type
+safety, consistency, and maintainability. All request validation is now handled through reusable
+schemas and middleware.
 
 ## ✨ What's New in Zod v4
 
@@ -59,24 +61,27 @@ New Zod v4 best practices utilities:
 
 ```typescript
 // In validation/schemas/example.ts
-import { z } from 'zod';
-import { addressSchema, teamIdSchema, memoSchema } from './common';
+import { z } from "zod";
+import { addressSchema, teamIdSchema, memoSchema } from "./common";
 
 export const createUserBodySchema = z.object({
   name: z
-    .string({ message: 'Name is required' })
+    .string({ message: "Name is required" })
     .trim()
-    .min(1, 'Name cannot be empty')
-    .max(100, 'Name cannot exceed 100 characters'),
-  email: z.string({ message: 'Email is required' }).email('Invalid email format').toLowerCase(),
+    .min(1, "Name cannot be empty")
+    .max(100, "Name cannot exceed 100 characters"),
+  email: z
+    .string({ message: "Email is required" })
+    .email("Invalid email format")
+    .toLowerCase(),
   address: addressSchema, // Reuse common schemas
 });
 
 export const getUserParamsSchema = z.object({
   userId: z.coerce
-    .number({ message: 'User ID must be a number' })
-    .int('User ID must be an integer')
-    .positive('User ID must be positive'),
+    .number({ message: "User ID must be a number" })
+    .int("User ID must be an integer")
+    .positive("User ID must be positive"),
 });
 ```
 
@@ -89,18 +94,18 @@ import {
   validateParams,
   createUserBodySchema,
   getUserParamsSchema,
-} from '../validation';
+} from "../validation";
 
 // Single validation
-router.post('/users', validateBody(createUserBodySchema), createUser);
-router.get('/users/:userId', validateParams(getUserParamsSchema), getUser);
+router.post("/users", validateBody(createUserBodySchema), createUser);
+router.get("/users/:userId", validateParams(getUserParamsSchema), getUser);
 
 // Multiple validations
 router.put(
-  '/users/:userId',
+  "/users/:userId",
   validateParams(getUserParamsSchema),
   validateBody(createUserBodySchema),
-  updateUser
+  updateUser,
 );
 ```
 
@@ -109,15 +114,15 @@ router.put(
 #### Enhanced Address Validation
 
 ```typescript
-import { addressSchema } from './common';
+import { addressSchema } from "./common";
 // Validates Ethereum addresses using viem's isAddress() with detailed error messages
 ```
 
 #### Improved Enum Validation
 
 ```typescript
-const statusSchema = z.enum(['pending', 'approved', 'rejected'], {
-  message: 'Invalid status. Allowed: pending, approved, rejected',
+const statusSchema = z.enum(["pending", "approved", "rejected"], {
+  message: "Invalid status. Allowed: pending, approved, rejected",
 });
 ```
 
@@ -127,11 +132,13 @@ const statusSchema = z.enum(['pending', 'approved', 'rejected'], {
 const rateSchema = z
   .array(
     z.object({
-      type: z.string({ message: 'Rate type is required' }).min(1),
-      amount: z.coerce.number({ message: 'Amount must be a number' }).positive(),
-    })
+      type: z.string({ message: "Rate type is required" }).min(1),
+      amount: z.coerce
+        .number({ message: "Amount must be a number" })
+        .positive(),
+    }),
   )
-  .min(1, 'At least one rate required');
+  .min(1, "At least one rate required");
 ```
 
 #### Enhanced Union Types
@@ -139,9 +146,7 @@ const rateSchema = z
 ```typescript
 const dataSchema = z.union([
   z.string().transform((str) => JSON.parse(str)), // Parse JSON string
-  z.object({
-    /* predefined object */
-  }), // Or accept object directly
+  z.object({/* predefined object */}), // Or accept object directly
 ]);
 ```
 
@@ -149,9 +154,9 @@ const dataSchema = z.union([
 
 ```typescript
 const teamIdSchema = z.coerce
-  .number({ message: 'Must be a number' })
-  .int('Must be an integer')
-  .positive('Must be positive');
+  .number({ message: "Must be a number" })
+  .int("Must be an integer")
+  .positive("Must be positive");
 ```
 
 ## Zod v4 Best Practices
@@ -161,9 +166,9 @@ const teamIdSchema = z.coerce
 ```typescript
 // ✅ Good: Descriptive error messages
 const nameSchema = z
-  .string({ message: 'Name is required' })
-  .min(1, 'Name cannot be empty')
-  .max(100, 'Name cannot exceed 100 characters');
+  .string({ message: "Name is required" })
+  .min(1, "Name cannot be empty")
+  .max(100, "Name cannot exceed 100 characters");
 
 // ❌ Avoid: Generic error messages
 const nameSchema = z.string().min(1).max(100);
@@ -173,18 +178,18 @@ const nameSchema = z.string().min(1).max(100);
 
 ```typescript
 // Use caching for expensive validations
-import { createCachedValidationSchema } from './utils';
+import { createCachedValidationSchema } from "./utils";
 
 const expensiveSchema = createCachedValidationSchema(
   complexValidationSchema,
-  { maxSize: 50, ttl: 300000 } // 5 minutes cache
+  { maxSize: 50, ttl: 300000 }, // 5 minutes cache
 );
 ```
 
 ### 3. Type-Safe API Handlers
 
 ```typescript
-import { ApiHandler, InferInput, InferOutput } from '../validation';
+import { ApiHandler, InferInput, InferOutput } from "../validation";
 
 const createUserHandler: ApiHandler<
   typeof createUserBodySchema,
@@ -239,8 +244,8 @@ Zod v4 provides enhanced error messages with the new `issues` format:
 ### Before (Zod v3)
 
 ```typescript
-const schema = z.enum(['a', 'b'], {
-  errorMap: () => ({ message: 'Invalid value' }),
+const schema = z.enum(["a", "b"], {
+  errorMap: () => ({ message: "Invalid value" }),
 });
 
 if (!result.success) {
@@ -251,8 +256,8 @@ if (!result.success) {
 ### After (Zod v4)
 
 ```typescript
-const schema = z.enum(['a', 'b'], {
-  message: 'Invalid value',
+const schema = z.enum(["a", "b"], {
+  message: "Invalid value",
 });
 
 if (!result.success) {
@@ -267,12 +272,12 @@ if (!result.success) {
 ```typescript
 const conditionalSchema = z
   .object({
-    type: z.enum(['individual', 'business']),
+    type: z.enum(["individual", "business"]),
     taxId: z.string().optional(),
   })
-  .refine((data) => data.type !== 'business' || data.taxId, {
-    message: 'Tax ID is required for business accounts',
-    path: ['taxId'],
+  .refine((data) => data.type !== "business" || data.taxId, {
+    message: "Tax ID is required for business accounts",
+    path: ["taxId"],
   });
 ```
 
@@ -296,7 +301,7 @@ const uniqueEmailSchema = z
       const exists = await checkEmailExists(email);
       return !exists;
     },
-    { message: 'Email already exists' }
+    { message: "Email already exists" },
   );
 ```
 
@@ -320,7 +325,8 @@ With Zod v4 upgrade:
 
 ## Testing
 
-All existing tests pass with Zod v4. The validation behavior is backward compatible while providing enhanced error messages and better performance.
+All existing tests pass with Zod v4. The validation behavior is backward compatible while providing
+enhanced error messages and better performance.
 
 ```bash
 # Run validation tests

@@ -52,7 +52,7 @@ import { ref, watch, computed, type Ref } from 'vue'
 import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
 import { useChainId, useReadContract } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { BANK_ABI } from '@/artifacts/abi/bank'
+import { bankAbi } from '@/artifacts/abi/generated'
 import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
@@ -61,7 +61,7 @@ import { useOfficerFeeBps } from '@/composables/officer/reads'
 import { useTransfer, useTransferToken } from '@/composables/bank/writes'
 import { classifyError, log } from '@/utils'
 import type { TokenOption } from '@/types'
-import { useContractBalance } from '@/composables'
+import { useContractBalance, contractBalanceKeys } from '@/composables'
 
 interface Props {
   bankAddress: Address
@@ -73,14 +73,15 @@ const chainId = useChainId()
 const queryClient = useQueryClient()
 const toast = useToast()
 
-const { balances } = useContractBalance(props.bankAddress)
+const { data: balance } = useContractBalance(props.bankAddress)
+const balances = computed(() => balance.value?.balances ?? [])
 
 const userStore = useUserDataStore()
 
 // get the current owner of the bank
 const { data: bankOwner } = useReadContract({
   address: props.bankAddress,
-  abi: BANK_ABI,
+  abi: bankAbi,
   functionName: 'owner'
 })
 
@@ -120,7 +121,7 @@ const getTokens = (): TokenOption[] =>
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.values['USD']?.price ?? 0,
+      price: b.price.usd.value,
       name: b.token.name,
       code: b.token.code
     }))
@@ -187,12 +188,12 @@ const handleTransfer = async (data: {
     // BOD Action path
     const encodedData = isNativeToken
       ? encodeFunctionData({
-          abi: BANK_ABI,
+          abi: bankAbi,
           functionName: 'transfer',
           args: [data.address.address, transferAmount]
         })
       : encodeFunctionData({
-          abi: BANK_ABI,
+          abi: bankAbi,
           functionName: 'transferToken',
           args: [tokenAddress as Address, data.address.address, transferAmount]
         })
@@ -218,17 +219,11 @@ const handleTransfer = async (data: {
   const onSuccess = async () => {
     toast.add({ title: 'Transferred successfully', color: 'success' })
 
-    const queryKey = isNativeToken
-      ? ['balance', { address: props.bankAddress, chainId: chainId.value }]
-      : [
-          'readContract',
-          {
-            address: tokenAddress,
-            args: [props.bankAddress],
-            chainId: chainId.value
-          }
-        ]
-    await queryClient.invalidateQueries({ queryKey })
+    // Native and ERC-20 amounts share one query per contract, so both transfer
+    // paths refresh through the same key.
+    await queryClient.invalidateQueries({
+      queryKey: contractBalanceKeys.detail(props.bankAddress, chainId.value)
+    })
 
     resetTransferValues()
   }

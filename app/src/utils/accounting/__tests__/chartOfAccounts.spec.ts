@@ -18,9 +18,12 @@ describe('chart of accounts', () => {
       'Cash — Safe': 'ASSET',
       'Cash — Payroll': 'ASSET',
       'Cash — Expense': 'ASSET',
+      'Cash — Credit': 'ASSET',
       'Cash — FeeCollector': 'ASSET',
       'Trading account': 'ASSET',
       'Wage Payable': 'LIABILITY',
+      'Loan Payable': 'LIABILITY',
+      'Interest Payable': 'LIABILITY',
       'Shares to be issued': 'LIABILITY',
       'Owner Capital': 'EQUITY',
       'Investor Equity': 'EQUITY',
@@ -30,6 +33,7 @@ describe('chart of accounts', () => {
       'Payroll Expense': 'EXPENSE',
       'Share-based Compensation': 'EXPENSE',
       'Operating Expense': 'EXPENSE',
+      'Interest Expense': 'EXPENSE',
       'Dividend Expense': 'EXPENSE',
       'Trading Loss': 'EXPENSE',
       'Transaction Fee Expense': 'EXPENSE'
@@ -43,14 +47,22 @@ describe('chart of accounts', () => {
       'Cash — Safe',
       'Cash — Payroll',
       'Cash — Expense',
+      'Cash — Credit',
       'Cash — FeeCollector'
     ])
     cashPockets.forEach((pocket) => expect(classOf(pocket)).toBe('ASSET'))
   })
 
   it('excludes the Phase 2 gap accounts and treats fees as a move, not an account', () => {
-    const forbidden = ['Infrastructure Expense', 'Interest Expense', 'Protocol Fee Revenue', 'Fee']
+    const forbidden = ['Infrastructure Expense', 'Protocol Fee Revenue', 'Fee']
     forbidden.forEach((name) => expect(ACCOUNT_NAMES).not.toContain(name))
+  })
+
+  it('books the Community Credit accounts (FixedReturn feed)', () => {
+    expect(classOf('Cash — Credit')).toBe('ASSET')
+    expect(classOf('Loan Payable')).toBe('LIABILITY')
+    expect(classOf('Interest Payable')).toBe('LIABILITY')
+    expect(classOf('Interest Expense')).toBe('EXPENSE')
   })
 
   it('exposes ACCOUNTS as { name, class } records matching the map', () => {

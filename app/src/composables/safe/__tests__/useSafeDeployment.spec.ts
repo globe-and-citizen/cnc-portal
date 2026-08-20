@@ -8,7 +8,7 @@ import { getConnections } from '@wagmi/core'
 // run — we just assert the call shape.
 const mockGetConnections = vi.mocked(getConnections)
 const mockParseEventLogs = vi.mocked(parseEventLogs)
-import { deploySafe, useDeploySafe, formatDeploySafeError } from '../useSafeDeployment'
+import { deploySafe, useDeploySafe } from '../useSafeDeployment'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import {
   useMutationFn,
@@ -16,7 +16,6 @@ import {
   useQueryClientFn,
   mockInvalidateQueries
 } from '@/tests/mocks/composables.mock'
-import { mockParseError } from '@/tests/mocks/utils.mock'
 
 const OWNER = '0x1111111111111111111111111111111111111111' as Address
 const SAFE_ADDRESS = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as Address
@@ -156,14 +155,5 @@ describe('useDeploySafe (TanStack wrapper)', () => {
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
     expect(keys).toContainEqual(['safe', 'info', { safeAddress: SAFE_ADDRESS }])
-  })
-})
-
-describe('formatDeploySafeError', () => {
-  it('delegates to parseError with the Safe proxy factory ABI', () => {
-    mockParseError.mockReturnValue('Parsed!')
-    const result = formatDeploySafeError(new Error('boom'))
-    expect(result).toBe('Parsed!')
-    expect(mockParseError).toHaveBeenCalled()
   })
 })

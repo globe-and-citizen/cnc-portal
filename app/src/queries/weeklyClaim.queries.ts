@@ -123,7 +123,7 @@ export const useGetTeamWeeklyClaimsQuery = createQueryHook<
     ...queryPresets.stable,
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: true
   }
 })
 
@@ -302,9 +302,7 @@ export const useSyncWeeklyClaimsMutation = createMutationHook<
 >({
   method: 'POST',
   endpoint: 'weeklyClaim/sync',
-  invalidateKeys: (params) => [
-    weeklyClaimKeys.team(params.queryParams.teamId, undefined, undefined)
-  ]
+  invalidateKeys: [weeklyClaimKeys.teams()]
 })
 
 // ============================================================================

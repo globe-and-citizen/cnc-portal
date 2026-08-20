@@ -7,26 +7,17 @@ import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentB
 import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
 import PastBoDElectionsSection from '@/components/sections/AdministrationView/PastBoDElectionsSection.vue'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
-import { useReadContractFn, mockTeamStore } from '@/tests/mocks'
+import { mockLog, useReadContractFn, mockTeamStore } from '@/tests/mocks'
 import { useTeamStore } from '@/stores'
 
 // Test constants
 const MOCK_ELECTIONS_ADDRESS = '0x1234567890123456789012345678901234567890'
-
-const { mockLog, mockParseError } = vi.hoisted(() => ({
-  mockLog: { error: vi.fn() },
-  mockParseError: vi.fn((error: Error) => error.message)
-}))
 
 // Reactive refs created after imports
 const mockUseReadContractData = ref<bigint | number | null>(null)
 const mockUseReadContractError = ref<Error | null>(null)
 const mockUseReadContractIsLoading = ref(false)
 
-vi.mock('@/utils', () => ({
-  log: mockLog,
-  parseError: mockParseError
-}))
 vi.mock('@/artifacts/abi/elections', () => ({
   ELECTIONS_ABI: [
     {

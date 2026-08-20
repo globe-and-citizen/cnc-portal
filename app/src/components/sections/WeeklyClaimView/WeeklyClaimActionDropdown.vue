@@ -1,147 +1,144 @@
 <template>
-  <div v-if="status !== 'withdrawn'" class="relative inline-flex items-center" ref="dropdownRef">
-    <!-- Dropdown menu positioned to the left -->
-    <ul
-      v-if="isOpen"
-      class="bg-default border-default absolute top-1/2 right-full z-99999 mr-2 flex w-52 -translate-y-1/2 transform flex-col gap-1 rounded-lg border p-2 shadow-lg"
-    >
-      <!-- Pending status: Sign -->
-      <template v-if="status === 'pending'">
-        <li
-          class="pointer-events-none rounded-md px-3 py-1.5 opacity-50"
-          data-test="pending-withdraw"
-        >
-          <a class="text-sm"> Withdraw </a>
-        </li>
-        <li
-          :class="[
-            'hover:bg-muted rounded-md px-3 py-1.5',
-            {
-              'pointer-events-none opacity-50':
-                !isCashRemunerationOwner || isCurrentWeek(weeklyClaim) || isWriteDisabled
-            }
-          ]"
-          data-test="pending-sign"
-        >
-          <CRSigne
-            :weekly-claim="weeklyClaim"
-            :is-drop-down="true"
-            :disabled="isCurrentWeek(weeklyClaim)"
-            @close="isOpen = false"
-          />
-        </li>
-      </template>
+  <div v-if="status !== 'withdrawn'" class="inline-flex items-center" ref="dropdownRef">
+    <Teleport to="body">
+      <ul
+        v-if="isOpen"
+        ref="menuRef"
+        :style="menuStyle"
+        class="bg-default border-default z-99999 flex w-52 flex-col gap-1 rounded-lg border p-2 shadow-lg"
+      >
+        <!-- Pending status: Sign -->
+        <template v-if="status === 'pending'">
+          <li class="pointer-events-none rounded-md opacity-50" data-test="pending-withdraw">
+            <a class="block w-full px-3 py-1.5 text-sm"> Withdraw </a>
+          </li>
+          <li
+            :class="[
+              'hover:bg-muted rounded-md',
+              {
+                'pointer-events-none opacity-50':
+                  !isCashRemunerationOwner || isCurrentWeek(weeklyClaim) || isWriteDisabled
+              }
+            ]"
+            data-test="pending-sign"
+          >
+            <CRSigne
+              :weekly-claim="weeklyClaim"
+              :is-drop-down="true"
+              :disabled="isCurrentWeek(weeklyClaim)"
+              @close="closeDropdown"
+            />
+          </li>
+        </template>
 
-      <!-- Signed status: Withdraw and Disable.
+        <!-- Signed status: Withdraw and Disable.
            If the row's signature is bound to a stale CashRemunerationEIP712
            (post-redeploy), withdraw is meaningless on the new contract — show
            Re-sign instead so the approver re-binds against the current one. -->
-      <template v-else-if="status === 'signed'">
-        <li
-          v-if="isStaleSignature"
-          data-test="signed-resign"
-          :class="[
-            'hover:bg-muted rounded-md px-3 py-1.5',
-            { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
-          ]"
-        >
-          <CRSigne
-            :weekly-claim="weeklyClaim"
-            :is-drop-down="true"
-            :is-resign="true"
-            @close="isOpen = false"
-          />
-        </li>
-        <li
-          v-else
-          data-test="signed-withdraw"
-          :class="[
-            'hover:bg-muted rounded-md px-3 py-1.5',
-            { 'pointer-events-none opacity-50': !isClaimOwner || isWriteDisabled }
-          ]"
-        >
-          <CRWithdrawClaim
-            :weekly-claim="weeklyClaim"
-            :is-drop-down="true"
-            :is-claim-owner="isClaimOwner"
-            @claim-withdrawn="isOpen = false"
-          />
-        </li>
-        <li
-          data-test="signed-disable"
-          :class="[
-            'hover:bg-muted rounded-md px-3 py-1.5',
-            { 'pointer-events-none opacity-50': !isCashRemunerationOwner || isWriteDisabled }
-          ]"
-        >
-          <a
+        <template v-else-if="status === 'signed'">
+          <li
+            v-if="isStaleSignature"
+            data-test="signed-resign"
             :class="[
-              'text-sm',
-              { 'pointer-events-none opacity-50': disableTx.isPending.value || isWriteDisabled }
+              'hover:bg-muted rounded-md',
+              { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
             ]"
-            :title="isWriteDisabled ? archivedTooltip : undefined"
-            :aria-disabled="disableTx.isPending.value"
-            :tabindex="disableTx.isPending.value ? -1 : 0"
-            :style="{ pointerEvents: disableTx.isPending.value ? 'none' : undefined }"
-            @click="
-              async () => {
-                if (disableTx.isPending.value || isWriteDisabled) return
-                await disableClaim()
-              }
-            "
           >
-            <UIcon
-              v-if="disableTx.isPending.value"
-              name="i-lucide-loader-circle"
-              class="mr-2 h-3 w-3 animate-spin"
+            <CRSigne
+              :weekly-claim="weeklyClaim"
+              :is-drop-down="true"
+              :is-resign="true"
+              @close="closeDropdown"
             />
-            Disable
-          </a>
-        </li>
-      </template>
+          </li>
+          <li
+            v-else
+            data-test="signed-withdraw"
+            :class="[
+              'hover:bg-muted rounded-md',
+              { 'pointer-events-none opacity-50': !isClaimOwner || isWriteDisabled }
+            ]"
+          >
+            <CRWithdrawClaim
+              :weekly-claim="weeklyClaim"
+              :is-drop-down="true"
+              :is-claim-owner="isClaimOwner"
+              @claim-withdrawn="closeDropdown"
+            />
+          </li>
+          <li
+            data-test="signed-disable"
+            :class="[
+              'hover:bg-muted rounded-md',
+              { 'pointer-events-none opacity-50': !isCashRemunerationOwner || isWriteDisabled }
+            ]"
+          >
+            <a
+              :class="[
+                'block w-full cursor-pointer px-3 py-1.5 text-sm',
+                { 'pointer-events-none opacity-50': disableTx.isPending.value || isWriteDisabled }
+              ]"
+              :title="isWriteDisabled ? archivedTooltip : undefined"
+              :aria-disabled="disableTx.isPending.value"
+              :tabindex="disableTx.isPending.value ? -1 : 0"
+              :style="{ pointerEvents: disableTx.isPending.value ? 'none' : undefined }"
+              @click="
+                async () => {
+                  if (disableTx.isPending.value || isWriteDisabled) return
+                  await disableClaim()
+                }
+              "
+            >
+              <UIcon
+                v-if="disableTx.isPending.value"
+                name="i-lucide-loader-circle"
+                class="mr-2 h-3 w-3 animate-spin"
+              />
+              Disable
+            </a>
+          </li>
+        </template>
 
-      <!-- Disabled status: Enable and Resign -->
-      <template v-else-if="status === 'disabled'">
-        <li
-          data-test="disabled-withdraw"
-          class="pointer-events-none rounded-md px-3 py-1.5 opacity-50"
-        >
-          <a class="text-sm"> Withdraw </a>
-        </li>
-        <li
-          data-test="disabled-enable"
-          :class="[
-            'hover:bg-muted rounded-md px-3 py-1.5',
-            { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
-          ]"
-        >
-          <WeeklyClaimActionEnable
-            :weekly-claim="weeklyClaim"
-            :is-cash-remuneration-owner="isCashRemunerationOwner"
-            @close="isOpen = false"
-          />
-        </li>
-        <li
-          data-test="disabled-resign"
-          :class="[
-            'hover:bg-muted rounded-md px-3 py-1.5',
-            { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
-          ]"
-        >
-          <CRSigne
-            :weekly-claim="weeklyClaim"
-            :is-drop-down="true"
-            @close="isOpen = false"
-            :is-resign="true"
-          />
-        </li>
-      </template>
+        <!-- Disabled status: Enable and Resign -->
+        <template v-else-if="status === 'disabled'">
+          <li data-test="disabled-withdraw" class="pointer-events-none rounded-md opacity-50">
+            <a class="block w-full px-3 py-1.5 text-sm"> Withdraw </a>
+          </li>
+          <li
+            data-test="disabled-enable"
+            :class="[
+              'hover:bg-muted rounded-md',
+              { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
+            ]"
+          >
+            <WeeklyClaimActionEnable
+              :weekly-claim="weeklyClaim"
+              :is-cash-remuneration-owner="isCashRemunerationOwner"
+              @close="closeDropdown"
+            />
+          </li>
+          <li
+            data-test="disabled-resign"
+            :class="[
+              'hover:bg-muted rounded-md',
+              { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
+            ]"
+          >
+            <CRSigne
+              :weekly-claim="weeklyClaim"
+              :is-drop-down="true"
+              @close="closeDropdown"
+              :is-resign="true"
+            />
+          </li>
+        </template>
 
-      <!-- Withdrawn status: No actions 
+        <!-- Withdrawn status: No actions
       <li v-else-if="status === 'withdrawn'">
         <a class="text-sm text-gray-400 cursor-not-allowed"> No actions available </a>
       </li>-->
-    </ul>
+      </ul>
+    </Teleport>
 
     <!-- Dropdown trigger button -->
     <UButton variant="ghost" size="sm" @click.stop="toggleDropdown">
@@ -152,14 +149,15 @@
 
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, computed } from 'vue'
+import { useWeeklyClaimDropdownMenu } from './useWeeklyClaimDropdown'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
 import type { WeeklyClaim } from '@/types'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
+import { useSyncWeeklyClaimsMutation, weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
 import { keccak256 } from 'viem'
 import { classifyError, log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -192,9 +190,12 @@ const toast = useToast()
 const queryClient = useQueryClient()
 
 // Reactive data
-const isOpen = ref<boolean>(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 const ellipsisIcon: string = 'heroicons:ellipsis-vertical'
+
+// Shared open-state + teleported/clamped positioning live in the composable.
+const { isOpen, menuRef, menuStyle, toggleDropdown, closeDropdown } =
+  useWeeklyClaimDropdownMenu(dropdownRef)
 
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
@@ -211,7 +212,7 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress,
-  abi: CASH_REMUNERATION_EIP712_ABI
+  abi: cashRemunerationEip712Abi
 })
 
 const isCashRemunerationOwner = computed(() => userStore.address === cashRemunerationOwner.value)
@@ -250,10 +251,10 @@ const disableClaim = async () => {
         }
 
         queryClient.invalidateQueries({
-          queryKey: ['weekly-claims', teamStore.currentTeamId]
+          queryKey: weeklyClaimKeys.teams()
         })
 
-        isOpen.value = false
+        closeDropdown()
       },
       onError: (error) => {
         log.error('Disable error', error)
@@ -264,26 +265,4 @@ const disableClaim = async () => {
     }
   )
 }
-
-const toggleDropdown = (): void => {
-  isOpen.value = !isOpen.value
-}
-
-const handleClickOutside = (event: MouseEvent): void => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
-    isOpen.value = false
-  }
-}
-
-// Event listeners
-onMounted((): void => {
-  // Use setTimeout to ensure the listener is added after the current click event
-  setTimeout(() => {
-    document.addEventListener('click', handleClickOutside)
-  }, 0)
-})
-
-onUnmounted((): void => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>

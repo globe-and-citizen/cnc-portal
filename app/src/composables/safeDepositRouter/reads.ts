@@ -2,18 +2,17 @@ import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { useTeamStore } from '@/stores'
-import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
-
+import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 const SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES = {
   PAUSED: 'paused',
   OWNER: 'owner',
-  DEPOSITS_ENABLED: 'depositsEnabled',
-  SAFE_ADDRESS: 'safeAddress',
-  OFFICER_ADDRESS: 'officerAddress',
-  MULTIPLIER: 'multiplier',
+  DEPOSITS_ENABLED: 'getDepositsEnabled',
+  SAFE_ADDRESS: 'getSafeAddress',
+  OFFICER_ADDRESS: 'getOfficerAddress',
+  MULTIPLIER: 'getMultiplier',
   MIN_MULTIPLIER: 'MIN_MULTIPLIER',
   IS_TOKEN_SUPPORTED: 'isTokenSupported',
-  TOKEN_DECIMALS: 'tokenDecimals',
+  TOKEN_DECIMALS: 'getTokenDecimals',
   CALCULATE_COMPENSATION: 'calculateCompensation'
 } as const
 
@@ -33,7 +32,7 @@ export function useSafeDepositRouterPaused() {
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.PAUSED,
     query: {
       enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
@@ -46,7 +45,7 @@ export function useSafeDepositRouterOwner() {
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.OWNER,
     query: {
       enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
@@ -59,7 +58,7 @@ export function useSafeDepositRouterDepositsEnabled() {
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.DEPOSITS_ENABLED,
     query: {
       enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
@@ -72,7 +71,7 @@ export function useSafeDepositRouterSafeAddress() {
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.SAFE_ADDRESS,
     query: {
       enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
@@ -87,7 +86,7 @@ export function useSafeDepositRouterOfficerAddress() {
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.OFFICER_ADDRESS,
     query: {
       enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
@@ -101,7 +100,7 @@ export function useSafeDepositRouterMultiplier() {
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.MULTIPLIER,
     query: {
       enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
@@ -116,7 +115,7 @@ export function useSafeDepositRouterMinMultiplier() {
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.MIN_MULTIPLIER,
     query: {
       enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
@@ -130,7 +129,7 @@ export function useSafeDepositRouterIsTokenSupported(tokenAddress: MaybeRef<Addr
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.IS_TOKEN_SUPPORTED,
     args: [tokenValue],
     query: {
@@ -151,7 +150,7 @@ export function useSafeDepositRouterTokenDecimals(tokenAddress: MaybeRef<Address
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.TOKEN_DECIMALS,
     args: [tokenValue],
     query: {
@@ -176,7 +175,7 @@ export function useSafeDepositRouterCalculateCompensation(
 
   return useReadContract({
     address: safeDepositRouterAddress,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    abi: safeDepositRouterAbi,
     functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.CALCULATE_COMPENSATION,
     args: [tokenValue, amountValue],
     query: {

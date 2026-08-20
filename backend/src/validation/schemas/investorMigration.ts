@@ -4,9 +4,10 @@ import { teamIdSchema, addressSchema } from './common';
 /**
  * InvestorMigration-related validation schemas.
  *
- * Persists the frozen shareholder snapshot an InvestorV1 -> Investor (v2)
- * Merkle migration was built from, so any shareholder can later fetch their
- * (amount, proof) to self-claim. See issue #2286.
+ * Persists the frozen shareholder snapshot a Merkle migration was built from,
+ * so any shareholder can later fetch their (amount, proof) to self-claim. The
+ * source is the previous Officer's share token, whichever generation it is.
+ * See issue #2286.
  */
 
 const shareholderSchema = z.object({

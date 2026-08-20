@@ -5,6 +5,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -28,6 +29,7 @@ contract ExpenseAccountEIP712 is
   using Address for address payable;
   using ECDSA for bytes32;
   using DateTime for uint256;
+  using SafeERC20 for IERC20;
 
   /// @dev Frequency type controlling how the budget limit is applied.
   enum FrequencyType {
@@ -221,9 +223,6 @@ contract ExpenseAccountEIP712 is
     uint256 required,
     uint256 available
   );
-  /// @dev A raw ERC20 transfer returned false.
-  /// @param token The token whose transfer returned false.
-  error ExpenseAccountEIP712__TokenTransferFailed(address token);
   /// @dev The transfer amount exceeds the single-withdrawal budget limit.
   error ExpenseAccountEIP712__AmountExceedsBudgetLimit();
   /// @dev A one-time budget has already been used.
@@ -303,8 +302,7 @@ contract ExpenseAccountEIP712 is
           amount,
           tokenBal
         );
-      if (!IERC20(budgetLimit.tokenAddress).transfer(to, amount))
-        revert ExpenseAccountEIP712__TokenTransferFailed(budgetLimit.tokenAddress);
+      IERC20(budgetLimit.tokenAddress).safeTransfer(to, amount);
       emit TokenTransfer(budgetLimit.approvedAddress, to, budgetLimit.tokenAddress, amount);
     }
   }
@@ -370,8 +368,7 @@ contract ExpenseAccountEIP712 is
     for (uint256 i = 0; i < length; ++i) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
-        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
-          revert ExpenseAccountEIP712__TokenTransferFailed(tokens[i]);
+        IERC20(tokens[i]).safeTransfer(bankAddress, tokenBalance);
         emit OwnerTreasuryWithdrawToken(ownerAddress, tokens[i], tokenBalance);
       }
     }
@@ -393,8 +390,7 @@ contract ExpenseAccountEIP712 is
       revert ExpenseAccountEIP712__TokenNotSupported(token);
     if (amount == 0) revert ExpenseAccountEIP712__ZeroAmount();
 
-    if (!IERC20(token).transferFrom(msg.sender, address(this), amount))
-      revert ExpenseAccountEIP712__TokenTransferFailed(token);
+    IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
     emit TokenDeposited(msg.sender, token, amount);
   }
 
@@ -577,7 +573,7 @@ contract ExpenseAccountEIP712 is
 
   /// @notice Current contract version, per semver.
   function version() public pure returns (string memory) {
-    return "2.0.0";
+    return "2.0.1";
   }
 
   /**

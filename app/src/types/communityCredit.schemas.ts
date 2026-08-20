@@ -1,10 +1,9 @@
 import { z } from 'zod'
 import { parseUnits } from 'viem'
 import {
-  CREDIT_TERM_MAX_DAYS,
+  addCreditTerm,
   CREDIT_TERM_MAX_YEARS,
   formatCalendarBreakdown,
-  MINUTES_PER_DAY,
   sumWhitelistAmountUnits
 } from '@/utils'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
@@ -77,8 +76,20 @@ export function createCreditCallTermsSchema(context: CreditCallTermsSchemaContex
       }
     )
     .superRefine((data, ctx) => {
-      if (data.period <= CREDIT_TERM_MAX_DAYS * MINUTES_PER_DAY) return
-      const entered = formatCalendarBreakdown(data.deadline, data.deadlineTime ?? '', data.period)
+      if (!data.deadline) return
+      // Compare against the real calendar span for CREDIT_TERM_MAX_YEARS, anchored on
+      // the same deadline the issuer picked — not a flat days-per-year constant. A real
+      // 30-year span almost always contains several leap days (e.g. 8, for a span
+      // starting 2026-07-31), so a flat `30 * 365` comparison rejected the exact "30
+      // years" a user enters via the Years unit, which `addCreditTerm` itself resolves
+      // the calendar-real way. Anchoring both sides identically is what makes the
+      // boundary actually inclusive, as the error message below promises.
+      const deadlineTime = data.deadlineTime ?? ''
+      const anchorSeconds = addCreditTerm(data.deadline, deadlineTime, 0, 'years')
+      const maxSeconds = addCreditTerm(data.deadline, deadlineTime, CREDIT_TERM_MAX_YEARS, 'years')
+      const maxMinutes = Math.round((maxSeconds - anchorSeconds) / 60)
+      if (data.period <= maxMinutes) return
+      const entered = formatCalendarBreakdown(data.deadline, deadlineTime, data.period)
       ctx.addIssue({
         code: 'custom',
         path: ['period'],

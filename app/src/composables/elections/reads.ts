@@ -2,8 +2,7 @@ import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { useTeamStore } from '@/stores'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-
+import { electionsAbi } from '@/artifacts/abi/generated'
 /**
  * Elections contract types and constants
  */
@@ -57,7 +56,7 @@ export function useElectionsOwner() {
 
   return useReadContract({
     address: electionsAddress,
-    abi: ELECTIONS_ABI,
+    abi: electionsAbi,
     functionName: 'owner',
     query: { enabled: isElectionsAddressValid }
   })
@@ -75,7 +74,7 @@ export function useElectionsGetElection(electionId: MaybeRef<bigint>) {
 
   return useReadContract({
     address: electionsAddress,
-    abi: ELECTIONS_ABI,
+    abi: electionsAbi,
     functionName: 'getElection',
     args: [electionIdValue],
     query: {
@@ -96,7 +95,7 @@ export function useElectionsGetVoteCount(electionId: MaybeRef<bigint>) {
 
   return useReadContract({
     address: electionsAddress,
-    abi: ELECTIONS_ABI,
+    abi: electionsAbi,
     functionName: 'getVoteCount',
     args: [electionIdValue],
     query: {
@@ -117,7 +116,7 @@ export function useElectionsGetCandidates(electionId: MaybeRef<bigint>) {
 
   return useReadContract({
     address: electionsAddress,
-    abi: ELECTIONS_ABI,
+    abi: electionsAbi,
     functionName: 'getElectionCandidates',
     args: [electionIdValue],
     query: {
@@ -138,7 +137,7 @@ export function useElectionsGetEligibleVoters(electionId: MaybeRef<bigint>) {
 
   return useReadContract({
     address: electionsAddress,
-    abi: ELECTIONS_ABI,
+    abi: electionsAbi,
     functionName: 'getElectionEligibleVoters',
     args: [electionIdValue],
     query: {
@@ -159,7 +158,7 @@ export function useElectionsGetWinners(electionId: MaybeRef<bigint>) {
 
   return useReadContract({
     address: electionsAddress,
-    abi: ELECTIONS_ABI,
+    abi: electionsAbi,
     functionName: 'getElectionWinners',
     args: [electionIdValue],
     query: {
@@ -181,7 +180,7 @@ export function useElectionsHasVoted(electionId: MaybeRef<bigint>, voter: MaybeR
 
   return useReadContract({
     address: electionsAddress,
-    abi: ELECTIONS_ABI,
+    abi: electionsAbi,
     functionName: 'hasVoted',
     args: [electionIdValue, voterValue],
     query: {

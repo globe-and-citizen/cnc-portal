@@ -27,6 +27,7 @@ import devRoutes from '../routes/devRoutes';
 import statsRoutes from '../routes/statsRoute';
 import healthRoutes from '../routes/healthRoutes';
 import featureRoutes from '../routes/featureRoutes';
+import officerVersionRoutes from '../routes/officerVersionRoutes';
 import sentryTunnelRoute from '../routes/sentryTunnelRoute';
 
 //#endregion routing modules
@@ -82,6 +83,10 @@ const options = {
       { name: 'Upload', description: 'File and asset uploads' },
       { name: 'Statistics', description: 'Platform statistics (admin only)' },
       { name: 'Features', description: 'Feature flags (admin only)' },
+      {
+        name: 'Officer Versions',
+        description: 'Bulk realignment of stored Officer versions (admin only)',
+      },
       { name: 'Health', description: 'Service health checks' },
       { name: 'Development', description: 'Development-only helpers' },
     ],
@@ -123,6 +128,7 @@ class Server {
       dev: '/api/dev/',
       health: '/api/health/',
       features: '/api/admin/features/',
+      officerVersions: '/api/admin/officer-versions/',
       sentryTunnel: '/api/sentry-tunnel',
     };
     const limiter = rateLimit({
@@ -211,6 +217,7 @@ class Server {
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use(this.paths.stats, authorizeUser, requireAdmin, statsRoutes);
     this.app.use(this.paths.features, authorizeUser, requireAdmin, featureRoutes);
+    this.app.use(this.paths.officerVersions, authorizeUser, requireAdmin, officerVersionRoutes);
 
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {

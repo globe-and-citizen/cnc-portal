@@ -5,6 +5,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -28,6 +29,7 @@ contract CashRemunerationEIP712 is
   using Address for address payable;
   using ECDSA for bytes32;
   using DateTime for uint256;
+  using SafeERC20 for IERC20;
 
   /**
    * @dev Represents a wage in a specific token.
@@ -185,10 +187,6 @@ contract CashRemunerationEIP712 is
   /// @dev The Bank contract could not be located via the Officer.
   error CashRemunerationEIP712__BankContractNotFound();
 
-  /// @dev A raw ERC20 transfer returned false.
-  /// @param token The token whose `transfer` returned false.
-  error CashRemunerationEIP712__TokenTransferFailed(address token);
-
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
@@ -321,7 +319,7 @@ contract CashRemunerationEIP712 is
             );
 
           // Transfer tokens from contract to employee
-          IERC20(wage.tokenAddress).transfer(employee, amountToPay);
+          IERC20(wage.tokenAddress).safeTransfer(employee, amountToPay);
 
           // Emit event for token withdrawal (transfer)
           emit WithdrawToken(employee, wage.tokenAddress, amountToPay);
@@ -403,8 +401,7 @@ contract CashRemunerationEIP712 is
     for (uint256 i = 0; i < length; ++i) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
-        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
-          revert CashRemunerationEIP712__TokenTransferFailed(tokens[i]);
+        IERC20(tokens[i]).safeTransfer(bankAddress, tokenBalance);
         emit OwnerTreasuryWithdrawToken(ownerAddress, tokens[i], tokenBalance);
       }
     }
@@ -466,7 +463,7 @@ contract CashRemunerationEIP712 is
 
   /// @notice Current contract version, per semver.
   function version() public pure returns (string memory) {
-    return "2.0.0";
+    return "2.0.1";
   }
 
   /**

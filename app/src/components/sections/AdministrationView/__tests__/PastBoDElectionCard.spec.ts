@@ -3,20 +3,10 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { ref } from 'vue'
 import PastBoDElectionCard from '@/components/sections/AdministrationView/PastBoDElectionCard.vue'
-import { useReadContractFn, mockUseReadContract } from '@/tests/mocks/wagmi.vue.mock'
+import { mockTeamStore, useReadContractFn, mockUseReadContract } from '@/tests/mocks'
 
 const memberA = '0x000000000000000000000000000000000000aaaa'
 const memberB = '0x000000000000000000000000000000000000bbbb'
-
-vi.mock('@/stores', () => ({
-  useTeamStore: () => ({
-    currentTeamId: '1',
-    getContractAddressByType: () => '0x0000000000000000000000000000000000000010',
-    currentTeam: {
-      members: [{ address: memberA, name: 'Alice' }]
-    }
-  })
-}))
 
 describe('PastBoDElectionCard', () => {
   const election = {
@@ -33,6 +23,14 @@ describe('PastBoDElectionCard', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    mockTeamStore.currentTeamId = '1'
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0x0000000000000000000000000000000000000010'
+    )
+    mockTeamStore.currentTeam = {
+      ...mockTeamStore.currentTeam,
+      members: [{ address: memberA, name: 'Alice' }]
+    }
     useReadContractFn.mockImplementation((args: { functionName: string }) => {
       if (args.functionName === 'getVoteCount') {
         return { ...mockUseReadContract, data: ref(12n), error: ref(null) }

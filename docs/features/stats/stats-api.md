@@ -2,11 +2,14 @@
 
 ## Overview
 
-The Statistics API provides comprehensive analytics and metrics for the CNC Portal platform. It offers insights into teams, users, claims, wages, expenses, contracts, board actions, and recent activity across the system.
+The Statistics API provides comprehensive analytics and metrics for the CNC Portal platform. It
+offers insights into teams, users, claims, wages, expenses, contracts, board actions, and recent
+activity across the system.
 
 **Base URL**: `/api/stats`
 
-**Authentication**: All endpoints require JWT authentication via the `Authorization: Bearer <token>` header.
+**Authentication**: All endpoints require JWT authentication via the `Authorization: Bearer <token>`
+header.
 
 ## Table of Contents
 
@@ -26,16 +29,17 @@ The Statistics API provides comprehensive analytics and metrics for the CNC Port
 
 ## Overview Statistics
 
-Get comprehensive platform-wide statistics including teams, members, claims, expenses, contracts, and growth metrics.
+Get comprehensive platform-wide statistics including teams, members, claims, expenses, contracts,
+and growth metrics.
 
 **Endpoint**: `GET /api/stats/overview`
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
 
 ### Response
 
@@ -108,11 +112,11 @@ Get detailed statistics about teams including member counts, activity levels, an
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `page` | integer | No | `1` | Page number for pagination |
-| `limit` | integer | No | `10` | Items per page (max: 100) |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `page`    | integer | No       | `1`     | Page number for pagination             |
+| `limit`   | integer | No       | `10`    | Items per page (max: 100)              |
 
 ### Response
 
@@ -159,12 +163,12 @@ Get statistics about users including activity levels and team participation.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
-| `page` | integer | No | `1` | Page number for pagination |
-| `limit` | integer | No | `10` | Items per page (max: 100) |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
+| `page`    | integer | No       | `1`     | Page number for pagination             |
+| `limit`   | integer | No       | `10`    | Items per page (max: 100)              |
 
 ### Response
 
@@ -199,10 +203,10 @@ Get statistics about claims and hours worked across teams.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
 
 ### Response
 
@@ -240,10 +244,10 @@ Get statistics about wage rates and distribution across the platform.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
 
 ### Response
 
@@ -251,9 +255,9 @@ Get statistics about wage rates and distribution across the platform.
 {
   "totalWages": 145,
   "averageRates": {
-    "cash": 25.50,
+    "cash": 25.5,
     "token": 0.015,
-    "usdc": 22.00
+    "usdc": 22.0
   },
   "wageDistribution": {
     "cash": 78,
@@ -287,12 +291,12 @@ Get statistics about expenses including status distribution and team breakdown.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
-| `page` | integer | No | `1` | Page number for pagination |
-| `limit` | integer | No | `10` | Items per page (max: 100) |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
+| `page`    | integer | No       | `1`     | Page number for pagination             |
+| `limit`   | integer | No       | `10`    | Items per page (max: 100)              |
 
 ### Response
 
@@ -337,10 +341,10 @@ Get statistics about team contracts including types and distribution.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
 
 ### Response
 
@@ -372,12 +376,12 @@ Get statistics about board of director actions including execution rates.
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `period` | string | No | `30d` | Time period: `7d`, `30d`, `90d`, `all` |
-| `teamId` | integer | No | - | Filter by specific team ID |
-| `page` | integer | No | `1` | Page number for pagination |
-| `limit` | integer | No | `10` | Items per page (max: 100) |
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| `period`  | string  | No       | `30d`   | Time period: `7d`, `30d`, `90d`, `all` |
+| `teamId`  | integer | No       | -       | Filter by specific team ID             |
+| `page`    | integer | No       | `1`     | Page number for pagination             |
+| `limit`   | integer | No       | `10`    | Items per page (max: 100)              |
 
 ### Response
 
@@ -392,7 +396,7 @@ Get statistics about board of director actions including execution rates.
       "teamName": "Development Team",
       "actionCount": 25,
       "executedCount": 22,
-      "executionRate": 88.00
+      "executionRate": 88.0
     }
   ],
   "period": "30d",
@@ -414,16 +418,17 @@ Get statistics about board of director actions including execution rates.
 
 ## Recent Activity
 
-Get a feed of recent activities across the platform including claims, expenses, actions, and contracts.
+Get a feed of recent activities across the platform including claims, expenses, actions, and
+contracts.
 
 **Endpoint**: `GET /api/stats/activity/recent`
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `limit` | integer | No | `20` | Number of activities to return (max: 100) |
-| `teamId` | integer | No | - | Filter by specific team ID |
+| Parameter | Type    | Required | Default | Description                               |
+| --------- | ------- | -------- | ------- | ----------------------------------------- |
+| `limit`   | integer | No       | `20`    | Number of activities to return (max: 100) |
+| `teamId`  | integer | No       | -       | Filter by specific team ID                |
 
 ### Response
 
@@ -559,11 +564,14 @@ Server-side error occurred.
 
 ```javascript
 // Get overview statistics for the last 30 days
-const response = await fetch('http://localhost:3000/api/stats/overview?period=30d', {
-  headers: {
-    'Authorization': `Bearer ${token}`
-  }
-});
+const response = await fetch(
+  "http://localhost:3000/api/stats/overview?period=30d",
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  },
+);
 const data = await response.json();
 console.log(data);
 ```
@@ -582,7 +590,7 @@ curl -X GET "http://localhost:3000/api/stats/teams?period=90d&page=1&limit=20" \
 // Using the useStats composable
 const { getOverviewStats } = useStats();
 
-const stats = await getOverviewStats('30d', teamId);
+const stats = await getOverviewStats("30d", teamId);
 console.log(stats);
 ```
 
@@ -590,23 +598,29 @@ console.log(stats);
 
 ## Rate Limiting
 
-The Statistics API is protected by rate limiting configured at the server level. The default rate limit is 100,000 requests per 15 minutes per IP address.
+The Statistics API is protected by rate limiting configured at the server level. The default rate
+limit is 100,000 requests per 15 minutes per IP address.
 
 ---
 
 ## Best Practices
 
-1. **Cache Results**: Statistics data doesn't change frequently. Consider caching responses for appropriate durations.
+1. **Cache Results**: Statistics data doesn't change frequently. Consider caching responses for
+   appropriate durations.
 
-2. **Use Appropriate Periods**: Select the smallest period that meets your needs to reduce server load.
+2. **Use Appropriate Periods**: Select the smallest period that meets your needs to reduce server
+   load.
 
-3. **Pagination**: For endpoints with large result sets, use pagination to avoid loading unnecessary data.
+3. **Pagination**: For endpoints with large result sets, use pagination to avoid loading unnecessary
+   data.
 
-4. **Team Filtering**: When working with team-specific views, always use the `teamId` parameter to reduce response size.
+4. **Team Filtering**: When working with team-specific views, always use the `teamId` parameter to
+   reduce response size.
 
 5. **Error Handling**: Implement proper error handling for network failures and API errors.
 
-6. **Token Management**: Ensure JWT tokens are refreshed before expiration to avoid authentication errors.
+6. **Token Management**: Ensure JWT tokens are refreshed before expiration to avoid authentication
+   errors.
 
 ---
 

@@ -7,8 +7,13 @@
  * keys off the {@link AccountName} union and {@link AccountClass} declared here.
  *
  * Scope notes (spec §5–§6):
- * - `Infrastructure Expense` / `Interest Expense` are intentionally **absent** —
- *   they are Phase 2 gaps with no data feed yet.
+ * - `Infrastructure Expense` is intentionally **absent** — a Phase 2 gap with no
+ *   data feed yet.
+ * - `Interest Expense` **is** booked: the FixedReturn (Community Credit) feed
+ *   supplies it, as the fixed return paid to lenders above their principal. The
+ *   contract fixes that fee when the round funds and never prorates it, so it is
+ *   recognised in full there — not when the cash leaves — and sits in
+ *   `Interest Payable` until it is paid.
  * - `Network Fee Expense` (gas paid to validators) is likewise **absent**: gas is
  *   not indexed by any feed yet, so there is nothing to post.
  * - The Bank protocol fee (`FeePaid`) *is* booked, as a real cost leaving the
@@ -21,17 +26,20 @@ export type AccountClass = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'INCOME' | 'EXPENS
 
 /**
  * Every account the CNC books touch. Cash is split per on-chain pocket
- * (Bank / Safe / Payroll / Expense / FeeCollector) — each is its own account
- * that rolls up into total Cash.
+ * (Bank / Safe / Payroll / Expense / Credit / FeeCollector) — each is its own
+ * account that rolls up into total Cash.
  */
 export const ACCOUNT_NAMES = [
   'Cash — Bank',
   'Cash — Safe',
   'Cash — Payroll',
   'Cash — Expense',
+  'Cash — Credit',
   'Cash — FeeCollector',
   'Trading account',
   'Wage Payable',
+  'Loan Payable',
+  'Interest Payable',
   'Shares to be issued',
   'Owner Capital',
   'Investor Equity',
@@ -41,6 +49,7 @@ export const ACCOUNT_NAMES = [
   'Payroll Expense',
   'Share-based Compensation',
   'Operating Expense',
+  'Interest Expense',
   'Dividend Expense',
   'Trading Loss',
   'Transaction Fee Expense'
@@ -59,9 +68,12 @@ export const CHART_OF_ACCOUNTS: Readonly<Record<AccountName, AccountClass>> = {
   'Cash — Safe': 'ASSET',
   'Cash — Payroll': 'ASSET',
   'Cash — Expense': 'ASSET',
+  'Cash — Credit': 'ASSET',
   'Cash — FeeCollector': 'ASSET',
   'Trading account': 'ASSET',
   'Wage Payable': 'LIABILITY',
+  'Loan Payable': 'LIABILITY',
+  'Interest Payable': 'LIABILITY',
   'Shares to be issued': 'LIABILITY',
   'Owner Capital': 'EQUITY',
   'Investor Equity': 'EQUITY',
@@ -71,6 +83,7 @@ export const CHART_OF_ACCOUNTS: Readonly<Record<AccountName, AccountClass>> = {
   'Payroll Expense': 'EXPENSE',
   'Share-based Compensation': 'EXPENSE',
   'Operating Expense': 'EXPENSE',
+  'Interest Expense': 'EXPENSE',
   'Dividend Expense': 'EXPENSE',
   'Trading Loss': 'EXPENSE',
   'Transaction Fee Expense': 'EXPENSE'

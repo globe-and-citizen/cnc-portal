@@ -11,16 +11,22 @@ import {
   addTeamMembers,
   deleteTeamMember
 } from '~/api/teams'
-import type { CreateTeamPayload, UpdateTeamPayload, AddMembersPayload } from '~/api/teams'
+import type {
+  CreateTeamPayload,
+  UpdateTeamPayload,
+  AddMembersPayload,
+  GetAllTeamsParams
+} from '~/api/teams'
 
 /**
- * Fetch all teams
+ * Fetch all teams. `showArchived` is part of the key so the archived-inclusive
+ * list caches separately from the default one.
  */
-export const useTeamsQuery = () => {
+export const useTeamsQuery = (params: GetAllTeamsParams = {}) => {
   return useQuery({
-    queryKey: ['teams'],
+    queryKey: ['teams', { showArchived: params.showArchived ?? false }],
     queryFn: async () => {
-      return await getAllTeams()
+      return await getAllTeams(params)
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5 // 5 minutes

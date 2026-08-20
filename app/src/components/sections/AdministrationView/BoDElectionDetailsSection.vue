@@ -16,15 +16,15 @@
 <script lang="ts" setup>
 import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
 import { computed, reactive, watch } from 'vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
-import { encodeFunctionData, zeroAddress, type Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 import { useReadContract } from '@wagmi/vue'
 import { useElectionsCastVote } from '@/composables/elections/writes'
-import { estimateGas, readContract } from '@wagmi/core'
+import { readContract, simulateContract } from '@wagmi/core'
 import type { User } from '@/types'
 import { config } from '@/wagmi.config'
-import { log, parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 
 const props = defineProps<{ electionId: bigint }>()
 const teamStore = useTeamStore()
@@ -37,16 +37,16 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 
 const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
-  address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  address: electionsAddress,
+  abi: electionsAbi,
   args: [electionId],
   query: { enabled: true }
 })
 
 const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getElection',
-  address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  address: electionsAddress,
+  abi: electionsAbi,
   args: [electionId],
   query: { enabled: computed(() => !!electionId.value) }
 })
@@ -56,8 +56,8 @@ const {
   // isLoading: isLoadingVoteCount,
 } = useReadContract({
   functionName: 'getVoteCount',
-  address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  address: electionsAddress,
+  abi: electionsAbi,
   args: [electionId], // Supply currentElectionId as an argument
   query: {
     enabled: computed(() => !!electionId.value) // Only fetch if currentElectionId is available
@@ -107,19 +107,23 @@ const castVote = async (candidateAddress: Address) => {
   }
   const args: readonly [bigint, Address] = [electionId.value, candidateAddress]
 
+  // Simulated through the ABI, not as raw call data: a raw gas estimate leaves
+  // viem nothing to decode the revert with, and every refusal the contract has
+  // a name for — closed ballot, voter not registered, already voted — reaches
+  // the user as the same shrug of an "Election action failed".
   try {
-    const data = encodeFunctionData({
-      abi: ELECTIONS_ABI,
+    await simulateContract(config, {
+      address: electionsAddress.value,
+      abi: electionsAbi,
       functionName: 'castVote',
       args
     })
-    await estimateGas(config, {
-      to: electionsAddress.value,
-      data
-    })
   } catch (error) {
-    toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
-    log.error('Error estimating gas:', parseError(error, ELECTIONS_ABI))
+    log.error('Error simulating vote:', error)
+    toast.add({
+      title: classifyError(error, { contract: 'Elections' }).userMessage,
+      color: 'error'
+    })
     return
   }
 
@@ -131,8 +135,10 @@ const castVote = async (candidateAddress: Address) => {
         await fetchVotes()
       },
       onError: (error) => {
-        toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
-        log.error('Error casting vote:', parseError(error, ELECTIONS_ABI))
+        log.error('Error casting vote:', error)
+        const classified = classifyError(error, { contract: 'Elections' })
+        if (classified.category === 'user_rejected') return
+        toast.add({ title: classified.userMessage, color: 'error' })
       }
     }
   )
@@ -150,8 +156,8 @@ const fetchVotes = async () => {
         candidatesList.map(async (candidate) => {
           const count = await readContract(config, {
             address: electionsAddress.value || zeroAddress,
-            abi: ELECTIONS_ABI,
-            functionName: '_voteCounts',
+            abi: electionsAbi,
+            functionName: 'getVoteCounts',
             args: [props.electionId, candidate]
           })
           votesPerCandidate[candidate] = Number(count) || 0
@@ -159,8 +165,11 @@ const fetchVotes = async () => {
       )
     }
   } catch (error) {
-    toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
-    log.error('Error fetching votes:', parseError(error, ELECTIONS_ABI))
+    log.error('Error fetching votes:', error)
+    toast.add({
+      title: classifyError(error, { contract: 'Elections' }).userMessage,
+      color: 'error'
+    })
   }
 }
 

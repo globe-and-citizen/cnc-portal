@@ -88,6 +88,7 @@ export const mockCashRemunerationReads = {
 }
 
 export const mockCashRemunerationWrites = {
+  withdraw: createContractWriteV3Mock(),
   ownerWithdrawAllToBank: createContractWriteV3Mock(),
   enableClaim: createContractWriteV3Mock(),
   disableClaim: createContractWriteV3Mock()
@@ -116,6 +117,11 @@ export const mockVestingWrites = {
   release: createContractWriteV3Mock()
 }
 
+export const mockVestingReads = {
+  vestingsWithMembers: createContractReadMock<unknown>([[], [], []]),
+  archivedVestingsFlat: createContractReadMock<unknown>([[], [], []])
+}
+
 /**
  * Investor Contract Mocks
  */
@@ -130,14 +136,7 @@ export const mockInvestorReads = {
   totalInvested: createContractReadMock(0n),
   userInvestment: createContractReadMock(0n),
   dividendBalance: createContractReadMock(0n),
-  investorCount: createContractReadMock(0n)
-}
-
-/**
- * Investor v2 (Investor.sol) read mocks — distinct contractType from
- * InvestorV1, see composables/investor/readsV2.ts.
- */
-export const mockInvestorV2Reads = {
+  investorCount: createContractReadMock(0n),
   migrationRoot: createContractReadMock<`0x${string}`>(zeroHash),
   migrationComplete: createContractReadMock(false)
 }
@@ -183,10 +182,6 @@ export const mockFixedReturnReads = {
 export const mockFixedReturnWrites = {
   createLendingOffer: createContractWriteV3Mock(),
   lendFunds: createContractWriteV3Mock(),
-  // markAsRefundable / claimRefund no longer exist on FixedReturn v1.3.0 — kept only
-  // because Issue Note's refund UI still calls them (reverts at runtime until migrated).
-  markAsRefundable: createContractWriteV3Mock(),
-  claimRefund: createContractWriteV3Mock(),
   refundLenders: createContractWriteV3Mock(),
   acceptPartialFunding: createContractWriteV3Mock(),
   addTokenSupport: createContractWriteV3Mock(),
@@ -202,9 +197,9 @@ export const resetContractMocks = () => {
     mockBankReads,
     mockBODReads,
     mockInvestorReads,
-    mockInvestorV2Reads,
     mockCashRemunerationReads,
     mockExpenseAccountReads,
+    mockVestingReads,
     mockFixedReturnReads
   ]
 

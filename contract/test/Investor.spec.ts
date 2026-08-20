@@ -4,6 +4,10 @@ import type { SignerWithAddress } from './hardhat-context.js'
 
 import { AbiCoder } from 'ethers'
 
+// Shared with backend/src/services/__tests__/merkleParity.test.ts — both sides
+// are pinned to the same bytes rather than to each other's idea of the format.
+import goldenVector from './fixtures/investor-migration-merkle.json' with { type: 'json' }
+
 before(initializeHardhat)
 
 // --- Minimal Merkle helper (sorted-pair hashing, compatible with OpenZeppelin
@@ -248,5 +252,40 @@ describe('Investor — Merkle-pull migration', () => {
       expect(await investor.balanceOf(addr1.address)).to.equal(60n)
       expect(await investor.totalSupply()).to.equal(60n)
     })
+  })
+})
+
+// The suite above builds its own tree, so it only ever proves the contract is
+// self-consistent. In production the root and proofs come from the backend
+// (backend/src/services/merkleSnapshotService.ts), which built them with
+// unsorted pairs while MerkleProof.verify hashes pairs commutatively — every
+// claim reverted past two shareholders and no test could see it. This block
+// replays the backend's real output against the real contract.
+describe('Investor — backend Merkle parity (golden vector)', () => {
+  const holders = goldenVector.shareholders.map((s) => s.shareholder)
+  const amounts = goldenVector.shareholders.map((s) => BigInt(s.amount))
+  const proofs = holders.map((holder) => goldenVector.proofs[holder.toLowerCase()])
+
+  it('accepts a root and proofs produced by the backend snapshot service', async () => {
+    const { investor } = await deployFixture()
+    await investor.setMigrationRoot(goldenVector.root)
+
+    await investor.bulkClaim(holders, amounts, proofs)
+
+    for (let i = 0; i < holders.length; i++) {
+      expect(await investor.balanceOf(holders[i])).to.equal(amounts[i])
+    }
+    expect(await investor.totalSupply()).to.equal(amounts.reduce((sum, a) => sum + a, 0n))
+  })
+
+  it('still rejects a tampered amount under the backend root', async () => {
+    const { investor } = await deployFixture()
+    await investor.setMigrationRoot(goldenVector.root)
+
+    // Guards against a vacuous pass: the root must really be verified, not
+    // merely stored.
+    await expect(
+      investor.bulkClaim([holders[0]], [amounts[0] + 1n], [proofs[0]])
+    ).to.be.revertedWithCustomError(investor, 'Investor__InvalidProof')
   })
 })

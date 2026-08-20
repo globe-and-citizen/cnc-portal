@@ -203,10 +203,11 @@ describe('ClaimForm.vue', () => {
       .findComponent({ name: 'UCalendar' })
       .props('isDateDisabled') as DateDisabledFn
 
-    expect(fn1({ year: 2024, month: 1, day: 8 })).toBe(true)
-    expect(fn2({ year: 2024, month: 1, day: 7 })).toBe(true)
-    expect(fn2({ year: 2024, month: 1, day: 13 })).toBe(true)
-    expect(fn2({ year: 2024, month: 1, day: 8 })).toBe(true)
+    // Now is Fri 12 Jan 2024, so the current ISO week runs Mon 8 -> Sun 14.
+    expect(fn1({ year: 2024, month: 1, day: 8 })).toBe(true) // week already approved
+    expect(fn2({ year: 2024, month: 1, day: 7 })).toBe(true) // previous week
+    expect(fn2({ year: 2024, month: 1, day: 13 })).toBe(true) // in the future
+    expect(fn2({ year: 2024, month: 1, day: 8 })).toBe(false)
     expect(fn3({ year: 2024, month: 1, day: 1 })).toBe(false)
 
     vi.useRealTimers()

@@ -12,7 +12,7 @@ import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getConnections } from '@wagmi/core'
 import { encodeFunctionData, parseEventLogs, zeroAddress, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { randomSaltNonce } from '@/utils/safe'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import { getSafeInfraAddresses } from '@/constant'
@@ -139,13 +139,4 @@ export function useDeploySafe() {
       log.error('Safe deployment error:', error)
     }
   })
-}
-
-/**
- * Decodes an error from a deploy attempt into a human-readable message.
- * Templates use this when rendering `deployMutation.error.value` to show the
- * parsed ABI revert reason rather than the raw blockchain error.
- */
-export function formatDeploySafeError(error: unknown): string {
-  return parseError(error, SAFE_PROXY_FACTORY_ABI)
 }

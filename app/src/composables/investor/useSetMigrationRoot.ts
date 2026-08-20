@@ -1,5 +1,5 @@
 /**
- * Write-only composable: set migration root on Investor v2 contract.
+ * Write-only composable: set the migration root on the Investor contract.
  * Backend snapshot generation is handled by useGenerateMerkleSnapshotMutation (in queries).
  *
  * Separation of concerns:
@@ -12,12 +12,12 @@
  */
 import { useMutation } from '@tanstack/vue-query'
 import { type Address, type Hex } from 'viem'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
+import { investorAbi } from '@/artifacts/abi/generated'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import { useToast } from '@nuxt/ui/composables'
 
 export interface SetMigrationRootArgs {
-  investorV2Address: Address
+  investorAddress: Address
   root: Hex
   shareholderCount: number
 }
@@ -28,15 +28,15 @@ export interface SetMigrationRootResult {
 }
 
 /**
- * Set migration root on Investor v2 contract.
+ * Set the migration root on the Investor contract.
  * Caller must generate snapshot separately via useGenerateMerkleSnapshotMutation.
  */
 export async function setMigrationRoot(
   args: SetMigrationRootArgs
 ): Promise<SetMigrationRootResult> {
   await executeContractWrite({
-    address: args.investorV2Address,
-    abi: INVESTOR_V2_ABI,
+    address: args.investorAddress,
+    abi: investorAbi,
     functionName: 'setMigrationRoot',
     args: [args.root]
   })

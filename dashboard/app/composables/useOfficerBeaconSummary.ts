@@ -1,15 +1,10 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useQueries } from '@tanstack/vue-query'
 import { useClient } from '@wagmi/vue'
-import { getStorageAt } from 'viem/actions'
-import { getAddress, isAddressEqual, zeroAddress, type Address } from 'viem'
+import type { Address } from 'viem'
 import { getTeamOfficers } from '~/api/contract'
+import { fetchOfficerBeacon, officerBeaconQueryKey } from '~/queries/officerBeacon.query'
 import type { Team, TeamOfficer } from '~/types'
-
-// ERC-1967 beacon slot — see officerBeacon.query.ts. Kept in sync here so the
-// aggregate reads hit the exact same query cache as the per-row cells.
-const BEACON_SLOT
-  = '0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50'
 
 export interface BeaconStat {
   // Null when the beacon slot is empty / not yet resolved.
@@ -56,17 +51,8 @@ export const useOfficerBeaconSummary = (teams: MaybeRefOrGetter<Team[]>) => {
   const beaconQueries = useQueries({
     queries: computed(() =>
       uniqueAddresses.value.map(address => ({
-        queryKey: ['officer-beacon', { address }],
-        queryFn: async (): Promise<Address | null> => {
-          if (!client.value) return null
-          const raw = await getStorageAt(client.value, {
-            address: address as Address,
-            slot: BEACON_SLOT
-          })
-          if (!raw) return null
-          const beacon = getAddress(`0x${raw.slice(-40)}`)
-          return isAddressEqual(beacon, zeroAddress) ? null : beacon
-        },
+        queryKey: officerBeaconQueryKey(address),
+        queryFn: async () => await fetchOfficerBeacon(client.value, address),
         enabled: !!client.value,
         staleTime: Infinity
       }))

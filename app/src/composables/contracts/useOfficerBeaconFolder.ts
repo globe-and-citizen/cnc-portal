@@ -12,14 +12,16 @@ import { folderForOfficerBeacon, type FolderVersion } from '@/artifacts/registry
 const BEACON_SLOT = '0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50'
 
 /**
- * Resolve the artifact folder of a team's Officer from its on-chain beacon.
- * Cached per Officer address (a proxy's beacon never changes). Returns undefined
- * until resolved (or on failure). Isolated from useContractVersion so the latter
- * stays a pure computed for consumers/tests.
+ * Resolve the artifact folder of an Officer from its on-chain beacon, keeping
+ * the query state.
+ *
+ * Cached per Officer address (a proxy's beacon never changes). `folder` is
+ * undefined both while the read is in flight and when it fails, so callers that
+ * must not act on a guess — e.g. one deciding whether a generation supports a
+ * given contract function — branch on `isPending` / `isError` instead of
+ * reading `undefined` as "unknown generation".
  */
-export function useOfficerBeaconFolder(
-  officerAddress: ComputedRef<string | undefined>
-): ComputedRef<FolderVersion | undefined> {
+export function useOfficerBeaconFolderQuery(officerAddress: ComputedRef<string | undefined>) {
   const query = useQuery({
     queryKey: computed(() => ['officer-beacon-folder', officerAddress.value]),
     enabled: computed(() => !!officerAddress.value),
@@ -36,5 +38,21 @@ export function useOfficerBeaconFolder(
     }
   })
 
-  return computed(() => query.data.value ?? undefined)
+  return {
+    folder: computed(() => query.data.value ?? undefined),
+    isPending: query.isPending,
+    isError: query.isError
+  }
+}
+
+/**
+ * Resolve the artifact folder of a team's Officer from its on-chain beacon.
+ * Cached per Officer address (a proxy's beacon never changes). Returns undefined
+ * until resolved (or on failure). Isolated from useContractVersion so the latter
+ * stays a pure computed for consumers/tests.
+ */
+export function useOfficerBeaconFolder(
+  officerAddress: ComputedRef<string | undefined>
+): ComputedRef<FolderVersion | undefined> {
+  return useOfficerBeaconFolderQuery(officerAddress).folder
 }

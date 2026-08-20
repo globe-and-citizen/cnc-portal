@@ -7,7 +7,7 @@ import { useVestingDateRange } from '@/composables/vesting/useVestingDateRange'
 import { type VestingCreation } from '@/types/vesting'
 import type { User } from '@/types'
 
-// Share token (InvestorV1) decimals — the contract mints this token on release.
+// Share token (Investor) decimals — the contract mints this token on release.
 const VESTING_TOKEN_DECIMALS = 6
 
 type CreateVestingEmit = (event: 'reload' | 'closeAddVestingModal') => void
@@ -18,7 +18,7 @@ type CreateVestingEmit = (event: 'reload' | 'closeAddVestingModal') => void
 // tokens — no owner balance check, no ERC20 allowance, no `approve`. A member
 // can hold several schedules at once, so there is no duplicate guard either.
 // This is a focused form flow — collect input, validate, issue one `addVesting`
-// write. The releasable amount is minted from the team's InvestorV1 on `release`.
+// write. The releasable amount is minted from the team's Investor on `release`.
 export function useCreateVesting(emit: CreateVestingEmit) {
   const toast = useToast()
 

@@ -12,11 +12,6 @@ import {
 import { mockLog } from '@/tests/mocks/utils.mock'
 import * as utils from '@/utils'
 
-vi.mock('@/composables/cashRemuneration/writes', () => ({
-  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
-  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim)
-}))
-
 describe('WeeklyClaimActionEnable', () => {
   const weeklyClaim: WeeklyClaim = {
     id: 1,
@@ -118,7 +113,7 @@ describe('WeeklyClaimActionEnable', () => {
     const queryClient =
       useQueryClientFn.mock.results[useQueryClientFn.mock.results.length - 1]?.value
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['weekly-claims', '1']
+      queryKey: ['weeklyClaims', 'team']
     })
 
     expect(wrapper.emitted('close')).toBeTruthy()
@@ -135,7 +130,7 @@ describe('WeeklyClaimActionEnable', () => {
 
     expect(mutateAsync).toHaveBeenCalled()
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['weekly-claims', '1']
+      queryKey: ['weeklyClaims', 'team']
     })
   })
 

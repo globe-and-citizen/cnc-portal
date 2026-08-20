@@ -1,8 +1,14 @@
 import { computed, ref, type Ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useAccountingExport } from './useAccountingExport'
-import { entriesForAccount, accountBalance } from '@/utils/accounting/accountLedger'
+import {
+  entriesForAccount,
+  accountBalance,
+  accountNet,
+  accountOpening
+} from '@/utils/accounting/accountLedger'
 import { exportFilename } from '@/utils/accounting/exportNaming'
+import { money } from '@/utils/accounting/presenter'
 import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
@@ -33,6 +39,10 @@ export function useLedgerDrilldown(
 
   const isAggregate = computed(() => Array.isArray(target.value))
 
+  // The one account the running-balance column runs on — empty for an aggregate,
+  // whose accounts span classes and so share no natural side.
+  const balanceAccount = computed(() => (isAggregate.value ? '' : (target.value as string)))
+
   // The postings composing the drilled-in line, over the statement's own window.
   const drilldownEntries = computed(() => {
     const t = target.value
@@ -47,6 +57,18 @@ export function useLedgerDrilldown(
     typeof target.value === 'string' && target.value
       ? accountBalance(drilldownEntries.value, target.value)
       : lineTotal.value
+  )
+
+  // What the account brought into the window — the ledger's "Opening balance"
+  // line. Nothing precedes an open-ended window, nor an aggregate line.
+  const opening = computed(() => accountOpening(entries.value, balanceAccount.value, bounds().from))
+
+  // Where the account is left once every posting in the window is booked — the
+  // figure at the foot of the Balance column.
+  const closing = computed(() =>
+    balanceAccount.value
+      ? money(opening.value.balance + accountNet(drilldownEntries.value, balanceAccount.value))
+      : total.value
   )
 
   /**
@@ -90,5 +112,16 @@ export function useLedgerDrilldown(
     }
   }
 
-  return { open, account: displayName, total, columns, drilldownEntries, openFor, onExport }
+  return {
+    open,
+    account: displayName,
+    total,
+    columns,
+    balanceAccount,
+    opening,
+    closing,
+    drilldownEntries,
+    openFor,
+    onExport
+  }
 }

@@ -9,17 +9,14 @@ import CRWithdrawClaim from '../CRWithdrawClaim.vue'
 import type { WeeklyClaim } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
-import { mockTeamStore, mockGetBalance, mockUseWriteContract, mockWagmiCore } from '@/tests/mocks'
+import {
+  mockCashRemunerationWrites,
+  mockTeamStore,
+  mockGetBalance,
+  mockWagmiCore
+} from '@/tests/mocks'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import * as utils from '@/utils'
-
-vi.mock('@/composables/contracts/useContractWritesV3', () => ({
-  useContractWritesV3: vi.fn(() => mockUseWriteContract)
-}))
-
-vi.mock('@/composables/cashRemuneration/writes', () => ({
-  useWithdraw: vi.fn(() => mockUseWriteContract)
-}))
 
 type WrapperProps = {
   weeklyClaim: WeeklyClaim
@@ -103,12 +100,12 @@ describe('CRWithdrawClaim', () => {
 
     // The component calls withdrawTx.mutate(variables, { onSuccess, onError })
     // By default, invoke onSuccess callback to simulate a successful mutation
-    mockUseWriteContract.mutate = vi.fn(
+    mockCashRemunerationWrites.withdraw.mutate = vi.fn(
       async (_variables: unknown, options?: { onSuccess?: () => Promise<void> | void }) => {
         await options?.onSuccess?.()
       }
     )
-    mockUseWriteContract.mutateAsync = vi.fn().mockResolvedValue('0xhash')
+    mockCashRemunerationWrites.withdraw.mutateAsync = vi.fn().mockResolvedValue('0xhash')
 
     mockGetBalance.mockResolvedValue(parseEther('100'))
 
@@ -126,7 +123,7 @@ describe('CRWithdrawClaim', () => {
     await clickWithdrawButton()
 
     // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim withdrawn', color: 'success' })
-    expect(mockUseWriteContract.mutate).toHaveBeenCalled()
+    expect(mockCashRemunerationWrites.withdraw.mutate).toHaveBeenCalled()
   })
 
   it('withdraws and emits from dropdown when owner', async () => {
@@ -148,8 +145,8 @@ describe('CRWithdrawClaim', () => {
 
   it('skips dropdown click while loading', async () => {
     // Don't invoke onSuccess so isLoading stays true
-    mockUseWriteContract.mutate = vi.fn(() => {
-      mockUseWriteContract.isPending.value = true
+    mockCashRemunerationWrites.withdraw.mutate = vi.fn(() => {
+      mockCashRemunerationWrites.withdraw.isPending.value = true
     })
 
     createWrapper({ isDropDown: true, isClaimOwner: true })
@@ -161,8 +158,8 @@ describe('CRWithdrawClaim', () => {
     await action.trigger('click')
     await nextTick()
 
-    expect(mockUseWriteContract.mutate).toHaveBeenCalledTimes(1)
-    mockUseWriteContract.isPending.value = false
+    expect(mockCashRemunerationWrites.withdraw.mutate).toHaveBeenCalledTimes(1)
+    mockCashRemunerationWrites.withdraw.isPending.value = false
   })
 
   it('shows error when contract address is missing', async () => {
@@ -235,7 +232,7 @@ describe('CRWithdrawClaim', () => {
 
     await clickWithdrawButton()
 
-    expect(mockUseWriteContract.mutate).toHaveBeenCalledWith(
+    expect(mockCashRemunerationWrites.withdraw.mutate).toHaveBeenCalledWith(
       expect.objectContaining({
         args: [
           expect.objectContaining({
@@ -325,7 +322,7 @@ describe('CRWithdrawClaim', () => {
       raw: new Error('rejected')
     } as ReturnType<typeof utils.classifyError>)
 
-    mockUseWriteContract.mutate = vi.fn(
+    mockCashRemunerationWrites.withdraw.mutate = vi.fn(
       async (_variables: unknown, options?: { onError?: (error: unknown) => void }) => {
         options?.onError?.(new Error('rejected'))
       }
@@ -344,7 +341,7 @@ describe('CRWithdrawClaim', () => {
       raw: new Error('boom')
     } as ReturnType<typeof utils.classifyError>)
 
-    mockUseWriteContract.mutate = vi.fn(
+    mockCashRemunerationWrites.withdraw.mutate = vi.fn(
       async (_variables: unknown, options?: { onError?: (error: unknown) => void }) => {
         options?.onError?.(new Error('boom'))
       }
@@ -369,7 +366,7 @@ describe('CRWithdrawClaim', () => {
     createWrapper({ weeklyClaim: claimOnOtherContract })
     await clickWithdrawButton()
 
-    expect(mockUseWriteContract.mutate).not.toHaveBeenCalled()
+    expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
   })
 
   it('blocks withdraw when claim was signed on a different chain', async () => {
@@ -385,7 +382,7 @@ describe('CRWithdrawClaim', () => {
     createWrapper({ weeklyClaim: claimOnOtherChain })
     await clickWithdrawButton()
 
-    expect(mockUseWriteContract.mutate).not.toHaveBeenCalled()
+    expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
   })
 
   it('blocks withdraw when recovered signer does not match contract owner', async () => {
@@ -396,7 +393,7 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockUseWriteContract.mutate).not.toHaveBeenCalled()
+    expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
   })
 
   it('allows withdraw for legacy claims with no data.contractAddress when recovery matches owner', async () => {
@@ -408,6 +405,6 @@ describe('CRWithdrawClaim', () => {
     createWrapper({ weeklyClaim: legacyClaim })
     await clickWithdrawButton()
 
-    expect(mockUseWriteContract.mutate).toHaveBeenCalled()
+    expect(mockCashRemunerationWrites.withdraw.mutate).toHaveBeenCalled()
   })
 })

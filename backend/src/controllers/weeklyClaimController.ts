@@ -14,6 +14,7 @@ import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { signWeeklyClaimBodySchema, z } from '../validation';
+import { resolveWageForWeek } from '../utils/wageResolution';
 
 type SignWeeklyClaimBody = z.infer<typeof signWeeklyClaimBodySchema>;
 
@@ -255,6 +256,17 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         break;
       }
       case 'withdraw': {
+        // Only the member the claim belongs to may mark it withdrawn. The
+        // on-chain withdrawal pays `employeeAddress`, so the claim owner is
+        // the only party the action can legitimately come from — unlike
+        // sign/disable/enable, which are owner actions. Without this check any
+        // authenticated user could flip an arbitrary claim to `withdrawn`, and
+        // because syncWeeklyClaims only re-reads `signed`/`disabled` rows the
+        // wrong status would never be reconciled back (issue #2471).
+        if (weeklyClaim.memberAddress.toLowerCase() !== callerAddress.toLowerCase()) {
+          return errorResponse(403, 'Caller is not the owner of this weekly claim', res);
+        }
+
         // Check if the weekly claim is already signed
         if (weeklyClaim.status !== 'signed') {
           let withdrawErrorMsg = 'Weekly claim must be signed before it can be withdrawn';
@@ -580,27 +592,20 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
     weeklyGoals: string;
   };
 
-  // Normalize to Monday 00:00 UTC the same way addClaim does, so the row lines
-  // up with the [wageId, weekStart] uniqueness used by daily claims.
+  // Normalize to Monday 00:00 UTC the same way addClaim does, so goals and
+  // daily claims land on the same row for a given week.
   const weekStart = dayjs.utc(weekStartInput).startOf('isoWeek').toDate();
 
   try {
-    // A WeeklyClaim requires a wageId, so the member needs a current wage
-    // before any goals can be recorded (mirrors addClaim).
-    const wage = await prisma.wage.findFirst({
-      where: { userAddress: callerAddress, nextWageId: null, teamId },
-    });
-
-    if (!wage) {
-      return errorResponse(400, 'No wage found for the user', res);
-    }
-
+    // Looked up by week rather than by wage, exactly as addClaim does, so goals
+    // never open a second row for a week whose wage has changed since. When the
+    // week holds no hours yet, the first claim moves the row onto the wage that
+    // prices it; goals alone never commit a week to a wage.
     const existing = await prisma.weeklyClaim.findFirst({
       where: {
-        wage: { teamId, nextWageId: null },
-        weekStart,
-        memberAddress: callerAddress,
         teamId,
+        memberAddress: callerAddress,
+        weekStart,
       },
     });
 
@@ -620,6 +625,15 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
         data: { weeklyGoals },
       });
       return res.status(200).json(updated);
+    }
+
+    // A WeeklyClaim requires a wageId, so the member needs a wage before any
+    // goals can be recorded. Only reached for a week nobody has opened yet,
+    // which is priced by resolution like a first claim would be.
+    const wage = await resolveWageForWeek(teamId, callerAddress, weekStart);
+
+    if (!wage) {
+      return errorResponse(400, 'No wage found for the user', res);
     }
 
     const created = await prisma.weeklyClaim.create({

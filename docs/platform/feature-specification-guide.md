@@ -8,7 +8,9 @@
 
 ## Overview
 
-This guide provides instructions for creating feature functional specifications in the CNC Portal project. A well-written functional specification focuses on **feature-specific information only** and references platform-wide standards instead of duplicating them.
+This guide provides instructions for creating feature functional specifications in the CNC Portal
+project. A well-written functional specification focuses on **feature-specific information only**
+and references platform-wide standards instead of duplicating them.
 
 ---
 
@@ -36,7 +38,7 @@ This guide provides instructions for creating feature functional specifications 
 When your feature uses platform standards, reference them:
 
 ```markdown
-This feature follows platform security standards. 
+This feature follows platform security standards.
 See [Security Standards](../../platform/security.md) for details.
 
 ### Feature-Specific Security Considerations
@@ -62,12 +64,12 @@ See [Security Standards](../../platform/security.md) for details.
 
 ### Required Sections
 
-```markdown
+````markdown
 # [Feature Name] - Functional Specification
 
-**Version:** 1.0.0  
-**Date:** YYYY-MM-DD  
-**Status:** Draft | In Progress | Implemented  
+**Version:** 1.0.0
+**Date:** YYYY-MM-DD
+**Status:** Draft | In Progress | Implemented
 **Feature Branch:** feature/[feature-name]
 
 ---
@@ -81,10 +83,12 @@ See [Security Standards](../../platform/security.md) for details.
 ### 1.2 Scope
 
 **This feature includes:**
+
 - [List what's in scope]
 - [Be specific about deliverables]
 
 **This feature excludes:**
+
 - [List what's explicitly NOT included]
 - [Prevents scope creep]
 
@@ -102,13 +106,15 @@ See [Security Standards](../../platform/security.md) for details.
 
 #### FR-1: [Requirement Name]
 
-**Priority:** High | Medium | Low  
+**Priority:** High | Medium | Low
 **Description:** [Brief description of the requirement]
 
 **User Story:**
+
 > As a [user role], I want to [action] so that [benefit].
 
 **Acceptance Criteria:**
+
 - [Specific, measurable criteria]
 - [Must be testable]
 - [Use "Display", "Calculate", "Allow", "Prevent" verbs]
@@ -124,10 +130,10 @@ See [Security Standards](../../platform/security.md) for details.
 
 All endpoints are prefixed with `/api/[feature]` and require JWT authentication.
 
-| Endpoint | Method | Description | Query Parameters |
-|----------|--------|-------------|------------------|
-| `/[endpoint1]` | GET | [Description] | `param1`, `param2` |
-| `/[endpoint2]` | POST | [Description] | - |
+| Endpoint       | Method | Description   | Query Parameters   |
+| -------------- | ------ | ------------- | ------------------ |
+| `/[endpoint1]` | GET    | [Description] | `param1`, `param2` |
+| `/[endpoint2]` | POST   | [Description] | -                  |
 
 **Query Parameters:**
 
@@ -137,6 +143,7 @@ All endpoints are prefixed with `/api/[feature]` and require JWT authentication.
 **Authentication & Authorization:**
 
 [Only document feature-specific auth rules]
+
 - Reference: See [Security Standards](../../platform/security.md)
 
 ---
@@ -145,15 +152,17 @@ All endpoints are prefixed with `/api/[feature]` and require JWT authentication.
 
 ### 4.1 Dashboard Layout
 
-**Location:** [Where in the app]  
+**Location:** [Where in the app]
 **Components:** [List of components]
 
 **Display:**
+
 - [What's shown to users]
 - [Layout structure]
 - [Visual elements]
 
 **Interactions:**
+
 - [User actions available]
 - [Navigation flows]
 - [State changes]
@@ -165,12 +174,14 @@ All endpoints are prefixed with `/api/[feature]` and require JWT authentication.
 **Purpose:** [What this component does]
 
 **Props:**
+
 ```typescript
 interface ComponentProps {
-  propName: Type // Description
-  optionalProp?: Type // Description with default
+  propName: Type; // Description
+  optionalProp?: Type; // Description with default
 }
 ```
+````
 
 **Layout:**
 
@@ -218,7 +229,7 @@ interface ComponentProps {
 
 ```typescript
 // Provide pseudocode or actual implementation
-result = calculation(inputs)
+result = calculation(inputs);
 
 // Document edge cases:
 // - If X: behavior
@@ -335,7 +346,7 @@ result = calculation(inputs)
 - [Feature update]
 - [Bug fixes]
 
-```
+````
 
 ---
 
@@ -352,17 +363,18 @@ result = calculation(inputs)
 - Token stored in localStorage
 - Included in Authorization header
 - Token expiry: 24 hours
-```
+````
 
 **Instead write:**
 
 ```markdown
 ## Security
 
-This feature follows platform security standards. 
+This feature follows platform security standards.
 See [Security Standards](../../platform/security.md).
 
 ### Feature-Specific Authorization
+
 - Team owners can only access their team's data
 - Cross-team access is forbidden
 ```
@@ -371,15 +383,17 @@ See [Security Standards](../../platform/security.md).
 
 **Don't write:**
 
-```markdown
+````markdown
 ### Input Validation
 
 Using Zod schemas:
+
 ```typescript
 const schema = z.object({
-  email: z.string().email()
-})
+  email: z.string().email(),
+});
 ```
+````
 
 **Instead write:**
 
@@ -387,6 +401,7 @@ const schema = z.object({
 ### Data Validation
 
 **Required Parameters:**
+
 - `teamId`: UUID format (validated per platform standards)
 - `period`: Must be one of: '7d', '30d', '90d', 'all'
 - `limit`: Integer, 1-100 (feature-specific max)
@@ -396,7 +411,7 @@ const schema = z.object({
 
 **Don't write:**
 
-```markdown
+````markdown
 ### Error Response Format
 
 ```json
@@ -408,6 +423,7 @@ const schema = z.object({
   }
 }
 ```
+````
 
 **Instead write:**
 
@@ -417,6 +433,7 @@ const schema = z.object({
 Follows platform error handling standards. See [Error Handling](./development-standards.md#error-handling).
 
 **Feature-Specific Errors:**
+
 - `INVALID_PERIOD`: Period parameter must be '7d', '30d', '90d', or 'all'
 - `TEAM_NOT_FOUND`: Specified team does not exist
 ```
@@ -429,6 +446,7 @@ Follows platform error handling standards. See [Error Handling](./development-st
 ### Testing Strategy
 
 **Unit Tests:**
+
 - Coverage target: > 90%
 - Mock all dependencies
 - Test error scenarios
@@ -442,6 +460,7 @@ Follows platform error handling standards. See [Error Handling](./development-st
 Follows platform testing standards. See [Testing Strategy](../../platform/testing-strategy.md).
 
 **Feature-Specific Tests:**
+
 - Test growth calculation edge cases (division by zero)
 - Test period boundary conditions
 - Verify team filtering works correctly
@@ -455,6 +474,7 @@ Follows platform testing standards. See [Testing Strategy](../../platform/testin
 ### Deployment
 
 **Steps:**
+
 1. Run tests
 2. Deploy backend
 3. Deploy frontend
@@ -469,6 +489,7 @@ Follows platform testing standards. See [Testing Strategy](../../platform/testin
 Follows platform deployment procedures. See [Deployment](../../platform/deployment.md).
 
 **Feature-Specific Requirements:**
+
 - No database migrations required
 - Ensure indexes exist (see Section 5.1)
 - Verify stats endpoints return data in staging
@@ -520,6 +541,7 @@ This feature adds 9 new API endpoints to the statistics service layer.
 See [Glossary](../../README.md#glossary) for platform terminology.
 
 **Feature-Specific Terms:**
+
 - **Active Entity:** Entity with activity in the selected period
 - **Growth Metric:** Percentage change from previous period
 ```
@@ -572,15 +594,19 @@ Before finalizing your functional specification, verify:
 ## 5. Security
 
 ### Authentication
+
 All endpoints require JWT authentication. Token must be included in Authorization header.
 
 ### Authorization
+
 Users must have proper permissions to access endpoints.
 
 ### Rate Limiting
+
 100,000 requests per 15 minutes per IP.
 
 ### Input Validation
+
 All inputs validated with Zod schemas.
 ```
 
@@ -595,12 +621,13 @@ All inputs validated with Zod schemas.
 ```markdown
 ## 5. Authorization & Data Filtering
 
-Follows platform authentication and security standards. 
+Follows platform authentication and security standards.
 See [Security Standards](../../platform/security.md).
 
 ### Feature-Specific Authorization
 
 **Team Statistics Access:**
+
 - Team owners: Full access to their team statistics only
 - Platform admins: Full access to all team statistics
 - Regular members: Read-only access to their own team
@@ -608,6 +635,7 @@ See [Security Standards](../../platform/security.md).
 
 **Data Filtering Rules:**
 When `teamId` parameter provided:
+
 - Verify user is team owner OR admin
 - Return 403 Forbidden if unauthorized
 - Filter all aggregations by teamId

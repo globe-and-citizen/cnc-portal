@@ -42,34 +42,6 @@ export const {
   }
 })
 
-vi.mock('@vue/apollo-composable', async () => {
-  const { ref } = await import('vue')
-  apolloState.investorResult = ref()
-  apolloState.investorError = ref<Error | null>(null)
-  apolloState.investorLoading = ref(false)
-  apolloState.safeResult = ref()
-  apolloState.safeError = ref<Error | null>(null)
-  apolloState.safeLoading = ref(false)
-  return { useQuery: mockUseQuery }
-})
-
-vi.mock('@/stores', () => ({
-  useTeamStore: () => ({
-    getContractAddressByType: mockGetContractAddressByType
-  }),
-  useCurrencyStore: () => ({
-    localCurrency: { code: 'USD' },
-    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
-    getTokenPrice: mockGetTokenPrice
-  })
-}))
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: () => ({
-    data: mockInvestorSymbolData
-  })
-}))
-
 const UCardStub = defineComponent({
   name: 'UCard',
   template: '<div><slot name="header" /><slot /></div>'

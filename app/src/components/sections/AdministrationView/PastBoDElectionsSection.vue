@@ -23,11 +23,11 @@ import { computed } from 'vue'
 import PastBoDElectionCard from './PastBoDElectionCard.vue'
 import PastBoDElection404 from './PastBoDElection404.vue'
 import { useTeamStore } from '@/stores'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import type { Election } from '@/types'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { useQuery } from '@tanstack/vue-query'
 
 const teamStore = useTeamStore()
@@ -41,7 +41,7 @@ const fetchElections = async (): Promise<Election[]> => {
     // Get the next election ID (1 call)
     const nextElectionId = (await readContract(config, {
       address: electionsAddress.value,
-      abi: ELECTIONS_ABI,
+      abi: electionsAbi,
       functionName: 'getNextElectionId'
     })) as bigint
 
@@ -60,7 +60,7 @@ const fetchElections = async (): Promise<Election[]> => {
       try {
         const election = (await readContract(config, {
           address: electionsAddress.value,
-          abi: ELECTIONS_ABI,
+          abi: electionsAbi,
           functionName: 'getElection',
           args: [BigInt(electionId)]
         })) as readonly [bigint, string, string, `0x${string}`, bigint, bigint, bigint, boolean]
@@ -85,7 +85,7 @@ const fetchElections = async (): Promise<Election[]> => {
 
     return electionsList.sort((a, b) => b.id - a.id)
   } catch (err) {
-    log.error('Error fetching elections: ', parseError(err))
+    log.error('Error fetching elections: ', err)
     return []
   }
 }

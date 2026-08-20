@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useConnection } from '@wagmi/vue'
-import { isAddress, type Address } from 'viem'
+import { isAddress } from 'viem'
 import externalApiClient from '@/lib/external.axios.ts'
 import type {
   ExecuteTransactionParams,
@@ -20,11 +20,7 @@ import {
   proposeSafeTransaction,
   waitForTransaction
 } from '@/utils/safe.mutations'
-import {
-  getExecutedErc20TransferTokenAddress,
-  getTxServiceUrl,
-  transformToSafeMultisigResponse
-} from '@/utils/safe'
+import { getTxServiceUrl, transformToSafeMultisigResponse } from '@/utils/safe'
 import { getConnectedSigner } from '@/utils/walletUtil'
 import { safeKeys } from './safe.queries'
 
@@ -114,10 +110,10 @@ export function useExecuteTransactionMutation() {
       return txHash
     },
     onSuccess: async (_, variables) => {
-      const safeAddress = variables.pathParams.safeAddress as Address
       const chainId = variables.queryParams.chainId
-      const tokenAddress = getExecutedErc20TransferTokenAddress(variables.body.transactionData)
 
+      // One balance key per Safe now covers native and every ERC-20 it holds,
+      // so an executed transfer needs no per-token invalidation.
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: safeKeys.info(variables.pathParams.safeAddress)
@@ -127,14 +123,7 @@ export function useExecuteTransactionMutation() {
         }),
         queryClient.invalidateQueries({
           queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId)
-        }),
-        ...(tokenAddress
-          ? [
-              queryClient.invalidateQueries({
-                queryKey: safeKeys.tokenBalance(tokenAddress, safeAddress, chainId)
-              })
-            ]
-          : [])
+        })
       ])
     }
   })
@@ -269,10 +258,6 @@ export function useTransferFromSafeMutation() {
       return { hash, executed: true }
     },
     onSuccess: async (result, variables) => {
-      const safeAddress = variables.pathParams.safeAddress as Address
-      const tokenId = variables.body.options.tokenId ?? 'native'
-      const tokenAddress = getTokenAddress(tokenId)
-
       // Pending transactions (needed for proposals when threshold >= 2)
       await queryClient.invalidateQueries({
         queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
@@ -282,15 +267,11 @@ export function useTransferFromSafeMutation() {
         return
       }
 
+      // Covers the transferred token whichever it was: native and ERC-20
+      // amounts share the Safe's single balance query.
       await queryClient.invalidateQueries({
         queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId.value)
       })
-
-      if (tokenAddress) {
-        await queryClient.invalidateQueries({
-          queryKey: safeKeys.tokenBalance(tokenAddress, safeAddress, chainId.value)
-        })
-      }
     }
   })
 }

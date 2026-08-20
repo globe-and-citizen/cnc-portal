@@ -25,7 +25,7 @@
             class="h-3 w-3 rounded-full"
             :class="entry.totalMinutes > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
           />
-          <span class="font-medium">{{ entry.date.format('ddd DD MMM') }}</span>
+          <span class="font-medium">{{ formatDateWeekdayShort(entry.date) }}</span>
 
           <!-- Attachment icon if files exist -->
           <span
@@ -88,6 +88,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { Icon } from '@iconify/vue'
 import type { Address } from 'viem'
 import type { Week } from '@/utils/dayUtils'
+import { formatDateWeekdayShort } from '@/utils/format'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
 import { useUserDataStore } from '@/stores'
 import type { WeeklyClaim, Claim } from '@/types'

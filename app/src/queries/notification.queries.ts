@@ -16,7 +16,7 @@ export const notificationKeys = {
  * Empty params for useGetNotificationsQuery (no parameters needed)
  */
 
-export interface GetNotificationsParams {}
+export type GetNotificationsParams = Record<string, never>
 
 /**
  * Fetch all notifications for the current user

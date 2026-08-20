@@ -4,8 +4,9 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-import { mockUseContractBalance } from '@/tests/mocks'
+import { mockUseContractBalance, makeTokenBalance, useQueryClientFn } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
+import * as utils from '@/utils'
 
 const {
   mockGetSafeHomeUrl,
@@ -13,7 +14,6 @@ const {
   mockUseChainId,
   mockUseTeamStore,
   mockuseGetSafeInfoQuery,
-  mockQueryClient,
   mockTransferMutate,
   mockTransferReset,
   mockTransferPending,
@@ -24,12 +24,6 @@ const {
   mockUseChainId: vi.fn(),
   mockUseTeamStore: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
-  mockQueryClient: {
-    invalidateQueries: vi.fn(async () => undefined),
-    getQueryData: vi.fn(() => undefined),
-    setQueryData: vi.fn(() => undefined),
-    removeQueries: vi.fn(() => undefined)
-  },
   mockTransferMutate: vi.fn(),
   mockTransferReset: vi.fn(),
   mockTransferPending: { value: false },
@@ -50,14 +44,6 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
-vi.mock('@vueuse/core', async () => {
-  const actual = await vi.importActual<typeof import('@vueuse/core')>('@vueuse/core')
-  return {
-    ...actual,
-    useStorage: vi.fn()
-  }
-})
-
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
@@ -66,32 +52,15 @@ vi.mock('@/queries/safe.mutations', () => ({
   useTransferFromSafeMutation: mockUseTransferFromSafeMutation
 }))
 
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: () => mockQueryClient
-}))
-
-vi.mock('@/utils', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    getTokenAddress: vi.fn((tokenId: string) => {
-      if (tokenId === 'native') return undefined
-      if (tokenId === 'usdc') return '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
-      if (tokenId === 'usdt') return '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-      return undefined
-    })
-  }
-})
-
 // Test constants
 const MOCK_DATA = {
   safeAddress: '0x1234567890123456789012345678901234567890' as Address,
   safeInfo: { owners: ['0x1111111111111111111111111111111111111111' as Address], threshold: 2 },
   balances: [
-    {
+    makeTokenBalance({
       token: {
         symbol: 'ETH',
-        id: 'ethereum',
+        id: 'native',
         name: 'Ethereum',
         code: 'ETH',
         coingeckoId: 'ethereum',
@@ -99,19 +68,9 @@ const MOCK_DATA = {
         address: '0x0000000000000000000000000000000000000000'
       },
       amount: 1.5,
-      values: {
-        USD: {
-          value: 3000,
-          formated: '$3,000',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 2000,
-          formatedPrice: '$2K'
-        }
-      }
-    },
-    {
+      usdPrice: 2000
+    }),
+    makeTokenBalance({
       token: {
         symbol: 'SHER',
         id: 'sher',
@@ -122,29 +81,12 @@ const MOCK_DATA = {
         address: '0x1234567890123456789012345678901234567890'
       },
       amount: 100,
-      values: {
-        USD: {
-          value: 500,
-          formated: '$500',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 5,
-          formatedPrice: '$5'
-        }
-      }
-    }
+      usdPrice: 5
+    })
   ],
   total: {
-    USD: {
-      value: 4500,
-      formated: '$4,500',
-      id: 'usd',
-      code: 'USD',
-      symbol: '$',
-      price: 1,
-      formatedPrice: '$1'
-    }
+    usd: { value: 4500, formatted: '$4,500' },
+    local: { value: 4500, formatted: '$4,500' }
   },
   defaultCurrency: { code: 'USD', name: 'US Dollar', symbol: '$' },
   team: {
@@ -210,6 +152,18 @@ describe('SafeBalanceSection', () => {
     mockTransferReset.mockReset()
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
+    useQueryClientFn.mockReturnValue({
+      invalidateQueries: vi.fn(async () => undefined),
+      getQueryData: vi.fn(() => undefined),
+      setQueryData: vi.fn(() => undefined),
+      removeQueries: vi.fn(() => undefined)
+    })
+    vi.spyOn(utils, 'getTokenAddress').mockImplementation((tokenId: string) => {
+      if (tokenId === 'native') return undefined
+      if (tokenId === 'usdc') return '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+      if (tokenId === 'usdt') return '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+      return undefined
+    })
 
     mockGetSafeHomeUrl.mockReturnValue(
       'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'
@@ -241,7 +195,7 @@ describe('SafeBalanceSection', () => {
             options: {
               to: '0x3333333333333333333333333333333333333333',
               amount: '1',
-              tokenId: 'ethereum'
+              tokenId: 'native'
             }
           }
         },

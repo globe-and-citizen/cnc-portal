@@ -81,6 +81,7 @@ Implement on-chain logic:
 - [Authentication](./auth/README.md) — SIWE, JWT, user management
 - [Statistics Feature](./features/stats/functional-specification.md) — Platform analytics implementation
 - [API Reference](./features/stats/stats-api.md) — Statistics API endpoints
+- [Community Credit — User Flow Analysis](./features/community-credit/user-flow-analysis.md) — FixedReturn lending rounds: state machine, custody model, flows, findings
 
 ### Developer Support
 
@@ -121,16 +122,16 @@ Implement on-chain logic:
 
 ## 📊 Documentation Status
 
-| Document                                            | Version | Updated          | Status |
-| --------------------------------------------------- | ------- | ---------------- | ------ |
+| Document                                               | Version | Updated          | Status |
+| ------------------------------------------------------ | ------- | ---------------- | ------ |
 | [Project Charter](./01_PROJECT_CHARTER.md)             | 1.0.0   | March 11, 2026   | Active |
 | [User Stories](./02_USER_STORIES.md)                   | 1.0.0   | March 12, 2026   | Active |
 | [Implementation Status](./03_IMPLEMENTATION_STATUS.md) | 1.0.0   | March 12, 2026   | Active |
-| [Architecture Overview](./platform/architecture.md) | 1.0.0   | December 7, 2025 | Active |
-| [Testing Strategy](./platform/testing-strategy.md)  | 1.0.0   | December 7, 2025 | Active |
-| [Security Standards](./platform/security.md)        | 1.0.0   | TBD              | Draft  |
-| [Performance Standards](./platform/performance.md)  | 1.0.0   | TBD              | Draft  |
-| [Deployment Guide](./platform/deployment.md)        | 1.0.0   | TBD              | Draft  |
+| [Architecture Overview](./platform/architecture.md)    | 1.0.0   | December 7, 2025 | Active |
+| [Testing Strategy](./platform/testing-strategy.md)     | 1.0.0   | December 7, 2025 | Active |
+| [Security Standards](./platform/security.md)           | 1.0.0   | TBD              | Draft  |
+| [Performance Standards](./platform/performance.md)     | 1.0.0   | TBD              | Draft  |
+| [Deployment Guide](./platform/deployment.md)           | 1.0.0   | TBD              | Draft  |
 
 ---
 

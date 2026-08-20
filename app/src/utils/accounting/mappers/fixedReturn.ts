@@ -1,0 +1,381 @@
+/**
+ * FixedReturn (Community Credit) source mapper — the team **borrows** from its
+ * lenders and repays them principal + a fixed return.
+ *
+ * The credit contract is treated as **external** to the team's books: a lender's
+ * deposit is not the team's money while the offer is still filling, so it raises
+ * no asset and no liability. The loan is recognised only when the round **funds**
+ * and the principal actually lands in the Bank — the way a business records a loan
+ * when it receives the proceeds, not when each lender pledges. This keeps one
+ * posting where the old model wrote two (a deposit into a `Cash — Credit` pocket,
+ * then an internal sweep of that same money out to Bank).
+ *
+ *   `FundsLent`          (tracked, no entry)  — a pledge, still the lender's money
+ *   `LendingOfferFunded` UC-CREDIT-01  Dr Cash — Bank      · Cr Loan Payable
+ *   (no event)           UC-CREDIT-05  Dr Interest Expense · Cr Interest Payable (the fee owed)
+ *   `LenderRepaid`       UC-CREDIT-03  Dr Loan Payable     · Cr Cash — Bank     (principal leg)
+ *                                      Dr Interest Payable · Cr Cash — Bank     (interest leg)
+ *   `PrincipalRefunded`  (no entry)          — an unfunded pledge handed back, never booked
+ *
+ * Why each side is what it is:
+ * - Deposits accumulate **in the FixedReturn contract** while the offer is Open.
+ *   Because that contract is external, they are only tracked (to know each
+ *   lender's share of the round), not posted — so an offer that never funds and
+ *   refunds its lenders leaves the books entirely untouched.
+ * - On the deposit that hits the funding target (or on `acceptPartialFunding`,
+ *   which emits `LendingOfferFunded` too) the whole principal is swept to Bank
+ *   with a raw `safeTransfer`, which emits **no Bank event** — so the loan is
+ *   booked here, straight to Bank, one posting per lender so the journal still
+ *   reads who the team owes.
+ * - Repayment runs `Bank → FixedReturn → lender` inside a single transaction
+ *   (`Bank.fundFixedReturnRepayment`, whose `FixedReturnRepaymentFunded` is not in
+ *   the Bank feed). The contract keeps no balance across it, so each `LenderRepaid`
+ *   credits `Cash — Bank` directly — booking the intermediate hop as well would
+ *   double-count the cash out.
+ *
+ * **Interest is recognised when the round funds, not when the cash leaves.** The
+ * contract fixes the whole obligation at that instant — `totalFunded × (1 + rate)`
+ * — and never prorates it: repaying on day two still costs the full flat fee. So
+ * the fixed return is a liability from the moment the round closes, booked against
+ * `Interest Payable` (`UC-CREDIT-05`) **one posting per lender**, so the journal
+ * reads who is owed what, and the balance sheet shows the real debt (principal
+ * *and* fee) for as long as it is outstanding. Spreading it across the term would
+ * understate what is owed every day until maturity.
+ *
+ * A repayment then draws that liability down; only a fee that was never recognised
+ * — because the round's rate was unavailable — falls through to `Interest Expense`
+ * at payment time. Either way the total cost booked is exactly what the lenders
+ * were paid. The rate travels on `LendingOfferCreated` but not through the mapper's
+ * feed, so recognition happens only when `offerTerms` is supplied (see `assemble`).
+ *
+ * Splitting a repayment installment: `repayLenders` distributes cumulatively and
+ * makes no principal/interest distinction, so the split is reconstructed here —
+ * a lender's payments retire their principal first (Dr Loan Payable), and
+ * everything beyond it is the fixed return. That leaves `Loan Payable` at exactly
+ * zero once a lender has been made whole.
+ *
+ * Lifecycle events that move no money (`LendingOfferCreated`,
+ * `LendingOfferRefundable`, `PartialFundingAccepted`, `RepaymentDistributed`,
+ * `TokenSupportAdded/Removed`, `OwnershipTransferred`) produce no entry;
+ * `LendingOfferCreated` is still consumed, for the offer → token index. The two
+ * aggregate events (`RefundsDistributed` / `RepaymentDistributed`) are exactly
+ * the sum of their per-lender events, so booking them too would double-count.
+ */
+import type { TokenId } from '@/constant'
+import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import {
+  creditTimeline,
+  toBigInt,
+  type CreditEvent,
+  type FixedReturnMapperInput
+} from './creditTimeline'
+import { atDate, type MapperContext } from './context'
+
+export type { CreditOfferTerms, FixedReturnMapperInput } from './creditTimeline'
+
+const BANK = 'Cash — Bank' as const
+const LOAN_PAYABLE = 'Loan Payable' as const
+const INTEREST_PAYABLE = 'Interest Payable' as const
+const INTEREST_EXPENSE = 'Interest Expense' as const
+
+/** A lender's cumulative deposit on one offer, kept in first-lent order. */
+type OfferDeposits = Map<string, { lender: string; amount: bigint }>
+
+/** `${offerId}|${lender}` — keys a lender's position within one offer. */
+function positionKey(offerId: string, lender: string): string {
+  return `${offerId}|${lender.toLowerCase()}`
+}
+
+/** Read-modify-write helper for the running per-key bigint balances. */
+function bump(balances: Map<string, bigint>, key: string, delta: bigint): void {
+  balances.set(key, (balances.get(key) ?? 0n) + delta)
+}
+
+/** Accumulate a lender's deposit on an offer, preserving first-lent order. */
+function addDeposit(
+  byOffer: Map<string, OfferDeposits>,
+  offerId: string,
+  lender: string,
+  amount: bigint
+): void {
+  let deposits = byOffer.get(offerId)
+  if (!deposits) {
+    deposits = new Map()
+    byOffer.set(offerId, deposits)
+  }
+  const key = lender.toLowerCase()
+  const seen = deposits.get(key)
+  if (seen) seen.amount += amount
+  else deposits.set(key, { lender, amount })
+}
+
+/**
+ * Map the FixedReturn feed to ledger entries by replaying the credit lifecycle.
+ *
+ * An offer whose `LendingOfferCreated` is missing from the feed cannot be valued:
+ * that event is the only carrier of the offer's token, and posting a base-unit
+ * amount against a guessed token would put a wildly wrong USD figure in the books.
+ * Rather than drop it silently, the round gets a single **memo** entry (no
+ * monetary legs, so the trial balance is untouched) naming what is unaccounted
+ * for. The feed is scanned from the contract's deploy block, so in practice this
+ * only fires when the RPC window truncated the history.
+ */
+export function mapFixedReturnEvents(
+  input: FixedReturnMapperInput,
+  ctx: MapperContext
+): LedgerEntry[] {
+  const tokenByOffer = new Map<string, TokenId>()
+  for (const row of input.lendingOfferCreateds ?? []) {
+    tokenByOffer.set(row.offerId, ctx.tokenIdOf(row.token))
+  }
+
+  /** Principal sitting in the contract for an offer, not yet swept or refunded. */
+  const heldByOffer = new Map<string, bigint>()
+  /** Per-lender deposits an offer has taken, replayed into its funding posting so
+   *  the recognised loan names each lender's share. */
+  const depositsByOffer = new Map<string, OfferDeposits>()
+  /** Principal a lender has outstanding on an offer — what repayment retires first. */
+  const owedToLender = new Map<string, bigint>()
+  /** The `Interest Payable` a lender is still owed on an offer — what the interest
+   *  side of their repayment clears, the mirror of `owedToLender` for principal. */
+  const payableToLender = new Map<string, bigint>()
+  /** What a whole round still owes, every lender together: principal plus the
+   *  recognised fixed return, less what has been paid or refunded. It is what the
+   *  journal reads to say how much of a loan is left after an installment. */
+  const owedByRound = new Map<string, bigint>()
+  /** Offers already flagged as unvaluable — one memo each, not one per event. */
+  const unvalued = new Set<string>()
+
+  const entries: LedgerEntry[] = []
+
+  for (const event of creditTimeline(input)) {
+    const token = tokenByOffer.get(event.offerId)
+    if (!token) {
+      if (!unvalued.has(event.offerId)) {
+        unvalued.add(event.offerId)
+        entries.push(unvaluedOfferMemo(event))
+      }
+      continue
+    }
+    const at = atDate(event.timestamp)
+    const usd = (raw: bigint): number => ctx.toUsd(raw, token, at)
+    const key = event.lender ? positionKey(event.offerId, event.lender) : ''
+
+    switch (event.kind) {
+      case 'lent': {
+        // A pledge into an offer still filling: the contract is external, so the
+        // deposit is only tracked (per lender, and against the round) — not posted.
+        const amount = toBigInt(event.amount)
+        if (amount <= 0n || !event.lender) break
+        bump(heldByOffer, event.offerId, amount)
+        bump(owedToLender, key, amount)
+        bump(owedByRound, event.offerId, amount)
+        addDeposit(depositsByOffer, event.offerId, event.lender, amount)
+        break
+      }
+
+      case 'funded': {
+        // The round closed: the whole principal raised is swept to Bank in the
+        // same transaction and is now the team's money. Recognise the loan here,
+        // straight to Bank — one leg per lender, so the journal reads who is owed.
+        const deposits = depositsByOffer.get(event.offerId)
+        heldByOffer.set(event.offerId, 0n)
+        depositsByOffer.delete(event.offerId)
+        if (!deposits) break
+        for (const { lender, amount } of deposits.values()) {
+          if (amount <= 0n) continue
+          entries.push(
+            makeEntry({
+              id: `credit-principal-${event.offerId}-${lender.toLowerCase()}`,
+              timestamp: event.timestamp,
+              useCase: 'UC-CREDIT-01',
+              debit: BANK,
+              credit: LOAN_PAYABLE,
+              amountUsd: usd(amount),
+              token,
+              rawAmount: amount.toString(),
+              counterparty: lender,
+              creditOfferId: event.offerId,
+              memo: `Loan received from a lender on Community Credit offer #${event.offerId}`
+            })
+          )
+        }
+        break
+      }
+
+      case 'interest': {
+        // The round has closed, so the whole flat fee is owed from this instant —
+        // one posting per lender, at the funding date, for the share they will be
+        // paid on top of their principal.
+        const owed = toBigInt(event.amount)
+        if (owed <= 0n) break
+        bump(payableToLender, key, owed)
+        bump(owedByRound, event.offerId, owed)
+        entries.push(
+          makeEntry({
+            id: event.id,
+            timestamp: event.timestamp,
+            useCase: 'UC-CREDIT-05',
+            debit: INTEREST_EXPENSE,
+            credit: INTEREST_PAYABLE,
+            amountUsd: usd(owed),
+            token,
+            rawAmount: owed.toString(),
+            counterparty: event.lender,
+            creditOfferId: event.offerId,
+            memo: `Fixed return owed to a lender on Community Credit offer #${event.offerId}`
+          })
+        )
+        break
+      }
+
+      case 'repaid': {
+        const amount = toBigInt(event.amount)
+        if (amount <= 0n) break
+        const outstanding = owedToLender.get(key) ?? 0n
+        const principal = amount < outstanding ? amount : outstanding
+        const creditRemainingUsd = drawRound(owedByRound, event.offerId, amount, usd)
+        if (principal > 0n) {
+          owedToLender.set(key, outstanding - principal)
+          entries.push(
+            makeEntry({
+              id: legId(event.id, 'principal'),
+              timestamp: event.timestamp,
+              useCase: 'UC-CREDIT-03',
+              debit: LOAN_PAYABLE,
+              credit: BANK,
+              amountUsd: usd(principal),
+              token,
+              rawAmount: principal.toString(),
+              counterparty: event.lender,
+              creditOfferId: event.offerId,
+              creditRemainingUsd,
+              memo: `Principal repaid on Community Credit offer #${event.offerId}`
+            })
+          )
+        }
+        entries.push(
+          ...interestLegs({
+            event,
+            interest: amount - principal,
+            key,
+            payableToLender,
+            token,
+            usd,
+            creditRemainingUsd
+          })
+        )
+        break
+      }
+
+      case 'refunded': {
+        // The offer missed its target and its deposits are handed back. Nothing
+        // was ever booked (the deposits were the lenders' money, held in the
+        // external contract), so the refund leaves the books untouched too. The
+        // trackers for the round are simply unwound.
+        const amount = toBigInt(event.amount)
+        if (amount <= 0n) break
+        bump(heldByOffer, event.offerId, -amount)
+        bump(owedToLender, key, -amount)
+        bump(owedByRound, event.offerId, -amount)
+        break
+      }
+    }
+  }
+
+  return entries
+}
+
+/**
+ * A repayment leg's id. The suffix goes **after** the `${txHash}-${logIndex}`
+ * event id, which `txHashOf` reads past by matching the leading hash, so both
+ * legs still resolve to the transaction they were paid in.
+ */
+function legId(eventId: string, leg: string): string {
+  return `${eventId}-${leg}`
+}
+
+/**
+ * Draw what a payment gave back off the round's running debt, and value what is
+ * left. The draw is capped at the balance: a fixed return that was never
+ * recognised — the round's rate was unavailable, so nothing was ever booked as
+ * owed — is still paid out, and must not push the round into a negative debt.
+ */
+function drawRound(
+  owedByRound: Map<string, bigint>,
+  offerId: string,
+  paid: bigint,
+  usd: (raw: bigint) => number
+): number {
+  const owed = owedByRound.get(offerId) ?? 0n
+  const drawn = paid < owed ? paid : owed
+  owedByRound.set(offerId, owed - drawn)
+  return usd(owed - drawn)
+}
+
+/**
+ * The interest side of one repayment installment: it clears what **this lender**
+ * was recognised as owed when the round funded, and only a fee never recognised
+ * there — the round's rate was unavailable, so nothing was booked — falls through
+ * to `Interest Expense`. With no terms at all the payable is empty and every cent
+ * takes the second leg, which is the cash-basis treatment this mapper started with.
+ */
+function interestLegs(input: {
+  event: CreditEvent
+  interest: bigint
+  key: string
+  payableToLender: Map<string, bigint>
+  token: TokenId
+  usd: (raw: bigint) => number
+  creditRemainingUsd: number
+}): LedgerEntry[] {
+  const { event, interest, key, payableToLender, token, usd, creditRemainingUsd } = input
+  if (interest <= 0n) return []
+  const payable = payableToLender.get(key) ?? 0n
+  const fromPayable = interest < payable ? interest : payable
+  const unrecognised = interest - fromPayable
+  const legs: LedgerEntry[] = []
+
+  const leg = (id: string, debit: typeof INTEREST_PAYABLE | typeof INTEREST_EXPENSE, raw: bigint) =>
+    makeEntry({
+      id: legId(event.id, id),
+      timestamp: event.timestamp,
+      useCase: 'UC-CREDIT-03' as const,
+      debit,
+      credit: BANK,
+      amountUsd: usd(raw),
+      token,
+      rawAmount: raw.toString(),
+      counterparty: event.lender,
+      creditOfferId: event.offerId,
+      creditRemainingUsd,
+      memo: `Fixed return paid on Community Credit offer #${event.offerId}`
+    })
+
+  if (fromPayable > 0n) {
+    payableToLender.set(key, payable - fromPayable)
+    legs.push(leg('interest', INTEREST_PAYABLE, fromPayable))
+  }
+  if (unrecognised > 0n) legs.push(leg('interest-unrecognised', INTEREST_EXPENSE, unrecognised))
+  return legs
+}
+
+/**
+ * The memo standing in for a round whose token could not be resolved — it names
+ * the gap in the journal instead of leaving a hole nothing explains. Memo-only
+ * (both legs `null`, `$0`), so no statement and no trial balance is disturbed.
+ */
+function unvaluedOfferMemo(event: CreditEvent): LedgerEntry {
+  return makeEntry({
+    id: `credit-unvalued-${event.offerId}`,
+    timestamp: event.timestamp,
+    useCase: 'UC-CREDIT-01',
+    debit: null,
+    credit: null,
+    amountUsd: 0,
+    token: 'native',
+    rawAmount: '0',
+    enrichment: 'needs-off-chain-data',
+    memo: `Community Credit offer #${event.offerId} could not be valued — its creation event is missing from the feed`
+  })
+}

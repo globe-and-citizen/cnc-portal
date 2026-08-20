@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document establishes code quality standards, best practices, and development guidelines for the CNC Portal project. Following these standards ensures code consistency, maintainability, and collaboration effectiveness across the team.
+This document establishes code quality standards, best practices, and development guidelines for the
+CNC Portal project. Following these standards ensures code consistency, maintainability, and
+collaboration effectiveness across the team.
 
 ## Code Quality Standards
 
@@ -70,7 +72,7 @@ interface Admin extends User {
 }
 
 // Use type for unions and complex types
-type Status = 'pending' | 'approved' | 'rejected';
+type Status = "pending" | "approved" | "rejected";
 type Result<T> = { success: true; data: T } | { success: false; error: string };
 ```
 
@@ -82,16 +84,16 @@ type Result<T> = { success: true; data: T } | { success: false; error: string };
 
 ```typescript
 // External libraries
-import { ref, computed } from 'vue';
-import { isAddress } from 'viem';
+import { ref, computed } from "vue";
+import { isAddress } from "viem";
 
 // Internal modules
-import { useTeamStore } from '@/stores';
-import type { TeamData } from '@/types';
+import { useTeamStore } from "@/stores";
+import type { TeamData } from "@/types";
 
 // Relative imports
-import { formatAddress } from './utils';
-import type { ComponentProps } from './types';
+import { formatAddress } from "./utils";
+import type { ComponentProps } from "./types";
 ```
 
 ### Code Style
@@ -137,17 +139,17 @@ npm run format:check
 
 ```typescript
 // Variables and functions
-const userName = 'John';
+const userName = "John";
 function getUserData() {}
 
 // Classes and interfaces
 class UserManager {}
 interface UserData {}
-type UserStatus = 'active' | 'inactive';
+type UserStatus = "active" | "inactive";
 
 // Constants
 const MAX_RETRY_COUNT = 3;
-const API_BASE_URL = 'https://api.example.com';
+const API_BASE_URL = "https://api.example.com";
 
 // Vue components
 // File: UserProfile.vue
@@ -170,9 +172,9 @@ Each file should follow this structure:
 
 ```typescript
 // 1. Imports (external → internal → relative)
-import { ref } from 'vue';
-import { useStore } from '@/stores';
-import { helper } from './utils';
+import { ref } from "vue";
+import { useStore } from "@/stores";
+import { helper } from "./utils";
 
 // 2. Types and interfaces
 interface Props {
@@ -269,8 +271,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: '',
-  disabled: false
+  modelValue: "",
+  disabled: false,
 });
 ```
 
@@ -278,15 +280,15 @@ const props = withDefaults(defineProps<Props>(), {
 
 ```typescript
 const emit = defineEmits<{
-  'update:modelValue': [value: string];
+  "update:modelValue": [value: string];
   submit: [data: FormData];
   close: [];
 }>();
 
 // Usage
-emit('update:modelValue', newValue);
-emit('submit', formData);
-emit('close');
+emit("update:modelValue", newValue);
+emit("submit", formData);
+emit("close");
 ```
 
 #### Data-Test Attributes
@@ -295,12 +297,10 @@ All interactive elements must have `data-test` attributes:
 
 ```vue
 <template>
-  <button data-test="submit-button" @click="handleSubmit">
-    Submit
-  </button>
-  
+  <button data-test="submit-button" @click="handleSubmit">Submit</button>
+
   <input data-test="email-input" v-model="email" />
-  
+
   <div data-test="error-message" v-if="hasError">
     {{ errorMessage }}
   </div>
@@ -312,12 +312,12 @@ All interactive elements must have `data-test` attributes:
 ```typescript
 // Use ref() for primitive values
 const count = ref(0);
-const message = ref('Hello');
+const message = ref("Hello");
 
 // Use reactive() for objects needing deep reactivity
 const user = reactive({
-  name: 'John',
-  email: 'john@example.com'
+  name: "John",
+  email: "john@example.com",
 });
 
 // Use computed() for derived state
@@ -333,30 +333,30 @@ const largeDataset = shallowRef([]);
 
 ```typescript
 // stores/userStore.ts
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
 
-export const useUserStore = defineStore('user', () => {
+export const useUserStore = defineStore("user", () => {
   // State
   const currentUser = ref<User | null>(null);
-  
+
   // Getters
   const isAuthenticated = computed(() => currentUser.value !== null);
-  
+
   // Actions
   const setUser = (user: User) => {
     currentUser.value = user;
   };
-  
+
   const logout = () => {
     currentUser.value = null;
   };
-  
+
   return {
     currentUser,
     isAuthenticated,
     setUser,
-    logout
+    logout,
   };
 });
 ```
@@ -394,17 +394,17 @@ Follow RESTful principles:
 
 ```typescript
 // routes/teams.ts
-import { Router } from 'express';
-import { TeamController } from '../controllers/TeamController';
+import { Router } from "express";
+import { TeamController } from "../controllers/TeamController";
 
 const router = Router();
 const controller = new TeamController();
 
-router.get('/', controller.getAllTeams);
-router.get('/:id', controller.getTeamById);
-router.post('/', controller.createTeam);
-router.put('/:id', controller.updateTeam);
-router.delete('/:id', controller.deleteTeam);
+router.get("/", controller.getAllTeams);
+router.get("/:id", controller.getTeamById);
+router.post("/", controller.createTeam);
+router.put("/:id", controller.updateTeam);
+router.delete("/:id", controller.deleteTeam);
 
 export default router;
 ```
@@ -419,8 +419,8 @@ export class TeamController {
       const teams = await prisma.team.findMany();
       res.json({ data: teams });
     } catch (error) {
-      console.error('Error fetching teams:', error);
-      res.status(500).json({ error: 'Failed to fetch teams' });
+      console.error("Error fetching teams:", error);
+      res.status(500).json({ error: "Failed to fetch teams" });
     }
   }
 }
@@ -429,22 +429,26 @@ export class TeamController {
 ### Validation with Zod
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 // Define schema
 const createTeamSchema = z.object({
   name: z.string().min(3).max(50),
   description: z.string().optional(),
-  memberAddresses: z.array(z.string().regex(/^0x[a-fA-F0-9]{40}$/))
+  memberAddresses: z.array(z.string().regex(/^0x[a-fA-F0-9]{40}$/)),
 });
 
 // Validate request
-export const validateCreateTeam = (req: Request, res: Response, next: NextFunction) => {
+export const validateCreateTeam = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     createTeamSchema.parse(req.body);
     next();
   } catch (error) {
-    res.status(400).json({ error: 'Invalid request data', details: error });
+    res.status(400).json({ error: "Invalid request data", details: error });
   }
 };
 ```
@@ -455,21 +459,21 @@ export const validateCreateTeam = (req: Request, res: Response, next: NextFuncti
 // Good: Use transactions for multiple operations
 await prisma.$transaction([
   prisma.team.create({ data: teamData }),
-  prisma.member.createMany({ data: memberData })
+  prisma.member.createMany({ data: memberData }),
 ]);
 
 // Good: Use select to limit returned fields
 const user = await prisma.user.findUnique({
   where: { id },
-  select: { id: true, name: true, email: true }
+  select: { id: true, name: true, email: true },
 });
 
 // Good: Use proper error handling
 try {
   await prisma.team.create({ data });
 } catch (error) {
-  if (error.code === 'P2002') {
-    throw new Error('Team name already exists');
+  if (error.code === "P2002") {
+    throw new Error("Team name already exists");
   }
   throw error;
 }
@@ -494,37 +498,37 @@ contract MyContract is Ownable {
     // State variables
     uint256 public totalSupply;
     mapping(address => uint256) private balances;
-    
+
     // Events
     event Transfer(address indexed from, address indexed to, uint256 amount);
-    
+
     // Modifiers
     modifier validAddress(address _addr) {
         require(_addr != address(0), "Invalid address");
         _;
     }
-    
+
     // Functions (in order: constructor, external, public, internal, private)
-    
+
     constructor() Ownable(msg.sender) {
         totalSupply = 1000000;
     }
-    
+
     /**
      * @notice Transfer tokens
      * @param to Recipient address
      * @param amount Amount to transfer
      */
-    function transfer(address to, uint256 amount) 
-        external 
-        validAddress(to) 
-        returns (bool) 
+    function transfer(address to, uint256 amount)
+        external
+        validAddress(to)
+        returns (bool)
     {
         require(balances[msg.sender] >= amount, "Insufficient balance");
-        
+
         balances[msg.sender] -= amount;
         balances[to] += amount;
-        
+
         emit Transfer(msg.sender, to, amount);
         return true;
     }
@@ -549,12 +553,12 @@ import { ethers } from "hardhat";
 describe("MyContract", function () {
   it("Should transfer tokens correctly", async function () {
     const [owner, addr1] = await ethers.getSigners();
-    
+
     const Contract = await ethers.getContractFactory("MyContract");
     const contract = await Contract.deploy();
-    
+
     await contract.transfer(addr1.address, 100);
-    
+
     expect(await contract.balances(addr1.address)).to.equal(100);
   });
 });
@@ -584,29 +588,29 @@ src/
 ### Test Structure
 
 ```typescript
-describe('ComponentName', () => {
+describe("ComponentName", () => {
   let wrapper: ReturnType<typeof mount>;
-  
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
-  
+
   afterEach(() => {
     if (wrapper) wrapper.unmount();
   });
-  
-  describe('Rendering', () => {
-    it('should render with default props', () => {
+
+  describe("Rendering", () => {
+    it("should render with default props", () => {
       wrapper = mount(Component);
       expect(wrapper.exists()).toBe(true);
     });
   });
-  
-  describe('User Interactions', () => {
-    it('should emit event on button click', async () => {
+
+  describe("User Interactions", () => {
+    it("should emit event on button click", async () => {
       wrapper = mount(Component);
-      await wrapper.find('[data-test="button"]').trigger('click');
-      expect(wrapper.emitted('click')).toBeTruthy();
+      await wrapper.find('[data-test="button"]').trigger("click");
+      expect(wrapper.emitted("click")).toBeTruthy();
     });
   });
 });
@@ -625,15 +629,15 @@ describe('ComponentName', () => {
 ### Address Handling
 
 ```typescript
-import { isAddress, type Address } from 'viem';
+import { isAddress, type Address } from "viem";
 
 // Always validate addresses
 if (!isAddress(userInput)) {
-  throw new Error('Invalid Ethereum address');
+  throw new Error("Invalid Ethereum address");
 }
 
 // Use Address type from viem
-const recipientAddress: Address = '0x1234567890123456789012345678901234567890';
+const recipientAddress: Address = "0x1234567890123456789012345678901234567890";
 
 // Consistent formatting (lowercase for comparison)
 const normalized = address.toLowerCase();
@@ -642,14 +646,18 @@ const normalized = address.toLowerCase();
 ### Contract Interactions
 
 ```typescript
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue';
+import {
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "@wagmi/vue";
 
 // Reading contract state
 const { data: tokenSupport, isLoading } = useReadContract({
   address: contractAddress,
   abi: contractABI,
-  functionName: 'supportedTokens',
-  args: [tokenAddress]
+  functionName: "supportedTokens",
+  args: [tokenAddress],
 });
 
 // Writing to contract
@@ -660,17 +668,17 @@ const handleAddToken = async () => {
     await writeContract({
       address: contractAddress,
       abi: contractABI,
-      functionName: 'addTokenSupport',
-      args: [tokenAddress]
+      functionName: "addTokenSupport",
+      args: [tokenAddress],
     });
-    
+
     // Wait for confirmation
     const receipt = await useWaitForTransactionReceipt({ hash });
-    
-    addSuccessToast('Token added successfully');
+
+    addSuccessToast("Token added successfully");
   } catch (error) {
-    console.error('Error adding token:', error);
-    addErrorToast('Failed to add token');
+    console.error("Error adding token:", error);
+    addErrorToast("Failed to add token");
   }
 };
 ```
@@ -680,17 +688,17 @@ const handleAddToken = async () => {
 ```typescript
 // Comprehensive blockchain error handling
 try {
-  await writeContract({ /* ... */ });
+  await writeContract({/* ... */});
 } catch (error: any) {
-  if (error.message.includes('User rejected')) {
-    addErrorToast('Transaction was cancelled');
-  } else if (error.message.includes('insufficient funds')) {
-    addErrorToast('Insufficient funds for transaction');
-  } else if (error.message.includes('network')) {
-    addErrorToast('Network error. Please try again');
+  if (error.message.includes("User rejected")) {
+    addErrorToast("Transaction was cancelled");
+  } else if (error.message.includes("insufficient funds")) {
+    addErrorToast("Insufficient funds for transaction");
+  } else if (error.message.includes("network")) {
+    addErrorToast("Network error. Please try again");
   } else {
-    console.error('Blockchain error:', error);
-    addErrorToast('Transaction failed. Please try again');
+    console.error("Blockchain error:", error);
+    addErrorToast("Transaction failed. Please try again");
   }
 }
 ```
@@ -708,7 +716,7 @@ const addressSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/);
 export const validateUser = z.object({
   email: z.string().email(),
   address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  name: z.string().min(2).max(50)
+  name: z.string().min(2).max(50),
 });
 ```
 
@@ -781,19 +789,19 @@ const users = await prisma.user.findMany({
   select: { id: true, name: true }, // Only fetch needed fields
   take: 10, // Limit results
   skip: offset, // Pagination
-  where: { active: true } // Filter in database
+  where: { active: true }, // Filter in database
 });
 
 // Caching
-import { Redis } from 'ioredis';
+import { Redis } from "ioredis";
 const redis = new Redis();
 
 const getCachedUser = async (id: string) => {
   const cached = await redis.get(`user:${id}`);
   if (cached) return JSON.parse(cached);
-  
+
   const user = await prisma.user.findUnique({ where: { id } });
-  await redis.set(`user:${id}`, JSON.stringify(user), 'EX', 3600);
+  await redis.set(`user:${id}`, JSON.stringify(user), "EX", 3600);
   return user;
 };
 ```
@@ -842,14 +850,14 @@ See [performance.md](./performance.md) for detailed performance standards.
 
 ### Code Documentation
 
-```typescript
+````typescript
 /**
  * Calculates the total amount including tax
- * 
+ *
  * @param amount - The base amount before tax
  * @param taxRate - Tax rate as decimal (e.g., 0.1 for 10%)
  * @returns The total amount including tax
- * 
+ *
  * @example
  * ```typescript
  * const total = calculateWithTax(100, 0.1);
@@ -859,7 +867,7 @@ See [performance.md](./performance.md) for detailed performance standards.
 function calculateWithTax(amount: number, taxRate: number): number {
   return amount * (1 + taxRate);
 }
-```
+````
 
 ### Component Documentation
 
@@ -949,7 +957,8 @@ Before committing code:
 
 ### Review Checklist
 
-See [review-checklist.md](../../.github/copilot-instructions/review-checklist.md) for comprehensive checklist.
+See [review-checklist.md](../../.github/copilot-instructions/review-checklist.md) for comprehensive
+checklist.
 
 ## Tools and Configuration
 
@@ -1054,7 +1063,9 @@ If you believe a standard should be modified or need an exception:
 
 ---
 
-**Remember**: These standards exist to maintain code quality, readability, and maintainability. They make collaboration easier and reduce technical debt. When in doubt, follow the standards. When standards are unclear, ask the team.
+**Remember**: These standards exist to maintain code quality, readability, and maintainability. They
+make collaboration easier and reduce technical debt. When in doubt, follow the standards. When
+standards are unclear, ask the team.
 
 ---
 

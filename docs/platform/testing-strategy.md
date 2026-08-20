@@ -7,7 +7,8 @@
 
 ## Testing Philosophy
 
-The CNC Portal follows a comprehensive testing strategy prioritizing behavior-driven testing over implementation details. All features should have proper test coverage before deployment.
+The CNC Portal follows a comprehensive testing strategy prioritizing behavior-driven testing over
+implementation details. All features should have proper test coverage before deployment.
 
 ## Testing Framework Stack
 
@@ -32,12 +33,12 @@ The CNC Portal follows a comprehensive testing strategy prioritizing behavior-dr
 
 ### Minimum Coverage Targets
 
-| Type | Target |
-|------|--------|
-| Unit Tests | 90% line coverage |
-| Component Tests | 85% line coverage |
-| Integration Tests | 70% line coverage |
-| E2E Tests | Critical user flows only |
+| Type              | Target                   |
+| ----------------- | ------------------------ |
+| Unit Tests        | 90% line coverage        |
+| Component Tests   | 85% line coverage        |
+| Integration Tests | 70% line coverage        |
+| E2E Tests         | Critical user flows only |
 
 ### Required Test Areas
 
@@ -85,23 +86,23 @@ src/
 **Test Structure:**
 
 ```typescript
-describe('ComponentName', () => {
-  describe('Component Rendering', () => {
+describe("ComponentName", () => {
+  describe("Component Rendering", () => {
     // Basic rendering tests
-  })
+  });
 
-  describe('User Interactions', () => {
+  describe("User Interactions", () => {
     // Click, keyboard, form interactions
-  })
+  });
 
-  describe('State Management', () => {
+  describe("State Management", () => {
     // Props, emits, reactive state
-  })
+  });
 
-  describe('Error Handling', () => {
+  describe("Error Handling", () => {
     // Error scenarios and fallbacks
-  })
-})
+  });
+});
 ```
 
 ## Testing Principles
@@ -110,30 +111,32 @@ describe('ComponentName', () => {
 
 ```typescript
 // ✅ Good: Testing user-visible behavior
-expect(wrapper.find('[data-test="display-value"]').text()).toBe('Expected Value')
+expect(wrapper.find('[data-test="display-value"]').text()).toBe(
+  "Expected Value",
+);
 
 // ❌ Bad: Testing internal state
-expect(wrapper.vm.internalValue).toBe('expected')
+expect(wrapper.vm.internalValue).toBe("expected");
 ```
 
 ### 2. Use Data-Test Attributes
 
 ```typescript
 // ✅ Good: Stable test attributes
-wrapper.find('[data-test="submit-button"]')
+wrapper.find('[data-test="submit-button"]');
 
 // ❌ Bad: Fragile selectors
-wrapper.find('.btn-primary')
+wrapper.find(".btn-primary");
 ```
 
 ### 3. Descriptive Test Names
 
 ```typescript
 // ✅ Good: Specific behavior descriptions
-it('should emit update:modelValue when option is selected', () => {})
+it("should emit update:modelValue when option is selected", () => {});
 
 // ❌ Bad: Generic descriptions
-it('works correctly', () => {})
+it("works correctly", () => {});
 ```
 
 ### 4. Single Responsibility Per Test
@@ -221,12 +224,10 @@ Each test should verify one specific behavior or outcome.
 ```typescript
 // Constants for reusable test data
 const MOCK_DATA = {
-  validAddress: '0x1234567890123456789012345678901234567890',
-  invalidAddress: 'invalid-address',
-  users: [
-    { id: 1, name: 'John Doe', address: '0x123...' }
-  ]
-} as const
+  validAddress: "0x1234567890123456789012345678901234567890",
+  invalidAddress: "invalid-address",
+  users: [{ id: 1, name: "John Doe", address: "0x123..." }],
+} as const;
 ```
 
 ### Test Selectors
@@ -235,8 +236,8 @@ const MOCK_DATA = {
 // Centralized selectors
 const SELECTORS = {
   trigger: '[data-test="component-trigger"]',
-  submitBtn: '[data-test="submit-btn"]'
-} as const
+  submitBtn: '[data-test="submit-btn"]',
+} as const;
 ```
 
 ## Performance Testing

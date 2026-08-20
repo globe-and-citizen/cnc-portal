@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { nextTick, type ComponentPublicInstance } from 'vue'
 import type { User } from '@/types'
+import { mockUseChainId } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
 
 interface AddSignerModalInstance extends ComponentPublicInstance {
@@ -24,19 +25,10 @@ interface AddSignerModalInstance extends ComponentPublicInstance {
   handleAddSigners(): Promise<void>
 }
 
-const { mockChainId, mockUpdateOwnersMutate, mockUpdateOwnersPending } = vi.hoisted(() => ({
-  mockChainId: { value: 137 },
+const { mockUpdateOwnersMutate, mockUpdateOwnersPending } = vi.hoisted(() => ({
   mockUpdateOwnersMutate: vi.fn(),
   mockUpdateOwnersPending: { value: false }
 }))
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@wagmi/vue')>()
-  return {
-    ...actual,
-    useChainId: vi.fn(() => mockChainId)
-  }
-})
 
 vi.mock('@/queries/safe.mutations', () => ({
   useUpdateSafeOwnersMutation: () => ({
@@ -79,6 +71,7 @@ const createWrapper = (props = {}): VueWrapper<AddSignerModalInstance> =>
 describe('AddSignerModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseChainId.value = 137
     mockUpdateOwnersPending.value = false
     mockUpdateOwnersMutate.mockImplementation(() => undefined)
   })

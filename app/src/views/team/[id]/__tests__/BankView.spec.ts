@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
@@ -6,14 +6,6 @@ import type { ComponentPublicInstance } from 'vue'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 import BankView from '../Accounts/BankView.vue'
-
-vi.mock('@/stores', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useTeamStore: vi.fn(() => mockTeamStore)
-  }
-})
 
 describe('BankView', () => {
   let wrapper: VueWrapper<ComponentPublicInstance & typeof BankView>

@@ -2,7 +2,9 @@
 
 ## Overview
 
-This guide explains how to integrate and use the Statistics API in the Nuxt Dashboard application. It covers the composable usage, component implementation, and best practices for displaying statistics.
+This guide explains how to integrate and use the Statistics API in the Nuxt Dashboard application.
+It covers the composable usage, component implementation, and best practices for displaying
+statistics.
 
 ## Architecture
 
@@ -24,21 +26,21 @@ All statistics types are defined in `/dashboard/app/types/index.d.ts`:
 
 ```typescript
 // Period type for time-based filtering
-export type StatsPeriod = '7d' | '30d' | '90d' | 'all'
+export type StatsPeriod = "7d" | "30d" | "90d" | "all";
 
 // Main overview statistics
 export interface StatsOverview {
-  totalTeams: number
-  activeTeams: number
-  totalMembers: number
-  totalClaims: number
+  totalTeams: number;
+  activeTeams: number;
+  totalMembers: number;
+  totalClaims: number;
   // ... other fields
   growthMetrics: {
-    teamsGrowth: number
-    membersGrowth: number
-    claimsGrowth: number
-  }
-  period: string
+    teamsGrowth: number;
+    membersGrowth: number;
+    claimsGrowth: number;
+  };
+  period: string;
 }
 
 // Similar interfaces for other stat types:
@@ -47,7 +49,8 @@ export interface StatsOverview {
 
 ### 2. The useStats Composable
 
-The `useStats` composable (`/dashboard/app/composables/useStats.ts`) provides a clean API for fetching statistics:
+The `useStats` composable (`/dashboard/app/composables/useStats.ts`) provides a clean API for
+fetching statistics:
 
 ```typescript
 const {
@@ -62,8 +65,8 @@ const {
   getContractsStats,
   getActionsStats,
   getRecentActivity,
-  refreshAllStats
-} = useStats()
+  refreshAllStats,
+} = useStats();
 ```
 
 #### Key Features
@@ -77,16 +80,16 @@ const {
 
 ```typescript
 // Fetch overview statistics
-const overview = await getOverviewStats('30d', teamId)
+const overview = await getOverviewStats("30d", teamId);
 
 // Fetch team statistics with pagination
-const teams = await getTeamsStats('7d', 1, 10)
+const teams = await getTeamsStats("7d", 1, 10);
 
 // Fetch recent activity
-const activity = await getRecentActivity(50, teamId)
+const activity = await getRecentActivity(50, teamId);
 
 // Refresh all stats at once
-const allStats = await refreshAllStats('90d')
+const allStats = await refreshAllStats("90d");
 ```
 
 ### 3. Component Integration
@@ -95,37 +98,33 @@ const allStats = await refreshAllStats('90d')
 
 ```vue
 <script setup lang="ts">
-import type { StatsPeriod } from '~/types'
+import type { StatsPeriod } from "~/types";
 
-const { getOverviewStats, isLoading, error } = useStats()
+const { getOverviewStats, isLoading, error } = useStats();
 
-const selectedPeriod = ref<StatsPeriod>('30d')
+const selectedPeriod = ref<StatsPeriod>("30d");
 
 // Fetch data with useAsyncData for SSR compatibility
 const { data: stats, refresh } = await useAsyncData(
-  'overview-stats',
+  "overview-stats",
   () => getOverviewStats(selectedPeriod.value),
-  { watch: [selectedPeriod] }
-)
+  { watch: [selectedPeriod] },
+);
 
 // Manual refresh handler
 const handleRefresh = async () => {
-  await refresh()
-}
+  await refresh();
+};
 </script>
 
 <template>
   <div>
     <!-- Loading state -->
     <USkeleton v-if="isLoading" class="h-32 w-full" />
-    
+
     <!-- Error state -->
-    <UAlert
-      v-else-if="error"
-      color="error"
-      :description="error.message"
-    />
-    
+    <UAlert v-else-if="error" color="error" :description="error.message" />
+
     <!-- Data display -->
     <div v-else-if="stats">
       <p>Total Teams: {{ stats.totalTeams }}</p>
@@ -139,16 +138,16 @@ const handleRefresh = async () => {
 
 ```vue
 <script setup lang="ts">
-import type { StatsPeriod } from '~/types'
+import type { StatsPeriod } from "~/types";
 
-const selectedPeriod = defineModel<StatsPeriod>({ default: '30d' })
+const selectedPeriod = defineModel<StatsPeriod>({ default: "30d" });
 
 const periodOptions = [
-  { label: 'Last 7 Days', value: '7d' as StatsPeriod },
-  { label: 'Last 30 Days', value: '30d' as StatsPeriod },
-  { label: 'Last 90 Days', value: '90d' as StatsPeriod },
-  { label: 'All Time', value: 'all' as StatsPeriod }
-]
+  { label: "Last 7 Days", value: "7d" as StatsPeriod },
+  { label: "Last 30 Days", value: "30d" as StatsPeriod },
+  { label: "Last 90 Days", value: "90d" as StatsPeriod },
+  { label: "All Time", value: "all" as StatsPeriod },
+];
 </script>
 
 <template>
@@ -169,35 +168,35 @@ The home page displays 4 key metrics using the overview stats:
 
 ```vue
 <script setup lang="ts">
-const { getOverviewStats } = useStats()
+const { getOverviewStats } = useStats();
 
 // Map UI period to API period format
 const apiPeriod = computed<StatsPeriod>(() => {
   const periodMap: Record<Period, StatsPeriod> = {
-    daily: '7d',
-    weekly: '30d',
-    monthly: '90d'
-  }
-  return periodMap[props.period] || '30d'
-})
+    daily: "7d",
+    weekly: "30d",
+    monthly: "90d",
+  };
+  return periodMap[props.period] || "30d";
+});
 
 const { data: stats } = await useAsyncData(
-  'home-stats',
+  "home-stats",
   async () => {
-    const overviewData = await getOverviewStats(apiPeriod.value)
-    
+    const overviewData = await getOverviewStats(apiPeriod.value);
+
     return [
       {
-        title: 'Teams',
-        icon: 'i-lucide-users',
+        title: "Teams",
+        icon: "i-lucide-users",
         value: formatNumber(overviewData.totalTeams),
-        variation: overviewData.growthMetrics.teamsGrowth
+        variation: overviewData.growthMetrics.teamsGrowth,
       },
       // ... other metrics
-    ]
+    ];
   },
-  { watch: [apiPeriod] }
-)
+  { watch: [apiPeriod] },
+);
 </script>
 ```
 
@@ -207,21 +206,21 @@ Full-featured statistics dashboard with tabs:
 
 ```vue
 <script setup lang="ts">
-const selectedPeriod = ref<StatsPeriod>('30d')
-const selectedTab = ref(0)
+const selectedPeriod = ref<StatsPeriod>("30d");
+const selectedTab = ref(0);
 
 // Fetch all stat types
 const { data: overviewData } = await useAsyncData(
-  'stats-overview',
+  "stats-overview",
   () => getOverviewStats(selectedPeriod.value),
-  { watch: [selectedPeriod] }
-)
+  { watch: [selectedPeriod] },
+);
 
 const { data: teamsData } = await useAsyncData(
-  'stats-teams',
+  "stats-teams",
   () => getTeamsStats(selectedPeriod.value, 1, 10),
-  { watch: [selectedPeriod] }
-)
+  { watch: [selectedPeriod] },
+);
 
 // ... other stat types
 </script>
@@ -231,7 +230,7 @@ const { data: teamsData } = await useAsyncData(
     <!-- Period selector and refresh button -->
     <USelectMenu v-model="selectedPeriod" :options="periodOptions" />
     <UButton @click="refreshAll">Refresh</UButton>
-    
+
     <!-- Tabbed interface -->
     <UTabs v-model="selectedTab" :items="tabs">
       <StatsOverviewSection :data="overviewData" :is-loading="isLoading" />
@@ -282,19 +281,17 @@ Always handle loading and error states:
 <template>
   <!-- Loading -->
   <USkeleton v-if="pending" />
-  
+
   <!-- Error -->
   <UAlert v-else-if="error" color="error" :description="error.message" />
-  
+
   <!-- Data -->
   <div v-else-if="data">
     <!-- Display data -->
   </div>
-  
+
   <!-- Empty state -->
-  <div v-else>
-    No data available
-  </div>
+  <div v-else>No data available</div>
 </template>
 ```
 
@@ -303,12 +300,14 @@ Always handle loading and error states:
 Use consistent formatting utilities:
 
 ```typescript
-const formatNumber = (value: number) => value?.toLocaleString('en-US') || '0'
-const formatPercent = (value: number) => `${value >= 0 ? '+' : ''}${value?.toFixed(1) || 0}%`
-const formatCurrency = (value: number) => value?.toLocaleString('en-US', {
-  style: 'currency',
-  currency: 'USD'
-}) || '$0'
+const formatNumber = (value: number) => value?.toLocaleString("en-US") || "0";
+const formatPercent = (value: number) =>
+  `${value >= 0 ? "+" : ""}${value?.toFixed(1) || 0}%`;
+const formatCurrency = (value: number) =>
+  value?.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  }) || "$0";
 ```
 
 ### 3. Performance Optimization
@@ -316,17 +315,17 @@ const formatCurrency = (value: number) => value?.toLocaleString('en-US', {
 ```typescript
 // Use watch for reactive updates
 const { data } = await useAsyncData(
-  'unique-key',
+  "unique-key",
   () => getStats(period.value),
   {
-    watch: [period],  // Auto-refresh when period changes
-    lazy: true,       // Don't block initial render
-    server: false     // Client-side only (if SSR not needed)
-  }
-)
+    watch: [period], // Auto-refresh when period changes
+    lazy: true, // Don't block initial render
+    server: false, // Client-side only (if SSR not needed)
+  },
+);
 
 // Debounce rapid changes
-const debouncedPeriod = refDebounced(selectedPeriod, 300)
+const debouncedPeriod = refDebounced(selectedPeriod, 300);
 ```
 
 ### 4. Authentication
@@ -334,10 +333,10 @@ const debouncedPeriod = refDebounced(selectedPeriod, 300)
 The composable automatically handles authentication:
 
 ```typescript
-const token = authStore.getToken()
+const token = authStore.getToken();
 if (!token) {
-  error.value = { message: 'Authentication required', code: 'AUTH_REQUIRED' }
-  return null
+  error.value = { message: "Authentication required", code: "AUTH_REQUIRED" };
+  return null;
 }
 ```
 
@@ -347,10 +346,10 @@ Always use proper types:
 
 ```typescript
 // ✅ Good
-const stats = ref<StatsOverview | null>(null)
+const stats = ref<StatsOverview | null>(null);
 
 // ❌ Bad
-const stats = ref<any>(null)
+const stats = ref<any>(null);
 ```
 
 ## Extending the Stats Feature
@@ -361,35 +360,37 @@ const stats = ref<any>(null)
 
 ```typescript
 export interface NewStatType {
-  total: number
-  active: number
-  period: string
+  total: number;
+  active: number;
+  period: string;
 }
 ```
 
 2. **Add composable function** in `composables/useStats.ts`:
 
 ```typescript
-const getNewStats = async (period: StatsPeriod = '30d'): Promise<NewStatType | null> => {
-  return await fetchStats<NewStatType>('/new-stats', { period })
-}
+const getNewStats = async (
+  period: StatsPeriod = "30d",
+): Promise<NewStatType | null> => {
+  return await fetchStats<NewStatType>("/new-stats", { period });
+};
 
 return {
   // ... existing functions
-  getNewStats
-}
+  getNewStats,
+};
 ```
 
 3. **Create section component** in `components/stats/`:
 
 ```vue
 <script setup lang="ts">
-import type { NewStatType } from '~/types'
+import type { NewStatType } from "~/types";
 
 defineProps<{
-  data: NewStatType | null | undefined
-  isLoading: boolean
-}>()
+  data: NewStatType | null | undefined;
+  isLoading: boolean;
+}>();
 </script>
 
 <template>
@@ -402,11 +403,8 @@ defineProps<{
 4. **Add to stats page**:
 
 ```vue
-const { data: newStats } = await useAsyncData(
-  'stats-new',
-  () => getNewStats(selectedPeriod.value),
-  { watch: [selectedPeriod] }
-)
+const { data: newStats } = await useAsyncData( 'stats-new', () =>
+getNewStats(selectedPeriod.value), { watch: [selectedPeriod] } )
 ```
 
 ### Adding Charts/Visualizations
@@ -421,15 +419,17 @@ Example implementation:
 
 ```vue
 <script setup lang="ts">
-import { Line } from 'vue-chartjs'
+import { Line } from "vue-chartjs";
 
 const chartData = computed(() => ({
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-  datasets: [{
-    label: 'Claims',
-    data: [12, 19, 3, 5, 2]
-  }]
-}))
+  labels: ["Jan", "Feb", "Mar", "Apr", "May"],
+  datasets: [
+    {
+      label: "Claims",
+      data: [12, 19, 3, 5, 2],
+    },
+  ],
+}));
 </script>
 
 <template>
@@ -446,9 +446,9 @@ const chartData = computed(() => ({
 **Solution**: Ensure user is authenticated and token is valid:
 
 ```typescript
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 if (!authStore.isAuthenticated) {
-  navigateTo('/login')
+  navigateTo("/login");
 }
 ```
 
@@ -461,7 +461,7 @@ if (!authStore.isAuthenticated) {
 ```typescript
 runtimeConfig: {
   public: {
-    backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+    backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
   }
 }
 ```
@@ -474,7 +474,7 @@ runtimeConfig: {
 
 ```typescript
 // Use optional chaining for nested properties
-const growth = data?.growthMetrics?.teamsGrowth ?? 0
+const growth = data?.growthMetrics?.teamsGrowth ?? 0;
 ```
 
 ### Data Not Updating
@@ -485,10 +485,10 @@ const growth = data?.growthMetrics?.teamsGrowth ?? 0
 
 ```typescript
 const { data } = await useAsyncData(
-  'stats-key',
+  "stats-key",
   () => getStats(period.value),
-  { watch: [period] }  // Must include watched refs
-)
+  { watch: [period] }, // Must include watched refs
+);
 ```
 
 ## Testing
@@ -496,12 +496,12 @@ const { data } = await useAsyncData(
 ### Component Testing
 
 ```typescript
-import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
-import StatsOverviewSection from './StatsOverviewSection.vue'
+import { mount } from "@vue/test-utils";
+import { describe, it, expect, vi } from "vitest";
+import StatsOverviewSection from "./StatsOverviewSection.vue";
 
-describe('StatsOverviewSection', () => {
-  it('should display stats when data is provided', () => {
+describe("StatsOverviewSection", () => {
+  it("should display stats when data is provided", () => {
     const wrapper = mount(StatsOverviewSection, {
       props: {
         data: {
@@ -509,25 +509,25 @@ describe('StatsOverviewSection', () => {
           activeTeams: 32,
           // ... other fields
         },
-        isLoading: false
-      }
-    })
-    
-    expect(wrapper.text()).toContain('45')
-    expect(wrapper.text()).toContain('32')
-  })
-  
-  it('should show loading state', () => {
+        isLoading: false,
+      },
+    });
+
+    expect(wrapper.text()).toContain("45");
+    expect(wrapper.text()).toContain("32");
+  });
+
+  it("should show loading state", () => {
     const wrapper = mount(StatsOverviewSection, {
       props: {
         data: null,
-        isLoading: true
-      }
-    })
-    
-    expect(wrapper.findComponent({ name: 'USkeleton' }).exists()).toBe(true)
-  })
-})
+        isLoading: true,
+      },
+    });
+
+    expect(wrapper.findComponent({ name: "USkeleton" }).exists()).toBe(true);
+  });
+});
 ```
 
 ## Resources

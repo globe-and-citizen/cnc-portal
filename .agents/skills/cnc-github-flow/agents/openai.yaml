@@ -1,0 +1,4 @@
+interface:
+  display_name: "CNC GitHub Flow"
+  short_description: "Create, link, review, and publish CNC GitHub work."
+  default_prompt: "Use $cnc-github-flow to handle this CNC Portal issue and PR workflow."

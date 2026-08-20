@@ -1,25 +1,36 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { ref } from 'vue'
+import { nextTick, ref, toValue } from 'vue'
 import { readContract, estimateGas } from '@wagmi/core'
 import { recoverTypedDataAddress } from 'viem'
 import TransferAction from '../TransferAction.vue'
-import { mockExpenseAccountWrites, mockERC20Writes } from '@/tests/mocks'
+import {
+  mockERC20Writes,
+  mockExpenseAccountWrites,
+  mockGetTokens,
+  mockTeamStore
+} from '@/tests/mocks'
 
-vi.mock('@/utils', () => ({
-  log: { error: vi.fn() },
-  parseError: vi.fn(() => 'Parsed error:'),
-  getTokens: vi.fn(() => [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }])
-}))
+const DEFAULT_TOKENS = [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }]
+
+// `classifyError` is left un-mocked so these tests assert the message the user
+// actually sees, rather than a stand-in string.
+// Kept as a spy so a test can assert *what* the balance query was keyed on:
+// the address arrives with the team query, so the argument has to stay a live
+// source rather than a value read once during setup.
+const contractBalanceState = {
+  data: ref<{ balances: unknown[]; total: undefined } | undefined>({
+    balances: [],
+    total: undefined
+  }),
+  isLoading: ref(false),
+  error: ref<Error | null>(null)
+}
+const useContractBalanceSpy = vi.fn(() => contractBalanceState)
 
 vi.mock('@/composables', () => ({
-  useContractBalance: () => ({ balances: ref({}) })
-}))
-
-vi.mock('@wagmi/core', () => ({
-  readContract: vi.fn(),
-  estimateGas: vi.fn()
+  useContractBalance: (address: unknown) => useContractBalanceSpy(address)
 }))
 
 const MockTransferForm = {
@@ -86,52 +97,101 @@ describe('TransferAction.vue', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    mockGetTokens.mockReturnValue(DEFAULT_TOKENS)
+    contractBalanceState.isLoading.value = false
+    contractBalanceState.error.value = null
     vi.mocked(estimateGas).mockResolvedValue(21000n)
     vi.mocked(recoverTypedDataAddress).mockResolvedValue(OWNER_ADDRESS)
   })
 
-  it('invokes transfer when ERC20 allowance is sufficient', async () => {
-    vi.mocked(readContract)
-      .mockResolvedValueOnce(OWNER_ADDRESS)
-      .mockResolvedValueOnce(BigInt(200 * 1e6))
+  describe('contract balance', () => {
+    const openModal = async (wrapper: VueWrapper) => {
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await flushPromises()
+    }
+
+    it('keys the balance query on a live address, not one read at setup', async () => {
+      // The address comes from the team query, which routinely resolves after
+      // this row has mounted. Passing `ref(store.getContractAddressByType(...))`
+      // froze `undefined` in place, leaving the query disabled forever: no
+      // balance, a spendable balance of 0, and no transfer form. The ref here
+      // stands in for the query data the real store reads.
+      const teamAddress = ref<string | undefined>(undefined)
+      mockTeamStore.getContractAddressByType = vi.fn(() => teamAddress.value)
+      createComponent()
+
+      const [addressSource] = useContractBalanceSpy.mock.calls[0]!
+      expect(toValue(addressSource)).toBeUndefined()
+
+      teamAddress.value = CURRENT_EXPENSE_ACCOUNT
+      await nextTick()
+
+      expect(toValue(addressSource)).toBe(CURRENT_EXPENSE_ACCOUNT)
+    })
+
+    it('explains itself while the balance is still loading', async () => {
+      mockGetTokens.mockReturnValue([])
+      contractBalanceState.isLoading.value = true
+
+      const wrapper = createComponent()
+      await openModal(wrapper)
+
+      expect(wrapper.find('[data-test="balance-loading"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="transfer-form"]').exists()).toBe(false)
+    })
+
+    it('reports a failed balance read instead of an empty dialog', async () => {
+      mockGetTokens.mockReturnValue([])
+      contractBalanceState.error.value = new Error('rpc down')
+
+      const wrapper = createComponent()
+      await openModal(wrapper)
+
+      expect(wrapper.find('[data-test="balance-error"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="transfer-form"]').exists()).toBe(false)
+    })
+
+    it('labels the spendable balance with the expense token symbol', async () => {
+      // The symbol used to come from the empty form model, so the dialog opened
+      // on a bare, unitless number.
+      const wrapper = createComponent()
+      await openModal(wrapper)
+
+      expect(wrapper.findComponent({ name: 'UModal' }).props('description')).toBe(
+        'Spendable balance: 100 USDC'
+      )
+    })
+
+    it('omits the balance label entirely when there is no token to describe', async () => {
+      mockGetTokens.mockReturnValue([])
+      contractBalanceState.isLoading.value = true
+
+      const wrapper = createComponent()
+      await openModal(wrapper)
+
+      expect(wrapper.findComponent({ name: 'UModal' }).props('description')).toBeUndefined()
+    })
+  })
+
+  // `ExpenseAccountEIP712.transfer` spends the contract's own token balance, so
+  // the member's allowance is irrelevant: no allowance read, no approval.
+  it('transfers ERC20 without reading an allowance or requesting an approval', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
 
     const wrapper = createComponent()
-    await submitTransfer(wrapper)
+    await submitTransfer(wrapper, { to: '0xRecipient', amount: '1' })
 
     expect(approve.mutate).not.toHaveBeenCalled()
-    expect(transfer.mutate).toHaveBeenCalled()
-  })
-
-  it('approves then transfers when allowance is insufficient', async () => {
-    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS).mockResolvedValueOnce(0n)
-    approve.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
-      opts?.onSuccess?.()
-    })
-
-    const wrapper = createComponent()
-    await submitTransfer(wrapper)
-
-    expect(approve.mutate).toHaveBeenCalled()
-    expect(transfer.mutate).toHaveBeenCalled()
-  })
-
-  it('shows approve error in the alert and skips the transfer', async () => {
-    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS).mockResolvedValueOnce(0n)
-    approve.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
-      opts?.onError?.(new Error('approve failed'))
-    })
-
-    const wrapper = createComponent()
-    await submitTransfer(wrapper)
-
-    expect(transfer.mutate).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Failed to approve token spending')
+    // The only on-chain read is the owner lookup used to verify the signature.
+    expect(readContract).toHaveBeenCalledTimes(1)
+    expect(transfer.mutate).toHaveBeenCalledWith(
+      { args: ['0xRecipient', BigInt(1e6), expect.anything(), '0xSignature'] },
+      expect.anything()
+    )
   })
 
   it('shows transfer error in the alert', async () => {
-    vi.mocked(readContract)
-      .mockResolvedValueOnce(OWNER_ADDRESS)
-      .mockResolvedValueOnce(BigInt(200 * 1e6))
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
     transfer.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
       opts?.onError?.(new Error('transfer failed'))
     })
@@ -139,7 +199,7 @@ describe('TransferAction.vue', () => {
     const wrapper = createComponent()
     await submitTransfer(wrapper)
 
-    expect(wrapper.text()).toContain('Failed to transfer')
+    expect(wrapper.text()).toContain('transfer failed')
   })
 
   it('estimates gas then transfers a native deposit', async () => {
@@ -152,9 +212,7 @@ describe('TransferAction.vue', () => {
   })
 
   it('closes the modal when the transfer mutation resolves', async () => {
-    vi.mocked(readContract)
-      .mockResolvedValueOnce(OWNER_ADDRESS)
-      .mockResolvedValueOnce(BigInt(200 * 1e6))
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
     transfer.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) =>
       opts?.onSuccess?.()
     )
@@ -165,26 +223,24 @@ describe('TransferAction.vue', () => {
     expect(wrapper.find('[data-test="transfer-form"]').exists()).toBe(false)
   })
 
-  it('shows the parsed error when estimateGas rejects on native transfer', async () => {
+  it('shows the classified error when estimateGas rejects on native transfer', async () => {
     vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
     vi.mocked(estimateGas).mockRejectedValueOnce(new Error('insufficient funds'))
     const wrapper = createComponent(NATIVE_BUDGET)
     await submitTransfer(wrapper)
 
     expect(transfer.mutate).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Parsed error:')
+    expect(wrapper.text()).toContain('insufficient funds')
   })
 
-  it('surfaces "Failed to read allowance" when readContract rejects', async () => {
-    vi.mocked(readContract)
-      .mockResolvedValueOnce(OWNER_ADDRESS)
-      .mockRejectedValueOnce(new Error('rpc error'))
+  it('surfaces a verification failure when the owner lookup rejects', async () => {
+    vi.mocked(readContract).mockRejectedValueOnce(new Error('rpc error'))
     const wrapper = createComponent()
     await submitTransfer(wrapper)
 
     expect(transfer.mutate).not.toHaveBeenCalled()
     expect(approve.mutate).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Failed to read allowance')
+    expect(wrapper.text()).toContain('Failed to verify expense approval signature')
   })
 
   it('blocks transfers when the approval was signed for another expense account', async () => {

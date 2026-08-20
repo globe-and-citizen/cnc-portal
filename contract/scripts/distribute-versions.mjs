@@ -73,6 +73,10 @@ for (const v of folders) {
       n++
     }
   }
+  // The backend also needs the raw addresses: resolving a team's on-chain
+  // Officer FactoryBeacon back to a generation means matching the beacon
+  // address, and the registry only stores the module *reference*.
+  copy(srcAddr, join(REPO, BACKEND, 'deployed_addresses', v, 'chain-137.json'))
   console.log(`  ${v}: ${abiFiles.length} abi -> app/dashboard/ponder, ${n} -> backend`)
 }
 

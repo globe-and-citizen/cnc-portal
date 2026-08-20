@@ -76,6 +76,15 @@ function toScreamingSnakeCase(name: string): string {
     .toUpperCase();
 }
 
+function isEventAbiEntry(entry: unknown): boolean {
+  return (
+    typeof entry === "object" &&
+    entry !== null &&
+    "type" in entry &&
+    entry.type === "event"
+  );
+}
+
 function formatValue(val: unknown, indent: number): string {
   const pad = "  ".repeat(indent);
   if (val === null) return "null";
@@ -106,7 +115,7 @@ function generateFile(
   eventsOnly: boolean,
 ): string {
   const exportName = `${toScreamingSnakeCase(contractName)}_ABI`;
-  const entries = eventsOnly ? abi.filter((e: any) => e.type === "event") : abi;
+  const entries = eventsOnly ? abi.filter(isEventAbiEntry) : abi;
 
   const items = entries
     .map((entry) => `  ${formatValue(entry, 1)}`)
@@ -145,7 +154,7 @@ for (const file of jsonFiles) {
   }
 
   const abi = JSON.parse(readFileSync(join(ABIS_JSON_DIR, file), "utf8"));
-  const entries = eventsOnly ? abi.filter((e: any) => e.type === "event") : abi;
+  const entries = eventsOnly ? abi.filter(isEventAbiEntry) : abi;
 
   if (entries.length === 0) {
     console.log(

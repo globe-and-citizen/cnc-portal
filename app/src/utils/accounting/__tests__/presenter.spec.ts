@@ -1,12 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import type { Address } from 'viem'
-import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
 import {
   money,
   fmtDate,
   fmtDateTime,
-  presentSummaryCards,
-  presentBanner,
   presentIncome,
   presentBalance,
   presentTrial,
@@ -18,68 +14,10 @@ import {
 } from '@/utils/accounting/presenter'
 import { presentLedger, categoryOf } from '@/utils/accounting/ledgerPresenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import { USDC_ADDRESS } from '@/constant'
-import { ADDR } from './fixtures'
+import { sampleBooks } from './fixtures'
 
-/** A small live book: a $100 client deposit and a $30 expense payout. */
-function books(): CncAccounting {
-  return assembleCncAccounting({
-    contracts: [
-      { type: 'Bank', address: ADDR.bank as Address, deployer: ADDR.bank as Address, admins: [] },
-      {
-        type: 'ExpenseAccountEIP712',
-        address: ADDR.expense as Address,
-        deployer: ADDR.bank as Address,
-        admins: []
-      }
-    ],
-    bankEvents: {
-      bankDeposits: { items: [] },
-      bankTokenDeposits: {
-        items: [
-          {
-            id: 'bd1',
-            contractAddress: ADDR.bank,
-            depositor: ADDR.client,
-            token: USDC_ADDRESS,
-            amount: '100000000', // 100 USDC, ts 100
-            timestamp: 100
-          }
-        ]
-      },
-      bankTransfers: { items: [] },
-      bankTokenTransfers: { items: [] },
-      bankDividendDistributionTriggereds: { items: [] },
-      bankFeePaids: { items: [] },
-      bankOwnershipTransferreds: { items: [] },
-      rawContractTokenTransfers: { items: [] }
-    },
-    expenseEvents: {
-      expenseDeposits: { items: [] },
-      expenseTokenDeposits: { items: [] },
-      expenseTransfers: { items: [] },
-      expenseTokenTransfers: {
-        items: [
-          {
-            id: 'et1',
-            contractAddress: ADDR.expense,
-            withdrawer: ADDR.expense,
-            to: ADDR.member,
-            token: USDC_ADDRESS,
-            amount: '30000000', // 30 USDC, ts 200
-            timestamp: 200
-          }
-        ]
-      },
-      expenseApprovals: { items: [] },
-      expenseOwnerTreasuryWithdrawNatives: { items: [] },
-      expenseOwnerTreasuryWithdrawTokens: { items: [] },
-      expenseTokenSupportAddeds: { items: [] },
-      expenseTokenSupportRemoveds: { items: [] },
-      expenseTokenAddressChangeds: { items: [] }
-    }
-  })
-}
+/** The shared live book: a $100 client deposit and a $30 expense payout. */
+const books = sampleBooks
 
 describe('formatters', () => {
   it('money formats USD with two decimals', () => {
@@ -91,7 +29,7 @@ describe('formatters', () => {
     expect(money(-0)).toBe('$0.00') // never "$-0.00"
     expect(money(-0.004)).toBe('$0.00') // rounds to zero, no stray minus sign
     expect(money(-0.002 + -0.002)).toBe('$0.00') // sub-cent residue stays clean
-    expect(money(-0.01)).toBe('$-0.01') // a real cent still reads negative
+    expect(money(-0.01)).toBe('-$0.01') // a real cent still reads negative
   })
 
   it('fmtDate renders a unix-seconds timestamp', () => {
@@ -102,43 +40,6 @@ describe('formatters', () => {
     const out = fmtDateTime(Math.floor(Date.parse('2026-03-01T14:05:32Z') / 1000))
     expect(out).toContain('2026')
     expect(out).toMatch(/\d{2}:\d{2}:\d{2}/) // HH:mm:ss present
-  })
-})
-
-describe('presentSummaryCards / presentBanner', () => {
-  const acc = books()
-
-  it('derives the metric cards from the live roll-up', () => {
-    const cards = presentSummaryCards(acc.summary, acc.incomeStatement, acc.balanceSheet)
-    expect(cards.map((c) => c.label)).toEqual([
-      'Net income',
-      'Total revenue',
-      'Total expenses',
-      'Total transaction fees',
-      'Total assets',
-      'Total equity'
-    ])
-    expect(cards.find((c) => c.label === 'Total revenue')?.value).toBe('$100.00')
-    expect(cards.find((c) => c.label === 'Total expenses')?.value).toBe('$30.00')
-    expect(cards.find((c) => c.label === 'Total transaction fees')?.value).toBe(
-      money(acc.summary.transactionFees)
-    )
-  })
-
-  it('reports the balanced banner with the live identity figures', () => {
-    const banner = presentBanner(acc.balanceSheet, acc.generalLedger)
-    expect(banner.balanced).toBe(true)
-    expect(banner.identity).toContain('=')
-    expect(banner.trial).toMatch(/Dr .* = Cr/)
-  })
-
-  it('identity string foots exactly: Assets = Liabilities + Equity, to the cent', () => {
-    const banner = presentBanner(acc.balanceSheet, acc.generalLedger)
-    // Parse "$A = $L + $E" and assert L + E === A on the *displayed* cents.
-    const cents = (s: string): number => Math.round(parseFloat(s.replace(/[$,]/g, '')) * 100)
-    const [lhs, rhs] = banner.identity.split(' = ')
-    const [liab, equity] = rhs.split(' + ')
-    expect(cents(liab) + cents(equity)).toBe(cents(lhs))
   })
 })
 

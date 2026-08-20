@@ -72,7 +72,10 @@ describe('CashOutAllAction', () => {
   })
 
   it('disables the button when every account is empty', () => {
-    mockUseContractBalance.total.value = {}
+    mockUseContractBalance.total.value = {
+      usd: { value: 0, formatted: '$0' },
+      local: { value: 0, formatted: '$0' }
+    }
     expect(createWrapper().get(BUTTON).attributes('disabled')).toBeDefined()
   })
 

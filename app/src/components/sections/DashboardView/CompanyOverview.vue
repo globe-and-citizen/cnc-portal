@@ -129,6 +129,7 @@ import { computed } from 'vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import CashOutAllAction from '@/components/sections/DashboardView/CashOutAllAction.vue'
 import type { Address } from 'viem'
+import { formatCurrency } from '@/utils/format'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
@@ -145,8 +146,6 @@ const safeBalance = useContractBalance(safeAddress as unknown as Address)
 const expenseBalance = useContractBalance(expenseAddress as unknown as Address)
 const cashRemBalance = useContractBalance(cashRemAddress as unknown as Address)
 
-const currencyCode = computed(() => currencyStore.localCurrency.code)
-
 const isLoadingBalances = computed(
   () =>
     bankBalance.isLoading.value ||
@@ -156,11 +155,11 @@ const isLoadingBalances = computed(
 )
 
 function getFormattedTotal(balance: ReturnType<typeof useContractBalance>) {
-  return balance.total.value[currencyCode.value]?.formated ?? '$0.00'
+  return balance.data.value?.total.local.formatted ?? '$0.00'
 }
 
 function getRawTotal(balance: ReturnType<typeof useContractBalance>) {
-  return balance.total.value[currencyCode.value]?.value ?? 0
+  return balance.data.value?.total.local.value ?? 0
 }
 
 const totalBalance = computed(() => {
@@ -169,8 +168,7 @@ const totalBalance = computed(() => {
     getRawTotal(safeBalance) +
     getRawTotal(expenseBalance) +
     getRawTotal(cashRemBalance)
-  const symbol = currencyStore.localCurrency.symbol
-  return `${symbol}${sum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatCurrency(sum, { currency: currencyStore.localCurrency.code })
 })
 
 const accountBalances = computed(() => {

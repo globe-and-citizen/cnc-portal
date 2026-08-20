@@ -1,6 +1,16 @@
 <template>
   <UCard data-test="action-alerts">
     <div class="flex flex-col gap-4">
+      <!-- Upcoming rate change: shown to the member so the switch is not a surprise -->
+      <UAlert
+        v-if="memberAddress === userStore.address && scheduledWageNotice"
+        color="info"
+        variant="subtle"
+        icon="i-heroicons-calendar"
+        data-test="scheduled-wage-alert"
+        :description="`${scheduledWageNotice}. Weeks before that date keep your current rate.`"
+      />
+
       <!-- Submit Claims Alert (for member's own view) -->
       <UAlert
         v-if="memberAddress === userStore.address"
@@ -16,6 +26,8 @@
               :weekly-claim="weeklyClaim"
               :signed-week-starts="signedWeekStarts"
               :selected-week-start="selectedWeekStart"
+              :maximum-hours-per-day="userWage?.maximumHoursPerDay"
+              :existing-claims="weeklyClaim?.claims"
             />
             <SubmitWeeklyGoals
               :weekly-claim="weeklyClaim"
@@ -106,6 +118,8 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 import type { Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
+import { formatScheduledWageNotice } from '@/utils/wageUtil'
+import { useScheduledWageRefresh } from '@/composables/useScheduledWageRefresh'
 import type { WeeklyClaim } from '@/types'
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import SubmitWeeklyGoals from '../CashRemunerationView/SubmitWeeklyGoals.vue'
@@ -138,12 +152,26 @@ const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
   }
 })
 
-const hasWage = computed(() => {
-  const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)
-  if (!userWage) return false
+const userWage = computed(() =>
+  teamWageData.value?.find((wage) => wage.userAddress === userStore.address)
+)
 
-  return true
+const hasWage = computed(() => !!userWage.value)
+
+const scheduledWage = computed(() => userWage.value?.scheduledWage ?? null)
+
+const scheduledWageNotice = computed(() => {
+  const effectiveFrom = scheduledWage.value?.effectiveFrom
+  if (!effectiveFrom) return null
+  if (!dayjs.utc(props.selectedWeekStart).isBefore(dayjs.utc(effectiveFrom))) return null
+
+  return formatScheduledWageNotice(scheduledWage.value)
 })
+
+useScheduledWageRefresh(
+  scheduledWage,
+  computed(() => teamStore.currentTeamId)
+)
 
 watch(teamWageDataError, (newVal) => {
   if (newVal) {

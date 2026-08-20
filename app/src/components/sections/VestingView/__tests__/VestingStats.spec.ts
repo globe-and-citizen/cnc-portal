@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { type VueWrapper } from '@vue/test-utils'
-import { renderWithProviders } from '@/tests/mocks'
+import { mockInvestorReads, mockVestingReads, renderWithProviders } from '@/tests/mocks'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mock the module
@@ -26,68 +26,7 @@ import { ref } from 'vue'
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
-const mockSymbol = ref<string>('shr')
 const mockReloadKey = ref<number>(0)
-// Mocks — reads return a 3-tuple [members, indices, infos]; a member appears
-// once per schedule.
-const mockVestingInfos = ref<[string[], bigint[], { totalAmount: number; released: number }[]]>([
-  [memberAddress],
-  [0n],
-  [
-    {
-      totalAmount: 0,
-      released: 0
-    }
-  ]
-])
-
-const refetchVestingInfos = vi.fn()
-
-const mockArchivedInfos = ref([[], [], []])
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: vi.fn(() => ({
-    data: mockSymbol,
-    error: ref(null),
-    refetch: vi.fn()
-  }))
-}))
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
-      if (functionName === 'getVestingsWithMembers') {
-        return {
-          data: mockVestingInfos,
-          error: ref(null),
-          refetch: refetchVestingInfos
-        }
-      }
-      if (functionName === 'getAllArchivedVestingsFlat') {
-        return {
-          data: mockArchivedInfos,
-          error: ref(null),
-          refetch: vi.fn()
-        }
-      }
-      if (functionName === 'symbol') {
-        return {
-          data: mockSymbol,
-          error: ref(null),
-          refetch: vi.fn()
-        }
-      }
-      return {
-        data: ref('TST'),
-        error: ref(null),
-        refetch: vi.fn()
-      }
-    })
-  }
-})
-
 // Test suite
 describe('VestingStats.vue', () => {
   let wrapper: VueWrapper
@@ -102,12 +41,19 @@ describe('VestingStats.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockInvestorReads.symbol.data.value = 'shr'
+    mockVestingReads.vestingsWithMembers.data.value = [
+      [memberAddress],
+      [0n],
+      [{ totalAmount: 0, released: 0 }]
+    ]
+    mockVestingReads.archivedVestingsFlat.data.value = [[], [], []]
     wrapper = mountComponent()
   })
 
   it('calculates token summary correctly from vestings data', async () => {
     // Setup mock data with two schedules for the same member (one per index).
-    mockVestingInfos.value = [
+    mockVestingReads.vestingsWithMembers.data.value = [
       [memberAddress, memberAddress],
       [0n, 1n],
       [
@@ -132,14 +78,14 @@ describe('VestingStats.vue', () => {
     }>
     expect(tableData).toHaveLength(1) // Should have one row per token symbol
     expect(tableData[0]).toMatchObject({
-      symbol: mockSymbol.value,
+      symbol: mockInvestorReads.symbol.data.value,
       totalPromised: 150,
       totalReleased: 30
     })
   })
 
   it('handles empty vestings array', () => {
-    mockVestingInfos.value = [[], [], []]
+    mockVestingReads.vestingsWithMembers.data.value = [[], [], []]
     wrapper = mountComponent()
 
     const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<unknown>
@@ -147,8 +93,8 @@ describe('VestingStats.vue', () => {
   })
 
   it('displays formatted token amounts with symbols', async () => {
-    mockSymbol.value = 'TEST'
-    mockVestingInfos.value = [
+    mockInvestorReads.symbol.data.value = 'TEST'
+    mockVestingReads.vestingsWithMembers.data.value = [
       [memberAddress],
       [0n],
       [

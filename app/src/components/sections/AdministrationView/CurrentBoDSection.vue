@@ -8,7 +8,7 @@
       <div
         v-for="(memberAddress, index) in _boardOfDirectors"
         :key="index"
-        class="to-emarald-50 mt-4 overflow-hidden rounded-xl bg-linear-to-t from-emerald-100 shadow-xs transition-all hover:shadow-md"
+        class="overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-t from-emerald-100 to-emerald-50 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
       >
         <UserComponentCol
           :user="
@@ -29,15 +29,14 @@
   </UCard>
 </template>
 <script setup lang="ts">
-import { BOD_ABI } from '@/artifacts/abi/bod'
+import { boardOfDirectorsAbi, electionsAbi } from '@/artifacts/abi/generated'
 import UserComponentCol from '@/components/UserComponent.vue'
 import CurrentBoDSection404 from './CurrentBoDSection404.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import { computed, watch } from 'vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 
 const props = defineProps<{
   electionId?: bigint
@@ -48,11 +47,14 @@ const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDir
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 const { data: boardOfDirectors, isFetching } = useReadContract({
-  address: bodAddress.value,
-  abi: BOD_ABI,
+  // Ref, not `.value`: on a page reload the team contracts land after setup
+  // has already run, and a frozen `undefined` address never recovers.
+  address: bodAddress,
+  abi: boardOfDirectorsAbi,
   functionName: 'getBoardOfDirectors',
   args: [],
-  scopeKey: 'boardOfDirectors'
+  scopeKey: 'boardOfDirectors',
+  query: { enabled: computed(() => !!bodAddress.value) }
 })
 
 const normalizedBoardOfDirectors = computed<string[]>(() =>
@@ -60,13 +62,14 @@ const normalizedBoardOfDirectors = computed<string[]>(() =>
     ? boardOfDirectors.value.filter((member): member is string => typeof member === 'string')
     : []
 )
+const winnersArgs = computed(() => [BigInt(props.electionId || 0)] as const)
 const { data: electionWinners, error: errorGetElectionWinners } = useReadContract({
-  address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  address: electionsAddress,
+  abi: electionsAbi,
   functionName: 'getElectionWinners',
-  args: [BigInt(props.electionId || 0)], // Assuming 0 is the current election ID, adjust as necessary
+  args: winnersArgs,
   //scopeKey: 'electionWinners'
-  query: { enabled: computed(() => !!props.electionId) }
+  query: { enabled: computed(() => !!props.electionId && !!electionsAddress.value) }
 })
 
 const _boardOfDirectors = computed(() => {
@@ -79,7 +82,7 @@ const _boardOfDirectors = computed(() => {
 
 watch(errorGetElectionWinners, (error) => {
   if (error) {
-    log.error('Error fetching election winners: ', parseError(error))
+    log.error('Error fetching election winners: ', error)
   }
 })
 </script>

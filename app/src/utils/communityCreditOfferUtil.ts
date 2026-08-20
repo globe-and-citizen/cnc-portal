@@ -26,7 +26,6 @@ dayjs.extend(utc)
  *  above 30 for that unit) — the closest thing this codebase has to a deliberate,
  *  previously-agreed answer to "how long should a round be allowed to run." */
 export const CREDIT_TERM_MAX_YEARS = 30
-export const CREDIT_TERM_MAX_DAYS = CREDIT_TERM_MAX_YEARS * 365
 
 const CREDIT_TERM_UNIT_TO_DAYJS: Record<CreditTermUnit, dayjs.ManipulateType> = {
   minutes: 'minute',
@@ -49,7 +48,7 @@ const CREDIT_TERM_UNIT_APPROX_DAYS: Record<CreditTermUnit, number> = {
 /** A generous ceiling well inside the ECMAScript `Date` range (valid roughly
  *  ±100,000,000 days from the epoch) even after accounting for the anchor deadline's
  *  own offset from the epoch. Any custom entry beyond this is already many orders of
- *  magnitude past FixedReturn's own term cap (`CREDIT_TERM_MAX_DAYS`), so clamping
+ *  magnitude past FixedReturn's own term cap (`CREDIT_TERM_MAX_YEARS`), so clamping
  *  loses no meaningful information — it only guards against dayjs silently producing
  *  an Invalid Date for a wildly out-of-range entry (e.g. "100000000" days, almost
  *  exactly that boundary), which would otherwise propagate as NaN through every

@@ -4,9 +4,13 @@ import type { CalendarDate, DateValue } from '@internationalized/date'
 import { z } from 'zod'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
 import type { ClaimFormData } from '@/types'
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
+import { formatDateIso } from '@/utils/format'
 
 dayjs.extend(utc)
+dayjs.extend(isoWeek)
 
 export interface ClaimFormFileData {
   fileName?: string
@@ -23,6 +27,11 @@ interface UseClaimFormToast {
   }) => void
 }
 
+export interface DailyClaimEntry {
+  minutesWorked: number
+  dayWorked: string
+}
+
 interface UseClaimFormOptions {
   initialData: Ref<Partial<ClaimFormData> | undefined>
   existingFiles: Ref<Partial<ClaimFormFileData>[] | null | undefined>
@@ -30,6 +39,8 @@ interface UseClaimFormOptions {
   restrictSubmit: Ref<boolean>
   toast: UseClaimFormToast
   maxFiles?: number
+  maximumHoursPerDay?: Ref<number | undefined>
+  existingClaims?: Ref<DailyClaimEntry[] | undefined>
 }
 
 export type CalendarSelectionValue =
@@ -66,44 +77,86 @@ export const formatUTC = (value: Date | string | null | undefined): string => {
     const year = value.getFullYear()
     const month = value.getMonth()
     const day = value.getDate()
-    return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
+    return `${formatDateIso(dayjs.utc(Date.UTC(year, month, day)))} UTC`
   }
-  return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
+  return `${formatDateIso(dayjs.utc(value))} UTC`
 }
 
-const claimSchema = z
-  .object({
-    hoursWorked: z
-      .union([z.string(), z.number()])
-      .refine((val) => String(val).trim() !== '', { message: 'Hours is required' })
-      .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' })
-      .refine((val) => Number(val) >= 0, { message: 'Hours cannot be negative' })
-      .refine((val) => Number(val) <= 24, { message: 'Cannot exceed 24 hours' })
-      .refine((val) => Number.isInteger(Number(val)), { message: 'Hours must be a whole number' }),
-    minutesWorked: z
-      .union([z.string(), z.number()])
-      .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' }),
-    memo: z.string().min(1, 'Memo is required').max(3000, 'Memo must not exceed 3000 characters'),
-    dayWorked: z.string().min(1, 'Date is required')
-  })
-  .refine((data) => [0, 10, 20, 30, 40, 50].includes(Number(data.minutesWorked)), {
-    message: 'Minutes must be 0, 10, 20, 30, 40, or 50',
-    path: ['hoursWorked']
-  })
-  .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) > 0, {
-    message: 'Duration must be greater than 0',
-    path: ['hoursWorked']
-  })
-  .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) <= 1440, {
-    message: 'Total duration cannot exceed 24 hours (1440 minutes)',
-    path: ['hoursWorked']
-  })
+const alreadyClaimedForDay = (claims: DailyClaimEntry[], dayWorked: string): number =>
+  claims.filter((c) => c.dayWorked === dayWorked).reduce((sum, c) => sum + c.minutesWorked, 0)
+
+const formatMinutes = (minutes: number): string => {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m > 0 ? `${h}h${m}min` : `${h}h`
+}
+
+const buildClaimSchema = (dailyCap?: number, existingClaims?: DailyClaimEntry[]) => {
+  // Wages created before the daily-cap column existed carry no value; fall back to the
+  // same default the server applies so both sides accept exactly the same claims.
+  const hasCap = typeof dailyCap === 'number' && dailyCap > 0
+  const effectiveCap = hasCap ? dailyCap : DEFAULT_MAXIMUM_HOURS_PER_DAY
+  const maxMinutes = effectiveCap * 60
+
+  return z
+    .object({
+      hoursWorked: z
+        .union([z.string(), z.number()])
+        .refine((val) => String(val).trim() !== '', { message: 'Hours is required' })
+        .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' })
+        .refine((val) => Number(val) >= 0, { message: 'Hours cannot be negative' })
+        .refine((val) => Number(val) <= effectiveCap, {
+          message: `Cannot exceed ${effectiveCap} hours`
+        })
+        .refine((val) => Number.isInteger(Number(val)), {
+          message: 'Hours must be a whole number'
+        }),
+      minutesWorked: z
+        .union([z.string(), z.number()])
+        .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' }),
+      memo: z.string().min(1, 'Memo is required').max(3000, 'Memo must not exceed 3000 characters'),
+      dayWorked: z.string().min(1, 'Date is required')
+    })
+    .refine((data) => [0, 10, 20, 30, 40, 50].includes(Number(data.minutesWorked)), {
+      message: 'Minutes must be 0, 10, 20, 30, 40, or 50',
+      path: ['hoursWorked']
+    })
+    .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) > 0, {
+      message: 'Duration must be greater than 0',
+      path: ['hoursWorked']
+    })
+    .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) <= maxMinutes, {
+      message: `Cannot exceed daily cap of ${effectiveCap} hours`,
+      path: ['hoursWorked']
+    })
+    .superRefine((data, ctx) => {
+      if (!existingClaims?.length) return
+      const inputMinutes = Number(data.hoursWorked) * 60 + Number(data.minutesWorked)
+      const claimed = alreadyClaimedForDay(existingClaims, data.dayWorked)
+      if (inputMinutes + claimed <= maxMinutes) return
+
+      const remaining = Math.max(0, maxMinutes - claimed)
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          `Daily limit would be exceeded. ` +
+          `Allowance: ${formatMinutes(maxMinutes)}. ` +
+          `Already claimed: ${formatMinutes(claimed)}. ` +
+          `Remaining: ${formatMinutes(remaining)}.`,
+        path: ['hoursWorked']
+      })
+    })
+}
 
 export function useClaimForm(options: UseClaimFormOptions) {
   const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES
   const uploadedFiles = ref<File[]>([])
   const datePickerOpen = ref(false)
   const minutesOptions = ['0', '10', '20', '30', '40', '50']
+
+  const claimSchema = computed(() =>
+    buildClaimSchema(options.maximumHoursPerDay?.value, options.existingClaims?.value)
+  )
 
   const formData = ref<ClaimFormData>(createDefaultFormData(options.initialData.value))
 
@@ -159,9 +212,9 @@ export function useClaimForm(options: UseClaimFormOptions) {
       const today = dayjs.utc().startOf('day')
 
       const disabledWeekKeys = (options.disabledWeekStarts.value ?? []).map((w) =>
-        dayjs.utc(w).startOf('isoWeek').format('YYYY-MM-DD')
+        formatDateIso(dayjs.utc(w).startOf('isoWeek'))
       )
-      const dateWeekKey = d.startOf('isoWeek').format('YYYY-MM-DD')
+      const dateWeekKey = formatDateIso(d.startOf('isoWeek'))
 
       if (disabledWeekKeys.includes(dateWeekKey)) return true
 

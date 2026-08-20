@@ -7,6 +7,7 @@
       :is-loading="isUpdating"
       :restrict-submit="isRestricted"
       :existing-files="existingFiles"
+      :maximum-hours-per-day="props.claim.wage?.maximumHoursPerDay"
       :error-message="updateClaimErrorMessage"
       error-title="Failed to update claim"
       @submit="updateClaim"
@@ -23,7 +24,7 @@ import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
 const props = defineProps<{
   claim: Claim

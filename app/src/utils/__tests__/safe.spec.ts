@@ -57,7 +57,7 @@ describe('safe utils', () => {
   describe('formatSafeTransactionValue', () => {
     it('formats native value and placeholder branches', () => {
       expect(formatSafeTransactionValue(String(1_000_000_000_000_000_000n))).toBe(
-        `1.0000 ${NETWORK.currencySymbol}`
+        `1 ${NETWORK.currencySymbol}`
       )
       expect(
         formatSafeTransactionValue('0', {
@@ -65,7 +65,7 @@ describe('safe utils', () => {
           parameters: []
         } as never)
       ).toBe('...')
-      expect(formatSafeTransactionValue('0')).toBe(`0.0000 ${NETWORK.currencySymbol}`)
+      expect(formatSafeTransactionValue('0')).toBe(`0 ${NETWORK.currencySymbol}`)
     })
 
     it('formats known ERC20 transfer via token address', () => {
@@ -80,7 +80,7 @@ describe('safe utils', () => {
         } as never,
         USDC_ADDRESS
       )
-      expect(result).toBe('1.0000 USDC')
+      expect(result).toBe('1 USDC')
     })
 
     it('falls back to native symbol when token is unknown or invalid value', () => {
@@ -156,14 +156,14 @@ describe('safe utils', () => {
         value: '1000000',
         tokenInfo: { decimals: 6, symbol: 'USDC' }
       } as SafeIncomingTransfer)
-    ).toBe('1.0000 USDC')
+    ).toBe('1 USDC')
 
     expect(
       formatSafeTransferAmount({
         type: 'ETHER_TRANSFER',
         value: String(1_000_000_000_000_000_000n)
       } as SafeIncomingTransfer)
-    ).toBe(`1.000000 ${NETWORK.currencySymbol}`)
+    ).toBe(`1 ${NETWORK.currencySymbol}`)
 
     expect(formatSafeTransferType('ETHER_TRANSFER')).toBe(NETWORK.currencySymbol)
     expect(formatSafeTransferType('ERC20_TRANSFER')).toBe('ERC20')

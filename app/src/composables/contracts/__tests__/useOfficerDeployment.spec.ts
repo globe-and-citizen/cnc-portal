@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseEventLogs, type Address } from 'viem'
+import { BaseError, ContractFunctionRevertedError, parseEventLogs, type Address } from 'viem'
 import { getConnections } from '@wagmi/core'
 
 // Both `@wagmi/core` (incl. getConnections) and `parseEventLogs` are globally
@@ -20,7 +20,6 @@ import {
   useQueryClientFn,
   mockInvalidateQueries
 } from '@/tests/mocks/composables.mock'
-import { mockParseError } from '@/tests/mocks/utils.mock'
 
 const USER = '0x1234567890123456789012345678901234567890' as Address
 const OFFICER_PROXY = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as Address
@@ -202,10 +201,22 @@ describe('useInvalidateOfficerQueries', () => {
 })
 
 describe('formatDeployError', () => {
-  it('delegates to parseError with the factory beacon ABI', () => {
-    mockParseError.mockReturnValue('Parsed!')
-    const result = formatDeployError(new Error('boom'))
-    expect(result).toBe('Parsed!')
-    expect(mockParseError).toHaveBeenCalled()
+  it('surfaces the classified message for a plain error', () => {
+    expect(formatDeployError(new Error('boom'))).toBe('boom')
+  })
+
+  it('resolves an Officer revert through the error catalog', () => {
+    const inner = new ContractFunctionRevertedError({
+      abi: [],
+      data: `0x${'00'.repeat(4)}`,
+      functionName: 'deployAll'
+    })
+    ;(inner as unknown as { data: { errorName: string } }).data = {
+      errorName: 'OfficerAddressNotSet'
+    }
+
+    expect(formatDeployError(new BaseError('reverted', { cause: inner }))).toBe(
+      'Officer contract is not configured'
+    )
   })
 })

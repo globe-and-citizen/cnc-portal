@@ -92,8 +92,6 @@
         :disabled="loading"
         data-test="transferButton"
       >
-        <!-- {{ `Transfer${showFees ? ` ${totalToSend.toFixed(2)} ${model.token.symbol}` : ''}` }} -->
-
         {{
           `Transfer${showFees ? ` ${formatTransferAmount(totalToSend)} ${model.token.symbol}` : ''}`
         }}
@@ -206,7 +204,10 @@ const validationSchema = computed(() =>
         const amount = parseFloat(value)
         const bps = props.feeBps ?? 0
         const fee = bps > 0 ? (amount * bps) / (10000 - bps) : 0
-        return amount + fee <= (model.value.token.balance ?? 0)
+        // Same number `TokenAmount` shows as available: for an expense that is
+        // the remaining approved budget, which is lower than the raw holdings.
+        const available = model.value.token.spendableBalance ?? model.value.token.balance ?? 0
+        return amount + fee <= available
       }, 'Amount + fees exceed available balance')
   })
 )

@@ -1,25 +1,25 @@
 import { useMutation } from '@tanstack/vue-query'
 import { type Address, type Hex } from 'viem'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
+import { investorAbi } from '@/artifacts/abi/generated'
 import {
   executeContractWrite,
   type ExecuteContractWriteResult
 } from '@/composables/contracts/useContractWritesV3'
 
 export interface ClaimArgs {
-  investorV2Address: Address
+  investorAddress: Address
   amount: bigint
   proof: Hex[]
 }
 
 /**
- * Claim migrated shares on Investor v2 via Merkle proof.
+ * Claim migrated shares on the Investor contract via Merkle proof.
  * Called after migration root is set and shareholder has their proof.
  */
 export async function claimMigration(args: ClaimArgs) {
   const { receipt } = await executeContractWrite({
-    address: args.investorV2Address,
-    abi: INVESTOR_V2_ABI,
+    address: args.investorAddress,
+    abi: investorAbi,
     functionName: 'claim',
     args: [args.amount, args.proof]
   })

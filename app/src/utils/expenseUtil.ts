@@ -1,8 +1,39 @@
-import type { ExpenseResponse, TokenBalance, TokenOption } from '@/types'
+import type { BudgetLimit, ExpenseResponse, TokenBalance, TokenOption } from '@/types'
 import { tokenSymbol } from './constantUtil'
-import { zeroAddress } from 'viem'
+import { parseEther, zeroAddress } from 'viem'
 import type { TokenId } from '@/constant'
 import type { TableRow } from '@/types/table'
+
+/**
+ * EIP-712 struct definition of a budget limit. Must stay byte-for-byte in step
+ * with `BudgetLimit` in `ExpenseAccountEIP712.sol` — the field order is part of
+ * the type hash, so reordering here silently breaks signature recovery.
+ */
+export const budgetLimitTypes = {
+  BudgetLimit: [
+    { name: 'amount', type: 'uint256' },
+    { name: 'frequencyType', type: 'uint8' },
+    { name: 'customFrequency', type: 'uint256' },
+    { name: 'startDate', type: 'uint256' },
+    { name: 'endDate', type: 'uint256' },
+    { name: 'tokenAddress', type: 'address' },
+    { name: 'approvedAddress', type: 'address' }
+  ]
+} as const
+
+/** A budget limit in the units the contract expects: wei for native, 6-decimal for ERC-20. */
+export const buildContractBudgetLimit = (budgetLimit: BudgetLimit) => ({
+  amount:
+    budgetLimit.tokenAddress === zeroAddress
+      ? parseEther(`${budgetLimit.amount}`)
+      : BigInt(Number(budgetLimit.amount) * 1e6),
+  frequencyType: Number(budgetLimit.frequencyType),
+  customFrequency: BigInt(Number(budgetLimit.customFrequency)),
+  startDate: BigInt(Number(budgetLimit.startDate)),
+  endDate: BigInt(Number(budgetLimit.endDate)),
+  tokenAddress: budgetLimit.tokenAddress,
+  approvedAddress: budgetLimit.approvedAddress
+})
 
 // Frequency types mapping
 export const frequencyTypes = [
@@ -55,7 +86,7 @@ export const getTokens = (
           balance: Number(balance),
           spendableBalance: spendableBalance,
           tokenId: tokenId as TokenId,
-          price: balances.find((b) => b.token.id === tokenId)?.values['USD']?.price || 0,
+          price: balances.find((b) => b.token.id === tokenId)?.price.usd.value || 0,
           code: balances.find((b) => b.token.id === tokenId)?.token.code || ''
         }
       ]
@@ -67,18 +98,27 @@ const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
 }
 
 /**
- * Calculate remaining spendable balance for an expense
+ * Calculate remaining spendable balance for an expense.
+ *
+ * The cap is whichever runs out first: the budget the owner approved, or what
+ * the contract actually holds — an ERC-20 transfer pays from the contract's own
+ * balance, so a funded budget on an empty contract is not spendable.
+ *
  * @param expense The expense row data
- * @returns The remaining balance that can be spent, or null if no budget data found
+ * @param contractBalance Contract holdings of the expense's token
+ * @returns The remaining balance that can be spent, never negative
  */
 const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
-  const maxAmountData = expense.data.amount // budgetData.find((item) => item.budgetType === 1)?.value
-  const amountTransferred = expense.balances[1]
+  // Both are 0 on a never-used expense, and `balances` is absent on rows the
+  // backend short-circuits. Truthiness checks here read those as "no budget"
+  // and collapse the whole approval to 0 — coerce instead.
+  const maxAmount = Number(expense.data?.amount ?? 0)
+  const amountTransferred = Number(expense.balances?.[1] ?? 0)
 
-  // Calculate remaining spendable amount
   const remainingBudget =
-    maxAmountData && amountTransferred ? Number(maxAmountData) - Number(amountTransferred) : 0
+    Number.isFinite(maxAmount) && Number.isFinite(amountTransferred)
+      ? Math.max(maxAmount - amountTransferred, 0)
+      : 0
 
-  // Return the minimum between contract balance and remaining budget
   return Math.min(contractBalance, remainingBudget)
 }

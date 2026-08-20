@@ -4,7 +4,7 @@ import {
   createCreditCallTermsSchema,
   createRepayAmountSchema
 } from '../communityCredit.schemas'
-import { MINUTES_PER_DAY } from '@/utils'
+import { addCreditTerm, MINUTES_PER_DAY } from '@/utils'
 
 function baseTermsData(overrides: Record<string, unknown> = {}) {
   return {
@@ -19,24 +19,29 @@ function baseTermsData(overrides: Record<string, unknown> = {}) {
 describe('createCreditCallTermsSchema — term length cap', () => {
   const schema = createCreditCallTermsSchema({ today: '2026-01-01' })
 
+  // The cap is checked against the real calendar span for 30 years anchored on this
+  // deadline (2026-07-31 → 2056-07-31), not a flat `30 * 365` — that span includes 8
+  // leap days, so it's longer than a naive 10,950-day count. Computed the same way
+  // `addCreditTerm` resolves a "30" + Years custom entry in the wizard, so a real user
+  // typing "30" in the Years unit lands on exactly this boundary and passes.
+  const deadline = '2026-07-31'
+  const deadlineTime = '23:59'
+  const maxMinutes =
+    (addCreditTerm(deadline, deadlineTime, 30, 'years') -
+      addCreditTerm(deadline, deadlineTime, 0, 'years')) /
+    60
+
   it('passes at exactly the 30-year cap', () => {
-    const result = schema.safeParse(baseTermsData({ period: 30 * 365 * MINUTES_PER_DAY }))
+    const result = schema.safeParse(baseTermsData({ period: maxMinutes }))
     expect(result.success).toBe(true)
   })
 
   it('rejects one day over the cap with a calendar-breakdown message, not a bare minute count', () => {
-    const result = schema.safeParse(
-      baseTermsData({ period: 30 * 365 * MINUTES_PER_DAY + MINUTES_PER_DAY })
-    )
+    const result = schema.safeParse(baseTermsData({ period: maxMinutes + MINUTES_PER_DAY }))
     expect(result.success).toBe(false)
     if (result.success) return
     const issue = result.error.issues.find((i) => i.path[0] === 'period')
-    // 30*365 days from this deadline isn't quite 30 calendar years (leap years make a
-    // real 30-year span slightly longer than a flat 365-day/year multiply) — the
-    // message reflects the actual calendar breakdown, not a naive "30 years, 1 day".
-    expect(issue?.message).toBe(
-      'Term of 29 years, 11 months, 3 weeks, 3 days exceeds the 30-year maximum'
-    )
+    expect(issue?.message).toBe('Term of 30 years, 1 day exceeds the 30-year maximum')
   })
 })
 

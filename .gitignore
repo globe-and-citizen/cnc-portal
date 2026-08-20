@@ -60,3 +60,8 @@ scripts/
 
 # Local working todolist shared between dev and AI agents (never committed)
 /todolist.md
+
+# Accounting export artifacts dropped at the root of app/ when an export runs
+# outside a browser (jsPDF / the Excel writer fall back to the process cwd)
+/app/*.pdf
+/app/*.xlsx

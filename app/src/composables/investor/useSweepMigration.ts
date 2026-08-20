@@ -1,13 +1,13 @@
 import { useMutation } from '@tanstack/vue-query'
 import { type Address, type Hex } from 'viem'
-import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
+import { investorAbi } from '@/artifacts/abi/generated'
 import {
   executeContractWrite,
   type ExecuteContractWriteResult
 } from '@/composables/contracts/useContractWritesV3'
 
 export interface SweepArgs {
-  investorV2Address: Address
+  investorAddress: Address
   holders: Address[]
   amounts: bigint[]
   proofs: Hex[][]
@@ -19,8 +19,8 @@ export interface SweepArgs {
  */
 export async function sweepMigration(args: SweepArgs) {
   const { receipt } = await executeContractWrite({
-    address: args.investorV2Address,
-    abi: INVESTOR_V2_ABI,
+    address: args.investorAddress,
+    abi: investorAbi,
     functionName: 'bulkClaim',
     args: [args.holders, args.amounts, args.proofs]
   })
@@ -32,10 +32,10 @@ export async function sweepMigration(args: SweepArgs) {
  * Close the migration after the owner has dispatched the remaining claims.
  * Once closed, no further shareholder claim is accepted by the contract.
  */
-export async function completeMigration(investorV2Address: Address) {
+export async function completeMigration(investorAddress: Address) {
   const { receipt } = await executeContractWrite({
-    address: investorV2Address,
-    abi: INVESTOR_V2_ABI,
+    address: investorAddress,
+    abi: investorAbi,
     functionName: 'completeMigration',
     args: []
   })

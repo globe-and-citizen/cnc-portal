@@ -14,16 +14,6 @@ vi.mock('@/api/user.api', () => ({
 vi.mock('@/api/auth.api', () => ({
   siweAuth: vi.fn()
 }))
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    getConnection: vi.fn(),
-    connect: vi.fn(),
-    switchChain: vi.fn(),
-    signMessage: vi.fn()
-  }
-})
 import {
   useSiweMutation,
   WalletConnectRejectedError,

@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import dayjs from 'dayjs'
+import { formatDateShort } from '@/utils/format'
 import { useQuery } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import { formatUnits, isAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
-import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import { useFixedReturnAddress, useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
 import { useGetFixedReturnOfferingsQuery } from '@/queries/fixedReturnOffering.queries'
 import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
@@ -49,7 +49,7 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
     queryFn: () =>
       readContract(config, {
         address: fixedReturnAddress.value as Address,
-        abi: FIXED_RETURN_ABI,
+        abi: fixedReturnAbi,
         functionName: 'owner'
       }) as Promise<Address>,
     enabled: computed(() => !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value))
@@ -138,7 +138,7 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
       })
       .map((raw) => offerMaturityDate(raw.offer))
       .sort((a, b) => a.getTime() - b.getTime())[0]
-    return soonest ? dayjs(soonest).format('MMM D') : '—'
+    return soonest ? formatDateShort(soonest) : '—'
   })
 
   // ───────── team members eligible to lend (restricted-list picker) ─────────

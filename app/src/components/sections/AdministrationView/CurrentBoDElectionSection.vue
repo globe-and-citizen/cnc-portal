@@ -70,10 +70,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useTeamStore } from '@/stores'
 import type { OldProposal } from '@/types'
-import { log, parseError } from '@/utils'
+import { classifyError, log } from '@/utils'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from './ElectionActions.vue'
@@ -109,21 +108,20 @@ const createElection = async (electionData: OldProposal) => {
     }
 
     const dateToUnixTimestamp = (date: Date) => Math.floor(date.getTime() / 1000)
-    const dateNow = dateToUnixTimestamp(new Date())
 
+    // The dates come from the form as they were decided there — the opening a
+    // couple of minutes out, the closing at the hour the owner picked. Nothing
+    // is adjusted here: an election rewritten on the way to the chain is an
+    // election the owner never agreed to.
     const args = [
       electionData.title,
       electionData.description,
-      dateToUnixTimestamp(electionData.startDate as Date) < dateNow
-        ? dateNow + 60 // Start in 1 minute if start date is in the past
-        : dateToUnixTimestamp(electionData.startDate as Date),
-      dateToUnixTimestamp(electionData.startDate as Date) < dateNow
-        ? dateNow + 60 + 60 // End 1 minute after adjusted start time if start date is in the past
-        : dateToUnixTimestamp(electionData.endDate as Date),
-      electionData.winnerCount,
+      BigInt(dateToUnixTimestamp(electionData.startDate as Date)),
+      BigInt(dateToUnixTimestamp(electionData.endDate as Date)),
+      BigInt(electionData.winnerCount),
       electionData.candidates?.map((c) => c.candidateAddress) || [],
       teamStore.currentTeam?.members.map((m) => m.address) || []
-    ] as readonly unknown[]
+    ] as const
 
     await writeCreateElection({ args })
 
@@ -132,8 +130,10 @@ const createElection = async (electionData: OldProposal) => {
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
   } catch (error) {
-    createElectionError.value = parseError(error, ELECTIONS_ABI)
     log.error('creatingElection error:', error)
+    const classified = classifyError(error, { contract: 'Elections' })
+    if (classified.category === 'user_rejected') return
+    createElectionError.value = classified.userMessage
   }
 }
 

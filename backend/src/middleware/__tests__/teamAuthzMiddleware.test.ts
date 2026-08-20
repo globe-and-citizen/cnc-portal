@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { rejectIfArchived } from '../teamAuthzMiddleware';
+import { rejectIfArchived, requireTeamMember } from '../teamAuthzMiddleware';
 import { prisma } from '../../utils';
 
 vi.mock('../../utils', async () => {
@@ -10,6 +10,7 @@ vi.mock('../../utils', async () => {
     prisma: {
       team: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
       },
       claim: {
         findUnique: vi.fn(),
@@ -130,5 +131,99 @@ describe('rejectIfArchived', () => {
       select: { teamId: true },
     });
     expect(mockRes.status).toHaveBeenCalledWith(409);
+  });
+});
+
+describe('requireTeamMember', () => {
+  const CALLER = '0x1234567890123456789012345678901234567890';
+
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+  let mockNext: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockReq = { body: {}, query: {}, params: {}, address: CALLER } as Partial<Request>;
+    mockRes = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    mockNext = vi.fn();
+  });
+
+  it('calls next when the caller is a member (query.teamId)', async () => {
+    mockReq.query = { teamId: '1' };
+    vi.mocked(prisma.team.findFirst).mockResolvedValue({ id: 1 } as never);
+
+    await requireTeamMember('query.teamId')(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction
+    );
+
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockRes.status).not.toHaveBeenCalled();
+  });
+
+  // The weekly-claim route labels the location `params.weeklyClaimId` while the
+  // path parameter is `:id`, so the guard has to resolve the team through the
+  // claim row rather than reading a teamId straight off the request (#2471).
+  it('resolves teamId from params.weeklyClaimId and rejects a non-member', async () => {
+    mockReq.params = { id: '7' };
+    vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 4 } as never);
+    vi.mocked(prisma.team.findFirst).mockResolvedValue(null as never);
+
+    await requireTeamMember('params.weeklyClaimId')(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction
+    );
+
+    expect(prisma.weeklyClaim.findUnique).toHaveBeenCalledWith({
+      where: { id: 7 },
+      select: { teamId: true },
+    });
+    expect(prisma.team.findFirst).toHaveBeenCalledWith({
+      where: { id: 4, members: { some: { address: CALLER } } },
+      select: { id: true },
+    });
+    expect(mockRes.status).toHaveBeenCalledWith(403);
+    expect(mockRes.json).toHaveBeenCalledWith({ message: 'Caller is not a member of the team' });
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the weekly claim does not exist', async () => {
+    mockReq.params = { id: '7' };
+    vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue(null as never);
+
+    await requireTeamMember('params.weeklyClaimId')(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction
+    );
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('resolves the team only once when chained with rejectIfArchived', async () => {
+    mockReq.params = { id: '7' };
+    vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 4 } as never);
+    vi.mocked(prisma.team.findFirst).mockResolvedValue({ id: 4 } as never);
+    vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: false } as never);
+
+    await requireTeamMember('params.weeklyClaimId')(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction
+    );
+    await rejectIfArchived('params.weeklyClaimId')(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction
+    );
+
+    expect(mockNext).toHaveBeenCalledTimes(2);
+    expect(prisma.weeklyClaim.findUnique).toHaveBeenCalledTimes(1);
   });
 });

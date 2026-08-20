@@ -2,12 +2,11 @@ import { computed, unref, type MaybeRef, type MaybeRefOrGetter, toValue } from '
 import { useQuery } from '@tanstack/vue-query'
 import { useReadContract } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
-import { formatUnits, isAddress, type Address } from 'viem'
-import type { ExtractAbiFunctionNames } from 'abitype'
+import { formatUnits, isAddress, zeroAddress, type Address, type ContractFunctionName } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { config } from '@/wagmi.config'
-import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { decimalsForFixedReturnToken, log, parseError } from '@/utils'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
+import { decimalsForFixedReturnToken, log } from '@/utils'
 import type {
   FixedReturnLenderPosition,
   FixedReturnOfferLender,
@@ -15,7 +14,8 @@ import type {
   LendingOfferStruct
 } from '@/types'
 
-type FixedReturnFunctionNames = ExtractAbiFunctionNames<typeof FIXED_RETURN_ABI>
+/** View/pure names only — `useReadContract` rejects state-changing ones. */
+type FixedReturnReadNames = ContractFunctionName<typeof fixedReturnAbi, 'view' | 'pure'>
 
 /**
  * FixedReturn contract address helper
@@ -26,11 +26,11 @@ export function useFixedReturnAddress() {
 }
 
 /** Reads with no args beyond the contract's own address. */
-function useFixedReturnRead(functionName: FixedReturnFunctionNames) {
+function useFixedReturnRead(functionName: FixedReturnReadNames) {
   const fixedReturnAddress = useFixedReturnAddress()
   return useReadContract({
     address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
+    abi: fixedReturnAbi,
     functionName,
     query: {
       enabled: computed(() => !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value))
@@ -39,15 +39,12 @@ function useFixedReturnRead(functionName: FixedReturnFunctionNames) {
 }
 
 /** Reads taking a single offerId — no extra address to validate beyond the contract's own. */
-function useFixedReturnOfferRead(
-  functionName: FixedReturnFunctionNames,
-  offerId: MaybeRef<bigint>
-) {
+function useFixedReturnOfferRead(functionName: FixedReturnReadNames, offerId: MaybeRef<bigint>) {
   const fixedReturnAddress = useFixedReturnAddress()
   const offerIdValue = computed(() => unref(offerId))
   return useReadContract({
     address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
+    abi: fixedReturnAbi,
     functionName,
     args: [offerIdValue],
     query: {
@@ -58,7 +55,7 @@ function useFixedReturnOfferRead(
 
 /** Reads taking (offerId, lender) — gated on both the contract address and lender. */
 function useFixedReturnOfferLenderRead(
-  functionName: FixedReturnFunctionNames,
+  functionName: FixedReturnReadNames,
   offerId: MaybeRef<bigint>,
   lender: MaybeRef<Address>
 ) {
@@ -67,7 +64,7 @@ function useFixedReturnOfferLenderRead(
   const lenderValue = computed(() => unref(lender))
   return useReadContract({
     address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
+    abi: fixedReturnAbi,
     functionName,
     args: [offerIdValue, lenderValue],
     query: {
@@ -132,7 +129,7 @@ export function useFixedReturnIsTokenSupported(token: MaybeRef<Address>) {
   const tokenValue = computed(() => unref(token))
   return useReadContract({
     address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
+    abi: fixedReturnAbi,
     functionName: 'isTokenSupported',
     args: [tokenValue],
     query: {
@@ -152,8 +149,14 @@ export function useFixedReturnIsTokenSupported(token: MaybeRef<Address>) {
  * offer is read individually by id — so this is shared by every view that needs the
  * full list (OfferingsList, LenderMarketplace) rather than duplicated per-component.
  */
-export function useFixedReturnAllOffers() {
-  const fixedReturnAddress = useFixedReturnAddress()
+export function useFixedReturnAllOffers(address?: MaybeRefOrGetter<string | undefined>) {
+  // Defaults to the active team's contract; callers that resolve the team
+  // themselves (the accounting data layer) pass their own address instead of
+  // going through the store.
+  const fromStore = useFixedReturnAddress()
+  const fixedReturnAddress = computed(
+    () => (toValue(address) || fromStore.value || undefined) as Address | undefined
+  )
 
   async function fetchAllOffers(): Promise<FixedReturnRawOffer[]> {
     const address = fixedReturnAddress.value
@@ -162,7 +165,7 @@ export function useFixedReturnAllOffers() {
     try {
       const total = (await readContract(config, {
         address,
-        abi: FIXED_RETURN_ABI,
+        abi: fixedReturnAbi,
         functionName: 'getTotalOfferings'
       })) as bigint
 
@@ -174,18 +177,18 @@ export function useFixedReturnAllOffers() {
         try {
           const offer = (await readContract(config, {
             address,
-            abi: FIXED_RETURN_ABI,
+            abi: fixedReturnAbi,
             functionName: 'getLendingOffer',
             args: [BigInt(offerId)]
           })) as LendingOfferStruct
           offers.push({ offerId, offer, decimals: decimalsForFixedReturnToken(offer.token) ?? 6 })
         } catch (error) {
-          log.error(`Failed to fetch FixedReturn offer #${offerId}:`, parseError(error))
+          log.error(`Failed to fetch FixedReturn offer #${offerId}:`, error)
         }
       }
       return offers
     } catch (error) {
-      log.error('Failed to fetch FixedReturn offerings:', parseError(error))
+      log.error('Failed to fetch FixedReturn offerings:', error)
       return []
     }
   }
@@ -219,7 +222,7 @@ export function useFixedReturnOfferLenders(
     try {
       const lenderAddresses = (await readContract(config, {
         address,
-        abi: FIXED_RETURN_ABI,
+        abi: fixedReturnAbi,
         functionName: 'getOfferLenders',
         args: [offerIdValue]
       })) as Address[]
@@ -229,13 +232,13 @@ export function useFixedReturnOfferLenders(
           const [principal, expected] = await Promise.all([
             readContract(config, {
               address,
-              abi: FIXED_RETURN_ABI,
+              abi: fixedReturnAbi,
               functionName: 'getLenderDeposits',
               args: [offerIdValue, lender]
             }) as Promise<bigint>,
             readContract(config, {
               address,
-              abi: FIXED_RETURN_ABI,
+              abi: fixedReturnAbi,
               functionName: 'totalEntitlementOf',
               args: [offerIdValue, lender]
             }) as Promise<bigint>
@@ -248,15 +251,30 @@ export function useFixedReturnOfferLenders(
         })
       )
     } catch (error) {
-      log.error('Failed to fetch FixedReturn offer lenders:', parseError(error))
+      log.error('Failed to fetch FixedReturn offer lenders:', error)
       return []
     }
   }
 
+  // `token` starts out as `zeroAddress` (the caller's placeholder default) until the
+  // offer itself resolves and reveals the real token. `zeroAddress` isn't merely
+  // "unknown" to decimalsForFixedReturnToken() — it's SUPPORTED_TOKENS' own `native`
+  // entry, at 18 decimals — so fetching before the real token arrives locks in the
+  // wrong decimals for the entire result (e.g. 500 USDC read back as ~0.0000000005),
+  // and since the query key didn't include the token, that wrong-decimals fetch would
+  // cache forever with no later refetch to correct it. Including `token` in the key
+  // and gating `enabled` on it being resolved avoids ever fetching against the
+  // placeholder in the first place.
+  const tokenValue = computed(() => toValue(token))
   return useQuery({
-    queryKey: ['fixedReturnOfferLenders', fixedReturnAddress, offerId],
+    queryKey: ['fixedReturnOfferLenders', fixedReturnAddress, offerId, tokenValue],
     queryFn: fetchLenders,
-    enabled: computed(() => !!fixedReturnAddress.value)
+    enabled: computed(
+      () =>
+        !!fixedReturnAddress.value &&
+        isAddress(tokenValue.value) &&
+        tokenValue.value !== zeroAddress
+    )
   })
 }
 
@@ -286,20 +304,20 @@ export function useFixedReturnMyLenderPositions() {
           const [allocation, deposited] = await Promise.all([
             readContract(config, {
               address,
-              abi: FIXED_RETURN_ABI,
+              abi: fixedReturnAbi,
               functionName: 'getLenderAllocation',
               args: [BigInt(offerId), lender]
             }) as Promise<bigint>,
             readContract(config, {
               address,
-              abi: FIXED_RETURN_ABI,
+              abi: fixedReturnAbi,
               functionName: 'getLenderDeposits',
               args: [BigInt(offerId), lender]
             }) as Promise<bigint>
           ])
           return [offerId, { allocation, deposited }] as const
         } catch (error) {
-          log.error(`Failed to fetch lender position for offer #${offerId}:`, parseError(error))
+          log.error(`Failed to fetch lender position for offer #${offerId}:`, error)
           return [offerId, { allocation: 0n, deposited: 0n }] as const
         }
       })

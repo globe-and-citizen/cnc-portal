@@ -5,3 +5,4 @@ artifacts
 cache
 coverage
 ignition/deployments/**/*.json
+**/*.md

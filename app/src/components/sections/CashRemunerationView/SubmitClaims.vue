@@ -30,6 +30,8 @@
           :is-loading="isWageClaimAdding"
           :disabled-week-starts="props.signedWeekStarts"
           :restrict-submit="isRestricted"
+          :maximum-hours-per-day="props.maximumHoursPerDay"
+          :existing-claims="props.existingClaims"
           :error-message="addWageClaimError && errorMessage ? errorMessage.message : ''"
           error-title="Failed to submit claim"
           @submit="handleSubmit"
@@ -46,11 +48,11 @@ import utc from 'dayjs/plugin/utc'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
-import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
+import type { ClaimFormData, ClaimSubmitPayload, Claim } from '@/types'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
 import { startOfWeek } from '@/utils/dayUtils'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
 dayjs.extend(utc)
 
@@ -89,6 +91,8 @@ const props = defineProps<{
   }
   signedWeekStarts?: string[]
   selectedWeekStart?: string
+  maximumHoursPerDay?: number
+  existingClaims?: Pick<Claim, 'minutesWorked' | 'dayWorked'>[]
 }>()
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))

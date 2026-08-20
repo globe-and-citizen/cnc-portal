@@ -95,7 +95,7 @@ export interface MerkleSnapshot {
 
 export interface GenerateMerkleSnapshotParams {
   body: {
-    investorV1Address: string
+    previousInvestorAddress: string
   }
 }
 

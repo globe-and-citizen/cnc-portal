@@ -10,7 +10,7 @@ import {
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
   mockInvestorReads,
-  mockParseError
+  makeTokenBalance
 } from '@/tests/mocks'
 
 type MutateOptions = {
@@ -67,8 +67,9 @@ describe('SafeDepositRouterForm.vue', () => {
     vi.clearAllMocks()
     mockInvestorReads.symbol.data.value = 'SHER'
     mockUseContractBalance.balances.value = [
-      {
+      makeTokenBalance({
         amount: 50,
+        usdPrice: 1,
         token: {
           id: 'usdc',
           name: 'USD Coin',
@@ -77,19 +78,8 @@ describe('SafeDepositRouterForm.vue', () => {
           coingeckoId: 'usd-coin',
           decimals: 6,
           address: '0xA3492D046095AFFE351cFac15de9b86425E235dB'
-        },
-        values: {
-          USD: {
-            value: 50,
-            formated: '$50',
-            id: 'usd',
-            code: 'USD',
-            symbol: '$',
-            price: 1,
-            formatedPrice: '$1'
-          }
         }
-      }
+      })
     ]
     mockERC20Reads.allowance.data.value = 0n
   })
@@ -138,7 +128,6 @@ describe('SafeDepositRouterForm.vue', () => {
     const vm = getVm(wrapper)
 
     await setTokenAmount(wrapper, '1', 'usdc', true)
-    mockParseError.mockReturnValue('User rejected request')
     rejectOnError(mockERC20Writes.approve.mutateAsync, new Error('approve rejected'))
 
     await vm.submitForm()
@@ -154,7 +143,6 @@ describe('SafeDepositRouterForm.vue', () => {
 
     await setTokenAmount(wrapper, '1', 'usdc', true)
     mockERC20Reads.allowance.data.value = 1000000n // skip approval
-    mockParseError.mockReturnValue('Deposit failed')
     rejectOnError(mockSafeDepositRouterWrites.deposit.mutateAsync, new Error('deposit failed'))
 
     await vm.submitForm()

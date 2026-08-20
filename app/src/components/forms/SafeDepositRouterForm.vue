@@ -77,7 +77,7 @@ import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useUserDataStore } from '@/stores'
-import { parseError } from '@/utils'
+import { classifyError } from '@/utils'
 import {
   formatSafeDepositRouterMultiplier,
   calculateSherCompensation,
@@ -136,9 +136,10 @@ const formattedMultiplier = computed(() =>
 
 const multiplierNumber = computed(() => parseFloat(formattedMultiplier.value) || 0)
 
-const { balances, isLoading: isBalanceLoading } = useContractBalance(
+const { data: balance, isLoading: isBalanceLoading } = useContractBalance(
   userDataStore.address as Address
 )
+const balances = computed(() => balance.value?.balances ?? [])
 
 const ROUTER_SUPPORTED_TOKENS: TokenId[] = ['usdc']
 
@@ -216,7 +217,7 @@ const { data: allowance } = useErc20Allowance(
 // ERC20 Approve composable
 const approveWrite = useERC20Approve(selectedTokenAddress)
 
-// Deposit composable — handles cross-contract invalidation (router + InvestorV1)
+// Deposit composable — handles cross-contract invalidation (router + Investor)
 // internally on success. See useDeposit in safeDepositRouter/writes.ts.
 const depositWrite = useDeposit()
 
@@ -235,7 +236,7 @@ const isLoading = computed(
 const errorMessage = computed(() => {
   if (guardError.value) return guardError.value
   const err = (approveWrite.error.value || depositWrite.error.value) as Error | null
-  return err ? parseError(err) || err.message || 'Transaction failed' : null
+  return err ? classifyError(err, { contract: 'SafeDepositRouter' }).userMessage : null
 })
 
 watch(multiplierError, (error) => {
@@ -245,14 +246,10 @@ watch(multiplierError, (error) => {
   }
 })
 
-const isUserRejection = (err: unknown) => {
-  const msg = parseError(err as Error)
-  return msg.includes('User rejected') || msg.includes('User denied')
-}
-
 const toastFailure = (err: unknown, fallback: string) => {
+  const classified = classifyError(err, { contract: 'SafeDepositRouter' })
   toast.add({
-    title: isUserRejection(err) ? 'Transaction cancelled by user' : fallback,
+    title: classified.category === 'unknown' ? fallback : classified.userMessage,
     color: 'error'
   })
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 import { safeKeys } from '../safe.queries'
 
 describe('safeKeys', () => {
@@ -16,15 +17,13 @@ describe('safeKeys', () => {
     ])
   })
 
-  it('builds native balance and token balance keys', () => {
+  it('builds the balance key the contract-balance query owns', () => {
+    // Native and ERC-20 holdings share one key, so there is no separate
+    // per-token key to invalidate.
+    expect(safeKeys.balance('0xSafe', 137)).toEqual(contractBalanceKeys.detail('0xSafe', 137))
     expect(safeKeys.balance('0xSafe', 137)).toEqual([
       'balance',
       { address: '0xSafe', chainId: 137 }
-    ])
-
-    expect(safeKeys.tokenBalance('0xToken', '0xSafe', 137)).toEqual([
-      'readContract',
-      { address: '0xToken', args: ['0xSafe'], chainId: 137 }
     ])
   })
 })

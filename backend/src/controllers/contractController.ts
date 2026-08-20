@@ -2,8 +2,8 @@ import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
 import { Address } from 'viem';
 import OFFICER_ABI from '../artifacts/officer_abi.json';
-import LEGACY_OFFICER_ABI from '../artifacts/V1/officer_abi.json';
 import { errorResponse, prisma } from '../utils';
+import { resolveOfficerVersion } from '../utils/officerVersion';
 import publicClient from '../utils/viem.config';
 import {
   addContractBodySchema,
@@ -18,62 +18,14 @@ type SyncContractsBody = z.infer<typeof syncContractsBodySchema>;
 type CreateOfficerBody = z.infer<typeof createOfficerBodySchema>;
 type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
 
-// Active Officer generation per network. Hardhat can validate a new generation
-// before Polygon adopts it; keep these values independent until that deployment
-// is complete. Polygon's value becomes '2.0.0' after the V2 rollout.
-export const ACTIVE_OFFICER_VERSION_BY_CHAIN: Record<number, string> = {
-  137: 'V1',
-  31337: '2.0.0',
-};
-
-export const getActiveOfficerVersion = (chainId = publicClient.chain?.id ?? 137) =>
-  ACTIVE_OFFICER_VERSION_BY_CHAIN[chainId];
-
-// Beacon address → version mapping per network (from contract/versions/version-registry.json).
-// Used to detect Officer version for older deployments that don't have version() function.
-const BEACON_TO_VERSION_BY_CHAIN: Record<number, Record<string, string>> = {
-  // Polygon mainnet
-  137: {
-    '0xb5d4bcc95b80672c28a31ab5fbbc71e827b8d33f': 'V0',
-    '0xcca727068860886a133f904d1c6ef6479556ff08': 'V0.1',
-    '0xa90c50305c45d613d951d1dd435294bfca5f4615': 'V1',
-  },
-  // Add other chains as needed (sepolia, mainnet, etc.)
-};
-
-const getBeaconToVersionMap = (): Record<string, string> => {
-  const chainId = publicClient.chain?.id;
-  return BEACON_TO_VERSION_BY_CHAIN[chainId ?? 137] ?? {}; // Default to Polygon
-};
-
-// Detect Officer version: try reading version() directly (v2+), fallback to beacon detection (v0/v0.1/v1).
-const detectOfficerVersion = async (officerAddress: Address): Promise<string> => {
-  try {
-    // Try to read version() - available in v2+
-    const version = (await publicClient.readContract({
-      address: officerAddress,
-      abi: OFFICER_ABI,
-      functionName: 'version',
-    })) as string;
-    if (typeof version === 'string' && version.length > 0) return version;
-  } catch {
-    // Older versions do not expose version().
-  }
-
-  // Use the legacy ABI because the current V2 ABI exposes getContractBeacon()
-  // instead of the old contractBeacons() mapping getter.
-  const beaconAddress = (await publicClient.readContract({
-    address: officerAddress,
-    abi: LEGACY_OFFICER_ABI,
-    functionName: 'contractBeacons',
-    args: ['Officer'],
-  })) as Address;
-
-  if (typeof beaconAddress !== 'string') return 'unknown';
-
-  const beaconMap = getBeaconToVersionMap();
-  return beaconMap[beaconAddress.toLowerCase()] || 'unknown';
-};
+// Re-exported so consumers (teamController, tests) keep a single import path
+// while the detection itself lives in utils/officerVersion.
+export {
+  ACTIVE_OFFICER_FOLDER_BY_CHAIN,
+  getActiveOfficerFolder,
+  getActiveOfficerVersion,
+  isActiveOfficerVersion,
+} from '../utils/officerVersion';
 
 // Look up the head of a team's Officer linked list — the row with no
 // successor pointing back to it. Returns null if the team has never had an
@@ -102,18 +54,18 @@ const upsertOfficerAndSyncContracts = async (
     functionName: 'getTeam',
   })) as { contractType: string; contractAddress: string }[];
 
-  // Detect Officer version from the contract (v2+ via version(), older via beacon).
-  const detectedVersion = await detectOfficerVersion(officerAddress);
+  // Detect the Officer generation as a semver (v2+ via version(), older via the
+  // ERC-1967 beacon matched against the registry). 'unknown' when neither works.
+  const { version: detectedVersion } = await resolveOfficerVersion(officerAddress);
 
   // Caller is responsible for ensuring the officerAddress is not already
   // registered to a different team (createOfficer performs that guard and
   // returns 409 explicitly; syncContracts passes the team's own current Officer
   // address, so a mismatch is impossible there).
   //
-  // version: detected on insert. Existing rows (`update: {}`) keep
-  // whatever generation tag they already have — pre-feature rows backfilled
-  // to 'legacy' by the migration stay 'legacy' until a fresh Officer is
-  // deployed.
+  // version: detected on insert. Existing rows (`update: {}`) keep whatever
+  // generation tag they already have — realigning those is the job of
+  // POST /admin/officer-versions/sync, not of a contract sync.
   const officer = await prisma.teamOfficer.upsert({
     where: { address: officerAddress },
     create: {
@@ -123,7 +75,7 @@ const upsertOfficerAndSyncContracts = async (
       deployBlockNumber: deployBlockNumber ?? null,
       deployedAt: deployedAt ?? null,
       previousOfficerId,
-      version: detectedVersion,
+      version: detectedVersion ?? 'unknown',
     },
     update: {},
   });

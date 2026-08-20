@@ -319,6 +319,32 @@ describe('ExpenseAccountEIP712V2', function () {
           .transfer(recipient.address, ethers.parseEther('150'), budgetLimit, signature)
       ).to.emit(expenseAccount, 'TokenTransfer')
     })
+
+    it('Should transfer tokens that do not return a boolean', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+      const NoReturnToken = await ethers.getContractFactory('MockNoReturnERC20')
+      const noReturnToken = await NoReturnToken.deploy()
+      const tokenAddress = await noReturnToken.getAddress()
+      const amount = ethers.parseEther('100')
+
+      await expenseAccount.addTokenSupport(tokenAddress)
+      await noReturnToken.mint(await expenseAccount.getAddress(), amount)
+
+      const budgetLimit = createBudgetLimit({
+        amount,
+        tokenAddress,
+        approvedAddress: approvedAddress.address
+      })
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, amount, budgetLimit, signature)
+
+      expect(await noReturnToken.balanceOf(recipient.address)).to.equal(amount)
+    })
   })
 
   describe('Validation', function () {

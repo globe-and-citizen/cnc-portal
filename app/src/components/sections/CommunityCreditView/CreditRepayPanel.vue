@@ -47,6 +47,15 @@
         />
 
         <UAlert
+          v-if="isStillRaising"
+          color="warning"
+          variant="soft"
+          icon="i-lucide-circle-alert"
+          description="This round hasn't reached its funding target yet — repayment opens once it's fully funded."
+          data-test="repay-not-funded"
+        />
+
+        <UAlert
           v-if="submitError"
           color="error"
           variant="soft"
@@ -63,7 +72,7 @@
             icon="heroicons:check-circle"
             :label="isSubmitting ? 'Signing…' : `Repay `"
             :loading="isSubmitting"
-            :disabled="isSubmitting || numericAmount <= 0"
+            :disabled="isSubmitting || numericAmount <= 0 || !isRepayable"
             data-test="confirm-repay"
             @click="confirmRepay"
           />
@@ -111,7 +120,7 @@ import {
   roundToDisplayPrecision,
   statusMeta
 } from '@/utils'
-import type { LendingOfferStruct } from '@/types'
+import type { LendingOfferStruct, RoundStatus } from '@/types'
 import CreditRepayBreakdownTable from './CreditRepayBreakdownTable.vue'
 import RepayAmountPanel from './RepayAmountPanel.vue'
 
@@ -129,6 +138,20 @@ const offerId = computed(() => BigInt(roundId.value || '0'))
 
 const round = computed(() => store.getRound(roundId.value))
 const status = computed(() => statusMeta(round.value?.status ?? 'active'))
+
+// Mirrors FixedReturn.sol's repayLenders gate (OfferState.Funded/Repaying only) —
+// without this, the tab was reachable and submittable on a still-Open round (raising,
+// not yet at its funding target), wasting a transaction on a guaranteed
+// FixedReturn__OfferNotFunded() revert that the error classifier can't decode into a
+// friendly message (it only has Bank.json's ABI loaded, not FixedReturn's).
+const REPAYABLE_STATUSES: RoundStatus[] = ['funded', 'active', 'overdue']
+const isRepayable = computed(() => !!round.value && REPAYABLE_STATUSES.includes(round.value.status))
+
+// The "hasn't reached its funding target yet" wording only makes sense while the round
+// is still actively raising — a 'stalled'/'refunded'/'repaid' round already resolved one
+// way or the other, so repeating "repayment opens once it's fully funded" there would be
+// inaccurate (refunded never will be; repaid already was).
+const isStillRaising = computed(() => round.value?.status === 'open')
 
 const { data: rawOffer, refetch: refetchOffer } = useFixedReturnGetLendingOffer(offerId)
 const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)
@@ -183,9 +206,13 @@ const treasuryBalance = computed(() =>
 )
 const amount = ref('')
 const numericAmount = computed(() => Math.max(0, Number(amount.value) || 0))
-const amountUnits = computed(() =>
-  parseUnits(numericAmount.value.toFixed(decimals.value), decimals.value)
-)
+const amountUnits = computed(() => {
+  try {
+    return parseUnits(amount.value || '0', decimals.value)
+  } catch {
+    return 0n
+  }
+})
 const amountPanelRef = ref<{ validate: () => boolean } | null>(null)
 
 // Prefill once with the full repayable amount — the first click still repays everything,
@@ -229,7 +256,7 @@ watch(
 )
 
 async function confirmRepay() {
-  if (!bankAddress.value || numericAmount.value <= 0) return
+  if (!bankAddress.value || numericAmount.value <= 0 || !isRepayable.value) return
   submitError.value = null
   if (!amountPanelRef.value?.validate()) return
 
@@ -239,7 +266,7 @@ async function confirmRepay() {
     toast.add({
       title: isFullRepay
         ? 'Round repaid — principal + interest returned'
-        : `Repaid ${formatAmount(numericAmount.value, round.value?.token, 4)} towards the outstanding balance`,
+        : `Repaid ${formatAmount(numericAmount.value, round.value?.token)} towards the outstanding balance`,
       color: 'success'
     })
     await Promise.all([

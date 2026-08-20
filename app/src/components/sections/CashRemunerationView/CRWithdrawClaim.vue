@@ -2,7 +2,10 @@
   <a
     v-if="isDropDown"
     data-test="withdraw-action"
-    :class="['text-sm', { disabled: withdrawTx.isPending.value || isTeamArchived }]"
+    :class="[
+      'block w-full cursor-pointer px-3 py-1.5 text-sm',
+      { disabled: withdrawTx.isPending.value || isTeamArchived }
+    ]"
     :aria-disabled="withdrawTx.isPending.value || isTeamArchived"
     :tabindex="withdrawTx.isPending.value || isTeamArchived ? -1 : 0"
     :style="{ pointerEvents: withdrawTx.isPending.value || isTeamArchived ? 'none' : undefined }"
@@ -47,7 +50,7 @@ import { recoverTypedDataAddress, zeroAddress, type Address } from 'viem'
 import { readContract } from '@wagmi/core'
 import { useChainId } from '@wagmi/vue'
 import { config } from '@/wagmi.config'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
 import { USDC_ADDRESS } from '@/constant'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
@@ -146,7 +149,7 @@ const withdrawClaim = async () => {
       }),
       readContract(config, {
         address: currentContract,
-        abi: CASH_REMUNERATION_EIP712_ABI,
+        abi: cashRemunerationEip712Abi,
         functionName: 'owner'
       }) as Promise<Address>
     ])

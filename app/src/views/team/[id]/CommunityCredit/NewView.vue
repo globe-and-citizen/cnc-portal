@@ -151,7 +151,7 @@ import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { config } from '@/wagmi.config'
-import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import {
   useFixedReturnAddress,
   useFixedReturnGetSupportedTokens
@@ -304,7 +304,7 @@ async function publish() {
     // Offers are 1-indexed and sequential, so the new offer's id is the post-write count.
     const total = (await readContract(config, {
       address: fixedReturnAddress.value,
-      abi: FIXED_RETURN_ABI,
+      abi: fixedReturnAbi,
       functionName: 'getTotalOfferings'
     })) as bigint
     const offerId = Number(total)

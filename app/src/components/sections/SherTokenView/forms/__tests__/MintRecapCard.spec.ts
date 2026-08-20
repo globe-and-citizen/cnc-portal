@@ -1,19 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ref } from 'vue'
 import MintRecapCard from '../MintRecapCard.vue'
-import { renderWithProviders } from '@/tests/mocks'
+import { mockInvestorReads, renderWithProviders } from '@/tests/mocks'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
-
-const symbolRef = ref<string | undefined>('SHER')
-const totalSupplyRef = ref<bigint | undefined>(100_000_000n)
-const recipientBalanceRef = ref<bigint | undefined>(20_000_000n)
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: vi.fn(() => ({ data: symbolRef })),
-  useInvestorTotalSupply: vi.fn(() => ({ data: totalSupplyRef })),
-  useInvestorBalanceOf: vi.fn(() => ({ data: recipientBalanceRef }))
-}))
 
 const mountRecap = (props: Record<string, unknown> = {}) =>
   renderWithProviders(MintRecapCard, {
@@ -28,9 +17,9 @@ const mountRecap = (props: Record<string, unknown> = {}) =>
 describe('MintRecapCard.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    symbolRef.value = 'SHER'
-    totalSupplyRef.value = 100_000_000n
-    recipientBalanceRef.value = 20_000_000n
+    mockInvestorReads.symbol.data.value = 'SHER'
+    mockInvestorReads.totalSupply.data.value = 100_000_000n
+    mockInvestorReads.balanceOf.data.value = 20_000_000n
   })
 
   it('renders recap lines for valid recipient context', () => {
@@ -54,9 +43,9 @@ describe('MintRecapCard.vue', () => {
   })
 
   it('formats recap stake and supply lines with expected precision for decimal issuance', () => {
-    totalSupplyRef.value = 50_000_000n
-    recipientBalanceRef.value = 28_000_000n
-    symbolRef.value = 'shr'
+    mockInvestorReads.totalSupply.data.value = 50_000_000n
+    mockInvestorReads.balanceOf.data.value = 28_000_000n
+    mockInvestorReads.symbol.data.value = 'shr'
 
     const wrapper = mountRecap({ issuedAmount: 1.162791 })
 
@@ -70,9 +59,9 @@ describe('MintRecapCard.vue', () => {
   })
 
   it('truncates a near-100% recap stake instead of rounding it up', () => {
-    totalSupplyRef.value = 50_000_000n
-    recipientBalanceRef.value = 28_000_000n
-    symbolRef.value = 'shr'
+    mockInvestorReads.totalSupply.data.value = 50_000_000n
+    mockInvestorReads.balanceOf.data.value = 28_000_000n
+    mockInvestorReads.symbol.data.value = 'shr'
 
     const wrapper = mountRecap({ issuedAmount: 219_999_949.871549 })
 
@@ -83,9 +72,9 @@ describe('MintRecapCard.vue', () => {
   })
 
   it('shows status-only recap lines when amount is unsolvable', () => {
-    totalSupplyRef.value = 50_000_000n
-    recipientBalanceRef.value = 28_000_000n
-    symbolRef.value = 'shr'
+    mockInvestorReads.totalSupply.data.value = 50_000_000n
+    mockInvestorReads.balanceOf.data.value = 28_000_000n
+    mockInvestorReads.symbol.data.value = 'shr'
 
     const wrapper = mountRecap({
       issuedAmount: null,
@@ -104,7 +93,7 @@ describe('MintRecapCard.vue', () => {
   })
 
   it('does not render recap card when token symbol is unavailable', () => {
-    symbolRef.value = undefined
+    mockInvestorReads.symbol.data.value = undefined
     const wrapper = mountRecap()
     expect(wrapper.find('[data-test="recap-card"]').exists()).toBe(false)
   })

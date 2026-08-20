@@ -24,7 +24,7 @@
 
       <template #weekStart-cell="{ row: { original: row } }">
         <span class="font-bold">{{
-          dayjs(row.weekStart).utc().startOf('isoWeek').format('MMMM YYYY')
+          formatMonthYear(dayjs(row.weekStart).utc().startOf('isoWeek'))
         }}</span>
         <br />
         <span>{{ formatIsoWeekRange(dayjs(row.weekStart).utc().startOf('isoWeek')) }}</span>
@@ -50,7 +50,7 @@
             :class="'font-bold'"
           />
           <span class="">
-            ≃ ${{ row.derived.hourlyRateInUserCurrency.toFixed(2) }}
+            ≃ {{ formatCurrency(row.derived.hourlyRateInUserCurrency, localCurrencyFormatOptions) }}
             {{ currencyStore.localCurrency.code }} / Hour
           </span>
           <template v-if="row.derived.hasOvertime">
@@ -61,7 +61,13 @@
               :class="'font-bold'"
             />
             <span class="">
-              ≃ ${{ row.derived.overtimeHourlyRateInUserCurrency.toFixed(2) }}
+              ≃
+              {{
+                formatCurrency(
+                  row.derived.overtimeHourlyRateInUserCurrency,
+                  localCurrencyFormatOptions
+                )
+              }}
               {{ currencyStore.localCurrency.code }} / Hour
             </span>
           </template>
@@ -77,7 +83,7 @@
             :class="'font-bold'"
           />
           <span class="">
-            ≃ ${{ row.derived.totalInUserCurrency.toFixed(2) }}
+            ≃ {{ formatCurrency(row.derived.totalInUserCurrency, localCurrencyFormatOptions) }}
             {{ currencyStore.localCurrency.code }}
           </span>
         </div>
@@ -162,6 +168,7 @@ import TablePagination from '@/components/TablePagination.vue'
 import { usePagination } from '@/composables/usePagination'
 import type { Address } from 'viem'
 import { computeClaimTokenAmounts, formatMinutesAsDuration } from '@/utils/wageUtil'
+import { formatCurrency, formatMonthYear } from '@/utils/format'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -262,6 +269,7 @@ watch(() => props.memberAddress, reset)
 const isTeamClaimDataFetching = computed(() => !fetchedData.value && !error.value)
 
 const currencyStore = useCurrencyStore()
+const localCurrencyFormatOptions = computed(() => ({ currency: currencyStore.localCurrency.code }))
 
 // Converts a list of token amounts (rates or payouts) into the user's local
 // currency. Reused for hourly rate, overtime rate and the weekly total.

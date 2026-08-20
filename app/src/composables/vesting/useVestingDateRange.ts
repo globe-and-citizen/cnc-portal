@@ -1,6 +1,7 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import type { DateRange } from 'reka-ui'
 import { differenceInCalendarDays, differenceInMonths, differenceInYears } from '@/utils/dayUtils'
+import { formatDate } from '@/utils/format'
 
 interface CalendarDateLike {
   year: number
@@ -21,8 +22,6 @@ const isCalendarDateLike = (value: unknown): value is CalendarDateLike => {
 
 const calendarDateToDate = (value: CalendarDateLike): Date =>
   new Date(value.year, value.month - 1, value.day)
-
-const formatDate = (value: Date): string => value.toLocaleDateString('en-GB')
 
 export interface VestingDuration {
   years: number

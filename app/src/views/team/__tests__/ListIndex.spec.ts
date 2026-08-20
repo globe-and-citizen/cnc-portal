@@ -3,7 +3,7 @@ import ListIndex from '@/views/team/ListIndex.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-import { mockTeamsData, mockTeamData, mockRouterPush, mockRouterReplace } from '@/tests/mocks'
+import { mockTeamsData, mockTeamData, mockRouterReplace } from '@/tests/mocks'
 import type { Team } from '@/types'
 import { useRoute } from 'vue-router'
 
@@ -42,9 +42,10 @@ describe('ListIndex - Team List View', () => {
               '<div data-test="add-team-card"><button data-test="add-team">Add Team</button></div>'
           },
           TeamCard: {
+            name: 'TeamCard',
             template:
               '<div :data-test="`team-card-${team.id}`" class="team-card"><strong>{{ team.name }}</strong></div>',
-            props: ['team']
+            props: ['team', 'to']
           }
         }
       }
@@ -127,11 +128,13 @@ describe('ListIndex - Team List View', () => {
       expect(illustration.attributes('width')).toBe('300')
     })
 
-    it('should not display team list when teams array is empty', async () => {
+    // The grid itself still renders — it is what holds the create tile — but it
+    // holds no team cards.
+    it('should not display any team card when teams array is empty', async () => {
       const wrapper = createWrapper([])
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-test="team-list"]').exists()).toBe(false)
+      expect(wrapper.findAll('[data-test^="team-card-"]')).toHaveLength(0)
     })
 
     it('should display add team button when no teams and not loading', async () => {
@@ -220,56 +223,43 @@ describe('ListIndex - Team List View', () => {
     })
   })
 
-  describe('User Interactions', () => {
-    it('should navigate to team when team card is clicked', async () => {
+  describe('Company links', () => {
+    it('should give each team card a route to its company overview', async () => {
       const wrapper = createWrapper(mockTeamsData)
       await wrapper.vm.$nextTick()
 
-      const teamCard = wrapper.find(`[data-test="team-card-${mockTeamData.id}"]`)
-      await teamCard.trigger('click')
+      const teamCard = wrapper
+        .findAllComponents({ name: 'TeamCard' })
+        .find((card) => card.props('team').id === mockTeamData.id)
 
-      expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamData.id}`)
+      expect(teamCard?.props('to')).toEqual({
+        name: 'show-team',
+        params: { id: mockTeamData.id }
+      })
     })
 
-    it('should navigate with correct team ID', async () => {
-      const testTeam = { ...mockTeamData, id: '123' }
-      const wrapper = createWrapper([testTeam])
+    it('should create a distinct destination for every company', async () => {
+      const teams = [
+        { ...mockTeamData, id: '1' },
+        { ...mockTeamData, id: '2', name: 'Team 2' },
+        { ...mockTeamData, id: '3', name: 'Team 3' }
+      ]
+      const wrapper = createWrapper(teams)
       await wrapper.vm.$nextTick()
 
-      const teamCard = wrapper.find(`[data-test="team-card-${testTeam.id}"]`)
-      await teamCard.trigger('click')
-
-      expect(mockRouterPush).toHaveBeenCalledWith('/teams/123')
+      expect(
+        wrapper.findAllComponents({ name: 'TeamCard' }).map((card) => card.props('to'))
+      ).toEqual(teams.map((team) => ({ name: 'show-team', params: { id: team.id } })))
     })
+  })
 
+  describe('User Interactions', () => {
     it('should open add team modal when add team button is clicked', async () => {
       const wrapper = createWrapper([], false)
       await wrapper.vm.$nextTick()
 
       const addTeamBtn = wrapper.find('[data-test="add-team"]')
       expect(addTeamBtn.exists()).toBe(true)
-    })
-
-    it('should handle multiple team clicks correctly', async () => {
-      const multipleTeams = [
-        { ...mockTeamData, id: '1' },
-        { ...mockTeamData, id: '2', name: 'Team 2' },
-        { ...mockTeamData, id: '3', name: 'Team 3' }
-      ]
-      const wrapper = createWrapper(multipleTeams)
-      await wrapper.vm.$nextTick()
-
-      const teamCard1 = wrapper.find('[data-test="team-card-1"]')
-      const teamCard2 = wrapper.find('[data-test="team-card-2"]')
-      const teamCard3 = wrapper.find('[data-test="team-card-3"]')
-
-      await teamCard1.trigger('click')
-      await teamCard2.trigger('click')
-      await teamCard3.trigger('click')
-
-      expect(mockRouterPush).toHaveBeenNthCalledWith(1, '/teams/1')
-      expect(mockRouterPush).toHaveBeenNthCalledWith(2, '/teams/2')
-      expect(mockRouterPush).toHaveBeenNthCalledWith(3, '/teams/3')
     })
   })
 

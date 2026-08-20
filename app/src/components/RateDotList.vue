@@ -17,14 +17,15 @@
           'bg-purple-500': !['native', 'usdc', 'usdt'].includes(rate.type)
         }"
       />
-      {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
+      {{ rateSymbol(rate.type) }}
       {{ formatRateAmount(rate.amount) }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { NETWORK } from '@/constant'
+import { rateSymbol } from '@/utils/wageUtil'
+import { formatNumber } from '@/utils/format'
 
 interface RateItem {
   type: string
@@ -45,13 +46,9 @@ const props = withDefaults(
 )
 
 const formatRateAmount = (amount: number) => {
-  const tokenAmount = Number(amount)
-
-  if (tokenAmount === 0) return new Intl.NumberFormat('en-US').format(0)
-
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: props.minimumFractionDigits,
-    maximumFractionDigits: props.maximumFractionDigits
-  }).format(tokenAmount)
+  return formatNumber(amount, {
+    minDecimals: props.minimumFractionDigits,
+    maxDecimals: props.maximumFractionDigits
+  })
 }
 </script>

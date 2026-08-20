@@ -29,7 +29,7 @@
             <div class="bg-muted flex-1 rounded-xl px-3.5 py-3">
               <div class="text-muted text-[11px] font-semibold">Remaining</div>
               <div class="mt-0.5 text-base font-bold" data-test="lend-remaining">
-                {{ formatAmount(displayRemaining, round.token, 4) }}
+                {{ formatAmount(displayRemaining, round.token) }}
               </div>
             </div>
             <div class="bg-muted flex-1 rounded-xl px-3.5 py-3">
@@ -87,21 +87,19 @@
             <div class="flex flex-col gap-2">
               <div class="flex justify-between text-sm">
                 <span class="text-muted">You lend</span>
-                <span class="font-semibold">{{ formatAmount(numericAmount, round.token, 4) }}</span>
+                <span class="font-semibold">{{ formatAmount(numericAmount, round.token) }}</span>
               </div>
               <div class="flex justify-between text-sm">
                 <span class="text-muted">Interest · {{ round.rate }}%</span>
                 <span class="text-primary font-semibold"
-                  >+ {{ formatAmount(interest, round.token, 4) }}</span
+                  >+ {{ formatAmount(interest, round.token) }}</span
                 >
               </div>
               <div
                 class="border-primary/20 flex items-baseline justify-between border-t border-dashed pt-2.5"
               >
                 <span class="text-sm font-semibold">You receive at maturity</span>
-                <span class="text-xl font-extrabold">{{
-                  formatAmount(total, round.token, 4)
-                }}</span>
+                <span class="text-xl font-extrabold">{{ formatAmount(total, round.token) }}</span>
               </div>
             </div>
             <div class="text-muted mt-2 text-[11px]">{{ maturityNote }}</div>
@@ -260,7 +258,7 @@ const capLabel = computed(() =>
 )
 const capValue = computed(() =>
   lenderOffering.value?.cap != null
-    ? formatAmount(capLeft.value ?? 0, props.round?.token, 4)
+    ? formatAmount(capLeft.value ?? 0, props.round?.token)
     : 'No cap'
 )
 
@@ -290,7 +288,7 @@ const maturityNote = computed(() =>
 
 const confirmLabel = computed(() =>
   props.round && numericAmount.value > 0
-    ? `Sign & lend ${formatAmount(numericAmount.value, props.round.token, 4)}`
+    ? `Sign & lend ${formatAmount(numericAmount.value, props.round.token)}`
     : 'Sign & lend'
 )
 
@@ -316,7 +314,7 @@ async function confirm() {
     }
     await lendResult.mutateAsync({ args: [BigInt(round.id), amountUnits.value] })
     toast.add({
-      title: `Credit signed — ${formatAmount(numericAmount.value, round.token, 4)} sent`,
+      title: `Credit signed — ${formatAmount(numericAmount.value, round.token)} sent`,
       color: 'success'
     })
     await Promise.all([

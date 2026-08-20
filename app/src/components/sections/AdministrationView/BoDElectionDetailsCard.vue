@@ -1,5 +1,8 @@
 <template>
-  <UCard class="relative flex flex-col" :class="{ 'border-warning': isElectionWinner }">
+  <UCard
+    class="relative flex flex-col !overflow-visible"
+    :class="{ 'border-warning': isElectionWinner }"
+  >
     <!-- Winner Badge (aligned to straddle border) -->
     <UBadge
       v-if="isElectionWinner"
@@ -23,8 +26,8 @@
     <UProgress
       class="my-4"
       color="success"
-      :value="election.currentVotes"
-      :max="election.totalVotes"
+      :model-value="election.currentVotes"
+      :max="Math.max(election.totalVotes, 1)"
     />
 
     <!-- Conditional Button/Indicator -->
@@ -57,9 +60,9 @@ import { computed, watch, type PropType, ref } from 'vue'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import type { Address } from 'viem'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { useBoDElections } from '@/composables/elections'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
@@ -92,22 +95,22 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 
 const { data: hasVoted, error: errorHasVoted } = useReadContract({
   functionName: 'hasVoted',
-  address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  address: electionsAddress,
+  abi: electionsAbi,
   args: [props.election.id, userDataStore.address as Address]
 })
 
 const { data: voterChoice } = useReadContract({
   functionName: 'getVoterChoice',
-  address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  address: electionsAddress,
+  abi: electionsAbi,
   args: [props.election.id, userDataStore.address as Address]
 })
 
 const { data: electionResults } = useReadContract({
   functionName: 'getElectionResults',
-  address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  address: electionsAddress,
+  abi: electionsAbi,
   args: [props.election.id]
 })
 
@@ -138,7 +141,7 @@ const isElectionWinner = computed(
 
 watch(errorHasVoted, (error) => {
   if (error) {
-    log.error('Error checking vote status:', parseError(error))
+    log.error('Error checking vote status:', error)
   }
 })
 

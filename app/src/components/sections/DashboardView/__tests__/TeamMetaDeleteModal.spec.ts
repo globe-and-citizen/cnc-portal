@@ -150,4 +150,22 @@ describe('TeamMetaDeleteModal.vue', () => {
     const deleteBtn = wrapper.get('[data-test="delete-team-button"]')
     expect(deleteBtn.attributes('disabled')).toBeDefined()
   })
+
+  // Deleting the team the store happens to point at instead of the card the
+  // user acted on would destroy the wrong company, so pin the precedence down.
+  it('deletes the supplied team rather than the store’s current one', async () => {
+    const wrapper = mount(TeamMetaDeleteModal, {
+      props: {
+        currentTeam: teamProps({ id: '123' }),
+        teamId: '123',
+        withTrigger: false,
+        open: true
+      }
+    })
+
+    expect(wrapper.find('[data-test="team-meta-delete-open"]').exists()).toBe(false)
+    await wrapper.find('[data-test="delete-team-button"]').trigger('click')
+
+    expect(mutateSpy).toHaveBeenCalledWith({ pathParams: { teamId: '123' } }, expect.any(Object))
+  })
 })

@@ -7,132 +7,43 @@
 import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from './presenter'
 import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
+import { activityDestinationOf, type ActivityDestination } from './activityDestination'
 import { mergeBankFees } from './mergeBankFees'
-import { flattenLedgerRows } from './payrollGrouping'
+import { flattenLedgerRows } from './ledgerGrouping'
 import { filterLedgerByCurrency } from './ledgerCurrency'
-import { formatAmountWithPrecision } from '@/utils/currencyUtil'
-import type { LedgerEntry, UseCase } from './ledgerEntry'
+import {
+  badgeClassOf,
+  categoryOf,
+  FEE_ACCOUNT,
+  FEE_FILTER,
+  type LedgerCategory
+} from './ledgerCategory'
+import type { LedgerEntry } from './ledgerEntry'
 import type { TokenId } from '@/constant'
+import { formatNumber } from '@/utils/format'
 
 // Currency derivation / filtering lives in its own module, re-exported here.
 export { entryCurrency, ledgerCurrencies, filterLedgerByCurrency } from './ledgerCurrency'
+// So is the Activity's link target — see ./activityDestination.
+export { activityDestinationOf } from './activityDestination'
+export type { ActivityDestination, LedgerSection } from './activityDestination'
+// So do the category vocabulary and its badges — see ./ledgerCategory.
+export {
+  badgeClassOf,
+  categoryOf,
+  CATEGORY_BADGE,
+  FEE_ACCOUNT,
+  FEE_FILTER,
+  ledgerCategories,
+  type LedgerCategory
+} from './ledgerCategory'
+
+// So does the column list the table, the selector and the exporters share.
+export { LEDGER_COLUMNS, resolveLedgerColumns, ledgerTotalRow } from './ledgerColumns'
+export type { LedgerColumn, LedgerColumnKey } from './ledgerColumns'
 
 /** The empty activity carried by a posting's continuation (credit) and total rows. */
 const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
-
-/** Exact chart-of-accounts label for a protocol-fee leg; drives badge + filter. */
-export const FEE_ACCOUNT = 'Transaction Fee Expense'
-
-export type LedgerCategory =
-  | 'Investment'
-  | 'Revenue'
-  | 'Trading'
-  | 'Transfer'
-  | 'Payroll'
-  | 'Expense'
-  | 'Dividend'
-  | 'Memo'
-
-/**
- * Soft badge classes per ledger category — one distinct theme colour each, so
- * the "Action" column reads at a glance (static strings so Tailwind keeps them).
- * Colours come from the project palette (see `assets/main.css`).
- */
-export const CATEGORY_BADGE: Record<LedgerCategory, string> = {
-  Investment: 'bg-secondary/10 text-secondary', // capital in — blue
-  Revenue: 'bg-success/10 text-success', // income earned — green
-  Trading: 'bg-info/10 text-info', // market activity — cyan
-  Transfer: 'bg-neutral/10 text-neutral', // internal move — neutral
-  Payroll: 'bg-warning/10 text-warning', // wage accrued / owed — amber
-  Expense: 'bg-error/10 text-error', // cost out — red
-  Dividend: 'bg-primary/10 text-primary', // profit distribution — green
-  Memo: 'bg-muted text-dimmed' // share-count note — grey
-}
-
-/**
- * The pseudo-category the Fee pill filters on — not a {@link LedgerCategory} (a
- * fee is a leg of a Transfer/Expense entry), so it's handled specially by
- * {@link filterLedgerEntries} / {@link presentLedger} rather than via `categoryOf`.
- */
-export const FEE_FILTER = 'Fee'
-
-/** Ledger filter categories shown as pills (in design order). */
-export const ledgerCategories: Array<LedgerCategory | 'All' | typeof FEE_FILTER> = [
-  'All',
-  'Investment',
-  'Revenue',
-  'Trading',
-  'Transfer',
-  'Payroll',
-  'Expense',
-  'Dividend',
-  FEE_FILTER
-]
-
-/** The toggleable ledger table columns (keys match the table's cell slots). */
-export type LedgerColumnKey =
-  | 'date'
-  | 'action'
-  | 'transaction'
-  | 'activity'
-  | 'account'
-  | 'dr'
-  | 'cr'
-  | 'currency'
-  | 'quantity'
-  | 'rate'
-
-/** A ledger column as rendered in the selector and the exports. */
-export type LedgerColumn = { value: LedgerColumnKey; label: string }
-
-/**
- * Ledger columns as `{ value, label }`, for the show/hide-columns selector.
- * Devise / Quantité / Taux (spec §2) lead the USD debit/credit so each posting
- * reads "native currency · quantity · rate of record · $ moved".
- */
-export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
-  { value: 'date', label: 'Date' },
-  { value: 'action', label: 'Action' },
-  { value: 'transaction', label: 'Transaction' },
-  { value: 'activity', label: 'Activity' },
-  { value: 'account', label: 'Account' },
-  { value: 'currency', label: 'Currency' },
-  { value: 'quantity', label: 'Quantity' },
-  { value: 'rate', label: 'Rate' },
-  { value: 'dr', label: 'Debit' },
-  { value: 'cr', label: 'Credit' }
-]
-
-/**
- * The visible ledger columns for an export, in canonical order — an empty or
- * absent selection means "all columns". Shared by the PDF and Excel exporters so
- * both honour the same order regardless of the order columns were toggled.
- */
-export function resolveLedgerColumns(columns?: readonly LedgerColumnKey[]): LedgerColumn[] {
-  const visible = columns && columns.length ? columns : LEDGER_COLUMNS.map((c) => c.value)
-  return LEDGER_COLUMNS.filter((c) => visible.includes(c.value))
-}
-
-/**
- * The trailing "Total movements" row for an exported ledger, mirroring the
- * on-screen footer: the grand total in the Debit and Credit columns — as the
- * caller's already-rendered `amount` (a `$`-string for the PDF, a number for
- * Excel) — with the label in the Transaction column, or the first non-amount
- * column when Transaction is hidden.
- */
-export function ledgerTotalRow(
-  cols: readonly LedgerColumn[],
-  amount: string | number
-): (string | number)[] {
-  const labelKey = cols.some((c) => c.value === 'transaction')
-    ? 'transaction'
-    : cols.find((c) => c.value !== 'dr' && c.value !== 'cr')?.value
-  return cols.map((c) => {
-    if (c.value === 'dr' || c.value === 'cr') return amount
-    if (c.value === labelKey) return 'Total movements'
-    return ''
-  })
-}
 
 export interface LedgerRow {
   isFirst: boolean
@@ -141,6 +52,9 @@ export interface LedgerRow {
   label: string
   /** The structured narration (the "Activity" column) — avatar(s) + predicate. */
   activity: ActivityCell
+  /** The section the Activity links to ({@link ./activityDestination}); absent on
+   *  a continuation row, and on a posting with no portal surface of its own. */
+  destination?: ActivityDestination | null
   cat: LedgerCategory | ''
   catClass: string
   account: string
@@ -156,47 +70,15 @@ export interface LedgerRow {
   rate: string
   /** True on a `Transaction Fee Expense` leg — drives the "Fee" badge and filter. */
   isFee?: boolean
+  /** Running balance of the drilled account after this posting (see
+   *  {@link ./accountLedger.withRunningBalance}); absent outside a drill-down. */
+  balance?: string
 }
 
 export interface LedgerView {
   rows: LedgerRow[]
   total: string
   entryCount: number
-}
-
-/**
- * Badge classes for a ledger entry's "Action" pill. Normally one colour per
- * category, but the two payroll use cases are split so the journal shows at a
- * glance whether a wage was merely **accrued** (submitted, still owed — amber)
- * or **settled** (withdrawn, actually paid out — green).
- */
-export function badgeClassOf(entry: LedgerEntry): string {
-  // A settled wage (UC-CASH-03 — withdrawn / actually paid out) reads as cyan,
-  // distinct from a wage merely accrued (UC-CASH-02 — submitted, still owed),
-  // which keeps the category's amber. Every other entry takes its category colour.
-  if (entry.useCase === 'UC-CASH-03') return 'bg-accent/10 text-accent'
-  return CATEGORY_BADGE[categoryOf(entry)]
-}
-
-/** The display category a ledger entry falls under, from its use case. */
-export function categoryOf(entry: LedgerEntry): LedgerCategory {
-  const byUseCase: Partial<Record<UseCase, LedgerCategory>> = {
-    'UC-BANK-01': 'Investment',
-    'UC-SDR-01': 'Investment',
-    'UC-MEMBER-01': 'Investment',
-    'UC-BANK-02': 'Revenue',
-    'CASH-IN': 'Revenue',
-    'UC-CASH-02': 'Payroll',
-    'UC-CASH-03': 'Payroll',
-    'UC-EXP-01': 'Expense',
-    'CASH-OUT': 'Expense',
-    'UC-INV-01': 'Dividend',
-    'DEFAULT-D': 'Investment',
-    FEE: 'Expense',
-    INTERNAL: 'Transfer',
-    'UC-BANK-03': 'Transfer'
-  }
-  return byUseCase[entry.useCase] ?? 'Transfer'
 }
 
 /** The Devise / Quantité / Taux columns of one token move (spec §2). */
@@ -215,11 +97,9 @@ function movementOf(rawAmount: string, token: TokenId, rate?: number): Movement 
   }
   return {
     currency: currencySymbol(token),
-    quantity: whole.toLocaleString('en-US', { maximumFractionDigits: 6 }),
-    // Reuse the shared amount formatter (as Bank / Payroll do) so trailing zeros
-    // are trimmed — `1.000000` reads `1`, `0.200000` reads `0.2` — while a value
-    // with real decimals keeps them, capped at 6 dp.
-    rate: rate == null ? '' : '$' + formatAmountWithPrecision(rate, 0, 6)
+    quantity: formatNumber(whole, { maxDecimals: 6 }),
+    // Rates remain compact while preserving real fractional precision up to 6 dp.
+    rate: rate == null ? '' : `$${formatNumber(rate, { maxDecimals: 6 })}`
   }
 }
 
@@ -253,6 +133,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
     activity: activityOf(entry),
+    destination: activityDestinationOf(entry),
     cat: categoryOf(entry),
     catClass: badgeClassOf(entry)
   }
@@ -356,8 +237,9 @@ export function filterLedgerEntries(
   return currencies ? filterLedgerByCurrency(scoped, currencies, filter === FEE_FILTER) : scoped
 }
 
-/** Flatten postings into rows, folding each wage event's per-currency legs into one
- *  compound posting ({@link compoundLedgerRows}); other entries stay two rows each. */
+/** Flatten postings into rows, folding a wage event's per-currency legs and a
+ *  credit round's per-lender legs into one compound posting each
+ *  ({@link ./ledgerGrouping}); every other entry stays two rows. */
 export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
   return flattenLedgerRows(entries, rowsOf)
 }
@@ -378,7 +260,8 @@ export function ledgerFeeRows(entries: readonly LedgerEntry[]): LedgerRow[] {
     isFirst: true,
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
-    activity: activityOf(entry)
+    activity: activityOf(entry),
+    destination: activityDestinationOf(entry)
   }))
 }
 

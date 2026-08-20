@@ -79,32 +79,7 @@
 
         <!-- Progress phase -->
         <div v-else class="space-y-4" data-test="cash-out-progress">
-          <ul class="space-y-2">
-            <li
-              v-for="step in cashOut.steps.value"
-              :key="step.key"
-              class="flex items-start gap-3 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-800"
-              :data-test="`cash-out-step-${step.key}`"
-            >
-              <UIcon
-                :name="stepIcon(step.status)"
-                :class="['mt-0.5 size-5 shrink-0', stepIconClass(step.status)]"
-              />
-              <div class="min-w-0 flex-1">
-                <p class="font-medium">{{ step.label }}</p>
-                <p v-if="step.status === 'active' && step.detail" class="text-xs text-gray-500">
-                  {{ step.detail }}
-                </p>
-                <p
-                  v-if="step.status === 'failed' && step.error"
-                  class="text-error text-xs"
-                  :data-test="`cash-out-error-${step.key}`"
-                >
-                  {{ step.error }}
-                </p>
-              </div>
-            </li>
-          </ul>
+          <CashOutStepList :steps="cashOut.steps.value" test-prefix="cash-out" />
 
           <UAlert
             v-if="cashOut.isComplete.value"
@@ -146,9 +121,9 @@ import type { Address } from 'viem'
 import { useContractBalance } from '@/composables'
 import { useBankOwner } from '@/composables/bank/reads'
 import { buildCashOutPlan, useCashOutAll } from '@/composables/cashOut'
-import type { CashOutStepStatus } from '@/composables/cashOut'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
+import CashOutStepList from '@/components/CashOutStepList.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 const teamStore = useTeamStore()
@@ -168,9 +143,9 @@ const { data: bankOwner } = useBankOwner()
 
 const currencyCode = computed(() => currencyStore.localCurrency.code)
 const fiat = (balance: ReturnType<typeof useContractBalance>) =>
-  balance.total.value[currencyCode.value]?.value ?? 0
+  balance.data.value?.total.local.value ?? 0
 const fiatFormatted = (balance: ReturnType<typeof useContractBalance>) =>
-  balance.total.value[currencyCode.value]?.formated ?? '—'
+  balance.data.value?.total.local.formatted ?? '—'
 
 const isOwner = computed(() => {
   if (!bankOwner.value || !userStore.address) return false
@@ -232,20 +207,4 @@ const confirm = async () => {
 }
 
 const retry = () => cashOut.retry()
-
-const stepIcon = (status: CashOutStepStatus) =>
-  ({
-    pending: 'i-heroicons-clock',
-    active: 'i-heroicons-arrow-path',
-    success: 'i-heroicons-check-circle',
-    failed: 'i-heroicons-x-circle'
-  })[status]
-
-const stepIconClass = (status: CashOutStepStatus) =>
-  ({
-    pending: 'text-gray-400',
-    active: 'animate-spin text-warning',
-    success: 'text-success',
-    failed: 'text-error'
-  })[status]
 </script>

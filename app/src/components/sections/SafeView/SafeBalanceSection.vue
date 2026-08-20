@@ -21,13 +21,13 @@
                 class="text-primary h-10 w-10 animate-spin"
                 data-test="safe-balance-loading"
               />
-              <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
+              <span v-else>{{ balance?.total.usd.formatted ?? 0 }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
         </div>
         <div class="mt-1 text-sm text-gray-500">
-          ≈ {{ total[currency.code]?.formated ?? total['USD']?.formated ?? 0 }} {{ currency.code }}
+          ≈ {{ balance?.total.local.formatted ?? 0 }} {{ currency.code }}
         </div>
         <div class="mt-2 flex flex-col gap-1 text-sm text-gray-600">
           <div>
@@ -147,15 +147,15 @@ interface Props {
 const props = defineProps<Props>()
 const { isWriteDisabled } = useTeamWriteGuard()
 
-const { total, balances, isLoading } = useContractBalance(props.address)
+const { data: balance, isLoading } = useContractBalance(props.address)
 
 const getTokens = (): TokenOption[] =>
-  balances.value
+  (balance.value?.balances ?? [])
     .map((b) => ({
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.values['USD']?.price ?? 0,
+      price: b.price.usd.value,
       name: b.token.name,
       code: b.token.code
     }))

@@ -1,15 +1,23 @@
 import { computed } from 'vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { electionsAbi } from '@/artifacts/abi/generated'
+import {
+  useContractWritesV3,
+  type WriteFunctionName
+} from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
-import { type ElectionsFunctionName } from './reads'
 
-function useElectionsContractWrite(functionName: ElectionsFunctionName) {
+/**
+ * State-changing names only. `ElectionsFunctionName` in ./reads covers every
+ * function on the contract, reads included, so it is the wrong constraint here.
+ */
+type ElectionsWriteNames = WriteFunctionName<typeof electionsAbi>
+
+function useElectionsContractWrite<F extends ElectionsWriteNames>(functionName: F) {
   const teamStore = useTeamStore()
   const contractAddress = computed(() => teamStore.getContractAddressByType('Elections'))
   return useContractWritesV3({
     contractAddress,
-    abi: ELECTIONS_ABI,
+    abi: electionsAbi,
     functionName
   })
 }

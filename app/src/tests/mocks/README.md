@@ -1,6 +1,7 @@
 # Global Mocks System
 
-This directory contains centralized mock definitions that provide consistent testing infrastructure across the application.
+This directory contains centralized mock definitions that provide consistent testing infrastructure
+across the application.
 
 ## Key Components
 
@@ -14,22 +15,28 @@ This directory contains centralized mock definitions that provide consistent tes
 ## Quick Usage
 
 ```typescript
-import { mockERC20Reads, mockERC20Writes, mockToastStore, resetERC20Mocks } from '@/tests/mocks'
+import {
+  mockERC20Reads,
+  mockERC20Writes,
+  mockToastStore,
+  resetERC20Mocks,
+} from "@/tests/mocks";
 
 beforeEach(() => {
-  resetERC20Mocks() // Clean state between tests
-})
+  resetERC20Mocks(); // Clean state between tests
+});
 
-it('should handle token operations', () => {
-  mockERC20Reads.allowance.data.value = 1000n
-  mockERC20Writes.approve.executeWrite.mockResolvedValue(undefined)
+it("should handle token operations", () => {
+  mockERC20Reads.allowance.data.value = 1000n;
+  mockERC20Writes.approve.executeWrite.mockResolvedValue(undefined);
   // Test component...
-})
+});
 ```
 
 ## Philosophy
 
-**"Mock Once, Use Everywhere"** - All mocks are centralized and globally available. Most tests work automatically without any mock setup.
+**"Mock Once, Use Everywhere"** - All mocks are centralized and globally available. Most tests work
+automatically without any mock setup.
 
 ## Complete Documentation
 

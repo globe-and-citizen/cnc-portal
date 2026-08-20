@@ -3,13 +3,13 @@ import { flushPromises } from '@vue/test-utils'
 import { computed, ref } from 'vue'
 import { zeroHash, type Address, type Hex } from 'viem'
 import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
-import { useInvestorV2Address, useInvestorV2MigrationRoot } from '@/composables/investor/readsV2'
+import { useInvestorAddress, useInvestorMigrationRoot } from '@/composables/investor/reads'
 import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 import { useTeamStore } from '@/stores'
-import { mockInvestorV2Reads, mockTeamStore, renderWithProviders } from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
 // ---------------------------------------------------------------------------
-// Mock the migration composable. Investor v2 reads + team store come from the
+// Mock the migration composable. Investor reads + team store come from the
 // global setup files (investor.setup.ts, store.setup.ts); we just rebind them
 // per test via vi.mocked().
 // ---------------------------------------------------------------------------
@@ -85,14 +85,14 @@ function setupMocks(
     }
   } as unknown as ReturnType<typeof useTeamStore>)
 
-  vi.mocked(useInvestorV2Address).mockReturnValue(
-    computed(() => investorAddress) as unknown as ReturnType<typeof useInvestorV2Address>
+  vi.mocked(useInvestorAddress).mockReturnValue(
+    computed(() => investorAddress) as unknown as ReturnType<typeof useInvestorAddress>
   )
 
-  mockInvestorV2Reads.migrationRoot.data.value =
+  mockInvestorReads.migrationRoot.data.value =
     migrationRoot === undefined ? undefined : (migrationRoot as unknown as Hex)
-  vi.mocked(useInvestorV2MigrationRoot).mockReturnValue(
-    mockInvestorV2Reads.migrationRoot as unknown as ReturnType<typeof useInvestorV2MigrationRoot>
+  vi.mocked(useInvestorMigrationRoot).mockReturnValue(
+    mockInvestorReads.migrationRoot as unknown as ReturnType<typeof useInvestorMigrationRoot>
   )
   vi.mocked(useGetInvestorMigrationQuery).mockReturnValue({
     data: ref(migrationSnapshots)

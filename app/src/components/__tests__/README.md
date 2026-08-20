@@ -2,7 +2,8 @@
 
 ## Overview
 
-The SelectComponent test suite has been significantly improved for better readability, maintainability, and comprehensiveness.
+The SelectComponent test suite has been significantly improved for better readability,
+maintainability, and comprehensiveness.
 
 ## Key Improvements Made
 
@@ -24,18 +25,18 @@ The SelectComponent test suite has been significantly improved for better readab
 ```typescript
 // Centralized test data
 const mockOptions = [
-  { value: 'ETH', label: 'Ethereum' },
-  { value: 'USDC', label: 'USD Coin' },
-  { value: 'BTC', label: 'Bitcoin' }
-]
+  { value: "ETH", label: "Ethereum" },
+  { value: "USDC", label: "USD Coin" },
+  { value: "BTC", label: "Bitcoin" },
+];
 
 // Reusable selectors
 const SELECTORS = {
   trigger: '[data-test="generic-selector"]',
   dropdown: '[data-test="options-dropdown"]',
-  options: 'li',
-  optionAnchors: 'a'
-} as const
+  options: "li",
+  optionAnchors: "a",
+} as const;
 ```
 
 ### 4. **Test Structure Reorganization**
@@ -97,4 +98,5 @@ Run the tests using:
 npx vitest SelectComponent --run
 ```
 
-The improved test suite provides comprehensive coverage while being much easier to read, understand, and maintain.
+The improved test suite provides comprehensive coverage while being much easier to read, understand,
+and maintain.

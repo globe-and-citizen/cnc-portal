@@ -2,8 +2,10 @@ import type { Action, ActionResponse, TeamContract, User } from '@/types'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
-import { log, parseError } from '@/utils'
-import { OWNABLE_PAUSABLE_ABI } from '@/artifacts/abi/ownable-pausable'
+import { log } from '@/utils'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import { CONTRACT_ABI_MAP } from '@/utils/abiDecodeUtil'
+import { formatDate } from '@/utils/format'
 
 export type FormattedAction = (Action & {
   requestedBy: User
@@ -35,13 +37,13 @@ export const filterAndFormatActions = (
   actions: ActionResponse | undefined,
   members: User[]
 ) => {
-  if (!actions) return []
+  if (!actions?.data) return []
   return actions.data
     .filter((action) => action.targetAddress === address && action.isExecuted === false)
     .map((action) => ({
       ...action,
       requestedBy: getUser(action.userAddress, members),
-      dateCreated: action.createdAt ? new Date(action.createdAt).toLocaleDateString() : '',
+      dateCreated: action.createdAt ? formatDate(action.createdAt) : '',
       description: JSON.parse(action.description).text,
       title: JSON.parse(action.description).title
     }))
@@ -52,7 +54,7 @@ export const filterAndFormatActions = (
 // contract never blanks the whole table.
 const readContractField = async (address: Address, functionName: 'owner' | 'paused') => {
   try {
-    return await readContract(config, { address, abi: OWNABLE_PAUSABLE_ABI, functionName })
+    return await readContract(config, { address, abi: ownablePausableAbi, functionName })
   } catch {
     return null
   }
@@ -69,13 +71,13 @@ export const getTeamContracts = async (contracts: TeamContract[]) => {
 
         return {
           ...contract,
-          abi: OWNABLE_PAUSABLE_ABI,
+          abi: CONTRACT_ABI_MAP[contract.type] ?? ownablePausableAbi,
           owner,
           paused
         }
       })
     )
   } catch (error) {
-    log.error('Error fetching contract owners: ', parseError(error))
+    log.error('Error fetching contract owners: ', error)
   }
 }
