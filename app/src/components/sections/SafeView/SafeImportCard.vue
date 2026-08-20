@@ -1,16 +1,24 @@
 <template>
-  <UCard>
+  <UCard class="h-full">
     <div class="mb-4 flex items-center gap-3">
       <IconifyIcon icon="heroicons:arrow-down-tray" class="text-primary h-8 w-8" />
       <div>
-        <h2 class="text-lg font-semibold">Import Existing Safe</h2>
+        <h2 class="text-lg font-semibold">Import an existing Safe</h2>
         <p class="text-sm text-gray-500">
           Attach an existing multi-signature wallet without changing its configuration.
         </p>
       </div>
     </div>
 
-    <UFormField label="Safe address" name="safeAddress" required>
+    <UAlert
+      color="info"
+      variant="soft"
+      icon="i-lucide-network"
+      :description="`The Safe must be deployed on ${network.networkName}.`"
+      data-test="safe-import-network"
+    />
+
+    <UFormField class="mt-4" label="Safe address" name="safeAddress" required>
       <UInput
         v-model="safeAddressInput"
         placeholder="0x..."
@@ -34,13 +42,44 @@
     >
       <h3 class="font-semibold">Confirm Safe details</h3>
       <dl class="mt-3 space-y-2 text-sm">
-        <div class="flex justify-between gap-4">
+        <div class="flex flex-col gap-1">
           <dt class="text-gray-500">Address</dt>
-          <dd class="font-mono">{{ formatAddress(inspectedSafe.address) }}</dd>
+          <dd class="min-w-0">
+            <AddressToolTip
+              :address="inspectedSafe.address"
+              class="max-w-full font-mono text-xs break-all"
+            />
+          </dd>
         </div>
-        <div class="flex justify-between gap-4">
+        <div>
           <dt class="text-gray-500">Owners</dt>
-          <dd>{{ inspectedSafe.owners.length }}</dd>
+          <dd class="mt-1">
+            <details>
+              <summary
+                class="text-primary cursor-pointer text-sm font-medium"
+                data-test="safe-import-owners-toggle"
+              >
+                View {{ inspectedSafe.owners.length }} owner{{
+                  inspectedSafe.owners.length === 1 ? '' : 's'
+                }}
+              </summary>
+              <ul class="mt-2 space-y-2">
+                <li
+                  v-for="owner in inspectedSafe.owners"
+                  :key="owner"
+                  class="flex items-center justify-between gap-3"
+                >
+                  <AddressToolTip :address="owner" slice class="min-w-0" />
+                  <span
+                    v-if="isConnectedAddress(owner)"
+                    class="text-primary shrink-0 text-xs font-medium"
+                  >
+                    Connected wallet
+                  </span>
+                </li>
+              </ul>
+            </details>
+          </dd>
         </div>
         <div class="flex justify-between gap-4">
           <dt class="text-gray-500">Threshold</dt>
@@ -57,6 +96,15 @@
         variant="soft"
         description="Importing only registers this Safe with CNC. It does not send an on-chain transaction or change the Safe."
       />
+      <UButton
+        class="mt-4"
+        color="neutral"
+        variant="link"
+        data-test="safe-import-reset-button"
+        @click="resetInspection"
+      >
+        Use another address
+      </UButton>
     </div>
 
     <template #footer>
@@ -65,7 +113,7 @@
           color="neutral"
           variant="outline"
           :loading="isInspecting"
-          :disabled="!canManageSafe || isInspecting || isRegistering || !safeAddressInput.trim()"
+          :disabled="isInspecting || isRegistering || !safeAddressInput.trim()"
           data-test="inspect-safe-button"
           @click="handleInspect"
         >
@@ -95,7 +143,8 @@ import { useToast } from '@nuxt/ui/composables'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useInspectSafe } from '@/composables/safe/useSafeImport'
 import { useCreateContractMutation } from '@/queries/contract.queries'
-import { formatAddress } from '@/utils/format'
+import { NETWORK } from '@/constant'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 interface Props {
@@ -116,7 +165,8 @@ const {
   mutate: inspectSafe,
   data: inspectedSafeData,
   error: inspectError,
-  isPending: isInspecting
+  isPending: isInspecting,
+  reset: resetInspectSafe
 } = useInspectSafe()
 const {
   mutate: createContract,
@@ -141,22 +191,23 @@ const inspectedSafe = computed(() => {
 })
 
 const canImport = computed(() => canManageSafe.value && !!inspectedSafe.value)
+const network = computed(() => NETWORK)
 
 const inspectionError = computed(
   () => inspectError.value?.message || registrationError.value?.message
 )
 
 function handleInspect() {
-  if (!canManageSafe.value) {
-    toast.add({
-      title: 'Error',
-      description: 'Only the team owner can import a Safe',
-      color: 'error'
-    })
-    return
-  }
-
   inspectSafe(safeAddressInput.value.trim())
+}
+
+function isConnectedAddress(address: Address) {
+  return userDataStore.address?.toLowerCase() === address.toLowerCase()
+}
+
+function resetInspection() {
+  safeAddressInput.value = ''
+  resetInspectSafe()
 }
 
 function handleImport() {

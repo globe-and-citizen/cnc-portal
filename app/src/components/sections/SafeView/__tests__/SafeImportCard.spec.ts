@@ -14,7 +14,8 @@ const mockInspection = {
     version: string
   }>(),
   error: ref<Error>(),
-  isPending: ref(false)
+  isPending: ref(false),
+  reset: vi.fn()
 }
 const mockCreateContract = {
   mutate: vi.fn(),
@@ -101,15 +102,39 @@ describe('SafeImportCard', () => {
     )
   })
 
-  it('disables import actions for a non-owner', async () => {
+  it('allows a non-owner to inspect but not import a Safe', async () => {
     mockUserStore.address = '0x0000000000000000000000000000000000000099'
     const wrapper = mountCard()
     await wrapper.find('[data-test="safe-import-address-input"]').setValue(SAFE_ADDRESS)
 
-    expect(wrapper.find('[data-test="inspect-safe-button"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('[data-test="inspect-safe-button"]').attributes('disabled')).toBeUndefined()
     expect(
       wrapper.find('[data-test="confirm-safe-import-button"]').attributes('disabled')
     ).toBeDefined()
-    expect(mockInspection.mutate).not.toHaveBeenCalled()
+    await wrapper.find('[data-test="inspect-safe-button"]').trigger('click')
+    expect(mockInspection.mutate).toHaveBeenCalledWith(SAFE_ADDRESS)
+  })
+
+  it('shows the configured network and the inspected owner list before import', async () => {
+    const wrapper = mountCard()
+    await wrapper.find('[data-test="safe-import-address-input"]').setValue(SAFE_ADDRESS)
+    await wrapper.find('[data-test="inspect-safe-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="safe-import-network"]').text()).toContain(
+      'Safe must be deployed'
+    )
+    expect(wrapper.find('[data-test="safe-import-owners-toggle"]').text()).toContain('View 1 owner')
+  })
+
+  it('clears the inspection when the user chooses another address', async () => {
+    const wrapper = mountCard()
+    await wrapper.find('[data-test="safe-import-address-input"]').setValue(SAFE_ADDRESS)
+    await wrapper.find('[data-test="inspect-safe-button"]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-test="safe-import-reset-button"]').trigger('click')
+
+    expect(mockInspection.reset).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('[data-test="safe-import-address-input"]').element.value).toBe('')
   })
 })

@@ -17,21 +17,46 @@
     <SafeIncomingTransactions :address="safeAddress" />
   </div>
 
-  <!-- Safe not deployed state -->
+  <!-- Safe setup state -->
   <div
     v-else-if="teamStore.currentTeamId && !isLoadingSafe"
     class="flex items-center justify-center p-8"
   >
-    <div class="grid w-full max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
-      <SafeDeploymentCard
-        :team-id="Number(teamStore.currentTeamId)"
-        @safe-deployed="handleSafeRegistered"
+    <section class="w-full max-w-5xl" aria-labelledby="safe-setup-heading">
+      <div class="mb-6 max-w-2xl">
+        <p class="text-primary text-sm font-semibold">Team treasury</p>
+        <h1
+          id="safe-setup-heading"
+          class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"
+        >
+          Set up your team Safe
+        </h1>
+        <p class="mt-2 text-gray-500">
+          Deploy a new multi-signature wallet, or connect one your team already owns.
+        </p>
+      </div>
+
+      <UAlert
+        v-if="!canManageSafe"
+        class="mb-6"
+        color="warning"
+        variant="soft"
+        icon="i-lucide-shield-alert"
+        description="Only the team owner can deploy or import a Safe. You can still inspect an existing Safe."
+        data-test="safe-setup-owner-notice"
       />
-      <SafeImportCard
-        :team-id="Number(teamStore.currentTeamId)"
-        @safe-imported="handleSafeRegistered"
-      />
-    </div>
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <SafeDeploymentCard
+          :team-id="Number(teamStore.currentTeamId)"
+          @safe-deployed="handleSafeRegistered"
+        />
+        <SafeImportCard
+          :team-id="Number(teamStore.currentTeamId)"
+          @safe-imported="handleSafeRegistered"
+        />
+      </div>
+    </section>
   </div>
 
   <!-- Loading state -->
@@ -53,18 +78,26 @@ import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vu
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
-import { type Address } from 'viem'
-import { useTeamStore } from '@/stores/teamStore'
+import { isAddress, type Address } from 'viem'
+import { useTeamStore, useUserDataStore } from '@/stores'
 
 const route = useRoute()
 const router = useRouter()
 const teamStore = useTeamStore()
+const userDataStore = useUserDataStore()
 
 const isLoadingSafe = ref(false)
 const deployedSafeAddress = ref<Address>()
 
 const safeAddress = computed(
   () => teamStore.getContractAddressByType('Safe') || deployedSafeAddress.value
+)
+
+const canManageSafe = computed(
+  () =>
+    !!userDataStore.address &&
+    isAddress(userDataStore.address) &&
+    teamStore.currentTeam?.ownerAddress.toLowerCase() === userDataStore.address.toLowerCase()
 )
 
 watch(safeAddress, (address) => {

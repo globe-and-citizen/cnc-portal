@@ -97,7 +97,7 @@ describe('SafeDeploymentCard', () => {
     expect(wrapper.emitted('safeDeployed')).toEqual([[SAFE_ADDRESS]])
   })
 
-  it('warns but still reports success when the Safe deploys but registration fails', async () => {
+  it('keeps the Safe registration pending and allows retrying when registration fails', async () => {
     mockUserStore.address = mockTeamData.ownerAddress
     mockTeamStore.currentTeam = mockTeamData
     mockCreateContractMutation.mutate.mockImplementation(
@@ -111,16 +111,21 @@ describe('SafeDeploymentCard', () => {
 
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'Warning',
+        title: 'Registration pending',
         color: 'warning',
         description: expect.stringContaining('registration exploded')
       })
     )
-    // Still surfaces the deploy as successful — the Safe is live on-chain even
-    // though it isn't tracked in the backend yet.
-    expect(mockToast.add).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Success', color: 'success' })
+    expect(wrapper.find('[data-test="safe-registration-pending"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="retry-safe-registration-button"]').exists()).toBe(true)
+    expect(wrapper.emitted('safeDeployed')).toBeUndefined()
+
+    mockCreateContractMutation.mutate.mockImplementation(
+      (_vars: unknown, opts?: { onSuccess?: () => void | Promise<void> }) => opts?.onSuccess?.()
     )
+    await wrapper.find('[data-test="retry-safe-registration-button"]').trigger('click')
+    await flushPromises()
+
     expect(wrapper.emitted('safeDeployed')).toEqual([[SAFE_ADDRESS]])
   })
 
