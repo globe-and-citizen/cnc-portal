@@ -22,10 +22,16 @@
     v-else-if="teamStore.currentTeamId && !isLoadingSafe"
     class="flex items-center justify-center p-8"
   >
-    <SafeDeploymentCard
-      :team-id="Number(teamStore.currentTeamId)"
-      @safe-deployed="handleSafeDeployed"
-    />
+    <div class="grid w-full max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
+      <SafeDeploymentCard
+        :team-id="Number(teamStore.currentTeamId)"
+        @safe-deployed="handleSafeRegistered"
+      />
+      <SafeImportCard
+        :team-id="Number(teamStore.currentTeamId)"
+        @safe-imported="handleSafeRegistered"
+      />
+    </div>
   </div>
 
   <!-- Loading state -->
@@ -46,6 +52,7 @@ import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSectio
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
+import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import { type Address } from 'viem'
 import { useTeamStore } from '@/stores/teamStore'
 
@@ -67,9 +74,9 @@ watch(safeAddress, (address) => {
 })
 
 /**
- * Handle successful Safe deployment
+ * Handle successful Safe registration after deployment or import.
  */
-const handleSafeDeployed = async (address: Address) => {
+const handleSafeRegistered = async (address: Address) => {
   deployedSafeAddress.value = address
   isLoadingSafe.value = true
 
