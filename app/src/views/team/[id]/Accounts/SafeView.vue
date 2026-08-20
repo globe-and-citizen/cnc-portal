@@ -18,11 +18,8 @@
   </div>
 
   <!-- Safe setup state -->
-  <div
-    v-else-if="teamStore.currentTeamId && !isLoadingSafe"
-    class="flex items-center justify-center p-8"
-  >
-    <section class="w-full max-w-5xl" aria-labelledby="safe-setup-heading">
+  <div v-else-if="teamStore.currentTeamId && !isLoadingSafe" class="w-full p-8">
+    <section class="w-full" aria-labelledby="safe-setup-heading">
       <div class="mb-6 max-w-2xl">
         <p class="text-primary text-sm font-semibold">Team treasury</p>
         <h1
