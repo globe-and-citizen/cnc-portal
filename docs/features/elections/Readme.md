@@ -1,7 +1,7 @@
 # Board of Directors Elections — User Stories
 
 **Format:** User Story | Acceptance Criteria (tester checklist) | Priority (P1–P5) | Effort
-(XS/S/M/L/XL) **Last updated:** 2026-08-17 **Issue:** #1415 — _[Perf] Review Election feature_
+(XS/S/M/L/XL) **Last updated:** 2026-08-20 **Issue:** #1415 — _[Perf] Review Election feature_
 
 These stories describe the **whole election feature as it is actually built today**, front to back:
 the two pages, the contract behind them, and the notification the backend sends. The acceptance
@@ -12,6 +12,15 @@ case and edge case of the feature has been exercised.
 [Annex A](#annex-a--review-findings-issue-1415) with what is wrong, where, and how bad it is. That
 tagging is the difference between this document and a wish list: you can hand it to a tester before
 the fixes land and the ticks will tell you exactly what is left.
+
+> **Fixes landed as of 2026-08-20.** The first round of corrections has shipped: **E-01** (the
+> ballot now takes the closing day _and_ a time of day, and the opening a start time too, so a
+> one-minute election can no longer be created), **E-02** (the opening is computed when the form is
+> submitted, not when it is built), and **E-04** (the owner can now publish from the Elections page,
+> not only the details page). **E-03** and **E-16** are partly done, and the shared read composables
+> asked for in **US-ELECTION-013** now exist and are being adopted. Every resolved row is marked
+> _✅ Fixed_ in [Annex A](#annex-a--review-findings-issue-1415); the tags left in the criteria below
+> are the ones a tester should still expect to fail.
 
 ### Where to test
 
@@ -56,8 +65,8 @@ was corrected on 2026-08-17 to match the points below, which are the ones most o
 
 | User Story      | Title                                        | Actor  | Status | Priority | Effort |
 | --------------- | -------------------------------------------- | ------ | :----: | :------: | ------ |
-| US-ELECTION-001 | Create an election                           | Owner  |   ⚠️   |    P1    | M      |
-| US-ELECTION-002 | Only one election at a time                  | Owner  |   ⚠️   |    P2    | S      |
+| US-ELECTION-001 | Create an election                           | Owner  |   ✅   |    P1    | M      |
+| US-ELECTION-002 | Only one election at a time                  | Owner  |   ✅   |    P2    | S      |
 | US-ELECTION-003 | Tell the team an election is open            | System |   ⚠️   |    P3    | S      |
 | US-ELECTION-004 | See the current election and where it stands | Member |   ✅   |    P1    | M      |
 | US-ELECTION-005 | Cast a vote                                  | Voter  |   ⚠️   |    P1    | M      |
@@ -89,13 +98,15 @@ was corrected on 2026-08-17 to match the points below, which are the ones most o
 
 - [ ] "Create Election" is visible on the Elections page and opens a modal titled "Create election"
 - [ ] The title must be at least 3 characters, the description at least 10
-- [ ] "Number of Board Of Directors" must be an odd number; below 3 the form refuses it _(bug E-16:
-      the contract accepts any odd number from 1, and the odd-number rule is never explained before
-      the error appears)_
-- [ ] **The start is not a choice.** By design the ballot opens a few minutes after it is created,
-      and the form says so in plain words rather than showing a picker the owner cannot really use
+- [ ] "Number of Board Of Directors" must be an odd number; the field carries a help line that
+      explains the odd-number rule up front ("An odd number — 3, 5, 7 …") _(bug E-16 partly fixed:
+      the rule is now stated before the error, but the form still floors at 3 while the contract
+      accepts any odd number from 1)_
+- [ ] **The opening is picked as a day _and_ a time of day**, or left blank to open a couple of
+      minutes after creation — the field says which in plain words. Leaving the day blank is the
+      "as soon as possible" path; picking a day lets the owner schedule the ballot ahead
 - [ ] **The end is picked as a day _and_ a time of day**, so the owner decides the hour the ballot
-      closes _(bug E-01: the calendar has no time control today)_
+      closes (an untouched closing time runs to the end of the chosen day)
 - [ ] An end that falls before the opening — or too soon after it — is refused in the form, and the
       message states the minimum length of a ballot
 - [ ] Candidates are picked from the team roster only; at least one is required, and at least as
@@ -105,12 +116,10 @@ was corrected on 2026-08-17 to match the points below, which are the ones most o
 
 **Acceptance Criteria — what actually gets created:**
 
-- [ ] **The election closes exactly at the moment the owner picked** _(bug E-01 — today it does not:
-      the calendar has no time of day, so the chosen start reads as already past, and the portal
-      silently replaces **both** dates with "opens in one minute, closes one minute later". The
-      owner gets a 60-second ballot and no warning.)_
+- [ ] **The election opens and closes exactly at the moments the owner picked** — the form no longer
+      rewrites the dates, and the create handler sends them to the chain unchanged _(E-01 fixed)_
 - [ ] The opening time is computed **when the form is submitted**, not when it was opened — a modal
-      left open for ten minutes still produces a valid election _(bug E-02)_
+      left open for ten minutes still produces a valid election _(E-02 fixed)_
 - [ ] Every current team member is registered as an eligible voter
 - [ ] On success: the toast "Election created successfully!", the modal closes, and the new election
       shows up as the current one
@@ -120,8 +129,8 @@ was corrected on 2026-08-17 to match the points below, which are the ones most o
       create elections"
 - [ ] Creating is blocked while the team is archived, with the archived tooltip explaining why
 
-**Priority:** P1 · **Effort:** M · **Status:** ⚠️ Works, but E-01 makes it unusable in practice ·
-**Dependencies:** US-TEAM-001
+**Priority:** P1 · **Effort:** M · **Status:** ✅ Works end to end (E-01, E-02 fixed); only polish
+left — E-16 floor-at-3 and E-17 dead code · **Dependencies:** US-TEAM-001
 
 ---
 
@@ -138,10 +147,11 @@ was corrected on 2026-08-17 to match the points below, which are the ones most o
 - [ ] **An election that ended without ever being published still blocks the team** — the only way
       out is to publish it. Test this deliberately: let an election expire with zero votes, then
       publish it and confirm a new one can be created
-- [ ] _(bug E-04)_ On the Elections page the owner is never offered the publish action, so the way
-      to unblock the team is only reachable from the details page
+- [ ] The owner is offered the publish action **on the Elections page too**, so the team can be
+      unblocked without opening the details page _(E-04 fixed — `ElectionActions` shows
+      `PublishResult` whenever a finished election awaits publication)_
 
-**Priority:** P2 · **Effort:** S · **Status:** ⚠️ · **Dependencies:** US-ELECTION-001
+**Priority:** P2 · **Effort:** S · **Status:** ✅ · **Dependencies:** US-ELECTION-001
 
 ---
 
@@ -256,7 +266,7 @@ Board of Directors
 
 - [ ] "Publish Results" is offered once the election is Completed and the results are not yet out
 - [ ] **It is offered wherever the owner meets a finished election, including the Elections page**
-      _(bug E-04 — today it only exists on the details page)_
+      _(E-04 fixed)_
 - [ ] Only the contract owner can publish; for anyone else the button is disabled
 - [ ] Publishing opens the wallet and, on success, shows "Election results published successfully!"
       and refreshes the past-elections list
@@ -388,9 +398,11 @@ This is the story the issue was opened for. It is the only one marked ❌.
 - [ ] The same election data is fetched once and shared, not fetched independently by the view, the
       section and every card
 - [ ] Navigating between the Elections page and the details page reuses what was already read
-- [ ] **A hard refresh of either page shows the election** _(bug E-03 — the contract address is read
-      once as the page is built rather than followed as it changes, so when the team's contracts
-      arrive a moment later the page stays empty until you navigate again)_
+- [ ] **A hard refresh of either page shows the election** _(bug E-03 partly fixed — the shared read
+      composables (`composables/elections`) now follow the contract address reactively, so the
+      Elections-page section recovers on a late-arriving address; but `BodElectionDetailsView.vue`
+      still captures `electionsAddress.value` once when it builds its own reads, so the details page
+      can still land empty on a hard refresh until the reads there move onto the composables)_
 
 **Priority:** P1 · **Effort:** L · **Status:** ❌ · **Dependencies:** US-ELECTION-004,
 US-ELECTION-006
@@ -411,9 +423,13 @@ the hand-rolled pre-flight checks around those writes.
 **Acceptance Criteria:**
 
 - [ ] Creating, voting and publishing all go through the shared write layer — **done**
+      (`composables/elections/writes.ts` wraps them in `useContractWritesV3`)
 - [ ] Every read goes through the election read composables (`composables/elections`), not through
-      one-off calls written inside components _(today the two views and four components each build
-      their own reads; only the composables get the address handling right — see E-03)_
+      one-off calls written inside components _(in progress: `reads.ts` and the aggregate
+      `useBoDElections` now exist and follow the address correctly, and `ElectionActions`,
+      `ElectionStatus`, `ElectionStats` and the Elections-page section already consume them; still
+      inline are `BoDElectionDetailsSection`, `BoDElectionDetailsCard`, `PastBoDElectionsSection`,
+      `PastBoDElectionCard` and `BodElectionDetailsView` — see E-03, E-06)_
 - [ ] No component estimates gas by hand before a write: the write layer already simulates, and the
       manual pre-flight is what produces the duplicate error messages in E-10
 - [ ] After a successful write, the affected reads are invalidated through the query cache rather
@@ -422,8 +438,8 @@ the hand-rolled pre-flight checks around those writes.
 - [ ] Dead code is gone: the click-outside handler bound to nothing in the create form, the unused
       results-modal flag, and the commented-out blocks left in four components _(bug E-17)_
 
-**Priority:** P1 · **Effort:** M · **Status:** ⚠️ Writes done, reads outstanding · **Dependencies:**
-none
+**Priority:** P1 · **Effort:** M · **Status:** ⚠️ Writes done, read composables now exist and are
+being adopted (some components still inline) · **Dependencies:** none
 
 ---
 
@@ -454,10 +470,10 @@ Severity: 🔴 blocks normal use · 🟠 real damage or dead end · 🔵 perform
 
 | ID   | What is wrong                                                                                                                                                                                                                                                                                                      | Sev | Story         |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-: | ------------- |
-| E-01 | The closing date the owner picks is silently thrown away. The calendar has no time of day, so the start reads as already past and the ballot is rewritten to open in one minute and close one minute later.                                                                                                        | 🔴  | 001           |
-| E-02 | The opening time is computed once, when the form is built, instead of when it is submitted. A modal left open a few minutes yields a start already in the past, which is what triggers E-01. (The comment claiming production should use an hour is stale — opening a few minutes after creation is the intent.)   | 🟠  | 001           |
-| E-03 | The contract address is captured once while the page is built instead of being followed. If the team's contracts arrive a moment later, the page stays empty until you navigate away and back.                                                                                                                     | 🟠  | 012           |
-| E-04 | "Publish Results" only exists on the details page. On the Elections page the owner has no way to publish — and until it is published, no new election can be created.                                                                                                                                              | 🟠  | 002, 007      |
+| E-01 | **✅ Fixed (2026-08-20).** _Was:_ the closing date the owner picks is silently thrown away; the calendar has no time of day, so the start reads as already past and the ballot is rewritten to open in one minute and close one minute later. The form now takes a day **and** a time for both opening and closing, and the create handler forwards them to the chain unchanged.                                    | 🔴  | 001           |
+| E-02 | **✅ Fixed (2026-08-20).** _Was:_ the opening time is computed once, when the form is built, instead of when it is submitted, so a modal left open a few minutes yields a start already in the past. It is now computed at submit time, and a slow clock keeps the announced opening fresh while the form is open.                                                                                                  | 🟠  | 001           |
+| E-03 | **🟡 Partly fixed.** The shared read composables (`composables/elections`) now follow the contract address reactively, so components on them recover on a late-arriving address. `BodElectionDetailsView.vue` still captures `electionsAddress.value` once for its own reads, so the details page can still land empty on a hard refresh until those reads move onto the composables.                                | 🟠  | 012           |
+| E-04 | **✅ Fixed (2026-08-20).** _Was:_ "Publish Results" only existed on the details page, so on the Elections page the owner had no way to publish — and until it is published, no new election can be created. `ElectionActions` now renders `PublishResult` wherever a finished election awaits publication, the Elections page included.                                                                              | 🟠  | 002, 007      |
 | E-05 | After voting, the page does not settle: the counter moves but "Your Vote" and the disabled buttons only appear after a reload.                                                                                                                                                                                     | 🟠  | 005           |
 | E-06 | Every candidate card re-reads the same election for itself — my vote, the provisional results, a full copy of the election composable and its two one-second timers — on top of one vote-count read per candidate. The transport batches the requests, so the cost lands on cached queries, timers and re-renders. | 🔵  | 012           |
 | E-07 | "Winner" badges appear as soon as the countdown ends, from provisional standings, before anything is published. With no votes cast it crowns candidates by address order.                                                                                                                                          | 🟠  | 006           |
@@ -469,13 +485,14 @@ Severity: 🔴 blocks normal use · 🟠 real damage or dead end · 🔵 perform
 | E-13 | A candidate's vote figure is unlabeled ("2/5") and reads as votes over voters rather than votes over votes cast.                                                                                                                                                                                                   | 🟡  | 006           |
 | E-14 | The "Publish Results" button is tagged in the tests as the create-election button.                                                                                                                                                                                                                                 | 🟡  | 007           |
 | E-15 | The voter roll is frozen at creation and cannot be amended. Newcomers cannot vote, and one inactive member means the election can only end by timing out.                                                                                                                                                          | 🟠  | 005           |
-| E-16 | The form demands at least three directors while the contract accepts any odd number, and the odd-number rule is never explained up front.                                                                                                                                                                          | 🟡  | 001           |
+| E-16 | **🟡 Partly fixed.** The odd-number rule is now explained up front (a help line on the field and the schema messages). The form still demands at least three directors while the contract accepts any odd number from 1 — that floor remains.                                                                        | 🟡  | 001           |
 | E-17 | Dead code: a click-outside handler bound to a ref that is never attached, an unused results-modal flag, commented-out blocks in four components.                                                                                                                                                                   | 🟡  | 013           |
 | E-18 | Fixed light-mode colours across the stat tiles, candidate cards and past-election cards.                                                                                                                                                                                                                           | 🟡  | 004, 006, 009 |
 
-**Suggested order of work:** E-01 and E-04 first — one produces one-minute elections, the other can
-strand a team with an election it cannot close. Then E-03, E-05, E-06 (the performance brief the
-issue was opened for), then E-07, E-09, E-15. The 🟡 rows are a single cleanup pass.
+**Suggested order of work:** E-01 and E-04 are done — the one-minute ballot and the team stranded by
+an unpublishable election are both gone. Finish E-03 (move the details view onto the composables),
+then E-05, E-06 (the performance brief the issue was opened for), then E-07, E-09, E-15. The 🟡 rows
+— including what is left of E-16 and E-17 — are a single cleanup pass.
 
 ---
 
@@ -487,7 +504,7 @@ The issue asks for three things. This is what each one means here.
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Review the Election feature** | This document: fourteen stories covering the whole feature, plus eighteen findings in Annex A.                                                                                                                                  |
 | **Fix the issues**              | Annex A, ordered. Each fix is verified by the criteria tagged with its id — the tag disappears when the fix lands.                                                                                                              |
-| **Use `useContractWriteV2`**    | US-ELECTION-013. V2 no longer exists; the portal moved to the V3 write layer and all three election writes already use it. What is left is the reads, which are still written by hand in the views and components (E-03, E-06). |
+| **Use `useContractWriteV2`**    | US-ELECTION-013. V2 no longer exists; the portal moved to the V3 write layer and all three election writes already use it. The read composables asked for now exist (`composables/elections`) and are being adopted; a few components still read inline (E-03, E-06). |
 
 ---
 
@@ -497,8 +514,9 @@ The issue asks for three things. This is what each one means here.
    tag is expected to fail until that fix ships — tick it only when it genuinely passes.
 2. **For Development:** pick a finding from Annex A, read the story it belongs to, and let the
    criteria define done.
-3. **For Product:** priority order is P1 > P2 > P3, but E-01 and E-04 come before everything: today
-   an owner cannot run a real election end to end.
+3. **For Product:** priority order is P1 > P2 > P3. E-01 and E-04 — the two that stopped an owner
+   running a real election end to end — are now fixed, so the next front is the performance brief
+   the issue was opened for (E-03, E-05, E-06).
 
 ---
 
