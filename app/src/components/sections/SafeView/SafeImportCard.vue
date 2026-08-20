@@ -150,6 +150,7 @@ import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 interface Props {
   teamId: number
+  teamOwnerAddress?: string
 }
 
 const props = defineProps<Props>()
@@ -179,7 +180,8 @@ const canManageSafe = computed(
   () =>
     !!userDataStore.address &&
     isAddress(userDataStore.address) &&
-    teamStore.currentTeam?.ownerAddress.toLowerCase() === userDataStore.address.toLowerCase()
+    (props.teamOwnerAddress ?? teamStore.currentTeam?.ownerAddress)?.toLowerCase() ===
+      userDataStore.address.toLowerCase()
 )
 
 const inspectedSafe = computed(() => {

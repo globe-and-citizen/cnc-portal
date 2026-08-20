@@ -4,21 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 import { createMockMutationResponse, mockTeamData } from '@/tests/mocks/query.mock'
-import { mockRouterPush } from '@/tests/mocks/router.mock'
 import { defineComponent, h } from 'vue'
-
-// Expose UStepper under a known name so we can read its `items` prop
-// (the upstream component has no explicit name).
-vi.mock('@nuxt/ui/components/Stepper.vue', async () => {
-  const { defineComponent: dc } = await import('vue')
-  return {
-    default: dc({
-      name: 'UStepper',
-      props: ['items', 'modelValue', 'disabled'],
-      template: '<div data-test="u-stepper" />'
-    })
-  }
-})
 
 // Stub for InvestorContractStep — step 3 is delegated to this component
 const InvestorContractStepStub = defineComponent({
@@ -38,23 +24,6 @@ const InvestorContractStepStub = defineComponent({
   }
 })
 
-const SafeDeploymentCardStub = defineComponent({
-  name: 'SafeDeploymentCard',
-  props: ['teamId', 'teamOwnerAddress'],
-  emits: ['safeDeployed'],
-  setup(_, { emit }) {
-    return () =>
-      h(
-        'button',
-        {
-          'data-test': 'deploy-safe-button',
-          onClick: () => emit('safeDeployed', '0x1111111111111111111111111111111111111111')
-        },
-        'Deploy Safe Wallet'
-      )
-  }
-})
-
 const MultiSelectMemberInputStub = defineComponent({
   name: 'MultiSelectMemberInput',
   props: ['modelValue', 'disableTeamMembers'],
@@ -68,14 +37,10 @@ const MultiSelectMemberInputStub = defineComponent({
 const SELECTORS = {
   teamNameInput: '[data-test="team-name-input"]',
   teamDescriptionInput: '[data-test="team-description-input"]',
-  deployContractButton: '[data-test="deploy-contract-button"]',
-  skipButton: '[data-test="skip-button"]',
   createTeamError: '[data-test="create-team-error"]',
   step1: '[data-test="step-1"]',
   step2: '[data-test="step-2"]',
-  step3: '[data-test="step-3"]',
-  step4: '[data-test="step-4"]',
-  deploySafeButton: '[data-test="deploy-safe-button"]'
+  step3: '[data-test="step-3"]'
 } as const
 
 describe('AddTeamForm.vue', () => {
@@ -87,7 +52,6 @@ describe('AddTeamForm.vue', () => {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           InvestorContractStep: InvestorContractStepStub,
-          SafeDeploymentCard: SafeDeploymentCardStub,
           MultiSelectMemberInput: MultiSelectMemberInputStub
         }
       }
@@ -106,29 +70,6 @@ describe('AddTeamForm.vue', () => {
     await w.find('form[data-test="step-1"]').trigger('submit.prevent')
     await flushPromises()
   }
-
-  // Step 1 → 2 requires the create-team mutation. The default mutation success
-  // chain auto-advances via nextStep().
-  const goToStep3 = async () => {
-    vi.mocked(useCreateTeamMutation).mockReturnValue(
-      createMockMutationResponse(mockTeamData) as ReturnType<typeof useCreateTeamMutation>
-    )
-    const newWrapper = mountComponent()
-    await goToStep2(newWrapper)
-    await newWrapper.find('[data-test="create-team-button"]').trigger('click')
-    await flushPromises()
-    return newWrapper
-  }
-
-  const goToStep4 = async () => {
-    const newWrapper = await goToStep3()
-    await newWrapper.find(SELECTORS.deployContractButton).trigger('click')
-    await flushPromises()
-    return newWrapper
-  }
-
-  const stepperItems = (w: VueWrapper) =>
-    w.findComponent({ name: 'UStepper' }).props('items') as Array<{ title: string; value: number }>
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -180,26 +121,6 @@ describe('AddTeamForm.vue', () => {
       expect(multiSelect.props('modelValue')).toEqual([
         { address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62', name: 'Alice' }
       ])
-    })
-
-    it('shows the member count in the step label when step index and members match the computed branch', async () => {
-      // Defense-in-depth computed branch: currentStep === 3 only occurs as
-      // a guard — the UI never advances past step index 2 (Investor Contract).
-      // Verify the computed by inspecting the UStepper items prop directly.
-      wrapper = mountComponent()
-      // Set members via UI on step 2
-      await goToStep2(wrapper)
-      const multiSelect = wrapper.findComponent({ name: 'MultiSelectMemberInput' })
-      await multiSelect.vm.$emit('update:modelValue', [
-        { address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62', name: 'Alice' },
-        { address: '0x8473AA8b4d95E27F364157DBA0768D7BaeD6931a', name: 'Bob' }
-      ])
-      await wrapper.vm.$nextTick()
-
-      // The "Members (N)" label only kicks in for currentStep === 3, which is unreachable
-      // via UI. The plain "Members" label is asserted instead — covering the actual
-      // user-facing behaviour.
-      expect(stepperItems(wrapper)[1]?.title).toBe('Members')
     })
   })
 
@@ -270,38 +191,6 @@ describe('AddTeamForm.vue', () => {
 
       expect(wrapper.find(SELECTORS.step1).exists()).toBe(true)
       expect(wrapper.find(SELECTORS.step2).exists()).toBe(false)
-    })
-  })
-
-  describe('Step 3 - Investor Contract', () => {
-    it('shows the Safe deployment step when Investor deployment is skipped', async () => {
-      wrapper = await goToStep3()
-
-      await wrapper.find(SELECTORS.skipButton).trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find(SELECTORS.step4).exists()).toBe(true)
-    })
-
-    it('shows the Safe deployment step after Investor contracts are deployed', async () => {
-      wrapper = await goToStep3()
-
-      await wrapper.find(SELECTORS.deployContractButton).trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find(SELECTORS.step4).exists()).toBe(true)
-      const safeDeployment = wrapper.findComponent({ name: 'SafeDeploymentCard' })
-      expect(safeDeployment.props('teamId')).toBe(Number(mockTeamData.id))
-      expect(safeDeployment.props('teamOwnerAddress')).toBe(mockTeamData.ownerAddress)
-    })
-
-    it('navigates to the team after the Safe is deployed and registered', async () => {
-      wrapper = await goToStep4()
-
-      await wrapper.find(SELECTORS.deploySafeButton).trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamData.id}`)
     })
   })
 

@@ -98,12 +98,93 @@
 
     <!-- Step 4: Safe Wallet -->
     <div v-else-if="currentStep === 3" data-test="step-4">
-      <SafeDeploymentCard
-        v-if="createdTeamData"
-        :team-id="Number(createdTeamData.id)"
-        :team-owner-address="createdTeamData.ownerAddress"
-        @safe-deployed="navigateToTeam"
-      />
+      <template v-if="!safeSetupChoice">
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold">Set up your Safe wallet</h2>
+          <p class="mt-1 text-sm text-gray-500">
+            Choose how to connect your team wallet, or set it up later from the Safe account.
+          </p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <UCard>
+            <template #header>
+              <div class="flex items-center gap-3">
+                <IconifyIcon icon="heroicons:shield-check" class="text-primary h-7 w-7" />
+                <h3 class="font-semibold">Deploy a new Safe</h3>
+              </div>
+            </template>
+            <p class="text-sm text-gray-500">Create a new multi-signature wallet for this team.</p>
+            <template #footer>
+              <UButton
+                block
+                data-test="choose-deploy-safe-button"
+                @click="safeSetupChoice = 'deploy'"
+              >
+                Deploy a new Safe
+              </UButton>
+            </template>
+          </UCard>
+
+          <UCard>
+            <template #header>
+              <div class="flex items-center gap-3">
+                <IconifyIcon icon="heroicons:arrow-down-tray" class="text-primary h-7 w-7" />
+                <h3 class="font-semibold">Import an existing Safe</h3>
+              </div>
+            </template>
+            <p class="text-sm text-gray-500">
+              Link a multi-signature wallet that your team already controls.
+            </p>
+            <template #footer>
+              <UButton
+                block
+                color="neutral"
+                variant="outline"
+                data-test="choose-import-safe-button"
+                @click="safeSetupChoice = 'import'"
+              >
+                Import an existing Safe
+              </UButton>
+            </template>
+          </UCard>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            data-test="skip-safe-setup-button"
+            @click="navigateToTeam"
+          >
+            Set up Safe later
+          </UButton>
+        </div>
+      </template>
+
+      <template v-else>
+        <UButton
+          class="mb-4"
+          color="neutral"
+          variant="link"
+          data-test="change-safe-setup-choice-button"
+          @click="safeSetupChoice = undefined"
+        >
+          Choose another option
+        </UButton>
+        <SafeDeploymentCard
+          v-if="safeSetupChoice === 'deploy' && createdTeamData"
+          :team-id="Number(createdTeamData.id)"
+          :team-owner-address="createdTeamData.ownerAddress"
+          @safe-deployed="navigateToTeam"
+        />
+        <SafeImportCard
+          v-else-if="safeSetupChoice === 'import' && createdTeamData"
+          :team-id="Number(createdTeamData.id)"
+          :team-owner-address="createdTeamData.ownerAddress"
+          @safe-imported="navigateToTeam"
+        />
+      </template>
     </div>
   </div>
 </template>
@@ -112,9 +193,11 @@
 import { ref, computed } from 'vue'
 import { z } from 'zod'
 import { isAddress } from 'viem'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { log } from '@/utils'
 import InvestorContractStep from '@/components/sections/TeamView/forms/InvestorContractStep.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
+import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import type { Team } from '@/types'
 import { useCreateTeamMutation } from '@/queries/team.queries'
@@ -143,6 +226,7 @@ const teamData = ref<Pick<Team, 'name' | 'description' | 'members'>>({
 })
 
 const currentStep = ref(0)
+const safeSetupChoice = ref<'deploy' | 'import'>()
 
 // Computed Properties
 const canProceed = computed(() => {
