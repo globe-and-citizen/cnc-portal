@@ -185,6 +185,10 @@ vi.mock('@/queries/member.queries', () => ({
  * Mock Wage Queries (wage.queries.ts)
  */
 vi.mock('@/queries/wage.queries', () => {
+  // Mirror the real `wageKeys` factory so composables that invalidate wage
+  // queries (e.g. useScheduledWageRefresh) keep working under mock, regardless
+  // of test-file ordering. Duplicated rather than imported to avoid pulling the
+  // real module (which touches `@/constant`).
   const wageKeys = {
     all: ['wages'] as const,
     teams: () => [...wageKeys.all, 'team'] as const,

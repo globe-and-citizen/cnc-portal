@@ -7,6 +7,7 @@ import { ref } from 'vue'
 // logic without touching the RPC. `refetch` resolves so the refresh test passes.
 const emptyLogsFeed = () => ({
   result: ref(null),
+  gaps: ref([]),
   loading: ref(false),
   error: ref(null),
   refetch: vi.fn().mockResolvedValue(undefined)

@@ -13,7 +13,8 @@ import {
   str,
   unionEventAbi,
   useContractEventsViaLogs,
-  type EventMapContext
+  type EventMapContext,
+  type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
 const CASH_REM_EVENT_ABI = unionEventAbi([CashRemV1, CashRemV01, CashRemV0])
@@ -134,7 +135,7 @@ const mapEvent = ({
 }
 
 export function useCashRemunerationEventsViaLogs(
-  contractAddress: MaybeRefOrGetter<string | undefined>
+  contractAddress: MaybeRefOrGetter<ContractAddressInput>
 ) {
   return useContractEventsViaLogs<CashRemunerationEventsQuery>({
     contractAddress,
