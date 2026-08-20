@@ -45,7 +45,8 @@ has one shared wallet in CNC.
 
 ### How it works
 
-1. Open the team's Safe account.
+1. After creating a team, the portal offers an optional Safe setup step. The team owner can also
+   open the team's Safe account later if they skip this step.
 2. Choose one of the two setup options:
    - **Deploy a new Safe** for a new team wallet.
    - **Import an existing Safe** already controlled by the team.
@@ -56,6 +57,8 @@ has one shared wallet in CNC.
 
 - [x] When the team has no Safe, the Safe account offers both **Deploy a new Safe** and **Import an
       existing Safe**.
+- [x] During team creation, the team owner can choose the **Deploy a new Safe** or **Import an
+      existing Safe** setup tab, or select **Set up Safe later** to continue without a Safe.
 - [x] Only the team owner can deploy or import a Safe. Other team members can inspect a Safe but
       cannot attach one to the team.
 - [x] Deploying creates a Safe with the team owner as the initial signer and a threshold of **1 of
