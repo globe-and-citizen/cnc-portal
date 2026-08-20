@@ -21,9 +21,9 @@ use cases and edge cases are covered.
 
 ### Lifecycle (test in this order)
 
-1. **Set up a generation.** On a freshly deployed team, make a few **money moves** on the **Bank** (a
-   deposit, a transfer) → confirm they show in **Accounting** (Summary + General Ledger) and on the
-   **Bank** view.
+1. **Set up a generation.** On a freshly deployed team, make a few **money moves** on the **Bank**
+   (a deposit, a transfer) → confirm they show in **Accounting** (Summary + General Ledger) and on
+   the **Bank** view.
 2. **Redeploy the Officer.** Sidebar → **Contract Management** → _Current contracts_ tab → in the
    _Current generation_ card, click **Redeploy contracts**. In the **"Redeploy Officer Contract"**
    modal, fill in the **name** and **symbol** of the new share token, then click **Redeploy
@@ -37,8 +37,8 @@ use cases and edge cases are covered.
 5. **Repeat 2 → 4** to validate several successive migrations.
 
 > Note: the **per-contract views** (Bank / Expense / …) intentionally show only the current
-> contract's transactions (they are per-contract, not consolidated). Only **Accounting** consolidates
-> every generation.
+> contract's transactions (they are per-contract, not consolidated). Only **Accounting**
+> consolidates every generation.
 
 ### Terminology
 
