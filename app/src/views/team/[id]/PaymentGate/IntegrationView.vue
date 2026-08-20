@@ -12,22 +12,21 @@
       }"
     />
 
-    <IntegrationCard />
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div class="space-y-6 lg:col-span-2">
+        <IntegrationCard />
+        <TokenConfigCard />
+      </div>
 
-    <SettlementModesCard
-      v-model:escrow-enabled="escrowEnabled"
-      v-model:metered-enabled="meteredEnabled"
-    />
-
-    <TokensCard />
+      <div class="lg:sticky lg:top-6 lg:self-start">
+        <WidgetPreviewCard />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import IntegrationCard from '@/components/sections/PaymentGateView/IntegrationCard.vue'
-import SettlementModesCard from '@/components/sections/PaymentGateView/SettlementModesCard.vue'
-import TokensCard from '@/components/sections/PaymentGateView/TokensCard.vue'
-import { usePaymentGateMockState } from '@/composables/usePaymentGateMockState'
-
-const { escrowEnabled, meteredEnabled } = usePaymentGateMockState()
+import TokenConfigCard from '@/components/sections/PaymentGateView/TokenConfigCard.vue'
+import WidgetPreviewCard from '@/components/sections/PaymentGateView/WidgetPreviewCard.vue'
 </script>

@@ -1,144 +1,141 @@
-# Payment Gate — v0 (Version allégée)
+# Payment Gate — v0 (Light)
 
-Version allégée du [Readme](./Readme.md) complet, limitée à ce dont le v0 a réellement besoin
-pour être livré. Juste le branchement d'un widget embarquable sur l'existant.
+A trimmed-down version of the full [Readme](./Readme.md), scoped to what v0 actually needs to
+ship. Just wiring an embeddable widget on top of what already exists.
 
-## Description de la fonctionnalité
+## Feature description
 
-CNC Pay permet à un marchand — ici appelé **Layer8** — d'intégrer un widget sur sa propre page
-pour que ses clients puissent le payer directement. Layer8 doit avoir un compte CNC ; les
-paiements atterrissent directement sur la Bank existante de son équipe.
+CNC Pay lets a merchant — here called **Layer8** — embed a widget on their own page so their
+customers can pay them directly. Layer8 needs a CNC account; payments land straight into that
+team's existing Bank contract.
 
-Le rôle de CNC Pay s'arrête à la collecte du paiement : on reçoit un montant Y et une facture ID
-Z, et on facture Y pour Z. Ce que Z représente ne nous regarde pas — c'est à Layer8 de le définir
-et de l'interpréter. Cette base suffit déjà à faire fonctionner aussi bien le **Pay now** que le
-**Pay as you go** ; à Layer8 de décider comment s'en servir, par exemple ce qu'une facture ID
-représente pour un usage pay-as-you-go.
+CNC Pay's job stops at collecting the payment: we receive an amount Y and a facture ID Z, and we
+charge Y for Z. What Z represents isn't our concern — that's Layer8's to define and interpret.
+This base already makes both **Pay now** and **Pay as you go** work; it's up to Layer8 to decide
+how to use it, e.g. what a facture ID represents for pay-as-you-go usage.
 
-### Flux de paiement (v0)
+### Payment flow (v0)
 
-1. Un client déclenche un paiement sur la page de Layer8 — par exemple un usage sous un plan
-   pay-as-you-go. Layer8 connaît déjà le montant et affiche la facture au client.
-2. Layer8 monte le widget pour cette facture — montant + facture ID.
-3. Le widget affiche un récapitulatif du paiement : montant et facture ID.
-4. Le client paie.
-5. Le widget affiche la conclusion de la transaction.
-
----
-
-## Aperçu des statuts
-
-| User Story        | Titre                              | Acteur   |     Statut      | Priorité | Effort |
-| ------------------ | ----------------------------------- | -------- | :--------------: | :------: | ------ |
-| US-PAYGATE-V0-001  | Configurer le widget                | Marchand |  🔲 Pas commencé  |    P1    | S      |
-| US-PAYGATE-V0-002  | Intégrer le widget sur la page du marchand | Marchand |  🔲 Pas commencé  |    P1    | M      |
-| US-PAYGATE-V0-003  | Payer via le widget                 | Client de Layer8 |  🔲 Pas commencé  |    P1    | L      |
-| US-PAYGATE-V0-004  | Historique des paiements            | Marchand |  🔲 Pas commencé  |    P2    | M      |
-| US-PAYGATE-V0-005  | Recall (Recheck) le statut d'un paiement | Marchand |  🔲 Pas commencé  |    P2    | M      |
+1. A customer triggers a payment on Layer8's page — e.g. usage under a pay-as-you-go plan. Layer8
+   already knows the amount and shows the customer their facture (invoice).
+2. Layer8 mounts the widget for that facture — amount + facture ID.
+3. The widget shows a payment recap: amount and facture ID.
+4. The customer pays.
+5. The widget shows the conclusion of the transaction.
 
 ---
 
-## US-PAYGATE-V0-001 : Configurer le widget
+## Status Overview
 
-**En tant que** marchand **je veux** configurer le widget **afin qu'**il corresponde à mon
-intégration
-
-**Critères d'acceptation :**
-
-- [ ] Le marchand configure le widget en spécifiant le token accepté (USDC, USDCe, POL)
-- [ ] Un aperçu du widget montre l'emplacement des éléments configurés (montant, token sélectionné)
-- [ ] Le token est le seul élément configurable par le marchand — style et disposition ne sont pas
-      modifiables en v0
-
-**Priorité :** P1 (Critique) · **Effort :** S · **Statut :** 🔲 Pas commencé · **Dépendances :** —
+| User Story        | Title                               | Actor    |     Status      | Priority | Effort |
+| ------------------ | ------------------------------------ | -------- | :--------------: | :------: | ------ |
+| US-PAYGATE-V0-001  | Configure the widget                 | Merchant |  🔲 Not started   |    P1    | S      |
+| US-PAYGATE-V0-002  | Embed the widget on the merchant's page | Merchant |  🔲 Not started   |    P1    | M      |
+| US-PAYGATE-V0-003  | Pay through the widget               | Layer8's customer |  🔲 Not started   |    P1    | L      |
+| US-PAYGATE-V0-004  | Payment history                      | Merchant |  🔲 Not started   |    P2    | M      |
+| US-PAYGATE-V0-005  | Recall (Recheck) a payment's status  | Merchant |  🔲 Not started   |    P2    | M      |
 
 ---
 
-## US-PAYGATE-V0-002 : Intégrer le widget sur la page du marchand
+## US-PAYGATE-V0-001: Configure the Widget
 
-**En tant que** marchand (Layer8) **je veux** insérer un script sur ma propre page **afin que**
-mes clients puissent me payer directement
+**As a** merchant **I want to** configure the widget **so that** it matches my integration
 
-**Critères d'acceptation :**
+**Acceptance Criteria:**
 
-- [ ] Le marchand dispose d'un compte CNC, et les paiements atterrissent sur la Bank de son équipe
-- [ ] Le script embarque le widget sur la page du marchand, avec l'adresse Bank et le token
-      configuré (US-PAYGATE-V0-001)
-- [ ] Pour une commande précise, le marchand passe au widget la facture ID correspondante
+- [ ] The merchant configures the widget by specifying the accepted token (USDC, USDCe, POL)
+- [ ] A widget preview shows the placement of the configured elements (amount, selected token)
+- [ ] The token is the only element the merchant can configure — style and layout aren't
+      editable in v0
 
-**Priorité :** P1 (Critique) · **Effort :** M · **Statut :** 🔲 Pas commencé · **Dépendances :**
+**Priority:** P1 (Critical) · **Effort:** S · **Status:** 🔲 Not started · **Dependencies:** —
+
+---
+
+## US-PAYGATE-V0-002: Embed the Widget on the Merchant's Page
+
+**As a** merchant (Layer8) **I want to** insert a script on my own page **so that** my customers
+can pay me directly
+
+**Acceptance Criteria:**
+
+- [ ] The merchant has a CNC account, and payments land on their team's Bank
+- [ ] The script embeds the widget on the merchant's page, with the Bank address and the token
+      configured in US-PAYGATE-V0-001
+- [ ] For a specific order, the merchant passes the corresponding facture ID to the widget
+
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🔲 Not started · **Dependencies:**
 US-PAYGATE-V0-001
 
 ---
 
-## US-PAYGATE-V0-003 : Payer via le widget
+## US-PAYGATE-V0-003: Pay Through the Widget
 
-**En tant que** client de Layer8 **je veux** payer directement depuis le widget **afin de** régler
-ma facture sans quitter la page du marchand
+**As a** Layer8 customer **I want to** pay directly from the widget **so that** I can settle my
+facture without leaving the merchant's page
 
-**Critères d'acceptation :**
+**Acceptance Criteria:**
 
-- [ ] Le widget affiche un récapitulatif du paiement : montant et facture ID
-- [ ] Le client paie ce montant pour cette facture ID — le widget ne distingue pas Pay now de Pay
-      as you go, c'est à Layer8 d'interpréter la facture ID
-- [ ] Le widget affiche la conclusion de la transaction (en cours/succès/échec)
-- [ ] Une fois la transaction diffusée, le widget rapporte le `txHash` avec la facture ID à CNC
-      Pay — c'est cet enregistrement qui alimente l'historique (US-PAYGATE-V0-004)
+- [ ] The widget shows a payment recap: amount and facture ID
+- [ ] The customer pays that amount for that facture ID — the widget doesn't distinguish Pay now
+      from Pay as you go, it's up to Layer8 to interpret the facture ID
+- [ ] The widget shows the conclusion of the transaction (pending/success/failed)
+- [ ] Once the transaction broadcasts, the widget reports the `txHash` with the facture ID to CNC
+      Pay — this record is what feeds the payment history (US-PAYGATE-V0-004)
 
-**Priorité :** P1 (Critique) · **Effort :** L · **Statut :** 🔲 Pas commencé · **Dépendances :**
+**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🔲 Not started · **Dependencies:**
 US-PAYGATE-V0-002
 
 ---
 
-## US-PAYGATE-V0-004 : Historique des paiements
+## US-PAYGATE-V0-004: Payment History
 
-**En tant que** marchand **je veux** consulter l'historique des paiements effectués via le widget
-**afin de** suivre ce que mes clients ont payé
+**As a** merchant **I want to** see the history of payments made through the widget **so that**
+I can track what my customers have paid
 
-**Critères d'acceptation :**
+**Acceptance Criteria:**
 
-- [ ] Le marchand peut consulter la liste des paiements passés par le widget
-- [ ] Chaque entrée montre au minimum le montant, la facture ID et le statut
+- [ ] The merchant can view the list of past payments made through the widget
+- [ ] Each entry shows at minimum the amount, the facture ID, and the status
 
-**Priorité :** P2 (Haute) · **Effort :** M · **Statut :** 🔲 Pas commencé · **Dépendances :**
+**Priority:** P2 (High) · **Effort:** M · **Status:** 🔲 Not started · **Dependencies:**
 US-PAYGATE-V0-003
 
 ---
 
-## US-PAYGATE-V0-005 : Recall (Recheck) le statut d'un paiement
+## US-PAYGATE-V0-005: Recall (Recheck) a Payment's Status
 
-**En tant que** marchand **je veux** redemander à CNC Pay le statut d'un paiement par facture ID
-**afin de** retrouver ce paiement si je n'ai pas pu enregistrer son statut moi-même au moment du
-paiement
+**As a** merchant **I want to** ask CNC Pay again for a payment's status by facture ID **so
+that** I can find that payment if I wasn't able to record its status myself at payment time
 
-**Critères d'acceptation :**
+**Acceptance Criteria:**
 
-- [ ] Le marchand peut demander le statut d'une facture ID directement à CNC Pay (fallback,
-      pas le chemin par défaut)
-- [ ] Cette vérification ne fonctionne que si le `txHash` a été enregistré au préalable
-      (US-PAYGATE-V0-003) — sans lui, rien ne relie la facture ID à une transaction
+- [ ] The merchant can request a facture ID's status directly from CNC Pay (fallback, not the
+      default path)
+- [ ] This lookup only works if the `txHash` was registered beforehand (US-PAYGATE-V0-003) —
+      without it, nothing links the facture ID to a transaction
 
-**Priorité :** P2 (Haute) · **Effort :** M · **Statut :** 🔲 Pas commencé · **Dépendances :**
+**Priority:** P2 (High) · **Effort:** M · **Status:** 🔲 Not started · **Dependencies:**
 US-PAYGATE-V0-003
 
 ---
 
-## Cas limites (à discuter en équipe)
+## Edge Cases (for team discussion)
 
-Pas encore tranchés — à passer en revue avant de considérer le v0 complet.
+Not decided yet — to review before considering v0 complete.
 
-| Cas | Description | Ce qu'il faut décider | Proposition |
+| Case | Description | What needs deciding | Proposal |
 | --- | --- | --- | --- |
-| Facture ID manquante ou vide | Le marchand monte le widget sans `data-facture-id` | Le widget doit-il refuser de s'afficher, ou afficher une erreur explicite ? | Afficher une erreur explicite, ex. : *"Configuration invalide : aucune facture ID fournie."* |
-| Token non configuré | Le marchand n'a pas encore choisi de token sur le widget | Y a-t-il un token par défaut, ou le widget reste bloqué tant que rien n'est configuré ? | Token par défaut : USDC |
-| Client ferme la page pendant la transaction | Le paiement est en cours (`en cours`) quand le client quitte ou recharge la page | Le marchand a-t-il un moyen de retrouver le statut réel après coup, ou le paiement est-il juste perdu de vue ? | Oui, via un endpoint. Deux options : une fonction de contrat qui prend la facture ID et le montant, ou l'enregistrement du `txHash` directement en base dès la validation dans MetaMask |
-| Transaction échoue on-chain (revert) | Le paiement passe de "en cours" à "échec" | Le widget affiche-t-il la raison de l'échec, ou juste "échec" sans détail ? | Afficher la raison, reformulée pour rester compréhensible par un humain |
-| Double soumission | Le client clique deux fois sur payer, ou rouvre le widget pour la même facture ID | Rien n'empêche aujourd'hui un double paiement pour la même facture ID | Le loader est censé empêcher le double-clic. Reste ouvert : comment gérer un doublon de facture ID (le widget rouvert sur une facture déjà payée) |
-| Montant à zéro ou négatif | Erreur de configuration côté marchand | Le widget doit-il valider le montant avant d'afficher quoi que ce soit ? | Oui, valider, et afficher un warning sur le widget |
-| Le rapport du `txHash` n'arrive jamais à CNC Pay | Le client ferme la page, ou le réseau coupe, entre la diffusion de la transaction et le rapport du `txHash` (US-PAYGATE-V0-003) | Sans ce rapport, rien ne lie la facture ID à la transaction — comment le marchand retrouve-t-il ce paiement dans l'historique (US-PAYGATE-V0-004) ? | — |
-| Le `txHash` n'a jamais été enregistré nulle part | Ni CNC Pay ni le marchand n'ont de trace du lien facture ID ↔ transaction (Recall de US-PAYGATE-V0-005 impossible) | Deux options à trancher : une fonction de contrat qui prend la facture ID en paramètre (traçable on-chain), ou un enregistrement en base de données côté CNC Pay | Même décision que ci-dessus : une fonction de contrat qui prend la facture ID et le montant, ou l'enregistrement du `txHash` directement en base dès la validation dans MetaMask |
+| Missing or empty facture ID | The merchant mounts the widget without `data-facture-id` | Should the widget refuse to render, or show an explicit error? | Show an explicit error, e.g.: *"Invalid configuration: no facture ID provided."* |
+| Token not configured | The merchant hasn't chosen a token on the widget yet | Is there a default token, or does the widget stay blocked until one is configured? | Default token: USDC |
+| Customer closes the page mid-transaction | The payment is pending (`en cours`) when the customer leaves or reloads the page | Does the merchant have a way to recover the real status afterward, or is the payment just lost from view? | Yes, via an endpoint. Two options: a contract function that takes the facture ID and amount, or registering the `txHash` directly in the database as soon as MetaMask validates |
+| On-chain transaction failure (revert) | The payment moves from "pending" to "failed" | Does the widget show the failure reason, or just "failed" with no detail? | Show the reason, reworded to stay understandable for a human |
+| Duplicate submission | The customer clicks pay twice, or reopens the widget for the same facture ID | Nothing today prevents a double payment for the same facture ID | The loader is meant to prevent the double-click. Still open: how to handle a duplicate facture ID (the widget reopened on an already-paid facture) |
+| Zero or negative amount | Merchant-side configuration error | Should the widget validate the amount before rendering anything? | Yes, validate, and show a warning on the widget |
+| The `txHash` report never reaches CNC Pay | The customer closes the page, or the network drops, between the transaction broadcasting and the `txHash` report (US-PAYGATE-V0-003) | Without that report, nothing links the facture ID to the transaction — how does the merchant find this payment in their history (US-PAYGATE-V0-004)? | — |
+| The `txHash` was never registered anywhere | Neither CNC Pay nor the merchant has a trace of the facture ID ↔ transaction link (Recall from US-PAYGATE-V0-005 is impossible) | Two options to decide between: a contract function that takes the facture ID as a parameter (traceable on-chain), or a database record on CNC Pay's side | Same decision as above: a contract function that takes the facture ID and amount, or registering the `txHash` directly in the database as soon as MetaMask validates |
 
 ---
 
-_[← Retour au flux de paiement et cas limites](./flow-and-edge-cases.md)_ ·
-_[User stories complètes](./Readme.md)_
+_[← Back to Payment Gate flow & edge cases](./flow-and-edge-cases.md)_ ·
+_[Full user stories](./Readme.md)_

@@ -40,12 +40,11 @@
         </p>
         <pre
           class="bg-elevated border-default overflow-x-auto rounded-md border p-3 text-xs"
-        ><code>&lt;script src="https://pay.cncportal.io/widget.js" data-bank="{{ bankAddress }}" async&gt;&lt;/script&gt;
+        ><code>&lt;script src="https://pay.cncportal.io/widget.js" data-bank="{{ bankAddress }}" data-token="{{ selectedToken }}" async&gt;&lt;/script&gt;
 &lt;div
   id="cnc-pay"
   data-facture-id="order_8842"
   data-amount="128.00"
-  data-token="USDC"
   data-on-status="handlePaymentStatus"
 &gt;&lt;/div&gt;</code></pre>
         <div class="mt-2 flex justify-end">
@@ -66,14 +65,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useTeamStore } from '@/stores'
+import { usePaymentGateMockState } from '@/composables/usePaymentGateMockState'
 
 const toast = useToast()
 const teamStore = useTeamStore()
+const { selectedToken } = usePaymentGateMockState()
 
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank') ?? '0x…')
 const snippet = computed(
   () =>
-    `<script src="https://pay.cncportal.io/widget.js" data-bank="${bankAddress.value}" async><\/script>\n<div\n  id="cnc-pay"\n  data-facture-id="order_8842"\n  data-amount="128.00"\n  data-token="USDC"\n  data-on-status="handlePaymentStatus"\n><\/div>`
+    `<script src="https://pay.cncportal.io/widget.js" data-bank="${bankAddress.value}" data-token="${selectedToken.value}" async><\/script>\n<div\n  id="cnc-pay"\n  data-facture-id="order_8842"\n  data-amount="128.00"\n  data-on-status="handlePaymentStatus"\n><\/div>`
 )
 
 const copiedAddress = ref(false)

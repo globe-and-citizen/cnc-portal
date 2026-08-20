@@ -232,14 +232,14 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
               to: { name: 'payment-gate', params: teamParams() }
             },
             {
-              label: 'Preview',
-              active: name === 'payment-gate-preview',
-              to: { name: 'payment-gate-preview', params: teamParams() }
-            },
-            {
               label: 'Reference',
               active: name === 'payment-gate-reference',
               to: { name: 'payment-gate-reference', params: teamParams() }
+            },
+            {
+              label: 'History',
+              active: name === 'payment-gate-history',
+              to: { name: 'payment-gate-history', params: teamParams() }
             }
           ]
         },

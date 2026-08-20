@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <UPageHeader
       headline="Integrations"
-      title="Reference"
-      description="The fallback lookup, for when the widget's direct callback doesn't reach this team's page."
+      title="History"
+      description="Payments made through the widget, as recorded by CNC Pay."
       :ui="{
         root: 'border-0 py-0',
         headline: 'mb-2 text-xs tracking-widest uppercase',
@@ -12,10 +12,10 @@
       }"
     />
 
-    <ReferenceCard />
+    <HistoryCard />
   </div>
 </template>
 
 <script setup lang="ts">
-import ReferenceCard from '@/components/sections/PaymentGateView/ReferenceCard.vue'
+import HistoryCard from '@/components/sections/PaymentGateView/HistoryCard.vue'
 </script>

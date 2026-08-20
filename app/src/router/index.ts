@@ -121,16 +121,16 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/PaymentGate/IntegrationView.vue')
         },
         {
-          path: '/teams/:id/payment-gate/preview',
-          name: 'payment-gate-preview',
-          meta: { name: 'Preview' },
-          component: () => import('@/views/team/[id]/PaymentGate/PreviewView.vue')
-        },
-        {
           path: '/teams/:id/payment-gate/reference',
           name: 'payment-gate-reference',
           meta: { name: 'Reference' },
           component: () => import('@/views/team/[id]/PaymentGate/ReferenceView.vue')
+        },
+        {
+          path: '/teams/:id/payment-gate/history',
+          name: 'payment-gate-history',
+          meta: { name: 'History' },
+          component: () => import('@/views/team/[id]/PaymentGate/HistoryView.vue')
         },
         {
           path: '/teams/:id/accounting',
