@@ -70,8 +70,8 @@ const SELECTORS = {
   step4: '[data-test="step-4"]',
   deployInvestorButton: '[data-test="deploy-investor-button"]',
   skipInvestorButton: '[data-test="skip-investor-button"]',
-  chooseDeploySafeButton: '[data-test="choose-deploy-safe-button"]',
-  chooseImportSafeButton: '[data-test="choose-import-safe-button"]',
+  deploySafeTab: '[data-test="safe-setup-tab-deploy"]',
+  importSafeTab: '[data-test="safe-setup-tab-import"]',
   deploySafeButton: '[data-test="deploy-safe-button"]',
   importSafeButton: '[data-test="confirm-safe-import-button"]',
   skipSafeSetupButton: '[data-test="skip-safe-setup-button"]'
@@ -114,22 +114,20 @@ describe('AddTeamForm Safe setup', () => {
 
   const chooseSafeSetup = async (choice: 'deploy' | 'import') => {
     await wrapper!
-      .get(
-        choice === 'deploy' ? SELECTORS.chooseDeploySafeButton : SELECTORS.chooseImportSafeButton
-      )
-      .trigger('click')
+      .get(choice === 'deploy' ? SELECTORS.deploySafeTab : SELECTORS.importSafeTab)
+      .trigger('mousedown')
     await flushPromises()
   }
 
   beforeEach(() => vi.clearAllMocks())
   afterEach(() => wrapper?.unmount())
 
-  it('offers deployment, import, and skip after the investor step is skipped', async () => {
+  it('offers deployment and import tabs plus skip after the investor step is skipped', async () => {
     await goToSafeSetup(false)
 
     expect(wrapper!.find(SELECTORS.step4).exists()).toBe(true)
-    expect(wrapper!.find(SELECTORS.chooseDeploySafeButton).exists()).toBe(true)
-    expect(wrapper!.find(SELECTORS.chooseImportSafeButton).exists()).toBe(true)
+    expect(wrapper!.find(SELECTORS.deploySafeTab).exists()).toBe(true)
+    expect(wrapper!.find(SELECTORS.importSafeTab).exists()).toBe(true)
     expect(wrapper!.find(SELECTORS.skipSafeSetupButton).exists()).toBe(true)
   })
 
