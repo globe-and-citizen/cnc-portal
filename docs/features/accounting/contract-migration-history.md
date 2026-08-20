@@ -16,9 +16,8 @@ use cases and edge cases are covered. |
 2. **Redeploy the Officer.**
 3. **Verify consolidation.** Go back to **Accounting**: the pre-migration transactions are still
    there, **exactly once**, next to the new ones.
-4. **Treasury sweep.** From the **Bank**, move the remaining funds from the old
-   contract to the new one → it must appear as an **internal move** (the income statement does not
-   change).
+4. **Treasury sweep.** From the **Bank**, move the remaining funds from the old contract to the new
+   one → it must appear as an **internal move** (the income statement does not change).
 5. **Repeat 2 → 4** to validate several successive migrations.
 
 > Note: the **per-contract views** (Bank / Expense / …) intentionally show only the current
