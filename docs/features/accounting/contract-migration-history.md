@@ -12,12 +12,12 @@ use cases and edge cases are covered.
 
 ### Where to do what (screen map)
 
-| Action | Where, in the portal |
-| --- | --- |
-| Make a money move (deposit, transfer) | The team's **Bank** view |
-| **Redeploy** the contracts | **Contract Management** → _Current contracts_ tab → _Current generation_ card → **Redeploy contracts** button |
-| See **archived** generations | **Contract Management** → _Deployment history_ tab |
-| Read the **consolidated books** | **Accounting** → _Summary · Income Statement · Balance Sheet · Trial Balance · General Ledger_ |
+| Action                                | Where, in the portal                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Make a money move (deposit, transfer) | The team's **Bank** view                                                                                      |
+| **Redeploy** the contracts            | **Contract Management** → _Current contracts_ tab → _Current generation_ card → **Redeploy contracts** button |
+| See **archived** generations          | **Contract Management** → _Deployment history_ tab                                                            |
+| Read the **consolidated books**       | **Accounting** → _Summary · Income Statement · Balance Sheet · Trial Balance · General Ledger_                |
 
 ### Lifecycle (test in this order)
 
@@ -54,11 +54,11 @@ use cases and edge cases are covered.
 
 ## Status Overview
 
-| User Story     | Title                                            | Actor  | Status | Priority | Effort |
-| -------------- | ------------------------------------------------ | ------ | :----: | :------: | ------ |
-| US-ACCTMIG-001 | History survives migrations                      | Viewer |   ✅   |    P1    | L      |
-| US-ACCTMIG-002 | Treasury sweeps stay internal                    | Viewer |   ✅   |    P1    | M      |
-| US-ACCTMIG-003 | Robust, failure-tolerant event handling          | System |   ✅   |    P1    | M      |
+| User Story     | Title                                   | Actor  | Status | Priority | Effort |
+| -------------- | --------------------------------------- | ------ | :----: | :------: | ------ |
+| US-ACCTMIG-001 | History survives migrations             | Viewer |   ✅   |    P1    | L      |
+| US-ACCTMIG-002 | Treasury sweeps stay internal           | Viewer |   ✅   |    P1    | M      |
+| US-ACCTMIG-003 | Robust, failure-tolerant event handling | System |   ✅   |    P1    | M      |
 
 ---
 
