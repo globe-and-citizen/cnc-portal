@@ -2,7 +2,8 @@
 
 **Quick Navigation for CNC Portal Documentation**
 
-Welcome! This index helps you navigate the comprehensive documentation for the CNC Portal project. Read the documents in the suggested order to build a complete understanding of the project.
+Welcome! This index helps you navigate the comprehensive documentation for the CNC Portal project.
+Read the documents in the suggested order to build a complete understanding of the project.
 
 ---
 
@@ -12,10 +13,13 @@ Welcome! This index helps you navigate the comprehensive documentation for the C
 
 Start here to get oriented:
 
-1. **[Project Charter](./01_PROJECT_CHARTER.md)** — Vision, scope, objectives, and governance (30 min)
-2. **[Architecture Overview](./platform/architecture.md)** — System components and relationships (20 min)
+1. **[Project Charter](./01_PROJECT_CHARTER.md)** — Vision, scope, objectives, and governance (30
+   min)
+2. **[Architecture Overview](./platform/architecture.md)** — System components and relationships (20
+   min)
 3. **[User Stories](./02_USER_STORIES.md)** — Feature intent and acceptance criteria (45 min)
-4. **[Implementation Status](./03_IMPLEMENTATION_STATUS.md)** — What's done, in progress, and planned (15 min)
+4. **[Implementation Status](./03_IMPLEMENTATION_STATUS.md)** — What's done, in progress, and
+   planned (15 min)
 
 ### For Product Managers
 
@@ -40,7 +44,8 @@ Build the UI:
 
 1. [Architecture Overview](./platform/architecture.md) — System design
 2. [User Stories](./02_USER_STORIES.md) — Feature flows and requirements
-3. [Vue Component Standards](../.github/copilot-instructions/vue-component-standards.md) — Component best practices
+3. [Vue Component Standards](../.github/copilot-instructions/vue-component-standards.md) — Component
+   best practices
 4. [Testing Strategy](./platform/testing-strategy.md) — Component testing requirements
 
 ### For Smart Contract Engineers
@@ -65,13 +70,16 @@ Implement on-chain logic:
 
 ### Architecture & Design
 
-- [System Architecture](./platform/architecture.md) — Tech stack, component relationships, system diagram
-- [Smart Contract Architecture](./contracts/contracts-technical-architecture.md) — On-chain design and patterns
+- [System Architecture](./platform/architecture.md) — Tech stack, component relationships, system
+  diagram
+- [Smart Contract Architecture](./contracts/contracts-technical-architecture.md) — On-chain design
+  and patterns
 - [Development Standards](./platform/development-standards.md) — Code quality and conventions
 
 ### Implementation Guides
 
-- [Testing Strategy](./platform/testing-strategy.md) — Unit, component, integration, and E2E testing standards
+- [Testing Strategy](./platform/testing-strategy.md) — Unit, component, integration, and E2E testing
+  standards
 - [Security Standards](./platform/security.md) — Security requirements and best practices
 - [Performance Standards](./platform/performance.md) — Performance targets and optimization
 - [Deployment Guide](./platform/deployment.md) — Environment setup and deployment procedures
@@ -79,18 +87,24 @@ Implement on-chain logic:
 ### Feature Documentation
 
 - [Authentication](./auth/README.md) — SIWE, JWT, user management
-- [Statistics Feature](./features/stats/functional-specification.md) — Platform analytics implementation
+- [Statistics Feature](./features/stats/functional-specification.md) — Platform analytics
+  implementation
 - [API Reference](./features/stats/stats-api.md) — Statistics API endpoints
-- [Community Credit — User Flow Analysis](./features/community-credit/user-flow-analysis.md) — FixedReturn lending rounds: state machine, custody model, flows, findings
+- [Community Credit — User Flow Analysis](./features/community-credit/user-flow-analysis.md) —
+  FixedReturn lending rounds: state machine, custody model, flows, findings
 - [Safe Wallet — User Stories](./features/safe/Readme.md) — Team Safe deployment, registration, and
   governance flows
 
 ### Developer Support
 
-- [Feature Specification Guide](./platform/feature-specification-guide.md) — How to write feature specs
-- [Vue Component Standards](../.github/copilot-instructions/vue-component-standards.md) — Vue best practices
-- [Web3 Integration Guide](../.github/copilot-instructions/web3-integration.md) — Wallet and contract interaction
-- [Commit Conventions](../.github/copilot-instructions/commit-conventions.md) — Git workflow standards
+- [Feature Specification Guide](./platform/feature-specification-guide.md) — How to write feature
+  specs
+- [Vue Component Standards](../.github/copilot-instructions/vue-component-standards.md) — Vue best
+  practices
+- [Web3 Integration Guide](../.github/copilot-instructions/web3-integration.md) — Wallet and
+  contract interaction
+- [Commit Conventions](../.github/copilot-instructions/commit-conventions.md) — Git workflow
+  standards
 
 ---
 
@@ -102,11 +116,13 @@ Implement on-chain logic:
 
 ### Want to implement a feature?
 
-→ Read: [User Stories](./02_USER_STORIES.md) + [Architecture Overview](./platform/architecture.md) + [Testing Strategy](./platform/testing-strategy.md)
+→ Read: [User Stories](./02_USER_STORIES.md) + [Architecture Overview](./platform/architecture.md) +
+[Testing Strategy](./platform/testing-strategy.md)
 
 ### Want to know what's being built when?
 
-→ Read: [Roadmap](./ROADMAP.md) + [Implementation Status](./03_IMPLEMENTATION_STATUS.md) + [Project Charter Milestones](./01_PROJECT_CHARTER.md#8-milestones-and-timeline)
+→ Read: [Roadmap](./ROADMAP.md) + [Implementation Status](./03_IMPLEMENTATION_STATUS.md) +
+[Project Charter Milestones](./01_PROJECT_CHARTER.md#8-milestones-and-timeline)
 
 ### Want to set up the project locally?
 
@@ -114,11 +130,13 @@ Implement on-chain logic:
 
 ### Want to understand security & performance?
 
-→ Read: [Security Standards](./platform/security.md) + [Performance Standards](./platform/performance.md)
+→ Read: [Security Standards](./platform/security.md) +
+[Performance Standards](./platform/performance.md)
 
 ### Want to contribute code?
 
-→ Read: [Development Standards](./platform/development-standards.md) + [Testing Strategy](./platform/testing-strategy.md) + [CONTRIBUTION.md](../CONTRIBUTION.md)
+→ Read: [Development Standards](./platform/development-standards.md) +
+[Testing Strategy](./platform/testing-strategy.md) + [CONTRIBUTION.md](../CONTRIBUTION.md)
 
 ---
 
@@ -149,7 +167,8 @@ Implement on-chain logic:
 
 - [Project Charter § 5.1](./01_PROJECT_CHARTER.md#51-core-features) — Feature overview
 - [User Stories: Payroll & Claims](./02_USER_STORIES.md#payroll--cash-remuneration) — Requirements
-- [Implementation Status: Financial](./03_IMPLEMENTATION_STATUS.md#financial-management) — What's built
+- [Implementation Status: Financial](./03_IMPLEMENTATION_STATUS.md#financial-management) — What's
+  built
 
 **Governance (Proposals, BOD Elections, Voting):**
 
@@ -160,8 +179,10 @@ Implement on-chain logic:
 **Web3 Integration & Smart Contracts:**
 
 - [Smart Contract Architecture](./contracts/contracts-technical-architecture.md) — Contract design
-- [Safe Wallet — User Stories](./features/safe/Readme.md) — Team Safe lifecycle and acceptance criteria
-- [Web3 Integration Guide](../.github/copilot-instructions/web3-integration.md) — Frontend integration
+- [Safe Wallet — User Stories](./features/safe/Readme.md) — Team Safe lifecycle and acceptance
+  criteria
+- [Web3 Integration Guide](../.github/copilot-instructions/web3-integration.md) — Frontend
+  integration
 - [Testing Web3](../.github/copilot-instructions/testing-web3.md) — Web3 testing patterns
 
 **Analytics & Dashboard:**
@@ -176,7 +197,8 @@ Implement on-chain logic:
 
 **Questions about the project direction?**
 
-- See: [Project Charter](./01_PROJECT_CHARTER.md) | Section: [Stakeholders & Governance](./01_PROJECT_CHARTER.md#4-stakeholders-and-governance)
+- See: [Project Charter](./01_PROJECT_CHARTER.md) | Section:
+  [Stakeholders & Governance](./01_PROJECT_CHARTER.md#4-stakeholders-and-governance)
 
 **Questions about feature requirements?**
 

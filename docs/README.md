@@ -1,6 +1,7 @@
 # CNC Portal Documentation
 
-Welcome to the CNC Portal documentation. This directory contains comprehensive documentation for all aspects of the platform.
+Welcome to the CNC Portal documentation. This directory contains comprehensive documentation for all
+aspects of the platform.
 
 ## 📑 Table of Contents
 
@@ -47,7 +48,8 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 
 **Writing Documentation?**
 
-- ✍️ [Feature Specification Guide](./platform/feature-specification-guide.md) - **How to write specs**
+- ✍️ [Feature Specification Guide](./platform/feature-specification-guide.md) - **How to write
+  specs**
 - 📝 [Development Standards](./platform/development-standards.md) - Code quality standards
 - 🧪 [Testing Strategy](./platform/testing-strategy.md) - How to test
 
@@ -61,16 +63,23 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 
 ## 📋 Project Charter
 
-The [Project Charter](./01_PROJECT_CHARTER.md) is the authoritative reference for the CNC Portal's purpose, scope, governance model, and delivery milestones. Read it first when joining the project or evaluating platform direction.
+The [Project Charter](./01_PROJECT_CHARTER.md) is the authoritative reference for the CNC Portal's
+purpose, scope, governance model, and delivery milestones. Read it first when joining the project or
+evaluating platform direction.
 
 **Key sections:**
 
-- [Executive Summary & Background](./01_PROJECT_CHARTER.md#1-executive-summary) — Why CNC Portal exists
-- [Vision, Mission & Objectives](./01_PROJECT_CHARTER.md#2-vision-mission-and-objectives) — Strategic goals
+- [Executive Summary & Background](./01_PROJECT_CHARTER.md#1-executive-summary) — Why CNC Portal
+  exists
+- [Vision, Mission & Objectives](./01_PROJECT_CHARTER.md#2-vision-mission-and-objectives) —
+  Strategic goals
 - [Success Criteria & KPIs](./01_PROJECT_CHARTER.md#3-success-criteria) — How progress is measured
-- [Stakeholders & Governance](./01_PROJECT_CHARTER.md#4-stakeholders-and-governance) — Roles and decision-making
-- [Scope & Deliverables](./01_PROJECT_CHARTER.md#5-scope-and-deliverables) — What is (and isn't) in scope
-- [Milestones](./01_PROJECT_CHARTER.md#8-milestones-and-timeline) — Capability phases and current status
+- [Stakeholders & Governance](./01_PROJECT_CHARTER.md#4-stakeholders-and-governance) — Roles and
+  decision-making
+- [Scope & Deliverables](./01_PROJECT_CHARTER.md#5-scope-and-deliverables) — What is (and isn't) in
+  scope
+- [Milestones](./01_PROJECT_CHARTER.md#8-milestones-and-timeline) — Capability phases and current
+  status
 
 ---
 
@@ -125,19 +134,23 @@ docs/
 - [Testing Strategy](./platform/testing-strategy.md) - Testing standards for the entire platform
 - [Deployment](./platform/deployment.md) - Deployment procedures and environment setup
 - [Development Standards](./platform/development-standards.md) - Code quality and conventions
-- [Feature Specification Guide](./platform/feature-specification-guide.md) - **How to write feature specs**
+- [Feature Specification Guide](./platform/feature-specification-guide.md) - **How to write feature
+  specs**
 
 ### Feature Documentation
 
 **Statistics Feature:**
 
-- [Functional Specification](./features/stats/functional-specification.md) - Complete feature specification
+- [Functional Specification](./features/stats/functional-specification.md) - Complete feature
+  specification
 - [API Documentation](./features/stats/stats-api.md) - REST API reference
-- [Dashboard Integration](./features/stats/stats-dashboard-integration.md) - Frontend integration guide
+- [Dashboard Integration](./features/stats/stats-dashboard-integration.md) - Frontend integration
+  guide
 
 **Serverless Wake-up Feature:**
 
-- [Feature Documentation](./features/serverless-wake-up/README.md) - Complete feature documentation and quick start
+- [Feature Documentation](./features/serverless-wake-up/README.md) - Complete feature documentation
+  and quick start
 
 **Backoffice Feature:**
 
@@ -157,9 +170,11 @@ docs/
 
 ### Smart Contracts
 
-- [Architecture Diagram](./contracts/contracts-architecture-diagram.md) - Visual contract architecture
+- [Architecture Diagram](./contracts/contracts-architecture-diagram.md) - Visual contract
+  architecture
 - [Quick Reference](./contracts/contracts-quick-reference.md) - Quick contract reference
-- [Technical Architecture](./contracts/contracts-technical-architecture.md) - Detailed technical specs
+- [Technical Architecture](./contracts/contracts-technical-architecture.md) - Detailed technical
+  specs
 
 ---
 
@@ -181,7 +196,8 @@ This comprehensive guide provides:
 
 When creating documentation for a new feature:
 
-1. **Read the guide first:** [Feature Specification Guide](./platform/feature-specification-guide.md)
+1. **Read the guide first:**
+   [Feature Specification Guide](./platform/feature-specification-guide.md)
 2. **Create a feature folder** under `docs/features/[feature-name]/`
 3. **Use the template** provided in the guide
 4. **Reference platform standards** instead of duplicating them
@@ -317,11 +333,14 @@ Each feature specification should follow this structure:
 
 ### Platform Terms
 
-**API (Application Programming Interface):** Set of rules and protocols for building and interacting with software applications.
+**API (Application Programming Interface):** Set of rules and protocols for building and interacting
+with software applications.
 
-**JWT (JSON Web Token):** Compact token format for securely transmitting information between parties as a JSON object.
+**JWT (JSON Web Token):** Compact token format for securely transmitting information between parties
+as a JSON object.
 
-**Prisma ORM:** Modern database toolkit for TypeScript and Node.js that provides type-safe database access.
+**Prisma ORM:** Modern database toolkit for TypeScript and Node.js that provides type-safe database
+access.
 
 **SSR (Server-Side Rendering):** Rendering web pages on the server before sending to client.
 
