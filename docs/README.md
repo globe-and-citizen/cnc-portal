@@ -144,6 +144,11 @@ docs/
 - [Feature Flags](./features/backoffice/feature-flags.md) - Feature flag system with API endpoints
 - [Admin Panel Overview](./features/backoffice/README.md) - Backoffice management system
 
+**Safe Wallet Feature:**
+
+- [User Stories](./features/safe/Readme.md) - Deployment, registration, funding, transaction, and
+  signer-management flows
+
 ### Authentication
 
 - [Authentication Overview](./auth/README.md) - Authentication system overview

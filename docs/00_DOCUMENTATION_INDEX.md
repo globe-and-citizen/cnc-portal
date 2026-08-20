@@ -82,6 +82,8 @@ Implement on-chain logic:
 - [Statistics Feature](./features/stats/functional-specification.md) — Platform analytics implementation
 - [API Reference](./features/stats/stats-api.md) — Statistics API endpoints
 - [Community Credit — User Flow Analysis](./features/community-credit/user-flow-analysis.md) — FixedReturn lending rounds: state machine, custody model, flows, findings
+- [Safe Wallet — User Stories](./features/safe/Readme.md) — Team Safe deployment, registration, and
+  governance flows
 
 ### Developer Support
 
@@ -158,6 +160,7 @@ Implement on-chain logic:
 **Web3 Integration & Smart Contracts:**
 
 - [Smart Contract Architecture](./contracts/contracts-technical-architecture.md) — Contract design
+- [Safe Wallet — User Stories](./features/safe/Readme.md) — Team Safe lifecycle and acceptance criteria
 - [Web3 Integration Guide](../.github/copilot-instructions/web3-integration.md) — Frontend integration
 - [Testing Web3](../.github/copilot-instructions/testing-web3.md) — Web3 testing patterns
 
