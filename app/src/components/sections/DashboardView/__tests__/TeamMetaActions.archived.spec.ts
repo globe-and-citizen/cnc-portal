@@ -169,8 +169,7 @@ describe('archived team write guard (TeamMetaActions)', () => {
         props: { electionId: 1n },
         global: {
           plugins: [createTestingPinia()],
-          stubs: { PublishResult: true },
-          provide: { showPublishResultBtn: false }
+          stubs: { PublishResult: true }
         }
       })
 
