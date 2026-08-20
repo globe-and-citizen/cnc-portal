@@ -115,6 +115,24 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/SherTokenView.vue')
         },
         {
+          path: '/teams/:id/payment-gate',
+          name: 'payment-gate',
+          meta: { name: 'Setup' },
+          component: () => import('@/views/team/[id]/PaymentGate/IntegrationView.vue')
+        },
+        {
+          path: '/teams/:id/payment-gate/reference',
+          name: 'payment-gate-reference',
+          meta: { name: 'Reference' },
+          component: () => import('@/views/team/[id]/PaymentGate/ReferenceView.vue')
+        },
+        {
+          path: '/teams/:id/payment-gate/history',
+          name: 'payment-gate-history',
+          meta: { name: 'History' },
+          component: () => import('@/views/team/[id]/PaymentGate/HistoryView.vue')
+        },
+        {
           path: '/teams/:id/accounting',
           name: 'accounting',
           redirect: { name: 'accounting-summary' }
