@@ -27,13 +27,14 @@ can perform the action, what they can do, and what must happen for it to succeed
 
 ## Status Overview
 
-| User Story  | What the user can do                              | Main actor          | Status | Priority |
-| ----------- | ------------------------------------------------- | ------------------- | :----: | :------: |
-| US-SAFE-001 | Set up a Safe: deploy a new one or import one     | Team owner          |   ✅   |    P1    |
-| US-SAFE-002 | Display Safe details                              | Team member         |   ✅   |    P1    |
-| US-SAFE-003 | Manage funds: deposit and transfer                | Team owner / signer |   ✅   |    P1    |
-| US-SAFE-004 | Manage signers and threshold                      | Safe owner          |   ✅   |    P2    |
-| US-SAFE-005 | Manage transactions: review, approve, and execute | Safe owner          |   ✅   |    P1    |
+| User Story  | What the user can do                          | Main actor          | Status | Priority |
+| ----------- | --------------------------------------------- | ------------------- | :----: | :------: |
+| US-SAFE-001 | Set up a Safe: deploy a new one or import one | Team owner          |   ✅   |    P1    |
+| US-SAFE-002 | Display Safe details                          | Team member         |   ✅   |    P1    |
+| US-SAFE-003 | Manage funds: deposit and transfer            | Team owner / signer |   ✅   |    P1    |
+| US-SAFE-004 | Manage signers and threshold                  | Safe owner          |   ✅   |    P2    |
+| US-SAFE-005 | Review Safe transactions                      | Team member         |   ✅   |    P2    |
+| US-SAFE-006 | Approve and execute a Safe transaction        | Safe owner          |   ✅   |    P1    |
 
 ---
 
@@ -105,7 +106,7 @@ from it **so that** the team can fund and use its shared treasury.
 
 1. Deposit native tokens or supported tokens into the Safe to fund the team wallet.
 2. Choose a Safe-held token and create a transfer when the team needs to pay or move funds.
-3. Complete the transaction through the Safe approval flow in US-SAFE-005.
+3. Complete the transaction through the Safe approval flow in US-SAFE-006.
 
 ### Acceptance Criteria
 
@@ -115,7 +116,7 @@ from it **so that** the team can fund and use its shared treasury.
 - [x] A transfer follows the Safe's approval and execution rules; it is not an unrestricted direct
       withdrawal.
 
-**Priority:** P1 (Critical) · **Status:** ✅ Done · **Dependencies:** US-SAFE-001, US-SAFE-005
+**Priority:** P1 (Critical) · **Status:** ✅ Done · **Dependencies:** US-SAFE-001, US-SAFE-006
 
 ---
 
@@ -128,7 +129,8 @@ approval rules match the team that controls it.
 
 1. Open the owners card in the Safe account.
 2. Add a signer, remove a signer, or choose a new threshold.
-3. Approve and execute the resulting Safe transaction according to the current threshold.
+3. Approve and execute the resulting Safe transaction according to the current threshold, as
+   described in US-SAFE-006.
 4. The updated owners and threshold appear in the Safe details.
 
 ### Acceptance Criteria
@@ -138,27 +140,46 @@ approval rules match the team that controls it.
 - [x] Signer and threshold changes use the same approval flow as other Safe transactions.
 - [x] The portal refreshes the owner list and required-signature count after a successful change.
 
-**Priority:** P2 (High) · **Status:** ✅ Done · **Dependencies:** US-SAFE-005
+**Priority:** P2 (High) · **Status:** ✅ Done · **Dependencies:** US-SAFE-006
 
 ---
 
-## US-SAFE-005: Manage Transactions
+## US-SAFE-005: Review Safe Transactions
 
-**As a** Safe owner **I want to** review, approve, and execute Safe transactions **so that** team
-actions happen only after the required signers agree.
+**As a** team member **I want to** review Safe transactions **so that** I understand which actions
+are pending and which ones the team has already completed.
 
-### How it works
+### What I can see
 
-1. Review the transaction list to see the action, recipient, value, status, and approvals.
-2. Approve a pending transaction if you are an eligible signer.
-3. Once the threshold is reached, execute the transaction.
-4. Review the resulting status and refreshed balances.
+- The action, recipient, value, status, transaction hash, and confirmation count.
+- The transaction details when more context is needed.
+- All transactions, only pending transactions, or only executed transactions.
 
 ### Acceptance Criteria
 
 - [x] The transaction list shows its method, recipient, value, status, transaction hash, and
       confirmation count.
 - [x] Users can filter between all, pending, and executed transactions.
+- [x] A team member can open a transaction to inspect its details without being a Safe owner.
+
+**Priority:** P2 (High) · **Status:** ✅ Done · **Dependencies:** US-SAFE-001
+
+---
+
+## US-SAFE-006: Approve and Execute a Safe Transaction
+
+**As a** Safe owner **I want to** approve a pending transaction and execute it once enough owners
+agree **so that** the team can carry out an action safely.
+
+### How it works
+
+1. Review a pending transaction and approve it if you agree with the action.
+2. Other Safe owners approve it until the Safe threshold is reached.
+3. Execute the transaction once it has the required number of approvals.
+4. Review the resulting status and refreshed balances.
+
+### Acceptance Criteria
+
 - [x] Only Safe owners can approve or execute a transaction.
 - [x] A signer cannot approve the same transaction twice.
 - [x] A transaction can execute only when it has the required number of confirmations.
