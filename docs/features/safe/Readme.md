@@ -23,6 +23,59 @@ can perform the action, what they can do, and what must happen for it to succeed
 - **Import:** attach an already-deployed Safe to the team. Importing does not change that Safe's
   owners, threshold, assets, or on-chain configuration.
 
+## Reviewable User Journey
+
+The Safe account follows the same order in the interface and in this document. Each section answers
+one user question before presenting the next set of actions.
+
+| Step | User question                                 | Interface section      | Primary next action                                      |
+| ---- | --------------------------------------------- | ---------------------- | -------------------------------------------------------- |
+| 1    | Does this team already have a Safe?           | Setup                  | Deploy a new Safe or inspect and import an existing Safe |
+| 2    | What does the wallet hold, and what can I do? | Overview               | Deposit funds, create a transfer, or open the Safe app   |
+| 3    | Who controls the wallet?                      | Funds and control      | Review holdings, owners, and required approvals          |
+| 4    | What needs signer attention?                  | Activity and approvals | Approve a proposal or execute one that is ready          |
+| 5    | What already happened?                        | Deposits and history   | Review executed actions and incoming transfers           |
+
+The connected wallet's role is stated next to the relevant controls:
+
+- a **team owner** can deploy or import the Safe;
+- a **Safe signer** can propose outgoing transfers, propose owner or threshold changes, approve
+  transactions, and execute ready transactions;
+- a **team member or other connected wallet** can review Safe information and deposit funds, but
+  cannot use signer-only controls.
+
+Disabled controls retain a visible explanation of who can use them and what must happen first. Team
+membership never implies Safe signer permission.
+
+### Transaction state model
+
+The approval queue uses one state model in the desktop table, mobile cards, filters, details, and
+action guidance.
+
+| State             | Meaning                                                    | Next step                                              |
+| ----------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| Pending approvals | The Safe has not collected its required confirmations      | One or more Safe signers approve the proposal          |
+| Ready to execute  | The confirmation threshold has been reached                | A Safe signer executes the transaction                 |
+| Conflicting       | Another pending transaction may be affected by this action | Review the pending queue before approving or executing |
+| Executed          | The Safe completed the transaction                         | No further signer action is required                   |
+| Invalid           | The Safe has already passed the transaction's nonce        | Create a new proposal if the action is still needed    |
+
+Approving and executing remain separate actions. Reaching the threshold makes a transaction ready;
+it does not execute it automatically. A conflict confirmation explains the consequence before the
+existing approval or execution behaviour continues.
+
+### Loading, empty, and error states
+
+- Loading states identify which Safe information is being checked instead of replacing the whole
+  account with an unexplained spinner.
+- Empty transaction and deposit states explain which user action will populate the section.
+- Query errors keep the Safe address and unaffected information visible and offer a local retry.
+- Success messages say whether an action is complete or has only created a proposal waiting for
+  signer approval.
+- Desktop tables become stacked transaction and deposit cards on small screens. Native links,
+  buttons, labelled fields, progress semantics, focus styles, and modal controls remain keyboard
+  reachable.
+
 ---
 
 ## Status Overview
