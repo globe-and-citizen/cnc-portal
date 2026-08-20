@@ -91,8 +91,18 @@
         :team="createdTeamData"
         :show-alert="true"
         :show-skip="true"
-        @skip="$emit('done')"
-        @contractDeployed="navigateToTeam"
+        @skip="showSafeDeploymentStep"
+        @contractDeployed="showSafeDeploymentStep"
+      />
+    </div>
+
+    <!-- Step 4: Safe Wallet -->
+    <div v-else-if="currentStep === 3" data-test="step-4">
+      <SafeDeploymentCard
+        v-if="createdTeamData"
+        :team-id="Number(createdTeamData.id)"
+        :team-owner-address="createdTeamData.ownerAddress"
+        @safe-deployed="navigateToTeam"
       />
     </div>
   </div>
@@ -104,12 +114,12 @@ import { z } from 'zod'
 import { isAddress } from 'viem'
 import { log } from '@/utils'
 import InvestorContractStep from '@/components/sections/TeamView/forms/InvestorContractStep.vue'
+import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import type { Team } from '@/types'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 import { useRouter } from 'vue-router'
 
-defineEmits(['done'])
 const toast = useToast()
 const router = useRouter()
 const {
@@ -159,7 +169,8 @@ const step2Label = computed(() => {
 const stepperItems = computed(() => [
   { title: 'Company Details', value: 1 },
   { title: step2Label.value, value: 2 },
-  { title: 'Investor Contract', value: 3 }
+  { title: 'Investor Contract', value: 3 },
+  { title: 'Safe Wallet', value: 4 }
 ])
 
 // Navigation Functions
@@ -170,9 +181,13 @@ const navigateToTeam = () => {
 }
 
 const nextStep = () => {
-  if (currentStep.value < 4 && canProceed.value) {
+  if (currentStep.value < 2 && canProceed.value) {
     currentStep.value++
   }
+}
+
+const showSafeDeploymentStep = () => {
+  currentStep.value = 3
 }
 
 // Form Submission Functions

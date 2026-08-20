@@ -38,6 +38,23 @@ const InvestorContractStepStub = defineComponent({
   }
 })
 
+const SafeDeploymentCardStub = defineComponent({
+  name: 'SafeDeploymentCard',
+  props: ['teamId', 'teamOwnerAddress'],
+  emits: ['safeDeployed'],
+  setup(_, { emit }) {
+    return () =>
+      h(
+        'button',
+        {
+          'data-test': 'deploy-safe-button',
+          onClick: () => emit('safeDeployed', '0x1111111111111111111111111111111111111111')
+        },
+        'Deploy Safe Wallet'
+      )
+  }
+})
+
 const MultiSelectMemberInputStub = defineComponent({
   name: 'MultiSelectMemberInput',
   props: ['modelValue', 'disableTeamMembers'],
@@ -56,7 +73,9 @@ const SELECTORS = {
   createTeamError: '[data-test="create-team-error"]',
   step1: '[data-test="step-1"]',
   step2: '[data-test="step-2"]',
-  step3: '[data-test="step-3"]'
+  step3: '[data-test="step-3"]',
+  step4: '[data-test="step-4"]',
+  deploySafeButton: '[data-test="deploy-safe-button"]'
 } as const
 
 describe('AddTeamForm.vue', () => {
@@ -68,6 +87,7 @@ describe('AddTeamForm.vue', () => {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           InvestorContractStep: InvestorContractStepStub,
+          SafeDeploymentCard: SafeDeploymentCardStub,
           MultiSelectMemberInput: MultiSelectMemberInputStub
         }
       }
@@ -96,6 +116,13 @@ describe('AddTeamForm.vue', () => {
     const newWrapper = mountComponent()
     await goToStep2(newWrapper)
     await newWrapper.find('[data-test="create-team-button"]').trigger('click')
+    await flushPromises()
+    return newWrapper
+  }
+
+  const goToStep4 = async () => {
+    const newWrapper = await goToStep3()
+    await newWrapper.find(SELECTORS.deployContractButton).trigger('click')
     await flushPromises()
     return newWrapper
   }
@@ -247,19 +274,31 @@ describe('AddTeamForm.vue', () => {
   })
 
   describe('Step 3 - Investor Contract', () => {
-    it('should emit done when skip is clicked', async () => {
+    it('shows the Safe deployment step when Investor deployment is skipped', async () => {
       wrapper = await goToStep3()
 
       await wrapper.find(SELECTORS.skipButton).trigger('click')
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.emitted('done')).toBeTruthy()
+      expect(wrapper.find(SELECTORS.step4).exists()).toBe(true)
     })
 
-    it('should navigate to team page when contracts are deployed', async () => {
+    it('shows the Safe deployment step after Investor contracts are deployed', async () => {
       wrapper = await goToStep3()
 
       await wrapper.find(SELECTORS.deployContractButton).trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find(SELECTORS.step4).exists()).toBe(true)
+      const safeDeployment = wrapper.findComponent({ name: 'SafeDeploymentCard' })
+      expect(safeDeployment.props('teamId')).toBe(Number(mockTeamData.id))
+      expect(safeDeployment.props('teamOwnerAddress')).toBe(mockTeamData.ownerAddress)
+    })
+
+    it('navigates to the team after the Safe is deployed and registered', async () => {
+      wrapper = await goToStep4()
+
+      await wrapper.find(SELECTORS.deploySafeButton).trigger('click')
       await wrapper.vm.$nextTick()
 
       expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamData.id}`)

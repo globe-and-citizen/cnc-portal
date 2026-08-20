@@ -65,6 +65,7 @@ import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 interface Props {
   teamId: number
+  teamOwnerAddress?: string
 }
 
 const props = defineProps<Props>()
@@ -82,7 +83,8 @@ const canDeploy = computed(
   () =>
     !!userDataStore.address &&
     isAddress(userDataStore.address) &&
-    teamStore.currentTeam?.ownerAddress == userDataStore.address
+    (props.teamOwnerAddress ?? teamStore.currentTeam?.ownerAddress)?.toLowerCase() ===
+      userDataStore.address.toLowerCase()
 )
 
 const networkName = computed(() => NETWORK || 'Polygon')
