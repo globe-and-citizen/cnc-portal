@@ -34,9 +34,9 @@ vi.mock('@/queries/contract.queries', () => ({
 
 const SAFE_ADDRESS = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
-function mountCard() {
+function mountCard(props: { teamId?: number; teamOwnerAddress?: string } = {}) {
   return mount(SafeDeploymentCard, {
-    props: { teamId: Number(mockTeamData.id) }
+    props: { teamId: Number(mockTeamData.id), ...props }
   })
 }
 
@@ -66,6 +66,25 @@ describe('SafeDeploymentCard', () => {
     const wrapper = mountCard()
     const button = wrapper.find('[data-test="deploy-safe-button"]')
     expect(button.attributes('disabled')).toBeDefined()
+  })
+
+  it('uses the supplied team owner when deployed from the team creation wizard', async () => {
+    mockUserStore.address = mockTeamData.ownerAddress
+    mockTeamStore.currentTeam = {
+      ...mockTeamData,
+      ownerAddress: '0x0000000000000000000000000000000000000099'
+    }
+
+    const wrapper = mountCard({ teamOwnerAddress: mockTeamData.ownerAddress })
+
+    expect(wrapper.find('[data-test="deploy-safe-button"]').attributes('disabled')).toBeUndefined()
+
+    await wrapper.find('[data-test="deploy-safe-button"]').trigger('click')
+
+    expect(mockDeploySafeMutation.mutate).toHaveBeenCalledWith(
+      { owners: [mockTeamData.ownerAddress], threshold: 1 },
+      expect.any(Object)
+    )
   })
 
   it('shows the full owner address in the deployment details', () => {

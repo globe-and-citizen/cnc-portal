@@ -31,8 +31,10 @@ vi.mock('@/queries/contract.queries', () => ({
   useCreateContractMutation: vi.fn(() => mockCreateContract)
 }))
 
-function mountCard() {
-  return mount(SafeImportCard, { props: { teamId: Number(mockTeamData.id) } })
+function mountCard(props: Partial<{ teamId: number; teamOwnerAddress: string }> = {}) {
+  return mount(SafeImportCard, {
+    props: { teamId: Number(mockTeamData.id), ...props }
+  })
 }
 
 describe('SafeImportCard', () => {
@@ -100,6 +102,20 @@ describe('SafeImportCard', () => {
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Success', color: 'success' })
     )
+  })
+
+  it('uses the team owner passed by the creation flow to authorize an import', async () => {
+    mockTeamStore.currentTeam = {
+      ...mockTeamData,
+      ownerAddress: '0x0000000000000000000000000000000000000099'
+    }
+    const wrapper = mountCard({ teamOwnerAddress: mockTeamData.ownerAddress })
+    await wrapper.find('[data-test="safe-import-address-input"]').setValue(SAFE_ADDRESS)
+    await wrapper.find('[data-test="inspect-safe-button"]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-test="confirm-safe-import-button"]').trigger('click')
+
+    expect(mockCreateContract.mutate).toHaveBeenCalled()
   })
 
   it('allows a non-owner to inspect but not import a Safe', async () => {
