@@ -1,18 +1,20 @@
 <template>
   <UCard data-test="safe-transactions-card">
     <template #header>
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div class="space-y-4">
         <div>
           <p class="text-lg font-semibold text-gray-900 dark:text-white">Approval queue</p>
           <p class="mt-1 text-sm text-gray-500">
-            Review what the Safe will do, collect signer approvals, then execute ready actions.
+            Start with transactions that need signer action, then review the completed history.
           </p>
         </div>
-        <SafeTransactionStatusFilter v-model="selectedStatus" @status-change="handleStatusChange" />
+        <SafeTransactionStatusFilter
+          v-model="selectedStatus"
+          :counts="transactionCounts"
+          @status-change="handleStatusChange"
+        />
       </div>
     </template>
-
-    <SafeTransactionSummary :counts="transactionCounts" />
 
     <SafeTransactionFeedback
       :has-error="!!error"
@@ -31,8 +33,14 @@
           :columns="columns"
           data-test="safe-transactions-table"
         >
-          <template #to-cell="{ row: { original: row } }">
-            <UserComponent :user="resolveUser(row.to)" />
+          <template #transaction-cell="{ row: { original: row } }">
+            <div class="min-w-44">
+              <p class="font-medium capitalize">{{ getSafeTransactionMethod(row) }}</p>
+              <div class="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                <span>To</span>
+                <AddressToolTip :address="row.to" slice />
+              </div>
+            </div>
           </template>
 
           <template #value-cell="{ row: { original: row } }">
@@ -47,37 +55,45 @@
             </span>
           </template>
 
-          <template #status-cell="{ row: { original: row } }">
-            <div class="min-w-40 space-y-2">
-              <div class="flex flex-wrap items-center gap-2">
-                <UBadge
-                  :color="getTransactionState(row).color"
-                  variant="soft"
-                  size="sm"
-                  data-test="safe-transaction-state"
-                >
-                  {{ getTransactionState(row).label }}
-                </UBadge>
-                <span class="text-xs text-gray-500">
-                  {{ row.confirmations?.length || 0 }} / {{ requiredConfirmations(row) }} approvals
-                </span>
+          <template #approvals-cell="{ row: { original: row } }">
+            <div class="min-w-28" data-test="safe-transaction-approval-progress">
+              <p class="text-sm font-medium">
+                {{ row.confirmations?.length || 0 }} of {{ requiredConfirmations(row) }}
+              </p>
+              <div
+                class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800"
+                role="progressbar"
+                :aria-label="`Transaction approval progress: ${row.confirmations?.length || 0} of ${requiredConfirmations(row)}`"
+                :aria-valuenow="row.confirmations?.length || 0"
+                aria-valuemin="0"
+                :aria-valuemax="requiredConfirmations(row)"
+              >
+                <div
+                  class="bg-primary h-full rounded-full"
+                  :style="{ width: confirmationProgress(row) }"
+                />
               </div>
+            </div>
+          </template>
+
+          <template #status-cell="{ row: { original: row } }">
+            <div class="max-w-52 space-y-1.5">
+              <UBadge
+                :color="getTransactionState(row).color"
+                variant="soft"
+                size="sm"
+                data-test="safe-transaction-state"
+              >
+                {{ getTransactionState(row).label }}
+              </UBadge>
               <p class="text-xs text-gray-500">{{ getTransactionState(row).nextStep }}</p>
             </div>
           </template>
 
-          <template #txHash-cell="{ row: { original: row } }">
-            <AddressToolTip
-              v-if="row.transactionHash"
-              :address="row.transactionHash"
-              type="transaction"
-              slice
-            />
-            <span v-else class="text-gray-400">Not executed</span>
-          </template>
-
-          <template #method-cell="{ row: { original: row } }">
-            {{ getSafeTransactionMethod(row) }}
+          <template #updated-cell="{ row: { original: row } }">
+            <span class="text-sm whitespace-nowrap text-gray-500">
+              {{ formatDateRelative(row.modified) }}
+            </span>
           </template>
 
           <template #actions-cell="{ row: { original: row } }">
@@ -108,7 +124,7 @@
       />
     </template>
 
-    <template #footer>
+    <template v-if="!isLoading && !error && total > pageSize" #footer>
       <TablePagination
         v-model:page="page"
         v-model:page-size="pageSize"
@@ -146,21 +162,21 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Address } from 'viem'
 import TablePagination from '@/components/TablePagination.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import UserComponent from '@/components/UserComponent.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
 import SafeTransactionActions from './SafeTransactionActions.vue'
 import SafeTransactionStatusFilter from './SafeTransactionStatusFilter.vue'
-import SafeTransactionSummary from './SafeTransactionSummary.vue'
 import SafeTransactionMobileList from './SafeTransactionMobileList.vue'
 import SafeTransactionFeedback from './SafeTransactionFeedback.vue'
 import { usePagination } from '@/composables/usePagination'
 import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
 import { useSafeTransactionConflicts } from '@/composables/safe/useSafeTransactionConflicts'
 import { useSafeTransactionActions } from '@/composables/safe/useSafeTransactionActions'
-import { formatSafeTransactionValue, getSafeTransactionMethod, resolveUser, log } from '@/utils'
+import { formatSafeTransactionValue, getSafeTransactionMethod, log } from '@/utils'
+import { formatDateRelative } from '@/utils/format'
 import {
   getSafeTransactionPermissions,
+  getSafeTransactionFilterCounts,
   getSafeTransactionState,
   matchesSafeTransactionFilter,
   type SafeTransactionStateMeta,
@@ -175,17 +191,17 @@ interface Props {
 
 const props = defineProps<Props>()
 const userDataStore = useUserDataStore()
-const selectedStatus = ref<SafeTransactionFilterValue>('all')
+const selectedStatus = ref<SafeTransactionFilterValue>('needs-action')
 const showDetailsModal = ref(false)
 const selectedTransactionForDetails = ref<SafeTransaction | null>(null)
 
 const columns: TableColumn<SafeTransaction>[] = [
-  { accessorKey: 'method', header: 'Action' },
-  { accessorKey: 'to', header: 'Recipient' },
+  { accessorKey: 'transaction', header: 'Transaction' },
   { accessorKey: 'value', header: 'Value' },
-  { accessorKey: 'status', header: 'Status and next step' },
-  { accessorKey: 'txHash', header: 'On-chain transaction' },
-  { accessorKey: 'actions', header: 'Available actions' }
+  { accessorKey: 'approvals', header: 'Approvals' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'updated', header: 'Updated' },
+  { accessorKey: 'actions', header: 'Action' }
 ]
 
 const {
@@ -251,14 +267,11 @@ const filteredTransactions = computed(() =>
   )
 )
 
-const transactionCounts = computed(() => {
-  const counts = { pending: 0, ready: 0, conflicting: 0, executed: 0 }
-  for (const transaction of transactions.value ?? []) {
-    const state = getTransactionState(transaction).state
-    if (state in counts) counts[state as keyof typeof counts] += 1
-  }
-  return counts
-})
+const transactionCounts = computed(() =>
+  getSafeTransactionFilterCounts(
+    (transactions.value ?? []).map((transaction) => getTransactionState(transaction).state)
+  )
+)
 
 const total = computed(() => filteredTransactions.value.length)
 const { page, pageSize, reset } = usePagination(() => total.value, { key: 'safeTx' })
@@ -270,7 +283,9 @@ const displayedTransactions = computed(() => {
 const emptyStateDescription = computed(() =>
   selectedStatus.value === 'all'
     ? 'Transfers and signer changes will appear here after they are proposed.'
-    : 'Choose another status to continue reviewing the Safe history.'
+    : selectedStatus.value === 'needs-action'
+      ? 'Everything is complete for now. Review all transactions to see the Safe history.'
+      : 'Choose another status to continue reviewing the Safe history.'
 )
 
 const confirmationProgress = (transaction: SafeTransaction) => {

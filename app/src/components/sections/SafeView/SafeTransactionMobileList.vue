@@ -43,8 +43,16 @@
         </div>
       </dl>
 
+      <div class="mt-4 flex items-center justify-between gap-3 text-xs text-gray-500">
+        <span
+          >{{ transaction.confirmations?.length || 0 }} of
+          {{ requiredConfirmations(transaction) }} approvals</span
+        >
+        <span>{{ formatDateRelative(transaction.modified) }}</span>
+      </div>
+
       <div
-        class="mt-4 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800"
+        class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800"
         role="progressbar"
         :aria-label="`Transaction approval progress: ${transaction.confirmations?.length || 0} of ${requiredConfirmations(transaction)}`"
         :aria-valuenow="transaction.confirmations?.length || 0"
@@ -79,6 +87,7 @@
 <script setup lang="ts">
 import SafeTransactionActions from './SafeTransactionActions.vue'
 import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
+import { formatDateRelative } from '@/utils/format'
 import type { SafeTransaction } from '@/types/safe'
 import type {
   SafeTransactionPermissions,

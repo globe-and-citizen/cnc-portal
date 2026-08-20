@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SafeConfirmation, SafeTransaction } from '@/types/safe'
 import {
+  getSafeTransactionFilterCounts,
   getSafeTransactionPermissions,
   getSafeTransactionState,
   matchesSafeTransactionFilter
@@ -127,5 +128,28 @@ describe('matchesSafeTransactionFilter', () => {
     expect(matchesSafeTransactionFilter('pending', 'needs-action')).toBe(true)
     expect(matchesSafeTransactionFilter('conflicting', 'needs-action')).toBe(true)
     expect(matchesSafeTransactionFilter('executed', 'needs-action')).toBe(false)
+  })
+})
+
+describe('getSafeTransactionFilterCounts', () => {
+  it('keeps actionability and individual state counts aligned', () => {
+    expect(
+      getSafeTransactionFilterCounts([
+        'pending',
+        'pending',
+        'ready',
+        'conflicting',
+        'executed',
+        'invalid'
+      ])
+    ).toEqual({
+      all: 6,
+      'needs-action': 4,
+      pending: 2,
+      ready: 1,
+      conflicting: 1,
+      executed: 1,
+      invalid: 1
+    })
   })
 })

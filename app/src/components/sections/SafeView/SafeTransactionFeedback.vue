@@ -1,29 +1,33 @@
 <template>
-  <UAlert
+  <div
     v-if="hasError"
-    class="mb-5"
-    color="error"
-    variant="soft"
-    icon="i-lucide-circle-alert"
-    title="Transactions could not be loaded"
-    description="Your Safe information is still available. Check your connection and try loading the approval queue again."
+    class="mb-4 flex flex-col gap-3 rounded-lg border border-red-200 bg-red-50 p-3 sm:flex-row sm:items-center sm:justify-between dark:border-red-900 dark:bg-red-950/30"
+    role="alert"
     data-test="safe-transactions-error"
   >
-    <template #actions>
-      <UButton
-        color="error"
-        variant="outline"
-        size="xs"
-        label="Try again"
-        data-test="retry-safe-transactions-button"
-        @click="emit('retry')"
-      />
-    </template>
-  </UAlert>
+    <div class="flex min-w-0 items-start gap-3">
+      <UIcon name="i-lucide-circle-alert" class="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+      <div>
+        <p class="text-sm font-medium text-red-800 dark:text-red-200">Approval queue unavailable</p>
+        <p class="mt-0.5 text-sm text-red-700 dark:text-red-300">
+          Check your connection and try loading the transactions again.
+        </p>
+      </div>
+    </div>
+    <UButton
+      color="error"
+      variant="outline"
+      size="xs"
+      label="Try again"
+      class="self-start sm:self-auto"
+      data-test="retry-safe-transactions-button"
+      @click="emit('retry')"
+    />
+  </div>
 
   <div
     v-else-if="isLoading"
-    class="flex min-h-48 flex-col items-center justify-center gap-3 text-center"
+    class="flex min-h-36 flex-col items-center justify-center gap-3 text-center"
     role="status"
     aria-live="polite"
     data-test="safe-transactions-loading"
@@ -37,7 +41,7 @@
 
   <div
     v-else-if="isEmpty"
-    class="flex min-h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center"
+    class="flex min-h-36 flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center"
     data-test="safe-transactions-empty"
   >
     <div class="bg-primary/10 flex h-11 w-11 items-center justify-center rounded-full">
@@ -45,7 +49,13 @@
     </div>
     <div>
       <p class="font-medium">
-        {{ selectedStatus === 'all' ? 'No Safe transactions yet' : 'No matching transactions' }}
+        {{
+          selectedStatus === 'all'
+            ? 'No Safe transactions yet'
+            : selectedStatus === 'needs-action'
+              ? 'No transactions need action'
+              : 'No matching transactions'
+        }}
       </p>
       <p class="mt-1 max-w-md text-sm text-gray-500">{{ emptyDescription }}</p>
     </div>

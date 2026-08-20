@@ -5,6 +5,8 @@ export type SafeTransactionState = 'pending' | 'ready' | 'conflicting' | 'execut
 
 export type SafeTransactionStatusFilter = 'all' | 'needs-action' | SafeTransactionState
 
+export type SafeTransactionFilterCounts = Record<SafeTransactionStatusFilter, number>
+
 export interface SafeTransactionStateContext {
   currentNonce: number
   threshold?: number
@@ -24,6 +26,30 @@ export interface SafeTransactionPermissions {
   canExecute: boolean
   approveHint: string
   executeHint: string
+}
+
+export function getSafeTransactionFilterCounts(
+  states: SafeTransactionState[]
+): SafeTransactionFilterCounts {
+  const counts: SafeTransactionFilterCounts = {
+    all: 0,
+    'needs-action': 0,
+    pending: 0,
+    ready: 0,
+    conflicting: 0,
+    executed: 0,
+    invalid: 0
+  }
+
+  for (const state of states) {
+    counts.all += 1
+    counts[state] += 1
+    if (state === 'pending' || state === 'ready' || state === 'conflicting') {
+      counts['needs-action'] += 1
+    }
+  }
+
+  return counts
 }
 
 const confirmationCount = (transaction: SafeTransaction) => transaction.confirmations?.length ?? 0

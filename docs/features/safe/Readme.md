@@ -44,13 +44,15 @@ The connected wallet's role is stated next to the relevant controls:
 - a **team member or other connected wallet** can review Safe information and deposit funds, but
   cannot use signer-only controls.
 
-Disabled controls retain a visible explanation of who can use them and what must happen first. Team
-membership never implies Safe signer permission.
+Disabled setup and wallet controls retain a visible explanation of who can use them and what must
+happen first. Approval queue rows show only the signer actions currently available; their status and
+details explain the next step. Team membership never implies Safe signer permission.
 
 ### Transaction state model
 
 The approval queue uses one state model in the desktop table, mobile cards, filters, details, and
-action guidance.
+action guidance. It opens on the compact **Needs action** filter, while the counted filters expose
+transactions awaiting approval, ready to execute, conflicting, executed, and the complete history.
 
 | State             | Meaning                                                    | Next step                                              |
 | ----------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
@@ -207,15 +209,16 @@ are pending and which ones the team has already completed.
 
 ### What I can see
 
-- The action, recipient, value, status, transaction hash, and confirmation count.
-- The transaction details when more context is needed.
-- All transactions, only pending transactions, or only executed transactions.
+- The action, recipient, value, approval progress, status, last update, and available action.
+- The transaction details, including its on-chain hash when available, when more context is needed.
+- Transactions needing action by default, or a counted status filter and the complete history.
 
 ### Acceptance Criteria
 
-- [x] The transaction list shows its method, recipient, value, status, transaction hash, and
-      confirmation count.
-- [x] Users can filter between all, pending, and executed transactions.
+- [x] The transaction list shows its method, recipient, value, approval progress, status, last
+      update, and available action; details expose the transaction hash when present.
+- [x] Counted filters prioritize transactions needing action and expose approval, ready, conflict,
+      executed, and complete-history views.
 - [x] A team member can open a transaction to inspect its details without being a Safe owner.
 
 **Priority:** P2 (High) · **Status:** ✅ Done · **Dependencies:** US-SAFE-001

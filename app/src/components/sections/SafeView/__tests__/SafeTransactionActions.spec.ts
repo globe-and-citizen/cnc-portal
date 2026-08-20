@@ -10,16 +10,14 @@ const defaultProps = {
 }
 
 describe('SafeTransactionActions', () => {
-  it('exposes permission explanations on signer actions', () => {
+  it('shows only the signer actions currently available', () => {
     const wrapper = mount(SafeTransactionActions, { props: defaultProps })
 
     expect(wrapper.get('[data-test="approve-button"]').attributes('title')).toBe(
       defaultProps.approveHint
     )
-    expect(wrapper.get('[data-test="execute-button"]').attributes('title')).toBe(
-      defaultProps.executeHint
-    )
-    expect(wrapper.get('[data-test="execute-button"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('[data-test="execute-button"]').exists()).toBe(false)
+    expect(wrapper.get('[data-test="view-details-button"]').exists()).toBe(true)
   })
 
   it('emits the keyboard-reachable action selected by the user', async () => {
@@ -44,5 +42,15 @@ describe('SafeTransactionActions', () => {
     expect(wrapper.get('[data-test="approve-button"]').attributes('disabled')).toBeDefined()
     expect(wrapper.get('[data-test="execute-button"]').attributes('disabled')).toBeDefined()
     expect(wrapper.get('[data-test="view-details-button"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('keeps unavailable signer actions out of a read-only row', () => {
+    const wrapper = mount(SafeTransactionActions, {
+      props: { ...defaultProps, canApprove: false }
+    })
+
+    expect(wrapper.find('[data-test="approve-button"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="execute-button"]').exists()).toBe(false)
+    expect(wrapper.get('[data-test="view-details-button"]').exists()).toBe(true)
   })
 })

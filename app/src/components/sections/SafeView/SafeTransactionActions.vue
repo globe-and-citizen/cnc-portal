@@ -11,6 +11,7 @@
       @click="emit('view')"
     />
     <UButton
+      v-if="canApprove"
       size="xs"
       color="primary"
       label="Approve"
@@ -22,6 +23,7 @@
       @click="emit('approve')"
     />
     <UButton
+      v-if="canExecute"
       size="xs"
       color="success"
       label="Execute"
