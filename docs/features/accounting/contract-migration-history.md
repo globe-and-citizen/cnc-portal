@@ -8,30 +8,15 @@ redeploys its Officer, the money-pocket contracts (Bank, Expense, CashRemunerati
 Investor) get **new addresses**; the previous ones keep living on-chain with all their past
 transactions. The books must consolidate **every generation**, not just the current one. The
 acceptance criteria are written as a **testing checklist**: once every box is ticked, the migration
-use cases and edge cases are covered.
-
-### Where to do what (screen map)
-
-| Action                                | Where, in the portal                                                                                          |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Make a money move (deposit, transfer) | The team's **Bank** view                                                                                      |
-| **Redeploy** the contracts            | **Contract Management** → _Current contracts_ tab → _Current generation_ card → **Redeploy contracts** button |
-| See **archived** generations          | **Contract Management** → _Deployment history_ tab                                                            |
-| Read the **consolidated books**       | **Accounting** → _Summary · Income Statement · Balance Sheet · Trial Balance · General Ledger_                |
+use cases and edge cases are covered. |
 
 ### Lifecycle (test in this order)
 
-1. **Set up a generation.** On a freshly deployed team, make a few **money moves** on the **Bank**
-   (a deposit, a transfer) → confirm they show in **Accounting** (Summary + General Ledger) and on
-   the **Bank** view.
-2. **Redeploy the Officer.** Sidebar → **Contract Management** → _Current contracts_ tab → in the
-   _Current generation_ card, click **Redeploy contracts**. In the **"Redeploy Officer Contract"**
-   modal, fill in the **name** and **symbol** of the new share token, then click **Redeploy
-   Officer**. The previous generation moves to the _Deployment history_ tab (**archived, not
-   deleted**); the **Safe** is preserved.
+1. **Set up a Team & do some token transactions on different contracts to get history.**
+2. **Redeploy the Officer.**
 3. **Verify consolidation.** Go back to **Accounting**: the pre-migration transactions are still
    there, **exactly once**, next to the new ones.
-4. _(optional)_ **Treasury sweep.** From the **Bank**, move the remaining funds from the old
+4. **Treasury sweep.** From the **Bank**, move the remaining funds from the old
    contract to the new one → it must appear as an **internal move** (the income statement does not
    change).
 5. **Repeat 2 → 4** to validate several successive migrations.
@@ -44,8 +29,8 @@ use cases and edge cases are covered.
 
 - **Generation** — one deployment of a team's contracts, tied to one Officer, with its own
   `deployBlockNumber` (its scan boundary).
-- **Officer-less pocket** — the **Safe** and **SafeDepositRouter** survive redeploys and keep the
-  same address across generations (no deploy boundary of their own).
+- **Safe** — the team's Safe survives a redeploy and keeps the same address across generations (no
+  deploy boundary of its own).
 - **Treasury sweep** — a transfer that moves funds from an old contract to its replacement (e.g. old
   Bank → new Bank) during/after a migration. It is an **internal move**, not revenue or expense.
 - **On-chain identity** — an event's `txHash`-`logIndex`. Used to deduplicate; never displayed.
@@ -76,8 +61,8 @@ after one or more contract redeploys **So that** the books are never wiped by a 
 - [ ] Every transaction appears **exactly once** — never duplicated across the before/during/after
       boundary
 - [ ] Each generation is scanned from its **own deploy block**, not a single global start block
-- [ ] Officer-less pockets (Safe / SafeDepositRouter) keep their history unchanged (same address
-      across generations)
+- [ ] The **Safe** keeps its history unchanged — it is the only contract that does not change
+      address on a redeploy
 - [ ] After **N** migrations, the ledger holds the complete history of all **N+1** generations;
       totals span the entire history
 
@@ -110,8 +95,8 @@ looking like income or a cost **So that** the income statement stays accurate th
 
 **Acceptance Criteria — edge cases:**
 
-- [ ] A sweep involving an **Officer-less pocket** (Safe / SafeDepositRouter) on one side and a
-      generation contract on the other is also recognised as internal
+- [ ] A sweep involving the **Safe** on one side and a generation contract on the other is also
+      recognised as internal
 - [ ] A transfer to an **external** address (not team-owned) is still booked normally as revenue /
       expense — the internal registry only "swallows" moves between the team's own contracts
 - [ ] A transfer between two contracts of the **same generation** stays internal as before (the
