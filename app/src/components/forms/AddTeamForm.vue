@@ -108,7 +108,6 @@
       <UTabs
         v-model="safeSetupChoice"
         :items="safeSetupTabs"
-        variant="link"
         aria-label="Safe wallet setup options"
       >
         <template #default="{ item }">
