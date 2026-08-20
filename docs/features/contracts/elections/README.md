@@ -199,7 +199,7 @@ US-ELEC-001
       `EnforcedPause`; reads keep working
 - [x] Pausing preserves votes already cast — resuming continues the same election
 - [ ] The portal exposes the control, and explains a paused contract to members rather than letting
-      their transactions fail at the wallet — see US-ELECTION-014 in the
+      their transactions fail at the wallet — see US-EL-09 in the
       [user stories](../../elections/Readme.md)
 
 ---
