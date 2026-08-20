@@ -191,9 +191,10 @@ vi.mock('@/queries/wage.queries', () => {
   // real module (which touches `@/constant`).
   const wageKeys = {
     all: ['wages'] as const,
-    teams: () => ['wages', 'team'] as const,
-    team: (teamId: string | number | null) => ['wages', 'team', { teamId }] as const
+    teams: () => [...wageKeys.all, 'team'] as const,
+    team: (teamId: string | number | null) => [...wageKeys.teams(), { teamId }] as const
   }
+
   return {
     wageKeys,
     useGetTeamWagesQuery: vi.fn(queryMocks.useGetTeamWagesQuery),
@@ -313,7 +314,6 @@ vi.mock('@/queries/weeklyClaim.queries', async (importOriginal) => {
 vi.mock('@/queries/safe.mutations', () => ({
   useGetSafeInfoQuery: vi.fn(queryMocks.useGetSafeInfoQuery),
   useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
-  useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),
   useApproveTransactionMutation: vi.fn(queryMocks.useApproveTransactionMutation),
   useExecuteTransactionMutation: vi.fn(queryMocks.useExecuteTransactionMutation),
 
