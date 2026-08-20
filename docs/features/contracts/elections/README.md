@@ -22,10 +22,10 @@ publication that seats the Board of Directors. **Contract File:**
 
 ✅ done · ⚠️ built with known defects · 🚫 not built
 
-> **The frontend exists.** Two pages cover this contract —
-> `/teams/:id/administration/bod-elections` and `.../bod-elections-details`. What they do, what is
-> broken and how to test it is in the [Elections user stories](../../elections/Readme.md), which is
-> the authority on frontend behaviour. This document is the authority on contract behaviour.
+> **The frontend exists.** Two pages cover this contract — `/teams/:id/administration/bod-elections`
+> and `.../bod-elections-details`. What they do, what is broken and how to test it is in the
+> [Elections user stories](../../elections/Readme.md), which is the authority on frontend behaviour.
+> This document is the authority on contract behaviour.
 
 ---
 
@@ -133,9 +133,9 @@ portal fills the roll with every current team member, so anyone joining later ca
 - [x] Emits `ResultsPublished(electionId, winners)`
 
 **Consequences worth knowing:** the winners array is always exactly `seatCount` long, so an election
-that received no votes at all still seats a board — the lowest candidate addresses win by
-tie-break. And publishing is the only thing that unblocks the next election (US-ELEC-005), so an
-election left unpublished strands the team.
+that received no votes at all still seats a board — the lowest candidate addresses win by tie-break.
+And publishing is the only thing that unblocks the next election (US-ELEC-005), so an election left
+unpublished strands the team.
 
 ---
 

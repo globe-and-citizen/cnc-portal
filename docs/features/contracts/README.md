@@ -31,6 +31,8 @@ known defects — see the feature's user stories)
 ## Further Reading
 
 - [Contract Overview](../../contracts/README.md) — function signatures and contract list
-- [Technical Architecture](../../contracts/contracts-technical-architecture.md) — patterns, data flows, upgrade mechanics
+- [Technical Architecture](../../contracts/contracts-technical-architecture.md) — patterns, data
+  flows, upgrade mechanics
 - [Architecture Diagrams](../../contracts/contracts-architecture-diagram.md) — mermaid diagrams
-- [Quick Reference](../../contracts/contracts-quick-reference.md) — function signatures, events, error codes
+- [Quick Reference](../../contracts/contracts-quick-reference.md) — function signatures, events,
+  error codes
