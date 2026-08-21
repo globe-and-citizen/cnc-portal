@@ -131,10 +131,8 @@ Put each part of the user-story sentence on its own source line and rendered lin
 ```markdown
 ## US-FEATURE-001: Perform an Observable Action
 
-**As a** permitted actor
-
-**I want to** perform one product action
-
+**As a** permitted actor\
+**I want to** perform one product action\
 **So that** I obtain one user-visible benefit
 
 ### How It Works

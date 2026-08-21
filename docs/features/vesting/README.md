@@ -55,10 +55,8 @@ stateDiagram-v2
 
 ## US-VESTING-001: Create a Minute-Precise Vesting Schedule
 
-**As a** team owner
-
-**I want to** configure and review a beneficiary's vesting schedule
-
+**As a** team owner\
+**I want to** configure and review a beneficiary's vesting schedule\
 **So that** the grant is recorded with unambiguous amounts and time boundaries
 
 ### Acceptance Criteria
@@ -83,10 +81,8 @@ stateDiagram-v2
 
 ## US-VESTING-002: View Schedules and Aggregate Totals
 
-**As a** team member or owner
-
-**I want to** see the team's vesting commitments and releases
-
+**As a** team member or owner\
+**I want to** see the team's vesting commitments and releases\
 **So that** I can understand the current vesting position
 
 ### Acceptance Criteria
@@ -105,10 +101,8 @@ stateDiagram-v2
 
 ## US-VESTING-003: Release Accrued Shares
 
-**As a** vesting beneficiary
-
-**I want to** release shares accrued by one of my schedules
-
+**As a** vesting beneficiary\
+**I want to** release shares accrued by one of my schedules\
 **So that** the earned shares are minted to my wallet
 
 ### Acceptance Criteria
@@ -128,10 +122,8 @@ stateDiagram-v2
 
 ## US-VESTING-004: Stop an Active Vesting Schedule
 
-**As a** team owner
-
-**I want to** stop one active vesting schedule
-
+**As a** team owner\
+**I want to** stop one active vesting schedule\
 **So that** future unvested shares are cancelled without losing accrued shares
 
 ### Acceptance Criteria
@@ -151,10 +143,8 @@ stateDiagram-v2
 
 ## US-VESTING-005: Understand Vested and Claimable Progress
 
-**As a** team member or owner
-
-**I want to** understand each schedule's accrued, released, and claimable shares
-
+**As a** team member or owner\
+**I want to** understand each schedule's accrued, released, and claimable shares\
 **So that** I know what can happen now and what remains locked
 
 ### Acceptance Criteria
