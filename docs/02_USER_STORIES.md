@@ -16,7 +16,7 @@ review.
 
 | User capability         | Current documentation                                              | Documentation state               |
 | ----------------------- | ------------------------------------------------------------------ | --------------------------------- |
-| Authentication          | [Authentication reference](./auth/README.md)                       | Current model migration due       |
+| Authentication          | [Authentication stories](./features/authentication/README.md)      | Current model; validation due     |
 | Companies and workspace | —                                                                  | Canonical stories not yet written |
 | Accounts                | [Safe stories](./features/safe/Readme.md)                          | Partial; complete journey due     |
 | Payroll                 | [Payroll stories](./features/payroll/Readme.md)                    | Existing stories; alignment due   |
@@ -37,19 +37,19 @@ All administrator capabilities are grouped in the
 `docs/features/backoffice/<capability>/README.md`; no dashboard capability owns a separate top-level
 feature directory.
 
-| Administrator capability | Current documentation                                               | Documentation state               |
-| ------------------------ | ------------------------------------------------------------------- | --------------------------------- |
-| Overview and statistics  | [Statistics references](./features/backoffice/statistics/README.md) | Current model migration due       |
-| Team operations          | —                                                                   | Canonical stories not yet written |
-| Micropayments            | —                                                                   | Canonical stories not yet written |
-| Polymarket accounting    | —                                                                   | Canonical stories not yet written |
-| Feature restrictions     | [Feature flags reference](./features/backoffice/feature-flags.md)   | Current model migration due       |
-| Contract operations      | —                                                                   | Canonical stories not yet written |
+| Administrator capability | Current documentation                                                               | Documentation state               |
+| ------------------------ | ----------------------------------------------------------------------------------- | --------------------------------- |
+| Overview and statistics  | [Statistics references](./features/backoffice/statistics/README.md)                 | Current model migration due       |
+| Team operations          | —                                                                                   | Canonical stories not yet written |
+| Micropayments            | —                                                                                   | Canonical stories not yet written |
+| Polymarket accounting    | —                                                                                   | Canonical stories not yet written |
+| Feature restrictions     | [Feature Restriction stories](./features/backoffice/feature-restrictions/README.md) | Current model; validation due     |
+| Contract operations      | —                                                                                   | Canonical stories not yet written |
 
-## Contract Feature Stories
+## Contract Behaviour References
 
 Contract behaviour and contract-scoped stories remain separate from product journeys. Start with the
-[Contract Features Index](./features/contracts/README.md), then open the relevant contract.
+[Contract Behaviour Index](./contracts/features/README.md), then open the relevant contract.
 
 Contract completion does not imply that a portal journey exists or has passed product review.
 

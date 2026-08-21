@@ -1,5 +1,8 @@
 # CNC Portal - Smart Contracts Overview
 
+For contract-specific behaviour and contract-scoped stories, start with the
+[Contract Behaviour Index](./features/README.md).
+
 ## All Contracts
 
 | Contract                                          | File                                                 | Upgradeable  | Purpose                                  |

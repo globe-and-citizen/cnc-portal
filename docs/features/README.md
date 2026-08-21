@@ -44,7 +44,7 @@ The client inventory follows the
 
 | User capability         | Current entry points                                    | Documentation coverage                                             |
 | ----------------------- | ------------------------------------------------------- | ------------------------------------------------------------------ |
-| Authentication          | `/login` and wallet session actions                     | [Existing reference](../auth/README.md)                            |
+| Authentication          | `/login` and wallet session actions                     | [Canonical stories](./authentication/README.md)                    |
 | Companies and workspace | `/teams`, `/teams/:id`                                  | Canonical stories not yet written                                  |
 | Accounts                | Bank, Safe, and Expense Account routes                  | [Safe stories](./safe/Readme.md); full journey due                 |
 | Payroll                 | Payroll account, history, company payroll, compensation | [Existing stories](./payroll/Readme.md)                            |
@@ -61,21 +61,21 @@ All administrator-dashboard capabilities are grouped under
 [`docs/features/backoffice/`](./backoffice/README.md). They are not separate top-level product
 features.
 
-| Administrator capability | Current entry points                        | Documentation coverage                                   |
-| ------------------------ | ------------------------------------------- | -------------------------------------------------------- |
-| Overview and statistics  | `/`, `/stats`                               | [Existing references](./backoffice/statistics/README.md) |
-| Team operations          | `/teams`, `/teams/:id`                      | Canonical stories not yet written                        |
-| Micropayments            | `/micropayments`                            | Canonical stories not yet written                        |
-| Polymarket accounting    | `/accounting`                               | Canonical stories not yet written                        |
-| Feature restrictions     | `/features`, `/features/:id`                | [Existing reference](./backoffice/feature-flags.md)      |
-| Contract operations      | `/contracts/history`, `/contracts/versions` | Canonical stories not yet written                        |
+| Administrator capability | Current entry points                        | Documentation coverage                                           |
+| ------------------------ | ------------------------------------------- | ---------------------------------------------------------------- |
+| Overview and statistics  | `/`, `/stats`                               | [Existing references](./backoffice/statistics/README.md)         |
+| Team operations          | `/teams`, `/teams/:id`                      | Canonical stories not yet written                                |
+| Micropayments            | `/micropayments`                            | Canonical stories not yet written                                |
+| Polymarket accounting    | `/accounting`                               | Canonical stories not yet written                                |
+| Feature restrictions     | `/features`, `/features/:id`                | [Canonical stories](./backoffice/feature-restrictions/README.md) |
+| Contract operations      | `/contracts/history`, `/contracts/versions` | Canonical stories not yet written                                |
 
 ## Excluded from the Product Inventory
 
-- Smart-contract packages and contract-specific documentation describe implementation behaviour;
-  they are not portal features by themselves.
-- RBAC, database seeding, serverless wake-up, deployment, and similar operational mechanisms support
-  features but are not user goals.
+- Smart-contract packages and contract-specific documentation describe implementation behaviour
+  under `docs/contracts/`; they are not portal features by themselves.
+- RBAC and runtime wake-up are architectural capabilities under `docs/implementation/`. Database
+  seeding is development tooling. None is a direct user goal.
 - Login guards, access-denied pages, error pages, and development playgrounds are journey states or
   tooling, not standalone features.
 - The dashboard's customer, inbox, profile, notification, and member-settings screens still use

@@ -28,14 +28,14 @@ flowchart TB
 
 ## Current Capabilities
 
-| Capability              | User-visible outcome                                                                           | Routes                                      | Documentation                                   |
-| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------- |
-| Overview and statistics | Inspect platform, team, user, claim, wage, expense, contract, governance, and activity metrics | `/`, `/stats`                               | [Statistics references](./statistics/README.md) |
-| Team operations         | Inspect teams, their members, balances, contracts, and Officer generations                     | `/teams`, `/teams/:id`                      | Alignment due                                   |
-| Micropayments           | Inspect FeeCollector versions and withdraw collected fees                                      | `/micropayments`                            | Alignment due                                   |
-| Polymarket accounting   | Reconstruct a wallet's statements, activity, and positions                                     | `/accounting`                               | Alignment due                                   |
-| Feature restrictions    | Manage global feature states and team overrides                                                | `/features`, `/features/:id`                | [Existing reference](./feature-flags.md)        |
-| Contract operations     | Inspect deployment history and synchronize Officer version metadata                            | `/contracts/history`, `/contracts/versions` | Alignment due                                   |
+| Capability              | User-visible outcome                                                                           | Routes                                      | Documentation                                         |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
+| Overview and statistics | Inspect platform, team, user, claim, wage, expense, contract, governance, and activity metrics | `/`, `/stats`                               | [Statistics references](./statistics/README.md)       |
+| Team operations         | Inspect teams, their members, balances, contracts, and Officer generations                     | `/teams`, `/teams/:id`                      | Alignment due                                         |
+| Micropayments           | Inspect FeeCollector versions and withdraw collected fees                                      | `/micropayments`                            | Alignment due                                         |
+| Polymarket accounting   | Reconstruct a wallet's statements, activity, and positions                                     | `/accounting`                               | Alignment due                                         |
+| Feature restrictions    | Manage global feature states and team overrides                                                | `/features`, `/features/:id`                | [Canonical stories](./feature-restrictions/README.md) |
+| Contract operations     | Inspect deployment history and synchronize Officer version metadata                            | `/contracts/history`, `/contracts/versions` | Alignment due                                         |
 
 `Alignment due` means that the product surface exists but no canonical feature README has yet been
 reviewed under the current model. It is not a delivery-status claim.
@@ -69,5 +69,6 @@ Their presence in the filesystem or router is not sufficient.
 
 - [Product Feature Inventory](../README.md)
 - [Feature Documentation Guide](../../platform/feature-specification-guide.md)
+- [Feature flag evaluation](../../implementation/feature-flags/README.md)
 - [Security Standards](../../platform/security.md)
 - [Testing Strategy](../../platform/testing-strategy.md)

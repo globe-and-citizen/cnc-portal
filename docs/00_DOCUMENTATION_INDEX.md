@@ -9,7 +9,9 @@ now maintained in one canonical place:
 - [Feature User Stories Index](./02_USER_STORIES.md) — links to user stories owned by each feature.
 - [Feature Documentation Guide](./platform/feature-specification-guide.md) — canonical structure,
   status semantics, and human review contract.
-- [Contract Features Index](./features/contracts/README.md) — current contract-specific behaviour.
+- [Architectural Capability Inventory](./implementation/README.md) — current shared runtime
+  behaviour.
+- [Contract Behaviour Index](./contracts/features/README.md) — contract-specific references.
 
 Do not add feature stories or duplicate navigation to this compatibility file. Update the canonical
 hub instead.

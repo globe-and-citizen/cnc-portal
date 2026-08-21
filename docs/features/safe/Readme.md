@@ -229,8 +229,8 @@ agree **so that** the team can carry out an action safely.
 
 ## Related Documentation
 
-- [SafeDepositRouter contract](../contracts/safe-deposit-router/README.md) — investor deposits
-  routed to a Safe; it is not the Safe wallet feature itself.
+- [SafeDepositRouter contract](../../contracts/features/safe-deposit-router/README.md) — investor
+  deposits routed to a Safe; it is not the Safe wallet feature itself.
 - [Payroll & Cash Remuneration](../payroll/Readme.md) — payroll funding may use the team's treasury
   flows.
 

@@ -1,5 +1,9 @@
 # Database Seed - Quick Start Guide
 
+> **Historical reference (December 2025):** Commands and claims in this snapshot are not current
+> operational guidance. Use the [verified database seeding guide](./README.md) and current backend
+> source before running any command.
+
 **Status:** ✅ Production Ready  
 **Last Updated:** December 30, 2025
 
@@ -177,7 +181,8 @@ ADMIN_ROLES="ROLE_SUPER_ADMIN" \
 NODE_ENV=production npx prisma db seed
 ```
 
-Creates user if not found, assigns admin role. Users are auto-created with a default name if they don't exist.
+Creates user if not found, assigns admin role. Users are auto-created with a default name if they
+don't exist.
 
 ### 6. Combined Production Seeding
 

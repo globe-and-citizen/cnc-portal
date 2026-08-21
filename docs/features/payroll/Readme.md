@@ -147,7 +147,7 @@ members have balances to withdraw against
       withdrawal fails on-chain — see US-PAYROLL-010)
 
 **Priority:** P1 (Critical) · **Effort:** — · **Status:** 🔗 Reference (see Bank) ·
-**Dependencies:** US-TEAM-001, [Bank](../contracts/bank/README.md)
+**Dependencies:** US-TEAM-001, [Bank](../../contracts/features/bank/README.md)
 
 ---
 
@@ -392,4 +392,4 @@ track work logged and payments made
 
 ---
 
-_[← Back to Cash Remuneration contract](../contracts/cash-remuneration/README.md)_
+_[← Back to Cash Remuneration contract](../../contracts/features/cash-remuneration/README.md)_

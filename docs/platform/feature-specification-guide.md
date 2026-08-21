@@ -49,7 +49,7 @@ documents.
 | Backoffice capability journey                    | `docs/features/backoffice/<feature>/README.md` |
 | Complex feature-specific rules                   | A focused file beside the feature README       |
 | Shared architectural capability                  | `docs/implementation/<capability>/README.md`   |
-| Current smart-contract behaviour                 | `docs/features/contracts/<contract>/README.md` |
+| Current smart-contract behaviour                 | `docs/contracts/features/<contract>/README.md` |
 | Platform-wide engineering standards              | `docs/platform/` or `.github/` guides          |
 | Executable behaviour and regression proof        | Code and tests                                 |
 | Active delivery and historical decisions         | GitHub issues, pull requests, ADRs, and Git    |
@@ -58,7 +58,7 @@ documents.
 
 Product and contract documentation remain separate even when they share a name. For example,
 `docs/features/vesting/README.md` owns the portal journey, while
-`docs/features/contracts/vesting/README.md` owns the Solidity behaviour that supports it.
+`docs/contracts/features/vesting/README.md` owns the Solidity behaviour that supports it.
 
 ## Location and Naming
 

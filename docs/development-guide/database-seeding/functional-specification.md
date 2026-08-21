@@ -1,4 +1,8 @@
-# Database Seeding Feature - Functional Specification
+# Database Seeding - Historical Functional Specification
+
+> **Historical reference (December 2025):** This specification is preserved for delivery context. It
+> is not a current product feature specification or operational guide. Use the
+> [verified database seeding guide](./README.md) and current backend source.
 
 **Version:** 2.0.0  
 **Date:** December 30, 2025  
@@ -11,15 +15,20 @@
 
 ### 1.1 Purpose
 
-The Database Seeding Feature provides automated, environment-aware test data generation for the CNC Portal platform. It enables developers to quickly populate the database with realistic, consistent data for development, testing, and staging environments while preventing accidental data seeding in production.
+The Database Seeding Feature provides automated, environment-aware test data generation for the CNC
+Portal platform. It enables developers to quickly populate the database with realistic, consistent
+data for development, testing, and staging environments while preventing accidental data seeding in
+production.
 
 ### 1.2 Scope
 
 This feature encompasses:
 
-- **Environment-Based Seeding**: Different data volumes and characteristics for dev, test, and staging
+- **Environment-Based Seeding**: Different data volumes and characteristics for dev, test, and
+  staging
 - **Admin Provisioning**: Assign admin roles to Ethereum addresses with automatic user creation
-- **Flexible Control**: Independent boolean flags (CLEAR_DATA, SEED_DATABASE, SEED_ADMINS) for granular control
+- **Flexible Control**: Independent boolean flags (CLEAR_DATA, SEED_DATABASE, SEED_ADMINS) for
+  granular control
 - **Production Safety**: Built-in restrictions to prevent accidental data loss in production
 - **Referential Integrity**: Automatic handling of foreign key relationships and dependencies
 - **Realistic Data Generation**: Use of Faker.js and custom helpers for authentic test data
@@ -49,7 +58,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a developer, I want different data volumes in dev/test/staging environments so that I can work efficiently without overwhelming the database.
+> As a developer, I want different data volumes in dev/test/staging environments so that I can work
+> efficiently without overwhelming the database.
 
 **Acceptance Criteria:**
 
@@ -67,7 +77,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a database administrator, I want seeding to respect foreign key constraints so that the database remains in a valid state.
+> As a database administrator, I want seeding to respect foreign key constraints so that the
+> database remains in a valid state.
 
 **Acceptance Criteria:**
 
@@ -85,7 +96,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a QA engineer, I want realistic test data so that I can identify bugs that would occur with real user data.
+> As a QA engineer, I want realistic test data so that I can identify bugs that would occur with
+> real user data.
 
 **Acceptance Criteria:**
 
@@ -103,7 +115,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a developer, I want to re-run seeds without errors so that I can quickly reset my development database.
+> As a developer, I want to re-run seeds without errors so that I can quickly reset my development
+> database.
 
 **Acceptance Criteria:**
 
@@ -121,7 +134,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a developer testing the stats feature, I want data distributed across different time periods so that I can verify 7d/30d/90d filtering works correctly.
+> As a developer testing the stats feature, I want data distributed across different time periods so
+> that I can verify 7d/30d/90d filtering works correctly.
 
 **Acceptance Criteria:**
 
@@ -139,7 +153,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a backend developer, I want modular seed functions so that I can easily add new entities or modify existing ones.
+> As a backend developer, I want modular seed functions so that I can easily add new entities or
+> modify existing ones.
 
 **Acceptance Criteria:**
 
@@ -157,7 +172,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a QA engineer, I want seed data to be validated so that invalid data doesn't corrupt test databases.
+> As a QA engineer, I want seed data to be validated so that invalid data doesn't corrupt test
+> databases.
 
 **Acceptance Criteria:**
 
@@ -175,7 +191,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a DevOps engineer, I want to assign admin roles to users in production without manual user creation so that I can provision admins automatically.
+> As a DevOps engineer, I want to assign admin roles to users in production without manual user
+> creation so that I can provision admins automatically.
 
 **Acceptance Criteria:**
 
@@ -196,7 +213,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a DevOps engineer, I want independent control over clearing data, seeding database, and seeding admins so that I can safely provision production environments.
+> As a DevOps engineer, I want independent control over clearing data, seeding database, and seeding
+> admins so that I can safely provision production environments.
 
 **Acceptance Criteria:**
 
@@ -233,14 +251,14 @@ Entities must be seeded in this specific order to maintain referential integrity
 
 ### 3.2 Seeding Execution Flow
 
-```text
-1. Environment Detection (NODE_ENV)
-2. Parse Flags (CLEAR_DATA, SEED_DATABASE, SEED_ADMINS)
-3. Validation (Production safety checks)
-4. Clear Data (if CLEAR_DATA=true)
-5. Seed Database (if SEED_DATABASE=true)
-6. Seed Admins (if SEED_ADMINS=true)
-7. Print Summary Statistics
+```mermaid
+flowchart LR
+  environment[Detect environment] --> flags[Parse control flags]
+  flags --> validation[Validate safety conditions]
+  validation --> clear[Optionally clear data]
+  clear --> database[Optionally seed product data]
+  database --> admins[Optionally seed administrators]
+  admins --> summary[Print summary]
 ```
 
 ### 3.3 Module Structure
@@ -306,7 +324,8 @@ This table shows the data volumes across all three environments:
 
 ### 5.1 Environment Detection Flow
 
-The environment detection process validates the execution context and ensures production safety by blocking destructive operations and requiring explicit confirmation flags.
+The environment detection process validates the execution context and ensures production safety by
+blocking destructive operations and requiring explicit confirmation flags.
 
 ```mermaid
 graph TD
@@ -326,7 +345,8 @@ graph TD
 **Key Safety Features:**
 
 - **Production Restriction:** `CLEAR_DATA` is blocked in production to prevent accidental data loss
-- **Explicit Confirmation:** At least one seeding flag (`SEED_DATABASE` or `SEED_ADMINS`) must be explicitly set
+- **Explicit Confirmation:** At least one seeding flag (`SEED_DATABASE` or `SEED_ADMINS`) must be
+  explicitly set
 - **Fallback Behavior:** Unknown environments default to development mode
 - **Environment Validation:** Only `development`, `test`, `staging`, and `production` are valid
 
@@ -351,7 +371,8 @@ graph LR
 
 **Strategy Details:**
 
-- **Development:** Mix of default Hardhat accounts (0xf39Fd6e..., 0x70997970..., etc.) and Faker-generated addresses for variety
+- **Development:** Mix of default Hardhat accounts (0xf39Fd6e..., 0x70997970..., etc.) and
+  Faker-generated addresses for variety
 - **Test:** Fixed, predictable addresses for consistent, reproducible test runs
 - **Staging:** All Faker-generated addresses to simulate production-like diversity
 - **Production:** Explicit custom addresses from `ADMIN_ADDRESSES` environment variable
@@ -598,8 +619,10 @@ model Claim {
 
 **Feature Documentation:**
 
-- [Stats Feature](../stats/functional-specification.md) - Statistics feature that uses seed data
-- [Seed Implementation](../../../backend/prisma/seed.ts) - Actual seed implementation code (~550 lines)
+- [Statistics Feature](../../features/backoffice/statistics/functional-specification.md) -
+  Statistics feature that uses seed data
+- [Seed Implementation](../../../backend/prisma/seed.ts) - Actual seed implementation code (~550
+  lines)
 
 **External Resources:**
 
@@ -629,7 +652,3 @@ model Claim {
 - Helper functions and utilities designed
 - CLI interface and scripts defined
 - Comprehensive documentation created
-
-```
-
-```

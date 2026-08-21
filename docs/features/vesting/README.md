@@ -183,5 +183,5 @@ review. Acceptance criteria remain the human review record; tests support each d
 
 ## Related Documentation
 
-- [Vesting V2 contract behaviour](../contracts/vesting/README.md)
-- [Contract features index](../contracts/README.md)
+- [Vesting V2 contract behaviour](../../contracts/features/vesting/README.md)
+- [Contract features index](../../contracts/features/README.md)

@@ -3,8 +3,9 @@
 **Purpose:** Record per-team share grants, accrue them linearly, and mint only the vested shares.
 **Contract version:** `2.0.0` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-08-21
 
-The product acceptance criteria live in the [Vesting user stories](../../vesting/README.md). This
-document describes the current contract behaviour that supports them.
+The product acceptance criteria live in the
+[Vesting user stories](../../../features/vesting/README.md). This document describes the current
+contract behaviour that supports them.
 
 ## Model
 
@@ -81,7 +82,7 @@ amount is the final settlement, and `totalAmount - released` is the cancelled re
 - [Vesting contract](../../../../contract/contracts/Vesting.sol)
 - [Vesting interface](../../../../contract/contracts/interfaces/IVesting.sol)
 - [Contract behaviour tests](../../../../contract/test/Vesting.spec.ts)
-- [Frontend user stories](../../vesting/README.md)
+- [Frontend user stories](../../../features/vesting/README.md)
 - [Frontend schedule model](../../../../app/src/utils/vestingScheduleUtil.ts)
 
-_[← Back to contract features](../README.md)_
+_[← Back to contract behaviour index](../README.md)_

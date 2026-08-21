@@ -1,12 +1,17 @@
 # Authentication Flow - Sign-In with Ethereum (SIWE)
 
-This document describes the authentication flow implemented in the CNC Portal Admin Dashboard using Sign-In with Ethereum (SIWE).
+This document describes the authentication flow implemented in the CNC Portal Admin Dashboard using
+Sign-In with Ethereum (SIWE).
 
-> **📚 Full Documentation:** For comprehensive authentication documentation covering the entire CNC Portal platform (Backend, App, and Dashboard), see the [Authentication Documentation](/docs/auth/README.md).
+> **📚 Full Documentation:** See the
+> [Authentication User Stories](../../docs/features/authentication/README.md) and
+> [Authentication Implementation](../../docs/implementation/authentication/README.md).
 
 ## Overview
 
-The admin dashboard uses SIWE (Sign-In with Ethereum) to authenticate users. This method allows users to prove ownership of their Ethereum wallet without exposing their private keys, and it provides a secure, decentralized authentication mechanism.
+The admin dashboard uses SIWE (Sign-In with Ethereum) to authenticate users. This method allows
+users to prove ownership of their Ethereum wallet without exposing their private keys, and it
+provides a secure, decentralized authentication mechanism.
 
 ## Prerequisites
 
@@ -52,5 +57,5 @@ NUXT_PUBLIC_BACKEND_URL=http://localhost:3000
 
 For in-depth implementation details, see:
 
-- [Full Authentication Documentation](/docs/auth/README.md)
-- [Dashboard-specific Authentication](/docs/auth/dashboard-authentication.md)
+- [Authentication User Stories](../../docs/features/authentication/README.md)
+- [Authentication Implementation](../../docs/implementation/authentication/README.md)

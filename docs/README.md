@@ -29,7 +29,7 @@ state before relying on a status claim.
 | What should a user be able to do in one feature? | `docs/features/<feature>/README.md`                        |
 | Has that behaviour passed human review?          | Feature acceptance criteria and validation statement       |
 | How does a shared runtime capability work?       | [Implementation Documentation](./implementation/README.md) |
-| How does a smart contract behave?                | [Contract Features](./features/contracts/README.md)        |
+| How does a smart contract behave?                | [Contract Behaviour](./contracts/features/README.md)       |
 | How should platform code be written and tested?  | Platform and repository implementation guides              |
 | Where is the executable evidence?                | Current code and tests                                     |
 | Why or when was a change delivered?              | GitHub issues, pull requests, ADRs, and Git                |
@@ -48,9 +48,11 @@ separate top-level feature directory.
 
 | Feature                                                                      | Journey                                                   | Model state             |
 | ---------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------- |
+| [Authentication](./features/authentication/README.md)                        | Wallet sign-in and protected entry                        | Validation due          |
 | [Payroll](./features/payroll/Readme.md)                                      | Wages, claims, signatures, withdrawal, and reconciliation | Existing; alignment due |
 | [Safe Wallet](./features/safe/Readme.md)                                     | Setup, treasury, signers, approvals, and execution        | Existing; alignment due |
 | [Vesting](./features/vesting/README.md)                                      | Vesting V2 creation, progress, release, and cancellation  | Current model trial     |
+| [Feature Restrictions](./features/backoffice/feature-restrictions/README.md) | Global feature states and team-specific overrides         | Validation due          |
 | [Accounting migrations](./features/accounting/contract-migration-history.md) | Accounting continuity across contract migrations          | Focused story set       |
 
 See the [Feature User Stories Index](./02_USER_STORIES.md) for coverage across the complete current
@@ -63,26 +65,26 @@ contract.
 
 | Area                                                                  | Current entry point                  |
 | --------------------------------------------------------------------- | ------------------------------------ |
-| [Authentication](./auth/README.md)                                    | Authentication flows                 |
 | [Accounting](./features/accounting/README.md)                         | Accounting scope and detailed models |
 | [Backoffice](./features/backoffice/README.md)                         | Administrator capability inventory   |
 | [Community Credit](./features/community-credit/user-flow-analysis.md) | Current flow analysis and findings   |
 
 ### Supporting Technical References
 
-These documents remain useful, but their current legacy location under `docs/features/` does not
-make them user-facing product features.
+These supporting documents are classified by their actual owner rather than as product features.
 
-| Area                                                          | Documentation role                |
-| ------------------------------------------------------------- | --------------------------------- |
-| [RBAC](./features/rbac/RBAC.md)                               | Authorization mechanism           |
-| [Database seeding](./features/seed/README.md)                 | Development and test data tooling |
-| [Serverless wake-up](./features/serverless-wake-up/README.md) | Runtime operations                |
+| Area                                                                       | Documentation role                |
+| -------------------------------------------------------------------------- | --------------------------------- |
+| [RBAC](./implementation/rbac/README.md)                                    | Architectural capability          |
+| [Database seeding](./development-guide/database-seeding/README.md)         | Development and test data tooling |
+| [Runtime wake-up](./implementation/runtime-wake-up/README.md)              | Architectural capability          |
+| [Feature flag evaluation](./implementation/feature-flags/README.md)        | Architectural capability          |
+| [Authentication implementation](./implementation/authentication/README.md) | Architectural capability          |
 
 ### Smart Contracts
 
-- [Contract Features Index](./features/contracts/README.md) — current behaviour by contract; this
-  technical namespace is excluded from the product feature inventory.
+- [Contract Behaviour Index](./contracts/features/README.md) — contract-specific references,
+  separated from the product feature inventory; verification remains contract-specific.
 - [Contract Overview](./contracts/README.md) — contract list and high-level concepts.
 - [Technical Architecture](./contracts/contracts-technical-architecture.md) — upgrade and design
   patterns.
