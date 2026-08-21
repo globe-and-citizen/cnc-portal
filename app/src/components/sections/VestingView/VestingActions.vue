@@ -1,15 +1,17 @@
 <template>
   <div>
-    <UButton
-      v-if="teamStore.currentTeam?.ownerAddress === userStore.address"
-      size="sm"
-      color="primary"
-      class="w-max"
-      @click="addVestingModal = { mount: true, show: true }"
-      data-test="createAddVesting"
-      leading-icon="heroicons-outline:plus-circle"
-      label="Create schedule"
-    />
+    <TeamArchivedTooltip v-if="isOwner" v-slot="{ disabled }">
+      <UButton
+        size="sm"
+        color="primary"
+        class="w-max"
+        :disabled="disabled"
+        data-test="createAddVesting"
+        leading-icon="heroicons-outline:plus-circle"
+        label="Create schedule"
+        @click="addVestingModal = { mount: true, show: true }"
+      />
+    </TeamArchivedTooltip>
 
     <UModal
       v-if="addVestingModal.mount"
@@ -35,19 +37,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
-
-defineProps<{
-  reloadKey: number
-}>()
 
 const emit = defineEmits(['reload'])
 
 const addVestingModal = ref({ mount: false, show: false })
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+const isOwner = computed(
+  () =>
+    !!teamStore.currentTeam?.ownerAddress &&
+    teamStore.currentTeam.ownerAddress.toLowerCase() === userStore.address?.toLowerCase()
+)
 
 const handleReload = () => {
   emit('reload') // Propagate reload up
