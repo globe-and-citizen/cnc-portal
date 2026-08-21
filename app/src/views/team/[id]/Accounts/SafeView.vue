@@ -101,7 +101,20 @@
     </section>
   </main>
 
-  <main v-else-if="teamStore.currentTeamId && !isLoadingSafe" class="w-full px-4 py-6 sm:p-8">
+  <div
+    v-else-if="isResolvingSafe"
+    class="flex items-center justify-center p-8"
+    role="status"
+    aria-live="polite"
+    data-test="safe-loading-state"
+  >
+    <div class="text-center">
+      <UIcon name="i-lucide-loader-circle" class="text-primary mx-auto h-10 w-10 animate-spin" />
+      <p class="mt-4 text-gray-500">Loading Safe…</p>
+    </div>
+  </div>
+
+  <main v-else-if="canShowSafeSetup" class="w-full px-4 py-6 sm:p-8" data-test="safe-setup-view">
     <section class="w-full" aria-labelledby="safe-setup-heading">
       <div class="mb-7 max-w-3xl">
         <p class="text-primary text-sm font-semibold">Team treasury</p>
@@ -160,13 +173,6 @@
       </div>
     </section>
   </main>
-
-  <div v-else class="flex items-center justify-center p-8" role="status" aria-live="polite">
-    <div class="text-center">
-      <UIcon name="i-lucide-loader-circle" class="text-primary mx-auto h-10 w-10 animate-spin" />
-      <p class="mt-4 text-gray-500">Loading Safe…</p>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -209,6 +215,12 @@ const setupSteps = [
 
 const safeAddress = computed(
   () => teamStore.getContractAddressByType('Safe') || deployedSafeAddress.value
+)
+
+const isResolvingSafe = computed(() => teamStore.currentTeamMeta.isPending || isLoadingSafe.value)
+
+const canShowSafeSetup = computed(
+  () => !!teamStore.currentTeamId && !!teamStore.currentTeamMeta.data && !isResolvingSafe.value
 )
 
 const canManageSafe = computed(
