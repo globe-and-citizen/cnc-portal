@@ -78,15 +78,20 @@ Product and contract documentation remain separate even when they share a name. 
 
 ## Human Review Contract
 
-Acceptance criteria are the centre of feature review. Automated tests support the decision but do
-not replace the reviewer.
+Acceptance criteria are the centre of feature review. Their checkboxes record verified
+implementation, while the story status and `Last reviewed` record human product validation.
 
 - One criterion describes one observable outcome.
 - Every criterion must produce a clear pass or fail result.
-- Checkboxes record human validation for the reviewed behaviour.
-- A story is `✅ Done` only when every criterion is checked.
+- `[x]` means current code, runtime behaviour, or tests confirm that the criterion is implemented.
+- `[ ]` means the criterion is incomplete or has not yet been verified against current evidence.
+- A story remains `🚧 In Progress` while any criterion is unchecked.
+- Once every criterion is checked, the story moves to `🧪 Validation` until a reviewer completes the
+  product journey.
+- A story is `✅ Done` only when every criterion is checked and human validation has passed.
 - Editorial changes do not change the `Last reviewed` date.
-- A behaviour change resets the affected criteria to `[ ]` and moves the story to `🧪 Validation`.
+- A behaviour change resets the affected criteria to `[ ]` and moves the story to `🚧 In Progress`
+  until the implementation is verified again.
 - The review date changes only after the affected behaviour has been reviewed again.
 
 ### Story Statuses
@@ -94,9 +99,9 @@ not replace the reviewer.
 | Status           | Meaning                                                    |
 | ---------------- | ---------------------------------------------------------- |
 | `📝 Draft`       | The target behaviour is being defined                      |
-| `🚧 In Progress` | The implementation is incomplete                           |
-| `🧪 Validation`  | The implementation exists, but human review is incomplete  |
-| `✅ Done`        | Every acceptance criterion has passed human review         |
+| `🚧 In Progress` | At least one criterion is incomplete or unverified         |
+| `🧪 Validation`  | Every criterion is implemented; human review is incomplete |
+| `✅ Done`        | Every criterion is implemented and has passed human review |
 | `🔗 Reference`   | Another feature owns the detailed behaviour and validation |
 
 Do not use `✅ Done` as a synonym for "code exists" or "automated tests pass."
@@ -148,9 +153,9 @@ Present the main journey in the order a user or tester encounters it.
 
 Summarize the complete feature before the detailed stories.
 
-| User Story     | Title              | Actor      | Status        | Priority | Effort |
-| -------------- | ------------------ | ---------- | ------------- | :------: | ------ |
-| US-FEATURE-001 | Observable outcome | Main actor | 🧪 Validation |    P1    | M      |
+| User Story     | Title              | Actor      | Status         | Priority | Effort |
+| -------------- | ------------------ | ---------- | -------------- | :------: | ------ |
+| US-FEATURE-001 | Observable outcome | Main actor | 🚧 In Progress |    P1    | M      |
 
 Use stable IDs. Do not reuse or silently renumber an ID after it has been referenced by code, tests,
 issues, or documentation.
@@ -178,7 +183,7 @@ Put each part of the user-story sentence on its own source line and rendered lin
 - [ ] One observable pass-or-fail outcome.
 - [ ] One authorization, boundary, or recovery outcome.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
 
 **Dependencies:** US-FEATURE-000 or a named current capability
 ```
@@ -189,7 +194,8 @@ criteria.
 ### 6. Human Validation
 
 For reviewed stories, state when and against what the feature was reviewed. Keep this statement
-short; the checked criteria are the review record.
+short; checked criteria remain the implementation record, while this statement and `✅ Done` record
+the human product review.
 
 ```markdown
 ## Human Validation
@@ -277,7 +283,8 @@ This rule applies to every committed documentation file, not only feature README
    contract behaviour.
 3. Define or update the lifecycle and stable story boundaries.
 4. Write observable acceptance criteria, including material boundaries and recovery states.
-5. Set status and checkboxes from actual human validation, not implementation confidence.
+5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from
+   the human product-review state.
 6. Refresh focused evidence links and related documentation.
 7. Update `docs/features/README.md`, `docs/02_USER_STORIES.md`, and `docs/README.md` only when
    navigation or canonical ownership changes.

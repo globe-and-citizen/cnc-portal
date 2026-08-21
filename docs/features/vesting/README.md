@@ -165,7 +165,8 @@ stateDiagram-v2
 ## Human Validation
 
 Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product
-review. Acceptance criteria remain the human review record; tests support each decision.
+review. Checked criteria record the verified implementation; this validation records the product
+review.
 
 ## Implementation Evidence
 

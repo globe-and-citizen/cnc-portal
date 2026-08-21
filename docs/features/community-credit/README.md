@@ -3,7 +3,7 @@
 **Scope:** Team credit rounds from issuer creation through member lending, deadline resolution,
 refund, and repayment
 
-**Last reviewed:** 2026-08-21
+**Last reviewed:** Not yet reviewed
 
 These acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
@@ -52,7 +52,7 @@ the contract does not transition automatically when a deadline or maturity date 
 | US-CC-001  | Inspect the Credit Account | Team member | 🚧 In Progress |    P1    | M      |
 | US-CC-002  | Publish a credit call      | Team issuer | 🚧 In Progress |    P1    | L      |
 | US-CC-003  | Lend to an open round      | Team member | 🚧 In Progress |    P1    | M      |
-| US-CC-004  | Resolve a stalled round    | Team issuer | ✅ Done        |    P1    | M      |
+| US-CC-004  | Resolve a stalled round    | Team issuer | 🧪 Validation  |    P1    | M      |
 | US-CC-005  | Repay lenders              | Team issuer | 🚧 In Progress |    P1    | L      |
 
 ## US-CC-001: Inspect the Credit Account
@@ -139,7 +139,7 @@ the contract does not transition automatically when a deadline or maturity date 
 - [x] Success refreshes the round and lender data; failure leaves the previous state visible with an
       error.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** ✅ Done
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
 ## US-CC-005: Repay Lenders
 
