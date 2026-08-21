@@ -14,18 +14,18 @@ review.
 
 ## Client Feature Coverage
 
-| User capability         | Current documentation                                              | Documentation state               |
-| ----------------------- | ------------------------------------------------------------------ | --------------------------------- |
-| Authentication          | [Authentication stories](./features/authentication/README.md)      | Current model; validation due     |
-| Companies and workspace | —                                                                  | Canonical stories not yet written |
-| Accounts                | [Safe stories](./features/safe/Readme.md)                          | Partial; complete journey due     |
-| Payroll                 | [Payroll stories](./features/payroll/Readme.md)                    | Existing stories; alignment due   |
-| Community Credit        | [Flow analysis](./features/community-credit/user-flow-analysis.md) | Current model migration due       |
-| Accounting              | [Accounting references](./features/accounting/README.md)           | Current model migration due       |
-| Contract Management     | —                                                                  | Canonical stories not yet written |
-| SHER Token              | —                                                                  | Canonical stories not yet written |
-| Governance              | —                                                                  | Canonical stories not yet written |
-| Vesting                 | [Vesting stories](./features/vesting/README.md)                    | Current model trial               |
+| User capability         | Current documentation                                             | Documentation state                |
+| ----------------------- | ----------------------------------------------------------------- | ---------------------------------- |
+| Authentication          | [Authentication stories](./features/authentication/README.md)     | Current model; validation due      |
+| Companies and workspace | —                                                                 | Canonical stories not yet written  |
+| Accounts                | [Safe stories](./features/safe/Readme.md)                         | Partial; complete journey due      |
+| Payroll                 | [Payroll stories](./features/payroll/Readme.md)                   | Existing stories; alignment due    |
+| Community Credit        | [Community Credit stories](./features/community-credit/README.md) | Current model; implementation gaps |
+| Accounting              | [Accounting references](./features/accounting/README.md)          | Current model migration due        |
+| Contract Management     | —                                                                 | Canonical stories not yet written  |
+| SHER Token              | —                                                                 | Canonical stories not yet written  |
+| Governance              | —                                                                 | Canonical stories not yet written  |
+| Vesting                 | [Vesting stories](./features/vesting/README.md)                   | Current model trial                |
 
 `Alignment due` or `migration due` describes documentation only. It does not mean that the product
 capability is incomplete.

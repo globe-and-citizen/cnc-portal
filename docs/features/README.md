@@ -42,18 +42,18 @@ The client inventory follows the
 [sidebar navigation](../../app/src/composables/useSidebarNavItems.ts), its linked
 [routes](../../app/src/router/index.ts), and the authentication entry journey.
 
-| User capability         | Current entry points                                    | Documentation coverage                                             |
-| ----------------------- | ------------------------------------------------------- | ------------------------------------------------------------------ |
-| Authentication          | `/login` and wallet session actions                     | [Canonical stories](./authentication/README.md)                    |
-| Companies and workspace | `/teams`, `/teams/:id`                                  | Canonical stories not yet written                                  |
-| Accounts                | Bank, Safe, and Expense Account routes                  | [Safe stories](./safe/Readme.md); full journey due                 |
-| Payroll                 | Payroll account, history, company payroll, compensation | [Existing stories](./payroll/Readme.md)                            |
-| Community Credit        | Rounds, new credit calls, and round details             | [Existing flow analysis](./community-credit/user-flow-analysis.md) |
-| Accounting              | Summary, income, balance, trial balance, and ledger     | [Existing references](./accounting/README.md)                      |
-| Contract Management     | `/teams/:id/contract-management`                        | Canonical stories not yet written                                  |
-| SHER Token              | `/teams/:id/sher-token`                                 | Canonical stories not yet written                                  |
-| Governance              | Board elections, election details, and proposals        | Canonical stories not yet written                                  |
-| Vesting                 | `/teams/:id/vesting`                                    | [Current model trial](./vesting/README.md)                         |
+| User capability         | Current entry points                                    | Documentation coverage                             |
+| ----------------------- | ------------------------------------------------------- | -------------------------------------------------- |
+| Authentication          | `/login` and wallet session actions                     | [Canonical stories](./authentication/README.md)    |
+| Companies and workspace | `/teams`, `/teams/:id`                                  | Canonical stories not yet written                  |
+| Accounts                | Bank, Safe, and Expense Account routes                  | [Safe stories](./safe/Readme.md); full journey due |
+| Payroll                 | Payroll account, history, company payroll, compensation | [Existing stories](./payroll/Readme.md)            |
+| Community Credit        | Rounds, new credit calls, and round details             | [Canonical stories](./community-credit/README.md)  |
+| Accounting              | Summary, income, balance, trial balance, and ledger     | [Existing references](./accounting/README.md)      |
+| Contract Management     | `/teams/:id/contract-management`                        | Canonical stories not yet written                  |
+| SHER Token              | `/teams/:id/sher-token`                                 | Canonical stories not yet written                  |
+| Governance              | Board elections, election details, and proposals        | Canonical stories not yet written                  |
+| Vesting                 | `/teams/:id/vesting`                                    | [Current model trial](./vesting/README.md)         |
 
 ## Backoffice Features
 

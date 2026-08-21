@@ -49,6 +49,7 @@ separate top-level feature directory.
 | Feature                                                                      | Journey                                                   | Model state             |
 | ---------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------- |
 | [Authentication](./features/authentication/README.md)                        | Wallet sign-in and protected entry                        | Validation due          |
+| [Community Credit](./features/community-credit/README.md)                    | Credit calls, lending, stalled rounds, and repayment      | Implementation gaps     |
 | [Payroll](./features/payroll/Readme.md)                                      | Wages, claims, signatures, withdrawal, and reconciliation | Existing; alignment due |
 | [Safe Wallet](./features/safe/Readme.md)                                     | Setup, treasury, signers, approvals, and execution        | Existing; alignment due |
 | [Vesting](./features/vesting/README.md)                                      | Vesting V2 creation, progress, release, and cancellation  | Current model trial     |
@@ -63,11 +64,10 @@ product inventory.
 These sources remain useful but have not yet been reviewed under the current feature-documentation
 contract.
 
-| Area                                                                  | Current entry point                  |
-| --------------------------------------------------------------------- | ------------------------------------ |
-| [Accounting](./features/accounting/README.md)                         | Accounting scope and detailed models |
-| [Backoffice](./features/backoffice/README.md)                         | Administrator capability inventory   |
-| [Community Credit](./features/community-credit/user-flow-analysis.md) | Current flow analysis and findings   |
+| Area                                          | Current entry point                  |
+| --------------------------------------------- | ------------------------------------ |
+| [Accounting](./features/accounting/README.md) | Accounting scope and detailed models |
+| [Backoffice](./features/backoffice/README.md) | Administrator capability inventory   |
 
 ### Supporting Technical References
 
