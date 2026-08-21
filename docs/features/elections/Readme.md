@@ -87,8 +87,8 @@ the authority on what the chain does; this one on what people can do.
 | US-EL-10 | New member  | Cast a vote although I joined the team late           |   ❌   |    P2    | L      |
 | US-EL-11 | Owner       | Cancel an election created by mistake                 |   🚫   |    P3    | M      |
 
-✅ works · ⚠️ works, but has known defects · ❌ not built · 🚫 the contract allows it, nothing in the
-portal exposes it
+✅ works · ⚠️ works, but has known defects · ❌ not built · 🚫 the contract allows it, nothing in
+the portal exposes it
 
 > Criteria tagged _(chain)_ describe contract behaviour a tester cannot always trigger from the
 > screen — check them against the contract test suite. Criteria tagged _(API)_ describe a server

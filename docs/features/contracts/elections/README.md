@@ -79,8 +79,8 @@ publication that seats the Board of Directors. **Contract File:**
 - [x] Emits `ElectionCreated(electionId, title, createdBy, startDate, endDate, seatCount)`
 
 **Not enforced by the contract:** candidates are never checked for membership of the team, and the
-list of eligible voters is fixed at creation — there is no function to add or remove a voter afterwards. The
-portal fills it with every current team member, so anyone joining later cannot vote.
+list of eligible voters is fixed at creation — there is no function to add or remove a voter
+afterwards. The portal fills it with every current team member, so anyone joining later cannot vote.
 
 ---
 
@@ -141,8 +141,8 @@ unpublished strands the team.
 
 ## US-ELEC-004: Query Election Details, Candidates, and Voters
 
-> **As a** team member, **I want to** inspect an election's details, candidate vote counts, and voter
-> participation, **so that** the process is transparent and auditable.
+> **As a** team member, **I want to** inspect an election's details, candidate vote counts, and
+> voter participation, **so that** the process is transparent and auditable.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** US-ELEC-001
 
@@ -156,8 +156,8 @@ unpublished strands the team.
 - [x] `getElectionIds()` and `getNextElectionId()` enumerate elections without an off-chain index
 - [x] `getElectionWinners(id)` returns the published winners, reverting with
       `Elections__ResultsNotReady` before publication
-- [x] `getElectionResults(id)` computes the **provisional** vote counts at any time, including before
-      the election has ended — it is a projection, not a result. Callers must gate it on
+- [x] `getElectionResults(id)` computes the **provisional** vote counts at any time, including
+      before the election has ended — it is a projection, not a result. Callers must gate it on
       `resultsPublished`, otherwise they announce winners for an election still in progress
 - [x] All query functions are `view` — no gas cost when called off-chain, and no access restriction
 - [x] `getVoteCounts` is the one read that does **not** validate the election id: an unknown id
@@ -186,8 +186,8 @@ unpublished strands the team.
 
 ## US-ELEC-006: Suspend and Resume the Contract
 
-> **As a** team owner, **I want to** freeze the elections contract, **so that** an election created by
-> mistake does not have to run to its end date.
+> **As a** team owner, **I want to** freeze the elections contract, **so that** an election created
+> by mistake does not have to run to its end date.
 
 **Status:** ✅ contract / 🚫 no UI | **Priority:** P4 | **Effort:** S | **Dependencies:**
 US-ELEC-001
