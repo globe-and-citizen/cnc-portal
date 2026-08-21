@@ -13,10 +13,9 @@ import {
   nextVestingMinute,
   vestingMinutesBetween
 } from '@/utils'
-import { type VestingCreation } from '@/types/vesting'
+import { VESTING_TOKEN_DECIMALS, type VestingCreation } from '@/types/vesting'
 import type { User } from '@/types'
 
-const VESTING_TOKEN_DECIMALS = 6
 const ONE_MINUTE_MS = 60_000
 
 type CreateVestingEmit = (event: 'reload' | 'closeAddVestingModal') => void

@@ -29,11 +29,13 @@ export interface TokenSummary {
   totalReleased: number
 }
 
+export const VESTING_TOKEN_DECIMALS = 6
+
 /** On-chain `VestingInfo` struct as returned by the Vesting contract. */
 export interface VestingInfo {
-  start: number
-  duration: number
-  cliff: number
+  start: bigint | number
+  duration: bigint | number
+  cliff: bigint | number
   totalAmount: bigint
   released: bigint
   active: boolean
@@ -58,4 +60,36 @@ export interface VestingCreation {
 // and the schedules themselves (a member appears once per schedule).
 export type VestingTuple = [string[], bigint[], VestingInfo[]]
 
-export type VestingStatus = 'all' | 'active' | 'completed' | 'cancelled'
+export type VestingScheduleState =
+  | 'upcoming'
+  | 'cliff_locked'
+  | 'accruing'
+  | 'claimable'
+  | 'fully_vested'
+  | 'completed'
+  | 'cancelled'
+
+export interface VestingSchedule {
+  member: string
+  index: bigint
+  start: number
+  end: number
+  cliffEnd: number
+  totalAmount: bigint
+  vestedAmount: bigint
+  claimableAmount: bigint
+  releasedAmount: bigint
+  unvestedAmount: bigint
+  active: boolean
+  progress: number
+  state: VestingScheduleState
+}
+
+export interface VestingTotals {
+  promised: bigint
+  vested: bigint
+  claimable: bigint
+  released: bigint
+}
+
+export type VestingStatus = 'all' | 'active' | 'claimable' | 'completed' | 'cancelled'
