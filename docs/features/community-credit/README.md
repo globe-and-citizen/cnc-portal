@@ -3,7 +3,7 @@
 **Scope:** Team credit rounds from issuer creation through member lending, deadline resolution,
 refund, and repayment
 
-**Last reviewed:** Not yet reviewed
+**Last reviewed:** 2026-08-21
 
 These acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
@@ -52,7 +52,7 @@ the contract does not transition automatically when a deadline or maturity date 
 | US-CC-001  | Inspect the Credit Account | Team member | 🚧 In Progress |    P1    | M      |
 | US-CC-002  | Publish a credit call      | Team issuer | 🚧 In Progress |    P1    | L      |
 | US-CC-003  | Lend to an open round      | Team member | 🚧 In Progress |    P1    | M      |
-| US-CC-004  | Resolve a stalled round    | Team issuer | 🧪 Validation  |    P1    | M      |
+| US-CC-004  | Resolve a stalled round    | Team issuer | ✅ Done        |    P1    | M      |
 | US-CC-005  | Repay lenders              | Team issuer | 🚧 In Progress |    P1    | L      |
 
 ## US-CC-001: Inspect the Credit Account
@@ -63,16 +63,16 @@ the contract does not transition automatically when a deadline or maturity date 
 
 ### Acceptance Criteria
 
-- [ ] A team without a deployed Credit Account sees the missing prerequisite rather than an empty
+- [x] A team without a deployed Credit Account sees the missing prerequisite rather than an empty
       round list.
-- [ ] Loading, read failure, no-round, and populated states are visibly distinct.
-- [ ] Each round exposes its purpose, token, target, amount raised, flat rate, access mode, dates,
+- [x] Loading, read failure, no-round, and populated states are visibly distinct.
+- [x] Each round exposes its purpose, token, target, amount raised, flat rate, access mode, dates,
       and current status.
 - [ ] Raising, action-required, and settled rounds are grouped without describing pending issuer
       work as history.
 - [ ] A lender can distinguish their own deposited and expected-return positions from the issuer's
       total debt figures.
-- [ ] Opening a round shows its lender breakdown, settlement progress, and matching on-chain
+- [x] Opening a round shows its lender breakdown, settlement progress, and matching on-chain
       activity.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
@@ -87,12 +87,12 @@ the contract does not transition automatically when a deadline or maturity date 
 
 - [ ] The issuer defines a name, purpose, supported ERC-20 token, positive target, flat rate, future
       subscription deadline, and term.
-- [ ] General access can apply an optional per-lender cap that does not exceed the target.
-- [ ] Restricted access rejects duplicate members, non-positive capped allocations, and a fully
+- [x] General access can apply an optional per-lender cap that does not exceed the target.
+- [x] Restricted access rejects duplicate members, non-positive capped allocations, and a fully
       capped allocation total below the target.
-- [ ] Every wizard step keeps its visible validation errors and the deadline is checked again before
+- [x] Every wizard step keeps its visible validation errors and the deadline is checked again before
       publication.
-- [ ] Successful publication creates one on-chain round, persists its title and purpose, refreshes
+- [x] Successful publication creates one on-chain round, persists its title and purpose, refreshes
       the list, and returns the issuer to the Credit Account.
 - [ ] Once the on-chain round exists, a metadata failure cannot invite the issuer to publish a
       second round or associate metadata with a different round.
@@ -108,15 +108,15 @@ the contract does not transition automatically when a deadline or maturity date 
 
 ### Acceptance Criteria
 
-- [ ] Lending is offered only while the round is open and before its subscription deadline.
-- [ ] A restricted round offers lending only to a member with a non-zero allocation.
-- [ ] The modal shows the lower of the round's remaining target and the lender's remaining cap or
+- [x] Lending is offered only while the round is open and before its subscription deadline.
+- [x] A restricted round offers lending only to a member with a non-zero allocation.
+- [x] The modal shows the lower of the round's remaining target and the lender's remaining cap or
       allocation.
-- [ ] The amount must be positive and cannot exceed that personal lending ceiling.
-- [ ] The portal requests token approval only when the current allowance is insufficient.
+- [x] The amount must be positive and cannot exceed that personal lending ceiling.
+- [x] The portal requests token approval only when the current allowance is insufficient.
 - [ ] A successful lend refreshes the round, lender position, token balances, and activity before
       another decision is made.
-- [ ] Rejected approval, rejected lending, or an on-chain failure leaves the round unchanged and
+- [x] Rejected approval, rejected lending, or an on-chain failure leaves the round unchanged and
       displays a recoverable error.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
@@ -129,17 +129,17 @@ the contract does not transition automatically when a deadline or maturity date 
 
 ### Acceptance Criteria
 
-- [ ] A round below target becomes visibly stalled after its subscription deadline without implying
+- [x] A round below target becomes visibly stalled after its subscription deadline without implying
       that an automatic transaction occurred.
-- [ ] The issuer can refund a stalled round, returning every lender's principal in one transaction.
-- [ ] The issuer can accept partial funding only when the stalled round raised a positive amount.
-- [ ] Accepting partial funding moves the raised principal to the team Bank and continues the round
+- [x] The issuer can refund a stalled round, returning every lender's principal in one transaction.
+- [x] The issuer can accept partial funding only when the stalled round raised a positive amount.
+- [x] Accepting partial funding moves the raised principal to the team Bank and continues the round
       using the actual funded amount.
-- [ ] Refund and partial acceptance are mutually exclusive final decisions for the stalled state.
-- [ ] Success refreshes the round and lender data; failure leaves the previous state visible with an
+- [x] Refund and partial acceptance are mutually exclusive final decisions for the stalled state.
+- [x] Success refreshes the round and lender data; failure leaves the previous state visible with an
       error.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** ✅ Done
 
 ## US-CC-005: Repay Lenders
 
@@ -149,19 +149,19 @@ the contract does not transition automatically when a deadline or maturity date 
 
 ### Acceptance Criteria
 
-- [ ] Repayment is available for funded, partially repaid, or overdue rounds, but not while a round
+- [x] Repayment is available for funded, partially repaid, or overdue rounds, but not while a round
       is still raising or after settlement.
 - [ ] The repayment entry point is a stable product action rather than a layout-exploration control
       whose state leaks between rounds.
 - [ ] Authorization and availability match the Bank owner and pause state used by the repayment
       transaction.
-- [ ] The amount is positive and cannot exceed either the outstanding obligation or the Bank's token
+- [x] The amount is positive and cannot exceed either the outstanding obligation or the Bank's token
       balance.
-- [ ] Installments distribute cumulative proportional entitlements without overpaying the round or
+- [x] Installments distribute cumulative proportional entitlements without overpaying the round or
       leaving rounding dust behind.
 - [ ] A successful installment refreshes repayment progress, lender balances, treasury balance, and
       activity; full settlement returns to the round detail.
-- [ ] A rejected or failed repayment preserves the outstanding amount and displays a recoverable
+- [x] A rejected or failed repayment preserves the outstanding amount and displays a recoverable
       error.
 
 **Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
