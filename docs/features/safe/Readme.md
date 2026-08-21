@@ -3,8 +3,9 @@
 The Safe is the team's shared multi-signature wallet. It is where the team holds funds and where
 Safe owners jointly approve actions.
 
-**How to read this document:** start with Setup, then follow the stories in order. Each one says who
-can perform the action, what they can do, and what must happen for it to succeed.
+**How to read this document:** follow the stories in the same order as the Safe account: setup,
+overview, funds and control, then activity. Each story says who can perform the action, what they
+can do, and what must happen for it to succeed.
 
 ### What the Safe feature lets a team do
 
@@ -70,6 +71,10 @@ has one shared wallet in CNC.
       or change the Safe's configuration.
 - [x] If registration fails after deployment, the portal keeps the deployed address visible and lets
       the owner retry registration instead of deploying another Safe.
+- [x] While the team and its contracts are loading, the portal shows a Safe loading state and does
+      not briefly display setup before confirming that the team has no Safe.
+- [x] Setup controls that the connected wallet cannot use remain accompanied by an explanation of
+      the required team-owner role.
 - [x] An archived team cannot deploy, import, or retry Safe registration.
 
 **Priority:** P1 (Critical) · **Status:** ✅ Done
@@ -95,6 +100,11 @@ team's wallet and who controls it.
 - [x] The owners list identifies the connected signer when applicable.
 - [x] Incoming native-token, ERC-20, and ERC-721 transfers are displayed as deposits.
 - [x] A user can inspect this information without being a Safe owner.
+- [x] Loading states identify the Safe information being checked, while query errors keep the Safe
+      address and unaffected information visible and provide a local retry.
+- [x] Empty deposit states explain which action will populate the section.
+- [x] Deposit history becomes stacked cards on small screens without removing keyboard access to
+      links, buttons, or transaction details.
 
 **Priority:** P1 (Critical) · **Status:** ✅ Done · **Dependencies:** US-SAFE-001
 
@@ -116,8 +126,12 @@ from it **so that** the team can fund and use its shared treasury.
 - [x] The Safe account offers a deposit flow for native tokens and supported tokens.
 - [x] The balance and token holdings reflect funds held by the Safe.
 - [x] Only a connected Safe owner can start a transfer from the Safe.
+- [x] Signer-only transfer controls explain the required role when the connected wallet cannot use
+      them; team membership alone does not grant signer permission.
 - [x] A transfer follows the Safe's approval and execution rules; it is not an unrestricted direct
       withdrawal.
+- [x] Success feedback distinguishes a completed action from a proposal that still needs signer
+      approvals.
 
 **Priority:** P1 (Critical) · **Status:** ✅ Done · **Dependencies:** US-SAFE-001, US-SAFE-006
 
@@ -139,7 +153,8 @@ approval rules match the team that controls it.
 ### Acceptance Criteria
 
 - [x] The Safe account lets a Safe owner add a signer, remove a signer, or update the threshold.
-- [x] A user who is not a Safe owner cannot use these controls.
+- [x] A user who is not a Safe owner cannot use these controls and sees why signer permission is
+      required.
 - [x] Signer and threshold changes use the same approval flow as other Safe transactions.
 - [x] The portal refreshes the owner list and required-signature count after a successful change.
 
@@ -154,16 +169,30 @@ are pending and which ones the team has already completed.
 
 ### What I can see
 
-- The action, recipient, value, status, transaction hash, and confirmation count.
-- The transaction details when more context is needed.
-- All transactions, only pending transactions, or only executed transactions.
+- The action, recipient, value, approval progress, status, last update, and available action.
+- The transaction details, including its on-chain hash when available, when more context is needed.
+- Transactions needing action by default, or a counted status filter and the complete history.
+- The current state and its next step:
+  - **Pending approvals:** the Safe still needs signer confirmations.
+  - **Ready to execute:** the threshold has been reached and a signer can execute the transaction.
+  - **Conflicting:** another pending transaction may be affected and should be reviewed first.
+  - **Executed:** the Safe completed the transaction and no further signer action is required.
+  - **Invalid:** the Safe has passed the transaction nonce; a new proposal is required if the action
+    is still needed.
 
 ### Acceptance Criteria
 
-- [x] The transaction list shows its method, recipient, value, status, transaction hash, and
-      confirmation count.
-- [x] Users can filter between all, pending, and executed transactions.
+- [x] The transaction list shows its method, recipient, value, approval progress, status, last
+      update, and available action; details expose the transaction hash when present.
+- [x] Counted filters prioritize transactions needing action and expose approval, ready, conflict,
+      executed, and complete-history views.
 - [x] A team member can open a transaction to inspect its details without being a Safe owner.
+- [x] Desktop rows, mobile cards, filters, details, and action guidance use the same transaction
+      statuses and approval progress.
+- [x] Empty and error states explain how to populate the queue or retry the affected request without
+      hiding unrelated Safe information.
+- [x] Transaction rows become stacked cards on small screens, while links, buttons, labelled fields,
+      progress information, focus styles, and modal controls remain keyboard reachable.
 
 **Priority:** P2 (High) · **Status:** ✅ Done · **Dependencies:** US-SAFE-001
 
@@ -186,8 +215,12 @@ agree **so that** the team can carry out an action safely.
 - [x] Only Safe owners can approve or execute a transaction.
 - [x] A signer cannot approve the same transaction twice.
 - [x] A transaction can execute only when it has the required number of confirmations.
+- [x] Reaching the threshold marks a transaction as ready; approval and execution remain separate
+      actions.
 - [x] Executed and stale-nonce transactions cannot be approved or executed again.
 - [x] The portal warns before an approval or execution that conflicts with pending transactions.
+- [x] Approval queue entries show only the actions currently available to the connected signer, and
+      their status explains the next step.
 - [x] After execution, the portal refreshes the transaction status, Safe details, and balances.
 
 **Priority:** P1 (Critical) · **Status:** ✅ Done · **Dependencies:** US-SAFE-001

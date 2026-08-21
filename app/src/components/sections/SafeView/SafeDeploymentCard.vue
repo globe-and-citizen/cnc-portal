@@ -4,7 +4,9 @@
       <IconifyIcon icon="heroicons:shield-check" class="text-primary h-8 w-8" />
       <div>
         <h2 class="text-lg font-semibold">Deploy a new Safe</h2>
-        <p class="text-sm text-gray-500">Your team's multi-signature wallet is not deployed yet</p>
+        <p class="text-sm text-gray-500">
+          Create a new wallet with the team owner as its first signer.
+        </p>
       </div>
     </div>
 
@@ -33,7 +35,17 @@
       color="info"
       variant="soft"
       icon="heroicons:information-circle"
-      description="This will create a Gnosis Safe wallet for your team. You can add more owners later."
+      description="Your wallet will ask you to confirm an on-chain deployment. CNC then registers the deployed Safe with this team."
+    />
+
+    <UAlert
+      v-if="!canDeploy"
+      class="mt-4"
+      color="warning"
+      variant="soft"
+      icon="i-lucide-lock-keyhole"
+      :description="deployPermissionHint"
+      data-test="safe-deployment-permission-notice"
     />
 
     <UAlert
@@ -64,6 +76,7 @@
             color="primary"
             :loading="isDeploying || isRegistering"
             :disabled="isDeploying || isRegistering || !canDeploy || archivedDisabled"
+            :title="deployPermissionHint"
             data-test="deploy-safe-button"
             @click="handleDeploySafe"
           >
@@ -118,6 +131,12 @@ const canDeploy = computed(
 
 const networkName = computed(() => NETWORK || 'Polygon')
 
+const deployPermissionHint = computed(() => {
+  if (!userDataStore.address) return 'Connect the team owner wallet to deploy a Safe.'
+  if (!canDeploy.value) return 'Only the team owner can deploy and attach a Safe.'
+  return 'Deploy a new Safe and register it with this team.'
+})
+
 const showDeploySuccess = (safeAddress: Address) => {
   toast.add({
     title: 'Success',
@@ -169,7 +188,11 @@ function retryRegistration() {
  */
 const handleDeploySafe = () => {
   if (!canDeploy.value) {
-    toast.add({ title: 'Error', description: 'connect your wallet', color: 'error' })
+    toast.add({
+      title: 'Safe deployment unavailable',
+      description: deployPermissionHint.value,
+      color: 'error'
+    })
     return
   }
 
