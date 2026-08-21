@@ -15,7 +15,7 @@
  *   realization price never moves afterwards.
  * - {@link resolveCurrentSherMultiplier} gives the **current** multiplier, used to
  *   value SHER that is **accrued but not yet withdrawn** (still pending in
- *   `Shares to be issued`) — that portion floats at today's rate until it is taken.
+ *   `SHERS To Be Issued`) — that portion floats at today's rate until it is taken.
  *
  * The matching of withdrawals to accruals (freeze the withdrawn portion, float the
  * pending one) lives in `mappers/sherIssuance.ts` ({@link settleWithdrawnSher}).

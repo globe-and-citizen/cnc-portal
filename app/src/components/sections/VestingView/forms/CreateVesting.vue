@@ -1,156 +1,289 @@
 <template>
-  <UForm
-    v-if="!showSummary"
-    :schema="schema"
-    :state="formState"
-    class="flex w-full max-w-5xl flex-col gap-5"
-    @submit="handleDisplaySummary"
-  >
-    <h4 class="text-lg font-bold">Create Vesting Schedule</h4>
+  <div class="flex flex-col gap-5">
+    <UStepper :model-value="showSummary ? 1 : 0" :items="stepperItems" disabled class="w-full" />
 
-    <UAlert
-      v-if="errorMessage"
-      color="error"
-      variant="soft"
-      icon="i-lucide-circle-alert"
-      :description="errorMessage"
-      data-test="error-alert"
-    />
+    <UForm
+      v-if="!showSummary"
+      :schema="schema"
+      :state="formState"
+      class="flex flex-col gap-6"
+      @submit="handleDisplaySummary"
+    >
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.85fr)]">
+        <div class="flex min-w-0 flex-col gap-6">
+          <section class="space-y-4">
+            <div>
+              <h3 class="font-semibold">Beneficiary and grant</h3>
+              <p class="text-muted text-sm">Choose who receives the shares and the total grant.</p>
+            </div>
 
-    <UFormField name="member" label="Choose Member" class="mt-4 gap-2">
-      <div v-if="member.address" class="h-20">
-        <UserComponent
-          class="bg-muted grow rounded-lg p-4"
-          :user="member"
-          data-test="selected-member"
-        />
+            <UFormField
+              name="memberAddress"
+              label="Beneficiary"
+              help="Only current team members can receive this schedule."
+              required
+            >
+              <div v-if="member.address" class="flex items-center gap-2">
+                <UserComponent
+                  class="bg-muted min-w-0 grow rounded-lg p-3"
+                  :user="member"
+                  data-test="selected-member"
+                />
+                <UButton
+                  type="button"
+                  color="neutral"
+                  variant="ghost"
+                  label="Change"
+                  data-test="change-member"
+                  @click="clearMember"
+                />
+              </div>
+              <SelectMemberInput
+                v-else
+                class="w-full text-xs"
+                :hidden-members="[]"
+                :disable-team-members="false"
+                show-on-focus
+                only-team-members
+                data-test="member"
+                @selectMember="handleSelectMember"
+              />
+            </UFormField>
+
+            <UFormField
+              name="totalAmount"
+              label="Total shares"
+              help="The maximum number of shares this schedule can mint."
+              required
+            >
+              <UInput
+                :model-value="totalAmount"
+                type="text"
+                inputmode="decimal"
+                placeholder="100,000"
+                class="w-full"
+                data-test="total-amount"
+                @update:model-value="totalAmount = String($event ?? '').replace(/,/g, '')"
+              >
+                <template #trailing>
+                  <span class="text-muted text-xs font-semibold">{{ tokenSymbol }}</span>
+                </template>
+              </UInput>
+            </UFormField>
+          </section>
+
+          <section class="space-y-4">
+            <div>
+              <h3 class="font-semibold">Schedule</h3>
+              <p class="text-muted text-sm">Set each boundary in your local time, to the minute.</p>
+            </div>
+
+            <VestingDateTimeField
+              name="startAt"
+              label="Starts"
+              help="The moment shares begin accruing."
+              test-id="vesting-start"
+              :day="startDay"
+              :time="startTime"
+              :value="startAt"
+              @update:day="setStartDay"
+              @update:time="setStartTime"
+            />
+
+            <VestingPresetButtons
+              label="Duration presets"
+              test-prefix="duration"
+              :presets="durationPresets"
+              :selected="durationPresetMonths"
+              :custom-active="durationPresetMonths === null && Boolean(endAt)"
+              @select="handleDurationPreset"
+            />
+
+            <VestingDateTimeField
+              name="endAt"
+              label="Fully vested"
+              help="The exact moment the full grant has accrued."
+              test-id="vesting-end"
+              :day="endDay"
+              :time="endTime"
+              :value="endAt"
+              @update:day="setEndDay"
+              @update:time="setEndTime"
+            />
+
+            <p class="text-muted text-sm" data-test="duration-readout">
+              Exact duration: <span class="text-highlighted font-medium">{{ durationLabel }}</span>
+            </p>
+
+            <VestingPresetButtons
+              label="Cliff"
+              test-prefix="cliff"
+              :presets="cliffPresets"
+              :selected="cliffPresetMonths"
+              :custom-active="cliffPresetMonths === null"
+              @select="selectCliffPreset"
+            />
+
+            <VestingDateTimeField
+              v-if="!noCliff"
+              name="cliffEndAt"
+              label="Cliff ends"
+              help="Accrued shares first become claimable at this exact moment."
+              test-id="vesting-cliff"
+              :day="cliffDay"
+              :time="cliffTime"
+              :value="cliffEndAt"
+              @update:day="setCliffDay"
+              @update:time="setCliffTime"
+            />
+
+            <p class="text-muted text-sm" data-test="cliff-duration-readout">
+              Cliff duration:
+              <span class="text-highlighted font-medium">{{ cliffDurationLabel }}</span>
+            </p>
+          </section>
+        </div>
+
+        <div class="min-w-0 lg:sticky lg:top-4 lg:self-start">
+          <VestingSchedulePreview
+            :start-at="startAt"
+            :end-at="endAt"
+            :cliff-end-at="cliffEndAt"
+            :no-cliff="noCliff"
+            :total-amount="totalAmount"
+            :token-symbol="tokenSymbol"
+          />
+
+          <UAlert
+            class="mt-4"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-shield-check"
+            description="No shares move today. Vested shares are minted when the beneficiary claims them."
+          />
+        </div>
       </div>
-      <div class="flex w-full grow">
-        <SelectMemberInput
-          data-test="member"
-          class="w-full text-xs"
-          :hidden-members="[]"
-          :disable-team-members="false"
-          showOnFocus
-          only-team-members
-          @selectMember="handleSelectMember"
-        />
-      </div>
-    </UFormField>
 
-    <UFormField name="dateRange" label="Period" class="mt-4">
-      <UPopover v-model:open="isDatePickerOpen">
+      <UAlert
+        v-if="errorMessage"
+        :color="feedbackColor"
+        variant="soft"
+        icon="i-lucide-circle-alert"
+        :description="errorMessage"
+        data-test="error-alert"
+      />
+
+      <div class="flex flex-col-reverse justify-end gap-2 sm:flex-row">
         <UButton
           type="button"
           color="neutral"
-          variant="outline"
-          class="w-full justify-start"
-          icon="i-lucide-calendar"
-          data-test="date-range"
-        >
-          {{ dateRangeLabel }}
-        </UButton>
-        <template #content>
-          <UCalendar
-            range
-            :number-of-months="1"
-            :model-value="calendarRange"
-            class="p-2"
-            @update:model-value="onDateRangeChange"
+          variant="ghost"
+          label="Cancel"
+          data-test="cancel-button"
+          @click="emit('closeAddVestingModal')"
+        />
+        <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+          <UButton
+            type="submit"
+            color="primary"
+            :disabled="loading || archivedDisabled"
+            :loading="loading"
+            label="Review schedule"
+            data-test="submit-btn"
           />
-        </template>
-      </UPopover>
-    </UFormField>
+        </TeamArchivedTooltip>
+      </div>
+    </UForm>
 
-    <div class="mt-4 flex w-full items-start gap-3">
-      <UFormField name="totalAmount" label="Amount" class="min-w-0 flex-1">
-        <UInput
-          data-test="total-amount"
-          type="number"
-          class="w-full"
-          :model-value="totalAmount"
-          @update:model-value="(v: string | number) => (totalAmount = Number(v))"
-          :required="true"
-        />
-      </UFormField>
-      <UFormField name="cliff" label="Cliff (days)" class="min-w-0 flex-1">
-        <UInput
-          data-test="cliff"
-          type="number"
-          class="w-full"
-          :model-value="cliff"
-          @update:model-value="(v: string | number) => (cliff = Number(v))"
-          :required="true"
-        />
-      </UFormField>
+    <div v-else-if="vestingData" class="flex flex-col gap-4">
+      <UAlert
+        v-if="errorMessage"
+        :color="feedbackColor"
+        variant="soft"
+        icon="i-lucide-circle-alert"
+        :description="errorMessage"
+        data-test="summary-error-alert"
+      />
+      <VestingSummary
+        :vesting="vestingData"
+        :loading="loading"
+        @back="showSummary = false"
+        @confirm="submit"
+      />
     </div>
-
-    <h3 class="pt-6 text-sm text-gray-600">
-      By clicking "Create Vesting", you promise this amount to the member under a vesting schedule.
-      No tokens move now — shares are minted to the member as they vest.
-    </h3>
-    <div class="mt-6 flex justify-end gap-2">
-      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
-        <UButton
-          type="button"
-          color="primary"
-          size="sm"
-          @click="handleDisplaySummary"
-          :disabled="loading || archivedDisabled"
-          :loading="loading"
-          data-test="submit-btn"
-          label="Create Vesting"
-        />
-      </TeamArchivedTooltip>
-    </div>
-  </UForm>
-  <div v-if="showSummary" class="flex flex-col gap-3">
-    <UAlert
-      v-if="errorMessage"
-      color="error"
-      variant="soft"
-      icon="i-lucide-circle-alert"
-      :description="errorMessage"
-      data-test="summary-error-alert"
-    />
-    <VestingSummary
-      :vesting="vestingData"
-      :loading="loading"
-      @back="showSummary = false"
-      @confirm="submit"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import UserComponent from '@/components/UserComponent.vue'
+import VestingSchedulePreview from '@/components/sections/VestingView/VestingSchedulePreview.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
+import VestingDateTimeField from './VestingDateTimeField.vue'
+import VestingPresetButtons from './VestingPresetButtons.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useCreateVesting } from '@/composables/vesting/useCreateVesting'
 
-const emit = defineEmits(['reload', 'closeAddVestingModal'])
+const emit = defineEmits<{
+  closeAddVestingModal: []
+}>()
+
+const emitVestingEvent = () => emit('closeAddVestingModal')
+
+const durationPresets = [
+  { label: '1 year', value: 12 },
+  { label: '2 years', value: 24 },
+  { label: '4 years', value: 48 }
+]
+const cliffPresets = [
+  { label: 'No cliff', value: 0 },
+  { label: '3 months', value: 3 },
+  { label: '6 months', value: 6 },
+  { label: '1 year', value: 12 }
+]
+const stepperItems = [{ title: 'Configure' }, { title: 'Review' }]
 
 const {
   member,
-  cliff,
   totalAmount,
-  calendarRange,
-  isDatePickerOpen,
+  startDay,
+  startTime,
+  endDay,
+  endTime,
+  cliffDay,
+  cliffTime,
+  noCliff,
+  startAt,
+  endAt,
+  cliffEndAt,
+  durationPresetMonths,
+  cliffPresetMonths,
+  durationLabel,
+  cliffDurationLabel,
+  tokenSymbol,
   showSummary,
   errorMessage,
+  feedbackColor,
   vestingData,
   formState,
   schema,
-  dateRangeLabel,
   loading,
   handleSelectMember,
-  onDateRangeChange,
+  clearMember,
+  setStartDay,
+  setStartTime,
+  setEndDay,
+  setEndTime,
+  setCliffDay,
+  setCliffTime,
+  selectDurationPreset,
+  selectCliffPreset,
   handleDisplaySummary,
   submit
-} = useCreateVesting(emit)
+} = useCreateVesting(emitVestingEvent)
 
-// submit is internal to the form flow but asserted on by the component's unit
-// tests, so keep it on the instance.
-defineExpose({ submit })
+function handleDurationPreset(months: number | null) {
+  if (months === null) durationPresetMonths.value = null
+  else selectDurationPreset(months)
+}
 </script>

@@ -6,13 +6,15 @@
  * **Retained Earnings**:
  *
  *  - Assets       cash pockets (rolled up) + Trading account + any other asset
- *  - Liabilities  Wage Payable + Loan Payable + Shares to be issued (net; 0 once settled)
- *  - Equity       Owner Capital + Investor Equity + Retained Earnings (net income)
+ *  - Liabilities  Wage Payable + Loan Payable
+ *  - Equity       Owner Capital + Investor Equity + SHERS To Be Issued
+ *                 − Deferred SHER Compensation (contra-equity)
+ *                 + Retained Earnings (net income)
  *
  * The identity holds by construction: every posting is balanced and net income
  * is exactly Σincome − Σexpense, so contributed-equity + retained-earnings +
  * liabilities = the asset side. In the worked example: assets 142.20 = equity
- * 142.20 (Investor Equity 138 + Retained Earnings 4.20), liabilities 0.
+ * 142.20 (Investor Equity 138 + Retained Earnings 14.20), liabilities 0.
  */
 import { formatUnits } from 'viem'
 import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
@@ -58,13 +60,15 @@ export interface BalanceSheet {
   /** Non-cash assets (Trading account, …) with non-zero balance. */
   otherAssets: StatementLine[]
   totalAssets: number
-  /** Liability accounts with non-zero balance (Wage Payable, Shares to be issued). */
+  /** Liability accounts with non-zero balance (Wage Payable, …). */
   liabilities: StatementLine[]
   totalLiabilities: number
   ownerCapital: number
   investorEquity: number
   /** Period net income closed into equity. */
   retainedEarnings: number
+  /** Contra-equity and pending-equity lines with non-zero balance. */
+  contraEquity: StatementLine[]
   totalEquity: number
   /**
    * Liabilities + Equity as a single figure, summed at full precision and
@@ -88,7 +92,8 @@ function round2(value: number): number {
 /**
  * The full-precision (unrounded) side totals of the balance-sheet identity.
  * Net income closes into equity, so income accounts add and expense accounts
- * subtract into `equityAndResult`. Summed from the raw net balances so the
+ * subtract into `equityAndResult`. CONTRA_EQUITY is debit-normal and reduces
+ * equity, so it is subtracted. Summed from the raw net balances so the
  * grand totals are rounded exactly **once** — summing already-rounded
  * per-account balances (multi-currency values rounded before summation) drifts a
  * cent and would break `Assets = Liabilities + Equity`.
@@ -115,6 +120,9 @@ function rawSideTotals(entries: readonly LedgerEntry[]): {
       case 'EQUITY':
       case 'INCOME':
         equityAndResult += value
+        break
+      case 'CONTRA_EQUITY':
+        equityAndResult -= value
         break
       case 'EXPENSE':
         equityAndResult -= value
@@ -181,6 +189,7 @@ export function buildBalanceSheet(entries: readonly LedgerEntry[]): BalanceSheet
   const cashByPocket: StatementLine[] = []
   const otherAssets: StatementLine[] = []
   const liabilities: StatementLine[] = []
+  const contraEquity: StatementLine[] = []
 
   // Line items display the per-account cent-rounded balances (each clean on its
   // own); the grand totals below come from the raw sums, never from these.
@@ -193,6 +202,7 @@ export function buildBalanceSheet(entries: readonly LedgerEntry[]): BalanceSheet
     const cls = classOf(account)
     if (cls === 'ASSET' && amount !== 0) otherAssets.push({ account, amount })
     else if (cls === 'LIABILITY' && amount !== 0) liabilities.push({ account, amount })
+    else if (cls === 'CONTRA_EQUITY' && amount !== 0) contraEquity.push({ account, amount })
   }
 
   const ownerCapital = balanceOf('Owner Capital')
@@ -227,6 +237,7 @@ export function buildBalanceSheet(entries: readonly LedgerEntry[]): BalanceSheet
     ownerCapital,
     investorEquity,
     retainedEarnings,
+    contraEquity,
     totalEquity,
     totalLiabilitiesAndEquity,
     identityGap,
