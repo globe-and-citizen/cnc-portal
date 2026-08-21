@@ -24,14 +24,14 @@ describe('chart of accounts', () => {
       'Wage Payable': 'LIABILITY',
       'Loan Payable': 'LIABILITY',
       'Interest Payable': 'LIABILITY',
-      'Shares to be issued': 'LIABILITY',
+      'Deferred SHER Compensation': 'CONTRA_EQUITY',
+      'SHERS To Be Issued': 'EQUITY',
       'Owner Capital': 'EQUITY',
       'Investor Equity': 'EQUITY',
       'Retained Earnings': 'EQUITY',
       'Service Revenue': 'INCOME',
       'Trading Gain': 'INCOME',
       'Payroll Expense': 'EXPENSE',
-      'Share-based Compensation': 'EXPENSE',
       'Operating Expense': 'EXPENSE',
       'Interest Expense': 'EXPENSE',
       'Dividend Expense': 'EXPENSE',
@@ -65,6 +65,13 @@ describe('chart of accounts', () => {
     expect(classOf('Interest Expense')).toBe('EXPENSE')
   })
 
+  it('books SHER compensation as contra-equity, not as an expense', () => {
+    expect(classOf('Deferred SHER Compensation')).toBe('CONTRA_EQUITY')
+    expect(classOf('SHERS To Be Issued')).toBe('EQUITY')
+    expect(isDebitNormal('Deferred SHER Compensation')).toBe(true)
+    expect(isDebitNormal('SHERS To Be Issued')).toBe(false)
+  })
+
   it('exposes ACCOUNTS as { name, class } records matching the map', () => {
     expect(ACCOUNTS).toHaveLength(ACCOUNT_NAMES.length)
     ACCOUNTS.forEach((account) => {
@@ -73,8 +80,8 @@ describe('chart of accounts', () => {
   })
 
   describe('normal balance', () => {
-    it('puts ASSET and EXPENSE on the debit side', () => {
-      const debitClasses: AccountClass[] = ['ASSET', 'EXPENSE']
+    it('puts ASSET, EXPENSE and CONTRA_EQUITY on the debit side', () => {
+      const debitClasses: AccountClass[] = ['ASSET', 'EXPENSE', 'CONTRA_EQUITY']
       debitClasses.forEach((cls) => expect(isDebitNormalClass(cls)).toBe(true))
     })
 
@@ -88,8 +95,10 @@ describe('chart of accounts', () => {
         ['Cash — Bank', true],
         ['Trading account', true],
         ['Payroll Expense', true],
+        ['Deferred SHER Compensation', true],
         ['Wage Payable', false],
         ['Investor Equity', false],
+        ['SHERS To Be Issued', false],
         ['Service Revenue', false]
       ]
       expectations.forEach(([account, debit]) => {
@@ -100,7 +109,8 @@ describe('chart of accounts', () => {
 
     it('keeps every account internally consistent with its class', () => {
       ACCOUNT_NAMES.forEach((name) => {
-        const expectedDebit = classOf(name) === 'ASSET' || classOf(name) === 'EXPENSE'
+        const cls = classOf(name)
+        const expectedDebit = cls === 'ASSET' || cls === 'EXPENSE' || cls === 'CONTRA_EQUITY'
         expect(isDebitNormal(name)).toBe(expectedDebit)
       })
     })
