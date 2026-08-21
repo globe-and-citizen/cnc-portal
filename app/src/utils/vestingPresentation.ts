@@ -1,10 +1,9 @@
-import { formatUnits } from 'viem'
 import {
   VESTING_TOKEN_DECIMALS,
   type VestingSchedule,
   type VestingScheduleState
 } from '@/types/vesting'
-import { formatPercent, formatToken } from '@/utils/format'
+import { formatPercent, formatTokenUnits, fromUnix } from '@/utils/format'
 import { formatVestingBoundary } from '@/utils/vestingScheduleUtil'
 
 type BadgeColor = 'neutral' | 'warning' | 'success' | 'info' | 'error'
@@ -29,17 +28,17 @@ const STATE_METADATA: Record<
 export const getVestingStateMeta = (state: VestingScheduleState) => STATE_METADATA[state]
 
 export const formatVestingAmount = (value: bigint, tokenSymbol: string) =>
-  formatToken(formatUnits(value, VESTING_TOKEN_DECIMALS), tokenSymbol, { maxDecimals: 2 })
+  formatTokenUnits(value, VESTING_TOKEN_DECIMALS, tokenSymbol, { maxDecimals: 6 })
 
 export const formatVestingProgress = (progress: number) =>
   formatPercent(Math.min(progress, 100) / 100, { decimals: 0 })
 
 export function getVestingNextStep(schedule: VestingSchedule): string {
   if (schedule.state === 'upcoming') {
-    return `Starts ${formatVestingBoundary(new Date(schedule.start * 1000))}`
+    return `Starts ${formatVestingBoundary(fromUnix(schedule.start).toDate())}`
   }
   if (schedule.state === 'cliff_locked') {
-    return `Cliff ends ${formatVestingBoundary(new Date(schedule.cliffEnd * 1000))}`
+    return `Cliff ends ${formatVestingBoundary(fromUnix(schedule.cliffEnd).toDate())}`
   }
   if (schedule.state === 'claimable') return 'Ready to release'
   if (schedule.state === 'accruing') return 'Shares continue accruing'

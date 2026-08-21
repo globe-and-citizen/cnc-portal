@@ -25,9 +25,9 @@ describe('VestingView.vue', () => {
     expect(wrapper.findComponent(VestingFlow).exists()).toBe(true)
   })
 
-  it('refreshes the shared read model after a schedule action', () => {
+  it('refreshes the shared read model only for an explicit retry', () => {
     const wrapper = mount(VestingView)
-    wrapper.getComponent(VestingFlow).vm.$emit('reload')
+    wrapper.getComponent(VestingFlow).vm.$emit('retry')
     expect(refetch).toHaveBeenCalledOnce()
   })
 })

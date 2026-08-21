@@ -54,8 +54,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatToken } from '@/utils/format'
 import { formatVestingBoundary, vestingAmountAtCliff } from '@/utils'
+import { formatVestingAmount } from '@/utils/vestingPresentation'
 
 interface Props {
   startAt: Date | null
@@ -93,6 +93,6 @@ const claimDescription = computed(() => {
     return 'Accrued shares become claimable when the cliff ends.'
   }
 
-  return `${formatToken(amount, props.tokenSymbol, { maxDecimals: 6 })} will be accrued when the cliff ends.`
+  return `${formatVestingAmount(amount, props.tokenSymbol)} will be accrued when the cliff ends.`
 })
 </script>

@@ -70,9 +70,21 @@ describe('VestingFlow.vue', () => {
     expect(review.props('schedule')).toEqual(schedule)
   })
 
-  it('refreshes the read model after a reviewed action succeeds', () => {
+  it('keeps an open review synchronized with the latest schedule state', async () => {
     const wrapper = mountComponent()
-    wrapper.getComponent(VestingActionReviewModal).vm.$emit('success', 'stop')
-    expect(wrapper.emitted('reload')).toBeTruthy()
+    wrapper.getComponent(VestingScheduleList).vm.$emit('action', 'release', schedule)
+    await wrapper.vm.$nextTick()
+
+    const updatedSchedule = {
+      ...schedule,
+      vestedAmount: 8_000_000n,
+      claimableAmount: 6_000_000n,
+      progress: 80
+    }
+    await wrapper.setProps({ schedules: [updatedSchedule] })
+
+    const review = wrapper.getComponent(VestingActionReviewModal)
+    expect(review.props('open')).toBe(true)
+    expect(review.props('schedule')).toEqual(updatedSchedule)
   })
 })

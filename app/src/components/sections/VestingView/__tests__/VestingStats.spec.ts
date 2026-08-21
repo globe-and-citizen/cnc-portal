@@ -35,4 +35,16 @@ describe('VestingStats.vue', () => {
     expect(wrapper.find('[data-test="vesting-promised"]').exists()).toBe(false)
     expect(wrapper.findAll('[data-test="vesting-stat-skeleton"]')).toHaveLength(4)
   })
+
+  it('keeps a positive base-unit total visible', () => {
+    const wrapper = renderWithProviders(VestingStats, {
+      props: {
+        totals: { promised: 1n, vested: 1n, claimable: 1n, released: 0n },
+        tokenSymbol: 'SHR',
+        isLoading: false
+      }
+    })
+
+    expect(wrapper.get('[data-test="vesting-claimable"]').text()).toBe('0.000001 SHR')
+  })
 })

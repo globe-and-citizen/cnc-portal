@@ -33,10 +33,12 @@ describe('VestingActions.vue', () => {
     expect(wrapper.findComponent(CreateVesting).exists()).toBe(true)
   })
 
-  it('propagates a successful creation so the shared read model refreshes', async () => {
+  it('closes the creation modal after a successful creation', async () => {
     const wrapper = mountComponent()
     await wrapper.get('[data-test="createAddVesting"]').trigger('click')
-    wrapper.getComponent(CreateVesting).vm.$emit('reload')
-    expect(wrapper.emitted('reload')).toBeTruthy()
+    wrapper.getComponent(CreateVesting).vm.$emit('closeAddVestingModal')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findComponent(CreateVesting).exists()).toBe(false)
   })
 })

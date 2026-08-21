@@ -86,7 +86,7 @@
       :member-name="memberName"
       :can-release="canRelease"
       :can-stop="canStop"
-      @details="selectedSchedule = $event"
+      @details="openScheduleDetails"
       @action="openActionReview"
     />
 
@@ -102,7 +102,6 @@
       :schedule="actionSchedule"
       :token-symbol="tokenSymbol"
       :member-name="memberName"
-      @success="emit('reload')"
     />
   </UCard>
 </template>
@@ -122,7 +121,7 @@ const props = defineProps<{
   isLoading: boolean
   error: unknown
 }>()
-const emit = defineEmits<{ reload: []; retry: [] }>()
+const emit = defineEmits<{ retry: [] }>()
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const { isWriteDisabled } = useTeamWriteGuard()
@@ -132,19 +131,28 @@ const selectedScope = ref<'mine' | 'team'>(
     : 'mine'
 )
 const selectedStatus = ref<VestingStatus>('all')
-const selectedSchedule = ref<VestingSchedule | null>(null)
-const actionSchedule = ref<VestingSchedule | null>(null)
+type ScheduleKey = Pick<VestingSchedule, 'member' | 'index'>
+const selectedScheduleKey = ref<ScheduleKey | null>(null)
+const actionScheduleKey = ref<ScheduleKey | null>(null)
 const actionKind = ref<'release' | 'stop'>('release')
+const findSchedule = (key: ScheduleKey | null) =>
+  key
+    ? (props.schedules.find(
+        (schedule) => schedule.member === key.member && schedule.index === key.index
+      ) ?? null)
+    : null
+const selectedSchedule = computed(() => findSchedule(selectedScheduleKey.value))
+const actionSchedule = computed(() => findSchedule(actionScheduleKey.value))
 const detailsOpen = computed({
   get: () => selectedSchedule.value !== null,
   set: (open) => {
-    if (!open) selectedSchedule.value = null
+    if (!open) selectedScheduleKey.value = null
   }
 })
 const actionOpen = computed({
   get: () => actionSchedule.value !== null,
   set: (open) => {
-    if (!open) actionSchedule.value = null
+    if (!open) actionScheduleKey.value = null
   }
 })
 const scopes = [
@@ -210,6 +218,9 @@ const canStop = (schedule: VestingSchedule) =>
   teamStore.currentTeam?.ownerAddress.toLowerCase() === userStore.address?.toLowerCase()
 const openActionReview = (kind: 'release' | 'stop', schedule: VestingSchedule) => {
   actionKind.value = kind
-  actionSchedule.value = schedule
+  actionScheduleKey.value = { member: schedule.member, index: schedule.index }
+}
+const openScheduleDetails = (schedule: VestingSchedule) => {
+  selectedScheduleKey.value = { member: schedule.member, index: schedule.index }
 }
 </script>

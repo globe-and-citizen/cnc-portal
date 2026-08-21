@@ -1,6 +1,6 @@
 import { computed, ref, type Ref } from 'vue'
 import { useToast } from '@nuxt/ui/composables'
-import { type Address, isAddress, parseUnits } from 'viem'
+import { isAddress } from 'viem'
 import { z } from 'zod'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import { useVestingAddVestingWrite } from '@/composables/vesting/writes'
@@ -8,18 +8,74 @@ import { combineDayAndTime } from '@/utils/dayUtils'
 import { formatTimeOfDay } from '@/utils/format'
 import {
   addVestingMonths,
+  buildAddVestingArgs,
   classifyError,
   formatVestingDuration,
   nextVestingMinute,
   vestingMinutesBetween
 } from '@/utils'
-import { VESTING_TOKEN_DECIMALS, type VestingCreation } from '@/types/vesting'
+import type { VestingCreation } from '@/types/vesting'
 import type { User } from '@/types'
 
 const ONE_MINUTE_MS = 60_000
 
-type CreateVestingEmit = (event: 'reload' | 'closeAddVestingModal') => void
+type CreateVestingEmit = (event: 'closeAddVestingModal') => void
 type FeedbackColor = 'error' | 'warning'
+
+const createVestingSchema = z
+  .object({
+    memberAddress: z
+      .string()
+      .refine((value) => isAddress(value), { message: 'Choose a valid team member.' }),
+    totalAmount: z
+      .string()
+      .trim()
+      .min(1, 'Enter the total number of shares.')
+      .regex(/^\d+(\.\d{1,6})?$/, 'Use a positive amount with up to 6 decimals.')
+      .refine((value) => Number(value) > 0, 'Amount must be greater than 0.'),
+    startAt: z.date().nullable(),
+    endAt: z.date().nullable(),
+    cliffEndAt: z.date().nullable()
+  })
+  .superRefine((value, context) => {
+    if (!value.startAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['startAt'],
+        message: 'Choose a start date and time.'
+      })
+    }
+    if (!value.endAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['endAt'],
+        message: 'Choose an end date and time.'
+      })
+    }
+    if (!value.cliffEndAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['cliffEndAt'],
+        message: 'Choose when the cliff ends.'
+      })
+    }
+    if (!value.startAt || !value.endAt || !value.cliffEndAt) return
+
+    if (value.endAt.getTime() - value.startAt.getTime() < ONE_MINUTE_MS) {
+      context.addIssue({
+        code: 'custom',
+        path: ['endAt'],
+        message: 'End must be at least one minute after start.'
+      })
+    }
+    if (value.cliffEndAt < value.startAt || value.cliffEndAt > value.endAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['cliffEndAt'],
+        message: 'Cliff end must be between the start and end.'
+      })
+    }
+  })
 
 /** Form orchestration for the configure → review → on-chain creation flow. */
 export function useCreateVesting(emit: CreateVestingEmit) {
@@ -83,63 +139,6 @@ export function useCreateVesting(emit: CreateVestingEmit) {
     endAt: endAt.value,
     cliffEndAt: cliffEndAt.value
   }))
-
-  const schema = computed(() =>
-    z
-      .object({
-        memberAddress: z
-          .string()
-          .refine((value) => isAddress(value), { message: 'Choose a valid team member.' }),
-        totalAmount: z
-          .string()
-          .trim()
-          .min(1, 'Enter the total number of shares.')
-          .regex(/^\d+(\.\d{1,6})?$/, 'Use a positive amount with up to 6 decimals.')
-          .refine((value) => Number(value) > 0, 'Amount must be greater than 0.'),
-        startAt: z.date().nullable(),
-        endAt: z.date().nullable(),
-        cliffEndAt: z.date().nullable()
-      })
-      .superRefine((value, context) => {
-        if (!value.startAt) {
-          context.addIssue({
-            code: 'custom',
-            path: ['startAt'],
-            message: 'Choose a start date and time.'
-          })
-        }
-        if (!value.endAt) {
-          context.addIssue({
-            code: 'custom',
-            path: ['endAt'],
-            message: 'Choose an end date and time.'
-          })
-        }
-        if (!value.cliffEndAt) {
-          context.addIssue({
-            code: 'custom',
-            path: ['cliffEndAt'],
-            message: 'Choose when the cliff ends.'
-          })
-        }
-        if (!value.startAt || !value.endAt || !value.cliffEndAt) return
-
-        if (value.endAt.getTime() - value.startAt.getTime() < ONE_MINUTE_MS) {
-          context.addIssue({
-            code: 'custom',
-            path: ['endAt'],
-            message: 'End must be at least one minute after start.'
-          })
-        }
-        if (value.cliffEndAt < value.startAt || value.cliffEndAt > value.endAt) {
-          context.addIssue({
-            code: 'custom',
-            path: ['cliffEndAt'],
-            message: 'Cliff end must be between the start and end.'
-          })
-        }
-      })
-  )
 
   function handleSelectMember(selectedMember: User) {
     member.value = {
@@ -224,7 +223,7 @@ export function useCreateVesting(emit: CreateVestingEmit) {
 
   function handleDisplaySummary() {
     errorMessage.value = ''
-    if (schema.value.safeParse(formState.value).success) showSummary.value = true
+    if (createVestingSchema.safeParse(formState.value).success) showSummary.value = true
   }
 
   const addVestingWrite = useVestingAddVestingWrite()
@@ -238,19 +237,12 @@ export function useCreateVesting(emit: CreateVestingEmit) {
 
     try {
       await addVestingWrite.mutateAsync({
-        args: [
-          data.member.address as Address,
-          BigInt(Math.floor(data.startAt.getTime() / 1000)),
-          BigInt(data.durationMinutes * 60),
-          BigInt(data.cliffMinutes * 60),
-          parseUnits(data.totalAmount, VESTING_TOKEN_DECIMALS)
-        ]
+        args: buildAddVestingArgs(data)
       })
 
       toast.add({ title: 'Vesting schedule created', color: 'success' })
       resetForm()
       emit('closeAddVestingModal')
-      emit('reload')
     } catch (error) {
       const classified = classifyError(error, { contract: 'Vesting' })
       if (classified.category === 'user_rejected') {
@@ -303,7 +295,7 @@ export function useCreateVesting(emit: CreateVestingEmit) {
     feedbackColor,
     vestingData,
     formState,
-    schema,
+    schema: createVestingSchema,
     loading,
     handleSelectMember,
     clearMember,

@@ -1,14 +1,17 @@
 import dayjs from 'dayjs'
+import { isAddress, parseUnits, type Address } from 'viem'
 import { formatDate, formatTimeOfDay } from '@/utils/format'
 import type {
+  VestingCreation,
   VestingInfo,
   VestingSchedule,
   VestingScheduleState,
   VestingTotals,
   VestingTuple
 } from '@/types/vesting'
+import { VESTING_TOKEN_DECIMALS } from '@/types/vesting'
 
-export const VESTING_MINUTE_MS = 60_000
+const VESTING_MINUTE_MS = 60_000
 
 const CALENDAR_UNITS: Array<{
   unit: 'year' | 'month' | 'week' | 'day' | 'hour' | 'minute'
@@ -23,7 +26,7 @@ const CALENDAR_UNITS: Array<{
 ]
 
 /** Keep vesting boundaries on the exact precision the form promises. */
-export function normalizeVestingMinute(value: Date): Date {
+function normalizeVestingMinute(value: Date): Date {
   const normalized = new Date(value)
   normalized.setSeconds(0, 0)
   return normalized
@@ -79,26 +82,49 @@ export function vestingAmountAtCliff(
   start: Date | null,
   cliffEnd: Date | null,
   end: Date | null
-): number | null {
+): bigint | null {
   if (!start || !cliffEnd || !end || end <= start || cliffEnd <= start) return null
-  const amount = Number(totalAmount)
-  if (!Number.isFinite(amount) || amount <= 0) return null
+
+  let amount: bigint
+  try {
+    amount = parseUnits(totalAmount, VESTING_TOKEN_DECIMALS)
+  } catch {
+    return null
+  }
+  if (amount <= 0n) return null
 
   const elapsed = Math.min(cliffEnd.getTime() - start.getTime(), end.getTime() - start.getTime())
-  return amount * (elapsed / (end.getTime() - start.getTime()))
+  return (amount * BigInt(elapsed)) / BigInt(end.getTime() - start.getTime())
+}
+
+/** Build the exact base-unit arguments expected by `Vesting.addVesting`. */
+export function buildAddVestingArgs(
+  data: VestingCreation
+): readonly [Address, bigint, bigint, bigint, bigint] {
+  return [
+    data.member.address as Address,
+    BigInt(Math.floor(data.startAt.getTime() / 1000)),
+    BigInt(data.durationMinutes * 60),
+    BigInt(data.cliffMinutes * 60),
+    parseUnits(data.totalAmount, VESTING_TOKEN_DECIMALS)
+  ]
 }
 
 export function buildVestingSchedules(
-  tuples: unknown[],
+  tuples: readonly unknown[],
   nowSeconds = Math.floor(Date.now() / 1000)
 ): VestingSchedule[] {
-  return tuples.filter(isVestingTuple).flatMap(([members, indices, infos]) =>
-    members.flatMap((member, position) => {
+  return tuples.flatMap((value) => {
+    const tuple = parseVestingTuple(value)
+    if (!tuple) return []
+    const [members, indices, infos] = tuple
+    return members.flatMap((member, position) => {
+      const index = indices[position]
       const info = infos[position]
-      if (!info) return []
-      return [buildVestingSchedule(member, indices[position] ?? BigInt(position), info, nowSeconds)]
+      if (index === undefined || !info) return []
+      return [buildVestingSchedule(member, index, info, nowSeconds)]
     })
-  )
+  })
 }
 
 export function summarizeVestingSchedules(schedules: VestingSchedule[]): VestingTotals {
@@ -179,9 +205,28 @@ function getVestingScheduleState(
   return 'accruing'
 }
 
-function isVestingTuple(value: unknown): value is VestingTuple {
-  if (!Array.isArray(value) || value.length !== 3) return false
-  return value.every(Array.isArray)
+function parseVestingTuple(value: unknown): VestingTuple | null {
+  if (!Array.isArray(value) || value.length !== 3) return null
+  const [members, indices, infos] = value
+  if (!Array.isArray(members) || !Array.isArray(indices) || !Array.isArray(infos)) return null
+  if (members.length !== indices.length || members.length !== infos.length) return null
+  if (!members.every((member) => typeof member === 'string' && isAddress(member))) return null
+  if (!indices.every((index) => typeof index === 'bigint')) return null
+  if (!infos.every(isVestingInfo)) return null
+  return value as unknown as VestingTuple
+}
+
+function isVestingInfo(value: unknown): value is VestingInfo {
+  if (!value || typeof value !== 'object') return false
+  const info = value as Record<string, unknown>
+  return (
+    typeof info.start === 'bigint' &&
+    typeof info.duration === 'bigint' &&
+    typeof info.cliff === 'bigint' &&
+    typeof info.totalAmount === 'bigint' &&
+    typeof info.released === 'bigint' &&
+    typeof info.active === 'boolean'
+  )
 }
 
 function maxBigInt(value: bigint, minimum: bigint): bigint {

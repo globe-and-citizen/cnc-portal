@@ -225,14 +225,10 @@ import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useCreateVesting } from '@/composables/vesting/useCreateVesting'
 
 const emit = defineEmits<{
-  reload: []
   closeAddVestingModal: []
 }>()
 
-const emitVestingEvent = (event: 'reload' | 'closeAddVestingModal') => {
-  if (event === 'reload') emit('reload')
-  else emit('closeAddVestingModal')
-}
+const emitVestingEvent = () => emit('closeAddVestingModal')
 
 const durationPresets = [
   { label: '1 year', value: 12 },

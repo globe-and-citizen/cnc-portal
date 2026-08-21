@@ -26,11 +26,7 @@
       :ui="{ content: 'sm:max-w-5xl' }"
     >
       <template #body>
-        <CreateVesting
-          v-if="teamStore.currentTeamId"
-          @closeAddVestingModal="handleClose"
-          @reload="handleReload"
-        />
+        <CreateVesting v-if="teamStore.currentTeamId" @closeAddVestingModal="handleClose" />
       </template>
     </UModal>
   </div>
@@ -42,8 +38,6 @@ import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 
-const emit = defineEmits(['reload'])
-
 const addVestingModal = ref({ mount: false, show: false })
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
@@ -52,10 +46,6 @@ const isOwner = computed(
     !!teamStore.currentTeam?.ownerAddress &&
     teamStore.currentTeam.ownerAddress.toLowerCase() === userStore.address?.toLowerCase()
 )
-
-const handleReload = () => {
-  emit('reload') // Propagate reload up
-}
 
 const handleClose = () => {
   addVestingModal.value = { mount: false, show: false }

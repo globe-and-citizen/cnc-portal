@@ -118,10 +118,10 @@ Legend — **A** built-in predicate · **B** hand-written · **C** left to stale
 
 ### Vesting
 
-| Write                        | Reads dirtied                                                                      | Covered by                               |
-| ---------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------- |
-| `addVesting` / `stopVesting` | `getVestingsWithMembers`, `getAllArchivedVestingsFlat`                             | **A** ✅ (+ `emit('reload')`)            |
-| `release`                    | same **+ cross-contract** Investor `balanceOf` / `totalSupply` (shares are minted) | **A** ✅ Vesting side · Investor side ❌ |
+| Write                    | Reads dirtied                                                                      | Covered by                                      |
+| ------------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `addVesting`             | `getVestingsWithMembers`, `getAllArchivedVestingsFlat`                             | **A** ✅                                        |
+| `release` / `stopVesting` | same **+ cross-contract** Investor `balanceOf` / `totalSupply` (shares are minted) | **A** ✅ Vesting side · **B** ✅ Investor side |
 
 ### Elections
 
@@ -193,8 +193,8 @@ and `safeKeys.tokenBalance` deliberately mirror the wagmi key shapes (`['balance
    `useSweepMigration`, `useSetMigrationRoot`, `useShareholderMigration`). Two of them compensate by
    hand; the Merkle-claim paths don't.
 5. **Cross-contract pairs with no invalidation:** ExpenseAccount/CashRemuneration
-   `ownerWithdrawAllToBank` → Bank balances · Vesting `release` → Investor balances · Elections
-   `publishResults` → BoD membership · SafeDepositRouter `deposit` → Safe balance · Bank
+   `ownerWithdrawAllToBank` → Bank balances · Elections `publishResults` → BoD membership ·
+   SafeDepositRouter `deposit` → Safe balance · Bank
    `fundFixedReturnRepayment` → both token balances.
 6. **Dead keys** — `['getBodActions']` ([`bod/writes.ts:47`](../bod/writes.ts), `:164`) matches no
    query. Backend-side equivalents: `['weekly-claims', teamId]` (`WeeklyClaimActionEnable.vue:68`,

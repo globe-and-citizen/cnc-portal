@@ -1,5 +1,6 @@
 import { computed, onScopeDispose, ref } from 'vue'
 import { useInvestorSymbol } from '@/composables/investor/reads'
+import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
 import {
   useVestingGetAllArchivedVestingsFlat,
   useVestingGetVestingsWithMembers
@@ -8,11 +9,15 @@ import { buildVestingSchedules, summarizeVestingSchedules } from '@/utils'
 
 /** One V2 read model shared by summary cards, filters, details, and actions. */
 export function useVestingSchedules() {
-  const nowSeconds = ref(Math.floor(Date.now() / 1000))
+  const fallbackNowSeconds = ref(Math.floor(Date.now() / 1000))
   const timer = setInterval(() => {
-    nowSeconds.value = Math.floor(Date.now() / 1000)
+    fallbackNowSeconds.value = Math.floor(Date.now() / 1000)
   }, 60_000)
   onScopeDispose(() => clearInterval(timer))
+  const blockTimestamp = useBlockTimestamp()
+  const nowSeconds = computed(() =>
+    blockTimestamp.value === null ? fallbackNowSeconds.value : Number(blockTimestamp.value)
+  )
 
   const active = useVestingGetVestingsWithMembers()
   const archived = useVestingGetAllArchivedVestingsFlat()
@@ -32,7 +37,7 @@ export function useVestingSchedules() {
 
   async function refetch() {
     await Promise.all([active.refetch(), archived.refetch()])
-    nowSeconds.value = Math.floor(Date.now() / 1000)
+    fallbackNowSeconds.value = Math.floor(Date.now() / 1000)
   }
 
   return { schedules, totals, tokenSymbol, isLoading, error, refetch }
