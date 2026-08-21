@@ -222,6 +222,19 @@ its full journey in `README.md` and can link a focused wage-scheduling document 
 Do not duplicate platform security, testing, deployment, formatting, or architecture standards.
 Reference their canonical guides.
 
+## Diagram Format
+
+This rule applies to every committed documentation file, not only feature READMEs.
+
+- Every diagram must be stored as Mermaid in a fenced `mermaid` block.
+- ASCII art, PlantUML, Draw.io, Graphviz, and image-only diagrams are not accepted alternatives.
+- Screenshots may illustrate a user interface, but they do not replace the Mermaid source for a
+  flow, state model, sequence, hierarchy, or architecture diagram.
+- Text code blocks may show commands, data, or directory layouts; they must not model relationships
+  or flows.
+- When a changed document contains a non-Mermaid diagram in the edited scope, convert it to Mermaid
+  as part of the same change.
+
 ## Change Process
 
 1. Inspect the current feature README, product entry points, business rules, tests, and linked
@@ -245,6 +258,7 @@ Reference their canonical guides.
 - [ ] Known gaps are visible and not hidden under `✅ Done`.
 - [ ] Evidence links resolve to current code or tests.
 - [ ] Related feature and contract documentation is linked without duplication.
+- [ ] Every diagram is purposeful and implemented in Mermaid.
 - [ ] Root indexes contain links, not copied user stories.
 
 ## Validation
