@@ -18,9 +18,9 @@ vi.mock('@/composables/vesting/useVestingSchedules', () => ({
 }))
 
 describe('VestingView.vue', () => {
-  it('renders the V2 hero, totals, and schedule flow', () => {
+  it('renders the vesting hero without an implementation-version label', () => {
     const wrapper = mount(VestingView)
-    expect(wrapper.text()).toContain('V2')
+    expect(wrapper.text()).not.toContain('V2')
     expect(wrapper.findComponent(VestingStats).exists()).toBe(true)
     expect(wrapper.findComponent(VestingFlow).exists()).toBe(true)
   })

@@ -11,10 +11,7 @@
               <UIcon name="i-lucide-timer-reset" class="size-6" />
             </div>
             <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <h1 class="text-2xl font-semibold text-gray-950 dark:text-white">Vesting</h1>
-                <UBadge color="success" variant="soft">V2</UBadge>
-              </div>
+              <h1 class="text-2xl font-semibold text-gray-950 dark:text-white">Vesting</h1>
               <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
                 Turn long-term grants into transparent, claimable shares.
               </p>

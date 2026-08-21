@@ -42,7 +42,11 @@ import { computed } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import type { VestingSchedule } from '@/types/vesting'
 import { formatDateUtc } from '@/utils/format'
-import { formatVestingAmount, getVestingStateMeta } from '@/utils/vestingPresentation'
+import {
+  formatVestingAmount,
+  formatVestingProgress,
+  getVestingStateMeta
+} from '@/utils/vestingPresentation'
 import { formatVestingBoundary } from '@/utils'
 
 const props = defineProps<{
@@ -61,7 +65,12 @@ const scheduleDetails = computed(() => {
     { label: 'Promised', value: amount(props.schedule.totalAmount) },
     { label: 'Vested', value: amount(props.schedule.vestedAmount) },
     { label: 'Claimable', value: amount(props.schedule.claimableAmount) },
-    { label: 'Released', value: amount(props.schedule.releasedAmount) }
+    { label: 'Released', value: amount(props.schedule.releasedAmount) },
+    { label: 'Progress', value: formatVestingProgress(props.schedule.progress) },
+    {
+      label: props.schedule.state === 'cancelled' ? 'Cancelled' : 'Unvested',
+      value: amount(props.schedule.unvestedAmount)
+    }
   ]
 })
 const boundaries = computed(() => {

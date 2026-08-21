@@ -78,6 +78,7 @@
         <div>
           <p class="text-muted text-xs">Claimable now</p>
           <p class="mt-1 font-semibold">{{ amount(schedule.claimableAmount) }}</p>
+          <p class="text-muted mt-1 text-xs">{{ amount(schedule.totalAmount) }} promised</p>
         </div>
         <p class="text-muted text-xs">{{ formatProgress(schedule.progress) }} vested</p>
       </div>

@@ -11,6 +11,7 @@
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div
             class="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-900"
+            role="group"
             aria-label="Schedule scope"
           >
             <UButton
