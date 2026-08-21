@@ -1,81 +1,23 @@
 import { computed, ref, type Ref } from 'vue'
 import { useToast } from '@nuxt/ui/composables'
-import { isAddress } from 'viem'
-import { z } from 'zod'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import { useVestingAddVestingWrite } from '@/composables/vesting/writes'
-import { combineDayAndTime } from '@/utils/dayUtils'
 import { formatTimeOfDay } from '@/utils/format'
 import {
   addVestingMonths,
   buildAddVestingArgs,
+  buildVestingCreation,
   classifyError,
   formatVestingDuration,
   nextVestingMinute,
-  vestingMinutesBetween
+  resolveVestingBoundary,
+  resolveVestingTokenSymbol,
+  vestingCreationSchema
 } from '@/utils'
-import type { VestingCreation } from '@/types/vesting'
 import type { User } from '@/types'
-
-const ONE_MINUTE_MS = 60_000
 
 type CreateVestingEmit = (event: 'closeAddVestingModal') => void
 type FeedbackColor = 'error' | 'warning'
-
-const createVestingSchema = z
-  .object({
-    memberAddress: z
-      .string()
-      .refine((value) => isAddress(value), { message: 'Choose a valid team member.' }),
-    totalAmount: z
-      .string()
-      .trim()
-      .min(1, 'Enter the total number of shares.')
-      .regex(/^\d+(\.\d{1,6})?$/, 'Use a positive amount with up to 6 decimals.')
-      .refine((value) => Number(value) > 0, 'Amount must be greater than 0.'),
-    startAt: z.date().nullable(),
-    endAt: z.date().nullable(),
-    cliffEndAt: z.date().nullable()
-  })
-  .superRefine((value, context) => {
-    if (!value.startAt) {
-      context.addIssue({
-        code: 'custom',
-        path: ['startAt'],
-        message: 'Choose a start date and time.'
-      })
-    }
-    if (!value.endAt) {
-      context.addIssue({
-        code: 'custom',
-        path: ['endAt'],
-        message: 'Choose an end date and time.'
-      })
-    }
-    if (!value.cliffEndAt) {
-      context.addIssue({
-        code: 'custom',
-        path: ['cliffEndAt'],
-        message: 'Choose when the cliff ends.'
-      })
-    }
-    if (!value.startAt || !value.endAt || !value.cliffEndAt) return
-
-    if (value.endAt.getTime() - value.startAt.getTime() < ONE_MINUTE_MS) {
-      context.addIssue({
-        code: 'custom',
-        path: ['endAt'],
-        message: 'End must be at least one minute after start.'
-      })
-    }
-    if (value.cliffEndAt < value.startAt || value.cliffEndAt > value.endAt) {
-      context.addIssue({
-        code: 'custom',
-        path: ['cliffEndAt'],
-        message: 'Cliff end must be between the start and end.'
-      })
-    }
-  })
 
 /** Form orchestration for the configure → review → on-chain creation flow. */
 export function useCreateVesting(emit: CreateVestingEmit) {
@@ -97,40 +39,29 @@ export function useCreateVesting(emit: CreateVestingEmit) {
   const errorMessage = ref('')
   const feedbackColor = ref<FeedbackColor>('error')
 
-  const startAt = computed(() => boundaryValue(startDay.value, startTime.value))
-  const endAt = computed(() => boundaryValue(endDay.value, endTime.value))
-  const selectedCliffAt = computed(() => boundaryValue(cliffDay.value, cliffTime.value))
+  const startAt = computed(() => resolveVestingBoundary(startDay.value, startTime.value))
+  const endAt = computed(() => resolveVestingBoundary(endDay.value, endTime.value))
+  const selectedCliffAt = computed(() => resolveVestingBoundary(cliffDay.value, cliffTime.value))
   const cliffEndAt = computed(() => (noCliff.value ? startAt.value : selectedCliffAt.value))
-  const durationMinutes = computed(() => vestingMinutesBetween(startAt.value, endAt.value))
-  const cliffMinutes = computed(() =>
-    noCliff.value ? 0 : vestingMinutesBetween(startAt.value, cliffEndAt.value)
-  )
   const durationLabel = computed(() => formatVestingDuration(startAt.value, endAt.value))
   const cliffDurationLabel = computed(() =>
     noCliff.value ? 'No cliff' : formatVestingDuration(startAt.value, cliffEndAt.value)
   )
 
   const { data: investorSymbol } = useInvestorSymbol()
-  const tokenSymbol = computed(() =>
-    typeof investorSymbol.value === 'string' && investorSymbol.value.trim()
-      ? investorSymbol.value
-      : 'SHARES'
-  )
+  const tokenSymbol = computed(() => resolveVestingTokenSymbol(investorSymbol.value))
 
-  const vestingData = computed<VestingCreation | null>(() => {
-    if (!startAt.value || !endAt.value || !cliffEndAt.value) return null
-    return {
+  const vestingData = computed(() =>
+    buildVestingCreation({
       member: member.value,
       totalAmount: totalAmount.value,
       tokenSymbol: tokenSymbol.value,
       startAt: startAt.value,
       endAt: endAt.value,
       cliffEndAt: cliffEndAt.value,
-      durationMinutes: durationMinutes.value,
-      cliffMinutes: cliffMinutes.value,
       noCliff: noCliff.value
-    }
-  })
+    })
+  )
 
   const formState = computed(() => ({
     memberAddress: member.value.address,
@@ -223,7 +154,7 @@ export function useCreateVesting(emit: CreateVestingEmit) {
 
   function handleDisplaySummary() {
     errorMessage.value = ''
-    if (createVestingSchema.safeParse(formState.value).success) showSummary.value = true
+    if (vestingCreationSchema.safeParse(formState.value).success) showSummary.value = true
   }
 
   const addVestingWrite = useVestingAddVestingWrite()
@@ -295,7 +226,7 @@ export function useCreateVesting(emit: CreateVestingEmit) {
     feedbackColor,
     vestingData,
     formState,
-    schema: createVestingSchema,
+    schema: vestingCreationSchema,
     loading,
     handleSelectMember,
     clearMember,
@@ -310,9 +241,4 @@ export function useCreateVesting(emit: CreateVestingEmit) {
     handleDisplaySummary,
     submit
   }
-}
-
-function boundaryValue(day: Date | null, time: string): Date | null {
-  if (!day || !time) return null
-  return combineDayAndTime(day, time)
 }

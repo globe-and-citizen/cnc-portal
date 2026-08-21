@@ -1,5 +1,7 @@
 import dayjs from 'dayjs'
 import { isAddress, parseUnits, type Address } from 'viem'
+import { z } from 'zod'
+import { combineDayAndTime } from '@/utils/dayUtils'
 import { formatDate, formatTimeOfDay } from '@/utils/format'
 import type {
   VestingCreation,
@@ -12,6 +14,62 @@ import type {
 import { VESTING_TOKEN_DECIMALS } from '@/types/vesting'
 
 const VESTING_MINUTE_MS = 60_000
+const ONE_MINUTE_MS = VESTING_MINUTE_MS
+
+export const vestingCreationSchema = z
+  .object({
+    memberAddress: z
+      .string()
+      .refine((value) => isAddress(value), { message: 'Choose a valid team member.' }),
+    totalAmount: z
+      .string()
+      .trim()
+      .min(1, 'Enter the total number of shares.')
+      .regex(/^\d+(\.\d{1,6})?$/, 'Use a positive amount with up to 6 decimals.')
+      .refine((value) => Number(value) > 0, 'Amount must be greater than 0.'),
+    startAt: z.date().nullable(),
+    endAt: z.date().nullable(),
+    cliffEndAt: z.date().nullable()
+  })
+  .superRefine((value, context) => {
+    if (!value.startAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['startAt'],
+        message: 'Choose a start date and time.'
+      })
+    }
+    if (!value.endAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['endAt'],
+        message: 'Choose an end date and time.'
+      })
+    }
+    if (!value.cliffEndAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['cliffEndAt'],
+        message: 'Choose when the cliff ends.'
+      })
+    }
+    if (!value.startAt || !value.endAt || !value.cliffEndAt) return
+
+    if (value.endAt.getTime() - value.startAt.getTime() < ONE_MINUTE_MS) {
+      context.addIssue({
+        code: 'custom',
+        path: ['endAt'],
+        message: 'End must be at least one minute after start.'
+      })
+    }
+    if (value.cliffEndAt < value.startAt || value.cliffEndAt > value.endAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['cliffEndAt'],
+        message: 'Cliff end must be between the start and end.'
+      })
+    }
+  })
 
 const CALENDAR_UNITS: Array<{
   unit: 'year' | 'month' | 'week' | 'day' | 'hour' | 'minute'
@@ -49,6 +107,39 @@ export function addVestingMonths(value: Date, months: number): Date {
 export function vestingMinutesBetween(start: Date | null, end: Date | null): number {
   if (!start || !end) return 0
   return Math.round((end.getTime() - start.getTime()) / VESTING_MINUTE_MS)
+}
+
+export function resolveVestingBoundary(day: Date | null, time: string): Date | null {
+  if (!day || !time) return null
+  return combineDayAndTime(day, time)
+}
+
+export function resolveVestingTokenSymbol(value: unknown): string {
+  return typeof value === 'string' && value.trim() ? value.trim() : 'SHARES'
+}
+
+export function buildVestingCreation(input: {
+  member: VestingCreation['member']
+  totalAmount: string
+  tokenSymbol: string
+  startAt: Date | null
+  endAt: Date | null
+  cliffEndAt: Date | null
+  noCliff: boolean
+}): VestingCreation | null {
+  if (!input.startAt || !input.endAt || !input.cliffEndAt) return null
+
+  return {
+    member: input.member,
+    totalAmount: input.totalAmount,
+    tokenSymbol: input.tokenSymbol,
+    startAt: input.startAt,
+    endAt: input.endAt,
+    cliffEndAt: input.cliffEndAt,
+    durationMinutes: vestingMinutesBetween(input.startAt, input.endAt),
+    cliffMinutes: input.noCliff ? 0 : vestingMinutesBetween(input.startAt, input.cliffEndAt),
+    noCliff: input.noCliff
+  }
 }
 
 /** Human calendar duration anchored to the actual vesting boundaries. */

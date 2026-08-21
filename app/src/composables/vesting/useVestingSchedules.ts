@@ -5,7 +5,11 @@ import {
   useVestingGetAllArchivedVestingsFlat,
   useVestingGetVestingsWithMembers
 } from '@/composables/vesting/reads'
-import { buildVestingSchedules, summarizeVestingSchedules } from '@/utils'
+import {
+  buildVestingSchedules,
+  resolveVestingTokenSymbol,
+  summarizeVestingSchedules
+} from '@/utils'
 
 /** One V2 read model shared by summary cards, filters, details, and actions. */
 export function useVestingSchedules() {
@@ -27,11 +31,7 @@ export function useVestingSchedules() {
     buildVestingSchedules([active.data.value, archived.data.value], nowSeconds.value)
   )
   const totals = computed(() => summarizeVestingSchedules(schedules.value))
-  const tokenSymbol = computed(() =>
-    typeof investorSymbol.value === 'string' && investorSymbol.value.trim()
-      ? investorSymbol.value
-      : 'SHARES'
-  )
+  const tokenSymbol = computed(() => resolveVestingTokenSymbol(investorSymbol.value))
   const isLoading = computed(() => active.isLoading.value || archived.isLoading.value)
   const error = computed(() => active.error.value || archived.error.value)
 

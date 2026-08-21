@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest'
 import {
   addVestingMonths,
   buildAddVestingArgs,
+  buildVestingCreation,
   buildVestingSchedules,
   formatVestingBoundary,
   formatVestingDuration,
   nextVestingMinute,
+  resolveVestingBoundary,
+  resolveVestingTokenSymbol,
   summarizeVestingSchedules,
+  vestingCreationSchema,
   vestingAmountAtCliff,
   vestingMinutesBetween
 } from '@/utils/vestingScheduleUtil'
@@ -33,6 +37,55 @@ describe('vestingScheduleUtil', () => {
     expect(vestingMinutesBetween(start, end)).toBe((end.getTime() - start.getTime()) / 60_000)
     expect(formatVestingDuration(start, end)).toBe('1 year, 1 month, 1 day, 1 hour, 15 minutes')
     expect(formatVestingBoundary(start)).toContain('09:37')
+    expect(resolveVestingBoundary(start, '10:52')).toEqual(new Date(2026, 7, 21, 10, 52))
+    expect(resolveVestingBoundary(start, 'invalid')).toBeNull()
+  })
+
+  it('validates creation boundaries without Vue state', () => {
+    const startAt = new Date(2026, 7, 21, 9, 37)
+    const valid = vestingCreationSchema.safeParse({
+      memberAddress: MEMBER,
+      totalAmount: '0.000001',
+      startAt,
+      endAt: new Date(2026, 7, 21, 9, 38),
+      cliffEndAt: startAt
+    })
+    const invalid = vestingCreationSchema.safeParse({
+      memberAddress: 'invalid',
+      totalAmount: '0.0000001',
+      startAt,
+      endAt: startAt,
+      cliffEndAt: new Date(2026, 7, 21, 9, 39)
+    })
+
+    expect(valid.success).toBe(true)
+    expect(invalid.success).toBe(false)
+    if (!invalid.success) {
+      expect(invalid.error.issues.map((issue) => issue.path[0])).toEqual(
+        expect.arrayContaining(['memberAddress', 'totalAmount', 'endAt', 'cliffEndAt'])
+      )
+    }
+  })
+
+  it('builds complete creation data and normalizes the token-symbol fallback', () => {
+    const startAt = new Date(2026, 7, 21, 9, 37)
+    const endAt = new Date(2026, 7, 21, 10, 37)
+    const cliffEndAt = new Date(2026, 7, 21, 10, 7)
+
+    expect(
+      buildVestingCreation({
+        member: { name: 'Ada', address: MEMBER },
+        totalAmount: '10',
+        tokenSymbol: 'SHR',
+        startAt,
+        endAt,
+        cliffEndAt,
+        noCliff: false
+      })
+    ).toMatchObject({ durationMinutes: 60, cliffMinutes: 30 })
+    expect(resolveVestingTokenSymbol('  SHR  ')).toBe('SHR')
+    expect(resolveVestingTokenSymbol('')).toBe('SHARES')
+    expect(resolveVestingTokenSymbol(undefined)).toBe('SHARES')
   })
 
   it('matches the contract linear accrual available at the cliff', () => {
