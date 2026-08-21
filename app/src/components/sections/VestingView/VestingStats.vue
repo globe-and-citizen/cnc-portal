@@ -23,9 +23,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatUnits } from 'viem'
-import { VESTING_TOKEN_DECIMALS, type VestingTotals } from '@/types/vesting'
-import { formatToken } from '@/utils/format'
+import type { VestingTotals } from '@/types/vesting'
+import { formatVestingAmount } from '@/utils/vestingPresentation'
 
 interface Props {
   totals: VestingTotals
@@ -35,8 +34,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const amount = (value: bigint) =>
-  formatToken(formatUnits(value, VESTING_TOKEN_DECIMALS), props.tokenSymbol, { maxDecimals: 2 })
+const amount = (value: bigint) => formatVestingAmount(value, props.tokenSymbol)
 
 const metrics = computed(() => [
   {

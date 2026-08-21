@@ -4,14 +4,6 @@ import { isAddress, type Address } from 'viem'
 import { vestingAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 
-export const VESTING_FUNCTION_NAMES = {
-  GET_VESTINGS_WITH_MEMBERS: 'getVestingsWithMembers',
-  GET_ALL_ARCHIVED_VESTINGS_FLAT: 'getAllArchivedVestingsFlat',
-  GET_MEMBERS: 'getMembers',
-  RELEASABLE: 'releasable',
-  VESTED_AMOUNT: 'vestedAmount'
-} as const
-
 export function useVestingAddress() {
   const teamStore = useTeamStore()
   return computed<Address | undefined>(() => {
@@ -26,7 +18,7 @@ export function useVestingGetVestingsWithMembers() {
   return useReadContract({
     address: vestingAddress,
     abi: vestingAbi,
-    functionName: VESTING_FUNCTION_NAMES.GET_VESTINGS_WITH_MEMBERS,
+    functionName: 'getVestingsWithMembers',
     query: {
       enabled: computed(() => !!vestingAddress.value)
     }
@@ -39,7 +31,7 @@ export function useVestingGetAllArchivedVestingsFlat() {
   return useReadContract({
     address: vestingAddress,
     abi: vestingAbi,
-    functionName: VESTING_FUNCTION_NAMES.GET_ALL_ARCHIVED_VESTINGS_FLAT,
+    functionName: 'getAllArchivedVestingsFlat',
     query: {
       enabled: computed(() => !!vestingAddress.value)
     }

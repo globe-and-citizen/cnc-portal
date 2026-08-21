@@ -77,4 +77,18 @@ describe('VestingActionReviewModal.vue', () => {
     expect(wrapper.get('[data-test="vesting-action-error"]').text()).toContain('No changes')
     expect(wrapper.emitted('success')).toBeUndefined()
   })
+
+  it('shows the exact smallest claimable amount', () => {
+    const wrapper = mount(VestingActionReviewModal, {
+      props: {
+        open: true,
+        kind: 'release',
+        schedule: { ...schedule, claimableAmount: 1n },
+        tokenSymbol: 'SHR',
+        memberName: () => 'Ada'
+      }
+    })
+
+    expect(wrapper.text()).toContain('0.000001 SHR')
+  })
 })

@@ -23,7 +23,7 @@
           </p>
         </div>
 
-        <VestingActions @reload="refetch" />
+        <VestingActions />
       </div>
     </header>
 
@@ -34,7 +34,6 @@
       :token-symbol="tokenSymbol"
       :is-loading="isLoading"
       :error="error"
-      @reload="refetch"
       @retry="refetch"
     />
   </main>

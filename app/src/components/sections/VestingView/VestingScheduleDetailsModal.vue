@@ -41,7 +41,7 @@
 import { computed } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import type { VestingSchedule } from '@/types/vesting'
-import { formatDateUtc } from '@/utils/format'
+import { formatDateUtc, fromUnix } from '@/utils/format'
 import {
   formatVestingAmount,
   formatVestingProgress,
@@ -82,7 +82,7 @@ const boundaries = computed(() => {
   ]
 })
 const boundary = (label: string, timestamp: number) => {
-  const value = new Date(timestamp * 1000)
+  const value = fromUnix(timestamp).toDate()
   return { label, local: `${formatVestingBoundary(value)} local`, utc: formatDateUtc(value) }
 }
 </script>
