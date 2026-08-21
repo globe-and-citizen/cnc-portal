@@ -1,22 +1,12 @@
 # Vesting — User Stories
 
-**Format:** User Story | Acceptance Criteria (tester checklist) | Priority (P1–P5) | Effort
-(XS/S/M/L/XL)
+**Scope:** The Vesting V2 journey exposed by the portal
 
-**Last updated:** 2026-08-21
+**Last reviewed:** 2026-08-21
 
 These stories describe the Vesting V2 journey exposed by the portal. Legacy Vesting versions are
-outside this feature scope.
-
-## Human Review Contract
-
-Acceptance criteria are the centre of human review. Automated tests provide evidence, but do not
-replace the reviewer's decision.
-
-- Each criterion describes one observable functional outcome.
-- Each criterion must produce a clear pass or fail result.
-- A story passes only when a human reviewer validates every criterion for the reviewed release.
-- Story status describes current implementation progress; checkboxes remain empty until review.
+outside this feature scope. Its acceptance criteria follow the
+[feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
 
 ## Product Model
 
@@ -65,8 +55,11 @@ stateDiagram-v2
 
 ## US-VESTING-001: Create a Minute-Precise Vesting Schedule
 
-**As a** team owner **I want to** configure and review a beneficiary's vesting schedule **So that**
-the grant is recorded with unambiguous amounts and time boundaries
+**As a** team owner
+
+**I want to** configure and review a beneficiary's vesting schedule
+
+**So that** the grant is recorded with unambiguous amounts and time boundaries
 
 ### Acceptance Criteria
 
@@ -90,8 +83,11 @@ the grant is recorded with unambiguous amounts and time boundaries
 
 ## US-VESTING-002: View Schedules and Aggregate Totals
 
-**As a** team member or owner **I want to** see the team's vesting commitments and releases **So
-that** I can understand the current vesting position
+**As a** team member or owner
+
+**I want to** see the team's vesting commitments and releases
+
+**So that** I can understand the current vesting position
 
 ### Acceptance Criteria
 
@@ -109,8 +105,11 @@ that** I can understand the current vesting position
 
 ## US-VESTING-003: Release Accrued Shares
 
-**As a** vesting beneficiary **I want to** release shares accrued by one of my schedules **So that**
-the earned shares are minted to my wallet
+**As a** vesting beneficiary
+
+**I want to** release shares accrued by one of my schedules
+
+**So that** the earned shares are minted to my wallet
 
 ### Acceptance Criteria
 
@@ -129,8 +128,11 @@ the earned shares are minted to my wallet
 
 ## US-VESTING-004: Stop an Active Vesting Schedule
 
-**As a** team owner **I want to** stop one active vesting schedule **So that** future unvested
-shares are cancelled while the beneficiary keeps what has already accrued
+**As a** team owner
+
+**I want to** stop one active vesting schedule
+
+**So that** future unvested shares are cancelled without losing accrued shares
 
 ### Acceptance Criteria
 
@@ -149,8 +151,11 @@ shares are cancelled while the beneficiary keeps what has already accrued
 
 ## US-VESTING-005: Understand Vested and Claimable Progress
 
-**As a** team member or owner **I want to** understand each schedule's accrued, released, and
-claimable shares **So that** I know what can happen now and what remains locked
+**As a** team member or owner
+
+**I want to** understand each schedule's accrued, released, and claimable shares
+
+**So that** I know what can happen now and what remains locked
 
 ### Acceptance Criteria
 
@@ -185,3 +190,8 @@ review. Acceptance criteria remain the human review record; tests support each d
 - [Frontend vesting writes](../../../app/src/composables/vesting/writes.ts)
 - [Current Vesting contract](../../../contract/contracts/Vesting.sol)
 - [Contract behaviour tests](../../../contract/test/Vesting.spec.ts)
+
+## Related Documentation
+
+- [Vesting V2 contract behaviour](../contracts/vesting/README.md)
+- [Contract features index](../contracts/README.md)
