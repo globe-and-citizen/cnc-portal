@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   addVestingMonths,
+  buildVestingSchedules,
   formatVestingBoundary,
   formatVestingDuration,
   nextVestingMinute,
   normalizeVestingMinute,
+  summarizeVestingSchedules,
   vestingAmountAtCliff,
   vestingMinutesBetween
 } from '@/utils/vestingScheduleUtil'
@@ -37,5 +39,94 @@ describe('vestingScheduleUtil', () => {
     expect(vestingAmountAtCliff('1000', start, cliff, end)).toBeCloseTo(
       (1000 * (cliff.getTime() - start.getTime())) / (end.getTime() - start.getTime())
     )
+  })
+
+  it('derives V2 claimable amounts and schedule state from contract tuples', () => {
+    const now = 1_700_050_000
+    const [schedule] = buildVestingSchedules(
+      [
+        [
+          ['0x0000000000000000000000000000000000000001'],
+          [3n],
+          [
+            {
+              start: 1_700_000_000n,
+              duration: 100_000n,
+              cliff: 10_000n,
+              totalAmount: 10_000_000n,
+              released: 2_000_000n,
+              active: true
+            }
+          ]
+        ]
+      ],
+      now
+    )
+
+    expect(schedule).toMatchObject({
+      index: 3n,
+      vestedAmount: 5_000_000n,
+      claimableAmount: 3_000_000n,
+      unvestedAmount: 5_000_000n,
+      progress: 50,
+      state: 'claimable'
+    })
+    expect(summarizeVestingSchedules([schedule])).toEqual({
+      promised: 10_000_000n,
+      vested: 5_000_000n,
+      claimable: 3_000_000n,
+      released: 2_000_000n
+    })
+  })
+
+  it('keeps a cancelled V2 schedule at its final released settlement', () => {
+    const [schedule] = buildVestingSchedules([
+      [
+        ['0x0000000000000000000000000000000000000001'],
+        [0n],
+        [
+          {
+            start: 1_700_000_000n,
+            duration: 100_000n,
+            cliff: 0n,
+            totalAmount: 10_000_000n,
+            released: 4_000_000n,
+            active: false
+          }
+        ]
+      ]
+    ])
+
+    expect(schedule).toMatchObject({
+      vestedAmount: 4_000_000n,
+      claimableAmount: 0n,
+      unvestedAmount: 6_000_000n,
+      state: 'cancelled'
+    })
+  })
+
+  it('distinguishes an active schedule with nothing currently claimable', () => {
+    const [schedule] = buildVestingSchedules(
+      [
+        [
+          ['0x0000000000000000000000000000000000000001'],
+          [0n],
+          [
+            {
+              start: 1_700_000_000n,
+              duration: 100_000n,
+              cliff: 0n,
+              totalAmount: 10_000_000n,
+              released: 5_000_000n,
+              active: true
+            }
+          ]
+        ]
+      ],
+      1_700_050_000
+    )
+
+    expect(schedule.state).toBe('accruing')
+    expect(schedule.claimableAmount).toBe(0n)
   })
 })

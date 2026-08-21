@@ -1,6 +1,6 @@
 # Contract Features Index
 
-**Last updated:** 2026-03-16
+**Last updated:** 2026-08-21
 
 ---
 
@@ -16,20 +16,22 @@
 | [Proposals](./proposals/README.md)                   | Board proposal creation and voting                 | 4 / 4   | ✅       | 🚫       |
 | [ExpenseAccount](./expense-account/README.md)        | EIP-712 signed expense budgets for employees       | 6 / 6   | ✅       | 🚫       |
 | [CashRemuneration](./cash-remuneration/README.md)    | EIP-712 signed wage claims with equity minting     | 5 / 5   | ✅       | 🚫       |
-| [Vesting](./vesting/README.md)                       | Linear ERC20 token vesting with cliff periods      | 5 / 5   | ✅       | 🚫       |
+| [Vesting](./vesting/README.md)                       | Linear share grants minted on demand               | 5 / 5   | ✅       | ✅       |
 | [FeeCollector](./fee-collector/README.md)            | Global fee vault with per-type configuration       | 4 / 4   | ✅       | ✅       |
 | [SafeDepositRouter](./safe-deposit-router/README.md) | Deposit tokens, receive SHER equity tokens         | 5 / 5   | ✅       | 🚫       |
 | [AdCampaignManager](./ad-campaign-manager/README.md) | Advertiser-funded campaigns with per-click payouts | 5 / 5   | ✅       | 🚫       |
 | [Voting](./voting/README.md)                         | Combined directive and election voting             | 4 / 4   | ✅       | 🚫       |
 | [Infrastructure](./infrastructure/README.md)         | FactoryBeacon, Beacon, UserBeaconProxy             | 3 / 3   | ✅       | —        |
 
-**Contract: 74 / 74 stories complete — Frontend: 1 / 14 contracts with UI**
+**Contract: 74 / 74 stories complete — Frontend: 2 / 14 contracts with UI**
 
 ---
 
 ## Further Reading
 
 - [Contract Overview](../../contracts/README.md) — function signatures and contract list
-- [Technical Architecture](../../contracts/contracts-technical-architecture.md) — patterns, data flows, upgrade mechanics
+- [Technical Architecture](../../contracts/contracts-technical-architecture.md) — patterns, data
+  flows, upgrade mechanics
 - [Architecture Diagrams](../../contracts/contracts-architecture-diagram.md) — mermaid diagrams
-- [Quick Reference](../../contracts/contracts-quick-reference.md) — function signatures, events, error codes
+- [Quick Reference](../../contracts/contracts-quick-reference.md) — function signatures, events,
+  error codes
