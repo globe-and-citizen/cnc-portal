@@ -44,7 +44,7 @@ result.
 | Per-team vs. global | **Both layers** — team activity is attributed per team, while the shared `FeeCollector` is global. A team-to-CNC usage fee is a cross-entity charge, not an internal move within the team.                                                                                                                                     |
 | Currency            | USD reporting currency. **POL** at its current live price (CoinGecko); **SHER** at the router multiplier — a withdrawal frozen at its own date, a pending accrual floating at the current rate; **USDC/USDT** pegged $1. See [catalogue → Currency & valuation](./money-flow-catalogue.md#currency--valuation-rate-of-record). |
 | Period              | A reporting period (the worked example uses 1–28 March 2026).                                                                                                                                                                                                                                                                  |
-| Basis               | Payroll = **accrual** (`Wage Payable` / `Shares to be issued`); everything else = **cash basis**.                                                                                                                                                                                                                              |
+| Basis               | Payroll = **accrual** (`Wage Payable` / `SHERS To Be Issued` + `Deferred SHER Compensation`); everything else = **cash basis**.                                                                                                                                                                                                                              |
 
 ---
 
@@ -113,7 +113,7 @@ already proxies transfer history via
 > mint) — it must be correlated with `Deposited` (SafeDepositRouter) or `WithdrawToken`
 > (CashRemuneration) to pick the right journal entry, per
 > [catalogue §5.4](./money-flow-catalogue.md). A `Minted` with neither is **Default D** —
-> a direct mint booked **Dr Shares to be issued · Cr Investor Equity\*\* at the SHER rate.
+> a direct mint booked **Dr SHERS To Be Issued · Cr Investor Equity** at the SHER rate.
 
 ### 3.2 Portal database (accrual + classification context)
 
@@ -146,11 +146,11 @@ Each available source maps to a journal entry (catalogue §5) and thus to a stat
 | Bank `Deposited` / `TokenDeposited` from a client                | UC-BANK-02 | Dr Cash — Bank · Cr Service Revenue                                                                    | IS: Service Revenue; BS: Cash ↑                                         |
 | SafeDepositRouter `Deposited` + InvestorV1 `Minted`              | UC-SDR-01  | Dr Cash — Safe · Cr Investor Equity                                                                    | BS: Cash ↑, Investor Equity ↑                                           |
 | Bank `Transfer` / `TokenTransfer` (fund payroll/expense)         | UC-BANK-03 | Dr Cash — Payroll/Expense · Cr Cash — Bank                                                             | BS: internal team cash move (no IS impact)                              |
-| WeeklyClaim signed (portal)                                      | UC-CASH-02 | Dr Payroll Expense · Cr Wage Payable · Cr Shares to be issued                                          | IS: Payroll Expense; BS: liabilities ↑                                  |
-| CashRemuneration `Withdraw` / `WithdrawToken` (+ `Minted`)       | UC-CASH-03 | Dr Wage Payable · Cr Cash — Payroll · Dr Shares to be issued · Cr Investor Equity                      | BS: liability settled, Cash ↓, Investor Equity ↑                        |
+| WeeklyClaim signed (portal)                                      | UC-CASH-02 | Dr Payroll Expense · Cr Wage Payable (cash) · Dr Deferred SHER Compensation · Cr SHERS To Be Issued   | IS: Payroll Expense (cash only); BS: equity ↑↓ (contra-equity offsets)  |
+| CashRemuneration `Withdraw` / `WithdrawToken` (+ `Minted`)       | UC-CASH-03 | Dr Wage Payable · Cr Cash — Payroll · Dr SHERS To Be Issued · Cr Investor Equity                      | BS: liability settled, Cash ↓, Investor Equity ↑                        |
 | ExpenseAccount `Transfer` / `TokenTransfer` (+ Expense record)   | UC-EXP-01  | Dr Operating Expense · Cr Cash — Expense                                                               | IS: Operating Expense; BS: Cash ↓                                       |
 | Bank `DividendDistributionTriggered` / InvestorV1 `DividendPaid` | UC-INV-01  | Dr Dividend Expense · Cr Cash — Bank                                                                   | IS: Dividend Expense; BS: Cash ↓                                        |
-| InvestorV1 `Minted` alone (direct mint)                          | Default D  | Dr Shares to be issued · Cr Investor Equity (at the SHER rate, frozen at mint date)                    | BS: Investor Equity ↑ (unbacked mint drives Shares to be issued contra) |
+| InvestorV1 `Minted` alone (direct mint)                          | Default D  | Dr SHERS To Be Issued · Cr Investor Equity (at the SHER rate, frozen at mint date)                    | BS: Investor Equity ↑ (unbacked mint drives SHERS To Be Issued contra)  |
 | Bank transfer + FeeCollector `FeePaid` (team usage fee)          | UC-FEE-01  | Team: Dr CNC Usage Fee Expense · Cr Cash — Bank; CNC: Dr Cash — FeeCollector · Cr Protocol Fee Revenue | Team IS: expense; CNC IS: protocol-fee revenue; both BS: cash movement  |
 
 > **Trading lines** (`Trading account`, `Trading Gain`, `Trading Loss`, UC-TRD-) are in the
