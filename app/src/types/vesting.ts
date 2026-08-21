@@ -44,15 +44,14 @@ export interface VestingCreation {
     name: string
     address: string
   }
-  totalAmount: number
-  startDate: Date
-  duration: {
-    years: number
-    months: number
-    days: number
-  }
-  durationInDays: number
-  cliff: number
+  totalAmount: string
+  tokenSymbol: string
+  startAt: Date
+  endAt: Date
+  cliffEndAt: Date
+  durationMinutes: number
+  cliffMinutes: number
+  noCliff: boolean
 }
 
 // Contract reads return three parallel arrays: members, their schedule indices,
