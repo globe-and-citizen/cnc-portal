@@ -18,6 +18,10 @@ function progress(campaign: AdvertisingCampaign) {
 function eventLabel(eventName: ExtendedEvent['eventName']) {
   return eventName.replace(/([A-Z])/g, ' $1').trim()
 }
+
+function handleOpenChange(open: boolean) {
+  if (!open) emit('close')
+}
 </script>
 
 <template>
@@ -26,7 +30,7 @@ function eventLabel(eventName: ExtendedEvent['eventName']) {
     title="Campaign details"
     description="Budget, advertiser and on-chain activity for this campaign."
     :ui="{ content: 'sm:max-w-xl' }"
-    @update:open="(open) => !open && emit('close')"
+    @update:open="handleOpenChange"
   >
     <template #body>
       <div v-if="campaign" class="space-y-6">
