@@ -6,7 +6,9 @@
 
 ## Problem
 
-After creating new files and restructuring documentation, we need to verify that all cross-references between documentation files work correctly. Broken links create a poor user experience and make documentation harder to navigate.
+After creating new files and restructuring documentation, we need to verify that all
+cross-references between documentation files work correctly. Broken links create a poor user
+experience and make documentation harder to navigate.
 
 ## Solution
 
@@ -39,7 +41,7 @@ Please perform a comprehensive link verification:
    - /docs/platform/performance.md
    - /docs/platform/deployment.md (newly created)
    - /docs/platform/development-standards.md (newly created)
-   - /docs/features/stats/functional-specification.md
+   - /docs/features/backoffice/statistics/functional-specification.md
 
 4. **Fix broken links**:
    - Update paths that are incorrect
