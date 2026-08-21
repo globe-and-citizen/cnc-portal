@@ -29,7 +29,7 @@ describe('mapCashRemunerationEvents', () => {
     })
   })
 
-  it('books a SHER WithdrawToken as the equity leg (Shares to be issued → Investor Equity)', () => {
+  it('books a SHER WithdrawToken as the equity leg (SHERS To Be Issued → Investor Equity)', () => {
     const [entry] = mapCashRemunerationEvents(
       {
         withdrawTokens: [
@@ -47,7 +47,7 @@ describe('mapCashRemunerationEvents', () => {
     )
     expect(entry).toMatchObject({
       useCase: 'UC-CASH-03',
-      debit: 'Shares to be issued',
+      debit: 'SHERS To Be Issued',
       credit: 'Investor Equity',
       token: 'sher',
       shares: 10,
@@ -127,7 +127,7 @@ describe('mapCashRemunerationEvents', () => {
     )
     expect(entries).toHaveLength(1)
     expect(entries[0]).toMatchObject({
-      debit: 'Shares to be issued',
+      debit: 'SHERS To Be Issued',
       credit: 'Investor Equity',
       token: 'sher',
       shares: 25

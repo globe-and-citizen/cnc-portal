@@ -249,7 +249,7 @@ describe('assembleCncAccounting', () => {
     expect(a.balanceSheet.balanced).toBe(true)
   })
 
-  it('issues an unbacked direct mint into equity (Dr Shares to be issued · Cr Investor Equity)', () => {
+  it('issues an unbacked direct mint into equity (Dr SHERS To Be Issued · Cr Investor Equity)', () => {
     const a = assembleCncAccounting({
       ...BASE,
       // No backing deposit/withdraw → the mint is a direct share issuance.
@@ -271,11 +271,11 @@ describe('assembleCncAccounting', () => {
       }
     })
 
-    // A real posting now (not a value-0 memo): it clears Shares to be issued into
+    // A real posting now (not a value-0 memo): it clears SHERS To Be Issued into
     // equity at the SHER rate of record (60 SHER × $1.00 = $60) — Dr/Cr filled.
     const issued = a.entries.find((e) => e.useCase === 'DEFAULT-D')
     expect(issued).toMatchObject({
-      debit: 'Shares to be issued',
+      debit: 'SHERS To Be Issued',
       credit: 'Investor Equity',
       token: 'sher',
       amountUsd: 60,

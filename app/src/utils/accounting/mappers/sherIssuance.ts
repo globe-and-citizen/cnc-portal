@@ -4,20 +4,20 @@
  *
  * The SHER lifecycle is two postings:
  *
- *   accrual   (UC-CASH-02)              Cr Shares to be issued   · shares *earned*
- *   issuance  (UC-CASH-03 / DEFAULT-D)  Dr Shares to be issued · Cr Investor Equity
+ *   accrual   (UC-CASH-02)              Cr SHERS To Be Issued   · shares *earned*
+ *   issuance  (UC-CASH-03 / DEFAULT-D)  Dr SHERS To Be Issued · Cr Investor Equity
  *                                       · shares *taken* (withdrawal or direct mint)
  *
  * Every leg is first stamped at the multiplier of its **own date** (see `sherRate.ts`),
  * so an **issuance is already frozen at its withdraw/mint-date value** — the realization
  * price, which must never move again. This pass only re-values the **accrual** legs so
- * `Shares to be issued` behaves correctly:
+ * `SHERS To Be Issued` behaves correctly:
  *
  * - the accrual quantity **matched** by an issuance (FIFO per member, by SHER quantity)
  *   is re-valued to that issuance's date rate — equal to the issuance leg, so the two
- *   cancel `Shares to be issued` to zero and Investor Equity keeps the realization value;
+ *   cancel `SHERS To Be Issued` to zero and Investor Equity keeps the realization value;
  * - the accrual quantity **still pending** (never withdrawn) is re-valued to the
- *   **current** multiplier, so open `Shares to be issued` floats at today's rate until
+ *   **current** multiplier, so open `SHERS To Be Issued` floats at today's rate until
  *   it is taken.
  *
  * A direct mint (DEFAULT-D) only settles accruals dated **before** it (shares granted
@@ -32,7 +32,7 @@ import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { round6 } from '@/utils/accounting/toUsd'
 import { getTokenDecimals } from '@/utils/constantUtil'
 
-const SHARES_TO_BE_ISSUED = 'Shares to be issued'
+const SHERS_TO_BE_ISSUED = 'SHERS To Be Issued'
 const INVESTOR_EQUITY = 'Investor Equity'
 const SHER_DECIMALS = getTokenDecimals('sher')
 
@@ -59,14 +59,14 @@ function isSherIssuance(entry: LedgerEntry): boolean {
   return (
     (entry.useCase === 'UC-CASH-03' || entry.useCase === 'DEFAULT-D') &&
     entry.token === 'sher' &&
-    entry.debit === SHARES_TO_BE_ISSUED &&
+    entry.debit === SHERS_TO_BE_ISSUED &&
     entry.credit === INVESTOR_EQUITY
   )
 }
 
 function isSherAccrual(entry: LedgerEntry): boolean {
   return (
-    entry.useCase === 'UC-CASH-02' && entry.token === 'sher' && entry.credit === SHARES_TO_BE_ISSUED
+    entry.useCase === 'UC-CASH-02' && entry.token === 'sher' && entry.credit === SHERS_TO_BE_ISSUED
   )
 }
 
@@ -103,7 +103,7 @@ function consumeAccruals(issuance: LedgerEntry, queue: AccrualState[] | undefine
   if (remaining <= 0 || !queue) return
 
   // The issuance leg is already stamped at its withdraw/mint-date rate — reuse it so
-  // the matched accrual cancels the issuance exactly in `Shares to be issued`.
+  // the matched accrual cancels the issuance exactly in `SHERS To Be Issued`.
   const withdrawRate = issuance.rate ?? 0
   // A direct mint only settles work accrued before it; a withdrawal is unrestricted.
   const cutoff = issuance.useCase === 'DEFAULT-D' ? issuance.timestamp : Infinity

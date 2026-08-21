@@ -12,12 +12,13 @@ export { presentSummaryCards, type SummaryCard } from './summaryCards'
 /** The breakdown-line fields the display helpers read (subset of {@link CashCurrencyLine}). */
 type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount'>
 
-export type TrialNature = 'Asset' | 'Equity' | 'Income' | 'Liability' | 'Expense'
+export type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
 /** Soft badge classes per trial-balance account nature. */
 export const NATURE_BADGE: Record<TrialNature, string> = {
   Asset: 'bg-info/10 text-info',
   Equity: 'bg-primary/10 text-primary',
+  'Contra-equity': 'bg-primary/10 text-primary',
   Income: 'bg-success/10 text-success',
   Liability: 'bg-muted text-muted',
   Expense: 'bg-error/10 text-error'
@@ -95,6 +96,7 @@ function natureOf(account: AccountName): TrialNature {
     ASSET: 'Asset',
     LIABILITY: 'Liability',
     EQUITY: 'Equity',
+    CONTRA_EQUITY: 'Contra-equity',
     INCOME: 'Income',
     EXPENSE: 'Expense'
   }
@@ -237,6 +239,11 @@ export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | nu
       value: money(bs.investorEquity),
       account: 'Investor Equity'
     },
+    ...bs.contraEquity.map((l) => ({
+      label: l.account,
+      value: money(-l.amount),
+      account: l.account
+    })),
     {
       label: 'Retained earnings (net profit)',
       value: money(bs.retainedEarnings),
@@ -260,7 +267,10 @@ export function presentTrial(ledger: GeneralLedger): {
   balanced: boolean
 } {
   const rows: TrialRow[] = ledger.trialBalance.map((r) => {
-    const debitSide = r.accountClass === 'ASSET' || r.accountClass === 'EXPENSE'
+    const debitSide =
+      r.accountClass === 'ASSET' ||
+      r.accountClass === 'EXPENSE' ||
+      r.accountClass === 'CONTRA_EQUITY'
     return {
       account: r.account,
       nature: natureOf(r.account),
