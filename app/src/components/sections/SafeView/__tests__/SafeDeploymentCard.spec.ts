@@ -34,9 +34,9 @@ vi.mock('@/queries/contract.queries', () => ({
 
 const SAFE_ADDRESS = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
-function mountCard() {
+function mountCard(props: { teamId?: number; teamOwnerAddress?: string } = {}) {
   return mount(SafeDeploymentCard, {
-    props: { teamId: Number(mockTeamData.id) }
+    props: { teamId: Number(mockTeamData.id), ...props }
   })
 }
 
@@ -68,6 +68,34 @@ describe('SafeDeploymentCard', () => {
     expect(button.attributes('disabled')).toBeDefined()
   })
 
+  it('uses the supplied team owner when deployed from the team creation wizard', async () => {
+    mockUserStore.address = mockTeamData.ownerAddress
+    mockTeamStore.currentTeam = {
+      ...mockTeamData,
+      ownerAddress: '0x0000000000000000000000000000000000000099'
+    }
+
+    const wrapper = mountCard({ teamOwnerAddress: mockTeamData.ownerAddress })
+
+    expect(wrapper.find('[data-test="deploy-safe-button"]').attributes('disabled')).toBeUndefined()
+
+    await wrapper.find('[data-test="deploy-safe-button"]').trigger('click')
+
+    expect(mockDeploySafeMutation.mutate).toHaveBeenCalledWith(
+      { owners: [mockTeamData.ownerAddress], threshold: 1 },
+      expect.any(Object)
+    )
+  })
+
+  it('shows the full owner address in the deployment details', () => {
+    mockUserStore.address = mockTeamData.ownerAddress
+    mockTeamStore.currentTeam = mockTeamData
+
+    const wrapper = mountCard()
+
+    expect(wrapper.text()).toContain(mockTeamData.ownerAddress)
+  })
+
   it('deploys and registers the Safe, then emits safeDeployed on success', async () => {
     mockUserStore.address = mockTeamData.ownerAddress
     mockTeamStore.currentTeam = mockTeamData
@@ -97,7 +125,7 @@ describe('SafeDeploymentCard', () => {
     expect(wrapper.emitted('safeDeployed')).toEqual([[SAFE_ADDRESS]])
   })
 
-  it('warns but still reports success when the Safe deploys but registration fails', async () => {
+  it('keeps the Safe registration pending and allows retrying when registration fails', async () => {
     mockUserStore.address = mockTeamData.ownerAddress
     mockTeamStore.currentTeam = mockTeamData
     mockCreateContractMutation.mutate.mockImplementation(
@@ -111,16 +139,21 @@ describe('SafeDeploymentCard', () => {
 
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'Warning',
+        title: 'Registration pending',
         color: 'warning',
         description: expect.stringContaining('registration exploded')
       })
     )
-    // Still surfaces the deploy as successful — the Safe is live on-chain even
-    // though it isn't tracked in the backend yet.
-    expect(mockToast.add).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Success', color: 'success' })
+    expect(wrapper.find('[data-test="safe-registration-pending"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="retry-safe-registration-button"]').exists()).toBe(true)
+    expect(wrapper.emitted('safeDeployed')).toBeUndefined()
+
+    mockCreateContractMutation.mutate.mockImplementation(
+      (_vars: unknown, opts?: { onSuccess?: () => void | Promise<void> }) => opts?.onSuccess?.()
     )
+    await wrapper.find('[data-test="retry-safe-registration-button"]').trigger('click')
+    await flushPromises()
+
     expect(wrapper.emitted('safeDeployed')).toEqual([[SAFE_ADDRESS]])
   })
 

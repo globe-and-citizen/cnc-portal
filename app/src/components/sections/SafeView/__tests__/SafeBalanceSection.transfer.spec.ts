@@ -136,7 +136,10 @@ describe('SafeBalanceSection', () => {
       MOCK_DATA.total as typeof mockUseContractBalance.total.value
 
     mockuseGetSafeInfoQuery.mockReturnValue({
-      data: mockSafeInfo
+      data: mockSafeInfo,
+      isLoading: ref(false),
+      error: ref(null),
+      refetch: vi.fn()
     })
 
     mockUserStore.address = MOCK_DATA.safeInfo.owners[0]!

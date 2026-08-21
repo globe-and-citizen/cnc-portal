@@ -162,7 +162,7 @@ describe('SafeIncomingTransactions', () => {
         error: ref(null)
       })
       wrapper = createWrapper()
-      const tokenSymbol = wrapper.find('.text-xs.text-gray-500')
+      const tokenSymbol = wrapper.find('[data-test="safe-deposit-token-symbol"]')
       expect(tokenSymbol.exists()).toBe(true)
       expect(tokenSymbol.text()).toBe('USDC')
     })
@@ -195,7 +195,7 @@ describe('SafeIncomingTransactions', () => {
         error: ref(null)
       })
       wrapper = createWrapper()
-      expect(wrapper.find('.text-xs.text-gray-500').exists()).toBe(false)
+      expect(wrapper.find('[data-test="safe-deposit-token-symbol"]').exists()).toBe(false)
     })
   })
 
