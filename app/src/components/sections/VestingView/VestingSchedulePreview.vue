@@ -10,23 +10,35 @@
     </div>
 
     <div v-else>
-      <div class="relative grid gap-4 sm:grid-cols-3">
-        <div
-          class="bg-primary/25 absolute top-3 right-[16%] left-[16%] hidden h-0.5 sm:block"
-          aria-hidden="true"
-        />
-
-        <div v-for="boundary in boundaries" :key="boundary.label" class="relative text-center">
+      <ul data-test="schedule-timeline">
+        <li
+          v-for="(boundary, index) in boundaries"
+          :key="boundary.label"
+          class="relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-3 pb-5 last:pb-0"
+          data-test="schedule-boundary"
+        >
           <div
-            class="bg-primary ring-muted relative z-10 mx-auto mb-2 size-6 rounded-full ring-4"
+            v-if="index < boundaries.length - 1"
+            class="bg-primary/25 absolute top-3 -bottom-3 left-3 w-0.5 -translate-x-1/2"
             aria-hidden="true"
           />
-          <p class="text-muted text-xs font-medium tracking-wide uppercase">{{ boundary.label }}</p>
-          <p class="mt-1 text-sm font-semibold" :data-test="boundary.testId">
-            {{ boundary.value }}
-          </p>
-        </div>
-      </div>
+          <div
+            class="bg-primary ring-muted relative z-10 size-6 rounded-full ring-4"
+            aria-hidden="true"
+          />
+          <div class="min-w-0 pt-0.5 sm:flex sm:items-baseline sm:justify-between sm:gap-4">
+            <p class="text-muted text-xs font-medium tracking-wide uppercase">
+              {{ boundary.label }}
+            </p>
+            <p
+              class="mt-1 text-sm font-semibold whitespace-nowrap sm:mt-0 sm:text-right"
+              :data-test="boundary.testId"
+            >
+              {{ boundary.value }}
+            </p>
+          </div>
+        </li>
+      </ul>
 
       <UAlert
         class="mt-5"

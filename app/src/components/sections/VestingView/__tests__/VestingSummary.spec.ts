@@ -36,10 +36,19 @@ describe('VestingSummary.vue', () => {
     expect(wrapper.find('[data-test="summary-cliff"]').text()).toContain('1 year')
   })
 
-  it('shows every minute-precise boundary in the review timeline', () => {
-    expect(wrapper.find('[data-test="preview-start"]').text()).toContain('09:37')
-    expect(wrapper.find('[data-test="preview-cliff"]').text()).toContain('09:37')
-    expect(wrapper.find('[data-test="preview-end"]').text()).toContain('09:37')
+  it('shows every minute-precise boundary as one row in the vertical timeline', () => {
+    const timeline = wrapper.find('[data-test="schedule-timeline"]')
+    const rows = wrapper.findAll('[data-test="schedule-boundary"]')
+
+    expect(timeline.element.tagName).toBe('UL')
+    expect(rows).toHaveLength(3)
+    expect(rows.every((row) => row.element.tagName === 'LI')).toBe(true)
+
+    for (const testId of ['preview-start', 'preview-cliff', 'preview-end']) {
+      const boundary = wrapper.find(`[data-test="${testId}"]`)
+      expect(boundary.text()).toContain('09:37')
+      expect(boundary.find('br').exists()).toBe(false)
+    }
   })
 
   it('emits navigation actions and disables them while creating', async () => {
