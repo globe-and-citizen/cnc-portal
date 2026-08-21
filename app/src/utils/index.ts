@@ -12,6 +12,7 @@ export * from './contractManagementUtil'
 export * from './contractPresentation'
 export * from './contractDeploymentUtil'
 export * from './walletUtil'
+export * from './vestingScheduleUtil'
 export * from './safe'
 export * from './fileUtil'
 // SafeDepositRouter utilities
