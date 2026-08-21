@@ -8,7 +8,7 @@
       @click="addVestingModal = { mount: true, show: true }"
       data-test="createAddVesting"
       leading-icon="heroicons-outline:plus-circle"
-      label="add vesting"
+      label="Create schedule"
     />
 
     <UModal
@@ -20,7 +20,8 @@
         }
       }"
       title="Add Vesting Schedule"
-      description="Create a new vesting schedule for your team members."
+      description="Create a minute-precise share vesting schedule for a team member."
+      :ui="{ content: 'sm:max-w-5xl' }"
     >
       <template #body>
         <CreateVesting
