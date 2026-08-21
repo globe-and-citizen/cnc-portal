@@ -1,132 +1,87 @@
 # Contract: Vesting
 
-**Epic Goal:** Provide linear ERC20 token vesting schedules with cliff periods, organized into
-teams. **Contract File:** `contracts/Vesting.sol` **Upgradeable:** Yes (Beacon) **Last updated:**
-2026-03-16
+**Purpose:** Record per-team share grants, accrue them linearly, and mint only the vested shares.
+**Contract version:** `2.0.0` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-08-21
 
----
+The product acceptance criteria live in the [Vesting user stories](../../vesting/README.md). This
+document describes the current contract behaviour that supports them.
 
-## Status Overview
+## Model
 
-| User Story  | Title                                                        | Contract | Frontend | Effort |
-| ----------- | ------------------------------------------------------------ | :------: | :------: | ------ |
-| US-VEST-001 | Create a vesting team with a token                           |    ✅    |    🚫    | S      |
-| US-VEST-002 | Add a linear vesting schedule with cliff for a member        |    ✅    |    🚫    | M      |
-| US-VEST-003 | Release vested tokens to the member                          |    ✅    |    🚫    | M      |
-| US-VEST-004 | Stop vesting early (releasable to member, unvested to owner) |    ✅    |    🚫    | M      |
-| US-VEST-005 | View vested and releasable amounts                           |    ✅    |    🚫    | S      |
+- The Officer deploys one Vesting proxy per team and transfers ownership to the team owner.
+- A schedule is an agreement; creation neither transfers nor locks tokens.
+- The current Investor share contract is resolved through the Officer when shares must be minted.
+- One beneficiary may have several schedules. Each schedule keeps its array index permanently.
+- Stopping a schedule sets `active` to `false`; it does not delete or move the schedule.
 
-**Contract: 5 / 5 — Frontend: 0 / 5**
+```mermaid
+stateDiagram-v2
+    [*] --> Active: Owner adds schedule
+    Active --> Active: Beneficiary releases vested shares
+    Active --> FullyReleased: Full grant released
+    Active --> Stopped: Owner stops schedule
+    FullyReleased --> [*]
+    Stopped --> [*]
+```
 
----
+## Write Behaviour
 
-## Implementation Notes
+| Function                                             | Caller      | Observable result                                      |
+| ---------------------------------------------------- | ----------- | ------------------------------------------------------ |
+| `addVesting(member, start, duration, cliff, amount)` | Owner       | Appends an active schedule; mints nothing              |
+| `release(index)`                                     | Beneficiary | Mints the selected schedule's current releasable share |
+| `stopVesting(member, index)`                         | Owner       | Mints the releasable share and stops future accrual    |
+| `pause()` / `unpause()`                              | Owner       | Blocks or restores schedule writes                     |
 
-- **Contract:** `contracts/Vesting.sol`
-- **Key functions:** `createTeam`, `addVesting`, `release`, `stopVesting`, `vestedAmount`,
-  `releasable`, `getTeamVestingsWithMembers`, `getTeamAllArchivedVestingsFlat`
-- **Access roles:** `onlyOwner` for `createTeam`, `addVesting`, `stopVesting`; `release` callable by
-  the vesting member themselves
-- **Pattern:** Team-based — each team has an owner and a token; cliff prevents any release until
-  elapsed; linear vesting after cliff; stopped vestings archived per member/team
-- **Protections:** `PausableUpgradeable`, `ReentrancyGuard`
+Every write is blocked while paused. `release` and `stopVesting` are non-reentrant, update schedule
+state before minting, and target one schedule by index.
 
----
+## Accrual Rules
 
-## US-VEST-001: Create a Vesting Team with a Token
+For a schedule with allocation `A`, start `S`, cliff duration `C`, total duration `D`, and current
+timestamp `T`:
 
-> **As a** team owner, **I want to** create a vesting group (team) associated with a specific ERC20
-> token, **so that** I can organize multiple members' vesting schedules under one umbrella.
+```text
+T < S + C        => vested = 0
+T >= S + D       => vested = A
+otherwise        => vested = A * (T - S) / D
+releasable       => vested - released
+```
 
-**Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
+The cliff blocks release but does not shift the linear accrual origin. At the cliff boundary, the
+amount accrued since the start becomes releasable.
 
-### Acceptance Criteria
+Stopping before the cliff mints nothing. Stopping after the cliff mints the current releasable
+amount and drops the unvested remainder.
 
-- [x] `createTeam(teamId, teamOwner, tokenAddress)` registers a new vesting team
-- [x] Restricted to the Vesting contract owner (global admin)
-- [x] `teamId` must be unique; reverts if already exists
-- [x] `tokenAddress` must be a non-zero address
-- [x] `teamOwner` becomes the admin for that team's vesting schedules
+## Read Behaviour
 
----
+- `vestedAmount(member, index)` returns the current vested amount for an active schedule.
+- `releasable(member, index)` returns vested shares not already minted.
+- `getVestingsWithMembers()` returns parallel member, index, and schedule arrays for active
+  schedules.
+- `getAllArchivedVestingsFlat()` returns the same shape for stopped schedules.
+- `getVestings(member)` and `getVestingCount(member)` expose the append-only schedule history.
+- `version()` returns `2.0.0`.
 
-## US-VEST-002: Add a Linear Vesting Schedule with Cliff for a Member
+For a stopped schedule, `vestedAmount` returns zero because accrual has ended. Its stored `released`
+amount is the final settlement, and `totalAmount - released` is the cancelled remainder.
 
-> **As a** vesting team owner, **I want to** assign a linear vesting schedule with a cliff period to
-> a team member, **so that** they earn tokens proportionally over time after a lock-up period.
+## Access and Minting Preconditions
 
-**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-VEST-001
+- Only the owner can create, stop, pause, or unpause schedules.
+- Only the beneficiary can call `release` for their schedule index.
+- The beneficiary must be non-zero and the cliff cannot exceed the duration.
+- Release reverts when nothing is currently releasable.
+- The Officer must resolve the current Investor contract.
+- Vesting must hold the Investor minter role before a settlement can mint shares.
 
-### Acceptance Criteria
+## Implementation Evidence
 
-- [x] `addVesting(teamId, member, start, duration, cliff, totalAmount, token)` creates a new vesting
-      schedule
-- [x] Restricted to the team owner for that `teamId`
-- [x] `cliff` ≤ `duration`; reverts otherwise
-- [x] `start` can be in the past (supports retro-active vesting for existing agreements)
-- [x] No tokens releasable before `start + cliff` elapses
-- [x] After cliff: tokens vest linearly;
-      `vestedAmount = totalAmount × (elapsed - cliff) / (duration - cliff)`
-- [x] Team owner must pre-fund the Vesting contract with `totalAmount` of the token before adding
-      the schedule
+- [Vesting contract](../../../../contract/contracts/Vesting.sol)
+- [Vesting interface](../../../../contract/contracts/interfaces/IVesting.sol)
+- [Contract behaviour tests](../../../../contract/test/Vesting.spec.ts)
+- [Frontend user stories](../../vesting/README.md)
+- [Frontend schedule model](../../../../app/src/utils/vestingScheduleUtil.ts)
 
----
-
-## US-VEST-003: Release Vested Tokens to the Member
-
-> **As a** vesting member, **I want to** claim my vested (and not yet released) tokens, **so that**
-> I receive the tokens I have earned up to now.
-
-**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-VEST-002
-
-### Acceptance Criteria
-
-- [x] `release(teamId)` transfers the releasable amount to `msg.sender`
-- [x] `releasable = vestedAmount - alreadyReleased`
-- [x] Reverts if `releasable == 0`
-- [x] Reverts if cliff period has not yet elapsed
-- [x] Reverts if contract is paused
-- [x] ReentrancyGuard protects the transfer
-- [x] `alreadyReleased` incremented after each successful release
-
----
-
-## US-VEST-004: Stop Vesting Early (Releasable to Member, Unvested to Owner)
-
-> **As a** vesting team owner, **I want to** terminate a member's vesting schedule before it
-> completes, **so that** the member receives tokens vested so far and unvested tokens are returned
-> to the owner.
-
-**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-VEST-002
-
-### Acceptance Criteria
-
-- [x] `stopVesting(member, teamId)` restricted to the team owner
-- [x] Computes `releasable` at stop time and transfers it to `member`
-- [x] Remaining unvested tokens transferred back to the team owner
-- [x] Vesting schedule archived (moved to stopped history) — no further releases possible
-- [x] `getTeamAllArchivedVestingsFlat(teamId)` includes the stopped schedule with stop timestamp
-- [x] Reverts if no active vesting exists for `member` in `teamId`
-
----
-
-## US-VEST-005: View Vested and Releasable Amounts
-
-> **As a** team member, **I want to** check how much I have vested and how much I can release right
-> now, **so that** I can decide when to call `release`.
-
-**Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** US-VEST-002
-
-### Acceptance Criteria
-
-- [x] `vestedAmount(member, teamId)` returns total tokens vested to date (including already
-      released)
-- [x] `releasable(member, teamId)` returns tokens available for immediate release
-      (`vestedAmount - released`)
-- [x] Both functions return `0` if cliff has not elapsed
-- [x] Both are `view` — no gas cost when called off-chain
-- [x] `getTeamVestingsWithMembers(teamId)` returns full vesting data for all members in a team
-
----
-
-_[← Back to index](../README.md)_
+_[← Back to contract features](../README.md)_
