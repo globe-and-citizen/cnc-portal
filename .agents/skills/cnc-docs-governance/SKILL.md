@@ -18,6 +18,11 @@ When editing feature documentation, read and follow the
 [Feature Documentation Guide](../../../docs/platform/feature-specification-guide.md). It owns the
 canonical feature structure, story-status semantics, and human review contract.
 
+When editing architectural capability documentation, read and follow the
+[Implementation Documentation Guide](../../../docs/platform/implementation-documentation-guide.md).
+It owns the product-versus-architecture classification, capability structure, and current-behaviour
+review contract.
+
 Do not copy detailed guidance into a skill or `AGENTS.md`; point to its owner. Remove obsolete
 backlinks when ownership moves.
 

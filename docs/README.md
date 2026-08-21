@@ -22,16 +22,17 @@ state before relying on a status claim.
 
 ## Documentation Ownership
 
-| Question                                         | Source of truth                                      |
-| ------------------------------------------------ | ---------------------------------------------------- |
-| Why does CNC Portal exist?                       | [Project Charter](./01_PROJECT_CHARTER.md)           |
-| Which product capabilities can users reach?      | [Product Feature Inventory](./features/README.md)    |
-| What should a user be able to do in one feature? | `docs/features/<feature>/README.md`                  |
-| Has that behaviour passed human review?          | Feature acceptance criteria and validation statement |
-| How does a smart contract behave?                | [Contract Features](./features/contracts/README.md)  |
-| How should platform code be written and tested?  | Platform and repository implementation guides        |
-| Where is the executable evidence?                | Current code and tests                               |
-| Why or when was a change delivered?              | GitHub issues, pull requests, ADRs, and Git          |
+| Question                                         | Source of truth                                            |
+| ------------------------------------------------ | ---------------------------------------------------------- |
+| Why does CNC Portal exist?                       | [Project Charter](./01_PROJECT_CHARTER.md)                 |
+| Which product capabilities can users reach?      | [Product Feature Inventory](./features/README.md)          |
+| What should a user be able to do in one feature? | `docs/features/<feature>/README.md`                        |
+| Has that behaviour passed human review?          | Feature acceptance criteria and validation statement       |
+| How does a shared runtime capability work?       | [Implementation Documentation](./implementation/README.md) |
+| How does a smart contract behave?                | [Contract Features](./features/contracts/README.md)        |
+| How should platform code be written and tested?  | Platform and repository implementation guides              |
+| Where is the executable evidence?                | Current code and tests                                     |
+| Why or when was a change delivered?              | GitHub issues, pull requests, ADRs, and Git                |
 
 ## Feature Documentation
 
@@ -94,6 +95,7 @@ corresponding portal journey exists or has passed human review.
 ## Platform Guides
 
 - [Feature Documentation Guide](./platform/feature-specification-guide.md)
+- [Implementation Documentation Guide](./platform/implementation-documentation-guide.md)
 - [Architecture Overview](./platform/architecture.md)
 - [Development Standards](./platform/development-standards.md)
 - [Testing Strategy](./platform/testing-strategy.md)
@@ -103,6 +105,17 @@ corresponding portal journey exists or has passed human review.
 
 Repository-specific coding guides live under `.github/copilot-instructions/`. Start with the
 repository root `AGENTS.md` when performing implementation work.
+
+## Implementation Documentation
+
+- [Architectural Capability Inventory](./implementation/README.md) — verified shared runtime
+  behaviour and its consumers.
+- [Implementation Documentation Guide](./platform/implementation-documentation-guide.md) —
+  classification, ownership, structure, and review rules.
+
+Product journeys and architectural capabilities are split when a subject has both facets. Feature
+READMEs own the user outcome; implementation READMEs own components, invariants, failure paths, and
+runtime evidence.
 
 ## Reading by Role
 

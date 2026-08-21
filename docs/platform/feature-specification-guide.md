@@ -31,6 +31,10 @@ access-denied pages, unused template screens, and orphaned routes that no curren
 Also exclude technical mechanisms such as contracts, APIs, RBAC, seeding, indexers, deployment, and
 server wake-up unless they are themselves exposed as an observable product goal.
 
+When a subject also has shared runtime behaviour, split the documentation. Keep the user journey in
+the feature README and place the architectural capability under `docs/implementation/` according to
+the [Implementation Documentation Guide](./implementation-documentation-guide.md).
+
 The [Product Feature Inventory](../features/README.md) is the canonical list. The client app owns
 top-level capabilities. All administrator-dashboard capabilities are grouped under
 `docs/features/backoffice/`, even when a dashboard capability has several routes or focused
@@ -44,6 +48,7 @@ documents.
 | Product intent, journey, and acceptance criteria | `docs/features/<feature>/README.md`            |
 | Backoffice capability journey                    | `docs/features/backoffice/<feature>/README.md` |
 | Complex feature-specific rules                   | A focused file beside the feature README       |
+| Shared architectural capability                  | `docs/implementation/<capability>/README.md`   |
 | Current smart-contract behaviour                 | `docs/features/contracts/<contract>/README.md` |
 | Platform-wide engineering standards              | `docs/platform/` or `.github/` guides          |
 | Executable behaviour and regression proof        | Code and tests                                 |
@@ -68,6 +73,8 @@ Product and contract documentation remain separate even when they share a name. 
 - Add focused sibling documents only when a rule, API, or operational flow would make the README
   difficult to review.
 - Link focused documents from the relevant story; do not repeat their detailed content.
+- Link shared architectural behaviour to its implementation owner; do not copy components,
+  invariants, or runtime failure paths into the product journey.
 
 ## Human Review Contract
 
@@ -290,6 +297,7 @@ This rule applies to every committed documentation file, not only feature README
 - [ ] Known gaps are visible and not hidden under `✅ Done`.
 - [ ] Evidence links resolve to current code or tests.
 - [ ] Related feature and contract documentation is linked without duplication.
+- [ ] Shared architectural behaviour is linked to `docs/implementation/` rather than duplicated.
 - [ ] Every diagram is purposeful and implemented in Mermaid.
 - [ ] Root indexes contain links, not copied user stories.
 
