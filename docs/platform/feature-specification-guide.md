@@ -15,11 +15,34 @@ current human-validation state.
 The feature README is not an implementation manual or a delivery history. Code and tests are
 executable evidence, while issues, pull requests, and Git history preserve active work and history.
 
+## Feature Eligibility and Grouping
+
+A documented product feature is an observable capability that a user can reach through a current
+product journey. Establish the inventory from runtime evidence in this order:
+
+1. inspect primary navigation and authentication entry points;
+2. follow their linked routes and meaningful user actions;
+3. apply the current access guards and role conditions;
+4. group routes that serve the same user goal into one capability;
+5. separate product availability from documentation and human-validation status.
+
+A route file alone is not enough. Exclude placeholders, development playgrounds, error and
+access-denied pages, unused template screens, and orphaned routes that no current journey exposes.
+Also exclude technical mechanisms such as contracts, APIs, RBAC, seeding, indexers, deployment, and
+server wake-up unless they are themselves exposed as an observable product goal.
+
+The [Product Feature Inventory](../features/README.md) is the canonical list. The client app owns
+top-level capabilities. All administrator-dashboard capabilities are grouped under
+`docs/features/backoffice/`, even when a dashboard capability has several routes or focused
+documents.
+
 ## Documentation Ownership
 
 | Information                                      | Canonical owner                                |
 | ------------------------------------------------ | ---------------------------------------------- |
+| Current user-accessible capability inventory     | `docs/features/README.md`                      |
 | Product intent, journey, and acceptance criteria | `docs/features/<feature>/README.md`            |
+| Backoffice capability journey                    | `docs/features/backoffice/<feature>/README.md` |
 | Complex feature-specific rules                   | A focused file beside the feature README       |
 | Current smart-contract behaviour                 | `docs/features/contracts/<contract>/README.md` |
 | Platform-wide engineering standards              | `docs/platform/` or `.github/` guides          |
@@ -34,7 +57,11 @@ Product and contract documentation remain separate even when they share a name. 
 
 ## Location and Naming
 
-- Create one directory per product capability: `docs/features/<kebab-case-feature>/`.
+- Create one directory per client capability: `docs/features/<kebab-case-feature>/`.
+- Create dashboard capability documentation under `docs/features/backoffice/<kebab-case-feature>/`;
+  do not add dashboard capabilities at the `docs/features/` root.
+- Treat `docs/features/README.md` and `docs/features/backoffice/README.md` as navigation
+  inventories, not as substitutes for the capability READMEs.
 - Name the canonical entry point `README.md` with this exact casing.
 - Keep the whole product journey in that README rather than splitting user stories by application
   layer.
@@ -237,19 +264,24 @@ This rule applies to every committed documentation file, not only feature README
 
 ## Change Process
 
-1. Inspect the current feature README, product entry points, business rules, tests, and linked
+1. Verify that the capability and its grouping match current navigation, linked routes, and access
+   guards.
+2. Inspect the current feature README, product entry points, business rules, tests, and linked
    contract behaviour.
-2. Define or update the lifecycle and stable story boundaries.
-3. Write observable acceptance criteria, including material boundaries and recovery states.
-4. Set status and checkboxes from actual human validation, not implementation confidence.
-5. Refresh focused evidence links and related documentation.
-6. Update `docs/02_USER_STORIES.md` and `docs/README.md` only when navigation changes.
-7. Keep historical explanations in Git, issues, pull requests, or ADRs rather than the current
+3. Define or update the lifecycle and stable story boundaries.
+4. Write observable acceptance criteria, including material boundaries and recovery states.
+5. Set status and checkboxes from actual human validation, not implementation confidence.
+6. Refresh focused evidence links and related documentation.
+7. Update `docs/features/README.md`, `docs/02_USER_STORIES.md`, and `docs/README.md` only when
+   navigation or canonical ownership changes.
+8. Keep historical explanations in Git, issues, pull requests, or ADRs rather than the current
    feature contract.
 
 ## Review Checklist
 
 - [ ] The README covers one complete product capability.
+- [ ] The capability is reachable through a current user journey and grouped under the correct
+      product surface.
 - [ ] Scope, versions, actors, and system boundaries are explicit.
 - [ ] The lifecycle matches the story order.
 - [ ] Every story uses `As a`, `I want to`, and `So that` on separate lines.

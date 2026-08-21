@@ -8,11 +8,13 @@ remain executable evidence.
 
 1. [Project Charter](./01_PROJECT_CHARTER.md) — product vision, scope, and governance.
 2. [Architecture Overview](./platform/architecture.md) — system boundaries and components.
-3. [Feature User Stories Index](./02_USER_STORIES.md) — canonical feature journeys and acceptance
+3. [Product Feature Inventory](./features/README.md) — current user-accessible client and backoffice
+   capabilities.
+4. [Feature User Stories Index](./02_USER_STORIES.md) — canonical feature journeys and acceptance
    criteria.
-4. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human
+5. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human
    review contract.
-5. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
+6. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
 
 The [Implementation Status](./03_IMPLEMENTATION_STATUS.md) and [Roadmap](./ROADMAP.md) are dated
 planning snapshots. Verify current delivery in the relevant feature README, code, tests, and GitHub
@@ -20,19 +22,28 @@ state before relying on a status claim.
 
 ## Documentation Ownership
 
-| Question                                        | Source of truth                                      |
-| ----------------------------------------------- | ---------------------------------------------------- |
-| Why does CNC Portal exist?                      | [Project Charter](./01_PROJECT_CHARTER.md)           |
-| What should a user be able to do?               | `docs/features/<feature>/README.md`                  |
-| Has that behaviour passed human review?         | Feature acceptance criteria and validation statement |
-| How does a smart contract behave?               | [Contract Features](./features/contracts/README.md)  |
-| How should platform code be written and tested? | Platform and repository implementation guides        |
-| Where is the executable evidence?               | Current code and tests                               |
-| Why or when was a change delivered?             | GitHub issues, pull requests, ADRs, and Git          |
+| Question                                         | Source of truth                                      |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| Why does CNC Portal exist?                       | [Project Charter](./01_PROJECT_CHARTER.md)           |
+| Which product capabilities can users reach?      | [Product Feature Inventory](./features/README.md)    |
+| What should a user be able to do in one feature? | `docs/features/<feature>/README.md`                  |
+| Has that behaviour passed human review?          | Feature acceptance criteria and validation statement |
+| How does a smart contract behave?                | [Contract Features](./features/contracts/README.md)  |
+| How should platform code be written and tested?  | Platform and repository implementation guides        |
+| Where is the executable evidence?                | Current code and tests                               |
+| Why or when was a change delivered?              | GitHub issues, pull requests, ADRs, and Git          |
 
 ## Feature Documentation
 
-### User-Story Features
+The [Product Feature Inventory](./features/README.md) is derived from the current app and dashboard
+journeys. It is the canonical answer to which capabilities users can access. Documentation coverage
+and human-validation status are tracked separately.
+
+All dashboard capabilities are grouped under the
+[Backoffice Feature Inventory](./features/backoffice/README.md). A dashboard route must not become a
+separate top-level feature directory.
+
+### Current User-Story Entry Points
 
 | Feature                                                                      | Journey                                                   | Model state             |
 | ---------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------- |
@@ -41,10 +52,10 @@ state before relying on a status claim.
 | [Vesting](./features/vesting/README.md)                                      | Vesting V2 creation, progress, release, and cancellation  | Current model trial     |
 | [Accounting migrations](./features/accounting/contract-migration-history.md) | Accounting continuity across contract migrations          | Focused story set       |
 
-See the [Feature User Stories Index](./02_USER_STORIES.md) for the ownership rule and migration
-state.
+See the [Feature User Stories Index](./02_USER_STORIES.md) for coverage across the complete current
+product inventory.
 
-### Specialised or Legacy Feature Documentation
+### Product References Awaiting the Current Model
 
 These sources remain useful but have not yet been reviewed under the current feature-documentation
 contract.
@@ -53,16 +64,24 @@ contract.
 | --------------------------------------------------------------------- | ------------------------------------ |
 | [Authentication](./auth/README.md)                                    | Authentication flows                 |
 | [Accounting](./features/accounting/README.md)                         | Accounting scope and detailed models |
-| [Backoffice](./features/backoffice/README.md)                         | Administration and feature flags     |
+| [Backoffice](./features/backoffice/README.md)                         | Administrator capability inventory   |
 | [Community Credit](./features/community-credit/user-flow-analysis.md) | Current flow analysis and findings   |
-| [RBAC](./features/rbac/RBAC.md)                                       | Role-based access control guide      |
-| [Database seeding](./features/seed/README.md)                         | Seed usage and implementation        |
-| [Serverless wake-up](./features/serverless-wake-up/README.md)         | Wake-up architecture and operations  |
-| [Statistics](./features/stats/README.md)                              | Statistics documentation index       |
+
+### Supporting Technical References
+
+These documents remain useful, but their current legacy location under `docs/features/` does not
+make them user-facing product features.
+
+| Area                                                          | Documentation role                |
+| ------------------------------------------------------------- | --------------------------------- |
+| [RBAC](./features/rbac/RBAC.md)                               | Authorization mechanism           |
+| [Database seeding](./features/seed/README.md)                 | Development and test data tooling |
+| [Serverless wake-up](./features/serverless-wake-up/README.md) | Runtime operations                |
 
 ### Smart Contracts
 
-- [Contract Features Index](./features/contracts/README.md) — current behaviour by contract.
+- [Contract Features Index](./features/contracts/README.md) — current behaviour by contract; this
+  technical namespace is excluded from the product feature inventory.
 - [Contract Overview](./contracts/README.md) — contract list and high-level concepts.
 - [Technical Architecture](./contracts/contracts-technical-architecture.md) — upgrade and design
   patterns.
@@ -109,10 +128,16 @@ repository root `AGENTS.md` when performing implementation work.
 
 ## Writing Feature Documentation
 
-Every new or migrated product feature uses:
+Every new or migrated client feature uses:
 
 ```text
 docs/features/<kebab-case-feature>/README.md
+```
+
+Every dashboard feature uses:
+
+```text
+docs/features/backoffice/<kebab-case-feature>/README.md
 ```
 
 The README contains the complete reviewable journey: scope, product model, lifecycle, status
@@ -125,6 +150,8 @@ Follow the [Feature Documentation Guide](./platform/feature-specification-guide.
 - use `✅ Done` only when every criterion has passed human review;
 - use `Last reviewed` only for behaviour review, not editorial updates;
 - keep root indexes navigational rather than copying story bodies;
+- derive the inventory from current user journeys rather than technical folder names;
+- group every dashboard capability under `features/backoffice/`;
 - preserve historical delivery context in GitHub and Git.
 
 ## Documentation Validation
@@ -139,6 +166,7 @@ git diff --check
 ```
 
 When navigation changes, verify every local link and update the
+[Product Feature Inventory](./features/README.md) and
 [Feature User Stories Index](./02_USER_STORIES.md).
 
 ## Updating This Hub
