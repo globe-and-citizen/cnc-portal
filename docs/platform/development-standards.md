@@ -1023,14 +1023,12 @@ checklist.
 - [Security Guidelines](./security.md)
 - [Performance Standards](./performance.md)
 - [Testing Strategy](./testing-strategy.md)
-- [Feature Specification Guide](./feature-specification-guide.md)
+- [Feature Documentation Guide](./feature-specification-guide.md)
 - [Deployment Guide](./deployment.md)
 
 ### Coding Guidelines
 
 - [Vue Component Standards](../../.github/copilot-instructions/vue-component-standards.md)
-- [TypeScript Guidelines](../../.github/copilot-instructions/typescript-guidelines.md)
-- [Web3 Integration](../../.github/copilot-instructions/web3-integration.md)
 - [Testing Patterns](../../.github/copilot-instructions/testing-patterns.md)
 
 ### External Resources
