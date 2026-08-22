@@ -27,7 +27,7 @@ state before relying on a status claim.
 | Why does CNC Portal exist?                       | [Project Charter](./01_PROJECT_CHARTER.md)                 |
 | Which product capabilities can users reach?      | [Product Feature Inventory](./features/README.md)          |
 | What should a user be able to do in one feature? | `docs/features/<feature>/README.md`                        |
-| Has that behaviour passed human review?          | Feature acceptance criteria and validation statement       |
+| Has that behaviour passed human review?          | Feature status, review date, and validation statement      |
 | How does a shared runtime capability work?       | [Implementation Documentation](./implementation/README.md) |
 | How does a smart contract behave?                | [Contract Behaviour](./contracts/features/README.md)       |
 | How should platform code be written and tested?  | Platform and repository implementation guides              |
@@ -125,8 +125,9 @@ runtime evidence.
 
 1. Open the relevant feature README from the user-story index.
 2. Follow its lifecycle in story order.
-3. Treat checked criteria as the human review record for the stated review date.
-4. Use linked implementation evidence to investigate a result, not as a substitute for review.
+3. Treat checked criteria as the verified implementation record.
+4. Use the story status, review date, and Human Validation statement for the product-review state.
+5. Use linked implementation evidence to investigate a result, not as a substitute for review.
 
 ### Developers
 
