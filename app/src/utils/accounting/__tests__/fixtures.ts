@@ -58,6 +58,7 @@ export function makeCtx(overrides: Partial<MapperContext> = {}): MapperContext {
     sherForUsd: (usd) => (RATE.sher > 0 ? usd / RATE.sher : 0),
     tokenIdOf,
     pocketOf: (address) => (address ? (POCKETS[address.toLowerCase()] ?? null) : null),
+    classificationOf: () => undefined,
     ...overrides
   }
 }
