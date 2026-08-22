@@ -19,7 +19,7 @@ review.
 | Authentication          | [Authentication stories](./features/authentication/README.md)     | Current model; validation due      |
 | Companies and workspace | —                                                                 | Canonical stories not yet written  |
 | Accounts                | [Safe stories](./features/safe/Readme.md)                         | Partial; complete journey due      |
-| Payroll                 | [Payroll stories](./features/payroll/Readme.md)                   | Existing stories; alignment due    |
+| Payroll                 | [Payroll stories](./features/payroll/README.md)                   | Implementation audit complete      |
 | Community Credit        | [Community Credit stories](./features/community-credit/README.md) | Current model; implementation gaps |
 | Accounting              | [Accounting references](./features/accounting/README.md)          | Current model migration due        |
 | Contract Management     | —                                                                 | Canonical stories not yet written  |

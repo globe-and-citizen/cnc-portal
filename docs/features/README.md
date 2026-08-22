@@ -47,7 +47,7 @@ The client inventory follows the
 | Authentication          | `/login` and wallet session actions                     | [Canonical stories](./authentication/README.md)    |
 | Companies and workspace | `/teams`, `/teams/:id`                                  | Canonical stories not yet written                  |
 | Accounts                | Bank, Safe, and Expense Account routes                  | [Safe stories](./safe/Readme.md); full journey due |
-| Payroll                 | Payroll account, history, company payroll, compensation | [Existing stories](./payroll/Readme.md)            |
+| Payroll                 | Payroll account, history, company payroll, compensation | [Canonical stories](./payroll/README.md)           |
 | Community Credit        | Rounds, new credit calls, and round details             | [Canonical stories](./community-credit/README.md)  |
 | Accounting              | Summary, income, balance, trial balance, and ledger     | [Existing references](./accounting/README.md)      |
 | Contract Management     | `/teams/:id/contract-management`                        | Canonical stories not yet written                  |

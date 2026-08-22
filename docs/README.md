@@ -50,7 +50,7 @@ separate top-level feature directory.
 | ---------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------- |
 | [Authentication](./features/authentication/README.md)                        | Wallet sign-in and protected entry                        | Validation due          |
 | [Community Credit](./features/community-credit/README.md)                    | Credit calls, lending, stalled rounds, and repayment      | Implementation gaps     |
-| [Payroll](./features/payroll/Readme.md)                                      | Wages, claims, signatures, withdrawal, and reconciliation | Existing; alignment due |
+| [Payroll](./features/payroll/README.md)                                      | Wages, claims, signatures, withdrawal, and reconciliation | Current model           |
 | [Safe Wallet](./features/safe/Readme.md)                                     | Setup, treasury, signers, approvals, and execution        | Existing; alignment due |
 | [Vesting](./features/vesting/README.md)                                      | Vesting V2 creation, progress, release, and cancellation  | Current model trial     |
 | [Feature Restrictions](./features/backoffice/feature-restrictions/README.md) | Global feature states and team-specific overrides         | Validation due          |
