@@ -505,7 +505,8 @@ Beyond execution on core features, the CNC Portal requires deliberate investment
 | Stats Feature Spec          | [docs/features/backoffice/statistics/functional-specification.md](./features/backoffice/statistics/functional-specification.md) |
 | Stats API Reference         | [docs/features/backoffice/statistics/stats-api.md](./features/backoffice/statistics/stats-api.md)                               |
 | Contract Architecture       | [docs/contracts/contracts-technical-architecture.md](./contracts/contracts-technical-architecture.md)                           |
-| Auth Overview               | [docs/auth/README.md](./auth/README.md)                                                                                         |
+| Authentication Stories      | [docs/features/authentication/README.md](./features/authentication/README.md)                                                   |
+| Authentication Architecture | [docs/implementation/authentication/README.md](./implementation/authentication/README.md)                                       |
 | CHANGELOG                   | [CHANGELOG.md](../CHANGELOG.md)                                                                                                 |
 | Contribution Guide          | [CONTRIBUTION.md](../CONTRIBUTION.md)                                                                                           |
 
