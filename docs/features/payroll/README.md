@@ -36,7 +36,7 @@ not a `transferFrom` operation, and its complete journey belongs to the Accounts
 
 | User Story     | Title                                      | Actor               | Status         | Priority | Effort |
 | -------------- | ------------------------------------------ | ------------------- | -------------- | :------: | ------ |
-| US-PAYROLL-001 | Set a member's wage                        | Team owner          | 🚧 In Progress |    P1    | M      |
+| US-PAYROLL-001 | Set a member's wage                        | Team owner          | 🧪 Validation  |    P1    | M      |
 | US-PAYROLL-002 | Pause or resume a member's wage            | Team owner          | 🧪 Validation  |    P2    | S      |
 | US-PAYROLL-003 | Fund the Payroll contract                  | Team owner          | 🔗 Reference   |    P1    | —      |
 | US-PAYROLL-004 | Set weekly goals                           | Team member         | 🧪 Validation  |    P3    | S      |
@@ -47,7 +47,7 @@ not a `transferFrom` operation, and its complete journey belongs to the Accounts
 | US-PAYROLL-009 | Disable or re-enable a signed weekly claim | Contract owner      | 🚧 In Progress |    P2    | M      |
 | US-PAYROLL-010 | Withdraw an approved weekly claim          | Paid member         | 🧪 Validation  |    P1    | M      |
 | US-PAYROLL-011 | Reconcile weekly claims with the chain     | System              | 🧪 Validation  |    P2    | M      |
-| US-PAYROLL-012 | Review payroll history                     | Team member / owner | 🚧 In Progress |    P2    | M      |
+| US-PAYROLL-012 | Review payroll history                     | Team member / owner | 🧪 Validation  |    P2    | M      |
 
 Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal
 alone.
@@ -87,8 +87,6 @@ alone.
 - [x] Saving again before the effective date rewrites the scheduled version without pushing its date
       back; if the week no longer contains hours, the change becomes immediate.
 - [x] _(API)_ The owner can cancel a future wage change, leaving the current wage in force.
-- [ ] The portal exposes an action for cancelling a future wage change; the cancellation currently
-      exists only through the API.
 - [x] A member and ISO week resolve to one weekly claim even when the wage changes.
 - [x] A disabled wage cannot be replaced until the owner resumes it.
 - [x] Archived teams cannot create, replace, or cancel wages.
@@ -96,7 +94,7 @@ alone.
 - [x] Wages and their version chain are stored off-chain and the wage endpoint returns the operative
       wage with any scheduled successor.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
 **Dependencies:** Companies and Workspace
 
@@ -176,7 +174,8 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Duration is positive, is a multiple of ten minutes, and does not exceed 24 hours or the wage's
       lower daily allowance.
 - [ ] The portal and API enforce the same memo limit; the portal currently uses 3,000 characters
-      while the API uses 3,000 words.
+      while the API uses 3,000 words
+      ([#2520](https://github.com/globe-and-citizen/cnc-portal/issues/2520)).
 - [x] Success reports that the claim was added, closes the modal, and refreshes weekly-claim data.
 - [x] The portal rejects a single claim above the daily allowance before submission.
 - [x] The portal includes existing claims for the selected day when checking the daily allowance and
@@ -206,7 +205,8 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] The claim owner can edit the duration, memo, and attachments while the week is pending.
 - [x] The work date remains locked during editing.
 - [ ] The update API applies the same non-empty memo rule and length unit as claim creation; it
-      currently accepts an empty memo and counts words while the portal counts characters.
+      currently accepts an empty memo and counts words while the portal counts characters
+      ([#2520](https://github.com/globe-and-citizen/cnc-portal/issues/2520)).
 - [x] The combined existing and new attachment count cannot exceed ten.
 - [x] _(API)_ The weekly allowance is rechecked while excluding the claim being edited.
 - [x] _(API)_ The daily allowance is rechecked for the original work date while excluding the claim
@@ -263,7 +263,8 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
       contract, and the active chain.
 - [x] The portal exposes signing only when the weekly claim contains at least one daily claim.
 - [ ] _(API)_ The backend rejects signing a goals-only weekly claim; it currently does not load or
-      validate the daily-claim count.
+      validate the daily-claim count
+      ([#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521)).
 - [x] The current week and future weeks cannot be signed.
 - [x] Normal signing applies to pending weeks; a disabled claim uses the explicit re-sign flow.
 - [x] Signing is unavailable while the team is archived or has not migrated to the current Officer
@@ -364,30 +365,29 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
       their daily claims.
 - [x] The Company Payroll table requests a paginated slice of at most 100 rows; unpaginated
       consumers receive the same `{ data, total }` response shape.
-- [ ] A regular team member is restricted to their own payroll records; the route and API currently
-      allow every authenticated team member to retrieve team-wide payroll data.
+- [x] Every authenticated team member can retrieve team-wide payroll records so that compensation
+      remains transparent within the team.
 - [x] Invalid status, member-address, page, and limit filters are rejected.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🚧 In Progress
+**Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-005
 
 ## Known Gaps
 
-- A scheduled wage change can be cancelled through the API, but the portal provides no cancellation
-  action.
 - Claim memo validation has three contracts: create API uses 3,000 words, update API accepts an
-  empty memo and uses 3,000 words, while the shared portal form requires 1–3,000 characters.
+  empty memo and uses 3,000 words, while the shared portal form requires 1–3,000 characters. Tracked
+  by [#2520](https://github.com/globe-and-citizen/cnc-portal/issues/2520).
 - The edit form does not include the other claims from the same day in its inline daily-limit check;
   the API still rejects the invalid total.
 - The update and delete APIs allow claims from a disabled week to change even though the portal
   exposes those actions only while the week is pending.
-- The signing API does not reject a goals-only weekly claim and accepts a team owner who is not the
-  current Cash Remuneration owner. Such a signature cannot authorise the later contract withdrawal.
+- The signing API does not reject a goals-only weekly claim. Tracked by
+  [#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521).
+- The signing API accepts a team owner who is not the current Cash Remuneration owner. Such a
+  signature cannot authorise the later contract withdrawal.
 - The legacy enable and disable API actions can update the stored status without performing the
   matching on-chain action.
-- Company Payroll and its API are readable by every team member, not only the team owner or the
-  member whose compensation is displayed.
 - The Submit Claim modal says that only one claim can be submitted per week, while the implemented
   model allows multiple daily claims in the same weekly claim.
 
