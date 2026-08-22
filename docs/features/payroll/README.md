@@ -12,8 +12,14 @@ These acceptance criteria follow the
 
 A wage is an off-chain, versioned record that defines a member's standard and optional overtime
 rates, weekly allowance, and daily allowance. A daily claim records work in ten-minute increments.
-Claims from the same member and ISO week belong to one weekly claim, which keeps the wage used to
-price its first submitted hours.
+Each team member has at most one weekly claim per ISO week. The first submitted daily claim binds
+that weekly claim to the current wage; every later claim for the same week reuses that row and wage,
+even when the owner changes the member's current wage. A goals-only weekly row has priced no work
+yet, so its first daily claim can bind it to the wage that is current at submission time.
+
+A wage change creates a new current version immediately. Payroll does not schedule wage changes or
+delay their effective date. Existing weekly claims keep their stored wage so historical hours,
+limits, approvals, and payments are not repriced.
 
 Approval is an EIP-712 signature from the current Cash Remuneration contract owner. It does not move
 funds. The member submits the signed weekly claim on-chain to receive native tokens and supported
@@ -36,7 +42,7 @@ not a `transferFrom` operation, and its complete journey belongs to the Accounts
 
 | User Story     | Title                                      | Actor               | Status         | Priority | Effort |
 | -------------- | ------------------------------------------ | ------------------- | -------------- | :------: | ------ |
-| US-PAYROLL-001 | Set a member's wage                        | Team owner          | 🧪 Validation  |    P1    | M      |
+| US-PAYROLL-001 | Set a member's wage                        | Team owner          | 🚧 In Progress |    P1    | M      |
 | US-PAYROLL-002 | Pause or resume a member's wage            | Team owner          | 🧪 Validation  |    P2    | S      |
 | US-PAYROLL-003 | Fund the Payroll contract                  | Team owner          | 🔗 Reference   |    P1    | —      |
 | US-PAYROLL-004 | Set weekly goals                           | Team member         | 🧪 Validation  |    P3    | S      |
@@ -76,25 +82,27 @@ alone.
       value when no wage exists.
 - [x] Editing pre-fills the operative wage and creates a new version instead of overwriting wage
       history.
-- [x] When the member has submitted hours in the current ISO week, a change takes effect the next
-      Monday and that week keeps its original wage.
-- [x] When the member has submitted no hours, a change applies from the current Monday to the whole
-      week.
-- [x] Weekly goals without submitted hours do not hold the week to its previous wage.
-- [x] The modal announces the effective date only when the change must wait.
-- [x] A scheduled change appears beside the current wage and disappears when it takes effect without
-      requiring a page reload.
-- [x] Saving again before the effective date rewrites the scheduled version without pushing its date
-      back; if the week no longer contains hours, the change becomes immediate.
-- [x] _(API)_ The owner can cancel a future wage change, leaving the current wage in force.
-- [x] A member and ISO week resolve to one weekly claim even when the wage changes.
+- [ ] A new wage version becomes current immediately; the product has no scheduled wage or future
+      effective date ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
+- [x] The API finds an existing weekly claim by team, member, and ISO week before selecting a wage.
+- [x] A weekly claim containing daily claims keeps the wage used for its first submitted hours after
+      the member's current wage changes.
+- [x] Further daily claims for that week reuse the existing weekly claim and its rate, daily limit,
+      weekly limit, and overtime rules.
+- [x] A goals-only weekly row does not lock its wage; its first daily claim can move it to the
+      member's current wage.
+- [ ] _(database)_ At most one weekly claim can exist for a team, member, and ISO week; the current
+      unique constraint still uses wage and week
+      ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
+- [ ] The portal and API expose no scheduled-wage badge, notice, timer, response field, or
+      cancellation action ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
 - [x] A disabled wage cannot be replaced until the owner resumes it.
-- [x] Archived teams cannot create, replace, or cancel wages.
-- [x] Non-owners cannot set or cancel a wage.
-- [x] Wages and their version chain are stored off-chain and the wage endpoint returns the operative
-      wage with any scheduled successor.
+- [x] Archived teams cannot create or replace wages.
+- [x] Non-owners cannot set a wage.
+- [x] Wages and their version chain are stored off-chain, and the wage endpoint returns the current
+      wage.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
 
 **Dependencies:** Companies and Workspace
 
@@ -375,6 +383,10 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ## Known Gaps
 
+- The current implementation still schedules some wage changes with `effectiveFrom`, exposes the
+  scheduled state through the API and portal, and enforces weekly-claim uniqueness by wage and week
+  instead of team, member, and week. Tracked by
+  [#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522).
 - Claim memo validation has three contracts: create API uses 3,000 words, update API accepts an
   empty memo and uses 3,000 words, while the shared portal form requires 1–3,000 characters. Tracked
   by [#2520](https://github.com/globe-and-citizen/cnc-portal/issues/2520).
@@ -415,7 +427,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ## Related Documentation
 
-- [Wage scheduling details](./wage-scheduling.md)
 - [Cash Remuneration contract](../../contracts/features/cash-remuneration/README.md)
 - [Bank contract](../../contracts/features/bank/README.md)
 - [Product Feature Inventory](../README.md)

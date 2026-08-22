@@ -257,7 +257,8 @@ complete reviewable journey.
 
 Move a subject into a focused sibling document when it needs extensive examples, data shapes, or
 edge-case explanation. Keep a short rule and a link in the parent story. For example, Payroll owns
-its full journey in `README.md` and can link a focused wage-scheduling document from the wage story.
+its full reviewable journey in `README.md`; a focused sibling is justified only when detailed rules
+would otherwise obscure that journey.
 
 Do not duplicate platform security, testing, deployment, formatting, or architecture standards.
 Reference their canonical guides.
