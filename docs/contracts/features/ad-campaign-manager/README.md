@@ -29,6 +29,11 @@
 - **Protections:** `PausableUpgradeable` (despite not being proxy-upgradeable), `ReentrancyGuard`
 - **Note:** Not upgradeable — no proxy; owner deploys and configures directly
 
+## Implementation Evidence
+
+- [Campaign manager setup form](../../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue)
+- [Campaign rate configuration](../../../../app/src/components/sections/ContractManagementView/TeamContractsDetail.vue)
+
 ---
 
 ## US-ADC-001: Create an Ad Campaign with ETH Budget

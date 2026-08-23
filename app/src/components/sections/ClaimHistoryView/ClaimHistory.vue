@@ -101,11 +101,4 @@ const actionAlertsRef = ref<ActionAlertsExposed | null>(null)
 const handleQuickSubmit = (dayIso: string) => {
   actionAlertsRef.value?.openSubmitClaimForDay(dayIso)
 }
-
-defineExpose({
-  selectedMemberAddress,
-  selectedMonthObject,
-  selectWeekWeelyClaim,
-  selectedMemberWage
-})
 </script>

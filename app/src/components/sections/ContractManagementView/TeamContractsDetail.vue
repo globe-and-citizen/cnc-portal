@@ -87,20 +87,13 @@ const emit = defineEmits<{
   (event: 'closeContractDataDialog'): void
 }>()
 
-const {
-  initialized,
-  originalValues,
-  originalCostPerClick,
-  originalCostPerImpression,
-  pendingTransactions,
-  isLoading,
-  submit
-} = useCampaignContractDetails({
-  datas: toRef(props, 'datas'),
-  contractAddress: toRef(props, 'contractAddress'),
-  reset: toRef(props, 'reset'),
-  onClose: () => emit('closeContractDataDialog')
-})
+const { originalCostPerClick, originalCostPerImpression, isLoading, submit } =
+  useCampaignContractDetails({
+    datas: toRef(props, 'datas'),
+    contractAddress: toRef(props, 'contractAddress'),
+    reset: toRef(props, 'reset'),
+    onClose: () => emit('closeContractDataDialog')
+  })
 
 const costPerClick = computed(
   () => props.datas.find((data) => data.key === 'costPerClick')?.value ?? ''
@@ -116,14 +109,6 @@ const hasChanges = computed(
     Number.parseFloat(costPerClick.value || '0') !== originalCostPerClick.value ||
     Number.parseFloat(costPerImpression.value || '0') !== originalCostPerImpression.value
 )
-
-defineExpose({
-  initialized,
-  originalValues,
-  originalCostPerClick,
-  originalCostPerImpression,
-  pendingTransactions
-})
 
 function updateCost(key: string, value: string | number) {
   const updatedDatas = props.datas.map((data) =>
