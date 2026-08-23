@@ -148,6 +148,17 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         const signErrors: string[] = [];
 
+        // Signing authorises a later contract withdrawal, so it must come
+        // from the current Cash Remuneration contract owner. A team owner may
+        // manage the team without holding that contract role after a redeploy.
+        const isCallerCashRemunOwner = await isCashRemunerationOwner(
+          callerAddress,
+          weeklyClaim.wage.team.id
+        );
+        if (!isCallerCashRemunOwner) {
+          return errorResponse(403, 'Caller is not the current Cash Remuneration owner', res);
+        }
+
         // Weekly goals can create a pending weekly claim before the member
         // submits any hours. Goals are planning information, not a payable
         // claim, so signing requires at least one linked daily claim.
@@ -157,16 +168,6 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (dailyClaimCount === 0) {
           signErrors.push('At least one daily claim is required before signing a weekly claim');
         }
-
-        // Check if the caller is the Cash Remuneration owner
-        const isCallerCashRemunOwner = await isCashRemunerationOwner(
-          callerAddress,
-          weeklyClaim.wage.team.id
-        );
-
-        // If not Cash Remuneration owner, check if they're the team owner
-        if (!isCallerCashRemunOwner && weeklyClaim.wage.team.ownerAddress !== callerAddress)
-          signErrors.push('Caller is not the Cash Remuneration owner or the team owner');
 
         // Check if the week is completed
         if (weeklyClaim.weekStart.getTime() >= getMondayStart(new Date()).getTime()) {

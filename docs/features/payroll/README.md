@@ -487,8 +487,6 @@ status of a user story.
 
 - The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
   week is pending.
-- The signing API accepts a team owner who is not the current Cash Remuneration owner. Such a signature cannot authorise the later contract
-  withdrawal.
 - The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
 
 ### UI/UX Notes
