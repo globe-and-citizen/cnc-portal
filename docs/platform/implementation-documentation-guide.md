@@ -118,7 +118,9 @@ diagram from the question:
 4. Write the compact capability README and add details only when needed.
 5. Update `docs/implementation/README.md` and every affected feature or platform backlink.
 6. Preserve delivery history outside the current-behaviour document.
-7. Run the repository documentation validations.
+7. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md) so each changed
+   runtime source and every document that owns it are reviewed in the same pull request.
+8. Run the repository documentation validations.
 
 ## Review Checklist
 
@@ -134,6 +136,8 @@ diagram from the question:
 ## Validation
 
 ```bash
+npm run test:docs-freshness
+npm run lint:docs-freshness
 npm run lint:md
 npm run format:md:check
 bash scripts/audit-doc-drift.sh

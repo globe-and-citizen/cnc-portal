@@ -45,6 +45,11 @@ addresses are mirrored into the frontend artifacts; after changing a contract in
 - Keep a change scoped to the requested outcome. Report adjacent drift that materially affects
   correctness, security, or the edited behaviour; track it separately unless it blocks the current
   work.
+- Treat documentation as part of every behavioural change. Before editing a product, contract, or
+  shared-runtime source, identify and update every canonical owner required by the
+  [Documentation Freshness Policy](./docs/platform/documentation-freshness-policy.md). The CI gate
+  rejects changed behavioural sources that have no owner or whose owner was not updated in the same
+  pull request.
 - Write every documentation diagram in Mermaid. Follow the
   [diagram format rule](./docs/platform/feature-specification-guide.md#diagram-format); do not add
   ASCII, PlantUML, Draw.io, or image-only diagrams.
@@ -123,5 +128,7 @@ changing agent-instruction Markdown, run:
 npm run lint:md
 # Markdown style lives in .prettier-markdown.json. Checks changed Markdown since origin/develop; subproject format checks exclude Markdown.
 npm run format:md:check
+npm run test:docs-freshness
+npm run lint:docs-freshness
 bash scripts/audit-doc-drift.sh
 ```

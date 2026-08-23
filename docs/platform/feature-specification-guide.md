@@ -291,6 +291,9 @@ This rule applies to every committed documentation file, not only feature README
    navigation or canonical ownership changes.
 8. Keep historical explanations in Git, issues, pull requests, or ADRs rather than the current
    feature contract.
+9. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md): every changed
+   behavioural source must be linked by, and reviewed through, its canonical feature owner in the
+   same pull request.
 
 ## Review Checklist
 
@@ -314,6 +317,8 @@ This rule applies to every committed documentation file, not only feature README
 Run the repository Markdown checks after editing feature documentation or this guide:
 
 ```bash
+npm run test:docs-freshness
+npm run lint:docs-freshness
 npm run lint:md
 npm run format:md:check
 bash scripts/audit-doc-drift.sh
