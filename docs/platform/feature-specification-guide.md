@@ -8,17 +8,16 @@
 
 ## Purpose
 
-Each product feature owns its user stories and acceptance criteria in one canonical README. The
-document describes the complete user journey, the behaviour expected from the product, and the
-current human-validation state.
+Each product feature owns its user stories and acceptance criteria in one canonical README. The document describes the
+complete user journey, the behaviour expected from the product, and the current human-validation state.
 
-The feature README is not an implementation manual or a delivery history. Code and tests are
-executable evidence, while issues, pull requests, and Git history preserve active work and history.
+The feature README is not an implementation manual or a delivery history. Code and tests are executable evidence, while
+issues, pull requests, and Git history preserve active work and history.
 
 ## Feature Eligibility and Grouping
 
-A documented product feature is an observable capability that a user can reach through a current
-product journey. Establish the inventory from runtime evidence in this order:
+A documented product feature is an observable capability that a user can reach through a current product journey.
+Establish the inventory from runtime evidence in this order:
 
 1. inspect primary navigation and authentication entry points;
 2. follow their linked routes and meaningful user actions;
@@ -26,19 +25,18 @@ product journey. Establish the inventory from runtime evidence in this order:
 4. group routes that serve the same user goal into one capability;
 5. separate product availability from documentation and human-validation status.
 
-A route file alone is not enough. Exclude placeholders, development playgrounds, error and
-access-denied pages, unused template screens, and orphaned routes that no current journey exposes.
-Also exclude technical mechanisms such as contracts, APIs, RBAC, seeding, indexers, deployment, and
-server wake-up unless they are themselves exposed as an observable product goal.
+A route file alone is not enough. Exclude placeholders, development playgrounds, error and access-denied pages, unused
+template screens, and orphaned routes that no current journey exposes. Also exclude technical mechanisms such as
+contracts, APIs, RBAC, seeding, indexers, deployment, and server wake-up unless they are themselves exposed as an
+observable product goal.
 
-When a subject also has shared runtime behaviour, split the documentation. Keep the user journey in
-the feature README and place the architectural capability under `docs/implementation/` according to
-the [Implementation Documentation Guide](./implementation-documentation-guide.md).
+When a subject also has shared runtime behaviour, split the documentation. Keep the user journey in the feature README
+and place the architectural capability under `docs/implementation/` according to the
+[Implementation Documentation Guide](./implementation-documentation-guide.md).
 
-The [Product Feature Inventory](../features/README.md) is the canonical list. The client app owns
-top-level capabilities. All administrator-dashboard capabilities are grouped under
-`docs/features/backoffice/`, even when a dashboard capability has several routes or focused
-documents.
+The [Product Feature Inventory](../features/README.md) is the canonical list. The client app owns top-level
+capabilities. All administrator-dashboard capabilities are grouped under `docs/features/backoffice/`, even when a
+dashboard capability has several routes or focused documents.
 
 ## Documentation Ownership
 
@@ -57,47 +55,42 @@ documents.
 `docs/02_USER_STORIES.md` is a navigation index. User-story bodies must not be duplicated there.
 
 Product and contract documentation remain separate even when they share a name. For example,
-`docs/features/vesting/README.md` owns the portal journey, while
-`docs/contracts/features/vesting/README.md` owns the Solidity behaviour that supports it.
+`docs/features/vesting/README.md` owns the portal journey, while `docs/contracts/features/vesting/README.md` owns the
+Solidity behaviour that supports it.
 
 ## Location and Naming
 
 - Create one directory per client capability: `docs/features/<kebab-case-feature>/`.
-- Create dashboard capability documentation under `docs/features/backoffice/<kebab-case-feature>/`;
-  do not add dashboard capabilities at the `docs/features/` root.
-- Treat `docs/features/README.md` and `docs/features/backoffice/README.md` as navigation
-  inventories, not as substitutes for the capability READMEs.
+- Create dashboard capability documentation under `docs/features/backoffice/<kebab-case-feature>/`; do not add dashboard
+  capabilities at the `docs/features/` root.
+- Treat `docs/features/README.md` and `docs/features/backoffice/README.md` as navigation inventories, not as substitutes
+  for the capability READMEs.
 - Name the canonical entry point `README.md` with this exact casing.
-- Keep the whole product journey in that README rather than splitting user stories by application
-  layer.
-- Add focused sibling documents only when a rule, API, or operational flow would make the README
-  difficult to review.
+- Keep the whole product journey in that README rather than splitting user stories by application layer.
+- Add focused sibling documents only when a rule, API, or operational flow would make the README difficult to review.
 - Link focused documents from the relevant story; do not repeat their detailed content.
-- Link shared architectural behaviour to its implementation owner; do not copy components,
-  invariants, or runtime failure paths into the product journey.
+- Link shared architectural behaviour to its implementation owner; do not copy components, invariants, or runtime
+  failure paths into the product journey.
 
 ## Human Review Contract
 
-Acceptance criteria are the centre of feature review. Their checkboxes record verified
-implementation, while the story status and `Last reviewed` record human product validation.
+Acceptance criteria are the centre of feature review. Their checkboxes record verified implementation, while the story
+status and `Last reviewed` record human product validation.
 
-- One criterion describes one observable functional outcome: what the actor can accomplish or what
-  domain or system result follows.
+- One criterion describes one observable functional outcome: what the actor can accomplish or what domain or system
+  result follows.
 - Every criterion must produce a clear pass or fail result.
-- A criterion must remain true when the interface is visually redesigned without changing product
-  behaviour.
-- UI and UX choices do not belong in feature acceptance criteria. Keep component types, layout,
-  styling, exact copy, animations, breakpoints, and interaction presentation in their dedicated
-  design, accessibility, or quality scope.
+- A criterion must remain true when the interface is visually redesigned without changing product behaviour.
+- UI and UX choices do not belong in feature acceptance criteria. Keep component types, layout, styling, exact copy,
+  animations, breakpoints, and interaction presentation in their dedicated design, accessibility, or quality scope.
 - `[x]` means current code, runtime behaviour, or tests confirm that the criterion is implemented.
 - `[ ]` means the criterion is incomplete or has not yet been verified against current evidence.
 - A story remains `🚧 In Progress` while any criterion is unchecked.
-- Once every criterion is checked, the story moves to `🧪 Validation` until a reviewer completes the
-  product journey.
+- Once every criterion is checked, the story moves to `🧪 Validation` until a reviewer completes the product journey.
 - A story is `✅ Done` only when every criterion is checked and human validation has passed.
 - Editorial changes do not change the `Last reviewed` date.
-- A behaviour change resets the affected criteria to `[ ]` and moves the story to `🚧 In Progress`
-  until the implementation is verified again.
+- A behaviour change resets the affected criteria to `[ ]` and moves the story to `🚧 In Progress` until the
+  implementation is verified again.
 - The review date changes only after the affected behaviour has been reviewed again.
 
 ### Story Statuses
@@ -131,8 +124,7 @@ These acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
 ```
 
-Use `Last reviewed`, not `Last updated`: an editorial change must not imply that the product was
-retested.
+Use `Last reviewed`, not `Last updated`: an editorial change must not imply that the product was retested.
 
 ### 2. Product Model or Terminology
 
@@ -163,11 +155,10 @@ Summarize the complete feature before the detailed stories.
 | -------------- | ------------------ | ---------- | -------------- | :------: | ------ |
 | US-FEATURE-001 | Observable outcome | Main actor | 🚧 In Progress |    P1    | M      |
 
-Use stable IDs. Do not reuse or silently renumber an ID after it has been referenced by code, tests,
-issues, or documentation.
+Use stable IDs. Do not reuse or silently renumber an ID after it has been referenced by code, tests, issues, or
+documentation.
 
-Priorities use `P1` to `P5`. Effort uses `XS`, `S`, `M`, `L`, or `XL`; use `—` for a reference story
-owned elsewhere.
+Priorities use `P1` to `P5`. Effort uses `XS`, `S`, `M`, `L`, or `XL`; use `—` for a reference story owned elsewhere.
 
 ### 5. User Stories
 
@@ -194,14 +185,12 @@ Put each part of the user-story sentence on its own source line and rendered lin
 **Dependencies:** US-FEATURE-000 or a named current capability
 ```
 
-`How It Works` is optional. Use it for a multi-step interaction, not to repeat the acceptance
-criteria.
+`How It Works` is optional. Use it for a multi-step interaction, not to repeat the acceptance criteria.
 
 ### 6. Human Validation
 
-For reviewed stories, state when and against what the feature was reviewed. Keep this statement
-short; checked criteria remain the implementation record, while this statement and `✅ Done` record
-the human product review.
+For reviewed stories, state when and against what the feature was reviewed. Keep this statement short; checked criteria
+remain the implementation record, while this statement and `✅ Done` record the human product review.
 
 ```markdown
 ## Human Validation
@@ -223,23 +212,21 @@ Link to the smallest useful set of current sources:
 - current smart contract for on-chain behaviour;
 - representative behaviour or integration tests.
 
-Evidence links prove where behaviour comes from. They do not turn the feature README into a file
-inventory.
+Evidence links prove where behaviour comes from. They do not turn the feature README into a file inventory.
 
 ### 8. Related Documentation and Known Gaps
 
-Link contract behaviour, focused feature rules, API references, or another feature that owns a
-referenced story.
+Link contract behaviour, focused feature rules, API references, or another feature that owns a referenced story.
 
-Record a known gap only when it is verified against current behaviour. Describe the observable
-impact. A GitHub issue may track remediation, but it is not evidence that the gap exists.
+Record a known gap only when it is verified against current behaviour. Describe the observable impact. A GitHub issue
+may track remediation, but it is not evidence that the gap exists.
 
 Omit `Known Gaps` when no gap has been verified.
 
 ## Acceptance-Criteria Quality
 
-Acceptance criteria define the functional contract of the feature, not its UI or UX specification.
-Cover the functional dimensions that materially affect the story:
+Acceptance criteria define the functional contract of the feature, not its UI or UX specification. Cover the functional
+dimensions that materially affect the story:
 
 - primary business action and resulting state;
 - roles and authorization;
@@ -249,35 +236,32 @@ Cover the functional dimensions that materially affect the story:
 - state refresh or on-chain reconciliation outcomes;
 - API, contract, or system results.
 
-A screen may be the observation surface, but the criterion must state the function rather than its
-presentation. For example:
+A screen may be the observation surface, but the criterion must state the function rather than its presentation. For
+example:
 
 - Functional: "An invalid claim is rejected without changing the weekly claim."
 - UI/UX-specific: "The submit button is disabled and a red error toast is displayed."
 
-The second statement may belong in a design or interaction test, but it is not a feature acceptance
-criterion. The functional rule should survive changes to components, layout, wording, styling, or
-responsive presentation.
+The second statement may belong in a design or interaction test, but it is not a feature acceptance criterion. The
+functional rule should survive changes to components, layout, wording, styling, or responsive presentation.
 
-Tag system-side checks with a concise marker such as `_(API)_`, `_(contract)_`, or `_(system)_`,
-then state how a reviewer can observe the functional result.
+Tag system-side checks with a concise marker such as `_(API)_`, `_(contract)_`, or `_(system)_`, then state how a
+reviewer can observe the functional result.
 
-Avoid criteria that merely name an internal component, store, library, or function. Link those
-details under Implementation Evidence unless the implementation choice is itself a product
-constraint.
+Avoid criteria that merely name an internal component, store, library, or function. Link those details under
+Implementation Evidence unless the implementation choice is itself a product constraint.
 
 ## Progressive Disclosure
 
-There is no line-count target. A feature README is as short as possible while still covering the
-complete reviewable journey.
+There is no line-count target. A feature README is as short as possible while still covering the complete reviewable
+journey.
 
-Move a subject into a focused sibling document when it needs extensive examples, data shapes, or
-edge-case explanation. Keep a short rule and a link in the parent story. For example, Payroll owns
-its full reviewable journey in `README.md`; a focused sibling is justified only when detailed rules
-would otherwise obscure that journey.
+Move a subject into a focused sibling document when it needs extensive examples, data shapes, or edge-case explanation.
+Keep a short rule and a link in the parent story. For example, Payroll owns its full reviewable journey in `README.md`;
+a focused sibling is justified only when detailed rules would otherwise obscure that journey.
 
-Do not duplicate platform security, testing, deployment, formatting, or architecture standards.
-Reference their canonical guides.
+Do not duplicate platform security, testing, deployment, formatting, or architecture standards. Reference their
+canonical guides.
 
 ## Diagram Format
 
@@ -285,43 +269,37 @@ This rule applies to every committed documentation file, not only feature README
 
 - Every diagram must be stored as Mermaid in a fenced `mermaid` block.
 - ASCII art, PlantUML, Draw.io, Graphviz, and image-only diagrams are not accepted alternatives.
-- Screenshots may illustrate a user interface, but they do not replace the Mermaid source for a
-  flow, state model, sequence, hierarchy, or architecture diagram.
-- Text code blocks may show commands, data, or directory layouts; they must not model relationships
-  or flows.
-- When a changed document contains a non-Mermaid diagram in the edited scope, convert it to Mermaid
-  as part of the same change.
+- Screenshots may illustrate a user interface, but they do not replace the Mermaid source for a flow, state model,
+  sequence, hierarchy, or architecture diagram.
+- Text code blocks may show commands, data, or directory layouts; they must not model relationships or flows.
+- When a changed document contains a non-Mermaid diagram in the edited scope, convert it to Mermaid as part of the same
+  change.
 
 ## Change Process
 
-1. Verify that the capability and its grouping match current navigation, linked routes, and access
-   guards.
-2. Inspect the current feature README, product entry points, business rules, tests, and linked
-   contract behaviour.
+1. Verify that the capability and its grouping match current navigation, linked routes, and access guards.
+2. Inspect the current feature README, product entry points, business rules, tests, and linked contract behaviour.
 3. Define or update the lifecycle and stable story boundaries.
-4. Write functional acceptance criteria, including material boundaries and recovery outcomes,
-   without prescribing UI or UX choices.
-5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from
-   the human product-review state.
+4. Write functional acceptance criteria, including material boundaries and recovery outcomes, without prescribing UI or
+   UX choices.
+5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from the human
+   product-review state.
 6. Refresh focused evidence links and related documentation.
-7. Update `docs/features/README.md`, `docs/02_USER_STORIES.md`, and `docs/README.md` only when
-   navigation or canonical ownership changes.
-8. Keep historical explanations in Git, issues, pull requests, or ADRs rather than the current
-   feature contract.
-9. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md): every changed
-   behavioural source must be linked by, and reviewed through, its canonical feature owner in the
-   same pull request.
+7. Update `docs/features/README.md`, `docs/02_USER_STORIES.md`, and `docs/README.md` only when navigation or canonical
+   ownership changes.
+8. Keep historical explanations in Git, issues, pull requests, or ADRs rather than the current feature contract.
+9. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md): every changed behavioural source
+   must be linked by, and reviewed through, its canonical feature owner in the same pull request.
 
 ## Review Checklist
 
 - [ ] The README covers one complete product capability.
-- [ ] The capability is reachable through a current user journey and grouped under the correct
-      product surface.
+- [ ] The capability is reachable through a current user journey and grouped under the correct product surface.
 - [ ] Scope, versions, actors, and system boundaries are explicit.
 - [ ] The lifecycle matches the story order.
 - [ ] Every story uses `As a`, `I want to`, and `So that` on separate lines.
-- [ ] Every criterion is a functional, observable, independently reviewable outcome that remains
-      valid after a visual redesign.
+- [ ] Every criterion is a functional, observable, independently reviewable outcome that remains valid after a visual
+      redesign.
 - [ ] UI and UX requirements are kept outside feature acceptance criteria.
 - [ ] Statuses, checkboxes, and the human-validation statement agree.
 - [ ] Known gaps are visible and not hidden under `✅ Done`.

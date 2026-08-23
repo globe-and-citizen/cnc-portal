@@ -69,4 +69,5 @@ After completing this step, proceed to `03-create-deployment-documentation.md`
 - Fixed structural issues with duplicate headings
 - Main README is now concise and navigable
 
-The documentation is now significantly improved. You can stop here if time is limited, or continue to Phase 2 for additional improvements.
+The documentation is now significantly improved. You can stop here if time is limited, or continue to Phase 2 for
+additional improvements.

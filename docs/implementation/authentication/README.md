@@ -4,11 +4,11 @@
 
 **Last verified:** 2026-08-21
 
-**Consumers:** [Authentication user journey](../../features/authentication/README.md), the Vue
-client, the administrator dashboard, and every authenticated backend route
+**Consumers:** [Authentication user journey](../../features/authentication/README.md), the Vue client, the administrator
+dashboard, and every authenticated backend route
 
-Authentication has a product facet and an architectural facet. The feature document owns what a user
-experiences; this document owns the shared SIWE and session boundaries.
+Authentication has a product facet and an architectural facet. The feature document owns what a user experiences; this
+document owns the shared SIWE and session boundaries.
 
 ## Runtime Model
 
@@ -37,10 +37,9 @@ sequenceDiagram
 
 ## Responsibility Boundaries
 
-- The client and dashboard own wallet connection, chain switching, SIWE message construction,
-  signature prompts, user-facing errors, and local session storage.
-- The backend owns nonce persistence, SIWE verification, nonce rotation, JWT issuance, and JWT
-  validation.
+- The client and dashboard own wallet connection, chain switching, SIWE message construction, signature prompts,
+  user-facing errors, and local session storage.
+- The backend owns nonce persistence, SIWE verification, nonce rotation, JWT issuance, and JWT validation.
 - RBAC owns authorization after authentication; a valid session does not imply administrator access.
 - Wallet signatures authenticate ownership but do not execute a transaction or consume gas.
 
@@ -54,8 +53,8 @@ sequenceDiagram
 
 ## Failure Behaviour
 
-- Wallet connection, chain switching, signature rejection, nonce retrieval, authentication, and
-  profile retrieval produce distinct client errors where the surface supports them.
+- Wallet connection, chain switching, signature rejection, nonce retrieval, authentication, and profile retrieval
+  produce distinct client errors where the surface supports them.
 - Invalid SIWE payloads or signatures are rejected by the backend.
 - Missing, invalid, or incomplete JWT payloads are rejected before protected handlers run.
 - Dashboard role rejection leads to the access-denied page rather than a protected module.

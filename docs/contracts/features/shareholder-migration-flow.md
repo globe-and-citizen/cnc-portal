@@ -1,7 +1,7 @@
 # Shareholder migration flow
 
-Ce document décrit le flow cible d'un propriétaire d'équipe qui possède des shareholders et migre
-vers une nouvelle génération de contrats.
+Ce document décrit le flow cible d'un propriétaire d'équipe qui possède des shareholders et migre vers une nouvelle
+génération de contrats.
 
 ## Flow UML complet
 
@@ -113,11 +113,11 @@ flowchart TD
 
 ## Notes d'implémentation
 
-Le snapshot persiste les shareholders et la root. Les preuves Merkle sont recalculées à la lecture à
-partir de cette liste déterministe, afin de ne pas dupliquer les données dans la base. Le frontend
-affiche directement le montant du snapshot au shareholder et l'envoie avec sa preuve. Le owner peut
-d'abord dispatcher les claims via `bulkClaim()` — les claims déjà effectués sont ignorés — puis
-appeler séparément `completeMigration()` pour fermer la migration et dégeler les dividendes.
+Le snapshot persiste les shareholders et la root. Les preuves Merkle sont recalculées à la lecture à partir de cette
+liste déterministe, afin de ne pas dupliquer les données dans la base. Le frontend affiche directement le montant du
+snapshot au shareholder et l'envoie avec sa preuve. Le owner peut d'abord dispatcher les claims via `bulkClaim()` — les
+claims déjà effectués sont ignorés — puis appeler séparément `completeMigration()` pour fermer la migration et dégeler
+les dividendes.
 
 Fichiers principaux :
 

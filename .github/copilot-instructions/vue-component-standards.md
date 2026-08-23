@@ -1,10 +1,10 @@
 # Vue Component Standards
 
-> **Canonical reference**: `app/src/components/__tests__/SelectComponent.spec.ts` shows the
-> props/emits/data-test contract from the test side.
+> **Canonical reference**: `app/src/components/__tests__/SelectComponent.spec.ts` shows the props/emits/data-test
+> contract from the test side.
 >
-> See [the frontend-change skill](../../.agents/skills/cnc-frontend-change/SKILL.md) for the
-> workflow that routes frontend changes to these standards.
+> See [the frontend-change skill](../../.agents/skills/cnc-frontend-change/SKILL.md) for the workflow that routes
+> frontend changes to these standards.
 
 ## Composition API only
 
@@ -18,13 +18,12 @@ Keep the requested change scoped. A component should describe what it renders:
 - Put reactive or stateful behaviour in a focused `useXxx` composable.
 - Search `utils/` and `composables/` before adding a near-duplicate helper.
 - Keep server data in its query cache instead of mirroring it into Pinia.
-- Treat a long component script as a signal to separate _coherent_ behaviour, not as a reason to
-  extract a one-consumer controller composable. A composable earns its boundary when it groups
-  reusable reactive behaviour or a real technical boundary.
+- Treat a long component script as a signal to separate _coherent_ behaviour, not as a reason to extract a one-consumer
+  controller composable. A composable earns its boundary when it groups reusable reactive behaviour or a real technical
+  boundary.
 
-If adjacent code materially risks correctness, security, or the behaviour being edited, report it
-and create or use a follow-up issue. Do not expand a focused change into opportunistic component
-refactoring.
+If adjacent code materially risks correctness, security, or the behaviour being edited, report it and create or use a
+follow-up issue. Do not expand a focused change into opportunistic component refactoring.
 
 ## Props
 
@@ -43,30 +42,28 @@ const props = withDefaults(defineProps<Props>(), {
 });
 ```
 
-Avoid `Object as PropType<…>` runtime declarations — strict TS interfaces are clearer and catch
-more.
+Avoid `Object as PropType<…>` runtime declarations — strict TS interfaces are clearer and catch more.
 
 ## Public API surface
 
-Component props, `defineExpose`, and a composable's parameters and return object are public APIs.
-Keep them intentionally small:
+Component props, `defineExpose`, and a composable's parameters and return object are public APIs. Keep them
+intentionally small:
 
 - A component has at most **7 props**.
-- A `useXxx` composable returns at most **8 members** and accepts at most **4 business
-  dependencies**.
-- `defineExpose` is for a documented production parent contract, never to let a test reach state
-  that users cannot reach. Prefer DOM interaction and emitted events in tests.
-- Grouping values into an `options` or configuration object does not bypass the dependency budget:
-  the direct fields still count.
+- A `useXxx` composable returns at most **8 members** and accepts at most **4 business dependencies**.
+- `defineExpose` is for a documented production parent contract, never to let a test reach state that users cannot
+  reach. Prefer DOM interaction and emitted events in tests.
+- Grouping values into an `options` or configuration object does not bypass the dependency budget: the direct fields
+  still count.
 
-The [API-surface check](../../app/scripts/check-api-surface.mjs) runs as part of `npm run lint`. It
-ratchets the current debt in [its baseline](../../app/scripts/api-surface-baseline.json): existing
-entries may shrink or be removed, but a normal change cannot add an entry or increase its allowance.
+The [API-surface check](../../app/scripts/check-api-surface.mjs) runs as part of `npm run lint`. It ratchets the current
+debt in [its baseline](../../app/scripts/api-surface-baseline.json): existing entries may shrink or be removed, but a
+normal change cannot add an entry or increase its allowance.
 
-An exception needs both a coherent reason and an explicit, reviewable annotation immediately above
-the affected component or composable. Use it only for a real technical boundary (for example a
-protocol adapter, a query/mutation wrapper, or a lifecycle listener), or for one strongly cohesive
-public contract. State the boundary and the tracking issue:
+An exception needs both a coherent reason and an explicit, reviewable annotation immediately above the affected
+component or composable. Use it only for a real technical boundary (for example a protocol adapter, a query/mutation
+wrapper, or a lifecycle listener), or for one strongly cohesive public contract. State the boundary and the tracking
+issue:
 
 ```ts
 // @api-surface-exception composableReturnMembers: Protocol adapter boundary tracked in #123.
@@ -75,8 +72,8 @@ export function useProtocolAdapter() {
 }
 ```
 
-The annotation does not make a controller composable acceptable: split unrelated state and actions
-into narrower contracts instead.
+The annotation does not make a controller composable acceptable: split unrelated state and actions into narrower
+contracts instead.
 
 ## Emits
 
@@ -92,8 +89,8 @@ const emit = defineEmits<{
 
 ## `data-test` is mandatory on interactive elements
 
-Buttons, inputs, error messages, dropdowns — anything a test needs to find. CSS classes change;
-`data-test` is a contract.
+Buttons, inputs, error messages, dropdowns — anything a test needs to find. CSS classes change; `data-test` is a
+contract.
 
 ```vue
 <button data-test="submit-button" :disabled="!isValid" @click="handleSubmit">
@@ -110,8 +107,8 @@ Buttons, inputs, error messages, dropdowns — anything a test needs to find. CS
 ## Reactivity
 
 - `ref()` for primitives.
-- `reactive()` only when you genuinely need a deeply-reactive object (rare — most cases are better
-  as multiple `ref`s or `computed`).
+- `reactive()` only when you genuinely need a deeply-reactive object (rare — most cases are better as multiple `ref`s or
+  `computed`).
 - `computed()` for derived values. **Never** mirror with a `watch` what `computed` can do.
 - `shallowRef()` for large frozen datasets you'll replace wholesale.
 
@@ -133,9 +130,8 @@ toast.add({ title: "Saved", color: "success" });
 <UAlert v-if="errorMessage" color="error" :description="errorMessage" />
 ```
 
-For mutations, surface `mutation.error` reactively via `<UAlert />` rather than wrapping
-`mutateAsync` in `try/catch`; see the [query guide](../../app/src/queries/README.md) for the
-mutation architecture:
+For mutations, surface `mutation.error` reactively via `<UAlert />` rather than wrapping `mutateAsync` in `try/catch`;
+see the [query guide](../../app/src/queries/README.md) for the mutation architecture:
 
 ```vue
 <script setup lang="ts">
@@ -150,8 +146,8 @@ const { mutate, error, isPending } = useSubmitFormMutation();
 
 ## Accessibility
 
-ARIA + semantic HTML + keyboard support. The tests must reach every interactive element via
-keyboard, and screen-readers must announce state changes.
+ARIA + semantic HTML + keyboard support. The tests must reach every interactive element via keyboard, and screen-readers
+must announce state changes.
 
 Minimum for a custom dropdown / disclosure:
 
@@ -164,18 +160,15 @@ Minimum for a custom dropdown / disclosure:
 ## Performance
 
 - `defineAsyncComponent(() => import('./Heavy.vue'))` for heavy / rarely-used components.
-- Don't memoize prematurely. `computed` is already memoized; don't wrap it in `useMemo`-like
-  helpers.
-- Clean up listeners and intervals in `onUnmounted` — every `addEventListener` needs a partner
-  `removeEventListener`.
+- Don't memoize prematurely. `computed` is already memoized; don't wrap it in `useMemo`-like helpers.
+- Clean up listeners and intervals in `onUnmounted` — every `addEventListener` needs a partner `removeEventListener`.
 
 ## Anti-patterns
 
-- **`v-if` + `v-for` on the same element.** Use a `computed` filtered list, or `<template v-for>`
-  wrapping a `<li v-if>`.
-- **Watchers as substitutes for `computed`.** If a watcher only sets one value from another, it's a
-  `computed`.
-- **Inline business logic.** If the script block grows past ~50 lines or you have multiple unrelated
-  `try/catch`, identify cohesive reactive behaviour to extract. Do not create a one-consumer
-  controller composable only to reduce line count.
+- **`v-if` + `v-for` on the same element.** Use a `computed` filtered list, or `<template v-for>` wrapping a
+  `<li v-if>`.
+- **Watchers as substitutes for `computed`.** If a watcher only sets one value from another, it's a `computed`.
+- **Inline business logic.** If the script block grows past ~50 lines or you have multiple unrelated `try/catch`,
+  identify cohesive reactive behaviour to extract. Do not create a one-consumer controller composable only to reduce
+  line count.
 - **`wrapper.vm.foo` in tests.** Test the rendered DOM, not internals.

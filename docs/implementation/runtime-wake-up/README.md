@@ -4,11 +4,11 @@
 
 **Last verified:** 2026-08-21
 
-**Consumers:** The Vue client, Nuxt dashboard, backend deployment workflow, and every journey that
-depends on the backend being responsive after an idle period
+**Consumers:** The Vue client, Nuxt dashboard, backend deployment workflow, and every journey that depends on the
+backend being responsive after an idle period
 
-Runtime wake-up is a performance and deployment capability, not a product feature. It reduces the
-impact of idle service startup without changing whether a user action succeeds.
+Runtime wake-up is a performance and deployment capability, not a product feature. It reduces the impact of idle service
+startup without changing whether a user action succeeds.
 
 ## Runtime Model
 
@@ -24,9 +24,9 @@ flowchart LR
   wakeScript --> database[(Database)]
 ```
 
-The public health endpoint reports backend process availability and intentionally performs no
-database query. Database readiness is handled separately by a deployment script that connects,
-executes a minimal query, retries failures, and exits non-zero after the retry budget is exhausted.
+The public health endpoint reports backend process availability and intentionally performs no database query. Database
+readiness is handled separately by a deployment script that connects, executes a minimal query, retries failures, and
+exits non-zero after the retry budget is exhausted.
 
 ## Invariants
 
@@ -38,11 +38,10 @@ executes a minimal query, retries failures, and exits non-zero after the retry b
 
 ## Failure Behaviour
 
-- A failed frontend ping is silently tolerated; the first real API request retains its normal error
-  and retry behaviour.
+- A failed frontend ping is silently tolerated; the first real API request retains its normal error and retry behaviour.
 - The dashboard health request aborts after five seconds and retries twice.
-- The database wake script retries ten times with a three-second delay, then terminates the
-  deployment step with a failure.
+- The database wake script retries ten times with a three-second delay, then terminates the deployment step with a
+  failure.
 
 ## Implementation Evidence
 

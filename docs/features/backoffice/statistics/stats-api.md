@@ -2,14 +2,12 @@
 
 ## Overview
 
-The Statistics API provides comprehensive analytics and metrics for the CNC Portal platform. It
-offers insights into teams, users, claims, wages, expenses, contracts, board actions, and recent
-activity across the system.
+The Statistics API provides comprehensive analytics and metrics for the CNC Portal platform. It offers insights into
+teams, users, claims, wages, expenses, contracts, board actions, and recent activity across the system.
 
 **Base URL**: `/api/stats`
 
-**Authentication**: All endpoints require JWT authentication via the `Authorization: Bearer <token>`
-header.
+**Authentication**: All endpoints require JWT authentication via the `Authorization: Bearer <token>` header.
 
 ## Table of Contents
 
@@ -29,8 +27,7 @@ header.
 
 ## Overview Statistics
 
-Get comprehensive platform-wide statistics including teams, members, claims, expenses, contracts,
-and growth metrics.
+Get comprehensive platform-wide statistics including teams, members, claims, expenses, contracts, and growth metrics.
 
 **Endpoint**: `GET /api/stats/overview`
 
@@ -418,8 +415,7 @@ Get statistics about board of director actions including execution rates.
 
 ## Recent Activity
 
-Get a feed of recent activities across the platform including claims, expenses, actions, and
-contracts.
+Get a feed of recent activities across the platform including claims, expenses, actions, and contracts.
 
 **Endpoint**: `GET /api/stats/activity/recent`
 
@@ -598,29 +594,24 @@ console.log(stats);
 
 ## Rate Limiting
 
-The Statistics API is protected by rate limiting configured at the server level. The default rate
-limit is 100,000 requests per 15 minutes per IP address.
+The Statistics API is protected by rate limiting configured at the server level. The default rate limit is 100,000
+requests per 15 minutes per IP address.
 
 ---
 
 ## Best Practices
 
-1. **Cache Results**: Statistics data doesn't change frequently. Consider caching responses for
-   appropriate durations.
+1. **Cache Results**: Statistics data doesn't change frequently. Consider caching responses for appropriate durations.
 
-2. **Use Appropriate Periods**: Select the smallest period that meets your needs to reduce server
-   load.
+2. **Use Appropriate Periods**: Select the smallest period that meets your needs to reduce server load.
 
-3. **Pagination**: For endpoints with large result sets, use pagination to avoid loading unnecessary
-   data.
+3. **Pagination**: For endpoints with large result sets, use pagination to avoid loading unnecessary data.
 
-4. **Team Filtering**: When working with team-specific views, always use the `teamId` parameter to
-   reduce response size.
+4. **Team Filtering**: When working with team-specific views, always use the `teamId` parameter to reduce response size.
 
 5. **Error Handling**: Implement proper error handling for network failures and API errors.
 
-6. **Token Management**: Ensure JWT tokens are refreshed before expiration to avoid authentication
-   errors.
+6. **Token Management**: Ensure JWT tokens are refreshed before expiration to avoid authentication errors.
 
 ---
 

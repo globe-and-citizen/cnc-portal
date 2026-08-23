@@ -6,14 +6,14 @@
 
 ## Problem
 
-The platform documentation (especially architecture.md) mentions diagrams and architecture overviews
-but may lack actual visual diagrams. Visual representations help developers understand the system
-structure more quickly than text descriptions.
+The platform documentation (especially architecture.md) mentions diagrams and architecture overviews but may lack actual
+visual diagrams. Visual representations help developers understand the system structure more quickly than text
+descriptions.
 
 ## Solution
 
-Create or enhance visual diagrams for key architectural concepts using Mermaid (markdown-compatible)
-or include links to external diagrams.
+Create or enhance visual diagrams for key architectural concepts using Mermaid (markdown-compatible) or include links to
+external diagrams.
 
 ## AI Prompt
 

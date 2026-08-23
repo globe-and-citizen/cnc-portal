@@ -2,13 +2,12 @@
 
 ## Global mocks are mandatory
 
-The Vitest setup files under [`setup/`](./setup) call `vi.mock(...)` once for every commonly used
-dependency: wagmi (`@wagmi/vue`, `@wagmi/core`, `@/wagmi.config`), `viem`, TanStack Query, Apollo,
-Pinia stores (`@/stores/*`), the canned `@/queries/*.queries` hooks, the ERC20-style
-`@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives (`Modal`, `Tooltip`,
-`SelectMenu`, `Icon`, `Button`, `Calendar`, `Popover`, `DropdownMenu`), `@/lib/axios`, `@/utils`,
-and more. Per-test override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) are
-re-exported from [`@/tests/mocks`](./mocks).
+The Vitest setup files under [`setup/`](./setup) call `vi.mock(...)` once for every commonly used dependency: wagmi
+(`@wagmi/vue`, `@wagmi/core`, `@/wagmi.config`), `viem`, TanStack Query, Apollo, Pinia stores (`@/stores/*`), the canned
+`@/queries/*.queries` hooks, the ERC20-style `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI
+primitives (`Modal`, `Tooltip`, `SelectMenu`, `Icon`, `Button`, `Calendar`, `Popover`, `DropdownMenu`), `@/lib/axios`,
+`@/utils`, and more. Per-test override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) are re-exported
+from [`@/tests/mocks`](./mocks).
 
 **Specs must reuse the global mocks**, not re-declare them locally:
 
@@ -23,20 +22,19 @@ beforeEach(() => resetERC20Mocks());
 mockERC20Reads.balanceOf.data.value = 1000n;
 ```
 
-ESLint enforces this via `no-restricted-syntax`: any `vi.mock('<globally-mocked-path>')` call in a
-spec file is an error. The banned-path list lives in
-[`app/eslint.config.js`](../../eslint.config.js) under `bannedGlobalMockPaths`. The full mock system
-is documented in [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md).
+ESLint enforces this via `no-restricted-syntax`: any `vi.mock('<globally-mocked-path>')` call in a spec file is an
+error. The banned-path list lives in [`app/eslint.config.js`](../../eslint.config.js) under `bannedGlobalMockPaths`. The
+full mock system is documented in [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md).
 
-If you need to mock a module that **isn't** yet globally mocked but you're reaching for it across
-several specs, add it to `src/tests/setup/` and re-export the override hook from
-`src/tests/mocks/index.ts` rather than re-mocking it in each spec.
+If you need to mock a module that **isn't** yet globally mocked but you're reaching for it across several specs, add it
+to `src/tests/setup/` and re-export the override hook from `src/tests/mocks/index.ts` rather than re-mocking it in each
+spec.
 
 ## Mounting components: `renderWithProviders`
 
-`renderWithProviders` (from [`@/tests/mocks`](./mocks)) is the **default mounting path** for
-component specs. It is a drop-in for `mount` that installs the providers nearly every spec needs —
-`createTestingPinia` and the route stub — so you stop copy-pasting `global.plugins` into every file.
+`renderWithProviders` (from [`@/tests/mocks`](./mocks)) is the **default mounting path** for component specs. It is a
+drop-in for `mount` that installs the providers nearly every spec needs — `createTestingPinia` and the route stub — so
+you stop copy-pasting `global.plugins` into every file.
 
 ```typescript
 // ❌ Before — every spec hand-rolls the same plugins block
@@ -58,10 +56,9 @@ const wrapper = renderWithProviders(MyComponent, {
 });
 ```
 
-The returned wrapper targets the component itself, so `props`, `emitted()`, `setProps`, `find`,
-`findComponent`, etc. all behave exactly as with `mount`. Any `mount` option you pass through
-(`props`, `attrs`, `slots`, `global.stubs`, …) is forwarded — the helper only **adds** to
-`global.plugins`, it never clobbers your `global` block:
+The returned wrapper targets the component itself, so `props`, `emitted()`, `setProps`, `find`, `findComponent`, etc.
+all behave exactly as with `mount`. Any `mount` option you pass through (`props`, `attrs`, `slots`, `global.stubs`, …)
+is forwarded — the helper only **adds** to `global.plugins`, it never clobbers your `global` block:
 
 ```typescript
 // Compose with local stubs — the helper merges them with the global ones
@@ -87,18 +84,16 @@ All [`mount` options](https://test-utils.vuejs.org/api/#mount) are accepted, plu
 renderWithProviders(MyView, { pinia: false, route: { params: { id: "42" } } });
 ```
 
-> **Pinia note:** `createTestingPinia` is installed by default, but the global
-> `vi.mock('@/stores/*')` still wins for the stores it mocks (see
-> [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md)). Pass `pinia: false` when a
-> spec relies entirely on the mocked stores and you want to make that explicit.
+> **Pinia note:** `createTestingPinia` is installed by default, but the global `vi.mock('@/stores/*')` still wins for
+> the stores it mocks (see [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md)). Pass `pinia: false`
+> when a spec relies entirely on the mocked stores and you want to make that explicit.
 
 ## Testing Components that Use Nuxt UI
 
 ### TL;DR
 
-**Most Nuxt UI components are already stubbed globally.** Just `mount()` your component — no extra
-setup needed for `UButton`, `UIcon`, `UModal`, `UTooltip`, `USelectMenu`, `UDropdownMenu`, or
-`UCalendar`.
+**Most Nuxt UI components are already stubbed globally.** Just `mount()` your component — no extra setup needed for
+`UButton`, `UIcon`, `UModal`, `UTooltip`, `USelectMenu`, `UDropdownMenu`, or `UCalendar`.
 
 ```typescript
 import { mount } from "@vue/test-utils";
@@ -128,9 +123,9 @@ These are replaced automatically in every test via `src/tests/setup/nuxt-ui.setu
 
 ### Components NOT Globally Stubbed
 
-`UInput`, `UForm`, `UFormField`, `UTextarea`, `USelect`, `UCheckbox`, `USwitch`, `URadioGroup`,
-`UTable`, `UBadge`, `UAlert`, `UCard`, `UAvatar`, `USkeleton`, `USeparator`, etc. render their real
-implementation in tests. This keeps form/table/display behavior realistic.
+`UInput`, `UForm`, `UFormField`, `UTextarea`, `USelect`, `UCheckbox`, `USwitch`, `URadioGroup`, `UTable`, `UBadge`,
+`UAlert`, `UCard`, `UAvatar`, `USkeleton`, `USeparator`, etc. render their real implementation in tests. This keeps
+form/table/display behavior realistic.
 
 If one of these causes issues in your test, stub it locally in your `mount()` call.
 
@@ -140,8 +135,8 @@ Two patterns are flagged by ESLint and must not be added to new specs.
 
 ### 1. Asserting on Tailwind / utility classes
 
-Tests that assert on framework-specific class names break on every styling refactor — a class rename
-in a Vue file triggers test failures unrelated to behavior.
+Tests that assert on framework-specific class names break on every styling refactor — a class rename in a Vue file
+triggers test failures unrelated to behavior.
 
 ```typescript
 // ❌ Don't
@@ -154,14 +149,14 @@ expect(wrapper.text()).toContain("Pending");
 expect(wrapper.emitted("confirm")).toBeTruthy();
 ```
 
-If a class genuinely encodes domain semantics (rare), use a `data-test`/`data-state` attribute on
-the element instead and assert against that.
+If a class genuinely encodes domain semantics (rare), use a `data-test`/`data-state` attribute on the element instead
+and assert against that.
 
 ### 2. Casting `wrapper.vm` to reach internal state
 
-`wrapper.vm as XxxVm` couples tests to component internals — refs, computed properties, helper
-functions. The test passes whether or not the component is wired to the DOM, so it can't catch
-wiring regressions, and any rename inside the component breaks the test for no good reason.
+`wrapper.vm as XxxVm` couples tests to component internals — refs, computed properties, helper functions. The test
+passes whether or not the component is wired to the DOM, so it can't catch wiring regressions, and any rename inside the
+component breaks the test for no good reason.
 
 ```typescript
 // ❌ Don't
@@ -182,15 +177,15 @@ Use:
 - `data-test` selectors and DOM events (`trigger('click')`, `setValue(...)`) to drive the component.
 - `wrapper.emitted(...)` to assert outputs.
 - `wrapper.setProps(...)` and rendered text/attributes to assert state.
-- `wrapper.findComponent({ name: 'UFoo' }).props(...)` when you need to verify what a child receives
-  — props are part of the contract, internal helpers are not.
+- `wrapper.findComponent({ name: 'UFoo' }).props(...)` when you need to verify what a child receives — props are part of
+  the contract, internal helpers are not.
 
 `app/src/components/forms/__tests__/TokenAmount.spec.ts` is the reference example for the pattern.
 
 ## Replacing `wrapper.vm as X`
 
-`wrapper.vm` casts are rejected in every spec. Replace a cast with the observable interaction that
-would drive the component in production. Here is the recipe per cast type.
+`wrapper.vm` casts are rejected in every spec. Replace a cast with the observable interaction that would drive the
+component in production. Here is the recipe per cast type.
 
 ### Cast type 1 — state mutation
 
@@ -199,9 +194,8 @@ would drive the component in production. Here is the recipe per cast type.
 Find the input bound to that field (`v-model="..."`) and drive it through its real surface:
 
 - **Native input** — `wrapper.find('input[data-test="..."]').setValue('foo')`
-- **Nuxt UI auto-imported component not in the global stub list** (`UInput`, `USelect`, `UTable`, …)
-  — register a local mock to expose the stub under a queryable `name`, then emit
-  `update:modelValue`:
+- **Nuxt UI auto-imported component not in the global stub list** (`UInput`, `USelect`, `UTable`, …) — register a local
+  mock to expose the stub under a queryable `name`, then emit `update:modelValue`:
   ```ts
   vi.mock("@nuxt/ui/components/Input.vue", () => ({
     default: defineComponent({
@@ -216,8 +210,8 @@ Find the input bound to that field (`v-model="..."`) and drive it through its re
     .findComponent({ name: "UInput" })
     .vm.$emit("update:modelValue", "foo");
   ```
-  Auto-imports bypass `global.stubs`; `vi.mock` is the reliable hook. See "Adding a New Global Stub"
-  above for the canonical recipe.
+  Auto-imports bypass `global.stubs`; `vi.mock` is the reliable hook. See "Adding a New Global Stub" above for the
+  canonical recipe.
 - **Local child form component** —
   `wrapper.findComponent({ name: 'SelectMember' }).vm.$emit('update:modelValue', { address: '0x...' })`
 
@@ -225,8 +219,8 @@ Find the input bound to that field (`v-model="..."`) and drive it through its re
 
 `(wrapper.vm as X).handleSubmit(payload)` / `vm.openModal()`
 
-The parent listens to a child's emit (e.g. `@submit="handleSubmit"`). Drive the emit, or the
-user-action that triggers it:
+The parent listens to a child's emit (e.g. `@submit="handleSubmit"`). Drive the emit, or the user-action that triggers
+it:
 
 ```ts
 // Drive the child form's submit emit
@@ -238,8 +232,8 @@ await wrapper
 await wrapper.find('[data-test="pay-dividends-button"]').trigger("click");
 ```
 
-If a button carries `:disabled` (e.g. a `coming soon` feature flag) and a DOM click is suppressed,
-emit the click on the component to bypass the HTML disabled while preserving the `@click` binding:
+If a button carries `:disabled` (e.g. a `coming soon` feature flag) and a DOM click is suppressed, emit the click on the
+component to bypass the HTML disabled while preserving the `@click` binding:
 
 ```ts
 await wrapper.findComponent({ name: "ActionButton" }).vm.$emit("click");
@@ -252,16 +246,15 @@ await wrapper.findComponent({ name: "ActionButton" }).vm.$emit("click");
 Read from the observable surface the parent passes downstream:
 
 - **Computed passed to a child** — `wrapper.findComponent({ name: 'UTable' }).props('data')`
-- **Error message rendered in UAlert** — `wrapper.text()` or
-  `wrapper.findComponent({ name: 'UAlert' }).text()`
-- **Modal open state** — `wrapper.findComponent({ name: 'UModal' }).props('open')`, or assert that
-  the modal's slot content is rendered (`findComponent(InnerForm).exists()`)
+- **Error message rendered in UAlert** — `wrapper.text()` or `wrapper.findComponent({ name: 'UAlert' }).text()`
+- **Modal open state** — `wrapper.findComponent({ name: 'UModal' }).props('open')`, or assert that the modal's slot
+  content is rendered (`findComponent(InnerForm).exists()`)
 
 ### Cast type 4 — `defineExpose`'d public API
 
-If a component does `defineExpose({ reset, openModalForDay })`, those methods are part of its
-contract — but `wrapper.vm.reset()` still trips the lint rule, and rightly so: the test should
-consume the API the way a real parent does.
+If a component does `defineExpose({ reset, openModalForDay })`, those methods are part of its contract — but
+`wrapper.vm.reset()` still trips the lint rule, and rightly so: the test should consume the API the way a real parent
+does.
 
 **Preferred — `ParentHarness` pattern.** Mount through a tiny harness that holds a template ref:
 
@@ -279,11 +272,10 @@ const wrapper = mount(ParentHarness);
 wrapper.vm.callReset(); // accesses the harness's own surface — not a cast
 ```
 
-`app/src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts` is
-the reference example.
+`app/src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts` is the reference example.
 
-**Fallback — scoped `eslint-disable` with a reason.** If a harness is overkill (the API has no real
-consumer yet), document inline:
+**Fallback — scoped `eslint-disable` with a reason.** If a harness is overkill (the API has no real consumer yet),
+document inline:
 
 ```ts
 // eslint-disable-next-line no-restricted-syntax -- defineExpose'd public API, no UI event triggers it
@@ -294,11 +286,10 @@ const vm = wrapper.vm as unknown as { openModalForDay: (day: Date) => void };
 
 Sparingly, and always with a `-- <reason>` after the rule name:
 
-- **Unreachable defensive branch.** A guard like `if (amount === 0)` in `submit()` that an upstream
-  Zod schema already rejects. Either delete the dead guard, or keep the cast as proof the guard
-  exists for defense-in-depth.
-- **Pure computed without UI surface.** Values like `activeMembers`, `tokenBalance` consumed only by
-  other internals; nothing observable renders them.
+- **Unreachable defensive branch.** A guard like `if (amount === 0)` in `submit()` that an upstream Zod schema already
+  rejects. Either delete the dead guard, or keep the cast as proof the guard exists for defense-in-depth.
+- **Pure computed without UI surface.** Values like `activeMembers`, `tokenBalance` consumed only by other internals;
+  nothing observable renders them.
 - **`defineExpose`'d API not yet wired to a parent.** See above.
 
 Code review will quote the `--` reason, so make it specific.
@@ -361,8 +352,8 @@ await items[0].trigger("click");
 
 ### When you need the REAL component
 
-If your test specifically exercises the real Nuxt UI component's behavior (e.g. testing
-`USelectMenu`'s search/filter logic), override the stub locally:
+If your test specifically exercises the real Nuxt UI component's behavior (e.g. testing `USelectMenu`'s search/filter
+logic), override the stub locally:
 
 ```typescript
 import { mount } from "@vue/test-utils";
@@ -382,14 +373,14 @@ const wrapper = mount(MyComponent, {
 });
 ```
 
-Both steps are required: `vi.unmock()` restores the real module, and `stubs: { X: false }` disables
-the name-based global stubs.
+Both steps are required: `vi.unmock()` restores the real module, and `stubs: { X: false }` disables the name-based
+global stubs.
 
 ## Provider Contexts (TooltipProvider)
 
-Some reka-ui primitives require a `TooltipProvider` ancestor. `UTooltip` is already globally mocked,
-so you normally don't need this. But if you test a component that uses reka-ui primitives directly,
-pass `tooltipProvider: true` to `renderWithProviders`:
+Some reka-ui primitives require a `TooltipProvider` ancestor. `UTooltip` is already globally mocked, so you normally
+don't need this. But if you test a component that uses reka-ui primitives directly, pass `tooltipProvider: true` to
+`renderWithProviders`:
 
 ```typescript
 import { renderWithProviders } from "@/tests/mocks";
@@ -397,8 +388,8 @@ import { renderWithProviders } from "@/tests/mocks";
 const wrapper = renderWithProviders(MyComponent, { tooltipProvider: true });
 ```
 
-When `tooltipProvider` is enabled the returned wrapper targets the inner component, so `setProps` is
-unavailable — drive props through the DOM or the initial `props` option instead.
+When `tooltipProvider` is enabled the returned wrapper targets the inner component, so `setProps` is unavailable — drive
+props through the DOM or the initial `props` option instead.
 
 ## Adding a New Global Stub
 
@@ -435,14 +426,12 @@ If you find yourself stubbing the same Nuxt UI component in many tests, add it t
    };
    ```
 
-**Why both?** Auto-imported components may be registered internally by filename (e.g. `MyComponent`)
-rather than by the auto-import alias (`UMyComponent`). Registering both keys ensures the stub is
-always matched.
+**Why both?** Auto-imported components may be registered internally by filename (e.g. `MyComponent`) rather than by the
+auto-import alias (`UMyComponent`). Registering both keys ensures the stub is always matched.
 
 **Why `vi.mock` AND `config.global.stubs`?**
 
-- `vi.mock` intercepts module imports — catches components imported by other `@nuxt/ui` components
-  internally.
+- `vi.mock` intercepts module imports — catches components imported by other `@nuxt/ui` components internally.
 - `config.global.stubs` matches by component name at render time — catches auto-imported components.
 - Together they cover every import path.
 
@@ -451,15 +440,14 @@ always matched.
 When writing a stub:
 
 - **Keep it simple** — stubs exist to remove complexity, not replicate behavior.
-- **Forward relevant props/events** — if the parent test checks `modelValue` or emits, the stub must
-  support them.
+- **Forward relevant props/events** — if the parent test checks `modelValue` or emits, the stub must support them.
 - **Use `data-test` attributes** for querying (e.g. `data-test="u-select-menu"`).
-- **Don't render text content from icon names** — use `data-icon` attribute instead, to avoid
-  polluting `.text()` assertions.
-- **Don't declare `class` as a prop** — let it pass through as an attribute so parent `:class`
-  bindings apply to the root element.
-- **Reflect `loading` in `disabled`** for interactive stubs — matches real Nuxt UI behavior where
-  loading implies disabled.
+- **Don't render text content from icon names** — use `data-icon` attribute instead, to avoid polluting `.text()`
+  assertions.
+- **Don't declare `class` as a prop** — let it pass through as an attribute so parent `:class` bindings apply to the
+  root element.
+- **Reflect `loading` in `disabled`** for interactive stubs — matches real Nuxt UI behavior where loading implies
+  disabled.
 
 ## Troubleshooting
 
@@ -474,11 +462,10 @@ Auto-imported components may be registered under the filename (without the `U` p
 
 ### The real component renders despite a global stub
 
-The component is likely auto-imported via a path not covered by `vi.mock()`. Add a `vi.mock()` entry
-for its module path, or add its filename-based name to `config.global.stubs` (e.g. `SelectMenu`
-alongside `USelectMenu`).
+The component is likely auto-imported via a path not covered by `vi.mock()`. Add a `vi.mock()` entry for its module
+path, or add its filename-based name to `config.global.stubs` (e.g. `SelectMenu` alongside `USelectMenu`).
 
 ### My test checks Nuxt UI's CSS classes and they're missing
 
-Stubs don't replicate Nuxt UI's theming classes. Either override the stub locally
-(`stubs: { UButton: false }`) or assert on the props/bound classes rather than the theme classes.
+Stubs don't replicate Nuxt UI's theming classes. Either override the stub locally (`stubs: { UButton: false }`) or
+assert on the props/bound classes rather than the theme classes.

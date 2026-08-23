@@ -6,11 +6,13 @@
 
 ## Problem
 
-The file `/docs/platform/development-standards.md` is referenced in the documentation structure but does not exist. This means developers lack a central reference for coding standards, best practices, and quality requirements.
+The file `/docs/platform/development-standards.md` is referenced in the documentation structure but does not exist. This
+means developers lack a central reference for coding standards, best practices, and quality requirements.
 
 ## Solution
 
-Create comprehensive development standards documentation that consolidates existing guidelines and establishes clear expectations.
+Create comprehensive development standards documentation that consolidates existing guidelines and establishes clear
+expectations.
 
 ## AI Prompt
 

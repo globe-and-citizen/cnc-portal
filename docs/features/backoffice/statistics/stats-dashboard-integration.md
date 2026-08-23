@@ -2,9 +2,8 @@
 
 ## Overview
 
-This guide explains how to integrate and use the Statistics API in the Nuxt Dashboard application.
-It covers the composable usage, component implementation, and best practices for displaying
-statistics.
+This guide explains how to integrate and use the Statistics API in the Nuxt Dashboard application. It covers the
+composable usage, component implementation, and best practices for displaying statistics.
 
 ## Architecture
 
@@ -49,8 +48,7 @@ export interface StatsOverview {
 
 ### 2. The useStats Composable
 
-The `useStats` composable (`/dashboard/app/composables/useStats.ts`) provides a clean API for
-fetching statistics:
+The `useStats` composable (`/dashboard/app/composables/useStats.ts`) provides a clean API for fetching statistics:
 
 ```typescript
 const {

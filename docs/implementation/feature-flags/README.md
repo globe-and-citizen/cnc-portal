@@ -1,16 +1,14 @@
 # Feature Flag Evaluation
 
-**Scope:** Persisted global settings, team overrides, administrator APIs, and consuming feature
-enforcement
+**Scope:** Persisted global settings, team overrides, administrator APIs, and consuming feature enforcement
 
 **Last verified:** 2026-08-21
 
-**Consumers:** [Feature Restrictions](../../features/backoffice/feature-restrictions/README.md) and
-the Payroll claim-submission window
+**Consumers:** [Feature Restrictions](../../features/backoffice/feature-restrictions/README.md) and the Payroll
+claim-submission window
 
-Feature Restrictions is the administrator-facing product capability. Feature Flag Evaluation is the
-architectural capability that stores settings, resolves overrides, and supplies effective status to
-consuming behaviour.
+Feature Restrictions is the administrator-facing product capability. Feature Flag Evaluation is the architectural
+capability that stores settings, resolves overrides, and supplies effective status to consuming behaviour.
 
 ## Runtime Model
 
@@ -29,9 +27,9 @@ flowchart TB
 
 ## Effective Status
 
-Persisted status values are `enabled`, `disabled`, and `beta`. For a team-scoped lookup, the
-resolver returns the team override first, then the global setting, then `null`. The consuming
-feature owns the meaning of each status and the missing-setting fallback.
+Persisted status values are `enabled`, `disabled`, and `beta`. For a team-scoped lookup, the resolver returns the team
+override first, then the global setting, then `null`. The consuming feature owns the meaning of each status and the
+missing-setting fallback.
 
 For the current `SUBMIT_RESTRICTION` consumer:
 

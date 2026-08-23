@@ -26,7 +26,8 @@ vi.mock("@wagmi/core", () => ({
 }));
 ```
 
-Don't mock viem — mock the wagmi layer the app actually calls. If you find yourself reaching for `viem` mocks, the production code is probably bypassing wagmi's abstraction.
+Don't mock viem — mock the wagmi layer the app actually calls. If you find yourself reaching for `viem` mocks, the
+production code is probably bypassing wagmi's abstraction.
 
 ## Address constants
 
@@ -90,7 +91,8 @@ expect(mockToast.add).toHaveBeenCalledWith(
 
 Cover at minimum:
 
-- **User-rejected** (wallet popup dismissed) — wagmi throws `UserRejectedRequestError`. Map to a non-error toast (info / silent), never a red error toast.
+- **User-rejected** (wallet popup dismissed) — wagmi throws `UserRejectedRequestError`. Map to a non-error toast (info /
+  silent), never a red error toast.
 - **Insufficient funds** — surface a useful message ("Insufficient funds for transaction"), not the raw RPC string.
 - **Revert with reason** — extract the reason; assert the user-friendly mapping.
 
@@ -139,6 +141,7 @@ expect(mockToast.add).toHaveBeenCalledWith(
 
 ## What NOT to do
 
-- Don't run a real local node in unit tests (that's E2E territory — Hardhat in `contract/`, or Synpress in `app/test/e2e/`).
+- Don't run a real local node in unit tests (that's E2E territory — Hardhat in `contract/`, or Synpress in
+  `app/test/e2e/`).
 - Don't assert on tx hashes byte-for-byte; use `expect.stringMatching(/^0x[a-fA-F0-9]+$/)`.
 - Don't mock `useToast` per-test — once at the top of the file is enough.

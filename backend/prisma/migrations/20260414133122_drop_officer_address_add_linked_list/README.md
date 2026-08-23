@@ -2,16 +2,25 @@
 
 ## What it does
 
-Replaces the denormalized `Team.officerAddress` column with a linked list on `TeamOfficer`. After this migration, the **current Officer** for a team is derived from the linked list — it is the row whose `nextOfficer` is null (no successor exists yet).
+Replaces the denormalized `Team.officerAddress` column with a linked list on `TeamOfficer`. After this migration, the
+**current Officer** for a team is derived from the linked list — it is the row whose `nextOfficer` is null (no successor
+exists yet).
 
-- **Adds** `TeamOfficer.previousOfficerId` (INTEGER, nullable, unique, FK → `TeamOfficer.id`). Each row points back to its predecessor. The unique constraint enforces that each officer has at most one direct successor (chain, not tree).
-- **Drops** `Team.officerAddress`. The single source of truth for "which Officer is currently active for this team" is now the linked list head.
+- **Adds** `TeamOfficer.previousOfficerId` (INTEGER, nullable, unique, FK → `TeamOfficer.id`). Each row points back to
+  its predecessor. The unique constraint enforces that each officer has at most one direct successor (chain, not tree).
+- **Drops** `Team.officerAddress`. The single source of truth for "which Officer is currently active for this team" is
+  now the linked list head.
 
 ## Impact on existing production data
 
-- **No backfill needed for `previousOfficerId`.** At the time the previous migration `20260414110402_add_team_officer_history` ran, exactly one `TeamOfficer` row was created per team (whichever Officer that team had at the time). Since no team has had an Officer redeploy yet, every existing `TeamOfficer` is the head of its (one-element) chain. `previousOfficerId` stays NULL for all rows.
-- **Dropping `Team.officerAddress`** loses no information: every team that had a non-null `officerAddress` already has a corresponding `TeamOfficer` row from the previous migration, so the address is preserved on the `TeamOfficer` side.
-- **API consumers** that previously read `team.officerAddress` from the backend must now read `team.currentOfficer.address`. The backend serializes `currentOfficer` (the linked list head) on every team read.
+- **No backfill needed for `previousOfficerId`.** At the time the previous migration
+  `20260414110402_add_team_officer_history` ran, exactly one `TeamOfficer` row was created per team (whichever Officer
+  that team had at the time). Since no team has had an Officer redeploy yet, every existing `TeamOfficer` is the head of
+  its (one-element) chain. `previousOfficerId` stays NULL for all rows.
+- **Dropping `Team.officerAddress`** loses no information: every team that had a non-null `officerAddress` already has a
+  corresponding `TeamOfficer` row from the previous migration, so the address is preserved on the `TeamOfficer` side.
+- **API consumers** that previously read `team.officerAddress` from the backend must now read
+  `team.currentOfficer.address`. The backend serializes `currentOfficer` (the linked list head) on every team read.
 
 ### Rows NOT touched
 
@@ -19,14 +28,17 @@ Replaces the denormalized `Team.officerAddress` column with a linked list on `Te
 
 ### Idempotency
 
-Plain DDL — re-applying would fail on the second run (column already dropped, FK already exists). Use `prisma migrate deploy` which tracks applied migrations.
+Plain DDL — re-applying would fail on the second run (column already dropped, FK already exists). Use
+`prisma migrate deploy` which tracks applied migrations.
 
 ## Production deploy checklist
 
 1. **Snapshot the production database** before deploying.
-2. **Deploy the new backend code** containing this migration. `prisma migrate deploy` runs the migration as part of the release.
+2. **Deploy the new backend code** containing this migration. `prisma migrate deploy` runs the migration as part of the
+   release.
 3. **Run the verification queries below**.
-4. The frontend release must ship in the same window — clients that still call the old API expecting `team.officerAddress` will see the field disappear.
+4. The frontend release must ship in the same window — clients that still call the old API expecting
+   `team.officerAddress` will see the field disappear.
 
 ## Verification queries
 
@@ -86,4 +98,6 @@ DELETE FROM "_prisma_migrations" WHERE "migration_name" = '20260414133122_drop_o
 COMMIT;
 ```
 
-The rollback is lossless for any team that still has a single linear chain. If multiple Officer redeployments have happened post-migration, the rollback collapses the history (only the current head is preserved in `Team.officerAddress`) — but the `TeamOfficer` archive rows are not deleted, so historical data survives.
+The rollback is lossless for any team that still has a single linear chain. If multiple Officer redeployments have
+happened post-migration, the rollback collapses the history (only the current head is preserved in
+`Team.officerAddress`) — but the `TeamOfficer` archive rows are not deleted, so historical data survives.

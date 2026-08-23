@@ -9,8 +9,7 @@ This index owns CNC Portal's shared architectural capabilities. Product features
 [`docs/contracts/`](../contracts/README.md), and development tooling remains under
 [`docs/development-guide/`](../development-guide/README.md).
 
-Capability documents describe verified current runtime behaviour. Their structure and ownership are
-defined by the
+Capability documents describe verified current runtime behaviour. Their structure and ownership are defined by the
 [Implementation Documentation Guide](../platform/implementation-documentation-guide.md).
 
 ## Capability Inventory
@@ -32,8 +31,7 @@ flowchart LR
 
 ## Updating This Index
 
-1. Confirm that the subject is not a direct product outcome, contract behaviour, or development
-   tool.
+1. Confirm that the subject is not a direct product outcome, contract behaviour, or development tool.
 2. Create `docs/implementation/<capability>/README.md`.
 3. Link every consuming product feature and subsystem.
 4. Add the capability here after current code and representative tests have been inspected.

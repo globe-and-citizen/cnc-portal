@@ -216,7 +216,8 @@ sequenceDiagram
 
 ## Data Flow: Dividend Distribution
 
-Distribution is **push-based** — one owner transaction immediately distributes to all shareholders. There is no claim step.
+Distribution is **push-based** — one owner transaction immediately distributes to all shareholders. There is no claim
+step.
 
 ```mermaid
 sequenceDiagram

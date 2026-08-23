@@ -1,7 +1,7 @@
 # Authentication Flow avec Bruno
 
-Ce dossier contient une séquence complète d'authentification SIWE (Sign-In with Ethereum) qui
-démontre le chaînage de requêtes avec Bruno.
+Ce dossier contient une séquence complète d'authentification SIWE (Sign-In with Ethereum) qui démontre le chaînage de
+requêtes avec Bruno.
 
 ## Structure du Flow
 

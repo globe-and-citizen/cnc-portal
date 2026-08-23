@@ -69,8 +69,8 @@ createOfficer({
 
 ### 2. Distribute Dividends
 
-Distribution is **push-based**: one owner transaction immediately transfers funds to all
-shareholders. There is no separate claim step.
+Distribution is **push-based**: one owner transaction immediately transfers funds to all shareholders. There is no
+separate claim step.
 
 **ETH Dividends**:
 

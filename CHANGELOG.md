@@ -76,8 +76,7 @@
   ([33a925b](https://github.com/globe-and-citizen/cnc-portal/commit/33a925b45247f06e3e71a950cdce8710c041a2c7))
 - add currency change handler and toast notification in EditUserForm
   ([130138e](https://github.com/globe-and-citizen/cnc-portal/commit/130138ece707da0b3cad1c86e31f7e08c091b568))
-- add date
-  ([b245888](https://github.com/globe-and-citizen/cnc-portal/commit/b245888831fe39903897079338f73d443c8f6973))
+- add date ([b245888](https://github.com/globe-and-citizen/cnc-portal/commit/b245888831fe39903897079338f73d443c8f6973))
 - add disapprove action
   ([d04a80c](https://github.com/globe-and-citizen/cnc-portal/commit/d04a80c0f1e885156c502dae5a0f928d5399b747))
 - add error handling and toast notifications for team fetching errors
@@ -100,10 +99,8 @@
   ([a7f6626](https://github.com/globe-and-citizen/cnc-portal/commit/a7f66267f7a8caf2e9e510b00634725c15cbc8e5))
 - add is weekly claim prop
   ([b5eca78](https://github.com/globe-and-citizen/cnc-portal/commit/b5eca787c1d9d3eed8bce51a790122071ec0e4f7))
-- add key
-  ([d09181c](https://github.com/globe-and-citizen/cnc-portal/commit/d09181cec66cc50c8d280e39db6c956a99ecf20c))
-- add key
-  ([ca43774](https://github.com/globe-and-citizen/cnc-portal/commit/ca4377476d133058dd5448b59502f845a584798d))
+- add key ([d09181c](https://github.com/globe-and-citizen/cnc-portal/commit/d09181cec66cc50c8d280e39db6c956a99ecf20c))
+- add key ([ca43774](https://github.com/globe-and-citizen/cnc-portal/commit/ca4377476d133058dd5448b59502f845a584798d))
 - add key binding
   ([ccbc4fe](https://github.com/globe-and-citizen/cnc-portal/commit/ccbc4fe4f231b6f0ce32c0a282e4197ad31c1c4a))
 - add loading state for ERC20 token transfer and manage loading flags during approval process
@@ -248,8 +245,7 @@
   ([8a939a5](https://github.com/globe-and-citizen/cnc-portal/commit/8a939a531e6d8b03f3a63baa8a082b90c226fa74))
 - cast to number
   ([f1da137](https://github.com/globe-and-citizen/cnc-portal/commit/f1da13791adffbd7b806f15ca7604469a53adddf))
-- cast type
-  ([dfd0159](https://github.com/globe-and-citizen/cnc-portal/commit/dfd01590bc663fc9b1fa0d27a85e601343ff98d6))
+- cast type ([dfd0159](https://github.com/globe-and-citizen/cnc-portal/commit/dfd01590bc663fc9b1fa0d27a85e601343ff98d6))
 - change author field from name to address
   ([a0e7df9](https://github.com/globe-and-citizen/cnc-portal/commit/a0e7df9b05447a4f727af7acb0caca8eec47e432))
 - change ButtonUI variant from primary to error in ModalComponent
@@ -276,10 +272,8 @@
   ([74e26f3](https://github.com/globe-and-citizen/cnc-portal/commit/74e26f38cbec6332a57a9ee0abce7211e43113b5))
 - check invalid network
   ([1eeaa7a](https://github.com/globe-and-citizen/cnc-portal/commit/1eeaa7aa377bcb7dd6bc39202f31dd217fb6e702))
-- ci
-  ([3def216](https://github.com/globe-and-citizen/cnc-portal/commit/3def216a2d173d2308c6636223d703d01ad8d5f9))
-- ci
-  ([58a47cf](https://github.com/globe-and-citizen/cnc-portal/commit/58a47cfa60f16a349dd8cc8fd8a9fa1574f8715f))
+- ci ([3def216](https://github.com/globe-and-citizen/cnc-portal/commit/3def216a2d173d2308c6636223d703d01ad8d5f9))
+- ci ([58a47cf](https://github.com/globe-and-citizen/cnc-portal/commit/58a47cfa60f16a349dd8cc8fd8a9fa1574f8715f))
 - ci working directory
   ([a0131db](https://github.com/globe-and-citizen/cnc-portal/commit/a0131db6bdd8d45a2ce89cad3bfa643a2ae2a0e5))
 - ci/cd errors and upgrade deployment
@@ -334,12 +328,9 @@
   ([215b761](https://github.com/globe-and-citizen/cnc-portal/commit/215b761cde96364ad531927eda4755f8d283d4f0))
 - configuration
   ([cd61672](https://github.com/globe-and-citizen/cnc-portal/commit/cd6167210a3962e72283e401650b08dd1a06f0df))
-- conflict
-  ([f45b7bd](https://github.com/globe-and-citizen/cnc-portal/commit/f45b7bdb926282a192a9e739798a7edd3e506027))
-- conflicts
-  ([18671f9](https://github.com/globe-and-citizen/cnc-portal/commit/18671f929ef6939c6c5d109b084d2502dfd7d6a8))
-- conflicts
-  ([ef34b8d](https://github.com/globe-and-citizen/cnc-portal/commit/ef34b8dc48ef7113502a75ce8404be67769c378c))
+- conflict ([f45b7bd](https://github.com/globe-and-citizen/cnc-portal/commit/f45b7bdb926282a192a9e739798a7edd3e506027))
+- conflicts ([18671f9](https://github.com/globe-and-citizen/cnc-portal/commit/18671f929ef6939c6c5d109b084d2502dfd7d6a8))
+- conflicts ([ef34b8d](https://github.com/globe-and-citizen/cnc-portal/commit/ef34b8dc48ef7113502a75ce8404be67769c378c))
 - connected setup
   ([a64be38](https://github.com/globe-and-citizen/cnc-portal/commit/a64be38fc24d2453797ce9e23b36f34aa6973025))
 - contract test
@@ -404,8 +395,7 @@
   ([d2b29ae](https://github.com/globe-and-citizen/cnc-portal/commit/d2b29ae9a64b8177b7d0aca444bdfece48d8648b))
 - correctly save token address
   ([ab35b2e](https://github.com/globe-and-citizen/cnc-portal/commit/ab35b2e530638693715184b5fc4f9d31978215f3))
-- coverage
-  ([84422b5](https://github.com/globe-and-citizen/cnc-portal/commit/84422b5b7175488bbf09b16fab8fdb46ff912eb1))
+- coverage ([84422b5](https://github.com/globe-and-citizen/cnc-portal/commit/84422b5b7175488bbf09b16fab8fdb46ff912eb1))
 - currency format and calculation error
   ([db1174c](https://github.com/globe-and-citizen/cnc-portal/commit/db1174c5e16f371e0960857589cc4a60ff532c3f))
 - currency symbol
@@ -426,8 +416,7 @@
   ([c59cf13](https://github.com/globe-and-citizen/cnc-portal/commit/c59cf13f20baa0cba925b4ed0f8d6a8e3d77725a))
 - delete teamContract records
   ([02f3c7c](https://github.com/globe-and-citizen/cnc-portal/commit/02f3c7ce30b81d5e7a14d3919ed1333a3b7948a1))
-- depencies
-  ([90e3ff1](https://github.com/globe-and-citizen/cnc-portal/commit/90e3ff14336645cb00bd6fca1ddd98b646356524))
+- depencies ([90e3ff1](https://github.com/globe-and-citizen/cnc-portal/commit/90e3ff14336645cb00bd6fca1ddd98b646356524))
 - deployment errors officer
   ([4dc8f89](https://github.com/globe-and-citizen/cnc-portal/commit/4dc8f89496006401bcc93339952a536deba70fe5))
 - desposit bank error
@@ -452,14 +441,11 @@
   ([805afe3](https://github.com/globe-and-citizen/cnc-portal/commit/805afe3df3a08907e83d75c2d06375fe195f2c54))
 - display when clear
   ([4aa8b97](https://github.com/globe-and-citizen/cnc-portal/commit/4aa8b9762c4adbc14e0a39e81dd57d61971234d3))
-- docs
-  ([1326990](https://github.com/globe-and-citizen/cnc-portal/commit/13269908a3002d4365632362b82251a71c6e983d))
+- docs ([1326990](https://github.com/globe-and-citizen/cnc-portal/commit/13269908a3002d4365632362b82251a71c6e983d))
 - drawer tests
   ([ab86ce8](https://github.com/globe-and-citizen/cnc-portal/commit/ab86ce8024e8978723e20082abc888b82dc25d2c))
-- e2e cache
-  ([b08e87e](https://github.com/globe-and-citizen/cnc-portal/commit/b08e87e25a09e6c8cbef288e184fabbf04020a11))
-- e2e setup
-  ([54fd09e](https://github.com/globe-and-citizen/cnc-portal/commit/54fd09e44277c30347e8500fcc69e7ef49f31e25))
+- e2e cache ([b08e87e](https://github.com/globe-and-citizen/cnc-portal/commit/b08e87e25a09e6c8cbef288e184fabbf04020a11))
+- e2e setup ([54fd09e](https://github.com/globe-and-citizen/cnc-portal/commit/54fd09e44277c30347e8500fcc69e7ef49f31e25))
 - e2e testing
   ([7a123a9](https://github.com/globe-and-citizen/cnc-portal/commit/7a123a97458859300e5295373b4f217c6562e14c))
 - elections officer
@@ -496,21 +482,17 @@
   ([81503a4](https://github.com/globe-and-citizen/cnc-portal/commit/81503a46025cfdd7809635609102cf6a1ecc7ddd))
 - ensure all deploy commands are called in deploy.bat
   ([dce0fab](https://github.com/globe-and-citizen/cnc-portal/commit/dce0fab86e4fcf63ac65d16a99164620d1bd96ea))
-- ensure typedBankAddress is defined before rendering BankBalanceSection and
-  GenericTokenHoldingsSection
+- ensure typedBankAddress is defined before rendering BankBalanceSection and GenericTokenHoldingsSection
   ([b00c1fb](https://github.com/globe-and-citizen/cnc-portal/commit/b00c1fbb4c741bdfcdc7b0345c87c671ee415901))
-- env
-  ([ebd4b25](https://github.com/globe-and-citizen/cnc-portal/commit/ebd4b25350212041c3c3b772dd29d6e2c15a5ca5))
-- env
-  ([0c96989](https://github.com/globe-and-citizen/cnc-portal/commit/0c9698967a8753dfbe6bd277da61b48bfc7be062))
+- env ([ebd4b25](https://github.com/globe-and-citizen/cnc-portal/commit/ebd4b25350212041c3c3b772dd29d6e2c15a5ca5))
+- env ([0c96989](https://github.com/globe-and-citizen/cnc-portal/commit/0c9698967a8753dfbe6bd277da61b48bfc7be062))
 - error description
   ([953e718](https://github.com/globe-and-citizen/cnc-portal/commit/953e718eb2681e923a583a9d27cfedae71da04e9))
 - error reactive
   ([2a3a58e](https://github.com/globe-and-citizen/cnc-portal/commit/2a3a58e91059fe6a6b4328f55071bc9649cac3b9))
 - error type
   ([06da19e](https://github.com/globe-and-citizen/cnc-portal/commit/06da19e84f35ac85bb85af595342e8f1ce2c2864))
-- errors
-  ([9e6e985](https://github.com/globe-and-citizen/cnc-portal/commit/9e6e98541e513efa2e8ebc8dfd5e81919c14b108))
+- errors ([9e6e985](https://github.com/globe-and-citizen/cnc-portal/commit/9e6e98541e513efa2e8ebc8dfd5e81919c14b108))
 - errors and add tests
   ([609d728](https://github.com/globe-and-citizen/cnc-portal/commit/609d728ed9292a02437544ff4233c47492165c54))
 - errors on bank
@@ -561,8 +543,7 @@
   ([ade8f80](https://github.com/globe-and-citizen/cnc-portal/commit/ade8f803a13e7fd772ca9e9b949b2a8fdbcbbc51))
 - fix props types
   ([4db1ae4](https://github.com/globe-and-citizen/cnc-portal/commit/4db1ae4774bb84dd7f2942656e484aaba5c6779f))
-- fix reload by updating address handling in useSafeSendTransaction for improved safety and
-  consistency
+- fix reload by updating address handling in useSafeSendTransaction for improved safety and consistency
   ([2f1e293](https://github.com/globe-and-citizen/cnc-portal/commit/2f1e29326e2dc751c2bc206400ead0aa8e00b4db))
 - fix team contracts
   ([0f3f08a](https://github.com/globe-and-citizen/cnc-portal/commit/0f3f08a5ded23e93a8775532bf46ebc7d76b39a7))
@@ -574,8 +555,7 @@
   ([043c44f](https://github.com/globe-and-citizen/cnc-portal/commit/043c44f27d4efbac944f4bdd55f272bff483ddd5))
 - fix UTC handling in claim tests and format code for readability
   ([21834aa](https://github.com/globe-and-citizen/cnc-portal/commit/21834aa99b795c50a3cde69166e0f4ac13da8e31))
-- fixe lint
-  ([d9c0a19](https://github.com/globe-and-citizen/cnc-portal/commit/d9c0a19980347f0f430e564d6ed2dbcc904e76d4))
+- fixe lint ([d9c0a19](https://github.com/globe-and-citizen/cnc-portal/commit/d9c0a19980347f0f430e564d6ed2dbcc904e76d4))
 - fixing lint warning
   ([a02e80c](https://github.com/globe-and-citizen/cnc-portal/commit/a02e80c8704cfbe5d67a61b568071e692aa07d7e))
 - fixing the difficulty to add colors to the icons.
@@ -584,12 +564,9 @@
   ([bf617b4](https://github.com/globe-and-citizen/cnc-portal/commit/bf617b44ebca5fdc85ca62771c3995355f8a9816))
 - follow bank transaciton history
   ([461f5fb](https://github.com/globe-and-citizen/cnc-portal/commit/461f5fb4b7058feea7eeb25d99deda083f27a621))
-- font size
-  ([9a8823d](https://github.com/globe-and-citizen/cnc-portal/commit/9a8823d3b78dccb3ef47e04830b62a429b3490fc))
-- format
-  ([47b9278](https://github.com/globe-and-citizen/cnc-portal/commit/47b9278990398f7f10441719aad51e1c9b9dc9ab))
-- format
-  ([e6648e6](https://github.com/globe-and-citizen/cnc-portal/commit/e6648e650e7e7604a3144e6dd682b665bc89ff9e))
+- font size ([9a8823d](https://github.com/globe-and-citizen/cnc-portal/commit/9a8823d3b78dccb3ef47e04830b62a429b3490fc))
+- format ([47b9278](https://github.com/globe-and-citizen/cnc-portal/commit/47b9278990398f7f10441719aad51e1c9b9dc9ab))
+- format ([e6648e6](https://github.com/globe-and-citizen/cnc-portal/commit/e6648e650e7e7604a3144e6dd682b665bc89ff9e))
 - format and lint
   ([ebee1be](https://github.com/globe-and-citizen/cnc-portal/commit/ebee1be9be7fb91c2398a9fa6f94015848375fda))
 - format Cancel button for improved readability
@@ -628,8 +605,7 @@
   ([aaa0d8d](https://github.com/globe-and-citizen/cnc-portal/commit/aaa0d8d09a7a3289d202c95caf45c6afc683f83c))
 - handle error when metamask not installed
   ([6f7f6c6](https://github.com/globe-and-citizen/cnc-portal/commit/6f7f6c616022a7e755b73d5c834a22c43c8f17e9))
-- handle gas estimation errors and provide user feedback for insufficient balance and unsupported
-  tokens
+- handle gas estimation errors and provide user feedback for insufficient balance and unsupported tokens
   ([bef7c7f](https://github.com/globe-and-citizen/cnc-portal/commit/bef7c7f121a3802ba017c2c75b8ad4337ae34d9e))
 - handle metamask error
   ([d13d8df](https://github.com/globe-and-citizen/cnc-portal/commit/d13d8df217810df4ce580f3ad4ba16a103d1cccf))
@@ -673,8 +649,7 @@
   ([d27ae00](https://github.com/globe-and-citizen/cnc-portal/commit/d27ae0095e5f69e5946d2d05f0a0a92bd4e0def0))
 - import TableComponent with type declaration for TableColumn
   ([6112014](https://github.com/globe-and-citizen/cnc-portal/commit/6112014a689c9531d145aae798ed47fc4510cd45))
-- imports
-  ([ede60f4](https://github.com/globe-and-citizen/cnc-portal/commit/ede60f4d6f33e47820d41919fc4d528b1fc9ae96))
+- imports ([ede60f4](https://github.com/globe-and-citizen/cnc-portal/commit/ede60f4d6f33e47820d41919fc4d528b1fc9ae96))
 - improve code readability by refactoring expect statement in CashRemunerationEIP712 test
   ([24dbf65](https://github.com/globe-and-citizen/cnc-portal/commit/24dbf65e06bbf22408d7d0b9c599f0acd54383a2))
 - improve currency formatting in transaction history
@@ -723,8 +698,7 @@
   ([a00ff0f](https://github.com/globe-and-citizen/cnc-portal/commit/a00ff0f47b47c33cf91e302eef55d8d86d9e3fef))
 - lint errors
   ([8613e13](https://github.com/globe-and-citizen/cnc-portal/commit/8613e134cd0c1cf1f31740b408b732a9bc5fb149))
-- list key
-  ([e045b41](https://github.com/globe-and-citizen/cnc-portal/commit/e045b41f689a0d8feeb01ba9da4794e6207cfbb4))
+- list key ([e045b41](https://github.com/globe-and-citizen/cnc-portal/commit/e045b41f689a0d8feeb01ba9da4794e6207cfbb4))
 - loading and owner validation
   ([9234698](https://github.com/globe-and-citizen/cnc-portal/commit/92346985204bd405e5d61f3f153a4bf37d91788b))
 - login fixture
@@ -795,18 +769,14 @@
   ([4654a0e](https://github.com/globe-and-citizen/cnc-portal/commit/4654a0e4be4bc841777e39a36173c6d8e7023fdc))
 - parse using 6 decimals for actions
   ([fb2661a](https://github.com/globe-and-citizen/cnc-portal/commit/fb2661a80c217ea9fdbc6f8c774794018aae2635))
-- path
-  ([c1cfca8](https://github.com/globe-and-citizen/cnc-portal/commit/c1cfca8a723e7c109b704d8b2c6be24564e994fc))
+- path ([c1cfca8](https://github.com/globe-and-citizen/cnc-portal/commit/c1cfca8a723e7c109b704d8b2c6be24564e994fc))
 - pinia tests
   ([29f9ddc](https://github.com/globe-and-citizen/cnc-portal/commit/29f9ddc7d2670bcbf746d5371c5f364a9a1e656f))
 - position in separate columns
   ([08d9084](https://github.com/globe-and-citizen/cnc-portal/commit/08d9084ed53278731d92cf2af8ea755bbdb962b9))
-- pr typo
-  ([2639416](https://github.com/globe-and-citizen/cnc-portal/commit/26394169dacabd1acaf49046afd212d8287e9ca7))
-- pr update
-  ([b512c02](https://github.com/globe-and-citizen/cnc-portal/commit/b512c028a99043cd4569a3375542f13ff7fcc851))
-- pr update
-  ([9c7af86](https://github.com/globe-and-citizen/cnc-portal/commit/9c7af863d6dd556c82ef8e9de9d21beafea5bd1b))
+- pr typo ([2639416](https://github.com/globe-and-citizen/cnc-portal/commit/26394169dacabd1acaf49046afd212d8287e9ca7))
+- pr update ([b512c02](https://github.com/globe-and-citizen/cnc-portal/commit/b512c028a99043cd4569a3375542f13ff7fcc851))
+- pr update ([9c7af86](https://github.com/globe-and-citizen/cnc-portal/commit/9c7af863d6dd556c82ef8e9de9d21beafea5bd1b))
 - prettier error
   ([b699891](https://github.com/globe-and-citizen/cnc-portal/commit/b699891889124bb6ebbf6cc7724bd1ba02ca9ba9))
 - prevent dropdown from showing when selecting an item
@@ -977,8 +947,7 @@
   ([c235d2b](https://github.com/globe-and-citizen/cnc-portal/commit/c235d2b267308c8a31e1a1f7cf1a1cf3516bdb12))
 - remove user address from URL query
   ([5812717](https://github.com/globe-and-citizen/cnc-portal/commit/5812717a4207c73d73dbefa966019646efdc61ac))
-- rename
-  ([ee7e542](https://github.com/globe-and-citizen/cnc-portal/commit/ee7e5421c64e5ed15fe099ccf17a057cdc4c45fb))
+- rename ([ee7e542](https://github.com/globe-and-citizen/cnc-portal/commit/ee7e5421c64e5ed15fe099ccf17a057cdc4c45fb))
 - rename and fix tests
   ([b5bd42d](https://github.com/globe-and-citizen/cnc-portal/commit/b5bd42d36bf37175808782a46d8a68ea78a2805a))
 - rename card title
@@ -1097,8 +1066,7 @@
   ([77543d7](https://github.com/globe-and-citizen/cnc-portal/commit/77543d79d73a2c047445ac9a6dece33bc27b5c8d))
 - stringify expense data
   ([cb1dba5](https://github.com/globe-and-citizen/cnc-portal/commit/cb1dba5f6904e06943624fb9d8a7b96c2e2adfb9))
-- table
-  ([256dca6](https://github.com/globe-and-citizen/cnc-portal/commit/256dca6e442435995166791450c55fce74f7f6f1))
+- table ([256dca6](https://github.com/globe-and-citizen/cnc-portal/commit/256dca6e442435995166791450c55fce74f7f6f1))
 - team controller
   ([6b52604](https://github.com/globe-and-citizen/cnc-portal/commit/6b52604fd95edfc8a2b2fef35b54e6a957605644))
 - team id issue
@@ -1109,52 +1077,31 @@
   ([b1319a3](https://github.com/globe-and-citizen/cnc-portal/commit/b1319a32a314accb750d0739682e3c70c36f5d5c))
 - temporarily disable rate limiter
   ([01ab938](https://github.com/globe-and-citizen/cnc-portal/commit/01ab9380bbf9f7ddd21daa8ca72e8a7519f1e6db))
-- test
-  ([216db7d](https://github.com/globe-and-citizen/cnc-portal/commit/216db7ddd7ae38a59d383d4e3fbac1b939685664))
-- test
-  ([a2a5b4b](https://github.com/globe-and-citizen/cnc-portal/commit/a2a5b4b6f4a48d8227a55283387e4651344e539f))
-- test
-  ([18f6062](https://github.com/globe-and-citizen/cnc-portal/commit/18f606267a5001d2fee1e1739a316dbb14ffb357))
-- test
-  ([1cfdc24](https://github.com/globe-and-citizen/cnc-portal/commit/1cfdc24ea2422a57dc2cc5ce39896813909dcf99))
+- test ([216db7d](https://github.com/globe-and-citizen/cnc-portal/commit/216db7ddd7ae38a59d383d4e3fbac1b939685664))
+- test ([a2a5b4b](https://github.com/globe-and-citizen/cnc-portal/commit/a2a5b4b6f4a48d8227a55283387e4651344e539f))
+- test ([18f6062](https://github.com/globe-and-citizen/cnc-portal/commit/18f606267a5001d2fee1e1739a316dbb14ffb357))
+- test ([1cfdc24](https://github.com/globe-and-citizen/cnc-portal/commit/1cfdc24ea2422a57dc2cc5ce39896813909dcf99))
 - test import
   ([b152b66](https://github.com/globe-and-citizen/cnc-portal/commit/b152b66171c95cda23bb8ff4f74a6301e2c8516f))
 - test name typo
   ([4eb0f64](https://github.com/globe-and-citizen/cnc-portal/commit/4eb0f648d619e550510fba5bd0e1b6e4d1a844c0))
-- testing
-  ([ca16b52](https://github.com/globe-and-citizen/cnc-portal/commit/ca16b52d644c5904c3773b2c2665f2aecb007004))
-- tests
-  ([d7162a2](https://github.com/globe-and-citizen/cnc-portal/commit/d7162a24a3c10d191afe9d929131de743c59b451))
-- tests
-  ([116e449](https://github.com/globe-and-citizen/cnc-portal/commit/116e449f2e690192b3806ebfd93f58cad8a8d135))
-- tests
-  ([4bc0fef](https://github.com/globe-and-citizen/cnc-portal/commit/4bc0fef5a6f1962c41c984220f94bd482c65ca11))
-- tests
-  ([b3b8ec1](https://github.com/globe-and-citizen/cnc-portal/commit/b3b8ec12bfac32312e6eb9cc7ccf324ca1d3a5ee))
-- tests
-  ([7ae91c7](https://github.com/globe-and-citizen/cnc-portal/commit/7ae91c75decfb54ef216dc8ece4d70f3e539fd2d))
-- tests
-  ([265be53](https://github.com/globe-and-citizen/cnc-portal/commit/265be5398f50f68765884b3a3c4ab9467cb8f8c8))
-- tests
-  ([951b676](https://github.com/globe-and-citizen/cnc-portal/commit/951b6764f66340a3a63db8d40cd004c5d1ef4812))
-- tests
-  ([1d9e716](https://github.com/globe-and-citizen/cnc-portal/commit/1d9e71685997769840c23b71e9bb845b30d20eb4))
-- tests
-  ([085d715](https://github.com/globe-and-citizen/cnc-portal/commit/085d7153c95ca3876af648b856d8787da3519d0c))
-- tests
-  ([51e8a17](https://github.com/globe-and-citizen/cnc-portal/commit/51e8a179c8d2d641b7b61d5dbae10548ae06710b))
-- tests
-  ([90938b5](https://github.com/globe-and-citizen/cnc-portal/commit/90938b52b51dcc826f7151ccf85a8cdde55316a3))
-- tests
-  ([6c1d882](https://github.com/globe-and-citizen/cnc-portal/commit/6c1d882dc64276522d950eed0276ea3db97d167d))
-- tests
-  ([6626a42](https://github.com/globe-and-citizen/cnc-portal/commit/6626a427938869a070396ad4d78a3366f4c69e61))
-- tests
-  ([35ced5b](https://github.com/globe-and-citizen/cnc-portal/commit/35ced5bdc5fa4f4e3300963e8469c6c9d06a30ff))
-- tests
-  ([3d6b0cf](https://github.com/globe-and-citizen/cnc-portal/commit/3d6b0cfc169287e0ea2c35e794c31e08680b78b6))
-- tests
-  ([8031838](https://github.com/globe-and-citizen/cnc-portal/commit/8031838b09160efff5c3f2c8ac4ef6368d34d659))
+- testing ([ca16b52](https://github.com/globe-and-citizen/cnc-portal/commit/ca16b52d644c5904c3773b2c2665f2aecb007004))
+- tests ([d7162a2](https://github.com/globe-and-citizen/cnc-portal/commit/d7162a24a3c10d191afe9d929131de743c59b451))
+- tests ([116e449](https://github.com/globe-and-citizen/cnc-portal/commit/116e449f2e690192b3806ebfd93f58cad8a8d135))
+- tests ([4bc0fef](https://github.com/globe-and-citizen/cnc-portal/commit/4bc0fef5a6f1962c41c984220f94bd482c65ca11))
+- tests ([b3b8ec1](https://github.com/globe-and-citizen/cnc-portal/commit/b3b8ec12bfac32312e6eb9cc7ccf324ca1d3a5ee))
+- tests ([7ae91c7](https://github.com/globe-and-citizen/cnc-portal/commit/7ae91c75decfb54ef216dc8ece4d70f3e539fd2d))
+- tests ([265be53](https://github.com/globe-and-citizen/cnc-portal/commit/265be5398f50f68765884b3a3c4ab9467cb8f8c8))
+- tests ([951b676](https://github.com/globe-and-citizen/cnc-portal/commit/951b6764f66340a3a63db8d40cd004c5d1ef4812))
+- tests ([1d9e716](https://github.com/globe-and-citizen/cnc-portal/commit/1d9e71685997769840c23b71e9bb845b30d20eb4))
+- tests ([085d715](https://github.com/globe-and-citizen/cnc-portal/commit/085d7153c95ca3876af648b856d8787da3519d0c))
+- tests ([51e8a17](https://github.com/globe-and-citizen/cnc-portal/commit/51e8a179c8d2d641b7b61d5dbae10548ae06710b))
+- tests ([90938b5](https://github.com/globe-and-citizen/cnc-portal/commit/90938b52b51dcc826f7151ccf85a8cdde55316a3))
+- tests ([6c1d882](https://github.com/globe-and-citizen/cnc-portal/commit/6c1d882dc64276522d950eed0276ea3db97d167d))
+- tests ([6626a42](https://github.com/globe-and-citizen/cnc-portal/commit/6626a427938869a070396ad4d78a3366f4c69e61))
+- tests ([35ced5b](https://github.com/globe-and-citizen/cnc-portal/commit/35ced5bdc5fa4f4e3300963e8469c6c9d06a30ff))
+- tests ([3d6b0cf](https://github.com/globe-and-citizen/cnc-portal/commit/3d6b0cfc169287e0ea2c35e794c31e08680b78b6))
+- tests ([8031838](https://github.com/globe-and-citizen/cnc-portal/commit/8031838b09160efff5c3f2c8ac4ef6368d34d659))
 - tests for voting actions
   ([25afb24](https://github.com/globe-and-citizen/cnc-portal/commit/25afb24e8c76790192957f8efa5511039c067804))
 - tests using user stories structure
@@ -1179,10 +1126,8 @@
   ([eaa29fc](https://github.com/globe-and-citizen/cnc-portal/commit/eaa29fcc5e03a6ea55f6879bcc0632713e89aa95))
 - try to change the step workflow
   ([f51d702](https://github.com/globe-and-citizen/cnc-portal/commit/f51d70206540e3e794b503f190c98e5de81f64f7))
-- type
-  ([55e4391](https://github.com/globe-and-citizen/cnc-portal/commit/55e43910549798734764b9f0f02c455c29e3b115))
-- type
-  ([caf6acc](https://github.com/globe-and-citizen/cnc-portal/commit/caf6acc3b876c8c2ceb26b6e27a6b7410ac6a3f2))
+- type ([55e4391](https://github.com/globe-and-citizen/cnc-portal/commit/55e43910549798734764b9f0f02c455c29e3b115))
+- type ([caf6acc](https://github.com/globe-and-citizen/cnc-portal/commit/caf6acc3b876c8c2ceb26b6e27a6b7410ac6a3f2))
 - type check
   ([4b3c293](https://github.com/globe-and-citizen/cnc-portal/commit/4b3c293de813c73791f776219da7e13a7eeee0f5))
 - type check
@@ -1225,22 +1170,17 @@
   ([478615c](https://github.com/globe-and-citizen/cnc-portal/commit/478615c787b29fdb6ba2d61b2256ce5994b4d8e9))
 - type-check error
   ([9a8435c](https://github.com/globe-and-citizen/cnc-portal/commit/9a8435ce5137fbc4882692f173e8649357e0bf12))
-- typecheck
-  ([798896c](https://github.com/globe-and-citizen/cnc-portal/commit/798896ca2ef896c402bf1476b5b5cb2d839e577b))
-- types
-  ([ddb805f](https://github.com/globe-and-citizen/cnc-portal/commit/ddb805ff6b01b074c297c7ec7a0ca09d632899f3))
-- types
-  ([e0c4a27](https://github.com/globe-and-citizen/cnc-portal/commit/e0c4a2731bb5423a35a449d94613229864ffd6ca))
+- typecheck ([798896c](https://github.com/globe-and-citizen/cnc-portal/commit/798896ca2ef896c402bf1476b5b5cb2d839e577b))
+- types ([ddb805f](https://github.com/globe-and-citizen/cnc-portal/commit/ddb805ff6b01b074c297c7ec7a0ca09d632899f3))
+- types ([e0c4a27](https://github.com/globe-and-citizen/cnc-portal/commit/e0c4a2731bb5423a35a449d94613229864ffd6ca))
 - types and remove unused error handler
   ([8258bab](https://github.com/globe-and-citizen/cnc-portal/commit/8258bab988a50828e26d5d47d6f3d30708fb7376))
-- typo
-  ([653eccb](https://github.com/globe-and-citizen/cnc-portal/commit/653eccba19ded3e50407e4890210fb22b02337a8))
+- typo ([653eccb](https://github.com/globe-and-citizen/cnc-portal/commit/653eccba19ded3e50407e4890210fb22b02337a8))
 - typo file name
   ([e12a2e0](https://github.com/globe-and-citizen/cnc-portal/commit/e12a2e0a8e3f699ae8449828eef6662caa3b0edf))
 - typo in issue template
   ([fe13b58](https://github.com/globe-and-citizen/cnc-portal/commit/fe13b58615dbfce0be555188371dafa7e36f95aa))
-- ui
-  ([bda3cc7](https://github.com/globe-and-citizen/cnc-portal/commit/bda3cc710c7e3bdcf8baf270cbb4eaa389de0ab1))
+- ui ([bda3cc7](https://github.com/globe-and-citizen/cnc-portal/commit/bda3cc710c7e3bdcf8baf270cbb4eaa389de0ab1))
 - Update ABI references in useBankReads functions
   ([38fb109](https://github.com/globe-and-citizen/cnc-portal/commit/38fb10900f715de7a7fa7746c36a8c366ee96bda))
 - update action button template in CashRemunerationWeeklyClaim component
@@ -1277,8 +1217,7 @@
   ([58a588e](https://github.com/globe-and-citizen/cnc-portal/commit/58a588ecd50e4509a70d40d57563837277dbb066))
 - update child item iteration in TheDrawer component for correct rendering
   ([2de904f](https://github.com/globe-and-citizen/cnc-portal/commit/2de904f5b75e3cfcb714b26c62dd28d7f2c10b61))
-- update Claim model to make description optional and improve validation error handling in addClaim
-  function
+- update Claim model to make description optional and improve validation error handling in addClaim function
   ([6f08485](https://github.com/globe-and-citizen/cnc-portal/commit/6f084857cdf2efa13cb2325a708a0a7b29864271))
 - update claim response status to include 'signed' instead of 'approved'
   ([0b89c52](https://github.com/globe-and-citizen/cnc-portal/commit/0b89c52d3aaade20a1e608e965bdb762e7864437))
@@ -1336,8 +1275,7 @@
   ([f3626b5](https://github.com/globe-and-citizen/cnc-portal/commit/f3626b5cac296ab74e6530331ba0086d2bd6fd47))
 - update estimated price calculation to use currency from storage
   ([33bfd87](https://github.com/globe-and-citizen/cnc-portal/commit/33bfd87393ca60551057e847f2d2fb6045dfea3b))
-- update event emission from 'change' to 'update:modelValue' for SelectComponent in DepositBankForm
-  tests
+- update event emission from 'change' to 'update:modelValue' for SelectComponent in DepositBankForm tests
   ([752690d](https://github.com/globe-and-citizen/cnc-portal/commit/752690dc889d22a16eb13eec3e52fe4c70b0925e))
 - update expected transaction amounts in tests
   ([991db7f](https://github.com/globe-and-citizen/cnc-portal/commit/991db7fd79fa53f5875cc7bcbb01784353f9349f))
@@ -1613,12 +1551,10 @@
   ([9c8ed63](https://github.com/globe-and-citizen/cnc-portal/commit/9c8ed6323ee2e1ae78ac589d604c12cfb13c7383))
 - width class name
   ([9a8b3b0](https://github.com/globe-and-citizen/cnc-portal/commit/9a8b3b0a9b9a27b79ef0c2a7a6a55c293ca02b7d))
-- withdraw
-  ([055a10f](https://github.com/globe-and-citizen/cnc-portal/commit/055a10f6cf934bbc2112725e66b7d4c4970382e5))
+- withdraw ([055a10f](https://github.com/globe-and-citizen/cnc-portal/commit/055a10f6cf934bbc2112725e66b7d4c4970382e5))
 - withdrawal
   ([def8e7e](https://github.com/globe-and-citizen/cnc-portal/commit/def8e7ea48d2a3a28b5e97d8aff4222a8bf6d23e))
-- workflow
-  ([13f7c54](https://github.com/globe-and-citizen/cnc-portal/commit/13f7c548c23667598d2c14f598dff84259a7eba6))
+- workflow ([13f7c54](https://github.com/globe-and-citizen/cnc-portal/commit/13f7c548c23667598d2c14f598dff84259a7eba6))
 - wrap all in try catch
   ([6eab85f](https://github.com/globe-and-citizen/cnc-portal/commit/6eab85fa8c162dd06d4e268e9120bdf630ab3076))
 
@@ -1629,8 +1565,8 @@
 
 ### Features
 
-- :art: replace inline hourly rate display with RatePerHourList component in WeeklyRecap,
-  PendingWeeklyClaim, SignedWeeklyClaim, and WeeklyClaim components
+- :art: replace inline hourly rate display with RatePerHourList component in WeeklyRecap, PendingWeeklyClaim,
+  SignedWeeklyClaim, and WeeklyClaim components
   ([962b033](https://github.com/globe-and-citizen/cnc-portal/commit/962b033a940b36650aa8358ed34db3cc9ef2025a))
 - :bricks: redeploy on polygon
   ([5e973fb](https://github.com/globe-and-citizen/cnc-portal/commit/5e973fb1335466652ffb5eaf3ec845104a316926))
@@ -1650,8 +1586,8 @@
   ([c159d08](https://github.com/globe-and-citizen/cnc-portal/commit/c159d08586f1268014d931d1877af01f26bb85ac))
 - :necktie: handle optional chaining for currentTeamMeta in ShowIndex.vue
   ([78df2ec](https://github.com/globe-and-citizen/cnc-portal/commit/78df2ecbd8f6405f1cea769e856f0d966f51bfbc))
-- :necktie: remove amount display templates from TransactionHistorySection for cleaner UI, there is
-  no need to call template for something you are not updating
+- :necktie: remove amount display templates from TransactionHistorySection for cleaner UI, there is no need to call
+  template for something you are not updating
   ([9030c60](https://github.com/globe-and-citizen/cnc-portal/commit/9030c604be6e6a580453741de1f92be3187fa7cc))
 - :necktie: remove unused event handler from MemberSection in ShowIndex.vue
   ([7c1b1c1](https://github.com/globe-and-citizen/cnc-portal/commit/7c1b1c1e930a97090dab0f45e7cc879e9cb33233))
@@ -1675,8 +1611,7 @@
   ([0b17936](https://github.com/globe-and-citizen/cnc-portal/commit/0b179369929f1956a7c123362bf4e3d7e7bd7aac))
 - :sparkles: add comprehensive code review checklist for improved quality assurance
   ([0c39da5](https://github.com/globe-and-citizen/cnc-portal/commit/0c39da53eeef5f7c49fb5ffe6af15c3f3c5c3bdb))
-- :sparkles: add ContinueAddTeamForm component to be able to continue adding team by deploying the
-  contracts
+- :sparkles: add ContinueAddTeamForm component to be able to continue adding team by deploying the contracts
   ([9241f87](https://github.com/globe-and-citizen/cnc-portal/commit/9241f87d674e82d2fca33b5d7fa388a9ef835aa6))
 - :sparkles: add disable prop to DeployContractSection for button control
   ([3c0cdfd](https://github.com/globe-and-citizen/cnc-portal/commit/3c0cdfd072c1de353a38c522757c6e84649f4e7a))
@@ -1692,8 +1627,7 @@
   ([93d3dfb](https://github.com/globe-and-citizen/cnc-portal/commit/93d3dfbb811eef65b0d1cb873118b26c04bff6b0))
 - :sparkles: add RatePerHourTotalList component to display total hourly rates
   ([97abfc1](https://github.com/globe-and-citizen/cnc-portal/commit/97abfc17b10b665af9479639dcc7592d83871570))
-- :sparkles: add tooltips to inform users about ownership requirements for minting tokens and paying
-  dividends
+- :sparkles: add tooltips to inform users about ownership requirements for minting tokens and paying dividends
   ([b134f38](https://github.com/globe-and-citizen/cnc-portal/commit/b134f383a38dc5c963e8d6d8b714eaa08ad435d8))
 - :sparkles: add transfer button tooltip and disable for non-owners
   ([7773504](https://github.com/globe-and-citizen/cnc-portal/commit/7773504ac70be03c413054f2b63c29960e74b8a9))
@@ -1709,9 +1643,8 @@
   ([6aac509](https://github.com/globe-and-citizen/cnc-portal/commit/6aac509889b233ac3cc7cd4de8dc4724d512f143))
 - :sparkles: enhance deposit modal functionality with improved state management and reset handling
   ([efa5e3c](https://github.com/globe-and-citizen/cnc-portal/commit/efa5e3c337ab645c48a42145adbb60986252c8e3))
-- :sparkles: enhance documentation with comprehensive instructions and guidelines for development,
-  testing, and quality standards
-  ([4630c93](https://github.com/globe-and-citizen/cnc-portal/commit/4630c93ff76cfdf3cfd4068e0da9ac0670a6b743))
+- :sparkles: enhance documentation with comprehensive instructions and guidelines for development, testing, and quality
+  standards ([4630c93](https://github.com/globe-and-citizen/cnc-portal/commit/4630c93ff76cfdf3cfd4068e0da9ac0670a6b743))
 - :sparkles: enhance dropdown visibility logic to respect disabled state
   ([4fbc52e](https://github.com/globe-and-citizen/cnc-portal/commit/4fbc52efb2147c8c522ef898fe776318c5ef018e))
 - :sparkles: enhance modal and form reset functionality in DepositBankForm and BankBalanceSection
@@ -1736,18 +1669,15 @@
   ([dc0b8d7](https://github.com/globe-and-citizen/cnc-portal/commit/dc0b8d70146792da7018a33dc856a9cd4fd36f1a))
 - :sparkles: no way to go back when the team is created
   ([33d3770](https://github.com/globe-and-citizen/cnc-portal/commit/33d3770d8a346780c8822923d6298a36c8e81ae4))
-- :sparkles: refactor PendingWeeklyClaim and SignedWeeklyClaim components to use useTanstackQuery
-  for data fetching
+- :sparkles: refactor PendingWeeklyClaim and SignedWeeklyClaim components to use useTanstackQuery for data fetching
   ([96e47cd](https://github.com/globe-and-citizen/cnc-portal/commit/96e47cd944be9d81630943aa93f80a6854a9b778))
-- :sparkles: refactor SubmitClaims component to improve date handling and integrate queryClient for
-  state management
+- :sparkles: refactor SubmitClaims component to improve date handling and integrate queryClient for state management
   ([21a012d](https://github.com/globe-and-citizen/cnc-portal/commit/21a012db7f17cddf51fa0c306b111b133e825880))
 - :sparkles: refresh bank owner data and handle ownership changes in transfer modal
   ([3a0ff98](https://github.com/globe-and-citizen/cnc-portal/commit/3a0ff98b43d1eb75d75e7a64d2f9fceca30715aa))
 - :sparkles: reload teams when the user create a new team
   ([2a6311d](https://github.com/globe-and-citizen/cnc-portal/commit/2a6311d970ca61250176894fb3934abb398b97fc))
-- :sparkles: replace tooltip spans with data attributes for improved accessibility and
-  maintainability
+- :sparkles: replace tooltip spans with data attributes for improved accessibility and maintainability
   ([291868b](https://github.com/globe-and-citizen/cnc-portal/commit/291868b81d765c9007e7e07ac08ddb78b2baf9ae))
 - :sparkles: update CRSigne component to use queryClient
   ([7dfb3c3](https://github.com/globe-and-citizen/cnc-portal/commit/7dfb3c3792ddb2c9cdce7803324d897634ba70c5))
@@ -1763,8 +1693,7 @@
   ([dd3f617](https://github.com/globe-and-citizen/cnc-portal/commit/dd3f6174bbad3480648fba79843507d904aaacd1))
 - :sparkles: update SubmitClaims component to enable date selection restriction using allowedDates
   ([6fdef1e](https://github.com/globe-and-citizen/cnc-portal/commit/6fdef1e25defd2ca592e8aa4a9f575bb5e98f32b))
-- :sparkles: update team display logic in TheDrawer component to show 'Select Team' when no current
-  team is selected
+- :sparkles: update team display logic in TheDrawer component to show 'Select Team' when no current team is selected
   ([24b27e3](https://github.com/globe-and-citizen/cnc-portal/commit/24b27e31611cc06f1cd3b1dffaaba663687ddbba))
 - :test_tube: test: add unit test of 500 error
   ([c2fbbe3](https://github.com/globe-and-citizen/cnc-portal/commit/c2fbbe38bde83cf2878dc8f4f629c9eff3322bb9))
@@ -1800,8 +1729,7 @@
   ([988d7cb](https://github.com/globe-and-citizen/cnc-portal/commit/988d7cb3453f2de965ca867aa2d66f062bbc6dab))
 - (WIP) add BoD section
   ([6627560](https://github.com/globe-and-citizen/cnc-portal/commit/6627560d9e60eee68a12d2042af81d83fd6a9ab1))
-- abi
-  ([bfdc343](https://github.com/globe-and-citizen/cnc-portal/commit/bfdc343802048c4e4f807738d8b67841549e7115))
+- abi ([bfdc343](https://github.com/globe-and-citizen/cnc-portal/commit/bfdc343802048c4e4f807738d8b67841549e7115))
 - action permissions based on roles
   ([09621f1](https://github.com/globe-and-citizen/cnc-portal/commit/09621f1967c7b982d189bacca26b381aeb70eb70))
 - activate approval
@@ -1878,8 +1806,7 @@
   ([cc77cd9](https://github.com/globe-and-citizen/cnc-portal/commit/cc77cd94067bb302ccabb715c872c99f1fcba59f))
 - add artifacts
   ([3e70ad6](https://github.com/globe-and-citizen/cnc-portal/commit/3e70ad6912c4f98bbf19d2c287971ac76ea425f7))
-- add authentication test cases for nonce, invalid token, login with SIWE, missing token, and
-  validate token
+- add authentication test cases for nonce, invalid token, login with SIWE, missing token, and validate token
   ([8401824](https://github.com/globe-and-citizen/cnc-portal/commit/840182476226a8471d836ef49d943af5a1f2ab3e))
 - add author field
   ([934945c](https://github.com/globe-and-citizen/cnc-portal/commit/934945ce971779a6956e275ab93d18be9b31513b))
@@ -1905,8 +1832,7 @@
   ([7934556](https://github.com/globe-and-citizen/cnc-portal/commit/7934556f87db997e222990302bd9ead98ccbb7ed))
 - add bankBeacon module
   ([224ca47](https://github.com/globe-and-citizen/cnc-portal/commit/224ca47238f15897c194c96db97f58e86153262f))
-- add BankChangeTipsAddressOperation component for changing tips address with validation and state
-  display
+- add BankChangeTipsAddressOperation component for changing tips address with validation and state display
   ([72a20f8](https://github.com/globe-and-citizen/cnc-portal/commit/72a20f8993498d4abec5e7609b1db4687d203e75))
 - add BankEthTransferOperation component for transferring ETH with validation and state display
   ([970f610](https://github.com/globe-and-citizen/cnc-portal/commit/970f610e1bc50eefce03fa247c3b4caff8897481))
@@ -1918,8 +1844,7 @@
   ([a11d274](https://github.com/globe-and-citizen/cnc-portal/commit/a11d2748ad975a0be0c9c4fc823aa730e8337d89))
 - add BankTokenTransferOperation component for transferring tokens with validation and state display
   ([365fb4e](https://github.com/globe-and-citizen/cnc-portal/commit/365fb4e2de8ccfa572d1abf9560ca168a42c3bba))
-- add BankTransferOwnershipOperation component for transferring ownership with validation and state
-  display
+- add BankTransferOwnershipOperation component for transferring ownership with validation and state display
   ([93208c7](https://github.com/globe-and-citizen/cnc-portal/commit/93208c7f37fbacde9be1274f67e7c6551731459d))
 - add BankView component for team balance display
   ([110e4b0](https://github.com/globe-and-citizen/cnc-portal/commit/110e4b04ba1d72abb852fa1511d1f1cb150c6876))
@@ -2075,9 +2000,8 @@
   ([582f762](https://github.com/globe-and-citizen/cnc-portal/commit/582f7628f0e8fb1c54bf38bc34db98ff04e12fb4))
 - add contractFactory and sendTransaction function to web3Library
   ([085809f](https://github.com/globe-and-citizen/cnc-portal/commit/085809f4df5808e7f1db5a1ea0265453a24eb7cc))
-- add ContractOwnerCard component to CashRemunerationView, ExpenseAccountView, and SherTokenView for
-  displaying contract addresses
-  ([2724af7](https://github.com/globe-and-citizen/cnc-portal/commit/2724af7bb3f036e29779a1d3080d832fc6d7fca9))
+- add ContractOwnerCard component to CashRemunerationView, ExpenseAccountView, and SherTokenView for displaying contract
+  addresses ([2724af7](https://github.com/globe-and-citizen/cnc-portal/commit/2724af7bb3f036e29779a1d3080d832fc6d7fca9))
 - add ContractOwnerCard component to display contract owner details
   ([2305620](https://github.com/globe-and-citizen/cnc-portal/commit/230562024674c55ff64d7504ebef008525e794f5))
 - add ContractOwnerCard to BankView and BodElectionView for displaying contract addresses
@@ -2172,8 +2096,8 @@
   ([00bc6bf](https://github.com/globe-and-citizen/cnc-portal/commit/00bc6bf42decb28b652070a443c4082a31d91a69))
 - add description field to Claim model and enhance validation in addClaim function
   ([152f68c](https://github.com/globe-and-citizen/cnc-portal/commit/152f68c8fd295b239e5cf2d6253dd5e5eed7c01e))
-- add description field to Claim model and update validation in addClaim function; enhance
-  CashRemunerationTable and SubmitClaims components for description display
+- add description field to Claim model and update validation in addClaim function; enhance CashRemunerationTable and
+  SubmitClaims components for description display
   ([61fe09a](https://github.com/globe-and-citizen/cnc-portal/commit/61fe09a3069b6bd364d6537aae39775859b2c556))
 - add description field to wage claim submission
   ([1f27536](https://github.com/globe-and-citizen/cnc-portal/commit/1f275365c3992f9846cdd5b2d4ded319546f2c06))
@@ -2193,8 +2117,7 @@
   ([421b32e](https://github.com/globe-and-citizen/cnc-portal/commit/421b32e6f36f8b4bd458e1db5e70600f7fd36933))
 - add Dockerfile for Node.js application setup
   ([27fc07f](https://github.com/globe-and-citizen/cnc-portal/commit/27fc07f2cfb65995db1e0d2538568150f848e303))
-- add documentation for Dev Controller endpoints including health check and SIWE signature
-  generation
+- add documentation for Dev Controller endpoints including health check and SIWE signature generation
   ([2581774](https://github.com/globe-and-citizen/cnc-portal/commit/25817748f13eea0ff93396f30e6d38475e86e86e))
 - add dropdown item
   ([37510c5](https://github.com/globe-and-citizen/cnc-portal/commit/37510c552c7fa7157a67388f21a40827274bf0c8))
@@ -2208,13 +2131,11 @@
   ([99db41b](https://github.com/globe-and-citizen/cnc-portal/commit/99db41be6ec185abeb013d274bb10b4e590f19e9))
 - add dynamic titles
   ([89fe366](https://github.com/globe-and-citizen/cnc-portal/commit/89fe36648cc5501fc3281c5cb8ea9b755a0c1cd6))
-- add edge case tests for SIWE authentication covering empty body, missing message, missing
-  signature, invalid signature format, malformed message, SQL injection, expired nonce, reused
-  signature, and invalid content type
+- add edge case tests for SIWE authentication covering empty body, missing message, missing signature, invalid signature
+  format, malformed message, SQL injection, expired nonce, reused signature, and invalid content type
   ([dcef967](https://github.com/globe-and-citizen/cnc-portal/commit/dcef967b57a0588d3b3303d83db015b6672de7ad))
-- add edge case tests for SIWE authentication including validation for empty body, expired nonce,
-  invalid content type, and more
-  ([e3b45c8](https://github.com/globe-and-citizen/cnc-portal/commit/e3b45c8786ebcefb23a4e97bc6cb8d949e02d8b0))
+- add edge case tests for SIWE authentication including validation for empty body, expired nonce, invalid content type,
+  and more ([e3b45c8](https://github.com/globe-and-citizen/cnc-portal/commit/e3b45c8786ebcefb23a4e97bc6cb8d949e02d8b0))
 - add eip712 constants
   ([5550c48](https://github.com/globe-and-citizen/cnc-portal/commit/5550c4809c5f6716722b5453db58cd3f59f0dd85))
 - add eip712 inputs
@@ -2367,8 +2288,7 @@
   ([04ce91f](https://github.com/globe-and-citizen/cnc-portal/commit/04ce91f837ee26fcb9e5dbab44e3027191182ed1))
 - add format ether util
   ([a63e2bb](https://github.com/globe-and-citizen/cnc-portal/commit/a63e2bb973af82b6c70a17396b638a3cbf5b2701))
-- add formatted transfer amount display and enhance currency conversion logic in TransferForm
-  component
+- add formatted transfer amount display and enhance currency conversion logic in TransferForm component
   ([8e67dfc](https://github.com/globe-and-citizen/cnc-portal/commit/8e67dfca378a24733f70a6978a72fcfb95eccbbe))
 - add formattign and filtering
   ([7c627fc](https://github.com/globe-and-citizen/cnc-portal/commit/7c627fc156b4f41ee7e9869de3dd6efd5cdaf07f))
@@ -2390,8 +2310,7 @@
   ([72320d2](https://github.com/globe-and-citizen/cnc-portal/commit/72320d23256b4cd01006c1b0e735a202543ffb20))
 - add get shareholders function
   ([7881102](https://github.com/globe-and-citizen/cnc-portal/commit/788110245886d548c49f773ed10b9380e129d19b))
-- add Get Users - Empty Search test case with validation for response structure and Ethereum
-  addresses
+- add Get Users - Empty Search test case with validation for response structure and Ethereum addresses
   ([e7932d4](https://github.com/globe-and-citizen/cnc-portal/commit/e7932d40074be67aa4a5f846f8aef448b6fff8e2))
 - add Get Users - No Results test case to validate response for non-existent search
   ([90a9d8c](https://github.com/globe-and-citizen/cnc-portal/commit/90a9d8c0ab8a130d585c7a2a93c6e4e4cf59f4d7))
@@ -2627,8 +2546,7 @@
   ([1d20335](https://github.com/globe-and-citizen/cnc-portal/commit/1d203356a340e98a99b896a267ab006c16cc3ca1))
 - add ownable interface
   ([d8145ff](https://github.com/globe-and-citizen/cnc-portal/commit/d8145ff64ea4b8be23cdfe6fd3eee371f7ca548c))
-- Add Ownable, ReentrancyGuard, and Pausable to Voting contract & make it a solo contract for each
-  team
+- Add Ownable, ReentrancyGuard, and Pausable to Voting contract & make it a solo contract for each team
   ([d74b51a](https://github.com/globe-and-citizen/cnc-portal/commit/d74b51aab559569a2545f084b1937a0df7520849))
 - add owner to team
   ([db7636e](https://github.com/globe-and-citizen/cnc-portal/commit/db7636ef737fdd4e19bf562d9404db0c5cccc77f))
@@ -2676,8 +2594,7 @@
   ([9657642](https://github.com/globe-and-citizen/cnc-portal/commit/9657642cbb6492e3c12652e0e253dee1a33365dd))
 - add proposal type and adjust ProposalVoted event
   ([930bf20](https://github.com/globe-and-citizen/cnc-portal/commit/930bf20f13c70bb1013987dc9bbf43862c0d620e))
-- add props
-  ([d062e98](https://github.com/globe-and-citizen/cnc-portal/commit/d062e9883ab7eb2bcc95d263cc76d05f6fd9715d))
+- add props ([d062e98](https://github.com/globe-and-citizen/cnc-portal/commit/d062e9883ab7eb2bcc95d263cc76d05f6fd9715d))
 - add proxy abi and bytecode to app folder
   ([734d135](https://github.com/globe-and-citizen/cnc-portal/commit/734d1358369451116c132990bd7168aa76ce8652))
 - add query invalidation for balance updates in handleTransfer function
@@ -2810,8 +2727,7 @@
   ([34acd66](https://github.com/globe-and-citizen/cnc-portal/commit/34acd66f4afd929123ae7a818d70cd9e35c0227c))
 - add teams route and integrate ListIndex component for team listing
   ([13a01c8](https://github.com/globe-and-citizen/cnc-portal/commit/13a01c80600cb10b30c4472b7dacf1b3672acfcb))
-- add test
-  ([9e497be](https://github.com/globe-and-citizen/cnc-portal/commit/9e497be0f3238732e083c3a183da568ebcbab5ec))
+- add test ([9e497be](https://github.com/globe-and-citizen/cnc-portal/commit/9e497be0f3238732e083c3a183da568ebcbab5ec))
 - add test case for handling invalid limit parameter in Get Users endpoint
   ([40409b0](https://github.com/globe-and-citizen/cnc-portal/commit/40409b027fcc9c77f59b4750ea5528ed65face31))
 - add test case for handling invalid limit parameter in Get Users request
@@ -2834,10 +2750,8 @@
   ([765d9d1](https://github.com/globe-and-citizen/cnc-portal/commit/765d9d1a681361b1d6a72b7c470877c4a5cf8580))
 - add test for user
   ([179ef8c](https://github.com/globe-and-citizen/cnc-portal/commit/179ef8cf6e4d6469df2f0e27ca3ffad90e4da3f4))
-- add tests
-  ([9201992](https://github.com/globe-and-citizen/cnc-portal/commit/9201992f495c18e13429e5587d924aa2d0e9ef0a))
-- add tests
-  ([df8e216](https://github.com/globe-and-citizen/cnc-portal/commit/df8e216cb1fb03beaa16f41b27dca6e70bd406de))
+- add tests ([9201992](https://github.com/globe-and-citizen/cnc-portal/commit/9201992f495c18e13429e5587d924aa2d0e9ef0a))
+- add tests ([df8e216](https://github.com/globe-and-citizen/cnc-portal/commit/df8e216cb1fb03beaa16f41b27dca6e70bd406de))
 - add tests for bodService
   ([eb9cd05](https://github.com/globe-and-citizen/cnc-portal/commit/eb9cd056617a7139360508d68739c339e194e466))
 - add tests for createbank and deposit events
@@ -2928,12 +2842,10 @@
   ([2bdc214](https://github.com/globe-and-citizen/cnc-portal/commit/2bdc214519774809bb09a85c37bcab140937c939))
 - add typechain run before testing
   ([b1b1248](https://github.com/globe-and-citizen/cnc-portal/commit/b1b1248419765c8d837762603224e3f03922eb56))
-- add types
-  ([2fee88c](https://github.com/globe-and-citizen/cnc-portal/commit/2fee88c49b8a363016a8c871c50605ce77da6d79))
+- add types ([2fee88c](https://github.com/globe-and-citizen/cnc-portal/commit/2fee88c49b8a363016a8c871c50605ce77da6d79))
 - add TypeScript definitions for swagger-jsdoc and swagger-ui-express
   ([586309d](https://github.com/globe-and-citizen/cnc-portal/commit/586309d34472582d424e233024efcc960792668f))
-- add unique constraint and default value for nextWageId in Wage model, enhance wage validation in
-  setWage function
+- add unique constraint and default value for nextWageId in Wage model, enhance wage validation in setWage function
   ([0015099](https://github.com/globe-and-citizen/cnc-portal/commit/0015099ade6fafe78eff8d5dbc654bc678356a81))
 - add unit tests for TeamMeta.vue
   ([5a3f108](https://github.com/globe-and-citizen/cnc-portal/commit/5a3f108f390ad55216436602549472632168cbb2))
@@ -2975,8 +2887,7 @@
   ([c081e10](https://github.com/globe-and-citizen/cnc-portal/commit/c081e10a1e7aadf99f9163c54237dfba9d8e8479))
 - Add utility functions for calculating start of the week and today's midnight
   ([4180cff](https://github.com/globe-and-citizen/cnc-portal/commit/4180cffd5e52309393d0dd8a7b3505c19acb7918))
-- add validation for teamId in syncContracts and enhance contract routes with addContract
-  functionality
+- add validation for teamId in syncContracts and enhance contract routes with addContract functionality
   ([7d95272](https://github.com/globe-and-citizen/cnc-portal/commit/7d952728a96baf579467c80616aee51199c390c3))
 - Add validation for unique candidates in CreateProposalForm.vue
   ([e21d9b9](https://github.com/globe-and-citizen/cnc-portal/commit/e21d9b9919649768421a77962c3cae3063b36618))
@@ -3030,8 +2941,7 @@
   ([a45ed9e](https://github.com/globe-and-citizen/cnc-portal/commit/a45ed9e91e3f9809e8b5f86fd8ffc3f03f68b01d))
 - add warning modal for contract redeployment with data loss details
   ([1f36f2f](https://github.com/globe-and-citizen/cnc-portal/commit/1f36f2fb30ec31ae63674e35cf81928bde7be734))
-- add watch functionality to dynamically show dropdown based on input focus and content in
-  SelectMemberInput
+- add watch functionality to dynamically show dropdown based on input focus and content in SelectMemberInput
   ([f8438f1](https://github.com/globe-and-citizen/cnc-portal/commit/f8438f189322388658693e1f6a9fefbd994906bb))
 - add watcher for route parameter changes in ShowIndex component
   ([7fe4172](https://github.com/globe-and-citizen/cnc-portal/commit/7fe41720a4a666b517fa888f065855daa29469ab))
@@ -3157,8 +3067,7 @@
   ([ab79099](https://github.com/globe-and-citizen/cnc-portal/commit/ab79099ebc13ec6de26be42d34896ba93490b24a))
 - bind contract data
   ([35ea641](https://github.com/globe-and-citizen/cnc-portal/commit/35ea64186afbb0a596e406d2bea16ce352e44fac))
-- bind data
-  ([12d5015](https://github.com/globe-and-citizen/cnc-portal/commit/12d5015716a47af58b7365292dc0ee34a972fc4d))
+- bind data ([12d5015](https://github.com/globe-and-citizen/cnc-portal/commit/12d5015716a47af58b7365292dc0ee34a972fc4d))
 - bind data to the graph
   ([93d5944](https://github.com/globe-and-citizen/cnc-portal/commit/93d59441aaccbdbb9d34ddd87209cd43b58c6bda))
 - bind expense account balance
@@ -3207,10 +3116,8 @@
   ([579fa3a](https://github.com/globe-and-citizen/cnc-portal/commit/579fa3ab2063fa6de0a951c119674fb3228b5c9f))
 - check when not paused function
   ([fff940c](https://github.com/globe-and-citizen/cnc-portal/commit/fff940cf3921d10c6a4b2a42861743ea439adfff))
-- clear
-  ([3e78a31](https://github.com/globe-and-citizen/cnc-portal/commit/3e78a3188c893d1268497cb0f27673a26b3191ad))
-- clear
-  ([a17c55d](https://github.com/globe-and-citizen/cnc-portal/commit/a17c55d919a09f56a74dfb59124eb3977d3b53ef))
+- clear ([3e78a31](https://github.com/globe-and-citizen/cnc-portal/commit/3e78a3188c893d1268497cb0f27673a26b3191ad))
+- clear ([a17c55d](https://github.com/globe-and-citizen/cnc-portal/commit/a17c55d919a09f56a74dfb59124eb3977d3b53ef))
 - Close button in the modale component
   ([bf55286](https://github.com/globe-and-citizen/cnc-portal/commit/bf55286b375a037232fa1780f7053d3a18fd3837))
 - close menu after withdraw
@@ -3221,8 +3128,7 @@
   ([687e246](https://github.com/globe-and-citizen/cnc-portal/commit/687e2469552592d662cb018b0def3bec54b59a78))
 - code cov yml for carry forward
   ([b37fb3b](https://github.com/globe-and-citizen/cnc-portal/commit/b37fb3b975fd1d8d4bff3d6792676b147572e6a3))
-- code q
-  ([050b766](https://github.com/globe-and-citizen/cnc-portal/commit/050b766dbfcddf7c4248f4a9fcac93aa4ea8cf8a))
+- code q ([050b766](https://github.com/globe-and-citizen/cnc-portal/commit/050b766dbfcddf7c4248f4a9fcac93aa4ea8cf8a))
 - comment out user search route and validation schema for future refactoring
   ([0ba54f4](https://github.com/globe-and-citizen/cnc-portal/commit/0ba54f49810cc5bd595a2f143c5e36d65d48aacf))
 - conclude proposal
@@ -3349,8 +3255,7 @@
   ([7d0b6e1](https://github.com/globe-and-citizen/cnc-portal/commit/7d0b6e1ef629f508cf3a4cf3ddf21ef436aa6853))
 - delete member from team
   ([d6fdd0f](https://github.com/globe-and-citizen/cnc-portal/commit/d6fdd0f6fa5ea1a9e54549486cee57c75bfeb470))
-- deploy
-  ([38e8fec](https://github.com/globe-and-citizen/cnc-portal/commit/38e8fec20e2efb050150fed3e11ff6d3e036d927))
+- deploy ([38e8fec](https://github.com/globe-and-citizen/cnc-portal/commit/38e8fec20e2efb050150fed3e11ff6d3e036d927))
 - deploy all contracts
   ([2915a66](https://github.com/globe-and-citizen/cnc-portal/commit/2915a66ea566e705a294f39eb921514ea70e5f89))
 - deploy bank implementation on sepolia network
@@ -3513,8 +3418,7 @@
   ([d94bd80](https://github.com/globe-and-citizen/cnc-portal/commit/d94bd80531674201bbd2f1253f6a185a43e10e7c))
 - enhance Bruno authentication setup with server health check and improved logging
   ([ff53d95](https://github.com/globe-and-citizen/cnc-portal/commit/ff53d959da857d8f098c3db4c085f19cc4002384))
-- enhance BudgetData structure in ExpenseAccountEIP712 to include token address for improved
-  transaction handling
+- enhance BudgetData structure in ExpenseAccountEIP712 to include token address for improved transaction handling
   ([a1fd53a](https://github.com/globe-and-citizen/cnc-portal/commit/a1fd53a72cbe534eebb7c44ec2795fc0a2f7459e))
 - enhance CardComponent to accept dynamic title and slot for actions
   ([5414b09](https://github.com/globe-and-citizen/cnc-portal/commit/5414b09ee04c8cb378bff4d56b4bb99dedacfcaa))
@@ -3522,8 +3426,7 @@
   ([995c737](https://github.com/globe-and-citizen/cnc-portal/commit/995c737f7ffb1b2d1520e66ca00d9bb5cf9716c5))
 - Enhance CashRemunerationWeeklyClaim component with additional wage rates and status display
   ([206f4e4](https://github.com/globe-and-citizen/cnc-portal/commit/206f4e4ceb2a716c4e4fc51dd735121818046dbd))
-- Enhance CashRemunerationWeeklyClaim to display detailed weekly claims data and improve error
-  handling
+- Enhance CashRemunerationWeeklyClaim to display detailed weekly claims data and improve error handling
   ([f5a8ce1](https://github.com/globe-and-citizen/cnc-portal/commit/f5a8ce124a654938bdd2689ae2cb6d3b4c56daf1))
 - enhance claim schema with additional fields and update OpenAPI documentation
   ([d40e73b](https://github.com/globe-and-citizen/cnc-portal/commit/d40e73b86ebee2dbb158011124035e6d6af6edaf))
@@ -3583,13 +3486,11 @@
   ([832aea5](https://github.com/globe-and-citizen/cnc-portal/commit/832aea5bc23c5120571f789304b06cd8cf559a4d))
 - enhance MintForm layout with SelectMemberInput and improve amount input styling
   ([e4b1272](https://github.com/globe-and-citizen/cnc-portal/commit/e4b127278aba96e6317560f4cee30c8ae4bdcbc2))
-- enhance modal management and reset functionality in CurrentBoDElectionSection and
-  CreateElectionForm components
+- enhance modal management and reset functionality in CurrentBoDElectionSection and CreateElectionForm components
   ([28bcac9](https://github.com/globe-and-citizen/cnc-portal/commit/28bcac9792d794f0e23e0a79de1e7e00f7fa4324))
 - enhance modal management and reset functionality in InvestorsActions and MintForm components
   ([f155811](https://github.com/globe-and-citizen/cnc-portal/commit/f1558118eeb234a360c19eda4a9c521ff167cfd1))
-- enhance modal management in ApproveUsersEIP712Form, ApprovedExpensesSection, and TransferAction
-  components
+- enhance modal management in ApproveUsersEIP712Form, ApprovedExpensesSection, and TransferAction components
   ([6ffd1e7](https://github.com/globe-and-citizen/cnc-portal/commit/6ffd1e7e597c0e80f63956d7383ec7388868d5cb))
 - enhance modal state management and reset functionality in ShareholderList and MintForm components
   ([e11f3ad](https://github.com/globe-and-citizen/cnc-portal/commit/e11f3ad11d063a9a0439b11ad2ec3f75a882e19e))
@@ -3615,13 +3516,11 @@
   ([2e41ca0](https://github.com/globe-and-citizen/cnc-portal/commit/2e41ca018ce0d85a55f83f7701afa347027f2d26))
 - enhance Sentry integration with session replay configuration
   ([2da2787](https://github.com/globe-and-citizen/cnc-portal/commit/2da27870f4bc2718ed4e1cfe40171bce7b91ea4e))
-- enhance ShareholderList layout by simplifying template structure and improving action button
-  styling
+- enhance ShareholderList layout by simplifying template structure and improving action button styling
   ([1025d6d](https://github.com/globe-and-citizen/cnc-portal/commit/1025d6dc21dab6f8f836f32d6eaa551b8734bd15))
 - enhance SIWE authentication with validation schemas and update routes
   ([da4a13d](https://github.com/globe-and-citizen/cnc-portal/commit/da4a13d521b3e7972067e55e1fa2cdc0f0bab184))
-- enhance SIWE edge case tests with specific validation messages and security checks for various
-  scenarios
+- enhance SIWE edge case tests with specific validation messages and security checks for various scenarios
   ([7e0d092](https://github.com/globe-and-citizen/cnc-portal/commit/7e0d092af00d78d39d86dfce7379fcc1bafd46e1))
 - enhance SubmitClaims component with date picker and improved input fields
   ([8ffe46e](https://github.com/globe-and-citizen/cnc-portal/commit/8ffe46e8415688eb412d9dc41ef5a69fa6b3f96b))
@@ -3647,20 +3546,17 @@
   ([abab6b6](https://github.com/globe-and-citizen/cnc-portal/commit/abab6b60dfd0d334dcc60994affcb7448570b591))
 - enhance Tips contract with push limit and token distribution improvements
   ([32a3c2c](https://github.com/globe-and-citizen/cnc-portal/commit/32a3c2c81fe498a4f4b4ceba985d3a3e1ea7c444))
-- enhance transaction handling with loading indicators and detailed timeline for pause/unpause
-  operations
+- enhance transaction handling with loading indicators and detailed timeline for pause/unpause operations
   ([fd78b73](https://github.com/globe-and-citizen/cnc-portal/commit/fd78b7384db7e421e4ec65b79c38d7629c108e6c))
 - enhance transaction history component with additional data formatting
   ([bfd1637](https://github.com/globe-and-citizen/cnc-portal/commit/bfd16371bd7754555dd12c0b381fab371dd5257a))
 - enhance transaction history component with currency conversion and remove unused props
   ([cfcaf59](https://github.com/globe-and-citizen/cnc-portal/commit/cfcaf59e2cd21b2239403723fb0ecdbfcd9ed74d))
-- enhance transaction history display with clickable contract addresses and improved contract type
-  icons
+- enhance transaction history display with clickable contract addresses and improved contract type icons
   ([4a3ef40](https://github.com/globe-and-citizen/cnc-portal/commit/4a3ef408ff543997cad092563df2337bfe2969cb))
 - enhance transaction history with receipt export options and refactor data handling
   ([ebaf99b](https://github.com/globe-and-citizen/cnc-portal/commit/ebaf99bf745a345767cec178e622e2cb938295b3))
-- enhance transaction queries in BankView, CashRemunerationView, and ExpenseAccountView with
-  ordering and polling
+- enhance transaction queries in BankView, CashRemunerationView, and ExpenseAccountView with ordering and polling
   ([729055b](https://github.com/globe-and-citizen/cnc-portal/commit/729055b8dd8c005d96c296921e6640c75f12a3ce))
 - enhance TransactionTimeline with dynamic color coding for steps
   ([f353459](https://github.com/globe-and-citizen/cnc-portal/commit/f353459c2fa14c95e7b6246fbfec215aba3f43ac))
@@ -3696,8 +3592,7 @@
   ([b0fd492](https://github.com/globe-and-citizen/cnc-portal/commit/b0fd492cebdf6e913e347b14d01f827d5437bd4b))
 - enhance weekly claims retrieval by adding member address filter
   ([d088010](https://github.com/globe-and-citizen/cnc-portal/commit/d088010dfd040fa5b04e8e36a626208740e3185b))
-- Enhance WeeklyClaimComponent with detailed notification table and refactor integration in
-  CashRemunerationWeeklyClaim
+- Enhance WeeklyClaimComponent with detailed notification table and refactor integration in CashRemunerationWeeklyClaim
   ([67e8cf6](https://github.com/globe-and-citizen/cnc-portal/commit/67e8cf67296c72d524cc22038f8458df3834c138))
 - enhance WeeklyClaimView with member link and date formatting improvements
   ([57a9d0f](https://github.com/globe-and-citizen/cnc-portal/commit/57a9d0f183c4047d45ef50ba5c7cbf54db3166b7))
@@ -3753,10 +3648,8 @@
   ([c466fbd](https://github.com/globe-and-citizen/cnc-portal/commit/c466fbd0584f78aa1d8482720a78ace33b2d4959))
 - formalize logic
   ([8861a5e](https://github.com/globe-and-citizen/cnc-portal/commit/8861a5ef1dd168bb019c272bd0a423f0fb8d607c))
-- format
-  ([230d86e](https://github.com/globe-and-citizen/cnc-portal/commit/230d86ebcb286df308105e65177dfd1142b1c761))
-- format
-  ([7565385](https://github.com/globe-and-citizen/cnc-portal/commit/75653852a45f6a1a55a28a708f4ddd69d15d3db5))
+- format ([230d86e](https://github.com/globe-and-citizen/cnc-portal/commit/230d86ebcb286df308105e65177dfd1142b1c761))
+- format ([7565385](https://github.com/globe-and-citizen/cnc-portal/commit/75653852a45f6a1a55a28a708f4ddd69d15d3db5))
 - format board of directors
   ([6c9973b](https://github.com/globe-and-citizen/cnc-portal/commit/6c9973ba8056ac6f8a2a433c2101a32272fc9d5c))
 - format documents
@@ -3841,8 +3734,7 @@
   ([aa7851a](https://github.com/globe-and-citizen/cnc-portal/commit/aa7851a36b6c85f221673802d1369adaa759702b))
 - implement BankEthTipOperation component for sending ETH tips with validation and state display
   ([bc5f36e](https://github.com/globe-and-citizen/cnc-portal/commit/bc5f36ea04cdc394ea3deb0468d3469481a54598))
-- implement BankReadOperations component for displaying contract read data with loading and error
-  states
+- implement BankReadOperations component for displaying contract read data with loading and error states
   ([e65a671](https://github.com/globe-and-citizen/cnc-portal/commit/e65a671cb444d9f5d7ef35eed0de8d13173a2a4d))
 - implement bulk ETH transfer script with configuration and recipient management
   ([b4293f2](https://github.com/globe-and-citizen/cnc-portal/commit/b4293f275f406538589a0de1d80cf430d120e213))
@@ -3856,8 +3748,7 @@
   ([6375596](https://github.com/globe-and-citizen/cnc-portal/commit/6375596c2e6fab871dad22bbb658281afc30101e))
 - implement complete authentication flow with SIWE and token validation tests
   ([6cd027d](https://github.com/globe-and-citizen/cnc-portal/commit/6cd027d1e9946c8acd8109218c5d1a541ccb1240))
-- implement complete authentication flow with SIWE, including signature generation, login, and token
-  validation tests
+- implement complete authentication flow with SIWE, including signature generation, login, and token validation tests
   ([1297f42](https://github.com/globe-and-citizen/cnc-portal/commit/1297f42138ec2d5218c3b119f9adbdd7b021d5fb))
 - Implement comprehensive bank view with token holdings and transaction history
   ([50b8665](https://github.com/globe-and-citizen/cnc-portal/commit/50b8665d94ba003de5cc988658968dec8768be32))
@@ -3867,8 +3758,7 @@
   ([780c460](https://github.com/globe-and-citizen/cnc-portal/commit/780c460020686e781a9649b72c84b8fb6488a30b))
 - implement dropdown for selecting user
   ([01bb65d](https://github.com/globe-and-citizen/cnc-portal/commit/01bb65dc4f24598dc59145e2b728f4af8ae6e0c6))
-- implement dynamic currency conversion in BankBalanceSection and update tests for local value
-  calculation
+- implement dynamic currency conversion in BankBalanceSection and update tests for local value calculation
   ([54dfc1e](https://github.com/globe-and-citizen/cnc-portal/commit/54dfc1e37ce2e1c0a05a7c1c89f738a2b507b9fb))
 - implement dynamic currency display and conversion in GenericTokenHoldingsSection component
   ([0cf4a81](https://github.com/globe-and-citizen/cnc-portal/commit/0cf4a81ca71cdd0bae5b7011d43462a00c1316a0))
@@ -3914,8 +3804,7 @@
   ([bc28abf](https://github.com/globe-and-citizen/cnc-portal/commit/bc28abf6f7290901497c69d696a52f1af4ef4ccf))
 - implement pagination for frontend
   ([71c2613](https://github.com/globe-and-citizen/cnc-portal/commit/71c2613b394059d7a29fd4149c467a6ef8d47e2a))
-- implement pagination in GenericTransactionHistory and TableComponent for improved transaction
-  display
+- implement pagination in GenericTransactionHistory and TableComponent for improved transaction display
   ([e9969a2](https://github.com/globe-and-citizen/cnc-portal/commit/e9969a22840ac2dafaff161aeb88774c232d1341))
 - implement proposal concluded
   ([5fbf493](https://github.com/globe-and-citizen/cnc-portal/commit/5fbf493027963320447cbd156d5f8d284b00939a))
@@ -3961,13 +3850,11 @@
   ([d71e6b5](https://github.com/globe-and-citizen/cnc-portal/commit/d71e6b5a13dfea125546bbabe61fc0c936ea1b71))
 - improve logging in teamStore for setting current team id and initialization
   ([0359d44](https://github.com/globe-and-citizen/cnc-portal/commit/0359d44e5e99218baaf8edccbb7c6aaddb47547e))
-- improve modal state management and reset functionality in AdvertiseContractSection and
-  CreateAddCampaign components
+- improve modal state management and reset functionality in AdvertiseContractSection and CreateAddCampaign components
   ([d8cf681](https://github.com/globe-and-citizen/cnc-portal/commit/d8cf681b8a012f21d40264b69be7876835603726))
 - improve modal state management in MemberSection for adding new members
   ([dd8e572](https://github.com/globe-and-citizen/cnc-portal/commit/dd8e5722f29838e899ae33089178cd8998638cb6))
-- improve TableComponent header rendering with data-test attributes and conditional sort button
-  display
+- improve TableComponent header rendering with data-test attributes and conditional sort button display
   ([c61f56f](https://github.com/globe-and-citizen/cnc-portal/commit/c61f56ff0ee78ec350058163bc6e58872c0c561f))
 - improve typing
   ([f03d4c8](https://github.com/globe-and-citizen/cnc-portal/commit/f03d4c846e23aa6de9737d629910547b8fcd2a1a))
@@ -4029,8 +3916,7 @@
   ([888f95a](https://github.com/globe-and-citizen/cnc-portal/commit/888f95ab4b576e224110aaf098be1b8cb0875acd))
 - integrate Cash Remuneration contract owner check in TheDrawer component
   ([59a9674](https://github.com/globe-and-citizen/cnc-portal/commit/59a967435feb8addf07ad8052919ed3bb542369f))
-- integrate CashRemunerationAction component into CashRemunerationTable and remove unused approval
-  logic
+- integrate CashRemunerationAction component into CashRemunerationTable and remove unused approval logic
   ([053a0ab](https://github.com/globe-and-citizen/cnc-portal/commit/053a0abf4249ee85f43635d27db8c5cfa229dbc2))
 - integrate CashRemunerationTable for individual member display in CashRemunerationView
   ([5a4051e](https://github.com/globe-and-citizen/cnc-portal/commit/5a4051ebcacf116f703392c538a20f3ae4968006))
@@ -4106,8 +3992,7 @@
   ([4c3765f](https://github.com/globe-and-citizen/cnc-portal/commit/4c3765f48daac038d5e47e7e10780e724771e10b))
 - modal dual bind and key and click event
   ([039d999](https://github.com/globe-and-citizen/cnc-portal/commit/039d999181bc72be4520005d1529311512fc0016))
-- moove member management functionality with add, delete, and wage setting operations in a separate
-  file
+- moove member management functionality with add, delete, and wage setting operations in a separate file
   ([9436fe0](https://github.com/globe-and-citizen/cnc-portal/commit/9436fe07d2b3b199fafdf481c9646dcdb5f14920))
 - move deployed addresses script
   ([680bd9d](https://github.com/globe-and-citizen/cnc-portal/commit/680bd9d01c4d6b0dbe299b96f8e5d4a9ae28489b))
@@ -4401,8 +4286,7 @@
   ([fb7592c](https://github.com/globe-and-citizen/cnc-portal/commit/fb7592ca48c19872a0db26359a83199eee4380bf))
 - show two digits stats
   ([6fa5781](https://github.com/globe-and-citizen/cnc-portal/commit/6fa5781c8a97e1a5c134f90341d75687012852d3))
-- Simplify data handling in CashRemunerationWeeklyClaim component and enhance claim processing in
-  controllers
+- Simplify data handling in CashRemunerationWeeklyClaim component and enhance claim processing in controllers
   ([6b7846e](https://github.com/globe-and-citizen/cnc-portal/commit/6b7846e37a50fa10f427281857aa76fa7e86b740))
 - simplify error response structure by removing redundant success field
   ([fa04d5d](https://github.com/globe-and-citizen/cnc-portal/commit/fa04d5d07eaaaba783be8ac05c8ed4fbbe15be7b))
@@ -4426,8 +4310,7 @@
   ([0860bfa](https://github.com/globe-and-citizen/cnc-portal/commit/0860bfae14e9845d6c46c20ea0997886d0f82821))
 - switch or set required network for user
   ([f042c82](https://github.com/globe-and-citizen/cnc-portal/commit/f042c82ae6e13c15fc8d7bd0267412aaa98c60f5))
-- table ui
-  ([48046d3](https://github.com/globe-and-citizen/cnc-portal/commit/48046d3c107e30f8b9b02eaaebee72e092f1d8ef))
+- table ui ([48046d3](https://github.com/globe-and-citizen/cnc-portal/commit/48046d3c107e30f8b9b02eaaebee72e092f1d8ef))
 - temp add function to set bod from voting
   ([5cefafb](https://github.com/globe-and-citizen/cnc-portal/commit/5cefafb6ff0fbde8e0b87d1c6c57fa8fd27af28f))
 - temporariliy set officer as owner
@@ -4446,8 +4329,7 @@
   ([007177f](https://github.com/globe-and-citizen/cnc-portal/commit/007177f1b3475406d7dc55ebdce11c01f8d191c6))
 - update abi in frontend
   ([d236245](https://github.com/globe-and-citizen/cnc-portal/commit/d236245a9c613703199ebe1020dc892f750e6690))
-- Update action templates in CashRemunerationWeeklyClaim to use weeklyClaim prop and improve data
-  fetching
+- Update action templates in CashRemunerationWeeklyClaim to use weeklyClaim prop and improve data fetching
   ([d65d25e](https://github.com/globe-and-citizen/cnc-portal/commit/d65d25e59b42b8f8eaea422a923757fa9e9a83cf))
 - update AddMemberForm to fetch team data after adding members
   ([26da335](https://github.com/globe-and-citizen/cnc-portal/commit/26da33574ddcf94e83827dfd4f5ab61fc045d7d5))
@@ -4469,13 +4351,11 @@
   ([8957c7e](https://github.com/globe-and-citizen/cnc-portal/commit/8957c7e21998f42b54b6d4834edf0e9c6f10f4e9))
 - update cash remuneration owner check in CashRemunerationView component
   ([cf67462](https://github.com/globe-and-citizen/cnc-portal/commit/cf67462689be5bded1b759fc21505fb1b2faf44d))
-- update cash remuneration owner checks in CRWeeklyClaimOwnerHeader and PendingWeeklyClaim
-  components
+- update cash remuneration owner checks in CRWeeklyClaimOwnerHeader and PendingWeeklyClaim components
   ([157bedd](https://github.com/globe-and-citizen/cnc-portal/commit/157bedd9d577d7c60e406900d2c5b865d050bb3d))
 - Update CashRemunerationWeeklyClaim component to improve user display and data handling
   ([3c01312](https://github.com/globe-and-citizen/cnc-portal/commit/3c01312e6e529a33ebccba88964142be88b50431))
-- Update CashRemunerationWeeklyClaim to use fetched data and enhance claim controller tests for wage
-  validation
+- Update CashRemunerationWeeklyClaim to use fetched data and enhance claim controller tests for wage validation
   ([907946d](https://github.com/globe-and-citizen/cnc-portal/commit/907946d41a9813df05e57930b6e83c962153f110))
 - update claim
   ([15e4088](https://github.com/globe-and-citizen/cnc-portal/commit/15e4088f7060a5720be59ed6a0d93b4a08f9153c))
@@ -4579,8 +4459,7 @@
   ([77d9597](https://github.com/globe-and-citizen/cnc-portal/commit/77d95978b2e244c4a741ab81352ae9616ef938f6))
 - update menu item visibility based on user ownership status
   ([302d61e](https://github.com/globe-and-citizen/cnc-portal/commit/302d61efec583bd493852c8a383e34a6a3ef6b7c))
-- update modal management for distribute mint and pay dividends actions in InvestorsActions
-  component
+- update modal management for distribute mint and pay dividends actions in InvestorsActions component
   ([bad4bf3](https://github.com/globe-and-citizen/cnc-portal/commit/bad4bf3317c9fa5591c36378bdf2267f8791cb71))
 - update modal state structure in BankBalanceSection tests for improved clarity
   ([4cb0538](https://github.com/globe-and-citizen/cnc-portal/commit/4cb05388883bcc71b6e645768e8bd19a597e1c56))
@@ -4684,18 +4563,15 @@
   ([7429cc2](https://github.com/globe-and-citizen/cnc-portal/commit/7429cc2e10b9817bfbe2a3c5ac95cc7bd42ad4f8))
 - update wage setting API to use PUT method and streamline request headers
   ([6c4cf2e](https://github.com/globe-and-citizen/cnc-portal/commit/6c4cf2ebf6576607e30c7e3eb0ca4dbc1990ca05))
-- update weekly claim controller to include cash remuneration owner validation and adjust HTTP
-  methods in tests
+- update weekly claim controller to include cash remuneration owner validation and adjust HTTP methods in tests
   ([bbf18db](https://github.com/globe-and-citizen/cnc-portal/commit/bbf18db1951724ee3563a22a6b0b6014e16c1214))
 - update weekly claim fetching logic to include member address filter
   ([3ec9514](https://github.com/globe-and-citizen/cnc-portal/commit/3ec95149f48a96385a36498b0e090298545e284b))
 - update weekly claim filter to use ISO string for date comparison
   ([bf8bf64](https://github.com/globe-and-citizen/cnc-portal/commit/bf8bf64a931af74d8b7d3458840bf4760c7c19db))
-- Update WeeklyClaimComponent with improved notification table layout and remove memo field; add
-  WeeklyClaim model and migration
-  ([a588a4e](https://github.com/globe-and-citizen/cnc-portal/commit/a588a4e3c34a013cac4569eed823b68e7596d160))
-- update withdraw claim component to emit event on successful withdrawal and fix claim status update
-  URL
+- Update WeeklyClaimComponent with improved notification table layout and remove memo field; add WeeklyClaim model and
+  migration ([a588a4e](https://github.com/globe-and-citizen/cnc-portal/commit/a588a4e3c34a013cac4569eed823b68e7596d160))
+- update withdraw claim component to emit event on successful withdrawal and fix claim status update URL
   ([7e3e1cb](https://github.com/globe-and-citizen/cnc-portal/commit/7e3e1cb76c32bb695161caaec6d4f12cca1ced83))
 - update workflow for non interactive interface
   ([552e59b](https://github.com/globe-and-citizen/cnc-portal/commit/552e59b5ba9a64138b782206873100d6812b6645))
@@ -4799,16 +4675,14 @@
   ([98cdb45](https://github.com/globe-and-citizen/cnc-portal/commit/98cdb4548419f6b0eda337d150f485de66f76826))
 - validation for update team form
   ([eaa4b84](https://github.com/globe-and-citizen/cnc-portal/commit/eaa4b84c567eeb578f6e53f74daf6ee3ee2f4b07))
-- vote form
-  ([b5741c7](https://github.com/globe-and-citizen/cnc-portal/commit/b5741c7a53b976faf84e15dcaf83f07d618b65d0))
+- vote form ([b5741c7](https://github.com/globe-and-citizen/cnc-portal/commit/b5741c7a53b976faf84e15dcaf83f07d618b65d0))
 - voting contract
   ([cb8d105](https://github.com/globe-and-citizen/cnc-portal/commit/cb8d105b54bc7c0972b332f333db6eb6f02d91f6))
 - voting function definition
   ([5bcc237](https://github.com/globe-and-citizen/cnc-portal/commit/5bcc237d37b87a1bed448e3736f64821c127c52e))
 - wage claim migrations
   ([1af833d](https://github.com/globe-and-citizen/cnc-portal/commit/1af833d36516ee9e996d9b9001f192f263905908))
-- wip
-  ([0daf564](https://github.com/globe-and-citizen/cnc-portal/commit/0daf564def835bf06d9b7b0aedaf21ea556bbaf2))
+- wip ([0daf564](https://github.com/globe-and-citizen/cnc-portal/commit/0daf564def835bf06d9b7b0aedaf21ea556bbaf2))
 
 ### Performance Improvements
 
@@ -4841,12 +4715,11 @@
 
 - Revert "refactor: :sparkles: update query key computations for pending and signed weekly claims"
   ([05fe455](https://github.com/globe-and-citizen/cnc-portal/commit/05fe455d4ef7960f8005a59875030b78246bb96d))
-- Revert "feat: replace input group with TokenAmount component for improved token handling in
-  TransferForm"
+- Revert "feat: replace input group with TokenAmount component for improved token handling in TransferForm"
   ([3ac9d0d](https://github.com/globe-and-citizen/cnc-portal/commit/3ac9d0db8d54e11bb7e00c2284a66b08bba1f586))
 - Revert "Merge pull request #898 from globe-and-citizen/feature/claimTable"
-  ([a821f29](https://github.com/globe-and-citizen/cnc-portal/commit/a821f29fe46fe6488a4204b8021e959ee186c607)),
-  closes [#898](https://github.com/globe-and-citizen/cnc-portal/issues/898)
+  ([a821f29](https://github.com/globe-and-citizen/cnc-portal/commit/a821f29fe46fe6488a4204b8021e959ee186c607)), closes
+  [#898](https://github.com/globe-and-citizen/cnc-portal/issues/898)
 - Revert "test: update useReadContract mock"
   ([3bd6a67](https://github.com/globe-and-citizen/cnc-portal/commit/3bd6a672f8f5e7785466b49203887f6b3981e90e))
 - Revert "Merge branch 'develop' into feature/claimTable"
@@ -4867,12 +4740,10 @@
   ([fb8a718](https://github.com/globe-and-citizen/cnc-portal/commit/fb8a718545415d1b79d4433185af948a9610f271))
 - Revert "Merge branch 'feat/team-crud-v2' into feat/crud-v2-frontend"
   ([ab00c02](https://github.com/globe-and-citizen/cnc-portal/commit/ab00c0243692485a0e7f1093e742d6d5c4cdc572))
-- also this
-  ([861a42a](https://github.com/globe-and-citizen/cnc-portal/commit/861a42a64ec1cf6de2edba90164f53712d11f87b))
+- also this ([861a42a](https://github.com/globe-and-citizen/cnc-portal/commit/861a42a64ec1cf6de2edba90164f53712d11f87b))
 - another one
   ([efd0275](https://github.com/globe-and-citizen/cnc-portal/commit/efd027525aa5fe638452478facd867642a4f3987))
-- changes
-  ([c24b2f4](https://github.com/globe-and-citizen/cnc-portal/commit/c24b2f468cd0ef57e4ebd23cb8dd5d76be22aa8f))
+- changes ([c24b2f4](https://github.com/globe-and-citizen/cnc-portal/commit/c24b2f468cd0ef57e4ebd23cb8dd5d76be22aa8f))
 - changes on team controller
   ([51c36fb](https://github.com/globe-and-citizen/cnc-portal/commit/51c36fb6d019b0924e252ca3b2b87554dda3b904))
 - navbar util
@@ -4887,8 +4758,7 @@
   ([4a6e24e](https://github.com/globe-and-citizen/cnc-portal/commit/4a6e24e1eb9faa519aff5f749ac8704219b177f9))
 - tabnavigation changes and use v-model
   ([94384eb](https://github.com/globe-and-citizen/cnc-portal/commit/94384ebf0fcd46ba049e3aa73b6abec2acdfb3e6))
-- this also
-  ([bd4cf3d](https://github.com/globe-and-citizen/cnc-portal/commit/bd4cf3d8033fb00830facb8da45a398d29d03f09))
+- this also ([bd4cf3d](https://github.com/globe-and-citizen/cnc-portal/commit/bd4cf3d8033fb00830facb8da45a398d29d03f09))
 - use old deployed addresses
   ([d133367](https://github.com/globe-and-citizen/cnc-portal/commit/d1333671568d78ff20c492b3b9d82690e2869991))
 
@@ -4988,8 +4858,7 @@ Key changes:
   ([8d8a2e1](https://github.com/globe-and-citizen/cnc-portal/commit/8d8a2e12decf3dd5bb4272f8a2afee93fc9f3f99))
 - add condition to check if no proposals
   ([33a925b](https://github.com/globe-and-citizen/cnc-portal/commit/33a925b45247f06e3e71a950cdce8710c041a2c7))
-- add date
-  ([b245888](https://github.com/globe-and-citizen/cnc-portal/commit/b245888831fe39903897079338f73d443c8f6973))
+- add date ([b245888](https://github.com/globe-and-citizen/cnc-portal/commit/b245888831fe39903897079338f73d443c8f6973))
 - add disapprove action
   ([d04a80c](https://github.com/globe-and-citizen/cnc-portal/commit/d04a80c0f1e885156c502dae5a0f928d5399b747))
 - add error handling and toast notifications for team fetching errors
@@ -5012,10 +4881,8 @@ Key changes:
   ([a7f6626](https://github.com/globe-and-citizen/cnc-portal/commit/a7f66267f7a8caf2e9e510b00634725c15cbc8e5))
 - add is weekly claim prop
   ([b5eca78](https://github.com/globe-and-citizen/cnc-portal/commit/b5eca787c1d9d3eed8bce51a790122071ec0e4f7))
-- add key
-  ([d09181c](https://github.com/globe-and-citizen/cnc-portal/commit/d09181cec66cc50c8d280e39db6c956a99ecf20c))
-- add key
-  ([ca43774](https://github.com/globe-and-citizen/cnc-portal/commit/ca4377476d133058dd5448b59502f845a584798d))
+- add key ([d09181c](https://github.com/globe-and-citizen/cnc-portal/commit/d09181cec66cc50c8d280e39db6c956a99ecf20c))
+- add key ([ca43774](https://github.com/globe-and-citizen/cnc-portal/commit/ca4377476d133058dd5448b59502f845a584798d))
 - add key binding
   ([ccbc4fe](https://github.com/globe-and-citizen/cnc-portal/commit/ccbc4fe4f231b6f0ce32c0a282e4197ad31c1c4a))
 - add loading state for ERC20 token transfer and manage loading flags during approval process
@@ -5158,8 +5025,7 @@ Key changes:
   ([8a939a5](https://github.com/globe-and-citizen/cnc-portal/commit/8a939a531e6d8b03f3a63baa8a082b90c226fa74))
 - cast to number
   ([f1da137](https://github.com/globe-and-citizen/cnc-portal/commit/f1da13791adffbd7b806f15ca7604469a53adddf))
-- cast type
-  ([dfd0159](https://github.com/globe-and-citizen/cnc-portal/commit/dfd01590bc663fc9b1fa0d27a85e601343ff98d6))
+- cast type ([dfd0159](https://github.com/globe-and-citizen/cnc-portal/commit/dfd01590bc663fc9b1fa0d27a85e601343ff98d6))
 - change author field from name to address
   ([a0e7df9](https://github.com/globe-and-citizen/cnc-portal/commit/a0e7df9b05447a4f727af7acb0caca8eec47e432))
 - change combination option to chain from overwrite for useCustomFetch
@@ -5184,10 +5050,8 @@ Key changes:
   ([74e26f3](https://github.com/globe-and-citizen/cnc-portal/commit/74e26f38cbec6332a57a9ee0abce7211e43113b5))
 - check invalid network
   ([1eeaa7a](https://github.com/globe-and-citizen/cnc-portal/commit/1eeaa7aa377bcb7dd6bc39202f31dd217fb6e702))
-- ci
-  ([3def216](https://github.com/globe-and-citizen/cnc-portal/commit/3def216a2d173d2308c6636223d703d01ad8d5f9))
-- ci
-  ([58a47cf](https://github.com/globe-and-citizen/cnc-portal/commit/58a47cfa60f16a349dd8cc8fd8a9fa1574f8715f))
+- ci ([3def216](https://github.com/globe-and-citizen/cnc-portal/commit/3def216a2d173d2308c6636223d703d01ad8d5f9))
+- ci ([58a47cf](https://github.com/globe-and-citizen/cnc-portal/commit/58a47cfa60f16a349dd8cc8fd8a9fa1574f8715f))
 - ci working directory
   ([a0131db](https://github.com/globe-and-citizen/cnc-portal/commit/a0131db6bdd8d45a2ce89cad3bfa643a2ae2a0e5))
 - ci/cd errors and upgrade deployment
@@ -5242,12 +5106,9 @@ Key changes:
   ([215b761](https://github.com/globe-and-citizen/cnc-portal/commit/215b761cde96364ad531927eda4755f8d283d4f0))
 - configuration
   ([cd61672](https://github.com/globe-and-citizen/cnc-portal/commit/cd6167210a3962e72283e401650b08dd1a06f0df))
-- conflict
-  ([f45b7bd](https://github.com/globe-and-citizen/cnc-portal/commit/f45b7bdb926282a192a9e739798a7edd3e506027))
-- conflicts
-  ([18671f9](https://github.com/globe-and-citizen/cnc-portal/commit/18671f929ef6939c6c5d109b084d2502dfd7d6a8))
-- conflicts
-  ([ef34b8d](https://github.com/globe-and-citizen/cnc-portal/commit/ef34b8dc48ef7113502a75ce8404be67769c378c))
+- conflict ([f45b7bd](https://github.com/globe-and-citizen/cnc-portal/commit/f45b7bdb926282a192a9e739798a7edd3e506027))
+- conflicts ([18671f9](https://github.com/globe-and-citizen/cnc-portal/commit/18671f929ef6939c6c5d109b084d2502dfd7d6a8))
+- conflicts ([ef34b8d](https://github.com/globe-and-citizen/cnc-portal/commit/ef34b8dc48ef7113502a75ce8404be67769c378c))
 - connected setup
   ([a64be38](https://github.com/globe-and-citizen/cnc-portal/commit/a64be38fc24d2453797ce9e23b36f34aa6973025))
 - contract test
@@ -5308,8 +5169,7 @@ Key changes:
   ([d2b29ae](https://github.com/globe-and-citizen/cnc-portal/commit/d2b29ae9a64b8177b7d0aca444bdfece48d8648b))
 - correctly save token address
   ([ab35b2e](https://github.com/globe-and-citizen/cnc-portal/commit/ab35b2e530638693715184b5fc4f9d31978215f3))
-- coverage
-  ([84422b5](https://github.com/globe-and-citizen/cnc-portal/commit/84422b5b7175488bbf09b16fab8fdb46ff912eb1))
+- coverage ([84422b5](https://github.com/globe-and-citizen/cnc-portal/commit/84422b5b7175488bbf09b16fab8fdb46ff912eb1))
 - currency format and calculation error
   ([db1174c](https://github.com/globe-and-citizen/cnc-portal/commit/db1174c5e16f371e0960857589cc4a60ff532c3f))
 - currency symbol
@@ -5330,8 +5190,7 @@ Key changes:
   ([c59cf13](https://github.com/globe-and-citizen/cnc-portal/commit/c59cf13f20baa0cba925b4ed0f8d6a8e3d77725a))
 - delete teamContract records
   ([02f3c7c](https://github.com/globe-and-citizen/cnc-portal/commit/02f3c7ce30b81d5e7a14d3919ed1333a3b7948a1))
-- depencies
-  ([90e3ff1](https://github.com/globe-and-citizen/cnc-portal/commit/90e3ff14336645cb00bd6fca1ddd98b646356524))
+- depencies ([90e3ff1](https://github.com/globe-and-citizen/cnc-portal/commit/90e3ff14336645cb00bd6fca1ddd98b646356524))
 - deployment errors officer
   ([4dc8f89](https://github.com/globe-and-citizen/cnc-portal/commit/4dc8f89496006401bcc93339952a536deba70fe5))
 - desposit bank error
@@ -5356,14 +5215,11 @@ Key changes:
   ([805afe3](https://github.com/globe-and-citizen/cnc-portal/commit/805afe3df3a08907e83d75c2d06375fe195f2c54))
 - display when clear
   ([4aa8b97](https://github.com/globe-and-citizen/cnc-portal/commit/4aa8b9762c4adbc14e0a39e81dd57d61971234d3))
-- docs
-  ([1326990](https://github.com/globe-and-citizen/cnc-portal/commit/13269908a3002d4365632362b82251a71c6e983d))
+- docs ([1326990](https://github.com/globe-and-citizen/cnc-portal/commit/13269908a3002d4365632362b82251a71c6e983d))
 - drawer tests
   ([ab86ce8](https://github.com/globe-and-citizen/cnc-portal/commit/ab86ce8024e8978723e20082abc888b82dc25d2c))
-- e2e cache
-  ([b08e87e](https://github.com/globe-and-citizen/cnc-portal/commit/b08e87e25a09e6c8cbef288e184fabbf04020a11))
-- e2e setup
-  ([54fd09e](https://github.com/globe-and-citizen/cnc-portal/commit/54fd09e44277c30347e8500fcc69e7ef49f31e25))
+- e2e cache ([b08e87e](https://github.com/globe-and-citizen/cnc-portal/commit/b08e87e25a09e6c8cbef288e184fabbf04020a11))
+- e2e setup ([54fd09e](https://github.com/globe-and-citizen/cnc-portal/commit/54fd09e44277c30347e8500fcc69e7ef49f31e25))
 - e2e testing
   ([7a123a9](https://github.com/globe-and-citizen/cnc-portal/commit/7a123a97458859300e5295373b4f217c6562e14c))
 - elections officer
@@ -5398,21 +5254,17 @@ Key changes:
   ([81503a4](https://github.com/globe-and-citizen/cnc-portal/commit/81503a46025cfdd7809635609102cf6a1ecc7ddd))
 - ensure all deploy commands are called in deploy.bat
   ([dce0fab](https://github.com/globe-and-citizen/cnc-portal/commit/dce0fab86e4fcf63ac65d16a99164620d1bd96ea))
-- ensure typedBankAddress is defined before rendering BankBalanceSection and
-  GenericTokenHoldingsSection
+- ensure typedBankAddress is defined before rendering BankBalanceSection and GenericTokenHoldingsSection
   ([b00c1fb](https://github.com/globe-and-citizen/cnc-portal/commit/b00c1fbb4c741bdfcdc7b0345c87c671ee415901))
-- env
-  ([ebd4b25](https://github.com/globe-and-citizen/cnc-portal/commit/ebd4b25350212041c3c3b772dd29d6e2c15a5ca5))
-- env
-  ([0c96989](https://github.com/globe-and-citizen/cnc-portal/commit/0c9698967a8753dfbe6bd277da61b48bfc7be062))
+- env ([ebd4b25](https://github.com/globe-and-citizen/cnc-portal/commit/ebd4b25350212041c3c3b772dd29d6e2c15a5ca5))
+- env ([0c96989](https://github.com/globe-and-citizen/cnc-portal/commit/0c9698967a8753dfbe6bd277da61b48bfc7be062))
 - error description
   ([953e718](https://github.com/globe-and-citizen/cnc-portal/commit/953e718eb2681e923a583a9d27cfedae71da04e9))
 - error reactive
   ([2a3a58e](https://github.com/globe-and-citizen/cnc-portal/commit/2a3a58e91059fe6a6b4328f55071bc9649cac3b9))
 - error type
   ([06da19e](https://github.com/globe-and-citizen/cnc-portal/commit/06da19e84f35ac85bb85af595342e8f1ce2c2864))
-- errors
-  ([9e6e985](https://github.com/globe-and-citizen/cnc-portal/commit/9e6e98541e513efa2e8ebc8dfd5e81919c14b108))
+- errors ([9e6e985](https://github.com/globe-and-citizen/cnc-portal/commit/9e6e98541e513efa2e8ebc8dfd5e81919c14b108))
 - errors and add tests
   ([609d728](https://github.com/globe-and-citizen/cnc-portal/commit/609d728ed9292a02437544ff4233c47492165c54))
 - errors on bank
@@ -5461,8 +5313,7 @@ Key changes:
   ([ade8f80](https://github.com/globe-and-citizen/cnc-portal/commit/ade8f803a13e7fd772ca9e9b949b2a8fdbcbbc51))
 - fix props types
   ([4db1ae4](https://github.com/globe-and-citizen/cnc-portal/commit/4db1ae4774bb84dd7f2942656e484aaba5c6779f))
-- fix reload by updating address handling in useSafeSendTransaction for improved safety and
-  consistency
+- fix reload by updating address handling in useSafeSendTransaction for improved safety and consistency
   ([2f1e293](https://github.com/globe-and-citizen/cnc-portal/commit/2f1e29326e2dc751c2bc206400ead0aa8e00b4db))
 - fix team contracts
   ([0f3f08a](https://github.com/globe-and-citizen/cnc-portal/commit/0f3f08a5ded23e93a8775532bf46ebc7d76b39a7))
@@ -5474,8 +5325,7 @@ Key changes:
   ([043c44f](https://github.com/globe-and-citizen/cnc-portal/commit/043c44f27d4efbac944f4bdd55f272bff483ddd5))
 - fix UTC handling in claim tests and format code for readability
   ([21834aa](https://github.com/globe-and-citizen/cnc-portal/commit/21834aa99b795c50a3cde69166e0f4ac13da8e31))
-- fixe lint
-  ([d9c0a19](https://github.com/globe-and-citizen/cnc-portal/commit/d9c0a19980347f0f430e564d6ed2dbcc904e76d4))
+- fixe lint ([d9c0a19](https://github.com/globe-and-citizen/cnc-portal/commit/d9c0a19980347f0f430e564d6ed2dbcc904e76d4))
 - fixing lint warning
   ([a02e80c](https://github.com/globe-and-citizen/cnc-portal/commit/a02e80c8704cfbe5d67a61b568071e692aa07d7e))
 - fixing the difficulty to add colors to the icons.
@@ -5484,12 +5334,9 @@ Key changes:
   ([bf617b4](https://github.com/globe-and-citizen/cnc-portal/commit/bf617b44ebca5fdc85ca62771c3995355f8a9816))
 - follow bank transaciton history
   ([461f5fb](https://github.com/globe-and-citizen/cnc-portal/commit/461f5fb4b7058feea7eeb25d99deda083f27a621))
-- font size
-  ([9a8823d](https://github.com/globe-and-citizen/cnc-portal/commit/9a8823d3b78dccb3ef47e04830b62a429b3490fc))
-- format
-  ([47b9278](https://github.com/globe-and-citizen/cnc-portal/commit/47b9278990398f7f10441719aad51e1c9b9dc9ab))
-- format
-  ([e6648e6](https://github.com/globe-and-citizen/cnc-portal/commit/e6648e650e7e7604a3144e6dd682b665bc89ff9e))
+- font size ([9a8823d](https://github.com/globe-and-citizen/cnc-portal/commit/9a8823d3b78dccb3ef47e04830b62a429b3490fc))
+- format ([47b9278](https://github.com/globe-and-citizen/cnc-portal/commit/47b9278990398f7f10441719aad51e1c9b9dc9ab))
+- format ([e6648e6](https://github.com/globe-and-citizen/cnc-portal/commit/e6648e650e7e7604a3144e6dd682b665bc89ff9e))
 - format and lint
   ([ebee1be](https://github.com/globe-and-citizen/cnc-portal/commit/ebee1be9be7fb91c2398a9fa6f94015848375fda))
 - format Cancel button for improved readability
@@ -5528,8 +5375,7 @@ Key changes:
   ([aaa0d8d](https://github.com/globe-and-citizen/cnc-portal/commit/aaa0d8d09a7a3289d202c95caf45c6afc683f83c))
 - handle error when metamask not installed
   ([6f7f6c6](https://github.com/globe-and-citizen/cnc-portal/commit/6f7f6c616022a7e755b73d5c834a22c43c8f17e9))
-- handle gas estimation errors and provide user feedback for insufficient balance and unsupported
-  tokens
+- handle gas estimation errors and provide user feedback for insufficient balance and unsupported tokens
   ([bef7c7f](https://github.com/globe-and-citizen/cnc-portal/commit/bef7c7f121a3802ba017c2c75b8ad4337ae34d9e))
 - handle metamask error
   ([d13d8df](https://github.com/globe-and-citizen/cnc-portal/commit/d13d8df217810df4ce580f3ad4ba16a103d1cccf))
@@ -5573,8 +5419,7 @@ Key changes:
   ([d27ae00](https://github.com/globe-and-citizen/cnc-portal/commit/d27ae0095e5f69e5946d2d05f0a0a92bd4e0def0))
 - import TableComponent with type declaration for TableColumn
   ([6112014](https://github.com/globe-and-citizen/cnc-portal/commit/6112014a689c9531d145aae798ed47fc4510cd45))
-- imports
-  ([ede60f4](https://github.com/globe-and-citizen/cnc-portal/commit/ede60f4d6f33e47820d41919fc4d528b1fc9ae96))
+- imports ([ede60f4](https://github.com/globe-and-citizen/cnc-portal/commit/ede60f4d6f33e47820d41919fc4d528b1fc9ae96))
 - improve code readability by refactoring expect statement in CashRemunerationEIP712 test
   ([24dbf65](https://github.com/globe-and-citizen/cnc-portal/commit/24dbf65e06bbf22408d7d0b9c599f0acd54383a2))
 - improve currency formatting in transaction history
@@ -5623,8 +5468,7 @@ Key changes:
   ([a00ff0f](https://github.com/globe-and-citizen/cnc-portal/commit/a00ff0f47b47c33cf91e302eef55d8d86d9e3fef))
 - lint errors
   ([8613e13](https://github.com/globe-and-citizen/cnc-portal/commit/8613e134cd0c1cf1f31740b408b732a9bc5fb149))
-- list key
-  ([e045b41](https://github.com/globe-and-citizen/cnc-portal/commit/e045b41f689a0d8feeb01ba9da4794e6207cfbb4))
+- list key ([e045b41](https://github.com/globe-and-citizen/cnc-portal/commit/e045b41f689a0d8feeb01ba9da4794e6207cfbb4))
 - loading and owner validation
   ([9234698](https://github.com/globe-and-citizen/cnc-portal/commit/92346985204bd405e5d61f3f153a4bf37d91788b))
 - login fixture
@@ -5695,18 +5539,14 @@ Key changes:
   ([4654a0e](https://github.com/globe-and-citizen/cnc-portal/commit/4654a0e4be4bc841777e39a36173c6d8e7023fdc))
 - parse using 6 decimals for actions
   ([fb2661a](https://github.com/globe-and-citizen/cnc-portal/commit/fb2661a80c217ea9fdbc6f8c774794018aae2635))
-- path
-  ([c1cfca8](https://github.com/globe-and-citizen/cnc-portal/commit/c1cfca8a723e7c109b704d8b2c6be24564e994fc))
+- path ([c1cfca8](https://github.com/globe-and-citizen/cnc-portal/commit/c1cfca8a723e7c109b704d8b2c6be24564e994fc))
 - pinia tests
   ([29f9ddc](https://github.com/globe-and-citizen/cnc-portal/commit/29f9ddc7d2670bcbf746d5371c5f364a9a1e656f))
 - position in separate columns
   ([08d9084](https://github.com/globe-and-citizen/cnc-portal/commit/08d9084ed53278731d92cf2af8ea755bbdb962b9))
-- pr typo
-  ([2639416](https://github.com/globe-and-citizen/cnc-portal/commit/26394169dacabd1acaf49046afd212d8287e9ca7))
-- pr update
-  ([b512c02](https://github.com/globe-and-citizen/cnc-portal/commit/b512c028a99043cd4569a3375542f13ff7fcc851))
-- pr update
-  ([9c7af86](https://github.com/globe-and-citizen/cnc-portal/commit/9c7af863d6dd556c82ef8e9de9d21beafea5bd1b))
+- pr typo ([2639416](https://github.com/globe-and-citizen/cnc-portal/commit/26394169dacabd1acaf49046afd212d8287e9ca7))
+- pr update ([b512c02](https://github.com/globe-and-citizen/cnc-portal/commit/b512c028a99043cd4569a3375542f13ff7fcc851))
+- pr update ([9c7af86](https://github.com/globe-and-citizen/cnc-portal/commit/9c7af863d6dd556c82ef8e9de9d21beafea5bd1b))
 - prettier error
   ([b699891](https://github.com/globe-and-citizen/cnc-portal/commit/b699891889124bb6ebbf6cc7724bd1ba02ca9ba9))
 - prevent dropdown from showing when selecting an item
@@ -5877,8 +5717,7 @@ Key changes:
   ([c235d2b](https://github.com/globe-and-citizen/cnc-portal/commit/c235d2b267308c8a31e1a1f7cf1a1cf3516bdb12))
 - remove user address from URL query
   ([5812717](https://github.com/globe-and-citizen/cnc-portal/commit/5812717a4207c73d73dbefa966019646efdc61ac))
-- rename
-  ([ee7e542](https://github.com/globe-and-citizen/cnc-portal/commit/ee7e5421c64e5ed15fe099ccf17a057cdc4c45fb))
+- rename ([ee7e542](https://github.com/globe-and-citizen/cnc-portal/commit/ee7e5421c64e5ed15fe099ccf17a057cdc4c45fb))
 - rename and fix tests
   ([b5bd42d](https://github.com/globe-and-citizen/cnc-portal/commit/b5bd42d36bf37175808782a46d8a68ea78a2805a))
 - rename card title
@@ -5985,8 +5824,7 @@ Key changes:
   ([77543d7](https://github.com/globe-and-citizen/cnc-portal/commit/77543d79d73a2c047445ac9a6dece33bc27b5c8d))
 - stringify expense data
   ([cb1dba5](https://github.com/globe-and-citizen/cnc-portal/commit/cb1dba5f6904e06943624fb9d8a7b96c2e2adfb9))
-- table
-  ([256dca6](https://github.com/globe-and-citizen/cnc-portal/commit/256dca6e442435995166791450c55fce74f7f6f1))
+- table ([256dca6](https://github.com/globe-and-citizen/cnc-portal/commit/256dca6e442435995166791450c55fce74f7f6f1))
 - team controller
   ([6b52604](https://github.com/globe-and-citizen/cnc-portal/commit/6b52604fd95edfc8a2b2fef35b54e6a957605644))
 - team id issue
@@ -5997,52 +5835,31 @@ Key changes:
   ([b1319a3](https://github.com/globe-and-citizen/cnc-portal/commit/b1319a32a314accb750d0739682e3c70c36f5d5c))
 - temporarily disable rate limiter
   ([01ab938](https://github.com/globe-and-citizen/cnc-portal/commit/01ab9380bbf9f7ddd21daa8ca72e8a7519f1e6db))
-- test
-  ([216db7d](https://github.com/globe-and-citizen/cnc-portal/commit/216db7ddd7ae38a59d383d4e3fbac1b939685664))
-- test
-  ([a2a5b4b](https://github.com/globe-and-citizen/cnc-portal/commit/a2a5b4b6f4a48d8227a55283387e4651344e539f))
-- test
-  ([18f6062](https://github.com/globe-and-citizen/cnc-portal/commit/18f606267a5001d2fee1e1739a316dbb14ffb357))
-- test
-  ([1cfdc24](https://github.com/globe-and-citizen/cnc-portal/commit/1cfdc24ea2422a57dc2cc5ce39896813909dcf99))
+- test ([216db7d](https://github.com/globe-and-citizen/cnc-portal/commit/216db7ddd7ae38a59d383d4e3fbac1b939685664))
+- test ([a2a5b4b](https://github.com/globe-and-citizen/cnc-portal/commit/a2a5b4b6f4a48d8227a55283387e4651344e539f))
+- test ([18f6062](https://github.com/globe-and-citizen/cnc-portal/commit/18f606267a5001d2fee1e1739a316dbb14ffb357))
+- test ([1cfdc24](https://github.com/globe-and-citizen/cnc-portal/commit/1cfdc24ea2422a57dc2cc5ce39896813909dcf99))
 - test import
   ([b152b66](https://github.com/globe-and-citizen/cnc-portal/commit/b152b66171c95cda23bb8ff4f74a6301e2c8516f))
 - test name typo
   ([4eb0f64](https://github.com/globe-and-citizen/cnc-portal/commit/4eb0f648d619e550510fba5bd0e1b6e4d1a844c0))
-- testing
-  ([ca16b52](https://github.com/globe-and-citizen/cnc-portal/commit/ca16b52d644c5904c3773b2c2665f2aecb007004))
-- tests
-  ([d7162a2](https://github.com/globe-and-citizen/cnc-portal/commit/d7162a24a3c10d191afe9d929131de743c59b451))
-- tests
-  ([116e449](https://github.com/globe-and-citizen/cnc-portal/commit/116e449f2e690192b3806ebfd93f58cad8a8d135))
-- tests
-  ([4bc0fef](https://github.com/globe-and-citizen/cnc-portal/commit/4bc0fef5a6f1962c41c984220f94bd482c65ca11))
-- tests
-  ([b3b8ec1](https://github.com/globe-and-citizen/cnc-portal/commit/b3b8ec12bfac32312e6eb9cc7ccf324ca1d3a5ee))
-- tests
-  ([7ae91c7](https://github.com/globe-and-citizen/cnc-portal/commit/7ae91c75decfb54ef216dc8ece4d70f3e539fd2d))
-- tests
-  ([265be53](https://github.com/globe-and-citizen/cnc-portal/commit/265be5398f50f68765884b3a3c4ab9467cb8f8c8))
-- tests
-  ([951b676](https://github.com/globe-and-citizen/cnc-portal/commit/951b6764f66340a3a63db8d40cd004c5d1ef4812))
-- tests
-  ([1d9e716](https://github.com/globe-and-citizen/cnc-portal/commit/1d9e71685997769840c23b71e9bb845b30d20eb4))
-- tests
-  ([085d715](https://github.com/globe-and-citizen/cnc-portal/commit/085d7153c95ca3876af648b856d8787da3519d0c))
-- tests
-  ([51e8a17](https://github.com/globe-and-citizen/cnc-portal/commit/51e8a179c8d2d641b7b61d5dbae10548ae06710b))
-- tests
-  ([90938b5](https://github.com/globe-and-citizen/cnc-portal/commit/90938b52b51dcc826f7151ccf85a8cdde55316a3))
-- tests
-  ([6c1d882](https://github.com/globe-and-citizen/cnc-portal/commit/6c1d882dc64276522d950eed0276ea3db97d167d))
-- tests
-  ([6626a42](https://github.com/globe-and-citizen/cnc-portal/commit/6626a427938869a070396ad4d78a3366f4c69e61))
-- tests
-  ([35ced5b](https://github.com/globe-and-citizen/cnc-portal/commit/35ced5bdc5fa4f4e3300963e8469c6c9d06a30ff))
-- tests
-  ([3d6b0cf](https://github.com/globe-and-citizen/cnc-portal/commit/3d6b0cfc169287e0ea2c35e794c31e08680b78b6))
-- tests
-  ([8031838](https://github.com/globe-and-citizen/cnc-portal/commit/8031838b09160efff5c3f2c8ac4ef6368d34d659))
+- testing ([ca16b52](https://github.com/globe-and-citizen/cnc-portal/commit/ca16b52d644c5904c3773b2c2665f2aecb007004))
+- tests ([d7162a2](https://github.com/globe-and-citizen/cnc-portal/commit/d7162a24a3c10d191afe9d929131de743c59b451))
+- tests ([116e449](https://github.com/globe-and-citizen/cnc-portal/commit/116e449f2e690192b3806ebfd93f58cad8a8d135))
+- tests ([4bc0fef](https://github.com/globe-and-citizen/cnc-portal/commit/4bc0fef5a6f1962c41c984220f94bd482c65ca11))
+- tests ([b3b8ec1](https://github.com/globe-and-citizen/cnc-portal/commit/b3b8ec12bfac32312e6eb9cc7ccf324ca1d3a5ee))
+- tests ([7ae91c7](https://github.com/globe-and-citizen/cnc-portal/commit/7ae91c75decfb54ef216dc8ece4d70f3e539fd2d))
+- tests ([265be53](https://github.com/globe-and-citizen/cnc-portal/commit/265be5398f50f68765884b3a3c4ab9467cb8f8c8))
+- tests ([951b676](https://github.com/globe-and-citizen/cnc-portal/commit/951b6764f66340a3a63db8d40cd004c5d1ef4812))
+- tests ([1d9e716](https://github.com/globe-and-citizen/cnc-portal/commit/1d9e71685997769840c23b71e9bb845b30d20eb4))
+- tests ([085d715](https://github.com/globe-and-citizen/cnc-portal/commit/085d7153c95ca3876af648b856d8787da3519d0c))
+- tests ([51e8a17](https://github.com/globe-and-citizen/cnc-portal/commit/51e8a179c8d2d641b7b61d5dbae10548ae06710b))
+- tests ([90938b5](https://github.com/globe-and-citizen/cnc-portal/commit/90938b52b51dcc826f7151ccf85a8cdde55316a3))
+- tests ([6c1d882](https://github.com/globe-and-citizen/cnc-portal/commit/6c1d882dc64276522d950eed0276ea3db97d167d))
+- tests ([6626a42](https://github.com/globe-and-citizen/cnc-portal/commit/6626a427938869a070396ad4d78a3366f4c69e61))
+- tests ([35ced5b](https://github.com/globe-and-citizen/cnc-portal/commit/35ced5bdc5fa4f4e3300963e8469c6c9d06a30ff))
+- tests ([3d6b0cf](https://github.com/globe-and-citizen/cnc-portal/commit/3d6b0cfc169287e0ea2c35e794c31e08680b78b6))
+- tests ([8031838](https://github.com/globe-and-citizen/cnc-portal/commit/8031838b09160efff5c3f2c8ac4ef6368d34d659))
 - tests for voting actions
   ([25afb24](https://github.com/globe-and-citizen/cnc-portal/commit/25afb24e8c76790192957f8efa5511039c067804))
 - tests using user stories structure
@@ -6067,10 +5884,8 @@ Key changes:
   ([eaa29fc](https://github.com/globe-and-citizen/cnc-portal/commit/eaa29fcc5e03a6ea55f6879bcc0632713e89aa95))
 - try to change the step workflow
   ([f51d702](https://github.com/globe-and-citizen/cnc-portal/commit/f51d70206540e3e794b503f190c98e5de81f64f7))
-- type
-  ([55e4391](https://github.com/globe-and-citizen/cnc-portal/commit/55e43910549798734764b9f0f02c455c29e3b115))
-- type
-  ([caf6acc](https://github.com/globe-and-citizen/cnc-portal/commit/caf6acc3b876c8c2ceb26b6e27a6b7410ac6a3f2))
+- type ([55e4391](https://github.com/globe-and-citizen/cnc-portal/commit/55e43910549798734764b9f0f02c455c29e3b115))
+- type ([caf6acc](https://github.com/globe-and-citizen/cnc-portal/commit/caf6acc3b876c8c2ceb26b6e27a6b7410ac6a3f2))
 - type check
   ([4b3c293](https://github.com/globe-and-citizen/cnc-portal/commit/4b3c293de813c73791f776219da7e13a7eeee0f5))
 - type check
@@ -6113,22 +5928,17 @@ Key changes:
   ([478615c](https://github.com/globe-and-citizen/cnc-portal/commit/478615c787b29fdb6ba2d61b2256ce5994b4d8e9))
 - type-check error
   ([9a8435c](https://github.com/globe-and-citizen/cnc-portal/commit/9a8435ce5137fbc4882692f173e8649357e0bf12))
-- typecheck
-  ([798896c](https://github.com/globe-and-citizen/cnc-portal/commit/798896ca2ef896c402bf1476b5b5cb2d839e577b))
-- types
-  ([ddb805f](https://github.com/globe-and-citizen/cnc-portal/commit/ddb805ff6b01b074c297c7ec7a0ca09d632899f3))
-- types
-  ([e0c4a27](https://github.com/globe-and-citizen/cnc-portal/commit/e0c4a2731bb5423a35a449d94613229864ffd6ca))
+- typecheck ([798896c](https://github.com/globe-and-citizen/cnc-portal/commit/798896ca2ef896c402bf1476b5b5cb2d839e577b))
+- types ([ddb805f](https://github.com/globe-and-citizen/cnc-portal/commit/ddb805ff6b01b074c297c7ec7a0ca09d632899f3))
+- types ([e0c4a27](https://github.com/globe-and-citizen/cnc-portal/commit/e0c4a2731bb5423a35a449d94613229864ffd6ca))
 - types and remove unused error handler
   ([8258bab](https://github.com/globe-and-citizen/cnc-portal/commit/8258bab988a50828e26d5d47d6f3d30708fb7376))
-- typo
-  ([653eccb](https://github.com/globe-and-citizen/cnc-portal/commit/653eccba19ded3e50407e4890210fb22b02337a8))
+- typo ([653eccb](https://github.com/globe-and-citizen/cnc-portal/commit/653eccba19ded3e50407e4890210fb22b02337a8))
 - typo file name
   ([e12a2e0](https://github.com/globe-and-citizen/cnc-portal/commit/e12a2e0a8e3f699ae8449828eef6662caa3b0edf))
 - typo in issue template
   ([fe13b58](https://github.com/globe-and-citizen/cnc-portal/commit/fe13b58615dbfce0be555188371dafa7e36f95aa))
-- ui
-  ([bda3cc7](https://github.com/globe-and-citizen/cnc-portal/commit/bda3cc710c7e3bdcf8baf270cbb4eaa389de0ab1))
+- ui ([bda3cc7](https://github.com/globe-and-citizen/cnc-portal/commit/bda3cc710c7e3bdcf8baf270cbb4eaa389de0ab1))
 - Update ABI references in useBankReads functions
   ([38fb109](https://github.com/globe-and-citizen/cnc-portal/commit/38fb10900f715de7a7fa7746c36a8c366ee96bda))
 - update action button template in CashRemunerationWeeklyClaim component
@@ -6165,8 +5975,7 @@ Key changes:
   ([58a588e](https://github.com/globe-and-citizen/cnc-portal/commit/58a588ecd50e4509a70d40d57563837277dbb066))
 - update child item iteration in TheDrawer component for correct rendering
   ([2de904f](https://github.com/globe-and-citizen/cnc-portal/commit/2de904f5b75e3cfcb714b26c62dd28d7f2c10b61))
-- update Claim model to make description optional and improve validation error handling in addClaim
-  function
+- update Claim model to make description optional and improve validation error handling in addClaim function
   ([6f08485](https://github.com/globe-and-citizen/cnc-portal/commit/6f084857cdf2efa13cb2325a708a0a7b29864271))
 - update claim response status to include 'signed' instead of 'approved'
   ([0b89c52](https://github.com/globe-and-citizen/cnc-portal/commit/0b89c52d3aaade20a1e608e965bdb762e7864437))
@@ -6222,8 +6031,7 @@ Key changes:
   ([f3626b5](https://github.com/globe-and-citizen/cnc-portal/commit/f3626b5cac296ab74e6530331ba0086d2bd6fd47))
 - update estimated price calculation to use currency from storage
   ([33bfd87](https://github.com/globe-and-citizen/cnc-portal/commit/33bfd87393ca60551057e847f2d2fb6045dfea3b))
-- update event emission from 'change' to 'update:modelValue' for SelectComponent in DepositBankForm
-  tests
+- update event emission from 'change' to 'update:modelValue' for SelectComponent in DepositBankForm tests
   ([752690d](https://github.com/globe-and-citizen/cnc-portal/commit/752690dc889d22a16eb13eec3e52fe4c70b0925e))
 - update expected transaction amounts in tests
   ([991db7f](https://github.com/globe-and-citizen/cnc-portal/commit/991db7fd79fa53f5875cc7bcbb01784353f9349f))
@@ -6477,12 +6285,10 @@ Key changes:
   ([9c8ed63](https://github.com/globe-and-citizen/cnc-portal/commit/9c8ed6323ee2e1ae78ac589d604c12cfb13c7383))
 - width class name
   ([9a8b3b0](https://github.com/globe-and-citizen/cnc-portal/commit/9a8b3b0a9b9a27b79ef0c2a7a6a55c293ca02b7d))
-- withdraw
-  ([055a10f](https://github.com/globe-and-citizen/cnc-portal/commit/055a10f6cf934bbc2112725e66b7d4c4970382e5))
+- withdraw ([055a10f](https://github.com/globe-and-citizen/cnc-portal/commit/055a10f6cf934bbc2112725e66b7d4c4970382e5))
 - withdrawal
   ([def8e7e](https://github.com/globe-and-citizen/cnc-portal/commit/def8e7ea48d2a3a28b5e97d8aff4222a8bf6d23e))
-- workflow
-  ([13f7c54](https://github.com/globe-and-citizen/cnc-portal/commit/13f7c548c23667598d2c14f598dff84259a7eba6))
+- workflow ([13f7c54](https://github.com/globe-and-citizen/cnc-portal/commit/13f7c548c23667598d2c14f598dff84259a7eba6))
 - wrap all in try catch
   ([6eab85f](https://github.com/globe-and-citizen/cnc-portal/commit/6eab85fa8c162dd06d4e268e9120bdf630ab3076))
 
@@ -6493,8 +6299,8 @@ Key changes:
 
 ### Features
 
-- :art: replace inline hourly rate display with RatePerHourList component in WeeklyRecap,
-  PendingWeeklyClaim, SignedWeeklyClaim, and WeeklyClaim components
+- :art: replace inline hourly rate display with RatePerHourList component in WeeklyRecap, PendingWeeklyClaim,
+  SignedWeeklyClaim, and WeeklyClaim components
   ([962b033](https://github.com/globe-and-citizen/cnc-portal/commit/962b033a940b36650aa8358ed34db3cc9ef2025a))
 - :bricks: redeploy on polygon
   ([5e973fb](https://github.com/globe-and-citizen/cnc-portal/commit/5e973fb1335466652ffb5eaf3ec845104a316926))
@@ -6514,8 +6320,8 @@ Key changes:
   ([c159d08](https://github.com/globe-and-citizen/cnc-portal/commit/c159d08586f1268014d931d1877af01f26bb85ac))
 - :necktie: handle optional chaining for currentTeamMeta in ShowIndex.vue
   ([78df2ec](https://github.com/globe-and-citizen/cnc-portal/commit/78df2ecbd8f6405f1cea769e856f0d966f51bfbc))
-- :necktie: remove amount display templates from TransactionHistorySection for cleaner UI, there is
-  no need to call template for something you are not updating
+- :necktie: remove amount display templates from TransactionHistorySection for cleaner UI, there is no need to call
+  template for something you are not updating
   ([9030c60](https://github.com/globe-and-citizen/cnc-portal/commit/9030c604be6e6a580453741de1f92be3187fa7cc))
 - :necktie: remove unused event handler from MemberSection in ShowIndex.vue
   ([7c1b1c1](https://github.com/globe-and-citizen/cnc-portal/commit/7c1b1c1e930a97090dab0f45e7cc879e9cb33233))
@@ -6539,8 +6345,7 @@ Key changes:
   ([0b17936](https://github.com/globe-and-citizen/cnc-portal/commit/0b179369929f1956a7c123362bf4e3d7e7bd7aac))
 - :sparkles: add comprehensive code review checklist for improved quality assurance
   ([0c39da5](https://github.com/globe-and-citizen/cnc-portal/commit/0c39da53eeef5f7c49fb5ffe6af15c3f3c5c3bdb))
-- :sparkles: add ContinueAddTeamForm component to be able to continue adding team by deploying the
-  contracts
+- :sparkles: add ContinueAddTeamForm component to be able to continue adding team by deploying the contracts
   ([9241f87](https://github.com/globe-and-citizen/cnc-portal/commit/9241f87d674e82d2fca33b5d7fa388a9ef835aa6))
 - :sparkles: add disable prop to DeployContractSection for button control
   ([3c0cdfd](https://github.com/globe-and-citizen/cnc-portal/commit/3c0cdfd072c1de353a38c522757c6e84649f4e7a))
@@ -6556,8 +6361,7 @@ Key changes:
   ([93d3dfb](https://github.com/globe-and-citizen/cnc-portal/commit/93d3dfbb811eef65b0d1cb873118b26c04bff6b0))
 - :sparkles: add RatePerHourTotalList component to display total hourly rates
   ([97abfc1](https://github.com/globe-and-citizen/cnc-portal/commit/97abfc17b10b665af9479639dcc7592d83871570))
-- :sparkles: add tooltips to inform users about ownership requirements for minting tokens and paying
-  dividends
+- :sparkles: add tooltips to inform users about ownership requirements for minting tokens and paying dividends
   ([b134f38](https://github.com/globe-and-citizen/cnc-portal/commit/b134f383a38dc5c963e8d6d8b714eaa08ad435d8))
 - :sparkles: add transfer button tooltip and disable for non-owners
   ([7773504](https://github.com/globe-and-citizen/cnc-portal/commit/7773504ac70be03c413054f2b63c29960e74b8a9))
@@ -6573,9 +6377,8 @@ Key changes:
   ([6aac509](https://github.com/globe-and-citizen/cnc-portal/commit/6aac509889b233ac3cc7cd4de8dc4724d512f143))
 - :sparkles: enhance deposit modal functionality with improved state management and reset handling
   ([efa5e3c](https://github.com/globe-and-citizen/cnc-portal/commit/efa5e3c337ab645c48a42145adbb60986252c8e3))
-- :sparkles: enhance documentation with comprehensive instructions and guidelines for development,
-  testing, and quality standards
-  ([4630c93](https://github.com/globe-and-citizen/cnc-portal/commit/4630c93ff76cfdf3cfd4068e0da9ac0670a6b743))
+- :sparkles: enhance documentation with comprehensive instructions and guidelines for development, testing, and quality
+  standards ([4630c93](https://github.com/globe-and-citizen/cnc-portal/commit/4630c93ff76cfdf3cfd4068e0da9ac0670a6b743))
 - :sparkles: enhance dropdown visibility logic to respect disabled state
   ([4fbc52e](https://github.com/globe-and-citizen/cnc-portal/commit/4fbc52efb2147c8c522ef898fe776318c5ef018e))
 - :sparkles: enhance modal and form reset functionality in DepositBankForm and BankBalanceSection
@@ -6600,18 +6403,15 @@ Key changes:
   ([dc0b8d7](https://github.com/globe-and-citizen/cnc-portal/commit/dc0b8d70146792da7018a33dc856a9cd4fd36f1a))
 - :sparkles: no way to go back when the team is created
   ([33d3770](https://github.com/globe-and-citizen/cnc-portal/commit/33d3770d8a346780c8822923d6298a36c8e81ae4))
-- :sparkles: refactor PendingWeeklyClaim and SignedWeeklyClaim components to use useTanstackQuery
-  for data fetching
+- :sparkles: refactor PendingWeeklyClaim and SignedWeeklyClaim components to use useTanstackQuery for data fetching
   ([96e47cd](https://github.com/globe-and-citizen/cnc-portal/commit/96e47cd944be9d81630943aa93f80a6854a9b778))
-- :sparkles: refactor SubmitClaims component to improve date handling and integrate queryClient for
-  state management
+- :sparkles: refactor SubmitClaims component to improve date handling and integrate queryClient for state management
   ([21a012d](https://github.com/globe-and-citizen/cnc-portal/commit/21a012db7f17cddf51fa0c306b111b133e825880))
 - :sparkles: refresh bank owner data and handle ownership changes in transfer modal
   ([3a0ff98](https://github.com/globe-and-citizen/cnc-portal/commit/3a0ff98b43d1eb75d75e7a64d2f9fceca30715aa))
 - :sparkles: reload teams when the user create a new team
   ([2a6311d](https://github.com/globe-and-citizen/cnc-portal/commit/2a6311d970ca61250176894fb3934abb398b97fc))
-- :sparkles: replace tooltip spans with data attributes for improved accessibility and
-  maintainability
+- :sparkles: replace tooltip spans with data attributes for improved accessibility and maintainability
   ([291868b](https://github.com/globe-and-citizen/cnc-portal/commit/291868b81d765c9007e7e07ac08ddb78b2baf9ae))
 - :sparkles: update CRSigne component to use queryClient
   ([7dfb3c3](https://github.com/globe-and-citizen/cnc-portal/commit/7dfb3c3792ddb2c9cdce7803324d897634ba70c5))
@@ -6627,8 +6427,7 @@ Key changes:
   ([dd3f617](https://github.com/globe-and-citizen/cnc-portal/commit/dd3f6174bbad3480648fba79843507d904aaacd1))
 - :sparkles: update SubmitClaims component to enable date selection restriction using allowedDates
   ([6fdef1e](https://github.com/globe-and-citizen/cnc-portal/commit/6fdef1e25defd2ca592e8aa4a9f575bb5e98f32b))
-- :sparkles: update team display logic in TheDrawer component to show 'Select Team' when no current
-  team is selected
+- :sparkles: update team display logic in TheDrawer component to show 'Select Team' when no current team is selected
   ([24b27e3](https://github.com/globe-and-citizen/cnc-portal/commit/24b27e31611cc06f1cd3b1dffaaba663687ddbba))
 - :test_tube: test: add unit test of 500 error
   ([c2fbbe3](https://github.com/globe-and-citizen/cnc-portal/commit/c2fbbe38bde83cf2878dc8f4f629c9eff3322bb9))
@@ -6664,8 +6463,7 @@ Key changes:
   ([988d7cb](https://github.com/globe-and-citizen/cnc-portal/commit/988d7cb3453f2de965ca867aa2d66f062bbc6dab))
 - (WIP) add BoD section
   ([6627560](https://github.com/globe-and-citizen/cnc-portal/commit/6627560d9e60eee68a12d2042af81d83fd6a9ab1))
-- abi
-  ([bfdc343](https://github.com/globe-and-citizen/cnc-portal/commit/bfdc343802048c4e4f807738d8b67841549e7115))
+- abi ([bfdc343](https://github.com/globe-and-citizen/cnc-portal/commit/bfdc343802048c4e4f807738d8b67841549e7115))
 - action permissions based on roles
   ([09621f1](https://github.com/globe-and-citizen/cnc-portal/commit/09621f1967c7b982d189bacca26b381aeb70eb70))
 - activate approval
@@ -6764,8 +6562,7 @@ Key changes:
   ([7934556](https://github.com/globe-and-citizen/cnc-portal/commit/7934556f87db997e222990302bd9ead98ccbb7ed))
 - add bankBeacon module
   ([224ca47](https://github.com/globe-and-citizen/cnc-portal/commit/224ca47238f15897c194c96db97f58e86153262f))
-- add BankChangeTipsAddressOperation component for changing tips address with validation and state
-  display
+- add BankChangeTipsAddressOperation component for changing tips address with validation and state display
   ([72a20f8](https://github.com/globe-and-citizen/cnc-portal/commit/72a20f8993498d4abec5e7609b1db4687d203e75))
 - add BankEthTransferOperation component for transferring ETH with validation and state display
   ([970f610](https://github.com/globe-and-citizen/cnc-portal/commit/970f610e1bc50eefce03fa247c3b4caff8897481))
@@ -6777,8 +6574,7 @@ Key changes:
   ([a11d274](https://github.com/globe-and-citizen/cnc-portal/commit/a11d2748ad975a0be0c9c4fc823aa730e8337d89))
 - add BankTokenTransferOperation component for transferring tokens with validation and state display
   ([365fb4e](https://github.com/globe-and-citizen/cnc-portal/commit/365fb4e2de8ccfa572d1abf9560ca168a42c3bba))
-- add BankTransferOwnershipOperation component for transferring ownership with validation and state
-  display
+- add BankTransferOwnershipOperation component for transferring ownership with validation and state display
   ([93208c7](https://github.com/globe-and-citizen/cnc-portal/commit/93208c7f37fbacde9be1274f67e7c6551731459d))
 - add BankView component for team balance display
   ([110e4b0](https://github.com/globe-and-citizen/cnc-portal/commit/110e4b04ba1d72abb852fa1511d1f1cb150c6876))
@@ -6918,9 +6714,8 @@ Key changes:
   ([c292b34](https://github.com/globe-and-citizen/cnc-portal/commit/c292b34bbbfbd167b13ab26b1fbc2172bbcc3bf9))
 - add contractFactory and sendTransaction function to web3Library
   ([085809f](https://github.com/globe-and-citizen/cnc-portal/commit/085809f4df5808e7f1db5a1ea0265453a24eb7cc))
-- add ContractOwnerCard component to CashRemunerationView, ExpenseAccountView, and SherTokenView for
-  displaying contract addresses
-  ([2724af7](https://github.com/globe-and-citizen/cnc-portal/commit/2724af7bb3f036e29779a1d3080d832fc6d7fca9))
+- add ContractOwnerCard component to CashRemunerationView, ExpenseAccountView, and SherTokenView for displaying contract
+  addresses ([2724af7](https://github.com/globe-and-citizen/cnc-portal/commit/2724af7bb3f036e29779a1d3080d832fc6d7fca9))
 - add ContractOwnerCard component to display contract owner details
   ([2305620](https://github.com/globe-and-citizen/cnc-portal/commit/230562024674c55ff64d7504ebef008525e794f5))
 - add ContractOwnerCard to BankView and BodElectionView for displaying contract addresses
@@ -7009,8 +6804,8 @@ Key changes:
   ([00bc6bf](https://github.com/globe-and-citizen/cnc-portal/commit/00bc6bf42decb28b652070a443c4082a31d91a69))
 - add description field to Claim model and enhance validation in addClaim function
   ([152f68c](https://github.com/globe-and-citizen/cnc-portal/commit/152f68c8fd295b239e5cf2d6253dd5e5eed7c01e))
-- add description field to Claim model and update validation in addClaim function; enhance
-  CashRemunerationTable and SubmitClaims components for description display
+- add description field to Claim model and update validation in addClaim function; enhance CashRemunerationTable and
+  SubmitClaims components for description display
   ([61fe09a](https://github.com/globe-and-citizen/cnc-portal/commit/61fe09a3069b6bd364d6537aae39775859b2c556))
 - add description field to wage claim submission
   ([1f27536](https://github.com/globe-and-citizen/cnc-portal/commit/1f275365c3992f9846cdd5b2d4ded319546f2c06))
@@ -7176,8 +6971,7 @@ Key changes:
   ([04ce91f](https://github.com/globe-and-citizen/cnc-portal/commit/04ce91f837ee26fcb9e5dbab44e3027191182ed1))
 - add format ether util
   ([a63e2bb](https://github.com/globe-and-citizen/cnc-portal/commit/a63e2bb973af82b6c70a17396b638a3cbf5b2701))
-- add formatted transfer amount display and enhance currency conversion logic in TransferForm
-  component
+- add formatted transfer amount display and enhance currency conversion logic in TransferForm component
   ([8e67dfc](https://github.com/globe-and-citizen/cnc-portal/commit/8e67dfca378a24733f70a6978a72fcfb95eccbbe))
 - add formattign and filtering
   ([7c627fc](https://github.com/globe-and-citizen/cnc-portal/commit/7c627fc156b4f41ee7e9869de3dd6efd5cdaf07f))
@@ -7419,8 +7213,7 @@ Key changes:
   ([6508efb](https://github.com/globe-and-citizen/cnc-portal/commit/6508efb31dba562c51b5afeea27b4f1fac6f1519))
 - add optionelection prop
   ([1d20335](https://github.com/globe-and-citizen/cnc-portal/commit/1d203356a340e98a99b896a267ab006c16cc3ca1))
-- Add Ownable, ReentrancyGuard, and Pausable to Voting contract & make it a solo contract for each
-  team
+- Add Ownable, ReentrancyGuard, and Pausable to Voting contract & make it a solo contract for each team
   ([d74b51a](https://github.com/globe-and-citizen/cnc-portal/commit/d74b51aab559569a2545f084b1937a0df7520849))
 - add owner to team
   ([db7636e](https://github.com/globe-and-citizen/cnc-portal/commit/db7636ef737fdd4e19bf562d9404db0c5cccc77f))
@@ -7464,8 +7257,7 @@ Key changes:
   ([9657642](https://github.com/globe-and-citizen/cnc-portal/commit/9657642cbb6492e3c12652e0e253dee1a33365dd))
 - add proposal type and adjust ProposalVoted event
   ([930bf20](https://github.com/globe-and-citizen/cnc-portal/commit/930bf20f13c70bb1013987dc9bbf43862c0d620e))
-- add props
-  ([d062e98](https://github.com/globe-and-citizen/cnc-portal/commit/d062e9883ab7eb2bcc95d263cc76d05f6fd9715d))
+- add props ([d062e98](https://github.com/globe-and-citizen/cnc-portal/commit/d062e9883ab7eb2bcc95d263cc76d05f6fd9715d))
 - add proxy abi and bytecode to app folder
   ([734d135](https://github.com/globe-and-citizen/cnc-portal/commit/734d1358369451116c132990bd7168aa76ce8652))
 - add query invalidation for balance updates in handleTransfer function
@@ -7596,8 +7388,7 @@ Key changes:
   ([34acd66](https://github.com/globe-and-citizen/cnc-portal/commit/34acd66f4afd929123ae7a818d70cd9e35c0227c))
 - add teams route and integrate ListIndex component for team listing
   ([13a01c8](https://github.com/globe-and-citizen/cnc-portal/commit/13a01c80600cb10b30c4472b7dacf1b3672acfcb))
-- add test
-  ([9e497be](https://github.com/globe-and-citizen/cnc-portal/commit/9e497be0f3238732e083c3a183da568ebcbab5ec))
+- add test ([9e497be](https://github.com/globe-and-citizen/cnc-portal/commit/9e497be0f3238732e083c3a183da568ebcbab5ec))
 - add test folder to tsconfig
   ([8076367](https://github.com/globe-and-citizen/cnc-portal/commit/80763678521e8f6e9ec4f216d554f6a65cff686e))
 - add test for drawer
@@ -7608,10 +7399,8 @@ Key changes:
   ([765d9d1](https://github.com/globe-and-citizen/cnc-portal/commit/765d9d1a681361b1d6a72b7c470877c4a5cf8580))
 - add test for user
   ([179ef8c](https://github.com/globe-and-citizen/cnc-portal/commit/179ef8cf6e4d6469df2f0e27ca3ffad90e4da3f4))
-- add tests
-  ([9201992](https://github.com/globe-and-citizen/cnc-portal/commit/9201992f495c18e13429e5587d924aa2d0e9ef0a))
-- add tests
-  ([df8e216](https://github.com/globe-and-citizen/cnc-portal/commit/df8e216cb1fb03beaa16f41b27dca6e70bd406de))
+- add tests ([9201992](https://github.com/globe-and-citizen/cnc-portal/commit/9201992f495c18e13429e5587d924aa2d0e9ef0a))
+- add tests ([df8e216](https://github.com/globe-and-citizen/cnc-portal/commit/df8e216cb1fb03beaa16f41b27dca6e70bd406de))
 - add tests for bodService
   ([eb9cd05](https://github.com/globe-and-citizen/cnc-portal/commit/eb9cd056617a7139360508d68739c339e194e466))
 - add tests for createbank and deposit events
@@ -7702,12 +7491,10 @@ Key changes:
   ([2bdc214](https://github.com/globe-and-citizen/cnc-portal/commit/2bdc214519774809bb09a85c37bcab140937c939))
 - add typechain run before testing
   ([b1b1248](https://github.com/globe-and-citizen/cnc-portal/commit/b1b1248419765c8d837762603224e3f03922eb56))
-- add types
-  ([2fee88c](https://github.com/globe-and-citizen/cnc-portal/commit/2fee88c49b8a363016a8c871c50605ce77da6d79))
+- add types ([2fee88c](https://github.com/globe-and-citizen/cnc-portal/commit/2fee88c49b8a363016a8c871c50605ce77da6d79))
 - add TypeScript definitions for swagger-jsdoc and swagger-ui-express
   ([586309d](https://github.com/globe-and-citizen/cnc-portal/commit/586309d34472582d424e233024efcc960792668f))
-- add unique constraint and default value for nextWageId in Wage model, enhance wage validation in
-  setWage function
+- add unique constraint and default value for nextWageId in Wage model, enhance wage validation in setWage function
   ([0015099](https://github.com/globe-and-citizen/cnc-portal/commit/0015099ade6fafe78eff8d5dbc654bc678356a81))
 - add unit tests for TeamMeta.vue
   ([5a3f108](https://github.com/globe-and-citizen/cnc-portal/commit/5a3f108f390ad55216436602549472632168cbb2))
@@ -7743,8 +7530,7 @@ Key changes:
   ([712f981](https://github.com/globe-and-citizen/cnc-portal/commit/712f9818654a6dca87375dd0484ab5451981f939))
 - Add utility functions for calculating start of the week and today's midnight
   ([4180cff](https://github.com/globe-and-citizen/cnc-portal/commit/4180cffd5e52309393d0dd8a7b3505c19acb7918))
-- add validation for teamId in syncContracts and enhance contract routes with addContract
-  functionality
+- add validation for teamId in syncContracts and enhance contract routes with addContract functionality
   ([7d95272](https://github.com/globe-and-citizen/cnc-portal/commit/7d952728a96baf579467c80616aee51199c390c3))
 - Add validation for unique candidates in CreateProposalForm.vue
   ([e21d9b9](https://github.com/globe-and-citizen/cnc-portal/commit/e21d9b9919649768421a77962c3cae3063b36618))
@@ -7794,8 +7580,7 @@ Key changes:
   ([a45ed9e](https://github.com/globe-and-citizen/cnc-portal/commit/a45ed9e91e3f9809e8b5f86fd8ffc3f03f68b01d))
 - add warning modal for contract redeployment with data loss details
   ([1f36f2f](https://github.com/globe-and-citizen/cnc-portal/commit/1f36f2fb30ec31ae63674e35cf81928bde7be734))
-- add watch functionality to dynamically show dropdown based on input focus and content in
-  SelectMemberInput
+- add watch functionality to dynamically show dropdown based on input focus and content in SelectMemberInput
   ([f8438f1](https://github.com/globe-and-citizen/cnc-portal/commit/f8438f189322388658693e1f6a9fefbd994906bb))
 - add watcher for route parameter changes in ShowIndex component
   ([7fe4172](https://github.com/globe-and-citizen/cnc-portal/commit/7fe41720a4a666b517fa888f065855daa29469ab))
@@ -7917,8 +7702,7 @@ Key changes:
   ([ab79099](https://github.com/globe-and-citizen/cnc-portal/commit/ab79099ebc13ec6de26be42d34896ba93490b24a))
 - bind contract data
   ([35ea641](https://github.com/globe-and-citizen/cnc-portal/commit/35ea64186afbb0a596e406d2bea16ce352e44fac))
-- bind data
-  ([12d5015](https://github.com/globe-and-citizen/cnc-portal/commit/12d5015716a47af58b7365292dc0ee34a972fc4d))
+- bind data ([12d5015](https://github.com/globe-and-citizen/cnc-portal/commit/12d5015716a47af58b7365292dc0ee34a972fc4d))
 - bind data to the graph
   ([93d5944](https://github.com/globe-and-citizen/cnc-portal/commit/93d59441aaccbdbb9d34ddd87209cd43b58c6bda))
 - bind expense account balance
@@ -7965,18 +7749,15 @@ Key changes:
   ([579fa3a](https://github.com/globe-and-citizen/cnc-portal/commit/579fa3ab2063fa6de0a951c119674fb3228b5c9f))
 - check when not paused function
   ([fff940c](https://github.com/globe-and-citizen/cnc-portal/commit/fff940cf3921d10c6a4b2a42861743ea439adfff))
-- clear
-  ([3e78a31](https://github.com/globe-and-citizen/cnc-portal/commit/3e78a3188c893d1268497cb0f27673a26b3191ad))
-- clear
-  ([a17c55d](https://github.com/globe-and-citizen/cnc-portal/commit/a17c55d919a09f56a74dfb59124eb3977d3b53ef))
+- clear ([3e78a31](https://github.com/globe-and-citizen/cnc-portal/commit/3e78a3188c893d1268497cb0f27673a26b3191ad))
+- clear ([a17c55d](https://github.com/globe-and-citizen/cnc-portal/commit/a17c55d919a09f56a74dfb59124eb3977d3b53ef))
 - Close button in the modale component
   ([bf55286](https://github.com/globe-and-citizen/cnc-portal/commit/bf55286b375a037232fa1780f7053d3a18fd3837))
 - close modals after actions
   ([928e3b1](https://github.com/globe-and-citizen/cnc-portal/commit/928e3b13a4b7129e92c4be41d7c08a7ed955160a))
 - code cov yml for carry forward
   ([b37fb3b](https://github.com/globe-and-citizen/cnc-portal/commit/b37fb3b975fd1d8d4bff3d6792676b147572e6a3))
-- code q
-  ([050b766](https://github.com/globe-and-citizen/cnc-portal/commit/050b766dbfcddf7c4248f4a9fcac93aa4ea8cf8a))
+- code q ([050b766](https://github.com/globe-and-citizen/cnc-portal/commit/050b766dbfcddf7c4248f4a9fcac93aa4ea8cf8a))
 - conclude proposal
   ([75cdd0b](https://github.com/globe-and-citizen/cnc-portal/commit/75cdd0b31626350935950ea84b14ef2eb654b012))
 - Conditionally add 'Action' column in MemberSection based on team ownership
@@ -8083,8 +7864,7 @@ Key changes:
   ([7d0b6e1](https://github.com/globe-and-citizen/cnc-portal/commit/7d0b6e1ef629f508cf3a4cf3ddf21ef436aa6853))
 - delete member from team
   ([d6fdd0f](https://github.com/globe-and-citizen/cnc-portal/commit/d6fdd0f6fa5ea1a9e54549486cee57c75bfeb470))
-- deploy
-  ([38e8fec](https://github.com/globe-and-citizen/cnc-portal/commit/38e8fec20e2efb050150fed3e11ff6d3e036d927))
+- deploy ([38e8fec](https://github.com/globe-and-citizen/cnc-portal/commit/38e8fec20e2efb050150fed3e11ff6d3e036d927))
 - deploy all contracts
   ([2915a66](https://github.com/globe-and-citizen/cnc-portal/commit/2915a66ea566e705a294f39eb921514ea70e5f89))
 - deploy bank implementation on sepolia network
@@ -8241,8 +8021,7 @@ Key changes:
   ([af2f197](https://github.com/globe-and-citizen/cnc-portal/commit/af2f1970128798729dc47921458633cb2b911b6f))
 - enhance bank deposit with USDC and dynamic loading states
   ([d94bd80](https://github.com/globe-and-citizen/cnc-portal/commit/d94bd80531674201bbd2f1253f6a185a43e10e7c))
-- enhance BudgetData structure in ExpenseAccountEIP712 to include token address for improved
-  transaction handling
+- enhance BudgetData structure in ExpenseAccountEIP712 to include token address for improved transaction handling
   ([a1fd53a](https://github.com/globe-and-citizen/cnc-portal/commit/a1fd53a72cbe534eebb7c44ec2795fc0a2f7459e))
 - enhance CardComponent to accept dynamic title and slot for actions
   ([5414b09](https://github.com/globe-and-citizen/cnc-portal/commit/5414b09ee04c8cb378bff4d56b4bb99dedacfcaa))
@@ -8250,8 +8029,7 @@ Key changes:
   ([995c737](https://github.com/globe-and-citizen/cnc-portal/commit/995c737f7ffb1b2d1520e66ca00d9bb5cf9716c5))
 - Enhance CashRemunerationWeeklyClaim component with additional wage rates and status display
   ([206f4e4](https://github.com/globe-and-citizen/cnc-portal/commit/206f4e4ceb2a716c4e4fc51dd735121818046dbd))
-- Enhance CashRemunerationWeeklyClaim to display detailed weekly claims data and improve error
-  handling
+- Enhance CashRemunerationWeeklyClaim to display detailed weekly claims data and improve error handling
   ([f5a8ce1](https://github.com/globe-and-citizen/cnc-portal/commit/f5a8ce124a654938bdd2689ae2cb6d3b4c56daf1))
 - enhance claim schema with additional fields and update OpenAPI documentation
   ([d40e73b](https://github.com/globe-and-citizen/cnc-portal/commit/d40e73b86ebee2dbb158011124035e6d6af6edaf))
@@ -8307,13 +8085,11 @@ Key changes:
   ([832aea5](https://github.com/globe-and-citizen/cnc-portal/commit/832aea5bc23c5120571f789304b06cd8cf559a4d))
 - enhance MintForm layout with SelectMemberInput and improve amount input styling
   ([e4b1272](https://github.com/globe-and-citizen/cnc-portal/commit/e4b127278aba96e6317560f4cee30c8ae4bdcbc2))
-- enhance modal management and reset functionality in CurrentBoDElectionSection and
-  CreateElectionForm components
+- enhance modal management and reset functionality in CurrentBoDElectionSection and CreateElectionForm components
   ([28bcac9](https://github.com/globe-and-citizen/cnc-portal/commit/28bcac9792d794f0e23e0a79de1e7e00f7fa4324))
 - enhance modal management and reset functionality in InvestorsActions and MintForm components
   ([f155811](https://github.com/globe-and-citizen/cnc-portal/commit/f1558118eeb234a360c19eda4a9c521ff167cfd1))
-- enhance modal management in ApproveUsersEIP712Form, ApprovedExpensesSection, and TransferAction
-  components
+- enhance modal management in ApproveUsersEIP712Form, ApprovedExpensesSection, and TransferAction components
   ([6ffd1e7](https://github.com/globe-and-citizen/cnc-portal/commit/6ffd1e7e597c0e80f63956d7383ec7388868d5cb))
 - enhance modal state management and reset functionality in ShareholderList and MintForm components
   ([e11f3ad](https://github.com/globe-and-citizen/cnc-portal/commit/e11f3ad11d063a9a0439b11ad2ec3f75a882e19e))
@@ -8337,8 +8113,7 @@ Key changes:
   ([2e41ca0](https://github.com/globe-and-citizen/cnc-portal/commit/2e41ca018ce0d85a55f83f7701afa347027f2d26))
 - enhance Sentry integration with session replay configuration
   ([2da2787](https://github.com/globe-and-citizen/cnc-portal/commit/2da27870f4bc2718ed4e1cfe40171bce7b91ea4e))
-- enhance ShareholderList layout by simplifying template structure and improving action button
-  styling
+- enhance ShareholderList layout by simplifying template structure and improving action button styling
   ([1025d6d](https://github.com/globe-and-citizen/cnc-portal/commit/1025d6dc21dab6f8f836f32d6eaa551b8734bd15))
 - enhance SubmitClaims component with date picker and improved input fields
   ([8ffe46e](https://github.com/globe-and-citizen/cnc-portal/commit/8ffe46e8415688eb412d9dc41ef5a69fa6b3f96b))
@@ -8364,20 +8139,17 @@ Key changes:
   ([abab6b6](https://github.com/globe-and-citizen/cnc-portal/commit/abab6b60dfd0d334dcc60994affcb7448570b591))
 - enhance Tips contract with push limit and token distribution improvements
   ([32a3c2c](https://github.com/globe-and-citizen/cnc-portal/commit/32a3c2c81fe498a4f4b4ceba985d3a3e1ea7c444))
-- enhance transaction handling with loading indicators and detailed timeline for pause/unpause
-  operations
+- enhance transaction handling with loading indicators and detailed timeline for pause/unpause operations
   ([fd78b73](https://github.com/globe-and-citizen/cnc-portal/commit/fd78b7384db7e421e4ec65b79c38d7629c108e6c))
 - enhance transaction history component with additional data formatting
   ([bfd1637](https://github.com/globe-and-citizen/cnc-portal/commit/bfd16371bd7754555dd12c0b381fab371dd5257a))
 - enhance transaction history component with currency conversion and remove unused props
   ([cfcaf59](https://github.com/globe-and-citizen/cnc-portal/commit/cfcaf59e2cd21b2239403723fb0ecdbfcd9ed74d))
-- enhance transaction history display with clickable contract addresses and improved contract type
-  icons
+- enhance transaction history display with clickable contract addresses and improved contract type icons
   ([4a3ef40](https://github.com/globe-and-citizen/cnc-portal/commit/4a3ef408ff543997cad092563df2337bfe2969cb))
 - enhance transaction history with receipt export options and refactor data handling
   ([ebaf99b](https://github.com/globe-and-citizen/cnc-portal/commit/ebaf99bf745a345767cec178e622e2cb938295b3))
-- enhance transaction queries in BankView, CashRemunerationView, and ExpenseAccountView with
-  ordering and polling
+- enhance transaction queries in BankView, CashRemunerationView, and ExpenseAccountView with ordering and polling
   ([729055b](https://github.com/globe-and-citizen/cnc-portal/commit/729055b8dd8c005d96c296921e6640c75f12a3ce))
 - enhance TransactionTimeline with dynamic color coding for steps
   ([f353459](https://github.com/globe-and-citizen/cnc-portal/commit/f353459c2fa14c95e7b6246fbfec215aba3f43ac))
@@ -8411,8 +8183,7 @@ Key changes:
   ([b0fd492](https://github.com/globe-and-citizen/cnc-portal/commit/b0fd492cebdf6e913e347b14d01f827d5437bd4b))
 - enhance weekly claims retrieval by adding member address filter
   ([d088010](https://github.com/globe-and-citizen/cnc-portal/commit/d088010dfd040fa5b04e8e36a626208740e3185b))
-- Enhance WeeklyClaimComponent with detailed notification table and refactor integration in
-  CashRemunerationWeeklyClaim
+- Enhance WeeklyClaimComponent with detailed notification table and refactor integration in CashRemunerationWeeklyClaim
   ([67e8cf6](https://github.com/globe-and-citizen/cnc-portal/commit/67e8cf67296c72d524cc22038f8458df3834c138))
 - enhance WeeklyClaimView with member link and date formatting improvements
   ([57a9d0f](https://github.com/globe-and-citizen/cnc-portal/commit/57a9d0f183c4047d45ef50ba5c7cbf54db3166b7))
@@ -8466,10 +8237,8 @@ Key changes:
   ([c466fbd](https://github.com/globe-and-citizen/cnc-portal/commit/c466fbd0584f78aa1d8482720a78ace33b2d4959))
 - formalize logic
   ([8861a5e](https://github.com/globe-and-citizen/cnc-portal/commit/8861a5ef1dd168bb019c272bd0a423f0fb8d607c))
-- format
-  ([230d86e](https://github.com/globe-and-citizen/cnc-portal/commit/230d86ebcb286df308105e65177dfd1142b1c761))
-- format
-  ([7565385](https://github.com/globe-and-citizen/cnc-portal/commit/75653852a45f6a1a55a28a708f4ddd69d15d3db5))
+- format ([230d86e](https://github.com/globe-and-citizen/cnc-portal/commit/230d86ebcb286df308105e65177dfd1142b1c761))
+- format ([7565385](https://github.com/globe-and-citizen/cnc-portal/commit/75653852a45f6a1a55a28a708f4ddd69d15d3db5))
 - format board of directors
   ([6c9973b](https://github.com/globe-and-citizen/cnc-portal/commit/6c9973ba8056ac6f8a2a433c2101a32272fc9d5c))
 - format documents
@@ -8550,8 +8319,7 @@ Key changes:
   ([aa7851a](https://github.com/globe-and-citizen/cnc-portal/commit/aa7851a36b6c85f221673802d1369adaa759702b))
 - implement BankEthTipOperation component for sending ETH tips with validation and state display
   ([bc5f36e](https://github.com/globe-and-citizen/cnc-portal/commit/bc5f36ea04cdc394ea3deb0468d3469481a54598))
-- implement BankReadOperations component for displaying contract read data with loading and error
-  states
+- implement BankReadOperations component for displaying contract read data with loading and error states
   ([e65a671](https://github.com/globe-and-citizen/cnc-portal/commit/e65a671cb444d9f5d7ef35eed0de8d13173a2a4d))
 - implement bulk ETH transfer script with configuration and recipient management
   ([b4293f2](https://github.com/globe-and-citizen/cnc-portal/commit/b4293f275f406538589a0de1d80cf430d120e213))
@@ -8571,8 +8339,7 @@ Key changes:
   ([780c460](https://github.com/globe-and-citizen/cnc-portal/commit/780c460020686e781a9649b72c84b8fb6488a30b))
 - implement dropdown for selecting user
   ([01bb65d](https://github.com/globe-and-citizen/cnc-portal/commit/01bb65dc4f24598dc59145e2b728f4af8ae6e0c6))
-- implement dynamic currency conversion in BankBalanceSection and update tests for local value
-  calculation
+- implement dynamic currency conversion in BankBalanceSection and update tests for local value calculation
   ([54dfc1e](https://github.com/globe-and-citizen/cnc-portal/commit/54dfc1e37ce2e1c0a05a7c1c89f738a2b507b9fb))
 - implement dynamic currency display and conversion in GenericTokenHoldingsSection component
   ([0cf4a81](https://github.com/globe-and-citizen/cnc-portal/commit/0cf4a81ca71cdd0bae5b7011d43462a00c1316a0))
@@ -8618,8 +8385,7 @@ Key changes:
   ([bc28abf](https://github.com/globe-and-citizen/cnc-portal/commit/bc28abf6f7290901497c69d696a52f1af4ef4ccf))
 - implement pagination for frontend
   ([71c2613](https://github.com/globe-and-citizen/cnc-portal/commit/71c2613b394059d7a29fd4149c467a6ef8d47e2a))
-- implement pagination in GenericTransactionHistory and TableComponent for improved transaction
-  display
+- implement pagination in GenericTransactionHistory and TableComponent for improved transaction display
   ([e9969a2](https://github.com/globe-and-citizen/cnc-portal/commit/e9969a22840ac2dafaff161aeb88774c232d1341))
 - implement proposal concluded
   ([5fbf493](https://github.com/globe-and-citizen/cnc-portal/commit/5fbf493027963320447cbd156d5f8d284b00939a))
@@ -8665,13 +8431,11 @@ Key changes:
   ([d71e6b5](https://github.com/globe-and-citizen/cnc-portal/commit/d71e6b5a13dfea125546bbabe61fc0c936ea1b71))
 - improve logging in teamStore for setting current team id and initialization
   ([0359d44](https://github.com/globe-and-citizen/cnc-portal/commit/0359d44e5e99218baaf8edccbb7c6aaddb47547e))
-- improve modal state management and reset functionality in AdvertiseContractSection and
-  CreateAddCampaign components
+- improve modal state management and reset functionality in AdvertiseContractSection and CreateAddCampaign components
   ([d8cf681](https://github.com/globe-and-citizen/cnc-portal/commit/d8cf681b8a012f21d40264b69be7876835603726))
 - improve modal state management in MemberSection for adding new members
   ([dd8e572](https://github.com/globe-and-citizen/cnc-portal/commit/dd8e5722f29838e899ae33089178cd8998638cb6))
-- improve TableComponent header rendering with data-test attributes and conditional sort button
-  display
+- improve TableComponent header rendering with data-test attributes and conditional sort button display
   ([c61f56f](https://github.com/globe-and-citizen/cnc-portal/commit/c61f56ff0ee78ec350058163bc6e58872c0c561f))
 - improve typing
   ([f03d4c8](https://github.com/globe-and-citizen/cnc-portal/commit/f03d4c846e23aa6de9737d629910547b8fcd2a1a))
@@ -8731,8 +8495,7 @@ Key changes:
   ([888f95a](https://github.com/globe-and-citizen/cnc-portal/commit/888f95ab4b576e224110aaf098be1b8cb0875acd))
 - integrate Cash Remuneration contract owner check in TheDrawer component
   ([59a9674](https://github.com/globe-and-citizen/cnc-portal/commit/59a967435feb8addf07ad8052919ed3bb542369f))
-- integrate CashRemunerationAction component into CashRemunerationTable and remove unused approval
-  logic
+- integrate CashRemunerationAction component into CashRemunerationTable and remove unused approval logic
   ([053a0ab](https://github.com/globe-and-citizen/cnc-portal/commit/053a0abf4249ee85f43635d27db8c5cfa229dbc2))
 - integrate CashRemunerationTable for individual member display in CashRemunerationView
   ([5a4051e](https://github.com/globe-and-citizen/cnc-portal/commit/5a4051ebcacf116f703392c538a20f3ae4968006))
@@ -8806,8 +8569,7 @@ Key changes:
   ([4c3765f](https://github.com/globe-and-citizen/cnc-portal/commit/4c3765f48daac038d5e47e7e10780e724771e10b))
 - modal dual bind and key and click event
   ([039d999](https://github.com/globe-and-citizen/cnc-portal/commit/039d999181bc72be4520005d1529311512fc0016))
-- moove member management functionality with add, delete, and wage setting operations in a separate
-  file
+- moove member management functionality with add, delete, and wage setting operations in a separate file
   ([9436fe0](https://github.com/globe-and-citizen/cnc-portal/commit/9436fe07d2b3b199fafdf481c9646dcdb5f14920))
 - move deployed addresses script
   ([680bd9d](https://github.com/globe-and-citizen/cnc-portal/commit/680bd9d01c4d6b0dbe299b96f8e5d4a9ae28489b))
@@ -9067,8 +8829,7 @@ Key changes:
   ([fb7592c](https://github.com/globe-and-citizen/cnc-portal/commit/fb7592ca48c19872a0db26359a83199eee4380bf))
 - show two digits stats
   ([6fa5781](https://github.com/globe-and-citizen/cnc-portal/commit/6fa5781c8a97e1a5c134f90341d75687012852d3))
-- Simplify data handling in CashRemunerationWeeklyClaim component and enhance claim processing in
-  controllers
+- Simplify data handling in CashRemunerationWeeklyClaim component and enhance claim processing in controllers
   ([6b7846e](https://github.com/globe-and-citizen/cnc-portal/commit/6b7846e37a50fa10f427281857aa76fa7e86b740))
 - simplify error response structure by removing redundant success field
   ([fa04d5d](https://github.com/globe-and-citizen/cnc-portal/commit/fa04d5d07eaaaba783be8ac05c8ed4fbbe15be7b))
@@ -9090,8 +8851,7 @@ Key changes:
   ([0860bfa](https://github.com/globe-and-citizen/cnc-portal/commit/0860bfae14e9845d6c46c20ea0997886d0f82821))
 - switch or set required network for user
   ([f042c82](https://github.com/globe-and-citizen/cnc-portal/commit/f042c82ae6e13c15fc8d7bd0267412aaa98c60f5))
-- table ui
-  ([48046d3](https://github.com/globe-and-citizen/cnc-portal/commit/48046d3c107e30f8b9b02eaaebee72e092f1d8ef))
+- table ui ([48046d3](https://github.com/globe-and-citizen/cnc-portal/commit/48046d3c107e30f8b9b02eaaebee72e092f1d8ef))
 - temp add function to set bod from voting
   ([5cefafb](https://github.com/globe-and-citizen/cnc-portal/commit/5cefafb6ff0fbde8e0b87d1c6c57fa8fd27af28f))
 - tests for add member and team
@@ -9106,8 +8866,7 @@ Key changes:
   ([007177f](https://github.com/globe-and-citizen/cnc-portal/commit/007177f1b3475406d7dc55ebdce11c01f8d191c6))
 - update abi in frontend
   ([d236245](https://github.com/globe-and-citizen/cnc-portal/commit/d236245a9c613703199ebe1020dc892f750e6690))
-- Update action templates in CashRemunerationWeeklyClaim to use weeklyClaim prop and improve data
-  fetching
+- Update action templates in CashRemunerationWeeklyClaim to use weeklyClaim prop and improve data fetching
   ([d65d25e](https://github.com/globe-and-citizen/cnc-portal/commit/d65d25e59b42b8f8eaea422a923757fa9e9a83cf))
 - update AddMemberForm to fetch team data after adding members
   ([26da335](https://github.com/globe-and-citizen/cnc-portal/commit/26da33574ddcf94e83827dfd4f5ab61fc045d7d5))
@@ -9127,13 +8886,11 @@ Key changes:
   ([8957c7e](https://github.com/globe-and-citizen/cnc-portal/commit/8957c7e21998f42b54b6d4834edf0e9c6f10f4e9))
 - update cash remuneration owner check in CashRemunerationView component
   ([cf67462](https://github.com/globe-and-citizen/cnc-portal/commit/cf67462689be5bded1b759fc21505fb1b2faf44d))
-- update cash remuneration owner checks in CRWeeklyClaimOwnerHeader and PendingWeeklyClaim
-  components
+- update cash remuneration owner checks in CRWeeklyClaimOwnerHeader and PendingWeeklyClaim components
   ([157bedd](https://github.com/globe-and-citizen/cnc-portal/commit/157bedd9d577d7c60e406900d2c5b865d050bb3d))
 - Update CashRemunerationWeeklyClaim component to improve user display and data handling
   ([3c01312](https://github.com/globe-and-citizen/cnc-portal/commit/3c01312e6e529a33ebccba88964142be88b50431))
-- Update CashRemunerationWeeklyClaim to use fetched data and enhance claim controller tests for wage
-  validation
+- Update CashRemunerationWeeklyClaim to use fetched data and enhance claim controller tests for wage validation
   ([907946d](https://github.com/globe-and-citizen/cnc-portal/commit/907946d41a9813df05e57930b6e83c962153f110))
 - update claim
   ([15e4088](https://github.com/globe-and-citizen/cnc-portal/commit/15e4088f7060a5720be59ed6a0d93b4a08f9153c))
@@ -9237,8 +8994,7 @@ Key changes:
   ([77d9597](https://github.com/globe-and-citizen/cnc-portal/commit/77d95978b2e244c4a741ab81352ae9616ef938f6))
 - update menu item visibility based on user ownership status
   ([302d61e](https://github.com/globe-and-citizen/cnc-portal/commit/302d61efec583bd493852c8a383e34a6a3ef6b7c))
-- update modal management for distribute mint and pay dividends actions in InvestorsActions
-  component
+- update modal management for distribute mint and pay dividends actions in InvestorsActions component
   ([bad4bf3](https://github.com/globe-and-citizen/cnc-portal/commit/bad4bf3317c9fa5591c36378bdf2267f8791cb71))
 - update modal state structure in BankBalanceSection tests for improved clarity
   ([4cb0538](https://github.com/globe-and-citizen/cnc-portal/commit/4cb05388883bcc71b6e645768e8bd19a597e1c56))
@@ -9326,18 +9082,15 @@ Key changes:
   ([7429cc2](https://github.com/globe-and-citizen/cnc-portal/commit/7429cc2e10b9817bfbe2a3c5ac95cc7bd42ad4f8))
 - update wage setting API to use PUT method and streamline request headers
   ([6c4cf2e](https://github.com/globe-and-citizen/cnc-portal/commit/6c4cf2ebf6576607e30c7e3eb0ca4dbc1990ca05))
-- update weekly claim controller to include cash remuneration owner validation and adjust HTTP
-  methods in tests
+- update weekly claim controller to include cash remuneration owner validation and adjust HTTP methods in tests
   ([bbf18db](https://github.com/globe-and-citizen/cnc-portal/commit/bbf18db1951724ee3563a22a6b0b6014e16c1214))
 - update weekly claim fetching logic to include member address filter
   ([3ec9514](https://github.com/globe-and-citizen/cnc-portal/commit/3ec95149f48a96385a36498b0e090298545e284b))
 - update weekly claim filter to use ISO string for date comparison
   ([bf8bf64](https://github.com/globe-and-citizen/cnc-portal/commit/bf8bf64a931af74d8b7d3458840bf4760c7c19db))
-- Update WeeklyClaimComponent with improved notification table layout and remove memo field; add
-  WeeklyClaim model and migration
-  ([a588a4e](https://github.com/globe-and-citizen/cnc-portal/commit/a588a4e3c34a013cac4569eed823b68e7596d160))
-- update withdraw claim component to emit event on successful withdrawal and fix claim status update
-  URL
+- Update WeeklyClaimComponent with improved notification table layout and remove memo field; add WeeklyClaim model and
+  migration ([a588a4e](https://github.com/globe-and-citizen/cnc-portal/commit/a588a4e3c34a013cac4569eed823b68e7596d160))
+- update withdraw claim component to emit event on successful withdrawal and fix claim status update URL
   ([7e3e1cb](https://github.com/globe-and-citizen/cnc-portal/commit/7e3e1cb76c32bb695161caaec6d4f12cca1ced83))
 - update workflow for non interactive interface
   ([552e59b](https://github.com/globe-and-citizen/cnc-portal/commit/552e59b5ba9a64138b782206873100d6812b6645))
@@ -9429,16 +9182,14 @@ Key changes:
   ([98cdb45](https://github.com/globe-and-citizen/cnc-portal/commit/98cdb4548419f6b0eda337d150f485de66f76826))
 - validation for update team form
   ([eaa4b84](https://github.com/globe-and-citizen/cnc-portal/commit/eaa4b84c567eeb578f6e53f74daf6ee3ee2f4b07))
-- vote form
-  ([b5741c7](https://github.com/globe-and-citizen/cnc-portal/commit/b5741c7a53b976faf84e15dcaf83f07d618b65d0))
+- vote form ([b5741c7](https://github.com/globe-and-citizen/cnc-portal/commit/b5741c7a53b976faf84e15dcaf83f07d618b65d0))
 - voting contract
   ([cb8d105](https://github.com/globe-and-citizen/cnc-portal/commit/cb8d105b54bc7c0972b332f333db6eb6f02d91f6))
 - voting function definition
   ([5bcc237](https://github.com/globe-and-citizen/cnc-portal/commit/5bcc237d37b87a1bed448e3736f64821c127c52e))
 - wage claim migrations
   ([1af833d](https://github.com/globe-and-citizen/cnc-portal/commit/1af833d36516ee9e996d9b9001f192f263905908))
-- wip
-  ([0daf564](https://github.com/globe-and-citizen/cnc-portal/commit/0daf564def835bf06d9b7b0aedaf21ea556bbaf2))
+- wip ([0daf564](https://github.com/globe-and-citizen/cnc-portal/commit/0daf564def835bf06d9b7b0aedaf21ea556bbaf2))
 
 ### Performance Improvements
 
@@ -9469,12 +9220,11 @@ Key changes:
 
 - Revert "refactor: :sparkles: update query key computations for pending and signed weekly claims"
   ([05fe455](https://github.com/globe-and-citizen/cnc-portal/commit/05fe455d4ef7960f8005a59875030b78246bb96d))
-- Revert "feat: replace input group with TokenAmount component for improved token handling in
-  TransferForm"
+- Revert "feat: replace input group with TokenAmount component for improved token handling in TransferForm"
   ([3ac9d0d](https://github.com/globe-and-citizen/cnc-portal/commit/3ac9d0db8d54e11bb7e00c2284a66b08bba1f586))
 - Revert "Merge pull request #898 from globe-and-citizen/feature/claimTable"
-  ([a821f29](https://github.com/globe-and-citizen/cnc-portal/commit/a821f29fe46fe6488a4204b8021e959ee186c607)),
-  closes [#898](https://github.com/globe-and-citizen/cnc-portal/issues/898)
+  ([a821f29](https://github.com/globe-and-citizen/cnc-portal/commit/a821f29fe46fe6488a4204b8021e959ee186c607)), closes
+  [#898](https://github.com/globe-and-citizen/cnc-portal/issues/898)
 - Revert "test: update useReadContract mock"
   ([3bd6a67](https://github.com/globe-and-citizen/cnc-portal/commit/3bd6a672f8f5e7785466b49203887f6b3981e90e))
 - Revert "Merge branch 'develop' into feature/claimTable"
@@ -9495,12 +9245,10 @@ Key changes:
   ([fb8a718](https://github.com/globe-and-citizen/cnc-portal/commit/fb8a718545415d1b79d4433185af948a9610f271))
 - Revert "Merge branch 'feat/team-crud-v2' into feat/crud-v2-frontend"
   ([ab00c02](https://github.com/globe-and-citizen/cnc-portal/commit/ab00c0243692485a0e7f1093e742d6d5c4cdc572))
-- also this
-  ([861a42a](https://github.com/globe-and-citizen/cnc-portal/commit/861a42a64ec1cf6de2edba90164f53712d11f87b))
+- also this ([861a42a](https://github.com/globe-and-citizen/cnc-portal/commit/861a42a64ec1cf6de2edba90164f53712d11f87b))
 - another one
   ([efd0275](https://github.com/globe-and-citizen/cnc-portal/commit/efd027525aa5fe638452478facd867642a4f3987))
-- changes
-  ([c24b2f4](https://github.com/globe-and-citizen/cnc-portal/commit/c24b2f468cd0ef57e4ebd23cb8dd5d76be22aa8f))
+- changes ([c24b2f4](https://github.com/globe-and-citizen/cnc-portal/commit/c24b2f468cd0ef57e4ebd23cb8dd5d76be22aa8f))
 - changes on team controller
   ([51c36fb](https://github.com/globe-and-citizen/cnc-portal/commit/51c36fb6d019b0924e252ca3b2b87554dda3b904))
 - navbar util
@@ -9513,8 +9261,7 @@ Key changes:
   ([4a6e24e](https://github.com/globe-and-citizen/cnc-portal/commit/4a6e24e1eb9faa519aff5f749ac8704219b177f9))
 - tabnavigation changes and use v-model
   ([94384eb](https://github.com/globe-and-citizen/cnc-portal/commit/94384ebf0fcd46ba049e3aa73b6abec2acdfb3e6))
-- this also
-  ([bd4cf3d](https://github.com/globe-and-citizen/cnc-portal/commit/bd4cf3d8033fb00830facb8da45a398d29d03f09))
+- this also ([bd4cf3d](https://github.com/globe-and-citizen/cnc-portal/commit/bd4cf3d8033fb00830facb8da45a398d29d03f09))
 - use old deployed addresses
   ([d133367](https://github.com/globe-and-citizen/cnc-portal/commit/d1333671568d78ff20c492b3b9d82690e2869991))
 

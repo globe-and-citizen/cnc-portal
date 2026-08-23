@@ -1,19 +1,20 @@
 # CNC Portal — Roadmap
 
-**Version:** 1.1.0
-**Last Updated:** March 16, 2026
-**Status:** Active
+**Version:** 1.1.0 **Last Updated:** March 16, 2026 **Status:** Active
 
 ---
 
 ## 1. Executive Summary
 
-The CNC Portal is an open platform that enables any team — open-source community or traditional company — to operate as a Crypto Native Corporation (CNC): compensating contributors on-chain with wages, claims, and vesting, and governing transparently through proposals and Board of Directors elections.
+The CNC Portal is an open platform that enables any team — open-source community or traditional company — to operate as
+a Crypto Native Corporation (CNC): compensating contributors on-chain with wages, claims, and vesting, and governing
+transparently through proposals and Board of Directors elections.
 
-**Current status:** 70% complete (35/50 tracked features), actively in M5 — Analytics (Q1 2026).
-**Target production date:** Q2 2026 (M8 deployment automation and monitoring), with full-scale launch in Q3 2026 (M9).
+**Current status:** 70% complete (35/50 tracked features), actively in M5 — Analytics (Q1 2026). **Target production
+date:** Q2 2026 (M8 deployment automation and monitoring), with full-scale launch in Q3 2026 (M9).
 
-> ⚠️ **Mainnet is blocked** by 3 critical security findings from the March 4, 2026 audit. Security remediation is a hard gate before M8.
+> ⚠️ **Mainnet is blocked** by 3 critical security findings from the March 4, 2026 audit. Security remediation is a hard
+> gate before M8.
 
 ---
 
@@ -35,7 +36,8 @@ The CNC Portal is an open platform that enables any team — open-source communi
 
 ## 4. Milestone Deep-Dives
 
-> M1–M4 are fully complete. See [Implementation Status](./03_IMPLEMENTATION_STATUS.md) for the full feature-level breakdown.
+> M1–M4 are fully complete. See [Implementation Status](./03_IMPLEMENTATION_STATUS.md) for the full feature-level
+> breakdown.
 
 ---
 
@@ -74,7 +76,8 @@ The CNC Portal is an open platform that enables any team — open-source communi
 
 ### M7 — Hardening & Safe Integration (Q2 2026)
 
-**Goal:** Reach production-grade quality, complete Safe wallet integration as the foundation for on-chain treasury and payroll, and resolve all security audit findings.
+**Goal:** Reach production-grade quality, complete Safe wallet integration as the foundation for on-chain treasury and
+payroll, and resolve all security audit findings.
 
 #### Quality & Testing
 
@@ -88,7 +91,8 @@ The CNC Portal is an open platform that enables any team — open-source communi
 
 #### Safe Wallet Integration
 
-A key architectural goal of M7 is to move treasury and payroll operations onto [Safe (Gnosis Safe)](https://safe.global/) multi-sig contracts, replacing the current single-owner bank model.
+A key architectural goal of M7 is to move treasury and payroll operations onto
+[Safe (Gnosis Safe)](https://safe.global/) multi-sig contracts, replacing the current single-owner bank model.
 
 | Feature                                 | Status     | Notes                                                                   |
 | --------------------------------------- | ---------- | ----------------------------------------------------------------------- |
@@ -99,7 +103,8 @@ A key architectural goal of M7 is to move treasury and payroll operations onto [
 | BOD integration with Safe               | ⏳ Pending | BOD members as Safe signers, or Safe as BOD executor — architecture TBD |
 | Safe modules for extended functionality | ⏳ Pending | Custom modules for recurring payments, allowances, spending limits      |
 
-> **Architecture note:** The BOD + Safe integration is the most open design question of M7. Two approaches under review: (a) BOD members are the Safe signers directly, or (b) the Safe is the execution target for approved BOD actions.
+> **Architecture note:** The BOD + Safe integration is the most open design question of M7. Two approaches under review:
+> (a) BOD members are the Safe signers directly, or (b) the Safe is the execution target for approved BOD actions.
 
 #### Engineering & Infra
 
@@ -138,11 +143,13 @@ A key architectural goal of M7 is to move treasury and payroll operations onto [
 
 ### M9 — Scale (Q3 2026)
 
-**Goal:** Grow adoption infrastructure, unlock advanced governance, and deliver account abstraction for frictionless onboarding.
+**Goal:** Grow adoption infrastructure, unlock advanced governance, and deliver account abstraction for frictionless
+onboarding.
 
 #### Team Documents
 
-Each CNC team should be able to generate, customize, and publish founding documents. These form the legal and operational backbone of the corporation.
+Each CNC team should be able to generate, customize, and publish founding documents. These form the legal and
+operational backbone of the corporation.
 
 | Document                | Status     | Notes                                               |
 | ----------------------- | ---------- | --------------------------------------------------- |
@@ -210,6 +217,5 @@ Each CNC team should be able to generate, customize, and publish founding docume
 
 ---
 
-**Last Updated:** March 16, 2026
-**Maintainer:** Tech Lead + Product Team
-**Next Review:** At M6 completion or when scope changes significantly
+**Last Updated:** March 16, 2026 **Maintainer:** Tech Lead + Product Team **Next Review:** At M6 completion or when
+scope changes significantly

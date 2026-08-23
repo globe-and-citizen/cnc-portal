@@ -1,7 +1,7 @@
 # Contract: Bank
 
-**Epic Goal:** Hold team treasury funds and distribute dividends proportionally to all shareholders.
-**Contract File:** `contracts/Bank.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
+**Epic Goal:** Hold team treasury funds and distribute dividends proportionally to all shareholders. **Contract File:**
+`contracts/Bank.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
 
 ---
 
@@ -27,17 +27,16 @@
 - **Key functions:** `depositToken`, `transfer`, `transferToken`, `distributeNativeDividends`,
   `distributeTokenDividends`, `getBalance`, `getTokenBalance`
 - **Access roles:** `onlyOwner` for transfers and dividend distribution
-- **Dependencies:** Officer (dynamic resolution of InvestorV1 and FeeCollector addresses),
-  InvestorV1 (push-based dividend execution)
-- **Pattern:** Push-based dividends — funds go directly to shareholders in the same transaction; no
-  claim pattern
+- **Dependencies:** Officer (dynamic resolution of InvestorV1 and FeeCollector addresses), InvestorV1 (push-based
+  dividend execution)
+- **Pattern:** Push-based dividends — funds go directly to shareholders in the same transaction; no claim pattern
 
 ---
 
 ## US-BANK-001: Deposit ETH into the Treasury
 
-> **As a** team member, **I want to** send ETH to the Bank, **so that** the team treasury
-> accumulates funds for future use.
+> **As a** team member, **I want to** send ETH to the Bank, **so that** the team treasury accumulates funds for future
+> use.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** XS | **Dependencies:** none
 
@@ -52,8 +51,8 @@
 
 ## US-BANK-002: Deposit ERC20 Tokens into the Treasury
 
-> **As a** team member, **I want to** deposit ERC20 tokens into the Bank, **so that** the team can
-> hold and distribute non-ETH assets.
+> **As a** team member, **I want to** deposit ERC20 tokens into the Bank, **so that** the team can hold and distribute
+> non-ETH assets.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
 
@@ -68,16 +67,15 @@
 
 ## US-BANK-003: Transfer ETH to a Recipient (with Protocol Fee)
 
-> **As a** team owner, **I want to** send ETH from the treasury to any address, **so that** I can
-> pay expenses, salaries, or vendors.
+> **As a** team owner, **I want to** send ETH from the treasury to any address, **so that** I can pay expenses,
+> salaries, or vendors.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BANK-001
 
 ### Acceptance Criteria
 
 - [x] `transfer(to, amount)` restricted to `onlyOwner`
-- [x] Protocol fee (basis points from `Officer.getFeeFor("BANK")`) deducted from `amount` and sent
-      to FeeCollector
+- [x] Protocol fee (basis points from `Officer.getFeeFor("BANK")`) deducted from `amount` and sent to FeeCollector
 - [x] Net amount (after fee) sent to `to`
 - [x] Reverts if Bank balance is insufficient
 - [x] Reverts if contract is paused
@@ -87,8 +85,8 @@
 
 ## US-BANK-004: Transfer ERC20 Tokens to a Recipient (with Fee for Supported Tokens)
 
-> **As a** team owner, **I want to** send ERC20 tokens from the treasury to any address, **so that**
-> I can pay vendors or team members in tokens.
+> **As a** team owner, **I want to** send ERC20 tokens from the treasury to any address, **so that** I can pay vendors
+> or team members in tokens.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BANK-002
 
@@ -105,8 +103,8 @@
 
 ## US-BANK-005: Distribute ETH Dividends to All Shareholders
 
-> **As a** team owner, **I want to** push ETH dividends to every shareholder proportional to their
-> equity, **so that** profit-sharing is settled on-chain immediately.
+> **As a** team owner, **I want to** push ETH dividends to every shareholder proportional to their equity, **so that**
+> profit-sharing is settled on-chain immediately.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BANK-001
 
@@ -124,8 +122,8 @@
 
 ## US-BANK-006: Distribute ERC20 Dividends to All Shareholders
 
-> **As a** team owner, **I want to** push ERC20 dividends to every shareholder proportional to their
-> equity, **so that** token-denominated profits are distributed on-chain.
+> **As a** team owner, **I want to** push ERC20 dividends to every shareholder proportional to their equity, **so that**
+> token-denominated profits are distributed on-chain.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BANK-002
 
@@ -142,8 +140,8 @@
 
 ## US-BANK-007: View ETH and Token Balances
 
-> **As a** team member, **I want to** query the Bank's ETH and ERC20 balances, **so that** I can
-> verify available funds without reading raw blockchain state.
+> **As a** team member, **I want to** query the Bank's ETH and ERC20 balances, **so that** I can verify available funds
+> without reading raw blockchain state.
 
 **Status:** ✅ | **Priority:** P3 | **Effort:** XS | **Dependencies:** none
 

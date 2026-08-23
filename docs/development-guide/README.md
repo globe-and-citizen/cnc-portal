@@ -6,8 +6,7 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 ### Database Tooling
 
-- **[Database Seeding](./database-seeding/README.md)** - Current flags, safety boundaries, and
-  execution flow
+- **[Database Seeding](./database-seeding/README.md)** - Current flags, safety boundaries, and execution flow
 
 ### Testing
 
@@ -17,10 +16,9 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 ### Code Standards
 
-- **[Vue.js Component Standards](../../.github/copilot-instructions/vue-component-standards.md)** -
-  Component development guidelines
-- **[Testing Overview](../../.github/copilot-instructions/testing-overview.md)** - Repository test
-  conventions
+- **[Vue.js Component Standards](../../.github/copilot-instructions/vue-component-standards.md)** - Component
+  development guidelines
+- **[Testing Overview](../../.github/copilot-instructions/testing-overview.md)** - Repository test conventions
 
 ## Quick Links
 
@@ -125,8 +123,7 @@ Before submitting a PR:
 - [ ] Component has proper accessibility (ARIA labels, keyboard nav)
 - [ ] No console errors or warnings
 - [ ] Documentation updated if API changed
-- [ ] Commit messages follow
-      [Conventional Commits](../../.github/copilot-instructions/commit-conventions.md)
+- [ ] Commit messages follow [Conventional Commits](../../.github/copilot-instructions/commit-conventions.md)
 
 ## Resources
 

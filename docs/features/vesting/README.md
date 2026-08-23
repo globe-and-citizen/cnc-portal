@@ -4,22 +4,21 @@
 
 **Last reviewed:** 2026-08-21
 
-These stories describe the Vesting V2 journey exposed by the portal. Legacy Vesting versions are
-outside this feature scope. Its acceptance criteria follow the
+These stories describe the Vesting V2 journey exposed by the portal. Legacy Vesting versions are outside this feature
+scope. Its acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
 
 ## Product Model
 
 - A vesting schedule is an on-chain **promise of future team shares**, not a token transfer.
-- Creating a schedule neither mints nor locks shares. The Investor contract mints only the amount
-  that has become releasable when the beneficiary claims, or when the owner stops the schedule.
-- Accrual is linear from the start to the fully vested boundary. A cliff blocks claims; it does not
-  delay the beginning of accrual.
-- One beneficiary may have several concurrent schedules. Every action targets one schedule by its
-  index.
+- Creating a schedule neither mints nor locks shares. The Investor contract mints only the amount that has become
+  releasable when the beneficiary claims, or when the owner stops the schedule.
+- Accrual is linear from the start to the fully vested boundary. A cliff blocks claims; it does not delay the beginning
+  of accrual.
+- One beneficiary may have several concurrent schedules. Every action targets one schedule by its index.
 - The portal reads and writes only the current Vesting V2 contract selected for the team.
-- Portal boundaries are selected in local time with minute precision, shown in UTC for verification,
-  and submitted on-chain with zero seconds.
+- Portal boundaries are selected in local time with minute precision, shown in UTC for verification, and submitted
+  on-chain with zero seconds.
 
 ## Lifecycle
 
@@ -62,17 +61,14 @@ stateDiagram-v2
 ### Acceptance Criteria
 
 - [x] Only the team owner can create a schedule; archived teams cannot create one.
-- [x] The owner can select one current team member and enter a positive grant with up to six
-      decimals.
-- [x] Start, end, and optional cliff boundaries are set to the minute and shown in local time and
-      UTC.
+- [x] The owner can select one current team member and enter a positive grant with up to six decimals.
+- [x] Start, end, and optional cliff boundaries are set to the minute and shown in local time and UTC.
 - [x] End is after start, and the cliff is between start and end.
 - [x] The owner can use duration and cliff presets or enter custom boundaries.
 - [x] Review shows the beneficiary, grant, boundaries, cliff effect, and first claimable amount.
 - [x] Returning from review preserves the entered schedule.
 - [x] Confirmation creates an on-chain commitment without minting shares.
-- [x] Success refreshes the schedules; cancellation or failure creates nothing and preserves
-      context.
+- [x] Success refreshes the schedules; cancellation or failure creates nothing and preserves context.
 - [x] The same beneficiary can receive multiple schedules.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** ✅ Done
@@ -152,8 +148,7 @@ stateDiagram-v2
 - [x] Each schedule shows promised, vested, released, claimable, and unvested shares.
 - [x] The next boundary is shown to the minute in local time and UTC.
 - [x] Before the cliff, the user sees that accrued shares remain locked.
-- [x] Upcoming, Cliff locked, Accruing, Claimable, Fully vested, Completed, and Cancelled are
-      distinct.
+- [x] Upcoming, Cliff locked, Accruing, Claimable, Fully vested, Completed, and Cancelled are distinct.
 - [x] Release appears only when its claimable amount is positive.
 - [x] Fully vested and fully released schedules have distinct statuses.
 - [x] Cancelled schedules show released and cancelled amounts.
@@ -164,9 +159,8 @@ stateDiagram-v2
 
 ## Human Validation
 
-Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product
-review. Checked criteria record the verified implementation; this validation records the product
-review.
+Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product review. Checked criteria
+record the verified implementation; this validation records the product review.
 
 ## Implementation Evidence
 

@@ -1,7 +1,7 @@
 # Dev Controller Documentation
 
-The Dev Controller provides development-only endpoints for generating SIWE (Sign-In with Ethereum)
-messages and signatures. These endpoints are only available when `NODE_ENV=development`.
+The Dev Controller provides development-only endpoints for generating SIWE (Sign-In with Ethereum) messages and
+signatures. These endpoints are only available when `NODE_ENV=development`.
 
 ## Endpoints
 
@@ -165,8 +165,7 @@ const generateTestSignature = async () => {
 
 ## Common Test Private Keys (Hardhat Default Accounts)
 
-These are well-known test private keys from Hardhat's default accounts. **Never use these in
-production!**
+These are well-known test private keys from Hardhat's default accounts. **Never use these in production!**
 
 ```
 Account #0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
@@ -181,8 +180,7 @@ Private Key: 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 
 ## Integration with Bruno/API Testing
 
-You can use this endpoint in your Bruno API tests to generate valid SIWE signatures for
-authentication testing:
+You can use this endpoint in your Bruno API tests to generate valid SIWE signatures for authentication testing:
 
 1. First, generate a signature using the dev endpoint
 2. Use the returned message and signature to test the `/api/auth/siwe` endpoint

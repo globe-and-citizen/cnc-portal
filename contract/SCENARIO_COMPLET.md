@@ -1,6 +1,7 @@
 # 🏛️ CNC Portal & TechDAO — Full Scenario
 
-> _The story of a platform that rises, and a team that builds, governs, and grows together._ > _Every public function of every contract appears at least once in this scenario._
+> _The story of a platform that rises, and a team that builds, governs, and grows together._ > _Every public function of
+> every contract appears at least once in this scenario._
 
 ---
 
@@ -87,7 +88,8 @@ timeline
 
 ### The infrastructure goes live
 
-The CNC team deploys the platform. First, a **global fee vault** — the FeeCollector — is initialized with a 0.5% rate on bank transfers and support for USDC and USDT.
+The CNC team deploys the platform. First, a **global fee vault** — the FeeCollector — is initialized with a 0.5% rate on
+bank transfers and support for USDC and USDT.
 
 ```mermaid
 sequenceDiagram
@@ -111,13 +113,15 @@ sequenceDiagram
     Note over OFF: Returns [Bank, Elections, BoardOfDirectors,<br/>Proposals, InvestorV1, CashRemuneration,<br/>SafeDepositRouter, ExpenseAccountEIP712]
 ```
 
-> 💡 Each implementation is registered as a **beacon** — if CNC Portal improves a contract, all teams benefit from the upgrade automatically.
+> 💡 Each implementation is registered as a **beacon** — if CNC Portal improves a contract, all teams benefit from the
+> upgrade automatically.
 
 ---
 
 ### The platform adds a new contract type mid-flight
 
-Six months later, CNC Portal ships a new contract type. Rather than redeploying the entire Officer, they add a single beacon.
+Six months later, CNC Portal ships a new contract type. Rather than redeploying the entire Officer, they add a single
+beacon.
 
 ```mermaid
 sequenceDiagram
@@ -155,7 +159,8 @@ flowchart LR
 
 ### 👩‍💼 Alice deploys all team contracts at once
 
-Alice uses `deployAllContracts` to bootstrap her entire team in a single call, then queries the Officer to confirm everything is live.
+Alice uses `deployAllContracts` to bootstrap her entire team in a single call, then queries the Officer to confirm
+everything is live.
 
 ```mermaid
 sequenceDiagram
@@ -191,7 +196,8 @@ sequenceDiagram
 
 ### Pre-election payroll
 
-Before elections, Alice is the sole owner of CashRemuneration and signs all wage claims herself. Every team member receives **a mix of ETH and SHER** in a single claim.
+Before elections, Alice is the sole owner of CashRemuneration and signs all wage claims herself. Every team member
+receives **a mix of ETH and SHER** in a single claim.
 
 ```mermaid
 sequenceDiagram
@@ -218,13 +224,15 @@ sequenceDiagram
     CR->>SHER: individualMint(Charlie, 640 SHER)
 ```
 
-> 💡 SHER is **minted on demand** when the claim is processed — no SHER pre-funding needed. The ETH is transferred from the contract's balance.
+> 💡 SHER is **minted on demand** when the claim is processed — no SHER pre-funding needed. The ETH is transferred from
+> the contract's balance.
 
 ---
 
 ### A mistaken claim is issued and revoked
 
-Alice accidentally signs a claim with the wrong amount. She immediately disables it before anyone uses it. Later, once the correct claim is issued, she re-enables the original to confirm it stays blocked.
+Alice accidentally signs a claim with the wrong amount. She immediately disables it before anyone uses it. Later, once
+the correct claim is issued, she re-enables the original to confirm it stays blocked.
 
 ```mermaid
 flowchart LR
@@ -238,7 +246,8 @@ flowchart LR
 
 ### Adding a new token to CashRemuneration
 
-The team negotiates a USDC salary component starting month 2. Alice adds USDC to the supported tokens and later removes it when the team switches back to pure SHER/ETH.
+The team negotiates a USDC salary component starting month 2. Alice adds USDC to the supported tokens and later removes
+it when the team switches back to pure SHER/ETH.
 
 ```mermaid
 sequenceDiagram
@@ -258,7 +267,8 @@ sequenceDiagram
 
 ### Bob's monthly cloud server budget (recurring)
 
-The Board funds the ExpenseAccount and Alice signs Bob a **monthly** budget to cover cloud infrastructure costs. The signature can be reused every month within its validity window.
+The Board funds the ExpenseAccount and Alice signs Bob a **monthly** budget to cover cloud infrastructure costs. The
+signature can be reused every month within its validity window.
 
 ```mermaid
 sequenceDiagram
@@ -612,7 +622,8 @@ sequenceDiagram
 
 ### The Board updates its own ownership structure
 
-When a new strategic partner joins, the Board votes to add them as an owner of the BOD itself (a self-referential action).
+When a new strategic partner joins, the Board votes to add them as an owner of the BOD itself (a self-referential
+action).
 
 ```mermaid
 sequenceDiagram
@@ -641,7 +652,8 @@ sequenceDiagram
 
 ### The Board votes on a remote work policy
 
-Diana creates a formal policy proposal. All three Board members vote. Results are tallied automatically when the last vote is cast.
+Diana creates a formal policy proposal. All three Board members vote. Results are tallied automatically when the last
+vote is cast.
 
 ```mermaid
 sequenceDiagram
@@ -763,7 +775,8 @@ flowchart TD
     SHER -->|"proportional to SHER held"| Diana["👩‍⚖️ Diana"]
 ```
 
-> 💡 Bob and Diana both accumulated SHER through their mixed ETH+SHER salaries. Every SHER holder benefits at dividend time — employees, Board members, and external investors alike.
+> 💡 Bob and Diana both accumulated SHER through their mixed ETH+SHER salaries. Every SHER holder benefits at dividend
+> time — employees, Board members, and external investors alike.
 
 ---
 
@@ -888,4 +901,5 @@ flowchart TD
 
 ---
 
-> _CNC Portal is the infrastructure. TechDAO is the use case. Together, they form a coherent ecosystem where value flows transparently, without any trusted intermediary._
+> _CNC Portal is the infrastructure. TechDAO is the use case. Together, they form a coherent ecosystem where value flows
+> transparently, without any trusted intermediary._

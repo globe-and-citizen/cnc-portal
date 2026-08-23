@@ -9,8 +9,7 @@ The CNC Portal is a multi-component application consisting of four main parts th
 3. **Smart Contracts** (Hardhat/Solidity) - Ethereum blockchain contracts
 4. **Subgraph** (The Graph) - Blockchain data indexing
 
-This guide covers deployment procedures for each component in both development and production
-environments.
+This guide covers deployment procedures for each component in both development and production environments.
 
 ## Architecture
 
@@ -788,8 +787,8 @@ gcloud logging read "resource.type=cloudsql_database" --limit=50
 
 ### Error Tracking
 
-Sentry is configured at two levels — frontend (Vue) and backend (Node.js) — with separate Sentry
-projects sharing the same organisation.
+Sentry is configured at two levels — frontend (Vue) and backend (Node.js) — with separate Sentry projects sharing the
+same organisation.
 
 **Required environment variables:**
 
@@ -816,8 +815,8 @@ Sentry.init({
 });
 ```
 
-**Frontend** (`app/src/main.ts`) — events are routed through the backend tunnel to bypass
-ad-blockers (Brave Shields, uBlock Origin, etc.):
+**Frontend** (`app/src/main.ts`) — events are routed through the backend tunnel to bypass ad-blockers (Brave Shields,
+uBlock Origin, etc.):
 
 ```typescript
 import * as Sentry from "@sentry/vue";
@@ -831,9 +830,9 @@ Sentry.init({
 });
 ```
 
-**Source maps** are generated as `hidden` in production builds (not served to browsers) and uploaded
-to Sentry automatically by `@sentry/vite-plugin` during `npm run build` (frontend) and by
-`sentry-cli sourcemaps` during `npm run build` (backend).
+**Source maps** are generated as `hidden` in production builds (not served to browsers) and uploaded to Sentry
+automatically by `@sentry/vite-plugin` during `npm run build` (frontend) and by `sentry-cli sourcemaps` during
+`npm run build` (backend).
 
 ### Backup Procedures
 

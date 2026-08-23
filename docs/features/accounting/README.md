@@ -1,10 +1,9 @@
 # CNC Accounting
 
-Treat the CNC as a **company** and keep its books: general ledger, income statement, and balance
-sheet.
+Treat the CNC as a **company** and keep its books: general ledger, income statement, and balance sheet.
 
-This folder catalogues **every way money moves** across the CNC contracts, maps each one to a
-journal entry, and runs a **full worked example** end to end so the numbers can be trusted.
+This folder catalogues **every way money moves** across the CNC contracts, maps each one to a journal entry, and runs a
+**full worked example** end to end so the numbers can be trusted.
 
 | Document                                                         | What's inside                                                                                                                                                                                                                                      |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -19,10 +18,10 @@ journal entry, and runs a **full worked example** end to end so the numbers can 
 
 ### At a glance
 
-- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712,
-  InvestorV1, SafeDepositRouter — the contracts the CNC actually uses.
-- **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash
-  basis**; investing returns **SHER shares** booked to `Investor Equity`; a direct mint with nothing
-  behind it is **memo only** (tracked in shares, not value); each team books CNC usage fees as an
-  expense, while the global FeeCollector books the same payments as protocol-fee revenue.
+- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1,
+  SafeDepositRouter — the contracts the CNC actually uses.
+- **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns
+  **SHER shares** booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares,
+  not value); each team books CNC usage fees as an expense, while the global FeeCollector books the same payments as
+  protocol-fee revenue.
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
