@@ -62,12 +62,6 @@
       "allowed": 9
     },
     {
-      "path": "src/composables/contracts/useMainContractActions.ts",
-      "subject": "useMainContractActions",
-      "metric": "composableReturnMembers",
-      "allowed": 19
-    },
-    {
       "path": "src/composables/contracts/useOfficerRedeploy.ts",
       "subject": "useOfficerRedeploy",
       "metric": "composableReturnMembers",
