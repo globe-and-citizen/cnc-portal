@@ -45,7 +45,11 @@
               <div class="flex-1">
                 <p class="font-medium text-gray-700">{{ claim.memo }}</p>
               </div>
-              <ClaimActions v-if="canModifyClaims" :claim="claim" />
+              <ClaimActions
+                v-if="canModifyClaims"
+                :claim="claim"
+                :week-claims="props.weeklyClaim?.claims ?? []"
+              />
             </div>
             <!-- File gallery below memo -->
             <ExpandableFileGallery

@@ -98,6 +98,50 @@ describe('ClaimForm.vue', () => {
     expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-15 UTC')
   })
 
+  it('allows an edit that stays within the remaining daily allowance', async () => {
+    const wrapper = createWrapper({
+      mode: 'edit',
+      initialData: {
+        hoursWorked: '1',
+        minutesWorked: '0',
+        memo: 'Finish the review',
+        dayWorked: '2024-01-10T00:00:00.000Z'
+      },
+      submissionRules: {
+        maximumHoursPerDay: 8,
+        existingClaims: [{ minutesWorked: 420, dayWorked: '2024-01-10T00:00:00.000Z' }]
+      }
+    })
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.emitted('submit')?.[0]?.[0]).toEqual(
+      expect.objectContaining({ minutesWorked: 60, memo: 'Finish the review' })
+    )
+  })
+
+  it('blocks an edit that exceeds the remaining daily allowance', async () => {
+    const wrapper = createWrapper({
+      mode: 'edit',
+      initialData: {
+        hoursWorked: '2',
+        minutesWorked: '0',
+        memo: 'Exceed the allowance',
+        dayWorked: '2024-01-10T00:00:00.000Z'
+      },
+      submissionRules: {
+        maximumHoursPerDay: 8,
+        existingClaims: [{ minutesWorked: 420, dayWorked: '2024-01-10T00:00:00.000Z' }]
+      }
+    })
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.emitted('submit')).toBeFalsy()
+  })
+
   it('updates the selected date through the calendar', async () => {
     const wrapper = createWrapper({
       initialData: { hoursWorked: '2', memo: 'memo', dayWorked: '' }

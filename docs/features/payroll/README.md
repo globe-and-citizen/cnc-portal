@@ -493,8 +493,6 @@ status of a user story.
 
 ### UI/UX Notes
 
-- The edit flow does not include the other claims from the same day in its pre-submit daily-limit feedback; the API still rejects the
-  invalid total.
 - The Submit Claim copy says that only one claim can be submitted per week, while the implemented model allows multiple daily claims in the
   same weekly claim.
 
@@ -512,6 +510,7 @@ The claim-submission and claim-history journeys remain unchanged; their current 
 - [Claim submission flow](../../../app/src/components/sections/CashRemunerationView/SubmitClaims.vue)
 - [Claim editing flow](../../../app/src/components/sections/CashRemunerationView/EditClaims.vue)
 - [Claim history daily breakdown](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue)
+- [Claim history claim actions](../../../app/src/components/sections/ClaimHistoryView/ClaimActions.vue)
 - [Daily claim form rules](../../../app/src/utils/claimFormUtil.ts)
 - [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)

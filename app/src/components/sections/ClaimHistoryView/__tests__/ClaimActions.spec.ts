@@ -33,10 +33,11 @@ describe('ClaimActions', () => {
     updatedAt: new Date().toISOString()
   }
 
-  const createWrapper = () => {
+  const createWrapper = (weekClaims: Claim[] = []) => {
     return mount(ClaimActions, {
       props: {
-        claim: mockClaim
+        claim: mockClaim,
+        weekClaims
       },
       global: {
         stubs: {
@@ -53,7 +54,7 @@ describe('ClaimActions', () => {
           EditClaims: {
             name: 'EditClaims',
             template: '<div data-test="edit-claims-stub" />',
-            props: ['claim'],
+            props: ['claim', 'weekClaims'],
             emits: ['close']
           },
           DeleteClaimModal: {
@@ -98,14 +99,16 @@ describe('ClaimActions', () => {
       expect(editModal.exists()).toBe(true)
     })
 
-    it('should pass correct props to edit modal', async () => {
-      const wrapper = createWrapper()
+    it('should pass the claim and its week siblings to edit modal', async () => {
+      const siblingClaim: Claim = { ...mockClaim, id: 2, minutesWorked: 120 }
+      const wrapper = createWrapper([mockClaim, siblingClaim])
 
       await wrapper.find('[data-test="edit-claim-button"]').trigger('click')
       await nextTick()
 
       const editModal = wrapper.findComponent({ name: 'EditClaims' })
       expect(editModal.props('claim')).toEqual(mockClaim)
+      expect(editModal.props('weekClaims')).toEqual([mockClaim, siblingClaim])
     })
   })
 
