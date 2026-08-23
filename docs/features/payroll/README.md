@@ -539,4 +539,5 @@ The claim-submission and claim-history journeys remain unchanged; their current 
 
 - [Cash Remuneration contract](../../contracts/features/cash-remuneration/README.md)
 - [Bank contract](../../contracts/features/bank/README.md)
+- [ADR-0001: Use member-week identity for payroll claims](../../adr/0001-member-week-payroll-identity.md)
 - [Product Feature Inventory](../README.md)
