@@ -23,7 +23,7 @@ import {
   isSubmitRestricted,
   SUBMIT_RESTRICTION_MAX_DAYS_BACK,
 } from '../utils/featureUtils';
-import { resolveWageForWeek } from '../utils/wageResolution';
+import { resolveCurrentWage } from '../utils/wageResolution';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -120,9 +120,9 @@ export const addClaim = async (req: Request, res: Response) => {
     // has nowhere to happen.
     let weeklyClaim = await prisma.weeklyClaim.findFirst({
       where: {
-        teamId: teamId,
+        teamId,
         memberAddress: callerAddress,
-        weekStart: weekStart,
+        weekStart,
       },
       include: { claims: true, wage: true },
     });
@@ -135,7 +135,7 @@ export const addClaim = async (req: Request, res: Response) => {
     const weekIsSubmitted = (weeklyClaim?.claims.length ?? 0) > 0;
     const wage = weekIsSubmitted
       ? weeklyClaim!.wage
-      : await resolveWageForWeek(teamId, callerAddress, weekStart);
+      : await resolveCurrentWage(teamId, callerAddress);
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
@@ -206,18 +206,30 @@ export const addClaim = async (req: Request, res: Response) => {
     }
 
     if (!weeklyClaim) {
-      weeklyClaim = await prisma.weeklyClaim.create({
-        data: {
+      // The composite database key makes this operation converge when a daily
+      // claim and weekly goals (or two daily claims) arrive concurrently.
+      weeklyClaim = await prisma.weeklyClaim.upsert({
+        where: {
+          teamId_memberAddress_weekStart: {
+            teamId,
+            memberAddress: callerAddress,
+            weekStart,
+          },
+        },
+        create: {
           wageId: wage.id,
-          weekStart: weekStart,
+          weekStart,
           memberAddress: callerAddress,
-          teamId: teamId,
+          teamId,
           data: {},
           status: 'pending',
         },
+        update: {},
         include: { claims: true, wage: true },
       });
-    } else if (weeklyClaim.wageId !== wage.id) {
+    }
+
+    if (weeklyClaim.claims.length === 0 && weeklyClaim.wageId !== wage.id) {
       // Only reachable on a goals-only week whose wage changed since: these are
       // the first hours in it, so the row moves to the wage that prices them
       // instead of leaving the week pointing at the superseded one.
