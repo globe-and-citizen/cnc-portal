@@ -7,7 +7,8 @@
       :existing-files="existingFiles"
       :submission-rules="{
         restrictSubmit: isRestricted,
-        maximumHoursPerDay: props.claim.wage?.maximumHoursPerDay
+        maximumHoursPerDay: props.claim.wage?.maximumHoursPerDay,
+        existingClaims: otherWeekClaims
       }"
       :error="{ message: updateClaimErrorMessage, title: 'Failed to update claim' }"
       @submit="updateClaim"
@@ -26,9 +27,15 @@ import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
 import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
-const props = defineProps<{
-  claim: Claim
-}>()
+const props = withDefaults(
+  defineProps<{
+    claim: Claim
+    weekClaims?: Claim[]
+  }>(),
+  {
+    weekClaims: () => []
+  }
+)
 
 const emit = defineEmits<{
   close: []
@@ -46,6 +53,10 @@ const claimFormInitialData = computed<ClaimFormData>(() => ({
   memo: props.claim.memo ?? '',
   dayWorked: props.claim.dayWorked
 }))
+
+const otherWeekClaims = computed(() =>
+  props.weekClaims.filter((weekClaim) => weekClaim.id !== props.claim.id)
+)
 
 const existingFiles = ref<
   Array<{
