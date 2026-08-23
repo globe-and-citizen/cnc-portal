@@ -2,8 +2,7 @@
 
 ## Intial Issue Description
 
-The description of the issue (in the kanban board) that this PR addresses. Please include the issue number in the title
-of the PR.
+The description of the issue (in the kanban board) that this PR addresses. Please include the issue number in the title of the PR.
 
 > Link to the issue in the kanban board If no issue exists, please create one and link it here. Fixes # (issue)
 
@@ -13,9 +12,8 @@ If exit: The description of issues you find and fix in this PR.
 
 ## PR Summary Or Solution description
 
-The summary should be a short description of the change, what you have done to fixe the issue. Please include the
-motivation for the change and how it was implemented. If applicable, please include screenshots or code snippets to
-illustrate the changes.
+The summary should be a short description of the change, what you have done to fixe the issue. Please include the motivation for the change
+and how it was implemented. If applicable, please include screenshots or code snippets to illustrate the changes.
 
 ## Contribution
 

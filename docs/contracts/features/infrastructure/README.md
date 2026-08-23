@@ -1,8 +1,8 @@
 # Contract: Infrastructure (FactoryBeacon, Beacon, UserBeaconProxy)
 
 **Epic Goal:** Provide the upgrade-safe deployment primitives that underpin all team contracts. **Contract Files:**
-`contracts/beacons/FactoryBeacon.sol`, `contracts/beacons/Beacon.sol`, `contracts/beacons/UserBeaconProxy.sol`
-**Upgradeable:** No (these are the upgrade mechanism themselves) **Last updated:** 2026-03-16
+`contracts/beacons/FactoryBeacon.sol`, `contracts/beacons/Beacon.sol`, `contracts/beacons/UserBeaconProxy.sol` **Upgradeable:** No (these
+are the upgrade mechanism themselves) **Last updated:** 2026-03-16
 
 ---
 
@@ -20,21 +20,21 @@
 
 ## Implementation Notes
 
-- **FactoryBeacon** (`contracts/beacons/FactoryBeacon.sol`): Singleton entry point; creates Officer instances as
-  `UserBeaconProxy` contracts pointing to the Officer Beacon
-- **Beacon** (`contracts/beacons/Beacon.sol`): Stores a single `implementation` address; one Beacon per contract type;
-  owner calls `upgradeTo(newImpl)` to update all proxies at once
-- **UserBeaconProxy** (`contracts/beacons/UserBeaconProxy.sol`): Lightweight delegatecall proxy; reads implementation
-  from its Beacon on every call; created by FactoryBeacon (for Officers) and by Officer (for all other contracts)
-- **Pattern:** OpenZeppelin Beacon Proxy pattern; all instances of a contract type share logic from one Beacon;
-  upgrading the Beacon upgrades all instances simultaneously
+- **FactoryBeacon** (`contracts/beacons/FactoryBeacon.sol`): Singleton entry point; creates Officer instances as `UserBeaconProxy` contracts
+  pointing to the Officer Beacon
+- **Beacon** (`contracts/beacons/Beacon.sol`): Stores a single `implementation` address; one Beacon per contract type; owner calls
+  `upgradeTo(newImpl)` to update all proxies at once
+- **UserBeaconProxy** (`contracts/beacons/UserBeaconProxy.sol`): Lightweight delegatecall proxy; reads implementation from its Beacon on
+  every call; created by FactoryBeacon (for Officers) and by Officer (for all other contracts)
+- **Pattern:** OpenZeppelin Beacon Proxy pattern; all instances of a contract type share logic from one Beacon; upgrading the Beacon
+  upgrades all instances simultaneously
 
 ---
 
 ## US-INFRA-001: Deploy a New Officer Instance via FactoryBeacon
 
-> **As a** deployer, **I want to** call FactoryBeacon to create a new Officer proxy for a team, **so that** each team
-> gets an independent Officer instance sharing the same logic.
+> **As a** deployer, **I want to** call FactoryBeacon to create a new Officer proxy for a team, **so that** each team gets an independent
+> Officer instance sharing the same logic.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** none
 
@@ -50,8 +50,8 @@
 
 ## US-INFRA-002: Upgrade All Proxies Atomically by Updating a Beacon
 
-> **As a** protocol admin, **I want to** deploy a new contract implementation and update the Beacon, **so that** all
-> existing proxy instances immediately use the new logic without any per-proxy transaction.
+> **As a** protocol admin, **I want to** deploy a new contract implementation and update the Beacon, **so that** all existing proxy
+> instances immediately use the new logic without any per-proxy transaction.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** none
 
@@ -59,8 +59,7 @@
 
 - [x] `Beacon.upgradeTo(newImpl)` stores the new implementation address (owner only)
 - [x] `newImpl` must be a non-zero address; reverts otherwise
-- [x] All `UserBeaconProxy` instances pointing to this Beacon use `newImpl` on the very next call (no migration
-      required)
+- [x] All `UserBeaconProxy` instances pointing to this Beacon use `newImpl` on the very next call (no migration required)
 - [x] Old implementation address replaced atomically in a single transaction
 - [x] `Beacon.implementation()` returns the current implementation address
 
@@ -68,8 +67,8 @@
 
 ## US-INFRA-003: Delegate Calls Transparently via UserBeaconProxy
 
-> **As a** team contract caller, **I want to** interact with a proxy address exactly as if it were the implementation
-> contract, **so that** the upgrade mechanism is invisible to end users and integrators.
+> **As a** team contract caller, **I want to** interact with a proxy address exactly as if it were the implementation contract, **so that**
+> the upgrade mechanism is invisible to end users and integrators.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** US-INFRA-002
 

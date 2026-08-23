@@ -1,7 +1,7 @@
 # Dev Controller Documentation
 
-The Dev Controller provides development-only endpoints for generating SIWE (Sign-In with Ethereum) messages and
-signatures. These endpoints are only available when `NODE_ENV=development`.
+The Dev Controller provides development-only endpoints for generating SIWE (Sign-In with Ethereum) messages and signatures. These endpoints
+are only available when `NODE_ENV=development`.
 
 ## Endpoints
 

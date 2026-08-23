@@ -1,8 +1,7 @@
 # Contract: CashRemunerationEIP712
 
-**Epic Goal:** Pay employees wages (in multiple tokens and/or equity) using owner-signed claims that can be submitted at
-any time. **Contract File:** `contracts/CashRemunerationEIP712.sol` **Upgradeable:** Yes (Beacon) **Last updated:**
-2026-03-16
+**Epic Goal:** Pay employees wages (in multiple tokens and/or equity) using owner-signed claims that can be submitted at any time.
+**Contract File:** `contracts/CashRemunerationEIP712.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
 
 ---
 
@@ -26,17 +25,15 @@ any time. **Contract File:** `contracts/CashRemunerationEIP712.sol` **Upgradeabl
 - **Key functions:** `withdraw`, `enableClaim`, `disableClaim`
 - **Access roles:** Employee holds signed claim and calls `withdraw`; `onlyOwner` for `enableClaim`/`disableClaim`
 - **EIP-712:** Typed data includes employee address, array of `{ token, amount }` entries, timestamp, and nonce
-- **Dependencies:** InvestorV1 (`MINTER_ROLE` granted to this contract for equity minting); Officer (runtime InvestorV1
-  resolution)
-- **Anti-replay:** Timestamp in the claim struct prevents reuse across different pay periods; claim hash stored after
-  use
+- **Dependencies:** InvestorV1 (`MINTER_ROLE` granted to this contract for equity minting); Officer (runtime InvestorV1 resolution)
+- **Anti-replay:** Timestamp in the claim struct prevents reuse across different pay periods; claim hash stored after use
 
 ---
 
 ## US-CR-001: Withdraw Wages with an Owner-Signed Claim (EIP-712)
 
-> **As an** employee, **I want to** submit a signed wage claim and receive my wages on-chain, **so that** payment is
-> settled without requiring the owner to be online at withdrawal time.
+> **As an** employee, **I want to** submit a signed wage claim and receive my wages on-chain, **so that** payment is settled without
+> requiring the owner to be online at withdrawal time.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** L | **Dependencies:** US-CR-004
 
@@ -54,8 +51,8 @@ any time. **Contract File:** `contracts/CashRemunerationEIP712.sol` **Upgradeabl
 
 ## US-CR-002: Pay Wages in Multiple Tokens in a Single Transaction
 
-> **As a** team owner, **I want to** include multiple token payments in a single signed wage claim, **so that** an
-> employee receives their full compensation (e.g., ETH + USDC) atomically.
+> **As a** team owner, **I want to** include multiple token payments in a single signed wage claim, **so that** an employee receives their
+> full compensation (e.g., ETH + USDC) atomically.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-CR-001
 
@@ -71,8 +68,8 @@ any time. **Contract File:** `contracts/CashRemunerationEIP712.sol` **Upgradeabl
 
 ## US-CR-003: Mint Equity (InvestorV1) Tokens as Part of Compensation
 
-> **As a** team owner, **I want to** include equity token minting in a wage claim, **so that** employees receive their
-> equity compensation on-chain alongside cash wages.
+> **As a** team owner, **I want to** include equity token minting in a wage claim, **so that** employees receive their equity compensation
+> on-chain alongside cash wages.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-CR-001
 
@@ -88,8 +85,7 @@ any time. **Contract File:** `contracts/CashRemunerationEIP712.sol` **Upgradeabl
 
 ## US-CR-004: Prevent Double Payment via Claim Hash
 
-> **As a** system, **I want to** record each used claim hash, **so that** a signed wage claim can only be submitted and
-> paid once.
+> **As a** system, **I want to** record each used claim hash, **so that** a signed wage claim can only be submitted and paid once.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
 
@@ -104,8 +100,8 @@ any time. **Contract File:** `contracts/CashRemunerationEIP712.sol` **Upgradeabl
 
 ## US-CR-005: Disable/Enable a Wage Claim Before It Is Submitted
 
-> **As a** team owner, **I want to** revoke a specific signed wage claim before the employee submits it, **so that** I
-> can correct mistakes without issuing a new contract.
+> **As a** team owner, **I want to** revoke a specific signed wage claim before the employee submits it, **so that** I can correct mistakes
+> without issuing a new contract.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** US-CR-001
 

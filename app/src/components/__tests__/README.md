@@ -2,8 +2,7 @@
 
 ## Overview
 
-The SelectComponent test suite has been significantly improved for better readability, maintainability, and
-comprehensiveness.
+The SelectComponent test suite has been significantly improved for better readability, maintainability, and comprehensiveness.
 
 ## Key Improvements Made
 

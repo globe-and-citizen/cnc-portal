@@ -1,10 +1,10 @@
 # Contract: Vesting
 
-**Purpose:** Record per-team share grants, accrue them linearly, and mint only the vested shares. **Contract version:**
-`2.0.0` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-08-21
+**Purpose:** Record per-team share grants, accrue them linearly, and mint only the vested shares. **Contract version:** `2.0.0`
+**Upgradeable:** Yes (Beacon) **Last updated:** 2026-08-21
 
-The product acceptance criteria live in the [Vesting user stories](../../../features/vesting/README.md). This document
-describes the current contract behaviour that supports them.
+The product acceptance criteria live in the [Vesting user stories](../../../features/vesting/README.md). This document describes the current
+contract behaviour that supports them.
 
 ## Model
 
@@ -33,8 +33,8 @@ stateDiagram-v2
 | `stopVesting(member, index)`                         | Owner       | Mints the releasable share and stops future accrual    |
 | `pause()` / `unpause()`                              | Owner       | Blocks or restores schedule writes                     |
 
-Every write is blocked while paused. `release` and `stopVesting` are non-reentrant, update schedule state before
-minting, and target one schedule by index.
+Every write is blocked while paused. `release` and `stopVesting` are non-reentrant, update schedule state before minting, and target one
+schedule by index.
 
 ## Accrual Rules
 
@@ -47,11 +47,10 @@ otherwise        => vested = A * (T - S) / D
 releasable       => vested - released
 ```
 
-The cliff blocks release but does not shift the linear accrual origin. At the cliff boundary, the amount accrued since
-the start becomes releasable.
+The cliff blocks release but does not shift the linear accrual origin. At the cliff boundary, the amount accrued since the start becomes
+releasable.
 
-Stopping before the cliff mints nothing. Stopping after the cliff mints the current releasable amount and drops the
-unvested remainder.
+Stopping before the cliff mints nothing. Stopping after the cliff mints the current releasable amount and drops the unvested remainder.
 
 ## Read Behaviour
 
@@ -62,8 +61,8 @@ unvested remainder.
 - `getVestings(member)` and `getVestingCount(member)` expose the append-only schedule history.
 - `version()` returns `2.0.0`.
 
-For a stopped schedule, `vestedAmount` returns zero because accrual has ended. Its stored `released` amount is the final
-settlement, and `totalAmount - released` is the cancelled remainder.
+For a stopped schedule, `vestedAmount` returns zero because accrual has ended. Its stored `released` amount is the final settlement, and
+`totalAmount - released` is the cancelled remainder.
 
 ## Access and Minting Preconditions
 

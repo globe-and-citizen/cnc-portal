@@ -9,11 +9,11 @@ These acceptance criteria follow the
 
 ## Product Model
 
-CNC Portal uses Sign-In with Ethereum. The user connects a wallet, switches to the configured network, and signs a
-message. Signing in does not submit an on-chain transaction and does not consume gas.
+CNC Portal uses Sign-In with Ethereum. The user connects a wallet, switches to the configured network, and signs a message. Signing in does
+not submit an on-chain transaction and does not consume gas.
 
-The client accepts an authenticated portal user. The dashboard additionally requires a persisted administrator role.
-Authentication proves wallet ownership; authorization decides which product surface the user may enter.
+The client accepts an authenticated portal user. The dashboard additionally requires a persisted administrator role. Authentication proves
+wallet ownership; authorization decides which product surface the user may enter.
 
 ## Lifecycle
 

@@ -4,8 +4,8 @@ This document provides guidelines on how to use Zod validation schemas in the CN
 
 ## Overview
 
-We've upgraded to **Zod v4.1.11** and replaced manual validation with Zod schemas for better type safety, consistency,
-and maintainability. All request validation is now handled through reusable schemas and middleware.
+We've upgraded to **Zod v4.1.11** and replaced manual validation with Zod schemas for better type safety, consistency, and maintainability.
+All request validation is now handled through reusable schemas and middleware.
 
 ## ✨ What's New in Zod v4
 
@@ -324,8 +324,8 @@ With Zod v4 upgrade:
 
 ## Testing
 
-All existing tests pass with Zod v4. The validation behavior is backward compatible while providing enhanced error
-messages and better performance.
+All existing tests pass with Zod v4. The validation behavior is backward compatible while providing enhanced error messages and better
+performance.
 
 ```bash
 # Run validation tests

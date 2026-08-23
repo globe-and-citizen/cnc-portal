@@ -16,8 +16,7 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 ### Code Standards
 
-- **[Vue.js Component Standards](../../.github/copilot-instructions/vue-component-standards.md)** - Component
-  development guidelines
+- **[Vue.js Component Standards](../../.github/copilot-instructions/vue-component-standards.md)** - Component development guidelines
 - **[Testing Overview](../../.github/copilot-instructions/testing-overview.md)** - Repository test conventions
 
 ## Quick Links
@@ -159,5 +158,5 @@ Before submitting a PR:
 
 ## Contributing
 
-Follow the development workflow and code review checklist when contributing. See
-[CONTRIBUTION.md](../../CONTRIBUTION.md) for full guidelines.
+Follow the development workflow and code review checklist when contributing. See [CONTRIBUTION.md](../../CONTRIBUTION.md) for full
+guidelines.

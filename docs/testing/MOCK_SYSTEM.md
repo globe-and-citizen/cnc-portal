@@ -2,8 +2,7 @@
 
 ## Overview
 
-The CNC Portal has a comprehensive centralized mock system that provides consistent, maintainable testing
-infrastructure. The system covers:
+The CNC Portal has a comprehensive centralized mock system that provides consistent, maintainable testing infrastructure. The system covers:
 
 - **TanStack Query Operations** - All API queries and mutations
 - **Web3/Blockchain Interactions** - ERC20 tokens, contract operations, wagmi

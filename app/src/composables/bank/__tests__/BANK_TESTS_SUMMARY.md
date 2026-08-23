@@ -2,8 +2,8 @@
 
 ## 📋 Overview
 
-This document outlines the comprehensive test suite created for all Bank composables in the CNC Portal application. The
-test suite covers 100% of the bank composable functionality with robust test cases.
+This document outlines the comprehensive test suite created for all Bank composables in the CNC Portal application. The test suite covers
+100% of the bank composable functionality with robust test cases.
 
 ## 🧪 Test Files Created
 
@@ -281,8 +281,7 @@ Each test runs in isolation with properly mocked dependencies, ensuring reliable
 
 ### 4. **Real-World Scenarios**
 
-Tests cover actual usage patterns found in the application, including destructuring, validation chains, and error
-handling.
+Tests cover actual usage patterns found in the application, including destructuring, validation chains, and error handling.
 
 ### 5. **Regression Prevention**
 
@@ -294,8 +293,7 @@ Tests serve as living documentation showing how each composable should be used.
 
 ## 🎉 Conclusion
 
-The bank composables test suite provides complete coverage of all bank-related functionality in the CNC Portal
-application. The tests are:
+The bank composables test suite provides complete coverage of all bank-related functionality in the CNC Portal application. The tests are:
 
 - **Comprehensive**: Cover all functions, edge cases, and error conditions
 - **Maintainable**: Well-organized with clear test descriptions and mock strategies

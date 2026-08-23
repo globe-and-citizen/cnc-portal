@@ -2,8 +2,8 @@
 
 ## Overview
 
-The Statistics API provides comprehensive analytics and metrics for the CNC Portal platform. It offers insights into
-teams, users, claims, wages, expenses, contracts, board actions, and recent activity across the system.
+The Statistics API provides comprehensive analytics and metrics for the CNC Portal platform. It offers insights into teams, users, claims,
+wages, expenses, contracts, board actions, and recent activity across the system.
 
 **Base URL**: `/api/stats`
 
@@ -594,8 +594,8 @@ console.log(stats);
 
 ## Rate Limiting
 
-The Statistics API is protected by rate limiting configured at the server level. The default rate limit is 100,000
-requests per 15 minutes per IP address.
+The Statistics API is protected by rate limiting configured at the server level. The default rate limit is 100,000 requests per 15 minutes
+per IP address.
 
 ---
 

@@ -4,21 +4,19 @@
 
 **Last reviewed:** 2026-08-21
 
-These stories describe the Vesting V2 journey exposed by the portal. Legacy Vesting versions are outside this feature
-scope. Its acceptance criteria follow the
-[feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
+These stories describe the Vesting V2 journey exposed by the portal. Legacy Vesting versions are outside this feature scope. Its acceptance
+criteria follow the [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
 
 ## Product Model
 
 - A vesting schedule is an on-chain **promise of future team shares**, not a token transfer.
-- Creating a schedule neither mints nor locks shares. The Investor contract mints only the amount that has become
-  releasable when the beneficiary claims, or when the owner stops the schedule.
-- Accrual is linear from the start to the fully vested boundary. A cliff blocks claims; it does not delay the beginning
-  of accrual.
+- Creating a schedule neither mints nor locks shares. The Investor contract mints only the amount that has become releasable when the
+  beneficiary claims, or when the owner stops the schedule.
+- Accrual is linear from the start to the fully vested boundary. A cliff blocks claims; it does not delay the beginning of accrual.
 - One beneficiary may have several concurrent schedules. Every action targets one schedule by its index.
 - The portal reads and writes only the current Vesting V2 contract selected for the team.
-- Portal boundaries are selected in local time with minute precision, shown in UTC for verification, and submitted
-  on-chain with zero seconds.
+- Portal boundaries are selected in local time with minute precision, shown in UTC for verification, and submitted on-chain with zero
+  seconds.
 
 ## Lifecycle
 
@@ -159,8 +157,8 @@ stateDiagram-v2
 
 ## Human Validation
 
-Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product review. Checked criteria
-record the verified implementation; this validation records the product review.
+Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product review. Checked criteria record the verified
+implementation; this validation records the product review.
 
 ## Implementation Evidence
 

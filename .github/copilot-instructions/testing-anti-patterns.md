@@ -2,20 +2,19 @@
 
 ## What to Avoid in Testing
 
-This document outlines common testing anti-patterns and mistakes to avoid when writing tests for the CNC Portal project.
-Each anti-pattern is shown with examples of what NOT to do and the correct approach.
+This document outlines common testing anti-patterns and mistakes to avoid when writing tests for the CNC Portal project. Each anti-pattern
+is shown with examples of what NOT to do and the correct approach.
 
 ## ⚠️ Re-mocking globally-mocked modules
 
-`app/vitest.config.ts` loads setup files from `app/src/tests/setup/` that call `vi.mock(...)` once for every commonly
-used dependency (wagmi, viem, TanStack Query, Apollo, Pinia stores, the `@/composables/<domain>/{reads,writes}` modules,
-the stubbed Nuxt UI primitives, `@/lib/axios`, `@/utils`, `@/queries/*.queries`, …). Override hooks (`mockTeamStore`,
-`mockERC20Reads`, `resetERC20Mocks`, …) are re-exported from `@/tests/mocks`.
+`app/vitest.config.ts` loads setup files from `app/src/tests/setup/` that call `vi.mock(...)` once for every commonly used dependency
+(wagmi, viem, TanStack Query, Apollo, Pinia stores, the `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives,
+`@/lib/axios`, `@/utils`, `@/queries/*.queries`, …). Override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) are
+re-exported from `@/tests/mocks`.
 
-**Do not declare a `vi.mock('<same-path>', …)` block in a spec for any of those paths.** Re-mocking shadows the global
-setup, duplicates `vi.hoisted` boilerplate, and drifts from the canonical mock shape. It is enforced by ESLint
-(`no-restricted-syntax` in `app/eslint.config.js`); the banned-path list lives in `bannedGlobalMockPaths` and applies to
-every spec.
+**Do not declare a `vi.mock('<same-path>', …)` block in a spec for any of those paths.** Re-mocking shadows the global setup, duplicates
+`vi.hoisted` boilerplate, and drifts from the canonical mock shape. It is enforced by ESLint (`no-restricted-syntax` in
+`app/eslint.config.js`); the banned-path list lives in `bannedGlobalMockPaths` and applies to every spec.
 
 ❌ **Bad: re-mocking `@wagmi/vue` per spec**
 
@@ -44,9 +43,9 @@ it("reads balance", () => {
 });
 ```
 
-If you need to mock a module that **isn't** yet covered, add it to `app/src/tests/setup/` and re-export the override
-hook from `app/src/tests/mocks/index.ts` — don't add per-spec `vi.mock` calls. See `app/src/tests/README.md` and
-`docs/testing/MOCK_SYSTEM.md` for the full mock system.
+If you need to mock a module that **isn't** yet covered, add it to `app/src/tests/setup/` and re-export the override hook from
+`app/src/tests/mocks/index.ts` — don't add per-spec `vi.mock` calls. See `app/src/tests/README.md` and `docs/testing/MOCK_SYSTEM.md` for the
+full mock system.
 
 ## Component Testing Anti-Patterns
 
@@ -724,5 +723,4 @@ describe("Component", () => {
 17. **Don't use flat test structure** - Organize tests logically
 18. **Don't duplicate test setup** - Create reusable helper functions
 
-Following these guidelines will help maintain high-quality, maintainable tests that provide reliable feedback about your
-code's behavior.
+Following these guidelines will help maintain high-quality, maintainable tests that provide reliable feedback about your code's behavior.

@@ -1,7 +1,6 @@
 # Commit Message Conventions
 
-> [`AGENTS.md`](../../AGENTS.md) contains the repository-level workflow. This file contains the commit-specific
-> convention and examples.
+> [`AGENTS.md`](../../AGENTS.md) contains the repository-level workflow. This file contains the commit-specific convention and examples.
 
 ## Format
 
@@ -56,15 +55,14 @@ feat(api): ✨ add endpoint   ← no scopes
 
 ## Atomic commits
 
-One commit per logical change. **Do not** batch unrelated changes, and **do not** squash an entire PR into a single
-commit at the end. Commit as each piece lands so the history is reviewable.
+One commit per logical change. **Do not** batch unrelated changes, and **do not** squash an entire PR into a single commit at the end.
+Commit as each piece lands so the history is reviewable.
 
 ## Body & footer (optional)
 
 - **Body** — explain _why_, not _what_. Separate from subject with a blank line.
 - **Breaking changes** — append `!` after the type (e.g. `feat!: ✨ …`) and describe in the body.
-- **Issue refs** — link via the PR description rather than commit footers; the team relies on PR-level linking, not
-  `Fixes #123` trailers.
+- **Issue refs** — link via the PR description rather than commit footers; the team relies on PR-level linking, not `Fixes #123` trailers.
 
 ## Never
 

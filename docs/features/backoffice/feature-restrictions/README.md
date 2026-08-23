@@ -9,9 +9,9 @@ These acceptance criteria follow the
 
 ## Product Model
 
-A feature restriction has a stable function name and one global status: `enabled`, `disabled`, or `beta`. An
-administrator can add a team override so that one team uses a different status from the global value. The consuming
-product feature decides what each status means for its user journey.
+A feature restriction has a stable function name and one global status: `enabled`, `disabled`, or `beta`. An administrator can add a team
+override so that one team uses a different status from the global value. The consuming product feature decides what each status means for
+its user journey.
 
 Only authenticated administrators can access this backoffice capability.
 

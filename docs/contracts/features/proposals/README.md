@@ -1,7 +1,7 @@
 # Contract: Proposals
 
-**Epic Goal:** Let board members create formal proposals and record Yes/No/Abstain votes with automatic tallying.
-**Contract File:** `contracts/Proposals/Proposals.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
+**Epic Goal:** Let board members create formal proposals and record Yes/No/Abstain votes with automatic tallying. **Contract File:**
+`contracts/Proposals/Proposals.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
 
 ---
 
@@ -22,19 +22,18 @@
 
 - **Contract:** `contracts/Proposals/Proposals.sol`
 - **Key functions:** `createProposal`, `castVote`, `tallyResults`
-- **Access roles:** Board members only for `createProposal` and `castVote`; anyone can call `tallyResults` once period
-  ends
+- **Access roles:** Board members only for `createProposal` and `castVote`; anyone can call `tallyResults` once period ends
 - **Dependencies:** BoardOfDirectors (live membership check via Officer resolution)
 - **States:** `Active` → `Succeeded` / `Defeated` / `Expired`
-- **Pattern:** Board membership checked live from BoardOfDirectors at vote time; auto-tallied when all members vote;
-  manual tally available after end date
+- **Pattern:** Board membership checked live from BoardOfDirectors at vote time; auto-tallied when all members vote; manual tally available
+  after end date
 
 ---
 
 ## US-PROP-001: Create a Proposal (Board Members Only)
 
-> **As a** board member, **I want to** create a formal proposal with a voting period, **so that** decisions are
-> discussed and recorded on-chain.
+> **As a** board member, **I want to** create a formal proposal with a voting period, **so that** decisions are discussed and recorded
+> on-chain.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
 
@@ -50,8 +49,7 @@
 
 ## US-PROP-002: Vote Yes/No/Abstain on a Proposal
 
-> **As a** board member, **I want to** cast a Yes, No, or Abstain vote on an active proposal, **so that** my position is
-> recorded on-chain.
+> **As a** board member, **I want to** cast a Yes, No, or Abstain vote on an active proposal, **so that** my position is recorded on-chain.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** US-PROP-001
 
@@ -68,8 +66,8 @@
 
 ## US-PROP-003: Auto-Tally Results When All Board Members Have Voted
 
-> **As a** system, **I want to** finalize a proposal immediately when every board member has cast a vote, **so that**
-> results are available without waiting for the voting period to end.
+> **As a** system, **I want to** finalize a proposal immediately when every board member has cast a vote, **so that** results are available
+> without waiting for the voting period to end.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-PROP-002
 
@@ -85,8 +83,8 @@
 
 ## US-PROP-004: Manually Tally Results After Voting Period Ends
 
-> **As a** team member, **I want to** trigger result tallying after the voting period ends (even if not all members
-> voted), **so that** proposals are not stuck in limbo.
+> **As a** team member, **I want to** trigger result tallying after the voting period ends (even if not all members voted), **so that**
+> proposals are not stuck in limbo.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** US-PROP-002
 

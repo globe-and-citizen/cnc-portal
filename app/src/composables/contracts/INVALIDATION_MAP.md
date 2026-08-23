@@ -1,14 +1,13 @@
 # On-chain invalidation map
 
-Which **contract reads** each **contract write** dirties, and by which mechanism (if any) they get invalidated today.
-Companion to [`README.md`](./README.md) (§"What V3 gives you").
+Which **contract reads** each **contract write** dirties, and by which mechanism (if any) they get invalidated today. Companion to
+[`README.md`](./README.md) (§"What V3 gives you").
 
-Scope: the chain layer only — `useReadContract` / `useBalance` / custom `useQuery` reads under `app/src/composables/**`.
-Backend REST invalidation is a separate surface (`app/src/queries/**`, see
-[`QUERY_FACTORY.md`](../../queries/QUERY_FACTORY.md)).
+Scope: the chain layer only — `useReadContract` / `useBalance` / custom `useQuery` reads under `app/src/composables/**`. Backend REST
+invalidation is a separate surface (`app/src/queries/**`, see [`QUERY_FACTORY.md`](../../queries/QUERY_FACTORY.md)).
 
-**Read this before adding a write composable.** The built-in invalidation covers less than its name suggests, and the
-gap is not obvious from the call site.
+**Read this before adding a write composable.** The built-in invalidation covers less than its name suggests, and the gap is not obvious
+from the call site.
 
 ---
 
@@ -22,16 +21,16 @@ gap is not obvious from the call site.
 
 ### The matching rule that decides everything
 
-`invalidateQueries({ queryKey })` uses `partialMatchKey` — `Object.keys(filter).every(...)` with an early
-`typeof a !== typeof b → false`. Two consequences that shape this whole document:
+`invalidateQueries({ queryKey })` uses `partialMatchKey` — `Object.keys(filter).every(...)` with an early `typeof a !== typeof b → false`.
+Two consequences that shape this whole document:
 
 1. **Mechanism A only fires on `key[0] === 'readContract'`.** Any other namespace is invisible to it.
 2. **An ERC-20 balance of contract X is keyed on the _token_ address, not on X.** `balanceOf(bank)` →
-   `['readContract', { address: USDC, args: [bank], … }]`. A write to the Bank therefore **never** invalidates the
-   Bank's token balances through mechanism A.
+   `['readContract', { address: USDC, args: [bank], … }]`. A write to the Bank therefore **never** invalidates the Bank's token balances
+   through mechanism A.
 
-Corollary: mechanism A covers _view functions of the contract you just wrote to_ (`owner`, `paused`, `getShareholders`,
-`getLendingOffer`, …) and **no balance of any kind**.
+Corollary: mechanism A covers _view functions of the contract you just wrote to_ (`owner`, `paused`, `getShareholders`, `getLendingOffer`,
+…) and **no balance of any kind**.
 
 ---
 
@@ -103,8 +102,8 @@ Legend — **A** built-in predicate · **B** hand-written · **C** left to stale
 | `setMigrationRoot` ([`useSetMigrationRoot`](../investor/useSetMigrationRoot.ts), [`useShareholderMigration`](../investor/useShareholderMigration.ts))          | `getMigrationRoot`                                                             | **❌/B** same bypass — `ShareholderMigrationBanner.vue:114` compensates with an explicit `refetchMigrationRoot()` + `['contracts']`                                                                                                                                   |
 | `configureBeacon` / `deployBeaconProxy` ([`useInvestorUpgrade`](../investor/useInvestorUpgrade.ts))                                                            | every Investor read (the address changes), `officer-beacon-folder`             | **B** `useInvestorUpgrade` runs inside the Officer redeploy orchestrator → `useInvalidateOfficerQueries()` (teams + contracts) ✅ for the address · `officer-beacon-folder` is `staleTime: Infinity` but keyed by officer address, so a new Officer gets a new key ✅ |
 
-> The four `executeContractWrite` call sites are the systematic hole: `executeContractWrite` is the framework-agnostic
-> function — it has no `queryClient`. Only `useContractWritesV3` invalidates.
+> The four `executeContractWrite` call sites are the systematic hole: `executeContractWrite` is the framework-agnostic function — it has no
+> `queryClient`. Only `useContractWritesV3` invalidates.
 
 ### FixedReturn (Community Credit)
 
@@ -152,10 +151,9 @@ Legend — **A** built-in predicate · **B** hand-written · **C** left to stale
 
 ### Safe (multisig, off-chain tx service)
 
-Covered separately in [`queries/safe.mutations.ts`](../../queries/safe.mutations.ts): each mutation hand-invalidates
-`safeKeys.info` / `transactions` / `balance` / `tokenBalance`. `safeKeys.balance` and `safeKeys.tokenBalance`
-deliberately mirror the wagmi key shapes (`['balance', …]`, `['readContract', …]`) so they cross the namespace boundary
-— the right instinct, applied only here.
+Covered separately in [`queries/safe.mutations.ts`](../../queries/safe.mutations.ts): each mutation hand-invalidates `safeKeys.info` /
+`transactions` / `balance` / `tokenBalance`. `safeKeys.balance` and `safeKeys.tokenBalance` deliberately mirror the wagmi key shapes
+(`['balance', …]`, `['readContract', …]`) so they cross the namespace boundary — the right instinct, applied only here.
 
 ---
 
@@ -180,22 +178,20 @@ deliberately mirror the wagmi key shapes (`['balance', …]`, `['readContract', 
 
 ## 5. Ranked gaps
 
-1. **The 6 `*-events-logs` transaction feeds are never invalidated.** After a deposit or transfer the balance updates
-   but the transaction row doesn't appear until a refocus past the 30 s `staleTime`. Affects Bank, Expense, Community
-   Credit, Investor, Cash Remuneration, SafeDepositRouter.
+1. **The 6 `*-events-logs` transaction feeds are never invalidated.** After a deposit or transfer the balance updates but the transaction
+   row doesn't appear until a refocus past the 30 s `staleTime`. Affects Bank, Expense, Community Credit, Investor, Cash Remuneration,
+   SafeDepositRouter.
 2. **`PayDividendsAction.vue` invalidates nothing.** Dividends are paid, no balance anywhere refreshes.
 3. **`TransferAction.vue` (ExpenseAccount `transfer`) invalidates only the backend expense list** — no chain balance.
-4. **The 4 `executeContractWrite` call sites bypass mechanism A entirely** (`useClaimMigration`, `useSweepMigration`,
-   `useSetMigrationRoot`, `useShareholderMigration`). Two of them compensate by hand; the Merkle-claim paths don't.
-5. **Cross-contract pairs with no invalidation:** ExpenseAccount/CashRemuneration `ownerWithdrawAllToBank` → Bank
-   balances · Elections `publishResults` → BoD membership · SafeDepositRouter `deposit` → Safe balance · Bank
-   `fundFixedReturnRepayment` → both token balances.
-6. **Dead keys** — `['getBodActions']` ([`bod/writes.ts:47`](../bod/writes.ts), `:164`) matches no query. Backend-side
-   equivalents: `['weekly-claims', teamId]` (`WeeklyClaimActionEnable.vue:68`, `WeeklyClaimActionDropdown.vue:253`) and
-   `['team', {teamId}]` (`CreateAddCampaign.vue:163`), plus the `undefined`-laden key from
-   `useSyncWeeklyClaimsMutation`.
-7. **`ProposalsList.vue` / `ContractOwnerCard.vue` read outside the cache** — no invalidation strategy is even possible
-   until they move to `useReadContract`.
+4. **The 4 `executeContractWrite` call sites bypass mechanism A entirely** (`useClaimMigration`, `useSweepMigration`, `useSetMigrationRoot`,
+   `useShareholderMigration`). Two of them compensate by hand; the Merkle-claim paths don't.
+5. **Cross-contract pairs with no invalidation:** ExpenseAccount/CashRemuneration `ownerWithdrawAllToBank` → Bank balances · Elections
+   `publishResults` → BoD membership · SafeDepositRouter `deposit` → Safe balance · Bank `fundFixedReturnRepayment` → both token balances.
+6. **Dead keys** — `['getBodActions']` ([`bod/writes.ts:47`](../bod/writes.ts), `:164`) matches no query. Backend-side equivalents:
+   `['weekly-claims', teamId]` (`WeeklyClaimActionEnable.vue:68`, `WeeklyClaimActionDropdown.vue:253`) and `['team', {teamId}]`
+   (`CreateAddCampaign.vue:163`), plus the `undefined`-laden key from `useSyncWeeklyClaimsMutation`.
+7. **`ProposalsList.vue` / `ContractOwnerCard.vue` read outside the cache** — no invalidation strategy is even possible until they move to
+   `useReadContract`.
 
 ---
 
@@ -228,13 +224,13 @@ export function useInvalidateBankQueries() {
 
 Three rules that follow from §1:
 
-- **Never hand-write a key namespace in a component.** Every namespace in §2 should have exactly one key factory
-  exporting it, imported by both the read and the invalidation (`safeKeys` already does this — nothing else does).
-- **Balances need an explicit invalidation, always.** Mechanism A cannot reach them. A shared
-  `invalidateBalances(address, tokens)` removes the per-component drift documented in §3.
-- **A feed is part of the write's effect.** If a write emits an event the UI renders, its `*-events-logs` key belongs in
-  the same `onSuccess`. A prefix predicate (`key[0].endsWith('-events-logs')`) closes all six at once.
+- **Never hand-write a key namespace in a component.** Every namespace in §2 should have exactly one key factory exporting it, imported by
+  both the read and the invalidation (`safeKeys` already does this — nothing else does).
+- **Balances need an explicit invalidation, always.** Mechanism A cannot reach them. A shared `invalidateBalances(address, tokens)` removes
+  the per-component drift documented in §3.
+- **A feed is part of the write's effect.** If a write emits an event the UI renders, its `*-events-logs` key belongs in the same
+  `onSuccess`. A prefix predicate (`key[0].endsWith('-events-logs')`) closes all six at once.
 
-Guard it with a test that registers the real read keys against a real `QueryClient` and asserts each write's
-invalidation matches ≥1 of them. Asserting `invalidateQueries` "was called with a key" — what the current specs do —
-cannot catch a key that matches nothing, which is how every item in §5.6 shipped.
+Guard it with a test that registers the real read keys against a real `QueryClient` and asserts each write's invalidation matches ≥1 of
+them. Asserting `invalidateQueries` "was called with a key" — what the current specs do — cannot catch a key that matches nothing, which is
+how every item in §5.6 shipped.

@@ -4,10 +4,9 @@
 
 **Last updated:** 2026-08-21
 
-Contract behaviour is an implementation boundary, not a product feature inventory. Product actors, journeys, and
-human-reviewed acceptance criteria remain under [`docs/features/`](../../features/README.md). The documents below
-predate the current documentation model unless they state a recent `Last verified` date; their historical story counts
-and checkboxes are not evidence of current product validation.
+Contract behaviour is an implementation boundary, not a product feature inventory. Product actors, journeys, and human-reviewed acceptance
+criteria remain under [`docs/features/`](../../features/README.md). The documents below predate the current documentation model unless they
+state a recent `Last verified` date; their historical story counts and checkboxes are not evidence of current product validation.
 
 ## Contract References
 

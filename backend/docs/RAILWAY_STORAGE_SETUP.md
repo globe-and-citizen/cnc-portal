@@ -1,12 +1,11 @@
 # Railway Storage Setup Guide
 
-This document explains how to configure and use Railway Object Storage (S3-compatible) for file uploads in the CNC
-Portal backend.
+This document explains how to configure and use Railway Object Storage (S3-compatible) for file uploads in the CNC Portal backend.
 
 ## Overview
 
-The CNC Portal uses Railway Storage for storing files (images and documents) instead of storing them directly in the
-database. This approach offers:
+The CNC Portal uses Railway Storage for storing files (images and documents) instead of storing them directly in the database. This approach
+offers:
 
 - **Better Performance**: Files are served directly from S3, reducing database load
 - **Scalability**: Object storage scales independently from the database
@@ -659,12 +658,9 @@ mindmap
 
 ### Official Documentation
 
-- [Railway Storage Documentation](https://docs.railway.com/guides/storage-buckets) - Complete guide for Railway Object
-  Storage
-- [AWS S3 SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/) - S3 client
-  API reference
-- [Prisma JSON Field Types](https://www.prisma.io/docs/concepts/components/prisma-schema/data-model#json-type) - Working
-  with JSON in Prisma
+- [Railway Storage Documentation](https://docs.railway.com/guides/storage-buckets) - Complete guide for Railway Object Storage
+- [AWS S3 SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/) - S3 client API reference
+- [Prisma JSON Field Types](https://www.prisma.io/docs/concepts/components/prisma-schema/data-model#json-type) - Working with JSON in Prisma
 
 ### Related CNC Portal Documentation
 

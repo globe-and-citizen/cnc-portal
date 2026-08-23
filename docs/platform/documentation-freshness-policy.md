@@ -8,18 +8,17 @@
 
 ## Policy
 
-Documentation is part of a behavioural change, not a follow-up task. Before editing a behavioural source, identify its
-canonical documentation owner. In the same pull request, update that owner when the verified behaviour, journey, rules,
-boundaries, failures, evidence, or validation state changes.
+Documentation is part of a behavioural change, not a follow-up task. Before editing a behavioural source, identify its canonical
+documentation owner. In the same pull request, update that owner when the verified behaviour, journey, rules, boundaries, failures,
+evidence, or validation state changes.
 
-An AI agent performs this update as part of its implementation work. Continuous integration does not generate product
-claims on the agent's behalf; it blocks a pull request when the required review and documentation update are absent.
+An AI agent performs this update as part of its implementation work. Continuous integration does not generate product claims on the agent's
+behalf; it blocks a pull request when the required review and documentation update are absent.
 
 ## Enforced Scope
 
-The [documentation freshness validator](../../scripts/validate-documentation-freshness.mjs) reads local source links and
-backticked repository paths from canonical documents. It treats a linked file or directory as that document's declared
-implementation evidence.
+The [documentation freshness validator](../../scripts/validate-documentation-freshness.mjs) reads local source links and backticked
+repository paths from canonical documents. It treats a linked file or directory as that document's declared implementation evidence.
 
 | Behavioural change                                                        | Canonical documentation owner                                                |
 | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -29,28 +28,27 @@ implementation evidence.
 | Solidity contract behaviour                                               | `docs/contracts/features/**/README.md` and any linked product feature README |
 | Shared client, dashboard, backend, indexer, or subgraph runtime           | `docs/implementation/**/README.md` and any linked feature README             |
 
-Test-only changes are outside this gate. They still need the normal test review and may require a documentation change
-when they reveal a user-visible rule or gap.
+Test-only changes are outside this gate. They still need the normal test review and may require a documentation change when they reveal a
+user-visible rule or gap.
 
-Markdown files are documentation, including when they are stored beneath a behavioural source root. They are not treated
-as behavioural source code by this gate.
+Markdown files are documentation, including when they are stored beneath a behavioural source root. They are not treated as behavioural
+source code by this gate.
 
-The current enforcement applies to the source roots listed above. Expand the validator's behavioural-source patterns
-when a new runtime surface gains canonical documentation; do not bypass the check by removing an evidence link.
+The current enforcement applies to the source roots listed above. Expand the validator's behavioural-source patterns when a new runtime
+surface gains canonical documentation; do not bypass the check by removing an evidence link.
 
 ## Pull Request Contract
 
 For every changed behavioural path, the validator requires both conditions below:
 
-1. At least one canonical owner currently links that source file or directory as implementation evidence. A previously
-   undocumented path therefore fails until the agent creates or completes the relevant documentation.
-2. Every canonical document that owns the changed path is modified in the same pull request. This forces re-review of
-   each product, contract, or implementation statement that could be stale.
+1. At least one canonical owner currently links that source file or directory as implementation evidence. A previously undocumented path
+   therefore fails until the agent creates or completes the relevant documentation.
+2. Every canonical document that owns the changed path is modified in the same pull request. This forces re-review of each product,
+   contract, or implementation statement that could be stale.
 
-Use precise Markdown links under the document's implementation evidence rather than copying source code. A directory
-link is appropriate only when the whole directory belongs to the same documented behaviour. A source link without a
-substantive documentation review is not sufficient: update the affected journey, rules, criteria, gap, or verification
-state as the change requires.
+Use precise Markdown links under the document's implementation evidence rather than copying source code. A directory link is appropriate
+only when the whole directory belongs to the same documented behaviour. A source link without a substantive documentation review is not
+sufficient: update the affected journey, rules, criteria, gap, or verification state as the change requires.
 
 ## Agent Workflow
 
@@ -60,9 +58,9 @@ state as the change requires.
 4. Run `npm run lint:docs-freshness` before handing over the change.
 5. Run the relevant Markdown and subproject validations.
 
-The validator is intentionally conservative: an unrelated refactor inside a documented directory still requires an
-explicit documentation review. If the observable behaviour is unchanged, record that fact through the normal review
-process while keeping the existing statements accurate.
+The validator is intentionally conservative: an unrelated refactor inside a documented directory still requires an explicit documentation
+review. If the observable behaviour is unchanged, record that fact through the normal review process while keeping the existing statements
+accurate.
 
 ## Validation
 

@@ -1,7 +1,7 @@
 # Database Seed - Quick Start Guide
 
-> **Historical reference (December 2025):** Commands and claims in this snapshot are not current operational guidance.
-> Use the [verified database seeding guide](./README.md) and current backend source before running any command.
+> **Historical reference (December 2025):** Commands and claims in this snapshot are not current operational guidance. Use the
+> [verified database seeding guide](./README.md) and current backend source before running any command.
 
 **Status:** ✅ Production Ready  
 **Last Updated:** December 30, 2025

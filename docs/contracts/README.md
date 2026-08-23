@@ -1,7 +1,6 @@
 # CNC Portal - Smart Contracts Overview
 
-For contract-specific behaviour and contract-scoped stories, start with the
-[Contract Behaviour Index](./features/README.md).
+For contract-specific behaviour and contract-scoped stories, start with the [Contract Behaviour Index](./features/README.md).
 
 ## All Contracts
 
@@ -62,16 +61,15 @@ isFeeCollectorToken(tokenAddress) → bool
 
 **Path**: `contracts/Bank.sol`
 
-Organizational treasury. Holds ETH and ERC20 tokens, routes transfers with protocol fees, and triggers push-based
-dividend distributions via InvestorV1.
+Organizational treasury. Holds ETH and ERC20 tokens, routes transfers with protocol fees, and triggers push-based dividend distributions via
+InvestorV1.
 
 **Features**:
 
 - Accept ETH via `receive()` and ERC20 via `depositToken()`
 - Transfer ETH/ERC20 to recipients; protocol fee (basis points) deducted and sent to FeeCollector
 - ERC20 fee only charged for tokens supported by FeeCollector
-- **Push-based dividend distribution** — no claim pattern; funds transfer directly to shareholders in the same
-  transaction
+- **Push-based dividend distribution** — no claim pattern; funds transfer directly to shareholders in the same transaction
 - Resolves InvestorV1 address dynamically via Officer (no stored investor address)
 - Pausable and reentrancy-protected
 
@@ -99,8 +97,7 @@ ERC20 equity token (**6 decimals**) with automatic shareholder tracking and push
 
 - ERC20 with auto-tracked shareholder set (added/removed via `_update` hook on every transfer)
 - Owner bulk-mints via `distributeMint()`; role-based single-mint via `MINTER_ROLE` (granted to CashRemuneration)
-- **Executes dividend distribution** — pushes ETH and ERC20 directly to each shareholder proportionally in one
-  transaction
+- **Executes dividend distribution** — pushes ETH and ERC20 directly to each shareholder proportionally in one transaction
 - `onlyBank` modifier restricts dividend calls to the Bank contract (Bank address resolved via Officer at runtime)
 - Last shareholder receives the integer remainder to ensure full, lossless distribution
 - 6 decimals (USDC-style precision)
@@ -251,21 +248,19 @@ disableClaim(signatureHash)                       // Revoke claim before use
 
 **Path**: `contracts/Vesting.sol`
 
-Per-team linear vesting with cliff periods. Deployed per team via the Officer beacon registry; schedules are
-**agreements only** — share tokens are minted on demand, never pre-funded.
+Per-team linear vesting with cliff periods. Deployed per team via the Officer beacon registry; schedules are **agreements only** — share
+tokens are minted on demand, never pre-funded.
 
 **Features**:
 
 - Per-team: deployed per Officer, owned by the team owner (no `teamId` keys)
-- Agreement-then-mint: `addVesting` moves no tokens; `release` mints only what has vested from the team's `InvestorV1`
-  via `individualMint`
+- Agreement-then-mint: `addVesting` moves no tokens; `release` mints only what has vested from the team's `InvestorV1` via `individualMint`
 - Investor resolved through the Officer (`findDeployedContract('InvestorV1')`); no configurable token address
-- Multiple schedules per member: each grant is appended to the member's `vestings` array and addressed by its index
-  (initial grant, refreshers, …)
+- Multiple schedules per member: each grant is appended to the member's `vestings` array and addressed by its index (initial grant,
+  refreshers, …)
 - Cliff period: no tokens releasable until cliff elapses
 - Linear vesting: tokens unlock proportionally after cliff
-- Team owner can stop a schedule: releasable amount is minted to the member, the unvested remainder is simply never
-  minted (no refund path)
+- Team owner can stop a schedule: releasable amount is minted to the member, the unvested remainder is simply never minted (no refund path)
 - Schedules are append-only: a stopped one is kept with `active = false`, a fully-released one stays `active = true`
 - Requires `MINTER_ROLE` on `InvestorV1` (granted by Officer at deployment)
 - Upgradeable, Pausable, ReentrancyGuard
@@ -289,8 +284,7 @@ getAllArchivedVestingsFlat()    // stopped schedules: (members[], indices[], inf
 
 **Path**: `contracts/AdCampaignManager.sol`
 
-Manages advertiser-funded campaigns. Admins claim payments per-click/impression; advertisers can withdraw remaining
-budget.
+Manages advertiser-funded campaigns. Admins claim payments per-click/impression; advertisers can withdraw remaining budget.
 
 **Features**:
 
@@ -320,8 +314,7 @@ getAdCampaignByCode(campaignCode) → AdCampaign
 
 **Path**: `contracts/SafeDepositRouter.sol`
 
-Deposit whitelisted tokens and receive SHER (InvestorV1) tokens at a configurable multiplier. Deposited tokens go to a
-Safe wallet.
+Deposit whitelisted tokens and receive SHER (InvestorV1) tokens at a configurable multiplier. Deposited tokens go to a Safe wallet.
 
 **Features**:
 
@@ -384,8 +377,8 @@ getTokenBalance(token) → uint256
 
 **Path**: `contracts/Voting/Voting.sol`
 
-Combined directive and election voting contract. Earlier/alternative to the separate Proposals + Elections contracts.
-Integrates directly with BoardOfDirectors via Officer.
+Combined directive and election voting contract. Earlier/alternative to the separate Proposals + Elections contracts. Integrates directly
+with BoardOfDirectors via Officer.
 
 **Features**:
 
@@ -426,15 +419,15 @@ Singleton factory that creates Officer instances via `createBeaconProxy()`. Entr
 
 **Path**: `contracts/beacons/Beacon.sol`
 
-Stores a single implementation address. All proxies pointing to this beacon share the same logic. Owner calls
-`upgradeTo(newImpl)` to upgrade all instances at once.
+Stores a single implementation address. All proxies pointing to this beacon share the same logic. Owner calls `upgradeTo(newImpl)` to
+upgrade all instances at once.
 
 ### UserBeaconProxy
 
 **Path**: `contracts/beacons/UserBeaconProxy.sol`
 
-Lightweight proxy that delegates all calls to the implementation returned by its beacon. Created by FactoryBeacon or
-Officer for each contract instance.
+Lightweight proxy that delegates all calls to the implementation returned by its beacon. Created by FactoryBeacon or Officer for each
+contract instance.
 
 ---
 

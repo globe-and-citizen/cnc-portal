@@ -2,8 +2,8 @@
 
 ## Overview
 
-This guide explains how to integrate and use the Statistics API in the Nuxt Dashboard application. It covers the
-composable usage, component implementation, and best practices for displaying statistics.
+This guide explains how to integrate and use the Statistics API in the Nuxt Dashboard application. It covers the composable usage, component
+implementation, and best practices for displaying statistics.
 
 ## Architecture
 

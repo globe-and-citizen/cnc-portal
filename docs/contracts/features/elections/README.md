@@ -1,7 +1,7 @@
 # Contract: Elections
 
-**Epic Goal:** Run formal board elections with candidates, eligible voters, and automatic result publication. **Contract
-File:** `contracts/Elections/Elections.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
+**Epic Goal:** Run formal board elections with candidates, eligible voters, and automatic result publication. **Contract File:**
+`contracts/Elections/Elections.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
 
 ---
 
@@ -23,25 +23,24 @@ File:** `contracts/Elections/Elections.sol` **Upgradeable:** Yes (Beacon) **Last
 
 - **Contract:** `contracts/Elections/Elections.sol`
 - **Key functions:** `createElection`, `castVote`, `publishResults`, `getElectionResults`
-- **Access roles:** `onlyOwner` for `createElection`; eligible voters only for `castVote`; anyone can call
-  `publishResults` once conditions are met
+- **Access roles:** `onlyOwner` for `createElection`; eligible voters only for `castVote`; anyone can call `publishResults` once conditions
+  are met
 - **Dependencies:** Officer (runtime resolution of BoardOfDirectors address at result publication time)
-- **Pattern:** Seat count must be odd (tie prevention); candidates sorted by vote count descending, ties broken by
-  address ascending; results published once all votes cast or end date passed
+- **Pattern:** Seat count must be odd (tie prevention); candidates sorted by vote count descending, ties broken by address ascending;
+  results published once all votes cast or end date passed
 
 ---
 
 ## US-ELEC-001: Create a Board Election with Candidates and Eligible Voters
 
-> **As a** team owner, **I want to** create a formal board election with defined candidates and voter lists, **so that**
-> board composition changes are decided through an auditable on-chain process.
+> **As a** team owner, **I want to** create a formal board election with defined candidates and voter lists, **so that** board composition
+> changes are decided through an auditable on-chain process.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** none
 
 ### Acceptance Criteria
 
-- [x] `createElection(title, description, startDate, endDate, seatCount, candidates[], voters[])` creates a new election
-      and returns its ID
+- [x] `createElection(title, description, startDate, endDate, seatCount, candidates[], voters[])` creates a new election and returns its ID
 - [x] Restricted to `onlyOwner`
 - [x] `seatCount` must be odd (reverts otherwise — tie prevention)
 - [x] `candidates[]` and `voters[]` must be non-empty
@@ -52,8 +51,8 @@ File:** `contracts/Elections/Elections.sol` **Upgradeable:** Yes (Beacon) **Last
 
 ## US-ELEC-002: Cast a Vote for a Candidate
 
-> **As an** eligible voter, **I want to** cast my vote for a candidate in the active election, **so that** my preference
-> is recorded on-chain.
+> **As an** eligible voter, **I want to** cast my vote for a candidate in the active election, **so that** my preference is recorded
+> on-chain.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** US-ELEC-001
 
@@ -71,8 +70,8 @@ File:** `contracts/Elections/Elections.sol` **Upgradeable:** Yes (Beacon) **Last
 
 ## US-ELEC-003: Publish Election Results and Update Board of Directors
 
-> **As a** team member, **I want to** publish results once voting is complete, **so that** the Board of Directors is
-> updated automatically without manual intervention.
+> **As a** team member, **I want to** publish results once voting is complete, **so that** the Board of Directors is updated automatically
+> without manual intervention.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-ELEC-002
 
@@ -90,16 +89,16 @@ File:** `contracts/Elections/Elections.sol` **Upgradeable:** Yes (Beacon) **Last
 
 ## US-ELEC-004: Query Election Details, Candidates, and Voters
 
-> **As a** team member, **I want to** inspect an election's details, candidate standings, and voter participation, **so
-> that** the process is transparent and auditable.
+> **As a** team member, **I want to** inspect an election's details, candidate standings, and voter participation, **so that** the process
+> is transparent and auditable.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** US-ELEC-001
 
 ### Acceptance Criteria
 
 - [x] `getElectionResults(electionId)` returns the sorted winner addresses after publication
-- [x] Election struct includes: title, description, startDate, endDate, seatCount, status, candidates with vote counts,
-      and voters with voted status
+- [x] Election struct includes: title, description, startDate, endDate, seatCount, status, candidates with vote counts, and voters with
+      voted status
 - [x] All query functions are `view` — no gas cost when called off-chain
 - [x] No access restriction on reads
 
@@ -107,8 +106,8 @@ File:** `contracts/Elections/Elections.sol` **Upgradeable:** Yes (Beacon) **Last
 
 ## US-ELEC-005: Enforce Only One Active Election at a Time
 
-> **As a** team owner, **I want to** be prevented from creating a new election while one is ongoing, **so that** the
-> voting process is not fragmented across concurrent elections.
+> **As a** team owner, **I want to** be prevented from creating a new election while one is ongoing, **so that** the voting process is not
+> fragmented across concurrent elections.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** US-ELEC-001
 

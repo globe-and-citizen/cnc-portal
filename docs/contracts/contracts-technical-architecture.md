@@ -16,8 +16,8 @@
 
 ## Overview
 
-The CNC Portal smart contract system is a comprehensive organizational governance and financial management platform
-built on Ethereum. It enables decentralized teams to manage:
+The CNC Portal smart contract system is a comprehensive organizational governance and financial management platform built on Ethereum. It
+enables decentralized teams to manage:
 
 - **Financial Operations**: Banking, dividends, expense accounts, and cash remuneration
 - **Governance**: Elections, proposals, and board of directors management
@@ -284,8 +284,8 @@ Each team deploys their own set of contract instances:
 
 ### 1. Dividend Distribution Flow
 
-Distribution is **push-based**: a single transaction by the owner funds InvestorV1, which immediately sends each
-shareholder their proportional share. There is no claim step.
+Distribution is **push-based**: a single transaction by the owner funds InvestorV1, which immediately sends each shareholder their
+proportional share. There is no claim step.
 
 **ETH Dividends**:
 

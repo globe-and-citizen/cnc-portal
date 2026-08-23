@@ -6,8 +6,7 @@
 
 ## Problem
 
-The main README at `/docs/README.md` contains a complete copy of the contracts documentation (lines 265-573). This
-creates:
+The main README at `/docs/README.md` contains a complete copy of the contracts documentation (lines 265-573). This creates:
 
 - Maintenance burden (changes must be made in two places)
 - Confusion about which is the authoritative source
@@ -15,8 +14,7 @@ creates:
 
 ## Solution
 
-Remove the duplicate contracts content and replace it with a simple reference link to the actual contracts
-documentation.
+Remove the duplicate contracts content and replace it with a simple reference link to the actual contracts documentation.
 
 ## AI Prompt
 

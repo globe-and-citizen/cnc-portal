@@ -2,8 +2,8 @@
 
 > **Read first**: [`testing-overview.md`](./testing-overview.md) for principles and the canonical-reference list.
 >
-> This file lists patterns by name and points to a real, currently-passing test that demonstrates each. Snippets here
-> are deliberately small — the _full_ shape lives in the linked file, which CI keeps correct.
+> This file lists patterns by name and points to a real, currently-passing test that demonstrates each. Snippets here are deliberately small
+> — the _full_ shape lives in the linked file, which CI keeps correct.
 
 ## Component rendering with `data-test`
 
@@ -25,8 +25,8 @@ expect(wrapper.find(SELECTORS.submit).exists()).toBe(true)
 
 → `app/src/composables/__tests__/useContractFunction.spec.ts` lines 9–19 — canonical `vi.hoisted` block.
 
-Rule: anything referenced inside a `vi.mock` factory must be declared with `vi.hoisted`, otherwise it's a
-`ReferenceError` at module-load time.
+Rule: anything referenced inside a `vi.mock` factory must be declared with `vi.hoisted`, otherwise it's a `ReferenceError` at module-load
+time.
 
 ```ts
 const { mockTeamStore } = vi.hoisted(() => ({
@@ -41,8 +41,8 @@ vi.mock("@/stores", () => ({ useTeamStore: () => mockTeamStore }));
 
 → `app/src/queries/__tests__/weeklyClaim.queries.spec.ts` (lines ~170–220) — file upload + invalidation + error.
 
-Test the composable, not the component that uses it. Assert: `mutate(payload)` triggers the underlying call, `error` is
-reactive on failure, the right query keys are invalidated on success.
+Test the composable, not the component that uses it. Assert: `mutate(payload)` triggers the underlying call, `error` is reactive on failure,
+the right query keys are invalidated on success.
 
 ## Toast assertions
 
@@ -60,8 +60,7 @@ See [`testing-overview.md`](./testing-overview.md#mocking-conventions) for the f
 
 → `app/src/utils/__tests__/currencyUtil.spec.ts` — short, no mocks, boundary cases (negative, zero, large numbers).
 
-If your utility test needs mocks, the function is impure — push the side-effects out into a composable and re-test the
-pure part directly.
+If your utility test needs mocks, the function is impure — push the side-effects out into a composable and re-test the pure part directly.
 
 ## Async / reactive assertions
 
@@ -88,9 +87,8 @@ consoleSpy.mockRestore();
 
 ## Helpers worth extracting
 
-If you find yourself repeating mount setup across specs, factor a `mountComponent(props, options)` helper at the top of
-the file. Don't extract to a shared `test-utils/` module unless 3+ specs need the exact same helper — premature shared
-helpers hide intent.
+If you find yourself repeating mount setup across specs, factor a `mountComponent(props, options)` helper at the top of the file. Don't
+extract to a shared `test-utils/` module unless 3+ specs need the exact same helper — premature shared helpers hide intent.
 
 ## Anti-patterns
 

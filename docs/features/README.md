@@ -4,12 +4,12 @@
 
 **Last verified:** 2026-08-21
 
-This inventory names the product capabilities that a user can currently reach in the CNC Portal client or its
-administrator dashboard. It is derived from the current navigation, routes, access guards, and linked product actions.
-The presence of a source directory, API, contract, or standalone route does not make something a product feature.
+This inventory names the product capabilities that a user can currently reach in the CNC Portal client or its administrator dashboard. It is
+derived from the current navigation, routes, access guards, and linked product actions. The presence of a source directory, API, contract,
+or standalone route does not make something a product feature.
 
-Documentation coverage is recorded separately from product access. A missing or legacy document does not mean that the
-corresponding product surface is absent, and a document does not prove that the feature has passed human review.
+Documentation coverage is recorded separately from product access. A missing or legacy document does not mean that the corresponding product
+surface is absent, and a document does not prove that the feature has passed human review.
 
 ```mermaid
 flowchart LR
@@ -54,8 +54,8 @@ The client inventory follows the [sidebar navigation](../../app/src/composables/
 
 ## Backoffice Features
 
-All administrator-dashboard capabilities are grouped under [`docs/features/backoffice/`](./backoffice/README.md). They
-are not separate top-level product features.
+All administrator-dashboard capabilities are grouped under [`docs/features/backoffice/`](./backoffice/README.md). They are not separate
+top-level product features.
 
 | Administrator capability | Current entry points                        | Documentation coverage                                           |
 | ------------------------ | ------------------------------------------- | ---------------------------------------------------------------- |
@@ -68,19 +68,17 @@ are not separate top-level product features.
 
 ## Excluded from the Product Inventory
 
-- Smart-contract packages and contract-specific documentation describe implementation behaviour under `docs/contracts/`;
-  they are not portal features by themselves.
-- RBAC and runtime wake-up are architectural capabilities under `docs/implementation/`. Database seeding is development
-  tooling. None is a direct user goal.
-- Login guards, access-denied pages, error pages, and development playgrounds are journey states or tooling, not
-  standalone features.
-- The dashboard's customer, inbox, profile, notification, and member-settings screens still use template or static
-  fixture data. They are not CNC Portal features until a real product journey exposes them.
-- The dashboard `/contracts` landing page is a placeholder. The implemented history and Officer version-sync journeys
-  are grouped as Contract operations.
+- Smart-contract packages and contract-specific documentation describe implementation behaviour under `docs/contracts/`; they are not portal
+  features by themselves.
+- RBAC and runtime wake-up are architectural capabilities under `docs/implementation/`. Database seeding is development tooling. None is a
+  direct user goal.
+- Login guards, access-denied pages, error pages, and development playgrounds are journey states or tooling, not standalone features.
+- The dashboard's customer, inbox, profile, notification, and member-settings screens still use template or static fixture data. They are
+  not CNC Portal features until a real product journey exposes them.
+- The dashboard `/contracts` landing page is a placeholder. The implemented history and Officer version-sync journeys are grouped as
+  Contract operations.
 
 ## Updating This Inventory
 
-Follow the [Feature Documentation Guide](../platform/feature-specification-guide.md#feature-eligibility-and-grouping).
-Verify current navigation, linked routes, access guards, and meaningful user actions before adding, renaming,
-regrouping, or retiring a capability.
+Follow the [Feature Documentation Guide](../platform/feature-specification-guide.md#feature-eligibility-and-grouping). Verify current
+navigation, linked routes, access guards, and meaningful user actions before adding, renaming, regrouping, or retiring a capability.

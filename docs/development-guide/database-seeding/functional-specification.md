@@ -1,8 +1,7 @@
 # Database Seeding - Historical Functional Specification
 
-> **Historical reference (December 2025):** This specification is preserved for delivery context. It is not a current
-> product feature specification or operational guide. Use the [verified database seeding guide](./README.md) and current
-> backend source.
+> **Historical reference (December 2025):** This specification is preserved for delivery context. It is not a current product feature
+> specification or operational guide. Use the [verified database seeding guide](./README.md) and current backend source.
 
 **Version:** 2.0.0  
 **Date:** December 30, 2025  
@@ -15,9 +14,9 @@
 
 ### 1.1 Purpose
 
-The Database Seeding Feature provides automated, environment-aware test data generation for the CNC Portal platform. It
-enables developers to quickly populate the database with realistic, consistent data for development, testing, and
-staging environments while preventing accidental data seeding in production.
+The Database Seeding Feature provides automated, environment-aware test data generation for the CNC Portal platform. It enables developers
+to quickly populate the database with realistic, consistent data for development, testing, and staging environments while preventing
+accidental data seeding in production.
 
 ### 1.2 Scope
 
@@ -55,8 +54,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a developer, I want different data volumes in dev/test/staging environments so that I can work efficiently without
-> overwhelming the database.
+> As a developer, I want different data volumes in dev/test/staging environments so that I can work efficiently without overwhelming the
+> database.
 
 **Acceptance Criteria:**
 
@@ -74,8 +73,7 @@ This feature encompasses:
 
 **User Story:**
 
-> As a database administrator, I want seeding to respect foreign key constraints so that the database remains in a valid
-> state.
+> As a database administrator, I want seeding to respect foreign key constraints so that the database remains in a valid state.
 
 **Acceptance Criteria:**
 
@@ -129,8 +127,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a developer testing the stats feature, I want data distributed across different time periods so that I can verify
-> 7d/30d/90d filtering works correctly.
+> As a developer testing the stats feature, I want data distributed across different time periods so that I can verify 7d/30d/90d filtering
+> works correctly.
 
 **Acceptance Criteria:**
 
@@ -184,8 +182,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a DevOps engineer, I want to assign admin roles to users in production without manual user creation so that I can
-> provision admins automatically.
+> As a DevOps engineer, I want to assign admin roles to users in production without manual user creation so that I can provision admins
+> automatically.
 
 **Acceptance Criteria:**
 
@@ -206,8 +204,8 @@ This feature encompasses:
 
 **User Story:**
 
-> As a DevOps engineer, I want independent control over clearing data, seeding database, and seeding admins so that I
-> can safely provision production environments.
+> As a DevOps engineer, I want independent control over clearing data, seeding database, and seeding admins so that I can safely provision
+> production environments.
 
 **Acceptance Criteria:**
 
@@ -317,8 +315,8 @@ This table shows the data volumes across all three environments:
 
 ### 5.1 Environment Detection Flow
 
-The environment detection process validates the execution context and ensures production safety by blocking destructive
-operations and requiring explicit confirmation flags.
+The environment detection process validates the execution context and ensures production safety by blocking destructive operations and
+requiring explicit confirmation flags.
 
 ```mermaid
 graph TD
@@ -363,8 +361,7 @@ graph LR
 
 **Strategy Details:**
 
-- **Development:** Mix of default Hardhat accounts (0xf39Fd6e..., 0x70997970..., etc.) and Faker-generated addresses for
-  variety
+- **Development:** Mix of default Hardhat accounts (0xf39Fd6e..., 0x70997970..., etc.) and Faker-generated addresses for variety
 - **Test:** Fixed, predictable addresses for consistent, reproducible test runs
 - **Staging:** All Faker-generated addresses to simulate production-like diversity
 - **Production:** Explicit custom addresses from `ADMIN_ADDRESSES` environment variable
@@ -611,8 +608,7 @@ model Claim {
 
 **Feature Documentation:**
 
-- [Statistics Feature](../../features/backoffice/statistics/functional-specification.md) - Statistics feature that uses
-  seed data
+- [Statistics Feature](../../features/backoffice/statistics/functional-specification.md) - Statistics feature that uses seed data
 - [Seed Implementation](../../../backend/prisma/seed.ts) - Actual seed implementation code (~550 lines)
 
 **External Resources:**

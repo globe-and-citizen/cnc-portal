@@ -8,8 +8,7 @@
 
 ## 1. Overview & Purpose
 
-The admin dashboard provides **centralized monitoring and analytics** for the CNC Portal platform, enabling super
-administrators to:
+The admin dashboard provides **centralized monitoring and analytics** for the CNC Portal platform, enabling super administrators to:
 
 - View comprehensive platform statistics and metrics
 - Monitor team activities and growth

@@ -11,9 +11,8 @@
 
 ### 1.1 Purpose
 
-The Statistics Feature provides comprehensive analytics and metrics for the CNC Portal platform, enabling stakeholders
-to monitor platform health, track user engagement, analyze financial data, and make data-driven decisions for platform
-governance.
+The Statistics Feature provides comprehensive analytics and metrics for the CNC Portal platform, enabling stakeholders to monitor platform
+health, track user engagement, analyze financial data, and make data-driven decisions for platform governance.
 
 ### 1.2 Scope
 
@@ -45,8 +44,7 @@ This feature encompasses:
 
 **User Story:**
 
-> As a platform administrator, I want to view overall platform statistics so that I can monitor platform health and
-> growth.
+> As a platform administrator, I want to view overall platform statistics so that I can monitor platform health and growth.
 
 **Acceptance Criteria:**
 

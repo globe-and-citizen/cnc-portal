@@ -1,7 +1,7 @@
 # Contract: Officer
 
-**Epic Goal:** Deploy and orchestrate all team contracts from a single on-chain hub. **Contract File:**
-`contracts/Officer.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
+**Epic Goal:** Deploy and orchestrate all team contracts from a single on-chain hub. **Contract File:** `contracts/Officer.sol`
+**Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
 
 ---
 
@@ -25,17 +25,17 @@
 - **Key functions:** `deployAllContracts`, `deployBeaconProxy`, `findDeployedContract`, `configureBeacon`, `getFeeFor`,
   `isFeeCollectorToken`
 - **Access roles:** `onlyOwner` for configuration and deployment
-- **Dependencies:** FeeCollector (fee queries), FactoryBeacon (creates Officer instances), Beacon (per-contract-type
-  implementation pointers)
-- **Pattern:** Stores `DeployedContract[]` array; also auto-links contracts (Bank↔InvestorV1,
-  Elections→BoardOfDirectors, CashRemuneration→InvestorV1) after deployment
+- **Dependencies:** FeeCollector (fee queries), FactoryBeacon (creates Officer instances), Beacon (per-contract-type implementation
+  pointers)
+- **Pattern:** Stores `DeployedContract[]` array; also auto-links contracts (Bank↔InvestorV1, Elections→BoardOfDirectors,
+  CashRemuneration→InvestorV1) after deployment
 
 ---
 
 ## US-OFFICER-001: Deploy All Team Contracts in One Transaction
 
-> **As a** deployer, **I want to** create all required team contracts (Bank, InvestorV1, Elections, etc.) in a single
-> transaction, **so that** the team is fully set up without manual per-contract deployment steps.
+> **As a** deployer, **I want to** create all required team contracts (Bank, InvestorV1, Elections, etc.) in a single transaction, **so
+> that** the team is fully set up without manual per-contract deployment steps.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** L | **Dependencies:** US-OFFICER-002
 
@@ -44,8 +44,8 @@
 - [x] `deployAllContracts(deployments[])` accepts an array of `{ contractType, initializerData }` entries
 - [x] Each entry creates a `UserBeaconProxy` pointing to the configured beacon for that type
 - [x] Proxies are registered in the internal `_deployedContracts` array
-- [x] Auto-linking runs after deployment: Bank receives InvestorV1 address via Officer lookup; CashRemuneration receives
-      MINTER_ROLE on InvestorV1; Elections receives BoardOfDirectors address
+- [x] Auto-linking runs after deployment: Bank receives InvestorV1 address via Officer lookup; CashRemuneration receives MINTER_ROLE on
+      InvestorV1; Elections receives BoardOfDirectors address
 - [x] Ownership of each deployed contract is transferred to the team owner
 - [x] Returns array of deployed addresses in the same order as inputs
 - [x] Reverts if a required beacon is not configured
@@ -54,8 +54,8 @@
 
 ## US-OFFICER-002: Configure Beacons per Contract Type
 
-> **As a** deployer, **I want to** register a beacon address for each contract type, **so that** Officer knows which
-> implementation to use when deploying proxies.
+> **As a** deployer, **I want to** register a beacon address for each contract type, **so that** Officer knows which implementation to use
+> when deploying proxies.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** S | **Dependencies:** none
 
@@ -71,8 +71,8 @@
 
 ## US-OFFICER-003: Look Up a Deployed Contract by Type
 
-> **As a** team member, **I want to** resolve the address of any deployed contract by its type string, **so that**
-> contracts can locate siblings (e.g. InvestorV1 → Bank) without hard-coded addresses.
+> **As a** team member, **I want to** resolve the address of any deployed contract by its type string, **so that** contracts can locate
+> siblings (e.g. InvestorV1 → Bank) without hard-coded addresses.
 
 **Status:** ✅ | **Priority:** P1 | **Effort:** XS | **Dependencies:** US-OFFICER-001
 
@@ -87,8 +87,8 @@
 
 ## US-OFFICER-004: Query Fee Configuration via Officer
 
-> **As a** contract, **I want to** retrieve the protocol fee and check whether a token is supported by FeeCollector,
-> **so that** I can compute and route fees without storing these addresses locally.
+> **As a** contract, **I want to** retrieve the protocol fee and check whether a token is supported by FeeCollector, **so that** I can
+> compute and route fees without storing these addresses locally.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** none
 
@@ -104,8 +104,8 @@
 
 ## US-OFFICER-005: Pause/Unpause Team Operations
 
-> **As a** team owner, **I want to** pause all Officer-controlled operations in an emergency, **so that** no new
-> deployments or configuration changes can occur during an incident.
+> **As a** team owner, **I want to** pause all Officer-controlled operations in an emergency, **so that** no new deployments or
+> configuration changes can occur during an incident.
 
 **Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** none
 

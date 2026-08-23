@@ -1,11 +1,11 @@
 # Contract upgrade strategy
 
-This document defines how we evolve our upgradeable contracts. It exists to answer one recurring question: **for this
-change, do I upgrade in place or redeploy?**
+This document defines how we evolve our upgradeable contracts. It exists to answer one recurring question: **for this change, do I upgrade
+in place or redeploy?**
 
-The default answer is **upgrade in place**. Redeployment is expensive: it breaks on-chain references, forces state
-migration, loses historical context, and often cascades into redeploying dependent contracts (e.g. Officer). We only
-redeploy when the OpenZeppelin upgrades plugin tells us we have to.
+The default answer is **upgrade in place**. Redeployment is expensive: it breaks on-chain references, forces state migration, loses
+historical context, and often cascades into redeploying dependent contracts (e.g. Officer). We only redeploy when the OpenZeppelin upgrades
+plugin tells us we have to.
 
 ## 1. The decision rule
 
@@ -47,10 +47,10 @@ The rule in one sentence: **never redeploy by default; let `validate-upgrade` be
 
 **Gray area** (possible with care, use `reinitializer(N)`):
 
-- Adding a parent contract at the end of the inheritance list (storage goes after existing vars — usually compatible if
-  there's a `__gap`, but verify)
-- Changing logic that depends on a previously-uninitialized state variable (must initialize it via a `reinitializer` in
-  the new implementation)
+- Adding a parent contract at the end of the inheritance list (storage goes after existing vars — usually compatible if there's a `__gap`,
+  but verify)
+- Changing logic that depends on a previously-uninitialized state variable (must initialize it via a `reinitializer` in the new
+  implementation)
 
 ## 3. Version tracking
 
@@ -70,25 +70,22 @@ Semver rules for contracts:
 - **Minor** (`1.2.0 → 1.3.0`) — added API, added storage (compatible append)
 - **Major** (`1.x.x → 2.0.0`) — breaking change, typically means redeployment
 
-**Anti-pattern**: naming files `InvestorV1.sol`, `InvestorV2.sol` on every upgrade. The `V1` suffix should only appear
-when there is a _separate proxy_ for the old version — i.e. when we actually did a redeployment. For a compatible
-upgrade, you edit `Investor.sol` in place and bump `version()`. The file name represents a _proxy line_, not a code
-revision.
+**Anti-pattern**: naming files `InvestorV1.sol`, `InvestorV2.sol` on every upgrade. The `V1` suffix should only appear when there is a
+_separate proxy_ for the old version — i.e. when we actually did a redeployment. For a compatible upgrade, you edit `Investor.sol` in place
+and bump `version()`. The file name represents a _proxy line_, not a code revision.
 
-For historical reasons we still have `InvestorV1.sol`. Treat it as the canonical name of that proxy line; do not create
-`InvestorV2.sol` unless you actually redeploy a fresh proxy.
+For historical reasons we still have `InvestorV1.sol`. Treat it as the canonical name of that proxy line; do not create `InvestorV2.sol`
+unless you actually redeploy a fresh proxy.
 
 ## 4. Running `validate-upgrade`
 
-Baselines are **per network**. They live in `storage-baselines/<network>/<Contract>.json` and are committed to git.
-Today we care about:
+Baselines are **per network**. They live in `storage-baselines/<network>/<Contract>.json` and are committed to git. Today we care about:
 
 - `polygon` — production
 - `localhost` — local dev / hardhat node
 
-The script **refuses to run without `--network <name>`**. The default in-memory `hardhat` network is not a valid
-baseline target — it would produce a baseline that doesn't represent any real chain. Use the `:polygon` / `:local` npm
-aliases.
+The script **refuses to run without `--network <name>`**. The default in-memory `hardhat` network is not a valid baseline target — it would
+produce a baseline that doesn't represent any real chain. Use the `:polygon` / `:local` npm aliases.
 
 ### First-time setup
 
@@ -102,8 +99,8 @@ BAKE=1 npm run validate-upgrade:polygon
 BAKE=1 npm run validate-upgrade:local
 ```
 
-This writes `storage-baselines/<network>/<Contract>.json` for each contract. **Commit these files** — they are the
-source of truth for what the on-chain storage layout looks like for that network.
+This writes `storage-baselines/<network>/<Contract>.json` for each contract. **Commit these files** — they are the source of truth for what
+the on-chain storage layout looks like for that network.
 
 ### On every change
 
@@ -119,8 +116,8 @@ npm run validate-upgrade:local
 
 The script compiles, then for each upgradeable contract:
 
-1. Runs OpenZeppelin's `validateImplementation` (catches constructors with state, `selfdestruct`, unsafe `delegatecall`,
-   missing initializers, etc.)
+1. Runs OpenZeppelin's `validateImplementation` (catches constructors with state, `selfdestruct`, unsafe `delegatecall`, missing
+   initializers, etc.)
 2. Compares the current storage layout against `storage-baselines/<network>/<Contract>.json`
 
 Output legend:
@@ -132,8 +129,8 @@ Output legend:
 
 ### After a successful deployment
 
-When you deploy a new implementation to prod (polygon), re-bake the baseline for that contract on that network so future
-diffs are relative to the new on-chain state:
+When you deploy a new implementation to prod (polygon), re-bake the baseline for that contract on that network so future diffs are relative
+to the new on-chain state:
 
 ```bash
 BAKE=1 CONTRACT=InvestorV1 npm run validate-upgrade:polygon
@@ -151,24 +148,22 @@ CONTRACT=Officer npm run validate-upgrade:polygon
 
 ### When polygon and localhost drift
 
-It is normal for `localhost` to temporarily be ahead of `polygon` while you are iterating on a change. The rule of
-thumb:
+It is normal for `localhost` to temporarily be ahead of `polygon` while you are iterating on a change. The rule of thumb:
 
 - The **polygon baseline** represents production. It must stay green on every PR that ships — that's the gate.
-- The **localhost baseline** is a scratch pad. You bake it when your local node is in a known good state, and you
-  re-bake it when you're happy with a change. It exists to help you notice unintended layout drift during iteration.
+- The **localhost baseline** is a scratch pad. You bake it when your local node is in a known good state, and you re-bake it when you're
+  happy with a change. It exists to help you notice unintended layout drift during iteration.
 
-If you deliberately make a breaking change on localhost that doesn't yet apply to polygon, either re-bake the local
-baseline to accept the change, or delete `storage-baselines/localhost/<Contract>.json` until you're ready to ship.
+If you deliberately make a breaking change on localhost that doesn't yet apply to polygon, either re-bake the local baseline to accept the
+change, or delete `storage-baselines/localhost/<Contract>.json` until you're ready to ship.
 
 ## 5. Redeployment + migration playbook
 
-Only follow this when `validate-upgrade` rejects the change and you cannot restructure the code to keep the layout
-compatible.
+Only follow this when `validate-upgrade` rejects the change and you cannot restructure the code to keep the layout compatible.
 
 1. **Bump the major version** (`2.0.0`) and add an entry in `CHANGELOG.md` explaining _why_ the change is incompatible.
-2. **Rename the old file** to `<Name>V1.sol` (if it isn't already) and create `<Name>V2.sol` for the new version. Keep
-   the old file — you'll need it for state extraction.
+2. **Rename the old file** to `<Name>V1.sol` (if it isn't already) and create `<Name>V2.sol` for the new version. Keep the old file — you'll
+   need it for state extraction.
 3. **Write the new beacon and upgrade modules** under `ignition/modules/`:
    - `<Name>V2BeaconModule.ts` — deploys the new beacon + implementation
    - `<Name>V2UpgradeModule.ts` — template for future compatible upgrades of V2
@@ -177,21 +172,21 @@ compatible.
    - Reads all state from V1 (iterating via view getters)
    - Calls V2's initializer / batch-seed function to replicate that state
    - Verifies invariants (total supply, counts, sample balances)
-5. **Update Officer** to point to the V2 beacon. Prefer calling a registry function on the existing Officer proxy — **do
-   not redeploy Officer** unless Officer itself has an incompatible storage change.
+5. **Update Officer** to point to the V2 beacon. Prefer calling a registry function on the existing Officer proxy — **do not redeploy
+   Officer** unless Officer itself has an incompatible storage change.
 6. **Bake a fresh baseline** for V2 (not V1 — V1 is frozen from now on).
 7. **Update the `version()` function** on V2 to start at `2.0.0`.
 
 ## 6. Officer-specific rule
 
-Officer is a registry. It should **almost never** be redeployed, because every other contract holds its address, and the
-dashboard hard-codes it per network. Before touching Officer:
+Officer is a registry. It should **almost never** be redeployed, because every other contract holds its address, and the dashboard
+hard-codes it per network. Before touching Officer:
 
 - If you're adding a new contract type to the registry, that is a _function call_, not a code change. No upgrade needed.
-- If you're changing Officer's logic or storage, run `validate-upgrade` and fight hard to keep it compatible. Use
-  `__gap` slots. Do not rearrange parents.
-- Only redeploy Officer if the plugin refuses and there's no storage-compatible refactor — and in that case, every
-  contract that references Officer's address needs to be updated too (subgraph, frontend, other contracts).
+- If you're changing Officer's logic or storage, run `validate-upgrade` and fight hard to keep it compatible. Use `__gap` slots. Do not
+  rearrange parents.
+- Only redeploy Officer if the plugin refuses and there's no storage-compatible refactor — and in that case, every contract that references
+  Officer's address needs to be updated too (subgraph, frontend, other contracts).
 
 ## 7. Checklist (copy into your PR description)
 

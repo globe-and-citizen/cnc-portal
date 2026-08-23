@@ -4,12 +4,12 @@
 
 **Last verified:** 2026-08-21
 
-The backoffice is one product surface containing several administrator capabilities. This README owns their grouping and
-navigation. Each capability can gain its own canonical user stories under
-`docs/features/backoffice/<capability>/README.md` as it is migrated to the current documentation model.
+The backoffice is one product surface containing several administrator capabilities. This README owns their grouping and navigation. Each
+capability can gain its own canonical user stories under `docs/features/backoffice/<capability>/README.md` as it is migrated to the current
+documentation model.
 
-Access requires an authenticated user with `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`. Authentication and role guards are entry
-conditions, not separate backoffice features.
+Access requires an authenticated user with `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`. Authentication and role guards are entry conditions, not
+separate backoffice features.
 
 ```mermaid
 flowchart TB
@@ -36,8 +36,8 @@ flowchart TB
 | Feature restrictions    | Manage global feature states and team overrides                                                | `/features`, `/features/:id`                | [Canonical stories](./feature-restrictions/README.md) |
 | Contract operations     | Inspect deployment history and synchronize Officer version metadata                            | `/contracts/history`, `/contracts/versions` | Alignment due                                         |
 
-`Alignment due` means that the product surface exists but no canonical feature README has yet been reviewed under the
-current model. It is not a delivery-status claim.
+`Alignment due` means that the product surface exists but no canonical feature README has yet been reviewed under the current model. It is
+not a delivery-status claim.
 
 ## Routes That Do Not Define Backoffice Features
 
@@ -49,8 +49,8 @@ current model. It is not a delivery-status claim.
 | `/customers`, `/inbox`     | Nuxt dashboard template screens backed by fixture data       |
 | `/settings*`               | Template profile, member, notification, and security screens |
 
-These routes can become features only after CNC Portal provides a real user journey through them. Their presence in the
-filesystem or router is not sufficient.
+These routes can become features only after CNC Portal provides a real user journey through them. Their presence in the filesystem or router
+is not sufficient.
 
 ## Current Evidence
 

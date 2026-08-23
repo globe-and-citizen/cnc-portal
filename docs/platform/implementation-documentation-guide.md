@@ -4,17 +4,16 @@
 
 **Last updated:** 2026-08-21
 
-**Purpose:** Define where CNC Portal architectural capabilities live and how their current runtime behaviour is
-documented
+**Purpose:** Define where CNC Portal architectural capabilities live and how their current runtime behaviour is documented
 
 ## Purpose
 
-`docs/features/` describes goals that a product user can achieve. `docs/implementation/` describes the architectural
-capabilities that make those journeys possible. An architectural capability is a shared runtime guarantee, boundary, or
-mechanism; it is not a product feature merely because the implementation calls it a feature.
+`docs/features/` describes goals that a product user can achieve. `docs/implementation/` describes the architectural capabilities that make
+those journeys possible. An architectural capability is a shared runtime guarantee, boundary, or mechanism; it is not a product feature
+merely because the implementation calls it a feature.
 
-Current implementation documentation explains what the system does now. Proposed designs belong in an ADR or tracking
-issue, exact interfaces remain in their generated or executable owner, and code and tests remain the final proof.
+Current implementation documentation explains what the system does now. Proposed designs belong in an ADR or tracking issue, exact
+interfaces remain in their generated or executable owner, and code and tests remain the final proof.
 
 ## Classification Rule
 
@@ -36,8 +35,8 @@ A subject can have both a product and an architectural facet. In that case, spli
 - the feature README owns actors, journeys, user stories, and human acceptance;
 - the implementation README owns components, runtime flow, invariants, failure paths, and evidence.
 
-Do not copy the same lifecycle or rules into both places. Each document summarizes the other facet in one sentence and
-links to its canonical owner.
+Do not copy the same lifecycle or rules into both places. Each document summarizes the other facet in one sentence and links to its
+canonical owner.
 
 ## Documentation Ownership
 
@@ -54,8 +53,8 @@ links to its canonical owner.
 | Executable proof                                 | Current code and tests                         |
 | Active delivery and history                      | GitHub issues, pull requests, and Git          |
 
-`docs/platform/architecture.md` remains the compact system map. It links to capability documents rather than duplicating
-their runtime details.
+`docs/platform/architecture.md` remains the compact system map. It links to capability documents rather than duplicating their runtime
+details.
 
 ## Capability Location and Structure
 
@@ -67,9 +66,8 @@ docs/implementation/<kebab-case-capability>/
 └── details.md
 ```
 
-Only add `details.md` when the verified runtime map, invariants, failures, or evidence would make the README difficult
-to scan. Existing specialised filenames may remain when they have a clear audience and the README routes readers to
-them.
+Only add `details.md` when the verified runtime map, invariants, failures, or evidence would make the README difficult to scan. Existing
+specialised filenames may remain when they have a clear audience and the README routes readers to them.
 
 ### Required README Content
 
@@ -83,9 +81,8 @@ them.
 8. **Implementation evidence** — link the smallest useful set of current code and tests.
 9. **Related documentation** — link feature, contract, platform, or development owners.
 
-Implementation documents do not contain product user stories, acceptance checkboxes, priorities, or `✅ Done` status.
-Those semantics belong to feature review. Use `Last verified`, not a historical version or branch name, to communicate
-freshness.
+Implementation documents do not contain product user stories, acceptance checkboxes, priorities, or `✅ Done` status. Those semantics belong
+to feature review. Use `Last verified`, not a historical version or branch name, to communicate freshness.
 
 ## Current Behaviour and History
 
@@ -97,8 +94,7 @@ freshness.
 
 ## Diagrams
 
-Follow the [Mermaid-only diagram rule](./feature-specification-guide.md#diagram-format). Choose the diagram from the
-question:
+Follow the [Mermaid-only diagram rule](./feature-specification-guide.md#diagram-format). Choose the diagram from the question:
 
 - `flowchart` for context, dependencies, and responsibility boundaries;
 - `sequenceDiagram` for runtime calls and failure propagation;
@@ -114,8 +110,8 @@ question:
 4. Write the compact capability README and add details only when needed.
 5. Update `docs/implementation/README.md` and every affected feature or platform backlink.
 6. Preserve delivery history outside the current-behaviour document.
-7. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md) so each changed runtime source and
-   every document that owns it are reviewed in the same pull request.
+7. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md) so each changed runtime source and every document that
+   owns it are reviewed in the same pull request.
 8. Run the repository documentation validations.
 
 ## Review Checklist

@@ -2,19 +2,18 @@
 
 ## Description
 
-This project is the contract registry for CNC. All non-trivial contracts are **upgradeable** (beacon proxy pattern).
-Before changing any contract under `contracts/`, read [`UPGRADE_STRATEGY.md`](./UPGRADE_STRATEGY.md) — it defines when
-to upgrade in place vs. redeploy, and the checklist every PR has to pass.
+This project is the contract registry for CNC. All non-trivial contracts are **upgradeable** (beacon proxy pattern). Before changing any
+contract under `contracts/`, read [`UPGRADE_STRATEGY.md`](./UPGRADE_STRATEGY.md) — it defines when to upgrade in place vs. redeploy, and the
+checklist every PR has to pass.
 
-**TL;DR**: never redeploy by default. Modify the contract in place, run `npm run validate-upgrade:polygon` (or
-`:local`), and only redeploy if the script forces you to.
+**TL;DR**: never redeploy by default. Modify the contract in place, run `npm run validate-upgrade:polygon` (or `:local`), and only redeploy
+if the script forces you to.
 
 ## How to run
 
 - Setup the environment
 
-Clone the repository and install the dependencies: Copy the .env.example file to .env and fill the variables with your
-values.
+Clone the repository and install the dependencies: Copy the .env.example file to .env and fill the variables with your values.
 
 ```env
 ALCHEMY_API_KEY=<Alchemy API KEY>
@@ -42,8 +41,7 @@ Look at other scripts on the package.json file.
 
 ## Deployed contracts
 
-- Tip.sol:
-  [0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B](https://sepolia.etherscan.io/address/0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B)
+- Tip.sol: [0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B](https://sepolia.etherscan.io/address/0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B)
 
 ## Scripts
 
@@ -55,8 +53,7 @@ npx hardhat ignition deploy ./ignition/modules/[yourIgnitionScript].ts --network
 
 ps: to make the verify working you need to have the `ETHERSCAN_API_KEY` on your .env file
 
-- Verify a contract: If you have a contract deploy on a network and you need to verify it you can use the following
-  command:
+- Verify a contract: If you have a contract deploy on a network and you need to verify it you can use the following command:
 
 ```bash
 npx hardhat verify --network polygon [contractAddress]
@@ -64,14 +61,13 @@ npx hardhat verify --network polygon [contractAddress]
 
 ## Upgradeable contracts workflow
 
-Every change to an upgradeable contract goes through `validate-upgrade`, which compiles, runs OpenZeppelin's safety
-checks, and compares the current storage layout against a baked-in baseline
-(`storage-baselines/<network>/<Contract>.json`).
+Every change to an upgradeable contract goes through `validate-upgrade`, which compiles, runs OpenZeppelin's safety checks, and compares the
+current storage layout against a baked-in baseline (`storage-baselines/<network>/<Contract>.json`).
 
 ### Daily commands
 
-Baselines are **per network**. They live in `storage-baselines/<network>/<Contract>.json` and are committed to git.
-`polygon` is production, `localhost` is for local testing.
+Baselines are **per network**. They live in `storage-baselines/<network>/<Contract>.json` and are committed to git. `polygon` is production,
+`localhost` is for local testing.
 
 ```bash
 # Validate every upgradeable contract against the polygon baseline
@@ -91,8 +87,8 @@ BAKE=1 CONTRACT=InvestorV1 npm run validate-upgrade:polygon
 npx hardhat run scripts/validate-upgrade.ts --network polygon
 ```
 
-> The script refuses to run against the default in-memory `hardhat` network — you must pass `--network <name>` so
-> baselines never accidentally represent an ephemeral state.
+> The script refuses to run against the default in-memory `hardhat` network — you must pass `--network <name>` so baselines never
+> accidentally represent an ephemeral state.
 
 ### Output legend
 
@@ -116,11 +112,10 @@ Track every deployed change in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Security review
 
-Every PR touching `contract/` runs [Slither](https://github.com/crytic/slither) in CI
-(`.github/workflows/contract-slither.yml`), which reports findings to the GitHub Security tab (report-only until the
-existing high/medium baseline is triaged). Before merging, also work through the
-[Solidity audit checklist](../.github/copilot-instructions/solidity-audit-checklist.md) (no `console.sol`, `SafeERC20`,
-`__gap`, no `blockhash` randomness, `nonReentrant` on token paths, access control, upgrade safety).
+Every PR touching `contract/` runs [Slither](https://github.com/crytic/slither) in CI (`.github/workflows/contract-slither.yml`), which
+reports findings to the GitHub Security tab (report-only until the existing high/medium baseline is triaged). Before merging, also work
+through the [Solidity audit checklist](../.github/copilot-instructions/solidity-audit-checklist.md) (no `console.sol`, `SafeERC20`, `__gap`,
+no `blockhash` randomness, `nonReentrant` on token paths, access control, upgrade safety).
 
 ## Resources
 

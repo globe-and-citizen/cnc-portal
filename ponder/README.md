@@ -49,8 +49,8 @@ PONDER_RPC_URL_137=https://polygon-mainnet.g.alchemy.com/v2/<your-key>
    cd contract && npm run mc
    ```
 
-   This writes `ponder/artifacts/deployed_addresses/chain-31337.json` (gitignored), from which Ponder reads
-   `OfficerFactoryBeacon` and `FeeCollector` — no manual copy.
+   This writes `ponder/artifacts/deployed_addresses/chain-31337.json` (gitignored), from which Ponder reads `OfficerFactoryBeacon` and
+   `FeeCollector` — no manual copy.
 
 3. In `.env.local`, just select the network:
 
@@ -64,12 +64,10 @@ PONDER_RPC_URL_137=https://polygon-mainnet.g.alchemy.com/v2/<your-key>
    pnpm dev
    ```
 
-The indexer will connect to `http://127.0.0.1:8545` (override with `PONDER_RPC_URL_HARDHAT` if needed) and start from
-block 0.
+The indexer will connect to `http://127.0.0.1:8545` (override with `PONDER_RPC_URL_HARDHAT` if needed) and start from block 0.
 
-> **Note:** every time you restart `npx hardhat node` contracts are redeployed at new addresses. Re-run `npm run mc` (in
-> contract/) and restart `pnpm dev`. You can still override an address via `FACTORY_ADDRESS` / `FEE_COLLECTOR_ADDRESS`
-> in `.env.local`.
+> **Note:** every time you restart `npx hardhat node` contracts are redeployed at new addresses. Re-run `npm run mc` (in contract/) and
+> restart `pnpm dev`. You can still override an address via `FACTORY_ADDRESS` / `FEE_COLLECTOR_ADDRESS` in `.env.local`.
 
 ## Scripts
 
@@ -263,18 +261,16 @@ curl "http://localhost:42069/teams/0xofficer.../timeline?limit=50&before=1699990
 
 #### GET `/users/:userAddress/activity`
 
-All activity initiated by a wallet across all contract types, sorted newest first. Same pagination shape as the timeline
-endpoint.
+All activity initiated by a wallet across all contract types, sorted newest first. Same pagination shape as the timeline endpoint.
 
 ```bash
 curl "http://localhost:42069/users/0xwallet.../activity?limit=50"
 curl "http://localhost:42069/users/0xwallet.../activity?limit=50&before=1699990000"
 ```
 
-Covers: `BankDeposit`, `BankTokenDeposit`, `BankTransfer`, `BankTokenTransfer`, `ElectionVote`, `ProposalVote`,
-`BoardApproval`, `InvestorMint`, `InvestorDividendPaid`, `InvestorDividendPaymentFailed`, `CashRemunerationDeposit`,
-`CashRemunerationWithdraw`, `CashRemunerationWithdrawToken`, `SafeDeposit`, `ExpenseDeposit`, `ExpenseTokenDeposit`,
-`ExpenseTransfer`, `ExpenseTokenTransfer`.
+Covers: `BankDeposit`, `BankTokenDeposit`, `BankTransfer`, `BankTokenTransfer`, `ElectionVote`, `ProposalVote`, `BoardApproval`,
+`InvestorMint`, `InvestorDividendPaid`, `InvestorDividendPaymentFailed`, `CashRemunerationDeposit`, `CashRemunerationWithdraw`,
+`CashRemunerationWithdrawToken`, `SafeDeposit`, `ExpenseDeposit`, `ExpenseTokenDeposit`, `ExpenseTransfer`, `ExpenseTokenTransfer`.
 
 ---
 
@@ -313,8 +309,8 @@ curl "http://localhost:42069/contracts/0xbod.../board-actions?open=true"
 
 #### GET `/contracts/:address/wage-claims`
 
-Latest state of each wage claim for a `CashRemunerationEIP712` contract. Deduplicated by `signatureHash` — only the most
-recent event per hash is returned.
+Latest state of each wage claim for a `CashRemunerationEIP712` contract. Deduplicated by `signatureHash` — only the most recent event per
+hash is returned.
 
 ```bash
 # All wage claims
@@ -359,17 +355,16 @@ Bank: {
 }
 ```
 
-Ponder extracts only the `deployedAddress` and ignores `contractType`. As a result, **every deployed sub-contract
-address gets registered under all 8 contract types simultaneously**.
+Ponder extracts only the `deployedAddress` and ignores `contractType`. As a result, **every deployed sub-contract address gets registered
+under all 8 contract types simultaneously**.
 
-It does not cause incorrect data — a Bank contract does not emit Elections events so those handlers never fire — but
-ponder makes unnecessary RPC log-filter calls for each mismatched (address, contract type) pair, which wastes resources
-during historical backfill and live indexing.
+It does not cause incorrect data — a Bank contract does not emit Elections events so those handlers never fire — but ponder makes
+unnecessary RPC log-filter calls for each mismatched (address, contract type) pair, which wastes resources during historical backfill and
+live indexing.
 
 **Recommended fix — Separate events per contract type in the Officer contract**
 
-Change the `Officer` smart contract to emit a typed event for each contract type instead of a single generic
-`ContractDeployed`:
+Change the `Officer` smart contract to emit a typed event for each contract type instead of a single generic `ContractDeployed`:
 
 ```solidity
 // Instead of:

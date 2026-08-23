@@ -4,8 +4,7 @@ Comprehensive guide for understanding and using the centralized mock system for 
 
 ## Overview
 
-The CNC Portal uses a centralized mocking system that provides consistent, reusable mocks for all query and mutation
-hooks. This ensures:
+The CNC Portal uses a centralized mocking system that provides consistent, reusable mocks for all query and mutation hooks. This ensures:
 
 - **Consistency** - All tests use the same mock data structure
 - **Maintainability** - Mock data is defined in one place

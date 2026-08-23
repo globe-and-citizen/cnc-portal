@@ -1,7 +1,7 @@
 # Contracts changelog
 
-One section per upgradeable contract. Bump per [semver for contracts](UPGRADE_STRATEGY.md#3-version-tracking): **patch**
-= bugfix only, **minor** = added API or appended storage, **major** = breaking (redeploy).
+One section per upgradeable contract. Bump per [semver for contracts](UPGRADE_STRATEGY.md#3-version-tracking): **patch** = bugfix only,
+**minor** = added API or appended storage, **major** = breaking (redeploy).
 
 Each entry should answer:
 

@@ -4,13 +4,13 @@
 
 **Last verified:** 2026-08-21
 
-Database seeding is not a user-accessible product feature. This guide owns the current execution flags and safety
-boundaries implemented by the backend seed orchestrator.
+Database seeding is not a user-accessible product feature. This guide owns the current execution flags and safety boundaries implemented by
+the backend seed orchestrator.
 
 ## Current Invocation Model
 
-Run commands from `backend/`. Selecting an environment does not enable data creation by itself; `SEED_DATABASE=true` is
-required for entity seeding.
+Run commands from `backend/`. Selecting an environment does not enable data creation by itself; `SEED_DATABASE=true` is required for entity
+seeding.
 
 ```bash
 # Development profile
@@ -29,8 +29,7 @@ ADMIN_ROLES="<matching-comma-separated-roles>" \
 npm run seed
 ```
 
-The valid administrator roles are `ROLE_ADMIN` and `ROLE_SUPER_ADMIN`. Address and role lists must contain the same
-number of entries.
+The valid administrator roles are `ROLE_ADMIN` and `ROLE_SUPER_ADMIN`. Address and role lists must contain the same number of entries.
 
 ## Execution Flow
 
@@ -59,10 +58,9 @@ flowchart TB
 - Production execution requires `SEED_DATABASE=true` or `SEED_ADMINS=true`.
 - Data and administrator seeding are independently controlled.
 - Administrator seeding validates every wallet address and role before assignment.
-- The production volume profile contains zero generated entities; explicit enablement alone does not define production
-  data.
-- `seed:reset` invokes a forced Prisma migration reset and then runs the seed script without setting
-  `SEED_DATABASE=true`; treat it as destructive tooling and do not assume it repopulates data.
+- The production volume profile contains zero generated entities; explicit enablement alone does not define production data.
+- `seed:reset` invokes a forced Prisma migration reset and then runs the seed script without setting `SEED_DATABASE=true`; treat it as
+  destructive tooling and do not assume it repopulates data.
 
 ## Entity Dependency Order
 
@@ -77,14 +75,13 @@ flowchart LR
   users --> notifications[Notifications]
 ```
 
-The current orchestrator calls users, teams, wages, claims, expenses, board actions, and notifications. Team contract
-records are not called directly by the current `seed.ts` entry point.
+The current orchestrator calls users, teams, wages, claims, expenses, board actions, and notifications. Team contract records are not called
+directly by the current `seed.ts` entry point.
 
 ## Preserved Historical References
 
-The following files preserve the December 2025 documentation snapshot. Their commands, metrics, completion claims, and
-file counts have not been revalidated against the current implementation; use this README and current source for
-operational decisions.
+The following files preserve the December 2025 documentation snapshot. Their commands, metrics, completion claims, and file counts have not
+been revalidated against the current implementation; use this README and current source for operational decisions.
 
 - [Legacy quick start](./QUICK_START.md)
 - [Legacy functional specification](./functional-specification.md)

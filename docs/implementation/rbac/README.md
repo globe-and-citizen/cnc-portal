@@ -4,17 +4,15 @@
 
 **Last verified:** 2026-08-21
 
-**Consumers:** [Backoffice features](../../features/backoffice/README.md) and every backend route protected by an
-administrator role
+**Consumers:** [Backoffice features](../../features/backoffice/README.md) and every backend route protected by an administrator role
 
-RBAC is an architectural capability, not a product feature. It decides whether an authenticated request or dashboard
-session may enter an administrator-only surface.
+RBAC is an architectural capability, not a product feature. It decides whether an authenticated request or dashboard session may enter an
+administrator-only surface.
 
 ## Runtime Model
 
-The persisted role set uses three values: `ROLE_USER`, `ROLE_ADMIN`, and `ROLE_SUPER_ADMIN`. New users receive
-`ROLE_USER`. The shared role utilities model administrator and super-administrator inheritance, while backend middleware
-remains the enforcement boundary.
+The persisted role set uses three values: `ROLE_USER`, `ROLE_ADMIN`, and `ROLE_SUPER_ADMIN`. New users receive `ROLE_USER`. The shared role
+utilities model administrator and super-administrator inheritance, while backend middleware remains the enforcement boundary.
 
 ```mermaid
 sequenceDiagram
@@ -50,8 +48,8 @@ sequenceDiagram
 
 - Missing or insufficient roles return `403 Forbidden`.
 - The dashboard redirects authenticated non-administrators to `/access-denied`.
-- `requireAllRoles` currently calls `hasAnyRole`, so it accepts one matching role rather than all requested roles. No
-  production route currently calls this helper, but it must not be used as an all-roles guarantee until corrected.
+- `requireAllRoles` currently calls `hasAnyRole`, so it accepts one matching role rather than all requested roles. No production route
+  currently calls this helper, but it must not be used as an all-roles guarantee until corrected.
 
 ## Implementation Evidence
 
