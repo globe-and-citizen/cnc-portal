@@ -77,9 +77,10 @@ Acceptance criteria are the centre of feature review. Their checkboxes record ve
 
 - Organize every story's criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases` so normal outcomes, invariant rules, and
   exceptional behaviour can be reviewed separately.
-- One criterion describes one observable functional outcome: what the actor can accomplish or what domain or system result follows.
+- One criterion describes one cohesive observable functional outcome: what the actor can accomplish or what domain or system result follows.
 - One criterion may instead describe one independently verifiable business rule.
-- Keep every criterion atomic, testable, concise, unambiguous, and focused on the required outcome rather than its implementation.
+- Keep every criterion atomic and cohesive, testable, concise, unambiguous, and focused on the required outcome rather than its
+  implementation.
 - Every criterion must produce a clear pass or fail result.
 - A criterion must remain true when the interface is visually redesigned without changing product behaviour.
 - UI and UX choices do not belong in feature acceptance criteria. Keep component types, layout, styling, exact copy, animations,
@@ -251,10 +252,11 @@ For every user story, organize the criteria into these categories:
 2. `Business Rules` — functional constraints, permissions, limits, and domain rules that must always hold.
 3. `Edge & Error Cases` — boundaries, invalid inputs, unavailable states, failures, and other exceptional scenarios.
 
-The core rule is: **one acceptance criterion equals one observable behaviour or one independently verifiable business rule.** Each criterion
-must be:
+The core rule is: **one acceptance criterion equals one cohesive observable behaviour or one independently verifiable business rule.** Each
+criterion must be:
 
-- **Atomic:** do not combine independent rules or outcomes.
+- **Atomic and cohesive:** express one pass-or-fail decision; do not combine independent rules, but do not create a separate checkbox for
+  every attribute of the same result.
 - **Testable:** a developer or QA reviewer can determine whether it passes or fails.
 - **Concise:** prefer one clear sentence.
 - **Unambiguous:** state the expected behaviour explicitly.
@@ -274,6 +276,26 @@ Write each independently verifiable rule separately:
 - [ ] Duration cannot exceed 24 hours.
 - [ ] Duration cannot exceed the daily allowance.
 ```
+
+Group attributes when they form one functional result, such as one response contract, transaction payload, signature domain, state
+transition, or invariant. They must be reviewed together, supported by the same evidence, and share the same implementation status. For
+example, avoid turning each field of the same history record into a separate criterion:
+
+```markdown
+- [ ] Payroll history exposes the claim status.
+- [ ] Payroll history exposes the total duration.
+- [ ] Payroll history exposes the token amounts.
+```
+
+Prefer one cohesive result:
+
+```markdown
+- [ ] Payroll history exposes each claim's status, total duration, and token amounts.
+```
+
+Keep criteria separate when one part can meaningfully pass while another fails, the parts need different evidence, or their implementation
+checkboxes differ. A useful test is: **if one part fails, can the other parts still be accepted as implemented?** If yes, split them; if no,
+group them.
 
 Do not use Given/When/Then unless a scenario is too complex or ambiguous to express as a clear single-line criterion. Keep important edge
 cases inside the owning user story instead of creating separate stories solely for error scenarios.
@@ -318,8 +340,8 @@ This rule applies to every committed documentation file, not only feature README
 1. Verify that the capability and its grouping match current navigation, linked routes, and access guards.
 2. Inspect the current feature README, product entry points, business rules, tests, and linked contract behaviour.
 3. Define or update the lifecycle and stable story boundaries.
-4. Write atomic functional acceptance criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`, including material boundaries
-   and recovery outcomes without prescribing UI or UX choices.
+4. Write atomic and cohesive functional acceptance criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`, including
+   material boundaries and recovery outcomes without prescribing UI or UX choices.
 5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from the human product-review state.
 6. Refresh focused evidence links and related documentation.
 7. Update `docs/features/README.md`, `docs/02_USER_STORIES.md`, and `docs/README.md` only when navigation or canonical ownership changes.
@@ -335,7 +357,8 @@ This rule applies to every committed documentation file, not only feature README
 - [ ] The lifecycle matches the story order.
 - [ ] Every story uses `As a`, `I want to`, and `So that` on separate lines.
 - [ ] Every story organizes its criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`.
-- [ ] Every criterion contains one observable behaviour or one independently verifiable business rule.
+- [ ] Every criterion contains one cohesive observable behaviour or one independently verifiable business rule.
+- [ ] Grouped attributes form one result, use the same evidence, and share the same implementation status.
 - [ ] Every criterion is a functional, observable, independently reviewable outcome that remains valid after a visual redesign.
 - [ ] UI and UX requirements are kept outside feature acceptance criteria.
 - [ ] Statuses, checkboxes, and the human-validation statement agree.
