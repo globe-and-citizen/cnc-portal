@@ -1,8 +1,7 @@
 # Statistics Feature - Historical Functional Specification
 
-> **Status:** Historical reference. This document records the original target scope and must not be used as evidence of current behaviour
-> or acceptance. Current user stories, checked criteria, and known gaps are owned by the
-> [Backoffice Statistics README](./README.md).
+> **Status:** Historical reference. This document records the original target scope and must not be used as evidence of current behaviour or
+> acceptance. Current user stories, checked criteria, and known gaps are owned by the [Backoffice Statistics README](./README.md).
 
 **Version:** 1.0.0\
 **Date:** December 7, 2025\

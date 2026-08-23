@@ -9,8 +9,7 @@ These acceptance criteria follow the
 
 ## Product Model
 
-- Accounting presents one consolidated set of double-entry books for the team across its money-moving contracts and relevant portal
-  records.
+- Accounting presents one consolidated set of double-entry books for the team across its money-moving contracts and relevant portal records.
 - The general ledger is the source for the summary, income statement, balance sheet, and trial balance.
 - Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
@@ -214,8 +213,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-- [Accounting routes](../../../app/src/router/index.ts) and
-  [Accounting navigation](../../../app/src/composables/useSidebarNavItems.ts)
+- [Accounting routes](../../../app/src/router/index.ts) and [Accounting navigation](../../../app/src/composables/useSidebarNavItems.ts)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue) and
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
