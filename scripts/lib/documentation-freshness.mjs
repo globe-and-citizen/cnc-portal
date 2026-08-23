@@ -188,10 +188,10 @@ export function changedRepositoryPaths(repositoryRoot, baseCommit) {
     git(repositoryRoot, [
       'diff',
       '--name-only',
-      '--diff-filter=ACMRTD',
+      '--diff-filter=ACMRT',
       `${baseCommit}...HEAD`
     ]),
-    git(repositoryRoot, ['diff', '--name-only', '--diff-filter=ACMRTD', 'HEAD']),
+    git(repositoryRoot, ['diff', '--name-only', '--diff-filter=ACMRT', 'HEAD']),
     git(repositoryRoot, ['ls-files', '--others', '--exclude-standard'])
   ]
 

@@ -156,6 +156,11 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 **I want to** log the work completed on a given day\
 **So that** it can be included in my weekly compensation
 
+### Implementation Review
+
+The daily-claim form implementation was reviewed after its internal API was simplified. The create and edit journeys, UTC date restrictions,
+attachment limit, validation, failure recovery, and claim request payload remain as specified below.
+
 ### Acceptance Criteria
 
 - [x] Submit Claim is available only to the selected member when an applicable wage exists and the selected week accepts new claims.
@@ -367,7 +372,10 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
 - [Member wage overview](../../../app/src/components/sections/DashboardView/MemberSection.vue)
 - [Daily claim form](../../../app/src/components/sections/CashRemunerationView/Form/ClaimForm.vue)
-- [Daily claim form validation](../../../app/src/composables/useClaimForm.ts)
+- [Claim submission flow](../../../app/src/components/sections/CashRemunerationView/SubmitClaims.vue)
+- [Claim editing flow](../../../app/src/components/sections/CashRemunerationView/EditClaims.vue)
+- [Claim history daily breakdown](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue)
+- [Daily claim form rules](../../../app/src/utils/claimFormUtil.ts)
 - [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)
 - [Weekly claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
