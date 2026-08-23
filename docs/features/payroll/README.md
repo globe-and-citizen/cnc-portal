@@ -203,11 +203,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 **I want to** log the work completed on a given day\
 **So that** it can be included in my weekly compensation
 
-### Implementation Review
-
-The daily-claim form implementation was reviewed after its internal API was simplified. The create and edit journeys, UTC date restrictions,
-attachment limit, validation, failure recovery, and claim request payload remain as specified below.
-
 ### Acceptance Criteria
 
 #### Happy Path
