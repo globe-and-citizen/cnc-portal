@@ -5,6 +5,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import claimRoutes from '../../routes/claimRoute';
 import { prisma } from '../../utils';
+import { DAILY_CLAIM_MEMO_MAX_LENGTH } from '../../validation';
 
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
@@ -227,10 +228,6 @@ app.use('/', claimRoutes);
 const invalidBodyScenarios = [
   { body: { teamId: 1, descpription: '' }, description: 'memo is missing' },
   { body: { teamId: 1, minutesWorked: 300, memo: ' ' }, description: 'memo is only spaces' },
-  {
-    body: { teamId: 1, minutesWorked: 300, memo: Array(3001).fill('word').join(' ') },
-    description: 'memo exceeds 3000 words',
-  },
   { body: {}, description: 'required fields are missing' },
   { body: { teamId: 1, minutesWorked: -5, memo: '' }, description: 'minutesWorked is invalid' },
 ];
@@ -250,6 +247,41 @@ describe('Claim Controller', () => {
         expect(response.status).toBe(400);
         expect(response.body.message).toContain('Invalid request body');
       });
+    });
+
+    it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
+      'should create a claim with a trimmed %i-character memo',
+      async (length) => {
+        const memo = ` ${'m'.repeat(length)} `;
+        const mockWage = createMockWage();
+        mockResolveWageForWeek.mockResolvedValue(mockWage);
+        vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(
+          createMockWeeklyClaim({ claims: [] })
+        );
+        const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+
+        const response = await request(app).post('/').send({ teamId: 1, minutesWorked: 300, memo });
+
+        expect(response.status).toBe(201);
+        expect(createSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ memo: memo.trim() }) })
+        );
+      }
+    );
+
+    it('should reject a memo over the character limit', async () => {
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: 1,
+          minutesWorked: 300,
+          memo: 'm'.repeat(DAILY_CLAIM_MEMO_MAX_LENGTH + 1),
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        `Memo must not exceed ${DAILY_CLAIM_MEMO_MAX_LENGTH} characters`
+      );
     });
 
     it("should return 400 if user doesn't have wage", async () => {
@@ -666,6 +698,37 @@ describe('Claim Controller', () => {
         },
       } as any);
     };
+
+    it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
+      'should update a claim with a trimmed %i-character memo',
+      async (length) => {
+        const memo = ` ${'m'.repeat(length)} `;
+        setupMockClaim();
+        const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({ id: 1 } as any);
+
+        const response = await request(app).put('/1').send({ memo });
+
+        expect(response.status).toBe(200);
+        expect(updateSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ memo: memo.trim() }) })
+        );
+      }
+    );
+
+    it.each([
+      ['empty', 'Memo cannot be empty', ''],
+      ['whitespace-only', 'Memo cannot be empty', '   '],
+      [
+        'overlong',
+        `Memo must not exceed ${DAILY_CLAIM_MEMO_MAX_LENGTH} characters`,
+        'm'.repeat(DAILY_CLAIM_MEMO_MAX_LENGTH + 1),
+      ],
+    ])('should reject a %s memo on update', async (_description, message, memo) => {
+      const response = await request(app).put('/1').send({ memo });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(message);
+    });
 
     // Helper function for authorization tests
     const testAuthorization = async (
