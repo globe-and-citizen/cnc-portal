@@ -58,12 +58,20 @@ automatically when a deadline or maturity date passes.
 
 ### Acceptance Criteria
 
-- [x] A team without a deployed Credit Account sees the missing prerequisite rather than an empty round list.
-- [x] Loading, read failure, no-round, and populated states are visibly distinct.
+#### Happy Path
+
 - [x] Each round exposes its purpose, token, target, amount raised, flat rate, access mode, dates, and current status.
-- [ ] Raising, action-required, and settled rounds are grouped without describing pending issuer work as history.
 - [ ] A lender can distinguish their own deposited and expected-return positions from the issuer's total debt figures.
-- [x] Opening a round shows its lender breakdown, settlement progress, and matching on-chain activity.
+- [x] An opened round exposes its lender breakdown, settlement progress, and matching on-chain activity.
+
+#### Business Rules
+
+- [ ] Rounds that still require an issuer action remain accessible separately from settled rounds.
+
+#### Edge & Error Cases
+
+- [x] A team without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
+- [x] The Credit Account journey distinguishes loading, read-failure, no-round, and populated outcomes.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
 
@@ -75,15 +83,30 @@ automatically when a deadline or maturity date passes.
 
 ### Acceptance Criteria
 
-- [ ] The issuer defines a name, purpose, supported ERC-20 token, positive target, flat rate, future subscription deadline, and term.
-- [x] General access can apply an optional per-lender cap that does not exceed the target.
-- [x] Restricted access rejects duplicate members, non-positive capped allocations, and a fully capped allocation total below the target.
-- [x] Every wizard step keeps its visible validation errors and the deadline is checked again before publication.
-- [x] Successful publication creates one on-chain round, persists its title and purpose, refreshes the list, and returns the issuer to the
-      Credit Account.
-- [ ] Once the on-chain round exists, a metadata failure cannot invite the issuer to publish a second round or associate metadata with a
-      different round.
-- [ ] Rejected or failed publication remains recoverable with a visible error.
+#### Happy Path
+
+- [x] The issuer can define a round name of at least three characters and an optional purpose.
+- [x] The issuer can select an ERC-20 token supported by the team's Credit Account.
+- [x] The issuer can define a positive funding target.
+- [x] The issuer can define a flat interest rate from 0% to 100% for the complete term.
+- [x] The issuer can define a future subscription deadline and a positive term of at most 30 years.
+- [x] Successful publication creates one on-chain round, persists its metadata, and exposes the round through subsequent Credit Account
+      reads.
+
+#### Business Rules
+
+- [x] A general-access round can apply an optional positive per-lender cap that does not exceed the funding target.
+- [x] A restricted round requires at least one lender and rejects duplicate lender addresses.
+- [x] Every capped restricted lender requires a positive allocation.
+- [x] Fully capped restricted allocations must total at least the funding target.
+- [x] The subscription deadline is validated again immediately before publication.
+- [ ] Off-chain metadata is associated with the exact offer identifier emitted by the on-chain creation transaction.
+
+#### Edge & Error Cases
+
+- [x] Invalid round terms are rejected before an on-chain transaction is requested.
+- [x] Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
+- [ ] Once the on-chain round exists, a metadata failure can be retried without creating a second round.
 
 **Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
 
@@ -95,13 +118,25 @@ automatically when a deadline or maturity date passes.
 
 ### Acceptance Criteria
 
-- [x] Lending is offered only while the round is open and before its subscription deadline.
-- [x] A restricted round offers lending only to a member with a non-zero allocation.
-- [x] The modal shows the lower of the round's remaining target and the lender's remaining cap or allocation.
-- [x] The amount must be positive and cannot exceed that personal lending ceiling.
-- [x] The portal requests token approval only when the current allowance is insufficient.
-- [ ] A successful lend refreshes the round, lender position, token balances, and activity before another decision is made.
-- [x] Rejected approval, rejected lending, or an on-chain failure leaves the round unchanged and displays a recoverable error.
+#### Happy Path
+
+- [x] An eligible member can lend to a round while it is open and before its subscription deadline.
+- [x] A successful lend increases both the round's funded amount and the lender's deposited position.
+- [x] A successful lend refreshes the round and the lender's position before another lending decision.
+- [ ] A successful lend refreshes the lender's token balance and the matching activity feed before another decision.
+
+#### Business Rules
+
+- [x] A restricted round accepts funds only from a member with a non-zero allocation.
+- [x] The lender's available amount is the lower of the remaining funding target and their remaining cap or allocation.
+- [x] A lending amount must be greater than 0.
+- [x] A lending amount cannot exceed the lender's available amount.
+- [x] Token approval is requested only when the current allowance is insufficient.
+
+#### Edge & Error Cases
+
+- [x] Rejecting approval, rejecting the lending transaction, or an on-chain failure leaves the round unchanged and returns a recoverable
+      failure outcome.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
 
@@ -113,12 +148,22 @@ automatically when a deadline or maturity date passes.
 
 ### Acceptance Criteria
 
-- [x] A round below target becomes visibly stalled after its subscription deadline without implying that an automatic transaction occurred.
+#### Happy Path
+
 - [x] The issuer can refund a stalled round, returning every lender's principal in one transaction.
-- [x] The issuer can accept partial funding only when the stalled round raised a positive amount.
-- [x] Accepting partial funding moves the raised principal to the team Bank and continues the round using the actual funded amount.
-- [x] Refund and partial acceptance are mutually exclusive final decisions for the stalled state.
-- [x] Success refreshes the round and lender data; failure leaves the previous state visible with an error.
+- [x] The issuer can accept a positive partial raise and continue the round using the actual funded amount.
+- [x] Accepting a partial raise transfers the raised principal to the team Bank.
+- [x] A successful resolution refreshes the round and lender data.
+
+#### Business Rules
+
+- [x] A round below target remains on-chain as open after its subscription deadline until the issuer resolves it.
+- [x] Refund and partial acceptance are mutually exclusive final decisions for a stalled round.
+
+#### Edge & Error Cases
+
+- [x] A partial raise of 0 cannot be accepted.
+- [x] A failed resolution leaves the round unchanged and returns a failure outcome.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -130,14 +175,28 @@ automatically when a deadline or maturity date passes.
 
 ### Acceptance Criteria
 
-- [x] Repayment is available for funded, partially repaid, or overdue rounds, but not while a round is still raising or after settlement.
-- [ ] The repayment entry point is a stable product action rather than a layout-exploration control whose state leaks between rounds.
-- [ ] Authorization and availability match the Bank owner and pause state used by the repayment transaction.
-- [x] The amount is positive and cannot exceed either the outstanding obligation or the Bank's token balance.
-- [x] Installments distribute cumulative proportional entitlements without overpaying the round or leaving rounding dust behind.
-- [ ] A successful installment refreshes repayment progress, lender balances, treasury balance, and activity; full settlement returns to the
-      round detail.
-- [x] A rejected or failed repayment preserves the outstanding amount and displays a recoverable error.
+#### Happy Path
+
+- [x] The issuer can repay a funded, partially repaid, or overdue round from the team Bank.
+- [x] An installment distributes each lender's cumulative proportional entitlement without overpaying the round or leaving rounding dust.
+- [x] A successful installment refreshes repayment progress and lender settlement data.
+- [ ] A successful installment refreshes lender token balances, the Bank token balance, and the matching activity feed.
+- [x] Repaying the complete obligation settles the round and prevents further repayment.
+
+#### Business Rules
+
+- [x] A repayment amount must be greater than 0.
+- [x] A repayment amount cannot exceed the outstanding obligation.
+- [x] A repayment amount cannot exceed the Bank's token balance.
+- [x] The Bank rejects repayment from an account other than its current owner.
+- [x] A paused Bank rejects repayment.
+- [ ] The product journey offers repayment only to the current Bank owner while the Bank is not paused.
+
+#### Edge & Error Cases
+
+- [x] A round that is still raising cannot be repaid.
+- [x] A settled round cannot be repaid again.
+- [x] Rejecting or failing a repayment preserves the outstanding amount and returns a recoverable failure outcome.
 
 **Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
 
@@ -146,12 +205,17 @@ automatically when a deadline or maturity date passes.
 The following gaps were rechecked against the current feature entry points on 2026-08-21. Their technical evidence and remediation
 directions remain in the [detailed flow and implementation analysis](./user-flow-analysis.md#8-findings).
 
+### Functional Gaps
+
 - Publishing still infers the new offer ID from the total offer count and can repeat the on-chain write after a metadata failure.
-- The list puts funded, repaying, overdue, and stalled rounds under **History**, even when the issuer still has an action to perform.
-- The account hero presents issuer debt figures to lenders without a personal-position summary.
-- Repayment remains coupled to a global **Layout exploration** variant rather than a stable route.
-- Lending and repayment refresh domain aggregates but do not refresh every affected token balance and activity feed.
-- Repayment visibility follows the Credit Account owner even though the write is authorized by the Bank owner and pause state.
+- Rounds that require an issuer action are grouped with settled history.
+- Lenders cannot review their personal deposited and expected-return positions separately from the team's debt.
+- Lending and repayment refresh domain aggregates but not every affected token balance or activity feed.
+- Repayment availability follows the Credit Account owner instead of the Bank owner and pause state enforced by the transaction.
+
+### UI/UX Notes
+
+- Repayment remains coupled to a global **Layout exploration** variant rather than a stable route, and that state leaks between rounds.
 
 ## Implementation Evidence
 

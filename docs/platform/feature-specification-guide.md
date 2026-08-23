@@ -1,6 +1,6 @@
 # Feature Documentation Guide
 
-**Status:** Trial — initially applied to Vesting; categorized acceptance criteria piloted on Payroll
+**Status:** Current — applied to every canonical product feature user story
 
 **Last updated:** 2026-08-23
 
@@ -382,5 +382,5 @@ bash scripts/audit-doc-drift.sh
 git diff --check
 ```
 
-The first trial of the overall contract is the [Vesting feature](../features/vesting/README.md). The categorized, atomic acceptance-criteria
-rule is first applied to the [Payroll feature](../features/payroll/README.md).
+The categorized acceptance-criteria contract is applied to every canonical product feature user story. Reference-only feature pages remain
+exempt until they own user stories of their own.
