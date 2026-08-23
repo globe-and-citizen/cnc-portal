@@ -84,12 +84,6 @@
       "subject": "useDatePicker",
       "metric": "composableReturnMembers",
       "allowed": 10
-    },
-    {
-      "path": "src/composables/vesting/useCreateVesting.ts",
-      "subject": "useCreateVesting",
-      "metric": "composableReturnMembers",
-      "allowed": 36
     }
   ]
 }
