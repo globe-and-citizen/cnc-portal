@@ -53,9 +53,16 @@ create a tracking issue only when requested or required by the active GitHub wor
   **So that** I obtain one user-visible benefit
   ```
 
-- Make each acceptance criterion an independently observable pass-or-fail outcome. Cover only the
-  permission, validation, failure, loading, refresh, responsive, API, or contract boundaries that
-  materially affect that story.
+- Make each acceptance criterion an independently observable functional outcome. Cover the business
+  result, permissions, validation boundaries, state transitions, persistence, cancellation, failure,
+  retry, reconciliation, API, or contract outcomes that materially affect that story.
+- Write criteria that remain true if the interface is visually redesigned without changing the
+  product behaviour. Do not prescribe components, layout, styling, copy, animations, breakpoints, or
+  other UI/UX choices in feature acceptance criteria. Track those concerns in their dedicated
+  design, accessibility, or quality scope.
+- A screen can be the place where a reviewer observes the result, but the criterion must describe
+  the function rather than its presentation. Prefer "the invalid operation is rejected without
+  changing the saved state" over "the submit button is disabled and shows an error toast."
 - Check a criterion only when current code, tests, or observed runtime behaviour proves it. Split
   partial behaviour so the implemented and missing outcomes remain visible.
 - Apply the guide's status and human-review contract exactly. Fully implemented criteria without a
