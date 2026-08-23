@@ -30,6 +30,10 @@ wallet. **Contract File:** `contracts/SafeDepositRouter.sol` **Upgradeable:** Ye
 - **Dependencies:** InvestorV1 (`individualMint` to mint SHER to depositor); Safe wallet (receives deposited tokens)
 - **Two-level stop:** `disableDeposits()` for normal pause; `pause()` for emergency
 
+## Implementation Evidence
+
+- [Compensation multiplier form](../../../../app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue)
+
 ---
 
 ## US-SDR-001: Deposit a Whitelisted Token and Receive SHER (InvestorV1)

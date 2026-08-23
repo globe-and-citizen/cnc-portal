@@ -29,16 +29,21 @@ describe('ClaimHistory.vue', () => {
           ClaimHistoryMemberHeader: {
             template: '<div class="h" data-test="member-header" />'
           },
-          ClaimHistoryWeekNavigator: {
+          ClaimHistoryWeekNavigator: defineComponent({
+            name: 'ClaimHistoryWeekNavigator',
+            props: ['modelValue', 'memberAddress'],
             emits: ['update:modelValue'],
             template:
               "<button data-test=\"week-nav\" @click=\"$emit('update:modelValue', { year: 2025, month: 0, isoWeek: 1, isoString: '2024-12-30T00:00:00.000Z', formatted: 'Dec 30-Jan 5' })\" />"
-          },
-          WeeklyRecap: {
+          }),
+          WeeklyRecap: defineComponent({
+            name: 'WeeklyRecap',
+            props: ['weeklyClaim', 'wage'],
             template: '<div class="r" data-test="weekly-recap" />'
-          },
+          }),
           ClaimHistoryActionAlerts: defineComponent({
             name: 'ClaimHistoryActionAlerts',
+            props: ['weeklyClaim', 'memberAddress', 'selectedWeekStart'],
             setup(_, { expose }) {
               expose({ openSubmitClaimForDay: openSubmitClaimForDayMock })
               return {}
@@ -92,7 +97,6 @@ describe('ClaimHistory.vue', () => {
   it('does not render claim history content when memberAddress is missing', () => {
     const wrapper = createWrapper()
 
-    expect(wrapper.vm.selectedMemberAddress).toBeUndefined()
     expect(wrapper.find('[data-test="member-header"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="week-nav"]').exists()).toBe(false)
   })
@@ -128,16 +132,15 @@ describe('ClaimHistory.vue', () => {
 
     const wrapper = createWrapper()
 
-    expect(wrapper.vm.selectedMemberAddress).toBe(memberAddress)
-    expect(wrapper.vm.selectWeekWeelyClaim).toEqual(
+    expect(wrapper.findComponent({ name: 'WeeklyRecap' }).props('weeklyClaim')).toEqual(
       expect.objectContaining({ weekStart: currentWeekIso })
     )
-    expect(wrapper.vm.selectedMemberWage).toEqual(
+    expect(wrapper.findComponent({ name: 'WeeklyRecap' }).props('wage')).toEqual(
       expect.objectContaining({ userAddress: memberAddress })
     )
   })
 
-  it('updates selected week claim when selectedMonthObject changes', async () => {
+  it('updates the displayed claim when the week navigator changes selection', async () => {
     const memberAddress = '0x1234567890123456789012345678901234567890'
     const firstWeekIso = '2025-04-07T00:00:00.000Z'
     const secondWeekIso = '2025-04-14T00:00:00.000Z'
@@ -158,29 +161,30 @@ describe('ClaimHistory.vue', () => {
 
     const wrapper = createWrapper()
 
-    wrapper.vm.selectedMonthObject = {
+    const weekNavigator = wrapper.findComponent({ name: 'ClaimHistoryWeekNavigator' })
+    await weekNavigator.vm.$emit('update:modelValue', {
       year: 2025,
       month: 3,
       isoWeek: 15,
       isoString: firstWeekIso,
       formatted: 'April 7-13'
-    }
+    })
     await nextTick()
 
-    expect(wrapper.vm.selectWeekWeelyClaim).toEqual(
+    expect(wrapper.findComponent({ name: 'WeeklyRecap' }).props('weeklyClaim')).toEqual(
       expect.objectContaining({ weekStart: firstWeekIso })
     )
 
-    wrapper.vm.selectedMonthObject = {
+    await weekNavigator.vm.$emit('update:modelValue', {
       year: 2025,
       month: 3,
       isoWeek: 16,
       isoString: secondWeekIso,
       formatted: 'April 14-20'
-    }
+    })
     await nextTick()
 
-    expect(wrapper.vm.selectWeekWeelyClaim).toEqual(
+    expect(wrapper.findComponent({ name: 'WeeklyRecap' }).props('weeklyClaim')).toEqual(
       expect.objectContaining({ weekStart: secondWeekIso })
     )
   })
@@ -198,7 +202,7 @@ describe('ClaimHistory.vue', () => {
     expect(openSubmitClaimForDayMock).toHaveBeenCalledWith('2024-01-01T00:00:00.000Z')
   })
 
-  it('updates selectedMonthObject when week navigator emits v-model update', async () => {
+  it('passes the selected week to action alerts when week navigator emits a v-model update', async () => {
     ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce(
       {
         params: { memberAddress: '0x1234567890123456789012345678901234567890' }
@@ -208,12 +212,8 @@ describe('ClaimHistory.vue', () => {
     const wrapper = createWrapper()
     await wrapper.find('[data-test="week-nav"]').trigger('click')
 
-    expect(wrapper.vm.selectedMonthObject).toEqual({
-      year: 2025,
-      month: 0,
-      isoWeek: 1,
-      isoString: '2024-12-30T00:00:00.000Z',
-      formatted: 'Dec 30-Jan 5'
-    })
+    expect(
+      wrapper.findComponent({ name: 'ClaimHistoryActionAlerts' }).props('selectedWeekStart')
+    ).toBe('2024-12-30T00:00:00.000Z')
   })
 })

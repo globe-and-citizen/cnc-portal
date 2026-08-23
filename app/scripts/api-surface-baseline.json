@@ -8,40 +8,10 @@
   },
   "exceptions": [
     {
-      "path": "src/components/forms/DepositBankForm.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 1
-    },
-    {
-      "path": "src/components/forms/DepositSafeForm.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 1
-    },
-    {
-      "path": "src/components/forms/SafeDepositRouterForm.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 1
-    },
-    {
       "path": "src/components/sections/CashRemunerationView/SubmitClaims.vue",
       "subject": "component",
       "metric": "componentExposedMembers",
-      "allowed": 5
-    },
-    {
-      "path": "src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 4
-    },
-    {
-      "path": "src/components/sections/ClaimHistoryView/ClaimHistory.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 4
+      "allowed": 1
     },
     {
       "path": "src/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue",
@@ -68,25 +38,7 @@
       "allowed": 1
     },
     {
-      "path": "src/components/sections/ContractManagementView/TeamContractsDetail.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 5
-    },
-    {
-      "path": "src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 1
-    },
-    {
       "path": "src/components/sections/ProposalsView/ProposalsList.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 1
-    },
-    {
-      "path": "src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue",
       "subject": "component",
       "metric": "componentExposedMembers",
       "allowed": 1

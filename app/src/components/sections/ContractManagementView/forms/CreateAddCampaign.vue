@@ -103,15 +103,6 @@ watch(contractAddress, (newAddress) => {
   )
 })
 
-function reset() {
-  formState.costPerClick = ''
-  formState.costPerImpression = ''
-  submissionError.value = bankMissing.value
-    ? 'A Bank contract is required before setting up the manager.'
-    : null
-}
-defineExpose({ reset })
-
 function deployCampaignManager(event: FormSubmitEvent<CampaignFormSchema>) {
   if (!event.data.bankAddress) {
     submissionError.value = 'A Bank contract is required before setting up the manager.'
