@@ -65,43 +65,25 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 #### Happy Path
 
 - [x] A team owner can set a wage for any team member.
-- [x] A successful wage request creates a new wage version.
-- [x] Subsequent member-wage reads return the created wage version.
-- [x] Member-wage reads return the standard rates.
-- [x] Member-wage reads return the overtime rates.
-- [x] Member-wage reads return the weekly allowance.
-- [x] Member-wage reads return the daily allowance.
-- [x] Member-wage reads distinguish members who do not have a wage.
+- [x] A successful wage request persists a new version that subsequent member-wage reads return.
+- [x] Member-wage reads expose the standard rates, overtime rates, weekly allowance, and daily allowance.
 
 #### Business Rules
 
-- [x] A wage belongs to one member.
-- [x] A wage stores standard rates separately from optional overtime rates.
-- [x] Standard rates support the network-native token.
-- [x] Standard rates support USDC.
-- [x] Standard rates support SHER.
+- [x] A wage belongs to one member and stores standard rates separately from optional overtime rates.
+- [x] Standard rates support the network-native token, USDC, and SHER.
 - [x] At least one standard token rate must be enabled with a positive value.
 - [x] A disabled token rate is submitted as zero.
-- [x] The regular weekly allowance uses whole hours.
-- [x] The regular weekly allowance must be at least 1 hour.
-- [x] The regular weekly allowance cannot exceed 40 hours.
-- [x] The daily allowance uses whole hours.
-- [x] The daily allowance must be at least 1 hour.
-- [x] The daily allowance cannot exceed 24 hours.
+- [x] The regular weekly allowance is a whole number from 1 to 40 hours.
+- [x] The daily allowance is a whole number from 1 to 24 hours.
 - [x] The daily allowance defaults to 8 hours.
 - [x] The daily allowance remains a per-day cap even when the weekly allowance still has unused capacity.
 - [x] Overtime configuration requires at least one positive overtime rate.
-- [x] The overtime allowance uses whole hours.
-- [x] The overtime allowance must be at least 1 hour.
-- [x] The overtime allowance cannot exceed 20 hours.
-- [x] A replacement wage references the operative wage as its predecessor.
-- [x] Replacing a wage preserves its version history.
-- [ ] A new wage version becomes current immediately ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
-- [ ] A wage change cannot be scheduled for future activation ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
-- [x] A daily claim for an existing team, member, and ISO week reuses that weekly claim before applying the member's current wage.
-- [x] A weekly claim containing daily claims keeps the wage used for its first submitted hours after the member's current wage changes.
-- [x] Further daily claims are priced with the existing weekly claim's wage.
-- [x] Further daily claims are validated with the existing weekly claim's wage rules.
+- [x] The overtime allowance is a whole number from 1 to 20 hours.
+- [x] A replacement wage references the operative wage as its predecessor without overwriting version history.
+- [ ] A new wage version becomes current immediately without a future activation option
+      ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
+- [x] A weekly claim containing daily claims retains its initial wage for the pricing and validation of all later claims in that ISO week.
 - [x] The first daily claim in a goals-only weekly row uses the member's current wage.
 - [ ] _(database)_ At most one weekly claim can exist for each team, member, and ISO week
       ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
@@ -112,6 +94,7 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 
 #### Edge & Error Cases
 
+- [x] Member-wage reads distinguish members who do not have a wage.
 - [x] A disabled wage cannot be replaced until the owner resumes it.
 - [x] Archived teams cannot create wages.
 - [x] Archived teams cannot replace wages.
@@ -225,8 +208,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 #### Happy Path
 
 - [x] A member can submit a daily claim for themselves.
-- [x] A successful submission persists the daily claim.
-- [x] Subsequent weekly-claim reads include the submitted daily claim.
+- [x] A successful submission persists the daily claim and exposes it through subsequent weekly-claim reads.
 
 #### Business Rules
 
@@ -235,14 +217,11 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A daily-claim duration must use ten-minute increments.
 - [x] A daily-claim duration cannot exceed 24 hours.
 - [x] A daily-claim duration cannot exceed the wage's lower daily allowance.
-- [x] A daily-claim memo is trimmed before validation.
-- [x] A trimmed daily-claim memo must contain at least 1 character.
-- [x] A trimmed daily-claim memo cannot exceed 3,000 characters.
+- [x] A daily-claim memo must contain 1 to 3,000 characters after trimming.
 - [x] A daily claim can contain at most ten attachments.
 - [x] Daily-allowance validation adds the new duration to the existing claims for the selected work date.
 - [x] _(API)_ The weekly total cannot exceed the combined regular and overtime allowances.
-- [x] _(API)_ The server enforces the daily allowance.
-- [x] _(API)_ The server uses an 8-hour daily-allowance fallback for legacy wages.
+- [x] _(API)_ The server enforces the daily allowance with an 8-hour fallback for legacy wages.
 - [x] When submission restriction is active, the portal accepts claims only for the current ISO week.
 - [x] _(API)_ When submission restriction is active, the API accepts claims only for the current ISO week.
 - [x] When submission restriction is active, the portal accepts work dates at most four days in the past.
@@ -252,16 +231,11 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] A daily claim submitted for another member is rejected.
 - [x] A daily claim submitted without an applicable wage is rejected.
-- [x] A week that already carries a signature rejects new daily claims.
-- [x] A signed week rejects new daily claims.
+- [x] A signed week or a week that already carries a signature rejects new daily claims.
 - [x] A withdrawn week rejects new daily claims.
 - [x] A disabled week rejects new daily claims.
 - [x] A paused wage rejects new claims.
-- [x] A whitespace-only memo is rejected.
-- [x] A memo longer than 3,000 characters after trimming is rejected.
-- [x] More than ten attachments are rejected.
-- [x] A rejected submission persists no daily claim.
-- [x] A rejected submission returns its rejection reason.
+- [x] A rejected submission leaves the daily-claim state unchanged and returns its rejection reason.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -277,18 +251,14 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 #### Happy Path
 
-- [x] The claim owner can edit the duration while the week is pending.
-- [x] The claim owner can edit the memo while the week is pending.
-- [x] The claim owner can replace the attachments while the week is pending.
+- [x] The claim owner can edit the duration, memo, and attachments while the week is pending.
 - [x] A successful edit persists the new claim values.
 
 #### Business Rules
 
 - [x] Editing cannot change the claim's original work date.
 - [x] The update API permits a partial update without a memo.
-- [x] A supplied memo is trimmed before validation.
-- [x] A supplied memo must contain at least 1 character after trimming.
-- [x] A supplied memo cannot exceed 3,000 characters after trimming.
+- [x] A supplied memo must contain 1 to 3,000 characters after trimming.
 - [x] The combined existing and new attachment count cannot exceed ten.
 - [x] _(API)_ The weekly allowance is rechecked while excluding the claim being edited.
 - [x] _(API)_ The daily allowance is rechecked for the original work date while excluding the claim being edited.
@@ -298,8 +268,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 #### Edge & Error Cases
 
 - [x] A paused wage blocks claim editing.
-- [x] A rejected edit leaves the stored claim unchanged.
-- [x] A rejected edit returns its rejection reason.
+- [x] A rejected edit leaves the stored claim unchanged and returns its rejection reason.
 - [x] Archived teams cannot edit claims.
 
 **Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
@@ -316,14 +285,12 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 #### Happy Path
 
-- [x] A confirmed deletion removes the claim from subsequent weekly-claim reads.
-- [x] Stored attachments belonging to the deleted claim are removed.
+- [x] A confirmed deletion removes the claim and its stored attachments from subsequent weekly-claim reads.
 
 #### Business Rules
 
 - [x] Deleting a daily claim requires its owner's confirmation before stored data changes.
-- [x] Deleting the final daily claim removes an otherwise empty weekly claim.
-- [x] Deleting the final daily claim preserves a weekly claim that still contains goals.
+- [x] Deleting the final daily claim removes an otherwise empty weekly claim but preserves one that still contains goals.
 - [x] A user other than the claim owner cannot delete the claim.
 - [ ] The API rejects claim deletion when the weekly claim is disabled.
 
@@ -331,8 +298,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] A paused wage blocks claim deletion.
 - [x] Archived teams cannot delete claims.
-- [x] A failed deletion leaves the stored claim unchanged.
-- [x] A failed deletion returns a failure outcome.
+- [x] A failed deletion leaves the stored claim unchanged and returns a failure outcome.
 
 **Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
 
@@ -349,9 +315,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 #### Happy Path
 
 - [x] Only the current Cash Remuneration contract owner can initiate signing through the product journey.
-- [x] Signing requests an EIP-712 wallet signature bound to Cash Remuneration version 1.
-- [x] Signing requests a wallet signature bound to the active Cash Remuneration contract.
-- [x] Signing requests a wallet signature bound to the active chain.
+- [x] Signing requests an EIP-712 wallet signature bound to Cash Remuneration version 1, the active contract, and the active chain.
 
 #### Business Rules
 
@@ -369,10 +333,8 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A future week cannot be signed.
 - [x] Archived teams cannot sign weekly claims.
 - [x] Teams that have not migrated to the current Officer generation cannot sign weekly claims.
-- [x] Rejecting the wallet signature leaves the weekly claim's stored status unchanged.
-- [x] Rejecting the wallet signature leaves the weekly claim's stored signature unchanged.
-- [x] A previous-contract signature is cleared during reconciliation.
-- [x] A weekly claim with a previous-contract signature returns to pending during reconciliation.
+- [x] Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
+- [x] Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
 - [x] Re-signing a disabled current-contract claim re-enables its existing signature before storing the replacement.
 
 **Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
@@ -419,36 +381,28 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 #### Happy Path
 
 - [x] Only the member named by a signed weekly claim can initiate its withdrawal.
-- [x] Withdrawal sends the native-token wage amount on-chain.
-- [x] Withdrawal sends the ERC-20 wage amounts on-chain.
-- [x] Withdrawal sends the mintable-token wage amount on-chain.
+- [x] Withdrawal sends the complete native-token, ERC-20, and mintable-token wage payload on-chain.
 - [x] A successful withdrawal transfers the approved compensation.
 - [x] A successful withdrawal reconciles the stored status with the contract.
 
 #### Business Rules
 
-- [x] _(API)_ A user outside the team cannot mark a member's weekly claim as withdrawn.
-- [x] _(API)_ Another team member cannot mark a member's weekly claim as withdrawn.
-- [x] _(API)_ The team owner cannot mark another member's weekly claim as withdrawn.
-- [x] _(API)_ The contract owner cannot mark another member's weekly claim as withdrawn.
-- [x] A signature bound to another Cash Remuneration contract is rejected before the transaction.
-- [x] A signature bound to another network is rejected before the transaction.
+- [x] _(API)_ Only the member named by the weekly claim can mark it as withdrawn.
+- [x] A signature bound to another Cash Remuneration contract or network is rejected before the transaction.
 - [x] A signature that no longer recovers the current contract owner is rejected.
 - [x] _(contract)_ The caller must match the employee encoded by the signed claim.
+- [x] Product withdrawal requires both signed status and a stored signature.
 
 #### Edge & Error Cases
 
 - [x] A paid claim cannot be withdrawn.
 - [x] A claim belonging to an archived team cannot be withdrawn.
-- [x] A weekly claim without signed status cannot be withdrawn through the product journey.
-- [x] A weekly claim without a signature cannot be withdrawn through the product journey.
 - [x] _(contract)_ A paid claim reverts.
 - [x] _(contract)_ A disabled claim reverts.
 - [x] _(contract)_ A claim with an unsupported token reverts.
 - [x] _(contract)_ A claim reverts when the Cash Remuneration contract lacks the required balance.
 - [x] _(contract)_ A withdrawal reverts while the Cash Remuneration contract is paused.
-- [x] Cancelling the wallet transaction leaves the claim unpaid.
-- [x] Cancelling the wallet transaction leaves the stored claim status unchanged.
+- [x] Cancelling the wallet transaction leaves the claim unpaid and its stored status unchanged.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -464,28 +418,23 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 #### Happy Path
 
-- [x] Reconciliation evaluates every signed weekly claim.
-- [x] Reconciliation evaluates every disabled weekly claim.
+- [x] Reconciliation evaluates every signed or disabled weekly claim.
 - [x] Reconciliation updates a paid weekly claim to withdrawn.
 - [x] Reconciliation updates an on-chain-disabled weekly claim to disabled.
 - [x] Reconciliation runs when team data loads.
 - [x] Reconciliation runs after a successful withdrawal.
 - [x] Reconciliation runs after a successful disable operation.
 - [x] Reconciliation runs after a successful enable operation.
-- [x] Reconciliation reports the number of processed claims.
-- [x] Reconciliation reports the number of updated claims.
-- [x] Reconciliation reports the number of skipped claims.
+- [x] Reconciliation reports the numbers of processed, updated, and skipped claims.
 - [x] Subsequent weekly-claim reads expose the reconciled statuses.
 
 #### Business Rules
 
-- [x] A signature bound to a previous Cash Remuneration contract is cleared.
-- [x] A weekly claim with a previous-contract signature returns to pending.
+- [x] A signature bound to a previous Cash Remuneration contract is cleared and its weekly claim returns to pending.
 
 #### Edge & Error Cases
 
-- [x] A missing signature skips only the affected weekly claim.
-- [x] An invalid signature skips only the affected weekly claim.
+- [x] A missing or invalid signature skips only the affected weekly claim.
 - [x] A failed contract read skips only the affected weekly claim.
 
 **Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
@@ -502,19 +451,8 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 #### Happy Path
 
-- [x] A member can review each weekly claim's status.
-- [x] A member can review each weekly claim's total duration.
-- [x] A member can review each weekly claim's token amounts.
-- [x] A member can review each weekly claim's daily breakdown.
-- [x] A member can review each weekly claim's goals.
-- [x] A member can review each weekly claim's attachments.
-- [x] Team-wide payroll history identifies the member for each weekly claim.
-- [x] Team-wide payroll history identifies the ISO week for each weekly claim.
-- [x] Team-wide payroll history provides each weekly claim's duration.
-- [x] Team-wide payroll history provides each weekly claim's rates.
-- [x] Team-wide payroll history provides each weekly claim's computed amounts.
-- [x] Team-wide payroll history provides each weekly claim's status.
-- [x] Team-wide payroll history provides each weekly claim's currently valid transitions.
+- [x] A member can review each weekly claim's status, total duration, token amounts, daily breakdown, goals, and attachments.
+- [x] Team-wide payroll history provides each claim's member, week, duration, rates, computed amounts, status, and valid transitions.
 - [x] _(API)_ Weekly claims can be filtered by status.
 - [x] _(API)_ Weekly claims can be filtered by member.
 - [x] _(API)_ Weekly-claim total minutes are derived from their daily claims.
