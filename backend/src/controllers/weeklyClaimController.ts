@@ -148,6 +148,16 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         const signErrors: string[] = [];
 
+        // Weekly goals can create a pending weekly claim before the member
+        // submits any hours. Goals are planning information, not a payable
+        // claim, so signing requires at least one linked daily claim.
+        const dailyClaimCount = await prisma.claim.count({
+          where: { weeklyClaimId: weeklyClaim.id },
+        });
+        if (dailyClaimCount === 0) {
+          signErrors.push('At least one daily claim is required before signing a weekly claim');
+        }
+
         // Check if the caller is the Cash Remuneration owner
         const isCallerCashRemunOwner = await isCashRemunerationOwner(
           callerAddress,

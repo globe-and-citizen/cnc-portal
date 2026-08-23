@@ -244,8 +244,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
       the Cash Remuneration owner.
 - [x] Signing requests an EIP-712 wallet signature bound to Cash Remuneration version 1, the active contract, and the active chain.
 - [x] The portal exposes signing only when the weekly claim contains at least one daily claim.
-- [ ] _(API)_ The backend rejects signing a goals-only weekly claim; it currently does not load or validate the daily-claim count
-      ([#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521)).
+- [x] _(API)_ The backend rejects signing a goals-only weekly claim before storing a signature or changing its status.
 - [x] The current week and future weeks cannot be signed.
 - [x] Normal signing applies to pending weeks; a disabled claim uses the explicit re-sign flow.
 - [x] Signing is unavailable while the team is archived or has not migrated to the current Officer generation.
@@ -353,8 +352,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
   total.
 - The update and delete APIs allow claims from a disabled week to change even though the portal exposes those actions only while the week is
   pending.
-- The signing API does not reject a goals-only weekly claim. Tracked by
-  [#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521).
 - The signing API accepts a team owner who is not the current Cash Remuneration owner. Such a signature cannot authorise the later contract
   withdrawal.
 - The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
