@@ -35,6 +35,9 @@ For the current `SUBMIT_RESTRICTION` consumer:
 - `disabled` and `beta` leave submission unrestricted;
 - enforcement runs on the backend, while the client mirrors the date guard for immediate feedback.
 
+Payroll wage versioning and member-week uniqueness do not use feature-flag status. They remain separate payroll data rules; this consumer
+only decides whether a submitted work date falls inside the claim-submission window.
+
 ## Invariants
 
 - Administrator CRUD routes require authentication and an administrator role.

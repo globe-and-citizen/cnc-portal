@@ -49,7 +49,8 @@ focused documents.
 | Current smart-contract behaviour                 | `docs/contracts/features/<contract>/README.md` |
 | Platform-wide engineering standards              | `docs/platform/` or `.github/` guides          |
 | Executable behaviour and regression proof        | Code and tests                                 |
-| Active delivery and historical decisions         | GitHub issues, pull requests, ADRs, and Git    |
+| Architectural decisions and trade-offs           | [`docs/adr/`](../adr/README.md)                |
+| Active delivery and history                      | GitHub issues, pull requests, and Git          |
 
 Product and contract documentation remain separate even when they share a name. For example, `docs/features/vesting/README.md` owns the
 portal journey, while `docs/contracts/features/vesting/README.md` owns the Solidity behaviour that supports it.

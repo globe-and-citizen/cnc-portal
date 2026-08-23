@@ -26,6 +26,7 @@ vi.mock('../../utils', async () => {
         findFirst: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
+        upsert: vi.fn(),
         update: vi.fn(),
         delete: vi.fn(),
       },
@@ -59,13 +60,13 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
   getCashRemunerationOwner: vi.fn(),
 }));
 
-// Mock the wage resolution utility so addClaim's resolveWageForWeek call
+// Mock the wage resolution utility so addClaim's resolveCurrentWage call
 // returns whatever we set up per-test via mockResolveWageForWeek.
 const { mockResolveWageForWeek } = vi.hoisted(() => ({
   mockResolveWageForWeek: vi.fn(),
 }));
 vi.mock('../../utils/wageResolution', () => ({
-  resolveWageForWeek: mockResolveWageForWeek,
+  resolveCurrentWage: mockResolveWageForWeek,
 }));
 
 // Mock the storage service
@@ -321,6 +322,33 @@ describe('Claim Controller', () => {
       expect(mockResolveWageForWeek).not.toHaveBeenCalled();
     });
 
+    it('keeps the first submitted wage weekly cap after a mid-week wage change', async () => {
+      const workedDay = dayjs.utc().subtract(1, 'day').startOf('day').toDate();
+      const submittedWeek = createMockWeeklyClaim({
+        wageId: 1,
+        wage: createMockWage({ id: 1, maximumHoursPerWeek: 40 }),
+      } as Partial<WeeklyClaim>);
+      (submittedWeek as any).claims = [
+        { id: 1, dayWorked: workedDay, hoursWorked: 39, minutesWorked: 2340 },
+      ];
+
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(submittedWeek);
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ id: 2, maximumHoursPerWeek: 60 }));
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: 1,
+          minutesWorked: 120,
+          memo: 'memo',
+          dayWorked: dayjs.utc().startOf('day').toISOString(),
+        });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('weekly hours limit would be exceeded');
+      expect(mockResolveWageForWeek).not.toHaveBeenCalled();
+    });
+
     it('should move a goals-only week onto the wage in force when hours arrive', async () => {
       // Goals commit nothing: the member had not submitted their hours when the
       // wage changed, so the first hours are priced at the new wage and the
@@ -438,7 +466,7 @@ describe('Claim Controller', () => {
       vi.mocked(getEffectiveStatus).mockResolvedValueOnce('disabled');
       mockResolveWageForWeek.mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
-      vi.spyOn(prisma.weeklyClaim, 'create').mockResolvedValue(createMockWeeklyClaim());
+      vi.spyOn(prisma.weeklyClaim, 'upsert').mockResolvedValue(createMockWeeklyClaim());
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
 
       const outOfWindow = dayjs.utc().subtract(10, 'day').startOf('day').toISOString();
@@ -456,7 +484,7 @@ describe('Claim Controller', () => {
 
       mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
-      vi.spyOn(prisma.weeklyClaim, 'create').mockResolvedValue(mockWeeklyClaims);
+      vi.spyOn(prisma.weeklyClaim, 'upsert').mockResolvedValue(mockWeeklyClaims);
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 
       const response = await request(app)
@@ -472,6 +500,18 @@ describe('Claim Controller', () => {
         wageId: mockClaim.wageId,
         weeklyClaimId: mockClaim.weeklyClaimId,
       });
+      expect(prisma.weeklyClaim.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            teamId_memberAddress_weekStart: expect.objectContaining({
+              teamId: 1,
+              memberAddress: TEST_ADDRESS,
+            }),
+          },
+          create: expect.objectContaining({ wageId: mockWage.id, status: 'pending' }),
+          update: {},
+        })
+      );
     });
 
     it('should create new claims with legacy hoursWorked set to 0', async () => {

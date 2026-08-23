@@ -77,7 +77,7 @@ const { mockResolveWageForWeek } = vi.hoisted(() => ({
   mockResolveWageForWeek: vi.fn(),
 }));
 vi.mock('../../utils/wageResolution', () => ({
-  resolveWageForWeek: mockResolveWageForWeek,
+  resolveCurrentWage: mockResolveWageForWeek,
 }));
 
 // Mock viem's recoverTypedDataAddress so tests can drive the recovery result
@@ -109,6 +109,7 @@ vi.mock('../../utils', async () => {
         findFirst: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
+        upsert: vi.fn(),
         update: vi.fn(),
         findUnique: vi.fn(),
         count: vi.fn().mockResolvedValue(0),
@@ -1061,16 +1062,22 @@ describe('Weekly Claim Controller', () => {
     it('creates a claim-less weekly claim when none exists yet', async () => {
       mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null as never);
-      vi.mocked(prisma.weeklyClaim.create).mockResolvedValue(
+      vi.mocked(prisma.weeklyClaim.upsert).mockResolvedValue(
         weeklyClaimFactory({ id: 42, weeklyGoals: GOALS_BODY.weeklyGoals }) as never
       );
 
       const response = await request(app).put('/goals').send(GOALS_BODY);
 
       expect(response.status).toBe(200);
-      expect(prisma.weeklyClaim.create).toHaveBeenCalledWith(
+      expect(prisma.weeklyClaim.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
+          where: {
+            teamId_memberAddress_weekStart: expect.objectContaining({
+              teamId: 1,
+              memberAddress: CALLER,
+            }),
+          },
+          create: expect.objectContaining({
             wageId: currentWage.id,
             memberAddress: CALLER,
             teamId: 1,
@@ -1098,7 +1105,7 @@ describe('Weekly Claim Controller', () => {
         where: { id: 5 },
         data: { weeklyGoals: GOALS_BODY.weeklyGoals },
       });
-      expect(prisma.weeklyClaim.create).not.toHaveBeenCalled();
+      expect(prisma.weeklyClaim.upsert).not.toHaveBeenCalled();
     });
 
     it('rejects with 409 when the week is already signed', async () => {
@@ -1111,7 +1118,7 @@ describe('Weekly Claim Controller', () => {
 
       expect(response.status).toBe(409);
       expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
-      expect(prisma.weeklyClaim.create).not.toHaveBeenCalled();
+      expect(prisma.weeklyClaim.upsert).not.toHaveBeenCalled();
     });
 
     it('returns 400 when the caller has no current wage', async () => {

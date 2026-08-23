@@ -8,8 +8,9 @@ rules belong in platform guides, and code and tests remain executable evidence.
 1. [Project Charter](./01_PROJECT_CHARTER.md) — product vision, scope, and governance.
 2. [Architecture Overview](./platform/architecture.md) — system boundaries and components.
 3. [Product Feature Inventory](./features/README.md) — current user-accessible client and backoffice capabilities.
-4. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human review contract.
-5. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
+4. [Architecture Decision Records](./adr/README.md) — durable technical choices and trade-offs.
+5. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human review contract.
+6. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
 
 The [Implementation Status](./03_IMPLEMENTATION_STATUS.md) and [Roadmap](./ROADMAP.md) are dated planning snapshots. Verify current delivery
 in the relevant feature README, code, tests, and GitHub state before relying on a status claim.
@@ -25,8 +26,9 @@ in the relevant feature README, code, tests, and GitHub state before relying on 
 | How does a shared runtime capability work?       | [Implementation Documentation](./implementation/README.md) |
 | How does a smart contract behave?                | [Contract Behaviour](./contracts/features/README.md)       |
 | How should platform code be written and tested?  | Platform and repository implementation guides              |
+| Why was an enduring architectural choice made?   | [Architecture Decision Records](./adr/README.md)           |
 | Where is the executable evidence?                | Current code and tests                                     |
-| Why or when was a change delivered?              | GitHub issues, pull requests, ADRs, and Git                |
+| Why or when was a change delivered?              | GitHub issues, pull requests, and Git                      |
 
 ## Feature Documentation
 
