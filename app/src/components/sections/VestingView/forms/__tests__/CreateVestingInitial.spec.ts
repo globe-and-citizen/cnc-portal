@@ -42,6 +42,12 @@ describe('CreateVesting.vue — configuration', () => {
     expect(wrapper.find('[data-test="member"]').exists()).toBe(true)
   })
 
+  it('closes the modal when the user cancels configuration', async () => {
+    await wrapper.find('[data-test="cancel-button"]').trigger('click')
+
+    expect(wrapper.emitted('closeAddVestingModal')).toHaveLength(1)
+  })
+
   it('shows field feedback instead of silently ignoring an invalid review action', async () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
