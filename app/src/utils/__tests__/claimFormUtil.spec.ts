@@ -112,6 +112,9 @@ describe('claimFormUtil', () => {
     expect(
       overLimit.error?.issues.find((issue) => issue.path.includes('hoursWorked'))?.message
     ).toContain('Already claimed: 7h')
+    expect(
+      overLimit.error?.issues.find((issue) => issue.path.includes('hoursWorked'))?.message
+    ).toContain('Remaining: 1h')
     expect(otherDay.success).toBe(true)
   })
 

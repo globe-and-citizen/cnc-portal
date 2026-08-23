@@ -55,11 +55,12 @@ const ClaimFormStub = defineComponent({
   template: '<div />'
 })
 
-const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
+const createWrapper = (props: Partial<{ claim: Claim; weekClaims: Claim[] }> = {}) => {
   const queryClient = new QueryClient()
   return mount(EditClaims, {
     props: {
-      claim: props.claim ?? defaultClaim
+      claim: props.claim ?? defaultClaim,
+      weekClaims: props.weekClaims
     },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
@@ -125,6 +126,21 @@ describe('EditClaims', () => {
       message: 'Server unavailable',
       title: 'Failed to update claim'
     })
+  })
+
+  it('passes only sibling claims to the daily allowance validation', () => {
+    const siblingClaim: Claim = {
+      ...defaultClaim,
+      id: 2,
+      minutesWorked: 420,
+      memo: 'Earlier work on the same day'
+    }
+    const wrapper = createWrapper({ weekClaims: [defaultClaim, siblingClaim] })
+    const form = wrapper.findComponent({ name: 'ClaimForm' })
+
+    expect(form.props('submissionRules')).toEqual(
+      expect.objectContaining({ existingClaims: [siblingClaim] })
+    )
   })
 
   it('emits close when cancel is triggered', async () => {
