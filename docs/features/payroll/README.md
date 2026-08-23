@@ -505,6 +505,7 @@ status of a user story.
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
 - [Member wage overview](../../../app/src/components/sections/DashboardView/MemberSection.vue)
 - [Daily claim form](../../../app/src/components/sections/CashRemunerationView/Form/ClaimForm.vue)
+- [Daily claim file upload](../../../app/src/components/sections/CashRemunerationView/Form/UploadFileDB.vue)
 - [Claim submission flow](../../../app/src/components/sections/CashRemunerationView/SubmitClaims.vue)
 - [Claim editing flow](../../../app/src/components/sections/CashRemunerationView/EditClaims.vue)
 - [Claim history daily breakdown](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue)
