@@ -9,17 +9,17 @@
 ## Context
 
 A weekly claim is the payroll aggregate used by daily claims, weekly goals, approval, and withdrawal. Its identity must therefore remain
-stable when a member's wage changes. The former wage-week identity allowed more than one aggregate for the same member and ISO week,
-which could split goals, hours, allowances, signatures, and terminal states across payroll records.
+stable when a member's wage changes. The former wage-week identity allowed more than one aggregate for the same member and ISO week, which
+could split goals, hours, allowances, signatures, and terminal states across payroll records.
 
-The affected [Payroll feature](../features/payroll/README.md) defines the current user-facing behaviour. The [database schema](../../backend/prisma/schema.prisma),
-[claim controller](../../backend/src/controllers/claimController.ts), and [weekly-claim controller](../../backend/src/controllers/weeklyClaimController.ts)
-are the executable implementation evidence.
+The affected [Payroll feature](../features/payroll/README.md) defines the current user-facing behaviour. The
+[database schema](../../backend/prisma/schema.prisma), [claim controller](../../backend/src/controllers/claimController.ts), and
+[weekly-claim controller](../../backend/src/controllers/weeklyClaimController.ts) are the executable implementation evidence.
 
 ## Decision
 
-Weekly claims are identified by team, member, and ISO week, independently of wage version. The database enforces this identity with a
-unique constraint, and claim and goals writes address the same member-week aggregate.
+Weekly claims are identified by team, member, and ISO week, independently of wage version. The database enforces this identity with a unique
+constraint, and claim and goals writes address the same member-week aggregate.
 
 A daily claim binds a weekly aggregate to the wage that is current when that first daily claim is submitted. That wage remains the
 historical pricing and allowance snapshot for later claims in the same week. A goals-only aggregate has not priced work yet, so its first
