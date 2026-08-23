@@ -43,7 +43,7 @@ complete journey belongs to the Accounts feature.
 | US-PAYROLL-002 | Pause or resume a member's wage            | Team owner          | 🧪 Validation  |    P2    | S      |
 | US-PAYROLL-003 | Fund the Payroll contract                  | Team owner          | 🔗 Reference   |    P1    | —      |
 | US-PAYROLL-004 | Set weekly goals                           | Team member         | 🧪 Validation  |    P3    | S      |
-| US-PAYROLL-005 | Submit a daily claim                       | Team member         | 🚧 In Progress |    P1    | M      |
+| US-PAYROLL-005 | Submit a daily claim                       | Team member         | 🧪 Validation  |    P1    | M      |
 | US-PAYROLL-006 | Edit a daily claim                         | Team member         | 🚧 In Progress |    P2    | S      |
 | US-PAYROLL-007 | Delete a daily claim                       | Team member         | 🚧 In Progress |    P2    | S      |
 | US-PAYROLL-008 | Sign a completed weekly claim              | Contract owner      | 🚧 In Progress |    P1    | L      |
@@ -62,31 +62,42 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 
 ### Acceptance Criteria
 
-- [x] The Set Wage action is available to the team owner for every member.
-- [x] The modal identifies the member and separates standard wage from optional overtime wage.
-- [x] Standard rates support the network-native token, USDC, and SHER; at least one rate must be enabled with a positive value.
-- [x] Disabling a rate resets its submitted amount to zero.
+#### Happy Path
+
+- [x] A team owner can set a wage for any team member.
+- [x] A successful wage request persists a new version that subsequent member-wage reads return.
+- [x] Member-wage reads expose the standard rates, overtime rates, weekly allowance, and daily allowance.
+
+#### Business Rules
+
+- [x] A wage belongs to one member and stores standard rates separately from optional overtime rates.
+- [x] Standard rates support the network-native token, USDC, and SHER.
+- [x] At least one standard token rate must be enabled with a positive value.
+- [x] A disabled token rate is submitted as zero.
 - [x] The regular weekly allowance is a whole number from 1 to 40 hours.
-- [x] The daily allowance is a whole number from 1 to 24 hours and defaults to 8 hours.
-- [x] The form explains that hours beyond the daily allowance cannot be claimed even when the weekly allowance has capacity.
-- [x] Overtime configuration requires at least one positive overtime rate and a whole-number allowance from 1 to 20 hours.
-- [x] Success closes the modal, reports that the wage was updated, and refreshes the member data.
-- [x] The member table shows standard and overtime rates, weekly and daily allowances, and an empty value when no wage exists.
-- [x] Editing pre-fills the operative wage and creates a new version instead of overwriting wage history.
-- [ ] A new wage version becomes current immediately; the product has no scheduled wage or future effective date
+- [x] The daily allowance is a whole number from 1 to 24 hours.
+- [x] The daily allowance defaults to 8 hours.
+- [x] The daily allowance remains a per-day cap even when the weekly allowance still has unused capacity.
+- [x] Overtime configuration requires at least one positive overtime rate.
+- [x] The overtime allowance is a whole number from 1 to 20 hours.
+- [x] A replacement wage references the operative wage as its predecessor without overwriting version history.
+- [ ] A new wage version becomes current immediately without a future activation option
       ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
-- [x] The API finds an existing weekly claim by team, member, and ISO week before selecting a wage.
-- [x] A weekly claim containing daily claims keeps the wage used for its first submitted hours after the member's current wage changes.
-- [x] Further daily claims for that week reuse the existing weekly claim and its rate, daily limit, weekly limit, and overtime rules.
-- [x] A goals-only weekly row does not lock its wage; its first daily claim can move it to the member's current wage.
-- [ ] _(database)_ At most one weekly claim can exist for a team, member, and ISO week; the current unique constraint still uses wage and
-      week ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
-- [ ] The portal and API expose no scheduled-wage badge, notice, timer, response field, or cancellation action
+- [x] A weekly claim containing daily claims retains its initial wage for the pricing and validation of all later claims in that ISO week.
+- [x] The first daily claim in a goals-only weekly row uses the member's current wage.
+- [ ] _(database)_ At most one weekly claim can exist for each team, member, and ISO week
       ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
+- [ ] The wage lifecycle has no cancellation operation ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
+- [x] Only team owners can set wages.
+- [x] Every wage version is stored off-chain.
+- [x] The wage endpoint returns the current wage.
+
+#### Edge & Error Cases
+
+- [x] Member-wage reads distinguish members who do not have a wage.
 - [x] A disabled wage cannot be replaced until the owner resumes it.
-- [x] Archived teams cannot create or replace wages.
-- [x] Non-owners cannot set a wage.
-- [x] Wages and their version chain are stored off-chain, and the wage endpoint returns the current wage.
+- [x] Archived teams cannot create wages.
+- [x] Archived teams cannot replace wages.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
 
@@ -100,12 +111,26 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 
 ### Acceptance Criteria
 
-- [x] The owner can pause an active wage and resume a paused wage.
-- [x] A paused wage blocks new, edited, and deleted daily claims and blocks a replacement wage.
-- [x] Resuming the wage restores the normal claim and wage-change actions.
+#### Happy Path
+
+- [x] The owner can pause an active wage.
+- [x] The owner can resume a paused wage.
+- [x] Resuming a wage restores daily-claim actions.
+- [x] Resuming a wage permits the owner to replace it.
+
+#### Business Rules
+
+- [x] A paused wage blocks new daily claims.
+- [x] A paused wage blocks daily-claim edits.
+- [x] A paused wage blocks daily-claim deletion.
+- [x] A paused wage blocks replacement wages.
 - [x] Non-owners cannot change the wage status.
-- [x] A missing, historical, or otherwise non-operative wage cannot be toggled.
-- [x] Archived teams cannot pause or resume a wage.
+
+#### Edge & Error Cases
+
+- [x] The status of a missing wage cannot be changed.
+- [x] The status of a historical wage cannot be changed.
+- [x] The wage status of an archived team cannot be changed.
 
 **Priority:** P2 (High) · **Effort:** S · **Status:** 🧪 Validation
 
@@ -121,10 +146,20 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ### Acceptance Criteria
 
-- [x] The Bank owner can send native assets with `transfer` and ERC-20 assets with `transferToken` to the Cash Remuneration address.
-- [x] The Cash Remuneration contract can receive native assets and supported ERC-20 transfers.
-- [x] _(contract)_ A withdrawal in a non-mintable asset fails when the Cash Remuneration contract lacks the required balance.
+#### Happy Path
+
+- [x] The Bank owner can send native assets to the Cash Remuneration address.
+- [x] The Bank owner can send supported ERC-20 assets to the Cash Remuneration address.
+- [x] The Cash Remuneration contract can receive native assets.
+- [x] The Cash Remuneration contract can receive supported ERC-20 assets.
+
+#### Business Rules
+
 - [x] _(contract)_ SHER compensation follows the configured Investor minting path instead of requiring a prefunded SHER balance.
+
+#### Edge & Error Cases
+
+- [x] _(contract)_ A withdrawal in a non-mintable asset fails when the Cash Remuneration contract lacks the required balance.
 
 **Priority:** P1 (Critical) · **Effort:** — · **Status:** 🔗 Reference
 
@@ -138,13 +173,25 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ### Acceptance Criteria
 
+#### Happy Path
+
 - [x] A member with a wage can submit a free-form Markdown goals memo.
 - [x] Goals can create a pending weekly claim before any daily hours are submitted.
 - [x] Saving again updates the single goals memo for that member and week.
-- [x] A member without an applicable wage cannot create the weekly goals record.
 - [x] Goals can be cleared with an empty memo.
-- [x] Goals become read-only once the week is signed, withdrawn, or disabled.
-- [x] Archived teams cannot create or update weekly goals.
+
+#### Business Rules
+
+- [x] Each member and ISO week has at most one goals memo.
+
+#### Edge & Error Cases
+
+- [x] A member without an applicable wage cannot create a weekly goals record.
+- [x] Goals are read-only once the week is signed.
+- [x] Goals are read-only once the week is withdrawn.
+- [x] Goals are read-only once the week is disabled.
+- [x] Archived teams cannot create weekly goals.
+- [x] Archived teams cannot update weekly goals.
 
 **Priority:** P3 (Medium) · **Effort:** S · **Status:** 🧪 Validation
 
@@ -156,32 +203,41 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 **I want to** log the work completed on a given day\
 **So that** it can be included in my weekly compensation
 
-### Implementation Review
-
-The daily-claim form implementation was reviewed after its internal API was simplified. The create and edit journeys, UTC date restrictions,
-attachment limit, validation, failure recovery, and claim request payload remain as specified below.
-
 ### Acceptance Criteria
 
-- [x] Submit Claim is available only to the selected member when an applicable wage exists and the selected week accepts new claims.
-- [x] The form contains a UTC work date, whole hours, ten-minute increments, a memo, and up to ten attachments.
-- [x] Duration is positive, is a multiple of ten minutes, and does not exceed 24 hours or the wage's lower daily allowance.
-- [x] The portal and API validate a supplied memo after trimming: it must contain 1 to 3,000 characters, so empty or whitespace-only values
-      and a 3,001-character value are rejected.
-- [x] Success reports that the claim was added, closes the modal, and refreshes weekly-claim data.
-- [x] The portal rejects a single claim above the daily allowance before submission.
-- [x] The portal includes existing claims for the selected day when checking the daily allowance and explains the allowance, claimed amount,
-      and remainder.
-- [x] _(API)_ The weekly total cannot exceed the combined regular and overtime allowances.
-- [x] _(API)_ The server enforces the daily allowance and uses an 8-hour fallback for legacy wages.
-- [x] When submission restriction is active, the portal and API accept only the current ISO week and at most four days in the past.
-- [x] Weeks that already carry a signature are unavailable in the date picker.
-- [x] Signed, withdrawn, and disabled weeks reject new claims.
-- [x] A paused wage rejects new claims.
-- [x] More than ten attachments are rejected by both the portal and API.
-- [x] A rejected request keeps the form available and displays the server error.
+#### Happy Path
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
+- [x] A member can submit a daily claim for themselves.
+- [x] A successful submission persists the daily claim and exposes it through subsequent weekly-claim reads.
+
+#### Business Rules
+
+- [x] A daily claim stores its work date in UTC.
+- [x] A daily-claim duration must be greater than 0.
+- [x] A daily-claim duration must use ten-minute increments.
+- [x] A daily-claim duration cannot exceed 24 hours.
+- [x] A daily-claim duration cannot exceed the wage's lower daily allowance.
+- [x] A daily-claim memo must contain 1 to 3,000 characters after trimming.
+- [x] A daily claim can contain at most ten attachments.
+- [x] Daily-allowance validation adds the new duration to the existing claims for the selected work date.
+- [x] _(API)_ The weekly total cannot exceed the combined regular and overtime allowances.
+- [x] _(API)_ The server enforces the daily allowance with an 8-hour fallback for legacy wages.
+- [x] When submission restriction is active, the portal accepts claims only for the current ISO week.
+- [x] _(API)_ When submission restriction is active, the API accepts claims only for the current ISO week.
+- [x] When submission restriction is active, the portal accepts work dates at most four days in the past.
+- [x] _(API)_ When submission restriction is active, the API accepts work dates at most four days in the past.
+
+#### Edge & Error Cases
+
+- [x] A daily claim submitted for another member is rejected.
+- [x] A daily claim submitted without an applicable wage is rejected.
+- [x] A signed week or a week that already carries a signature rejects new daily claims.
+- [x] A withdrawn week rejects new daily claims.
+- [x] A disabled week rejects new daily claims.
+- [x] A paused wage rejects new claims.
+- [x] A rejected submission leaves the daily-claim state unchanged and returns its rejection reason.
+
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-001
 
@@ -193,20 +249,26 @@ attachment limit, validation, failure recovery, and claim request payload remain
 
 ### Acceptance Criteria
 
+#### Happy Path
+
 - [x] The claim owner can edit the duration, memo, and attachments while the week is pending.
-- [x] The work date remains locked during editing.
-- [x] The update API permits a partial update without a memo; when a memo is supplied, the portal and API apply the same trimmed
-      1-to-3,000-character rule as claim creation.
+- [x] A successful edit persists the new claim values.
+
+#### Business Rules
+
+- [x] Editing cannot change the claim's original work date.
+- [x] The update API permits a partial update without a memo.
+- [x] A supplied memo must contain 1 to 3,000 characters after trimming.
 - [x] The combined existing and new attachment count cannot exceed ten.
 - [x] _(API)_ The weekly allowance is rechecked while excluding the claim being edited.
 - [x] _(API)_ The daily allowance is rechecked for the original work date while excluding the claim being edited.
-- [ ] The edit form includes other claims from the same day in its pre-submit daily-limit feedback; the API currently catches this only
-      after submission.
 - [x] A user other than the claim owner cannot edit the claim.
-- [ ] The API restricts editing to a pending week; it currently also accepts a disabled weekly claim even though the portal hides the
-      action.
+- [ ] The API rejects claim edits when the weekly claim is disabled.
+
+#### Edge & Error Cases
+
 - [x] A paused wage blocks claim editing.
-- [x] Success refreshes the claim data and failure keeps an actionable error in the modal.
+- [x] A rejected edit leaves the stored claim unchanged and returns its rejection reason.
 - [x] Archived teams cannot edit claims.
 
 **Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
@@ -221,16 +283,22 @@ attachment limit, validation, failure recovery, and claim request payload remain
 
 ### Acceptance Criteria
 
-- [x] The owner can open a confirmation showing the claim duration and date for a pending claim.
-- [x] Confirming deletion reports success and refreshes weekly-claim data.
-- [x] Stored attachments belonging to the deleted claim are removed.
-- [x] Deleting the final claim removes an otherwise empty weekly claim but preserves a row that still contains weekly goals.
+#### Happy Path
+
+- [x] A confirmed deletion removes the claim and its stored attachments from subsequent weekly-claim reads.
+
+#### Business Rules
+
+- [x] Deleting a daily claim requires its owner's confirmation before stored data changes.
+- [x] Deleting the final daily claim removes an otherwise empty weekly claim but preserves one that still contains goals.
 - [x] A user other than the claim owner cannot delete the claim.
-- [ ] The API restricts deletion to a pending week; it currently also accepts a disabled weekly claim even though the portal hides the
-      action.
+- [ ] The API rejects claim deletion when the weekly claim is disabled.
+
+#### Edge & Error Cases
+
 - [x] A paused wage blocks claim deletion.
 - [x] Archived teams cannot delete claims.
-- [x] A failed deletion remains visible as an error rather than success.
+- [x] A failed deletion leaves the stored claim unchanged and returns a failure outcome.
 
 **Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
 
@@ -244,21 +312,29 @@ attachment limit, validation, failure recovery, and claim request payload remain
 
 ### Acceptance Criteria
 
-- [x] The portal exposes the sign action only to the current Cash Remuneration contract owner.
-- [ ] The API uses the same signing authority as the portal and contract; it currently also accepts the team owner when that address is not
-      the Cash Remuneration owner.
+#### Happy Path
+
+- [x] Only the current Cash Remuneration contract owner can initiate signing through the product journey.
 - [x] Signing requests an EIP-712 wallet signature bound to Cash Remuneration version 1, the active contract, and the active chain.
-- [x] The portal exposes signing only when the weekly claim contains at least one daily claim.
-- [ ] _(API)_ The backend rejects signing a goals-only weekly claim; it currently does not load or validate the daily-claim count
-      ([#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521)).
-- [x] The current week and future weeks cannot be signed.
-- [x] Normal signing applies to pending weeks; a disabled claim uses the explicit re-sign flow.
-- [x] Signing is unavailable while the team is archived or has not migrated to the current Officer generation.
-- [x] _(API)_ The signed-against contract must match the team's current Cash Remuneration contract, and the recovered signer must match the
-      caller.
-- [x] A rejected wallet signature is reported without changing the weekly claim.
-- [x] A previous-contract signature is reset to pending during reconciliation so the current owner can sign it again against the active
-      contract.
+
+#### Business Rules
+
+- [ ] The API authorizes only the current Cash Remuneration contract owner.
+- [x] The product journey permits signing only when the weekly claim contains at least one daily claim.
+- [ ] _(API)_ The backend rejects signing a goals-only weekly claim ([#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521)).
+- [x] Normal signing applies only to pending weeks.
+- [x] A disabled claim uses the explicit re-sign flow.
+- [x] _(API)_ The signed-against contract must match the team's current Cash Remuneration contract.
+- [x] _(API)_ The recovered signer must match the caller.
+
+#### Edge & Error Cases
+
+- [x] The current week cannot be signed.
+- [x] A future week cannot be signed.
+- [x] Archived teams cannot sign weekly claims.
+- [x] Teams that have not migrated to the current Officer generation cannot sign weekly claims.
+- [x] Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
+- [x] Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
 - [x] Re-signing a disabled current-contract claim re-enables its existing signature before storing the replacement.
 
 **Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
@@ -273,14 +349,22 @@ attachment limit, validation, failure recovery, and claim request payload remain
 
 ### Acceptance Criteria
 
+#### Happy Path
+
 - [x] The current Cash Remuneration owner can disable a signed claim on-chain.
 - [x] The owner can re-enable a disabled claim that has an existing signature.
-- [x] Successful contract actions reconcile the stored status and refresh the action menu.
-- [x] Withdrawn claims expose no disable or enable action in the portal.
-- [x] The action menu exposes only the transition valid for the current signed or disabled state.
+- [x] A successful on-chain disable operation reconciles the stored weekly claim to disabled.
+- [x] A successful on-chain enable operation reconciles the stored weekly claim to signed.
+
+#### Business Rules
+
 - [x] Users who are not the Cash Remuneration owner cannot invoke the contract actions.
-- [ ] The legacy weekly-claim update API cannot mark a claim enabled or disabled without the matching on-chain action; it currently accepts
-      a team owner and updates only the database.
+- [ ] The legacy weekly-claim update API does not change stored status without the matching on-chain action.
+
+#### Edge & Error Cases
+
+- [x] A withdrawn claim cannot transition to disabled.
+- [x] A withdrawn claim cannot transition to enabled.
 
 **Priority:** P2 (High) · **Effort:** M · **Status:** 🚧 In Progress
 
@@ -294,18 +378,31 @@ attachment limit, validation, failure recovery, and claim request payload remain
 
 ### Acceptance Criteria
 
-- [x] A signed week exposes Withdraw only to the member named by the claim.
+#### Happy Path
+
+- [x] Only the member named by a signed weekly claim can initiate its withdrawal.
 - [x] Withdrawal sends the complete native-token, ERC-20, and mintable-token wage payload on-chain.
-- [x] Success reports Claim withdrawn and reconciles the stored status with the contract.
-- [x] Withdraw is unavailable after payment and while the team is archived.
-- [x] A weekly claim without signed status or without a signature cannot be withdrawn through the product journey.
-- [x] _(API)_ A user outside the team, another member, and the team or contract owner cannot mark a member's weekly claim withdrawn on their
-      behalf.
+- [x] A successful withdrawal transfers the approved compensation.
+- [x] A successful withdrawal reconciles the stored status with the contract.
+
+#### Business Rules
+
+- [x] _(API)_ Only the member named by the weekly claim can mark it as withdrawn.
 - [x] A signature bound to another Cash Remuneration contract or network is rejected before the transaction.
 - [x] A signature that no longer recovers the current contract owner is rejected.
 - [x] _(contract)_ The caller must match the employee encoded by the signed claim.
-- [x] _(contract)_ A paid, disabled, unsupported-token, underfunded, or paused claim reverts.
-- [x] Cancelling the wallet transaction produces no success state and no error toast.
+- [x] Product withdrawal requires both signed status and a stored signature.
+
+#### Edge & Error Cases
+
+- [x] A paid claim cannot be withdrawn.
+- [x] A claim belonging to an archived team cannot be withdrawn.
+- [x] _(contract)_ A paid claim reverts.
+- [x] _(contract)_ A disabled claim reverts.
+- [x] _(contract)_ A claim with an unsupported token reverts.
+- [x] _(contract)_ A claim reverts when the Cash Remuneration contract lacks the required balance.
+- [x] _(contract)_ A withdrawal reverts while the Cash Remuneration contract is paused.
+- [x] Cancelling the wallet transaction leaves the claim unpaid and its stored status unchanged.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -319,11 +416,26 @@ attachment limit, validation, failure recovery, and claim request payload remain
 
 ### Acceptance Criteria
 
-- [x] Reconciliation reads every signed or disabled claim and updates paid claims to withdrawn and on-chain-disabled claims to disabled.
-- [x] A signature bound to a previous Cash Remuneration contract is cleared and returned to pending.
-- [x] Reconciliation runs when team data loads and after successful withdraw, disable, or enable actions.
-- [x] A missing or invalid signature and a failed contract read skip only the affected row.
-- [x] The result reports processed, updated, and skipped claims and refreshes weekly-claim queries.
+#### Happy Path
+
+- [x] Reconciliation evaluates every signed or disabled weekly claim.
+- [x] Reconciliation updates a paid weekly claim to withdrawn.
+- [x] Reconciliation updates an on-chain-disabled weekly claim to disabled.
+- [x] Reconciliation runs when team data loads.
+- [x] Reconciliation runs after a successful withdrawal.
+- [x] Reconciliation runs after a successful disable operation.
+- [x] Reconciliation runs after a successful enable operation.
+- [x] Reconciliation reports the numbers of processed, updated, and skipped claims.
+- [x] Subsequent weekly-claim reads expose the reconciled statuses.
+
+#### Business Rules
+
+- [x] A signature bound to a previous Cash Remuneration contract is cleared and its weekly claim returns to pending.
+
+#### Edge & Error Cases
+
+- [x] A missing or invalid signature skips only the affected weekly claim.
+- [x] A failed contract read skips only the affected weekly claim.
 
 **Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -337,13 +449,26 @@ attachment limit, validation, failure recovery, and claim request payload remain
 
 ### Acceptance Criteria
 
-- [x] A member's history shows each week's status, total duration, token amounts, daily breakdown, goals, and attachments.
-- [x] The Company Payroll table shows member, week, duration, rates, computed amounts, status, and currently available actions.
-- [x] _(API)_ Weekly claims can be filtered by status and member, and total minutes are derived from their daily claims.
-- [x] The Company Payroll table requests a paginated slice of at most 100 rows; unpaginated consumers receive the same `{ data, total }`
-      response shape.
+#### Happy Path
+
+- [x] A member can review each weekly claim's status, total duration, token amounts, daily breakdown, goals, and attachments.
+- [x] Team-wide payroll history provides each claim's member, week, duration, rates, computed amounts, status, and valid transitions.
+- [x] _(API)_ Weekly claims can be filtered by status.
+- [x] _(API)_ Weekly claims can be filtered by member.
+- [x] _(API)_ Weekly-claim total minutes are derived from their daily claims.
+
+#### Business Rules
+
+- [x] Paginated team-wide payroll history returns at most 100 rows per page.
+- [x] Unpaginated team-wide payroll history uses the `{ data, total }` response shape.
 - [x] Every authenticated team member can retrieve team-wide payroll records so that compensation remains transparent within the team.
-- [x] Invalid status, member-address, page, and limit filters are rejected.
+
+#### Edge & Error Cases
+
+- [x] An invalid status filter is rejected.
+- [x] An invalid member-address filter is rejected.
+- [x] An invalid page filter is rejected.
+- [x] An invalid limit filter is rejected.
 
 **Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -351,19 +476,27 @@ attachment limit, validation, failure recovery, and claim request payload remain
 
 ## Known Gaps
 
-- The current implementation still schedules some wage changes with `effectiveFrom`, exposes the scheduled state through the API and portal,
-  and enforces weekly-claim uniqueness by wage and week instead of team, member, and week. Tracked by
+Functional gaps map to unchecked acceptance criteria. UI/UX notes remain visible separately but do not define the functional completion
+status of a user story.
+
+### Functional Gaps
+
+- The current implementation still schedules some wage changes with `effectiveFrom`, exposes a scheduled-wage lifecycle, and enforces
+  weekly-claim uniqueness by wage and week instead of team, member, and week. Tracked by
   [#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522).
-- The edit form does not include the other claims from the same day in its inline daily-limit check; the API still rejects the invalid
-  total.
-- The update and delete APIs allow claims from a disabled week to change even though the portal exposes those actions only while the week is
-  pending.
+- The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
+  week is pending.
 - The signing API does not reject a goals-only weekly claim. Tracked by
   [#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521).
 - The signing API accepts a team owner who is not the current Cash Remuneration owner. Such a signature cannot authorise the later contract
   withdrawal.
 - The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
-- The Submit Claim modal says that only one claim can be submitted per week, while the implemented model allows multiple daily claims in the
+
+### UI/UX Notes
+
+- The edit flow does not include the other claims from the same day in its pre-submit daily-limit feedback; the API still rejects the
+  invalid total.
+- The Submit Claim copy says that only one claim can be submitted per week, while the implemented model allows multiple daily claims in the
   same weekly claim.
 
 ## Implementation Evidence
