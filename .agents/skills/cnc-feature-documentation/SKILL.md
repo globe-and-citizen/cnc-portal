@@ -52,6 +52,10 @@ requested or required by the active GitHub workflow.
 - Make each acceptance criterion an independently observable functional outcome. Cover the business result, permissions, validation
   boundaries, state transitions, persistence, cancellation, failure, retry, reconciliation, API, or contract outcomes that materially affect
   that story.
+- Under every story's `Acceptance Criteria`, use the guide's `Happy Path`, `Business Rules`, and `Edge & Error Cases` categories. Keep each
+  criterion atomic and cohesive: one observable result or one independently verifiable business rule. Group attributes of the same response,
+  payload, signature domain, transition, or invariant when they use the same evidence and checkbox status. Split parts that can meaningfully
+  pass or fail independently, require different evidence, or have different implementation states.
 - Write criteria that remain true if the interface is visually redesigned without changing the product behaviour. Do not prescribe
   components, layout, styling, copy, animations, breakpoints, or other UI/UX choices in feature acceptance criteria. Track those concerns in
   their dedicated design, accessibility, or quality scope.
