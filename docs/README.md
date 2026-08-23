@@ -172,9 +172,14 @@ Follow the [Feature Documentation Guide](./platform/feature-specification-guide.
 
 ## Documentation Validation
 
-Run the Markdown checks for every documentation change:
+Run the documentation checks for every documentation change and before handing over a behavioural
+change. The freshness check requires the canonical feature, contract, or implementation owner to be
+reviewed in the same pull request; see the
+[Documentation Freshness Policy](./platform/documentation-freshness-policy.md).
 
 ```bash
+npm run test:docs-freshness
+npm run lint:docs-freshness
 npm run lint:md
 npm run format:md:check
 bash scripts/audit-doc-drift.sh

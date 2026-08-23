@@ -20,10 +20,14 @@ CNC Portal is a Crypto Native Corporation Portal built with:
 
 ### Docs
 
-For every feature create documentation in the `/docs` folder using Markdown files. Follow the
-existing structure and naming conventions.
+For every feature create and maintain canonical documentation in the `/docs` folder. Before editing
+behavioural code, find the owner described by the
+[Documentation Freshness Policy](../../docs/platform/documentation-freshness-policy.md), then update
+that document in the same change. CI rejects behavioural source changes with no canonical evidence
+owner or an unchanged owner document.
 
-Try to keep each feature documentation short, and use mermaid for diagrams where applicable.
+Keep each feature document short, use Mermaid for diagrams where applicable, and follow the
+[Feature Documentation Guide](../../docs/platform/feature-specification-guide.md).
 
 ### Display Formatting
 
