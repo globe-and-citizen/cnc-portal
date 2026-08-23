@@ -35,11 +35,11 @@ flowchart TB
 
 ## Status Overview
 
-| User Story  | Title                             | Actor                  | Status        | Priority | Effort |
-| ----------- | --------------------------------- | ---------------------- | ------------- | :------: | ------ |
-| US-AUTH-001 | Sign in to the client             | Portal user            | 🧪 Validation |    P1    | M      |
-| US-AUTH-002 | Sign in to the backoffice         | Platform administrator | 🧪 Validation |    P1    | M      |
-| US-AUTH-003 | Recover from an interrupted login | Portal user            | 🧪 Validation |    P1    | S      |
+| User Story  | Title                             | Actor                  | Status         | Priority | Effort |
+| ----------- | --------------------------------- | ---------------------- | -------------- | :------: | ------ |
+| US-AUTH-001 | Sign in to the client             | Portal user            | 🧪 Validation  |    P1    | M      |
+| US-AUTH-002 | Sign in to the backoffice         | Platform administrator | 🧪 Validation  |    P1    | M      |
+| US-AUTH-003 | Recover from an interrupted login | Portal user            | 🚧 In Progress |    P1    | S      |
 
 ## US-AUTH-001: Sign in to the Client
 
@@ -49,11 +49,23 @@ flowchart TB
 
 ### Acceptance Criteria
 
-- [ ] The login page identifies Sign-In with Ethereum as the authentication action.
-- [ ] The journey connects the wallet and requests the configured network before signing.
-- [ ] The wallet message can be reviewed and rejected without sending a transaction or consuming gas.
-- [ ] A successful signature and backend verification open the Companies surface.
-- [ ] A protected client route redirects a user without a valid session to login.
+#### Happy Path
+
+- [x] A portal user can authenticate by signing a SIWE message and access their companies.
+- [x] An unknown wallet address receives a default portal user account after successful authentication.
+
+#### Business Rules
+
+- [x] The wallet is connected and switched to the configured network before the SIWE message is signed.
+- [x] The SIWE message binds the wallet address, nonce, chain, domain, URI, and protocol version.
+- [x] The backend verifies the message signature and current nonce before authenticating the user.
+- [x] Successful authentication rotates the nonce and issues a JWT valid for 24 hours.
+- [x] Authentication signs a message without submitting an on-chain transaction or consuming gas.
+
+#### Edge & Error Cases
+
+- [x] A portal user without a valid local session is redirected from protected client routes to login.
+- [x] An invalid SIWE message or signature is rejected without authenticating the user.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -65,11 +77,22 @@ flowchart TB
 
 ### Acceptance Criteria
 
-- [ ] The dashboard separates wallet connection from message signing.
-- [ ] The connected wallet address is visible before the user signs in.
-- [ ] A successful administrator login opens the backoffice Overview.
-- [ ] An authenticated user without an administrator role reaches Access Denied rather than a protected module.
-- [ ] Logging out clears the session and returns the user to login.
+#### Happy Path
+
+- [x] A platform administrator can connect a wallet, sign a SIWE message, and access the backoffice.
+- [x] Wallet connection can be completed before the authentication message is signed.
+
+#### Business Rules
+
+- [x] Protected backoffice capabilities require an authenticated user with an administrator or super-administrator role.
+- [x] Successful backoffice authentication persists the access token and authenticated wallet address.
+- [x] Logging out clears the persisted session, disconnects the wallet, and returns the user to login.
+
+#### Edge & Error Cases
+
+- [x] A missing access token or wallet address redirects the user to login.
+- [x] An authenticated user without an administrator role is denied access to protected backoffice capabilities.
+- [x] A failed token or user validation clears the persisted backoffice session and redirects the user to login.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -81,22 +104,42 @@ flowchart TB
 
 ### Acceptance Criteria
 
-- [ ] Rejecting wallet connection, network switching, or message signing leaves the user logged out.
-- [ ] A nonce, authentication, or profile request failure leaves the protected surface inaccessible.
-- [ ] The client identifies the failed login stage with a user-facing error.
-- [ ] The dashboard displays a recoverable login error and allows another attempt.
-- [ ] A failed attempt does not expose a protected route or persist a valid session.
+#### Happy Path
 
-**Priority:** P1 (Critical) · **Effort:** S · **Status:** 🧪 Validation
+- [x] A user can retry authentication after an unsuccessful login attempt.
+
+#### Business Rules
+
+- [x] Rejecting wallet connection, network switching, or message signing does not authenticate the user.
+- [x] A nonce, authentication, or profile request failure does not set the client authentication state.
+- [x] The client classifies wallet connection, network switching, signature, and backend failures separately.
+- [x] The backoffice classifies rejected signatures, network mismatches, backend failures, and connectivity failures separately.
+- [ ] The client removes an issued access token when the following profile request fails.
+
+#### Edge & Error Cases
+
+- [x] A missing wallet provider leaves the user unauthenticated.
+- [x] An unsuccessful login attempt does not provide access to a protected product surface.
+
+**Priority:** P1 (Critical) · **Effort:** S · **Status:** 🚧 In Progress
+
+## Known Gaps
+
+- The client persists the issued access token if the following profile request fails, although the local authentication state remains false.
 
 ## Implementation Evidence
 
 - [Client login page](../../../app/src/views/LoginView.vue)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
 - [Client SIWE tests](../../../app/src/composables/__tests__/useSiwe.spec.ts)
+- [Client route guard](../../../app/src/router/index.ts)
+- [Client route guard tests](../../../app/src/router/__tests__/index.spec.ts)
 - [Dashboard login page](../../../dashboard/app/pages/login.vue)
 - [Dashboard SIWE orchestration](../../../dashboard/app/composables/useSiwe.ts)
 - [Dashboard route guard](../../../dashboard/app/middleware/auth.global.ts)
+- [Dashboard login error classification](../../../dashboard/app/utils/loginError.ts)
+- [Backend SIWE controller](../../../backend/src/controllers/authController.ts)
+- [Backend authentication middleware](../../../backend/src/middleware/authMiddleware.ts)
 - [Backend authentication tests](../../../backend/src/controllers/__tests__/authController.test.ts)
 
 ## Related Documentation
