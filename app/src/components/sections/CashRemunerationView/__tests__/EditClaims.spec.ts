@@ -41,24 +41,18 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-const resetFormMock = vi.fn()
-
 const ClaimFormStub = defineComponent({
   name: 'ClaimForm',
   props: {
     initialData: { type: Object, required: false },
-    isEdit: { type: Boolean, required: false },
-    isLoading: { type: Boolean, required: false },
-    restrictSubmit: { type: Boolean, required: false },
+    mode: { type: String, required: false },
+    loading: { type: Boolean, required: false },
     existingFiles: { type: Array, required: false },
-    errorMessage: { type: String, required: false, default: '' },
-    errorTitle: { type: String, required: false, default: '' }
+    submissionRules: { type: Object, required: false },
+    error: { type: Object, required: false }
   },
   emits: ['submit', 'cancel', 'delete-file'],
-  setup(_, { expose }) {
-    expose({ resetForm: resetFormMock })
-    return () => null
-  }
+  template: '<div />'
 })
 
 const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
@@ -116,7 +110,7 @@ describe('EditClaims', () => {
     expect(wrapper.emitted('close')).toBeUndefined()
   })
 
-  it('passes backend error message to ClaimForm when mutation returns an error', async () => {
+  it('passes backend error details to ClaimForm when mutation returns an error', async () => {
     vi.mocked(useEditClaimWithFilesMutation).mockReturnValueOnce(
       createMockMutationResponse(null, false, new Error('Server unavailable')) as ReturnType<
         typeof useEditClaimWithFilesMutation
@@ -127,8 +121,10 @@ describe('EditClaims', () => {
     await flushPromises()
 
     const form = wrapper.findComponent({ name: 'ClaimForm' })
-    expect(form.props('errorMessage')).toBe('Server unavailable')
-    expect(form.props('errorTitle')).toBe('Failed to update claim')
+    expect(form.props('error')).toEqual({
+      message: 'Server unavailable',
+      title: 'Failed to update claim'
+    })
   })
 
   it('emits close when cancel is triggered', async () => {
