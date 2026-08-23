@@ -30,11 +30,11 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                        | Actor                  | Status        | Priority | Effort |
-| ----------- | ---------------------------- | ---------------------- | ------------- | :------: | ------ |
-| US-FLAG-001 | Manage global restrictions   | Platform administrator | 🧪 Validation |    P1    | M      |
-| US-FLAG-002 | Manage team overrides        | Platform administrator | 🧪 Validation |    P1    | M      |
-| US-FLAG-003 | Remove obsolete restrictions | Platform administrator | 🧪 Validation |    P2    | S      |
+| User Story  | Title                        | Actor                  | Status         | Priority | Effort |
+| ----------- | ---------------------------- | ---------------------- | -------------- | :------: | ------ |
+| US-FLAG-001 | Manage global restrictions   | Platform administrator | 🧪 Validation  |    P1    | M      |
+| US-FLAG-002 | Manage team overrides        | Platform administrator | 🚧 In Progress |    P1    | M      |
+| US-FLAG-003 | Remove obsolete restrictions | Platform administrator | 🚧 In Progress |    P2    | S      |
 
 ## US-FLAG-001: Manage Global Restrictions
 
@@ -44,11 +44,24 @@ flowchart LR
 
 ### Acceptance Criteria
 
-- [ ] The list shows every restriction with its function name and global status.
-- [ ] The administrator can create a restriction using a valid function name and status.
-- [ ] Duplicate or invalid function names are rejected with a visible error.
-- [ ] The administrator can change an existing global status to enabled, disabled, or beta.
-- [ ] A failed update preserves the previously displayed persisted state.
+#### Happy Path
+
+- [x] An administrator can list every restriction with its function name and global status.
+- [x] An administrator can create an available predefined restriction with an initial status.
+- [x] An administrator can change an existing restriction's global status.
+
+#### Business Rules
+
+- [x] Only authenticated administrators can manage feature restrictions.
+- [x] A restriction status must be `enabled`, `disabled`, or `beta`.
+- [x] A restriction function name contains only uppercase letters and underscores.
+- [x] Each restriction function name is unique.
+
+#### Edge & Error Cases
+
+- [x] An invalid or duplicate restriction is rejected without creating a record.
+- [x] Updating a missing restriction is rejected without creating a record.
+- [x] An invalid global status update is rejected without changing the persisted restriction.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -60,13 +73,28 @@ flowchart LR
 
 ### Acceptance Criteria
 
-- [ ] The restriction detail shows its current team overrides.
-- [ ] The administrator can add an override for an existing team.
-- [ ] A duplicate override for the same team and restriction is rejected.
-- [ ] The administrator can update an override to enabled, disabled, or beta.
-- [ ] Removing an override returns that team to the global status.
+#### Happy Path
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+- [ ] Restriction details include every configured team override.
+- [x] An administrator can add an override for an existing team.
+- [x] An administrator can change an override's status.
+- [x] Removing an override returns the team to the restriction's global status.
+
+#### Business Rules
+
+- [x] A team can have at most one override for each restriction.
+- [x] An override status must be `enabled`, `disabled`, or `beta`.
+- [x] A team's override takes precedence over the restriction's global status.
+- [x] An override can reference only an existing restriction and team.
+
+#### Edge & Error Cases
+
+- [x] A duplicate override is rejected without changing the existing override.
+- [x] Updating a missing override is rejected without creating one.
+- [x] Removing a missing override is rejected without changing other overrides.
+- [x] An invalid override status is rejected without changing the persisted override.
+
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
 
 ## US-FLAG-003: Remove Obsolete Restrictions
 
@@ -76,13 +104,33 @@ flowchart LR
 
 ### Acceptance Criteria
 
-- [ ] The administrator is asked to confirm the destructive action.
-- [ ] Cancelling confirmation leaves the restriction and its overrides unchanged.
-- [ ] Confirming deletion removes the restriction from the list.
-- [ ] Deleting a restriction also removes its team overrides.
-- [ ] A failed deletion remains visible as an error rather than success.
+#### Happy Path
 
-**Priority:** P2 (High) · **Effort:** S · **Status:** 🧪 Validation
+- [x] An administrator can delete an existing restriction.
+- [x] Successful deletion removes the restriction and all its team overrides.
+
+#### Business Rules
+
+- [x] Only authenticated administrators can delete a restriction.
+
+#### Edge & Error Cases
+
+- [x] Cancelling deletion leaves the restriction and its overrides unchanged.
+- [x] Deleting a missing restriction is rejected.
+- [x] A failed deletion is reported as a failure rather than success.
+- [ ] A failed deletion leaves the restriction and all its team overrides unchanged.
+
+**Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
+
+## Known Gaps
+
+- Restriction details return at most 100 team overrides, so additional overrides are omitted.
+- Restriction deletion removes overrides before deleting the restriction without a database transaction, so a partial failure can remove
+  overrides while preserving the restriction.
+
+## UI/UX Notes
+
+- The backoffice asks for confirmation before deleting a restriction and allows the administrator to cancel that confirmation.
 
 ## Implementation Evidence
 
@@ -91,6 +139,9 @@ flowchart LR
 - [Global restriction component](../../../../dashboard/app/components/features/FeatureGlobalRestriction.vue)
 - [Team override component](../../../../dashboard/app/components/features/TeamOverridesSection.vue)
 - [Feature queries](../../../../dashboard/app/queries/feature.query.ts)
+- [Backend feature controller](../../../../backend/src/controllers/featureController.ts)
+- [Backend feature validation](../../../../backend/src/validation/featureValidation.ts)
+- [Backend feature persistence](../../../../backend/src/utils/featureUtils.ts)
 - [Backend controller tests](../../../../backend/src/controllers/__tests__/featureController.test.ts)
 
 ## Related Documentation
