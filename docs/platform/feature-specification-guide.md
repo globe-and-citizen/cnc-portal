@@ -1,6 +1,6 @@
 # Feature Documentation Guide
 
-**Status:** Trial — applied first to Vesting
+**Status:** Trial — initially applied to Vesting; categorized acceptance criteria piloted on Payroll
 
 **Last updated:** 2026-08-23
 
@@ -75,7 +75,11 @@ portal journey, while `docs/contracts/features/vesting/README.md` owns the Solid
 Acceptance criteria are the centre of feature review. Their checkboxes record verified implementation, while the story status and
 `Last reviewed` record human product validation.
 
+- Organize every story's criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases` so normal outcomes, invariant rules, and
+  exceptional behaviour can be reviewed separately.
 - One criterion describes one observable functional outcome: what the actor can accomplish or what domain or system result follows.
+- One criterion may instead describe one independently verifiable business rule.
+- Keep every criterion atomic, testable, concise, unambiguous, and focused on the required outcome rather than its implementation.
 - Every criterion must produce a clear pass or fail result.
 - A criterion must remain true when the interface is visually redesigned without changing product behaviour.
 - UI and UX choices do not belong in feature acceptance criteria. Keep component types, layout, styling, exact copy, animations,
@@ -173,8 +177,17 @@ Put each part of the user-story sentence on its own source line and rendered lin
 
 ### Acceptance Criteria
 
-- [ ] One observable pass-or-fail outcome.
-- [ ] One authorization, boundary, or recovery outcome.
+#### Happy Path
+
+- [ ] One observable successful outcome.
+
+#### Business Rules
+
+- [ ] One independently verifiable authorization, limit, or domain rule.
+
+#### Edge & Error Cases
+
+- [ ] One observable boundary, invalid-input, unavailable-state, failure, or recovery outcome.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
 
@@ -232,6 +245,39 @@ materially affect the story:
 - state refresh or on-chain reconciliation outcomes;
 - API, contract, or system results.
 
+For every user story, organize the criteria into these categories:
+
+1. `Happy Path` — expected behaviour when the feature is used normally and succeeds.
+2. `Business Rules` — functional constraints, permissions, limits, and domain rules that must always hold.
+3. `Edge & Error Cases` — boundaries, invalid inputs, unavailable states, failures, and other exceptional scenarios.
+
+The core rule is: **one acceptance criterion equals one observable behaviour or one independently verifiable business rule.** Each criterion
+must be:
+
+- **Atomic:** do not combine independent rules or outcomes.
+- **Testable:** a developer or QA reviewer can determine whether it passes or fails.
+- **Concise:** prefer one clear sentence.
+- **Unambiguous:** state the expected behaviour explicitly.
+- **Outcome-focused:** describe what the system must do, not how it is implemented.
+
+For example, do not combine every duration constraint into one criterion:
+
+```markdown
+- [ ] Duration must be positive, use 10-minute increments, not exceed 24 hours, and respect the daily allowance.
+```
+
+Write each independently verifiable rule separately:
+
+```markdown
+- [ ] Duration must be greater than 0.
+- [ ] Duration must use 10-minute increments.
+- [ ] Duration cannot exceed 24 hours.
+- [ ] Duration cannot exceed the daily allowance.
+```
+
+Do not use Given/When/Then unless a scenario is too complex or ambiguous to express as a clear single-line criterion. Keep important edge
+cases inside the owning user story instead of creating separate stories solely for error scenarios.
+
 A screen may be the observation surface, but the criterion must state the function rather than its presentation. For example:
 
 - Functional: "An invalid claim is rejected without changing the weekly claim."
@@ -272,7 +318,8 @@ This rule applies to every committed documentation file, not only feature README
 1. Verify that the capability and its grouping match current navigation, linked routes, and access guards.
 2. Inspect the current feature README, product entry points, business rules, tests, and linked contract behaviour.
 3. Define or update the lifecycle and stable story boundaries.
-4. Write functional acceptance criteria, including material boundaries and recovery outcomes, without prescribing UI or UX choices.
+4. Write atomic functional acceptance criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`, including material boundaries
+   and recovery outcomes without prescribing UI or UX choices.
 5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from the human product-review state.
 6. Refresh focused evidence links and related documentation.
 7. Update `docs/features/README.md`, `docs/02_USER_STORIES.md`, and `docs/README.md` only when navigation or canonical ownership changes.
@@ -287,6 +334,8 @@ This rule applies to every committed documentation file, not only feature README
 - [ ] Scope, versions, actors, and system boundaries are explicit.
 - [ ] The lifecycle matches the story order.
 - [ ] Every story uses `As a`, `I want to`, and `So that` on separate lines.
+- [ ] Every story organizes its criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`.
+- [ ] Every criterion contains one observable behaviour or one independently verifiable business rule.
 - [ ] Every criterion is a functional, observable, independently reviewable outcome that remains valid after a visual redesign.
 - [ ] UI and UX requirements are kept outside feature acceptance criteria.
 - [ ] Statuses, checkboxes, and the human-validation statement agree.
@@ -310,4 +359,5 @@ bash scripts/audit-doc-drift.sh
 git diff --check
 ```
 
-The first trial of this contract is the [Vesting feature](../features/vesting/README.md).
+The first trial of the overall contract is the [Vesting feature](../features/vesting/README.md). The categorized, atomic acceptance-criteria
+rule is first applied to the [Payroll feature](../features/payroll/README.md).
