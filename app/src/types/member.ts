@@ -7,5 +7,4 @@ export interface Member {
   teamId: number
   imageUrl?: string
   currentWage?: Wage
-  scheduledWage?: Wage | null // Present when a wage change is scheduled for a future week.
 }

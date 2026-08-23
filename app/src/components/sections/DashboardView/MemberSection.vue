@@ -88,15 +88,6 @@
               {{ row.original.currentWage.maximumHoursPerDay + 'h/d' }}
             </span>
           </div>
-          <span
-            v-if="scheduledWageNotice(row.original.scheduledWage)"
-            class="mt-1.5 inline-flex max-w-full items-start gap-1 rounded-md bg-[#E6F1FB] px-2 py-1 text-left text-[11px] leading-tight font-medium text-wrap text-[#0C447C]"
-            title="Wage changes take effect at the start of the next week"
-            data-test="scheduled-wage-badge"
-          >
-            <UIcon name="i-heroicons-calendar" aria-hidden="true" class="mt-0.5 size-3 shrink-0" />
-            {{ scheduledWageNotice(row.original.scheduledWage) }}
-          </span>
         </div>
         <div v-else>—</div>
       </template>
@@ -154,7 +145,6 @@ import SetMemberWageModal from './SetMemberWageModal.vue'
 import RateDotList from '@/components/RateDotList.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { formatScheduledWageNotice } from '@/utils/wageUtil'
 
 type MemberRow = Member & {
   index: number
@@ -164,8 +154,6 @@ const userDataStore = useUserDataStore()
 const toast = useToast()
 const teamStore = useTeamStore()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
-
-const scheduledWageNotice = (wage: Wage | null | undefined) => formatScheduledWageNotice(wage)
 
 const pauseWageTooltip = (wage: Wage | null | undefined) => {
   if (archivedTooltip.value) return archivedTooltip.value
