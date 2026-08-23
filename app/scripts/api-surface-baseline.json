@@ -26,24 +26,6 @@
       "allowed": 1
     },
     {
-      "path": "src/components/sections/CashRemunerationView/Form/ClaimForm.vue",
-      "subject": "component",
-      "metric": "componentProps",
-      "allowed": 11
-    },
-    {
-      "path": "src/components/sections/CashRemunerationView/Form/ClaimForm.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 2
-    },
-    {
-      "path": "src/components/sections/CashRemunerationView/Form/UploadFileDB.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 1
-    },
-    {
       "path": "src/components/sections/CashRemunerationView/SubmitClaims.vue",
       "subject": "component",
       "metric": "componentExposedMembers",
@@ -144,18 +126,6 @@
       "subject": "useSafeTransactionActions",
       "metric": "composableReturnMembers",
       "allowed": 9
-    },
-    {
-      "path": "src/composables/useClaimForm.ts",
-      "subject": "useClaimForm",
-      "metric": "composableDependencies",
-      "allowed": 8
-    },
-    {
-      "path": "src/composables/useClaimForm.ts",
-      "subject": "useClaimForm",
-      "metric": "composableReturnMembers",
-      "allowed": 14
     },
     {
       "path": "src/composables/useDatePicker.ts",

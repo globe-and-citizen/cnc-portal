@@ -37,6 +37,10 @@ source code by this gate.
 The current enforcement applies to the source roots listed above. Expand the validator's behavioural-source patterns when a new runtime
 surface gains canonical documentation; do not bypass the check by removing an evidence link.
 
+Deleted sources are excluded from the automated ownership check because a canonical document cannot truthfully link to code that is no
+longer present. When removing a source changes a documented journey, replace its evidence with the current implementation and update the
+owning document in the same pull request.
+
 ## Pull Request Contract
 
 For every changed behavioural path, the validator requires both conditions below:
