@@ -59,7 +59,8 @@ sufficient: update the affected journey, rules, criteria, gap, or verification s
 1. Classify the changed behaviour with the Feature or Implementation Documentation Guide.
 2. Locate every canonical README that already links its source path.
 3. Update the complete set of affected documents; add a new owner and inventory entry when none exists.
-4. Run `npm run lint:docs-freshness` before handing over the change.
+4. Run `npm run lint:docs-freshness` before every GitHub push. The Husky pre-push hook repeats this validation and blocks stale changes; it
+   complements, but does not replace, the pull-request gate.
 5. Run the relevant Markdown and subproject validations.
 
 The validator is intentionally conservative: an unrelated refactor inside a documented directory still requires an explicit documentation

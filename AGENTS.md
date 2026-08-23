@@ -73,6 +73,10 @@ artifacts; after changing a contract interface, run `npm run generate-abi` in `c
 
 Run every applicable check in each subproject you changed, and fix failures before pushing.
 
+Before every GitHub push, agents must also run `npm run lint:docs-freshness` from the repository root. The Husky pre-push hook repeats this
+validation and blocks a push when a behavioural change has no current canonical documentation owner or its owner was not reviewed in the
+same change. Do not bypass the hook with `--no-verify`; update the affected documentation and rerun the validator instead.
+
 ### `app/`
 
 ```bash
