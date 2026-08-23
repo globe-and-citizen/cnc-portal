@@ -321,9 +321,10 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [ ] The API authorizes only the current Cash Remuneration contract owner.
 - [x] The product journey permits signing only when the weekly claim contains at least one daily claim.
-- [ ] _(API)_ The backend rejects signing a goals-only weekly claim ([#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521)).
+- [x] _(API)_ The backend rejects signing a goals-only weekly claim before storing a signature or changing its status.
 - [x] Normal signing applies only to pending weeks.
 - [x] A disabled claim uses the explicit re-sign flow.
+- [x] Re-signing a disabled current-contract claim re-enables its existing signature before storing the replacement.
 - [x] _(API)_ The signed-against contract must match the team's current Cash Remuneration contract.
 - [x] _(API)_ The recovered signer must match the caller.
 
@@ -335,7 +336,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Teams that have not migrated to the current Officer generation cannot sign weekly claims.
 - [x] Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
 - [x] Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
-- [x] Re-signing a disabled current-contract claim re-enables its existing signature before storing the replacement.
 
 **Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
 
@@ -486,8 +486,6 @@ status of a user story.
   [#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522).
 - The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
   week is pending.
-- The signing API does not reject a goals-only weekly claim. Tracked by
-  [#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521).
 - The signing API accepts a team owner who is not the current Cash Remuneration owner. Such a signature cannot authorise the later contract
   withdrawal.
 - The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
