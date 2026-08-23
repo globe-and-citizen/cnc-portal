@@ -38,7 +38,9 @@ source and generated artifacts, and active work or delivery history in GitHub is
 
 ## Index
 
-No decision records have been published yet. New accepted records belong in this list, ordered by their ADR number.
+| ADR                                                | Title                                       | Status   | Date       |
+| -------------------------------------------------- | ------------------------------------------- | -------- | ---------- |
+| [ADR-0001](./0001-member-week-payroll-identity.md) | Use member-week identity for payroll claims | Accepted | 2026-08-23 |
 
 ## Related Documentation
 

@@ -14,7 +14,7 @@ import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { signWeeklyClaimBodySchema, z } from '../validation';
-import { resolveWageForWeek } from '../utils/wageResolution';
+import { resolveCurrentWage } from '../utils/wageResolution';
 
 type SignWeeklyClaimBody = z.infer<typeof signWeeklyClaimBodySchema>;
 
@@ -582,7 +582,8 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
 
 /**
  * Upsert the member's weekly goals memo (free-form Markdown) for a given ISO
- * week. Exactly one memo exists per weekly claim ([wageId, weekStart]). The
+ * week. Exactly one memo exists per weekly claim ([teamId, memberAddress,
+ * weekStart]). The
  * caller can only set their own goals — `req.address` is the member address.
  *
  * The memo is decoupled from daily claims: submitting goals for a week that has
@@ -639,15 +640,22 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
 
     // A WeeklyClaim requires a wageId, so the member needs a wage before any
     // goals can be recorded. Only reached for a week nobody has opened yet,
-    // which is priced by resolution like a first claim would be.
-    const wage = await resolveWageForWeek(teamId, callerAddress, weekStart);
+    // so its first hours will use this current wage too.
+    const wage = await resolveCurrentWage(teamId, callerAddress);
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
     }
 
-    const created = await prisma.weeklyClaim.create({
-      data: {
+    const created = await prisma.weeklyClaim.upsert({
+      where: {
+        teamId_memberAddress_weekStart: {
+          teamId,
+          memberAddress: callerAddress,
+          weekStart,
+        },
+      },
+      create: {
         wageId: wage.id,
         weekStart,
         memberAddress: callerAddress,
@@ -656,6 +664,7 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
         status: 'pending',
         weeklyGoals,
       },
+      update: { weeklyGoals },
     });
 
     return res.status(200).json(created);

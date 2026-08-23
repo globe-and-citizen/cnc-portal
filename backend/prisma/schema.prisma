@@ -100,7 +100,6 @@ model Wage {
   maximumHoursPerWeek         Int
   maximumHoursPerDay          Int           @default(8)
   disabled                    Boolean       @default(false)
-  effectiveFrom               DateTime?
   nextWageId                  Int?          @unique
   nextWage                    Wage?         @relation("wageRelated", fields: [nextWageId], references: [id], onDelete: SetNull)
   previousWage                Wage?         @relation("wageRelated")
@@ -147,7 +146,7 @@ model WeeklyClaim {
   // redeployed. Nullable for legacy rows signed before this column existed.
   signedAgainstContractAddress String?
   // Free-form Markdown memo of the member's goals for the week. One per weekly
-  // claim (the [wageId, weekStart] pair). Upserted independently of daily
+  // claim (the [teamId, memberAddress, weekStart] tuple). Upserted independently of daily
   // claims — a goals-only week creates a claim-less WeeklyClaim row. Nullable
   // for weeks with no goals set.
   weeklyGoals                  String?
@@ -157,7 +156,7 @@ model WeeklyClaim {
   createdAt                    DateTime @default(now())
   updatedAt                    DateTime @updatedAt
 
-  @@unique([wageId, weekStart])
+  @@unique([teamId, memberAddress, weekStart])
   @@index([weekStart])
 }
 

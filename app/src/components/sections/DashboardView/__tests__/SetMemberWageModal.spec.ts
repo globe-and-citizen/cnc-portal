@@ -278,40 +278,4 @@ describe('SetMemberWageModal', () => {
     await wrapper.find('[data-test="add-wage-button"]').trigger('click')
     expect(mutateSpy.mock.calls[0]?.[0].body.userAddress).toBe('')
   })
-
-  describe('effective date notice', () => {
-    const notice = async (nextChangeEffectiveFrom: string | null) => {
-      const wrapper = createWrapper({ wage: { ...mockWage, nextChangeEffectiveFrom } })
-      await openModal(wrapper)
-
-      return wrapper.find('[data-test="wage-effective-date-notice"]')
-    }
-
-    /** The server only ever answers with a Monday, so the fixtures are too. */
-    const mondayUtc = (weeksAhead = 0) => {
-      const today = new Date()
-      const daysSinceMonday = (today.getUTCDay() + 6) % 7
-
-      return new Date(
-        Date.UTC(
-          today.getUTCFullYear(),
-          today.getUTCMonth(),
-          today.getUTCDate() - daysSinceMonday + weeksAhead * 7
-        )
-      ).toISOString()
-    }
-
-    it('says nothing when the change simply takes effect', async () => {
-      // No hours submitted this week, so the new wage is what the week will be
-      // priced at. There is no change to announce — only a delay would be news.
-      expect((await notice(mondayUtc())).exists()).toBe(false)
-    })
-
-    it('announces the date when hours are already submitted for this week', async () => {
-      const alert = await notice(mondayUtc(1))
-
-      expect(alert.exists()).toBe(true)
-      expect(alert.text()).toContain('current rate stays in force')
-    })
-  })
 })

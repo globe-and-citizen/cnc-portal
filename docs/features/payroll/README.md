@@ -18,6 +18,10 @@ wage that is current at submission time.
 A wage change creates a new current version immediately. Payroll does not schedule wage changes or delay their effective date. Existing
 weekly claims keep their stored wage so historical hours, limits, approvals, and payments are not repriced.
 
+When historical data contains more than one weekly claim for the same team member and ISO week, the database migration stops before it
+changes the uniqueness rule. The affected claims, goals, signatures, and terminal states must be reconciled explicitly; no payroll data is
+silently merged or discarded.
+
 Approval is an EIP-712 signature from the current Cash Remuneration contract owner. It does not move funds. The member submits the signed
 weekly claim on-chain to receive native tokens and supported ERC-20 assets; SHER compensation is minted when the current contract
 configuration supports it.
@@ -39,7 +43,7 @@ complete journey belongs to the Accounts feature.
 
 | User Story     | Title                                      | Actor               | Status         | Priority | Effort |
 | -------------- | ------------------------------------------ | ------------------- | -------------- | :------: | ------ |
-| US-PAYROLL-001 | Set a member's wage                        | Team owner          | 🚧 In Progress |    P1    | M      |
+| US-PAYROLL-001 | Set a member's wage                        | Team owner          | 🧪 Validation  |    P1    | M      |
 | US-PAYROLL-002 | Pause or resume a member's wage            | Team owner          | 🧪 Validation  |    P2    | S      |
 | US-PAYROLL-003 | Fund the Payroll contract                  | Team owner          | 🔗 Reference   |    P1    | —      |
 | US-PAYROLL-004 | Set weekly goals                           | Team member         | 🧪 Validation  |    P3    | S      |
@@ -81,13 +85,13 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] Overtime configuration requires at least one positive overtime rate.
 - [x] The overtime allowance is a whole number from 1 to 20 hours.
 - [x] A replacement wage references the operative wage as its predecessor without overwriting version history.
-- [ ] A new wage version becomes current immediately without a future activation option
-      ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
+- [x] A new wage version becomes current immediately without a future activation option.
 - [x] A weekly claim containing daily claims retains its initial wage for the pricing and validation of all later claims in that ISO week.
 - [x] The first daily claim in a goals-only weekly row uses the member's current wage.
-- [ ] _(database)_ At most one weekly claim can exist for each team, member, and ISO week
-      ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
-- [ ] The wage lifecycle has no cancellation operation ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
+- [x] _(database)_ At most one weekly claim can exist for each team, member, and ISO week.
+- [x] _(migration)_ Legacy duplicate member-week records stop the migration for explicit reconciliation instead of losing claims, goals,
+      signatures, or terminal states.
+- [x] The wage lifecycle has no cancellation operation.
 - [x] Only team owners can set wages.
 - [x] Every wage version is stored off-chain.
 - [x] The wage endpoint returns the current wage.
@@ -99,7 +103,7 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] Archived teams cannot create wages.
 - [x] Archived teams cannot replace wages.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
 **Dependencies:** Companies and Workspace
 
@@ -481,9 +485,6 @@ status of a user story.
 
 ### Functional Gaps
 
-- The current implementation still schedules some wage changes with `effectiveFrom`, exposes a scheduled-wage lifecycle, and enforces
-  weekly-claim uniqueness by wage and week instead of team, member, and week. Tracked by
-  [#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522).
 - The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
   week is pending.
 - The signing API accepts a team owner who is not the current Cash Remuneration owner. Such a signature cannot authorise the later contract
@@ -504,6 +505,8 @@ The claim-submission and claim-history journeys remain unchanged; their current 
 - [Payroll navigation and routes](../../../app/src/composables/useSidebarNavItems.ts)
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
 - [Member wage overview](../../../app/src/components/sections/DashboardView/MemberSection.vue)
+- [Member claim action alerts](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue)
+- [Wage client query and mutations](../../../app/src/queries/wage.queries.ts)
 - [Daily claim form](../../../app/src/components/sections/CashRemunerationView/Form/ClaimForm.vue)
 - [Daily claim file upload](../../../app/src/components/sections/CashRemunerationView/Form/UploadFileDB.vue)
 - [Claim submission flow](../../../app/src/components/sections/CashRemunerationView/SubmitClaims.vue)
@@ -517,6 +520,10 @@ The claim-submission and claim-history journeys remain unchanged; their current 
 - [Withdrawal flow](../../../app/src/components/sections/CashRemunerationView/CRWithdrawClaim.vue)
 - [Wage API](../../../backend/src/controllers/wageController.ts)
 - [Daily claim API](../../../backend/src/controllers/claimController.ts)
+- [Member wage API](../../../backend/src/controllers/teamController.ts)
+- [Wage routes](../../../backend/src/routes/wageRoute.ts)
+- [Wage request validation](../../../backend/src/validation/schemas/wage.ts)
+- [Payroll persistence models](../../../backend/prisma/schema.prisma)
 - [Daily claim request validation](../../../backend/src/validation/schemas/claim.ts)
 - [Daily claim validation tests](../../../backend/src/validation/__tests__/claim.test.ts)
 - [Weekly claim API and reconciliation](../../../backend/src/controllers/weeklyClaimController.ts)
@@ -532,4 +539,5 @@ The claim-submission and claim-history journeys remain unchanged; their current 
 
 - [Cash Remuneration contract](../../contracts/features/cash-remuneration/README.md)
 - [Bank contract](../../contracts/features/bank/README.md)
+- [ADR-0001: Use member-week identity for payroll claims](../../adr/0001-member-week-payroll-identity.md)
 - [Product Feature Inventory](../README.md)
