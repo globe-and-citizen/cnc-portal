@@ -105,7 +105,7 @@ interface Props {
   /**
    * When true, quick-submit is only offered for days the backend would accept
    * (current ISO week, up to SUBMIT_RESTRICTION_MAX_DAYS_BACK days in the past).
-   * Mirrors the calendar guard in useClaimForm and the server-side enforcement
+   * Mirrors the claim calendar guard and the server-side enforcement
    * in addClaim, so old/out-of-window days don't expose a "+" that 400s.
    */
   isRestricted?: boolean
