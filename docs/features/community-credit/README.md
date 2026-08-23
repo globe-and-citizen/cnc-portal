@@ -62,7 +62,7 @@ automatically when a deadline or maturity date passes.
 
 - [x] Each round exposes its purpose, token, target, amount raised, flat rate, access mode, dates, and current status.
 - [ ] A lender can distinguish their own deposited and expected-return positions from the issuer's total debt figures.
-- [x] Opening a round shows its lender breakdown, settlement progress, and matching on-chain activity.
+- [x] An opened round exposes its lender breakdown, settlement progress, and matching on-chain activity.
 
 #### Business Rules
 
