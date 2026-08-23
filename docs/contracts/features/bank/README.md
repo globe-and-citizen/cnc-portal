@@ -30,6 +30,10 @@
 - **Dependencies:** Officer (dynamic resolution of InvestorV1 and FeeCollector addresses), InvestorV1 (push-based dividend execution)
 - **Pattern:** Push-based dividends — funds go directly to shareholders in the same transaction; no claim pattern
 
+## Implementation Evidence
+
+- [Bank deposit form](../../../../app/src/components/forms/DepositBankForm.vue)
+
 ---
 
 ## US-BANK-001: Deposit ETH into the Treasury

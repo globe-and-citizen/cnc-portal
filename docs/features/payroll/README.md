@@ -499,6 +499,8 @@ status of a user story.
 
 ## Implementation Evidence
 
+The claim-submission and claim-history journeys remain unchanged; their current implementation evidence was reviewed with this update.
+
 - [Payroll navigation and routes](../../../app/src/composables/useSidebarNavItems.ts)
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
 - [Member wage overview](../../../app/src/components/sections/DashboardView/MemberSection.vue)
