@@ -49,7 +49,8 @@ focused documents.
 | Current smart-contract behaviour                 | `docs/contracts/features/<contract>/README.md` |
 | Platform-wide engineering standards              | `docs/platform/` or `.github/` guides          |
 | Executable behaviour and regression proof        | Code and tests                                 |
-| Active delivery and historical decisions         | GitHub issues, pull requests, ADRs, and Git    |
+| Architectural decisions and trade-offs           | [`docs/adr/`](../adr/README.md)                |
+| Active delivery and history                      | GitHub issues, pull requests, and Git          |
 
 `docs/02_USER_STORIES.md` is a navigation index. User-story bodies must not be duplicated there.
 
