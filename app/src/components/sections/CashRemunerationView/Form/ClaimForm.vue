@@ -70,7 +70,12 @@
     </UFormField>
 
     <!-- Memo -->
-    <UFormField label="Memo" name="memo" required :hint="`${String(formData.memo).length} / 3000`">
+    <UFormField
+      label="Memo"
+      name="memo"
+      required
+      :hint="`${String(formData.memo).length} / ${DAILY_CLAIM_MEMO_MAX_LENGTH}`"
+    >
       <UTextarea
         v-model="formData.memo"
         :placeholder="isEdit ? 'I worked on...' : 'I worked on the ....'"
@@ -146,6 +151,7 @@ import type { ClaimFormData } from '@/types'
 import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 import {
+  DAILY_CLAIM_MEMO_MAX_LENGTH,
   useClaimForm,
   type ClaimFormFileData,
   type DailyClaimEntry
