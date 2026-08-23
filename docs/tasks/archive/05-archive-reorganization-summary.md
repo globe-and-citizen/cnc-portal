@@ -6,7 +6,8 @@
 
 ## Problem
 
-The file `/docs/REORGANIZATION-SUMMARY.md` (379 lines) was created to document the reorganization process but is now obsolete. It serves no ongoing purpose and adds clutter to the documentation.
+The file `/docs/REORGANIZATION-SUMMARY.md` (379 lines) was created to document the reorganization process but is now obsolete. It serves no
+ongoing purpose and adds clutter to the documentation.
 
 ## Solution
 

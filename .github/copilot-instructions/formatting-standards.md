@@ -5,8 +5,7 @@
 - `app/` → `import { formatUsd } from '@/utils/format'`
 - `dashboard/` → `import { formatUsd } from '~/utils/format'`
 
-ESLint enforces this. The rationale, the API, and what to do when the module doesn't cover your case
-are below.
+ESLint enforces this. The rationale, the API, and what to do when the module doesn't cover your case are below.
 
 ---
 
@@ -14,23 +13,18 @@ are below.
 
 Before this module, `app/src` alone carried:
 
-- **four** ways to render a date — `dayjs` with 14 distinct pattern strings,
-  `toLocaleString('en-US')`, `Intl.DateTimeFormat`, and a hand-rolled `String.replace` on
-  `dd/MM/yyyy`;
-- **five strictly identical** transaction-date helpers, one per domain (`formatBankTransactionDate`,
-  `formatExpenseTransactionDate`, …), each `new Date(ts * 1000).toLocaleString('en-US')`;
-- **three** money conventions with different decimal policies, only one of which avoided rendering a
-  negative zero as `$-0.00`;
-- **five** address truncations, two using `…` where the rest used `...`, so the same address looked
-  like two different values in two tables.
+- **four** ways to render a date — `dayjs` with 14 distinct pattern strings, `toLocaleString('en-US')`, `Intl.DateTimeFormat`, and a
+  hand-rolled `String.replace` on `dd/MM/yyyy`;
+- **five strictly identical** transaction-date helpers, one per domain (`formatBankTransactionDate`, `formatExpenseTransactionDate`, …),
+  each `new Date(ts * 1000).toLocaleString('en-US')`;
+- **three** money conventions with different decimal policies, only one of which avoided rendering a negative zero as `$-0.00`;
+- **five** address truncations, two using `…` where the rest used `...`, so the same address looked like two different values in two tables.
 
-That is not a tidiness problem. A `maximumFractionDigits: 0` default plus raw `toLocaleString` at
-the call sites can round every fractional Community Credit amount to a whole number, so a `0.2 USDC`
-position displays as `0`.
+That is not a tidiness problem. A `maximumFractionDigits: 0` default plus raw `toLocaleString` at the call sites can round every fractional
+Community Credit amount to a whole number, so a `0.2 USDC` position displays as `0`.
 
-A formatter is a **product decision** — how much precision a user is trusted with, whether zero
-means zero or unknown, whether a figure is reconcilable against a block explorer. Decisions like
-that belong in one reviewed place, not re-derived per call site.
+A formatter is a **product decision** — how much precision a user is trusted with, whether zero means zero or unknown, whether a figure is
+reconcilable against a block explorer. Decisions like that belong in one reviewed place, not re-derived per call site.
 
 ---
 
@@ -64,8 +58,8 @@ Same surface in both front-ends (`app/src/utils/format/`, `dashboard/app/utils/f
 | `formatDuration(minutes)`       | `1 h 30 min`            | Elapsed spans. Never `01:30`, which reads as a clock time.                 |
 | `fromUnix(seconds)`             | a `Dayjs`               | On-chain timestamps. **Use this instead of `* 1000`.**                     |
 
-A bare `number` passed to a date formatter is **milliseconds** (the JavaScript convention). Contract
-timestamps are seconds — `formatDate(fromUnix(ts))`, not `formatDate(ts * 1000)`.
+A bare `number` passed to a date formatter is **milliseconds** (the JavaScript convention). Contract timestamps are seconds —
+`formatDate(fromUnix(ts))`, not `formatDate(ts * 1000)`.
 
 ### Addresses and hashes
 
@@ -74,25 +68,23 @@ timestamps are seconds — `formatDate(fromUnix(ts))`, not `formatDate(ts * 1000
 | `formatAddress(address, { lead = 6, tail = 4 })` | `0x4b6f...6F70`                  |
 | `formatTxHash(hash)`                             | same shape, named for the intent |
 
-Values already short enough to read whole come back untouched. Display only — never feed a truncated
-value into a contract call or a comparison.
+Values already short enough to read whole come back untouched. Display only — never feed a truncated value into a contract call or a
+comparison.
 
 ---
 
 ## Conventions the module encodes
 
-**Locale is pinned to `en-US`.** Not the browser's: a `1,234.50` that becomes `1.234,50` for one
-teammate makes screenshots, exports and support threads unreadable, and the surrounding copy is
-English-only anyway.
+**Locale is pinned to `en-US`.** Not the browser's: a `1,234.50` that becomes `1.234,50` for one teammate makes screenshots, exports and
+support threads unreadable, and the surrounding copy is English-only anyway.
 
-**Nothing renderable → `EMPTY_VALUE` (`—`), never `0`.** A zero is a claim about the data. Rendering
-`$0.00` for a balance that is merely still loading is how an empty wallet gets reported as a bug.
+**Nothing renderable → `EMPTY_VALUE` (`—`), never `0`.** A zero is a claim about the data. Rendering `$0.00` for a balance that is merely
+still loading is how an empty wallet gets reported as a bug.
 
-**A value that rounds to zero renders as a clean zero.** `-0.004` at cent precision is `$0.00`, not
-`-$0.00`.
+**A value that rounds to zero renders as a clean zero.** `-0.004` at cent precision is `$0.00`, not `-$0.00`.
 
-**Money is fixed-precision, tokens are not.** `$5` and `$5.20` in the same column is a misread
-waiting to happen, so USD pads. `0.0001 SHER` and `0.00 SHER` are different claims, so tokens trim.
+**Money is fixed-precision, tokens are not.** `$5` and `$5.20` in the same column is a misread waiting to happen, so USD pads. `0.0001 SHER`
+and `0.00 SHER` are different claims, so tokens trim.
 
 ---
 
@@ -107,8 +99,7 @@ Outside `utils/format/`, these are errors (in `<script>` **and** in `<template>`
 | `.toFixed(n)`                                                         | `formatNumber` / `formatUsd` for display — see below for on-chain amounts |
 | `.format('MMM D, YYYY')` — a literal dayjs pattern                    | a named date helper                                                       |
 
-`.format(value)` with a non-literal argument stays allowed: that's a formatter instance being
-called, not a pattern being invented.
+`.format(value)` with a non-literal argument stays allowed: that's a formatter instance being called, not a pattern being invented.
 
 Specs are exempt — a test may assert against a natively formatted expectation.
 
@@ -118,27 +109,24 @@ Specs are exempt — a test may assert against a natively formatted expectation.
 parseUnits(amount.toFixed(decimals), decimals); // ❌ silently changes the amount transacted
 ```
 
-Rounding a value _before_ converting it on-chain means the user signs a different number than the
-one they entered. Pass the unrounded value. Formatting is what you do to show a number to a human —
-never to prepare one for a contract.
+Rounding a value _before_ converting it on-chain means the user signs a different number than the one they entered. Pass the unrounded
+value. Formatting is what you do to show a number to a human — never to prepare one for a contract.
 
 ---
 
 ## When the module doesn't cover your case
 
-**Extend it.** Add the named style to `utils/format/`, with a test and a one-line doc comment saying
-when to reach for it. Then use it in both front-ends.
+**Extend it.** Add the named style to `utils/format/`, with a test and a one-line doc comment saying when to reach for it. Then use it in
+both front-ends.
 
-Do **not** add a formatting allowlist. The guard is intentionally applied to every application
-source file outside `utils/format/`; a new convention belongs in the canonical module instead.
+Do **not** add a formatting allowlist. The guard is intentionally applied to every application source file outside `utils/format/`; a new
+convention belongs in the canonical module instead.
 
-If a one-off truly is one-off, a scoped
-`// eslint-disable-next-line no-restricted-syntax -- <reason>` on the line itself is the escape
+If a one-off truly is one-off, a scoped `// eslint-disable-next-line no-restricted-syntax -- <reason>` on the line itself is the escape
 hatch. The reason is mandatory; "legacy" is not a reason.
 
-**Keep the two implementations identical.** `app/` and `dashboard/` render the same figures for the
-same teams. There is no shared package to hold the module yet, so duplication is the price — any
-change lands in both.
+**Keep the two implementations identical.** `app/` and `dashboard/` render the same figures for the same teams. There is no shared package
+to hold the module yet, so duplication is the price — any change lands in both.
 
 ---
 

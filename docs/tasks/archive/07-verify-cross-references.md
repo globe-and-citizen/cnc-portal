@@ -6,9 +6,8 @@
 
 ## Problem
 
-After creating new files and restructuring documentation, we need to verify that all
-cross-references between documentation files work correctly. Broken links create a poor user
-experience and make documentation harder to navigate.
+After creating new files and restructuring documentation, we need to verify that all cross-references between documentation files work
+correctly. Broken links create a poor user experience and make documentation harder to navigate.
 
 ## Solution
 

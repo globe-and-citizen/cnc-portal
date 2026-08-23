@@ -6,7 +6,8 @@
 
 ## Problem
 
-The file `/docs/platform/deployment.md` is referenced multiple times in the documentation but does not exist. This creates broken links and missing information for deploying the CNC Portal.
+The file `/docs/platform/deployment.md` is referenced multiple times in the documentation but does not exist. This creates broken links and
+missing information for deploying the CNC Portal.
 
 ## Solution
 

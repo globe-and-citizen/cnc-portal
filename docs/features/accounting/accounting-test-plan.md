@@ -1,11 +1,11 @@
 # CNC Accounting — Full Test Scenario
 
-One continuous scenario to exercise **every** money flow of the CNC, from 1 to N.
-Do each step in order. Keep amounts small so the maths stays easy to check.
-Extends the Sprint Script in
-[#2255](https://github.com/globe-and-citizen/cnc-portal/issues/2255) to cover all use cases.
+One continuous scenario to exercise **every** money flow of the CNC, from 1 to N. Do each step in order. Keep amounts small so the maths
+stays easy to check. Extends the Sprint Script in [#2255](https://github.com/globe-and-citizen/cnc-portal/issues/2255) to cover all use
+cases.
 
-- [ ] **1.** Create a team with the six contracts deployed (Bank, FeeCollector, CashRemuneration, ExpenseAccount, InvestorV1, SafeDepositRouter + Safe).
+- [ ] **1.** Create a team with the six contracts deployed (Bank, FeeCollector, CashRemuneration, ExpenseAccount, InvestorV1,
+      SafeDepositRouter + Safe).
 - [ ] **2.** A founder deposits **$4** into the **Bank**.
 - [ ] **3.** Hermann, Georges and Achille each **invest $2** and get SHER (2 SHER for $2) via the **SafeDepositRouter**.
 - [ ] **4.** A member sends **$2 straight to the Safe** (no router) to invest.

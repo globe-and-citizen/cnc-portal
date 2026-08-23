@@ -1,8 +1,10 @@
 # CNC Portal GitHub Copilot Instructions
 
-> **Primary entry point for AI agents is [`AGENTS.md`](../AGENTS.md) at the repo root.** This file and the [`copilot-instructions/`](./copilot-instructions/) folder hold deeper area-specific guides referenced from there.
+> **Primary entry point for AI agents is [`AGENTS.md`](../AGENTS.md) at the repo root.** This file and the
+> [`copilot-instructions/`](./copilot-instructions/) folder hold deeper area-specific guides referenced from there.
 
-The CNC Portal is a multi-component application enabling financial recognition of micro contributions in open-source projects and promoting effective governance tools.
+The CNC Portal is a multi-component application enabling financial recognition of micro contributions in open-source projects and promoting
+effective governance tools.
 
 ## Architecture Overview
 
@@ -21,7 +23,8 @@ The CNC Portal is a multi-component application enabling financial recognition o
 
 ## Comprehensive Instructions
 
-For detailed coding guidelines and best practices, see the instruction files in the [`copilot-instructions/`](./copilot-instructions/) directory:
+For detailed coding guidelines and best practices, see the instruction files in the [`copilot-instructions/`](./copilot-instructions/)
+directory:
 
 ### Core Development Guidelines
 

@@ -62,3 +62,7 @@ test('rejects behavioral source paths without a documentation owner', () => {
 test('does not require documentation for test-only source changes', () => {
   assert.equal(isBehavioralSourcePath('app/src/views/__tests__/VestingView.spec.ts'), false)
 })
+
+test('does not treat co-located Markdown as behavioral source code', () => {
+  assert.equal(isBehavioralSourcePath('app/src/queries/README.md'), false)
+})
