@@ -2,7 +2,7 @@
 
 **Status:** Navigation-derived inventory
 
-**Last verified:** 2026-08-21
+**Last verified:** 2026-08-23
 
 This inventory names the product capabilities that a user can currently reach in the CNC Portal client or its administrator dashboard. It is
 derived from the current navigation, routes, access guards, and linked product actions. The presence of a source directory, API, contract,
@@ -39,18 +39,18 @@ flowchart LR
 The client inventory follows the [sidebar navigation](../../app/src/composables/useSidebarNavItems.ts), its linked
 [routes](../../app/src/router/index.ts), and the authentication entry journey.
 
-| User capability         | Current entry points                                    | Documentation coverage                             |
-| ----------------------- | ------------------------------------------------------- | -------------------------------------------------- |
-| Authentication          | `/login` and wallet session actions                     | [Canonical stories](./authentication/README.md)    |
-| Companies and workspace | `/teams`, `/teams/:id`                                  | Canonical stories not yet written                  |
-| Accounts                | Bank, Safe, and Expense Account routes                  | [Safe stories](./safe/Readme.md); full journey due |
-| Payroll                 | Payroll account, history, company payroll, compensation | [Canonical stories](./payroll/README.md)           |
-| Community Credit        | Rounds, new credit calls, and round details             | [Canonical stories](./community-credit/README.md)  |
-| Accounting              | Summary, income, balance, trial balance, and ledger     | [Existing references](./accounting/README.md)      |
-| Contract Management     | `/teams/:id/contract-management`                        | Canonical stories not yet written                  |
-| SHER Token              | `/teams/:id/sher-token`                                 | Canonical stories not yet written                  |
-| Governance              | Board elections, election details, and proposals        | Canonical stories not yet written                  |
-| Vesting                 | `/teams/:id/vesting`                                    | [Current model trial](./vesting/README.md)         |
+| User capability         | Current entry points                                    | Documentation coverage                            |
+| ----------------------- | ------------------------------------------------------- | ------------------------------------------------- |
+| Authentication          | `/login` and wallet session actions                     | [Canonical stories](./authentication/README.md)   |
+| Companies and workspace | `/teams`, `/teams/:id`                                  | Canonical stories not yet written                 |
+| Accounts                | Bank, Safe, and Expense Account routes                  | [Canonical stories](./accounts/README.md)         |
+| Payroll                 | Payroll account, history, company payroll, compensation | [Canonical stories](./payroll/README.md)          |
+| Community Credit        | Rounds, new credit calls, and round details             | [Canonical stories](./community-credit/README.md) |
+| Accounting              | Summary, income, balance, trial balance, and ledger     | [Canonical stories](./accounting/README.md)       |
+| Contract Management     | `/teams/:id/contract-management`                        | Canonical stories not yet written                 |
+| SHER Token              | `/teams/:id/sher-token`                                 | Canonical stories not yet written                 |
+| Governance              | Board elections, election details, and proposals        | Canonical stories not yet written                 |
+| Vesting                 | `/teams/:id/vesting`                                    | [Canonical stories](./vesting/README.md)          |
 
 ## Backoffice Features
 
@@ -59,7 +59,7 @@ top-level product features.
 
 | Administrator capability | Current entry points                        | Documentation coverage                                           |
 | ------------------------ | ------------------------------------------- | ---------------------------------------------------------------- |
-| Overview and statistics  | `/`, `/stats`                               | [Existing references](./backoffice/statistics/README.md)         |
+| Overview and statistics  | `/`                                         | [Canonical stories](./backoffice/statistics/README.md)           |
 | Team operations          | `/teams`, `/teams/:id`                      | Canonical stories not yet written                                |
 | Micropayments            | `/micropayments`                            | Canonical stories not yet written                                |
 | Polymarket accounting    | `/accounting`                               | Canonical stories not yet written                                |
@@ -77,6 +77,8 @@ top-level product features.
   not CNC Portal features until a real product journey exposes them.
 - The dashboard `/contracts` landing page is a placeholder. The implemented history and Officer version-sync journeys are grouped as
   Contract operations.
+- The dashboard `/stats` route duplicates the statistics already exposed at `/` but is not linked from the current navigation. It does not
+  define another capability.
 
 ## Updating This Inventory
 

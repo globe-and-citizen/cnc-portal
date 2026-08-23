@@ -2,7 +2,7 @@
 
 **Status:** Navigation index
 
-**Last updated:** 2026-08-21
+**Last updated:** 2026-08-23
 
 User stories live with the product capability they describe. This file maps the complete current
 [Product Feature Inventory](./features/README.md) to its documentation owner; it does not duplicate acceptance criteria, status, or effort
@@ -17,30 +17,30 @@ independently from the feature, its implementation, and its human review.
 | ----------------------- | ----------------------------------------------------------------- | ---------------------------------- |
 | Authentication          | [Authentication stories](./features/authentication/README.md)     | Current model; validation due      |
 | Companies and workspace | —                                                                 | Canonical stories not yet written  |
-| Accounts                | [Safe stories](./features/safe/Readme.md)                         | Partial; complete journey due      |
-| Payroll                 | [Payroll stories](./features/payroll/README.md)                   | Implementation audit complete      |
+| Accounts                | [Accounts stories](./features/accounts/README.md)                 | Current model; implementation gaps |
+| Payroll                 | [Payroll stories](./features/payroll/README.md)                   | Current model; implementation gaps |
 | Community Credit        | [Community Credit stories](./features/community-credit/README.md) | Current model; implementation gaps |
-| Accounting              | [Accounting references](./features/accounting/README.md)          | Current model migration due        |
+| Accounting              | [Accounting stories](./features/accounting/README.md)             | Current model; implementation gaps |
 | Contract Management     | —                                                                 | Canonical stories not yet written  |
 | SHER Token              | —                                                                 | Canonical stories not yet written  |
 | Governance              | —                                                                 | Canonical stories not yet written  |
-| Vesting                 | [Vesting stories](./features/vesting/README.md)                   | Current model trial                |
+| Vesting                 | [Vesting stories](./features/vesting/README.md)                   | Current model; human reviewed      |
 
-`Alignment due` or `migration due` describes documentation only. It does not mean that the product capability is incomplete.
+Documentation state describes the feature document and its review record, not product availability.
 
 ## Backoffice Feature Coverage
 
 All administrator capabilities are grouped in the [Backoffice Feature Inventory](./features/backoffice/README.md). Focused user stories
 belong under `docs/features/backoffice/<capability>/README.md`; no dashboard capability owns a separate top-level feature directory.
 
-| Administrator capability | Current documentation                                                               | Documentation state               |
-| ------------------------ | ----------------------------------------------------------------------------------- | --------------------------------- |
-| Overview and statistics  | [Statistics references](./features/backoffice/statistics/README.md)                 | Current model migration due       |
-| Team operations          | —                                                                                   | Canonical stories not yet written |
-| Micropayments            | —                                                                                   | Canonical stories not yet written |
-| Polymarket accounting    | —                                                                                   | Canonical stories not yet written |
-| Feature restrictions     | [Feature Restriction stories](./features/backoffice/feature-restrictions/README.md) | Current model; validation due     |
-| Contract operations      | —                                                                                   | Canonical stories not yet written |
+| Administrator capability | Current documentation                                                               | Documentation state                |
+| ------------------------ | ----------------------------------------------------------------------------------- | ---------------------------------- |
+| Overview and statistics  | [Statistics stories](./features/backoffice/statistics/README.md)                    | Current model; implementation gaps |
+| Team operations          | —                                                                                   | Canonical stories not yet written  |
+| Micropayments            | —                                                                                   | Canonical stories not yet written  |
+| Polymarket accounting    | —                                                                                   | Canonical stories not yet written  |
+| Feature restrictions     | [Feature Restriction stories](./features/backoffice/feature-restrictions/README.md) | Current model; validation due      |
+| Contract operations      | —                                                                                   | Canonical stories not yet written  |
 
 ## Contract Behaviour References
 
