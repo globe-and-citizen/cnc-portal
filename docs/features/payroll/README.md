@@ -43,7 +43,7 @@ complete journey belongs to the Accounts feature.
 | US-PAYROLL-002 | Pause or resume a member's wage            | Team owner          | 🧪 Validation  |    P2    | S      |
 | US-PAYROLL-003 | Fund the Payroll contract                  | Team owner          | 🔗 Reference   |    P1    | —      |
 | US-PAYROLL-004 | Set weekly goals                           | Team member         | 🧪 Validation  |    P3    | S      |
-| US-PAYROLL-005 | Submit a daily claim                       | Team member         | 🚧 In Progress |    P1    | M      |
+| US-PAYROLL-005 | Submit a daily claim                       | Team member         | 🧪 Validation  |    P1    | M      |
 | US-PAYROLL-006 | Edit a daily claim                         | Team member         | 🚧 In Progress |    P2    | S      |
 | US-PAYROLL-007 | Delete a daily claim                       | Team member         | 🚧 In Progress |    P2    | S      |
 | US-PAYROLL-008 | Sign a completed weekly claim              | Contract owner      | 🚧 In Progress |    P1    | L      |
@@ -62,17 +62,18 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 
 ### Acceptance Criteria
 
-- [x] The Set Wage action is available to the team owner for every member.
-- [x] The modal identifies the member and separates standard wage from optional overtime wage.
+- [x] A team owner can set a wage for any team member.
+- [x] A wage belongs to one member and stores standard rates separately from optional overtime rates.
 - [x] Standard rates support the network-native token, USDC, and SHER; at least one rate must be enabled with a positive value.
-- [x] Disabling a rate resets its submitted amount to zero.
+- [x] A disabled token rate is submitted as zero.
 - [x] The regular weekly allowance is a whole number from 1 to 40 hours.
 - [x] The daily allowance is a whole number from 1 to 24 hours and defaults to 8 hours.
-- [x] The form explains that hours beyond the daily allowance cannot be claimed even when the weekly allowance has capacity.
+- [x] The daily allowance remains a per-day cap even when the weekly allowance still has unused capacity.
 - [x] Overtime configuration requires at least one positive overtime rate and a whole-number allowance from 1 to 20 hours.
-- [x] Success closes the modal, reports that the wage was updated, and refreshes the member data.
-- [x] The member table shows standard and overtime rates, weekly and daily allowances, and an empty value when no wage exists.
-- [x] Editing pre-fills the operative wage and creates a new version instead of overwriting wage history.
+- [x] A successful wage request persists the resulting version and subsequent member-wage reads expose it.
+- [x] The product exposes each member's standard and overtime rates and weekly and daily allowances, and distinguishes members without a
+      wage.
+- [x] Updating a wage uses the operative wage as its predecessor and creates a new version instead of overwriting wage history.
 - [ ] A new wage version becomes current immediately; the product has no scheduled wage or future effective date
       ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
 - [x] The API finds an existing weekly claim by team, member, and ISO week before selecting a wage.
@@ -81,7 +82,7 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] A goals-only weekly row does not lock its wage; its first daily claim can move it to the member's current wage.
 - [ ] _(database)_ At most one weekly claim can exist for a team, member, and ISO week; the current unique constraint still uses wage and
       week ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
-- [ ] The portal and API expose no scheduled-wage badge, notice, timer, response field, or cancellation action
+- [ ] The wage lifecycle has no scheduled state, future-effective transition, or cancellation operation
       ([#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522)).
 - [x] A disabled wage cannot be replaced until the owner resumes it.
 - [x] Archived teams cannot create or replace wages.
@@ -158,25 +159,24 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ### Acceptance Criteria
 
-- [x] Submit Claim is available only to the selected member when an applicable wage exists and the selected week accepts new claims.
-- [x] The form contains a UTC work date, whole hours, ten-minute increments, a memo, and up to ten attachments.
-- [x] Duration is positive, is a multiple of ten minutes, and does not exceed 24 hours or the wage's lower daily allowance.
+- [x] Only the selected member can submit a daily claim when an applicable wage exists and the selected week accepts new claims.
+- [x] A daily claim records a UTC work date, a duration in whole hours and ten-minute increments, a memo, and up to ten attachments.
+- [x] A duration that is not positive, is not a multiple of ten minutes, exceeds 24 hours, or exceeds the wage's lower daily allowance is
+      rejected.
 - [x] The portal and API validate a supplied memo after trimming: it must contain 1 to 3,000 characters, so empty or whitespace-only values
       and a 3,001-character value are rejected.
-- [x] Success reports that the claim was added, closes the modal, and refreshes weekly-claim data.
-- [x] The portal rejects a single claim above the daily allowance before submission.
-- [x] The portal includes existing claims for the selected day when checking the daily allowance and explains the allowance, claimed amount,
-      and remainder.
+- [x] A successful submission persists the daily claim and subsequent weekly-claim reads include it.
+- [x] Daily-allowance validation adds the new duration to the existing claims for the selected work date.
 - [x] _(API)_ The weekly total cannot exceed the combined regular and overtime allowances.
 - [x] _(API)_ The server enforces the daily allowance and uses an 8-hour fallback for legacy wages.
 - [x] When submission restriction is active, the portal and API accept only the current ISO week and at most four days in the past.
-- [x] Weeks that already carry a signature are unavailable in the date picker.
+- [x] A week that already carries a signature rejects new daily claims.
 - [x] Signed, withdrawn, and disabled weeks reject new claims.
 - [x] A paused wage rejects new claims.
 - [x] More than ten attachments are rejected by both the portal and API.
-- [x] A rejected request keeps the form available and displays the server error.
+- [x] A rejected submission persists no daily claim and returns the rejection reason so the member can correct or retry it.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-001
 
@@ -189,19 +189,16 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 ### Acceptance Criteria
 
 - [x] The claim owner can edit the duration, memo, and attachments while the week is pending.
-- [x] The work date remains locked during editing.
+- [x] Editing cannot change the claim's original work date.
 - [x] The update API permits a partial update without a memo; when a memo is supplied, the portal and API apply the same trimmed
       1-to-3,000-character rule as claim creation.
 - [x] The combined existing and new attachment count cannot exceed ten.
 - [x] _(API)_ The weekly allowance is rechecked while excluding the claim being edited.
 - [x] _(API)_ The daily allowance is rechecked for the original work date while excluding the claim being edited.
-- [ ] The edit form includes other claims from the same day in its pre-submit daily-limit feedback; the API currently catches this only
-      after submission.
 - [x] A user other than the claim owner cannot edit the claim.
-- [ ] The API restricts editing to a pending week; it currently also accepts a disabled weekly claim even though the portal hides the
-      action.
+- [ ] The API restricts editing to a pending week; it currently also accepts a disabled weekly claim.
 - [x] A paused wage blocks claim editing.
-- [x] Success refreshes the claim data and failure keeps an actionable error in the modal.
+- [x] A successful edit persists the new claim values; a rejected edit leaves the stored claim unchanged and returns the rejection reason.
 - [x] Archived teams cannot edit claims.
 
 **Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
@@ -216,16 +213,15 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ### Acceptance Criteria
 
-- [x] The owner can open a confirmation showing the claim duration and date for a pending claim.
-- [x] Confirming deletion reports success and refreshes weekly-claim data.
+- [x] Deleting a pending claim requires explicit confirmation from its owner before stored data changes.
+- [x] A confirmed deletion removes the claim from subsequent weekly-claim reads.
 - [x] Stored attachments belonging to the deleted claim are removed.
 - [x] Deleting the final claim removes an otherwise empty weekly claim but preserves a row that still contains weekly goals.
 - [x] A user other than the claim owner cannot delete the claim.
-- [ ] The API restricts deletion to a pending week; it currently also accepts a disabled weekly claim even though the portal hides the
-      action.
+- [ ] The API restricts deletion to a pending week; it currently also accepts a disabled weekly claim.
 - [x] A paused wage blocks claim deletion.
 - [x] Archived teams cannot delete claims.
-- [x] A failed deletion remains visible as an error rather than success.
+- [x] A failed deletion leaves the stored claim unchanged and returns a failure rather than a successful outcome.
 
 **Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
 
@@ -239,19 +235,19 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ### Acceptance Criteria
 
-- [x] The portal exposes the sign action only to the current Cash Remuneration contract owner.
-- [ ] The API uses the same signing authority as the portal and contract; it currently also accepts the team owner when that address is not
-      the Cash Remuneration owner.
+- [x] Only the current Cash Remuneration contract owner can initiate signing through the product journey.
+- [ ] The API authorizes only the current Cash Remuneration contract owner; it currently also accepts the team owner when that address is
+      different.
 - [x] Signing requests an EIP-712 wallet signature bound to Cash Remuneration version 1, the active contract, and the active chain.
-- [x] The portal exposes signing only when the weekly claim contains at least one daily claim.
+- [x] The product journey permits signing only when the weekly claim contains at least one daily claim.
 - [ ] _(API)_ The backend rejects signing a goals-only weekly claim; it currently does not load or validate the daily-claim count
       ([#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521)).
 - [x] The current week and future weeks cannot be signed.
 - [x] Normal signing applies to pending weeks; a disabled claim uses the explicit re-sign flow.
-- [x] Signing is unavailable while the team is archived or has not migrated to the current Officer generation.
+- [x] Archived teams and teams that have not migrated to the current Officer generation cannot sign weekly claims.
 - [x] _(API)_ The signed-against contract must match the team's current Cash Remuneration contract, and the recovered signer must match the
       caller.
-- [x] A rejected wallet signature is reported without changing the weekly claim.
+- [x] Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
 - [x] A previous-contract signature is reset to pending during reconciliation so the current owner can sign it again against the active
       contract.
 - [x] Re-signing a disabled current-contract claim re-enables its existing signature before storing the replacement.
@@ -270,9 +266,9 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] The current Cash Remuneration owner can disable a signed claim on-chain.
 - [x] The owner can re-enable a disabled claim that has an existing signature.
-- [x] Successful contract actions reconcile the stored status and refresh the action menu.
-- [x] Withdrawn claims expose no disable or enable action in the portal.
-- [x] The action menu exposes only the transition valid for the current signed or disabled state.
+- [x] Successful on-chain disable and enable operations reconcile the stored weekly-claim status.
+- [x] A withdrawn claim cannot transition to disabled or enabled.
+- [x] A signed claim can transition to disabled, while a disabled claim with an existing signature can transition to enabled.
 - [x] Users who are not the Cash Remuneration owner cannot invoke the contract actions.
 - [ ] The legacy weekly-claim update API cannot mark a claim enabled or disabled without the matching on-chain action; it currently accepts
       a team owner and updates only the database.
@@ -289,10 +285,10 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ### Acceptance Criteria
 
-- [x] A signed week exposes Withdraw only to the member named by the claim.
+- [x] Only the member named by a signed weekly claim can initiate its withdrawal.
 - [x] Withdrawal sends the complete native-token, ERC-20, and mintable-token wage payload on-chain.
-- [x] Success reports Claim withdrawn and reconciles the stored status with the contract.
-- [x] Withdraw is unavailable after payment and while the team is archived.
+- [x] A successful withdrawal transfers the approved compensation and reconciles the stored status with the contract.
+- [x] A paid claim and a claim belonging to an archived team cannot be withdrawn.
 - [x] A weekly claim without signed status or without a signature cannot be withdrawn through the product journey.
 - [x] _(API)_ A user outside the team, another member, and the team or contract owner cannot mark a member's weekly claim withdrawn on their
       behalf.
@@ -300,7 +296,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A signature that no longer recovers the current contract owner is rejected.
 - [x] _(contract)_ The caller must match the employee encoded by the signed claim.
 - [x] _(contract)_ A paid, disabled, unsupported-token, underfunded, or paused claim reverts.
-- [x] Cancelling the wallet transaction produces no success state and no error toast.
+- [x] Cancelling the wallet transaction leaves the claim unpaid and its stored status unchanged.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -318,7 +314,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A signature bound to a previous Cash Remuneration contract is cleared and returned to pending.
 - [x] Reconciliation runs when team data loads and after successful withdraw, disable, or enable actions.
 - [x] A missing or invalid signature and a failed contract read skip only the affected row.
-- [x] The result reports processed, updated, and skipped claims and refreshes weekly-claim queries.
+- [x] Reconciliation reports processed, updated, and skipped claims, and subsequent weekly-claim reads expose the resulting statuses.
 
 **Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
 
@@ -332,11 +328,11 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ### Acceptance Criteria
 
-- [x] A member's history shows each week's status, total duration, token amounts, daily breakdown, goals, and attachments.
-- [x] The Company Payroll table shows member, week, duration, rates, computed amounts, status, and currently available actions.
+- [x] A member can review each week's status, total duration, token amounts, daily breakdown, goals, and attachments.
+- [x] Team-wide payroll history provides the member, week, duration, rates, computed amounts, status, and currently valid transitions.
 - [x] _(API)_ Weekly claims can be filtered by status and member, and total minutes are derived from their daily claims.
-- [x] The Company Payroll table requests a paginated slice of at most 100 rows; unpaginated consumers receive the same `{ data, total }`
-      response shape.
+- [x] Team-wide payroll history supports paginated slices of at most 100 rows, while unpaginated consumers receive the same
+      `{ data, total }` response shape.
 - [x] Every authenticated team member can retrieve team-wide payroll records so that compensation remains transparent within the team.
 - [x] Invalid status, member-address, page, and limit filters are rejected.
 
@@ -346,19 +342,27 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ## Known Gaps
 
-- The current implementation still schedules some wage changes with `effectiveFrom`, exposes the scheduled state through the API and portal,
-  and enforces weekly-claim uniqueness by wage and week instead of team, member, and week. Tracked by
+Functional gaps map to unchecked acceptance criteria. UI/UX notes remain visible separately but do not define the functional completion
+status of a user story.
+
+### Functional Gaps
+
+- The current implementation still schedules some wage changes with `effectiveFrom`, exposes a scheduled-wage lifecycle, and enforces
+  weekly-claim uniqueness by wage and week instead of team, member, and week. Tracked by
   [#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522).
-- The edit form does not include the other claims from the same day in its inline daily-limit check; the API still rejects the invalid
-  total.
-- The update and delete APIs allow claims from a disabled week to change even though the portal exposes those actions only while the week is
-  pending.
+- The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
+  week is pending.
 - The signing API does not reject a goals-only weekly claim. Tracked by
   [#2521](https://github.com/globe-and-citizen/cnc-portal/issues/2521).
 - The signing API accepts a team owner who is not the current Cash Remuneration owner. Such a signature cannot authorise the later contract
   withdrawal.
 - The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
-- The Submit Claim modal says that only one claim can be submitted per week, while the implemented model allows multiple daily claims in the
+
+### UI/UX Notes
+
+- The edit flow does not include the other claims from the same day in its pre-submit daily-limit feedback; the API still rejects the
+  invalid total.
+- The Submit Claim copy says that only one claim can be submitted per week, while the implemented model allows multiple daily claims in the
   same weekly claim.
 
 ## Implementation Evidence
