@@ -243,11 +243,12 @@ describe('Weekly Claim Controller', () => {
         message: 'Weekly claim already withdrawn',
       },
       {
-        title: 'sign unauthorized',
+        title: 'sign when the team owner is not the current Cash Remuneration owner',
         action: 'sign',
-        claim: weeklyClaimFactory({ status: 'pending', wage: ownerWage('0x456') }),
+        claim: weeklyClaimFactory({ status: 'pending', wage: ownerWage(CALLER) }),
         ownerOk: false,
-        message: 'Caller is not the Cash Remuneration owner or the team owner',
+        expectedStatus: 403,
+        message: 'Caller is not the current Cash Remuneration owner',
       },
       {
         title: 'sign week not completed',
@@ -284,13 +285,20 @@ describe('Weekly Claim Controller', () => {
         ownerOk: true,
         message: 'Weekly claim already withdrawn',
       },
-    ])('should return 400 for $title', async ({ action, claim, ownerOk, message }) => {
-      vi.mocked(isCashRemunerationOwner).mockResolvedValue(ownerOk);
-      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(claim as any);
-      const response = await putAction(action);
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message });
-    });
+    ])(
+      'should return the expected rejection for $title',
+      async ({ action, claim, ownerOk, message, expectedStatus = 400 }) => {
+        vi.mocked(isCashRemunerationOwner).mockResolvedValue(ownerOk);
+        vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(claim as any);
+        const response = await putAction(action);
+        expect(response.status).toBe(expectedStatus);
+        expect(response.body).toEqual({ message });
+        if (action === 'sign' && expectedStatus === 403) {
+          expect(prisma.$transaction).not.toHaveBeenCalled();
+          expect(recoverTypedDataAddress).not.toHaveBeenCalled();
+        }
+      }
+    );
 
     // Authorization on `withdraw` (issue #2471). Before the fix any
     // authenticated user could flip any team's signed claim to `withdrawn`,
