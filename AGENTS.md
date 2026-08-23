@@ -45,6 +45,9 @@ addresses are mirrored into the frontend artifacts; after changing a contract in
 - Keep a change scoped to the requested outcome. Report adjacent drift that materially affects
   correctness, security, or the edited behaviour; track it separately unless it blocks the current
   work.
+- Write every documentation diagram in Mermaid. Follow the
+  [diagram format rule](./docs/platform/feature-specification-guide.md#diagram-format); do not add
+  ASCII, PlantUML, Draw.io, or image-only diagrams.
 - Use the [query guide](./app/src/queries/README.md) for frontend API queries and mutations. In
   particular, mutations are pure async functions wrapped by a `useXxxMutation` composable, and one
   hook serves one endpoint rather than each UI action.

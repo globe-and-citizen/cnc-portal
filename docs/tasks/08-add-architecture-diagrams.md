@@ -137,7 +137,7 @@ grep -c "```mermaid" /Users/test/Documents/data/gc/cnc-portal/docs/platform/arch
 If time permits, consider adding diagrams to other files:
 
 - `/docs/platform/security.md` - Security architecture diagram
-- `/docs/features/stats/functional-specification.md` - Stats data flow
+- `/docs/features/backoffice/statistics/functional-specification.md` - Stats data flow
 - `/docs/platform/deployment.md` - Deployment pipeline diagram
 
 ## Expected Result

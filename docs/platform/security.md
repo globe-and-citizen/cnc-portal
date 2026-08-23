@@ -431,5 +431,5 @@ When implementing new features, ensure:
 
 ---
 
-For feature-specific security considerations, see individual feature specifications in
+For feature-specific security considerations, see each canonical feature README under
 `/docs/features/`.

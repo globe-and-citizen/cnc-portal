@@ -1,8 +1,8 @@
 # Statistics Feature - Functional Specification
 
-**Version:** 1.0.0  
-**Date:** December 7, 2025  
-**Status:** Implemented  
+**Version:** 1.0.0\
+**Date:** December 7, 2025\
+**Status:** Implemented\
 **Feature Branch:** feature/perf-stats
 
 ---
@@ -40,7 +40,7 @@ This feature encompasses:
 
 #### FR-1: Overview Statistics
 
-**Priority:** High  
+**Priority:** High\
 **Description:** Display platform-wide aggregate statistics
 
 **User Story:**
@@ -60,7 +60,7 @@ This feature encompasses:
 
 #### FR-2: Team Statistics
 
-**Priority:** High  
+**Priority:** High\
 **Description:** Provide detailed analytics for teams
 
 **User Story:**
@@ -79,7 +79,7 @@ This feature encompasses:
 
 #### FR-3: User Statistics
 
-**Priority:** High  
+**Priority:** High\
 **Description:** Analyze user engagement and activity
 
 **User Story:**
@@ -98,7 +98,7 @@ This feature encompasses:
 
 #### FR-4: Claims Statistics
 
-**Priority:** High  
+**Priority:** High\
 **Description:** Track claim submission and processing metrics
 
 **User Story:**
@@ -117,7 +117,7 @@ This feature encompasses:
 
 #### FR-5: Wages Statistics
 
-**Priority:** Medium  
+**Priority:** Medium\
 **Description:** Analyze wage distribution and rates
 
 **User Story:**
@@ -136,7 +136,7 @@ This feature encompasses:
 
 #### FR-6: Expenses Statistics
 
-**Priority:** Medium  
+**Priority:** Medium\
 **Description:** Monitor expense submissions and approvals
 
 **User Story:**
@@ -154,7 +154,7 @@ This feature encompasses:
 
 #### FR-7: Contracts Statistics
 
-**Priority:** Medium  
+**Priority:** Medium\
 **Description:** Track smart contract deployments and types
 
 **User Story:**
@@ -173,7 +173,7 @@ This feature encompasses:
 
 #### FR-8: Board Actions Statistics
 
-**Priority:** Medium  
+**Priority:** Medium\
 **Description:** Monitor governance actions and execution rates
 
 **User Story:**
@@ -192,7 +192,7 @@ This feature encompasses:
 
 #### FR-9: Recent Activity Feed
 
-**Priority:** High  
+**Priority:** High\
 **Description:** Display chronological feed of recent platform activities
 
 **User Story:**
@@ -242,7 +242,7 @@ All endpoints are prefixed with `/api/stats` and require JWT authentication.
 
 #### Home Page Stats Cards
 
-**Location:** Dashboard home page  
+**Location:** Dashboard home page\
 **Components:** 4 metric cards
 
 **Display:**
@@ -260,7 +260,7 @@ All endpoints are prefixed with `/api/stats` and require JWT authentication.
 
 #### Stats Page
 
-**Location:** `/stats` route  
+**Location:** `/stats` route\
 **Layout:** Tabbed interface with sections
 
 **Sections:**

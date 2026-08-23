@@ -8,14 +8,14 @@ statistics.
 
 ## Architecture
 
-The stats integration follows a clean architecture pattern:
+The stats integration follows four dashboard layers:
 
-```
-Dashboard App
-├── Types (TypeScript definitions)
-├── Composables (API integration layer)
-├── Components (UI display components)
-└── Pages (Route-level components)
+```mermaid
+flowchart TB
+  dashboard[Dashboard App] --> types[Types: TypeScript definitions]
+  dashboard --> composables[Composables: API integration layer]
+  dashboard --> components[Components: UI display components]
+  dashboard --> pages[Pages: route-level components]
 ```
 
 ## Getting Started
