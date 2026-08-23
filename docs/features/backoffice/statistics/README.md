@@ -4,13 +4,12 @@
 
 **Documentation state:** Existing references; alignment with the current feature model is due
 
-The dashboard overview and detailed statistics route let administrators inspect platform, team,
-user, claim, wage, expense, contract, governance-action, and recent-activity metrics over a selected
-period. This directory is nested under Backoffice because statistics are exposed through the
-administrator dashboard rather than the client app.
+The dashboard overview and detailed statistics route let administrators inspect platform, team, user, claim, wage, expense, contract,
+governance-action, and recent-activity metrics over a selected period. This directory is nested under Backoffice because statistics are
+exposed through the administrator dashboard rather than the client app.
 
-These documents predate the current human-review contract. They provide useful implementation and
-product context, but their historical completion claims are not a current acceptance record.
+These documents predate the current human-review contract. They provide useful implementation and product context, but their historical
+completion claims are not a current acceptance record.
 
 ## Documentation
 

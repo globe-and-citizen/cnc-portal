@@ -19,6 +19,7 @@ const BEHAVIORAL_SOURCE_PATTERNS = [
 ]
 
 const TEST_SOURCE_PATTERN = /(?:^|\/)(?:__tests__|tests?)(?:\/|$)|\.(?:spec|test)\.[^/]+$/
+const MARKDOWN_FILE_PATTERN = /\.md$/i
 
 function normalizePath(path) {
   return path.split(sep).join('/').replace(/^\.\//, '').replace(/\/$/, '')
@@ -71,6 +72,7 @@ export function isBehavioralSourcePath(path) {
   const normalizedPath = normalizePath(path)
 
   return (
+    !MARKDOWN_FILE_PATTERN.test(normalizedPath) &&
     !TEST_SOURCE_PATTERN.test(normalizedPath) &&
     BEHAVIORAL_SOURCE_PATTERNS.some((pattern) => pattern.test(normalizedPath))
   )

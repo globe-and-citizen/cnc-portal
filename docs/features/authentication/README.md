@@ -9,13 +9,11 @@ These acceptance criteria follow the
 
 ## Product Model
 
-CNC Portal uses Sign-In with Ethereum. The user connects a wallet, switches to the configured
-network, and signs a message. Signing in does not submit an on-chain transaction and does not
-consume gas.
+CNC Portal uses Sign-In with Ethereum. The user connects a wallet, switches to the configured network, and signs a message. Signing in does
+not submit an on-chain transaction and does not consume gas.
 
-The client accepts an authenticated portal user. The dashboard additionally requires a persisted
-administrator role. Authentication proves wallet ownership; authorization decides which product
-surface the user may enter.
+The client accepts an authenticated portal user. The dashboard additionally requires a persisted administrator role. Authentication proves
+wallet ownership; authorization decides which product surface the user may enter.
 
 ## Lifecycle
 
@@ -53,8 +51,7 @@ flowchart TB
 
 - [ ] The login page identifies Sign-In with Ethereum as the authentication action.
 - [ ] The journey connects the wallet and requests the configured network before signing.
-- [ ] The wallet message can be reviewed and rejected without sending a transaction or consuming
-      gas.
+- [ ] The wallet message can be reviewed and rejected without sending a transaction or consuming gas.
 - [ ] A successful signature and backend verification open the Companies surface.
 - [ ] A protected client route redirects a user without a valid session to login.
 
@@ -71,8 +68,7 @@ flowchart TB
 - [ ] The dashboard separates wallet connection from message signing.
 - [ ] The connected wallet address is visible before the user signs in.
 - [ ] A successful administrator login opens the backoffice Overview.
-- [ ] An authenticated user without an administrator role reaches Access Denied rather than a
-      protected module.
+- [ ] An authenticated user without an administrator role reaches Access Denied rather than a protected module.
 - [ ] Logging out clears the session and returns the user to login.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation

@@ -1,24 +1,19 @@
 # CNC Portal Documentation
 
-This hub routes readers to the current owner of each kind of CNC Portal documentation. Feature
-behaviour belongs with its feature, platform rules belong in platform guides, and code and tests
-remain executable evidence.
+This hub routes readers to the current owner of each kind of CNC Portal documentation. Feature behaviour belongs with its feature, platform
+rules belong in platform guides, and code and tests remain executable evidence.
 
 ## Start Here
 
 1. [Project Charter](./01_PROJECT_CHARTER.md) — product vision, scope, and governance.
 2. [Architecture Overview](./platform/architecture.md) — system boundaries and components.
-3. [Product Feature Inventory](./features/README.md) — current user-accessible client and backoffice
-   capabilities.
-4. [Feature User Stories Index](./02_USER_STORIES.md) — canonical feature journeys and acceptance
-   criteria.
-5. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human
-   review contract.
+3. [Product Feature Inventory](./features/README.md) — current user-accessible client and backoffice capabilities.
+4. [Feature User Stories Index](./02_USER_STORIES.md) — canonical feature journeys and acceptance criteria.
+5. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human review contract.
 6. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
 
-The [Implementation Status](./03_IMPLEMENTATION_STATUS.md) and [Roadmap](./ROADMAP.md) are dated
-planning snapshots. Verify current delivery in the relevant feature README, code, tests, and GitHub
-state before relying on a status claim.
+The [Implementation Status](./03_IMPLEMENTATION_STATUS.md) and [Roadmap](./ROADMAP.md) are dated planning snapshots. Verify current delivery
+in the relevant feature README, code, tests, and GitHub state before relying on a status claim.
 
 ## Documentation Ownership
 
@@ -36,13 +31,11 @@ state before relying on a status claim.
 
 ## Feature Documentation
 
-The [Product Feature Inventory](./features/README.md) is derived from the current app and dashboard
-journeys. It is the canonical answer to which capabilities users can access. Documentation coverage
-and human-validation status are tracked separately.
+The [Product Feature Inventory](./features/README.md) is derived from the current app and dashboard journeys. It is the canonical answer to
+which capabilities users can access. Documentation coverage and human-validation status are tracked separately.
 
-All dashboard capabilities are grouped under the
-[Backoffice Feature Inventory](./features/backoffice/README.md). A dashboard route must not become a
-separate top-level feature directory.
+All dashboard capabilities are grouped under the [Backoffice Feature Inventory](./features/backoffice/README.md). A dashboard route must not
+become a separate top-level feature directory.
 
 ### Current User-Story Entry Points
 
@@ -56,13 +49,11 @@ separate top-level feature directory.
 | [Feature Restrictions](./features/backoffice/feature-restrictions/README.md) | Global feature states and team-specific overrides         | Validation due          |
 | [Accounting migrations](./features/accounting/contract-migration-history.md) | Accounting continuity across contract migrations          | Focused story set       |
 
-See the [Feature User Stories Index](./02_USER_STORIES.md) for coverage across the complete current
-product inventory.
+See the [Feature User Stories Index](./02_USER_STORIES.md) for coverage across the complete current product inventory.
 
 ### Product References Awaiting the Current Model
 
-These sources remain useful but have not yet been reviewed under the current feature-documentation
-contract.
+These sources remain useful but have not yet been reviewed under the current feature-documentation contract.
 
 | Area                                          | Current entry point                  |
 | --------------------------------------------- | ------------------------------------ |
@@ -83,16 +74,15 @@ These supporting documents are classified by their actual owner rather than as p
 
 ### Smart Contracts
 
-- [Contract Behaviour Index](./contracts/features/README.md) — contract-specific references,
-  separated from the product feature inventory; verification remains contract-specific.
+- [Contract Behaviour Index](./contracts/features/README.md) — contract-specific references, separated from the product feature inventory;
+  verification remains contract-specific.
 - [Contract Overview](./contracts/README.md) — contract list and high-level concepts.
-- [Technical Architecture](./contracts/contracts-technical-architecture.md) — upgrade and design
-  patterns.
+- [Technical Architecture](./contracts/contracts-technical-architecture.md) — upgrade and design patterns.
 - [Architecture Diagrams](./contracts/contracts-architecture-diagram.md) — contract relationships.
 - [Quick Reference](./contracts/contracts-quick-reference.md) — functions, events, and errors.
 
-Product and contract documentation are complementary. Contract completion does not prove that the
-corresponding portal journey exists or has passed human review.
+Product and contract documentation are complementary. Contract completion does not prove that the corresponding portal journey exists or has
+passed human review.
 
 ## Platform Guides
 
@@ -105,19 +95,17 @@ corresponding portal journey exists or has passed human review.
 - [Performance Standards](./platform/performance.md)
 - [Deployment Guide](./platform/deployment.md)
 
-Repository-specific coding guides live under `.github/copilot-instructions/`. Start with the
-repository root `AGENTS.md` when performing implementation work.
+Repository-specific coding guides live under `.github/copilot-instructions/`. Start with the repository root `AGENTS.md` when performing
+implementation work.
 
 ## Implementation Documentation
 
-- [Architectural Capability Inventory](./implementation/README.md) — verified shared runtime
-  behaviour and its consumers.
-- [Implementation Documentation Guide](./platform/implementation-documentation-guide.md) —
-  classification, ownership, structure, and review rules.
+- [Architectural Capability Inventory](./implementation/README.md) — verified shared runtime behaviour and its consumers.
+- [Implementation Documentation Guide](./platform/implementation-documentation-guide.md) — classification, ownership, structure, and review
+  rules.
 
-Product journeys and architectural capabilities are split when a subject has both facets. Feature
-READMEs own the user outcome; implementation READMEs own components, invariants, failure paths, and
-runtime evidence.
+Product journeys and architectural capabilities are split when a subject has both facets. Feature READMEs own the user outcome;
+implementation READMEs own components, invariants, failure paths, and runtime evidence.
 
 ## Reading by Role
 
@@ -156,9 +144,9 @@ Every dashboard feature uses:
 docs/features/backoffice/<kebab-case-feature>/README.md
 ```
 
-The README contains the complete reviewable journey: scope, product model, lifecycle, status
-overview, user stories, acceptance criteria, human validation, evidence, and related documentation.
-Detailed rules may live in focused sibling files and are linked from the relevant story.
+The README contains the complete reviewable journey: scope, product model, lifecycle, status overview, user stories, acceptance criteria,
+human validation, evidence, and related documentation. Detailed rules may live in focused sibling files and are linked from the relevant
+story.
 
 Follow the [Feature Documentation Guide](./platform/feature-specification-guide.md). In particular:
 
@@ -172,9 +160,8 @@ Follow the [Feature Documentation Guide](./platform/feature-specification-guide.
 
 ## Documentation Validation
 
-Run the documentation checks for every documentation change and before handing over a behavioural
-change. The freshness check requires the canonical feature, contract, or implementation owner to be
-reviewed in the same pull request; see the
+Run the documentation checks for every documentation change and before handing over a behavioural change. The freshness check requires the
+canonical feature, contract, or implementation owner to be reviewed in the same pull request; see the
 [Documentation Freshness Policy](./platform/documentation-freshness-policy.md).
 
 ```bash
@@ -186,11 +173,10 @@ bash scripts/audit-doc-drift.sh
 git diff --check
 ```
 
-When navigation changes, verify every local link and update the
-[Product Feature Inventory](./features/README.md) and
+When navigation changes, verify every local link and update the [Product Feature Inventory](./features/README.md) and
 [Feature User Stories Index](./02_USER_STORIES.md).
 
 ## Updating This Hub
 
-Add or remove an entry when its canonical owner changes. Do not copy detailed rules, stories, status
-tables, API contracts, or implementation inventories into this file.
+Add or remove an entry when its canonical owner changes. Do not copy detailed rules, stories, status tables, API contracts, or
+implementation inventories into this file.

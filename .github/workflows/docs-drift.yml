@@ -33,8 +33,6 @@ jobs:
 
       - name: 💄 Check Markdown formatting
         run: npm run format:md:check
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
 
       - name: ✅ Test documentation freshness rules
         run: npm run test:docs-freshness

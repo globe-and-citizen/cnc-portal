@@ -5,12 +5,11 @@
 **Last updated:** 2026-08-21
 
 User stories live with the product capability they describe. This file maps the complete current
-[Product Feature Inventory](./features/README.md) to its documentation owner; it does not duplicate
-acceptance criteria, status, or effort estimates.
+[Product Feature Inventory](./features/README.md) to its documentation owner; it does not duplicate acceptance criteria, status, or effort
+estimates.
 
-The former aggregate catalogue is preserved in Git history. It is no longer a current product source
-because a global copy can drift independently from the feature, its implementation, and its human
-review.
+The former aggregate catalogue is preserved in Git history. It is no longer a current product source because a global copy can drift
+independently from the feature, its implementation, and its human review.
 
 ## Client Feature Coverage
 
@@ -27,15 +26,12 @@ review.
 | Governance              | —                                                                 | Canonical stories not yet written  |
 | Vesting                 | [Vesting stories](./features/vesting/README.md)                   | Current model trial                |
 
-`Alignment due` or `migration due` describes documentation only. It does not mean that the product
-capability is incomplete.
+`Alignment due` or `migration due` describes documentation only. It does not mean that the product capability is incomplete.
 
 ## Backoffice Feature Coverage
 
-All administrator capabilities are grouped in the
-[Backoffice Feature Inventory](./features/backoffice/README.md). Focused user stories belong under
-`docs/features/backoffice/<capability>/README.md`; no dashboard capability owns a separate top-level
-feature directory.
+All administrator capabilities are grouped in the [Backoffice Feature Inventory](./features/backoffice/README.md). Focused user stories
+belong under `docs/features/backoffice/<capability>/README.md`; no dashboard capability owns a separate top-level feature directory.
 
 | Administrator capability | Current documentation                                                               | Documentation state               |
 | ------------------------ | ----------------------------------------------------------------------------------- | --------------------------------- |
@@ -55,10 +51,8 @@ Contract completion does not imply that a portal journey exists or has passed pr
 
 ## Adding or Updating Stories
 
-1. Confirm the capability and its product surface in the
-   [Product Feature Inventory](./features/README.md).
-2. Open `docs/features/<feature>/README.md` for the client or
-   `docs/features/backoffice/<feature>/README.md` for the dashboard.
+1. Confirm the capability and its product surface in the [Product Feature Inventory](./features/README.md).
+2. Open `docs/features/<feature>/README.md` for the client or `docs/features/backoffice/<feature>/README.md` for the dashboard.
 3. Follow the [Feature Documentation Guide](./platform/feature-specification-guide.md).
 4. Keep `As a`, `I want to`, and `So that` on separate consecutive lines.
 5. Update this index only when a canonical feature entry point is added, renamed, or retired.
