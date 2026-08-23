@@ -42,6 +42,23 @@ describe('TeamContractsDetail.vue', () => {
     return JSON.parse(JSON.stringify(originalTestData))
   }
 
+  async function mountInitializedComponent(datas = getClonedTestData()) {
+    const wrapper = mount(TeamContractsDetail, {
+      props: {
+        datas: [],
+        contractAddress,
+        reset: false,
+        'onUpdate:datas': (updatedDatas: typeof datas) => {
+          void wrapper.setProps({ datas: updatedDatas })
+        }
+      }
+    })
+
+    await wrapper.setProps({ datas })
+    await flushPromises()
+    return wrapper
+  }
+
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
@@ -53,56 +70,27 @@ describe('TeamContractsDetail.vue', () => {
 
   it('shows error toast if submit throws error', async () => {
     setCostPerClickMock.mockRejectedValueOnce(new Error('fail'))
-    const datas = getClonedTestData()
-    datas[0].value = '0.2'
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas,
-        contractAddress,
-        reset: true
-      }
-    })
-    await flushPromises()
-    wrapper.vm.initialized = true
+    const wrapper = await mountInitializedComponent()
+    await wrapper.findAll('input')[0].setValue('0.2')
     await wrapper.find('button').trigger('click')
     await flushPromises()
     expect(setCostPerClickMock).toHaveBeenCalled()
   })
 
   it('shows error toast when the the costPerClick and CostPerImpression is null', async () => {
-    const datas = getClonedTestData()
-    datas[0].value = '0.2'
-
     setCostPerClickMock.mockImplementationOnce(() => {
       throw new Error('Unexpected error')
     })
 
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas,
-        contractAddress,
-        reset: true
-      }
-    })
-
-    wrapper.vm.initialized = true
+    const wrapper = await mountInitializedComponent()
+    await wrapper.findAll('input')[0].setValue('0.2')
 
     await wrapper.find('button').trigger('click')
     await flushPromises()
   })
 
   it('shows error toast when setCostPerClick and setCostPerImpression fails ', async () => {
-    const datas = getClonedTestData()
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas,
-        contractAddress,
-        reset: true
-      }
-    })
-
-    await flushPromises()
-    wrapper.vm.initialized = true
+    await mountInitializedComponent()
 
     // Simulate the error on the ref observed by the watcher
     mockErrorSetCostPerClick.value = new Error('fail')
@@ -116,74 +104,29 @@ describe('TeamContractsDetail.vue', () => {
     mockErrorSetCostPerClick.value = null
   })
 
-  it('initializes original values when datas is updated and not yet initialized', async () => {
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: [],
-        contractAddress,
-        reset: true
-      }
-    })
-
-    wrapper.vm.initialized = false
-
-    const newDatas = getClonedTestData()
-    await wrapper.setProps({ datas: newDatas })
-
-    await flushPromises()
-
-    expect(wrapper.vm.initialized).toBe(true)
-    expect(wrapper.vm.originalValues.costPerClick).toBe(0.1)
-  })
-
-  it('initializes with 0 if value is empty string (setProps style)', async () => {
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: [],
-        contractAddress,
-        reset: true
-      }
-    })
-
-    wrapper.vm.initialized = false
-
+  it('keeps save disabled when loaded rates are empty', async () => {
     const datas = [
       { key: 'costPerClick', value: '' },
       { key: 'costPerImpression', value: '' }
     ]
-    await wrapper.setProps({ datas })
-    await flushPromises()
+    const wrapper = await mountInitializedComponent(datas)
 
-    expect(wrapper.vm.originalValues.costPerClick).toBe(0)
-    expect(wrapper.vm.originalValues.costPerImpression).toBe(0)
+    expect(wrapper.find('button').attributes('disabled')).toBeDefined()
   })
 
-  it('resets initialized when props.reset is true', async () => {
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: getClonedTestData(),
-        contractAddress,
-        reset: false
-      }
-    })
-    wrapper.vm.initialized = true
+  it('uses new rates as the baseline after the parent resets the form', async () => {
+    const wrapper = await mountInitializedComponent()
     await wrapper.setProps({ reset: true })
-    expect(wrapper.vm.initialized).toBe(false)
+    await wrapper.findAll('input')[0].setValue('0.2')
+    await flushPromises()
+
+    expect(wrapper.find('button').attributes('disabled')).toBeDefined()
   })
   it('confirms setCostPerClick transaction and emits closeContractDataDialog', async () => {
     setCostPerClickMock.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
       opts?.onSuccess?.()
     )
-    const datas = getClonedTestData()
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas,
-        contractAddress,
-        reset: true
-      }
-    })
-    await flushPromises()
-    wrapper.vm.initialized = true
+    const wrapper = await mountInitializedComponent()
     await wrapper.find('input[type="number"]').setValue('0.2')
     await wrapper.find('button').trigger('click')
     await flushPromises()
@@ -194,17 +137,8 @@ describe('TeamContractsDetail.vue', () => {
     setCostPerImpressionMock.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
       opts?.onSuccess?.()
     )
-    const datas = getClonedTestData()
-    // Change the impression value before mount so the watcher sees it as the
-    // original and bumps when the input differs.
-    datas[1].value = '0.5'
-    const wrapper = mount(TeamContractsDetail, {
-      props: { datas, contractAddress, reset: true }
-    })
-    await flushPromises()
-    wrapper.vm.initialized = true
-    wrapper.vm.originalCostPerImpression = 0.5
-    datas[1].value = '0.7'
+    const wrapper = await mountInitializedComponent()
+    await wrapper.findAll('input[type="number"]')[1].setValue('0.7')
     await wrapper.find('button').trigger('click')
     await flushPromises()
     expect(setCostPerImpressionMock).toHaveBeenCalled()

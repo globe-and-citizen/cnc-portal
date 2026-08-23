@@ -12,8 +12,9 @@
 those journeys possible. An architectural capability is a shared runtime guarantee, boundary, or mechanism; it is not a product feature
 merely because the implementation calls it a feature.
 
-Current implementation documentation explains what the system does now. Proposed designs belong in an ADR or tracking issue, exact
-interfaces remain in their generated or executable owner, and code and tests remain the final proof.
+Current implementation documentation explains what the system does now. Durable technical choices and their trade-offs belong in
+[Architecture Decision Records](../adr/README.md), while active delivery plans belong in tracking issues. Exact interfaces remain in their
+generated or executable owner, and code and tests remain the final proof.
 
 ## Classification Rule
 
@@ -48,7 +49,7 @@ canonical owner.
 | Smart-contract behaviour                         | `docs/contracts/features/<contract>/README.md` |
 | Development tooling and local workflows          | `docs/development-guide/`                      |
 | Platform-wide engineering standards              | `docs/platform/`                               |
-| Decisions and trade-offs                         | ADRs                                           |
+| Decisions and trade-offs                         | [`docs/adr/`](../adr/README.md)                |
 | Exact HTTP or contract interfaces                | OpenAPI, ABI artifacts, and current source     |
 | Executable proof                                 | Current code and tests                         |
 | Active delivery and history                      | GitHub issues, pull requests, and Git          |
@@ -87,7 +88,7 @@ to feature review. Use `Last verified`, not a historical version or branch name,
 ## Current Behaviour and History
 
 - Describe only behaviour verified against the current branch.
-- Put proposed behaviour and migration plans in an ADR or GitHub issue.
+- Put durable proposed behaviour, migration choices, and their trade-offs in an ADR; keep active delivery plans in GitHub issues.
 - Keep historical explanations in Git, issues, pull requests, or explicitly labelled historical references.
 - Do not infer runtime correctness from an old completion status, branch name, or test count.
 - Link exact payloads and function signatures to OpenAPI, ABIs, or source instead of copying them.
