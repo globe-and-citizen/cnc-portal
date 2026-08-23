@@ -2,14 +2,15 @@
 
 **Status:** Current documentation index
 
-**Last updated:** 2026-08-21
+**Last updated:** 2026-08-23
 
 This index owns CNC Portal's shared architectural capabilities. Product features remain in the
 [Product Feature Inventory](../features/README.md), contract behaviour remains under [`docs/contracts/`](../contracts/README.md), and
 development tooling remains under [`docs/development-guide/`](../development-guide/README.md).
 
 Capability documents describe verified current runtime behaviour. Their structure and ownership are defined by the
-[Implementation Documentation Guide](../platform/implementation-documentation-guide.md).
+[Implementation Documentation Guide](../platform/implementation-documentation-guide.md). Durable technical choices and their trade-offs
+belong in [Architecture Decision Records](../adr/README.md).
 
 ## Capability Inventory
 
