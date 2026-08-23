@@ -29,12 +29,12 @@ source and generated artifacts, and active work or delivery history in GitHub is
 
 ## Statuses
 
-| Status       | Meaning                                                               |
-| ------------ | --------------------------------------------------------------------- |
-| `Proposed`   | Under consideration; not yet a project constraint.                   |
-| `Accepted`   | The current decision and its documented trade-offs.                  |
-| `Superseded` | Replaced by a later ADR, which must be linked from this record.      |
-| `Deprecated` | No longer applies and has no direct replacement.                     |
+| Status       | Meaning                                                         |
+| ------------ | --------------------------------------------------------------- |
+| `Proposed`   | Under consideration; not yet a project constraint.              |
+| `Accepted`   | The current decision and its documented trade-offs.             |
+| `Superseded` | Replaced by a later ADR, which must be linked from this record. |
+| `Deprecated` | No longer applies and has no direct replacement.                |
 
 ## Index
 
