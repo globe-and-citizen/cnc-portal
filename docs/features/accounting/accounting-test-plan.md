@@ -25,7 +25,7 @@ cases.
 - [ ] **18.** Approve a **one-time** expense budget for Hermann; Hermann **withdraws $1.25**.
 - [ ] **19.** Approve a **recurring (weekly)** budget and **withdraw part** of it.
 - [ ] **20.** Send **$0.75 back from Expense to Bank**.
-- [ ] **21.** Open a **debt issuance** to raise **$8**.
+- [ ] **21.** Open a **Community Credit borrowing round** to raise **$8**.
 - [ ] **22.** Achille, Ravi, Hermann and Georges each **lend $2 @ 4% for 1 day**.
 - [ ] **23.** The funded offer **sweeps its principal to the Bank**.
 - [ ] **24.** Ravi **releases the funds to repay** the lenders with interest.
@@ -33,7 +33,7 @@ cases.
 - [ ] **26.** Ravi **sweeps Payroll → Bank and Expense → Bank** to reconcile.
 - [ ] **27.** Ravi **pays a dividend** to the shareholders of whatever is left.
 - [ ] **28.** Add a **memo** on one deposit and one withdrawal.
-- [ ] **29.** Open the **ledger**: search rows, filter by each category, toggle column visibility, paginate.
+- [ ] **29.** Open the **ledger**: filter by category, date, and currency; toggle column visibility; paginate.
 - [ ] **30.** Open a **line drill-down** (loupe / Details) on an account.
 - [ ] **31.** **Export** the ledger / a statement.
 - [ ] **32.** Refresh and re-open the page on an **empty team**, and with a **failed / NFT** transfer present.

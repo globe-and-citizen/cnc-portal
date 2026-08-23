@@ -8,10 +8,9 @@ rules belong in platform guides, and code and tests remain executable evidence.
 1. [Project Charter](./01_PROJECT_CHARTER.md) — product vision, scope, and governance.
 2. [Architecture Overview](./platform/architecture.md) — system boundaries and components.
 3. [Product Feature Inventory](./features/README.md) — current user-accessible client and backoffice capabilities.
-4. [Feature User Stories Index](./02_USER_STORIES.md) — canonical feature journeys and acceptance criteria.
-5. [Architecture Decision Records](./adr/README.md) — durable technical choices and trade-offs.
-6. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human review contract.
-7. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
+4. [Architecture Decision Records](./adr/README.md) — durable technical choices and trade-offs.
+5. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human review contract.
+6. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
 
 The [Implementation Status](./03_IMPLEMENTATION_STATUS.md) and [Roadmap](./ROADMAP.md) are dated planning snapshots. Verify current delivery
 in the relevant feature README, code, tests, and GitHub state before relying on a status claim.
@@ -41,26 +40,26 @@ become a separate top-level feature directory.
 
 ### Current User-Story Entry Points
 
-| Feature                                                                      | Journey                                                   | Model state             |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------- |
-| [Authentication](./features/authentication/README.md)                        | Wallet sign-in and protected entry                        | Validation due          |
-| [Community Credit](./features/community-credit/README.md)                    | Credit calls, lending, stalled rounds, and repayment      | Implementation gaps     |
-| [Payroll](./features/payroll/README.md)                                      | Wages, claims, signatures, withdrawal, and reconciliation | Current model           |
-| [Safe Wallet](./features/safe/Readme.md)                                     | Setup, treasury, signers, approvals, and execution        | Existing; alignment due |
-| [Vesting](./features/vesting/README.md)                                      | Vesting V2 creation, progress, release, and cancellation  | Current model trial     |
-| [Feature Restrictions](./features/backoffice/feature-restrictions/README.md) | Global feature states and team-specific overrides         | Validation due          |
-| [Accounting migrations](./features/accounting/contract-migration-history.md) | Accounting continuity across contract migrations          | Focused story set       |
+| Feature                                                                      | Journey                                                   | Model state         |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------- |
+| [Authentication](./features/authentication/README.md)                        | Wallet sign-in and protected entry                        | Validation due      |
+| [Accounts](./features/accounts/README.md)                                    | Bank, Safe, and Expense Account operations                | Implementation gaps |
+| [Community Credit](./features/community-credit/README.md)                    | Credit calls, lending, stalled rounds, and repayment      | Implementation gaps |
+| [Payroll](./features/payroll/README.md)                                      | Wages, claims, signatures, withdrawal, and reconciliation | Implementation gaps |
+| [Accounting](./features/accounting/README.md)                                | Summary, ledger, statements, exports, and history         | Implementation gaps |
+| [Vesting](./features/vesting/README.md)                                      | Vesting V2 creation, progress, release, and cancellation  | Human reviewed      |
+| [Backoffice Statistics](./features/backoffice/statistics/README.md)          | Platform metrics, category statistics, and activity       | Implementation gaps |
+| [Feature Restrictions](./features/backoffice/feature-restrictions/README.md) | Global feature states and team-specific overrides         | Validation due      |
 
-See the [Feature User Stories Index](./02_USER_STORIES.md) for coverage across the complete current product inventory.
+See the [Product Feature Inventory](./features/README.md) for coverage across the complete current product inventory.
 
 ### Product References Awaiting the Current Model
 
 These sources remain useful but have not yet been reviewed under the current feature-documentation contract.
 
-| Area                                          | Current entry point                  |
-| --------------------------------------------- | ------------------------------------ |
-| [Accounting](./features/accounting/README.md) | Accounting scope and detailed models |
-| [Backoffice](./features/backoffice/README.md) | Administrator capability inventory   |
+| Area                                          | Current entry point                |
+| --------------------------------------------- | ---------------------------------- |
+| [Backoffice](./features/backoffice/README.md) | Administrator capability inventory |
 
 ### Supporting Technical References
 
@@ -113,7 +112,7 @@ implementation READMEs own components, invariants, failure paths, and runtime ev
 
 ### Product and QA
 
-1. Open the relevant feature README from the user-story index.
+1. Open the relevant feature README from the Product Feature Inventory.
 2. Follow its lifecycle in story order.
 3. Treat checked criteria as the verified implementation record.
 4. Use the story status, review date, and Human Validation statement for the product-review state.
@@ -175,8 +174,8 @@ bash scripts/audit-doc-drift.sh
 git diff --check
 ```
 
-When navigation changes, verify every local link and update the [Product Feature Inventory](./features/README.md) and
-[Feature User Stories Index](./02_USER_STORIES.md).
+When navigation changes, verify every local link and update the [Product Feature Inventory](./features/README.md) and this documentation
+hub.
 
 ## Updating This Hub
 

@@ -1,5 +1,9 @@
 # Statistics API Documentation
 
+> **Status:** Historical reference. Examples and response descriptions may not match the current implementation. Use the
+> [Backoffice Statistics README](./README.md) for the current product contract and the
+> [statistics routes](../../../../backend/src/routes/statsRoute.ts) for the current API surface.
+
 ## Overview
 
 The Statistics API provides comprehensive analytics and metrics for the CNC Portal platform. It offers insights into teams, users, claims,

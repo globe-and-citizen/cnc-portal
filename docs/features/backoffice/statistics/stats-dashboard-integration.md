@@ -1,5 +1,9 @@
 # Statistics Dashboard Integration Guide
 
+> **Status:** Historical reference. Examples may not match the current Nuxt implementation. Use the
+> [Backoffice Statistics README](./README.md) for the current product contract and the
+> [statistics composable](../../../../dashboard/app/composables/useStats.ts) for the current integration surface.
+
 ## Overview
 
 This guide explains how to integrate and use the Statistics API in the Nuxt Dashboard application. It covers the composable usage, component

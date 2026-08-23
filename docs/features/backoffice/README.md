@@ -2,7 +2,7 @@
 
 **Scope:** Administrator-only capabilities exposed by the Nuxt dashboard
 
-**Last verified:** 2026-08-21
+**Last verified:** 2026-08-23
 
 The backoffice is one product surface containing several administrator capabilities. This README owns their grouping and navigation. Each
 capability can gain its own canonical user stories under `docs/features/backoffice/<capability>/README.md` as it is migrated to the current
@@ -29,7 +29,7 @@ flowchart TB
 
 | Capability              | User-visible outcome                                                                           | Routes                                      | Documentation                                         |
 | ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
-| Overview and statistics | Inspect platform, team, user, claim, wage, expense, contract, governance, and activity metrics | `/`, `/stats`                               | [Statistics references](./statistics/README.md)       |
+| Overview and statistics | Inspect platform, team, user, claim, wage, expense, contract, governance, and activity metrics | `/`                                         | [Canonical stories](./statistics/README.md)           |
 | Team operations         | Inspect teams, their members, balances, contracts, and Officer generations                     | `/teams`, `/teams/:id`                      | Alignment due                                         |
 | Micropayments           | Inspect FeeCollector versions and withdraw collected fees                                      | `/micropayments`                            | Alignment due                                         |
 | Polymarket accounting   | Reconstruct a wallet's statements, activity, and positions                                     | `/accounting`                               | Alignment due                                         |
@@ -45,6 +45,7 @@ not a delivery-status claim.
 | -------------------------- | ------------------------------------------------------------ |
 | `/login`, `/access-denied` | Authentication and authorization states                      |
 | `/date-picker-demo`        | Development playground                                       |
+| `/stats`                   | Unlinked duplicate of the statistics exposed at `/`          |
 | `/contracts`               | Placeholder landing page; no administrator outcome yet       |
 | `/customers`, `/inbox`     | Nuxt dashboard template screens backed by fixture data       |
 | `/settings*`               | Template profile, member, notification, and security screens |
