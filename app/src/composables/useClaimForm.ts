@@ -58,6 +58,16 @@ export interface ClaimFormSubmitPayload {
 }
 
 const DEFAULT_MAX_FILES = 10
+export const DAILY_CLAIM_MEMO_MAX_LENGTH = 3_000
+
+const dailyClaimMemoSchema = z
+  .string()
+  .trim()
+  .min(1, 'Memo is required')
+  .max(
+    DAILY_CLAIM_MEMO_MAX_LENGTH,
+    `Memo must not exceed ${DAILY_CLAIM_MEMO_MAX_LENGTH} characters`
+  )
 
 const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({
   hoursWorked: overrides?.hoursWorked ?? '0',
@@ -114,7 +124,7 @@ const buildClaimSchema = (dailyCap?: number, existingClaims?: DailyClaimEntry[])
       minutesWorked: z
         .union([z.string(), z.number()])
         .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' }),
-      memo: z.string().min(1, 'Memo is required').max(3000, 'Memo must not exceed 3000 characters'),
+      memo: dailyClaimMemoSchema,
       dayWorked: z.string().min(1, 'Date is required')
     })
     .refine((data) => [0, 10, 20, 30, 40, 50].includes(Number(data.minutesWorked)), {

@@ -22,6 +22,7 @@ work:
 - `cnc-github-flow` — issues, Sprint hierarchy, PRs, reviews, and publishing.
 - `cnc-pr-review` — issue conformance and code-quality review.
 - `cnc-docs-governance` — agent and implementation documentation.
+- `cnc-feature-documentation` — implementation-backed product feature stories and acceptance.
 - `cnc-frontend-change` — Vue client and Nuxt dashboard changes.
 - `cnc-contract-change` — Solidity and ABI changes.
 

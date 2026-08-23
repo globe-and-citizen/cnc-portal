@@ -1,11 +1,15 @@
 ---
 name: cnc-docs-governance
-description: Maintain CNC Portal agent guidance and implementation documentation without duplicating authority. Use when changing AGENTS.md, repository skills, developer guides, feature documentation, or documentation validation.
+description: Maintain CNC Portal agent guidance, architectural documentation, and developer documentation without duplicating authority. Use when changing AGENTS.md, repository skills, developer or platform guides, implementation documentation, or documentation validation; use cnc-feature-documentation for product feature user stories.
 ---
 
 # CNC documentation governance
 
 Keep each rule in one authoritative place and link to it from the entry points that need it.
+
+Use `cnc-feature-documentation` to create or validate product feature READMEs and their user
+stories. This skill owns the wider documentation architecture and the guides that define that
+feature workflow.
 
 ## Choose the owner
 

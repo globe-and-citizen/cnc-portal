@@ -181,9 +181,8 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
       attachments.
 - [x] Duration is positive, is a multiple of ten minutes, and does not exceed 24 hours or the wage's
       lower daily allowance.
-- [ ] The portal and API enforce the same memo limit; the portal currently uses 3,000 characters
-      while the API uses 3,000 words
-      ([#2520](https://github.com/globe-and-citizen/cnc-portal/issues/2520)).
+- [x] The portal and API validate a supplied memo after trimming: it must contain 1 to 3,000
+      characters, so empty or whitespace-only values and a 3,001-character value are rejected.
 - [x] Success reports that the claim was added, closes the modal, and refreshes weekly-claim data.
 - [x] The portal rejects a single claim above the daily allowance before submission.
 - [x] The portal includes existing claims for the selected day when checking the daily allowance and
@@ -212,9 +211,8 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] The claim owner can edit the duration, memo, and attachments while the week is pending.
 - [x] The work date remains locked during editing.
-- [ ] The update API applies the same non-empty memo rule and length unit as claim creation; it
-      currently accepts an empty memo and counts words while the portal counts characters
-      ([#2520](https://github.com/globe-and-citizen/cnc-portal/issues/2520)).
+- [x] The update API permits a partial update without a memo; when a memo is supplied, the portal
+      and API apply the same trimmed 1-to-3,000-character rule as claim creation.
 - [x] The combined existing and new attachment count cannot exceed ten.
 - [x] _(API)_ The weekly allowance is rechecked while excluding the claim being edited.
 - [x] _(API)_ The daily allowance is rechecked for the original work date while excluding the claim
@@ -387,9 +385,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
   scheduled state through the API and portal, and enforces weekly-claim uniqueness by wage and week
   instead of team, member, and week. Tracked by
   [#2522](https://github.com/globe-and-citizen/cnc-portal/issues/2522).
-- Claim memo validation has three contracts: create API uses 3,000 words, update API accepts an
-  empty memo and uses 3,000 words, while the shared portal form requires 1–3,000 characters. Tracked
-  by [#2520](https://github.com/globe-and-citizen/cnc-portal/issues/2520).
 - The edit form does not include the other claims from the same day in its inline daily-limit check;
   the API still rejects the invalid total.
 - The update and delete APIs allow claims from a disabled week to change even though the portal
@@ -409,6 +404,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
 - [Member wage overview](../../../app/src/components/sections/DashboardView/MemberSection.vue)
 - [Daily claim form](../../../app/src/components/sections/CashRemunerationView/Form/ClaimForm.vue)
+- [Daily claim form validation](../../../app/src/composables/useClaimForm.ts)
 - [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)
 - [Weekly claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
@@ -416,6 +412,8 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [Withdrawal flow](../../../app/src/components/sections/CashRemunerationView/CRWithdrawClaim.vue)
 - [Wage API](../../../backend/src/controllers/wageController.ts)
 - [Daily claim API](../../../backend/src/controllers/claimController.ts)
+- [Daily claim request validation](../../../backend/src/validation/schemas/claim.ts)
+- [Daily claim validation tests](../../../backend/src/validation/__tests__/claim.test.ts)
 - [Weekly claim API and reconciliation](../../../backend/src/controllers/weeklyClaimController.ts)
 - [Cash Remuneration contract](../../../contract/contracts/CashRemunerationEIP712.sol)
 - [Bank contract](../../../contract/contracts/Bank.sol)

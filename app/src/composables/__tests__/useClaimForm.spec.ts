@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { useClaimForm, formatUTC } from '@/composables/useClaimForm'
+import { DAILY_CLAIM_MEMO_MAX_LENGTH, useClaimForm, formatUTC } from '@/composables/useClaimForm'
 import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
 
 const createOptions = () => {
@@ -45,6 +45,33 @@ describe('useClaimForm', () => {
     expect(formData.value.minutesWorked).toBe('40')
     expect(formData.value.memo).toBe('Updated')
     expect(formData.value.dayWorked).toBe('2024-01-15T00:00:00.000Z')
+  })
+
+  it('uses the daily-claim memo character bounds after trimming', () => {
+    const options = createOptions()
+    const { claimSchema } = useClaimForm(options)
+    const formFields = {
+      hoursWorked: '1',
+      minutesWorked: '0',
+      dayWorked: '2024-01-10T00:00:00.000Z'
+    }
+
+    for (const length of [1, DAILY_CLAIM_MEMO_MAX_LENGTH]) {
+      const memo = ` ${'m'.repeat(length)} `
+      const result = claimSchema.value.safeParse({ ...formFields, memo })
+
+      expect(result.success).toBe(true)
+      if (result.success) expect(result.data.memo).toBe(memo.trim())
+    }
+
+    expect(claimSchema.value.safeParse({ ...formFields, memo: '' }).success).toBe(false)
+    expect(claimSchema.value.safeParse({ ...formFields, memo: '   ' }).success).toBe(false)
+    expect(
+      claimSchema.value.safeParse({
+        ...formFields,
+        memo: 'm'.repeat(DAILY_CLAIM_MEMO_MAX_LENGTH + 1)
+      }).success
+    ).toBe(false)
   })
 
   it('maps existing files and handles date selection', () => {

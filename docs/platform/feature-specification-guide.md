@@ -2,7 +2,7 @@
 
 **Status:** Trial — applied first to Vesting
 
-**Last updated:** 2026-08-21
+**Last updated:** 2026-08-23
 
 **Purpose:** Define the canonical, reviewable documentation contract for CNC Portal features
 
@@ -81,8 +81,14 @@ Product and contract documentation remain separate even when they share a name. 
 Acceptance criteria are the centre of feature review. Their checkboxes record verified
 implementation, while the story status and `Last reviewed` record human product validation.
 
-- One criterion describes one observable outcome.
+- One criterion describes one observable functional outcome: what the actor can accomplish or what
+  domain or system result follows.
 - Every criterion must produce a clear pass or fail result.
+- A criterion must remain true when the interface is visually redesigned without changing product
+  behaviour.
+- UI and UX choices do not belong in feature acceptance criteria. Keep component types, layout,
+  styling, exact copy, animations, breakpoints, and interaction presentation in their dedicated
+  design, accessibility, or quality scope.
 - `[x]` means current code, runtime behaviour, or tests confirm that the criterion is implemented.
 - `[ ]` means the criterion is incomplete or has not yet been verified against current evidence.
 - A story remains `🚧 In Progress` while any criterion is unchecked.
@@ -232,19 +238,29 @@ Omit `Known Gaps` when no gap has been verified.
 
 ## Acceptance-Criteria Quality
 
-Cover the dimensions that materially affect the feature:
+Acceptance criteria define the functional contract of the feature, not its UI or UX specification.
+Cover the functional dimensions that materially affect the story:
 
-- happy path and primary result;
+- primary business action and resulting state;
 - roles and authorization;
 - validation limits and business boundaries;
-- cancellation, failure, and retry behaviour;
-- loading, empty, and error states;
-- state refresh or on-chain reconciliation;
-- responsive and keyboard behaviour for UI whose layout changes;
-- API, contract, or system outcomes that cannot be reviewed from the screen.
+- lifecycle transitions and persisted outcomes;
+- cancellation, failure, retry, and idempotency guarantees;
+- state refresh or on-chain reconciliation outcomes;
+- API, contract, or system results.
 
-Tag non-UI checks with a concise marker such as `_(API)_`, `_(contract)_`, or `_(system)_`, then
-state how a reviewer can observe the result.
+A screen may be the observation surface, but the criterion must state the function rather than its
+presentation. For example:
+
+- Functional: "An invalid claim is rejected without changing the weekly claim."
+- UI/UX-specific: "The submit button is disabled and a red error toast is displayed."
+
+The second statement may belong in a design or interaction test, but it is not a feature acceptance
+criterion. The functional rule should survive changes to components, layout, wording, styling, or
+responsive presentation.
+
+Tag system-side checks with a concise marker such as `_(API)_`, `_(contract)_`, or `_(system)_`,
+then state how a reviewer can observe the functional result.
 
 Avoid criteria that merely name an internal component, store, library, or function. Link those
 details under Implementation Evidence unless the implementation choice is itself a product
@@ -283,7 +299,8 @@ This rule applies to every committed documentation file, not only feature README
 2. Inspect the current feature README, product entry points, business rules, tests, and linked
    contract behaviour.
 3. Define or update the lifecycle and stable story boundaries.
-4. Write observable acceptance criteria, including material boundaries and recovery states.
+4. Write functional acceptance criteria, including material boundaries and recovery outcomes,
+   without prescribing UI or UX choices.
 5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from
    the human product-review state.
 6. Refresh focused evidence links and related documentation.
@@ -303,7 +320,9 @@ This rule applies to every committed documentation file, not only feature README
 - [ ] Scope, versions, actors, and system boundaries are explicit.
 - [ ] The lifecycle matches the story order.
 - [ ] Every story uses `As a`, `I want to`, and `So that` on separate lines.
-- [ ] Every criterion is observable and independently reviewable.
+- [ ] Every criterion is a functional, observable, independently reviewable outcome that remains
+      valid after a visual redesign.
+- [ ] UI and UX requirements are kept outside feature acceptance criteria.
 - [ ] Statuses, checkboxes, and the human-validation statement agree.
 - [ ] Known gaps are visible and not hidden under `✅ Done`.
 - [ ] Evidence links resolve to current code or tests.
