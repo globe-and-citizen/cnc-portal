@@ -264,8 +264,6 @@ function reset() {
   guardError.value = null
 }
 
-defineExpose({ reset })
-
 function handleCancel() {
   reset()
   emits('closeModal')

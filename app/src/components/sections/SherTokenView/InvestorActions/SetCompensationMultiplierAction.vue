@@ -279,6 +279,4 @@ async function handleSetMultiplier(event?: FormSubmitEvent<MultiplierFormSchema>
 
   await setMultiplierWrite.mutateAsync({ args: [multiplierInWei] })
 }
-
-defineExpose({ handleSetMultiplier })
 </script>

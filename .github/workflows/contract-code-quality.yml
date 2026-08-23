@@ -7,6 +7,8 @@ on:
     branches: "**"
     paths:
       - "contract/**"
+      - "app/src/artifacts/abi/generated.ts"
+      - ".github/workflows/contract-code-quality.yml"
   workflow_dispatch:
 jobs:
   contract_ci_cd:
@@ -28,6 +30,10 @@ jobs:
 
       - name: ⚒️ Run Compile
         run: npm run compile
+        working-directory: ./contract
+
+      - name: 🔄 Verify generated client ABI
+        run: npm run verify-abi-sync
         working-directory: ./contract
 
       - name: </> Run Format Check

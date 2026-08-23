@@ -43,8 +43,8 @@ Slither cannot catch everything. Confirm each of these by hand:
 
 ## Outputs
 
-- [ ] **ABIs regenerated.** Run `npm run generate-abi` and commit the refreshed `app/src/artifacts/abi/generated.ts`, plus the ABIs mirrored
-      into `dashboard/` and `ponder/`. A new or renamed function only reaches the frontend's types through this step.
+- [ ] **Client ABI regenerated.** Run `npm run generate-abi` and commit the refreshed `app/src/artifacts/abi/generated.ts`. Contract CI
+      repeats this generation and rejects a stale file. Review version snapshots and Ponder artifacts through their separate change paths.
 - [ ] **`CHANGELOG.md` updated** for any deployed change.
 
 ## Local commands

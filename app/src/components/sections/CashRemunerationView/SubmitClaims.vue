@@ -224,11 +224,5 @@ onMounted(async () => {
   }
 })
 
-defineExpose({
-  handleSubmit,
-  modal,
-  errorMessage,
-  formInitialData,
-  openModalForDay
-})
+defineExpose({ openModalForDay })
 </script>

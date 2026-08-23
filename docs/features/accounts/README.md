@@ -471,8 +471,10 @@ flowchart LR
   [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
-- [Safe page](../../../app/src/views/team/%5Bid%5D/Accounts/SafeView.vue), [Safe orchestration](../../../app/src/composables/safe/index.ts),
-  and [Safe transaction state](../../../app/src/utils/safeTransactionState.ts)
+- [Safe page](../../../app/src/views/team/%5Bid%5D/Accounts/SafeView.vue),
+  [Safe deposit form](../../../app/src/components/forms/DepositSafeForm.vue),
+  [Safe orchestration](../../../app/src/composables/safe/index.ts), and
+  [Safe transaction state](../../../app/src/utils/safeTransactionState.ts)
 - [Safe component tests](../../../app/src/components/sections/SafeView/__tests__) and
   [Safe composable tests](../../../app/src/composables/safe/__tests__)
 - [Expense Account page](../../../app/src/views/team/%5Bid%5D/Accounts/ExpenseAccountView.vue),
