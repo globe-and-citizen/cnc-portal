@@ -284,7 +284,7 @@ Contract groups in parentheses indicate which contracts were delivered in that m
 
 - Review status by test type in **Quality & Testing** section
 - Plan test efforts based on feature completion status
-- Open the relevant feature README from the [Feature User Stories Index](./02_USER_STORIES.md) for acceptance criteria
+- Open the relevant feature README from the [Product Feature Inventory](./features/README.md) for acceptance criteria
 
 ---
 

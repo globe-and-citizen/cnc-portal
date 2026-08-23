@@ -51,8 +51,6 @@ focused documents.
 | Executable behaviour and regression proof        | Code and tests                                 |
 | Active delivery and historical decisions         | GitHub issues, pull requests, ADRs, and Git    |
 
-`docs/02_USER_STORIES.md` is a navigation index. User-story bodies must not be duplicated there.
-
 Product and contract documentation remain separate even when they share a name. For example, `docs/features/vesting/README.md` owns the
 portal journey, while `docs/contracts/features/vesting/README.md` owns the Solidity behaviour that supports it.
 
@@ -344,7 +342,7 @@ This rule applies to every committed documentation file, not only feature README
    material boundaries and recovery outcomes without prescribing UI or UX choices.
 5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from the human product-review state.
 6. Refresh focused evidence links and related documentation.
-7. Update `docs/features/README.md`, `docs/02_USER_STORIES.md`, and `docs/README.md` only when navigation or canonical ownership changes.
+7. Update `docs/features/README.md` and `docs/README.md` only when navigation or canonical ownership changes.
 8. Keep historical explanations in Git, issues, pull requests, or ADRs rather than the current feature contract.
 9. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md): every changed behavioural source must be linked by, and
    reviewed through, its canonical feature owner in the same pull request.
