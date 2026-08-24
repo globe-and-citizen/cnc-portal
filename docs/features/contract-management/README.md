@@ -18,6 +18,8 @@ These acceptance criteria follow the
 - A **Campaign Manager** defines advertising rates and the Bank destination for validated advertising spend. It is managed separately from
   the current contract suite.
 - A previous Officer generation remains available as deployment history. It is not the active suite used for current operations.
+- **Redeploying an Officer** creates a new Officer generation and its workspace contracts. The previous generation remains in deployment
+  history, while the team's Safe is not changed by this action.
 
 ## Lifecycle
 
@@ -30,6 +32,8 @@ flowchart LR
     Current --> Inspect[Inspect contract state]
     Inspect --> Direct[Owner transfers ownership or changes status]
     Inspect --> Board[Board member reviews pending Board actions]
+    Current --> Redeploy[Team owner redeploys Officer]
+    Redeploy --> Migration[Set shareholder migration root or recover later]
 
     Campaigns --> CampaignManager[Manage Campaign Manager and campaigns]
     History --> Previous[Review previous Officer generations]
@@ -43,6 +47,7 @@ flowchart LR
 | US-CONTRACT-002 | Manage current contract operations | Owner / Board member   | 🧪 Validation  |    P1    | M      |
 | US-CONTRACT-003 | Manage advertising campaigns       | Authorized team member | 🚧 In Progress |    P2    | L      |
 | US-CONTRACT-004 | Review deployment history          | Team member            | 🚧 In Progress |    P2    | M      |
+| US-CONTRACT-005 | Redeploy an Officer generation     | Team owner             | 🧪 Validation  |    P1    | L      |
 
 ## US-CONTRACT-001: Review the Current Contract Suite
 
@@ -153,6 +158,38 @@ flowchart LR
 
 **Dependencies:** Current team and the Officer-generation history read
 
+## US-CONTRACT-005: Redeploy an Officer Generation
+
+**As a** team owner\
+**I want to** replace the active Officer generation with a new one\
+**So that** the team can continue using a fresh set of workspace contracts
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] The team owner can open the redeploy form from the active Officer generation and choose the new share token name and symbol.
+- [x] A successful redeploy registers the new Officer generation, refreshes the displayed contract data, and keeps the team's Safe
+      unchanged.
+- [x] When a previous Officer has shareholders, the owner can sign the follow-up transaction that sets the migration root for the new
+      Investor contract.
+
+#### Business Rules
+
+- [x] The redeploy action is available only to the current team owner and is unavailable for an archived team.
+- [x] A previous Officer generation and its workspace contracts remain visible in deployment history; they are not deleted by a
+      redeployment.
+- [x] A shareholder migration can be skipped after a failure and completed later from the Share Token journey.
+
+#### Edge & Error Cases
+
+- [x] A failed deploy, Officer registration, or follow-up lookup keeps the form open and identifies the step that failed.
+- [x] A failed shareholder migration keeps the form open with options to retry the migration or skip it and close the form.
+
+**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🧪 Validation
+
+**Dependencies:** US-CONTRACT-001, a current team owner, a connected wallet, and an active Officer generation
+
 ## Implementation Evidence
 
 - [Contract Management page](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
@@ -163,7 +200,13 @@ flowchart LR
 - [Pending Board-action behaviour](../../../app/src/composables/contracts/usePendingBodActions.ts)
 - [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertiseContractSection.vue)
 - [Deployment history section](../../../app/src/components/sections/ContractManagementView/DeploymentHistorySection.vue)
+- [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
+- [Officer redeploy form and recovery actions](../../../app/src/components/sections/ContractManagementView/RedeployOfficerModal.vue)
+- [Officer redeploy workflow](../../../app/src/composables/contracts/useOfficerRedeploy.ts)
 - [Current contract action tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActions.spec.ts)
+- [Officer redeploy form tests](../../../app/src/components/sections/ContractManagementView/__tests__/RedeployOfficerModal.spec.ts)
+- [Officer redeploy workflow tests](../../../app/src/composables/contracts/__tests__/useOfficerRedeploy.spec.ts)
+- [Officer redeploy migration recovery tests](../../../app/src/composables/contracts/__tests__/useOfficerRedeploy.retry.spec.ts)
 
 ## Related Documentation
 

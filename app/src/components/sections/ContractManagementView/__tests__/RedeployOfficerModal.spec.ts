@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 import RedeployOfficerModal from '@/components/sections/ContractManagementView/RedeployOfficerModal.vue'
+import type {
+  OfficerRedeployFailure,
+  OfficerRedeployMigrationRecovery
+} from '@/composables/contracts/useOfficerRedeploy'
 import { renderWithProviders } from '@/tests/mocks'
 
 // ---------------------------------------------------------------------------
@@ -16,11 +20,8 @@ const mockRedeployState = {
   skipMigration: vi.fn().mockResolvedValue(undefined),
   reset: vi.fn(),
   isRunning: ref(false),
-  migrationFailed: ref(false),
-  deployError: ref<Error | null>(null),
-  registerError: ref<Error | null>(null),
-  migrationError: ref<Error | null>(null),
-  workflowError: ref<Error | null>(null)
+  failure: ref<OfficerRedeployFailure | null>(null),
+  migrationRecovery: ref<OfficerRedeployMigrationRecovery | null>(null)
 }
 
 vi.mock('@/composables/contracts/useOfficerRedeploy', () => ({
@@ -75,11 +76,8 @@ describe('RedeployOfficerModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockRedeployState.isRunning.value = false
-    mockRedeployState.migrationFailed.value = false
-    mockRedeployState.deployError.value = null
-    mockRedeployState.registerError.value = null
-    mockRedeployState.migrationError.value = null
-    mockRedeployState.workflowError.value = null
+    mockRedeployState.failure.value = null
+    mockRedeployState.migrationRecovery.value = null
   })
 
   it('renders modal body with the redeploy form when open', async () => {
@@ -140,7 +138,7 @@ describe('RedeployOfficerModal', () => {
   })
 
   it('keeps the modal open when deployError is set', async () => {
-    mockRedeployState.deployError.value = new Error('deploy boom')
+    mockRedeployState.failure.value = { stage: 'deploy', error: new Error('deploy boom') }
     const wrapper = mountModal({ open: true })
     await flushPromises()
 
@@ -154,7 +152,10 @@ describe('RedeployOfficerModal', () => {
   })
 
   it('renders register-error alert when registerError is set', async () => {
-    mockRedeployState.registerError.value = new Error('register boom')
+    mockRedeployState.failure.value = {
+      stage: 'registration',
+      error: new Error('register boom')
+    }
     const wrapper = mountModal({ open: true })
     await flushPromises()
 
@@ -162,7 +163,10 @@ describe('RedeployOfficerModal', () => {
   })
 
   it('renders workflow-error alert when workflowError is set', async () => {
-    mockRedeployState.workflowError.value = new Error('workflow boom')
+    mockRedeployState.failure.value = {
+      stage: 'workflow',
+      error: new Error('workflow boom')
+    }
     const wrapper = mountModal({ open: true })
     await flushPromises()
 
@@ -170,8 +174,7 @@ describe('RedeployOfficerModal', () => {
   })
 
   it('renders migration-error alert and retry button when migrationFailed', async () => {
-    mockRedeployState.migrationFailed.value = true
-    mockRedeployState.migrationError.value = new Error('mint boom')
+    mockRedeployState.migrationRecovery.value = { error: new Error('mint boom') }
     const wrapper = mountModal({ open: true })
     await flushPromises()
 
@@ -196,7 +199,7 @@ describe('RedeployOfficerModal', () => {
   })
 
   it('cancel calls skipMigration when migrationFailed is true', async () => {
-    mockRedeployState.migrationFailed.value = true
+    mockRedeployState.migrationRecovery.value = { error: new Error('mint boom') }
     const wrapper = mountModal({ open: true })
     await flushPromises()
 
