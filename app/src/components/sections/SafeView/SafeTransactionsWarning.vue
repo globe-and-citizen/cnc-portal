@@ -51,7 +51,7 @@
             data-test="confirm-execute-button"
             @click="handleConfirm"
           >
-            {{ action }} Anyway
+            {{ actionLabel }} Anyway
           </UButton>
         </div>
       </div>
@@ -65,12 +65,12 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 
 interface Props {
   isExecuting?: boolean
-  action?: string
+  action?: 'approve' | 'execute'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isExecuting: false,
-  action: 'Confirm'
+  action: 'execute'
 })
 
 const emit = defineEmits<{
@@ -80,8 +80,10 @@ const emit = defineEmits<{
 
 const isOpen = defineModel<boolean>({ required: true })
 
+const actionLabel = computed(() => (props.action === 'approve' ? 'Approve' : 'Execute'))
+
 const actionExplanation = computed(() =>
-  props.action === 'Approve'
+  props.action === 'approve'
     ? 'Your approval will be recorded. If it reaches the threshold, signers should resolve the conflict before execution.'
     : 'The Safe will submit this transaction for execution. Another pending transaction may then become invalid.'
 )

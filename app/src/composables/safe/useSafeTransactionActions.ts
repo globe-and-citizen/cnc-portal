@@ -16,6 +16,11 @@ interface UseSafeTransactionActionsParams {
 
 type ActionType = 'approve' | 'execute'
 
+/** The confirmation a signer must make before continuing with a conflicting transaction. */
+export interface SafeTransactionConflictWarning {
+  action: ActionType
+}
+
 export function useSafeTransactionActions({
   safeAddress,
   willApprovalCauseConflict,
@@ -26,15 +31,14 @@ export function useSafeTransactionActions({
   const { mutate: approve, isPending: isApproving } = useApproveTransactionMutation()
   const { mutate: execute, isPending: isExecuting } = useExecuteTransactionMutation()
 
-  const showConflictWarning = ref(false)
   const pendingExecutionTransaction = ref<SafeTransaction | null>(null)
   const pendingApprovalTransaction = ref<SafeTransaction | null>(null)
-  const conflictActionType = ref<ActionType>('execute')
+  const pendingConflictAction = ref<ActionType | null>(null)
   const approvingTransactions = ref<Set<string>>(new Set())
   const executingTransactions = ref<Set<string>>(new Set())
 
-  const conflictActionLabel = computed(() =>
-    conflictActionType.value === 'execute' ? 'Execute' : 'Approve'
+  const conflictWarning = computed<SafeTransactionConflictWarning | null>(() =>
+    pendingConflictAction.value ? { action: pendingConflictAction.value } : null
   )
 
   const isTransactionLoading = (safeTxHash: string, operation: ActionType): boolean => {
@@ -132,8 +136,7 @@ export function useSafeTransactionActions({
   const handleApproveClick = (transaction: SafeTransaction) => {
     if (willApprovalCauseConflict(transaction)) {
       pendingApprovalTransaction.value = transaction
-      conflictActionType.value = 'approve'
-      showConflictWarning.value = true
+      pendingConflictAction.value = 'approve'
       return
     }
 
@@ -143,8 +146,7 @@ export function useSafeTransactionActions({
   const handleExecuteClick = (transaction: SafeTransaction) => {
     if (hasConflictingTransactions(transaction)) {
       pendingExecutionTransaction.value = transaction
-      conflictActionType.value = 'execute'
-      showConflictWarning.value = true
+      pendingConflictAction.value = 'execute'
       return
     }
 
@@ -152,27 +154,26 @@ export function useSafeTransactionActions({
   }
 
   const handleConfirmAction = () => {
-    if (conflictActionType.value === 'approve' && pendingApprovalTransaction.value) {
+    if (pendingConflictAction.value === 'approve' && pendingApprovalTransaction.value) {
       handleApproveTransaction(pendingApprovalTransaction.value)
       pendingApprovalTransaction.value = null
-    } else if (conflictActionType.value === 'execute' && pendingExecutionTransaction.value) {
+    } else if (pendingConflictAction.value === 'execute' && pendingExecutionTransaction.value) {
       handleExecuteTransaction(pendingExecutionTransaction.value)
       pendingExecutionTransaction.value = null
     }
-    showConflictWarning.value = false
+    pendingConflictAction.value = null
   }
 
   const handleCancelAction = () => {
     pendingExecutionTransaction.value = null
     pendingApprovalTransaction.value = null
-    showConflictWarning.value = false
+    pendingConflictAction.value = null
   }
 
   return {
     isApproving,
     isExecuting,
-    showConflictWarning,
-    conflictActionLabel,
+    conflictWarning,
     isTransactionLoading,
     handleApproveClick,
     handleExecuteClick,

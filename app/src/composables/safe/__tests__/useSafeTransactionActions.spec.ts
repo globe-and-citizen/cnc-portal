@@ -83,7 +83,7 @@ describe('useSafeTransactionActions', () => {
     actions.handleApproveClick(baseTransaction)
     actions.handleExecuteClick(baseTransaction)
 
-    expect(actions.conflictActionLabel.value).toBe('Execute')
+    expect(actions.conflictWarning.value).toBeNull()
     expect(mockApproveMutate).not.toHaveBeenCalled()
     expect(mockExecuteMutate).not.toHaveBeenCalled()
   })
@@ -170,13 +170,12 @@ describe('useSafeTransactionActions', () => {
 
     actions.handleApproveClick(baseTransaction)
 
-    expect(actions.showConflictWarning.value).toBe(true)
-    expect(actions.conflictActionLabel.value).toBe('Approve')
+    expect(actions.conflictWarning.value).toEqual({ action: 'approve' })
     expect(mockApproveMutate).not.toHaveBeenCalled()
 
     actions.handleConfirmAction()
 
-    expect(actions.showConflictWarning.value).toBe(false)
+    expect(actions.conflictWarning.value).toBeNull()
     expect(mockApproveMutate).toHaveBeenCalledTimes(1)
   })
 
@@ -187,18 +186,17 @@ describe('useSafeTransactionActions', () => {
 
     actions.handleExecuteClick(baseTransaction)
 
-    expect(actions.showConflictWarning.value).toBe(true)
-    expect(actions.conflictActionLabel.value).toBe('Execute')
+    expect(actions.conflictWarning.value).toEqual({ action: 'execute' })
     expect(mockExecuteMutate).not.toHaveBeenCalled()
 
     actions.handleCancelAction()
-    expect(actions.showConflictWarning.value).toBe(false)
+    expect(actions.conflictWarning.value).toBeNull()
     expect(mockExecuteMutate).not.toHaveBeenCalled()
 
     actions.handleExecuteClick(baseTransaction)
     actions.handleConfirmAction()
 
-    expect(actions.showConflictWarning.value).toBe(false)
+    expect(actions.conflictWarning.value).toBeNull()
     expect(mockExecuteMutate).toHaveBeenCalledTimes(1)
   })
 })

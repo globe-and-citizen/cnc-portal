@@ -135,12 +135,12 @@
     </template>
 
     <SafeTransactionsWarning
-      v-if="showConflictWarning"
-      v-model="showConflictWarning"
+      v-if="conflictWarning"
+      :model-value="true"
       :is-executing="isExecuting || isApproving"
-      :action="conflictActionLabel"
+      :action="conflictWarning.action"
+      @update:model-value="handleConflictWarningOpenChange"
       @confirm="handleConfirmAction"
-      @cancel="handleCancelAction"
       data-test="conflict-warning-modal"
     />
 
@@ -223,8 +223,7 @@ const { currentSafeNonce, hasConflictingTransactions, willApprovalCauseConflict 
 const {
   isApproving,
   isExecuting,
-  showConflictWarning,
-  conflictActionLabel,
+  conflictWarning,
   isTransactionLoading,
   handleApproveClick,
   handleExecuteClick,
@@ -235,6 +234,10 @@ const {
   hasConflictingTransactions,
   willApprovalCauseConflict
 })
+
+const handleConflictWarningOpenChange = (isOpen: boolean) => {
+  if (!isOpen) handleCancelAction()
+}
 
 const isConnectedUserOwner = computed(() => {
   if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
