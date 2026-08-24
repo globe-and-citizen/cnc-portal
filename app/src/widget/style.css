@@ -1,0 +1,68 @@
+/**
+ * Widget-local stylesheet, imported with Vite's `?inline` query (see
+ * `main.ts`) so the compiled CSS lands in the shadow root's own `<style>`
+ * tag instead of the host page's `<head>` — Tailwind/Nuxt UI utility classes
+ * stay scoped to the widget and never leak onto (or clash with) the
+ * third-party page it's embedded in.
+ *
+ * Theme tokens mirror `src/assets/main.css` so the real widget matches the
+ * in-app mockup's colors. No `base.css` import: those rules target `body`,
+ * which doesn't exist inside this shadow root.
+ */
+@import 'tailwindcss';
+
+@import '@nuxt/ui';
+
+/*
+ * Shadow DOM blocks *selector* leakage from the host page (its
+ * `button { color: red }` can't match anything in here), but *inherited*
+ * properties — color, font-family, line-height, … — still flow across the
+ * shadow boundary by default, the same way they'd inherit into any other
+ * element. Without this reset, a host page's `body { color: #e8d9c5 }`
+ * bleeds straight into every text node inside the widget. `display: block`
+ * restores normal box layout, since `all: initial` also resets `display`
+ * to its spec-initial value (`inline`).
+ */
+:host {
+  all: initial;
+  display: block;
+}
+
+@theme default {
+  --color-base-100: #ffffff;
+  --color-base-200: #f3fcf9;
+  --color-base-300: #e6f7f0;
+  --color-base-content: #333333;
+  --color-primary: #00bf7a;
+  --color-primary-content: #000;
+  --color-secondary: #3366ff;
+  --color-accent: #00b8d9;
+  --color-neutral: #0f3d2e;
+  --color-info: #00b8d9;
+  --color-success: #36b37e;
+  --color-success-content: #000;
+  --color-warning: #ffab00;
+  --color-error: #ff5630;
+
+  --radius-selector: 1rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 1px;
+
+  --depth: 1;
+  --noise: 0;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
