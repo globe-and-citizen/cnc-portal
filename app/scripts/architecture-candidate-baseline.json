@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "limits": {
+    "componentFunctionProps": 3,
+    "componentForwardedProps": 3,
+    "singleConsumerComposableNestedCalls": 1
+  },
+  "exceptions": [
+    {
+      "path": "src/components/utils/MultiSelectMemberInput.vue",
+      "subject": "component",
+      "metric": "componentForwardedProps",
+      "allowed": 4,
+      "reason": "Existing candidate tracked by #2531."
+    },
+    {
+      "path": "src/composables/accounting/useCNCAccounting.ts",
+      "subject": "useCNCAccounting",
+      "metric": "singleConsumerComposableNestedCalls",
+      "allowed": 16,
+      "reason": "Existing candidate tracked by #2531."
+    },
+    {
+      "path": "src/composables/contracts/useCampaignContractDetails.ts",
+      "subject": "useCampaignContractDetails",
+      "metric": "singleConsumerComposableNestedCalls",
+      "allowed": 2,
+      "reason": "Existing candidate tracked by #2531."
+    },
+    {
+      "path": "src/composables/contracts/useContractManagementGenerations.ts",
+      "subject": "useContractManagementGenerations",
+      "metric": "singleConsumerComposableNestedCalls",
+      "allowed": 2,
+      "reason": "Existing candidate tracked by #2531."
+    },
+    {
+      "path": "src/composables/contracts/useOfficerRedeploy.ts",
+      "subject": "useOfficerRedeploy",
+      "metric": "singleConsumerComposableNestedCalls",
+      "allowed": 6,
+      "reason": "Existing candidate tracked by #2531."
+    },
+    {
+      "path": "src/composables/contracts/usePendingBodActions.ts",
+      "subject": "usePendingBodActions",
+      "metric": "singleConsumerComposableNestedCalls",
+      "allowed": 4,
+      "reason": "Existing candidate tracked by #2531."
+    },
+    {
+      "path": "src/composables/vesting/useVestingSchedules.ts",
+      "subject": "useVestingSchedules",
+      "metric": "singleConsumerComposableNestedCalls",
+      "allowed": 4,
+      "reason": "Existing candidate tracked by #2531."
+    }
+  ]
+}

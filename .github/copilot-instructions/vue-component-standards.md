@@ -70,6 +70,24 @@ export function useProtocolAdapter() {
 
 The annotation does not make a controller composable acceptable: split unrelated state and actions into narrower contracts instead.
 
+## Architecture candidates
+
+The API-surface check catches public contracts that are too large. The
+[architecture candidate check](../../app/scripts/check-architecture-candidates.mjs) catches two review signals that size alone cannot prove:
+
+- A component receives more than three function props. This often means a parent is passing calculations or screen behaviour down instead of
+  passing display-ready data.
+- A component forwards more than three of its props unchanged to an imported child without otherwise using them in its template. This is a
+  direct prop-relay signal; inspect whether the middle component should own the rendering or receive a more cohesive value instead.
+- A composable has at most one production consumer, calls more than one other `useXxx` hook, and returns at least four members. This can
+  indicate a one-screen controller rather than a reusable reactive boundary.
+
+These signals are intentionally candidates, not automatic proof of a bad abstraction. Run `npm run audit:architecture` to inspect every
+candidate. `npm run lint` ratchets the reviewed candidates in [its baseline](../../app/scripts/architecture-candidate-baseline.json): a
+change cannot introduce a new candidate, increase an allowance, or leave an allowance behind after simplifying the code. Do not add a
+baseline exception merely to pass CI; keep it only for a coherent technical or domain boundary and link its tracking issue in the exception
+reason.
+
 ## Emits
 
 Type emits, don't rely on string-only signatures:
