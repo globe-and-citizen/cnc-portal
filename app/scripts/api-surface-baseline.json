@@ -44,18 +44,6 @@
       "allowed": 1
     },
     {
-      "path": "src/composables/accounting/useCNCAccounting.ts",
-      "subject": "useCNCAccounting",
-      "metric": "composableReturnMembers",
-      "allowed": 9
-    },
-    {
-      "path": "src/composables/accounting/useLedgerDrilldown.ts",
-      "subject": "useLedgerDrilldown",
-      "metric": "composableReturnMembers",
-      "allowed": 10
-    },
-    {
       "path": "src/composables/cashOut/useCashOutAll.ts",
       "subject": "useCashOutAll",
       "metric": "composableReturnMembers",
