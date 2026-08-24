@@ -37,14 +37,14 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                      | Actor                  | Status         | Priority | Effort |
-| ----------- | ------------------------------------------ | ---------------------- | -------------- | :------: | ------ |
-| US-ACCT-001 | Review the consolidated accounting summary | Team member            | 🚧 In Progress |    P1    | L      |
-| US-ACCT-002 | Explore the general ledger                 | Team member            | 🧪 Validation  |    P1    | M      |
-| US-ACCT-003 | Review the financial statements            | Team member            | 🧪 Validation  |    P1    | M      |
-| US-ACCT-004 | Export accounting reports                  | Team member            | 🧪 Validation  |    P2    | M      |
-| US-ACCT-005 | Preserve books across contract migrations  | Team member            | 🚧 In Progress |    P1    | L      |
-| US-ACCT-006 | Classify a Bank transaction                | Authorized team member | 📝 Draft       |    P1    | M      |
+| User Story  | Title                                      | Actor       | Status         | Priority | Effort |
+| ----------- | ------------------------------------------ | ----------- | -------------- | :------: | ------ |
+| US-ACCT-001 | Review the consolidated accounting summary | Team member | 🚧 In Progress |    P1    | L      |
+| US-ACCT-002 | Explore the general ledger                 | Team member | 🧪 Validation  |    P1    | M      |
+| US-ACCT-003 | Review the financial statements            | Team member | 🧪 Validation  |    P1    | M      |
+| US-ACCT-004 | Export accounting reports                  | Team member | 🧪 Validation  |    P2    | M      |
+| US-ACCT-005 | Preserve books across contract migrations  | Team member | 🚧 In Progress |    P1    | L      |
+| US-ACCT-006 | Classify a Bank transaction                | Bank owner  | 📝 Draft       |    P1    | M      |
 
 ## US-ACCT-001: Review the Consolidated Accounting Summary
 
@@ -207,7 +207,7 @@ flowchart LR
 
 ## US-ACCT-006: Classify a Bank Transaction
 
-**As an** authorized team member\
+**As a** Bank owner\
 **I want to** assign the economic classification of a Bank deposit or withdrawal\
 **So that** the books record why funds moved instead of assuming it from the on-chain address
 
@@ -215,11 +215,11 @@ flowchart LR
 
 #### Happy Path
 
-- [ ] An authorized team member can classify a Bank transaction with a supported accounting category and an optional memo.
+- [ ] The Bank owner can classify a Bank transaction with a supported accounting category and an optional memo.
 - [ ] An owner can deposit funds received off-chain from a client and classify the Bank deposit as Service Revenue (`UC-BANK-02`).
 - [ ] An owner who is the economic client can classify their own Bank deposit as Service Revenue (`UC-BANK-02`).
 - [ ] An owner can classify a contribution that receives no SHER as Owner Capital (`UC-BANK-01`).
-- [ ] A saved classification is visible to every authorized team member after a refresh.
+- [ ] A saved classification remains visible in the accounting books after a refresh.
 
 #### Business Rules
 
@@ -227,7 +227,7 @@ flowchart LR
 - [ ] Address-based inference remains visible only when no manual classification exists.
 - [ ] A guaranteed transfer between team-owned pockets remains an internal transfer and cannot be reclassified as income or expense.
 - [ ] The classification action is available for supported native-token and ERC-20 Bank deposits and withdrawals.
-- [ ] Only an authorized team member can create or change a classification.
+- [ ] Only the Bank owner can create or change a classification.
 
 #### Edge & Error Cases
 
@@ -236,7 +236,7 @@ flowchart LR
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 📝 Draft
 
-**Dependencies:** US-ACCT-002, an authorized Bank transaction, and the planned Bank-classification delivery
+**Dependencies:** US-ACCT-002, a Bank-owner transaction, and the planned Bank-classification delivery
 
 ## Known Gaps
 
