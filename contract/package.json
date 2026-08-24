@@ -21,13 +21,14 @@
     "format-check": "npm run format-check:sol && npm run format-check:ts",
     "format-check:sol": "npx prettier --check \"contracts/**/*.sol\"",
     "format-check:ts": "npx prettier --check '**/*.{ts,js,cjs,mjs,md,yml,yaml}'",
-    "moveConstants": "nodemon --exec \"node --experimental-strip-types\" scripts/moveConstants.ts",
-    "mc": "nodemon --exec \"node --experimental-strip-types\" scripts/moveConstants.ts",
+    "moveConstants": "nodemon scripts/moveConstants.ts",
+    "mc": "nodemon scripts/moveConstants.ts",
     "freeze": "ts-node scripts/freeze-version.ts",
     "validate-upgrade": "npx hardhat run scripts/validate-upgrade.ts",
     "validate-upgrade:polygon": "npx hardhat run scripts/validate-upgrade.ts --network polygon",
     "validate-upgrade:local": "npx hardhat run scripts/validate-upgrade.ts --network localhost",
-    "generate-abi": "wagmi generate"
+    "generate-abi": "wagmi generate && cd .. && npx --prefix contract prettier --config contract/abi-prettier.config.json --write app/src/artifacts/abi/generated.ts",
+    "verify-abi-sync": "npm run generate-abi && git diff --exit-code -- ../app/src/artifacts/abi/generated.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
