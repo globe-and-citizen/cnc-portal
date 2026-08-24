@@ -12,8 +12,13 @@ import {
   useQueryClientFn,
   mockInvalidateQueries,
   mockFixedReturnReads,
+  mockBankReads,
   mockBankWrites
 } from '@/tests/mocks'
+
+// Connected wallet address the global user-store mock defaults to (store.setup.ts) —
+// Repay is gated on Bank's owner matching this, alongside store.isOwner.
+const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
 
 // The Community Credit store is the contract-backed read hub — mocked so the panel can
 // be driven deterministically, mirroring the RoundView/IndexView test convention (see
@@ -84,6 +89,7 @@ describe('CreditRepayPanel', () => {
     mockInvalidateQueries.mockClear()
     mockFixedReturnReads.getLendingOffer.data.value = null
     mockFixedReturnReads.offerLenders.data.value = []
+    mockBankReads.owner.data.value = MOCK_USER_ADDRESS
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
       getQueryData: vi.fn(),
@@ -174,6 +180,29 @@ describe('CreditRepayPanel', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-test="repay-error"]').exists()).toBe(true)
+  })
+
+  it('disables Repay and explains why when the connected wallet is not Bank’s owner', async () => {
+    // fundFixedReturnRepayment is onlyOwner on Bank's own Ownable — a separate owner
+    // slot from FixedReturn's (store.isOwner). Both start out the same address at
+    // deploy time but are independently transferable.
+    mockBankReads.owner.data.value = '0x00000000000000000000000000000000000bad'
+    store.rounds = [sampleRound()]
+    mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
+    mockFixedReturnReads.offerLenders.data.value = [
+      { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
+    ]
+    setMockRoute({ params: { id: '1', roundId: '1' } })
+    const wrapper = mount(CreditRepayPanel)
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="repay-bank-blocked"]').exists()).toBe(true)
+    const button = wrapper.findComponent('[data-test="confirm-repay"]')
+    expect(button.props('disabled')).toBe(true)
+
+    await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+    await flushPromises()
+    expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('disables the Repay button and explains why on a round still Open (not yet funded)', async () => {

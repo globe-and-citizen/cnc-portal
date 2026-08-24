@@ -15,11 +15,13 @@ import type {
   FixedReturnOfferParams,
   FixedReturnRawOffer,
   LendingOfferStruct,
+  RoundDetailVariant,
   RoundStatus,
   StatusMeta
 } from '@/types'
 import {
   getCreditTokenSymbol,
+  gradientForAddress,
   isLendingOfferAcceptingFunds,
   sumWhitelistAmount,
   toFixedReturnOfferParams
@@ -106,6 +108,15 @@ export function reachedFundingTarget(round: Pick<CreditRound, 'raised' | 'target
   return round.raised >= round.target
 }
 
+/** Whether the connected wallet is Bank's owner — used to gate Repay, which calls
+ *  Bank.fundFixedReturnRepayment (onlyOwner on Bank's own Ownable, a separate owner
+ *  slot from FixedReturn's). Same pattern as CashOutAllAction.vue /
+ *  LegacyGenerationWithdrawAction.vue, just shared instead of re-inlined. */
+export function isBankOwner(bankOwner: unknown, userAddress: string | undefined): boolean {
+  if (!bankOwner || !userAddress) return false
+  return String(bankOwner).toLowerCase() === userAddress.toLowerCase()
+}
+
 /** Display label + badge color for every round status. */
 export const ROUND_STATUS_META: Record<RoundStatus, StatusMeta> = {
   open: { label: 'Open', color: 'primary' },
@@ -116,6 +127,15 @@ export const ROUND_STATUS_META: Record<RoundStatus, StatusMeta> = {
   repaid: { label: 'Repaid', color: 'success' },
   refunded: { label: 'Refunded', color: 'neutral' }
 }
+
+/** UTabs `items` for the round-detail Ledger/Gauge/Timeline/Repay switcher. */
+export const ROUND_VARIANT_TAB_ITEMS: { label: string; value: RoundDetailVariant; slot: string }[] =
+  [
+    { label: 'Ledger', value: 'ledger', slot: 'ledger' },
+    { label: 'Gauge', value: 'gauge', slot: 'gauge' },
+    { label: 'Timeline', value: 'timeline', slot: 'timeline' },
+    { label: 'Repay', value: 'repay', slot: 'repay' }
+  ]
 
 export function statusMeta(status: RoundStatus): StatusMeta {
   return ROUND_STATUS_META[status]
@@ -228,20 +248,6 @@ export function creditTermLabel(
 
 // ───────── on-chain → CreditRound adapters ─────────
 
-/** Avatar gradient palette — lenders have no on-chain color, so derive one by address. */
-const CREDIT_GRADIENT_STOPS = ['#00bf7a', '#00b8d9', '#3366ff', '#0f3d2e', '#00925c']
-
-/** Deterministic two-color gradient for an address (stable across renders). */
-export function gradientForAddress(address: string): string {
-  let hash = 0
-  for (let i = 0; i < address.length; i++) hash = (hash * 31 + address.charCodeAt(i)) >>> 0
-  const first = CREDIT_GRADIENT_STOPS[hash % CREDIT_GRADIENT_STOPS.length]
-  const second = CREDIT_GRADIENT_STOPS[(hash >> 4) % CREDIT_GRADIENT_STOPS.length]
-  const distinct =
-    first === second ? CREDIT_GRADIENT_STOPS[(hash + 1) % CREDIT_GRADIENT_STOPS.length] : second
-  return `${first},${distinct}`
-}
-
 /** Full principal + flat interest the issuer owes across the whole funded amount. */
 function offerExpectedTotal(offer: LendingOfferStruct): bigint {
   return offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000n
@@ -310,9 +316,11 @@ export function offerMaturityDate(offer: LendingOfferStruct): Date {
  * Maps one on-chain offer (from useFixedReturnAllOffers) to the CreditRound the
  * Community Credit UI renders. Amounts are scaled by the offer's token decimals; the
  * title/purpose come from the off-chain metadata endpoint (FixedReturn.sol stores
- * neither), falling back to generic copy. `lenders` is left empty — the per-round lender
- * list is a separate on-chain read (useFixedReturnOfferLenders) that the round detail
- * view fetches on demand, so the list doesn't pay for it.
+ * neither), falling back to generic copy. `lenders` here is address-only (no
+ * principal/expected/paid — those need the per-lender reads useFixedReturnOfferLenders
+ * does, which the round detail view fetches on demand) — just enough for the round
+ * card's lender count and avatar stack to be accurate without paying for the full
+ * breakdown on every round in the list.
  */
 export function lendingOfferToCreditRound(
   raw: FixedReturnRawOffer,
@@ -347,7 +355,15 @@ export function lendingOfferToCreditRound(
     restricted: offer.fundingAccess === 1,
     cap: offer.isCapEnabled ? Number(formatUnits(offer.lenderCap, decimals)) : null,
     desc: purpose || 'On-chain fixed-return credit round.',
-    lenders: []
+    lenders: raw.lenderAddresses.map((address) => ({
+      name: shortenAddress(address),
+      addr: shortenAddress(address),
+      gradient: gradientForAddress(address),
+      amount: 0,
+      expected: 0,
+      paid: 0,
+      date: ''
+    }))
   }
 }
 

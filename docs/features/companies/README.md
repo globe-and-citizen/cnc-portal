@@ -17,6 +17,8 @@ These acceptance criteria follow the
   and registers the resulting Officer generation with the team.
 - The owner may defer Officer setup or Safe setup. Safe deployment and import are documented by
   [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-a-safe).
+- The shared `/teams/:id/...` route namespace also hosts feature-specific child routes. Community Credit's optional round-view segment is
+  specified in the [Community Credit documentation](../community-credit/README.md).
 
 ## Lifecycle
 
@@ -99,7 +101,8 @@ flowchart LR
 
 ## Implementation Evidence
 
-- [Companies route](../../../app/src/router/index.ts) and [team-creation form](../../../app/src/components/forms/AddTeamForm.vue)
+- [Companies and child-feature routes](../../../app/src/router/index.ts) and
+  [team-creation form](../../../app/src/components/forms/AddTeamForm.vue)
 - [Team creation endpoint](../../../backend/src/controllers/teamController.ts) and
   [request validation](../../../backend/src/validation/schemas/team.ts)
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue) and

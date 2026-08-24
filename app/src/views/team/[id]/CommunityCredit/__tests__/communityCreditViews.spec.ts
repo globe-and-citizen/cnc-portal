@@ -9,13 +9,19 @@ import { MINUTES_PER_DAY } from '@/utils'
 // mockRouterPush and useRoute() reads the shared reactive mockRoute.
 import {
   mockRouterPush,
+  mockRouterReplace,
   setMockRoute,
   useQueryClientFn,
   mockInvalidateQueries,
   mockFixedReturnReads,
-  mockFixedReturnWrites
+  mockFixedReturnWrites,
+  mockBankReads
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
+
+// Connected wallet address the global user-store mock defaults to (store.setup.ts) —
+// Repay is gated on Bank's owner matching this, alongside store.isOwner.
+const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
 
 // The Community Credit store is the contract-backed read hub. We mock it so the views
 // can be driven deterministically; mocking the submodule propagates through the
@@ -28,7 +34,6 @@ const { store } = vi.hoisted(() => {
     isError: false,
     isOwner: true,
     isLender: false,
-    variant: 'ledger' as const,
     rounds: [] as CreditRound[],
     activeRounds: [] as CreditRound[],
     historyRounds: [] as CreditRound[],
@@ -38,7 +43,6 @@ const { store } = vi.hoisted(() => {
     repaidLifetime: 0,
     nextMaturity: '—',
     members: [] as unknown[],
-    setVariant: vi.fn(),
     getRound: (id: string): CreditRound | undefined => store.rounds.find((r) => r.id === id)
   }
   return { store }
@@ -103,7 +107,6 @@ function resetStore() {
     isError: false,
     isOwner: true,
     isLender: false,
-    variant: 'ledger',
     rounds: [],
     activeRounds: [],
     historyRounds: [],
@@ -161,9 +164,11 @@ describe('Community Credit views', () => {
         expect.objectContaining({ name: 'community-credit-round' })
       )
       card.vm.$emit('repay')
-      expect(store.setVariant).toHaveBeenCalledWith('repay')
-      expect(mockRouterPush).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'community-credit-round' })
+      expect(mockRouterPush).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          name: 'community-credit-round',
+          params: expect.objectContaining({ view: 'repay' })
+        })
       )
       card.vm.$emit('lend')
       await nextTick()
@@ -209,10 +214,10 @@ describe('Community Credit views', () => {
   })
 
   describe('RoundView', () => {
-    function mountRound(round: CreditRound, offer: LendingOfferStruct = offerStruct()) {
+    function mountRound(round: CreditRound, offer = offerStruct(), view?: string) {
       store.rounds = [round]
       mockFixedReturnReads.getLendingOffer.data.value = offer
-      setMockRoute({ params: { id: '1', roundId: round.id } })
+      setMockRoute({ params: { id: '1', roundId: round.id, ...(view ? { view } : {}) } })
       return mount(RoundView)
     }
 
@@ -225,12 +230,18 @@ describe('Community Credit views', () => {
       )
     })
 
-    it('switches to the Repay layout variant for a round in repayment, same as the switcher pill', async () => {
+    it('switches to the Repay tab (route param) for a round in repayment, same as the tab itself', async () => {
       store.isOwner = true
+      mockBankReads.owner.data.value = MOCK_USER_ADDRESS
       const wrapper = mountRound(sampleRound({ status: 'active' }))
       await flushPromises()
       await wrapper.find('[data-test="round-cta-repay"]').trigger('click')
-      expect(store.setVariant).toHaveBeenCalledWith('repay')
+      expect(mockRouterReplace).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          name: 'community-credit-round',
+          params: expect.objectContaining({ view: 'repay' })
+        })
+      )
     })
 
     it('lets the owner push refunds to every lender on a stalled round in one step', async () => {
@@ -294,16 +305,14 @@ describe('Community Credit views', () => {
       expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
     })
 
-    it('offers Repay as a fourth layout-exploration option, rendering the same panel as the Repay round button', async () => {
+    it('renders the Repay tab straight from its route param, same panel as the Repay round button', async () => {
       store.isOwner = true
-      store.variant = 'repay'
       mockFixedReturnReads.offerLenders.data.value = [
         { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
       ]
-      const wrapper = mountRound(sampleRound({ status: 'active' }))
+      const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'repay')
       await flushPromises()
 
-      expect(wrapper.find('[data-test="variant-repay"]').exists()).toBe(true)
       expect(wrapper.text()).toContain('Repayment breakdown')
       expect(wrapper.text()).toContain('5,250')
       expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
