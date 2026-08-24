@@ -44,12 +44,6 @@
       "allowed": 1
     },
     {
-      "path": "src/composables/cashOut/useCashOutAll.ts",
-      "subject": "useCashOutAll",
-      "metric": "composableReturnMembers",
-      "allowed": 9
-    },
-    {
       "path": "src/composables/safe/useSafeTransactionActions.ts",
       "subject": "useSafeTransactionActions",
       "metric": "composableReturnMembers",
