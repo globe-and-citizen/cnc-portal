@@ -136,20 +136,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { useClipboard } from '@vueuse/core'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { Abi, Address } from 'viem'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { NETWORK } from '@/constant'
 import { useBodIsBodAction } from '@/composables/bod/reads'
+import { useBodApproveAction } from '@/composables/bod/writes'
 import { useContractOwnershipTransfer } from '@/composables/contracts/useContractOwnershipTransfer'
 import { useContractStatusChange } from '@/composables/contracts/useContractStatusChange'
-import { usePendingBodActions } from '@/composables/contracts/usePendingBodActions'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { useUserDataStore } from '@/stores'
+import { useGetBodActionsQuery } from '@/queries'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { TableRow } from '@/types/table'
-import { getContractPresentation } from '@/utils'
+import { filterAndFormatActions, getContractPresentation } from '@/utils'
 import BodApprovalModal from './BodApprovalModal.vue'
 import ContractReadDataSection from './ContractReadDataSection.vue'
 import PendingEventsList from './PendingEventsList.vue'
@@ -164,8 +165,10 @@ const emit = defineEmits<{
 }>()
 const toast = useToast()
 const { copy } = useClipboard()
+const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const { isWriteDisabled } = useTeamWriteGuard()
+const approveActionMutation = useBodApproveAction()
 const showDetails = ref(false)
 const showTransferModal = ref(false)
 const showApprovalModal = ref(false)
@@ -182,13 +185,20 @@ const actionsDisabled = computed(
 const modalWidth = computed(() =>
   currentStep.value === 1 ? 'w-full sm:max-w-4xl' : 'w-full sm:max-w-xl'
 )
-
-const {
-  formattedActions,
-  pendingActionsDisabled,
-  isLoading: isLoadingApproveAction,
-  approveAction
-} = usePendingBodActions(rowRef, isBodAction, handleApprovalComplete)
+const { data: bodActions } = useGetBodActionsQuery({
+  queryParams: {
+    teamId: computed(() => teamStore.currentTeamId),
+    isExecuted: false
+  }
+})
+const formattedActions = computed(() =>
+  filterAndFormatActions(props.row.address, bodActions.value, teamStore.currentTeam?.members || [])
+)
+const pendingActionsDisabled = computed(
+  () => isWriteDisabled.value || !isBodAction.value || formattedActions.value.length === 0
+)
+const isLoadingApproveAction = approveActionMutation.isPending
+const approveAction = approveActionMutation.executeApproveAction
 const {
   errorMessage: transferOwnershipErrorMessage,
   isLoading: isLoadingTransfer,
@@ -198,6 +208,10 @@ const { changeContractStatus } = useContractStatusChange(
   contractAddress,
   handleContractStatusChanged
 )
+
+watch(approveActionMutation.isSuccess, (isApproved) => {
+  if (isApproved) handleApprovalComplete()
+})
 
 function handleContractStatusChanged() {
   emit('contract-status-changed')
