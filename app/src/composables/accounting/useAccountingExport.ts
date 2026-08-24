@@ -26,10 +26,7 @@ export function useAccountingExport() {
   /** Freeze the reactive books into a plain value for the pure builders. */
   const snapshot = (): CncAccounting => ({
     entries: acc.entries.value,
-    summary: acc.summary.value,
-    generalLedger: acc.generalLedger.value,
-    incomeStatement: acc.incomeStatement.value,
-    balanceSheet: acc.balanceSheet.value
+    ...acc.reports.value
   })
 
   async function exportPdf(
