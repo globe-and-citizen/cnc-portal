@@ -49,7 +49,7 @@
               :class="!w.custom && 'text-muted cursor-pointer'"
               data-test="whitelist-amount-input"
               @focus="!w.custom && $emit('update-custom', i, true)"
-              @update:model-value="(v) => $emit('update-amount', i, v)"
+              @update:model-value="(value: string | number) => $emit('update-amount', i, value)"
             >
               <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
             </UInput>

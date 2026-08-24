@@ -200,6 +200,7 @@ flowchart LR
 - [Contract-status behaviour](../../../app/src/composables/contracts/useContractStatusChange.ts)
 - [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
 - [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertiseContractSection.vue)
+- [Advertising campaign workspace](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue)
 - [Deployment history section](../../../app/src/components/sections/ContractManagementView/DeploymentHistorySection.vue)
 - [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
 - [Officer redeploy form and recovery actions](../../../app/src/components/sections/ContractManagementView/RedeployOfficerModal.vue)

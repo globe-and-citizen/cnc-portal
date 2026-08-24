@@ -7,7 +7,11 @@
     <UTable
       :data="rows"
       :columns="columns"
-      :meta="{ class: { tr: (row) => (row.original.you ? 'bg-primary/5' : '') } }"
+      :meta="{
+        class: {
+          tr: (row: TableRow<RepayBreakdownRow>) => (row.original.you ? 'bg-primary/5' : '')
+        }
+      }"
     >
       <template #lender-cell="{ row }">
         <div class="flex items-center gap-2.5">
@@ -58,6 +62,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { TableRow } from '@nuxt/ui'
 import { formatAmount } from '@/utils'
 import type { CreditLender } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
