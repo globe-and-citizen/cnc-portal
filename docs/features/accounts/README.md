@@ -368,7 +368,8 @@ flowchart LR
 
 #### Edge & Error Cases
 
-- [x] A conflicting pending transaction is identified before approval or execution.
+- [x] Before approving or executing a conflicting transaction, the Safe owner sees a warning that names the pending action and can cancel or
+      continue.
 - [x] A rejected or failed approval does not increase the approval count.
 - [x] A rejected or failed execution leaves the transaction unexecuted.
 
@@ -526,8 +527,13 @@ flowchart LR
   [Safe deposit form](../../../app/src/components/forms/DepositSafeForm.vue),
   [Safe orchestration](../../../app/src/composables/safe/index.ts), and
   [Safe transaction state](../../../app/src/utils/safeTransactionState.ts)
+- [Safe transaction queue](../../../app/src/components/sections/SafeView/SafeTransactions.vue),
+  [Safe transaction actions](../../../app/src/composables/safe/useSafeTransactionActions.ts), and
+  [Safe conflict warning](../../../app/src/components/sections/SafeView/SafeTransactionsWarning.vue)
 - [Safe component tests](../../../app/src/components/sections/SafeView/__tests__) and
   [Safe composable tests](../../../app/src/composables/safe/__tests__)
+- [Safe transaction action tests](../../../app/src/composables/safe/__tests__/useSafeTransactionActions.spec.ts) and
+  [Safe conflict warning tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactionsWarning.spec.ts)
 - [Expense Account page](../../../app/src/views/team/%5Bid%5D/Accounts/ExpenseAccountView.vue),
   [Expense API controller](../../../backend/src/controllers/expenseController.ts), and
   [Expense Account contract](../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
