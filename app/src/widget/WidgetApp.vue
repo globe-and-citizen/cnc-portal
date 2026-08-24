@@ -3,13 +3,8 @@
     :network-name="networkName"
     :token-symbol="token?.symbol"
     :token-symbol-raw="tokenSymbolRaw"
-    :amount="amount"
-    :facture-id="factureId"
-    :pane="pane"
-    :payment-step="paymentStep"
-    :confirmed-status="confirmedStatus"
-    :error-message="errorMessage"
-    :tx-hash="txHash"
+    :order="{ amount, factureId }"
+    :state="{ pane, paymentStep, confirmedStatus, errorMessage, txHash }"
     @pay="runPayment"
   />
 </template>

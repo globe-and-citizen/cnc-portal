@@ -15,12 +15,13 @@
       network-name="Polygon"
       :token-symbol="selectedToken"
       :token-symbol-raw="selectedToken"
-      :amount="amount"
-      :facture-id="factureId"
-      :pane="pane"
-      :payment-step="paymentStep"
-      :confirmed-status="confirmedStatus"
-      :tx-hash="pane === 'confirmed' && confirmedStatus === 'success' ? mockTxHash : undefined"
+      :order="{ amount, factureId }"
+      :state="{
+        pane,
+        paymentStep,
+        confirmedStatus,
+        txHash: pane === 'confirmed' && confirmedStatus === 'success' ? mockTxHash : undefined
+      }"
       @pay="simulate"
     />
   </div>
