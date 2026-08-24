@@ -26,3 +26,19 @@ export function useWithdrawAdvertisingCampaign(contractAddress: MaybeRef<Address
     onSuccess: useCampaignWriteInvalidation()
   })
 }
+
+export function useSetCampaignCostPerClick(contractAddress: MaybeRef<Address | undefined>) {
+  return useContractWritesV3({
+    contractAddress,
+    abi: adCampaignManagerAbi,
+    functionName: 'setCostPerClick'
+  })
+}
+
+export function useSetCampaignCostPerImpression(contractAddress: MaybeRef<Address | undefined>) {
+  return useContractWritesV3({
+    contractAddress,
+    abi: adCampaignManagerAbi,
+    functionName: 'setCostPerImpression'
+  })
+}
