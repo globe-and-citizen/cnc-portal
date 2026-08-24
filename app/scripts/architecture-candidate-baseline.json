@@ -11,21 +11,21 @@
       "subject": "useCNCAccounting",
       "metric": "singleConsumerComposableNestedCalls",
       "allowed": 16,
-      "reason": "Existing candidate tracked by #2531."
+      "reason": "Accounting aggregation boundary combining on-chain, Safe, and backend feeds into one ledger and report set; tracked by #2531."
     },
     {
       "path": "src/composables/contracts/useOfficerRedeploy.ts",
       "subject": "useOfficerRedeploy",
       "metric": "singleConsumerComposableNestedCalls",
       "allowed": 6,
-      "reason": "Existing candidate tracked by #2531."
+      "reason": "Workflow orchestrator coordinating Officer deployment, registration, cache refresh, and migration recovery; tracked by #2531."
     },
     {
       "path": "src/composables/vesting/useVestingSchedules.ts",
       "subject": "useVestingSchedules",
       "metric": "singleConsumerComposableNestedCalls",
       "allowed": 4,
-      "reason": "Existing candidate tracked by #2531."
+      "reason": "Vesting read model shared by the screen's summaries, filters, details, and actions; tracked by #2531."
     }
   ]
 }
