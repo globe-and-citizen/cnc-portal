@@ -28,13 +28,6 @@
       "reason": "Existing candidate tracked by #2531."
     },
     {
-      "path": "src/composables/contracts/usePendingBodActions.ts",
-      "subject": "usePendingBodActions",
-      "metric": "singleConsumerComposableNestedCalls",
-      "allowed": 4,
-      "reason": "Existing candidate tracked by #2531."
-    },
-    {
       "path": "src/composables/vesting/useVestingSchedules.ts",
       "subject": "useVestingSchedules",
       "metric": "singleConsumerComposableNestedCalls",
