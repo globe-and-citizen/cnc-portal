@@ -226,6 +226,7 @@ directions remain in the [detailed flow and implementation analysis](./user-flow
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
+- [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
 - [Lending modal](../../../app/src/components/sections/CommunityCreditView/CreditLendModal.vue)
 - [Repayment panel](../../../app/src/components/sections/CommunityCreditView/CreditRepayPanel.vue)
 - [FixedReturn contract](../../../contract/contracts/FixedReturn.sol)

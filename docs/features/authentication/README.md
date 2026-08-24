@@ -64,7 +64,8 @@ flowchart TB
 
 #### Edge & Error Cases
 
-- [x] A portal user without a valid local session is redirected from protected client routes to login.
+- [x] A portal user without a valid local session is redirected from protected client routes, including parameterized detail routes, to
+      login.
 - [x] An invalid SIWE message or signature is rejected without authenticating the user.
 
 **Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation

@@ -311,16 +311,15 @@ buttons. A "my positions" panel needs no new read.
 Already catalogued in [`INVALIDATION_MAP.md:68,114-115`](../../../app/src/composables/contracts/INVALIDATION_MAP.md:68). The three domain
 aggregates (`fixedReturnAllOffers`, `fixedReturnOfferLenders`, `fixedReturnMyLenderPositions`) are invalidated correctly in all four
 components — the map calls this "the most disciplined domain in the app". The matching `fixed-return-events-logs` feed is now invalidated
-after lending and repayment. What remains missed is `balanceOf(token, user)`, `balanceOf(token, bank)`, and
-`balanceOf(token, fixedReturn)`.
+after lending and repayment. What remains missed is `balanceOf(token, user)`, `balanceOf(token, bank)`, and `balanceOf(token, fixedReturn)`.
 
 **Direction:** a per-domain invalidation helper, which is the conclusion the map itself reaches.
 
 ### F7 — The Repay CTA requires the Credit Account owner as well as the Bank owner
 
 The repayment panel blocks any wallet other than `Bank.owner()`, matching the transaction's `onlyOwner` check. The main round CTA also
-requires `store.isOwner` (`FixedReturn.owner()`), so it disappears when the Bank owner changes independently. The Bank's paused state is
-not surfaced before the transaction is submitted.
+requires `store.isOwner` (`FixedReturn.owner()`), so it disappears when the Bank owner changes independently. The Bank's paused state is not
+surfaced before the transaction is submitted.
 
 **Direction:** make the primary CTA follow Bank ownership alone and surface the Bank pause state before submission.
 
@@ -506,12 +505,12 @@ single-sourced and uses the right clock, and the UI gates mirror on-chain revert
 
 The debt is in navigation and write orchestration:
 
-| #   | Finding                                            | Impact                                      |
-| --- | -------------------------------------------------- | ------------------------------------------- |
-| F2  | repayment navigation remains beside layout tabs     | money flow looks like a design prototype    |
-| F4  | funded/active/overdue filed under "History"        | issuer's pending work is hidden · dead CTAs |
-| F5  | no lender-facing view                              | issuer metrics shown to lenders             |
-| F6  | token balances not invalidated                     | stale balance figures after lend/repay       |
-| F7  | Repay CTA also needs FixedReturn owner             | Bank-owner transfer hides the primary CTA   |
+| #   | Finding                                         | Impact                                      |
+| --- | ----------------------------------------------- | ------------------------------------------- |
+| F2  | repayment navigation remains beside layout tabs | money flow looks like a design prototype    |
+| F4  | funded/active/overdue filed under "History"     | issuer's pending work is hidden · dead CTAs |
+| F5  | no lender-facing view                           | issuer metrics shown to lenders             |
+| F6  | token balances not invalidated                  | stale balance figures after lend/repay      |
+| F7  | Repay CTA also needs FixedReturn owner          | Bank-owner transfer hides the primary CTA   |
 
 The remaining debt is navigation clarity, issuer work queues, lender reporting, balance freshness, and the primary repayment CTA.

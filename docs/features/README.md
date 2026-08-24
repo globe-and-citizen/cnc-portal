@@ -45,7 +45,7 @@ The client inventory follows the [sidebar navigation](../../app/src/composables/
 | Companies and workspace | `/teams`, `/teams/:id`                                  | Canonical stories not yet written                    |
 | Accounts                | Bank, Safe, and Expense Account routes                  | [Canonical stories](./accounts/README.md)            |
 | Payroll                 | Payroll account, history, company payroll, compensation | [Canonical stories](./payroll/README.md)             |
-| Community Credit        | Rounds, new credit calls, and round details             | [Canonical stories](./community-credit/README.md)    |
+| Community Credit        | Rounds, new credit calls, and bookmarkable round views  | [Canonical stories](./community-credit/README.md)    |
 | Accounting              | Summary, income, balance, trial balance, and ledger     | [Canonical stories](./accounting/README.md)          |
 | Contract Management     | `/teams/:id/contract-management`                        | [Canonical stories](./contract-management/README.md) |
 | SHER Token              | `/teams/:id/sher-token`                                 | Canonical stories not yet written                    |
