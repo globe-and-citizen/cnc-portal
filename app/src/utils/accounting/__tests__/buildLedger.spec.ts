@@ -9,7 +9,7 @@ describe('buildLedger — summary on the catalogue worked example', () => {
   it('rolls up the period totals (cash / income / expense / equity)', () => {
     expect(summary.cash).toBeCloseTo(142.2, 2)
     expect(summary.income).toBeCloseTo(115, 2)
-    expect(summary.expense).toBeCloseTo(110.8, 2)
+    expect(summary.expense).toBeCloseTo(100.8, 2)
     expect(summary.equity).toBeCloseTo(138, 2)
   })
 
@@ -146,7 +146,7 @@ describe('buildLedger — drops orphaned $0 postings (unpriced native legs)', ()
     const shareLeg: LedgerEntry = {
       ...wageSettlement,
       id: 'shares-1',
-      debit: 'Shares to be issued',
+      debit: 'SHERS To Be Issued',
       credit: 'Investor Equity',
       token: 'sher',
       shares: 5

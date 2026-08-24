@@ -56,10 +56,10 @@ describe('accountLedger — statement-line drill-down', () => {
     })
 
     it('accepts a list of accounts (aggregate line) — the union of their postings', () => {
-      const group: AccountName[] = ['Payroll Expense', 'Share-based Compensation']
+      const group: AccountName[] = ['Payroll Expense', 'Deferred SHER Compensation']
       const scoped = entriesForAccount(catalogueLedger, group)
       const a = entriesForAccount(catalogueLedger, 'Payroll Expense')
-      const b = entriesForAccount(catalogueLedger, 'Share-based Compensation')
+      const b = entriesForAccount(catalogueLedger, 'Deferred SHER Compensation')
       // Every posting touches at least one of the accounts…
       expect(
         scoped.every(
@@ -79,7 +79,7 @@ describe('accountLedger — statement-line drill-down', () => {
       'Cash — Expense',
       'Investor Equity',
       'Payroll Expense',
-      'Share-based Compensation'
+      'Deferred SHER Compensation'
     ]
     for (const account of cases) {
       it(`${account} nets to its trial-balance value`, () => {
@@ -203,7 +203,7 @@ describe('accountLedger — statement-line drill-down', () => {
     })
 
     it('keeps the supplied total for an aggregate line', () => {
-      const group: AccountName[] = ['Payroll Expense', 'Share-based Compensation']
+      const group: AccountName[] = ['Payroll Expense', 'Deferred SHER Compensation']
       const view = presentAccountLedger(catalogueLedger, group, null, null, '-$50.00')
       expect(view.entryCount).toBe(entriesForAccount(catalogueLedger, group).length)
       // Mixed classes can't be netted, so the caller's figure is kept verbatim.
@@ -211,7 +211,7 @@ describe('accountLedger — statement-line drill-down', () => {
     })
 
     it('nets to zero for an aggregate line with no supplied total', () => {
-      const group: AccountName[] = ['Payroll Expense', 'Share-based Compensation']
+      const group: AccountName[] = ['Payroll Expense', 'Deferred SHER Compensation']
       const view = presentAccountLedger(catalogueLedger, group)
       // With no single account to net against, the balance falls back to $0.00.
       expect(view.total).toBe(money(0))

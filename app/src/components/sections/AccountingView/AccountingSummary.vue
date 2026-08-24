@@ -80,9 +80,15 @@ import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 const acc = useAccountingContext()
 
 const summaryCards = computed(() =>
-  presentSummaryCards(acc.summary.value, acc.incomeStatement.value, acc.balanceSheet.value)
+  presentSummaryCards(
+    acc.reports.value.summary,
+    acc.reports.value.incomeStatement,
+    acc.reports.value.balanceSheet
+  )
 )
-const banner = computed(() => presentBanner(acc.balanceSheet.value, acc.generalLedger.value))
+const banner = computed(() =>
+  presentBanner(acc.reports.value.balanceSheet, acc.reports.value.generalLedger)
+)
 
 const LAST_ROW_SPAN: Record<number, string> = {
   1: 'lg:col-span-12',

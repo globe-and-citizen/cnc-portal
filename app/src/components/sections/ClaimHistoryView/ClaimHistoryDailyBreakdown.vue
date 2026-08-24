@@ -45,7 +45,11 @@
               <div class="flex-1">
                 <p class="font-medium text-gray-700">{{ claim.memo }}</p>
               </div>
-              <ClaimActions v-if="canModifyClaims" :claim="claim" />
+              <ClaimActions
+                v-if="canModifyClaims"
+                :claim="claim"
+                :week-claims="props.weeklyClaim?.claims ?? []"
+              />
             </div>
             <!-- File gallery below memo -->
             <ExpandableFileGallery
@@ -105,7 +109,7 @@ interface Props {
   /**
    * When true, quick-submit is only offered for days the backend would accept
    * (current ISO week, up to SUBMIT_RESTRICTION_MAX_DAYS_BACK days in the past).
-   * Mirrors the calendar guard in useClaimForm and the server-side enforcement
+   * Mirrors the claim calendar guard and the server-side enforcement
    * in addClaim, so old/out-of-window days don't expose a "+" that 400s.
    */
   isRestricted?: boolean

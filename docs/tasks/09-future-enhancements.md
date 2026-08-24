@@ -6,8 +6,8 @@
 
 ## Overview
 
-This document outlines optional enhancements to make over time as the documentation evolves. These
-are not urgent but would provide additional value.
+This document outlines optional enhancements to make over time as the documentation evolves. These are not urgent but would provide
+additional value.
 
 ## Enhancement Ideas
 

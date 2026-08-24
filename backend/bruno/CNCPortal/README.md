@@ -117,4 +117,5 @@ tests {
 
 ## Best Practices
 
-For complex operations that cannot be performed directly in Bruno scripts (cryptographic operations, external API calls, etc.), see our [Best Practices Guide](./BEST_PRACTICES.md) which demonstrates the "Dev Endpoint Pattern" used in our SIWE authentication flow.
+For complex operations that cannot be performed directly in Bruno scripts (cryptographic operations, external API calls, etc.), see our
+[Best Practices Guide](./BEST_PRACTICES.md) which demonstrates the "Dev Endpoint Pattern" used in our SIWE authentication flow.

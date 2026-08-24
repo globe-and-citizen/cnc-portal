@@ -4,7 +4,8 @@ This document explains how to configure and use Railway Object Storage (S3-compa
 
 ## Overview
 
-The CNC Portal uses Railway Storage for storing files (images and documents) instead of storing them directly in the database. This approach offers:
+The CNC Portal uses Railway Storage for storing files (images and documents) instead of storing them directly in the database. This approach
+offers:
 
 - **Better Performance**: Files are served directly from S3, reducing database load
 - **Scalability**: Object storage scales independently from the database

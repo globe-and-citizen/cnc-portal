@@ -1,157 +1,90 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount, type VueWrapper, flushPromises } from '@vue/test-utils'
-import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
-import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
-import {
-  mockInvestorReads,
-  mockVestingReads,
-  mockVestingWrites,
-  mockTeamStore,
-  mockUserStore
-} from '@/tests/mocks'
+import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
+import VestingActionReviewModal from '@/components/sections/VestingView/VestingActionReviewModal.vue'
+import VestingScheduleList from '@/components/sections/VestingView/VestingScheduleList.vue'
+import { mockTeamStore, mockUserStore } from '@/tests/mocks'
+import type { VestingSchedule } from '@/types/vesting'
 
-const mockReloadKey = ref(0)
 const MEMBER = mockUserStore.address
-
-// Active vesting tuple shaped like the on-chain return: [members, indices, infos].
-// The single schedule lives at on-chain array index 3 for this member.
-const SCHEDULE_INDEX = 3n
-type MutateOptions = {
-  onSuccess?: () => void | Promise<void>
-  onError?: (err: Error) => void | Promise<void>
+const schedule: VestingSchedule = {
+  member: MEMBER,
+  index: 3n,
+  start: 1_700_000_000,
+  cliffEnd: 1_700_000_000,
+  end: 1_800_000_000,
+  totalAmount: 10_000_000n,
+  vestedAmount: 6_000_000n,
+  claimableAmount: 4_000_000n,
+  releasedAmount: 2_000_000n,
+  unvestedAmount: 4_000_000n,
+  active: true,
+  progress: 60,
+  state: 'claimable'
 }
 
+const mountComponent = (overrides: Record<string, unknown> = {}) =>
+  mount(VestingFlow, {
+    props: {
+      schedules: [schedule],
+      tokenSymbol: 'SHR',
+      isLoading: false,
+      error: null,
+      ...overrides
+    },
+    global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+  })
+
 describe('VestingFlow.vue', () => {
-  let wrapper: VueWrapper
-
-  const mountComponent = () =>
-    mount(VestingFlow, {
-      props: {
-        reloadKey: mockReloadKey.value
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockInvestorReads.symbol.data.value = 'SHR'
-    mockVestingReads.vestingsWithMembers.data.value = [
-      [MEMBER],
-      [SCHEDULE_INDEX],
-      [
-        {
-          start: BigInt(Math.floor(Date.now() / 1000) - 3600),
-          duration: BigInt(30 * 86400),
-          cliff: 0n,
-          totalAmount: BigInt(10e18),
-          released: BigInt(2e18),
-          active: true
-        }
-      ]
-    ]
-    mockVestingReads.archivedVestingsFlat.data.value = [[], [], []]
-    mockVestingWrites.stopVesting.mutate.mockReset()
-    mockVestingWrites.release.mutate.mockReset()
-    mockTeamStore.currentTeam = {
-      ...mockTeamStore.currentTeam,
-      id: 1,
-      ownerAddress: MEMBER
+    mockTeamStore.currentTeam = { ...mockTeamStore.currentTeam, ownerAddress: MEMBER }
+    mockUserStore.address = MEMBER
+  })
+
+  it('passes visible schedules and permissions to the responsive list', () => {
+    const list = mountComponent().getComponent(VestingScheduleList)
+    expect(list.props('schedules')).toEqual([schedule])
+    expect(list.props('canRelease')(schedule)).toBe(true)
+    expect(list.props('canStop')(schedule)).toBe(true)
+  })
+
+  it('shows loading, error, and retry states', async () => {
+    const loading = mountComponent({ isLoading: true })
+    expect(loading.find('[data-test="vesting-loading"]').exists()).toBe(true)
+
+    const failed = mountComponent({ error: new Error('read failed') })
+    expect(failed.find('[data-test="vesting-error"]').exists()).toBe(true)
+    await failed.get('[data-test="vesting-retry"]').trigger('click')
+    expect(failed.emitted('retry')).toBeTruthy()
+  })
+
+  it('opens an action review instead of writing immediately', async () => {
+    const wrapper = mountComponent()
+    wrapper.getComponent(VestingScheduleList).vm.$emit('action', 'release', schedule)
+    await wrapper.vm.$nextTick()
+
+    const review = wrapper.getComponent(VestingActionReviewModal)
+    expect(review.props('open')).toBe(true)
+    expect(review.props('kind')).toBe('release')
+    expect(review.props('schedule')).toEqual(schedule)
+  })
+
+  it('keeps an open review synchronized with the latest schedule state', async () => {
+    const wrapper = mountComponent()
+    wrapper.getComponent(VestingScheduleList).vm.$emit('action', 'release', schedule)
+    await wrapper.vm.$nextTick()
+
+    const updatedSchedule = {
+      ...schedule,
+      vestedAmount: 8_000_000n,
+      claimableAmount: 6_000_000n,
+      progress: 80
     }
-    wrapper = mountComponent()
-  })
+    await wrapper.setProps({ schedules: [updatedSchedule] })
 
-  describe('Rendering', () => {
-    it('displays vesting table with correct columns', () => {
-      const table = wrapper.find('[data-test="vesting-overview"]')
-      expect(table.exists()).toBe(true)
-    })
-  })
-
-  describe('Vesting Actions', () => {
-    it('emits reload event when actions complete', async () => {
-      const actions = wrapper.findComponent(VestingActions)
-      await actions.vm.$emit('reload')
-      expect(wrapper.emitted('reload')).toBeTruthy()
-    })
-  })
-
-  describe('Stop vesting', () => {
-    it('calls stopVesting mutate with member and schedule index when the row stop button is clicked', async () => {
-      await flushPromises()
-      const stopBtn = wrapper.find('[data-test="stop-btn"]')
-      expect(stopBtn.exists()).toBe(true)
-      await stopBtn.trigger('click')
-
-      expect(mockVestingWrites.stopVesting.mutate).toHaveBeenCalledWith(
-        { args: [MEMBER, SCHEDULE_INDEX] },
-        expect.objectContaining({
-          onSuccess: expect.any(Function),
-          onError: expect.any(Function)
-        })
-      )
-    })
-
-    it('emits reload when stop succeeds via its onSuccess callback', async () => {
-      mockVestingWrites.stopVesting.mutate.mockImplementation(
-        (_vars: unknown, opts?: MutateOptions) => opts?.onSuccess?.()
-      )
-      await flushPromises()
-      await wrapper.find('[data-test="stop-btn"]').trigger('click')
-      expect(wrapper.emitted('reload')).toBeTruthy()
-    })
-
-    it('logs an error and does not emit reload when stop fails', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mockVestingWrites.stopVesting.mutate.mockImplementation(
-        (_vars: unknown, opts?: MutateOptions) => opts?.onError?.(new Error('stop boom'))
-      )
-      await flushPromises()
-      await wrapper.find('[data-test="stop-btn"]').trigger('click')
-      expect(errorSpy).toHaveBeenCalledWith('stop vesting error', expect.any(Error))
-      expect(wrapper.emitted('reload')).toBeFalsy()
-      errorSpy.mockRestore()
-    })
-  })
-
-  describe('Release vesting', () => {
-    it('calls release mutate with the schedule index when the row release button is clicked', async () => {
-      await flushPromises()
-      const releaseBtn = wrapper.find('[data-test="release-btn"]')
-      expect(releaseBtn.exists()).toBe(true)
-      await releaseBtn.trigger('click')
-
-      expect(mockVestingWrites.release.mutate).toHaveBeenCalledWith(
-        { args: [SCHEDULE_INDEX] },
-        expect.objectContaining({
-          onSuccess: expect.any(Function),
-          onError: expect.any(Function)
-        })
-      )
-    })
-
-    it('emits reload when release succeeds via its onSuccess callback', async () => {
-      mockVestingWrites.release.mutate.mockImplementation((_vars: unknown, opts?: MutateOptions) =>
-        opts?.onSuccess?.()
-      )
-      await flushPromises()
-      await wrapper.find('[data-test="release-btn"]').trigger('click')
-      expect(wrapper.emitted('reload')).toBeTruthy()
-    })
-
-    it('logs an error and does not emit reload when release fails', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mockVestingWrites.release.mutate.mockImplementation((_vars: unknown, opts?: MutateOptions) =>
-        opts?.onError?.(new Error('release boom'))
-      )
-      await flushPromises()
-      await wrapper.find('[data-test="release-btn"]').trigger('click')
-      expect(errorSpy).toHaveBeenCalledWith('release vesting error', expect.any(Error))
-      expect(wrapper.emitted('reload')).toBeFalsy()
-      errorSpy.mockRestore()
-    })
+    const review = wrapper.getComponent(VestingActionReviewModal)
+    expect(review.props('open')).toBe(true)
+    expect(review.props('schedule')).toEqual(updatedSchedule)
   })
 })

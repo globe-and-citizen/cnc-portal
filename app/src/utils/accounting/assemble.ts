@@ -379,7 +379,7 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
 
   // Freeze the withdrawn SHER at its realization rate and float the pending accruals
   // at the current multiplier: matched accrual quantity cancels its issuance in
-  // `Shares to be issued`, the rest floats until it is taken.
+  // `SHERS To Be Issued`, the rest floats until it is taken.
   const currentRate = currentSherUsdRate(
     input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
     input.safeDepositRouterEvents?.safeDeposits?.items,

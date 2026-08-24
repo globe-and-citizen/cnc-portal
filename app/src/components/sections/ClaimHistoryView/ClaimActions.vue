@@ -23,7 +23,7 @@
       :description="`Edit your claim for the week. You can update the hours worked, memo, and attached files. Remember to save your changes.`"
     >
       <template #body>
-        <EditClaims :claim="claim" @close="showEditModal = false" />
+        <EditClaims :claim="claim" :week-claims="weekClaims" @close="showEditModal = false" />
       </template>
     </UModal>
     <!-- Delete Modal -->
@@ -44,6 +44,7 @@ import type { Claim } from '@/types'
 
 defineProps<{
   claim: Claim
+  weekClaims?: Claim[]
 }>()
 
 const showEditModal = ref(false)

@@ -18,14 +18,28 @@
       data-test="safe-import-network"
     />
 
+    <UAlert
+      v-if="!canManageSafe"
+      class="mt-4"
+      color="warning"
+      variant="soft"
+      icon="i-lucide-lock-keyhole"
+      :description="importPermissionHint"
+      data-test="safe-import-permission-notice"
+    />
+
     <UFormField class="mt-4" label="Safe address" name="safeAddress" required>
       <UInput
         v-model="safeAddressInput"
         class="w-full"
         placeholder="0x..."
         :disabled="isInspecting || isRegistering"
+        aria-describedby="safe-import-help"
         data-test="safe-import-address-input"
       />
+      <p id="safe-import-help" class="mt-1 text-xs text-gray-500">
+        Inspecting is read-only. Importing becomes available after the Safe details are verified.
+      </p>
     </UFormField>
 
     <UAlert
@@ -125,6 +139,7 @@
             color="primary"
             :loading="isRegistering"
             :disabled="!canImport || isRegistering || archivedDisabled"
+            :title="importPermissionHint"
             data-test="confirm-safe-import-button"
             @click="handleImport"
           >
@@ -150,6 +165,7 @@ import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 interface Props {
   teamId: number
+  teamOwnerAddress?: string
 }
 
 const props = defineProps<Props>()
@@ -179,7 +195,8 @@ const canManageSafe = computed(
   () =>
     !!userDataStore.address &&
     isAddress(userDataStore.address) &&
-    teamStore.currentTeam?.ownerAddress.toLowerCase() === userDataStore.address.toLowerCase()
+    (props.teamOwnerAddress ?? teamStore.currentTeam?.ownerAddress)?.toLowerCase() ===
+      userDataStore.address.toLowerCase()
 )
 
 const inspectedSafe = computed(() => {
@@ -193,6 +210,13 @@ const inspectedSafe = computed(() => {
 
 const canImport = computed(() => canManageSafe.value && !!inspectedSafe.value)
 const network = computed(() => NETWORK)
+
+const importPermissionHint = computed(() => {
+  if (!userDataStore.address) return 'Connect the team owner wallet to import this Safe.'
+  if (!canManageSafe.value) return 'Only the team owner can attach a Safe to this team.'
+  if (!inspectedSafe.value) return 'Inspect and confirm a valid Safe before importing it.'
+  return 'Register this existing Safe with the team without changing it on-chain.'
+})
 
 const inspectionError = computed(
   () => inspectError.value?.message || registrationError.value?.message

@@ -1,100 +1,50 @@
 <template>
-  <UCard>
+  <UCard data-test="safe-transactions-card">
     <template #header>
-      <div class="flex items-center justify-between">
-        <span>Transactions</span>
-        <div class="flex items-center gap-4">
-          <SafeTransactionStatusFilter @statusChange="handleStatusChange" />
+      <div class="space-y-4">
+        <div>
+          <p class="text-lg font-semibold text-gray-900 dark:text-white">Approval queue</p>
+          <p class="mt-1 text-sm text-gray-500">
+            Start with transactions that need signer action, then review the completed history.
+          </p>
         </div>
+        <SafeTransactionStatusFilter
+          v-model="selectedStatus"
+          :counts="transactionCounts"
+          @status-change="handleStatusChange"
+        />
       </div>
     </template>
 
-    <UTable
-      :data="displayedTransactions"
-      :columns="[
-        { accessorKey: 'method', header: 'Method' },
-        { accessorKey: 'to', header: 'To' },
-        { accessorKey: 'value', header: 'Value' },
-        { accessorKey: 'status', header: 'Status' },
-        { accessorKey: 'txHash', header: 'Tx Hash' },
-        { accessorKey: 'actions', header: 'Actions' }
-      ]"
-      :loading="isLoading"
-      data-test="safe-transactions-table"
-    >
-      <template #to-cell="{ row: { original: row } }">
-        <UserComponent :user="resolveUser(row.to)" />
-      </template>
+    <SafeTransactionFeedback
+      :has-error="!!error"
+      :is-loading="isLoading"
+      :is-empty="displayedTransactionRows.length === 0"
+      :selected-status="selectedStatus"
+      :empty-description="emptyStateDescription"
+      @retry="refetchTransactions"
+      @clear="clearFilter"
+    />
 
-      <template #value-cell="{ row: { original: row } }">
-        <span
-          >{{
-            formatSafeTransactionValue(row.value.toString(), row.dataDecoded ?? undefined, row.to)
-          }}
-        </span>
-      </template>
+    <template v-if="!isLoading && !error && displayedTransactionRows.length > 0">
+      <SafeTransactionsTable
+        :transactions="displayedTransactionRows"
+        :actions-disabled="isApproving || isExecuting"
+        @view="handleViewDetailsClick"
+        @approve="handleApproveClick"
+        @execute="handleExecuteClick"
+      />
 
-      <template #status-cell="{ row: { original: row } }">
-        <span>{{ getTransactionStatus(row as SafeTransaction) }}</span>
-        <UBadge color="neutral" variant="outline" size="sm" class="flex items-center gap-1">
-          {{ row.confirmations?.length || 0 }} / {{ row.confirmationsRequired }}
-        </UBadge>
-      </template>
+      <SafeTransactionMobileList
+        :transactions="displayedTransactionRows"
+        :actions-disabled="isApproving || isExecuting"
+        @view="handleViewDetailsClick"
+        @approve="handleApproveClick"
+        @execute="handleExecuteClick"
+      />
+    </template>
 
-      <template #txHash-cell="{ row: { original: row } }">
-        <AddressToolTip
-          v-if="row.transactionHash"
-          :address="row.transactionHash"
-          type="transaction"
-          slice
-        />
-        <span v-else>...</span>
-      </template>
-
-      <template #method-cell="{ row: { original: row } }">
-        {{ getSafeTransactionMethod(row as SafeTransaction) }}
-      </template>
-
-      <template #actions-cell="{ row: { original: row } }">
-        <div class="flex items-center gap-2">
-          <UButton
-            size="xs"
-            color="neutral"
-            variant="ghost"
-            icon="heroicons:eye"
-            @click="handleViewDetailsClick(row as SafeTransaction)"
-            data-test="view-details-button"
-          />
-
-          <UButton
-            size="xs"
-            color="primary"
-            @click="handleApproveClick(row as SafeTransaction)"
-            :disabled="!canApprove(row as SafeTransaction) || isApproving"
-            :loading="isTransactionLoading(row.safeTxHash, 'approve')"
-            class="flex items-center gap-1 text-xs"
-            data-test="approve-button"
-          >
-            Approve
-          </UButton>
-
-          <UButton
-            size="xs"
-            color="success"
-            @click="handleExecuteClick(row as SafeTransaction)"
-            :disabled="!canExecute(row as SafeTransaction) || isExecuting"
-            :loading="isTransactionLoading(row.safeTxHash, 'execute')"
-            class="flex items-center gap-1 text-xs"
-            data-test="execute-button"
-          >
-            Execute
-          </UButton>
-        </div>
-      </template>
-    </UTable>
-
-    <!-- Conflicting Transaction Warning Modal -->
-    <template #footer>
+    <template v-if="!isLoading && !error && total > pageSize" #footer>
       <TablePagination
         v-model:page="page"
         v-model:page-size="pageSize"
@@ -105,194 +55,269 @@
     </template>
 
     <SafeTransactionsWarning
-      v-if="showConflictWarning"
-      v-model="showConflictWarning"
+      v-if="pendingConflictAction"
+      :model-value="true"
       :is-executing="isExecuting || isApproving"
-      :action="conflictActionLabel"
+      :action="pendingConflictAction.action"
+      @update:model-value="(isOpen) => !isOpen && handleCancelAction()"
       @confirm="handleConfirmAction"
-      @cancel="handleCancelAction"
       data-test="conflict-warning-modal"
     />
 
     <SafeTransactionDetailsModal
       v-model="showDetailsModal"
       :transaction="selectedTransactionForDetails"
+      :state="
+        selectedTransactionForDetails
+          ? getTransactionState(selectedTransactionForDetails)
+          : undefined
+      "
     />
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { watch, computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useChainId } from '@wagmi/vue'
+import type { Address } from 'viem'
 import TablePagination from '@/components/TablePagination.vue'
-import { usePagination } from '@/composables/usePagination'
-import type { SafeTransaction } from '@/types/safe'
-
-// Components
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import UserComponent from '@/components/UserComponent.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
-
-// Stores and composables
+import SafeTransactionStatusFilter from './SafeTransactionStatusFilter.vue'
+import SafeTransactionMobileList from './SafeTransactionMobileList.vue'
+import SafeTransactionFeedback from './SafeTransactionFeedback.vue'
+import SafeTransactionsTable from './SafeTransactionsTable.vue'
+import { usePagination } from '@/composables/usePagination'
 import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
-import { useSafeTransactionConflicts } from '@/composables/safe/useSafeTransactionConflicts'
-import { useSafeTransactionActions } from '@/composables/safe/useSafeTransactionActions'
-import SafeTransactionStatusFilter, {
-  type SafeTransactionStatus
-} from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
-import { type Address } from 'viem'
-
-import { formatSafeTransactionValue, getSafeTransactionMethod, resolveUser, log } from '@/utils'
+import {
+  useApproveTransactionMutation,
+  useExecuteTransactionMutation
+} from '@/queries/safe.mutations'
+import { log } from '@/utils'
+import {
+  getSafeTransactionFilterCounts,
+  getSafeTransactionState,
+  hasConflictingSafeTransactions,
+  matchesSafeTransactionFilter,
+  willSafeTransactionApprovalCauseConflict,
+  buildSafeTransactionQueueRows,
+  type SafeTransactionQueueRow,
+  type SafeTransactionStateMeta,
+  type SafeTransactionStatusFilter as SafeTransactionFilterValue
+} from '@/utils/safeTransactionState'
+import type { SafeTransaction } from '@/types/safe'
 import { useUserDataStore } from '@/stores'
-
-const userDataStore = useUserDataStore()
 
 interface Props {
   address: Address
 }
 
 const props = defineProps<Props>()
-
-// Status filtering
-const selectedStatus = ref<SafeTransactionStatus>('all')
-
-// Route-bound page + size (shareable, reload-safe) with resize anchoring.
-const { page, pageSize, reset } = usePagination(() => total.value, { key: 'safeTx' })
-
+const userDataStore = useUserDataStore()
+const selectedStatus = ref<SafeTransactionFilterValue>('needs-action')
 const showDetailsModal = ref(false)
 const selectedTransactionForDetails = ref<SafeTransaction | null>(null)
+const pendingConflictAction = ref<{
+  action: 'approve' | 'execute'
+  transaction: SafeTransaction
+} | null>(null)
 
-// Data fetching
 const {
   data: transactions,
   isLoading,
-  error
-} = useGetSafeTransactionsQuery({ pathParams: { safeAddress: computed(() => props.address) } })
+  error,
+  refetch: refetchTransactions
+} = useGetSafeTransactionsQuery({
+  pathParams: { safeAddress: computed(() => props.address) }
+})
 
 const { data: safeInfo } = useGetSafeInfoQuery({
   pathParams: { safeAddress: computed(() => props.address) }
 })
 
-// Transaction conflict detection - now only needs safeAddress!
-const { isTransactionNonceValid, hasConflictingTransactions, willApprovalCauseConflict } =
-  useSafeTransactionConflicts(computed(() => props.address))
+const chainId = useChainId()
+const toast = useToast()
+const { mutate: approve, isPending: isApproving } = useApproveTransactionMutation()
+const { mutate: execute, isPending: isExecuting } = useExecuteTransactionMutation()
+const approvingTransactions = ref<Set<string>>(new Set())
+const executingTransactions = ref<Set<string>>(new Set())
+const currentSafeNonce = computed(() => safeInfo.value?.nonce ?? 0)
 
-const {
-  isApproving,
-  isExecuting,
-  showConflictWarning,
-  conflictActionLabel,
-  isTransactionLoading,
-  handleApproveClick,
-  handleExecuteClick,
-  handleConfirmAction,
-  handleCancelAction
-} = useSafeTransactionActions({
-  safeAddress: computed(() => props.address),
-  hasConflictingTransactions,
-  willApprovalCauseConflict
-})
-
-// Computed values
 const isConnectedUserOwner = computed(() => {
   if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
-
   return safeInfo.value.owners.some(
-    (owner) => owner.toLowerCase() === userDataStore.address.toLowerCase()
+    (owner) => owner.toLowerCase() === userDataStore.address?.toLowerCase()
   )
 })
 
-// Simplified filtering - directly filter the original transactions
-const filteredTransactions = computed(() => {
-  if (!transactions.value) return []
-
-  switch (selectedStatus.value) {
-    case 'pending':
-      return transactions.value.filter((tx) => !tx.isExecuted)
-    case 'executed':
-      return transactions.value.filter((tx) => tx.isExecuted)
-    default:
-      return transactions.value
-  }
+const getConflictContext = () => ({
+  currentNonce: currentSafeNonce.value,
+  threshold: safeInfo.value?.threshold,
+  transactions: transactions.value ?? []
 })
 
-// Helper functions
-const getTransactionStatus = (transaction: SafeTransaction): string => {
-  if (transaction.isExecuted) return 'Executed'
+const getTransactionState = (transaction: SafeTransaction): SafeTransactionStateMeta =>
+  getSafeTransactionState(transaction, {
+    currentNonce: currentSafeNonce.value,
+    threshold: safeInfo.value?.threshold,
+    hasConflict: hasConflictingSafeTransactions(transaction, getConflictContext())
+  })
 
-  // Check if transaction nonce is invalid (stale)
-  if (!isTransactionNonceValid(transaction)) {
-    return 'Invalid (Stale Nonce)'
-  }
+const isTransactionLoading = (safeTxHash: string, action: 'approve' | 'execute'): boolean =>
+  action === 'approve'
+    ? approvingTransactions.value.has(safeTxHash) && isApproving.value
+    : executingTransactions.value.has(safeTxHash) && isExecuting.value
 
-  const confirmations = transaction.confirmations?.length || 0
-  const required = transaction.confirmationsRequired || safeInfo.value?.threshold || 0
+const transactionRows = computed<SafeTransactionQueueRow[]>(() =>
+  buildSafeTransactionQueueRows({
+    ...getConflictContext(),
+    isSigner: isConnectedUserOwner.value,
+    connectedAddress: userDataStore.address,
+    isTransactionLoading
+  })
+)
 
-  if (confirmations >= required) return 'Ready to Execute'
-  return 'Pending'
-}
-
-/**
- * Determine if a transaction can be approved
- * Prevents approving:
- * - Already executed transactions
- * - Transactions with stale nonces (nonce < current Safe nonce)
- * - Transactions already approved by the current user
- */
-const canApprove = (transaction: SafeTransaction): boolean => {
-  if (!isConnectedUserOwner.value) return false
-  if (!props.address) return false
-  if (transaction.isExecuted) return false
-
-  // Don't allow approving transactions with invalid/stale nonce
-  // These can never be executed on-chain
-  if (!isTransactionNonceValid(transaction)) return false
-
-  const userAlreadyConfirmed = transaction.confirmations?.some(
-    (confirmation) => confirmation.owner.toLowerCase() === userDataStore.address?.toLowerCase()
+const filteredTransactionRows = computed(() =>
+  transactionRows.value.filter((row) =>
+    matchesSafeTransactionFilter(row.state.state, selectedStatus.value)
   )
+)
 
-  return !userAlreadyConfirmed
-}
+const transactionCounts = computed(() =>
+  getSafeTransactionFilterCounts(transactionRows.value.map((row) => row.state.state))
+)
 
-/**
- * Determine if a transaction can be executed
- * Prevents executing:
- * - Already executed transactions
- * - Transactions with stale nonces
- * - Transactions without enough confirmations
- */
-const canExecute = (transaction: SafeTransaction): boolean => {
-  if (!isConnectedUserOwner.value) return false
-  if (transaction.isExecuted) return false
-
-  // Don't allow executing transactions with invalid/stale nonce
-  if (!isTransactionNonceValid(transaction)) return false
-
-  const confirmations = transaction.confirmations?.length || 0
-  const required = transaction.confirmationsRequired || safeInfo.value?.threshold || 0
-
-  return confirmations >= required
-}
-
-const total = computed(() => filteredTransactions.value.length)
-const displayedTransactions = computed(() => {
+const total = computed(() => filteredTransactionRows.value.length)
+const { page, pageSize, reset } = usePagination(() => total.value, { key: 'safeTx' })
+const displayedTransactionRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
-  return filteredTransactions.value.slice(start, start + pageSize.value)
+  return filteredTransactionRows.value.slice(start, start + pageSize.value)
 })
 
-// Page-size changes are handled by usePagination's resize anchoring, so no
-// pageSize watcher here. Still clamp the page when a status filter shrinks the
-// list below the current page.
-watch(filteredTransactions, (transactionsList) => {
-  const maxPage = Math.max(1, Math.ceil(transactionsList.length / pageSize.value))
-  if (page.value > maxPage) {
-    page.value = maxPage
+const emptyStateDescription = computed(() =>
+  selectedStatus.value === 'all'
+    ? 'Transfers and signer changes will appear here after they are proposed.'
+    : selectedStatus.value === 'needs-action'
+      ? 'Everything is complete for now. Review all transactions to see the Safe history.'
+      : 'Choose another status to continue reviewing the Safe history.'
+)
+
+const getTransactionErrorMessage = (error: unknown, fallback: string): string => {
+  const message = error instanceof Error ? error.message : fallback
+  return message.includes('User rejected') ? 'Transaction rejected' : message
+}
+
+const approveTransaction = (transaction: SafeTransaction) => {
+  approvingTransactions.value.add(transaction.safeTxHash)
+  approve(
+    {
+      pathParams: {
+        safeAddress: props.address,
+        safeTxHash: transaction.safeTxHash
+      },
+      queryParams: {
+        chainId: chainId.value
+      }
+    },
+    {
+      onSuccess: () => {
+        toast.add({
+          title: 'Success',
+          description: 'Transaction approved successfully',
+          color: 'success'
+        })
+      },
+      onError: (error) => {
+        log.error('Failed to approve transaction:', error)
+        toast.add({
+          title: 'Error',
+          description: getTransactionErrorMessage(error, 'Failed to approve transaction'),
+          color: 'error'
+        })
+      },
+      onSettled: () => {
+        approvingTransactions.value.delete(transaction.safeTxHash)
+      }
+    }
+  )
+}
+
+const executeTransaction = (transaction: SafeTransaction) => {
+  executingTransactions.value.add(transaction.safeTxHash)
+  execute(
+    {
+      pathParams: {
+        safeAddress: props.address,
+        safeTxHash: transaction.safeTxHash
+      },
+      queryParams: {
+        chainId: chainId.value
+      },
+      body: {
+        transactionData: transaction
+      }
+    },
+    {
+      onSuccess: () => {
+        toast.add({
+          title: 'Success',
+          description: 'Transaction executed successfully',
+          color: 'success'
+        })
+      },
+      onError: (error) => {
+        log.error('Failed to execute transaction:', error)
+        toast.add({
+          title: 'Error',
+          description: getTransactionErrorMessage(error, 'Failed to execute transaction'),
+          color: 'error'
+        })
+      },
+      onSettled: () => {
+        executingTransactions.value.delete(transaction.safeTxHash)
+      }
+    }
+  )
+}
+
+const handleApproveClick = (transaction: SafeTransaction) => {
+  if (willSafeTransactionApprovalCauseConflict(transaction, getConflictContext())) {
+    pendingConflictAction.value = { action: 'approve', transaction }
+    return
   }
+
+  approveTransaction(transaction)
+}
+
+const handleExecuteClick = (transaction: SafeTransaction) => {
+  if (hasConflictingSafeTransactions(transaction, getConflictContext())) {
+    pendingConflictAction.value = { action: 'execute', transaction }
+    return
+  }
+
+  executeTransaction(transaction)
+}
+
+const handleConfirmAction = () => {
+  const action = pendingConflictAction.value
+  if (!action) return
+
+  pendingConflictAction.value = null
+  if (action.action === 'approve') approveTransaction(action.transaction)
+  else executeTransaction(action.transaction)
+}
+
+const handleCancelAction = () => (pendingConflictAction.value = null)
+
+watch(filteredTransactionRows, (transactionsList) => {
+  const maxPage = Math.max(1, Math.ceil(transactionsList.length / pageSize.value))
+  if (page.value > maxPage) page.value = maxPage
 })
 
-const handleStatusChange = (status: SafeTransactionStatus) => {
-  selectedStatus.value = status
+const handleStatusChange = () => reset()
+
+const clearFilter = () => {
+  selectedStatus.value = 'all'
   reset()
 }
 
@@ -305,10 +330,7 @@ watch(showDetailsModal, (isOpen) => {
   if (!isOpen) selectedTransactionForDetails.value = null
 })
 
-// Error watching
 watch(error, (newError) => {
-  if (newError) {
-    log.error('Error loading safe transactions:', newError)
-  }
+  if (newError) log.error('Error loading Safe transactions:', newError)
 })
 </script>

@@ -72,13 +72,13 @@
 
     <LedgerDrilldownModal
       v-model:open="drilldownOpen"
-      v-model:columns="drilldownColumns"
-      :account="drilldownAccount"
-      :total="drilldownTotal"
+      :account="drilldownLine?.label ?? ''"
+      :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
       :balance-account="drilldownBalanceAccount"
       :opening="drilldownOpening"
       :closing="drilldownClosing"
+      columns-storage-key="cnc-accounting-balance-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
   </div>
@@ -107,20 +107,14 @@ const balance = computed(() => presentBalance(acc.entries.value, asOf.value))
 // Per-line drill-down — over the same as-of slice the balance sheet is built from.
 const {
   open: drilldownOpen,
-  account: drilldownAccount,
-  total: drilldownTotal,
-  columns: drilldownColumns,
+  selectedLine: drilldownLine,
   balanceAccount: drilldownBalanceAccount,
   opening: drilldownOpening,
   closing: drilldownClosing,
   drilldownEntries,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(
-  acc.entries,
-  () => ({ from: null, to: asOf.value }),
-  'cnc-accounting-balance-drilldown-columns-v1'
-)
+} = useLedgerDrilldown(acc.entries, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(line: StatementLineView): void {
   // Retained earnings is an aggregate of every income + expense account; other

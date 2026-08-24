@@ -32,13 +32,13 @@ describe('mapPayrollAccruals', () => {
     expect(entry.amountUsd).toBe(50) // 2h × 25 USDC × $1
   })
 
-  it('books the SHER rate as Share-based Compensation against Shares to be issued', () => {
+  it('books the SHER rate as Deferred SHER Compensation against SHERS To Be Issued', () => {
     const [entry] = mapPayrollAccruals(
       [claim({ wage: { ratePerHour: [{ type: 'sher', amount: 10 }] } } as Partial<WeeklyClaim>)],
       ctx
     )
-    expect(entry.debit).toBe('Share-based Compensation')
-    expect(entry.credit).toBe('Shares to be issued')
+    expect(entry.debit).toBe('Deferred SHER Compensation')
+    expect(entry.credit).toBe('SHERS To Be Issued')
     expect(entry.amountUsd).toBe(10) // 2h × 10 SHER × $0.50
   })
 
@@ -57,8 +57,8 @@ describe('mapPayrollAccruals', () => {
       ctx
     )
     expect(entries).toHaveLength(2)
-    expect(entries.map((e) => e.debit)).toEqual(['Payroll Expense', 'Share-based Compensation'])
-    expect(entries.map((e) => e.credit)).toEqual(['Wage Payable', 'Shares to be issued'])
+    expect(entries.map((e) => e.debit)).toEqual(['Payroll Expense', 'Deferred SHER Compensation'])
+    expect(entries.map((e) => e.credit)).toEqual(['Wage Payable', 'SHERS To Be Issued'])
   })
 
   it('values overtime minutes at the overtime rate (reuses the canonical wage calc)', () => {

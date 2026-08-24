@@ -50,7 +50,7 @@
         <div class="mb-2 text-sm text-gray-700">
           Invite members to your company. You can always add more later.
         </div>
-        <MultiSelectMemberInput v-model="teamData.members" :disable-team-members="false" />
+        <MultiSelectMemberInput v-model="teamData.members" />
         {{ createTeamError }}
         <UAlert
           v-if="createTeamError"
@@ -91,9 +91,56 @@
         :team="createdTeamData"
         :show-alert="true"
         :show-skip="true"
-        @skip="$emit('done')"
-        @contractDeployed="navigateToTeam"
+        @skip="showSafeDeploymentStep"
+        @contractDeployed="showSafeDeploymentStep"
       />
+    </div>
+
+    <!-- Step 4: Safe Wallet -->
+    <div v-else-if="currentStep === 3" data-test="step-4">
+      <div class="mb-6">
+        <h2 class="text-lg font-semibold">Set up your Safe wallet</h2>
+        <p class="mt-1 text-sm text-gray-500">
+          Connect a new or existing team wallet, or set it up later from the Safe account.
+        </p>
+      </div>
+
+      <UTabs
+        v-model="safeSetupChoice"
+        :items="safeSetupTabs"
+        aria-label="Safe wallet setup options"
+      >
+        <template #default="{ item }">
+          <span :data-test="`safe-setup-tab-${item.value}`">{{ item.label }}</span>
+        </template>
+        <template #deploy>
+          <SafeDeploymentCard
+            v-if="createdTeamData"
+            :team-id="Number(createdTeamData.id)"
+            :team-owner-address="createdTeamData.ownerAddress"
+            @safe-deployed="navigateToTeam"
+          />
+        </template>
+        <template #import>
+          <SafeImportCard
+            v-if="createdTeamData"
+            :team-id="Number(createdTeamData.id)"
+            :team-owner-address="createdTeamData.ownerAddress"
+            @safe-imported="navigateToTeam"
+          />
+        </template>
+      </UTabs>
+
+      <div class="mt-6 flex justify-end">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          data-test="skip-safe-setup-button"
+          @click="navigateToTeam"
+        >
+          Set up Safe later
+        </UButton>
+      </div>
     </div>
   </div>
 </template>
@@ -104,12 +151,13 @@ import { z } from 'zod'
 import { isAddress } from 'viem'
 import { log } from '@/utils'
 import InvestorContractStep from '@/components/sections/TeamView/forms/InvestorContractStep.vue'
+import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
+import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import type { Team } from '@/types'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 import { useRouter } from 'vue-router'
 
-defineEmits(['done'])
 const toast = useToast()
 const router = useRouter()
 const {
@@ -133,6 +181,11 @@ const teamData = ref<Pick<Team, 'name' | 'description' | 'members'>>({
 })
 
 const currentStep = ref(0)
+const safeSetupChoice = ref<'deploy' | 'import'>('deploy')
+const safeSetupTabs = [
+  { label: 'Deploy a new Safe', value: 'deploy', slot: 'deploy' },
+  { label: 'Import an existing Safe', value: 'import', slot: 'import' }
+]
 
 // Computed Properties
 const canProceed = computed(() => {
@@ -159,7 +212,8 @@ const step2Label = computed(() => {
 const stepperItems = computed(() => [
   { title: 'Company Details', value: 1 },
   { title: step2Label.value, value: 2 },
-  { title: 'Investor Contract', value: 3 }
+  { title: 'Investor Contract', value: 3 },
+  { title: 'Safe Wallet', value: 4 }
 ])
 
 // Navigation Functions
@@ -170,9 +224,13 @@ const navigateToTeam = () => {
 }
 
 const nextStep = () => {
-  if (currentStep.value < 4 && canProceed.value) {
+  if (currentStep.value < 2 && canProceed.value) {
     currentStep.value++
   }
+}
+
+const showSafeDeploymentStep = () => {
+  currentStep.value = 3
 }
 
 // Form Submission Functions

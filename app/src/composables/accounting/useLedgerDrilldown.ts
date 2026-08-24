@@ -1,5 +1,4 @@
 import { computed, ref, type Ref } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
 import { useAccountingExport } from './useAccountingExport'
 import {
   entriesForAccount,
@@ -9,7 +8,7 @@ import {
 } from '@/utils/accounting/accountLedger'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
-import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
+import type { LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
@@ -19,23 +18,22 @@ export interface DrilldownBounds {
   to: Date | null
 }
 
+/** The statement line currently shown in the drill-down modal. */
+export interface LedgerDrilldownLine {
+  accounts: string | string[]
+  label: string
+  total: string
+}
+
 export function useLedgerDrilldown(
   entries: Ref<readonly LedgerEntry[]>,
-  bounds: () => DrilldownBounds,
-  columnsStorageKey: string
+  bounds: () => DrilldownBounds
 ) {
   const open = ref(false)
   // The account(s) the popup scopes to, and the name/figure shown for the line.
   const target = ref<string | string[]>('')
   const displayName = ref('')
   const lineTotal = ref('')
-
-  // Show/hide drill-down columns — persisted so the choice sticks across
-  // sessions, on a per-statement key so each card stays independent.
-  const columns = useLocalStorage<LedgerColumnKey[]>(
-    columnsStorageKey,
-    LEDGER_COLUMNS.map((c) => c.value)
-  )
 
   const isAggregate = computed(() => Array.isArray(target.value))
 
@@ -58,6 +56,15 @@ export function useLedgerDrilldown(
       ? accountBalance(drilldownEntries.value, target.value)
       : lineTotal.value
   )
+
+  const selectedLine = computed<LedgerDrilldownLine | null>(() => {
+    if (!target.value || (Array.isArray(target.value) && target.value.length === 0)) return null
+    return {
+      accounts: target.value,
+      label: displayName.value,
+      total: total.value
+    }
+  })
 
   // What the account brought into the window — the ledger's "Opening balance"
   // line. Nothing precedes an open-ended window, nor an aggregate line.
@@ -87,36 +94,32 @@ export function useLedgerDrilldown(
   // Export exactly the drilled-in ledger, over the same window and columns,
   // through the shared PDF / Excel pipeline. An aggregate carries its label and
   // total, which the pipeline can't recompute.
-  function onExport(format: 'pdf' | 'excel'): void {
+  function onExport(format: 'pdf' | 'excel', columns: LedgerColumnKey[]): void {
+    const line = selectedLine.value
+    if (!line) return
     const { from, to } = bounds()
     const spec: SectionSpec = {
       key: 'ledger',
-      account: target.value,
+      account: line.accounts,
       from,
       to,
-      columns: columns.value,
-      ...(isAggregate.value ? { accountLabel: displayName.value, accountTotal: total.value } : {})
+      columns,
+      ...(isAggregate.value ? { accountLabel: line.label, accountTotal: line.total } : {})
     }
     if (format === 'excel') {
-      exportExcel(
-        [spec],
-        exportFilename(spec, 'xlsx'),
-        `${displayName.value} ledger exported to Excel`
-      )
+      exportExcel([spec], exportFilename(spec, 'xlsx'), `${line.label} ledger exported to Excel`)
     } else {
       exportPdf(
         [spec],
         { filename: exportFilename(spec, 'pdf') },
-        `${displayName.value} ledger exported to PDF`
+        `${line.label} ledger exported to PDF`
       )
     }
   }
 
   return {
     open,
-    account: displayName,
-    total,
-    columns,
+    selectedLine,
     balanceAccount,
     opening,
     closing,

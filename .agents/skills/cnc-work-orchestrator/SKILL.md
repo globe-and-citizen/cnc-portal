@@ -5,7 +5,8 @@ description: Coordinate CNC Portal work across repository skills. Use for issue-
 
 # CNC work orchestrator
 
-Keep one agent accountable for the working tree, external writes, and final evidence. Use other agents only to produce independent, bounded evidence.
+Keep one agent accountable for the working tree, external writes, and final evidence. Use other agents only to produce independent, bounded
+evidence.
 
 ## Route the work
 
@@ -21,11 +22,14 @@ Keep one agent accountable for the working tree, external writes, and final evid
 
 ## Delegate safely
 
-- Delegate only bounded, independent investigation or review work. Good examples: trace a separate user journey, compare acceptance criteria to a diff, or inspect a distinct subsystem.
+- Delegate only bounded, independent investigation or review work. Good examples: trace a separate user journey, compare acceptance criteria
+  to a diff, or inspect a distinct subsystem.
 - A delegated task states its exact scope, expected evidence, and whether it is read-only.
-- Subagents do not edit shared files, stage changes, commit, push, create issues, or post reviews unless the user explicitly assigns that authority.
+- Subagents do not edit shared files, stage changes, commit, push, create issues, or post reviews unless the user explicitly assigns that
+  authority.
 - Do not delegate a task marked blocked, nor split a single coherent implementation merely to use more agents.
 
 ## Integrate and finish
 
-The primary agent evaluates all evidence, integrates the changes, runs the required checks, and owns commits and PR state. Mark the todo complete only after the agreed outcome and validation are complete.
+The primary agent evaluates all evidence, integrates the changes, runs the required checks, and owns commits and PR state. Mark the todo
+complete only after the agreed outcome and validation are complete.

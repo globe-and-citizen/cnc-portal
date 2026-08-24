@@ -1,11 +1,14 @@
 ---
 name: cnc-docs-governance
-description: Maintain CNC Portal agent guidance and implementation documentation without duplicating authority. Use when changing AGENTS.md, repository skills, developer guides, feature documentation, or documentation validation.
+description: Maintain CNC Portal agent guidance, architectural documentation, and developer documentation without duplicating authority. Use when changing AGENTS.md, repository skills, developer or platform guides, implementation documentation, or documentation validation; use cnc-feature-documentation for product feature user stories.
 ---
 
 # CNC documentation governance
 
 Keep each rule in one authoritative place and link to it from the entry points that need it.
+
+Use `cnc-feature-documentation` to create or validate product feature READMEs and their user stories. This skill owns the wider
+documentation architecture and the guides that define that feature workflow.
 
 ## Choose the owner
 
@@ -14,21 +17,29 @@ Keep each rule in one authoritative place and link to it from the entry points t
 - `.github/copilot-instructions/` holds detailed coding, testing, review, and formatting guidance.
 - `docs/` holds product and implementation behaviour; code and tests are executable evidence.
 
-Do not copy detailed guidance into a skill or `AGENTS.md`; point to its owner. Remove obsolete
-backlinks when ownership moves.
+When editing feature documentation, read and follow the
+[Feature Documentation Guide](../../../docs/platform/feature-specification-guide.md). It owns the canonical feature structure, story-status
+semantics, and human review contract.
 
-Keep operating rules self-contained. Cite current code, configuration, or CI behaviour as evidence;
-do not use historical issues or pull requests as their authority or rationale.
+When editing architectural capability documentation, read and follow the
+[Implementation Documentation Guide](../../../docs/platform/implementation-documentation-guide.md). It owns the product-versus-architecture
+classification, capability structure, and current-behaviour review contract.
+
+Do not copy detailed guidance into a skill or `AGENTS.md`; point to its owner. Remove obsolete backlinks when ownership moves.
+
+Keep operating rules self-contained. Cite current code, configuration, or CI behaviour as evidence; do not use historical issues or pull
+requests as their authority or rationale.
 
 ## Change safely
 
 1. Inspect the affected source, linked guides, and the runtime or test evidence before editing.
 2. Keep current behaviour separate from historical issue and PR context.
 3. Use compact navigation in entry points; put variants and examples in their specialised guide.
-4. Run `npm run lint:md`, `npm run format:md:check`, and `bash scripts/audit-doc-drift.sh` after
-   changing agent instructions, skills, or linked guides. The format check covers Markdown changed
-   since `origin/develop`; subproject format checks exclude Markdown. CI supplies its pull-request
-   base SHA.
+4. Apply the [Documentation Freshness Policy](../../../docs/platform/documentation-freshness-policy.md) before changing a behavioural
+   source. Its validator requires every canonical feature, contract, or implementation owner to change with the source it documents.
+5. Run `npm run test:docs-freshness`, `npm run lint:docs-freshness`, `npm run lint:md`, `npm run format:md:check`, and
+   `bash scripts/audit-doc-drift.sh` after changing agent instructions, skills, linked guides, or documented behaviour. The format check
+   covers every tracked Markdown file; subproject format checks exclude Markdown.
 
 ## Skill maintenance
 
