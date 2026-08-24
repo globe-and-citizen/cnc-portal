@@ -16,9 +16,8 @@
       @selectMember="addMember"
       class="col-span-2"
       :hiddenMembers="teamMembers"
-      :disable-team-members="props.disableTeamMembers"
+      :member-scope="props.memberScope"
       :show-on-focus="props.showOnFocus"
-      :only-team-members="props.onlyTeamMembers"
       :current-safe-owners="props.currentSafeOwners"
     />
   </div>
@@ -28,19 +27,17 @@
 import UserComponent from '@/components/UserComponent.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { ref } from 'vue'
-import type { User } from '@/types'
+import type { MemberSelectionScope, User } from '@/types'
 
 interface Props {
   showOnFocus?: boolean
-  onlyTeamMembers?: boolean
-  disableTeamMembers?: boolean
+  memberScope?: MemberSelectionScope
   currentSafeOwners?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showOnFocus: false,
-  onlyTeamMembers: false,
-  disableTeamMembers: false,
+  memberScope: 'all-users',
   currentSafeOwners: () => []
 })
 

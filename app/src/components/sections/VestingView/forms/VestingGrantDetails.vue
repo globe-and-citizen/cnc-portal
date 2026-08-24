@@ -30,9 +30,8 @@
         v-else
         class="w-full text-xs"
         :hidden-members="[]"
-        :disable-team-members="false"
         show-on-focus
-        only-team-members
+        member-scope="team-members"
         data-test="member"
         @selectMember="selectMember"
       />
