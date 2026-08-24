@@ -64,10 +64,10 @@
 import { computed, ref } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import type { ContractGeneration } from '@/composables/contracts/useContractManagementGenerations'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
+import type { ContractGeneration } from '@/types/deployments'
 import MainContractTable from './MainContractTable.vue'
 import RedeployOfficerModal from './RedeployOfficerModal.vue'
 
