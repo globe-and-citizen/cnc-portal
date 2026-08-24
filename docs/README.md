@@ -48,7 +48,7 @@ become a separate top-level feature directory.
 | [Community Credit](./features/community-credit/README.md)                    | Credit calls, lending, stalled rounds, and repayment      | Implementation gaps |
 | [Payroll](./features/payroll/README.md)                                      | Wages, claims, signatures, withdrawal, and reconciliation | Implementation gaps |
 | [Accounting](./features/accounting/README.md)                                | Summary, ledger, statements, exports, and history         | Implementation gaps |
-| [SHER Token](./features/sher-token/README.md)                                | Safe Deposit Router investment and dividends              | Validation due      |
+| [Shareholder Management](./features/shareholder-management/README.md)        | Investor contract, shareholder lifecycle, and dividends   | Implementation gaps |
 | [Vesting](./features/vesting/README.md)                                      | Vesting V2 creation, progress, release, and cancellation  | Human reviewed      |
 | [Backoffice Statistics](./features/backoffice/statistics/README.md)          | Platform metrics, category statistics, and activity       | Implementation gaps |
 | [Feature Restrictions](./features/backoffice/feature-restrictions/README.md) | Global feature states and team-specific overrides         | Validation due      |
