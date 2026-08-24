@@ -33,7 +33,7 @@
               :class="
                 isSafeOwner(user)
                   ? 'cursor-not-allowed'
-                  : disableTeamMembers && isTeamMember(user)
+                  : isExistingTeamMember(user)
                     ? 'cursor-not-allowed'
                     : 'cursor-pointer'
               "
@@ -41,7 +41,7 @@
             >
               <UTooltip
                 :text="
-                  disableTeamMembers && isTeamMember(user)
+                  isExistingTeamMember(user)
                     ? 'Already in your team'
                     : isSafeOwner(user)
                       ? 'Already a safe owner'
@@ -52,7 +52,7 @@
                 <UserComponent
                   class="grow rounded-lg p-4"
                   :class="[
-                    disableTeamMembers && isTeamMember(user)
+                    isExistingTeamMember(user)
                       ? 'bg-gray-200 opacity-60'
                       : isSafeOwner(user)
                         ? 'bg-gray-100 opacity-60'
@@ -77,24 +77,22 @@
 import { ref, computed, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
-import type { User } from '@/types'
+import type { MemberSelectionScope, User } from '@/types'
 import { useTeamStore } from '@/stores/teamStore'
 import { useGetSearchUsersQuery } from '@/queries'
 
 interface Props {
   disabled?: boolean
   showOnFocus?: boolean
-  onlyTeamMembers?: boolean
+  memberScope?: MemberSelectionScope
   hiddenMembers: User[]
-  disableTeamMembers: boolean
   currentSafeOwners?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showOnFocus: false,
-  onlyTeamMembers: false,
+  memberScope: 'all-users',
   hiddenMembers: () => [],
-  disableTeamMembers: false,
   currentSafeOwners: () => []
 })
 
@@ -130,13 +128,16 @@ const isTeamMember = (user: User): boolean => {
   return members.some((member) => lower(member.address) === lower(user.address))
 }
 
+const isExistingTeamMember = (user: User): boolean =>
+  props.memberScope === 'non-team-members' && isTeamMember(user)
+
 const isSafeOwner = (user: User): boolean => {
   return props.currentSafeOwners?.some((owner) => lower(owner) === lower(user.address)) ?? false
 }
 
 const filteredUsers = computed<User[]>(() => {
   let members: User[] = []
-  if (props.onlyTeamMembers) {
+  if (props.memberScope === 'team-members') {
     members = teamStore.currentTeamMeta.data?.members ?? []
   } else {
     members = users.value ? (users.value.users as User[]) : []
@@ -150,7 +151,7 @@ const filteredUsers = computed<User[]>(() => {
 watchDebounced(
   input,
   async () => {
-    if (!props.onlyTeamMembers) {
+    if (props.memberScope !== 'team-members') {
       await refetchUsers()
     }
   },
@@ -168,7 +169,7 @@ const handleSelectMember = async (member: User) => {
     return
   }
 
-  if (props.disableTeamMembers && isTeamMember(member)) {
+  if (isExistingTeamMember(member)) {
     return
   }
 

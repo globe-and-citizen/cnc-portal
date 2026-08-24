@@ -59,7 +59,7 @@ const SafeImportCardStub = defineComponent({
 
 const MultiSelectMemberInputStub = defineComponent({
   name: 'MultiSelectMemberInput',
-  props: ['modelValue', 'disableTeamMembers'],
+  props: ['modelValue'],
   emits: ['update:modelValue'],
   setup() {
     return () => h('div')

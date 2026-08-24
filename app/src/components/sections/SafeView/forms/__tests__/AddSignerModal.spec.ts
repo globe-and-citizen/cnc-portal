@@ -61,7 +61,7 @@ const createWrapper = (props = {}): VueWrapper<AddSignerModalInstance> =>
       stubs: {
         MultiSelectMemberInput: {
           template: '<div data-test="new-signers-input"></div>',
-          props: ['modelValue', 'disableTeamMembers', 'currentSafeOwners'],
+          props: ['modelValue', 'currentSafeOwners'],
           emits: ['update:modelValue']
         }
       }

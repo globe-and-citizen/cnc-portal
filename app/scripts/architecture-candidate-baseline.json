@@ -7,13 +7,6 @@
   },
   "exceptions": [
     {
-      "path": "src/components/utils/MultiSelectMemberInput.vue",
-      "subject": "component",
-      "metric": "componentForwardedProps",
-      "allowed": 4,
-      "reason": "Existing candidate tracked by #2531."
-    },
-    {
       "path": "src/composables/accounting/useCNCAccounting.ts",
       "subject": "useCNCAccounting",
       "metric": "singleConsumerComposableNestedCalls",
