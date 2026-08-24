@@ -214,8 +214,11 @@ flowchart LR
 ## Implementation Evidence
 
 - [Accounting routes](../../../app/src/router/index.ts) and [Accounting navigation](../../../app/src/composables/useSidebarNavItems.ts)
-- [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue) and
+- [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
+  [Accounting view components](../../../app/src/components/sections/AccountingView/), and
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+- [Statement-line drill-down](../../../app/src/composables/accounting/useLedgerDrilldown.ts)
+- [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [general ledger](../../../app/src/utils/accounting/generalLedger.ts),
   [income statement](../../../app/src/utils/accounting/incomeStatement.ts), and
