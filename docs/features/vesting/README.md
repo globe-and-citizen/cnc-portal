@@ -225,6 +225,7 @@ implementation; this validation records the product review.
 - [V2 schedule calculations](../../../app/src/utils/vestingScheduleUtil.ts)
 - [Release and Stop review](../../../app/src/components/sections/VestingView/VestingActionReviewModal.vue)
 - [Schedule creation, validation, and submission](../../../app/src/components/sections/VestingView/forms/)
+- [Vesting beneficiary selection](../../../app/src/components/sections/VestingView/forms/VestingGrantDetails.vue)
 - [Frontend vesting reads](../../../app/src/composables/vesting/reads.ts)
 - [Frontend vesting writes](../../../app/src/composables/vesting/writes.ts)
 - [Current Vesting contract](../../../contract/contracts/Vesting.sol)
@@ -233,4 +234,5 @@ implementation; this validation records the product review.
 ## Related Documentation
 
 - [Vesting V2 contract behaviour](../../contracts/features/vesting/README.md)
+- [Shared member-selection implementation](../../implementation/member-selection/README.md)
 - [Contract features index](../../contracts/features/README.md)

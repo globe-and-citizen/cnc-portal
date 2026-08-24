@@ -20,6 +20,7 @@ flowchart LR
   rbac --> backoffice[Backoffice capabilities]
   flags[Feature Flag Evaluation] --> payroll[Payroll claim rules]
   wake[Runtime Wake-Up] --> client[Client and dashboard availability]
+  selection[Member Selection] --> forms[Team and contract forms]
 ```
 
 | Capability                                           | System guarantee                                 | Main consumers                   | Last verified |
@@ -28,6 +29,7 @@ flowchart LR
 | [Feature Flag Evaluation](./feature-flags/README.md) | Global and team status resolution                | Feature Restrictions, Payroll    | 2026-08-21    |
 | [RBAC](./rbac/README.md)                             | Role-based backend and dashboard authorization   | Backoffice, administrator APIs   | 2026-08-21    |
 | [Runtime Wake-Up](./runtime-wake-up/README.md)       | Non-blocking process wake and database readiness | Client, dashboard, deployment    | 2026-08-21    |
+| [Member Selection](./member-selection/README.md)     | Scoped user selection and exclusions             | Team, Safe, elections, Vesting   | 2026-08-24    |
 
 ## Updating This Index
 

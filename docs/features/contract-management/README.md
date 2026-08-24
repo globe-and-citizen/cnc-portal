@@ -195,6 +195,7 @@ flowchart LR
 - [Contract Management page](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
 - [Current contract section](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
 - [Current contract actions](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
+- [Ownership recipient selection](../../../app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue)
 - [Ownership transfer behaviour](../../../app/src/composables/contracts/useContractOwnershipTransfer.ts)
 - [Contract-status behaviour](../../../app/src/composables/contracts/useContractStatusChange.ts)
 - [Pending Board-action behaviour](../../../app/src/composables/contracts/usePendingBodActions.ts)
@@ -211,4 +212,5 @@ flowchart LR
 ## Related Documentation
 
 - [Contract feature documentation](../../contracts/features/README.md)
+- [Shared member-selection implementation](../../implementation/member-selection/README.md)
 - [Product feature inventory](../README.md)
