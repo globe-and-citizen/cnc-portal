@@ -94,11 +94,10 @@ describe('useOfficerRedeploy — migration failure, retry, skip, reset', () => {
       return undefined
     })
 
-    const { redeploy, migrationFailed, migrationError } = useOfficerRedeploy()
+    const { redeploy, migrationRecovery } = useOfficerRedeploy()
     await redeploy({ name: 'Shares', symbol: 'SH' })
 
-    expect(migrationFailed.value).toBe(true)
-    expect(migrationError.value).toBe(err)
+    expect(migrationRecovery.value).toEqual({ error: err })
     expect(invalidateMock).not.toHaveBeenCalled()
   })
 
@@ -125,7 +124,7 @@ describe('useOfficerRedeploy — migration failure, retry, skip, reset', () => {
 
     const composable = useOfficerRedeploy()
     await composable.redeploy({ name: 'Shares', symbol: 'SH' })
-    expect(composable.migrationFailed.value).toBe(true)
+    expect(composable.migrationRecovery.value).not.toBeNull()
 
     // Now retry — this time the migration succeeds.
     migrateMutationRefs.mutateAsync.mockImplementationOnce(async (ctx) => {
@@ -139,7 +138,7 @@ describe('useOfficerRedeploy — migration failure, retry, skip, reset', () => {
     })
     await composable.retryMigration()
 
-    expect(composable.migrationFailed.value).toBe(false)
+    expect(composable.migrationRecovery.value).toBeNull()
     expect(invalidateMock).toHaveBeenCalledWith()
   })
 
@@ -165,12 +164,12 @@ describe('useOfficerRedeploy — migration failure, retry, skip, reset', () => {
 
     const composable = useOfficerRedeploy()
     await composable.redeploy({ name: 'Shares', symbol: 'SH' })
-    expect(composable.migrationFailed.value).toBe(true)
+    expect(composable.migrationRecovery.value).not.toBeNull()
 
     await composable.skipMigration()
 
     expect(migrateMutationRefs.reset).toHaveBeenCalled()
-    expect(composable.migrationFailed.value).toBe(false)
+    expect(composable.migrationRecovery.value).toBeNull()
     expect(invalidateMock).toHaveBeenCalledWith()
   })
 
@@ -180,7 +179,7 @@ describe('useOfficerRedeploy — migration failure, retry, skip, reset', () => {
     expect(deployMutationRefs.reset).toHaveBeenCalled()
     expect(registerMutationRefs.reset).toHaveBeenCalled()
     expect(migrateMutationRefs.reset).toHaveBeenCalled()
-    expect(c.workflowError.value).toBeNull()
+    expect(c.failure.value).toBeNull()
   })
 
   it('isRunning is false when no child mutation is pending', () => {

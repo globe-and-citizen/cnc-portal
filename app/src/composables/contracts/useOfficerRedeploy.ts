@@ -5,8 +5,9 @@
  *     cache flush. The wrappers it composes are configured to stay silent
  *     and skip their own invalidation so the user sees exactly one toast
  *     and one refetch wave for the whole redeploy.
- *   - Errors: NEVER toast from here. Each mutation's `error` ref plus
- *     `workflowError` are exposed for reactive rendering (UAlert).
+ *   - Errors: NEVER toast from here. `failure` identifies a failed deploy,
+ *     registration, or workflow step. `migrationRecovery` describes the
+ *     separate retry-or-skip state after a migration failure.
  *   - Workflow state: `pendingMigration` and `workflowError` are the only
  *     manual refs — everything else is derived from the three mutations.
  */
@@ -25,6 +26,19 @@ import { useCreateOfficerMutation } from '@/queries/contract.queries'
 import { officerAbi } from '@/artifacts/abi/generated'
 import { log } from '@/utils'
 
+export type OfficerRedeployFailureStage = 'deploy' | 'registration' | 'workflow'
+
+/** One redeployment step failed before shareholder migration could complete. */
+export interface OfficerRedeployFailure {
+  stage: OfficerRedeployFailureStage
+  error: Error
+}
+
+/** A deployed Officer needs its shareholder migration retried or skipped. */
+export interface OfficerRedeployMigrationRecovery {
+  error: Error | null
+}
+
 /**
  * Orchestrates the full "redeploy Officer" lifecycle: deploy on-chain,
  * register in the backend, then migrate shareholders from the previous
@@ -36,11 +50,10 @@ import { log } from '@/utils'
  * loading/error state lives in TanStack — this composable only owns the
  * higher-level workflow state that spans multiple calls.
  *
- * Errors are **not** surfaced via toast from here. Each mutation's `error`
- * ref is exposed as-is plus a workflow-level `workflowError` for things that
- * don't belong to any single mutation (e.g. "new Investor not found in
- * getTeam()"). The consumer template is expected to render them via reactive
- * UAlert components.
+ * Errors are **not** surfaced via toast from here. `failure` combines a
+ * failed workflow stage with its error, while `migrationRecovery` represents
+ * the separate retry-or-skip decision after deployment completed. The consumer
+ * template renders those reactive states with the appropriate UAlert.
  */
 export function useOfficerRedeploy() {
   const teamStore = useTeamStore()
@@ -71,9 +84,18 @@ export function useOfficerRedeploy() {
       registerMutation.isPending.value ||
       migrateMutation.isPending.value
   )
-  const migrationFailed = computed(
-    () => pendingMigration.value !== null && !migrateMutation.isPending.value
-  )
+  const failure = computed<OfficerRedeployFailure | null>(() => {
+    if (deployMutation.error.value) return { stage: 'deploy', error: deployMutation.error.value }
+    if (registerMutation.error.value)
+      return { stage: 'registration', error: registerMutation.error.value }
+    if (workflowError.value) return { stage: 'workflow', error: workflowError.value }
+    return null
+  })
+
+  const migrationRecovery = computed<OfficerRedeployMigrationRecovery | null>(() => {
+    if (!pendingMigration.value || migrateMutation.isPending.value) return null
+    return { error: migrateMutation.error.value }
+  })
 
   const findInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
     const contracts = (await readContract(config, {
@@ -157,8 +179,8 @@ export function useOfficerRedeploy() {
     reset()
 
     // Errors remain on deployMutation.error / registerMutation.error so the
-    // template can render them reactively. `` just aborts
-    // the sequence without leaking a rejection.
+    // template can render them reactively. A falsy result just aborts the
+    // sequence without leaking a rejection.
     const metadata = await deployMutation.mutateAsync({ investorInput, teamId })
     if (!metadata) return
 
@@ -218,12 +240,7 @@ export function useOfficerRedeploy() {
 
     // State
     isRunning,
-    migrationFailed,
-
-    // Reactive errors — bind directly to UAlert in the template
-    deployError: deployMutation.error,
-    registerError: registerMutation.error,
-    migrationError: migrateMutation.error,
-    workflowError
+    failure,
+    migrationRecovery
   }
 }
