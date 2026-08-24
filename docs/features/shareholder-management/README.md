@@ -57,14 +57,14 @@ flowchart LR
 
 | User Story  | Title                                    | Actor                           | Status         | Priority | Effort |
 | ----------- | ---------------------------------------- | ------------------------------- | -------------- | :------: | ------ |
-| US-SHER-003 | Review shareholder position and activity | Team member                     | 🧪 Validation  |    P1    | M      |
-| US-SHER-005 | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  |    P1    | M      |
 | US-SHER-001 | Invest in the Safe and receive SHER      | Team member                     | 🧪 Validation  |    P1    | M      |
-| US-SHER-004 | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress |    P1    | M      |
 | US-SHER-002 | Distribute dividends to shareholders     | Bank owner / Board member       | 🧪 Validation  |    P1    | M      |
-| US-SHER-008 | Start a shareholder migration            | Team owner                      | 🔗 Reference   |    P1    | L      |
+| US-SHER-003 | Review shareholder position and activity | Team member                     | 🧪 Validation  |    P1    | M      |
+| US-SHER-004 | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress |    P1    | M      |
+| US-SHER-005 | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  |    P1    | M      |
 | US-SHER-006 | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  |    P1    | M      |
 | US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🚧 In Progress |    P1    | M      |
+| US-SHER-008 | Start a shareholder migration            | Team owner                      | 🔗 Reference   |    P1    | L      |
 
 ## US-SHER-003: Review Shareholder Position and Activity
 
