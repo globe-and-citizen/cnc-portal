@@ -6,6 +6,7 @@ import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue
 
 vi.mock('@/components/sections/ContractManagementView/MainContractSection.vue', () => ({
   default: {
+    name: 'MainContractSection',
     props: ['generation'],
     template: '<div data-test="current-panel">Current panel</div>'
   }
@@ -17,6 +18,7 @@ vi.mock('@/components/sections/ContractManagementView/AdvertiseContractSection.v
 
 vi.mock('@/components/sections/ContractManagementView/DeploymentHistorySection.vue', () => ({
   default: {
+    name: 'DeploymentHistorySection',
     props: ['generations'],
     template: '<div data-test="history-panel">History panel</div>'
   }
@@ -67,6 +69,17 @@ describe('ContractManagementView.vue', () => {
     expect(mockRouterReplace).toHaveBeenLastCalledWith({ query: { tab: 'history' } })
   })
 
+  it('passes Officer history to the deployment history tab', () => {
+    const wrapper = renderWithProviders(ContractManagementView, {
+      pinia: false,
+      route: { query: { tab: 'history' } }
+    })
+
+    expect(wrapper.getComponent({ name: 'DeploymentHistorySection' }).props('generations')).toEqual(
+      [expect.objectContaining({ key: legacyOfficer.id, isCurrent: false })]
+    )
+  })
+
   it.each([
     ['campaigns', 'campaigns-panel'],
     ['history', 'history-panel']
@@ -87,5 +100,25 @@ describe('ContractManagementView.vue', () => {
     })
 
     expect(wrapper.find('[data-test="current-panel"]').exists()).toBe(true)
+  })
+
+  it('falls back to the current team Officer when history is empty', () => {
+    vi.mocked(useGetTeamOfficersQuery).mockReturnValue({
+      data: ref([]),
+      isPending: ref(false),
+      isError: ref(false),
+      refetch: vi.fn()
+    } as unknown as ReturnType<typeof useGetTeamOfficersQuery>)
+
+    const wrapper = renderWithProviders(ContractManagementView, { pinia: false })
+
+    expect(wrapper.getComponent({ name: 'MainContractSection' }).props('generation')).toEqual(
+      expect.objectContaining({
+        key: mockTeamStore.currentTeam.currentOfficer?.id,
+        officerAddress: mockTeamStore.currentTeam.currentOfficer?.address,
+        isCurrent: true,
+        contracts: mockTeamStore.currentTeam.teamContracts
+      })
+    )
   })
 })

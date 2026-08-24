@@ -192,7 +192,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-- [Contract Management page](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
+- [Contract Management page and Officer-generation derivation](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
 - [Current contract section](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
 - [Current contract actions](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
 - [Ownership recipient selection](../../../app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue)
