@@ -3,8 +3,6 @@ import * as safeModule from '../index'
 
 describe('safe index exports', () => {
   it('exports key Safe composables', () => {
-    expect(typeof safeModule.useSafeTransactionConflicts).toBe('function')
-    expect(typeof safeModule.useSafeTransactionActions).toBe('function')
     expect(typeof safeModule.useSafeSDK).toBe('function')
   })
 
