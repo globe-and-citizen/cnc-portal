@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "limits": {
+    "componentFunctionProps": 3,
+    "componentForwardedProps": 3,
+    "singleConsumerComposableNestedCalls": 1
+  },
+  "exceptions": [
+    {
+      "path": "src/composables/accounting/useCNCAccounting.ts",
+      "subject": "useCNCAccounting",
+      "metric": "singleConsumerComposableNestedCalls",
+      "allowed": 16,
+      "reason": "Existing candidate tracked by #2531."
+    },
+    {
+      "path": "src/composables/contracts/useOfficerRedeploy.ts",
+      "subject": "useOfficerRedeploy",
+      "metric": "singleConsumerComposableNestedCalls",
+      "allowed": 6,
+      "reason": "Existing candidate tracked by #2531."
+    },
+    {
+      "path": "src/composables/vesting/useVestingSchedules.ts",
+      "subject": "useVestingSchedules",
+      "metric": "singleConsumerComposableNestedCalls",
+      "allowed": 4,
+      "reason": "Existing candidate tracked by #2531."
+    }
+  ]
+}

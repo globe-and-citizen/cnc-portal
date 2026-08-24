@@ -13,6 +13,8 @@ warn=0
 DOC_PATHS=(
   "AGENTS.md"
   "CLAUDE.md"
+  ".agents/skills"
+  ".claude/skills"
   ".github/copilot-instructions.md"
   ".github/copilot-instructions"
 )
@@ -68,7 +70,7 @@ while IFS= read -r f; do
       broken=1
     fi
   done < <(grep -oE '\]\(([^)]+\.md[^)]*)\)' "$f" 2>/dev/null | sed 's/^\](//')
-done < <(find AGENTS.md CLAUDE.md .github/copilot-instructions.md .github/copilot-instructions -type f -name '*.md' 2>/dev/null)
+done < <(find AGENTS.md CLAUDE.md .agents/skills .claude/skills .github/copilot-instructions.md .github/copilot-instructions -type f -name '*.md' 2>/dev/null)
 if [ $broken -eq 0 ]; then
   echo -e "${GREEN}✓ no broken links${NC}"
 else

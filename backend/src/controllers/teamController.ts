@@ -90,10 +90,9 @@ const withCurrentOfficerAndContracts = <
   };
 };
 
-// The team list card shows the viewer's own wage status ("Wage set" vs "No wage
-// set"), not the whole roster's. Fetch just the caller's active wage (the row
-// with no successor) across the listed teams in a single query and index it by
-// team, so the list stays one extra query rather than one per team.
+// The team list card shows the viewer's own current wage status ("Wage set"
+// vs "No wage set"), not the whole roster's. The leaf of each wage chain is
+// the current version because changes now take effect immediately.
 const findCallerWagesByTeamId = async (callerAddress: string, teamIds: number[]) => {
   if (teamIds.length === 0) return new Map<number, Wage>();
 
@@ -226,10 +225,9 @@ const getTeam = async (req: Request, res: Response) => {
             imageUrl: true,
             Wage: {
               where: {
-                teamId: Number(id), // wage de cette équipe uniquement
-                nextWageId: null, // nextWageId null = wage actuel (pas de successeur)
+                teamId: Number(id),
+                nextWageId: null,
               },
-              take: 1,
             },
           },
         },
@@ -250,12 +248,14 @@ const getTeam = async (req: Request, res: Response) => {
     }
 
     const membersWithResolvedImages = await Promise.all(
-      team.members.map(async (member) => ({
-        ...member,
-        imageUrl: await resolveStorageImageUrl(member.imageUrl),
-        currentWage: member.Wage[0] ?? null, // aplatir le tableau
-        Wage: undefined, // retirer le tableau brut
-      }))
+      team.members.map(async (member) => {
+        return {
+          ...member,
+          imageUrl: await resolveStorageImageUrl(member.imageUrl),
+          currentWage: member.Wage[0] ?? null,
+          Wage: undefined,
+        };
+      })
     );
 
     const callerMemberData = await prisma.memberTeamsData.findUnique({

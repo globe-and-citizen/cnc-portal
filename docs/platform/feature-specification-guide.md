@@ -1,667 +1,385 @@
-# Feature Functional Specification Guide
+# Feature Documentation Guide
 
-**Version:** 1.0.0  
-**Date:** December 7, 2025  
-**Purpose:** Standard template and guidelines for creating feature functional specifications
+**Status:** Current — applied to every canonical product feature user story
 
----
+**Last updated:** 2026-08-23
 
-## Overview
+**Purpose:** Define the canonical, reviewable documentation contract for CNC Portal features
 
-This guide provides instructions for creating feature functional specifications in the CNC Portal project. A well-written functional specification focuses on **feature-specific information only** and references platform-wide standards instead of duplicating them.
+## Purpose
 
----
+Each product feature owns its user stories and acceptance criteria in one canonical README. The document describes the complete user
+journey, the behaviour expected from the product, and the current human-validation state.
 
-## Core Principles
+The feature README is not an implementation manual or a delivery history. Code and tests are executable evidence, while issues, pull
+requests, and Git history preserve active work and history.
 
-### 1. Feature-Specific Focus
+## Feature Eligibility and Grouping
 
-**✅ DO:**
+A documented product feature is an observable capability that a user can reach through a current product journey. Establish the inventory
+from runtime evidence in this order:
 
-- Document only what is unique to your feature
-- Describe feature-specific business logic and calculations
-- Detail feature-specific API endpoints and parameters
-- Explain feature-specific UI components and flows
+1. inspect primary navigation and authentication entry points;
+2. follow their linked routes and meaningful user actions;
+3. apply the current access guards and role conditions;
+4. group routes that serve the same user goal into one capability;
+5. separate product availability from documentation and human-validation status.
 
-**❌ DON'T:**
+A route file alone is not enough. Exclude placeholders, development playgrounds, error and access-denied pages, unused template screens, and
+orphaned routes that no current journey exposes. Also exclude technical mechanisms such as contracts, APIs, RBAC, seeding, indexers,
+deployment, and server wake-up unless they are themselves exposed as an observable product goal.
 
-- Duplicate platform-wide security standards
-- Repeat generic testing strategies
-- Copy deployment procedures
-- Redocument technology stack details
-- Include generic glossary terms
+When a subject also has shared runtime behaviour, split the documentation. Keep the user journey in the feature README and place the
+architectural capability under `docs/implementation/` according to the
+[Implementation Documentation Guide](./implementation-documentation-guide.md).
 
-### 2. Reference, Don't Duplicate
+The [Product Feature Inventory](../features/README.md) is the canonical list. The client app owns top-level capabilities. All
+administrator-dashboard capabilities are grouped under `docs/features/backoffice/`, even when a dashboard capability has several routes or
+focused documents.
 
-When your feature uses platform standards, reference them:
+## Documentation Ownership
+
+| Information                                      | Canonical owner                                |
+| ------------------------------------------------ | ---------------------------------------------- |
+| Current user-accessible capability inventory     | `docs/features/README.md`                      |
+| Product intent, journey, and acceptance criteria | `docs/features/<feature>/README.md`            |
+| Backoffice capability journey                    | `docs/features/backoffice/<feature>/README.md` |
+| Complex feature-specific rules                   | A focused file beside the feature README       |
+| Shared architectural capability                  | `docs/implementation/<capability>/README.md`   |
+| Current smart-contract behaviour                 | `docs/contracts/features/<contract>/README.md` |
+| Platform-wide engineering standards              | `docs/platform/` or `.github/` guides          |
+| Executable behaviour and regression proof        | Code and tests                                 |
+| Architectural decisions and trade-offs           | [`docs/adr/`](../adr/README.md)                |
+| Active delivery and history                      | GitHub issues, pull requests, and Git          |
+
+Product and contract documentation remain separate even when they share a name. For example, `docs/features/vesting/README.md` owns the
+portal journey, while `docs/contracts/features/vesting/README.md` owns the Solidity behaviour that supports it.
+
+## Location and Naming
+
+- Create one directory per client capability: `docs/features/<kebab-case-feature>/`.
+- Create dashboard capability documentation under `docs/features/backoffice/<kebab-case-feature>/`; do not add dashboard capabilities at the
+  `docs/features/` root.
+- Treat `docs/features/README.md` and `docs/features/backoffice/README.md` as navigation inventories, not as substitutes for the capability
+  READMEs.
+- Name the canonical entry point `README.md` with this exact casing.
+- Keep the whole product journey in that README rather than splitting user stories by application layer.
+- Add focused sibling documents only when a rule, API, or operational flow would make the README difficult to review.
+- Link focused documents from the relevant story; do not repeat their detailed content.
+- Link shared architectural behaviour to its implementation owner; do not copy components, invariants, or runtime failure paths into the
+  product journey.
+
+## Human Review Contract
+
+Acceptance criteria are the centre of feature review. Their checkboxes record verified implementation, while the story status and
+`Last reviewed` record human product validation.
+
+- Organize every story's criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases` so normal outcomes, invariant rules, and
+  exceptional behaviour can be reviewed separately.
+- One criterion describes one cohesive observable functional outcome: what the actor can accomplish or what domain or system result follows.
+- One criterion may instead describe one independently verifiable business rule.
+- Keep every criterion atomic and cohesive, testable, concise, unambiguous, and focused on the required outcome rather than its
+  implementation.
+- Every criterion must produce a clear pass or fail result.
+- A criterion must remain true when the interface is visually redesigned without changing product behaviour.
+- UI and UX choices do not belong in feature acceptance criteria. Keep component types, layout, styling, exact copy, animations,
+  breakpoints, and interaction presentation in their dedicated design, accessibility, or quality scope.
+- `[x]` means current code, runtime behaviour, or tests confirm that the criterion is implemented.
+- `[ ]` means the criterion is incomplete or has not yet been verified against current evidence.
+- A story remains `🚧 In Progress` while any criterion is unchecked.
+- Once every criterion is checked, the story moves to `🧪 Validation` until a reviewer completes the product journey.
+- A story is `✅ Done` only when every criterion is checked and human validation has passed.
+- Editorial changes do not change the `Last reviewed` date.
+- A behaviour change resets the affected criteria to `[ ]` and moves the story to `🚧 In Progress` until the implementation is verified
+  again.
+- The review date changes only after the affected behaviour has been reviewed again.
+
+### Story Statuses
+
+| Status           | Meaning                                                    |
+| ---------------- | ---------------------------------------------------------- |
+| `📝 Draft`       | The target behaviour is being defined                      |
+| `🚧 In Progress` | At least one criterion is incomplete or unverified         |
+| `🧪 Validation`  | Every criterion is implemented; human review is incomplete |
+| `✅ Done`        | Every criterion is implemented and has passed human review |
+| `🔗 Reference`   | Another feature owns the detailed behaviour and validation |
+
+Do not use `✅ Done` as a synonym for "code exists" or "automated tests pass."
+
+## Required Structure
+
+Every canonical feature README follows this order.
+
+### 1. Title and Scope
+
+Start with the feature name and `— User Stories`. Record the scope and the last behaviour review.
 
 ```markdown
-This feature follows platform security standards. 
-See [Security Standards](../../platform/security.md) for details.
+# Feature Name — User Stories
 
-### Feature-Specific Security Considerations
+**Scope:** The complete journey covered by this document
 
-- Only document what's unique to this feature
-- Example: Custom authorization rules specific to this feature
+**Last reviewed:** YYYY-MM-DD
+
+These acceptance criteria follow the
+[feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
 ```
 
-### 3. Keep It Concise
+Use `Last reviewed`, not `Last updated`: an editorial change must not imply that the product was retested.
 
-**Target Length:** 400-700 lines for most features
+### 2. Product Model or Terminology
 
-**Why?**
+Explain only the concepts a reviewer must understand before following the journey. Include:
 
-- Easier to read and maintain
-- Forces focus on what matters
-- Reduces duplication
-- Faster reviews
+- the feature's core business model;
+- actor and permission distinctions;
+- version or legacy boundaries;
+- off-chain and on-chain boundaries when they affect the user;
+- terms whose product meaning differs from everyday usage.
 
----
+Omit generic platform terminology. Link to its existing owner instead.
 
-## Standard Document Structure
+### 3. Lifecycle
 
-### Required Sections
+Present the main journey in the order a user or tester encounters it.
+
+- Use a short numbered list for a linear journey.
+- Use Mermaid for meaningful states, branches, or cross-system interactions.
+- Keep one diagram focused on one review question.
+- Do not add a diagram when the same relationship is clearer as a short list.
+
+### 4. Status Overview
+
+Summarize the complete feature before the detailed stories.
+
+| User Story     | Title              | Actor      | Status         | Priority | Effort |
+| -------------- | ------------------ | ---------- | -------------- | :------: | ------ |
+| US-FEATURE-001 | Observable outcome | Main actor | 🚧 In Progress |    P1    | M      |
+
+Use stable IDs. Do not reuse or silently renumber an ID after it has been referenced by code, tests, issues, or documentation.
+
+Priorities use `P1` to `P5`. Effort uses `XS`, `S`, `M`, `L`, or `XL`; use `—` for a reference story owned elsewhere.
+
+### 5. User Stories
+
+Put each part of the user-story sentence on its own source line and rendered line.
 
 ```markdown
-# [Feature Name] - Functional Specification
+## US-FEATURE-001: Perform an Observable Action
 
-**Version:** 1.0.0  
-**Date:** YYYY-MM-DD  
-**Status:** Draft | In Progress | Implemented  
-**Feature Branch:** feature/[feature-name]
+**As a** permitted actor\
+**I want to** perform one product action\
+**So that** I obtain one user-visible benefit
 
----
+### How It Works
 
-## 1. Executive Summary
+1. Describe the journey only when the criteria need this context.
 
-### 1.1 Purpose
+### Acceptance Criteria
 
-[2-3 sentences explaining what problem this feature solves and why it's valuable]
+#### Happy Path
 
-### 1.2 Scope
+- [ ] One observable successful outcome.
 
-**This feature includes:**
-- [List what's in scope]
-- [Be specific about deliverables]
+#### Business Rules
 
-**This feature excludes:**
-- [List what's explicitly NOT included]
-- [Prevents scope creep]
+- [ ] One independently verifiable authorization, limit, or domain rule.
 
-### 1.3 Stakeholders
+#### Edge & Error Cases
 
-- **[Role 1]:** How they use this feature
-- **[Role 2]:** How they benefit from it
-- **[Role 3]:** Their interaction with the feature
+- [ ] One observable boundary, invalid-input, unavailable-state, failure, or recovery outcome.
 
----
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
 
-## 2. Business Requirements
-
-### 2.1 Functional Requirements
-
-#### FR-1: [Requirement Name]
-
-**Priority:** High | Medium | Low  
-**Description:** [Brief description of the requirement]
-
-**User Story:**
-> As a [user role], I want to [action] so that [benefit].
-
-**Acceptance Criteria:**
-- [Specific, measurable criteria]
-- [Must be testable]
-- [Use "Display", "Calculate", "Allow", "Prevent" verbs]
-- [Include edge cases and limits]
-
-#### FR-2: [Next Requirement]
-
-[Repeat structure for each functional requirement]
-
----
-
-## 3. API Endpoints (if applicable)
-
-All endpoints are prefixed with `/api/[feature]` and require JWT authentication.
-
-| Endpoint | Method | Description | Query Parameters |
-|----------|--------|-------------|------------------|
-| `/[endpoint1]` | GET | [Description] | `param1`, `param2` |
-| `/[endpoint2]` | POST | [Description] | - |
-
-**Query Parameters:**
-
-- `param1`: Type, allowed values, default value, validation rules
-- `param2`: Type, allowed values, default value, validation rules
-
-**Authentication & Authorization:**
-
-[Only document feature-specific auth rules]
-- Reference: See [Security Standards](../../platform/security.md)
-
----
-
-## 4. User Interface Specifications (if applicable)
-
-### 4.1 Dashboard Layout
-
-**Location:** [Where in the app]  
-**Components:** [List of components]
-
-**Display:**
-- [What's shown to users]
-- [Layout structure]
-- [Visual elements]
-
-**Interactions:**
-- [User actions available]
-- [Navigation flows]
-- [State changes]
-
-### 4.2 Component Specifications
-
-#### [ComponentName]
-
-**Purpose:** [What this component does]
-
-**Props:**
-```typescript
-interface ComponentProps {
-  propName: Type // Description
-  optionalProp?: Type // Description with default
-}
+**Dependencies:** US-FEATURE-000 or a named current capability
 ```
 
-**Layout:**
+`How It Works` is optional. Use it for a multi-step interaction, not to repeat the acceptance criteria.
 
-- [Grid structure, responsive behavior]
+### 6. Human Validation
 
-**States:**
-
-- Loading: [Behavior]
-- Error: [Behavior]
-- Empty: [Behavior]
-- Success: [Behavior]
-
-### 4.3 User Flows
-
-#### Flow 1: [Primary User Flow]
-
-1. User [action]
-2. System [response]
-3. User [next action]
-4. System [outcome]
-
-#### Flow 2: [Error Handling Flow]
-
-1. User [attempts action]
-2. System [detects error]
-3. System [displays error message]
-4. User [recovery action]
-
-### 4.4 Accessibility Requirements
-
-[Only document feature-specific accessibility needs beyond platform standards]
-
-- Reference: See [Accessibility Standards](./development-standards.md#accessibility-standards)
-- Feature-specific: [Unique accessibility requirements]
-
----
-
-## 5. Business Logic
-
-### 5.1 [Calculation/Logic Name]
-
-**Purpose:** [What this logic accomplishes]
-
-**Algorithm:**
-
-```typescript
-// Provide pseudocode or actual implementation
-result = calculation(inputs)
-
-// Document edge cases:
-// - If X: behavior
-// - If Y: behavior
-```
-
-**Rules:**
-
-- [Business rule 1]
-- [Business rule 2]
-- [Exception handling]
-
-### 5.2 Data Filtering
-
-**[Filter Type]:**
-
-- [When applied]
-- [How it affects results]
-- [Default behavior]
-
-### 5.3 Authorization Logic
-
-[Feature-specific authorization rules]
-
-- Who can access what
-- How permissions are checked
-- Special cases
-
----
-
-## 6. Future Enhancements
-
-### 6.1 Phase 2 Features
-
-**[Feature Category]:**
-
-- [Specific enhancement]
-- [Another enhancement]
-- [Dependencies or prerequisites]
-
-### 6.2 Phase 3 Features
-
-**[Advanced Feature Category]:**
-
-- [Long-term enhancement]
-- [Why deferred to Phase 3]
-
-### 6.3 Performance Improvements
-
-**[Optimization Area]:**
-
-- [Specific optimization]
-- [Expected impact]
-- [Implementation approach]
-
----
-
-## 7. Success Metrics
-
-### 7.1 Key Performance Indicators (KPIs)
-
-**Technical KPIs:**
-
-- [Metric]: [Target] - [Current Status]
-- [Metric]: [Target] - [Current Status]
-
-**Business KPIs:**
-
-- [Metric]: [Target] - [Current Status]
-- [Metric]: [Target] - [Current Status]
-
-### 7.2 Acceptance Criteria
-
-- [ ] [Deliverable 1]
-- [ ] [Deliverable 2]
-- [ ] [Deliverable 3]
-- [ ] [Testing completed]
-- [ ] [Documentation completed]
-
----
-
-## 8. Related Documentation
-
-**Feature-Specific Documentation:**
-
-- [[Feature] API Reference](./[feature]-api.md) - Detailed API documentation
-- [[Feature] Integration Guide](./[feature]-integration.md) - Integration patterns
-
-**Platform Documentation:**
-
-- [Architecture](../../platform/architecture.md) - System architecture
-- [Security Standards](../../platform/security.md) - Security requirements
-- [Performance Standards](../../platform/performance.md) - Performance targets
-- [Testing Strategy](../../platform/testing-strategy.md) - Testing approach
-
-**Code References:**
-
-- Backend: `/backend/src/[path]/[feature].ts`
-- Frontend: `/dashboard/app/[path]/[feature].ts`
-- Tests: `/backend/src/__tests__/[feature].test.ts`
-
----
-
-## 9. Version History
-
-### Version 1.0.0 - YYYY-MM-DD
-
-- Initial implementation
-- [Major milestone 1]
-- [Major milestone 2]
-
-### Version 1.1.0 - YYYY-MM-DD (if applicable)
-
-- [Feature update]
-- [Bug fixes]
-
-```
-
----
-
-## What NOT to Include
-
-### ❌ Avoid These Common Mistakes
-
-#### 1. Generic Security Standards
-**Don't write:**
-```markdown
-## Security
-
-### JWT Authentication
-- Token stored in localStorage
-- Included in Authorization header
-- Token expiry: 24 hours
-```
-
-**Instead write:**
+For reviewed stories, state when and against what the feature was reviewed. Keep this statement short; checked criteria remain the
+implementation record, while this statement and `✅ Done` record the human product review.
 
 ```markdown
-## Security
+## Human Validation
 
-This feature follows platform security standards. 
-See [Security Standards](../../platform/security.md).
-
-### Feature-Specific Authorization
-- Team owners can only access their team's data
-- Cross-team access is forbidden
+Validated on YYYY-MM-DD against the reviewed portal behaviour, relevant system boundaries, and
+the implementation evidence below.
 ```
 
-#### 2. Generic Validation Patterns
+If only part of the feature was reviewed, name the stories or release boundary explicitly.
 
-**Don't write:**
+### 7. Implementation Evidence
+
+Link to the smallest useful set of current sources:
+
+- primary page or entry point;
+- orchestration composable or service;
+- business-rule utility when relevant;
+- backend route or controller when relevant;
+- current smart contract for on-chain behaviour;
+- representative behaviour or integration tests.
+
+Evidence links prove where behaviour comes from. They do not turn the feature README into a file inventory.
+
+### 8. Related Documentation and Known Gaps
+
+Link contract behaviour, focused feature rules, API references, or another feature that owns a referenced story.
+
+Record a known gap only when it is verified against current behaviour. Describe the observable impact. A GitHub issue may track remediation,
+but it is not evidence that the gap exists.
+
+Omit `Known Gaps` when no gap has been verified.
+
+## Acceptance-Criteria Quality
+
+Acceptance criteria define the functional contract of the feature, not its UI or UX specification. Cover the functional dimensions that
+materially affect the story:
+
+- primary business action and resulting state;
+- roles and authorization;
+- validation limits and business boundaries;
+- lifecycle transitions and persisted outcomes;
+- cancellation, failure, retry, and idempotency guarantees;
+- state refresh or on-chain reconciliation outcomes;
+- API, contract, or system results.
+
+For every user story, organize the criteria into these categories:
+
+1. `Happy Path` — expected behaviour when the feature is used normally and succeeds.
+2. `Business Rules` — functional constraints, permissions, limits, and domain rules that must always hold.
+3. `Edge & Error Cases` — boundaries, invalid inputs, unavailable states, failures, and other exceptional scenarios.
+
+The core rule is: **one acceptance criterion equals one cohesive observable behaviour or one independently verifiable business rule.** Each
+criterion must be:
+
+- **Atomic and cohesive:** express one pass-or-fail decision; do not combine independent rules, but do not create a separate checkbox for
+  every attribute of the same result.
+- **Testable:** a developer or QA reviewer can determine whether it passes or fails.
+- **Concise:** prefer one clear sentence.
+- **Unambiguous:** state the expected behaviour explicitly.
+- **Outcome-focused:** describe what the system must do, not how it is implemented.
+
+For example, do not combine every duration constraint into one criterion:
 
 ```markdown
-### Input Validation
-
-Using Zod schemas:
-```typescript
-const schema = z.object({
-  email: z.string().email()
-})
+- [ ] Duration must be positive, use 10-minute increments, not exceed 24 hours, and respect the daily allowance.
 ```
 
-**Instead write:**
+Write each independently verifiable rule separately:
 
 ```markdown
-### Data Validation
-
-**Required Parameters:**
-- `teamId`: UUID format (validated per platform standards)
-- `period`: Must be one of: '7d', '30d', '90d', 'all'
-- `limit`: Integer, 1-100 (feature-specific max)
+- [ ] Duration must be greater than 0.
+- [ ] Duration must use 10-minute increments.
+- [ ] Duration cannot exceed 24 hours.
+- [ ] Duration cannot exceed the daily allowance.
 ```
 
-#### 3. Generic Error Handling
-
-**Don't write:**
+Group attributes when they form one functional result, such as one response contract, transaction payload, signature domain, state
+transition, or invariant. They must be reviewed together, supported by the same evidence, and share the same implementation status. For
+example, avoid turning each field of the same history record into a separate criterion:
 
 ```markdown
-### Error Response Format
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Error message",
-    "code": "ERROR_CODE"
-  }
-}
+- [ ] Payroll history exposes the claim status.
+- [ ] Payroll history exposes the total duration.
+- [ ] Payroll history exposes the token amounts.
 ```
 
-**Instead write:**
+Prefer one cohesive result:
 
 ```markdown
-### Error Handling
-
-Follows platform error handling standards. See [Error Handling](./development-standards.md#error-handling).
-
-**Feature-Specific Errors:**
-- `INVALID_PERIOD`: Period parameter must be '7d', '30d', '90d', or 'all'
-- `TEAM_NOT_FOUND`: Specified team does not exist
+- [ ] Payroll history exposes each claim's status, total duration, and token amounts.
 ```
 
-#### 4. Generic Testing Approach
+Keep criteria separate when one part can meaningfully pass while another fails, the parts need different evidence, or their implementation
+checkboxes differ. A useful test is: **if one part fails, can the other parts still be accepted as implemented?** If yes, split them; if no,
+group them.
 
-**Don't write:**
+Do not use Given/When/Then unless a scenario is too complex or ambiguous to express as a clear single-line criterion. Keep important edge
+cases inside the owning user story instead of creating separate stories solely for error scenarios.
 
-```markdown
-### Testing Strategy
+A screen may be the observation surface, but the criterion must state the function rather than its presentation. For example:
 
-**Unit Tests:**
-- Coverage target: > 90%
-- Mock all dependencies
-- Test error scenarios
+- Functional: "An invalid claim is rejected without changing the weekly claim."
+- UI/UX-specific: "The submit button is disabled and a red error toast is displayed."
+
+The second statement may belong in a design or interaction test, but it is not a feature acceptance criterion. The functional rule should
+survive changes to components, layout, wording, styling, or responsive presentation.
+
+Tag system-side checks with a concise marker such as `_(API)_`, `_(contract)_`, or `_(system)_`, then state how a reviewer can observe the
+functional result.
+
+Avoid criteria that merely name an internal component, store, library, or function. Link those details under Implementation Evidence unless
+the implementation choice is itself a product constraint.
+
+## Progressive Disclosure
+
+There is no line-count target. A feature README is as short as possible while still covering the complete reviewable journey.
+
+Move a subject into a focused sibling document when it needs extensive examples, data shapes, or edge-case explanation. Keep a short rule
+and a link in the parent story. For example, Payroll owns its full reviewable journey in `README.md`; a focused sibling is justified only
+when detailed rules would otherwise obscure that journey.
+
+Do not duplicate platform security, testing, deployment, formatting, or architecture standards. Reference their canonical guides.
+
+## Diagram Format
+
+This rule applies to every committed documentation file, not only feature READMEs.
+
+- Every diagram must be stored as Mermaid in a fenced `mermaid` block.
+- ASCII art, PlantUML, Draw.io, Graphviz, and image-only diagrams are not accepted alternatives.
+- Screenshots may illustrate a user interface, but they do not replace the Mermaid source for a flow, state model, sequence, hierarchy, or
+  architecture diagram.
+- Text code blocks may show commands, data, or directory layouts; they must not model relationships or flows.
+- When a changed document contains a non-Mermaid diagram in the edited scope, convert it to Mermaid as part of the same change.
+
+## Change Process
+
+1. Verify that the capability and its grouping match current navigation, linked routes, and access guards.
+2. Inspect the current feature README, product entry points, business rules, tests, and linked contract behaviour.
+3. Define or update the lifecycle and stable story boundaries.
+4. Write atomic and cohesive functional acceptance criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`, including
+   material boundaries and recovery outcomes without prescribing UI or UX choices.
+5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from the human product-review state.
+6. Refresh focused evidence links and related documentation.
+7. Update `docs/features/README.md` and `docs/README.md` only when navigation or canonical ownership changes.
+8. Keep historical explanations in Git, issues, pull requests, or ADRs rather than the current feature contract.
+9. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md): every changed behavioural source must be linked by, and
+   reviewed through, its canonical feature owner in the same pull request.
+
+## Review Checklist
+
+- [ ] The README covers one complete product capability.
+- [ ] The capability is reachable through a current user journey and grouped under the correct product surface.
+- [ ] Scope, versions, actors, and system boundaries are explicit.
+- [ ] The lifecycle matches the story order.
+- [ ] Every story uses `As a`, `I want to`, and `So that` on separate lines.
+- [ ] Every story organizes its criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`.
+- [ ] Every criterion contains one cohesive observable behaviour or one independently verifiable business rule.
+- [ ] Grouped attributes form one result, use the same evidence, and share the same implementation status.
+- [ ] Every criterion is a functional, observable, independently reviewable outcome that remains valid after a visual redesign.
+- [ ] UI and UX requirements are kept outside feature acceptance criteria.
+- [ ] Statuses, checkboxes, and the human-validation statement agree.
+- [ ] Known gaps are visible and not hidden under `✅ Done`.
+- [ ] Evidence links resolve to current code or tests.
+- [ ] Related feature and contract documentation is linked without duplication.
+- [ ] Shared architectural behaviour is linked to `docs/implementation/` rather than duplicated.
+- [ ] Every diagram is purposeful and implemented in Mermaid.
+- [ ] Root indexes contain links, not copied user stories.
+
+## Validation
+
+Run the repository Markdown checks after editing feature documentation or this guide:
+
+```bash
+npm run test:docs-freshness
+npm run lint:docs-freshness
+npm run lint:md
+npm run format:md:check
+bash scripts/audit-doc-drift.sh
+git diff --check
 ```
 
-**Instead write:**
-
-```markdown
-### Testing
-
-Follows platform testing standards. See [Testing Strategy](../../platform/testing-strategy.md).
-
-**Feature-Specific Tests:**
-- Test growth calculation edge cases (division by zero)
-- Test period boundary conditions
-- Verify team filtering works correctly
-```
-
-#### 5. Generic Deployment Procedures
-
-**Don't write:**
-
-```markdown
-### Deployment
-
-**Steps:**
-1. Run tests
-2. Deploy backend
-3. Deploy frontend
-4. Verify production
-```
-
-**Instead write:**
-
-```markdown
-### Deployment
-
-Follows platform deployment procedures. See [Deployment](../../platform/deployment.md).
-
-**Feature-Specific Requirements:**
-- No database migrations required
-- Ensure indexes exist (see Section 5.1)
-- Verify stats endpoints return data in staging
-```
-
-#### 6. System Architecture Diagrams
-
-**Don't include:**
-
-```
-┌─────────────┐
-│  Frontend   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Backend    │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Database   │
-└─────────────┘
-```
-
-**Instead reference:**
-
-```markdown
-See [Architecture](../../platform/architecture.md) for system architecture.
-
-This feature adds 9 new API endpoints to the statistics service layer.
-```
-
-#### 7. Generic Glossary Terms
-
-**Don't include:**
-
-```markdown
-### Glossary
-
-**API:** Application Programming Interface
-**JWT:** JSON Web Token
-**REST:** Representational State Transfer
-```
-
-**Instead reference:**
-
-```markdown
-See [Glossary](../../README.md#glossary) for platform terminology.
-
-**Feature-Specific Terms:**
-- **Active Entity:** Entity with activity in the selected period
-- **Growth Metric:** Percentage change from previous period
-```
-
----
-
-## Quality Checklist
-
-Before finalizing your functional specification, verify:
-
-### Content Quality
-
-- [ ] All sections contain feature-specific information only
-- [ ] Platform standards are referenced, not duplicated
-- [ ] Acceptance criteria are specific and testable
-- [ ] User stories follow the standard format
-- [ ] Business logic is documented with examples or pseudocode
-- [ ] API endpoints are fully specified with parameters
-
-### Structure & Formatting
-
-- [ ] Section numbering is sequential (1-9)
-- [ ] Subsection numbering is consistent (1.1, 1.2, etc.)
-- [ ] Tables are properly formatted
-- [ ] Code blocks have language specifiers
-- [ ] Links to other documents work correctly
-
-### Completeness
-
-- [ ] All functional requirements are documented
-- [ ] User flows cover main scenarios and error cases
-- [ ] Success metrics are measurable
-- [ ] Related documentation is linked
-- [ ] Version history is maintained
-
-### Length & Focus
-
-- [ ] Document is 400-700 lines (not 1000+)
-- [ ] Each section answers "What's unique about this feature?"
-- [ ] No duplication of platform documentation
-- [ ] Concise and actionable
-
----
-
-## Example: Good vs Bad
-
-### ❌ Bad Example (Too Generic)
-
-```markdown
-## 5. Security
-
-### Authentication
-All endpoints require JWT authentication. Token must be included in Authorization header.
-
-### Authorization
-Users must have proper permissions to access endpoints.
-
-### Rate Limiting
-100,000 requests per 15 minutes per IP.
-
-### Input Validation
-All inputs validated with Zod schemas.
-```
-
-**Problems:**
-
-- All generic platform standards
-- No feature-specific information
-- Should be in platform docs, not feature spec
-
-### ✅ Good Example (Feature-Specific)
-
-```markdown
-## 5. Authorization & Data Filtering
-
-Follows platform authentication and security standards. 
-See [Security Standards](../../platform/security.md).
-
-### Feature-Specific Authorization
-
-**Team Statistics Access:**
-- Team owners: Full access to their team statistics only
-- Platform admins: Full access to all team statistics
-- Regular members: Read-only access to their own team
-- Cross-team access: Explicitly forbidden
-
-**Data Filtering Rules:**
-When `teamId` parameter provided:
-- Verify user is team owner OR admin
-- Return 403 Forbidden if unauthorized
-- Filter all aggregations by teamId
-```
-
-**Why it's good:**
-
-- References platform standards
-- Documents feature-unique authorization rules
-- Specific to statistics feature
-- Actionable for implementation
-
----
-
-## File Organization
-
-```
-docs/features/[feature-name]/
-├── functional-specification.md    # This document (400-700 lines)
-├── [feature]-api.md               # Detailed API documentation
-├── [feature]-integration.md       # Integration guides
-└── README.md                      # Feature overview
-```
-
----
-
-## Template Usage
-
-1. **Copy the structure** from this guide
-2. **Fill in your feature details** for each section
-3. **Remove sections** that don't apply to your feature
-4. **Add sections** if your feature needs them (rare)
-5. **Review with checklist** before submitting
-6. **Update version history** as feature evolves
-
----
-
-## Getting Help
-
-- **Architecture questions:** See [Architecture](./architecture.md)
-- **Security questions:** See [Security Standards](./security.md)
-- **Testing questions:** See [Testing Strategy](./testing-strategy.md)
-- **General questions:** Check [Documentation README](../README.md)
-
----
-
-## Continuous Improvement
-
-This guide evolves based on:
-
-- Lessons learned from writing specifications
-- Feedback from reviews
-- Changes in platform standards
-- Best practices discovered
-
-**Last Updated:** December 7, 2025  
-**Next Review:** March 2026
+The categorized acceptance-criteria contract is applied to every canonical product feature user story. Reference-only feature pages remain
+exempt until they own user stories of their own.

@@ -31,10 +31,9 @@ jobs:
           slither-version: "ff1bf3ff4a5ebdfa63e4b83cb4885f682624daad"
           solc-version: "0.8.24"
           slither-config: "contract/slither.config.json"
-          # Report-only for the initial rollout: existing contracts still carry
-          # high/medium findings (tracked in #1988 and #1993-1997), so blocking
-          # now would stall every contract PR. All findings are surfaced in the
-          # GitHub Security tab via the SARIF upload below.
+          # Report-only while existing contracts carry a high/medium findings
+          # baseline. Blocking now would stall every contract PR. All findings
+          # are surfaced in the GitHub Security tab via the SARIF upload below.
           # To enforce once the baseline is triaged: set `fail-on: high` (or
           # medium) and re-add a gate step on `steps.slither.outcome`. Known
           # false positives are silenced explicitly in contract/slither.config.json.

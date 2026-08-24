@@ -17,7 +17,7 @@ const TransferOptionCardStub = {
 
 const SelectMemberInputStub = {
   name: 'SelectMemberInput',
-  props: ['modelValue', 'disableTeamMembers', 'hiddenMembers', 'showOnFocus', 'onlyTeamMembers'],
+  props: ['modelValue', 'hiddenMembers', 'showOnFocus', 'memberScope'],
   emits: ['selectMember', 'update:modelValue'],
   template: `<div>
     <button

@@ -110,37 +110,6 @@ describe('EditUserForm', () => {
       await wrapper.vm.$nextTick()
       expect(wrapper.find('button[data-test="copied-icon"]').exists()).toBe(true)
     })
-
-    it('should update currency and show success toast', async () => {
-      const wrapper = createWrapper()
-
-      // Verify that the USelect exists
-      const select = wrapper.find('[data-test="currency-select"]')
-      expect(select.exists()).toBe(true)
-
-      // Since USelect is a complex Nuxt UI component and we can't easily trigger
-      // its @change event in tests, we'll verify the currency store and toast store
-      // are properly set up and can be called
-      //
-      // Access the component instance and call handleCurrencyChange directly
-      // This tests the actual business logic without needing to interact with USelect
-      await select.trigger('change')
-      await flushPromises()
-
-      expect(select.exists()).toBe(true)
-    })
-
-    it('executes the currency change handler when called directly', async () => {
-      const wrapper = createWrapper()
-      const vm = wrapper.vm as { handleCurrencyChange?: () => void }
-
-      if (vm.handleCurrencyChange) {
-        vm.handleCurrencyChange()
-        await flushPromises()
-      }
-
-      expect(wrapper.find('[data-test="currency-select"]').exists()).toBe(true)
-    })
   })
 
   describe('Form Validation', () => {

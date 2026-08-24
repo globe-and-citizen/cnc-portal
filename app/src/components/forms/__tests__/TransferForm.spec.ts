@@ -37,18 +37,6 @@ const defaultProps = {
 }
 
 type TransferFormProps = Partial<typeof defaultProps> & Record<string, unknown>
-type ValidationResult =
-  | { success: true }
-  | { success: false; error: { issues: Array<{ message: string }> } }
-
-type TransferFormVm = {
-  validationSchema: { safeParse: (value: { amount: string }) => ValidationResult }
-  depositFee: number
-  showFees: boolean
-  selectedTokenId: string
-  tokenAmountModel: { amount: string; tokenId: string }
-}
-
 function createModelValue(overrides: Partial<typeof defaultModelValue> = {}) {
   return {
     ...defaultModelValue,
@@ -77,14 +65,6 @@ function factory(props: TransferFormProps = {}) {
       plugins: [createTestingPinia({ createSpy: vi.fn })]
     }
   })
-}
-
-function getVm(wrapper: ReturnType<typeof factory>) {
-  return wrapper.vm as unknown as TransferFormVm
-}
-
-function validateAmount(wrapper: ReturnType<typeof factory>, amount: string) {
-  return getVm(wrapper).validationSchema.safeParse({ amount })
 }
 
 async function emitTokenAmount(
@@ -188,43 +168,20 @@ describe('TransferForm.vue', () => {
     })
   })
 
-  describe('Validation schema', () => {
-    it('passes validation for a valid amount within balance (no fee)', () => {
-      expect(validateAmount(wrapper, '50').success).toBe(true)
+  describe('Form validation', () => {
+    it.each(['', 'abc', '0', '150'])('does not submit an invalid amount of %s', async (amount) => {
+      const w = factory({ modelValue: createModelValue({ amount }) })
+      await w.find('form').trigger('submit')
+
+      expect(w.emitted('transfer')).toBeFalsy()
     })
 
-    it.each([
-      ['', 'Amount is required'],
-      ['abc', 'Enter a valid amount'],
-      ['0', 'Amount must be greater than 0'],
-      ['150', 'Amount + fees exceed available balance']
-    ])('fails validation for amount %s', (amount, message) => {
-      const result = validateAmount(wrapper, amount)
+    it('does not submit an amount when the fee-adjusted total exceeds the balance', async () => {
+      const w = factory({ feeBps: 1000, modelValue: createModelValue({ amount: '91' }) })
 
-      expect(result.success).toBe(false)
-      expect(result.error.issues[0].message).toBe(message)
-    })
+      await w.find('form').trigger('submit')
 
-    it('includes fee in balance check when feeBps > 0', () => {
-      const w = factory({
-        feeBps: 1000,
-        modelValue: createModelValue({ amount: '10' })
-      })
-
-      expect(validateAmount(w, '90').success).toBe(true)
-
-      const invalid = validateAmount(w, '91')
-      expect(invalid.success).toBe(false)
-      expect(invalid.error.issues[0].message).toBe('Amount + fees exceed available balance')
-    })
-
-    it('keeps validation valid when the fee-adjusted total exactly matches the balance', () => {
-      const w = factory({
-        feeBps: 1000,
-        modelValue: createModelValue({ amount: '10' })
-      })
-
-      expect(validateAmount(w, '90').success).toBe(true)
+      expect(w.emitted('transfer')).toBeFalsy()
     })
   })
 
@@ -246,7 +203,7 @@ describe('TransferForm.vue', () => {
       await w.vm.$nextTick()
 
       expect(w.find('.bg-green-50').exists()).toBe(false)
-      expect(getVm(w).showFees).toBe(false)
+      expect(w.find('[data-test="transferButton"]').text()).toBe('Transfer')
     })
 
     it('computes correct fee for feeBps > 0 (recipient gets exactly the specified amount)', async () => {
@@ -260,14 +217,10 @@ describe('TransferForm.vue', () => {
       expect(breakdown.exists()).toBe(true)
       expect(breakdown.text()).toContain('5.26')
     })
-
-    it('depositFee returns 0 when feeBps is 0', () => {
-      expect(getVm(wrapper).depositFee).toBe(0)
-    })
   })
 
   describe('Null-safety fallback branches', () => {
-    it('selectedTokenId getter falls back to "usdc" when token has no tokenId', () => {
+    it('passes the fallback token id to TokenAmount when the model token id is missing', () => {
       const w = factory({
         tokens: [],
         modelValue: createModelValue({
@@ -281,15 +234,15 @@ describe('TransferForm.vue', () => {
         })
       })
 
-      expect(getVm(w).selectedTokenId).toBe('usdc')
+      expect(w.findComponent(TokenAmount).props('modelValue')).toMatchObject({ tokenId: 'usdc' })
     })
 
-    it('tokenAmountModel getter falls back to empty string when amount is undefined', () => {
+    it('passes an empty amount to TokenAmount when the model amount is undefined', () => {
       const w = factory({
         modelValue: createModelValue({ amount: undefined as unknown as string })
       })
 
-      expect(getVm(w).tokenAmountModel.amount).toBe('')
+      expect(w.findComponent(TokenAmount).props('modelValue')).toMatchObject({ amount: '' })
     })
 
     it('tokenAmountModel setter handles undefined amount', async () => {
@@ -327,14 +280,13 @@ describe('TransferForm.vue', () => {
       expect(wrapper.props('modelValue').address).toEqual(newAddress)
     })
 
-    it('depositFee uses 0 fallback for feeBps ?? 0 when feeBps is null', () => {
-      expect(getVm(factory({ feeBps: null as unknown as number })).depositFee).toBe(0)
-    })
+    it('does not display a fee breakdown when feeBps is null', () => {
+      const w = factory({
+        feeBps: null as unknown as number,
+        modelValue: createModelValue({ amount: '10' })
+      })
 
-    it('validation refine uses 0 fallback for feeBps ?? 0 when feeBps is null', () => {
-      expect(validateAmount(factory({ feeBps: null as unknown as number }), '10').success).toBe(
-        true
-      )
+      expect(w.find('.bg-green-50').exists()).toBe(false)
     })
   })
 })

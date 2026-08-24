@@ -33,36 +33,6 @@ const vmCast = {
     'Avoid casting `wrapper.vm as Xxx` to reach component internals — it couples tests to implementation. Drive the component through DOM events (setValue, trigger) and assert via emitted()/text()/props. See app/src/tests/README.md.'
 }
 
-// Legacy offenders for the wrapper.vm cast rule. Tailwind class assertions
-// are now banned globally — all previous Tailwind offenders were refactored.
-// Refactor and remove from this list; once empty, drop the override block
-// and the helper lists below.
-
-const vmCastLegacyFiles = [
-  'src/components/forms/__tests__/EditUserForm.spec.ts',
-  'src/components/forms/__tests__/TransferForm.spec.ts',
-  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryWeekNavigator.spec.ts'
-]
-
-// Ratchet — this list was drained in PR #2024 (closes #1850) and further in
-// #2031. It MUST NOT grow. If you're about to add a new entry:
-//   1. First try to refactor — see app/src/tests/README.md
-//      "Migrating Legacy Specs Off `wrapper.vm as X`".
-//   2. If the cast is genuinely unavoidable, use a scoped
-//      `// eslint-disable-next-line no-restricted-syntax -- <reason>`
-//      on the cast line itself, not a file-level opt-out here.
-// This guard fires at config load time, so `npm run lint` fails fast
-// with the message below if the ceiling is breached. To lower the
-// ceiling after a refactor, drop the entry AND decrement the constant.
-const VM_CAST_LEGACY_MAX = 3
-if (vmCastLegacyFiles.length > VM_CAST_LEGACY_MAX) {
-  throw new Error(
-    `vmCastLegacyFiles has ${vmCastLegacyFiles.length} entries (ceiling ${VM_CAST_LEGACY_MAX}). ` +
-      'Refactor the new entry instead of whitelisting it — see app/src/tests/README.md ' +
-      '"Migrating Legacy Specs Off `wrapper.vm as X`".'
-  )
-}
-
 // Global-mock enforcement (issue #2014).
 //
 // `app/vitest.config.ts` loads a set of setup files from `src/tests/setup/`
@@ -83,11 +53,8 @@ if (vmCastLegacyFiles.length > VM_CAST_LEGACY_MAX) {
 //   - The `bannedGlobalMockPaths` list mirrors the `vi.mock(...)` first
 //     arguments found in `src/tests/setup/*.setup.ts`. Anything globally
 //     mocked there must appear here, and vice-versa.
-//   - `globalMockLegacyFiles` is the migration debt — each file in it
-//     still carries one or more local `vi.mock(...)` calls that should
-//     move onto the global helpers. Remove a file from this list once
-//     its local re-mocks are gone; the rule then enforces the contract
-//     for that file going forward.
+//   - The guard applies to every spec. Add shared mocks to the setup files and
+//     their override hooks to `@/tests/mocks`; do not create per-file exemptions.
 
 const bannedGlobalMockPaths = [
   // store.setup.ts
@@ -158,47 +125,6 @@ const globalMockReMockSelectors = bannedGlobalMockPaths.map((path) => ({
   selector: `CallExpression[callee.object.name='vi'][callee.property.name='mock'][arguments.0.value=${JSON.stringify(path)}]`,
   message: globalMockMessage(path)
 }))
-
-// Legacy offenders — these 34 spec files still carry at least one
-// `vi.mock(...)` call against a globally-mocked module path. The rule is
-// disabled for them so CI does not break on day one; each removal is a
-// follow-up to issue #2014.
-const globalMockLegacyFiles = [
-  'src/components/sections/AdministrationView/__tests__/CurrentBoDSection.spec.ts',
-  'src/components/sections/AdministrationView/__tests__/PastBoDElectionCard.spec.ts',
-  'src/components/sections/AdministrationView/__tests__/PublishResult.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/CRSigne.migration.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/CRSigne.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/CRWithdrawClaim.spec.ts',
-  'src/components/sections/DashboardView/__tests__/MemberSection.spec.ts',
-  'src/components/sections/ExpenseAccountView/__tests__/TransferAction.spec.ts',
-  'src/components/sections/SafeView/__tests__/RemoveOwnerButton.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeBalanceSection.transfer.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeOwnersCard.spec.ts',
-  'src/components/sections/SafeView/forms/__tests__/AddSignerModal.spec.ts',
-  'src/components/sections/SafeView/forms/__tests__/UpdateThresholdModal.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.test-utils.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/MintRecapCard.spec.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/MintStakeSection.spec.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/TwinAmountInputs.spec.ts',
-  'src/components/sections/VestingView/__tests__/VestingFlow.spec.ts',
-  'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
-  'src/components/sections/WeeklyClaimView/__tests__/WeeklyClaimActionDropdown.spec.ts',
-  'src/components/sections/WeeklyClaimView/__tests__/WeeklyClaimActionEnable.spec.ts',
-  'src/composables/__tests__/useFileUrl.spec.ts',
-  'src/composables/__tests__/useSiwe.spec.ts',
-  'src/composables/safe/__tests__/useSafeSdk.spec.ts',
-  'src/composables/safe/__tests__/useSafeTransactionActions.spec.ts',
-  'src/queries/__tests__/contract.queries.spec.ts',
-  'src/router/__tests__/index.spec.ts',
-  'src/stores/__tests__/teamStore.spec.ts',
-  'src/views/team/[[]id[]]/__tests__/BankView.spec.ts',
-  'src/views/team/[[]id[]]/__tests__/BodElectionView.spec.ts'
-]
 
 // Contract-writes V3 enforcement (issues #1798, #1926).
 //
@@ -274,72 +200,6 @@ const bannedDatePattern = {
 
 const formattingSelectors = [bannedIntlFormatter, bannedToLocale, bannedToFixed, bannedDatePattern]
 
-// Migration debt for the formatting guard — every file that still formats by
-// hand. This list only ever shrinks: PR 2 and PR 3 of #2383 drain it.
-//
-// If you're about to add an entry, you're adding a new convention to a codebase
-// that just spent a PR removing them. Either the canonical module covers your
-// case, or it should — extend `src/utils/format/` rather than whitelisting a
-// file here. The ceiling below fails `npm run lint` at config load if the list
-// grows; lower it as entries leave.
-const formattingLegacyFiles = [
-  'src/components/RateDotList.vue',
-  'src/components/TransactionChildRow.vue',
-  'src/components/TransactionDetailModal.vue',
-  'src/components/forms/ApproveExpenseSummaryForm.vue',
-  'src/components/forms/TokenAmount.vue',
-  'src/components/forms/TransferForm.vue',
-  'src/components/sections/AdministrationView/ElectionStats.vue',
-  'src/components/sections/AdministrationView/PastBoDElectionCard.vue',
-  'src/components/sections/CashRemunerationView/DeleteClaimModal.vue',
-  'src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue',
-  'src/components/sections/ClaimHistoryView/ClaimHistoryWeekNavigator.vue',
-  'src/components/sections/ClaimHistoryView/WeeklyRecap.vue',
-  'src/components/sections/CommunityCreditView/CreditCallTermsStep.vue',
-  'src/components/sections/CommunityCreditView/CreditRepayPanel.vue',
-  'src/components/sections/DashboardView/CompanyOverview.vue',
-  'src/components/sections/ExpenseAccountView/ExpenseAccountTable.vue',
-  'src/components/sections/ExpenseAccountView/ExpenseMonthSpent.vue',
-  'src/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue',
-  'src/components/sections/ProposalsView/ProposalsCard.vue',
-  'src/components/sections/SherTokenView/InvestorsTransactions.vue',
-  'src/components/sections/SherTokenView/forms/MintRecapCard.vue',
-  'src/components/sections/VestingView/VestingFlow.vue',
-  'src/components/sections/VestingView/VestingSummary.vue',
-  'src/components/sections/WeeklyClaimView/WeeklyClaim.vue',
-  'src/composables/useClaimForm.ts',
-  'src/composables/vesting/useVestingDateRange.ts',
-  'src/stores/communityCredit.ts',
-  'src/utils/abiDecodeUtil.ts',
-  'src/utils/accounting/ledgerPresenter.ts',
-  'src/utils/accounting/mappers/expenseAccount.ts',
-  'src/utils/accounting/presenter.ts',
-  'src/utils/accounting/toUsd.ts',
-  'src/utils/accountingPdf.ts',
-  'src/utils/bankTransactionUtil.ts',
-  'src/utils/cashRemunerationTransactionUtil.ts',
-  'src/utils/communityCreditUtil.ts',
-  'src/utils/contractManagementUtil.ts',
-  'src/utils/currencyUtil.ts',
-  'src/utils/datePicker.ts',
-  'src/utils/dayUtils.ts',
-  'src/utils/expenseTransactionUtil.ts',
-  'src/utils/fixedReturnTransactionUtil.ts',
-  'src/utils/generalUtil.ts',
-  'src/utils/investorsTransactionUtil.ts',
-  'src/utils/safe.ts',
-  'src/utils/safeDepositRouterUtil.ts'
-]
-
-const FORMATTING_LEGACY_MAX = 46
-if (formattingLegacyFiles.length > FORMATTING_LEGACY_MAX) {
-  throw new Error(
-    `formattingLegacyFiles has ${formattingLegacyFiles.length} entries (ceiling ${FORMATTING_LEGACY_MAX}). ` +
-      'Format through `@/utils/format` instead of whitelisting a new file — see ' +
-      '.github/copilot-instructions/formatting-standards.md.'
-  )
-}
-
 export default [
   {
     name: 'app/files-to-lint',
@@ -405,60 +265,6 @@ export default [
     }
   },
   {
-    name: 'app/test-fragility-bans-vm-legacy',
-    files: vmCastLegacyFiles,
-    rules: {
-      // Allow wrapper.vm casts in these files only; Tailwind class assertions
-      // and global-mock re-mock checks still apply.
-      'no-restricted-syntax': [
-        'error',
-        tailwindClassAssertion,
-        tailwindClassAssertionOptional,
-        tailwindClassIncludes,
-        ...globalMockReMockSelectors
-      ]
-    }
-  },
-  {
-    name: 'app/test-fragility-bans-global-mock-legacy',
-    files: globalMockLegacyFiles,
-    rules: {
-      // Allow local `vi.mock(...)` of globally-mocked paths in these files
-      // only — they predate issue #2014. Tailwind / vm-cast bans still apply
-      // (unless an entry also appears in `vmCastLegacyFiles`).
-      'no-restricted-syntax': [
-        'error',
-        tailwindClassAssertion,
-        tailwindClassAssertionOptional,
-        tailwindClassIncludes,
-        vmCast
-      ]
-    }
-  },
-  // Files in BOTH legacy lists: relax the vm-cast and global-mock checks,
-  // keep Tailwind class assertions banned. Spread conditionally — ESLint
-  // rejects empty `files` arrays, and the intersection drains as the
-  // vm-cast list shrinks.
-  ...(() => {
-    const both = vmCastLegacyFiles.filter((f) => globalMockLegacyFiles.includes(f))
-    return both.length === 0
-      ? []
-      : [
-          {
-            name: 'app/test-fragility-bans-both-legacy',
-            files: both,
-            rules: {
-              'no-restricted-syntax': [
-                'error',
-                tailwindClassAssertion,
-                tailwindClassAssertionOptional,
-                tailwindClassIncludes
-              ]
-            }
-          }
-        ]
-  })(),
-  {
     name: 'app/contract-writes-v3-only',
     files: ['src/**/*.{ts,tsx,vue}'],
     ignores: [
@@ -482,8 +288,7 @@ export default [
       'src/utils/format/**',
       // Specs may assert against natively formatted expectations.
       '**/__tests__/**',
-      '**/*.spec.{ts,tsx}',
-      ...formattingLegacyFiles
+      '**/*.spec.{ts,tsx}'
     ],
     rules: {
       // Two rules, one selector list: the core rule only walks `<script>`,

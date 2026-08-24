@@ -87,7 +87,7 @@ export function wholeTokenAmount(amount: bigint, tokenId: TokenId): number {
  * and only clutters a posting, so mappers skip it.
  */
 export function isNegligibleAmount(amount: bigint, tokenId: TokenId): boolean {
-  return Number(wholeTokenAmount(amount, tokenId).toFixed(6)) === 0
+  return Math.abs(wholeTokenAmount(amount, tokenId)) < 0.5e-6
 }
 
 /**

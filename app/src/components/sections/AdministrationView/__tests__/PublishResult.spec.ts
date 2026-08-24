@@ -15,14 +15,6 @@ vi.mock('@/constant', async (importOriginal) => ({
   ELECTIONS_BEACON_ADDRESS: '0x0000000000000000000000000000000000000003',
   ELECTIONS_IMPL_ADDRESS: '0x0000000000000000000000000000000000000004'
 }))
-vi.mock('viem', async () => {
-  const actual = await vi.importActual('viem')
-  return {
-    ...actual,
-    encodeFunctionData: vi.fn(() => '0xdeadbeef')
-  }
-})
-
 type PublishOptions = {
   onSuccess?: () => void
   onError?: (e: unknown) => void
@@ -56,7 +48,7 @@ describe('PublishResult.vue', () => {
   it('calls estimateGas and publishResults when button clicked', async () => {
     const wrapper = mount(PublishResult, { props: { electionId: 42 } })
 
-    await wrapper.find('[data-test="create-election-button"]').trigger('click')
+    await wrapper.find('[data-test="publish-results-button"]').trigger('click')
     await nextTick()
 
     expect(mockWagmiCore.estimateGas).toHaveBeenCalled()
@@ -72,7 +64,7 @@ describe('PublishResult.vue', () => {
     })
     const wrapper = mount(PublishResult, { props: { electionId: 7 } })
 
-    await wrapper.find('[data-test="create-election-button"]').trigger('click')
+    await wrapper.find('[data-test="publish-results-button"]').trigger('click')
     await nextTick()
     await Promise.resolve()
     expect(queryClientMock.invalidateQueries).toHaveBeenCalled()
@@ -84,7 +76,7 @@ describe('PublishResult.vue', () => {
     })
     const wrapper = mount(PublishResult, { props: { electionId: 3 } })
 
-    await wrapper.find('[data-test="create-election-button"]').trigger('click')
+    await wrapper.find('[data-test="publish-results-button"]').trigger('click')
     await nextTick()
     expect(mockLog.error).toHaveBeenCalled()
   })
@@ -93,7 +85,7 @@ describe('PublishResult.vue', () => {
     mockWagmiCore.estimateGas.mockRejectedValueOnce(new Error('insufficient funds'))
     const wrapper = mount(PublishResult, { props: { electionId: 11 } })
 
-    await wrapper.find('[data-test="create-election-button"]').trigger('click')
+    await wrapper.find('[data-test="publish-results-button"]').trigger('click')
     await nextTick()
     expect(publish.mutate).not.toHaveBeenCalled()
   })
@@ -102,5 +94,22 @@ describe('PublishResult.vue', () => {
     publish.isPending.value = true
     const wrapper = mount(PublishResult, { props: { electionId: 1 } })
     expect(wrapper.findComponent({ name: 'UButton' }).props('loading')).toBe(true)
+  })
+
+  it('does not publish and explains why when the viewer may not publish', async () => {
+    const wrapper = mount(PublishResult, {
+      props: { electionId: 5, disabled: true, disabledReason: 'Only the owner can publish' }
+    })
+
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'Only the owner can publish'
+    )
+    expect(wrapper.findComponent({ name: 'UButton' }).props('disabled')).toBe(true)
+
+    await wrapper.find('[data-test="publish-results-button"]').trigger('click')
+    await nextTick()
+
+    expect(mockWagmiCore.estimateGas).not.toHaveBeenCalled()
+    expect(publish.mutate).not.toHaveBeenCalled()
   })
 })

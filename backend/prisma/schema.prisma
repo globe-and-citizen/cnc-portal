@@ -112,6 +112,7 @@ model Wage {
   // Enforced by a deferrable EXCLUDE constraint (Wage_active_unique) in
   // migration 20260428_wage_active_deferrable. Deferrable so chained
   // create-and-relink can run inside a single transaction.
+  @@index([teamId, userAddress])
 }
 
 model Claim {
@@ -145,7 +146,7 @@ model WeeklyClaim {
   // redeployed. Nullable for legacy rows signed before this column existed.
   signedAgainstContractAddress String?
   // Free-form Markdown memo of the member's goals for the week. One per weekly
-  // claim (the [wageId, weekStart] pair). Upserted independently of daily
+  // claim (the [teamId, memberAddress, weekStart] tuple). Upserted independently of daily
   // claims — a goals-only week creates a claim-less WeeklyClaim row. Nullable
   // for weeks with no goals set.
   weeklyGoals                  String?
@@ -155,7 +156,7 @@ model WeeklyClaim {
   createdAt                    DateTime @default(now())
   updatedAt                    DateTime @updatedAt
 
-  @@unique([wageId, weekStart])
+  @@unique([teamId, memberAddress, weekStart])
   @@index([weekStart])
 }
 

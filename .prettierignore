@@ -1,0 +1,3 @@
+.claude/worktrees/
+**/node_modules/
+**/coverage/

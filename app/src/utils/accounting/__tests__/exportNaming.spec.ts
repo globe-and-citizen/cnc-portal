@@ -57,7 +57,7 @@ describe('exportBaseName', () => {
     expect(
       exportBaseName({
         key: 'ledger',
-        account: ['Payroll Expense', 'Share-based Compensation'],
+        account: ['Payroll Expense', 'Deferred SHER Compensation'],
         accountLabel: 'Retained earnings',
         from: FROM,
         to: TO

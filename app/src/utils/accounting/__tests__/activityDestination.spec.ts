@@ -68,7 +68,7 @@ describe('activityDestinationOf — use cases with their own surface', () => {
   it('sends share issuance and dividends to the SHER Token page', () => {
     expect(
       activityDestinationOf(
-        entry({ useCase: 'DEFAULT-D', debit: 'Shares to be issued', credit: 'Investor Equity' })
+        entry({ useCase: 'DEFAULT-D', debit: 'SHERS To Be Issued', credit: 'Investor Equity' })
       )
     ).toMatchObject({ section: 'sher-token' })
     expect(

@@ -11,6 +11,7 @@ import StatementLine from '../StatementLine.vue'
 import TablePagination from '@/components/TablePagination.vue'
 import { entriesForAccount, accountBalance } from '@/utils/accounting/accountLedger'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
+import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerPresenter'
 import type { StatementLineView } from '@/utils/accounting/presenter'
 
 // Clicking an export button used to run the real writers: `exportTablesPdf`
@@ -145,10 +146,11 @@ describe('BalanceSheetCard', () => {
 describe('LedgerDrilldownModal (issue #2249)', () => {
   const account = 'Investor Equity'
   const entries = entriesForAccount(catalogueLedger, account)
+  const columnsStorageKey = 'cnc-accounting-modal-test-columns'
 
   it('lists the account entries, count and balance', async () => {
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
-      props: { open: true, account, total: '$138.00', entries }
+      props: { open: true, account, total: '$138.00', entries, columnsStorageKey }
     })
     await flushPromises()
     const text = wrapper.text()
@@ -158,21 +160,47 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
     wrapper.unmount()
   })
 
-  it('emits the chosen export format when a download button is clicked', async () => {
+  it('emits the chosen export format and visible columns when a download button is clicked', async () => {
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
-      props: { open: true, account, total: '$138.00', entries }
+      props: { open: true, account, total: '$138.00', entries, columnsStorageKey }
     })
     await flushPromises()
     await wrapper.find('[data-test="drilldown-export-excel"]').trigger('click')
-    expect(wrapper.emitted('export')?.[0]).toEqual(['excel'])
+    expect(wrapper.emitted('export')?.[0]).toEqual([
+      'excel',
+      LEDGER_COLUMNS.map((column) => column.value)
+    ])
     await wrapper.find('[data-test="drilldown-export-pdf"]').trigger('click')
-    expect(wrapper.emitted('export')?.[1]).toEqual(['pdf'])
+    expect(wrapper.emitted('export')?.[1]).toEqual([
+      'pdf',
+      LEDGER_COLUMNS.map((column) => column.value)
+    ])
+    wrapper.unmount()
+  })
+
+  it('exports the column preference stored for its statement', async () => {
+    const storedColumnsKey = 'cnc-accounting-modal-stored-columns'
+    localStorage.setItem(storedColumnsKey, JSON.stringify(['activity', 'credit']))
+    const wrapper = renderWithProviders(LedgerDrilldownModal, {
+      props: { open: true, account, total: '$138.00', entries, columnsStorageKey: storedColumnsKey }
+    })
+    await flushPromises()
+    await wrapper.find('[data-test="drilldown-export-excel"]').trigger('click')
+
+    expect(wrapper.emitted('export')?.[0]).toEqual(['excel', ['activity', 'credit']])
     wrapper.unmount()
   })
 
   it('runs a Balance column after Credit when one account is drilled', async () => {
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
-      props: { open: true, account, total: '$138.00', entries, balanceAccount: account }
+      props: {
+        open: true,
+        account,
+        total: '$138.00',
+        entries,
+        balanceAccount: account,
+        columnsStorageKey
+      }
     })
     await flushPromises()
     const headers = wrapper.findAll('th').map((th) => th.text())
@@ -199,7 +227,8 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
         entries,
         balanceAccount: account,
         opening,
-        closing: '$238.00'
+        closing: '$238.00',
+        columnsStorageKey
       }
     })
     await flushPromises()
@@ -212,7 +241,13 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
 
   it('drops the Balance column for an aggregate line', async () => {
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
-      props: { open: true, account: 'Retained earnings', total: '-$50.00', entries }
+      props: {
+        open: true,
+        account: 'Retained earnings',
+        total: '-$50.00',
+        entries,
+        columnsStorageKey
+      }
     })
     await flushPromises()
     expect(wrapper.findAll('th').map((th) => th.text())).not.toContain('Balance')
@@ -222,7 +257,13 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
   it('pages through the entries, showing the next slice on page change', async () => {
     // The whole catalogue overflows a single 10-row page, so page 2 has content.
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
-      props: { open: true, account: 'All accounts', total: '$0.00', entries: catalogueLedger }
+      props: {
+        open: true,
+        account: 'All accounts',
+        total: '$0.00',
+        entries: catalogueLedger,
+        columnsStorageKey
+      }
     })
     await flushPromises()
     const pager = wrapper.findComponent(TablePagination)
@@ -254,7 +295,7 @@ describe('StatementLine', () => {
     const aggregate: StatementLineView = {
       label: 'Retained earnings',
       value: '-$50.00',
-      accounts: ['Payroll Expense', 'Share-based Compensation']
+      accounts: ['Payroll Expense', 'Deferred SHER Compensation']
     }
     const wrapper = renderWithProviders(StatementLine, { props: { line: aggregate } })
     await wrapper.find('[data-test="statement-drilldown-aggregate"]').trigger('click')

@@ -17,13 +17,13 @@
             <template v-if="receipt">
               <div class="flex items-center justify-between text-sm">
                 <span class="text-muted">Block</span>
-                <span>{{ Number(receipt.blockNumber).toLocaleString() }}</span>
+                <span>{{ formatNumber(Number(receipt.blockNumber)) }}</span>
               </div>
             </template>
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted">Timestamp</span>
               <span>
-                {{ formatDateUTC(String(transaction.date)) }}
+                {{ formatDateUtc(String(transaction.date)) }}
                 <span class="text-muted">
                   · {{ formatDateRelative(String(transaction.date)) }}</span
                 >
@@ -38,7 +38,7 @@
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-muted">Gas used</span>
-                <span>{{ Number(receipt.gasUsed).toLocaleString() }}</span>
+                <span>{{ formatNumber(Number(receipt.gasUsed)) }}</span>
               </div>
             </template>
             <div v-if="loading" class="text-muted flex items-center gap-1 text-xs">
@@ -193,7 +193,7 @@ import {
   type DecodedParam,
   type DecodedInputData
 } from '@/utils'
-import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+import { formatDateRelative, formatDateUtc, formatNumber } from '@/utils/format'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { getPublicClient } from '@wagmi/core'
 import { config } from '@/wagmi.config'

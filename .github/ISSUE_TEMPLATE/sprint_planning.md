@@ -1,9 +1,9 @@
 ---
 name: Sprint Planning
 about: Template for planning sprint goals and tasks
-title: 'Sprint [NUMBER] Plan'
-labels: 'sprint, planning'
-assignees: ''
+title: "Sprint [NUMBER] Plan"
+labels: "sprint, planning"
+assignees: ""
 ---
 
 ## Sprint [NUMBER] Plan Goals

@@ -183,6 +183,28 @@ describe('CashRemuneration*** (EIP712)', () => {
         expect(paidWageClaim).to.be.equal(true)
       })
 
+      it('Then I can pay a token that does not return a boolean', async () => {
+        const NoReturnToken = await ethers.getContractFactory('MockNoReturnERC20')
+        const noReturnToken = await NoReturnToken.deploy()
+        const tokenAddress = await noReturnToken.getAddress()
+        const amount = 20n
+
+        await cashRemunerationProxy.addTokenSupport(tokenAddress)
+        await noReturnToken.mint(await cashRemunerationProxy.getAddress(), amount)
+
+        const wageClaim = {
+          employeeAddress: employee.address,
+          minutesWorked: 60,
+          wages: [{ hourlyRate: amount, tokenAddress }],
+          date: Math.floor(Date.now() / 1000)
+        }
+        const signature = await employer.signTypedData(domain, types, wageClaim)
+
+        await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
+
+        expect(await noReturnToken.balanceOf(employee.address)).to.equal(amount)
+      })
+
       describe("Then a user can't transfer if;", () => {
         it('the signer is not the contract employer', async () => {
           const wageClaim = {

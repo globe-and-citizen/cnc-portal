@@ -16,6 +16,23 @@ describe('resolveRevertMessage', () => {
       )
     })
 
+    it('resolves house-style names carrying their contract prefix', () => {
+      expect(resolveRevertMessage('Elections__ElectionNotActive', undefined, 'Elections')).toBe(
+        'Election is not currently active'
+      )
+      // A library's errors surface under the contract the user called.
+      expect(resolveRevertMessage('ElectionUtils__InvalidSeatCount', undefined, 'Elections')).toBe(
+        'Seat count must be an odd positive number'
+      )
+      // Prefixed names still reach the common entries, and an unknown one still falls back.
+      expect(resolveRevertMessage('Bank__ZeroAddress', undefined, 'Bank')).toBe(
+        'A required address is not set'
+      )
+      expect(resolveRevertMessage('Elections__MysteryError', undefined, 'Elections')).toBe(
+        'Election action failed'
+      )
+    })
+
     it('uses fallbacks[contract] when revert name is unknown but contract is known', () => {
       expect(resolveRevertMessage('MysteryError', undefined, 'CashRemuneration')).toBe(
         'Withdraw failed'

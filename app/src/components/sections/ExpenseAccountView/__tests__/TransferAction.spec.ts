@@ -5,24 +5,17 @@ import { nextTick, ref, toValue } from 'vue'
 import { readContract, estimateGas } from '@wagmi/core'
 import { recoverTypedDataAddress } from 'viem'
 import TransferAction from '../TransferAction.vue'
-import { mockExpenseAccountWrites, mockERC20Writes, mockTeamStore } from '@/tests/mocks'
+import {
+  mockERC20Writes,
+  mockExpenseAccountWrites,
+  mockGetTokens,
+  mockTeamStore
+} from '@/tests/mocks'
 
-// Hoisted so the module factory below can read it, and mutable so a test can
-// model the window where the contract balance has not been read yet and
-// `getTokens` therefore yields nothing.
-const { mockTokens } = vi.hoisted(() => ({
-  mockTokens: { value: [] as unknown[] }
-}))
 const DEFAULT_TOKENS = [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }]
 
 // `classifyError` is left un-mocked so these tests assert the message the user
 // actually sees, rather than a stand-in string.
-vi.mock('@/utils', async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  log: { error: vi.fn() },
-  getTokens: vi.fn(() => mockTokens.value)
-}))
-
 // Kept as a spy so a test can assert *what* the balance query was keyed on:
 // the address arrives with the team query, so the argument has to stay a live
 // source rather than a value read once during setup.
@@ -38,11 +31,6 @@ const useContractBalanceSpy = vi.fn(() => contractBalanceState)
 
 vi.mock('@/composables', () => ({
   useContractBalance: (address: unknown) => useContractBalanceSpy(address)
-}))
-
-vi.mock('@wagmi/core', () => ({
-  readContract: vi.fn(),
-  estimateGas: vi.fn()
 }))
 
 const MockTransferForm = {
@@ -109,7 +97,7 @@ describe('TransferAction.vue', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    mockTokens.value = DEFAULT_TOKENS
+    mockGetTokens.mockReturnValue(DEFAULT_TOKENS)
     contractBalanceState.isLoading.value = false
     contractBalanceState.error.value = null
     vi.mocked(estimateGas).mockResolvedValue(21000n)
@@ -142,7 +130,7 @@ describe('TransferAction.vue', () => {
     })
 
     it('explains itself while the balance is still loading', async () => {
-      mockTokens.value = []
+      mockGetTokens.mockReturnValue([])
       contractBalanceState.isLoading.value = true
 
       const wrapper = createComponent()
@@ -153,7 +141,7 @@ describe('TransferAction.vue', () => {
     })
 
     it('reports a failed balance read instead of an empty dialog', async () => {
-      mockTokens.value = []
+      mockGetTokens.mockReturnValue([])
       contractBalanceState.error.value = new Error('rpc down')
 
       const wrapper = createComponent()
@@ -175,7 +163,7 @@ describe('TransferAction.vue', () => {
     })
 
     it('omits the balance label entirely when there is no token to describe', async () => {
-      mockTokens.value = []
+      mockGetTokens.mockReturnValue([])
       contractBalanceState.isLoading.value = true
 
       const wrapper = createComponent()

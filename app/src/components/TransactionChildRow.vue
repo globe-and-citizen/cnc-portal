@@ -13,6 +13,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { resolveUser, formatCryptoAmount, getTransactionTypeLabel } from '@/utils'
+import { formatPercent } from '@/utils/format'
 import type { UBadgeColor } from '@/types/ui'
 import UserComponent from '@/components/UserComponent.vue'
 
@@ -32,7 +33,7 @@ const props = withDefaults(
 const percentage = computed(() => {
   const parentAmt = Number(props.parentAmount)
   const childAmt = Number(props.amount)
-  if (parentAmt > 0 && childAmt > 0) return `${((childAmt / parentAmt) * 100).toFixed(2)}%`
+  if (parentAmt > 0 && childAmt > 0) return formatPercent(childAmt / parentAmt)
   return null
 })
 </script>

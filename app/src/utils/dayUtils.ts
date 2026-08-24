@@ -4,6 +4,13 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import weekday from 'dayjs/plugin/weekday'
+import {
+  formatDateRelative as formatCanonicalDateRelative,
+  formatDateShort as formatCanonicalDateShort,
+  formatDateTime,
+  formatDateUtc,
+  formatMonthYear as formatCanonicalMonthYear
+} from '@/utils/format'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -53,12 +60,7 @@ export function getMonthWeeks(year: number, month: number): Week[] {
  * Format helpers (UTC-safe)
  */
 export function formatMonthYear(year: number, month: number): string {
-  try {
-    return dayjs.utc().year(year).month(month).format('MMMM YYYY')
-  } catch (error) {
-    console.error('Error formatting month/year:', error)
-    return `${year}-${String(month + 1).padStart(2, '0')}`
-  }
+  return formatCanonicalMonthYear(dayjs.utc().year(year).month(month))
 }
 
 /**
@@ -67,14 +69,9 @@ export function formatMonthYear(year: number, month: number): string {
  * @returns A string representing the week range, e.g. "Jan 01 - Jan 07"
  */
 export function formatIsoWeekRange(base: dayjs.Dayjs): string {
-  try {
-    const start = base.startOf('isoWeek')
-    const end = base.endOf('isoWeek')
-    return `${start.format('MMM DD')} - ${end.format('MMM DD')}`
-  } catch (error) {
-    console.error('Error formatting ISO week range:', error)
-    return `${base.format('YYYY-MM-DD')} - ${base.add(6, 'day').format('YYYY-MM-DD')}`
-  }
+  const start = base.startOf('isoWeek')
+  const end = base.endOf('isoWeek')
+  return `${formatCanonicalDateShort(start)} - ${formatCanonicalDateShort(end)}`
 }
 
 /**
@@ -173,6 +170,28 @@ export function ensureFutureDate(selectedDate: Date, minDate: Date): Date {
   return selectedDate < minDate ? new Date(minDate) : selectedDate
 }
 
+/**
+ * Put a day picked on a calendar and a time of day typed as `hh:mm` back
+ * together into a single local instant.
+ *
+ * A calendar gives midnight, which is never the moment the user meant when a
+ * deadline is at stake. Returns `null` when the time cannot be read, so the
+ * caller can complain rather than silently deciding an hour on the user's
+ * behalf.
+ */
+export function combineDayAndTime(day: Date, timeOfDay: string): Date | null {
+  const parts = /^(\d{1,2}):(\d{2})$/.exec(timeOfDay.trim())
+  if (!parts) return null
+
+  const hours = Number(parts[1])
+  const minutes = Number(parts[2])
+  if (hours > 23 || minutes > 59) return null
+
+  const combined = new Date(day)
+  combined.setHours(hours, minutes, 0, 0)
+  return combined
+}
+
 export function format(date: Date, formatStr: string): string {
   const day = date.getDate().toString().padStart(2, '0')
   const month = (date.getMonth() + 1).toString().padStart(2, '0')
@@ -183,29 +202,13 @@ export function format(date: Date, formatStr: string): string {
 
 // Helper to format date
 export const formatDateShort = (dateString: string): string => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
+  return formatDateTime(dateString)
 }
 
 export function formatDateRelative(dateString: string): string {
-  const diffMs = Date.now() - new Date(dateString).getTime()
-  const diffSec = Math.floor(diffMs / 1000)
-  const diffMin = Math.floor(diffSec / 60)
-  const diffH = Math.floor(diffMin / 60)
-  const diffD = Math.floor(diffH / 24)
-
-  if (diffSec < 60) return 'just now'
-  if (diffMin < 60) return `${diffMin} min ago`
-  if (diffH < 24) return `${diffH} h ago`
-  if (diffD < 7) return `${diffD} d ago`
-  return dayjs.utc(new Date(dateString)).format('MMM D, YYYY')
+  return formatCanonicalDateRelative(dateString)
 }
 
 export function formatDateUTC(dateString: string): string {
-  return dayjs.utc(new Date(dateString)).format('YYYY-MM-DD HH:mm [UTC]')
+  return formatDateUtc(dateString)
 }

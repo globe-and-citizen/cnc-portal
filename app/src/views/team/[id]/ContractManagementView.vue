@@ -68,16 +68,54 @@ import { useRoute, useRouter } from 'vue-router'
 import AdvertiseContractSection from '@/components/sections/ContractManagementView/AdvertiseContractSection.vue'
 import DeploymentHistorySection from '@/components/sections/ContractManagementView/DeploymentHistorySection.vue'
 import MainContractSection from '@/components/sections/ContractManagementView/MainContractSection.vue'
-import { useContractManagementGenerations } from '@/composables/contracts/useContractManagementGenerations'
+import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useTeamStore } from '@/stores'
+import type { ContractGeneration } from '@/types/deployments'
 
 type ContractManagementView = 'current' | 'campaigns' | 'history'
 
 const teamStore = useTeamStore()
 const route = useRoute()
 const router = useRouter()
-const { currentGeneration, legacyGenerations, isPending, isError, refetch } =
-  useContractManagementGenerations()
+const officersQuery = useGetTeamOfficersQuery({
+  queryParams: { teamId: () => teamStore.currentTeamId ?? '' }
+})
+const generations = computed<ContractGeneration[]>(() => {
+  const officers = officersQuery.data.value ?? []
+
+  if (officers.length) {
+    return officers.map((officer) => ({
+      key: officer.id,
+      version: officer.version,
+      officerAddress: officer.address,
+      isCurrent: officer.isCurrent,
+      contracts: officer.isCurrent
+        ? (teamStore.currentTeam?.teamContracts ?? [])
+        : officer.contracts
+    }))
+  }
+
+  const currentOfficer = teamStore.currentTeam?.currentOfficer
+  if (!currentOfficer) return []
+
+  return [
+    {
+      key: currentOfficer.id,
+      version: currentOfficer.version,
+      officerAddress: currentOfficer.address,
+      isCurrent: true,
+      contracts: teamStore.currentTeam?.teamContracts ?? []
+    }
+  ]
+})
+const currentGeneration = computed(() =>
+  generations.value.find((generation) => generation.isCurrent)
+)
+const legacyGenerations = computed(() =>
+  generations.value.filter((generation) => !generation.isCurrent)
+)
+const isPending = officersQuery.isPending
+const isError = officersQuery.isError
 
 const isContractManagementView = (value: unknown): value is ContractManagementView =>
   typeof value === 'string' && ['current', 'campaigns', 'history'].includes(value)
@@ -128,6 +166,6 @@ const navigationItems = computed(() => [
 ])
 
 function refreshData() {
-  void refetch()
+  void officersQuery.refetch()
 }
 </script>

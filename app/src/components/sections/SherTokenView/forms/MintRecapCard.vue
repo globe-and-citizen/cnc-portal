@@ -63,7 +63,7 @@ const balanceBeforeRaw = computed<bigint>(() =>
 const issuedRaw = computed<bigint>(() => {
   const issued = props.issuedAmount
   if (issued == null || !Number.isFinite(issued) || issued === 0) return 0n
-  return parseUnits(issued.toFixed(TOKEN_DECIMALS), TOKEN_DECIMALS)
+  return parseUnits(String(issued), TOKEN_DECIMALS)
 })
 
 const recap = computed(() =>

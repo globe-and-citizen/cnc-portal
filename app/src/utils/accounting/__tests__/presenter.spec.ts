@@ -29,7 +29,7 @@ describe('formatters', () => {
     expect(money(-0)).toBe('$0.00') // never "$-0.00"
     expect(money(-0.004)).toBe('$0.00') // rounds to zero, no stray minus sign
     expect(money(-0.002 + -0.002)).toBe('$0.00') // sub-cent residue stays clean
-    expect(money(-0.01)).toBe('$-0.01') // a real cent still reads negative
+    expect(money(-0.01)).toBe('-$0.01') // a real cent still reads negative
   })
 
   it('fmtDate renders a unix-seconds timestamp', () => {

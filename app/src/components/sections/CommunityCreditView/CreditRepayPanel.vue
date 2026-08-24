@@ -221,9 +221,13 @@ const treasuryBalance = computed(() =>
 )
 const amount = ref('')
 const numericAmount = computed(() => Math.max(0, Number(amount.value) || 0))
-const amountUnits = computed(() =>
-  parseUnits(numericAmount.value.toFixed(decimals.value), decimals.value)
-)
+const amountUnits = computed(() => {
+  try {
+    return parseUnits(amount.value || '0', decimals.value)
+  } catch {
+    return 0n
+  }
+})
 const amountPanelRef = ref<{ validate: () => boolean } | null>(null)
 
 // Prefill once with the full repayable amount — the first click still repays everything,

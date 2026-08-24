@@ -158,11 +158,11 @@
             class="text-muted text-xs"
           >
             {{
-              (
-                (Number(row.original.amount) / Number(row.getParentRow()!.original.amount)) *
-                100
-              ).toFixed(2)
-            }}%
+              formatPercent(
+                Number(row.original.amount) / Number(row.getParentRow()!.original.amount),
+                { decimals: 2 }
+              )
+            }}
           </div>
         </template>
       </template>
@@ -202,6 +202,7 @@ import {
   log
 } from '@/utils'
 import { computed, watch } from 'vue'
+import { formatPercent } from '@/utils/format'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import { useCurrencyStore, useTeamStore } from '@/stores'

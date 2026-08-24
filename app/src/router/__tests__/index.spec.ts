@@ -17,27 +17,11 @@ import { nextTick } from 'vue'
  */
 
 // Hoist mocks to ensure they're available during module initialization
-const { mockIsAuth, mockUseStorage } = vi.hoisted(() => {
+const { mockIsAuth } = vi.hoisted(() => {
   const mockIsAuth = { value: false }
-  const mockUseStorage = vi.fn(() => mockIsAuth)
-  return { mockIsAuth, mockUseStorage }
+  globalThis.__mockUseStorageValue = mockIsAuth
+  return { mockIsAuth }
 })
-
-vi.mock('@vueuse/core', () => ({
-  useStorage: mockUseStorage,
-  // Minimal stub so composables using createFetch don't explode during dynamic imports
-  createFetch: () => {
-    const fakeJson = () => ({
-      isFetching: { value: false },
-      error: { value: null },
-      data: { value: [] },
-      statusCode: { value: 200 },
-      execute: vi.fn()
-    })
-    // Returned function signature: useCustomFetch(url, options)
-    return () => ({ json: fakeJson })
-  }
-}))
 
 // Mock all dynamic imports before importing router
 vi.mock('@/views/HomeView.vue', () => ({

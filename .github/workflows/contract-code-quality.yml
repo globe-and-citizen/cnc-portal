@@ -7,6 +7,8 @@ on:
     branches: "**"
     paths:
       - "contract/**"
+      - "app/src/artifacts/abi/generated.ts"
+      - ".github/workflows/contract-code-quality.yml"
   workflow_dispatch:
 jobs:
   contract_ci_cd:
@@ -30,6 +32,10 @@ jobs:
         run: npm run compile
         working-directory: ./contract
 
+      - name: 🔄 Verify generated client ABI
+        run: npm run verify-abi-sync
+        working-directory: ./contract
+
       - name: </> Run Format Check
         run: npm run format-check
         working-directory: ./contract
@@ -42,6 +48,19 @@ jobs:
             --exclude-dir=test || true)
           if [ -n "$matches" ]; then
             echo "::error::hardhat/console.sol must not be imported outside contracts/mocks and contracts/test"
+            echo "$matches"
+            exit 1
+          fi
+        working-directory: ./contract
+
+      - name: 🚫 Guard against raw ERC20 transfers in production contracts
+        run: |
+          matches=$(grep -rnE '\.(transfer|transferFrom)\(' contracts \
+            --include="*.sol" \
+            --exclude-dir=mocks \
+            --exclude-dir=test || true)
+          if [ -n "$matches" ]; then
+            echo "::error::Use SafeERC20 safeTransfer or safeTransferFrom in production contracts"
             echo "$matches"
             exit 1
           fi

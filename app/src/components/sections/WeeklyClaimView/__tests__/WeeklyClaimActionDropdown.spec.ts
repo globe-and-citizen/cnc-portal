@@ -15,11 +15,6 @@ import {
 import { mockLog } from '@/tests/mocks/utils.mock'
 import * as utils from '@/utils'
 
-vi.mock('@/composables/cashRemuneration/writes', () => ({
-  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
-  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim)
-}))
-
 describe('WeeklyClaimActionDropdown', () => {
   const weeklyClaim: WeeklyClaim = {
     id: 1,

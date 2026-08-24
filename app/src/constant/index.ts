@@ -5,6 +5,8 @@ import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
 import { isAddress, zeroAddress, type Address } from 'viem'
 
+export { getSafeInfraAddresses, type SafeInfraAddresses } from './safeInfra'
+
 export const NETWORK = getNetwork()
 
 interface TokenAddresses {

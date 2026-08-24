@@ -1,0 +1,4 @@
+interface:
+  display_name: "CNC Feature Documentation"
+  short_description: "Create evidence-backed CNC feature user stories."
+  default_prompt: "Use $cnc-feature-documentation to document this CNC Portal feature and validate its user stories."

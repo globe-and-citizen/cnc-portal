@@ -21,7 +21,7 @@ Remove the duplicate contracts content and replace it with a simple reference li
 ```
 I need to remove duplicate content from /Users/test/Documents/data/gc/cnc-portal/docs/README.md
 
-The file currently contains contracts documentation duplicated from lines 265-573. 
+The file currently contains contracts documentation duplicated from lines 265-573.
 
 Please:
 

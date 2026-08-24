@@ -19,25 +19,27 @@ describe('buildBalanceSheet — catalogue §6.6', () => {
     expect(bs.cash).toBeCloseTo(142.2, 2)
     expect(bs.investorEquity).toBeCloseTo(138, 2)
     expect(bs.ownerCapital).toBeCloseTo(0, 2)
-    expect(bs.retainedEarnings).toBeCloseTo(4.2, 2)
+    expect(bs.retainedEarnings).toBeCloseTo(14.2, 2) // was 4.2; SHER is off the IS
   })
 
-  it('shows no open liabilities once Wage Payable & Shares to be issued settle', () => {
+  it('shows no open liabilities once Wage Payable settles', () => {
     expect(bs.liabilities).toHaveLength(0)
   })
 
-  it('surfaces open liabilities when a claim is accrued without a withdrawal', () => {
+  it('surfaces Wage Payable as a liability and SHER as contra-equity when accrued without a withdrawal', () => {
     // Only the accrual legs of transaction #9 (claim), no withdrawal #10.
     const claimOnly = catalogueLedger.filter((e) => e.useCase === 'UC-CASH-02')
     const bs = buildBalanceSheet(claimOnly)
     const wagePayable = bs.liabilities.find((l) => l.account === 'Wage Payable')?.amount ?? 0
-    const sharesToIssue =
-      bs.liabilities.find((l) => l.account === 'Shares to be issued')?.amount ?? 0
     expect(wagePayable).toBeCloseTo(40.8, 2)
-    expect(sharesToIssue).toBeCloseTo(10, 2)
-    // The accrual books Payroll Expense against the liabilities — still balances.
-    expect(bs.totalLiabilities).toBeCloseTo(50.8, 2)
-    expect(bs.retainedEarnings).toBeCloseTo(-50.8, 2)
+    // SHER is now in contra-equity, not liabilities.
+    const deferredSher =
+      bs.contraEquity.find((l) => l.account === 'Deferred SHER Compensation')?.amount ?? 0
+    expect(deferredSher).toBeCloseTo(10, 2)
+    // Only cash wage is a liability now.
+    expect(bs.totalLiabilities).toBeCloseTo(40.8, 2)
+    // The accrual books Payroll Expense (cash) — the SHER leg is contra-equity.
+    expect(bs.retainedEarnings).toBeCloseTo(-40.8, 2)
     expect(bs.balanced).toBe(true)
   })
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
+import { formatDateTime, fromUnix } from '@/utils/format'
 import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
 import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
 import {
@@ -214,7 +215,7 @@ describe('cashRemunerationTransactionUtil', () => {
   })
 
   it('formats cash remuneration transaction dates from unix timestamps', () => {
-    expect(formatCashRemunerationTransactionDate(0)).toBe(new Date(0).toLocaleString('en-US'))
+    expect(formatCashRemunerationTransactionDate(0)).toBe(formatDateTime(fromUnix(0)))
   })
 
   it('maps cash remuneration transaction type to badge colors', () => {

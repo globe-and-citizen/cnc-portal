@@ -12,6 +12,10 @@
  * Optionally, `extraLogs` fetches a second, already-filtered log set (e.g. the
  * global FeeCollector's FeePaid for this contract) that's mapped via `mapExtra`
  * and folded into the same timestamp batch.
+ *
+ * The address input accepts a single address or an array of {@link ScanTarget}s
+ * (one per contract generation, each with its own deploy boundary); logs from
+ * every generation are merged and deduplicated on `txHash-logIndex` (#2456).
  */
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
@@ -25,6 +29,35 @@ import { currentChainId } from '@/constant'
 // so scan from block 0; a Polygon-only start block there yields an empty range.
 const POLYGON_START_BLOCK = 79743826n
 export const START_BLOCK = currentChainId === 137 ? POLYGON_START_BLOCK : 0n
+
+/**
+ * One contract generation to scan: its address plus the block its deployment
+ * boundary starts at. `fromBlock` defaults to {@link START_BLOCK} when omitted
+ * (e.g. a legacy Officer with no recorded deploy block).
+ */
+export interface ScanTarget {
+  address: string
+  fromBlock?: bigint
+}
+
+/** What a feed accepts as its address input: one address, or many generations. */
+export type ContractAddressInput = string | undefined | readonly ScanTarget[]
+
+/**
+ * A generation whose scan failed (e.g. the RPC rejected). Surfaced so the
+ * accounting UI can flag a reconciliation gap instead of silently dropping a
+ * whole contract type (issue #2456).
+ */
+export interface ScanGap {
+  address: string
+  error: unknown
+}
+
+/** What {@link scanContractLogs} returns: the merged feed plus any failed generations. */
+export interface ScanResult<T> {
+  data: T
+  gaps: ScanGap[]
+}
 
 /**
  * Shared block-number → Unix-seconds cache. A mined block's timestamp never
@@ -82,7 +115,8 @@ export interface EventMapContext<T> {
 }
 
 export interface EventsViaLogsOptions<T> {
-  contractAddress: MaybeRefOrGetter<string | undefined>
+  /** A single contract address, or one {@link ScanTarget} per generation. */
+  contractAddress: MaybeRefOrGetter<ContractAddressInput>
   /** Cache-key prefix, e.g. 'bank-events-logs'. */
   queryKey: string
   /** Union of the contract's event fragments across versions. */
@@ -97,81 +131,150 @@ export interface EventsViaLogsOptions<T> {
   mapExtra?: (ctx: EventMapContext<T>) => void
 }
 
+/** Normalize the address input to a deduped list of lower-cased scan targets. */
+function normalizeTargets(input: ContractAddressInput): ScanTarget[] {
+  const raw: readonly ScanTarget[] =
+    typeof input === 'string' ? [{ address: input }] : Array.isArray(input) ? input : []
+  const byAddress = new Map<string, ScanTarget>()
+  for (const target of raw) {
+    const address = target.address?.toLowerCase()
+    if (!address) continue
+    const existing = byAddress.get(address)
+    const fromBlock = target.fromBlock ?? START_BLOCK
+    if (!existing || fromBlock < (existing.fromBlock ?? START_BLOCK)) {
+      byAddress.set(address, { address, fromBlock })
+    }
+  }
+  return [...byAddress.values()]
+}
+
+/**
+ * A decoded log tagged with the generation address it was fetched for, so
+ * `extraLogs` entries (emitted by another contract, e.g. the FeeCollector) still
+ * know which scanned contract they belong to.
+ */
+interface TaggedLog {
+  log: DecodedLogLike
+  contract: Address
+}
+
+/**
+ * Scan every target from its deploy boundary, merge and deduplicate the logs on
+ * `txHash-logIndex`, resolve block timestamps, and fold each into the accumulator
+ * via `mapEvent` / `mapExtra`. Pure over its injected client so it is unit-tested
+ * without Vue or a live RPC (issue #2456).
+ *
+ * Each generation is scanned in isolation: a target whose RPC scan fails is
+ * recorded as a {@link ScanGap} and skipped, so the generations that did load are
+ * still returned rather than the whole feed being lost.
+ */
+export async function scanContractLogs<T>(
+  client: ChainClient,
+  targets: readonly ScanTarget[],
+  opts: Pick<EventsViaLogsOptions<T>, 'eventAbi' | 'empty' | 'mapEvent' | 'extraLogs' | 'mapExtra'>
+): Promise<ScanResult<T>> {
+  if (targets.length === 0) return { data: opts.empty(), gaps: [] }
+
+  const mainById = new Map<string, TaggedLog>()
+  const extraById = new Map<string, TaggedLog>()
+  const gaps: ScanGap[] = []
+
+  await Promise.all(
+    targets.map(async ({ address, fromBlock }) => {
+      const contract = address as Address
+      try {
+        const rawLogs = await client.getLogs({
+          address: contract,
+          fromBlock: fromBlock ?? START_BLOCK,
+          toBlock: 'latest'
+        })
+        const decoded = parseEventLogs({
+          abi: opts.eventAbi,
+          logs: rawLogs,
+          strict: false
+        }) as unknown as DecodedLogLike[]
+        for (const log of decoded) {
+          mainById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
+        }
+
+        if (opts.extraLogs) {
+          const extra = await opts.extraLogs(client, contract)
+          for (const log of extra) {
+            extraById.set(`${log.transactionHash}-${log.logIndex}`, { log, contract })
+          }
+        }
+      } catch (error) {
+        gaps.push({ address, error })
+      }
+    })
+  )
+
+  const allTagged = [...mainById.values(), ...extraById.values()]
+
+  const blockNumbers = [
+    ...new Set(allTagged.map((t) => t.log.blockNumber).filter((b): b is bigint => b != null))
+  ]
+  const uncached = blockNumbers.filter((n) => !blockTimestampCache.has(blockCacheKey(n)))
+  const fetched = await Promise.allSettled(
+    uncached.map((blockNumber) => client.getBlock({ blockNumber }))
+  )
+  for (const result of fetched) {
+    if (result.status === 'fulfilled') {
+      blockTimestampCache.set(blockCacheKey(result.value.number), Number(result.value.timestamp))
+    }
+  }
+  const tsOf = (blockNumber: bigint | null) =>
+    blockNumber == null ? 0 : (blockTimestampCache.get(blockCacheKey(blockNumber)) ?? 0)
+
+  const out = opts.empty()
+
+  const fold = (map: Map<string, TaggedLog>, mapFn?: (ctx: EventMapContext<T>) => void) => {
+    if (!mapFn) return
+    for (const { log, contract } of map.values()) {
+      mapFn({
+        out,
+        id: `${log.transactionHash}-${log.logIndex}`,
+        timestamp: tsOf(log.blockNumber),
+        contract,
+        eventName: log.eventName ?? '',
+        args: log.args ?? {},
+        log
+      })
+    }
+  }
+
+  fold(mainById, opts.mapEvent)
+  fold(extraById, opts.mapExtra)
+
+  return { data: out, gaps }
+}
+
 export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
-  const address = computed(() => toValue(opts.contractAddress)?.toLowerCase())
+  const targets = computed(() => normalizeTargets(toValue(opts.contractAddress)))
+  const addressKey = computed(() =>
+    targets.value
+      .map((t) => t.address)
+      .sort()
+      .join(',')
+  )
 
   const query = useQuery({
-    queryKey: computed(() => [opts.queryKey, address.value]),
-    enabled: computed(() => !!address.value),
+    queryKey: computed(() => [opts.queryKey, addressKey.value]),
+    enabled: computed(() => targets.value.length > 0),
     staleTime: 30_000,
-    queryFn: async (): Promise<T> => {
-      const contract = address.value as Address
+    queryFn: async (): Promise<ScanResult<T>> => {
       const client = getPublicClient(config, { chainId: currentChainId })
-      if (!client || !contract) return opts.empty()
-
-      const rawLogs = await client.getLogs({
-        address: contract,
-        fromBlock: START_BLOCK,
-        toBlock: 'latest'
-      })
-      const decoded = parseEventLogs({ abi: opts.eventAbi, logs: rawLogs, strict: false })
-      const extra = opts.extraLogs ? await opts.extraLogs(client, contract) : []
-
-      // Timestamps for each unique block the logs touch (logs carry none). Only
-      // blocks missing from the shared cache are fetched; with the transport's
-      // batching those `getBlock` calls collapse into a single JSON-RPC POST.
-      const blockNumbers = [
-        ...new Set(
-          [...decoded, ...extra].map((l) => l.blockNumber).filter((b): b is bigint => b != null)
-        )
-      ]
-      const uncached = blockNumbers.filter((n) => !blockTimestampCache.has(blockCacheKey(n)))
-      const fetched = await Promise.all(
-        uncached.map((blockNumber) => client.getBlock({ blockNumber }))
-      )
-      for (const block of fetched) {
-        blockTimestampCache.set(blockCacheKey(block.number), Number(block.timestamp))
-      }
-      const tsOf = (blockNumber: bigint | null) =>
-        blockNumber == null ? 0 : (blockTimestampCache.get(blockCacheKey(blockNumber)) ?? 0)
-
-      const out = opts.empty()
-
-      for (const log of decoded as unknown as DecodedLogLike[]) {
-        opts.mapEvent({
-          out,
-          id: `${log.transactionHash}-${log.logIndex}`,
-          timestamp: tsOf(log.blockNumber),
-          contract,
-          eventName: log.eventName ?? '',
-          args: log.args ?? {},
-          log
-        })
-      }
-
-      if (opts.mapExtra) {
-        for (const log of extra) {
-          opts.mapExtra({
-            out,
-            id: `${log.transactionHash}-${log.logIndex}`,
-            timestamp: tsOf(log.blockNumber),
-            contract,
-            eventName: log.eventName ?? '',
-            args: log.args ?? {},
-            log
-          })
-        }
-      }
-
-      return out
+      if (!client) return { data: opts.empty(), gaps: [] }
+      return scanContractLogs(client, targets.value, opts)
     }
   })
 
   // Mirror @vue/apollo-composable's shape so it drops into the *Transactions.vue.
-  // `refetch` is exposed so consumers (e.g. useCNCAccounting's refresh) can force
+  // `gaps` surfaces generations whose scan failed; `refetch` lets consumers force
   // a re-scan the same way they did with the Apollo queries.
   return {
-    result: query.data,
+    result: computed(() => query.data.value?.data ?? null),
+    gaps: computed<ScanGap[]>(() => query.data.value?.gaps ?? []),
     loading: query.isPending,
     error: query.error,
     refetch: query.refetch

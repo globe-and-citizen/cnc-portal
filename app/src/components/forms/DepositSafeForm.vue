@@ -91,8 +91,6 @@ function reset() {
   isAmountValid.value = false
 }
 
-defineExpose({ reset })
-
 // Component state
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')

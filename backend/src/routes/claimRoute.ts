@@ -91,6 +91,11 @@ const claimRoutes = express.Router();
  *               type: number
  *               description: The number of minutes worked
  *               minimum: 10
+ *             memo:
+ *               type: string
+ *               description: Daily claim memo, from 1 to 3000 characters after trimming
+ *               minLength: 1
+ *               maxLength: 3000
  *   responses:
  *     201:
  *       description: Claim added successfully
@@ -200,8 +205,9 @@ claimRoutes.get(
  *               description: Updated number of minutes worked
  *             memo:
  *               type: string
- *               description: Updated memo
- *               maxLength: 200
+ *               description: Updated daily claim memo, from 1 to 3000 characters after trimming
+ *               minLength: 1
+ *               maxLength: 3000
  *             dayWorked:
  *               type: string
  *               format: date

@@ -1,0 +1,4 @@
+interface:
+  display_name: "CNC Frontend Change"
+  short_description: "Implement and validate Vue frontend changes in CNC Portal."
+  default_prompt: "Use $cnc-frontend-change to implement this CNC Portal frontend change."

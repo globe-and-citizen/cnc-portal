@@ -76,32 +76,22 @@ describe('ElectionComponent', () => {
       mockElectionsWrites.createElection.mutateAsync.mockResolvedValue({})
     })
 
-    it('handles past start date by adjusting to future', async () => {
+    it('sends the dates the form decided, untouched', async () => {
       wrapper = createWrapper()
 
       // Open the modal via ElectionActions to mount CreateElectionForm
       await wrapper.find('[data-test="open-create-election"]').trigger('click')
 
-      const pastDate = new Date(Date.now() - 86400000) // Yesterday
-      const mockPastElectionData = {
-        ...mockElectionData,
-        startDate: pastDate,
-        endDate: new Date(Date.now() - 43200000) // 12 hours ago
-      }
-
       const form = wrapper.findComponent({ name: 'CreateElectionForm' })
-      await form.vm.$emit('createProposal', mockPastElectionData)
+      await form.vm.$emit('createProposal', mockElectionData)
       await new Promise((resolve) => setTimeout(resolve, 0))
 
       const [{ args }] = mockElectionsWrites.createElection.mutateAsync.mock.calls[0]! as [
         { args: readonly unknown[] }
       ]
-      const startTime = Number(args[2])
-      const endTime = Number(args[3])
 
-      // Should adjust to current time + 60 seconds
-      expect(startTime).toBeGreaterThan(Math.floor(Date.now() / 1000))
-      expect(endTime).toBeGreaterThan(startTime)
+      expect(Number(args[2])).toBe(Math.floor(mockElectionData.startDate.getTime() / 1000))
+      expect(Number(args[3])).toBe(Math.floor(mockElectionData.endDate.getTime() / 1000))
     })
   })
 })

@@ -51,7 +51,7 @@ export type UseCase =
   | 'UC-EXP-01'
   /** Dividend paid to a shareholder. */
   | 'UC-INV-01'
-  /** Direct SHER mint: issue shares into equity — Dr Shares to be issued · Cr Investor Equity. */
+  /** Direct SHER mint: issue shares into equity — Dr SHERS To Be Issued · Cr Investor Equity. */
   | 'DEFAULT-D'
   /** Bank protocol fee skimmed to the FeeCollector — a Transaction Fee Expense. */
   | 'FEE'
