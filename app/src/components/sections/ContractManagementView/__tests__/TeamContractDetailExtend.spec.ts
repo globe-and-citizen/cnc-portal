@@ -143,4 +143,19 @@ describe('TeamContractsDetail.vue', () => {
     await flushPromises()
     expect(setCostPerImpressionMock).toHaveBeenCalled()
   })
+
+  it('keeps the unsaved rate editable after the other rate succeeds', async () => {
+    setCostPerClickMock.mockImplementationOnce((_value: unknown, opts?: MutateOpts) =>
+      opts?.onSuccess?.()
+    )
+    const wrapper = await mountInitializedComponent()
+
+    await wrapper.findAll('input[type="number"]')[0].setValue('0.2')
+    await wrapper.findAll('input[type="number"]')[1].setValue('0.7')
+    await wrapper.get('[data-test="campaign-rate-save"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.emitted('closeContractDataDialog')).toBeUndefined()
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeUndefined()
+  })
 })

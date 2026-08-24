@@ -33,6 +33,7 @@
 
 - [Campaign manager setup form](../../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue)
 - [Campaign rate configuration](../../../../app/src/components/sections/ContractManagementView/TeamContractsDetail.vue)
+- [Campaign rate write hooks](../../../../app/src/composables/campaign/writes.ts) — one focused hook for each rate-setting contract function
 
 ---
 

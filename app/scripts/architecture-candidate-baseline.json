@@ -21,13 +21,6 @@
       "reason": "Existing candidate tracked by #2531."
     },
     {
-      "path": "src/composables/contracts/useCampaignContractDetails.ts",
-      "subject": "useCampaignContractDetails",
-      "metric": "singleConsumerComposableNestedCalls",
-      "allowed": 2,
-      "reason": "Existing candidate tracked by #2531."
-    },
-    {
       "path": "src/composables/contracts/useContractManagementGenerations.ts",
       "subject": "useContractManagementGenerations",
       "metric": "singleConsumerComposableNestedCalls",
