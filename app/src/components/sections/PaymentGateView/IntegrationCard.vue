@@ -35,18 +35,21 @@
       <div>
         <label class="text-muted mb-1 block text-xs font-medium uppercase">Embed snippet</label>
         <p class="text-muted mb-2 text-xs">
-          The Bank address goes on the script tag, once per page. The facture ID, amount, and
-          callback are per order — set them on the mount `&lt;div&gt;` for that checkout.
+          The Bank address goes on the script tag, once per page. For each order, call
+          <code>CncPay.setFactureId</code>/<code>setAmount</code> then <code>show()</code> — nothing
+          to store, nothing to recreate.
         </p>
         <pre
           class="bg-elevated border-default overflow-x-auto rounded-md border p-3 text-xs"
         ><code>&lt;script src="https://pay.cncportal.io/widget.js" data-bank="{{ bankAddress }}" data-token="{{ selectedToken }}" async&gt;&lt;/script&gt;
-&lt;div
-  id="cnc-pay"
-  data-facture-id="order_8842"
-  data-amount="128.00"
-  data-on-status="handlePaymentStatus"
-&gt;&lt;/div&gt;</code></pre>
+&lt;div id="cnc-pay"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+  CncPay.setFactureId('order_8842')
+  CncPay.setAmount('128.00')
+  CncPay.setOnStatus((status) => console.log('payment status', status))
+  CncPay.show('#cnc-pay')
+&lt;/script&gt;</code></pre>
         <div class="mt-2 flex justify-end">
           <UButton
             color="neutral"
@@ -74,7 +77,7 @@ const { selectedToken } = usePaymentGateMockState()
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank') ?? '0x…')
 const snippet = computed(
   () =>
-    `<script src="https://pay.cncportal.io/widget.js" data-bank="${bankAddress.value}" data-token="${selectedToken.value}" async><\/script>\n<div\n  id="cnc-pay"\n  data-facture-id="order_8842"\n  data-amount="128.00"\n  data-on-status="handlePaymentStatus"\n><\/div>`
+    `<script src="https://pay.cncportal.io/widget.js" data-bank="${bankAddress.value}" data-token="${selectedToken.value}" async><\/script>\n<div id="cnc-pay"><\/div>\n\n<script>\n  CncPay.setFactureId('order_8842')\n  CncPay.setAmount('128.00')\n  CncPay.setOnStatus((status) => console.log('payment status', status))\n  CncPay.show('#cnc-pay')\n<\/script>`
 )
 
 const copiedAddress = ref(false)
