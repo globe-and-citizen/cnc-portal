@@ -5,7 +5,9 @@
       :columns="columns"
       data-test="credit-history-table"
       :ui="{ tr: 'cursor-pointer' }"
-      @select="(_, row) => emit('select', row.original.round)"
+      @select="
+        (_event: Event, row: TableRow<CreditHistoryRow>) => emit('select', row.original.round)
+      "
     >
       <template #round-cell="{ row }">
         <div class="flex items-center gap-3">
@@ -59,6 +61,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { TableRow } from '@nuxt/ui'
 import { useCommunityCreditStore } from '@/stores'
 import { formatAmount, statusMeta } from '@/utils'
 import type { CreditRound } from '@/types'
@@ -67,10 +70,19 @@ const emit = defineEmits<{ select: [round: CreditRound] }>()
 
 const store = useCommunityCreditStore()
 
+type CreditHistoryRow = {
+  round: CreditRound
+  status: ReturnType<typeof statusMeta>
+  raised: string
+  outcome: string
+  icon: string
+  iconClass: string
+}
+
 // History = rounds no longer raising: stalled past their deadline awaiting a
 // refund/accept decision, fully funded and awaiting repayment, fully repaid, or
 // refunded after the issuer returned every lender's principal.
-const rows = computed(() =>
+const rows = computed<CreditHistoryRow[]>(() =>
   store.historyRounds.map((round) => {
     const outcome =
       round.status === 'stalled'
