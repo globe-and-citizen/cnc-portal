@@ -1,6 +1,6 @@
 # Accounts — User Stories
 
-**Scope:** The complete Bank, Safe, and Expense Account journey exposed by the portal
+**Scope:** The complete Bank, Safe, Expense Account, and treasury cash-out journey exposed by the portal
 
 **Last reviewed:** Not yet reviewed
 
@@ -16,6 +16,9 @@ These acceptance criteria follow the
   receiving custody of the whole account.
 - Bank and Expense Account actions use the current contracts selected for the team. Safe actions use the Safe registered to the team on the
   active network.
+- A Bank owner can cash out available treasury funds by first consolidating Cash Remuneration and Expense Account balances into the Bank,
+  then moving the Bank's held assets to the connected wallet. A historic generation can instead forward its available funds to the team's
+  current Bank.
 - Token administration, dividends, payroll, and community-credit repayments are owned by their respective features even when funds move
   through an account.
 
@@ -30,6 +33,8 @@ flowchart LR
     Bank --> FundBank[Fund treasury]
     Bank --> TransferBank[Transfer as owner or propose as Board]
     Bank --> ReviewBank[Review balance and history]
+    Bank --> CashOut[Cash out available treasury]
+    CashOut --> OwnerWallet[Connected owner wallet]
 
     Safe --> SetupSafe[Deploy or import]
     SetupSafe --> OperateSafe[Deposit, propose, approve, execute]
@@ -48,6 +53,7 @@ flowchart LR
 | US-BANK-001 | Fund the Bank                              | Team member             | 🧪 Validation  |    P1    | S      |
 | US-BANK-002 | Transfer Bank funds                        | Owner / Board member    | 🧪 Validation  |    P1    | M      |
 | US-BANK-003 | Review the Bank position and history       | Team member             | 🚧 In Progress |    P2    | M      |
+| US-BANK-004 | Cash out available treasury funds          | Bank owner              | 🧪 Validation  |    P1    | M      |
 | US-SAFE-001 | Set up a Safe                              | Team owner              | 🧪 Validation  |    P1    | M      |
 | US-SAFE-002 | Inspect Safe details                       | Team member             | 🧪 Validation  |    P1    | M      |
 | US-SAFE-003 | Manage Safe funds                          | Safe owner              | 🧪 Validation  |    P1    | M      |
@@ -149,6 +155,45 @@ flowchart LR
 **Priority:** P2 (High) · **Effort:** M · **Status:** 🚧 In Progress
 
 **Dependencies:** Current Bank contract and an available chain event provider
+
+## US-BANK-004: Cash Out Available Treasury Funds
+
+**As a** Bank owner\
+**I want to** cash out the team's available treasury funds\
+**So that** I can move them to my connected wallet or the team's current Bank
+
+### How It Works
+
+1. The owner reviews the funded accounts and the destination before confirming the run.
+2. When available, Cash Remuneration and Expense Account funds move into their generation's Bank first.
+3. The Bank then forwards its native and supported token balances to the destination. A historic generation forwards its available funds to
+   the team's current Bank.
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] The Bank owner can consolidate available Cash Remuneration and Expense Account funds into the current Bank, then transfer each held
+      native or supported ERC-20 asset to the connected wallet.
+- [x] The owner of a historic contract generation can forward its available Bank funds to the team's current Bank, including eligible
+      source-account sweeps.
+
+#### Business Rules
+
+- [x] Only the relevant Bank owner can start a cash-out run, and an archived current team cannot start one.
+- [x] Each Bank transfer reads balances after the source-account steps, so zero-balance assets do not create transactions.
+- [x] Historic generations without source-account withdrawal support can transfer only their Bank balance and identify the funds that remain
+      in their source accounts.
+
+#### Edge & Error Cases
+
+- [x] A failed step stops the sequence, leaves later steps pending, and lets the owner retry from the failed step.
+- [x] Rejecting a wallet request leaves the remaining steps unrun and identifies the rejected step to the owner.
+- [x] A cash-out run does not start when no eligible funded account is available.
+
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+
+**Dependencies:** US-BANK-001, US-BANK-002, and the current Cash Remuneration and Expense Account contracts
 
 ## US-SAFE-001: Set Up a Safe
 
@@ -471,6 +516,12 @@ flowchart LR
   [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
+- [Current treasury cash-out action](../../../app/src/components/sections/DashboardView/CashOutAllAction.vue),
+  [historic-generation withdrawal action](../../../app/src/components/sections/ContractManagementView/LegacyGenerationWithdrawAction.vue),
+  and [cash-out orchestration](../../../app/src/composables/cashOut/useCashOutAll.ts)
+- [Cash-out composable tests](../../../app/src/composables/cashOut/__tests__/useCashOutAll.spec.ts),
+  [current-treasury action tests](../../../app/src/components/sections/DashboardView/__tests__/CashOutAllAction.spec.ts), and
+  [historic-generation action tests](../../../app/src/components/sections/ContractManagementView/__tests__/LegacyGenerationWithdrawAction.spec.ts)
 - [Safe page](../../../app/src/views/team/%5Bid%5D/Accounts/SafeView.vue),
   [Safe deposit form](../../../app/src/components/forms/DepositSafeForm.vue),
   [Safe orchestration](../../../app/src/composables/safe/index.ts), and
