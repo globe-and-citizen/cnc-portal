@@ -118,12 +118,15 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     ])
     const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
     expect(bankRows).toHaveLength(2) // still two rows — the blank leg folded in
-    // Earliest instance keeps the plain name; the later one is suffixed.
+    // The original deployment keeps the plain name; only later ones are numbered.
     expect(bankRows[0].accountLabel).toBe('Cash — Bank')
     expect(bankRows[0].instance).toBe(bank1)
+    expect(bankRows[0].split).toBe(true)
+    expect(bankRows[0].isPrimaryInstance).toBe(true)
     expect(bankRows[0].balance).toBeCloseTo(170, 2) // 150 + the 20 un-instanced leg
-    expect(bankRows[1].accountLabel).toBe('Cash — Bank #2')
+    expect(bankRows[1].accountLabel).toBe('Cash — Bank 2')
     expect(bankRows[1].instance).toBe(bank2)
+    expect(bankRows[1].isPrimaryInstance).toBe(false)
     expect(bankRows[1].balance).toBeCloseTo(30, 2) // only the post-redeploy deposit
     // The split is presentation only: the book stays balanced and totals are whole.
     expect(gl2.balanced).toBe(true)
@@ -176,7 +179,8 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     ])
     const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
     expect(bankRows).toHaveLength(1)
-    expect(bankRows[0].accountLabel).toBe('Cash — Bank')
+    expect(bankRows[0].accountLabel).toBe('Cash — Bank') // single instance → no number
+    expect(bankRows[0].split).toBe(false)
   })
 
   it('flags an unbalanced book when a posting is missing a leg', () => {

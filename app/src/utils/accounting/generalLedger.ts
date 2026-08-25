@@ -54,13 +54,18 @@ export interface JournalEntry {
 export interface TrialBalanceRow {
   account: AccountName
   /**
-   * Display name for the row — the account, suffixed ` #2` / ` #3` when a cash
-   * pocket spans several contract instances (a redeploy). Equals {@link account}
-   * for a single instance, so an un-redeployed book reads exactly as before.
+   * Display name for the row — the account itself for the original deployment, then
+   * numbered ` 2` / ` 3` for each later deployment (a redeploy), so each shows as its
+   * own line. Equals {@link account} for a single instance, so an un-redeployed book
+   * reads exactly as before.
    */
   accountLabel: string
   /** The pocket contract instance this row rolls up, when the account is split across redeploys. */
   instance?: Address
+  /** True when this account is split across several instances (a redeploy) — drives the redeploy hint. */
+  split: boolean
+  /** True on the primary (earliest) instance row — the one that also carries the pocket's un-instanced legs. */
+  isPrimaryInstance: boolean
   accountClass: AccountClass
   /** Σ of every debit line posted to this account (gross). */
   totalDebit: number
@@ -249,9 +254,9 @@ export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedg
 
   // Iterate the chart in declared order so the trial balance reads top-down. A cash
   // pocket that spans several contract instances (a redeploy) emits one row per
-  // instance, ordered by first activity; the earliest keeps the plain account name,
-  // later ones get a ` #2` / ` #3` suffix. A single-instance account emits one row
-  // named exactly as before.
+  // instance, ordered by first activity: the original deployment keeps the plain
+  // account name, each later one is numbered ` 2` / ` 3`. A single-instance account
+  // emits one row named exactly as before.
   for (const account of ACCOUNT_NAMES) {
     const buckets = (groups.get(account) ?? []).sort(
       (a, b) => a.firstTs - b.firstTs || (a.instance ?? '').localeCompare(b.instance ?? '')
@@ -274,8 +279,10 @@ export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedg
 
       trialBalance.push({
         account,
-        accountLabel: split && index > 0 ? `${account} #${index + 1}` : account,
+        accountLabel: split && index > 0 ? `${account} ${index + 1}` : account,
         ...(bucket.instance ? { instance: bucket.instance } : {}),
+        split,
+        isPrimaryInstance: index === 0,
         accountClass: classOf(account),
         totalDebit: grossDebit,
         totalCredit: grossCredit,
