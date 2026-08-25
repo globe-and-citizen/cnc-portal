@@ -67,6 +67,10 @@ export interface TrialRow {
   account: string
   /** Display name — the account, suffixed ` #2` / ` #3` for a redeployed pocket's later instances. */
   label: string
+  /** The pocket contract instance this row rolls up, when split across redeploys. */
+  instance?: string
+  /** True on the primary (earliest) instance row — the one that also carries un-instanced legs. */
+  isPrimaryInstance: boolean
   nature: TrialNature
   natureClass: string
   dr: string
@@ -277,6 +281,9 @@ export function presentTrial(ledger: GeneralLedger): {
     return {
       account: r.account,
       label: r.accountLabel,
+      ...(r.instance ? { instance: r.instance } : {}),
+      // The primary row (no ` #n` suffix) also carries the pocket's un-instanced legs.
+      isPrimaryInstance: r.accountLabel === r.account,
       nature: natureOf(r.account),
       natureClass: NATURE_BADGE[natureOf(r.account)],
       dr: debitSide ? money(r.balance) : '—',

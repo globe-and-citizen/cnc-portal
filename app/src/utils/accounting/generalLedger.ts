@@ -205,8 +205,26 @@ function accumulateBuckets(journal: readonly JournalEntry[]): Map<AccountName, A
     }
   }
   const grouped = new Map<AccountName, AccountBucket[]>()
-  for (const [account, buckets] of byAccount) grouped.set(account, [...buckets.values()])
+  for (const [account, buckets] of byAccount) grouped.set(account, foldBlankBucket(buckets))
   return grouped
+}
+
+/**
+ * Fold the un-instanced (`''`) bucket into the pocket's earliest concrete instance,
+ * so a leg that carries no contract address (a FixedReturn sweep straight to Bank, an
+ * owner treasury sweep) lands on the deployment already on the books rather than
+ * spawning a phantom extra row. With no concrete instance at all (a normal, single
+ * account) the lone bucket is kept as-is — the un-redeployed book reads as before.
+ */
+function foldBlankBucket(buckets: Map<string, AccountBucket>): AccountBucket[] {
+  const blank = buckets.get('')
+  const concrete = [...buckets.values()].filter((b) => b.instance)
+  if (!blank || concrete.length === 0) return [...buckets.values()]
+  const primary = concrete.reduce((a, b) => (b.firstTs < a.firstTs ? b : a))
+  primary.debit += blank.debit
+  primary.credit += blank.credit
+  primary.firstTs = Math.min(primary.firstTs, blank.firstTs)
+  return concrete
 }
 
 /**

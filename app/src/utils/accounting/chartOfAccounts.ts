@@ -115,12 +115,15 @@ export function classOf(account: AccountName): AccountClass {
 /**
  * Cash pockets that split into **per-contract sub-accounts** when a team redeploys,
  * so the trial balance shows each deployment's balance on its own line (`Cash — Bank`
- * / `Cash — Bank #2`). `Cash — FeeCollector` is the protocol-wide collector (a single
+ * / `Cash — Bank #2`), each carrying only its own contract's events.
+ *
+ * `Cash — Safe` is **excluded**: the Gnosis Safe's address survives redeploys (it is
+ * governed by no Officer — see `useCNCAccounting`), so there is only ever one Safe
+ * instance to show. `Cash — FeeCollector` is the protocol-wide collector (a single
  * shared instance) and `Trading account` is a derived position, so neither splits.
  */
 const INSTANCED_POCKETS: ReadonlySet<AccountName> = new Set<AccountName>([
   'Cash — Bank',
-  'Cash — Safe',
   'Cash — Payroll',
   'Cash — Expense',
   'Cash — Credit'
