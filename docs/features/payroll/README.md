@@ -498,7 +498,8 @@ status of a user story.
 
 The claim-submission and claim-history journeys remain unchanged; their current implementation evidence was reviewed with this update.
 
-- [Payroll navigation and routes](../../../app/src/composables/useSidebarNavItems.ts)
+- [Payroll navigation and routes](../../../app/src/composables/useSidebarNavItems.ts) were reviewed alongside the separate Accounting
+  classification route.
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
 - [Member wage overview](../../../app/src/components/sections/DashboardView/MemberSection.vue)
 - [Member claim action alerts](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue)
@@ -518,6 +519,7 @@ The claim-submission and claim-history journeys remain unchanged; their current 
 - [Wage API](../../../backend/src/controllers/wageController.ts)
 - [Daily claim API](../../../backend/src/controllers/claimController.ts)
 - [Member wage API](../../../backend/src/controllers/teamController.ts)
+- [Shared persistence schema](../../../backend/prisma/schema.prisma), including Accounting classification records
 - [Wage routes](../../../backend/src/routes/wageRoute.ts)
 - [Wage request validation](../../../backend/src/validation/schemas/wage.ts)
 - [Payroll persistence models](../../../backend/prisma/schema.prisma)

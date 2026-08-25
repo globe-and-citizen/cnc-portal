@@ -264,9 +264,17 @@ flowchart LR
 
 - [Accounting routes](../../../app/src/router/index.ts) and [Accounting navigation](../../../app/src/composables/useSidebarNavItems.ts). The
   Community Credit round-detail view parameter does not alter Accounting entry points.
+- [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue), [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
+  [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+- [Classification query](../../../app/src/queries/classification.queries.ts), [classification types](../../../app/src/types/accounting-classification.ts), and
+  [classification assembly](../../../app/src/utils/accounting/classification.ts)
+- [Classification controller](../../../backend/src/controllers/classificationController.ts), [classification route](../../../backend/src/routes/classificationRoute.ts),
+  [classification validation](../../../backend/src/validation/schemas/classification.ts), and [validation registry](../../../backend/src/validation/index.ts)
+- [Classification persistence schema](../../../backend/prisma/schema.prisma) and
+  [classification migrations](../../../backend/prisma/migrations/20260821000000_add_transaction_classification/)
 - [Statement-line drill-down](../../../app/src/composables/accounting/useLedgerDrilldown.ts)
 - [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
