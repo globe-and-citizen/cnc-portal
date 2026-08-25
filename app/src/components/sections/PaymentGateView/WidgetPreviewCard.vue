@@ -29,14 +29,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { usePaymentGateMockState } from '@/composables/usePaymentGateMockState'
 import PaymentGateWidgetView, {
   type WidgetConfirmedStatus,
   type WidgetPane,
   type WidgetPaymentStep
 } from './PaymentGateWidgetView.vue'
 
-const { selectedToken } = usePaymentGateMockState()
+const { selectedToken } = defineProps<{ selectedToken: 'USDC' | 'USDCe' | 'POL' }>()
 
 const pane = ref<WidgetPane>('review')
 const paymentStep = ref<WidgetPaymentStep>('connecting')

@@ -68,16 +68,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useTeamStore } from '@/stores'
-import { usePaymentGateMockState } from '@/composables/usePaymentGateMockState'
+
+const { selectedToken } = defineProps<{ selectedToken: 'USDC' | 'USDCe' | 'POL' }>()
 
 const toast = useToast()
 const teamStore = useTeamStore()
-const { selectedToken } = usePaymentGateMockState()
 
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank') ?? '0x…')
 const snippet = computed(
   () =>
-    `<script src="https://pay.cncportal.io/widget.js" data-bank="${bankAddress.value}" data-token="${selectedToken.value}" async><\/script>\n<div id="cnc-pay"><\/div>\n\n<script>\n  CncPay.setFactureId('order_8842')\n  CncPay.setAmount('128.00')\n  CncPay.setOnStatus((status) => console.log('payment status', status))\n  CncPay.show('#cnc-pay')\n<\/script>`
+    `<script src="https://pay.cncportal.io/widget.js" data-bank="${bankAddress.value}" data-token="${selectedToken}" async><\/script>\n<div id="cnc-pay"><\/div>\n\n<script>\n  CncPay.setFactureId('order_8842')\n  CncPay.setAmount('128.00')\n  CncPay.setOnStatus((status) => console.log('payment status', status))\n  CncPay.show('#cnc-pay')\n<\/script>`
 )
 
 const copiedAddress = ref(false)
