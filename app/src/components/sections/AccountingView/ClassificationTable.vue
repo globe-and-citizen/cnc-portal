@@ -34,7 +34,15 @@
       <template #description-cell="{ row: { original: row } }">
         <div class="flex flex-col">
           <span class="text-sm font-medium">{{ row.description }}</span>
-          <span class="text-muted font-mono text-xs">{{ row.counterparty }}</span>
+          <span class="text-muted text-xs">{{ row.cashAccount }}</span>
+        </div>
+      </template>
+
+      <template #flow-cell="{ row: { original: row } }">
+        <div class="flex items-center gap-1.5">
+          <UserComponent compact size="sm" hide-address :user="nodeUser(row.flow.from)" />
+          <UIcon name="i-heroicons-arrow-long-right" class="text-dimmed size-4 shrink-0" />
+          <UserComponent compact size="sm" hide-address :user="nodeUser(row.flow.to)" />
         </div>
       </template>
 
@@ -48,10 +56,11 @@
         <div class="text-right">Amount</div>
       </template>
       <template #amount-cell="{ row: { original: row } }">
-        <div class="text-right text-sm font-semibold tabular-nums">
-          {{ row.amount }}
-          <span class="text-muted ml-1 font-normal">{{ row.currency }}</span>
-        </div>
+        <div class="text-right text-sm font-semibold tabular-nums">{{ row.amount }}</div>
+      </template>
+
+      <template #currency-cell="{ row: { original: row } }">
+        <span class="text-muted text-sm">{{ row.currency }}</span>
       </template>
 
       <template #classification-cell="{ row: { original: row } }">
@@ -76,6 +85,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import type { TableColumn } from '@nuxt/ui'
 import LedgerClassificationCell from './LedgerClassificationCell.vue'
+import UserComponent from '@/components/UserComponent.vue'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useUserDataStore } from '@/stores/user'
@@ -84,15 +94,24 @@ import { CATEGORY_LABEL, type ClassificationCategory } from '@/utils/accounting/
 import type { ClassificationDirection } from '@/utils/accounting/classification'
 import { money, fmtDateTime, currencySymbol } from '@/utils/accounting/presenter'
 import { entryLabel } from '@/utils/accounting/describeEntry'
+import { resolveUser } from '@/utils/transactionHistoryUtil'
+
+/**
+ * One end of a money flow: either a team cash pocket (Bank/Safe) or the external
+ * party (`address`) on the other side. Resolved to an avatar + name at render time.
+ */
+type FlowNode = { kind: 'pocket'; account: string } | { kind: 'party'; address?: string }
 
 interface ClassifyRow {
   entryId: string
   date: string
   description: string
-  counterparty: string
+  cashAccount: string
   amount: string
   currency: string
   direction: ClassificationDirection
+  /** Where the money came from and went to — source on the left, destination on the right. */
+  flow: { from: FlowNode; to: FlowNode }
   category?: ClassificationCategory
   memo?: string
 }
@@ -109,11 +128,6 @@ const isOwner = computed(() => {
   return !!owner && !!me && owner.toLowerCase() === me.toLowerCase()
 })
 
-/** `"0x1234…cdef"` — a counterparty shortened for the table. */
-function shortAddress(value: string | undefined): string {
-  return value && /^0x[0-9a-fA-F]{40}$/.test(value) ? `${value.slice(0, 6)}…${value.slice(-4)}` : ''
-}
-
 // The classifiable Bank/Safe deposits/withdrawals, newest first, mapped to table rows.
 const rows = computed<ClassifyRow[]>(() =>
   acc.entries.value
@@ -121,25 +135,45 @@ const rows = computed<ClassifyRow[]>(() =>
     .sort((a, b) => b.timestamp - a.timestamp)
     .map((entry) => {
       const target = classificationTargetOf(entry)!
+      const pocket: FlowNode = { kind: 'pocket', account: target.cashAccount }
+      const party: FlowNode = { kind: 'party', address: entry.counterparty }
       return {
         entryId: entry.id,
         date: fmtDateTime(entry.timestamp),
         description: entryLabel(entry),
-        counterparty: shortAddress(entry.counterparty),
+        cashAccount: target.cashAccount,
         amount: money(entry.amountUsd),
         currency: currencySymbol(entry.token),
         direction: target.direction,
+        // A deposit flows external party → pocket; a withdrawal flows pocket → external party.
+        flow: target.direction === 'in' ? { from: party, to: pocket } : { from: pocket, to: party },
         category: entry.classified,
         memo: entry.classified ? entry.memo : undefined
       }
     })
 )
 
+/** Resolve a flow endpoint to a {@link UserComponent} user — a contract pocket or an external party. */
+function nodeUser(node: FlowNode) {
+  if (node.kind === 'pocket') {
+    return {
+      name: node.account.replace('Cash — ', ''),
+      address: '',
+      icon: 'heroicons:document-text'
+    }
+  }
+  return node.address
+    ? resolveUser(node.address)
+    : { name: 'External wallet', address: '', icon: 'heroicons:globe-alt' }
+}
+
 const columns: TableColumn<ClassifyRow>[] = [
   { accessorKey: 'date', header: 'Date' },
   { id: 'description', header: 'Transaction' },
+  { id: 'flow', header: 'Money flow' },
   { id: 'direction', header: 'Type' },
   { id: 'amount', header: 'Amount' },
+  { id: 'currency', header: 'Currency' },
   { id: 'classification', header: 'Classification' }
 ]
 </script>
