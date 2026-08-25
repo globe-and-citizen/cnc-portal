@@ -113,6 +113,25 @@ export function classOf(account: AccountName): AccountClass {
 }
 
 /**
+ * Cash pockets that split into **per-contract sub-accounts** when a team redeploys,
+ * so the trial balance shows each deployment's balance on its own line (`Cash — Bank`
+ * / `Cash — Bank #2`). `Cash — FeeCollector` is the protocol-wide collector (a single
+ * shared instance) and `Trading account` is a derived position, so neither splits.
+ */
+const INSTANCED_POCKETS: ReadonlySet<AccountName> = new Set<AccountName>([
+  'Cash — Bank',
+  'Cash — Safe',
+  'Cash — Payroll',
+  'Cash — Expense',
+  'Cash — Credit'
+])
+
+/** Whether an account is a cash pocket whose trial-balance line splits per contract instance (redeploy). */
+export function isInstancedPocket(account: AccountName): boolean {
+  return INSTANCED_POCKETS.has(account)
+}
+
+/**
  * Classes whose normal balance sits on the debit side.
  * CONTRA_EQUITY is debit-normal: it increases with debits and reduces equity.
  */

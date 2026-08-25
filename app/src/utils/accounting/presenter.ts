@@ -63,7 +63,10 @@ export interface SummaryBanner {
 }
 
 export interface TrialRow {
+  /** Base account name — the drill-down key (a split pocket's instances share it). */
   account: string
+  /** Display name — the account, suffixed ` #2` / ` #3` for a redeployed pocket's later instances. */
+  label: string
   nature: TrialNature
   natureClass: string
   dr: string
@@ -273,6 +276,7 @@ export function presentTrial(ledger: GeneralLedger): {
       r.accountClass === 'CONTRA_EQUITY'
     return {
       account: r.account,
+      label: r.accountLabel,
       nature: natureOf(r.account),
       natureClass: NATURE_BADGE[natureOf(r.account)],
       dr: debitSide ? money(r.balance) : '—',
