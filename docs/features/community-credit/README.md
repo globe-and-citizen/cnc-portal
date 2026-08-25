@@ -221,7 +221,7 @@ directions remain in the [detailed flow and implementation analysis](./user-flow
 
 ## Implementation Evidence
 
-- [Community Credit routes](../../../app/src/router/index.ts)
+- [Community Credit routes](../../../app/src/router/index.ts) — the new Payment Gate routes do not alter Community Credit entry points
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)

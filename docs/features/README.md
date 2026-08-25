@@ -2,7 +2,7 @@
 
 **Status:** Navigation-derived inventory
 
-**Last verified:** 2026-08-24
+**Last verified:** 2026-08-25
 
 This inventory names the product capabilities that a user can currently reach in the CNC Portal client or its administrator dashboard. It is
 derived from the current navigation, routes, access guards, and linked product actions. The presence of a source directory, API, contract,
@@ -25,6 +25,7 @@ flowchart LR
   app --> shareholderManagement[Shareholder Management]
   app --> governance[Governance]
   app --> vesting[Vesting]
+  app --> paymentGate[Payment Gate]
 
   backoffice --> overview[Overview and statistics]
   backoffice --> teams[Team operations]
@@ -51,6 +52,7 @@ The client inventory follows the [sidebar navigation](../../app/src/composables/
 | Shareholder Management  | `/teams/:id/sher-token`                                 | [Canonical stories](./shareholder-management/README.md) |
 | Governance              | Board elections, election details, and proposals        | Canonical stories not yet written                       |
 | Vesting                 | `/teams/:id/vesting`                                    | [Canonical stories](./vesting/README.md)                |
+| Payment Gate            | `/teams/:id/payment-gate`, `/reference`, `/history`     | [Canonical stories](./payment-gate/Readme.md)           |
 
 ## Backoffice Features
 

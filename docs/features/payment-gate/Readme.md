@@ -367,4 +367,19 @@ prose alone
 
 ---
 
+## Implementation Evidence
+
+- [Integration setup view](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
+  [Bank address + embed snippet](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
+  [accepted-token configuration](../../../app/src/components/sections/PaymentGateView/TokenConfigCard.vue), and a
+  [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue) (`US-PAYGATE-001` through `003`).
+- [Payment history view](../../../app/src/views/team/[id]/PaymentGate/HistoryView.vue) and its
+  [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue) (`US-PAYGATE-005`).
+- [Recall/reference view](../../../app/src/views/team/[id]/PaymentGate/ReferenceView.vue) and its
+  [recheck-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-006`).
+- [Mock shared state](../../../app/src/composables/usePaymentGateMockState.ts) driving the setup page's cards before a backend exists — see
+  `docs/features/payment-gate/v0-Readme.md` for why there's nothing to read/write yet.
+
+---
+
 _[← Back to Payment Gate flow & edge cases](./flow-and-edge-cases.md)_
