@@ -187,6 +187,7 @@ flowchart LR
 - [x] Each contract generation is scanned from its own deployment boundary.
 - [x] Transactions made before and after a migration contribute to the same reports.
 - [x] A treasury sweep between old and replacement team contracts remains an internal transfer.
+- [x] The trial balance presents a redeployed cash pocket as one row per contract generation, and drilling a generation's row shows only that generation's entries.
 
 #### Business Rules
 
