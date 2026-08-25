@@ -3,8 +3,9 @@
     <UButton
       :color="category ? 'primary' : 'neutral'"
       :variant="category ? 'subtle' : 'outline'"
-      size="xs"
-      trailing-icon="i-heroicons-chevron-down"
+      size="md"
+      class="justify-between gap-2 font-medium"
+      :trailing-icon="open ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
       data-test="ledger-classify-trigger"
     >
       {{ triggerLabel }}

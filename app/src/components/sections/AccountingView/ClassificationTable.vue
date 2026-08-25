@@ -47,7 +47,15 @@
       </template>
 
       <template #direction-cell="{ row: { original: row } }">
-        <UBadge :color="row.direction === 'in' ? 'success' : 'warning'" variant="subtle" size="xs">
+        <UBadge
+          :color="row.direction === 'in' ? 'success' : 'warning'"
+          variant="subtle"
+          size="md"
+          class="font-medium"
+          :icon="
+            row.direction === 'in' ? 'i-heroicons-arrow-down-left' : 'i-heroicons-arrow-up-right'
+          "
+        >
           {{ row.direction === 'in' ? 'Deposit' : 'Withdrawal' }}
         </UBadge>
       </template>
@@ -72,7 +80,7 @@
           :category="row.category"
           :memo="row.memo"
         />
-        <UBadge v-else :color="row.category ? 'primary' : 'neutral'" variant="subtle" size="xs">
+        <UBadge v-else :color="row.category ? 'primary' : 'neutral'" variant="subtle" size="md">
           {{ row.category ? CATEGORY_LABEL[row.category] : 'Inferred' }}
         </UBadge>
       </template>
