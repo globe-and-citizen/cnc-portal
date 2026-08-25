@@ -4,16 +4,16 @@ import { teamIdSchema } from './common';
 /**
  * Transaction-classification validation schemas (issue #2457).
  *
- * A classification pins a manual accounting category onto a single Bank/Safe
- * deposit or withdrawal, keyed by its stable on-chain identity
- * `${txHash}-${logIndex}` — the same id the frontend accounting engine keys its
- * ledger entries on. It overrides the address-inference fallback when present.
+ * A classification pins a manual accounting category onto one Bank/Safe deposit or
+ * withdrawal, keyed by the stable on-chain identity `${txHash}-${logIndex}` the
+ * frontend accounting engine keys its ledger entries on, and overrides the
+ * address-inference fallback when present.
  */
 
 /**
  * The manual accounting categories. Mirrors the Prisma
- * `TransactionClassificationCategory` enum; the controller assigns validated
- * values straight to that enum, so any drift surfaces as a compile error there.
+ * `TransactionClassificationCategory` enum; the controller assigns validated values
+ * straight to it, so any drift surfaces as a compile error there.
  */
 export const CLASSIFICATION_CATEGORIES = [
   'REVENUE',
@@ -29,9 +29,8 @@ export const CLASSIFICATION_CATEGORIES = [
 export const classificationCategorySchema = z.enum(CLASSIFICATION_CATEGORIES);
 
 /**
- * Stable transaction identity: the canonical lowercase `${txHash}-${logIndex}`.
- * Normalized to lowercase so a mixed-case hash cannot masquerade as a second
- * classification for the same on-chain event.
+ * Stable transaction identity, normalized to lowercase so a mixed-case hash cannot
+ * masquerade as a second classification for the same on-chain event.
  */
 export const txIdSchema = z
   .string({ message: 'txId is required' })
