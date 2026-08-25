@@ -126,7 +126,7 @@ function trialTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable 
     head: ['Account', 'Nature', 'Debit', 'Credit'],
     align: ['left', 'left', 'right', 'right'],
     body: [
-      ...trial.rows.map((t) => [t.account, t.nature, t.dr, t.cr]),
+      ...trial.rows.map((t) => [t.label, t.nature, t.dr, t.cr]),
       ['Total', '', trial.total, trial.total]
     ]
   }

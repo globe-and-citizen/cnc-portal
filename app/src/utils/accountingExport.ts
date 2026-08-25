@@ -114,7 +114,7 @@ function trialSheet(acc: CncAccounting, asOf?: Date | null): SheetRows {
     [trialExportTitle(asOf)],
     [],
     ['Account', 'Nature', 'Debit', 'Credit'],
-    ...trial.rows.map((t) => [t.account, t.nature, usd(t.dr), usd(t.cr)]),
+    ...trial.rows.map((t) => [t.label, t.nature, usd(t.dr), usd(t.cr)]),
     ['Total', '', usd(trial.total), usd(trial.total)]
   ]
 }
