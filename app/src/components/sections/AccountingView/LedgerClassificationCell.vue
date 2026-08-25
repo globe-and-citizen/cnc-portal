@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
-  allowedCategories,
+  ALLOWED_BY_DIRECTION,
   CATEGORY_LABEL,
   type ClassificationCategory,
   type ClassificationDirection
@@ -92,7 +92,7 @@ const open = ref(false)
 const selected = ref<ExternalCategory | undefined>(props.category as ExternalCategory | undefined)
 const memoDraft = ref<string>(props.memo ?? '')
 
-// Re-seed the form whenever the underlying classification changes (a refetch after a save).
+/** Re-seed the form when the underlying classification changes (a refetch after a save). */
 watch(
   () => [props.category, props.memo] as const,
   ([category, memo]) => {
@@ -102,7 +102,7 @@ watch(
 )
 
 const categoryOptions = computed(() =>
-  allowedCategories(props.direction)
+  ALLOWED_BY_DIRECTION[props.direction]
     .filter((category): category is ExternalCategory => category !== 'INTERNAL_TRANSFER')
     .map((category) => ({ label: CATEGORY_LABEL[category], value: category }))
 )

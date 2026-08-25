@@ -136,7 +136,7 @@ const isOwner = computed(() => {
   return !!owner && !!me && owner.toLowerCase() === me.toLowerCase()
 })
 
-// The classifiable Bank/Safe deposits/withdrawals, newest first, mapped to table rows.
+/** The classifiable Bank/Safe deposits and withdrawals, newest first, as table rows. */
 const rows = computed<ClassifyRow[]>(() =>
   acc.entries.value
     .filter((entry) => classificationTargetOf(entry) != null)
@@ -153,7 +153,6 @@ const rows = computed<ClassifyRow[]>(() =>
         amount: money(entry.amountUsd),
         currency: currencySymbol(entry.token),
         direction: target.direction,
-        // A deposit flows external party → pocket; a withdrawal flows pocket → external party.
         flow: target.direction === 'in' ? { from: party, to: pocket } : { from: pocket, to: party },
         category: entry.classified,
         memo: entry.classified ? entry.memo : undefined
