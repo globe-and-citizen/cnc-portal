@@ -35,15 +35,13 @@ import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEven
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
-import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
-import { useGetExpensesQuery } from '@/queries/expense.queries'
-import { useGetClassificationsQuery } from '@/queries/classification.queries'
 import {
   useGetSafeIncomingTransfersQuery,
   useGetSafeOutgoingTransactionsQuery
 } from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransferInitiators } from './useTransferInitiators'
+import { useAccountingBackendFeeds } from './useAccountingBackendFeeds'
 import {
   assembleCncAccounting,
   type CncAccounting,
@@ -240,14 +238,8 @@ export function useCNCAccounting(
     }))
   )
 
-  // ── Backend DB: weekly claims + approved expenses (off-chain enrichment) ──
-  const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
-  const expenses = useGetExpensesQuery({ queryParams: { teamId } })
-
-  // ── Backend DB: manual Bank/Safe transaction classifications (issue #2457) ──
-  // Optional overlay on the address inference; a missing feed just leaves the
-  // inferred fallback in place, so it never blocks the books.
-  const classifications = useGetClassificationsQuery({ queryParams: { teamId } })
+  // ── Backend DB: the off-chain enrichment feeds (claims, expenses, classifications) ──
+  const { weeklyClaims, expenses, classifications } = useAccountingBackendFeeds(teamId)
 
   // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
   const safeTransfers = useGetSafeIncomingTransfersQuery({
