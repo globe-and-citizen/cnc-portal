@@ -148,6 +148,10 @@ export function useFixedReturnIsTokenSupported(token: MaybeRef<Address>) {
  * first. There's no batch view for this — totalOfferings gives the count, then each
  * offer is read individually by id — so this is shared by every view that needs the
  * full list (OfferingsList, LenderMarketplace) rather than duplicated per-component.
+ * Also fetches each offer's lender addresses (getOfferLenders) alongside — cheap
+ * (one extra read per offer, addresses only) and needed so the round list can show an
+ * accurate lender count/avatar stack without paying for the full per-lender
+ * principal/expected breakdown (see useFixedReturnOfferLenders) on every card.
  */
 export function useFixedReturnAllOffers(address?: MaybeRefOrGetter<string | undefined>) {
   // Defaults to the active team's contract; callers that resolve the team
@@ -175,13 +179,26 @@ export function useFixedReturnAllOffers(address?: MaybeRefOrGetter<string | unde
       const offers: FixedReturnRawOffer[] = []
       for (let offerId = count; offerId >= 1; offerId--) {
         try {
-          const offer = (await readContract(config, {
-            address,
-            abi: fixedReturnAbi,
-            functionName: 'getLendingOffer',
-            args: [BigInt(offerId)]
-          })) as LendingOfferStruct
-          offers.push({ offerId, offer, decimals: decimalsForFixedReturnToken(offer.token) ?? 6 })
+          const [offer, lenderAddresses] = await Promise.all([
+            readContract(config, {
+              address,
+              abi: fixedReturnAbi,
+              functionName: 'getLendingOffer',
+              args: [BigInt(offerId)]
+            }) as Promise<LendingOfferStruct>,
+            readContract(config, {
+              address,
+              abi: fixedReturnAbi,
+              functionName: 'getOfferLenders',
+              args: [BigInt(offerId)]
+            }) as Promise<Address[]>
+          ])
+          offers.push({
+            offerId,
+            offer,
+            decimals: decimalsForFixedReturnToken(offer.token) ?? 6,
+            lenderAddresses
+          })
         } catch (error) {
           log.error(`Failed to fetch FixedReturn offer #${offerId}:`, error)
         }

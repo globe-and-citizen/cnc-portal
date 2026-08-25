@@ -14,23 +14,16 @@ import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 
-const claimFormResetMock = vi.fn()
-
 const ClaimFormStub = defineComponent({
   name: 'ClaimForm',
   props: {
     initialData: { type: Object, required: false },
-    isLoading: { type: Boolean, required: false },
-    disabledWeekStarts: { type: Array, required: false },
-    restrictSubmit: { type: Boolean, required: false },
-    errorMessage: { type: String, required: false, default: '' },
-    errorTitle: { type: String, required: false, default: '' }
+    loading: { type: Boolean, required: false },
+    submissionRules: { type: Object, required: false },
+    error: { type: Object, required: false }
   },
   emits: ['submit'],
-  setup(_, { expose }) {
-    expose({ resetForm: claimFormResetMock })
-    return () => null
-  }
+  template: '<div />'
 })
 
 const createComponent = (props: Record<string, unknown> = {}) => {
@@ -149,7 +142,7 @@ describe('SubmitClaims', () => {
     }
   })
 
-  it('shows success toast and resets form after successful claim submission', async () => {
+  it('closes the form after a successful claim submission', async () => {
     const wrapper = createComponent()
 
     await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
@@ -170,7 +163,6 @@ describe('SubmitClaims', () => {
     //   title: 'Wage claim added successfully',
     //   color: 'success'
     // })
-    expect(claimFormResetMock).toHaveBeenCalledTimes(1)
     expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(false)
   })
 
@@ -234,8 +226,11 @@ describe('SubmitClaims', () => {
     })
     await flushPromises()
 
-    // Error surfaces as the ClaimForm's error-message prop
-    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('errorMessage')).toBe(backendMessage)
+    // Error surfaces in the ClaimForm error contract.
+    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('error')).toEqual({
+      message: backendMessage,
+      title: 'Failed to submit claim'
+    })
     expect(mockToast.add).not.toHaveBeenCalledWith({ title: backendMessage, color: 'error' })
   })
 
@@ -258,9 +253,10 @@ describe('SubmitClaims', () => {
     })
     await flushPromises()
 
-    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('errorMessage')).toBe(
-      'Plain failure message'
-    )
+    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('error')).toEqual({
+      message: 'Plain failure message',
+      title: 'Failed to submit claim'
+    })
   })
 
   it('opens modal with clicked day when using openModalForDay', async () => {

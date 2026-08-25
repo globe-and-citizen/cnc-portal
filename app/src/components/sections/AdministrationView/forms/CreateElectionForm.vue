@@ -106,7 +106,7 @@
           <MultiSelectMemberInput
             v-model="formData"
             :show-on-focus="true"
-            :only-team-members="true"
+            member-scope="team-members"
           />
         </UFormField>
       </div>

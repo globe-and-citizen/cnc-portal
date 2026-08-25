@@ -72,12 +72,6 @@ export const getWagesQuerySchema = z.object({
   teamId: teamIdSchema,
 });
 
-// Cancel a wage change that has been scheduled but has not taken effect yet
-export const cancelScheduledWageQuerySchema = z.object({
-  teamId: teamIdSchema,
-  userAddress: addressSchema,
-});
-
 // Toggle wage status path params and query
 export const toggleWageStatusParamsSchema = z.object({
   wageId: z.coerce.number().int().positive('Wage ID must be a positive integer'),

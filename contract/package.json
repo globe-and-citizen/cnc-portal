@@ -27,7 +27,8 @@
     "validate-upgrade": "npx hardhat run scripts/validate-upgrade.ts",
     "validate-upgrade:polygon": "npx hardhat run scripts/validate-upgrade.ts --network polygon",
     "validate-upgrade:local": "npx hardhat run scripts/validate-upgrade.ts --network localhost",
-    "generate-abi": "wagmi generate"
+    "generate-abi": "wagmi generate && cd .. && npx --prefix contract prettier --config contract/abi-prettier.config.json --write app/src/artifacts/abi/generated.ts",
+    "verify-abi-sync": "npm run generate-abi && git diff --exit-code -- ../app/src/artifacts/abi/generated.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

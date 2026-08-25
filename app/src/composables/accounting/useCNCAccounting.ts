@@ -72,12 +72,8 @@ export interface UseCNCAccountingOptions {
 export interface UseCNCAccountingReturn {
   /** Consolidated, deduped ledger postings. */
   entries: ComputedRef<LedgerEntry[]>
-  /** Roll-up totals for the summary cards. */
-  summary: ComputedRef<AccountingSummary>
-  /** Double-entry journal + trial balance. */
-  generalLedger: ComputedRef<GeneralLedger>
-  incomeStatement: ComputedRef<IncomeStatement>
-  balanceSheet: ComputedRef<BalanceSheet>
+  /** The summary and financial reports computed from the consolidated ledger. */
+  reports: ComputedRef<AccountingReports>
   /** True while any required feed is still loading. */
   isLoading: ComputedRef<boolean>
   /** The team query error (the only fatal one); optional feeds degrade silently. */
@@ -86,6 +82,16 @@ export interface UseCNCAccountingReturn {
   reconciliationGaps: ComputedRef<ReconciliationGap[]>
   /** Re-run every underlying query. */
   refetch: () => Promise<unknown>
+}
+
+/** The report set derived together from one consolidated accounting ledger. */
+export interface AccountingReports {
+  /** Roll-up totals for the summary cards. */
+  summary: AccountingSummary
+  /** Double-entry journal + trial balance. */
+  generalLedger: GeneralLedger
+  incomeStatement: IncomeStatement
+  balanceSheet: BalanceSheet
 }
 
 /** One contract generation that could not be loaded, for the UI gap warning. */
@@ -390,10 +396,12 @@ export function useCNCAccounting(
 
   return {
     entries,
-    summary: computed(() => accounting.value.summary),
-    generalLedger: computed(() => accounting.value.generalLedger),
-    incomeStatement: computed(() => accounting.value.incomeStatement),
-    balanceSheet: computed(() => accounting.value.balanceSheet),
+    reports: computed<AccountingReports>(() => ({
+      summary: accounting.value.summary,
+      generalLedger: accounting.value.generalLedger,
+      incomeStatement: accounting.value.incomeStatement,
+      balanceSheet: accounting.value.balanceSheet
+    })),
     isLoading,
     error,
     reconciliationGaps,

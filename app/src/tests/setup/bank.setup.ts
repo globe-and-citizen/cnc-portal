@@ -6,9 +6,8 @@ import { mockBankReads, mockBankWrites } from '../mocks/contract.mock'
 const MOCK_BANK_ADDRESS = '0x2234567890123456789012345678901234567890' as Address
 
 /**
- * Mock Bank read composables. Only `useBankAddress` is consumed today;
- * `useBankPaused`/`useBankOwner`/`useBankSupportedTokens` are dead — see
- * src/composables/bank/reads.ts for the commented-out definitions.
+ * Mock Bank read composables. `useBankPaused`/`useBankSupportedTokens` are dead —
+ * see src/composables/bank/reads.ts for the commented-out definitions.
  */
 vi.mock('@/composables/bank/reads', () => ({
   useBankAddress: vi.fn(() => computed(() => MOCK_BANK_ADDRESS)),

@@ -6,14 +6,12 @@
 
 ## Problem
 
-The platform documentation (especially architecture.md) mentions diagrams and architecture overviews
-but may lack actual visual diagrams. Visual representations help developers understand the system
-structure more quickly than text descriptions.
+The platform documentation (especially architecture.md) mentions diagrams and architecture overviews but may lack actual visual diagrams.
+Visual representations help developers understand the system structure more quickly than text descriptions.
 
 ## Solution
 
-Create or enhance visual diagrams for key architectural concepts using Mermaid (markdown-compatible)
-or include links to external diagrams.
+Create or enhance visual diagrams for key architectural concepts using Mermaid (markdown-compatible) or include links to external diagrams.
 
 ## AI Prompt
 
@@ -137,7 +135,7 @@ grep -c "```mermaid" /Users/test/Documents/data/gc/cnc-portal/docs/platform/arch
 If time permits, consider adding diagrams to other files:
 
 - `/docs/platform/security.md` - Security architecture diagram
-- `/docs/features/stats/functional-specification.md` - Stats data flow
+- `/docs/features/backoffice/statistics/functional-specification.md` - Stats data flow
 - `/docs/platform/deployment.md` - Deployment pipeline diagram
 
 ## Expected Result

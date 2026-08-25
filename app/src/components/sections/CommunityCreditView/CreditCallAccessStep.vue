@@ -87,7 +87,7 @@
           placeholder="10000"
           class="w-full"
           data-test="cc-cap"
-          @update:model-value="(v) => (form.cap = String(v))"
+          @update:model-value="(value: string | number) => (form.cap = String(value))"
         >
           <template #trailing>
             <span class="text-muted text-xs font-bold">{{ form.token }}</span>

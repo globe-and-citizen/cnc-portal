@@ -112,7 +112,9 @@
           placeholder="180"
           class="max-w-30"
           data-test="cc-term-value"
-          @update:model-value="(val) => recalcPeriod(String(val ?? ''), form.periodUnit)"
+          @update:model-value="
+            (value: string | number) => recalcPeriod(String(value), form.periodUnit)
+          "
         />
         <div
           class="border-default bg-muted flex max-w-[260px] flex-1 gap-0.5 rounded-lg border p-0.5"

@@ -1,11 +1,11 @@
 # CNC Accounting — Full Test Scenario
 
-One continuous scenario to exercise **every** money flow of the CNC, from 1 to N.
-Do each step in order. Keep amounts small so the maths stays easy to check.
-Extends the Sprint Script in
-[#2255](https://github.com/globe-and-citizen/cnc-portal/issues/2255) to cover all use cases.
+One continuous scenario to exercise **every** money flow of the CNC, from 1 to N. Do each step in order. Keep amounts small so the maths
+stays easy to check. Extends the Sprint Script in [#2255](https://github.com/globe-and-citizen/cnc-portal/issues/2255) to cover all use
+cases.
 
-- [ ] **1.** Create a team with the six contracts deployed (Bank, FeeCollector, CashRemuneration, ExpenseAccount, InvestorV1, SafeDepositRouter + Safe).
+- [ ] **1.** Create a team with the six contracts deployed (Bank, FeeCollector, CashRemuneration, ExpenseAccount, InvestorV1,
+      SafeDepositRouter + Safe).
 - [ ] **2.** A founder deposits **$4** into the **Bank**.
 - [ ] **3.** Hermann, Georges and Achille each **invest $2** and get SHER (2 SHER for $2) via the **SafeDepositRouter**.
 - [ ] **4.** A member sends **$2 straight to the Safe** (no router) to invest.
@@ -25,7 +25,7 @@ Extends the Sprint Script in
 - [ ] **18.** Approve a **one-time** expense budget for Hermann; Hermann **withdraws $1.25**.
 - [ ] **19.** Approve a **recurring (weekly)** budget and **withdraw part** of it.
 - [ ] **20.** Send **$0.75 back from Expense to Bank**.
-- [ ] **21.** Open a **debt issuance** to raise **$8**.
+- [ ] **21.** Open a **Community Credit borrowing round** to raise **$8**.
 - [ ] **22.** Achille, Ravi, Hermann and Georges each **lend $2 @ 4% for 1 day**.
 - [ ] **23.** The funded offer **sweeps its principal to the Bank**.
 - [ ] **24.** Ravi **releases the funds to repay** the lenders with interest.

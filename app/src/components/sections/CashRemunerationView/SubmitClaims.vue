@@ -25,15 +25,18 @@
     <template #body>
       <div class="mb-20 flex flex-col gap-4">
         <ClaimForm
-          ref="claimFormRef"
           :initial-data="formInitialData"
-          :is-loading="isWageClaimAdding"
-          :disabled-week-starts="props.signedWeekStarts"
-          :restrict-submit="isRestricted"
-          :maximum-hours-per-day="props.maximumHoursPerDay"
-          :existing-claims="props.existingClaims"
-          :error-message="addWageClaimError && errorMessage ? errorMessage.message : ''"
-          error-title="Failed to submit claim"
+          :loading="isWageClaimAdding"
+          :submission-rules="{
+            disabledWeekStarts: props.signedWeekStarts,
+            restrictSubmit: isRestricted,
+            maximumHoursPerDay: props.maximumHoursPerDay,
+            existingClaims: props.existingClaims
+          }"
+          :error="{
+            message: addWageClaimError && errorMessage ? errorMessage.message : '',
+            title: 'Failed to submit claim'
+          }"
           @submit="handleSubmit"
         />
       </div>
@@ -66,7 +69,6 @@ const modal = ref({
 })
 const errorMessage = ref<{ message: string } | null>(null)
 const addWageClaimError = ref(false)
-const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const resolveInitialDayWorked = (selectedWeekStart?: string): string => {
   const today = dayjs.utc().startOf('day')
   if (!selectedWeekStart) return today.toISOString()
@@ -116,7 +118,6 @@ const openModalForDay = (dayIso: string) => {
 }
 
 const closeModal = () => {
-  claimFormRef.value?.resetForm()
   errorMessage.value = null
   addWageClaimError.value = false
   modal.value = { mount: false, show: false }
@@ -223,11 +224,5 @@ onMounted(async () => {
   }
 })
 
-defineExpose({
-  handleSubmit,
-  modal,
-  errorMessage,
-  formInitialData,
-  openModalForDay
-})
+defineExpose({ openModalForDay })
 </script>

@@ -7,8 +7,8 @@
 
 ## Testing Philosophy
 
-The CNC Portal follows a comprehensive testing strategy prioritizing behavior-driven testing over
-implementation details. All features should have proper test coverage before deployment.
+The CNC Portal follows a comprehensive testing strategy prioritizing behavior-driven testing over implementation details. All features
+should have proper test coverage before deployment.
 
 ## Testing Framework Stack
 
@@ -285,4 +285,4 @@ const SELECTORS = {
 
 For detailed testing patterns and examples, see `.github/copilot-instructions/testing-*.md` files.
 
-For feature-specific testing requirements, see individual feature specifications.
+For feature-specific review criteria and evidence, see the canonical feature README.

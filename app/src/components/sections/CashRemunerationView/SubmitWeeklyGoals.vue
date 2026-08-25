@@ -154,6 +154,4 @@ const handleSubmit = async () => {
     errorMessage.value = getAxiosErrorMessage(error, 'Failed to save weekly goals')
   }
 }
-
-defineExpose({ modal, goals, handleSubmit, openModal })
 </script>

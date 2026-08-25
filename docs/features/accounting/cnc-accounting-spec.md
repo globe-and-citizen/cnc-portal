@@ -1,14 +1,11 @@
 # CNC Accounting — Spec & Scope (Phase 1)
 
-This document defines the **scope** and **spec** for CNC accounting: treating the CNC as a company
-and producing its financial statements (general ledger → income statement → balance sheet) from data
-**already available** on-chain and in the portal, reusing the Sprint 15 pipeline. The shared
-`FeeCollector` is the CNC protocol's global treasury: each team pays a usage fee into it when using
-CNC services.
+This document defines the **scope** and **spec** for CNC accounting: treating the CNC as a company and producing its financial statements
+(general ledger → income statement → balance sheet) from data **already available** on-chain and in the portal, reusing the Sprint 15
+pipeline. The shared `FeeCollector` is the CNC protocol's global treasury: each team pays a usage fee into it when using CNC services.
 
-It builds on the [money-flow catalogue](./money-flow-catalogue.md), which establishes the chart of
-accounts and the use-case → journal-entry mapping. This spec answers the next question: **which
-concrete data sources we already have feed those entries, and what is still missing.**
+It builds on the [money-flow catalogue](./money-flow-catalogue.md), which establishes the chart of accounts and the use-case → journal-entry
+mapping. This spec answers the next question: **which concrete data sources we already have feed those entries, and what is still missing.**
 
 ---
 
@@ -16,22 +13,19 @@ concrete data sources we already have feed those entries, and what is still miss
 
 ### In scope — the CNC's own books
 
-We keep **one consolidated set of books for the CNC entity**: its treasury contracts plus its equity
-contract (see [money-flow-catalogue §1](./money-flow-catalogue.md)). Phase 1 produces the three
-statements from data we **already capture today** — on-chain contract activity and portal records —
-with no new data collection required to get a first end-to-end result.
+We keep **one consolidated set of books for the CNC entity**: its treasury contracts plus its equity contract (see
+[money-flow-catalogue §1](./money-flow-catalogue.md)). Phase 1 produces the three statements from data we **already capture today** —
+on-chain contract activity and portal records — with no new data collection required to get a first end-to-end result.
 
 ### Explicitly out of scope (deferred)
 
-- **Polymarket / GC:Trader activity.** A CNC team effectively has a GC:Trader account, so the CNC's
-  _total_ accounting should eventually fold in the GC:Trader (Polymarket) books. This is
-  **deferred** — both because of effort and because the surface for Polymarket accounting (a
-  GC:Trader project vs. a dedicated app) is itself undecided
-  ([#2078](https://github.com/globe-and-citizen/cnc-portal/issues/2078)). In the worked example the
-  `Trading account` / `Trading Gain` / `Trading Loss` lines stand in for an external trader at cost;
-  the live Polymarket position feed is **not** consolidated here.
-- **Governance / wiring contracts** that move no money: `BoardOfDirectors`, `Proposals`,
-  `Elections`, `Officer`, `Voting`, proxies/beacons. `Officer` is read-only (fee lookup).
+- **Polymarket / GC:Trader activity.** A CNC team effectively has a GC:Trader account, so the CNC's _total_ accounting should eventually
+  fold in the GC:Trader (Polymarket) books. This is **deferred** — both because of effort and because the surface for Polymarket accounting
+  (a GC:Trader project vs. a dedicated app) is itself undecided ([#2078](https://github.com/globe-and-citizen/cnc-portal/issues/2078)). In
+  the worked example the `Trading account` / `Trading Gain` / `Trading Loss` lines stand in for an external trader at cost; the live
+  Polymarket position feed is **not** consolidated here.
+- **Governance / wiring contracts** that move no money: `BoardOfDirectors`, `Proposals`, `Elections`, `Officer`, `Voting`, proxies/beacons.
+  `Officer` is read-only (fee lookup).
 - **Deployed-but-unused contracts.** Only contracts the CNC actually uses are catalogued.
 
 ### Reporting boundary
@@ -48,9 +42,8 @@ with no new data collection required to get a first end-to-end result.
 
 ## 2. Reusing the Sprint 15 pipeline
 
-Sprint 15 ([#1862](https://github.com/globe-and-citizen/cnc-portal/issues/1862)) built a pipeline
-that reconstructs accounting for a Polymarket wallet from raw feeds. The shape is reusable; only the
-**feeds** and the **categorisation** change.
+Sprint 15 ([#1862](https://github.com/globe-and-citizen/cnc-portal/issues/1862)) built a pipeline that reconstructs accounting for a
+Polymarket wallet from raw feeds. The shape is reusable; only the **feeds** and the **categorisation** change.
 
 ```mermaid
 flowchart LR
@@ -69,18 +62,15 @@ flowchart LR
 ```
 
 Concretely, the existing `buildLedger` / `LedgerEntry` / `AccountingSummary` model in
-`[dashboard/app/utils/accounting.ts](../../../dashboard/app/utils/accounting.ts)` and the statement
-components in
-`[dashboard/app/components/accounting/](../../../dashboard/app/components/accounting/)`
-(`AccountingLedger`, `AccountingTrialBalance`, `AccountingIncomeStatement`,
-`AccountingBalanceSheet`) are the target rendering layer. Phase 1 work is to:
+`[dashboard/app/utils/accounting.ts](../../../dashboard/app/utils/accounting.ts)` and the statement components in
+`[dashboard/app/components/accounting/](../../../dashboard/app/components/accounting/)` (`AccountingLedger`, `AccountingTrialBalance`,
+`AccountingIncomeStatement`, `AccountingBalanceSheet`) are the target rendering layer. Phase 1 work is to:
 
 1. Add **CNC feeds** (contract events + the portal DB rows) alongside the existing transfer proxy.
-2. Replace the Polymarket `LedgerCategory` set with the CNC **use-case categories** from the
-   money-flow catalogue (`UC-BANK-01…`, `UC-CASH-02/03`, `UC-EXP-01`, `UC-INV-01`, `UC-SDR-01`, team
-   funding moves, and cross-entity fee payments).
-3. Map each entry to its **debit/credit accounts** per [catalogue §5](./money-flow-catalogue.md) and
-   let the existing trial-balance / IS / BS components roll them up.
+2. Replace the Polymarket `LedgerCategory` set with the CNC **use-case categories** from the money-flow catalogue (`UC-BANK-01…`,
+   `UC-CASH-02/03`, `UC-EXP-01`, `UC-INV-01`, `UC-SDR-01`, team funding moves, and cross-entity fee payments).
+3. Map each entry to its **debit/credit accounts** per [catalogue §5](./money-flow-catalogue.md) and let the existing trial-balance / IS /
+   BS components roll them up.
 
 ---
 
@@ -90,12 +80,10 @@ Two source families feed the ledger today.
 
 ### 3.1 On-chain (events + transfers)
 
-Every monetary interaction in [catalogue §3](./money-flow-catalogue.md) emits an event, and every
-value move is also an on-chain transfer. Source of truth = the chain; the dashboard already proxies
-transfer history via
-`[server/api/polygonscan/transfers.get.ts](../../../dashboard/server/api/polygonscan/transfers.get.ts)`
-(Etherscan API V2, native + ERC-20). Contract addresses come from
-`app/src/artifacts/deployed_addresses/` and the `TeamContract` table.
+Every monetary interaction in [catalogue §3](./money-flow-catalogue.md) emits an event, and every value move is also an on-chain transfer.
+Source of truth = the chain; the dashboard already proxies transfer history via
+`[server/api/polygonscan/transfers.get.ts](../../../dashboard/server/api/polygonscan/transfers.get.ts)` (Etherscan API V2, native + ERC-20).
+Contract addresses come from `app/src/artifacts/deployed_addresses/` and the `TeamContract` table.
 
 | Contract                   | Key events available                                                                        | What it tells the ledger                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -106,16 +94,15 @@ transfer history via
 | **InvestorV1**             | `Minted`, `DividendDistributed`, `DividendPaid`                                             | SHER mints (3 paths), pro-rata dividend distribution                                      |
 | **SafeDepositRouter**      | `Deposited`                                                                                 | Invest → SHER mint (cash lands in Safe)                                                   |
 
-> The `**Minted` event** alone is ambiguous (capital raise vs. wage-in-shares vs. direct mint) — it
-> must be correlated with `Deposited` (SafeDepositRouter) or `WithdrawToken` (CashRemuneration) to
-> pick the right journal entry, per [catalogue §5.4](./money-flow-catalogue.md). A `Minted` with
-> neither is **Default D** — a direct mint booked **Dr SHERS To Be Issued · Cr Investor Equity** at
-> the SHER rate.
+> The `**Minted` event** alone is ambiguous (capital raise vs. wage-in-shares vs. direct mint) — it must be correlated with `Deposited`
+> (SafeDepositRouter) or `WithdrawToken` (CashRemuneration) to pick the right journal entry, per
+> [catalogue §5.4](./money-flow-catalogue.md). A `Minted` with neither is **Default D** — a direct mint booked **Dr SHERS To Be Issued · Cr
+> Investor Equity** at the SHER rate.
 
 ### 3.2 Portal database (accrual + classification context)
 
-The chain records _when money moved_; the portal records _what it was for_ and the accrual side
-payroll needs. From `[backend/prisma/schema.prisma](../../../backend/prisma/schema.prisma)`:
+The chain records _when money moved_; the portal records _what it was for_ and the accrual side payroll needs. From
+`[backend/prisma/schema.prisma](../../../backend/prisma/schema.prisma)`:
 
 | Model            | Feeds                                                            | Notes                                                                                                               |
 | ---------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -125,16 +112,16 @@ payroll needs. From `[backend/prisma/schema.prisma](../../../backend/prisma/sche
 | **Expense**      | `data` (JSON), `status`, signature, `userAddress`                | The approved budget / category context behind an ExpenseAccount payout (UC-EXP-01)                                  |
 | **TeamContract** | contract `address`, `type`, `teamId`                             | Resolves which on-chain addresses belong to which team's books                                                      |
 
-> The **accrual gap** matters: a wage is _earned_ when the weekly claim is signed (portal,
-> UC-CASH-02) but _paid_ when the employee withdraws (chain, UC-CASH-03). Booking both requires
-> joining the portal `WeeklyClaim`/`Claim` rows to the on-chain `Withdraw` / `WithdrawToken` events.
+> The **accrual gap** matters: a wage is _earned_ when the weekly claim is signed (portal, UC-CASH-02) but _paid_ when the employee
+> withdraws (chain, UC-CASH-03). Booking both requires joining the portal `WeeklyClaim`/`Claim` rows to the on-chain `Withdraw` /
+> `WithdrawToken` events.
 
 ---
 
 ## 4. Source → statement line-item mapping
 
-Each available source maps to a journal entry (catalogue §5) and thus to a statement line. **IS** =
-income statement, **BS** = balance sheet.
+Each available source maps to a journal entry (catalogue §5) and thus to a statement line. **IS** = income statement, **BS** = balance
+sheet.
 
 | Source (event / record)                                          | Use case   | Journal entry                                                                                          | Statement line(s)                                                      |
 | ---------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
@@ -149,10 +136,9 @@ income statement, **BS** = balance sheet.
 | InvestorV1 `Minted` alone (direct mint)                          | Default D  | Dr SHERS To Be Issued · Cr Investor Equity (at the SHER rate, frozen at mint date)                     | BS: Investor Equity ↑ (unbacked mint drives SHERS To Be Issued contra) |
 | Bank transfer + FeeCollector `FeePaid` (team usage fee)          | UC-FEE-01  | Team: Dr CNC Usage Fee Expense · Cr Cash — Bank; CNC: Dr Cash — FeeCollector · Cr Protocol Fee Revenue | Team IS: expense; CNC IS: protocol-fee revenue; both BS: cash movement |
 
-> **Trading lines** (`Trading account`, `Trading Gain`, `Trading Loss`, UC-TRD-) are in the chart of
-> accounts and the worked example, but their live feed is the deferred Polymarket/GC:Trader
-> integration — see §1. In Phase 1 they are only exercised by manual / dogfood entries, not an
-> automated source.
+> **Trading lines** (`Trading account`, `Trading Gain`, `Trading Loss`, UC-TRD-) are in the chart of accounts and the worked example, but
+> their live feed is the deferred Polymarket/GC:Trader integration — see §1. In Phase 1 they are only exercised by manual / dogfood entries,
+> not an automated source.
 
 > **Manual classification overrides the inference (issue #2457).** Every Bank/Safe deposit and
 > withdrawal above is booked from address inference — the **visible fallback**. A team owner can
@@ -169,9 +155,8 @@ income statement, **BS** = balance sheet.
 
 ### 5.1 Fees
 
-A fee on a Bank transfer is paid by the team's `Bank` to the shared global `FeeCollector`. It is
-therefore a **cross-entity charge**, not an internal move within the team. The team books a CNC
-usage expense; the CNC protocol books protocol-fee revenue.
+A fee on a Bank transfer is paid by the team's `Bank` to the shared global `FeeCollector`. It is therefore a **cross-entity charge**, not an
+internal move within the team. The team books a CNC usage expense; the CNC protocol books protocol-fee revenue.
 
 ```
 TEAM BOOKS
@@ -183,15 +168,13 @@ Dr Cash — FeeCollector     (fee)
    Cr Protocol Fee Revenue (fee)
 ```
 
-The `FeePaid` event identifies the contract type and payer. The payer's `TeamContract` association
-supplies the team attribution for the team-side expense, while the `FeeCollector` event supplies the
-CNC-side revenue and cash entry.
+The `FeePaid` event identifies the contract type and payer. The payer's `TeamContract` association supplies the team attribution for the
+team-side expense, while the `FeeCollector` event supplies the CNC-side revenue and cash entry.
 
 ### 5.2 Expense categories
 
-Expenses are recognised **cash basis** (when paid), Dr `Operating Expense` · Cr the funding pocket.
-The goal issue calls out explicit categories so the income statement breaks expenses down rather
-than lumping them into one line:
+Expenses are recognised **cash basis** (when paid), Dr `Operating Expense` · Cr the funding pocket. The goal issue calls out explicit
+categories so the income statement breaks expenses down rather than lumping them into one line:
 
 | Category                       | What it covers                          | Source today                                                    | Phase                                               |
 | ------------------------------ | --------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------- |
@@ -200,9 +183,8 @@ than lumping them into one line:
 | **Ponder (infra)**             | Indexer / hosting / infrastructure cost | **not captured on-chain** — paid off-platform                   | Phase 2                                             |
 | **Debt (interest)**            | Cost of borrowing from the members      | FixedReturn (Community Credit) events + `getLendingOffer` terms | Phase 1 (`Interest Expense`, recognised at funding) |
 
-Phase 1 books **payroll**, **operating** and **debt (interest)** expenses from existing data.
-**Ponder (infra)** is named here for the chart of accounts but has no data feed yet — it is a gap
-(§6). Until then it requires manual journal entries if reported at all.
+Phase 1 books **payroll**, **operating** and **debt (interest)** expenses from existing data. **Ponder (infra)** is named here for the chart
+of accounts but has no data feed yet — it is a gap (§6). Until then it requires manual journal entries if reported at all.
 
 ---
 
@@ -234,8 +216,7 @@ What complete company accounting needs that we **don't yet capture**:
   ```
   and statement line (§4).
   ```
-- [x] **Fees & expenses booking** — team CNC usage fees as cross-entity charges; expense categories
-      incl. Ponder
+- [x] **Fees & expenses booking** — team CNC usage fees as cross-entity charges; expense categories incl. Ponder
   ```
   (infra), payroll, debt (interest) (§5).
   ```

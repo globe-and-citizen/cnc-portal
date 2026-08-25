@@ -19,104 +19,24 @@
     <SafeTransactionFeedback
       :has-error="!!error"
       :is-loading="isLoading"
-      :is-empty="displayedTransactions.length === 0"
+      :is-empty="displayedTransactionRows.length === 0"
       :selected-status="selectedStatus"
       :empty-description="emptyStateDescription"
       @retry="refetchTransactions"
       @clear="clearFilter"
     />
 
-    <template v-if="!isLoading && !error && displayedTransactions.length > 0">
-      <div class="hidden overflow-x-auto md:block">
-        <UTable
-          :data="displayedTransactions"
-          :columns="columns"
-          data-test="safe-transactions-table"
-        >
-          <template #transaction-cell="{ row: { original: row } }">
-            <div class="min-w-44">
-              <p class="font-medium capitalize">{{ getSafeTransactionMethod(row) }}</p>
-              <div class="mt-1 flex items-center gap-1 text-xs text-gray-500">
-                <span>To</span>
-                <AddressToolTip :address="row.to" slice />
-              </div>
-            </div>
-          </template>
-
-          <template #value-cell="{ row: { original: row } }">
-            <span>
-              {{
-                formatSafeTransactionValue(
-                  row.value.toString(),
-                  row.dataDecoded ?? undefined,
-                  row.to
-                )
-              }}
-            </span>
-          </template>
-
-          <template #approvals-cell="{ row: { original: row } }">
-            <div class="min-w-28" data-test="safe-transaction-approval-progress">
-              <p class="text-sm font-medium">
-                {{ row.confirmations?.length || 0 }} of {{ requiredConfirmations(row) }}
-              </p>
-              <div
-                class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800"
-                role="progressbar"
-                :aria-label="`Transaction approval progress: ${row.confirmations?.length || 0} of ${requiredConfirmations(row)}`"
-                :aria-valuenow="row.confirmations?.length || 0"
-                aria-valuemin="0"
-                :aria-valuemax="requiredConfirmations(row)"
-              >
-                <div
-                  class="bg-primary h-full rounded-full"
-                  :style="{ width: confirmationProgress(row) }"
-                />
-              </div>
-            </div>
-          </template>
-
-          <template #status-cell="{ row: { original: row } }">
-            <div class="max-w-52 space-y-1.5">
-              <UBadge
-                :color="getTransactionState(row).color"
-                variant="soft"
-                size="sm"
-                data-test="safe-transaction-state"
-              >
-                {{ getTransactionState(row).label }}
-              </UBadge>
-              <p class="text-xs text-gray-500">{{ getTransactionState(row).nextStep }}</p>
-            </div>
-          </template>
-
-          <template #updated-cell="{ row: { original: row } }">
-            <span class="text-sm whitespace-nowrap text-gray-500">
-              {{ formatDateRelative(row.modified) }}
-            </span>
-          </template>
-
-          <template #actions-cell="{ row: { original: row } }">
-            <SafeTransactionActions
-              v-bind="getTransactionPermissions(row)"
-              :is-approving="isTransactionLoading(row.safeTxHash, 'approve')"
-              :is-executing="isTransactionLoading(row.safeTxHash, 'execute')"
-              :actions-disabled="isApproving || isExecuting"
-              @view="handleViewDetailsClick(row)"
-              @approve="handleApproveClick(row)"
-              @execute="handleExecuteClick(row)"
-            />
-          </template>
-        </UTable>
-      </div>
+    <template v-if="!isLoading && !error && displayedTransactionRows.length > 0">
+      <SafeTransactionsTable
+        :transactions="displayedTransactionRows"
+        :actions-disabled="isApproving || isExecuting"
+        @view="handleViewDetailsClick"
+        @approve="handleApproveClick"
+        @execute="handleExecuteClick"
+      />
 
       <SafeTransactionMobileList
-        :transactions="displayedTransactions"
-        :get-state="getTransactionState"
-        :get-permissions="getTransactionPermissions"
-        :required-confirmations="requiredConfirmations"
-        :confirmation-progress="confirmationProgress"
-        :is-transaction-loading="isTransactionLoading"
+        :transactions="displayedTransactionRows"
         :actions-disabled="isApproving || isExecuting"
         @view="handleViewDetailsClick"
         @approve="handleApproveClick"
@@ -135,12 +55,12 @@
     </template>
 
     <SafeTransactionsWarning
-      v-if="showConflictWarning"
-      v-model="showConflictWarning"
+      v-if="pendingConflictAction"
+      :model-value="true"
       :is-executing="isExecuting || isApproving"
-      :action="conflictActionLabel"
+      :action="pendingConflictAction.action"
+      @update:model-value="(isOpen) => !isOpen && handleCancelAction()"
       @confirm="handleConfirmAction"
-      @cancel="handleCancelAction"
       data-test="conflict-warning-modal"
     />
 
@@ -158,27 +78,30 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
+import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import TablePagination from '@/components/TablePagination.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
-import SafeTransactionActions from './SafeTransactionActions.vue'
 import SafeTransactionStatusFilter from './SafeTransactionStatusFilter.vue'
 import SafeTransactionMobileList from './SafeTransactionMobileList.vue'
 import SafeTransactionFeedback from './SafeTransactionFeedback.vue'
+import SafeTransactionsTable from './SafeTransactionsTable.vue'
 import { usePagination } from '@/composables/usePagination'
 import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
-import { useSafeTransactionConflicts } from '@/composables/safe/useSafeTransactionConflicts'
-import { useSafeTransactionActions } from '@/composables/safe/useSafeTransactionActions'
-import { formatSafeTransactionValue, getSafeTransactionMethod, log } from '@/utils'
-import { formatDateRelative } from '@/utils/format'
 import {
-  getSafeTransactionPermissions,
+  useApproveTransactionMutation,
+  useExecuteTransactionMutation
+} from '@/queries/safe.mutations'
+import { log } from '@/utils'
+import {
   getSafeTransactionFilterCounts,
   getSafeTransactionState,
+  hasConflictingSafeTransactions,
   matchesSafeTransactionFilter,
+  willSafeTransactionApprovalCauseConflict,
+  buildSafeTransactionQueueRows,
+  type SafeTransactionQueueRow,
   type SafeTransactionStateMeta,
   type SafeTransactionStatusFilter as SafeTransactionFilterValue
 } from '@/utils/safeTransactionState'
@@ -194,15 +117,10 @@ const userDataStore = useUserDataStore()
 const selectedStatus = ref<SafeTransactionFilterValue>('needs-action')
 const showDetailsModal = ref(false)
 const selectedTransactionForDetails = ref<SafeTransaction | null>(null)
-
-const columns: TableColumn<SafeTransaction>[] = [
-  { accessorKey: 'transaction', header: 'Transaction' },
-  { accessorKey: 'value', header: 'Value' },
-  { accessorKey: 'approvals', header: 'Approvals' },
-  { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'updated', header: 'Updated' },
-  { accessorKey: 'actions', header: 'Action' }
-]
+const pendingConflictAction = ref<{
+  action: 'approve' | 'execute'
+  transaction: SafeTransaction
+} | null>(null)
 
 const {
   data: transactions,
@@ -217,24 +135,13 @@ const { data: safeInfo } = useGetSafeInfoQuery({
   pathParams: { safeAddress: computed(() => props.address) }
 })
 
-const { currentSafeNonce, hasConflictingTransactions, willApprovalCauseConflict } =
-  useSafeTransactionConflicts(computed(() => props.address))
-
-const {
-  isApproving,
-  isExecuting,
-  showConflictWarning,
-  conflictActionLabel,
-  isTransactionLoading,
-  handleApproveClick,
-  handleExecuteClick,
-  handleConfirmAction,
-  handleCancelAction
-} = useSafeTransactionActions({
-  safeAddress: computed(() => props.address),
-  hasConflictingTransactions,
-  willApprovalCauseConflict
-})
+const chainId = useChainId()
+const toast = useToast()
+const { mutate: approve, isPending: isApproving } = useApproveTransactionMutation()
+const { mutate: execute, isPending: isExecuting } = useExecuteTransactionMutation()
+const approvingTransactions = ref<Set<string>>(new Set())
+const executingTransactions = ref<Set<string>>(new Set())
+const currentSafeNonce = computed(() => safeInfo.value?.nonce ?? 0)
 
 const isConnectedUserOwner = computed(() => {
   if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
@@ -243,41 +150,48 @@ const isConnectedUserOwner = computed(() => {
   )
 })
 
-const requiredConfirmations = (transaction: SafeTransaction) =>
-  transaction.confirmationsRequired || safeInfo.value?.threshold || 0
+const getConflictContext = () => ({
+  currentNonce: currentSafeNonce.value,
+  threshold: safeInfo.value?.threshold,
+  transactions: transactions.value ?? []
+})
 
 const getTransactionState = (transaction: SafeTransaction): SafeTransactionStateMeta =>
   getSafeTransactionState(transaction, {
     currentNonce: currentSafeNonce.value,
     threshold: safeInfo.value?.threshold,
-    hasConflict: hasConflictingTransactions(transaction)
+    hasConflict: hasConflictingSafeTransactions(transaction, getConflictContext())
   })
 
-const getTransactionPermissions = (transaction: SafeTransaction) =>
-  getSafeTransactionPermissions(transaction, {
-    state: getTransactionState(transaction).state,
+const isTransactionLoading = (safeTxHash: string, action: 'approve' | 'execute'): boolean =>
+  action === 'approve'
+    ? approvingTransactions.value.has(safeTxHash) && isApproving.value
+    : executingTransactions.value.has(safeTxHash) && isExecuting.value
+
+const transactionRows = computed<SafeTransactionQueueRow[]>(() =>
+  buildSafeTransactionQueueRows({
+    ...getConflictContext(),
     isSigner: isConnectedUserOwner.value,
     connectedAddress: userDataStore.address,
-    threshold: safeInfo.value?.threshold
+    isTransactionLoading
   })
+)
 
-const filteredTransactions = computed(() =>
-  (transactions.value ?? []).filter((transaction) =>
-    matchesSafeTransactionFilter(getTransactionState(transaction).state, selectedStatus.value)
+const filteredTransactionRows = computed(() =>
+  transactionRows.value.filter((row) =>
+    matchesSafeTransactionFilter(row.state.state, selectedStatus.value)
   )
 )
 
 const transactionCounts = computed(() =>
-  getSafeTransactionFilterCounts(
-    (transactions.value ?? []).map((transaction) => getTransactionState(transaction).state)
-  )
+  getSafeTransactionFilterCounts(transactionRows.value.map((row) => row.state.state))
 )
 
-const total = computed(() => filteredTransactions.value.length)
+const total = computed(() => filteredTransactionRows.value.length)
 const { page, pageSize, reset } = usePagination(() => total.value, { key: 'safeTx' })
-const displayedTransactions = computed(() => {
+const displayedTransactionRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
-  return filteredTransactions.value.slice(start, start + pageSize.value)
+  return filteredTransactionRows.value.slice(start, start + pageSize.value)
 })
 
 const emptyStateDescription = computed(() =>
@@ -288,13 +202,114 @@ const emptyStateDescription = computed(() =>
       : 'Choose another status to continue reviewing the Safe history.'
 )
 
-const confirmationProgress = (transaction: SafeTransaction) => {
-  const required = requiredConfirmations(transaction)
-  if (required <= 0) return '0%'
-  return `${Math.min(((transaction.confirmations?.length || 0) / required) * 100, 100)}%`
+const getTransactionErrorMessage = (error: unknown, fallback: string): string => {
+  const message = error instanceof Error ? error.message : fallback
+  return message.includes('User rejected') ? 'Transaction rejected' : message
 }
 
-watch(filteredTransactions, (transactionsList) => {
+const approveTransaction = (transaction: SafeTransaction) => {
+  approvingTransactions.value.add(transaction.safeTxHash)
+  approve(
+    {
+      pathParams: {
+        safeAddress: props.address,
+        safeTxHash: transaction.safeTxHash
+      },
+      queryParams: {
+        chainId: chainId.value
+      }
+    },
+    {
+      onSuccess: () => {
+        toast.add({
+          title: 'Success',
+          description: 'Transaction approved successfully',
+          color: 'success'
+        })
+      },
+      onError: (error) => {
+        log.error('Failed to approve transaction:', error)
+        toast.add({
+          title: 'Error',
+          description: getTransactionErrorMessage(error, 'Failed to approve transaction'),
+          color: 'error'
+        })
+      },
+      onSettled: () => {
+        approvingTransactions.value.delete(transaction.safeTxHash)
+      }
+    }
+  )
+}
+
+const executeTransaction = (transaction: SafeTransaction) => {
+  executingTransactions.value.add(transaction.safeTxHash)
+  execute(
+    {
+      pathParams: {
+        safeAddress: props.address,
+        safeTxHash: transaction.safeTxHash
+      },
+      queryParams: {
+        chainId: chainId.value
+      },
+      body: {
+        transactionData: transaction
+      }
+    },
+    {
+      onSuccess: () => {
+        toast.add({
+          title: 'Success',
+          description: 'Transaction executed successfully',
+          color: 'success'
+        })
+      },
+      onError: (error) => {
+        log.error('Failed to execute transaction:', error)
+        toast.add({
+          title: 'Error',
+          description: getTransactionErrorMessage(error, 'Failed to execute transaction'),
+          color: 'error'
+        })
+      },
+      onSettled: () => {
+        executingTransactions.value.delete(transaction.safeTxHash)
+      }
+    }
+  )
+}
+
+const handleApproveClick = (transaction: SafeTransaction) => {
+  if (willSafeTransactionApprovalCauseConflict(transaction, getConflictContext())) {
+    pendingConflictAction.value = { action: 'approve', transaction }
+    return
+  }
+
+  approveTransaction(transaction)
+}
+
+const handleExecuteClick = (transaction: SafeTransaction) => {
+  if (hasConflictingSafeTransactions(transaction, getConflictContext())) {
+    pendingConflictAction.value = { action: 'execute', transaction }
+    return
+  }
+
+  executeTransaction(transaction)
+}
+
+const handleConfirmAction = () => {
+  const action = pendingConflictAction.value
+  if (!action) return
+
+  pendingConflictAction.value = null
+  if (action.action === 'approve') approveTransaction(action.transaction)
+  else executeTransaction(action.transaction)
+}
+
+const handleCancelAction = () => (pendingConflictAction.value = null)
+
+watch(filteredTransactionRows, (transactionsList) => {
   const maxPage = Math.max(1, Math.ceil(transactionsList.length / pageSize.value))
   if (page.value > maxPage) page.value = maxPage
 })

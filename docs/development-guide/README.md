@@ -4,6 +4,10 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 ## Contents
 
+### Database Tooling
+
+- **[Database Seeding](./database-seeding/README.md)** - Current flags, safety boundaries, and execution flow
+
 ### Testing
 
 - **[Testing Overview](../testing/)** - Main testing guide
@@ -12,12 +16,8 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 ### Code Standards
 
-- **[Vue.js Component Standards](./.github/copilot-instructions/vue-component-standards.md)** -
-  Component development guidelines
-- **[TypeScript Guidelines](./.github/copilot-instructions/typescript-guidelines.md)** - TypeScript
-  best practices
-- **[Web3 Integration](./.github/copilot-instructions/web3-integration.md)** - Web3 patterns and
-  utilities
+- **[Vue.js Component Standards](../../.github/copilot-instructions/vue-component-standards.md)** - Component development guidelines
+- **[Testing Overview](../../.github/copilot-instructions/testing-overview.md)** - Repository test conventions
 
 ## Quick Links
 
@@ -122,8 +122,7 @@ Before submitting a PR:
 - [ ] Component has proper accessibility (ARIA labels, keyboard nav)
 - [ ] No console errors or warnings
 - [ ] Documentation updated if API changed
-- [ ] Commit messages follow
-      [Conventional Commits](../.github/copilot-instructions/commit-conventions.md)
+- [ ] Commit messages follow [Conventional Commits](../../.github/copilot-instructions/commit-conventions.md)
 
 ## Resources
 
@@ -159,5 +158,5 @@ Before submitting a PR:
 
 ## Contributing
 
-Follow the development workflow and code review checklist when contributing. See
-[CONTRIBUTION.md](../../CONTRIBUTION.md) for full guidelines.
+Follow the development workflow and code review checklist when contributing. See [CONTRIBUTION.md](../../CONTRIBUTION.md) for full
+guidelines.

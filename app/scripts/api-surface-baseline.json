@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "limits": {
+    "componentProps": 7,
+    "componentExposedMembers": 0,
+    "composableReturnMembers": 8,
+    "composableDependencies": 4
+  },
+  "exceptions": [
+    {
+      "path": "src/components/sections/CashRemunerationView/SubmitClaims.vue",
+      "subject": "component",
+      "metric": "componentExposedMembers",
+      "allowed": 1
+    },
+    {
+      "path": "src/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue",
+      "subject": "component",
+      "metric": "componentExposedMembers",
+      "allowed": 1
+    },
+    {
+      "path": "src/components/sections/CommunityCreditView/CreditCallAccessStep.vue",
+      "subject": "component",
+      "metric": "componentExposedMembers",
+      "allowed": 1
+    },
+    {
+      "path": "src/components/sections/CommunityCreditView/CreditCallTermsStep.vue",
+      "subject": "component",
+      "metric": "componentExposedMembers",
+      "allowed": 1
+    },
+    {
+      "path": "src/components/sections/CommunityCreditView/RepayAmountPanel.vue",
+      "subject": "component",
+      "metric": "componentExposedMembers",
+      "allowed": 1
+    },
+    {
+      "path": "src/components/sections/ProposalsView/ProposalsList.vue",
+      "subject": "component",
+      "metric": "componentExposedMembers",
+      "allowed": 1
+    },
+    {
+      "path": "src/composables/useDatePicker.ts",
+      "subject": "useDatePicker",
+      "metric": "composableReturnMembers",
+      "allowed": 10
+    }
+  ]
+}

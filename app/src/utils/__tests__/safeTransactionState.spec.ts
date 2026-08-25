@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { SafeConfirmation, SafeTransaction } from '@/types/safe'
 import {
+  buildSafeTransactionQueueRows,
   getSafeTransactionFilterCounts,
   getSafeTransactionPermissions,
   getSafeTransactionState,
-  matchesSafeTransactionFilter
+  hasConflictingSafeTransactions,
+  matchesSafeTransactionFilter,
+  willSafeTransactionApprovalCauseConflict
 } from '@/utils/safeTransactionState'
 
 const signer = '0x1111111111111111111111111111111111111111'
@@ -69,6 +72,85 @@ describe('getSafeTransactionState', () => {
     expect(getSafeTransactionState(transaction, { currentNonce: 3 }).nextStep).toBe(
       '3 more signer approvals are required.'
     )
+  })
+})
+
+describe('Safe transaction conflicts', () => {
+  const conflictContext = (transactions: SafeTransaction[]) => ({
+    currentNonce: 3,
+    threshold: 2,
+    transactions
+  })
+
+  it('finds another pending transaction with a valid nonce', () => {
+    const transaction = makeTransaction({ safeTxHash: '0xfirst', nonce: 4 })
+    const otherPendingTransaction = makeTransaction({ safeTxHash: '0xsecond', nonce: 5 })
+
+    expect(
+      hasConflictingSafeTransactions(
+        transaction,
+        conflictContext([transaction, otherPendingTransaction])
+      )
+    ).toBe(true)
+  })
+
+  it('does not treat executed or stale transactions as conflicts', () => {
+    const transaction = makeTransaction({ safeTxHash: '0xfirst', nonce: 4 })
+    const executedTransaction = makeTransaction({
+      safeTxHash: '0xexecuted',
+      nonce: 5,
+      isExecuted: true
+    })
+    const staleTransaction = makeTransaction({ safeTxHash: '0xstale', nonce: 2 })
+
+    expect(
+      hasConflictingSafeTransactions(
+        transaction,
+        conflictContext([transaction, executedTransaction, staleTransaction])
+      )
+    ).toBe(false)
+  })
+
+  it('warns about an approval only when it reaches the required threshold', () => {
+    const transaction = makeTransaction({
+      safeTxHash: '0xfirst',
+      confirmations: [makeConfirmation(signer)]
+    })
+    const otherPendingTransaction = makeTransaction({ safeTxHash: '0xsecond', nonce: 5 })
+    const context = conflictContext([transaction, otherPendingTransaction])
+
+    expect(willSafeTransactionApprovalCauseConflict(transaction, context)).toBe(true)
+    expect(
+      willSafeTransactionApprovalCauseConflict(
+        makeTransaction({ safeTxHash: '0xthird', confirmations: [] }),
+        context
+      )
+    ).toBe(false)
+  })
+})
+
+describe('buildSafeTransactionQueueRows', () => {
+  it('prepares display and action data without passing callbacks to the list', () => {
+    const transaction = makeTransaction({ safeTxHash: '0xfirst' })
+    const rows = buildSafeTransactionQueueRows({
+      currentNonce: 3,
+      threshold: 2,
+      transactions: [transaction],
+      isSigner: true,
+      connectedAddress: signer,
+      isTransactionLoading: (safeTxHash, action) => safeTxHash === '0xfirst' && action === 'approve'
+    })
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        transaction,
+        requiredConfirmations: 2,
+        confirmationProgress: '0%',
+        isApproving: true,
+        isExecuting: false,
+        permissions: expect.objectContaining({ canApprove: true })
+      })
+    ])
   })
 })
 

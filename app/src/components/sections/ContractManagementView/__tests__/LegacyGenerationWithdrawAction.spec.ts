@@ -19,11 +19,9 @@ const LEGACY_CASH_REM = '0x00000000000000000000000000000000000000b3'
 // useCashOutAll.spec.ts; here we only drive the component UI from its state.
 const mockCashOut = {
   steps: ref<CashOutRunStep[]>([]),
-  currentIndex: ref(0),
   isRunning: ref(false),
   isComplete: ref(false),
   hasFailed: ref(false),
-  failedStep: ref<CashOutRunStep | null>(null),
   start: vi.fn(),
   retry: vi.fn(),
   reset: vi.fn()
