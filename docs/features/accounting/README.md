@@ -267,6 +267,7 @@ flowchart LR
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+- [Accounting backend feeds](../../../app/src/composables/accounting/useAccountingBackendFeeds.ts)
 - [Classification query](../../../app/src/queries/classification.queries.ts),
   [classification types](../../../app/src/types/accounting-classification.ts), and
   [classification assembly](../../../app/src/utils/accounting/classification.ts)
