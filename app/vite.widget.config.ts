@@ -19,11 +19,35 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
  * for the SPA build these settings deliberately diverge from).
  *
  * Build: `npm run build:widget` -> `dist-widget/widget.js`.
+ * Dev: `npm run dev:widget` -> serves `widget-dev/index.html` at `/`, opened
+ * automatically. `root` only moves in dev (`command === 'serve'`) — build
+ * keeps resolving `outDir`/`lib.entry` exactly as before, from `app/`.
+ * `widget-dev/index.html` can't be `app/index.html`: that one boots the main
+ * SPA (`src/main.ts` — router, stores, the main `wagmi.config.ts`), a
+ * completely different app from this standalone widget.
  */
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   // The SPA's `public/` (favicon, logos, …) has nothing to do with this
   // build — without this, Vite copies it into `dist-widget/` by default.
   publicDir: false,
+  ...(command === 'serve'
+    ? {
+        root: fileURLToPath(new URL('./widget-dev', import.meta.url)),
+        // `root` above moves where Vite looks for `.env` files too — without
+        // this, VITE_APP_NETWORK_ALIAS et al. from `app/.env` silently stop
+        // applying and NETWORK falls back to its default network.
+        envDir: fileURLToPath(new URL('.', import.meta.url)),
+        server: {
+          open: true,
+          // `root` above moves dev serving into `widget-dev/`, but the
+          // widget's real source lives one level up in `src/` — allow
+          // reaching outside `root` to serve it (Vite blocks that by
+          // default; see the `widget-entry` alias below for how the HTML
+          // reaches it in the first place).
+          fs: { allow: [fileURLToPath(new URL('.', import.meta.url))] }
+        }
+      }
+    : {}),
   plugins: [
     vue(),
     tailwindcss(),
@@ -44,6 +68,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Lets `widget-dev/index.html` reference the widget's real entry by a
+      // stable, portable specifier instead of a path relative to the dev
+      // `root` (which lives outside `src/`, one level up).
+      'widget-entry': fileURLToPath(new URL('./src/widget/main.ts', import.meta.url)),
       buffer: 'buffer/',
       crypto: 'crypto-browserify',
       stream: 'stream-browserify',
@@ -69,4 +97,4 @@ export default defineConfig({
       }
     }
   }
-})
+}))

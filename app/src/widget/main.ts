@@ -55,12 +55,14 @@ declare global {
   }
 }
 
-/** Reads `data-bank` / `data-token` off the <script> tag that loaded this file. */
+/**
+ * Reads `data-bank` / `data-token` off the widget's <script> tag. Found by
+ * attribute rather than `document.currentScript` — the latter is always
+ * `null` for a `type="module"` script (Vite's dev server), so this also
+ * works there, not just for the classic script tag production loads.
+ */
 function readScriptConfig(): { bankAddress: Address; tokenSymbol: string } | undefined {
-  // `document.currentScript` only reliably points at *this* <script> element
-  // while the script's top-level code is still running synchronously — which
-  // is exactly where we are right now, since this whole file runs top-level.
-  const script = document.currentScript as HTMLScriptElement | null
+  const script = document.querySelector<HTMLScriptElement>('script[data-bank]')
   const bankAddress = script?.dataset.bank
   const tokenSymbol = script?.dataset.token
   if (!script || !bankAddress || !tokenSymbol) {

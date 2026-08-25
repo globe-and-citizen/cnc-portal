@@ -1,0 +1,36 @@
+<!doctype html>
+<!--
+  Dev-only harness for the Payment Gate widget — not part of any build
+  (vite.widget.config.ts's `build.lib`/`publicDir: false` only apply to
+  `vite build`, so this directory is invisible to `npm run build:widget`).
+
+  Served by Vite's normal dev server: `npm run dev:widget` opens this
+  automatically. `entry.ts` imports the widget's real entry (aliased as
+  `widget-entry`, since it lives in `../src/widget/main.ts` — see
+  vite.widget.config.ts) as a live ES module with HMR, exactly like the main
+  app's `index.html` does for `src/main.ts`. It does not exercise the actual
+  built IIFE bundle; use `npm run preview:widget` for that.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Payment Gate widget — dev</title>
+  </head>
+  <body>
+    <div id="cnc-pay"></div>
+    <script
+      type="module"
+      src="/entry.ts"
+      data-bank="0x0000000000000000000000000000000000000000"
+      data-token="USDC"
+    ></script>
+    <script type="module">
+      CncPay.setFactureId('order_dev')
+      CncPay.setAmount('10.00')
+      CncPay.setOnStatus((status, extra) =>
+        console.log('[widget-dev] payment status', status, extra)
+      )
+      CncPay.show('#cnc-pay')
+    </script>
+  </body>
+</html>
