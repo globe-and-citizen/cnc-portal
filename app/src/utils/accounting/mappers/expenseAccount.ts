@@ -49,6 +49,9 @@ export interface ExpenseMapperInput {
 const EXPENSE = 'Cash — Expense' as const
 const BANK = 'Cash — Bank' as const
 
+/** Tag a native (token-less) row for a combined native + ERC-20 pass. */
+const nativeTag = <T>(row: T): { row: T; token: string | null } => ({ row, token: null })
+
 /** A pocket-to-pocket move that nets out of the income statement. */
 function internalMove(
   row: { id: string; amount: string; timestamp: number },
@@ -288,7 +291,7 @@ export function mapExpenseAccountEvents(
   const entries: LedgerEntry[] = []
 
   const deposits = [
-    ...(input.deposits ?? []).map((row) => ({ row, token: null as string | null })),
+    ...(input.deposits ?? []).map(nativeTag),
     ...(input.tokenDeposits ?? []).map((row) => ({ row, token: row.token }))
   ]
   for (const { row, token } of deposits) {
@@ -308,7 +311,7 @@ export function mapExpenseAccountEvents(
   // and thus the remaining-balance memo — is correct across native + token
   // withdrawals of the same budget.
   const payouts = [
-    ...(input.transfers ?? []).map((row) => ({ row, token: null as string | null })),
+    ...(input.transfers ?? []).map(nativeTag),
     ...(input.tokenTransfers ?? []).map((row) => ({ row, token: row.token }))
   ].sort((a, b) => a.row.timestamp - b.row.timestamp || a.row.id.localeCompare(b.row.id))
   for (const { row, token } of payouts) {
@@ -316,10 +319,7 @@ export function mapExpenseAccountEvents(
   }
 
   const sweeps = [
-    ...(input.ownerTreasuryWithdrawNatives ?? []).map((row) => ({
-      row,
-      token: null as string | null
-    })),
+    ...(input.ownerTreasuryWithdrawNatives ?? []).map(nativeTag),
     ...(input.ownerTreasuryWithdrawTokens ?? []).map((row) => ({ row, token: row.token }))
   ]
   for (const { row, token } of sweeps) {
