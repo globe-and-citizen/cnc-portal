@@ -52,6 +52,9 @@ The client inventory follows the [sidebar navigation](../../app/src/composables/
 | Governance              | Board elections, election details, and proposals        | Canonical stories not yet written                       |
 | Vesting                 | `/teams/:id/vesting`                                    | [Canonical stories](./vesting/README.md)                |
 
+Accounting's classification view and route are documented under the Accounting feature; the shared route and sidebar evidence was reviewed
+when that capability was added.
+
 ## Backoffice Features
 
 All administrator-dashboard capabilities are grouped under [`docs/features/backoffice/`](./backoffice/README.md). They are not separate

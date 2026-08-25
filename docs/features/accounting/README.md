@@ -17,6 +17,16 @@ These acceptance criteria follow the
 - Accounting includes every known contract generation. Individual account pages intentionally remain scoped to their current contract.
 - Off-platform activity without a connected data source, including infrastructure bills, is outside the current automated books.
 
+- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter — the contracts
+  the CNC actually uses.
+- **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
+  booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); each team books CNC
+  usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue.
+- **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a team owner can **manually classify** each one
+  into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan) —
+  persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
+- **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
+
 ## Lifecycle
 
 ```mermaid
@@ -251,9 +261,22 @@ flowchart LR
 
 - [Accounting routes](../../../app/src/router/index.ts) and [Accounting navigation](../../../app/src/composables/useSidebarNavItems.ts). The
   Community Credit round-detail view parameter does not alter Accounting entry points.
+- [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
+  [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
+  [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+- [Accounting backend feeds](../../../app/src/composables/accounting/useAccountingBackendFeeds.ts)
+- [Classification query](../../../app/src/queries/classification.queries.ts),
+  [classification types](../../../app/src/types/accounting-classification.ts), and
+  [classification assembly](../../../app/src/utils/accounting/classification.ts)
+- [Classification controller](../../../backend/src/controllers/classificationController.ts),
+  [classification route](../../../backend/src/routes/classificationRoute.ts),
+  [classification validation](../../../backend/src/validation/schemas/classification.ts), and
+  [validation registry](../../../backend/src/validation/index.ts)
+- [Classification persistence schema](../../../backend/prisma/schema.prisma) and
+  [classification migrations](../../../backend/prisma/migrations/20260821000000_add_transaction_classification/)
 - [Statement-line drill-down](../../../app/src/composables/accounting/useLedgerDrilldown.ts)
 - [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),

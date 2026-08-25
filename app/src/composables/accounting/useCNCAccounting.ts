@@ -35,14 +35,13 @@ import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEven
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
-import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
-import { useGetExpensesQuery } from '@/queries/expense.queries'
 import {
   useGetSafeIncomingTransfersQuery,
   useGetSafeOutgoingTransactionsQuery
 } from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransferInitiators } from './useTransferInitiators'
+import { useAccountingBackendFeeds } from './useAccountingBackendFeeds'
 import {
   assembleCncAccounting,
   type CncAccounting,
@@ -239,9 +238,8 @@ export function useCNCAccounting(
     }))
   )
 
-  // ── Backend DB: weekly claims + approved expenses (off-chain enrichment) ──
-  const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
-  const expenses = useGetExpensesQuery({ queryParams: { teamId } })
+  // ── Backend DB: the off-chain enrichment feeds (claims, expenses, classifications) ──
+  const { weeklyClaims, expenses, classifications } = useAccountingBackendFeeds(teamId)
 
   // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
   const safeTransfers = useGetSafeIncomingTransfersQuery({
@@ -295,7 +293,8 @@ export function useCNCAccounting(
     safeTransfers: safeTransfers.data.value,
     safeOutgoingTransactions: safeOutgoing.data.value,
     weeklyClaims: weeklyClaims.data.value?.data,
-    expenses: expenses.data.value
+    expenses: expenses.data.value,
+    classifications: classifications.data.value
   }))
 
   // Native (POL/ETH) is valued at the **current** live price (currency store /
@@ -380,6 +379,7 @@ export function useCNCAccounting(
         routerMultiplier,
         weeklyClaims,
         expenses,
+        classifications,
         safeTransfers,
         safeOutgoing
       ].map(run)
