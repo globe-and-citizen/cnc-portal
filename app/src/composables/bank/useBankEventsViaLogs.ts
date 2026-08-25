@@ -74,6 +74,7 @@ const mapEvent = ({
     case 'Transfer':
       out.bankTransfers.items.push({
         id,
+        contractAddress: contract,
         sender: args.sender,
         to: args.to,
         amount: str(args.amount),
@@ -83,6 +84,7 @@ const mapEvent = ({
     case 'TokenTransfer':
       out.bankTokenTransfers.items.push({
         id,
+        contractAddress: contract,
         sender: args.sender,
         to: args.to,
         token: args.token,

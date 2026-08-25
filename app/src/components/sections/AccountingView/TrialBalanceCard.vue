@@ -37,15 +37,15 @@
         @select="onRowSelect"
       >
         <template #account-cell="{ row: { original: row } }">
-          <span v-if="row.isTotal" class="font-extrabold">{{ row.account }}</span>
+          <span v-if="row.isTotal" class="font-extrabold">{{ row.label }}</span>
           <div v-else class="flex w-full items-center justify-between gap-3">
             <button
               type="button"
               class="focus-visible:ring-neutral truncate rounded font-semibold focus-visible:ring-2 focus-visible:outline-none"
-              :data-test="`drilldown-${row.account}`"
+              :data-test="`drilldown-${row.label}`"
               @click.stop="openDrilldown(row)"
             >
-              {{ row.account }}
+              {{ row.label }}
             </button>
             <span
               class="bg-neutral/10 text-neutral inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100"
@@ -126,6 +126,8 @@ import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 interface TrialTableRow {
   account: string
+  /** Display name — differs from `account` only for a redeployed pocket's later instances (` #2`). */
+  label: string
   nature: string
   natureClass: string
   dr: string
@@ -148,6 +150,7 @@ const tableRows = computed<TrialTableRow[]>(() => [
   ...trial.value.rows.map((r) => ({ ...r, isTotal: false })),
   {
     account: 'Total',
+    label: 'Total',
     nature: '',
     natureClass: '',
     dr: trial.value.total,
