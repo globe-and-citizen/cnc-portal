@@ -14,8 +14,6 @@
     "build:widget": "vite build --config vite.widget.config.ts",
     "build:widget:e2e": "VITE_E2E=true VITE_APP_NETWORK_ALIAS=hardhat vite build --config vite.widget.config.ts",
     "dev:widget": "vite --config vite.widget.config.ts",
-    "serve:widget": "node scripts/serve-widget.mjs",
-    "preview:widget": "npm run build:widget && npm run serve:widget",
     "preview": "vite preview",
     "test:unit": "vitest",
     "test:api-surface": "node --test scripts/__tests__/check-api-surface.node.mjs",
