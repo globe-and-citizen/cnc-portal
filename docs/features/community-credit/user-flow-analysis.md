@@ -261,63 +261,17 @@ whose token receipt reverts blocks everyone else in that offer. Accepted at curr
 
 Ranked by consequence. Each is: what · where · why it matters · direction.
 
-### F1 — `publish()` is not idempotent, and the `offerId` is inferred by a race
+### F2 — Repayment remains visually grouped with layout exploration
 
-**Where:** [`NewView.vue:302-321`](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue:302)
+**Where:** [`RoundView.vue`](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
 
-```ts
-await createOfferResult.mutateAsync({ args: [params] }); // offer now exists on-chain
-const total = await readContract(config, { functionName: "getTotalOfferings" });
-const offerId = Number(total); // assumes no concurrent create
-await createMetadataResult.mutateAsync({
-  body: { teamId, offerId, title, purpose },
-});
-```
+Repayment now has a route-backed tab state (`/teams/:id/community-credit/:roundId/repay`), so it can be bookmarked, shared, refreshed, and
+kept separate between rounds. It is still presented alongside the Ledger, Gauge, and Timeline layout experiments in the same tab group.
 
-Two coupled problems:
+**Why it matters:** the money-moving journey is technically independent from global UI state, but its primary navigation still looks like a
+design comparison control.
 
-1. **The metadata POST failing leaves the user on the wizard, with a Publish button.** The offer already exists on-chain. Clicking Publish
-   again sends a _second_ `createLendingOffer` — a second real round, with real terms, that members can lend to. There is no other place in
-   the app that retries the metadata write, so the first round stays permanently untitled.
-2. **`getTotalOfferings()` is a proxy for "my offer's id".** It is only correct if no other `createLendingOffer` landed in between — another
-   owner session, another tab, a queued transaction. When it is wrong, the title is attached to somebody else's round, and because
-   `(teamId, offerId)` is unique in Postgres, the write may instead 500 on a constraint violation.
-
-**Why it matters:** this is the only place in the feature that can produce a wrong or duplicated _on-chain_ state from ordinary user
-behaviour (a flaky network).
-
-**Direction:** `mutateAsync` already resolves to `{ hash, receipt }`
-([`useContractWritesV3.ts:239`](../../../app/src/composables/contracts/useContractWritesV3.ts:239)) and the contract emits
-`LendingOfferCreated(offerId, …)`. Decoding the event from the receipt removes the race entirely. Separately, the two writes need to stop
-being one atomic-looking step: once the chain write succeeds the round exists, and the metadata write should become a retryable follow-up
-(the UI can navigate to the round and offer "add a title") rather than an error that invites re-publishing.
-
-### F2 — The repayment flow is reached through a design-prototype widget
-
-**Where:** [`CreditLayoutSwitcher.vue`](../../../app/src/components/sections/CommunityCreditView/CreditLayoutSwitcher.vue)
-
-The round page renders a dashed box labelled **"Layout exploration"** with four pills: `Ledger` · `Gauge` · `Timeline` · `Repay`. The first
-three are alternative mockups of the same information. The fourth is a business action. And the page's own "Repay round" button does nothing
-but `store.setVariant('repay')` ([`RoundView.vue:263`](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue:263)).
-
-**Why it matters:** a layout comparison tool is shipped to production users, and the money-moving flow is entangled with it. Removing the
-prototype is currently impossible without also removing the way to repay.
-
-**Direction:** disentangle first — give repayment its own route — then delete the switcher, or gate it behind a dev flag if the layouts are
-still being evaluated.
-
-### F3 — `variant` is global persistent state instead of a URL
-
-**Where:** [`communityCredit.ts:37`](../../../app/src/stores/communityCredit.ts:37)
-
-`variant` lives on the store, so it is shared by every round. Consequences:
-
-- open one round in Repay mode, and **every** subsequent round opens in Repay mode
-- the repay screen cannot be linked, bookmarked or shared
-- a page refresh silently drops back to `ledger`
-
-**Direction:** `/teams/:id/community-credit/:roundId/repay` as a real route. This also fixes the back-button behaviour, which currently
-cannot distinguish the two screens.
+**Direction:** give repayment a permanent journey entry point independent of the layout-exploration affordance.
 
 ### F4 — "Open & active rounds" contains only _open_ rounds
 
@@ -352,23 +306,22 @@ or when.
 **Direction:** `useFixedReturnMyLenderPositions` already fetches allocation + deposits for every offer, and is currently used only to hide
 buttons. A "my positions" panel needs no new read.
 
-### F6 — Token balances and the activity feed are never invalidated
+### F6 — Token balances are not invalidated after lending or repayment
 
 Already catalogued in [`INVALIDATION_MAP.md:68,114-115`](../../../app/src/composables/contracts/INVALIDATION_MAP.md:68). The three domain
 aggregates (`fixedReturnAllOffers`, `fixedReturnOfferLenders`, `fixedReturnMyLenderPositions`) are invalidated correctly in all four
-components — the map calls this "the most disciplined domain in the app". What is missed after `lendFunds` and after a repayment:
-`balanceOf(token, user)`, `balanceOf(token, bank)`, `balanceOf(token, fixedReturn)`, and the `fixed-return-events-logs` feed.
+components — the map calls this "the most disciplined domain in the app". The matching `fixed-return-events-logs` feed is now invalidated
+after lending and repayment. What remains missed is `balanceOf(token, user)`, `balanceOf(token, bank)`, and `balanceOf(token, fixedReturn)`.
 
 **Direction:** a per-domain invalidation helper, which is the conclusion the map itself reaches.
 
-### F7 — The Repay CTA is gated on the wrong owner
+### F7 — The Repay CTA requires the Credit Account owner as well as the Bank owner
 
-`store.isOwner` compares against `FixedReturn.owner()`, but the transaction is `Bank.fundFixedReturnRepayment`, which is `onlyOwner` **on
-Bank** and additionally `whenNotPaused`. Officer initialises both with the same team-owner address, so today this is inert. It diverges the
-moment Bank ownership is transferred (to a multisig or the BoD) or the Bank is paused — the button stays visible and the transaction
-reverts.
+The repayment panel blocks any wallet other than `Bank.owner()`, matching the transaction's `onlyOwner` check. The main round CTA also
+requires `store.isOwner` (`FixedReturn.owner()`), so it disappears when the Bank owner changes independently. The Bank's paused state is not
+surfaced before the transaction is submitted.
 
-**Direction:** gate on the Bank owner and the pause flag for the repay action specifically. Low priority, worth a comment at minimum.
+**Direction:** make the primary CTA follow Bank ownership alone and surface the Bank pause state before submission.
 
 ---
 
@@ -552,14 +505,12 @@ single-sourced and uses the right clock, and the UI gates mirror on-chain revert
 
 The debt is in navigation and write orchestration:
 
-| #   | Finding                                            | Impact                                      |
-| --- | -------------------------------------------------- | ------------------------------------------- |
-| F1  | `publish()` not idempotent · `offerId` inferred    | can create duplicate on-chain rounds        |
-| F2  | repay reached via a "Layout exploration" prototype | prototype shipped to production             |
-| F3  | `variant` is global state, not a route             | leaks between rounds · unlinkable           |
-| F4  | funded/active/overdue filed under "History"        | issuer's pending work is hidden · dead CTAs |
-| F5  | no lender-facing view                              | issuer metrics shown to lenders             |
-| F6  | token balances and feed not invalidated            | stale figures after lend/repay              |
-| F7  | Repay gated on FixedReturn owner, not Bank owner   | latent — inert today                        |
+| #   | Finding                                         | Impact                                      |
+| --- | ----------------------------------------------- | ------------------------------------------- |
+| F2  | repayment navigation remains beside layout tabs | money flow looks like a design prototype    |
+| F4  | funded/active/overdue filed under "History"     | issuer's pending work is hidden · dead CTAs |
+| F5  | no lender-facing view                           | issuer metrics shown to lenders             |
+| F6  | token balances not invalidated                  | stale balance figures after lend/repay      |
+| F7  | Repay CTA also needs FixedReturn owner          | Bank-owner transfer hides the primary CTA   |
 
-**F1** is the only one that can produce incorrect on-chain state from ordinary use, and should be addressed first.
+The remaining debt is navigation clarity, issuer work queues, lender reporting, balance freshness, and the primary repayment CTA.

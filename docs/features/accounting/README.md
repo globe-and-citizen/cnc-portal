@@ -44,6 +44,7 @@ flowchart LR
 | US-ACCT-003 | Review the financial statements            | Team member | 🧪 Validation  |    P1    | M      |
 | US-ACCT-004 | Export accounting reports                  | Team member | 🧪 Validation  |    P2    | M      |
 | US-ACCT-005 | Preserve books across contract migrations  | Team member | 🚧 In Progress |    P1    | L      |
+| US-ACCT-006 | Classify a Bank transaction                | Team owner  | 📝 Draft       |    P1    | M      |
 
 ## US-ACCT-001: Review the Consolidated Accounting Summary
 
@@ -204,16 +205,52 @@ flowchart LR
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
+## US-ACCT-006: Classify a Bank Transaction
+
+**As a** team owner\
+**I want to** assign the economic classification of a Bank deposit or withdrawal\
+**So that** the books record why funds moved instead of assuming it from the on-chain address
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [ ] The team owner can classify a Bank transaction with a supported accounting category and an optional memo.
+- [ ] The team owner can deposit funds received off-chain from a client and classify the Bank deposit as Service Revenue (`UC-BANK-02`).
+- [ ] The team owner who is the economic client can classify their own Bank deposit as Service Revenue (`UC-BANK-02`).
+- [ ] The team owner can classify a contribution that receives no SHER as Owner Capital (`UC-BANK-01`).
+- [ ] A saved classification remains visible in the accounting books after a refresh.
+
+#### Business Rules
+
+- [ ] A classification is stored against a stable on-chain transaction identity and deterministically produces balanced ledger entries.
+- [ ] Address-based inference remains visible only when no manual classification exists.
+- [ ] A guaranteed transfer between team-owned pockets remains an internal transfer and cannot be reclassified as income or expense.
+- [ ] The classification action is available for supported native-token and ERC-20 Bank deposits and withdrawals.
+- [ ] Only the team owner can create or change a classification.
+
+#### Edge & Error Cases
+
+- [ ] An unknown transaction, invalid category, duplicate submission, or concurrent edit is rejected without changing the existing books.
+- [ ] A failed save leaves the previous classification visible and explains that the change was not applied.
+
+**Priority:** P1 (Critical) · **Effort:** M · **Status:** 📝 Draft
+
+**Dependencies:** US-ACCT-002, a team-owned Bank transaction, and the planned Bank-classification delivery
+
 ## Known Gaps
 
 - Accounting does not reconcile ledger closing cash balances against live on-chain balances (`US-ACCT-001`).
 - Safe feeds and off-chain enrichment failures can omit entries without an incomplete-books warning (`US-ACCT-001`).
 - Historical Community Credit terms and SHER valuation inputs are read from current-generation contracts (`US-ACCT-005`).
 - Off-platform activity without a connected data source is absent from the automated books.
+- Bank classifications currently rely on address-based inference, so an owner cannot record an off-chain client payment or their own client
+  payment as Service Revenue (`US-ACCT-006`).
 
 ## Implementation Evidence
 
-- [Accounting routes](../../../app/src/router/index.ts) and [Accounting navigation](../../../app/src/composables/useSidebarNavItems.ts)
+- [Accounting routes](../../../app/src/router/index.ts) and [Accounting navigation](../../../app/src/composables/useSidebarNavItems.ts). The
+  Community Credit round-detail view parameter does not alter Accounting entry points.
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
@@ -223,6 +260,8 @@ flowchart LR
   [general ledger](../../../app/src/utils/accounting/generalLedger.ts),
   [income statement](../../../app/src/utils/accounting/incomeStatement.ts), and
   [balance sheet](../../../app/src/utils/accounting/balanceSheet.ts)
+- [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
+  [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
 - [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
   [accounting data tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts), and
   [accounting rule tests](../../../app/src/utils/accounting/__tests__)

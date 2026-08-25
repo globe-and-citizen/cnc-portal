@@ -277,7 +277,7 @@ function refresh() {
       :open="!!withdrawCampaign"
       title="Withdraw remaining campaign budget"
       :description="withdrawCampaign ? `Review the final spend for ${withdrawCampaign.code}.` : ''"
-      @update:open="(open) => !open && (withdrawCampaign = null)"
+      @update:open="(open: boolean) => !open && (withdrawCampaign = null)"
     >
       <template #body>
         <WithdrawAdvertisingCampaign

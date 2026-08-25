@@ -100,13 +100,13 @@ automatically when a deadline or maturity date passes.
 - [x] Every capped restricted lender requires a positive allocation.
 - [x] Fully capped restricted allocations must total at least the funding target.
 - [x] The subscription deadline is validated again immediately before publication.
-- [ ] Off-chain metadata is associated with the exact offer identifier emitted by the on-chain creation transaction.
+- [x] Off-chain metadata is associated with the exact offer identifier emitted by the on-chain creation transaction.
 
 #### Edge & Error Cases
 
 - [x] Invalid round terms are rejected before an on-chain transaction is requested.
 - [x] Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
-- [ ] Once the on-chain round exists, a metadata failure can be retried without creating a second round.
+- [x] Once the on-chain round exists, a metadata failure can be retried without creating a second round.
 
 **Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
 
@@ -123,7 +123,8 @@ automatically when a deadline or maturity date passes.
 - [x] An eligible member can lend to a round while it is open and before its subscription deadline.
 - [x] A successful lend increases both the round's funded amount and the lender's deposited position.
 - [x] A successful lend refreshes the round and the lender's position before another lending decision.
-- [ ] A successful lend refreshes the lender's token balance and the matching activity feed before another decision.
+- [x] A successful lend refreshes the matching activity feed before another decision.
+- [ ] A successful lend refreshes the lender's token balance before another decision.
 
 #### Business Rules
 
@@ -180,7 +181,8 @@ automatically when a deadline or maturity date passes.
 - [x] The issuer can repay a funded, partially repaid, or overdue round from the team Bank.
 - [x] An installment distributes each lender's cumulative proportional entitlement without overpaying the round or leaving rounding dust.
 - [x] A successful installment refreshes repayment progress and lender settlement data.
-- [ ] A successful installment refreshes lender token balances, the Bank token balance, and the matching activity feed.
+- [x] A successful installment refreshes the matching activity feed before another decision.
+- [ ] A successful installment refreshes lender token balances and the Bank token balance before another decision.
 - [x] Repaying the complete obligation settles the round and prevents further repayment.
 
 #### Business Rules
@@ -190,7 +192,8 @@ automatically when a deadline or maturity date passes.
 - [x] A repayment amount cannot exceed the Bank's token balance.
 - [x] The Bank rejects repayment from an account other than its current owner.
 - [x] A paused Bank rejects repayment.
-- [ ] The product journey offers repayment only to the current Bank owner while the Bank is not paused.
+- [x] The repayment action is unavailable to a wallet other than the current Bank owner.
+- [ ] The repayment action is unavailable while the Bank is paused.
 
 #### Edge & Error Cases
 
@@ -207,15 +210,14 @@ directions remain in the [detailed flow and implementation analysis](./user-flow
 
 ### Functional Gaps
 
-- Publishing still infers the new offer ID from the total offer count and can repeat the on-chain write after a metadata failure.
 - Rounds that require an issuer action are grouped with settled history.
 - Lenders cannot review their personal deposited and expected-return positions separately from the team's debt.
-- Lending and repayment refresh domain aggregates but not every affected token balance or activity feed.
-- Repayment availability follows the Credit Account owner instead of the Bank owner and pause state enforced by the transaction.
+- Lending and repayment refresh the matching activity feed but not every affected token balance.
+- The main repayment CTA requires both the Credit Account and Bank owner, and the product does not yet reflect the Bank pause state.
 
 ### UI/UX Notes
 
-- Repayment remains coupled to a global **Layout exploration** variant rather than a stable route, and that state leaks between rounds.
+- Repayment has a stable, bookmarkable route state but remains presented beside the layout-exploration tabs.
 
 ## Implementation Evidence
 
@@ -224,8 +226,16 @@ directions remain in the [detailed flow and implementation analysis](./user-flow
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
+- [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
+- [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
+- [Credit-call terms step](../../../app/src/components/sections/CommunityCreditView/CreditCallTermsStep.vue)
+- [Credit Account transaction history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue)
+- [Credit round history](../../../app/src/components/sections/CommunityCreditView/CreditHistoryTable.vue)
 - [Lending modal](../../../app/src/components/sections/CommunityCreditView/CreditLendModal.vue)
 - [Repayment panel](../../../app/src/components/sections/CommunityCreditView/CreditRepayPanel.vue)
+- [Repayment breakdown](../../../app/src/components/sections/CommunityCreditView/CreditRepayBreakdownTable.vue)
+- [Credit round ledger](../../../app/src/components/sections/CommunityCreditView/CreditRoundLedger.vue)
+- [Whitelist allocation editor](../../../app/src/components/sections/CommunityCreditView/CreditWhitelistEditor.vue)
 - [FixedReturn contract](../../../contract/contracts/FixedReturn.sol)
 - [Contract behaviour tests](../../../contract/test/FixedReturn.spec.ts)
 - [Metadata controller tests](../../../backend/src/controllers/__tests__/fixedReturnOfferingController.test.ts)

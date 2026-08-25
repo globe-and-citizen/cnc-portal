@@ -63,6 +63,9 @@ export interface FixedReturnRawOffer {
   offerId: number
   offer: LendingOfferStruct
   decimals: number
+  /** Addresses only (getOfferLenders) — cheap enough to fetch for the whole list, unlike
+   *  the full per-lender principal/expected breakdown (see useFixedReturnOfferLenders). */
+  lenderAddresses: Address[]
 }
 
 /** A single lender's position on one offer, as returned by useFixedReturnOfferLenders. */
@@ -122,6 +125,16 @@ export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline' | 'repay'
 export interface StatusMeta {
   label: string
   color: UBadgeColor
+}
+
+export type Cta = {
+  test: string
+  label: string
+  icon: string
+  color: 'primary' | 'neutral' | 'warning'
+  variant: 'solid' | 'soft'
+  loading?: boolean
+  run: () => void
 }
 
 export type CreditAccess = 'everyone' | 'restricted'
