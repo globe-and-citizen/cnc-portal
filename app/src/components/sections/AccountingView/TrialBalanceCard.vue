@@ -128,6 +128,10 @@ interface TrialTableRow {
   account: string
   /** Display name — differs from `account` only for a redeployed pocket's later instances (` #2`). */
   label: string
+  /** Pocket contract instance this row rolls up, when split across redeploys. */
+  instance?: string
+  /** True on the primary instance row — it also carries the pocket's un-instanced legs. */
+  isPrimaryInstance?: boolean
   nature: string
   natureClass: string
   dr: string
@@ -197,7 +201,18 @@ const {
 
 function openDrilldown(row: TrialTableRow): void {
   // The line's balance sits in whichever column isn't the em-dash placeholder.
-  openFor(row.account, row.dr === '—' ? row.cr : row.dr)
+  const value = row.dr === '—' ? row.cr : row.dr
+  // A split-pocket row scopes its ledger to that one contract instance (and, on the
+  // primary row, the pocket's un-instanced legs) so each deployment shows only its
+  // own events; a plain row drills the whole account as before.
+  if (row.instance) {
+    openFor(row.account, value, row.label, {
+      instance: row.instance,
+      includeBlank: row.isPrimaryInstance
+    })
+  } else {
+    openFor(row.account, value)
+  }
 }
 
 // Export the current, as-of-filtered trial balance. The filename carries the
