@@ -158,6 +158,8 @@ interface LedgerTableOptions {
   account?: string | readonly string[]
   accountLabel?: string
   accountTotal?: string
+  instance?: string | null
+  includeBlank?: boolean
 }
 
 /** Display name for a drill-down: the account, or the aggregate's label. */
@@ -171,7 +173,10 @@ function ledgerTable(
   opts: LedgerTableOptions = {}
 ): AccountingPdfTable {
   const { rows, total } = opts.account
-    ? presentAccountLedger(acc.entries, opts.account, opts.from, opts.to, opts.accountTotal)
+    ? presentAccountLedger(acc.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
+        instance: opts.instance,
+        includeBlank: opts.includeBlank
+      })
     : presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
   const cols = resolveLedgerColumns(opts.columns)
   const body = rows.map((r) => cols.map((c) => LEDGER_PDF_CELL[c.value].pick(r, resolveName)))
@@ -210,7 +215,9 @@ function sectionTable(
         currencies: spec.currencies,
         account: spec.account,
         accountLabel: spec.accountLabel,
-        accountTotal: spec.accountTotal
+        accountTotal: spec.accountTotal,
+        instance: spec.instance,
+        includeBlank: spec.includeBlank
       })
   }
 }
