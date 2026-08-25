@@ -18,13 +18,18 @@ import {
   ACCOUNT_NAMES,
   classOf,
   isDebitNormal,
+  isInstancedPocket,
   type AccountClass,
   type AccountName
 } from './chartOfAccounts'
+import type { Address } from 'viem'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 
 export interface JournalLine {
   account: AccountName
+  /** The pocket contract instance holding this leg's cash, when known — what lets
+   *  the trial balance split a redeployed pocket (see {@link TrialBalanceRow}). */
+  instance?: Address
   debit: number
   credit: number
 }
@@ -48,6 +53,14 @@ export interface JournalEntry {
 
 export interface TrialBalanceRow {
   account: AccountName
+  /**
+   * Display name for the row — the account, suffixed ` #2` / ` #3` when a cash
+   * pocket spans several contract instances (a redeploy). Equals {@link account}
+   * for a single instance, so an un-redeployed book reads exactly as before.
+   */
+  accountLabel: string
+  /** The pocket contract instance this row rolls up, when the account is split across redeploys. */
+  instance?: Address
   accountClass: AccountClass
   /** Σ of every debit line posted to this account (gross). */
   totalDebit: number
@@ -116,8 +129,20 @@ export function netBalanceByAccountRaw(entries: readonly LedgerEntry[]): Map<Acc
 /** Convert one balanced posting into its (up to two) journal lines. */
 function linesOf(entry: LedgerEntry): JournalLine[] {
   const lines: JournalLine[] = []
-  if (entry.debit) lines.push({ account: entry.debit, debit: entry.amountUsd, credit: 0 })
-  if (entry.credit) lines.push({ account: entry.credit, debit: 0, credit: entry.amountUsd })
+  if (entry.debit)
+    lines.push({
+      account: entry.debit,
+      ...(entry.debitInstance ? { instance: entry.debitInstance } : {}),
+      debit: entry.amountUsd,
+      credit: 0
+    })
+  if (entry.credit)
+    lines.push({
+      account: entry.credit,
+      ...(entry.creditInstance ? { instance: entry.creditInstance } : {}),
+      debit: 0,
+      credit: entry.amountUsd
+    })
   return lines
 }
 
@@ -137,21 +162,60 @@ export function buildJournal(entries: readonly LedgerEntry[]): JournalEntry[] {
     .sort((a, b) => a.timestamp - b.timestamp)
 }
 
+/** One trial-balance roll-up bucket: an account, optionally scoped to a pocket instance. */
+interface AccountBucket {
+  instance?: Address
+  debit: number
+  credit: number
+  /** Earliest posting time in the bucket — orders the instances of a split pocket. */
+  firstTs: number
+}
+
+/**
+ * Roll the journal lines up into per-account buckets, splitting an instanced cash
+ * pocket ({@link isInstancedPocket}) into one bucket per contract instance and
+ * folding every other account (and any un-instanced pocket leg) into a single
+ * bucket. Returns the buckets grouped by base account, so the trial balance can
+ * emit them in chart order.
+ */
+function accumulateBuckets(journal: readonly JournalEntry[]): Map<AccountName, AccountBucket[]> {
+  const byAccount = new Map<AccountName, Map<string, AccountBucket>>()
+  for (const entry of journal) {
+    for (const line of entry.lines) {
+      const instance = isInstancedPocket(line.account) ? line.instance : undefined
+      const key = instance ? instance.toLowerCase() : ''
+      let buckets = byAccount.get(line.account)
+      if (!buckets) {
+        buckets = new Map()
+        byAccount.set(line.account, buckets)
+      }
+      let bucket = buckets.get(key)
+      if (!bucket) {
+        bucket = {
+          ...(instance ? { instance } : {}),
+          debit: 0,
+          credit: 0,
+          firstTs: entry.timestamp
+        }
+        buckets.set(key, bucket)
+      }
+      bucket.debit += line.debit
+      bucket.credit += line.credit
+      if (entry.timestamp < bucket.firstTs) bucket.firstTs = entry.timestamp
+    }
+  }
+  const grouped = new Map<AccountName, AccountBucket[]>()
+  for (const [account, buckets] of byAccount) grouped.set(account, [...buckets.values()])
+  return grouped
+}
+
 /**
  * Build the double-entry general ledger and its trial balance from the
  * consolidated feed.
  */
 export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedger {
   const journal = buildJournal(entries)
-
-  const debits = new Map<AccountName, number>()
-  const credits = new Map<AccountName, number>()
-  for (const entry of journal) {
-    for (const line of entry.lines) {
-      debits.set(line.account, (debits.get(line.account) ?? 0) + line.debit)
-      credits.set(line.account, (credits.get(line.account) ?? 0) + line.credit)
-    }
-  }
+  const groups = accumulateBuckets(journal)
 
   // Totals + the balanced check run on the **raw** (full-precision) sums: every
   // posting is internally balanced, so the raw debit/credit totals are exactly
@@ -165,28 +229,40 @@ export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedg
   let rawCreditBalance = 0
   const trialBalance: TrialBalanceRow[] = []
 
-  // Iterate the chart in declared order so the trial balance reads top-down.
+  // Iterate the chart in declared order so the trial balance reads top-down. A cash
+  // pocket that spans several contract instances (a redeploy) emits one row per
+  // instance, ordered by first activity; the earliest keeps the plain account name,
+  // later ones get a ` #2` / ` #3` suffix. A single-instance account emits one row
+  // named exactly as before.
   for (const account of ACCOUNT_NAMES) {
-    const rawDebit = debits.get(account) ?? 0
-    const rawCredit = credits.get(account) ?? 0
-    if (rawDebit === 0 && rawCredit === 0) continue
+    const buckets = (groups.get(account) ?? []).sort(
+      (a, b) => a.firstTs - b.firstTs || (a.instance ?? '').localeCompare(b.instance ?? '')
+    )
+    const split = buckets.length > 1
+    buckets.forEach((bucket, index) => {
+      const rawDebit = bucket.debit
+      const rawCredit = bucket.credit
+      if (rawDebit === 0 && rawCredit === 0) return
 
-    rawTotalDebit += rawDebit
-    rawTotalCredit += rawCredit
-    const rawBalance = isDebitNormal(account) ? rawDebit - rawCredit : rawCredit - rawDebit
-    if (isDebitNormal(account)) rawDebitBalance += rawBalance
-    else rawCreditBalance += rawBalance
+      rawTotalDebit += rawDebit
+      rawTotalCredit += rawCredit
+      const rawBalance = isDebitNormal(account) ? rawDebit - rawCredit : rawCredit - rawDebit
+      if (isDebitNormal(account)) rawDebitBalance += rawBalance
+      else rawCreditBalance += rawBalance
 
-    const grossDebit = round2(rawDebit)
-    const grossCredit = round2(rawCredit)
-    if (grossDebit === 0 && grossCredit === 0) continue // sub-cent residual: not shown
+      const grossDebit = round2(rawDebit)
+      const grossCredit = round2(rawCredit)
+      if (grossDebit === 0 && grossCredit === 0) return // sub-cent residual: not shown
 
-    trialBalance.push({
-      account,
-      accountClass: classOf(account),
-      totalDebit: grossDebit,
-      totalCredit: grossCredit,
-      balance: round2(rawBalance)
+      trialBalance.push({
+        account,
+        accountLabel: split && index > 0 ? `${account} #${index + 1}` : account,
+        ...(bucket.instance ? { instance: bucket.instance } : {}),
+        accountClass: classOf(account),
+        totalDebit: grossDebit,
+        totalCredit: grossCredit,
+        balance: round2(rawBalance)
+      })
     })
   }
 

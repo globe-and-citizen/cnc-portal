@@ -70,6 +70,73 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(gl2.debitBalanceTotal).toBeCloseTo(gl2.creditBalanceTotal, 2)
   })
 
+  it('splits a redeployed pocket into per-instance trial-balance rows, newest suffixed', () => {
+    // One team, two Bank contracts (a redeploy). Deposits before the redeploy hit
+    // the first Bank; the deposit after it hits Bank #2 — which must carry only its
+    // own transaction, while the original keeps everything up to the redeploy.
+    const bank1 = '0x1111111111111111111111111111111111111111'
+    const bank2 = '0x2222222222222222222222222222222222222222'
+    const deposit = (
+      id: string,
+      instance: string,
+      amountUsd: number,
+      timestamp: number
+    ): LedgerEntry => ({
+      id,
+      timestamp,
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Bank',
+      debitInstance: instance as `0x${string}`,
+      credit: 'Service Revenue',
+      amountUsd,
+      token: 'usdc',
+      rawAmount: String(amountUsd * 1e6),
+      internal: false,
+      memo: '',
+      enrichment: 'not-applicable'
+    })
+    const gl2 = buildGeneralLedger([
+      deposit('a', bank1, 100, 10),
+      deposit('b', bank1, 50, 20),
+      deposit('c', bank2, 30, 30) // after the redeploy → the new Bank
+    ])
+    const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
+    expect(bankRows).toHaveLength(2)
+    // Earliest instance keeps the plain name; the later one is suffixed.
+    expect(bankRows[0].accountLabel).toBe('Cash — Bank')
+    expect(bankRows[0].instance).toBe(bank1)
+    expect(bankRows[0].balance).toBeCloseTo(150, 2)
+    expect(bankRows[1].accountLabel).toBe('Cash — Bank #2')
+    expect(bankRows[1].instance).toBe(bank2)
+    expect(bankRows[1].balance).toBeCloseTo(30, 2) // only the post-redeploy deposit
+    // The split is presentation only: the book stays balanced and totals are whole.
+    expect(gl2.balanced).toBe(true)
+    expect(gl2.debitBalanceTotal).toBeCloseTo(180, 2)
+  })
+
+  it('keeps a single un-redeployed pocket as one un-suffixed row', () => {
+    const bank = '0x1111111111111111111111111111111111111111'
+    const gl2 = buildGeneralLedger([
+      {
+        id: 'a',
+        timestamp: 1,
+        useCase: 'UC-BANK-02',
+        debit: 'Cash — Bank',
+        debitInstance: bank as `0x${string}`,
+        credit: 'Service Revenue',
+        amountUsd: 42,
+        token: 'usdc',
+        rawAmount: '42000000',
+        internal: false,
+        memo: '',
+        enrichment: 'not-applicable'
+      }
+    ])
+    const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
+    expect(bankRows).toHaveLength(1)
+    expect(bankRows[0].accountLabel).toBe('Cash — Bank')
+  })
+
   it('flags an unbalanced book when a posting is missing a leg', () => {
     const halfPosting: LedgerEntry = {
       id: 'broken',
