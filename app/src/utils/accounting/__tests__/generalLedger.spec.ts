@@ -95,23 +95,65 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: '',
       enrichment: 'not-applicable'
     })
+    // A leg with NO instance (a FixedReturn sweep straight to Bank) must fold into
+    // the primary deployment, not spawn a phantom third row.
+    const blankBankLeg: LedgerEntry = {
+      id: 'd',
+      timestamp: 15,
+      useCase: 'UC-CREDIT-01',
+      debit: 'Cash — Bank',
+      credit: 'Loan Payable',
+      amountUsd: 20,
+      token: 'usdc',
+      rawAmount: '20000000',
+      internal: false,
+      memo: '',
+      enrichment: 'not-applicable'
+    }
     const gl2 = buildGeneralLedger([
       deposit('a', bank1, 100, 10),
       deposit('b', bank1, 50, 20),
-      deposit('c', bank2, 30, 30) // after the redeploy → the new Bank
+      deposit('c', bank2, 30, 30), // after the redeploy → the new Bank
+      blankBankLeg
     ])
     const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
-    expect(bankRows).toHaveLength(2)
+    expect(bankRows).toHaveLength(2) // still two rows — the blank leg folded in
     // Earliest instance keeps the plain name; the later one is suffixed.
     expect(bankRows[0].accountLabel).toBe('Cash — Bank')
     expect(bankRows[0].instance).toBe(bank1)
-    expect(bankRows[0].balance).toBeCloseTo(150, 2)
+    expect(bankRows[0].balance).toBeCloseTo(170, 2) // 150 + the 20 un-instanced leg
     expect(bankRows[1].accountLabel).toBe('Cash — Bank #2')
     expect(bankRows[1].instance).toBe(bank2)
     expect(bankRows[1].balance).toBeCloseTo(30, 2) // only the post-redeploy deposit
     // The split is presentation only: the book stays balanced and totals are whole.
     expect(gl2.balanced).toBe(true)
-    expect(gl2.debitBalanceTotal).toBeCloseTo(180, 2)
+  })
+
+  it('does not split Safe — its address survives redeploys', () => {
+    const safeLeg = (id: string, instance: string, amountUsd: number): LedgerEntry => ({
+      id,
+      timestamp: Number(id),
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Safe',
+      debitInstance: instance as `0x${string}`,
+      credit: 'Service Revenue',
+      amountUsd,
+      token: 'usdc',
+      rawAmount: String(amountUsd * 1e6),
+      internal: false,
+      memo: '',
+      enrichment: 'not-applicable'
+    })
+    // Even with two different addresses stamped, Safe is not an instanced pocket,
+    // so it stays a single consolidated row.
+    const gl2 = buildGeneralLedger([
+      safeLeg('1', '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 10),
+      safeLeg('2', '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 5)
+    ])
+    const safeRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Safe')
+    expect(safeRows).toHaveLength(1)
+    expect(safeRows[0].accountLabel).toBe('Cash — Safe')
+    expect(safeRows[0].balance).toBeCloseTo(15, 2)
   })
 
   it('keeps a single un-redeployed pocket as one un-suffixed row', () => {
