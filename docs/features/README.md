@@ -52,7 +52,7 @@ The client inventory follows the [sidebar navigation](../../app/src/composables/
 | Shareholder Management  | `/teams/:id/sher-token`                                 | [Canonical stories](./shareholder-management/README.md) |
 | Governance              | Board elections, election details, and proposals        | Canonical stories not yet written                       |
 | Vesting                 | `/teams/:id/vesting`                                    | [Canonical stories](./vesting/README.md)                |
-| Payment Gate            | `/teams/:id/payment-gate`, `/reference`, `/history`     | [Canonical stories](./payment-gate/Readme.md)           |
+| Payment Gate            | `/teams/:id/payment-gate`, `/reference`, `/history`     | [Canonical stories](./payment-gate/README.md)           |
 
 ## Backoffice Features
 
