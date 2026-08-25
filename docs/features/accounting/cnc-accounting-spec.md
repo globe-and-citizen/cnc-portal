@@ -97,7 +97,7 @@ Contract addresses come from `app/src/artifacts/deployed_addresses/` and the `Te
 > The `**Minted` event** alone is ambiguous (capital raise vs. wage-in-shares vs. direct mint) — it must be correlated with `Deposited`
 > (SafeDepositRouter) or `WithdrawToken` (CashRemuneration) to pick the right journal entry, per
 > [catalogue §5.4](./money-flow-catalogue.md). A `Minted` with neither is **Default D** — a direct mint booked **Dr SHERS To Be Issued · Cr
-> Investor Equity** at the SHER rate.
+> Investor Equity\*\* at the SHER rate.
 
 ### 3.2 Portal database (accrual + classification context)
 
@@ -140,14 +140,12 @@ sheet.
 > their live feed is the deferred Polymarket/GC:Trader integration — see §1. In Phase 1 they are only exercised by manual / dogfood entries,
 > not an automated source.
 
-> **Manual classification overrides the inference (issue #2457).** Every Bank/Safe deposit and
-> withdrawal above is booked from address inference — the **visible fallback**. A team owner can
-> reclassify a transaction into a supported accounting category (revenue; an expense — operating,
-> payroll, interest or dividend; owner capital; a shareholder loan; or an internal transfer),
-> persisted against its `${txHash}-${logIndex}` identity and shared across the team; the engine
-> re-resolves the two balanced legs deterministically. A guaranteed-internal pocket-to-pocket move can
-> never be reclassified into income or expense. Journal entries per category, and the invariant, are
-> in catalogue **§5.5**.
+> **Manual classification overrides the inference (issue #2457).** Every Bank/Safe deposit and withdrawal above is booked from address
+> inference — the **visible fallback**. A team owner can reclassify a transaction into a supported accounting category (revenue; an expense
+> — operating, payroll, interest or dividend; owner capital; a shareholder loan; or an internal transfer), persisted against its
+> `${txHash}-${logIndex}` identity and shared across the team; the engine re-resolves the two balanced legs deterministically. A
+> guaranteed-internal pocket-to-pocket move can never be reclassified into income or expense. Journal entries per category, and the
+> invariant, are in catalogue **§5.5**.
 
 ---
 
