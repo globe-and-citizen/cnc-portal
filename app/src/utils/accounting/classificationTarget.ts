@@ -2,15 +2,11 @@
  * Which ledger entries the classification UI may act on (issue #2457).
  *
  * The Bank/Safe mappers turn an external deposit/withdrawal into a single balanced
- * posting; those are the entries a team owner can reclassify. This pure helper reads
- * a consolidated {@link LedgerEntry} back and, for such an entry, returns its
- * direction and cash pocket so the UI can render a control and resolve the allowed
- * categories. Everything else — fees, internal pocket-to-pocket moves, payroll and
- * expense payouts, dividends, share mints — returns `null`.
- *
- * A guaranteed-internal move (`internal === true`) is intentionally excluded: it is
- * provably a transfer between the team's own pockets and cannot be reclassified into
- * income or expense, so no control is offered for it.
+ * posting; those are the entries a team owner can reclassify. This pure helper reads a
+ * consolidated {@link LedgerEntry} back and returns its direction and cash pocket, or
+ * `null` for anything else — fees, internal pocket-to-pocket moves, payroll and expense
+ * payouts, dividends, share mints. A guaranteed-internal move is excluded on purpose:
+ * it cannot be reclassified into income or expense, so no control is offered.
  */
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 import type { AccountName } from './chartOfAccounts'
@@ -20,9 +16,9 @@ import type { ClassificationDirection } from './classification'
 const CASH_POCKETS: ReadonlySet<AccountName> = new Set<AccountName>(['Cash — Bank', 'Cash — Safe'])
 
 /**
- * Use cases the Bank/Safe mappers emit for an **external** deposit/withdrawal —
- * founder/client inflows, an unclassified outflow, and the two `CASH-IN`/`CASH-OUT`
- * codes a manual classification stamps. Fees, dividends and internal moves are absent.
+ * Use cases the Bank/Safe mappers emit for an external deposit/withdrawal — founder and
+ * client inflows, an unclassified outflow, and the two codes a manual classification
+ * stamps. Fees, dividends and internal moves are absent.
  */
 const CLASSIFIABLE_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'UC-BANK-01',
@@ -39,9 +35,9 @@ export interface ClassificationTarget {
 
 /**
  * The classification target of a ledger entry, or `null` when it is not a
- * manually-classifiable Bank/Safe deposit/withdrawal. An entry already carrying a
- * manual `classified` category always qualifies (so it stays editable); otherwise it
- * must be an external Bank/Safe move with exactly one cash-pocket leg.
+ * manually-classifiable Bank/Safe deposit/withdrawal. An entry already carrying a manual
+ * `classified` category always qualifies so it stays editable; otherwise it must be an
+ * external Bank/Safe move with exactly one cash-pocket leg.
  */
 export function classificationTargetOf(entry: LedgerEntry): ClassificationTarget | null {
   if (entry.internal) return null

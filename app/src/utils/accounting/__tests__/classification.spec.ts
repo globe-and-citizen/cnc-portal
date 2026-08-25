@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   ALLOWED_BY_DIRECTION,
   CLASSIFICATION_CATEGORIES,
-  allowedCategories,
-  isClassificationAllowed,
   resolveClassifiedAccounts,
   type ClassificationCategory,
   type ClassificationDirection
@@ -28,48 +26,32 @@ describe('classification categories', () => {
   })
 })
 
-describe('isClassificationAllowed', () => {
+describe('direction constraints', () => {
+  const resolve = (direction: ClassificationDirection, category: ClassificationCategory) =>
+    resolveClassifiedAccounts({ direction, cashAccount: BANK, category })
+
   it('allows revenue only on an inflow', () => {
-    expect(isClassificationAllowed('in', 'REVENUE')).toBe(true)
-    expect(isClassificationAllowed('out', 'REVENUE')).toBe(false)
+    expect(resolve('in', 'REVENUE')).not.toBeNull()
+    expect(resolve('out', 'REVENUE')).toBeNull()
   })
 
   it('allows an expense only on an outflow', () => {
-    expect(isClassificationAllowed('out', 'EXPENSE')).toBe(true)
-    expect(isClassificationAllowed('in', 'EXPENSE')).toBe(false)
+    expect(resolve('out', 'EXPENSE')).not.toBeNull()
+    expect(resolve('in', 'EXPENSE')).toBeNull()
   })
 
-  it('allows capital, loan and internal transfer both ways', () => {
+  it('allows capital and a shareholder loan both ways', () => {
     for (const direction of ['in', 'out'] as ClassificationDirection[]) {
-      expect(isClassificationAllowed(direction, 'OWNER_CAPITAL')).toBe(true)
-      expect(isClassificationAllowed(direction, 'SHAREHOLDER_LOAN')).toBe(true)
-      expect(isClassificationAllowed(direction, 'INTERNAL_TRANSFER')).toBe(true)
+      expect(resolve(direction, 'OWNER_CAPITAL')).not.toBeNull()
+      expect(resolve(direction, 'SHAREHOLDER_LOAN')).not.toBeNull()
     }
   })
 
-  it('permits only an internal transfer on a guaranteed-internal movement', () => {
-    for (const direction of ['in', 'out'] as ClassificationDirection[]) {
-      expect(
-        isClassificationAllowed(direction, 'INTERNAL_TRANSFER', { guaranteedInternal: true })
-      ).toBe(true)
-      for (const category of ['REVENUE', 'EXPENSE', 'OWNER_CAPITAL', 'SHAREHOLDER_LOAN'] as const) {
-        expect(isClassificationAllowed(direction, category, { guaranteedInternal: true })).toBe(
-          false
-        )
-      }
-    }
-  })
-})
-
-describe('allowedCategories', () => {
-  it('offers the direction-appropriate set', () => {
-    expect(allowedCategories('in')).toEqual(ALLOWED_BY_DIRECTION.in)
-    expect(allowedCategories('out')).toEqual(ALLOWED_BY_DIRECTION.out)
-  })
-
-  it('narrows to just internal transfer when guaranteed internal', () => {
-    expect(allowedCategories('in', { guaranteedInternal: true })).toEqual(['INTERNAL_TRANSFER'])
-    expect(allowedCategories('out', { guaranteedInternal: true })).toEqual(['INTERNAL_TRANSFER'])
+  it('offers each direction its own menu', () => {
+    expect(ALLOWED_BY_DIRECTION.in).toContain('REVENUE')
+    expect(ALLOWED_BY_DIRECTION.in).not.toContain('EXPENSE')
+    expect(ALLOWED_BY_DIRECTION.out).toContain('EXPENSE')
+    expect(ALLOWED_BY_DIRECTION.out).not.toContain('REVENUE')
   })
 })
 
@@ -220,7 +202,7 @@ describe('guaranteed-internal invariant', () => {
         direction: 'in',
         cashAccount: BANK,
         category: 'REVENUE',
-        guaranteedInternal: true
+        pocket: PAYROLL
       })
     ).toBeNull()
     expect(
@@ -228,7 +210,7 @@ describe('guaranteed-internal invariant', () => {
         direction: 'out',
         cashAccount: BANK,
         category: 'EXPENSE',
-        guaranteedInternal: true
+        pocket: PAYROLL
       })
     ).toBeNull()
   })
@@ -239,8 +221,7 @@ describe('guaranteed-internal invariant', () => {
         direction: 'in',
         cashAccount: BANK,
         category: 'INTERNAL_TRANSFER',
-        pocket: PAYROLL,
-        guaranteedInternal: true
+        pocket: PAYROLL
       })
     ).toEqual({ debit: BANK, credit: PAYROLL, internal: true })
   })
@@ -255,7 +236,7 @@ describe('every resolved classification is a balanced pair', () => {
           direction,
           cashAccount: BANK,
           category,
-          pocket: PAYROLL
+          ...(category === 'INTERNAL_TRANSFER' ? { pocket: PAYROLL } : {})
         })
         expect(result).not.toBeNull()
         expect(result?.debit).toBeTruthy()

@@ -2,15 +2,12 @@
  * Apply a manual classification on top of an inferred Bank/Safe entry (issue #2457).
  *
  * The Bank and Safe mappers first infer a deposit/withdrawal from its direction and
- * counterparty. This shared helper then overlays the team owner's manual
- * classification, when one exists for the transaction: it re-resolves the balanced
- * debit/credit accounts via the pure {@link resolveClassifiedAccounts} engine and
- * rebuilds the entry, keeping every monetary field (amount, token, rate, txHash,
- * counterparty) intact — only the accounts, the internal flag and the label change.
- *
- * The address inference stays the **visible fallback**: with no classification, or
- * one the engine rejects (an invalid direction/category, or the guaranteed-internal
- * guard), the inferred entry is returned unchanged.
+ * counterparty; this shared helper then overlays the owner's manual classification
+ * when one exists, re-resolving the balanced accounts via the pure
+ * {@link resolveClassifiedAccounts} engine and keeping every monetary field intact —
+ * only the accounts, the internal flag and the label change. The address inference
+ * stays the visible fallback: with no classification, or one the engine rejects, the
+ * inferred entry is returned unchanged.
  */
 import {
   resolveClassifiedAccounts,
@@ -34,10 +31,11 @@ const DEFAULT_MEMO: Record<ClassificationCategory, string> = {
 }
 
 /**
- * Return the inferred entry with the owner's classification applied, or unchanged
- * when there is no applicable classification. `direction` is `'in'` for a deposit
- * and `'out'` for a withdrawal; `cashAccount` is the Bank/Safe pocket the money
- * moved through.
+ * Return the inferred entry with the owner's classification applied, or unchanged when
+ * there is no applicable classification. `direction` is `'in'` for a deposit and
+ * `'out'` for a withdrawal; `cashAccount` is the Bank/Safe pocket the money moved
+ * through. A manual classification counts as the off-chain review, so it clears any
+ * `needs-off-chain-data` flag.
  */
 export function applyClassification(
   inferred: LedgerEntry,
@@ -53,8 +51,7 @@ export function applyClassification(
     direction,
     cashAccount,
     category: override.category,
-    pocket,
-    guaranteedInternal: pocket != null
+    pocket
   })
   if (!accounts) return inferred
 
@@ -67,7 +64,6 @@ export function applyClassification(
     useCase: accounts.internal ? 'INTERNAL' : direction === 'in' ? 'CASH-IN' : 'CASH-OUT',
     classified: override.category,
     memo,
-    // A manual classification is the off-chain review — clear any needs-off-chain-data flag.
     enrichment: 'not-applicable'
   }
 }

@@ -3,18 +3,14 @@
  * (issue #2457).
  *
  * A team owner can override the address-inference fallback of the Bank/Safe mappers
- * by classifying a deposit or withdrawal into one accounting category. This module
- * is the **pure** core of that feature: given a direction (deposit vs withdrawal),
- * the cash pocket the money moved through, and a category, it resolves the balanced
- * debit and credit accounts. No Vue, no network — the persistence (backend) and the
- * pipeline wiring live elsewhere; this only owns the category → accounts rule so it
- * is one deterministic, unit-tested table.
+ * by classifying a deposit or withdrawal into one accounting category. This module is
+ * the pure core of that feature: given a direction, the cash pocket the money moved
+ * through and a category, it resolves the balanced debit and credit accounts.
  *
- * The **guaranteed-internal invariant**: a movement between two CNC-owned pockets is
- * provably an internal transfer (both sides are the team's own cash), so it can never
- * be reclassified as external income, expense, capital or a loan. Only
- * `INTERNAL_TRANSFER` survives that guard — which is what the inference already books
- * — so the override is a no-op there rather than a way to misstate the books.
+ * Guaranteed-internal invariant: a movement whose counterparty is one of the team's
+ * own pockets is provably an internal transfer, so it can never be reclassified as
+ * external income, expense, capital or a loan. Passing that `pocket` is what asserts
+ * the movement is internal, so the guard cannot be bypassed by forgetting a flag.
  */
 import type { AccountName } from './chartOfAccounts'
 
@@ -22,30 +18,9 @@ import type { AccountName } from './chartOfAccounts'
 export type ClassificationDirection = 'in' | 'out'
 
 /**
- * The constrained accounting categories a Bank/Safe movement can be classified into.
- * Mirrors the backend Prisma `TransactionClassificationCategory` enum (issue #2457).
+ * The accounting categories a Bank/Safe movement can be classified into. Mirrors the
+ * backend Prisma `TransactionClassificationCategory` enum.
  */
-export type ClassificationCategory =
-  | 'REVENUE'
-  | 'EXPENSE'
-  | 'SHAREHOLDER_LOAN'
-  | 'OWNER_CAPITAL'
-  | 'INTERNAL_TRANSFER'
-  | 'PAYROLL_EXPENSE'
-  | 'INTEREST_EXPENSE'
-  | 'DIVIDEND_EXPENSE'
-
-/**
- * A manual classification an owner attached to one transaction — the category plus
- * an optional free-text note. This is the override the pipeline threads through the
- * mapper context and applies on top of the address inference.
- */
-export interface ClassificationOverride {
-  category: ClassificationCategory
-  memo?: string | null
-}
-
-/** Every category, as a value tuple for iteration / validation. */
 export const CLASSIFICATION_CATEGORIES = [
   'REVENUE',
   'EXPENSE',
@@ -55,7 +30,15 @@ export const CLASSIFICATION_CATEGORIES = [
   'PAYROLL_EXPENSE',
   'INTEREST_EXPENSE',
   'DIVIDEND_EXPENSE'
-] as const satisfies readonly ClassificationCategory[]
+] as const
+
+export type ClassificationCategory = (typeof CLASSIFICATION_CATEGORIES)[number]
+
+/** A manual classification an owner attached to one transaction. */
+export interface ClassificationOverride {
+  category: ClassificationCategory
+  memo?: string | null
+}
 
 /** Human-readable label for each category, shared by the classification UI. */
 export const CATEGORY_LABEL: Record<ClassificationCategory, string> = {
@@ -69,7 +52,7 @@ export const CATEGORY_LABEL: Record<ClassificationCategory, string> = {
   DIVIDEND_EXPENSE: 'Dividend'
 }
 
-/** The non-cash leg's account for each external category (INTERNAL_TRANSFER books to a pocket). */
+/** The non-cash leg for each external category (INTERNAL_TRANSFER books to a pocket). */
 const COUNTER_ACCOUNT: Record<Exclude<ClassificationCategory, 'INTERNAL_TRANSFER'>, AccountName> = {
   REVENUE: 'Service Revenue',
   EXPENSE: 'Operating Expense',
@@ -81,9 +64,9 @@ const COUNTER_ACCOUNT: Record<Exclude<ClassificationCategory, 'INTERNAL_TRANSFER
 }
 
 /**
- * Which categories a user may pick for each direction. Revenue only makes sense on
- * an inflow and an expense only on an outflow; capital, a shareholder loan and an
- * internal transfer are meaningful both ways (contribution/draw, borrow/repay).
+ * Which categories a user may pick for each direction, and the menu the UI offers.
+ * Revenue only makes sense on an inflow and an expense only on an outflow; capital, a
+ * shareholder loan and an internal transfer are meaningful both ways.
  */
 export const ALLOWED_BY_DIRECTION: Record<
   ClassificationDirection,
@@ -101,41 +84,6 @@ export const ALLOWED_BY_DIRECTION: Record<
   ]
 }
 
-export interface ClassificationConstraints {
-  /**
-   * The movement is provably internal (its counterparty is a known CNC pocket). When
-   * true, only `INTERNAL_TRANSFER` is permitted — the guaranteed-internal invariant.
-   */
-  guaranteedInternal?: boolean
-}
-
-/**
- * Whether `category` is a valid manual classification for a movement in `direction`.
- * A guaranteed-internal movement admits only `INTERNAL_TRANSFER`; any external
- * category (revenue, expense, capital, loan) is rejected there.
- */
-export function isClassificationAllowed(
-  direction: ClassificationDirection,
-  category: ClassificationCategory,
-  { guaranteedInternal = false }: ClassificationConstraints = {}
-): boolean {
-  if (guaranteedInternal) return category === 'INTERNAL_TRANSFER'
-  return ALLOWED_BY_DIRECTION[direction].includes(category)
-}
-
-/**
- * The categories to offer for a movement — the direction's set, narrowed to just
- * `INTERNAL_TRANSFER` when the movement is guaranteed internal. Drives the UI menu.
- */
-export function allowedCategories(
-  direction: ClassificationDirection,
-  constraints: ClassificationConstraints = {}
-): ClassificationCategory[] {
-  return ALLOWED_BY_DIRECTION[direction].filter((category) =>
-    isClassificationAllowed(direction, category, constraints)
-  )
-}
-
 /** A balanced pair of accounts a classification books to, plus whether it is internal. */
 export interface ClassifiedAccounts {
   debit: AccountName
@@ -150,20 +98,19 @@ export interface ResolveClassifiedAccountsInput {
   cashAccount: AccountName
   category: ClassificationCategory
   /**
-   * The internal pocket the counterparty resolves to, required to book an
-   * `INTERNAL_TRANSFER` (the transfer's other leg). Absent for external categories.
+   * The team pocket the counterparty resolves to. Its presence both proves the
+   * movement is internal and supplies the transfer's other leg, so an internal
+   * movement admits `INTERNAL_TRANSFER` and nothing else.
    */
   pocket?: AccountName | null
-  /** The guaranteed-internal guard — see {@link isClassificationAllowed}. */
-  guaranteedInternal?: boolean
 }
 
 /**
- * Resolve the balanced debit/credit accounts a classification books to, or `null`
- * when the (direction, category) pair is not permitted — including the
- * guaranteed-internal guard, and an `INTERNAL_TRANSFER` with no known pocket to move
- * against. A `null` return means "keep the inference": the caller falls back to the
- * address-inferred entry rather than applying an invalid override.
+ * Resolve the balanced debit/credit accounts a classification books to, or `null` when
+ * the classification is not permitted — a category the direction disallows, an
+ * `INTERNAL_TRANSFER` with no pocket to move against, or an external category on a
+ * provably internal movement. A `null` return means "keep the inference": the caller
+ * falls back to the address-inferred entry rather than applying an invalid override.
  *
  * Deposits debit the cash pocket and credit the category account; withdrawals do the
  * reverse — so every result is a single balanced pair by construction.
@@ -171,9 +118,7 @@ export interface ResolveClassifiedAccountsInput {
 export function resolveClassifiedAccounts(
   input: ResolveClassifiedAccountsInput
 ): ClassifiedAccounts | null {
-  const { direction, cashAccount, category, pocket, guaranteedInternal } = input
-
-  if (!isClassificationAllowed(direction, category, { guaranteedInternal })) return null
+  const { direction, cashAccount, category, pocket } = input
 
   if (category === 'INTERNAL_TRANSFER') {
     if (!pocket) return null
@@ -181,6 +126,9 @@ export function resolveClassifiedAccounts(
       ? { debit: cashAccount, credit: pocket, internal: true }
       : { debit: pocket, credit: cashAccount, internal: true }
   }
+
+  if (pocket) return null
+  if (!ALLOWED_BY_DIRECTION[direction].includes(category)) return null
 
   const counter = COUNTER_ACCOUNT[category]
   return direction === 'in'
