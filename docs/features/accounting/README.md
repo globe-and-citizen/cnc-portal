@@ -25,4 +25,9 @@ journal entry, and runs a **full worked example** end to end so the numbers can 
   basis**; investing returns **SHER shares** booked to `Investor Equity`; a direct mint with nothing
   behind it is **memo only** (tracked in shares, not value); each team books CNC usage fees as an
   expense, while the global FeeCollector books the same payments as protocol-fee revenue.
+- **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a team
+  owner can **manually classify** each one into a supported accounting category (revenue, an expense
+  — operating/payroll/interest/dividend, owner capital, or a shareholder loan) — persisted, shared,
+  and reversible; see catalogue §5.5
+  ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.

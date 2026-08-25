@@ -154,6 +154,15 @@ income statement, **BS** = balance sheet.
 > integration — see §1. In Phase 1 they are only exercised by manual / dogfood entries, not an
 > automated source.
 
+> **Manual classification overrides the inference (issue #2457).** Every Bank/Safe deposit and
+> withdrawal above is booked from address inference — the **visible fallback**. A team owner can
+> reclassify a transaction into a supported accounting category (revenue; an expense — operating,
+> payroll, interest or dividend; owner capital; a shareholder loan; or an internal transfer),
+> persisted against its `${txHash}-${logIndex}` identity and shared across the team; the engine
+> re-resolves the two balanced legs deterministically. A guaranteed-internal pocket-to-pocket move can
+> never be reclassified into income or expense. Journal entries per category, and the invariant, are
+> in catalogue **§5.5**.
+
 ---
 
 ## 5. How fees and expenses are booked

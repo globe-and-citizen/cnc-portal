@@ -37,6 +37,7 @@ import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
+import { useGetClassificationsQuery } from '@/queries/classification.queries'
 import {
   useGetSafeIncomingTransfersQuery,
   useGetSafeOutgoingTransactionsQuery
@@ -237,6 +238,11 @@ export function useCNCAccounting(
   const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
   const expenses = useGetExpensesQuery({ queryParams: { teamId } })
 
+  // ── Backend DB: manual Bank/Safe transaction classifications (issue #2457) ──
+  // Optional overlay on the address inference; a missing feed just leaves the
+  // inferred fallback in place, so it never blocks the books.
+  const classifications = useGetClassificationsQuery({ queryParams: { teamId } })
+
   // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
   const safeTransfers = useGetSafeIncomingTransfersQuery({
     pathParams: { safeAddress },
@@ -289,7 +295,8 @@ export function useCNCAccounting(
     safeTransfers: safeTransfers.data.value,
     safeOutgoingTransactions: safeOutgoing.data.value,
     weeklyClaims: weeklyClaims.data.value?.data,
-    expenses: expenses.data.value
+    expenses: expenses.data.value,
+    classifications: classifications.data.value
   }))
 
   // Native (POL/ETH) is valued at the **current** live price (currency store /
@@ -374,6 +381,7 @@ export function useCNCAccounting(
         routerMultiplier,
         weeklyClaims,
         expenses,
+        classifications,
         safeTransfers,
         safeOutgoing
       ].map(run)

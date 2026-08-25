@@ -33,7 +33,8 @@ Extends the Sprint Script in
 - [ ] **26.** Ravi **sweeps Payroll → Bank and Expense → Bank** to reconcile.
 - [ ] **27.** Ravi **pays a dividend** to the shareholders of whatever is left.
 - [ ] **28.** Add a **memo** on one deposit and one withdrawal.
-- [ ] **29.** Open the **ledger**: search rows, filter by each category, toggle column visibility, paginate.
-- [ ] **30.** Open a **line drill-down** (loupe / Details) on an account.
-- [ ] **31.** **Export** the ledger / a statement.
-- [ ] **32.** Refresh and re-open the page on an **empty team**, and with a **failed / NFT** transfer present.
+- [ ] **29.** On the **Classification** page (owner): reclassify Ravi's Bank withdrawal (step 15) as an **Expense** and a client deposit (step 11) as a **Shareholder Loan** — confirm the income statement and balance sheet update, and that the changes survive a **refresh**. **Revert** one to the inferred fallback. Confirm a **guaranteed-internal** move (e.g. Bank → Payroll, step 16) offers no income/expense option, and that a **non-owner** sees the classifications read-only.
+- [ ] **30.** Open the **ledger**: search rows, filter by each category, toggle column visibility, paginate.
+- [ ] **31.** Open a **line drill-down** (loupe / Details) on an account.
+- [ ] **32.** **Export** the ledger / a statement.
+- [ ] **33.** Refresh and re-open the page on an **empty team**, and with a **failed / NFT** transfer present.
