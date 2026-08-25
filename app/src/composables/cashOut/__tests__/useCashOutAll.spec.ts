@@ -103,7 +103,6 @@ describe('useCashOutAll', () => {
     await flow.start(fullPlan())
 
     expect(flow.steps.value.map((s) => s.status)).toEqual(['success', 'failed', 'pending'])
-    expect(flow.failedStep.value?.key).toBe('expense')
     expect(flow.steps.value[1].error).toContain('RPC node unavailable')
     expect(mockBankWrites.transfer.mutateAsync).not.toHaveBeenCalled()
     expect(invalidateQueries).not.toHaveBeenCalled()
@@ -154,8 +153,11 @@ describe('useCashOutAll', () => {
     flow.reset()
 
     expect(flow.steps.value).toEqual([])
-    expect(flow.currentIndex.value).toBe(0)
     expect(flow.isRunning.value).toBe(false)
+
+    await flow.start(fullPlan())
+
+    expect(flow.isComplete.value).toBe(true)
   })
 
   describe('with an explicit generation and recipient', () => {

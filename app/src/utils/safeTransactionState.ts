@@ -13,6 +13,12 @@ export interface SafeTransactionStateContext {
   hasConflict?: boolean
 }
 
+export interface SafeTransactionConflictContext {
+  currentNonce: number
+  threshold?: number
+  transactions: SafeTransaction[]
+}
+
 export interface SafeTransactionStateMeta {
   state: SafeTransactionState
   label: string
@@ -26,6 +32,22 @@ export interface SafeTransactionPermissions {
   canExecute: boolean
   approveHint: string
   executeHint: string
+}
+
+export interface SafeTransactionQueueRow {
+  transaction: SafeTransaction
+  state: SafeTransactionStateMeta
+  permissions: SafeTransactionPermissions
+  requiredConfirmations: number
+  confirmationProgress: string
+  isApproving: boolean
+  isExecuting: boolean
+}
+
+export interface SafeTransactionQueueContext extends SafeTransactionConflictContext {
+  isSigner: boolean
+  connectedAddress?: string
+  isTransactionLoading: (safeTxHash: string, action: 'approve' | 'execute') => boolean
 }
 
 export function getSafeTransactionFilterCounts(
@@ -56,6 +78,63 @@ const confirmationCount = (transaction: SafeTransaction) => transaction.confirma
 
 const requiredConfirmationCount = (transaction: SafeTransaction, threshold?: number): number =>
   transaction.confirmationsRequired || threshold || 0
+
+export function hasConflictingSafeTransactions(
+  transaction: SafeTransaction,
+  context: SafeTransactionConflictContext
+): boolean {
+  return context.transactions.some(
+    (candidate) =>
+      !candidate.isExecuted &&
+      candidate.safeTxHash !== transaction.safeTxHash &&
+      candidate.nonce >= context.currentNonce
+  )
+}
+
+export function willSafeTransactionApprovalCauseConflict(
+  transaction: SafeTransaction,
+  context: SafeTransactionConflictContext
+): boolean {
+  const confirmationsAfterApproval = confirmationCount(transaction) + 1
+  const requiredConfirmations = requiredConfirmationCount(transaction, context.threshold)
+
+  return (
+    confirmationsAfterApproval >= requiredConfirmations &&
+    hasConflictingSafeTransactions(transaction, context)
+  )
+}
+
+export function buildSafeTransactionQueueRows(
+  context: SafeTransactionQueueContext
+): SafeTransactionQueueRow[] {
+  return context.transactions.map((transaction) => {
+    const requiredConfirmations = requiredConfirmationCount(transaction, context.threshold)
+    const state = getSafeTransactionState(transaction, {
+      currentNonce: context.currentNonce,
+      threshold: context.threshold,
+      hasConflict: hasConflictingSafeTransactions(transaction, context)
+    })
+    const permissions = getSafeTransactionPermissions(transaction, {
+      state: state.state,
+      isSigner: context.isSigner,
+      connectedAddress: context.connectedAddress,
+      threshold: context.threshold
+    })
+
+    return {
+      transaction,
+      state,
+      permissions,
+      requiredConfirmations,
+      confirmationProgress:
+        requiredConfirmations <= 0
+          ? '0%'
+          : `${Math.min((confirmationCount(transaction) / requiredConfirmations) * 100, 100)}%`,
+      isApproving: context.isTransactionLoading(transaction.safeTxHash, 'approve'),
+      isExecuting: context.isTransactionLoading(transaction.safeTxHash, 'execute')
+    }
+  })
+}
 
 export function getSafeTransactionState(
   transaction: SafeTransaction,

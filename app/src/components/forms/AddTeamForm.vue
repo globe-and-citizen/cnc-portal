@@ -50,7 +50,7 @@
         <div class="mb-2 text-sm text-gray-700">
           Invite members to your company. You can always add more later.
         </div>
-        <MultiSelectMemberInput v-model="teamData.members" :disable-team-members="false" />
+        <MultiSelectMemberInput v-model="teamData.members" />
         {{ createTeamError }}
         <UAlert
           v-if="createTeamError"

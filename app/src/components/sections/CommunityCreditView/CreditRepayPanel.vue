@@ -56,6 +56,15 @@
         />
 
         <UAlert
+          v-if="!canRepayViaBank"
+          color="warning"
+          variant="soft"
+          icon="i-lucide-circle-alert"
+          description="Repayment is unavailable right now — the connected wallet isn't the treasury's owner."
+          data-test="repay-bank-blocked"
+        />
+
+        <UAlert
           v-if="submitError"
           color="error"
           variant="soft"
@@ -72,7 +81,7 @@
             icon="heroicons:check-circle"
             :label="isSubmitting ? 'Signing…' : `Repay `"
             :loading="isSubmitting"
-            :disabled="isSubmitting || numericAmount <= 0 || !isRepayable"
+            :disabled="isSubmitting || numericAmount <= 0 || !isRepayable || !canRepayViaBank"
             data-test="confirm-repay"
             @click="confirmRepay"
           />
@@ -107,13 +116,14 @@ import {
   useFixedReturnGetLendingOffer,
   useFixedReturnOfferLenders
 } from '@/composables/fixedReturn/reads'
-import { useBankAddress } from '@/composables/bank/reads'
+import { useBankAddress, useBankOwner } from '@/composables/bank/reads'
 import { useFundFixedReturnRepayment } from '@/composables/bank/writes'
 import { useErc20BalanceOf } from '@/composables/erc20/reads'
 import {
   classifyError,
   decimalsForFixedReturnToken,
   formatAmount,
+  isBankOwner,
   offerLenderToCreditLender,
   repayableCeiling,
   resolveUser,
@@ -146,6 +156,11 @@ const status = computed(() => statusMeta(round.value?.status ?? 'active'))
 // friendly message (it only has Bank.json's ABI loaded, not FixedReturn's).
 const REPAYABLE_STATUSES: RoundStatus[] = ['funded', 'active', 'overdue']
 const isRepayable = computed(() => !!round.value && REPAYABLE_STATUSES.includes(round.value.status))
+
+// This panel is reachable directly via the /repay route regardless of whether the
+// round-page CTA (which hides this case) was shown, so it needs its own check too.
+const { data: bankOwner } = useBankOwner()
+const canRepayViaBank = computed(() => isBankOwner(bankOwner.value, userStore.address))
 
 // The "hasn't reached its funding target yet" wording only makes sense while the round
 // is still actively raising — a 'stalled'/'refunded'/'repaid' round already resolved one
@@ -257,6 +272,7 @@ watch(
 
 async function confirmRepay() {
   if (!bankAddress.value || numericAmount.value <= 0 || !isRepayable.value) return
+  if (!canRepayViaBank.value) return
   submitError.value = null
   if (!amountPanelRef.value?.validate()) return
 
@@ -272,7 +288,8 @@ async function confirmRepay() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
       queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] })
+      queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
+      queryClient.invalidateQueries({ queryKey: ['fixed-return-events-logs'] })
     ])
     // `offer` is a separate wagmi-managed read (its own internal query key, not the
     // ['fixedReturnAllOffers', …] key invalidated above), so totalRepaidByIssuer here

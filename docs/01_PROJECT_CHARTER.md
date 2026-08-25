@@ -11,17 +11,23 @@
 
 ### 1.1 Purpose
 
-The CNC Portal exists to enable financial recognition of contributions and to provide structured governance tooling for any team or organization — from open-source communities to traditional companies seeking to adopt blockchain-based operations. It bridges on-chain smart contract execution with a familiar web interface, lowering the barrier for teams to compensate contributors fairly, govern transparently, and benefit from the trust, auditability, and automation that blockchain infrastructure provides.
+The CNC Portal exists to enable financial recognition of contributions and to provide structured governance tooling for any team or
+organization — from open-source communities to traditional companies seeking to adopt blockchain-based operations. It bridges on-chain smart
+contract execution with a familiar web interface, lowering the barrier for teams to compensate contributors fairly, govern transparently,
+and benefit from the trust, auditability, and automation that blockchain infrastructure provides.
 
 ### 1.2 Background / Problem Statement
 
-Contributions — whether in open-source communities or inside traditional companies — are often poorly tracked, inconsistently rewarded, and governed through opaque, manual processes. At the same time, many organizations want the benefits of blockchain (transparency, auditability, trustless execution, borderless payments) but lack an accessible entry point.
+Contributions — whether in open-source communities or inside traditional companies — are often poorly tracked, inconsistently rewarded, and
+governed through opaque, manual processes. At the same time, many organizations want the benefits of blockchain (transparency, auditability,
+trustless execution, borderless payments) but lack an accessible entry point.
 
 The CNC Portal addresses both problems by providing:
 
 - On-chain wage, claim, and vesting mechanisms backed by auditable smart contracts — usable by any team, not just crypto-native ones.
 - An off-chain backend for coordination, user management, and analytics that integrates with familiar workflows.
-- A self-service frontend and admin dashboard designed for teams of any size, from small open-source projects to established companies onboarding to Web3.
+- A self-service frontend and admin dashboard designed for teams of any size, from small open-source projects to established companies
+  onboarding to Web3.
 
 ### 1.3 Charter Scope
 
@@ -47,19 +53,27 @@ The CNC Portal addresses both problems by providing:
 
 ### 2.1 Vision
 
-A world where any team — open-source community or traditional company — can operate as a Crypto Native Corporation (CNC) on-chain with the same transparency, fairness, and automation that blockchain infrastructure makes possible, without requiring deep Web3 expertise to get started. The CNC Portal is the "GitHub for blockchain companies."
+A world where any team — open-source community or traditional company — can operate as a Crypto Native Corporation (CNC) on-chain with the
+same transparency, fairness, and automation that blockchain infrastructure makes possible, without requiring deep Web3 expertise to get
+started. The CNC Portal is the "GitHub for blockchain companies."
 
 ### 2.2 Mission
 
-Deliver an intuitive and secure CNC Portal that makes spinning up and running a Crypto Native Corporation as seamless as creating a GitHub repository. Empower any team — open-source or traditional — to govern their operations transparently and compensate contributors fairly using blockchain technology.
+Deliver an intuitive and secure CNC Portal that makes spinning up and running a Crypto Native Corporation as seamless as creating a GitHub
+repository. Empower any team — open-source or traditional — to govern their operations transparently and compensate contributors fairly
+using blockchain technology.
 
 ### 2.3 Strategic Objectives
 
-1. **Financial inclusion** — Provide wage, claim, expense, and vesting primitives on-chain so any contributor or employee can receive payment in a trustless, borderless manner.
-2. **Blockchain onboarding** — Give traditional companies a practical, low-friction path to adopt on-chain operations and benefit from auditability, automation, and trustless execution.
-3. **Governance accessibility** — Enable teams to submit, vote on, and execute proposals with minimal technical overhead, regardless of their Web3 experience level.
+1. **Financial inclusion** — Provide wage, claim, expense, and vesting primitives on-chain so any contributor or employee can receive
+   payment in a trustless, borderless manner.
+2. **Blockchain onboarding** — Give traditional companies a practical, low-friction path to adopt on-chain operations and benefit from
+   auditability, automation, and trustless execution.
+3. **Governance accessibility** — Enable teams to submit, vote on, and execute proposals with minimal technical overhead, regardless of
+   their Web3 experience level.
 4. **Operational transparency** — Surface real-time analytics and activity statistics through the admin dashboard and platform stats API.
-5. **Community and contribution** — Build supporting infrastructure (onboarding programs, grants, developer advocacy) to attract and retain contributors and partners.
+5. **Community and contribution** — Build supporting infrastructure (onboarding programs, grants, developer advocacy) to attract and retain
+   contributors and partners.
 6. **Developer experience** — Maintain a high-quality, well-tested codebase that contributors and integrators can rely on.
 7. **Security first** — Adhere to security-by-default principles documented in [platform security standards](./platform/security.md).
 
@@ -243,7 +257,8 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 ### 4.2 Decision-Making Model
 
 - **Product roadmap** decisions are owned by the Product Team and reflect community input via GitHub Issues.
-- **Technical architecture** decisions follow the standards in [architecture.md](./platform/architecture.md); significant changes require a design document under `docs/platform/`.
+- **Technical architecture** decisions follow the standards in [architecture.md](./platform/architecture.md); significant changes require a
+  design document under `docs/platform/`.
 - **Breaking changes** to smart contracts require a security review and explicit versioning.
 - **Documentation** changes follow the guidelines in [feature-specification-guide.md](./platform/feature-specification-guide.md).
 
@@ -326,7 +341,7 @@ Each team member has ownership of best practices, learning, and continuous impro
 
 - SIWE / JWT authentication
 - Team, user, and contribution management endpoints
-- Platform statistics API (see [stats functional specification](./features/stats/functional-specification.md))
+- Platform statistics API (see [stats functional specification](./features/backoffice/statistics/functional-specification.md))
 - Prisma ORM schema with PostgreSQL
 
 ✅ **Vue Frontend (`app/`)**
@@ -340,7 +355,7 @@ Each team member has ownership of best practices, learning, and continuous impro
 
 - Activity analytics and member management
 - Backoffice feature flags and admin tooling
-- Stats dashboard integration (see [stats dashboard integration](./features/stats/stats-dashboard-integration.md))
+- Stats dashboard integration (see [stats dashboard integration](./features/backoffice/statistics/stats-dashboard-integration.md))
 
 ✅ **Infrastructure**
 
@@ -359,7 +374,8 @@ Each team member has ownership of best practices, learning, and continuous impro
 
 ## 7. Architecture and Platform Alignment
 
-This charter defers all architectural detail to the dedicated platform documentation. The following standards apply to all work on the CNC Portal:
+This charter defers all architectural detail to the dedicated platform documentation. The following standards apply to all work on the CNC
+Portal:
 
 | Standard               | Reference                                                                |
 | ---------------------- | ------------------------------------------------------------------------ |
@@ -433,7 +449,8 @@ Beyond execution on core features, the CNC Portal requires deliberate investment
 
 ### 10.1 Developer & Community Onboarding
 
-- **Onboarding Program:** Create structured onboarding checklists and training for new developers (Web3, blockchain dev experience level varies widely).
+- **Onboarding Program:** Create structured onboarding checklists and training for new developers (Web3, blockchain dev experience level
+  varies widely).
 - **Documentation:** Maintain comprehensive guides in `docs/copilot-instructions/` and `CONTRIBUTION.md` for easy contributor integration.
 - **Mentorship:** Pair senior developers with junior contributors to accelerate learning and responsibility ownership.
 
@@ -441,28 +458,30 @@ Beyond execution on core features, the CNC Portal requires deliberate investment
 
 - **Charter reviews** are conducted at the start of each milestone and whenever scope changes significantly.
 - **Charter amendments** require approval from the Document Owner (Product Team) and acknowledgment from the Tech Lead.
-- **Version increments:** Minor changes (typos, clarifications) increment the patch version (e.g., 1.0.1). Scope or objective changes increment the minor version (e.g., 1.1.0). Structural re-scoping increments the major version (e.g., 2.0.0).
+- **Version increments:** Minor changes (typos, clarifications) increment the patch version (e.g., 1.0.1). Scope or objective changes
+  increment the minor version (e.g., 1.1.0). Structural re-scoping increments the major version (e.g., 2.0.0).
 - All changes must be committed via standard PR process with a description of what changed and why.
 
 ---
 
 ## 12. Related Documentation
 
-| Document                    | Location                                                                                              |
-| --------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Architecture Overview       | [docs/platform/architecture.md](./platform/architecture.md)                                           |
-| Security Standards          | [docs/platform/security.md](./platform/security.md)                                                   |
-| Testing Strategy            | [docs/platform/testing-strategy.md](./platform/testing-strategy.md)                                   |
-| Performance Standards       | [docs/platform/performance.md](./platform/performance.md)                                             |
-| Deployment Guide            | [docs/platform/deployment.md](./platform/deployment.md)                                               |
-| Development Standards       | [docs/platform/development-standards.md](./platform/development-standards.md)                         |
-| Feature Specification Guide | [docs/platform/feature-specification-guide.md](./platform/feature-specification-guide.md)             |
-| Stats Feature Spec          | [docs/features/stats/functional-specification.md](./features/stats/functional-specification.md)       |
-| Stats API Reference         | [docs/features/stats/stats-api.md](./features/stats/stats-api.md)                                     |
-| Contract Architecture       | [docs/contracts/contracts-technical-architecture.md](./contracts/contracts-technical-architecture.md) |
-| Auth Overview               | [docs/auth/README.md](./auth/README.md)                                                               |
-| CHANGELOG                   | [CHANGELOG.md](../CHANGELOG.md)                                                                       |
-| Contribution Guide          | [CONTRIBUTION.md](../CONTRIBUTION.md)                                                                 |
+| Document                    | Location                                                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Architecture Overview       | [docs/platform/architecture.md](./platform/architecture.md)                                                                     |
+| Security Standards          | [docs/platform/security.md](./platform/security.md)                                                                             |
+| Testing Strategy            | [docs/platform/testing-strategy.md](./platform/testing-strategy.md)                                                             |
+| Performance Standards       | [docs/platform/performance.md](./platform/performance.md)                                                                       |
+| Deployment Guide            | [docs/platform/deployment.md](./platform/deployment.md)                                                                         |
+| Development Standards       | [docs/platform/development-standards.md](./platform/development-standards.md)                                                   |
+| Feature Specification Guide | [docs/platform/feature-specification-guide.md](./platform/feature-specification-guide.md)                                       |
+| Stats Feature Spec          | [docs/features/backoffice/statistics/functional-specification.md](./features/backoffice/statistics/functional-specification.md) |
+| Stats API Reference         | [docs/features/backoffice/statistics/stats-api.md](./features/backoffice/statistics/stats-api.md)                               |
+| Contract Architecture       | [docs/contracts/contracts-technical-architecture.md](./contracts/contracts-technical-architecture.md)                           |
+| Authentication Stories      | [docs/features/authentication/README.md](./features/authentication/README.md)                                                   |
+| Authentication Architecture | [docs/implementation/authentication/README.md](./implementation/authentication/README.md)                                       |
+| CHANGELOG                   | [CHANGELOG.md](../CHANGELOG.md)                                                                                                 |
+| Contribution Guide          | [CONTRIBUTION.md](../CONTRIBUTION.md)                                                                                           |
 
 ---
 

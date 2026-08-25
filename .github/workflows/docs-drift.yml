@@ -1,26 +1,12 @@
-name: Documentation quality
+name: Documentation quality and freshness
 permissions:
   contents: read
 
 on:
   pull_request:
     branches: ["**"]
-    paths:
-      - "AGENTS.md"
-      - "CLAUDE.md"
-      - ".agents/skills/**"
-      - ".claude/skills/**"
-      - ".github/copilot-instructions.md"
-      - ".github/copilot-instructions/**"
-      - "**/*.md"
-      - ".markdownlint-cli2.yaml"
-      - ".prettier-markdown.json"
-      - ".prettierignore"
-      - "package.json"
-      - "package-lock.json"
-      - "scripts/audit-doc-drift.sh"
-      - "scripts/check-markdown-format.mjs"
-      - ".github/workflows/docs-drift.yml"
+  push:
+    branches: [develop, main]
   workflow_dispatch:
 
 jobs:
@@ -47,8 +33,14 @@ jobs:
 
       - name: 💄 Check Markdown formatting
         run: npm run format:md:check
+
+      - name: ✅ Test documentation freshness rules
+        run: npm run test:docs-freshness
+
+      - name: 🔄 Enforce documentation freshness
+        run: npm run lint:docs-freshness
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_BASE_COMMIT: ${{ github.event.pull_request.base.sha || github.event.before }}
 
       - name: 🔍 Audit AI-agent docs for drift
         run: bash scripts/audit-doc-drift.sh

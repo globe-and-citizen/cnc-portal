@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { computed } from 'vue'
 import { Time } from '@internationalized/date'
-import type { Address } from 'viem'
+import { parseEventLogs, type Address } from 'viem'
 import type { CreditRound } from '@/types'
 import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
 import { SUPPORTED_TOKENS } from '@/constant'
@@ -21,14 +21,16 @@ import {
 
 // The Community Credit store is the contract-backed read hub. Mocked the same way as
 // communityCreditViews.spec.ts (split out to stay under the max-lines cap there).
-const { store } = vi.hoisted(() => {
+// mockCreateMetadata is hoisted and shared (not a fresh vi.fn() per call) so tests can
+// drive the exact mutateAsync instance NewView.vue ends up calling.
+const { store, mockCreateMetadata } = vi.hoisted(() => {
   const store = {
     hasContract: true,
     isOwner: true,
     rounds: [] as CreditRound[],
     members: [] as unknown[]
   }
-  return { store }
+  return { store, mockCreateMetadata: vi.fn() }
 })
 
 vi.mock('@/stores/communityCredit', () => ({
@@ -40,7 +42,7 @@ vi.mock('@/stores/communityCredit', () => ({
 vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   useCreateFixedReturnOfferingMutation: () => ({
-    mutateAsync: vi.fn(),
+    mutateAsync: mockCreateMetadata,
     isPending: { value: false }
   })
 }))
@@ -48,6 +50,7 @@ vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
 import NewView from '../NewView.vue'
 
 const FIXED_RETURN_ADDRESS = '0x5234567890123456789012345678901234567890' as Address
+const mockParseEventLogs = vi.mocked(parseEventLogs)
 
 describe('NewView', () => {
   beforeEach(() => {
@@ -55,6 +58,7 @@ describe('NewView', () => {
     mockRouterPush.mockClear()
     mockInvalidateQueries.mockClear()
     mockWagmiCore.readContract.mockReset()
+    mockCreateMetadata.mockReset()
     mockFixedReturnReads.getSupportedTokens.data.value = []
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
@@ -148,7 +152,12 @@ describe('NewView', () => {
   })
 
   it('creates the offer on-chain and returns to the list on publish', async () => {
-    mockWagmiCore.readContract.mockResolvedValue(1n) // totalOfferings after create
+    mockFixedReturnWrites.createLendingOffer.mutateAsync.mockResolvedValueOnce({
+      hash: '0xhash',
+      receipt: { logs: [] },
+      simulation: {}
+    } as never)
+    mockParseEventLogs.mockReturnValueOnce([{ args: { offerId: 1n } }] as never)
     const wrapper = mount(NewView)
 
     // Basics → Terms → Access → Publish
@@ -165,7 +174,6 @@ describe('NewView', () => {
   })
 
   it('surfaces an error and stays on the wizard when publishing fails', async () => {
-    mockWagmiCore.readContract.mockResolvedValue(1n)
     mockFixedReturnWrites.createLendingOffer.mutateAsync.mockRejectedValueOnce(new Error('boom'))
     const wrapper = mount(NewView)
 
@@ -176,6 +184,39 @@ describe('NewView', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-test="cc-error"]').exists()).toBe(true)
+  })
+
+  it('retries only the metadata POST after an on-chain success but metadata failure, without re-submitting on-chain', async () => {
+    mockFixedReturnWrites.createLendingOffer.mutateAsync.mockResolvedValueOnce({
+      hash: '0xhash',
+      receipt: { logs: [] },
+      simulation: {}
+    } as never)
+    mockParseEventLogs.mockReturnValueOnce([{ args: { offerId: 3n } }] as never)
+    mockCreateMetadata.mockRejectedValueOnce(new Error('metadata down'))
+
+    const wrapper = mount(NewView)
+    await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="cc-error"]').text()).toContain('Round #3 was created on-chain')
+    expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).toHaveBeenCalledTimes(1)
+
+    // Retry — must repair the metadata only, not send a second on-chain tx.
+    mockCreateMetadata.mockResolvedValueOnce(undefined)
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await flushPromises()
+
+    expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).toHaveBeenCalledTimes(1)
+    expect(mockCreateMetadata).toHaveBeenLastCalledWith(
+      expect.objectContaining({ body: expect.objectContaining({ offerId: 3 }) })
+    )
+    expect(mockRouterPush).toHaveBeenLastCalledWith(
+      expect.objectContaining({ name: 'community-credit' })
+    )
   })
 
   it('blocks publishing when the team has no deployed Credit Account', async () => {

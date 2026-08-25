@@ -100,8 +100,6 @@ function reset() {
   submitError.value = null
 }
 
-defineExpose({ reset })
-
 // Component state
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')

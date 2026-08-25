@@ -35,9 +35,8 @@ describe('MultiSelectMemberInput', () => {
             props: [
               'modelValue',
               'hiddenMembers',
-              'disableTeamMembers',
+              'memberScope',
               'showOnFocus',
-              'onlyTeamMembers',
               'currentSafeOwners'
             ],
             emits: ['selectMember', 'update:modelValue'],
@@ -76,9 +75,8 @@ describe('MultiSelectMemberInput', () => {
               props: [
                 'modelValue',
                 'hiddenMembers',
-                'disableTeamMembers',
+                'memberScope',
                 'showOnFocus',
-                'onlyTeamMembers',
                 'currentSafeOwners'
               ],
               emits: ['selectMember', 'update:modelValue'],
@@ -113,9 +111,8 @@ describe('MultiSelectMemberInput', () => {
               props: [
                 'modelValue',
                 'hiddenMembers',
-                'disableTeamMembers',
+                'memberScope',
                 'showOnFocus',
-                'onlyTeamMembers',
                 'currentSafeOwners'
               ],
               emits: ['selectMember', 'update:modelValue'],

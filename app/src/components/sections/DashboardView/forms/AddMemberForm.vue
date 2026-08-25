@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-5">
-    <MultiSelectMemberInput v-model="formData" :disable-team-members="true" />
+    <MultiSelectMemberInput v-model="formData" member-scope="non-team-members" />
 
     <template v-if="addMembersError">
       <UAlert

@@ -52,17 +52,22 @@ const workedMinutesSchema = z.coerce
     message: 'Minutes must be in 10-minute increments (10, 20, 30, ...)',
   });
 
+export const DAILY_CLAIM_MEMO_MAX_LENGTH = 3_000;
+
+export const dailyClaimMemoSchema = z
+  .string()
+  .trim()
+  .min(1, 'Memo cannot be empty')
+  .max(
+    DAILY_CLAIM_MEMO_MAX_LENGTH,
+    `Memo must not exceed ${DAILY_CLAIM_MEMO_MAX_LENGTH} characters`
+  );
+
 // Claim creation request body
 export const addClaimBodySchema = z.object({
   teamId: teamIdSchema,
   minutesWorked: workedMinutesSchema,
-  memo: z
-    .string()
-    .trim()
-    .min(1, 'Memo cannot be empty')
-    .refine((memo) => memo.split(/\s+/).length <= 3000, {
-      message: 'Memo is too long, maximum 3000 words allowed',
-    }),
+  memo: dailyClaimMemoSchema,
   dayWorked: z.iso.datetime().optional(),
   attachments: fileAttachmentsArraySchema.optional(),
 });
@@ -70,13 +75,7 @@ export const addClaimBodySchema = z.object({
 // Claim update request body (for signature)
 export const updateClaimBodySchema = z.object({
   minutesWorked: workedMinutesSchema.optional(),
-  memo: z
-    .string()
-    .trim()
-    .refine((memo) => memo.split(/\s+/).length <= 3000, {
-      message: 'Memo is too long, maximum 3000 words allowed',
-    })
-    .optional(),
+  memo: dailyClaimMemoSchema.optional(),
   dayWorked: z.string().optional(),
   deletedFileIndexes: z.array(z.number().int().nonnegative()).optional(), // Array of indexes to delete
   attachments: fileAttachmentsArraySchema.optional(),
