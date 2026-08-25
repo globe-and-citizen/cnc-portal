@@ -44,16 +44,41 @@
       </div>
     </div>
 
-    <!-- Layout explorer -->
-    <CreditLayoutSwitcher />
-
-    <!-- Active variant -->
-    <CreditRoundLedger v-if="store.variant === 'ledger'" :round="round" />
-    <CreditRoundGauge v-else-if="store.variant === 'gauge'" :round="round" />
-    <CreditRoundTimeline v-else-if="store.variant === 'timeline'" :round="round" />
-    <!-- Same panel the "Repay round" button switches to — CreditRepayPanel reads
-         roundId/teamId straight from this page's own route params. -->
-    <CreditRepayPanel v-else />
+    <!-- Layout exploration + Repay, each its own route param (see activeVariant). Styled to
+         match the old hand-rolled CreditLayoutSwitcher: a dashed, tinted container with the
+         icon+label pushed left (list-leading + mr-auto) and compact pill tabs on the right. -->
+    <UTabs
+      v-model="activeVariant"
+      :items="ROUND_VARIANT_TAB_ITEMS"
+      size="xs"
+      class="w-full"
+      :ui="{
+        list: 'border-primary/30 bg-primary/5 items-center gap-0.5 rounded-xl border border-dashed px-3.5 py-2.5',
+        indicator: 'hidden',
+        trigger:
+          'grow-0 shrink-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary'
+      }"
+    >
+      <template #list-leading>
+        <div class="text-primary mr-auto flex items-center gap-2.5 text-xs font-semibold">
+          <UIcon name="heroicons:swatch" class="size-4" />
+          Layout exploration
+        </div>
+      </template>
+      <template #ledger>
+        <CreditRoundLedger :round="round" />
+      </template>
+      <template #gauge>
+        <CreditRoundGauge :round="round" />
+      </template>
+      <template #timeline>
+        <CreditRoundTimeline :round="round" />
+      </template>
+      <template #repay>
+        <!-- CreditRepayPanel reads roundId/teamId straight from this page's own route params. -->
+        <CreditRepayPanel />
+      </template>
+    </UTabs>
 
     <CreditAccountTransactions
       v-if="fixedReturnAddress"
@@ -78,6 +103,7 @@ import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { zeroAddress } from 'viem'
 import { useCommunityCreditStore, useUserDataStore } from '@/stores'
+import { useBankOwner } from '@/composables/bank/reads'
 import {
   useFixedReturnAddress,
   useFixedReturnGetLendingOffer,
@@ -88,10 +114,16 @@ import {
   useFixedReturnRefundLenders,
   useFixedReturnAcceptPartialFunding
 } from '@/composables/fixedReturn/writes'
-import { classifyError, offerLenderToCreditLender, resolveUser, statusMeta } from '@/utils'
-import type { CreditRound, LendingOfferStruct } from '@/types'
+import {
+  classifyError,
+  isBankOwner,
+  offerLenderToCreditLender,
+  resolveUser,
+  ROUND_VARIANT_TAB_ITEMS,
+  statusMeta
+} from '@/utils'
+import type { CreditRound, Cta, LendingOfferStruct, RoundDetailVariant } from '@/types'
 import CreditAccountTransactions from '@/components/sections/CommunityCreditView/CreditAccountTransactions.vue'
-import CreditLayoutSwitcher from '@/components/sections/CommunityCreditView/CreditLayoutSwitcher.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 import CreditRepayPanel from '@/components/sections/CommunityCreditView/CreditRepayPanel.vue'
 import CreditRoundGauge from '@/components/sections/CommunityCreditView/CreditRoundGauge.vue'
@@ -108,6 +140,32 @@ const userStore = useUserDataStore()
 const teamId = computed(() => String(route.params.id))
 const roundId = computed(() => String(route.params.roundId))
 const offerId = computed(() => BigInt(roundId.value || '0'))
+
+const DEFAULT_VARIANT: RoundDetailVariant = 'ledger'
+
+// Which round-detail tab is showing (layout exploration + Repay) — a route param, not
+// app state, so a given tab is bookmarkable/shareable/reload-safe and never leaks across
+// rounds (each mount reads its own route.params.roundId + view). Mirrored via
+// router.replace (no history spam), same convention as IndexView's tab query param.
+const activeVariant = computed<RoundDetailVariant>({
+  get: () => {
+    const raw = route.params.view
+    const value = Array.isArray(raw) ? raw[0] : raw
+    return ROUND_VARIANT_TAB_ITEMS.some((item) => item.value === value)
+      ? (value as RoundDetailVariant)
+      : DEFAULT_VARIANT
+  },
+  set: (value: RoundDetailVariant) => {
+    router.replace({
+      name: 'community-credit-round',
+      params: {
+        id: teamId.value,
+        roundId: roundId.value,
+        view: value === DEFAULT_VARIANT ? undefined : value
+      }
+    })
+  }
+})
 
 const fixedReturnAddress = useFixedReturnAddress()
 const baseRound = computed(() => store.getRound(roundId.value))
@@ -158,6 +216,11 @@ const canAcceptPartialFunding = computed(
   () => canRefundLenders.value && (round.value?.raised ?? 0) > 0
 )
 
+// Repay calls Bank.fundFixedReturnRepayment, onlyOwner on Bank's own Ownable — a
+// separate owner slot from FixedReturn's (store.isOwner).
+const { data: bankOwner } = useBankOwner()
+const canRepayViaBank = computed(() => isBankOwner(bankOwner.value, userStore.address))
+
 function goList() {
   router.push({ name: 'community-credit', params: { id: teamId.value } })
 }
@@ -178,7 +241,8 @@ async function invalidateRound() {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
     queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] }),
-    queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] })
+    queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
+    queryClient.invalidateQueries({ queryKey: ['fixed-return-events-logs'] })
   ])
 }
 
@@ -223,16 +287,6 @@ function onLent() {
   lendRound.value = null
 }
 
-type Cta = {
-  test: string
-  label: string
-  icon: string
-  color: 'primary' | 'neutral' | 'warning'
-  variant: 'solid' | 'soft'
-  loading?: boolean
-  run: () => void
-}
-
 const ctas = computed<Cta[]>(() => {
   const r = round.value
   if (!r) return []
@@ -252,15 +306,16 @@ const ctas = computed<Cta[]>(() => {
   }
 
   if (store.isOwner) {
-    if (r.status === 'active' || r.status === 'funded' || r.status === 'overdue') {
+    const isRepayStatus = r.status === 'active' || r.status === 'funded' || r.status === 'overdue'
+    if (isRepayStatus && canRepayViaBank.value) {
       list.push({
         test: 'round-cta-repay',
         label: 'Repay round',
         icon: 'heroicons:arrow-uturn-left',
         color: 'primary',
         variant: 'solid',
-        // Same behavior as clicking the "Repay" layout-exploration pill.
-        run: () => store.setVariant('repay')
+        // Same behavior as clicking the "Repay" layout-exploration tab.
+        run: () => (activeVariant.value = 'repay')
       })
     } else if (r.status === 'stalled') {
       list.push({

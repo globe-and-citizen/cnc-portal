@@ -6,7 +6,7 @@
  *   so the enrichment step can attach the `Wage`/`Claim` category (rate, minutes,
  *   memo).
  * - `WithdrawToken` where the token is **SHER**: the wage is paid in shares —
- *   Dr Shares to be issued · Cr Investor Equity (the equity leg of UC-CASH-03).
+ *   Dr SHERS To Be Issued · Cr Investor Equity (the equity leg of UC-CASH-03).
  *   The matching `Investor Minted` is therefore *not* re-booked by the investor
  *   mapper (it would double-count the equity).
  * - `Deposited`: internal funding of the payroll pocket from Bank — internal move.
@@ -65,7 +65,7 @@ function shareSettlement(row: CashRemunerationWithdrawTokenRow, ctx: MapperConte
     id: row.id,
     timestamp: row.timestamp,
     useCase: 'UC-CASH-03',
-    debit: 'Shares to be issued',
+    debit: 'SHERS To Be Issued',
     credit: 'Investor Equity',
     amountUsd: ctx.toUsd(BigInt(row.amount), 'sher', atDate(row.timestamp)),
     token: 'sher',

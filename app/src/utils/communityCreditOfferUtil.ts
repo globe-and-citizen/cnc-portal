@@ -19,6 +19,20 @@ dayjs.extend(utc)
 // ───────── FixedReturn offer/lender mapping (Community Credit's own — FixedReturn.sol
 // is Community Credit's contract, and has no application concept beyond it) ─────────
 
+/** Avatar gradient palette — lenders have no on-chain color, so derive one by address. */
+const CREDIT_GRADIENT_STOPS = ['#00bf7a', '#00b8d9', '#3366ff', '#0f3d2e', '#00925c']
+
+/** Deterministic two-color gradient for an address (stable across renders). */
+export function gradientForAddress(address: string): string {
+  let hash = 0
+  for (let i = 0; i < address.length; i++) hash = (hash * 31 + address.charCodeAt(i)) >>> 0
+  const first = CREDIT_GRADIENT_STOPS[hash % CREDIT_GRADIENT_STOPS.length]
+  const second = CREDIT_GRADIENT_STOPS[(hash >> 4) % CREDIT_GRADIENT_STOPS.length]
+  const distinct =
+    first === second ? CREDIT_GRADIENT_STOPS[(hash + 1) % CREDIT_GRADIENT_STOPS.length] : second
+  return `${first},${distinct}`
+}
+
 /** UI-only sanity ceiling on a round's term length — FixedReturn.sol itself places no
  *  upper bound on maturityDate, only that it comes after subscriptionDeadline. 30 years
  *  matches the old on-chain bound for TermUnit.Years from before the maturityDate

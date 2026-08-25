@@ -1,296 +1,226 @@
 <template>
-  <UCard>
+  <UCard data-test="vesting-schedules-card">
     <template #header>
-      <div class="flex items-center justify-between">
-        <span>Vesting OverView</span>
-        <div class="flex items-center gap-4">
-          <VestingStatusFilter @statusChange="handleStatusChange" />
-
-          <VestingActions :reloadKey="reloadKey" @reload="handleReload" />
+      <div class="space-y-4">
+        <div>
+          <h2 class="text-lg font-semibold">Schedules</h2>
+          <p class="text-muted mt-1 text-sm">
+            Follow each grant, understand what happens next, and act when shares are available.
+          </p>
+        </div>
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div
+            class="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-900"
+            role="group"
+            aria-label="Schedule scope"
+          >
+            <UButton
+              v-for="scope in scopes"
+              :key="scope.value"
+              size="sm"
+              color="neutral"
+              :variant="selectedScope === scope.value ? 'solid' : 'ghost'"
+              :label="scope.label"
+              :data-test="`vesting-scope-${scope.value}`"
+              @click="selectedScope = scope.value"
+            />
+          </div>
+          <USelect
+            v-model="selectedStatus"
+            :items="statusOptions"
+            class="w-full lg:w-52"
+            aria-label="Filter vesting schedules by status"
+            data-test="vesting-status-filter"
+          />
         </div>
       </div>
     </template>
 
-    <UIcon v-if="loading" name="i-lucide-loader-circle" class="h-5 w-5 animate-spin" />
-
-    <UTable
-      :data="vestings"
-      :columns="columns"
-      :sticky="true"
-      :showPagination="true"
-      data-test="vesting-overview"
+    <div
+      v-if="isLoading"
+      class="flex min-h-48 items-center justify-center"
+      role="status"
+      aria-live="polite"
+      data-test="vesting-loading"
     >
-      <template #vestablePerDay-cell="{ row: { original: row } }">
-        <span class="flex items-center gap-1 text-sm text-gray-700">
-          {{ formatNumber(row.totalAmount / row.durationDays, { maxDecimals: 2 }) }}
-          <span class="text-xs">{{ row.tokenSymbol }}</span>
-        </span>
-      </template>
-      <template #totalAmount-cell="{ row: { original: row } }">
-        <span class="flex items-center gap-1 text-sm text-gray-700">
-          {{ (row as VestingRow).totalAmount }}
-          <span class="text-xs">{{ row.tokenSymbol }}</span>
-        </span>
-      </template>
-      <template #released-cell="{ row: { original: row } }">
-        <UBadge color="info" variant="subtle" class="flex items-center gap-1">
-          {{ formatNumber(row.released, { maxDecimals: 2 }) }}
-          <span class="text-xs">{{ row.tokenSymbol }}</span>
-        </UBadge>
-      </template>
-      <template #member-cell="{ row: { original: row } }">
-        <span>{{ row.member }}</span>
-      </template>
-      <template #actions-cell="{ row: { original: row } }">
-        <div class="flex flex-wrap gap-2">
-          <!-- Stop Button -->
+      <div class="text-center">
+        <UIcon name="i-lucide-loader-circle" class="text-primary mx-auto size-8 animate-spin" />
+        <p class="text-muted mt-3 text-sm">Loading vesting schedules…</p>
+      </div>
+    </div>
+    <div v-else-if="error" class="py-8 text-center" data-test="vesting-error">
+      <UIcon name="i-lucide-circle-alert" class="text-error mx-auto size-8" />
+      <p class="mt-3 font-medium">Schedules could not be loaded</p>
+      <p class="text-muted mt-1 text-sm">Check the active network, then try again.</p>
+      <UButton
+        class="mt-4"
+        color="neutral"
+        variant="outline"
+        label="Try again"
+        data-test="vesting-retry"
+        @click="emit('retry')"
+      />
+    </div>
+    <div
+      v-else-if="filteredSchedules.length === 0"
+      class="py-10 text-center"
+      data-test="vesting-empty"
+    >
+      <UIcon name="i-lucide-calendar-clock" class="text-muted mx-auto size-9" />
+      <p class="mt-3 font-medium">{{ emptyTitle }}</p>
+      <p class="text-muted mx-auto mt-1 max-w-md text-sm">{{ emptyDescription }}</p>
+      <UButton
+        v-if="selectedStatus !== 'all'"
+        class="mt-4"
+        color="neutral"
+        variant="outline"
+        label="Show all schedules"
+        data-test="vesting-clear-filter"
+        @click="selectedStatus = 'all'"
+      />
+    </div>
+    <VestingScheduleList
+      v-else
+      :schedules="filteredSchedules"
+      :token-symbol="tokenSymbol"
+      :member-name="memberName"
+      :can-release="canRelease"
+      :can-stop="canStop"
+      @details="openScheduleDetails"
+      @action="openActionReview"
+    />
 
-          <UTooltip :text="archivedTooltip">
-            <UButton
-              v-if="row.status === 'Active' && team?.ownerAddress == userAddress"
-              data-test="stop-btn"
-              color="error"
-              size="xs"
-              :disabled="isWriteDisabled"
-              @click.stop="stopVesting(row.member, row.index)"
-              icon="mdi:stop-circle-outline"
-              label="Stop"
-            />
-          </UTooltip>
-
-          <!-- Withdraw Button -->
-
-          <!-- Release Button -->
-
-          <UTooltip :text="archivedTooltip">
-            <UButton
-              data-test="release-btn"
-              v-if="row.status === 'Active' && row.member === userAddress"
-              color="success"
-              size="xs"
-              :disabled="isWriteDisabled || !row.isStarted"
-              :title="!row.isStarted ? 'Vesting has not started yet' : undefined"
-              @click.stop="releaseVesting(row.index)"
-              icon="mdi:lock-open"
-              label="Release"
-            />
-          </UTooltip>
-        </div>
-      </template>
-    </UTable>
+    <VestingScheduleDetailsModal
+      v-model:open="detailsOpen"
+      :schedule="selectedSchedule"
+      :token-symbol="tokenSymbol"
+      :member-name="memberName"
+    />
+    <VestingActionReviewModal
+      v-model:open="actionOpen"
+      :kind="actionKind"
+      :schedule="actionSchedule"
+      :token-symbol="tokenSymbol"
+      :member-name="memberName"
+    />
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, ref } from 'vue'
-import { type VestingRow, type VestingTuple, type VestingStatus } from '@/types/vesting'
-import { useTeamStore } from '@/stores'
-import { formatUnits } from 'viem'
-import { useUserDataStore } from '@/stores'
-
-import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
-import VestingStatusFilter from './VestingStatusFilter.vue'
-import { useInvestorSymbol } from '@/composables/investor/reads'
-import {
-  useVestingGetAllArchivedVestingsFlat,
-  useVestingGetVestingsWithMembers
-} from '@/composables/vesting/reads'
-import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
+import { computed, ref } from 'vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { formatDate, formatNumber, fromUnix } from '@/utils/format'
-
-const toast = useToast()
-const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
-
-const teamStore = useTeamStore()
-const team = computed(() => teamStore.currentTeam)
-
-const emit = defineEmits(['reload'])
+import type { VestingSchedule, VestingScheduleState, VestingStatus } from '@/types/vesting'
+import VestingActionReviewModal from './VestingActionReviewModal.vue'
+import VestingScheduleDetailsModal from './VestingScheduleDetailsModal.vue'
+import VestingScheduleList from './VestingScheduleList.vue'
 
 const props = defineProps<{
-  reloadKey: number
+  schedules: VestingSchedule[]
+  tokenSymbol: string
+  isLoading: boolean
+  error: unknown
 }>()
-
+const emit = defineEmits<{ retry: [] }>()
+const teamStore = useTeamStore()
 const userStore = useUserDataStore()
-const userAddress = computed(() => userStore.address)
-
-// const selectedStatus = ref('all')
-// // Add handler
-// const handleStatusChange = (status: string) => {
-//   selectedStatus.value = status
-// }
-
+const { isWriteDisabled } = useTeamWriteGuard()
+const selectedScope = ref<'mine' | 'team'>(
+  teamStore.currentTeam?.ownerAddress.toLowerCase() === userStore.address?.toLowerCase()
+    ? 'team'
+    : 'mine'
+)
 const selectedStatus = ref<VestingStatus>('all')
-
-const handleStatusChange = (status: VestingStatus) => {
-  selectedStatus.value = status
-}
-
-const {
-  data: tokenSymbol
-  //isLoading: isLoadingTokenSymbol
-  //error: tokenSymbolError
-} = useInvestorSymbol()
-
-const safeTokenSymbol = computed(() =>
-  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : 'default'
-)
-
-const {
-  data: archivedVestingInfos,
-  //isLoading: isLoadingArchivedVestingInfos,
-  error: errorGetArchivedVestingInfo,
-  refetch: getArchivedVestingInfos
-} = useVestingGetAllArchivedVestingsFlat()
-
-watch(errorGetArchivedVestingInfo, () => {
-  if (errorGetArchivedVestingInfo.value) {
-    toast.add({ title: 'get archived  failed', color: 'error' })
-    console.error('get archived  failed ====', errorGetArchivedVestingInfo)
+type ScheduleKey = Pick<VestingSchedule, 'member' | 'index'>
+const selectedScheduleKey = ref<ScheduleKey | null>(null)
+const actionScheduleKey = ref<ScheduleKey | null>(null)
+const actionKind = ref<'release' | 'stop'>('release')
+const findSchedule = (key: ScheduleKey | null) =>
+  key
+    ? (props.schedules.find(
+        (schedule) => schedule.member === key.member && schedule.index === key.index
+      ) ?? null)
+    : null
+const selectedSchedule = computed(() => findSchedule(selectedScheduleKey.value))
+const actionSchedule = computed(() => findSchedule(actionScheduleKey.value))
+const detailsOpen = computed({
+  get: () => selectedSchedule.value !== null,
+  set: (open) => {
+    if (!open) selectedScheduleKey.value = null
   }
 })
-
-const {
-  data: vestingInfos,
-  //isLoading: isLoadingVestingInfos,
-  error: errorGetVestingInfo,
-  refetch: getVestingInfos
-} = useVestingGetVestingsWithMembers()
-watch(errorGetVestingInfo, () => {
-  if (errorGetVestingInfo.value) {
-    toast.add({ title: 'Failed to load vestings', color: 'error' })
+const actionOpen = computed({
+  get: () => actionSchedule.value !== null,
+  set: (open) => {
+    if (!open) actionScheduleKey.value = null
   }
 })
-
-watch(
-  () => props.reloadKey,
-  async () => {
-    await getVestingInfos()
-    await getArchivedVestingInfos()
-  }
-)
-
-const isVestingTuple = (value: unknown): value is VestingTuple => {
-  if (!Array.isArray(value) || value.length !== 3) {
-    return false
-  }
-
-  const [members, indices, vestingsRaw] = value
-  return Array.isArray(members) && Array.isArray(indices) && Array.isArray(vestingsRaw)
-}
-
-const vestings = computed<VestingRow[]>(() => {
-  const currentDateInSeconds = Math.floor(Date.now() / 1000)
-
-  const allVestingsRaw: VestingTuple[] = [vestingInfos.value, archivedVestingInfos.value].filter(
-    isVestingTuple
-  )
-
-  const allRows = allVestingsRaw.flatMap(([members, indices, vestingsRaw]) =>
-    members.map((member, idx): VestingRow => {
-      const index = Number(indices[idx] ?? idx)
-      const v = vestingsRaw[idx]
-      if (!v) {
-        return {
-          member,
-          index,
-          startDate: '',
-          isStarted: false,
-          durationDays: 0,
-          cliffDays: 0,
-          totalAmount: 0,
-          released: 0,
-          status: 'Inactive',
-          tokenSymbol: safeTokenSymbol.value
-        }
-      }
-      const totalAmount = Number(formatUnits(v.totalAmount, 6))
-      const released = Number(formatUnits(v.released, 6))
-      const isStarted = currentDateInSeconds > Number(v.start)
-      const isCompleted = v.active && released >= totalAmount
-      const status = !v.active ? 'Inactive' : isCompleted ? 'Completed' : 'Active'
-
-      return {
-        member,
-        index,
-        startDate: formatDate(fromUnix(v.start)),
-        isStarted,
-        durationDays: Math.floor(Number(v.duration) / 86400),
-        cliffDays: Math.floor(Number(v.cliff) / 86400),
-        totalAmount,
-        released,
-        status,
-        tokenSymbol: safeTokenSymbol.value
-      }
-    })
-  )
-
-  switch (selectedStatus.value) {
-    case 'active':
-      return allRows.filter((row) => row.status === 'Active')
-    case 'completed':
-      return allRows.filter((row) => row.status === 'Completed')
-    case 'cancelled':
-      return allRows.filter((row) => row.status === 'Inactive')
-    default:
-      return allRows
-  }
-})
-
-const handleReload = () => {
-  emit('reload')
-}
-
-const stopVestingWrite = useVestingStopVestingWrite()
-
-const stopVesting = (member: string, index: number) => {
-  stopVestingWrite.mutate(
-    { args: [member, BigInt(index)] },
-    {
-      onSuccess: () => {
-        toast.add({ title: 'Vesting stopped successfully', color: 'success' })
-        emit('reload')
-      },
-      onError: (err) => {
-        toast.add({ title: 'Stop vesting failed', color: 'error' })
-        console.error('stop vesting error', err)
-      }
-    }
-  )
-}
-
-const releaseVestingWrite = useVestingReleaseWrite()
-
-const releaseVesting = (index: number) => {
-  releaseVestingWrite.mutate(
-    { args: [BigInt(index)] },
-    {
-      onSuccess: () => {
-        toast.add({ title: 'Vested shares minted to you', color: 'success' })
-        emit('reload')
-      },
-      onError: (err) => {
-        toast.add({ title: 'Release vesting failed', color: 'error' })
-        console.error('release vesting error', err)
-      }
-    }
-  )
-}
-
-const loading = computed(
-  () => releaseVestingWrite.isPending.value || stopVestingWrite.isPending.value
-)
-
-// Define columns including the new "Actions" column
-const columns = [
-  { accessorKey: 'member', header: 'Member Address', enableSorting: true },
-  { accessorKey: 'tokenSymbol', header: 'Token', enableSorting: false },
-  { accessorKey: 'startDate', header: 'Start Date', enableSorting: true },
-  { accessorKey: 'durationDays', header: 'Duration (days)', enableSorting: true },
-  { accessorKey: 'vestablePerDay', header: 'Per Day', enableSorting: false },
-  { accessorKey: 'totalAmount', header: 'Total Amount', enableSorting: true },
-  { accessorKey: 'released', header: 'Released', enableSorting: true },
-  { accessorKey: 'status', header: 'Status', enableSorting: true },
-  { accessorKey: 'actions', header: 'Actions' }
+const scopes = [
+  { label: 'My schedules', value: 'mine' as const },
+  { label: 'Team schedules', value: 'team' as const }
 ]
+const activeStates: VestingScheduleState[] = [
+  'upcoming',
+  'cliff_locked',
+  'accruing',
+  'claimable',
+  'fully_vested'
+]
+const scopedSchedules = computed(() => {
+  if (selectedScope.value === 'team') return props.schedules
+  const address = userStore.address?.toLowerCase()
+  return props.schedules.filter((schedule) => schedule.member.toLowerCase() === address)
+})
+const counts = computed(() => ({
+  all: scopedSchedules.value.length,
+  active: scopedSchedules.value.filter((schedule) => activeStates.includes(schedule.state)).length,
+  claimable: scopedSchedules.value.filter((schedule) => schedule.claimableAmount > 0n).length,
+  completed: scopedSchedules.value.filter((schedule) => schedule.state === 'completed').length,
+  cancelled: scopedSchedules.value.filter((schedule) => schedule.state === 'cancelled').length
+}))
+const statusOptions = computed(() => [
+  { label: `All (${counts.value.all})`, value: 'all' },
+  { label: `Active (${counts.value.active})`, value: 'active' },
+  { label: `Claimable (${counts.value.claimable})`, value: 'claimable' },
+  { label: `Completed (${counts.value.completed})`, value: 'completed' },
+  { label: `Cancelled (${counts.value.cancelled})`, value: 'cancelled' }
+])
+const filteredSchedules = computed(() => {
+  if (selectedStatus.value === 'all') return scopedSchedules.value
+  if (selectedStatus.value === 'active') {
+    return scopedSchedules.value.filter((schedule) => activeStates.includes(schedule.state))
+  }
+  if (selectedStatus.value === 'claimable') {
+    return scopedSchedules.value.filter((schedule) => schedule.claimableAmount > 0n)
+  }
+  return scopedSchedules.value.filter((schedule) => schedule.state === selectedStatus.value)
+})
+const emptyTitle = computed(() =>
+  selectedScope.value === 'mine' ? 'No schedules for this wallet' : 'No schedules to show'
+)
+const emptyDescription = computed(() =>
+  selectedStatus.value === 'all'
+    ? 'Created grants will appear here with their progress and next action.'
+    : 'Choose another status to continue reviewing vesting schedules.'
+)
+const memberName = (address: string) =>
+  teamStore.currentTeam?.members?.find(
+    (member) => member.address.toLowerCase() === address.toLowerCase()
+  )?.name || 'Team member'
+const canRelease = (schedule: VestingSchedule) =>
+  !isWriteDisabled.value &&
+  schedule.active &&
+  schedule.claimableAmount > 0n &&
+  schedule.member.toLowerCase() === userStore.address?.toLowerCase()
+const canStop = (schedule: VestingSchedule) =>
+  !isWriteDisabled.value &&
+  schedule.active &&
+  teamStore.currentTeam?.ownerAddress.toLowerCase() === userStore.address?.toLowerCase()
+const openActionReview = (kind: 'release' | 'stop', schedule: VestingSchedule) => {
+  actionKind.value = kind
+  actionScheduleKey.value = { member: schedule.member, index: schedule.index }
+}
+const openScheduleDetails = (schedule: VestingSchedule) => {
+  selectedScheduleKey.value = { member: schedule.member, index: schedule.index }
+}
 </script>

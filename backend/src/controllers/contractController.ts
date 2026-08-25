@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
-import { Address } from 'viem';
+import { getAddress, Address } from 'viem';
 import OFFICER_ABI from '../artifacts/officer_abi.json';
 import { errorResponse, prisma } from '../utils';
 import { resolveOfficerVersion } from '../utils/officerVersion';
@@ -260,6 +260,55 @@ export const addContract = async (req: Request, res: Response) => {
 
   try {
     // authz + existence enforced by requireTeamOwner middleware
+    if (contractType === 'Safe') {
+      const normalizedSafeAddress = getAddress(contractAddress).toLowerCase();
+      const existingTeamSafe = await prisma.teamContract.findFirst({
+        where: { teamId, type: 'Safe' },
+      });
+
+      if (existingTeamSafe) {
+        if (existingTeamSafe.address.toLowerCase() === normalizedSafeAddress) {
+          return res.status(200).json(existingTeamSafe);
+        }
+
+        return errorResponse(409, 'Team already has a Safe account', res);
+      }
+
+      const existingSafeAddress = await prisma.teamContract.findFirst({
+        where: {
+          address: { equals: normalizedSafeAddress, mode: 'insensitive' },
+        },
+      });
+
+      if (existingSafeAddress) {
+        return errorResponse(409, 'Safe address is already assigned to another team', res);
+      }
+
+      try {
+        const safe = await prisma.teamContract.create({
+          data: {
+            teamId,
+            address: normalizedSafeAddress,
+            deployer: callerAddress,
+            type: contractType,
+          },
+        });
+        return res.status(200).json(safe);
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          const concurrentSafe = await prisma.teamContract.findFirst({
+            where: { teamId, type: 'Safe' },
+          });
+          if (concurrentSafe?.address.toLowerCase() === normalizedSafeAddress) {
+            return res.status(200).json(concurrentSafe);
+          }
+
+          return errorResponse(409, 'Safe registration conflict. Refresh and retry.', res);
+        }
+        throw error;
+      }
+    }
+
     const contract = await prisma.teamContract.create({
       data: {
         teamId,

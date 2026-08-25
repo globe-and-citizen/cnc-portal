@@ -34,7 +34,11 @@
         <UTable
           :data="lenders"
           :columns="lenderColumns"
-          :meta="{ class: { tr: (row) => (row.original.you ? 'bg-primary/5' : '') } }"
+          :meta="{
+            class: {
+              tr: (row: TableRow<CreditRoundLenderRow>) => (row.original.you ? 'bg-primary/5' : '')
+            }
+          }"
         >
           <template #lender-cell="{ row }">
             <div class="flex items-center gap-2.5">
@@ -93,6 +97,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { TableRow } from '@nuxt/ui'
 import { formatAmount, percentOf, reachedFundingTarget } from '@/utils'
 import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
@@ -100,6 +105,8 @@ import CreditConditionsCard from './CreditConditionsCard.vue'
 import CreditRepaymentCard from './CreditRepaymentCard.vue'
 
 const props = defineProps<{ round: CreditRound }>()
+
+type CreditRoundLenderRow = CreditRound['lenders'][number] & { share: number }
 
 const pct = computed(() => percentOf(props.round.raised, props.round.target))
 const remainingNote = computed(() => {
@@ -111,7 +118,7 @@ const remainingNote = computed(() => {
   }
   return reachedFundingTarget(props.round) ? 'Fully funded' : 'Accepted with partial funding'
 })
-const lenders = computed(() =>
+const lenders = computed<CreditRoundLenderRow[]>(() =>
   props.round.lenders.map((lender) => ({
     ...lender,
     share: percentOf(lender.amount, props.round.raised)

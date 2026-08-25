@@ -184,11 +184,23 @@ vi.mock('@/queries/member.queries', () => ({
 /**
  * Mock Wage Queries (wage.queries.ts)
  */
-vi.mock('@/queries/wage.queries', () => ({
-  useGetTeamWagesQuery: vi.fn(queryMocks.useGetTeamWagesQuery),
-  useSetMemberWageMutation: vi.fn(queryMocks.useSetMemberWageMutation),
-  useToggleWageStatusMutation: vi.fn(queryMocks.useToggleWageStatusMutation)
-}))
+vi.mock('@/queries/wage.queries', () => {
+  // Mirror the real `wageKeys` factory so query invalidations keep working under
+  // mock, regardless of test-file ordering. Duplicated rather than imported to
+  // avoid pulling the real module (which touches `@/constant`).
+  const wageKeys = {
+    all: ['wages'] as const,
+    teams: () => [...wageKeys.all, 'team'] as const,
+    team: (teamId: string | number | null) => [...wageKeys.teams(), { teamId }] as const
+  }
+
+  return {
+    wageKeys,
+    useGetTeamWagesQuery: vi.fn(queryMocks.useGetTeamWagesQuery),
+    useSetMemberWageMutation: vi.fn(queryMocks.useSetMemberWageMutation),
+    useToggleWageStatusMutation: vi.fn(queryMocks.useToggleWageStatusMutation)
+  }
+})
 
 /**
  * Mock Notification Queries (notification.queries.ts)
@@ -301,7 +313,6 @@ vi.mock('@/queries/weeklyClaim.queries', async (importOriginal) => {
 vi.mock('@/queries/safe.mutations', () => ({
   useGetSafeInfoQuery: vi.fn(queryMocks.useGetSafeInfoQuery),
   useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
-  useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),
   useApproveTransactionMutation: vi.fn(queryMocks.useApproveTransactionMutation),
   useExecuteTransactionMutation: vi.fn(queryMocks.useExecuteTransactionMutation),
 

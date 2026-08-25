@@ -168,21 +168,4 @@ const emitFiles = (): void => {
   const files = previews.value.map((p) => p.file)
   emit('update:files', files)
 }
-
-const resetUpload = (): void => {
-  previews.value.forEach((preview) => {
-    if (preview.previewUrl) {
-      URL.revokeObjectURL(preview.previewUrl)
-    }
-  })
-
-  previews.value = []
-  internalFiles.value = []
-  errorMessage.value = ''
-  isUploading.value = false
-
-  emit('update:files', [])
-}
-
-defineExpose({ resetUpload })
 </script>

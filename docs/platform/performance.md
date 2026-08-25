@@ -148,4 +148,4 @@ Monitor these metrics in production:
 
 ---
 
-For feature-specific performance considerations, see individual feature specifications.
+For feature-specific performance considerations, see the canonical feature README.

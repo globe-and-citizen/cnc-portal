@@ -1,5 +1,5 @@
 import { MINUTES_PER_DAY } from './communityCreditUtil'
-import type { CreditCallForm } from '@/types'
+import type { CreditCallForm, CreditOfferForm } from '@/types'
 
 // ───────── form control styling (shared by the create wizard) ─────────
 
@@ -80,5 +80,28 @@ export function createDefaultCreditCallForm(): CreditCallForm {
     whitelist: [],
     capOn: false,
     cap: ''
+  }
+}
+
+/** Maps the wizard's `CreditCallForm` to the `CreditOfferForm` toCreditCallOfferParams
+ *  expects. A Community Credit round has a single date: lending closes and the loan
+ *  starts on the subscription deadline. FixedReturn.sol requires subscriptionDeadline
+ *  to be strictly in the future (reverts InvalidDeadline otherwise). The term is
+ *  already resolved to canonical whole minutes, so termUnit: 'minutes' is exact —
+ *  toFixedReturnOfferParams adds it straight onto the deadline to get maturityDate. */
+export function buildCreditOfferingForm(form: CreditCallForm): CreditOfferForm {
+  return {
+    title: form.name.trim(),
+    purpose: form.desc.trim(),
+    principal: Number(form.target) || 0,
+    rate: Number(form.rate) || 0,
+    termValue: form.period,
+    termUnit: 'minutes',
+    deadline: form.deadline,
+    deadlineTime: form.deadlineTime,
+    access: form.access === 'restricted' ? 'whitelist' : 'general',
+    capOn: form.capOn,
+    cap: Number(form.cap) || 0,
+    token: form.token
   }
 }

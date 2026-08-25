@@ -8,6 +8,14 @@
   >
     <template #body>
       <div v-if="transaction" class="flex w-full flex-col gap-4">
+        <div v-if="state" class="rounded-lg border p-3" data-test="transaction-state-summary">
+          <div class="flex flex-wrap items-center gap-2">
+            <UBadge :color="state.color" variant="soft">{{ state.label }}</UBadge>
+            <span class="text-sm text-gray-600 dark:text-gray-300">{{ state.description }}</span>
+          </div>
+          <p class="mt-2 text-sm font-medium">Next: {{ state.nextStep }}</p>
+        </div>
+
         <div class="rounded-lg bg-gray-50 p-3">
           <p class="text-sm text-gray-700">{{ actionSummary }}</p>
         </div>
@@ -27,7 +35,14 @@
         </div>
 
         <div class="flex justify-end pt-2">
-          <UButton color="neutral" variant="ghost" @click="handleClose">Close</UButton>
+          <UButton
+            color="neutral"
+            variant="ghost"
+            data-test="close-transaction-details-button"
+            @click="handleClose"
+          >
+            Close
+          </UButton>
         </div>
       </div>
     </template>
@@ -37,12 +52,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SafeTransaction } from '@/types/safe'
+import type { SafeTransactionStateMeta } from '@/utils/safeTransactionState'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
 
 interface Props {
   transaction: SafeTransaction | null
+  state?: SafeTransactionStateMeta
 }
 
 interface DetailItem {

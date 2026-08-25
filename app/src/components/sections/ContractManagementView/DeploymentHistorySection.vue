@@ -76,7 +76,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import type { ContractGeneration } from '@/composables/contracts/useContractManagementGenerations'
+import type { ContractGeneration } from '@/types/deployments'
 import LegacyGenerationWithdrawAction from './LegacyGenerationWithdrawAction.vue'
 import MainContractTable from './MainContractTable.vue'
 

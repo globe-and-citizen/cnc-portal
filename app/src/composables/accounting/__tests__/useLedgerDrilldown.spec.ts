@@ -23,44 +23,45 @@ describe('useLedgerDrilldown', () => {
   })
 
   it('opens a single-account drill-down and nets that account balance', () => {
-    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-1')
+    const d = useLedgerDrilldown(entries, bounds)
     d.openFor('Investor Equity', '$999.00')
 
     expect(d.open.value).toBe(true)
-    expect(d.account.value).toBe('Investor Equity')
+    expect(d.selectedLine.value?.label).toBe('Investor Equity')
     const scoped = entriesForAccount(catalogueLedger, 'Investor Equity')
     expect(d.drilldownEntries.value).toEqual(scoped)
     // The reconciling total is netted from the postings, not the clicked figure.
-    expect(d.total.value).toBe(accountBalance(scoped, 'Investor Equity'))
+    expect(d.selectedLine.value?.total).toBe(accountBalance(scoped, 'Investor Equity'))
   })
 
   it('exports the single account through the shared pipeline', () => {
-    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-2')
+    const d = useLedgerDrilldown(entries, bounds)
     d.openFor('Investor Equity', '$1.00')
-    d.onExport('excel')
+    d.onExport('excel', ['activity', 'debit'])
 
     expect(exportExcel).toHaveBeenCalledTimes(1)
     const [specs, filename] = exportExcel.mock.calls[0]
     expect(specs[0]).toMatchObject({ key: 'ledger', account: 'Investor Equity' })
+    expect(specs[0].columns).toEqual(['activity', 'debit'])
     expect(specs[0].accountLabel).toBeUndefined()
     expect(filename).toContain('Investor Equity')
   })
 
   it('opens an aggregate drill-down, keeping the line figure as the total', () => {
-    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-3')
-    const group = ['Payroll Expense', 'Share-based Compensation']
+    const d = useLedgerDrilldown(entries, bounds)
+    const group = ['Payroll Expense', 'Deferred SHER Compensation']
     d.openFor(group, '-$50.00', 'Retained earnings')
 
-    expect(d.account.value).toBe('Retained earnings')
+    expect(d.selectedLine.value?.label).toBe('Retained earnings')
     // Mixed classes can't be netted, so the line's own figure is kept.
-    expect(d.total.value).toBe('-$50.00')
+    expect(d.selectedLine.value?.total).toBe('-$50.00')
     expect(d.drilldownEntries.value).toEqual(entriesForAccount(catalogueLedger, group))
   })
 
   it('exports an aggregate with its label and total', () => {
-    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-4')
-    d.openFor(['Payroll Expense', 'Share-based Compensation'], '-$50.00', 'Retained earnings')
-    d.onExport('pdf')
+    const d = useLedgerDrilldown(entries, bounds)
+    d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00', 'Retained earnings')
+    d.onExport('pdf', ['activity'])
 
     expect(exportPdf).toHaveBeenCalledTimes(1)
     const [specs] = exportPdf.mock.calls[0]
@@ -69,29 +70,29 @@ describe('useLedgerDrilldown', () => {
   })
 
   it('labels an unlabelled aggregate "Aggregate"', () => {
-    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-agg')
+    const d = useLedgerDrilldown(entries, bounds)
     // A list of accounts with no explicit label falls back to the generic name.
-    d.openFor(['Payroll Expense', 'Share-based Compensation'], '-$50.00')
-    expect(d.account.value).toBe('Aggregate')
-    expect(d.total.value).toBe('-$50.00')
+    d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00')
+    expect(d.selectedLine.value?.label).toBe('Aggregate')
+    expect(d.selectedLine.value?.total).toBe('-$50.00')
   })
 
   it('runs the balance column on a single account, never on an aggregate', () => {
-    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-balance')
+    const d = useLedgerDrilldown(entries, bounds)
     d.openFor('Investor Equity', '$999.00')
     expect(d.balanceAccount.value).toBe('Investor Equity')
 
-    d.openFor(['Payroll Expense', 'Share-based Compensation'], '-$50.00', 'Retained earnings')
+    d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00', 'Retained earnings')
     // Mixed classes share no natural side, so there is no balance to run.
     expect(d.balanceAccount.value).toBe('')
   })
 
   it('carries nothing in and closes on the account balance over an open window', () => {
-    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-opening')
+    const d = useLedgerDrilldown(entries, bounds)
     d.openFor('Investor Equity', '$999.00')
 
     expect(d.opening.value).toEqual({ debits: 0, credits: 0, balance: 0 })
-    expect(d.closing.value).toBe(d.total.value)
+    expect(d.closing.value).toBe(d.selectedLine.value?.total)
   })
 
   it('opens on what a dated window carries in, and closes on the remainder', () => {
@@ -99,7 +100,7 @@ describe('useLedgerDrilldown', () => {
     const all = entriesForAccount(catalogueLedger, account)
     // A window starting after the first posting leaves that posting behind it.
     const from = new Date((all[1]!.timestamp + 1) * 1000)
-    const d = useLedgerDrilldown(entries, () => ({ from, to: null }), 'cnc-test-cols-opening-2')
+    const d = useLedgerDrilldown(entries, () => ({ from, to: null }))
     d.openFor(account, '$1.00')
 
     expect(d.opening.value.balance).not.toBe(0)
@@ -107,8 +108,10 @@ describe('useLedgerDrilldown', () => {
     expect(d.closing.value).toBe(accountBalance(all, account))
   })
 
-  it('defaults the visible columns to the full set', () => {
-    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-5')
-    expect(d.columns.value.length).toBeGreaterThan(0)
+  it('does not export until a statement line is selected', () => {
+    const d = useLedgerDrilldown(entries, bounds)
+    d.onExport('excel', ['activity'])
+
+    expect(exportExcel).not.toHaveBeenCalled()
   })
 })

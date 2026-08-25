@@ -171,7 +171,7 @@ describe('useOfficerRedeploy', () => {
       return { kind: 'done', migratedCount: 1, shareholders: [] }
     })
 
-    const { redeploy, migrationFailed } = useOfficerRedeploy()
+    const { redeploy, migrationRecovery } = useOfficerRedeploy()
     await redeploy({ name: 'Shares', symbol: 'SH' })
 
     expect(migrateMutationRefs.mutateAsync).toHaveBeenCalledWith({
@@ -179,7 +179,7 @@ describe('useOfficerRedeploy', () => {
       previousOfficerAddress: PREV_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
-    expect(migrationFailed.value).toBe(false)
+    expect(migrationRecovery.value).toBeNull()
     expect(invalidateMock).toHaveBeenCalledWith()
   })
 
@@ -200,13 +200,13 @@ describe('useOfficerRedeploy', () => {
       { contractType: 'Voting', contractAddress: '0xvoting' }
     ])
 
-    const { redeploy, workflowError } = useOfficerRedeploy()
+    const { redeploy, failure } = useOfficerRedeploy()
     await redeploy({ name: 'Shares', symbol: 'SH' })
 
     expect(migrateMutationRefs.mutateAsync).not.toHaveBeenCalled()
     expect(invalidateMock).not.toHaveBeenCalled()
-    expect(workflowError.value).toBeInstanceOf(Error)
-    expect(workflowError.value?.message).toMatch(/could not locate previous investor/i)
+    expect(failure.value).toMatchObject({ stage: 'workflow' })
+    expect(failure.value?.error.message).toMatch(/could not locate previous investor/i)
   })
 
   it('surfaces workflowError when the new Investor is missing from getTeam()', async () => {
@@ -226,12 +226,25 @@ describe('useOfficerRedeploy', () => {
       .mockResolvedValueOnce([{ contractType: 'Investor', contractAddress: NEW_INVESTOR }])
       .mockResolvedValueOnce([{ contractType: 'Voting', contractAddress: '0xvoting' }])
 
-    const { redeploy, workflowError } = useOfficerRedeploy()
+    const { redeploy, failure } = useOfficerRedeploy()
     await redeploy({ name: 'Shares', symbol: 'SH' })
 
     expect(migrateMutationRefs.mutateAsync).not.toHaveBeenCalled()
     expect(invalidateMock).not.toHaveBeenCalled()
-    expect(workflowError.value).toBeInstanceOf(Error)
-    expect(workflowError.value?.message).toMatch(/Investor could not be located/)
+    expect(failure.value).toMatchObject({ stage: 'workflow' })
+    expect(failure.value?.error.message).toMatch(/Investor could not be located/)
+  })
+
+  it('combines deploy and registration errors with their failed stage', () => {
+    deployMutationRefs.error.value = new Error('deploy boom')
+    const { failure: deployFailure } = useOfficerRedeploy()
+    expect(deployFailure.value?.stage).toBe('deploy')
+    expect(deployFailure.value?.error.message).toBe('deploy boom')
+
+    deployMutationRefs.error.value = null
+    registerMutationRefs.error.value = new Error('register boom')
+    const { failure: registrationFailure } = useOfficerRedeploy()
+    expect(registrationFailure.value?.stage).toBe('registration')
+    expect(registrationFailure.value?.error.message).toBe('register boom')
   })
 })

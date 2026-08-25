@@ -97,13 +97,13 @@
 
     <LedgerDrilldownModal
       v-model:open="drilldownOpen"
-      v-model:columns="drilldownColumns"
-      :account="drilldownAccount"
-      :total="drilldownTotal"
+      :account="drilldownLine?.label ?? ''"
+      :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
       :balance-account="drilldownBalanceAccount"
       :opening="drilldownOpening"
       :closing="drilldownClosing"
+      columns-storage-key="cnc-accounting-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
   </div>
@@ -183,20 +183,14 @@ const { exportPdf, exportExcel } = useAccountingExport()
 // Per-line drill-down — over the same as-of slice the trial balance is built from.
 const {
   open: drilldownOpen,
-  account: drilldownAccount,
-  total: drilldownTotal,
-  columns: drilldownColumns,
+  selectedLine: drilldownLine,
   balanceAccount: drilldownBalanceAccount,
   opening: drilldownOpening,
   closing: drilldownClosing,
   drilldownEntries,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(
-  acc.entries,
-  () => ({ from: null, to: asOf.value }),
-  'cnc-accounting-drilldown-columns-v1'
-)
+} = useLedgerDrilldown(acc.entries, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(row: TrialTableRow): void {
   // The line's balance sits in whichever column isn't the em-dash placeholder.
