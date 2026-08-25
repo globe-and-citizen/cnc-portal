@@ -54,7 +54,14 @@ function internalMove(
   row: { id: string; amount: string; timestamp: number },
   token: string | null,
   ctx: MapperContext,
-  opts: { debit: AccountName; credit: AccountName; counterparty?: string; memo: string }
+  opts: {
+    debit: AccountName
+    credit: AccountName
+    debitInstance?: string
+    creditInstance?: string
+    counterparty?: string
+    memo: string
+  }
 ): LedgerEntry {
   const tokenId = ctx.tokenIdOf(token)
   return makeEntry({
@@ -62,7 +69,9 @@ function internalMove(
     timestamp: row.timestamp,
     useCase: 'INTERNAL',
     debit: opts.debit,
+    debitInstance: opts.debitInstance,
     credit: opts.credit,
+    creditInstance: opts.creditInstance,
     amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
@@ -217,7 +226,14 @@ function presentApproval(
 
 /** Map an approved payout (or an internal move when the recipient is a pocket). */
 function mapTransfer(
-  row: { id: string; withdrawer: string; to: string; amount: string; timestamp: number },
+  row: {
+    id: string
+    contractAddress: string
+    withdrawer: string
+    to: string
+    amount: string
+    timestamp: number
+  },
   token: string | null,
   ctx: MapperContext,
   tracker: RemainingBudgetTracker
@@ -226,7 +242,9 @@ function mapTransfer(
   if (destPocket) {
     return internalMove(row, token, ctx, {
       debit: destPocket,
+      debitInstance: row.to,
       credit: EXPENSE,
+      creditInstance: row.contractAddress,
       counterparty: row.to,
       memo: `Internal move Expense → ${destPocket}`
     })
@@ -245,6 +263,7 @@ function mapTransfer(
     useCase: 'UC-EXP-01',
     debit: 'Operating Expense',
     credit: EXPENSE,
+    creditInstance: row.contractAddress,
     amountUsd: ctx.toUsd(amountBase, tokenId, at),
     token: tokenId,
     rawAmount: row.amount,
@@ -268,22 +287,17 @@ export function mapExpenseAccountEvents(
   const tracker = new RemainingBudgetTracker(expenses, ctx)
   const entries: LedgerEntry[] = []
 
-  for (const row of input.deposits ?? []) {
+  const deposits = [
+    ...(input.deposits ?? []).map((row) => ({ row, token: null as string | null })),
+    ...(input.tokenDeposits ?? []).map((row) => ({ row, token: row.token }))
+  ]
+  for (const { row, token } of deposits) {
     entries.push(
-      internalMove(row, null, ctx, {
+      internalMove(row, token, ctx, {
         debit: EXPENSE,
+        debitInstance: row.contractAddress,
         credit: ctx.pocketOf(row.depositor) ?? BANK,
-        counterparty: row.depositor,
-        memo: 'Internal funding into Expense'
-      })
-    )
-  }
-
-  for (const row of input.tokenDeposits ?? []) {
-    entries.push(
-      internalMove(row, row.token, ctx, {
-        debit: EXPENSE,
-        credit: ctx.pocketOf(row.depositor) ?? BANK,
+        creditInstance: row.depositor,
         counterparty: row.depositor,
         memo: 'Internal funding into Expense'
       })
@@ -301,22 +315,19 @@ export function mapExpenseAccountEvents(
     entries.push(mapTransfer(row, token, ctx, tracker))
   }
 
-  for (const row of input.ownerTreasuryWithdrawNatives ?? []) {
+  const sweeps = [
+    ...(input.ownerTreasuryWithdrawNatives ?? []).map((row) => ({
+      row,
+      token: null as string | null
+    })),
+    ...(input.ownerTreasuryWithdrawTokens ?? []).map((row) => ({ row, token: row.token }))
+  ]
+  for (const { row, token } of sweeps) {
     entries.push(
-      internalMove(row, null, ctx, {
+      internalMove(row, token, ctx, {
         debit: BANK,
         credit: EXPENSE,
-        counterparty: row.ownerAddress,
-        memo: 'Owner sweep Expense → Bank'
-      })
-    )
-  }
-
-  for (const row of input.ownerTreasuryWithdrawTokens ?? []) {
-    entries.push(
-      internalMove(row, row.token, ctx, {
-        debit: BANK,
-        credit: EXPENSE,
+        creditInstance: row.contractAddress,
         counterparty: row.ownerAddress,
         memo: 'Owner sweep Expense → Bank'
       })

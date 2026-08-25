@@ -44,12 +44,13 @@ function sameAddress(a: string, b: string): boolean {
   return isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
 }
 
-function mapInflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
+function mapInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
     timestamp: row.timestamp,
     debit: SAFE,
+    debitInstance: safeAddress,
     amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
@@ -62,6 +63,7 @@ function mapInflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
       ...base,
       useCase: 'INTERNAL',
       credit: sourcePocket,
+      creditInstance: row.from,
       internal: true,
       memo: `Internal funding into Safe from ${sourcePocket}`
     })
@@ -96,12 +98,13 @@ function mapInflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
   })
 }
 
-function mapOutflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
+function mapOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
     timestamp: row.timestamp,
     credit: SAFE,
+    creditInstance: safeAddress,
     amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
@@ -114,6 +117,7 @@ function mapOutflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
       ...base,
       useCase: 'INTERNAL',
       debit: destPocket,
+      debitInstance: row.to,
       internal: true,
       memo: `Internal move Safe → ${destPocket}`
     })
@@ -132,8 +136,9 @@ function mapOutflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
 export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): LedgerEntry[] {
   const entries: LedgerEntry[] = []
   for (const row of input.transfers ?? []) {
-    if (sameAddress(row.to, input.safeAddress)) entries.push(mapInflow(row, ctx))
-    else if (sameAddress(row.from, input.safeAddress)) entries.push(mapOutflow(row, ctx))
+    if (sameAddress(row.to, input.safeAddress)) entries.push(mapInflow(row, ctx, input.safeAddress))
+    else if (sameAddress(row.from, input.safeAddress))
+      entries.push(mapOutflow(row, ctx, input.safeAddress))
     // A transfer touching neither side of the Safe is not a Safe move — skip it.
   }
   return entries
