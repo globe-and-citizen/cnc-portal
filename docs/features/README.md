@@ -49,7 +49,8 @@ The client inventory follows the [sidebar navigation](../../app/src/composables/
 | Accounting              | Summary, income, balance, trial balance, and ledger     | [Canonical stories](./accounting/README.md)             |
 | Contract Management     | `/teams/:id/contract-management`                        | [Canonical stories](./contract-management/README.md)    |
 | Shareholder Management  | `/teams/:id/sher-token`                                 | [Canonical stories](./shareholder-management/README.md) |
-| Governance              | Board elections, election details, and proposals        | Canonical stories not yet written                       |
+| Board elections         | Board-election overview and election details            | [Canonical stories](./elections/README.md)              |
+| Board proposals         | Board proposals and proposal details                    | Canonical stories not yet written                       |
 | Vesting                 | `/teams/:id/vesting`                                    | [Canonical stories](./vesting/README.md)                |
 
 Accounting's classification view and route are documented under the Accounting feature; the shared route and sidebar evidence was reviewed
