@@ -35,7 +35,7 @@
 
     <template #activity-cell="{ row: { original: row } }">
       <LedgerActivityCell
-        v-if="!row.isTotal && row.isFirst"
+        v-if="!row.isTotal && (row.isFirst || activityHasContent(row.activity))"
         :activity="row.activity"
         :destination="row.destination"
         :linkable="!!routeFor(row.destination)"
@@ -148,6 +148,16 @@ const FEE_BADGE = 'bg-warning/10 text-warning'
 // "Where did this happen?" — resolved once for the table, so each Activity cell
 // only has to say whether it is clickable.
 const { routeFor, open } = useActivityDestination()
+
+/**
+ * Whether an Activity cell carries something to show — an actor or a transfer
+ * always does; a plain cell only when it has text. Lets an itemized posting narrate
+ * each line (e.g. every beneficiary of a grouped dividend), not just the lead row,
+ * while the head-only cells (Date / Action / Transaction) stay gated on `isFirst`.
+ */
+function activityHasContent(activity: LedgerRow['activity']): boolean {
+  return activity.kind !== 'plain' || activity.text.trim() !== ''
+}
 
 const tableRows = computed<LedgerTableRow[]>(() => [
   ...props.rows.map((r) => ({ ...r, isTotal: false })),
