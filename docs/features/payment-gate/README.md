@@ -132,6 +132,8 @@ Not decided yet — to review before considering v0 complete.
   [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue), and their shared
   [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-V0-001` and `002`).
 - [Payment history view](../../../app/src/views/team/[id]/PaymentGate/HistoryView.vue) and its
-  [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue) (`US-PAYGATE-V0-004`).
+  [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue) (`US-PAYGATE-V0-004`). Backed by real Bank
+  transactions, not a mock: [useFactureHistory](../../../app/src/composables/paymentGate/useFactureHistory.ts) reads the Bank's
+  `depositToken` deposits and keeps only the ones whose calldata decodes to a facture ID — no separate backend record.
 - [Recall/reference view](../../../app/src/views/team/[id]/PaymentGate/ReferenceView.vue) and its
   [recheck-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-V0-005`).
