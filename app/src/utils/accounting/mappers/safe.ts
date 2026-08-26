@@ -20,6 +20,7 @@ import { getAddress, isAddress } from 'viem'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import { atDate, type MapperContext } from './context'
+import { applyClassification } from './applyClassification'
 
 /** A normalized token transfer touching the Safe (native = `token: null`). */
 export interface SafeTransferRow {
@@ -44,7 +45,7 @@ function sameAddress(a: string, b: string): boolean {
   return isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
 }
 
-function mapInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
+function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
@@ -98,7 +99,7 @@ function mapInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string
   })
 }
 
-function mapOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
+function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
@@ -136,9 +137,11 @@ function mapOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: strin
 export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): LedgerEntry[] {
   const entries: LedgerEntry[] = []
   for (const row of input.transfers ?? []) {
-    if (sameAddress(row.to, input.safeAddress)) entries.push(mapInflow(row, ctx, input.safeAddress))
-    else if (sameAddress(row.from, input.safeAddress))
-      entries.push(mapOutflow(row, ctx, input.safeAddress))
+    if (sameAddress(row.to, input.safeAddress)) {
+      entries.push(applyClassification(inferInflow(row, ctx, input.safeAddress), 'in', SAFE, ctx))
+    } else if (sameAddress(row.from, input.safeAddress)) {
+      entries.push(applyClassification(inferOutflow(row, ctx, input.safeAddress), 'out', SAFE, ctx))
+    }
     // A transfer touching neither side of the Safe is not a Safe move — skip it.
   }
   return entries

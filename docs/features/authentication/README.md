@@ -35,11 +35,11 @@ flowchart TB
 
 ## Status Overview
 
-| User Story  | Title                             | Actor                  | Status         | Priority | Effort |
-| ----------- | --------------------------------- | ---------------------- | -------------- | :------: | ------ |
-| US-AUTH-001 | Sign in to the client             | Portal user            | 🧪 Validation  |    P1    | M      |
-| US-AUTH-002 | Sign in to the backoffice         | Platform administrator | 🧪 Validation  |    P1    | M      |
-| US-AUTH-003 | Recover from an interrupted login | Portal user            | 🚧 In Progress |    P1    | S      |
+| User Story  | Title                             | Actor                  | Status         |
+| ----------- | --------------------------------- | ---------------------- | -------------- |
+| US-AUTH-001 | Sign in to the client             | Portal user            | 🧪 Validation  |
+| US-AUTH-002 | Sign in to the backoffice         | Platform administrator | 🧪 Validation  |
+| US-AUTH-003 | Recover from an interrupted login | Portal user            | 🚧 In Progress |
 
 ## US-AUTH-001: Sign in to the Client
 
@@ -68,8 +68,6 @@ flowchart TB
       login.
 - [x] An invalid SIWE message or signature is rejected without authenticating the user.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
-
 ## US-AUTH-002: Sign in to the Backoffice
 
 **As a** platform administrator\
@@ -94,8 +92,6 @@ flowchart TB
 - [x] A missing access token or wallet address redirects the user to login.
 - [x] An authenticated user without an administrator role is denied access to protected backoffice capabilities.
 - [x] A failed token or user validation clears the persisted backoffice session and redirects the user to login.
-
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
 ## US-AUTH-003: Recover from an Interrupted Login
 
@@ -122,8 +118,6 @@ flowchart TB
 - [x] A missing wallet provider leaves the user unauthenticated.
 - [x] An unsuccessful login attempt does not provide access to a protected product surface.
 
-**Priority:** P1 (Critical) · **Effort:** S · **Status:** 🚧 In Progress
-
 ## Known Gaps
 
 - The client persists the issued access token if the following profile request fails, although the local authentication state remains false.
@@ -133,8 +127,6 @@ flowchart TB
 - [Client login page](../../../app/src/views/LoginView.vue)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
 - [Client SIWE tests](../../../app/src/composables/__tests__/useSiwe.spec.ts)
-- [Client route guard](../../../app/src/router/index.ts)
-- [Client route guard tests](../../../app/src/router/__tests__/index.spec.ts)
 - [Dashboard login page](../../../dashboard/app/pages/login.vue)
 - [Dashboard SIWE orchestration](../../../dashboard/app/composables/useSiwe.ts)
 - [Dashboard route guard](../../../dashboard/app/middleware/auth.global.ts)
@@ -145,6 +137,7 @@ flowchart TB
 
 ## Related Documentation
 
+- [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Authentication implementation](../../implementation/authentication/README.md)
 - [RBAC implementation](../../implementation/rbac/README.md)
 - [Security Standards](../../platform/security.md)

@@ -2,7 +2,7 @@
 
 **Status:** Navigation-derived inventory
 
-**Last verified:** 2026-08-24
+**Last verified:** 2026-08-25
 
 This inventory names the product capabilities that a user can currently reach in the CNC Portal client or its administrator dashboard. It is
 derived from the current navigation, routes, access guards, and linked product actions. The presence of a source directory, API, contract,
@@ -25,6 +25,7 @@ flowchart LR
   app --> shareholderManagement[Shareholder Management]
   app --> governance[Governance]
   app --> vesting[Vesting]
+  app --> paymentGate[Payment Gate]
 
   backoffice --> overview[Overview and statistics]
   backoffice --> teams[Team operations]
@@ -36,21 +37,23 @@ flowchart LR
 
 ## Client Features
 
-The client inventory follows the [sidebar navigation](../../app/src/composables/useSidebarNavItems.ts), its linked
-[routes](../../app/src/router/index.ts), and the authentication entry journey.
+The client inventory follows the [Client Navigation implementation](../implementation/client-navigation/README.md) and the authentication
+entry journey.
 
-| User capability         | Current entry points                                    | Documentation coverage                                  |
-| ----------------------- | ------------------------------------------------------- | ------------------------------------------------------- |
-| Authentication          | `/login` and wallet session actions                     | [Canonical stories](./authentication/README.md)         |
-| Companies and workspace | `/teams`, `/teams/:id`                                  | [Canonical stories](./companies/README.md)              |
-| Accounts                | Bank, Safe, and Expense Account routes                  | [Canonical stories](./accounts/README.md)               |
-| Payroll                 | Payroll account, history, company payroll, compensation | [Canonical stories](./payroll/README.md)                |
-| Community Credit        | Rounds, new credit calls, and bookmarkable round views  | [Canonical stories](./community-credit/README.md)       |
-| Accounting              | Summary, income, balance, trial balance, and ledger     | [Canonical stories](./accounting/README.md)             |
-| Contract Management     | `/teams/:id/contract-management`                        | [Canonical stories](./contract-management/README.md)    |
-| Shareholder Management  | `/teams/:id/sher-token`                                 | [Canonical stories](./shareholder-management/README.md) |
-| Governance              | Board elections, election details, and proposals        | Canonical stories not yet written                       |
-| Vesting                 | `/teams/:id/vesting`                                    | [Canonical stories](./vesting/README.md)                |
+| User capability         | Current entry points                                                | Documentation coverage                                  |
+| ----------------------- | ------------------------------------------------------------------- | ------------------------------------------------------- |
+| Authentication          | `/login` and wallet session actions                                 | [Canonical stories](./authentication/README.md)         |
+| Companies and workspace | `/teams`, `/teams/:id`                                              | [Canonical stories](./companies/README.md)              |
+| Accounts                | Bank, Safe, and Expense Account routes                              | [Canonical stories](./accounts/README.md)               |
+| Payroll                 | Payroll account, history, company payroll, compensation             | [Canonical stories](./payroll/README.md)                |
+| Community Credit        | Rounds, new credit calls, and bookmarkable round views              | [Canonical stories](./community-credit/README.md)       |
+| Accounting              | Summary, income, balance, trial balance, ledger, and classification | [Canonical stories](./accounting/README.md)             |
+| Contract Management     | `/teams/:id/contract-management`                                    | [Canonical stories](./contract-management/README.md)    |
+| Shareholder Management  | `/teams/:id/sher-token`                                             | [Canonical stories](./shareholder-management/README.md) |
+| Board elections         | Board-election overview and election details                        | [Canonical stories](./elections/README.md)              |
+| Board proposals         | Board proposals and proposal details                                | Canonical stories not yet written                       |
+| Vesting                 | `/teams/:id/vesting`                                                | [Canonical stories](./vesting/README.md)                |
+| Payment Gate            | `/teams/:id/payment-gate`, `/reference`, `/history`                 | [Canonical stories](./payment-gate/README.md)           |
 
 ## Backoffice Features
 
