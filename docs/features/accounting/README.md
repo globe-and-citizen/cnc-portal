@@ -106,6 +106,9 @@ flowchart LR
 
 - [x] Pagination does not change the totals for the complete filtered ledger.
 - [x] Compound transactions retain all debit and credit legs under one posting.
+- [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
+      community-credit round — is shown as a single ledger entry that still names each beneficiary and their share, with one credit for the
+      total.
 - [x] Protocol fees remain identifiable as expenses rather than neutral transfers.
 - [x] One on-chain event is not counted more than once in the consolidated ledger.
 
