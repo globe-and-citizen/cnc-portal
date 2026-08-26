@@ -106,6 +106,11 @@ payment), **MINT** (creates new shares).
 | `distributeMint()` / `individualMint()`                      | SHER shares     | MINT           | owner / MINTER_ROLE | `Minted`                              |
 | `distributeNativeDividends()` / `distributeTokenDividends()` | native / ERC-20 | OUT (pro-rata) | Bank                | `DividendDistributed`, `DividendPaid` |
 
+A distribution emits one `DividendPaid` per shareholder, so the canonical journal books one posting per shareholder (UC-INV-01, one token —
+distributions are mono-currency). The general-ledger **view** folds those legs into one entry — one debit line per beneficiary under
+Dividend Expense, then a single aggregated credit out of Cash — Bank — since the whole distribution is one on-chain transaction. This is
+presentation-only: the underlying postings, the statements, the trial balance, and the per-line drill-down are unchanged.
+
 ### 3.6 SafeDepositRouter — invest → SHER mint
 
 | Function                              | Asset  | Direction             | Caller | Event       |
