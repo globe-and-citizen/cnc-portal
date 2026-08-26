@@ -39,8 +39,9 @@ flowchart LR
 7. A failed generation scan does not discard successful generations; Accounting reports the affected source as a reconciliation gap.
 8. The trial balance splits a redeployed Bank, Payroll, or Expense pocket into one row per contract instance, ordered by first activity.
    Only these presentation rows are split — the journal, income statement, balance sheet, summary totals, and the balanced check all stay
-   consolidated on the base account, so figures do not change. Drilling a row shows only that deployment's entries; the original deployment's
-   row also carries any pocket leg that has no contract address of its own (a Community Credit sweep straight to Bank, an owner treasury sweep).
+   consolidated on the base account, so figures do not change. Drilling a row shows only that deployment's entries; the original
+   deployment's row also carries any pocket leg that has no contract address of its own (a Community Credit sweep straight to Bank, an owner
+   treasury sweep).
 
 ## Verification Journey
 
