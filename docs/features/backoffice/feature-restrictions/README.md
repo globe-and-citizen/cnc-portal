@@ -30,11 +30,11 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                        | Actor                  | Status         | Priority | Effort |
-| ----------- | ---------------------------- | ---------------------- | -------------- | :------: | ------ |
-| US-FLAG-001 | Manage global restrictions   | Platform administrator | 🧪 Validation  |    P1    | M      |
-| US-FLAG-002 | Manage team overrides        | Platform administrator | 🚧 In Progress |    P1    | M      |
-| US-FLAG-003 | Remove obsolete restrictions | Platform administrator | 🚧 In Progress |    P2    | S      |
+| User Story  | Title                        | Actor                  | Status         |
+| ----------- | ---------------------------- | ---------------------- | -------------- |
+| US-FLAG-001 | Manage global restrictions   | Platform administrator | 🧪 Validation  |
+| US-FLAG-002 | Manage team overrides        | Platform administrator | 🚧 In Progress |
+| US-FLAG-003 | Remove obsolete restrictions | Platform administrator | 🚧 In Progress |
 
 ## US-FLAG-001: Manage Global Restrictions
 
@@ -62,8 +62,6 @@ flowchart LR
 - [x] An invalid or duplicate restriction is rejected without creating a record.
 - [x] Updating a missing restriction is rejected without creating a record.
 - [x] An invalid global status update is rejected without changing the persisted restriction.
-
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
 ## US-FLAG-002: Manage Team Overrides
 
@@ -94,8 +92,6 @@ flowchart LR
 - [x] Removing a missing override is rejected without changing other overrides.
 - [x] An invalid override status is rejected without changing the persisted override.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
-
 ## US-FLAG-003: Remove Obsolete Restrictions
 
 **As a** platform administrator\
@@ -119,8 +115,6 @@ flowchart LR
 - [x] Deleting a missing restriction is rejected.
 - [x] A failed deletion is reported as a failure rather than success.
 - [ ] A failed deletion leaves the restriction and all its team overrides unchanged.
-
-**Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
 
 ## Known Gaps
 

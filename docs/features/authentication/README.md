@@ -35,11 +35,11 @@ flowchart TB
 
 ## Status Overview
 
-| User Story  | Title                             | Actor                  | Status         | Priority | Effort |
-| ----------- | --------------------------------- | ---------------------- | -------------- | :------: | ------ |
-| US-AUTH-001 | Sign in to the client             | Portal user            | 🧪 Validation  |    P1    | M      |
-| US-AUTH-002 | Sign in to the backoffice         | Platform administrator | 🧪 Validation  |    P1    | M      |
-| US-AUTH-003 | Recover from an interrupted login | Portal user            | 🚧 In Progress |    P1    | S      |
+| User Story  | Title                             | Actor                  | Status         |
+| ----------- | --------------------------------- | ---------------------- | -------------- |
+| US-AUTH-001 | Sign in to the client             | Portal user            | 🧪 Validation  |
+| US-AUTH-002 | Sign in to the backoffice         | Platform administrator | 🧪 Validation  |
+| US-AUTH-003 | Recover from an interrupted login | Portal user            | 🚧 In Progress |
 
 ## US-AUTH-001: Sign in to the Client
 
@@ -68,8 +68,6 @@ flowchart TB
       login.
 - [x] An invalid SIWE message or signature is rejected without authenticating the user.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
-
 ## US-AUTH-002: Sign in to the Backoffice
 
 **As a** platform administrator\
@@ -95,8 +93,6 @@ flowchart TB
 - [x] An authenticated user without an administrator role is denied access to protected backoffice capabilities.
 - [x] A failed token or user validation clears the persisted backoffice session and redirects the user to login.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
-
 ## US-AUTH-003: Recover from an Interrupted Login
 
 **As a** portal user\
@@ -121,8 +117,6 @@ flowchart TB
 
 - [x] A missing wallet provider leaves the user unauthenticated.
 - [x] An unsuccessful login attempt does not provide access to a protected product surface.
-
-**Priority:** P1 (Critical) · **Effort:** S · **Status:** 🚧 In Progress
 
 ## Known Gaps
 
