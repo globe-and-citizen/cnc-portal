@@ -42,13 +42,13 @@ stateDiagram-v2
 
 ## Status Overview
 
-| User Story     | Title                                    | Actor          | Status  | Priority | Effort |
-| -------------- | ---------------------------------------- | -------------- | ------- | :------: | ------ |
-| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done |    P1    | M      |
-| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | ✅ Done |    P1    | M      |
-| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done |    P1    | M      |
-| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done |    P1    | M      |
-| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done |    P2    | M      |
+| User Story     | Title                                    | Actor          | Status  |
+| -------------- | ---------------------------------------- | -------------- | ------- |
+| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done |
+| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | ✅ Done |
+| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done |
+| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done |
+| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done |
 
 ## US-VESTING-001: Create a Minute-Precise Vesting Schedule
 
@@ -81,7 +81,7 @@ stateDiagram-v2
 - [x] Cancelling schedule creation does not create an on-chain schedule.
 - [x] A failed schedule creation does not create an on-chain schedule and preserves the entered context.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** ✅ Done
+**Status:** ✅ Done
 
 **Dependencies:** Current team, current Vesting contract, current Investor contract
 
@@ -111,7 +111,7 @@ stateDiagram-v2
 - [x] An empty schedule scope returns zero aggregate totals and no schedule entries.
 - [x] A failed schedule read is reported without being treated as successfully loaded data.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** ✅ Done
+**Status:** ✅ Done
 
 **Dependencies:** US-VESTING-001
 
@@ -142,7 +142,7 @@ stateDiagram-v2
 - [x] Cancelling a release does not change the schedule or mint shares.
 - [x] A failed release does not change the schedule or mint shares.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** ✅ Done
+**Status:** ✅ Done
 
 **Dependencies:** US-VESTING-001
 
@@ -173,7 +173,7 @@ stateDiagram-v2
 - [x] Cancelling a stop does not change the active schedule.
 - [x] A failed stop leaves the schedule active.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** ✅ Done
+**Status:** ✅ Done
 
 **Dependencies:** US-VESTING-001
 
@@ -201,7 +201,7 @@ stateDiagram-v2
 - [x] Accrued shares remain locked before the cliff boundary.
 - [x] A Cancelled schedule exposes both its released amount and its cancelled amount.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** ✅ Done
+**Status:** ✅ Done
 
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 

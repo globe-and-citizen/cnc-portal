@@ -41,20 +41,20 @@ complete journey belongs to the Accounts feature.
 
 ## Status Overview
 
-| User Story     | Title                                      | Actor               | Status         | Priority | Effort |
-| -------------- | ------------------------------------------ | ------------------- | -------------- | :------: | ------ |
-| US-PAYROLL-001 | Set a member's wage                        | Team owner          | 🧪 Validation  |    P1    | M      |
-| US-PAYROLL-002 | Pause or resume a member's wage            | Team owner          | 🧪 Validation  |    P2    | S      |
-| US-PAYROLL-003 | Fund the Payroll contract                  | Team owner          | 🔗 Reference   |    P1    | —      |
-| US-PAYROLL-004 | Set weekly goals                           | Team member         | 🧪 Validation  |    P3    | S      |
-| US-PAYROLL-005 | Submit a daily claim                       | Team member         | 🧪 Validation  |    P1    | M      |
-| US-PAYROLL-006 | Edit a daily claim                         | Team member         | 🚧 In Progress |    P2    | S      |
-| US-PAYROLL-007 | Delete a daily claim                       | Team member         | 🚧 In Progress |    P2    | S      |
-| US-PAYROLL-008 | Sign a completed weekly claim              | Contract owner      | 🚧 In Progress |    P1    | L      |
-| US-PAYROLL-009 | Disable or re-enable a signed weekly claim | Contract owner      | 🚧 In Progress |    P2    | M      |
-| US-PAYROLL-010 | Withdraw an approved weekly claim          | Paid member         | 🧪 Validation  |    P1    | M      |
-| US-PAYROLL-011 | Reconcile weekly claims with the chain     | System              | 🧪 Validation  |    P2    | M      |
-| US-PAYROLL-012 | Review payroll history                     | Team member / owner | 🧪 Validation  |    P2    | M      |
+| User Story     | Title                                      | Actor               | Status         |
+| -------------- | ------------------------------------------ | ------------------- | -------------- |
+| US-PAYROLL-001 | Set a member's wage                        | Team owner          | 🧪 Validation  |
+| US-PAYROLL-002 | Pause or resume a member's wage            | Team owner          | 🧪 Validation  |
+| US-PAYROLL-003 | Fund the Payroll contract                  | Team owner          | 🔗 Reference   |
+| US-PAYROLL-004 | Set weekly goals                           | Team member         | 🧪 Validation  |
+| US-PAYROLL-005 | Submit a daily claim                       | Team member         | 🧪 Validation  |
+| US-PAYROLL-006 | Edit a daily claim                         | Team member         | 🚧 In Progress |
+| US-PAYROLL-007 | Delete a daily claim                       | Team member         | 🚧 In Progress |
+| US-PAYROLL-008 | Sign a completed weekly claim              | Contract owner      | 🚧 In Progress |
+| US-PAYROLL-009 | Disable or re-enable a signed weekly claim | Contract owner      | 🚧 In Progress |
+| US-PAYROLL-010 | Withdraw an approved weekly claim          | Paid member         | 🧪 Validation  |
+| US-PAYROLL-011 | Reconcile weekly claims with the chain     | System              | 🧪 Validation  |
+| US-PAYROLL-012 | Review payroll history                     | Team member / owner | 🧪 Validation  |
 
 Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal alone.
 
@@ -103,7 +103,7 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] Archived teams cannot create wages.
 - [x] Archived teams cannot replace wages.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** Companies and Workspace
 
@@ -136,7 +136,7 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] The status of a historical wage cannot be changed.
 - [x] The wage status of an archived team cannot be changed.
 
-**Priority:** P2 (High) · **Effort:** S · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-001
 
@@ -165,7 +165,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] _(contract)_ A withdrawal in a non-mintable asset fails when the Cash Remuneration contract lacks the required balance.
 
-**Priority:** P1 (Critical) · **Effort:** — · **Status:** 🔗 Reference
+**Status:** 🔗 Reference
 
 **Dependencies:** Accounts, [Bank contract](../../contracts/features/bank/README.md)
 
@@ -197,7 +197,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Archived teams cannot create weekly goals.
 - [x] Archived teams cannot update weekly goals.
 
-**Priority:** P3 (Medium) · **Effort:** S · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-001
 
@@ -241,7 +241,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A paused wage rejects new claims.
 - [x] A rejected submission leaves the daily-claim state unchanged and returns its rejection reason.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-001
 
@@ -275,7 +275,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A rejected edit leaves the stored claim unchanged and returns its rejection reason.
 - [x] Archived teams cannot edit claims.
 
-**Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** US-PAYROLL-005
 
@@ -304,7 +304,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Archived teams cannot delete claims.
 - [x] A failed deletion leaves the stored claim unchanged and returns a failure outcome.
 
-**Priority:** P2 (High) · **Effort:** S · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** US-PAYROLL-005
 
@@ -341,7 +341,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
 - [x] Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
 
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** US-PAYROLL-005
 
@@ -370,7 +370,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A withdrawn claim cannot transition to disabled.
 - [x] A withdrawn claim cannot transition to enabled.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** US-PAYROLL-008
 
@@ -408,7 +408,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] _(contract)_ A withdrawal reverts while the Cash Remuneration contract is paused.
 - [x] Cancelling the wallet transaction leaves the claim unpaid and its stored status unchanged.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-008, US-PAYROLL-003
 
@@ -441,7 +441,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A missing or invalid signature skips only the affected weekly claim.
 - [x] A failed contract read skips only the affected weekly claim.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-008
 
@@ -474,7 +474,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] An invalid page filter is rejected.
 - [x] An invalid limit filter is rejected.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-005
 

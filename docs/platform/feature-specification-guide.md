@@ -152,13 +152,14 @@ Present the main journey in the order a user or tester encounters it.
 
 Summarize the complete feature before the detailed stories.
 
-| User Story     | Title              | Actor      | Status         | Priority | Effort |
-| -------------- | ------------------ | ---------- | -------------- | :------: | ------ |
-| US-FEATURE-001 | Observable outcome | Main actor | 🚧 In Progress |    P1    | M      |
+| User Story     | Title              | Actor      | Status         |
+| -------------- | ------------------ | ---------- | -------------- |
+| US-FEATURE-001 | Observable outcome | Main actor | 🚧 In Progress |
 
 Use stable IDs. Do not reuse or silently renumber an ID after it has been referenced by code, tests, issues, or documentation.
 
-Priorities use `P1` to `P5`. Effort uses `XS`, `S`, `M`, `L`, or `XL`; use `—` for a reference story owned elsewhere.
+The status is the sole delivery-state signal in the overview. It records implementation and human-validation progress, not planning priority
+or estimation.
 
 ### 5. User Stories
 
@@ -189,7 +190,7 @@ Put each part of the user-story sentence on its own source line and rendered lin
 
 - [ ] One observable boundary, invalid-input, unavailable-state, failure, or recovery outcome.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** US-FEATURE-000 or a named current capability
 ```

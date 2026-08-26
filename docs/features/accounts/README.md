@@ -48,22 +48,22 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                      | Actor                   | Status         | Priority | Effort |
-| ----------- | ------------------------------------------ | ----------------------- | -------------- | :------: | ------ |
-| US-BANK-001 | Fund the Bank                              | Team member             | 🧪 Validation  |    P1    | S      |
-| US-BANK-002 | Transfer Bank funds                        | Owner / Board member    | 🧪 Validation  |    P1    | M      |
-| US-BANK-003 | Review the Bank position and history       | Team member             | 🚧 In Progress |    P2    | M      |
-| US-BANK-004 | Cash out available treasury funds          | Bank owner              | 🧪 Validation  |    P1    | M      |
-| US-SAFE-001 | Set up a Safe                              | Team owner              | 🧪 Validation  |    P1    | M      |
-| US-SAFE-002 | Inspect Safe details                       | Team member             | 🧪 Validation  |    P1    | M      |
-| US-SAFE-003 | Manage Safe funds                          | Safe owner              | 🧪 Validation  |    P1    | M      |
-| US-SAFE-004 | Manage Safe signers and threshold          | Safe owner              | 🧪 Validation  |    P2    | M      |
-| US-SAFE-005 | Review Safe transactions                   | Team member             | 🧪 Validation  |    P2    | M      |
-| US-SAFE-006 | Approve and execute a Safe transaction     | Safe owner              | 🧪 Validation  |    P1    | M      |
-| US-EXP-001  | Grant a signed spending approval           | Expense Account owner   | 🧪 Validation  |    P1    | M      |
-| US-EXP-002  | Spend from the Expense Account             | Approved recipient      | 🚧 In Progress |    P1    | M      |
-| US-EXP-003  | Deactivate or reactivate an approval       | Expense Account owner   | 🚧 In Progress |    P1    | M      |
-| US-EXP-004  | Review the Expense Account and its history | Team member / recipient | 🧪 Validation  |    P2    | M      |
+| User Story  | Title                                      | Actor                   | Status         |
+| ----------- | ------------------------------------------ | ----------------------- | -------------- |
+| US-BANK-001 | Fund the Bank                              | Team member             | 🧪 Validation  |
+| US-BANK-002 | Transfer Bank funds                        | Owner / Board member    | 🧪 Validation  |
+| US-BANK-003 | Review the Bank position and history       | Team member             | 🚧 In Progress |
+| US-BANK-004 | Cash out available treasury funds          | Bank owner              | 🧪 Validation  |
+| US-SAFE-001 | Set up a Safe                              | Team owner              | 🧪 Validation  |
+| US-SAFE-002 | Inspect Safe details                       | Team member             | 🧪 Validation  |
+| US-SAFE-003 | Manage Safe funds                          | Safe owner              | 🧪 Validation  |
+| US-SAFE-004 | Manage Safe signers and threshold          | Safe owner              | 🧪 Validation  |
+| US-SAFE-005 | Review Safe transactions                   | Team member             | 🧪 Validation  |
+| US-SAFE-006 | Approve and execute a Safe transaction     | Safe owner              | 🧪 Validation  |
+| US-EXP-001  | Grant a signed spending approval           | Expense Account owner   | 🧪 Validation  |
+| US-EXP-002  | Spend from the Expense Account             | Approved recipient      | 🚧 In Progress |
+| US-EXP-003  | Deactivate or reactivate an approval       | Expense Account owner   | 🚧 In Progress |
+| US-EXP-004  | Review the Expense Account and its history | Team member / recipient | 🧪 Validation  |
 
 ## US-BANK-001: Fund the Bank
 
@@ -92,7 +92,7 @@ flowchart LR
 - [x] Cancelling or rejecting a deposit leaves the Bank balance unchanged.
 - [x] A failed deposit leaves the Bank balance unchanged.
 
-**Priority:** P1 (Critical) · **Effort:** S · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** Current Bank contract and a connected wallet
 
@@ -124,7 +124,7 @@ flowchart LR
 - [x] A paused Bank rejects outgoing transfers. _(contract)_
 - [x] Cancelling, rejecting, or failing a transfer leaves the Bank balance unchanged.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-BANK-001 and the Board action capability for non-owner proposals
 
@@ -152,7 +152,7 @@ flowchart LR
 - [x] A history filter with no matching events returns an empty result.
 - [ ] A failed history read is distinguishable from a successfully loaded empty history.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** Current Bank contract and an available chain event provider
 
@@ -191,7 +191,7 @@ flowchart LR
 - [x] Rejecting a wallet request leaves the remaining steps unrun and identifies the rejected step to the owner.
 - [x] A cash-out run does not start when no eligible funded account is available.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-BANK-001, US-BANK-002, and the current Cash Remuneration and Expense Account contracts
 
@@ -222,7 +222,7 @@ flowchart LR
 - [x] If registration fails after deployment, the deployed Safe remains available for a registration retry.
 - [x] An archived team cannot deploy, import, or retry Safe registration.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** Current team and active network
 
@@ -251,7 +251,7 @@ flowchart LR
 - [x] A failed Safe information read is reported without hiding unaffected Safe information.
 - [x] A failed Safe information read can be retried without registering another Safe.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-SAFE-001
 
@@ -281,7 +281,7 @@ flowchart LR
 - [x] A rejected or failed proposal leaves Safe balances unchanged.
 - [x] An archived team cannot initiate a Safe deposit or transfer.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-SAFE-001 and US-SAFE-006
 
@@ -311,7 +311,7 @@ flowchart LR
 - [x] A user without Safe signer permission cannot propose a control change.
 - [x] A rejected or failed change preserves the current signers and threshold.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-SAFE-006
 
@@ -341,7 +341,7 @@ flowchart LR
 - [x] A failed transaction read is distinguishable from a successfully loaded empty result.
 - [x] A failed transaction read can be retried without hiding unaffected Safe information.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-SAFE-001
 
@@ -373,7 +373,7 @@ flowchart LR
 - [x] A rejected or failed approval does not increase the approval count.
 - [x] A rejected or failed execution leaves the transaction unexecuted.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-SAFE-001
 
@@ -404,7 +404,7 @@ flowchart LR
 - [x] An invalid or mismatched signature is rejected without creating an approval.
 - [x] Cancelling or rejecting the signature leaves the recipient's approvals unchanged.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** Current Expense Account contract and connected contract owner
 
@@ -437,7 +437,7 @@ flowchart LR
 - [x] A mismatched or unverifiable approval rejects spending without changing balances.
 - [x] A failed balance read prevents spending until the available amount can be verified.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** US-EXP-001 and a funded Expense Account
 
@@ -467,7 +467,7 @@ flowchart LR
 - [x] A failed state change preserves the approval's prior reported state.
 - [x] Expired and exhausted approvals remain unavailable after state synchronization.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** US-EXP-001
 
@@ -499,7 +499,7 @@ flowchart LR
 - [x] A failed approval read is distinguishable from a successfully loaded empty approval scope.
 - [x] A failed transaction read is distinguishable from a successfully loaded empty history.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** Current Expense Account contract and available API and chain providers
 

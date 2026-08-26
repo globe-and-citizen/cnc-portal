@@ -47,14 +47,14 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                      | Actor       | Status         | Priority | Effort |
-| ----------- | ------------------------------------------ | ----------- | -------------- | :------: | ------ |
-| US-ACCT-001 | Review the consolidated accounting summary | Team member | 🚧 In Progress |    P1    | L      |
-| US-ACCT-002 | Explore the general ledger                 | Team member | 🧪 Validation  |    P1    | M      |
-| US-ACCT-003 | Review the financial statements            | Team member | 🧪 Validation  |    P1    | M      |
-| US-ACCT-004 | Export accounting reports                  | Team member | 🧪 Validation  |    P2    | M      |
-| US-ACCT-005 | Preserve books across contract migrations  | Team member | 🚧 In Progress |    P1    | L      |
-| US-ACCT-006 | Classify a Bank transaction                | Team owner  | 📝 Draft       |    P1    | M      |
+| User Story  | Title                                      | Actor       | Status         |
+| ----------- | ------------------------------------------ | ----------- | -------------- |
+| US-ACCT-001 | Review the consolidated accounting summary | Team member | 🚧 In Progress |
+| US-ACCT-002 | Explore the general ledger                 | Team member | 🧪 Validation  |
+| US-ACCT-003 | Review the financial statements            | Team member | 🧪 Validation  |
+| US-ACCT-004 | Export accounting reports                  | Team member | 🧪 Validation  |
+| US-ACCT-005 | Preserve books across contract migrations  | Team member | 🚧 In Progress |
+| US-ACCT-006 | Classify a Bank transaction                | Team owner  | 📝 Draft       |
 
 ## US-ACCT-001: Review the Consolidated Accounting Summary
 
@@ -85,7 +85,7 @@ flowchart LR
 - [x] A failed contract-generation scan preserves available books and identifies the affected source as incomplete.
 - [ ] Every unavailable optional or enrichment source that can make the books incomplete is identified to the reviewer.
 
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** Current team, contract-event providers, and accounting enrichment records
 
@@ -117,7 +117,7 @@ flowchart LR
 - [x] Changing a filter resets pagination to a valid result page.
 - [x] An account with activity before the selected period carries its opening balance into the drill-down.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-ACCT-001
 
@@ -149,7 +149,7 @@ flowchart LR
 - [x] A statement line without underlying entries does not expose an empty drill-down as evidence.
 - [x] A point-in-time statement excludes entries after its selected date.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-ACCT-001 and US-ACCT-002
 
@@ -179,7 +179,7 @@ flowchart LR
 - [x] An export failure is reported without changing the accounting books.
 - [x] Exporting an empty report produces the selected report structure without inventing entries.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
@@ -211,7 +211,7 @@ flowchart LR
 - [x] A generation with no events does not remove events from other generations.
 - [x] A failed generation scan preserves the other generations and reports a reconciliation gap.
 
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
@@ -244,7 +244,7 @@ flowchart LR
 - [ ] An unknown transaction, invalid category, duplicate submission, or concurrent edit is rejected without changing the existing books.
 - [ ] A failed save leaves the previous classification visible and explains that the change was not applied.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 📝 Draft
+**Status:** 📝 Draft
 
 **Dependencies:** US-ACCT-002, a team-owned Bank transaction, and the planned Bank-classification delivery
 

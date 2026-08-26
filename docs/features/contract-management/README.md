@@ -41,13 +41,13 @@ flowchart LR
 
 ## Status Overview
 
-| User Story      | Title                              | Actor                  | Status         | Priority | Effort |
-| --------------- | ---------------------------------- | ---------------------- | -------------- | :------: | ------ |
-| US-CONTRACT-001 | Review the current contract suite  | Team member            | 🧪 Validation  |    P1    | M      |
-| US-CONTRACT-002 | Manage current contract operations | Owner / Board member   | 🧪 Validation  |    P1    | M      |
-| US-CONTRACT-003 | Manage advertising campaigns       | Authorized team member | 🚧 In Progress |    P2    | L      |
-| US-CONTRACT-004 | Review deployment history          | Team member            | 🚧 In Progress |    P2    | M      |
-| US-CONTRACT-005 | Redeploy an Officer generation     | Team owner             | 🧪 Validation  |    P1    | L      |
+| User Story      | Title                              | Actor                  | Status         |
+| --------------- | ---------------------------------- | ---------------------- | -------------- |
+| US-CONTRACT-001 | Review the current contract suite  | Team member            | 🧪 Validation  |
+| US-CONTRACT-002 | Manage current contract operations | Owner / Board member   | 🧪 Validation  |
+| US-CONTRACT-003 | Manage advertising campaigns       | Authorized team member | 🚧 In Progress |
+| US-CONTRACT-004 | Review deployment history          | Team member            | 🚧 In Progress |
+| US-CONTRACT-005 | Redeploy an Officer generation     | Team owner             | 🧪 Validation  |
 
 ## US-CONTRACT-001: Review the Current Contract Suite
 
@@ -73,7 +73,7 @@ flowchart LR
 - [x] A team without an active Officer generation receives an unavailable-state message instead of a contract table.
 - [x] A failed Officer-generation history read is reported without hiding the current team contracts.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** Current team and its active Officer generation
 
@@ -104,7 +104,7 @@ flowchart LR
 - [x] Rejecting a wallet request does not report a successful contract operation.
 - [x] A failed direct ownership transfer is shown in the transfer context without changing the displayed owner.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-CONTRACT-001, current contract permissions, and a connected wallet
 
@@ -130,7 +130,7 @@ flowchart LR
 
 - [ ] A team without a Campaign Manager receives an actionable unavailable-state message.
 
-**Priority:** P2 (High) · **Effort:** L · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** Current team and a configured Campaign Manager
 
@@ -154,7 +154,7 @@ flowchart LR
 
 - [ ] An empty deployment history remains distinguishable from a failed history read.
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🚧 In Progress
+**Status:** 🚧 In Progress
 
 **Dependencies:** Current team and the Officer-generation history read
 
@@ -186,7 +186,7 @@ flowchart LR
 - [x] A failed deploy, Officer registration, or follow-up lookup keeps the form open and identifies the step that failed.
 - [x] A failed shareholder migration keeps the form open with options to retry the migration or skip it and close the form.
 
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🧪 Validation
+**Status:** 🧪 Validation
 
 **Dependencies:** US-CONTRACT-001, a current team owner, a connected wallet, and an active Officer generation
 
