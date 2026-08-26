@@ -5,49 +5,51 @@
     </template>
 
     <p class="text-muted mb-4 text-sm">
-      Payments made through the widget — each entry only exists because the widget successfully
-      reported its <code>txHash</code> for that facture ID (see Reference).
+      Bank deposits that carry a facture ID — every payment made through the widget, read directly
+      from the chain. No separate record to keep in sync.
     </p>
 
-    <UTable :data="payments" :columns="columns" data-test="payment-gate-history-table">
-      <template #status-cell="{ row }">
-        <UBadge :color="statusColor(row.original.status)" variant="subtle" size="xs">
-          {{ row.original.status }}
-        </UBadge>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      title="Couldn't load payment history"
+      :description="error.message"
+    />
+    <UTable
+      v-else
+      :data="payments"
+      :columns="columns"
+      :loading="loading"
+      data-test="payment-gate-history-table"
+    >
+      <template #empty>
+        <p class="text-muted py-6 text-center text-sm">No payments yet.</p>
       </template>
     </UTable>
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { formatToken } from '@/utils/format'
+import { computed } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
+import { useTeamStore } from '@/stores'
+import { formatTxHash } from '@/utils/format'
+import { useFactureHistory, type FacturePayment } from '@/composables/paymentGate/useFactureHistory'
 
-type PaymentStatus = 'pending' | 'paid' | 'failed'
+const teamStore = useTeamStore()
+const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
-interface HistoryRow {
-  factureId: string
-  amount: string
-  token: string
-  status: PaymentStatus
-}
+const { payments, loading, error } = useFactureHistory(bankAddress)
 
-const payments: HistoryRow[] = [
-  { factureId: 'order_8842', amount: formatToken(128, 'USDC'), token: 'USDC', status: 'paid' },
-  { factureId: 'order_8841', amount: formatToken(64, 'USDC'), token: 'USDC', status: 'paid' },
-  { factureId: 'order_8840', amount: formatToken(32, 'USDC'), token: 'USDC', status: 'failed' },
-  { factureId: 'order_8839', amount: formatToken(96, 'USDC'), token: 'USDC', status: 'pending' }
-]
-
-const columns = [
+const columns: TableColumn<FacturePayment>[] = [
   { accessorKey: 'factureId', header: 'Facture ID' },
   { accessorKey: 'amount', header: 'Amount' },
   { accessorKey: 'token', header: 'Token' },
-  { accessorKey: 'status', header: 'Status' }
+  {
+    accessorKey: 'txHash',
+    header: 'Tx',
+    cell: ({ row }) => formatTxHash(row.original.txHash)
+  }
 ]
-
-function statusColor(status: PaymentStatus) {
-  if (status === 'paid') return 'success' as const
-  if (status === 'failed') return 'error' as const
-  return 'neutral' as const
-}
 </script>
