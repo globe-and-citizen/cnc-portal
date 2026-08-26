@@ -81,8 +81,6 @@ stateDiagram-v2
 - [x] Cancelling schedule creation does not create an on-chain schedule.
 - [x] A failed schedule creation does not create an on-chain schedule and preserves the entered context.
 
-**Status:** ✅ Done
-
 **Dependencies:** Current team, current Vesting contract, current Investor contract
 
 ## US-VESTING-002: View Schedules and Aggregate Totals
@@ -110,8 +108,6 @@ stateDiagram-v2
 
 - [x] An empty schedule scope returns zero aggregate totals and no schedule entries.
 - [x] A failed schedule read is reported without being treated as successfully loaded data.
-
-**Status:** ✅ Done
 
 **Dependencies:** US-VESTING-001
 
@@ -142,8 +138,6 @@ stateDiagram-v2
 - [x] Cancelling a release does not change the schedule or mint shares.
 - [x] A failed release does not change the schedule or mint shares.
 
-**Status:** ✅ Done
-
 **Dependencies:** US-VESTING-001
 
 ## US-VESTING-004: Stop an Active Vesting Schedule
@@ -173,8 +167,6 @@ stateDiagram-v2
 - [x] Cancelling a stop does not change the active schedule.
 - [x] A failed stop leaves the schedule active.
 
-**Status:** ✅ Done
-
 **Dependencies:** US-VESTING-001
 
 ## US-VESTING-005: Understand Vested and Claimable Progress
@@ -200,8 +192,6 @@ stateDiagram-v2
 
 - [x] Accrued shares remain locked before the cliff boundary.
 - [x] A Cancelled schedule exposes both its released amount and its cancelled amount.
-
-**Status:** ✅ Done
 
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 

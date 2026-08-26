@@ -92,8 +92,6 @@ flowchart LR
 - [x] Cancelling or rejecting a deposit leaves the Bank balance unchanged.
 - [x] A failed deposit leaves the Bank balance unchanged.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** Current Bank contract and a connected wallet
 
 ## US-BANK-002: Transfer Bank Funds
@@ -124,8 +122,6 @@ flowchart LR
 - [x] A paused Bank rejects outgoing transfers. _(contract)_
 - [x] Cancelling, rejecting, or failing a transfer leaves the Bank balance unchanged.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-BANK-001 and the Board action capability for non-owner proposals
 
 ## US-BANK-003: Review the Bank Position and History
@@ -151,8 +147,6 @@ flowchart LR
 
 - [x] A history filter with no matching events returns an empty result.
 - [ ] A failed history read is distinguishable from a successfully loaded empty history.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** Current Bank contract and an available chain event provider
 
@@ -191,8 +185,6 @@ flowchart LR
 - [x] Rejecting a wallet request leaves the remaining steps unrun and identifies the rejected step to the owner.
 - [x] A cash-out run does not start when no eligible funded account is available.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-BANK-001, US-BANK-002, and the current Cash Remuneration and Expense Account contracts
 
 ## US-SAFE-001: Set Up a Safe
@@ -222,8 +214,6 @@ flowchart LR
 - [x] If registration fails after deployment, the deployed Safe remains available for a registration retry.
 - [x] An archived team cannot deploy, import, or retry Safe registration.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** Current team and active network
 
 ## US-SAFE-002: Inspect Safe Details
@@ -250,8 +240,6 @@ flowchart LR
 - [x] A Safe with no incoming transfers returns an empty deposit history.
 - [x] A failed Safe information read is reported without hiding unaffected Safe information.
 - [x] A failed Safe information read can be retried without registering another Safe.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** US-SAFE-001
 
@@ -281,8 +269,6 @@ flowchart LR
 - [x] A rejected or failed proposal leaves Safe balances unchanged.
 - [x] An archived team cannot initiate a Safe deposit or transfer.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-SAFE-001 and US-SAFE-006
 
 ## US-SAFE-004: Manage Safe Signers and Threshold
@@ -311,8 +297,6 @@ flowchart LR
 - [x] A user without Safe signer permission cannot propose a control change.
 - [x] A rejected or failed change preserves the current signers and threshold.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-SAFE-006
 
 ## US-SAFE-005: Review Safe Transactions
@@ -340,8 +324,6 @@ flowchart LR
 - [x] A Safe with no matching transactions returns an empty result.
 - [x] A failed transaction read is distinguishable from a successfully loaded empty result.
 - [x] A failed transaction read can be retried without hiding unaffected Safe information.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** US-SAFE-001
 
@@ -373,8 +355,6 @@ flowchart LR
 - [x] A rejected or failed approval does not increase the approval count.
 - [x] A rejected or failed execution leaves the transaction unexecuted.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-SAFE-001
 
 ## US-EXP-001: Grant a Signed Spending Approval
@@ -403,8 +383,6 @@ flowchart LR
 - [x] An archived team cannot grant a spending approval.
 - [x] An invalid or mismatched signature is rejected without creating an approval.
 - [x] Cancelling or rejecting the signature leaves the recipient's approvals unchanged.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** Current Expense Account contract and connected contract owner
 
@@ -437,8 +415,6 @@ flowchart LR
 - [x] A mismatched or unverifiable approval rejects spending without changing balances.
 - [x] A failed balance read prevents spending until the available amount can be verified.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** US-EXP-001 and a funded Expense Account
 
 ## US-EXP-003: Deactivate or Reactivate an Approval
@@ -466,8 +442,6 @@ flowchart LR
 - [x] An archived team cannot deactivate or reactivate an approval.
 - [x] A failed state change preserves the approval's prior reported state.
 - [x] Expired and exhausted approvals remain unavailable after state synchronization.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** US-EXP-001
 
@@ -498,8 +472,6 @@ flowchart LR
 - [x] A scope with no approvals or transactions returns an empty result.
 - [x] A failed approval read is distinguishable from a successfully loaded empty approval scope.
 - [x] A failed transaction read is distinguishable from a successfully loaded empty history.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** Current Expense Account contract and available API and chain providers
 

@@ -158,8 +158,8 @@ Summarize the complete feature before the detailed stories.
 
 Use stable IDs. Do not reuse or silently renumber an ID after it has been referenced by code, tests, issues, or documentation.
 
-The status is the sole delivery-state signal in the overview. It records implementation and human-validation progress, not planning priority
-or estimation.
+The status overview is the sole delivery-state record for each story. It records implementation and human-validation progress, not planning
+priority or estimation. Detailed stories do not repeat their status after the acceptance criteria.
 
 ### 5. User Stories
 
@@ -189,8 +189,6 @@ Put each part of the user-story sentence on its own source line and rendered lin
 #### Edge & Error Cases
 
 - [ ] One observable boundary, invalid-input, unavailable-state, failure, or recovery outcome.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** US-FEATURE-000 or a named current capability
 ```

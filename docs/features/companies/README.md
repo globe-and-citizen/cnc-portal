@@ -66,8 +66,6 @@ flowchart LR
 - [x] Returning to the previous setup step preserves the entered company details.
 - [x] A failed create request leaves the setup form available and reports that the company was not created.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** Connected user with a portal account
 
 ## US-COMPANIES-002: Deploy the Initial Officer Contract Suite
@@ -94,8 +92,6 @@ flowchart LR
 
 - [x] A failed on-chain deployment is shown in the deployment step without advancing the setup flow.
 - [x] A failed Officer registration is shown separately from a failed deployment and does not report setup success.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
 

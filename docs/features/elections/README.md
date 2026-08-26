@@ -70,8 +70,6 @@ Only one unpublished election can exist at a time. An ended election still block
 - [x] Cancelling the wallet signature or closing the form does not create an election.
 - [x] A rejected creation preserves a recoverable error state in the creation flow.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** Current team, Elections contract, and connected team-owner wallet
 
 ## US-EL-02: Cast a Vote
@@ -98,8 +96,6 @@ Only one unpublished election can exist at a time. An ended election still block
 - [x] Rejecting the wallet signature does not record a vote.
 - [ ] After a successful vote, the portal refreshes the voter's recorded choice and the election counts without requiring a manual reload.
 - [ ] A member who is not eligible receives an explanation in the portal before attempting a wallet signature.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** US-EL-01
 
@@ -129,8 +125,6 @@ Only one unpublished election can exist at a time. An ended election still block
 - [x] Rejecting the wallet signature does not publish results or replace the Board.
 - [ ] An election with no votes leaves the existing Board unchanged rather than seating candidates solely through the tie-break rule.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** US-EL-02
 
 ## US-EL-04: Receive an Election-Created Notification
@@ -154,8 +148,6 @@ Only one unpublished election can exist at a time. An ended election still block
 
 - [x] A notification failure does not revert a successfully created on-chain election.
 - [ ] The notification tells each recipient whether they are eligible to vote, whether they are a candidate, and when the election ends.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** US-EL-01 and the notification service
 
@@ -182,8 +174,6 @@ Only one unpublished election can exist at a time. An ended election still block
 
 - [x] When election data is unavailable, the status component does not present it as a valid active election.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-EL-01
 
 ## US-EL-06: Follow Election Turnout and Vote Counts
@@ -208,8 +198,6 @@ Only one unpublished election can exist at a time. An ended election still block
 
 - [ ] Election pages keep their contract-read and rendering work bounded as the number of candidates grows.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** US-EL-02
 
 ## US-EL-07: View the Current Board of Directors
@@ -232,8 +220,6 @@ Only one unpublished election can exist at a time. An ended election still block
 #### Edge & Error Cases
 
 - [x] An empty Board state is presented as no current Board rather than as a successful populated Board.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** US-EL-03 and the Board of Directors contract
 
@@ -259,8 +245,6 @@ Only one unpublished election can exist at a time. An ended election still block
 - [ ] Every published election remains reachable regardless of its age.
 - [x] An empty past-election list remains distinguishable from a failed or loading history read.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** US-EL-03
 
 ## US-EL-09: Receive a Result-Published Notification
@@ -283,8 +267,6 @@ Only one unpublished election can exist at a time. An ended election still block
 #### Edge & Error Cases
 
 - [ ] A notification failure does not roll back a successful result publication and is reported to the publisher.
-
-**Status:** 📝 Draft
 
 **Dependencies:** US-EL-03 and the notification service
 
@@ -310,8 +292,6 @@ Only one unpublished election can exist at a time. An ended election still block
 - [ ] The portal explains why a later-joined member cannot vote in an existing election.
 - [ ] The portal makes the fixed eligible-voter list reviewable after the election has been published.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** US-EL-01
 
 ## US-EL-11: Cancel an Election
@@ -335,8 +315,6 @@ Only one unpublished election can exist at a time. An ended election still block
 #### Edge & Error Cases
 
 - [ ] A rejected cancellation does not change the election state.
-
-**Status:** 📝 Draft
 
 **Dependencies:** US-EL-01 and a future contract decision
 

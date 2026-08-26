@@ -90,8 +90,6 @@ flowchart LR
 - [x] Missing token data is presented as unavailable rather than as a fabricated balance or supply.
 - [x] A failed shareholder or activity read is reported without replacing known values with successful-looking data.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** Current Investor contract and team access
 
 ## US-SHER-005: Configure Shareholder Investment
@@ -119,8 +117,6 @@ flowchart LR
 
 - [x] A missing router or team Safe prevents the corresponding configuration write.
 - [x] A rejected or failed router write does not report the configuration as updated.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** US-SAFE-001, an active Safe Deposit Router, and a connected router owner
 
@@ -151,8 +147,6 @@ flowchart LR
 - [x] A failed deposit resets the form to the amount step and shows an error without reporting a successful investment.
 - [x] Cancelling the form resets its amount and closes the investment modal.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-SHER-005, an active Safe Deposit Router, a connected wallet, and a USDC balance
 
 ## US-SHER-004: Issue SHER to a Shareholder
@@ -181,8 +175,6 @@ flowchart LR
 
 - [x] An invalid recipient or invalid stake does not submit an individual issuance.
 - [x] A rejected or failed individual issuance does not report SHER as issued.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** Current Investor contract, a connected issuer with `MINTER_ROLE`, and a connected wallet
 
@@ -214,8 +206,6 @@ flowchart LR
 - [x] A Board-action attempt without a Bank address does not create an action.
 - [x] A failure while reading the Bank owner is reported without enabling an unauthorized dividend action.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-SHER-001, US-BANK-001, a current Bank owner or eligible Board member, and at least one shareholder
 
 ## US-SHER-008: Start a Shareholder Migration
@@ -227,8 +217,6 @@ flowchart LR
 This journey is owned by [US-CONTRACT-005](../contract-management/README.md#us-contract-005-redeploy-an-officer-generation), which covers
 the redeployment and migration-root commit. Shareholder Management exposes the migration status and uses the resulting snapshot for
 `US-SHER-006` and `US-SHER-007`.
-
-**Status:** 🔗 Reference
 
 **Dependencies:** US-CONTRACT-005 and a previous Investor generation
 
@@ -257,8 +245,6 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 - [x] A failed claim remains visible as a failure and does not report migrated shares as received.
 - [x] A completed migration no longer accepts an additional self-claim. _(contract)_
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-SHER-008, a connected shareholder, and a valid migration proof
 
 ## US-SHER-007: Settle and Close a Shareholder Migration
@@ -285,8 +271,6 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 - [x] A migration with no usable proof does not dispatch a partial allocation.
 - [x] A failed dispatch or closure is reported without marking the migration complete.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** US-SHER-008 and an Investor owner
 

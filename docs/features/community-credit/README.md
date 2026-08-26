@@ -73,8 +73,6 @@ automatically when a deadline or maturity date passes.
 - [x] A team without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
 - [x] The Credit Account journey distinguishes loading, read-failure, no-round, and populated outcomes.
 
-**Status:** 🚧 In Progress
-
 ## US-CC-002: Publish a Credit Call
 
 **As a** team issuer\
@@ -108,8 +106,6 @@ automatically when a deadline or maturity date passes.
 - [x] Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
 - [x] Once the on-chain round exists, a metadata failure can be retried without creating a second round.
 
-**Status:** 🚧 In Progress
-
 ## US-CC-003: Lend to an Open Round
 
 **As a** team member\
@@ -139,8 +135,6 @@ automatically when a deadline or maturity date passes.
 - [x] Rejecting approval, rejecting the lending transaction, or an on-chain failure leaves the round unchanged and returns a recoverable
       failure outcome.
 
-**Status:** 🚧 In Progress
-
 ## US-CC-004: Resolve a Stalled Round
 
 **As a** team issuer\
@@ -165,8 +159,6 @@ automatically when a deadline or maturity date passes.
 
 - [x] A partial raise of 0 cannot be accepted.
 - [x] A failed resolution leaves the round unchanged and returns a failure outcome.
-
-**Status:** 🧪 Validation
 
 ## US-CC-005: Repay Lenders
 
@@ -200,8 +192,6 @@ automatically when a deadline or maturity date passes.
 - [x] A round that is still raising cannot be repaid.
 - [x] A settled round cannot be repaid again.
 - [x] Rejecting or failing a repayment preserves the outstanding amount and returns a recoverable failure outcome.
-
-**Status:** 🚧 In Progress
 
 ## Known Gaps
 

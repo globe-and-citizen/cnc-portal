@@ -85,8 +85,6 @@ flowchart LR
 - [x] A failed contract-generation scan preserves available books and identifies the affected source as incomplete.
 - [ ] Every unavailable optional or enrichment source that can make the books incomplete is identified to the reviewer.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** Current team, contract-event providers, and accounting enrichment records
 
 ## US-ACCT-002: Explore the General Ledger
@@ -116,8 +114,6 @@ flowchart LR
 - [x] A filter with no matching entries produces an empty ledger with zero totals.
 - [x] Changing a filter resets pagination to a valid result page.
 - [x] An account with activity before the selected period carries its opening balance into the drill-down.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** US-ACCT-001
 
@@ -149,8 +145,6 @@ flowchart LR
 - [x] A statement line without underlying entries does not expose an empty drill-down as evidence.
 - [x] A point-in-time statement excludes entries after its selected date.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-ACCT-001 and US-ACCT-002
 
 ## US-ACCT-004: Export Accounting Reports
@@ -178,8 +172,6 @@ flowchart LR
 
 - [x] An export failure is reported without changing the accounting books.
 - [x] Exporting an empty report produces the selected report structure without inventing entries.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
@@ -211,8 +203,6 @@ flowchart LR
 - [x] A generation with no events does not remove events from other generations.
 - [x] A failed generation scan preserves the other generations and reports a reconciliation gap.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** Contract deployment history and US-ACCT-001
 
 ## US-ACCT-006: Classify a Bank Transaction
@@ -243,8 +233,6 @@ flowchart LR
 
 - [ ] An unknown transaction, invalid category, duplicate submission, or concurrent edit is rejected without changing the existing books.
 - [ ] A failed save leaves the previous classification visible and explains that the change was not applied.
-
-**Status:** 📝 Draft
 
 **Dependencies:** US-ACCT-002, a team-owned Bank transaction, and the planned Bank-classification delivery
 

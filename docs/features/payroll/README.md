@@ -103,8 +103,6 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] Archived teams cannot create wages.
 - [x] Archived teams cannot replace wages.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** Companies and Workspace
 
 ## US-PAYROLL-002: Pause or Resume a Member's Wage
@@ -136,8 +134,6 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] The status of a historical wage cannot be changed.
 - [x] The wage status of an archived team cannot be changed.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-PAYROLL-001
 
 ## US-PAYROLL-003: Fund the Payroll Contract
@@ -164,8 +160,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 #### Edge & Error Cases
 
 - [x] _(contract)_ A withdrawal in a non-mintable asset fails when the Cash Remuneration contract lacks the required balance.
-
-**Status:** 🔗 Reference
 
 **Dependencies:** Accounts, [Bank contract](../../contracts/features/bank/README.md)
 
@@ -196,8 +190,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Goals are read-only once the week is disabled.
 - [x] Archived teams cannot create weekly goals.
 - [x] Archived teams cannot update weekly goals.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-001
 
@@ -241,8 +233,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A paused wage rejects new claims.
 - [x] A rejected submission leaves the daily-claim state unchanged and returns its rejection reason.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-PAYROLL-001
 
 ## US-PAYROLL-006: Edit a Daily Claim
@@ -275,8 +265,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A rejected edit leaves the stored claim unchanged and returns its rejection reason.
 - [x] Archived teams cannot edit claims.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** US-PAYROLL-005
 
 ## US-PAYROLL-007: Delete a Daily Claim
@@ -303,8 +291,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A paused wage blocks claim deletion.
 - [x] Archived teams cannot delete claims.
 - [x] A failed deletion leaves the stored claim unchanged and returns a failure outcome.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** US-PAYROLL-005
 
@@ -341,8 +327,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
 - [x] Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** US-PAYROLL-005
 
 ## US-PAYROLL-009: Disable or Re-enable a Signed Weekly Claim
@@ -369,8 +353,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] A withdrawn claim cannot transition to disabled.
 - [x] A withdrawn claim cannot transition to enabled.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** US-PAYROLL-008
 
@@ -408,8 +390,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] _(contract)_ A withdrawal reverts while the Cash Remuneration contract is paused.
 - [x] Cancelling the wallet transaction leaves the claim unpaid and its stored status unchanged.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-PAYROLL-008, US-PAYROLL-003
 
 ## US-PAYROLL-011: Reconcile Weekly Claims With the Chain
@@ -441,8 +421,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A missing or invalid signature skips only the affected weekly claim.
 - [x] A failed contract read skips only the affected weekly claim.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** US-PAYROLL-008
 
 ## US-PAYROLL-012: Review Payroll History
@@ -473,8 +451,6 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] An invalid member-address filter is rejected.
 - [x] An invalid page filter is rejected.
 - [x] An invalid limit filter is rejected.
-
-**Status:** 🧪 Validation
 
 **Dependencies:** US-PAYROLL-005
 

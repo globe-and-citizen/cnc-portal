@@ -63,8 +63,6 @@ flowchart LR
 - [x] Updating a missing restriction is rejected without creating a record.
 - [x] An invalid global status update is rejected without changing the persisted restriction.
 
-**Status:** 🧪 Validation
-
 ## US-FLAG-002: Manage Team Overrides
 
 **As a** platform administrator\
@@ -94,8 +92,6 @@ flowchart LR
 - [x] Removing a missing override is rejected without changing other overrides.
 - [x] An invalid override status is rejected without changing the persisted override.
 
-**Status:** 🚧 In Progress
-
 ## US-FLAG-003: Remove Obsolete Restrictions
 
 **As a** platform administrator\
@@ -119,8 +115,6 @@ flowchart LR
 - [x] Deleting a missing restriction is rejected.
 - [x] A failed deletion is reported as a failure rather than success.
 - [ ] A failed deletion leaves the restriction and all its team overrides unchanged.
-
-**Status:** 🚧 In Progress
 
 ## Known Gaps
 

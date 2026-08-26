@@ -70,8 +70,6 @@ flowchart LR
 - [x] An authenticated non-administrator receives a forbidden response from the statistics API.
 - [x] An expired statistics session is cleared before further protected data is requested.
 
-**Status:** 🧪 Validation
-
 **Dependencies:** Dashboard authentication and administrator roles
 
 ## US-STATS-002: Review the Platform Overview and Trends
@@ -104,8 +102,6 @@ flowchart LR
 - [x] A reporting period without matching records returns zero totals and empty distributions.
 - [x] An invalid reporting period is rejected without running an aggregate query. _(API)_
 - [x] A failed statistics request is reported without fabricating overview values.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** US-STATS-001 and available database and chain providers
 
@@ -140,8 +136,6 @@ flowchart LR
 - [ ] Every displayed category metric maps to a field returned by its current API response.
 - [x] A failed category request is reported without replacing the failed result with fabricated data.
 
-**Status:** 🚧 In Progress
-
 **Dependencies:** US-STATS-001 and US-STATS-002
 
 ## US-STATS-004: Review Recent Platform Activity
@@ -169,8 +163,6 @@ flowchart LR
 - [x] A platform without matching activity returns an empty activity feed.
 - [x] An invalid activity limit is rejected without querying activity sources. _(API)_
 - [x] A failed activity request is reported without creating synthetic activity.
-
-**Status:** 🚧 In Progress
 
 **Dependencies:** US-STATS-001
 
