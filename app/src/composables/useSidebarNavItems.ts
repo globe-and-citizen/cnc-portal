@@ -200,6 +200,11 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
               label: 'General Ledger',
               active: name === 'accounting-ledger',
               to: { name: 'accounting-ledger', params: teamParams() }
+            },
+            {
+              label: 'Classification',
+              active: name === 'accounting-classification',
+              to: { name: 'accounting-classification', params: teamParams() }
             }
           ]
         },

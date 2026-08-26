@@ -36,10 +36,10 @@ flowchart LR
 
 ## Status Overview
 
-| User Story       | Title                                     | Actor        | Status        | Priority | Effort |
-| ---------------- | ----------------------------------------- | ------------ | ------------- | :------: | ------ |
-| US-COMPANIES-001 | Create a team workspace                   | Team creator | 🧪 Validation |    P1    | S      |
-| US-COMPANIES-002 | Deploy the initial Officer contract suite | Team owner   | 🧪 Validation |    P1    | M      |
+| User Story       | Title                                     | Actor        | Status        |
+| ---------------- | ----------------------------------------- | ------------ | ------------- |
+| US-COMPANIES-001 | Create a team workspace                   | Team creator | 🧪 Validation |
+| US-COMPANIES-002 | Deploy the initial Officer contract suite | Team owner   | 🧪 Validation |
 
 ## US-COMPANIES-001: Create a Team Workspace
 
@@ -65,8 +65,6 @@ flowchart LR
 
 - [x] Returning to the previous setup step preserves the entered company details.
 - [x] A failed create request leaves the setup form available and reports that the company was not created.
-
-**Priority:** P1 (Critical) · **Effort:** S · **Status:** 🧪 Validation
 
 **Dependencies:** Connected user with a portal account
 
@@ -95,14 +93,13 @@ flowchart LR
 - [x] A failed on-chain deployment is shown in the deployment step without advancing the setup flow.
 - [x] A failed Officer registration is shown separately from a failed deployment and does not report setup success.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
-
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
 
 ## Implementation Evidence
 
-- [Companies and child-feature routes](../../../app/src/router/index.ts) and
-  [team-creation form](../../../app/src/components/forms/AddTeamForm.vue)
+- [Companies and child-feature routes](../../../app/src/router/index.ts), reviewed with the separate Accounting classification route, and
+  [team-creation form](../../../app/src/components/forms/AddTeamForm.vue). The new Payment Gate child routes follow the same
+  `/teams/:id/...` pattern as every other team feature.
 - [Team creation endpoint](../../../backend/src/controllers/teamController.ts) and
   [request validation](../../../backend/src/validation/schemas/team.ts)
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue) and

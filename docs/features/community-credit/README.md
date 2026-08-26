@@ -42,13 +42,13 @@ automatically when a deadline or maturity date passes.
 
 ## Status Overview
 
-| User Story | Title                      | Actor       | Status         | Priority | Effort |
-| ---------- | -------------------------- | ----------- | -------------- | :------: | ------ |
-| US-CC-001  | Inspect the Credit Account | Team member | 🚧 In Progress |    P1    | M      |
-| US-CC-002  | Publish a credit call      | Team issuer | 🚧 In Progress |    P1    | L      |
-| US-CC-003  | Lend to an open round      | Team member | 🚧 In Progress |    P1    | M      |
-| US-CC-004  | Resolve a stalled round    | Team issuer | 🧪 Validation  |    P1    | M      |
-| US-CC-005  | Repay lenders              | Team issuer | 🚧 In Progress |    P1    | L      |
+| User Story | Title                      | Actor       | Status         |
+| ---------- | -------------------------- | ----------- | -------------- |
+| US-CC-001  | Inspect the Credit Account | Team member | 🚧 In Progress |
+| US-CC-002  | Publish a credit call      | Team issuer | 🚧 In Progress |
+| US-CC-003  | Lend to an open round      | Team member | 🚧 In Progress |
+| US-CC-004  | Resolve a stalled round    | Team issuer | 🧪 Validation  |
+| US-CC-005  | Repay lenders              | Team issuer | 🚧 In Progress |
 
 ## US-CC-001: Inspect the Credit Account
 
@@ -72,8 +72,6 @@ automatically when a deadline or maturity date passes.
 
 - [x] A team without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
 - [x] The Credit Account journey distinguishes loading, read-failure, no-round, and populated outcomes.
-
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
 
 ## US-CC-002: Publish a Credit Call
 
@@ -108,8 +106,6 @@ automatically when a deadline or maturity date passes.
 - [x] Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
 - [x] Once the on-chain round exists, a metadata failure can be retried without creating a second round.
 
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
-
 ## US-CC-003: Lend to an Open Round
 
 **As a** team member\
@@ -139,8 +135,6 @@ automatically when a deadline or maturity date passes.
 - [x] Rejecting approval, rejecting the lending transaction, or an on-chain failure leaves the round unchanged and returns a recoverable
       failure outcome.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
-
 ## US-CC-004: Resolve a Stalled Round
 
 **As a** team issuer\
@@ -165,8 +159,6 @@ automatically when a deadline or maturity date passes.
 
 - [x] A partial raise of 0 cannot be accepted.
 - [x] A failed resolution leaves the round unchanged and returns a failure outcome.
-
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
 
 ## US-CC-005: Repay Lenders
 
@@ -201,8 +193,6 @@ automatically when a deadline or maturity date passes.
 - [x] A settled round cannot be repaid again.
 - [x] Rejecting or failing a repayment preserves the outstanding amount and returns a recoverable failure outcome.
 
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
-
 ## Known Gaps
 
 The following gaps were rechecked against the current feature entry points on 2026-08-21. Their technical evidence and remediation
@@ -221,7 +211,8 @@ directions remain in the [detailed flow and implementation analysis](./user-flow
 
 ## Implementation Evidence
 
-- [Community Credit routes](../../../app/src/router/index.ts)
+- [Community Credit routes](../../../app/src/router/index.ts); the Accounting classification route and new Payment Gate routes remain
+  outside this feature
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)

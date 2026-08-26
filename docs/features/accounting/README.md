@@ -17,6 +17,16 @@ These acceptance criteria follow the
 - Accounting includes every known contract generation. Individual account pages intentionally remain scoped to their current contract.
 - Off-platform activity without a connected data source, including infrastructure bills, is outside the current automated books.
 
+- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter — the contracts
+  the CNC actually uses.
+- **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
+  booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); each team books CNC
+  usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue.
+- **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a team owner can **manually classify** each one
+  into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan) —
+  persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
+- **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
+
 ## Lifecycle
 
 ```mermaid
@@ -37,14 +47,14 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                      | Actor       | Status         | Priority | Effort |
-| ----------- | ------------------------------------------ | ----------- | -------------- | :------: | ------ |
-| US-ACCT-001 | Review the consolidated accounting summary | Team member | 🚧 In Progress |    P1    | L      |
-| US-ACCT-002 | Explore the general ledger                 | Team member | 🧪 Validation  |    P1    | M      |
-| US-ACCT-003 | Review the financial statements            | Team member | 🧪 Validation  |    P1    | M      |
-| US-ACCT-004 | Export accounting reports                  | Team member | 🧪 Validation  |    P2    | M      |
-| US-ACCT-005 | Preserve books across contract migrations  | Team member | 🚧 In Progress |    P1    | L      |
-| US-ACCT-006 | Classify a Bank transaction                | Team owner  | 📝 Draft       |    P1    | M      |
+| User Story  | Title                                      | Actor       | Status         |
+| ----------- | ------------------------------------------ | ----------- | -------------- |
+| US-ACCT-001 | Review the consolidated accounting summary | Team member | 🚧 In Progress |
+| US-ACCT-002 | Explore the general ledger                 | Team member | 🧪 Validation  |
+| US-ACCT-003 | Review the financial statements            | Team member | 🧪 Validation  |
+| US-ACCT-004 | Export accounting reports                  | Team member | 🧪 Validation  |
+| US-ACCT-005 | Preserve books across contract migrations  | Team member | 🚧 In Progress |
+| US-ACCT-006 | Classify a Bank transaction                | Team owner  | 📝 Draft       |
 
 ## US-ACCT-001: Review the Consolidated Accounting Summary
 
@@ -74,8 +84,6 @@ flowchart LR
 - [x] Failure to load the team prevents Accounting from presenting books for an unknown contract set.
 - [x] A failed contract-generation scan preserves available books and identifies the affected source as incomplete.
 - [ ] Every unavailable optional or enrichment source that can make the books incomplete is identified to the reviewer.
-
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
 
 **Dependencies:** Current team, contract-event providers, and accounting enrichment records
 
@@ -107,8 +115,6 @@ flowchart LR
 - [x] Changing a filter resets pagination to a valid result page.
 - [x] An account with activity before the selected period carries its opening balance into the drill-down.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
-
 **Dependencies:** US-ACCT-001
 
 ## US-ACCT-003: Review the Financial Statements
@@ -139,8 +145,6 @@ flowchart LR
 - [x] A statement line without underlying entries does not expose an empty drill-down as evidence.
 - [x] A point-in-time statement excludes entries after its selected date.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🧪 Validation
-
 **Dependencies:** US-ACCT-001 and US-ACCT-002
 
 ## US-ACCT-004: Export Accounting Reports
@@ -168,8 +172,6 @@ flowchart LR
 
 - [x] An export failure is reported without changing the accounting books.
 - [x] Exporting an empty report produces the selected report structure without inventing entries.
-
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🧪 Validation
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
@@ -200,8 +202,6 @@ flowchart LR
 - [x] When Officer history is unavailable, Accounting falls back to the current contract set.
 - [x] A generation with no events does not remove events from other generations.
 - [x] A failed generation scan preserves the other generations and reports a reconciliation gap.
-
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
@@ -234,8 +234,6 @@ flowchart LR
 - [ ] An unknown transaction, invalid category, duplicate submission, or concurrent edit is rejected without changing the existing books.
 - [ ] A failed save leaves the previous classification visible and explains that the change was not applied.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 📝 Draft
-
 **Dependencies:** US-ACCT-002, a team-owned Bank transaction, and the planned Bank-classification delivery
 
 ## Known Gaps
@@ -250,10 +248,23 @@ flowchart LR
 ## Implementation Evidence
 
 - [Accounting routes](../../../app/src/router/index.ts) and [Accounting navigation](../../../app/src/composables/useSidebarNavItems.ts). The
-  Community Credit round-detail view parameter does not alter Accounting entry points.
+  Community Credit round-detail view parameter and the new Payment Gate entry do not alter Accounting entry points.
+- [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
+  [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
+  [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+- [Accounting backend feeds](../../../app/src/composables/accounting/useAccountingBackendFeeds.ts)
+- [Classification query](../../../app/src/queries/classification.queries.ts),
+  [classification types](../../../app/src/types/accounting-classification.ts), and
+  [classification assembly](../../../app/src/utils/accounting/classification.ts)
+- [Classification controller](../../../backend/src/controllers/classificationController.ts),
+  [classification route](../../../backend/src/routes/classificationRoute.ts),
+  [classification validation](../../../backend/src/validation/schemas/classification.ts), and
+  [validation registry](../../../backend/src/validation/index.ts)
+- [Classification persistence schema](../../../backend/prisma/schema.prisma) and
+  [classification migrations](../../../backend/prisma/migrations/20260821000000_add_transaction_classification/)
 - [Statement-line drill-down](../../../app/src/composables/accounting/useLedgerDrilldown.ts)
 - [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),

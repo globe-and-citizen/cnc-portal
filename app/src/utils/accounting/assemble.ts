@@ -19,6 +19,7 @@ import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
+import type { TransactionClassificationRecord } from '@/types/accounting-classification'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
 import type { ExpenseEventsQuery } from '@/types/ponder/expense'
@@ -29,6 +30,7 @@ import type {
   SafeDepositRow
 } from '@/types/ponder/investor'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
+import type { ClassificationOverride } from '@/utils/accounting/classification'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
@@ -87,6 +89,8 @@ export interface CncAccountingInput {
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
   weeklyClaims?: readonly WeeklyClaim[]
   expenses?: readonly ExpenseResponse[]
+  /** Manual Bank/Safe transaction classifications, overriding address inference (#2457). */
+  classifications?: readonly TransactionClassificationRecord[] | null
 }
 
 /** The consolidated ledger + the three statements a team's books resolve to. */
@@ -113,6 +117,21 @@ export const phase1RateOfRecord: UsdRateOfRecord = () => 0
 /** Pull a Ponder query field's `.items`, tolerating a missing/null result. */
 function items<T>(field: { items: T[] } | null | undefined): T[] {
   return field?.items ?? []
+}
+
+/**
+ * Index the manual classifications by their transaction identity so the mapper
+ * context can look one up per ledger entry. Keys are lowercased to match the entry
+ * ids (`${txHash}-${logIndex}`), guarding against a mixed-case hash from the API.
+ */
+function toClassificationMap(
+  records: readonly TransactionClassificationRecord[] | null | undefined
+): Map<string, ClassificationOverride> {
+  const map = new Map<string, ClassificationOverride>()
+  for (const record of records ?? []) {
+    map.set(record.txId.toLowerCase(), { category: record.category, memo: record.memo })
+  }
+  return map
 }
 
 /** A SHER value transfer carries no cash; skip NFT moves entirely. */
@@ -360,7 +379,8 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     memberAddresses: input.memberAddresses,
     feeCollectorAddress: input.feeCollectorAddress,
     sherTokenAddress: input.sherTokenAddress,
-    rateOfRecord
+    rateOfRecord,
+    classifications: toClassificationMap(input.classifications)
   })
 
   const rawEntries = buildCncLedgerEntries(toLedgerSources(input), ctx, {
