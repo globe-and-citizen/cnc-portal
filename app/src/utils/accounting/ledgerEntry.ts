@@ -14,6 +14,7 @@
 import { getAddress, isAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
 import type { AccountName } from './chartOfAccounts'
+import type { ClassificationCategory } from './classification'
 
 /**
  * The use case (catalogue §5 / spec §4) a ledger entry realises. The `UC-*`
@@ -170,6 +171,13 @@ export interface LedgerEntry {
     /** USD rate of record, when resolved. */
     rate?: number
   }
+  /**
+   * The manual category a team owner classified the source transaction as
+   * (issue #2457), overriding the address inference. Absent means the entry is
+   * address-inferred — the visible fallback the UI flags as such. Set only on
+   * Bank/Safe deposit/withdrawal entries whose transaction has a classification.
+   */
+  classified?: ClassificationCategory
   /** Off-chain enrichment status. */
   enrichment: EnrichmentStatus
 }

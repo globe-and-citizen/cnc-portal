@@ -513,7 +513,8 @@ flowchart LR
 ## Implementation Evidence
 
 - [Accounts routes](../../../app/src/router/index.ts) and [Accounts navigation](../../../app/src/composables/useSidebarNavItems.ts). The
-  Community Credit round-detail view parameter and the new Payment Gate entry do not alter Accounts entry points.
+  Community Credit round-detail view parameter and the new Payment Gate entry do not alter Accounts entry points. The Accounting
+  classification route remains owned by Accounting.
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts), and
   [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and

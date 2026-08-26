@@ -168,6 +168,12 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/Accounting/GeneralLedgerView.vue')
         },
         {
+          path: '/teams/:id/accounting/classification',
+          name: 'accounting-classification',
+          meta: { name: 'Classification' },
+          component: () => import('@/views/team/[id]/Accounting/ClassificationView.vue')
+        },
+        {
           path: '/teams/:id/community-credit',
           name: 'community-credit',
           meta: { name: 'Community Credit' },

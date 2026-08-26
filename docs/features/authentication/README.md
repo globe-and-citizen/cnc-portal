@@ -133,7 +133,8 @@ flowchart TB
 - [Client login page](../../../app/src/views/LoginView.vue)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
 - [Client SIWE tests](../../../app/src/composables/__tests__/useSiwe.spec.ts)
-- [Client route guard](../../../app/src/router/index.ts) — the new Payment Gate routes authenticate through this same guard, unchanged
+- [Client route guard](../../../app/src/router/index.ts), including the Accounting classification route; the new Payment Gate routes
+  authenticate through this same guard, unchanged
 - [Client route guard tests](../../../app/src/router/__tests__/index.spec.ts)
 - [Dashboard login page](../../../dashboard/app/pages/login.vue)
 - [Dashboard SIWE orchestration](../../../dashboard/app/composables/useSiwe.ts)
