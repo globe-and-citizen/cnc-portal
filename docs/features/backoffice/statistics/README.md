@@ -36,12 +36,12 @@ flowchart LR
 
 ## Status Overview
 
-| User Story   | Title                                   | Actor         | Status         | Priority | Effort |
-| ------------ | --------------------------------------- | ------------- | -------------- | :------: | ------ |
-| US-STATS-001 | Access administrator statistics         | Administrator | 🧪 Validation  |    P1    | S      |
-| US-STATS-002 | Review the platform overview and trends | Administrator | 🚧 In Progress |    P1    | M      |
-| US-STATS-003 | Explore category statistics             | Administrator | 🚧 In Progress |    P1    | L      |
-| US-STATS-004 | Review recent platform activity         | Administrator | 🚧 In Progress |    P2    | M      |
+| User Story   | Title                                   | Actor         | Status         |
+| ------------ | --------------------------------------- | ------------- | -------------- |
+| US-STATS-001 | Access administrator statistics         | Administrator | 🧪 Validation  |
+| US-STATS-002 | Review the platform overview and trends | Administrator | 🚧 In Progress |
+| US-STATS-003 | Explore category statistics             | Administrator | 🚧 In Progress |
+| US-STATS-004 | Review recent platform activity         | Administrator | 🚧 In Progress |
 
 ## US-STATS-001: Access Administrator Statistics
 
@@ -69,8 +69,6 @@ flowchart LR
 - [x] An authenticated non-administrator is denied access to the dashboard.
 - [x] An authenticated non-administrator receives a forbidden response from the statistics API.
 - [x] An expired statistics session is cleared before further protected data is requested.
-
-**Priority:** P1 (Critical) · **Effort:** S · **Status:** 🧪 Validation
 
 **Dependencies:** Dashboard authentication and administrator roles
 
@@ -105,8 +103,6 @@ flowchart LR
 - [x] An invalid reporting period is rejected without running an aggregate query. _(API)_
 - [x] A failed statistics request is reported without fabricating overview values.
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🚧 In Progress
-
 **Dependencies:** US-STATS-001 and available database and chain providers
 
 ## US-STATS-003: Explore Category Statistics
@@ -140,8 +136,6 @@ flowchart LR
 - [ ] Every displayed category metric maps to a field returned by its current API response.
 - [x] A failed category request is reported without replacing the failed result with fabricated data.
 
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🚧 In Progress
-
 **Dependencies:** US-STATS-001 and US-STATS-002
 
 ## US-STATS-004: Review Recent Platform Activity
@@ -169,8 +163,6 @@ flowchart LR
 - [x] A platform without matching activity returns an empty activity feed.
 - [x] An invalid activity limit is rejected without querying activity sources. _(API)_
 - [x] A failed activity request is reported without creating synthetic activity.
-
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🚧 In Progress
 
 **Dependencies:** US-STATS-001
 
