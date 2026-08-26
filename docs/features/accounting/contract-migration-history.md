@@ -10,6 +10,9 @@ owned by [`US-ACCT-005`](./README.md#us-acct-005-preserve-books-across-contract-
 - Accounting includes current and historical generations in one ledger.
 - The team **Safe** and any other officerless money pocket survive Officer redeployment and are included once.
 - A **treasury sweep** moves funds between team-owned accounts. It is an internal movement, not revenue or an expense.
+- A **redeployed cash pocket** (Bank, Payroll, or Expense) is split in the **trial balance** into one row per contract instance, so each
+  deployment's balance and entries read on their own line. The Safe is never split — its address is persistent. The original deployment
+  keeps the plain account name; each later deployment is numbered (`Cash — Bank 2`, `Cash — Bank 3`) and carries a redeploy hint.
 
 ## Consolidation Flow
 
@@ -34,6 +37,11 @@ flowchart LR
 5. Events are merged, sorted, and deduplicated by their on-chain transaction and log identity.
 6. Every current and historical money-pocket address participates in internal-transfer classification.
 7. A failed generation scan does not discard successful generations; Accounting reports the affected source as a reconciliation gap.
+8. The trial balance splits a redeployed Bank, Payroll, or Expense pocket into one row per contract instance, ordered by first activity.
+   Only these presentation rows are split — the journal, income statement, balance sheet, summary totals, and the balanced check all stay
+   consolidated on the base account, so figures do not change. Drilling a row shows only that deployment's entries; the original
+   deployment's row also carries any pocket leg that has no contract address of its own (a Community Credit sweep straight to Bank, an owner
+   treasury sweep).
 
 ## Verification Journey
 
@@ -42,8 +50,10 @@ flowchart LR
 3. Confirm that Accounting contains the pre-migration and post-migration entries exactly once.
 4. Move funds from an old team contract to its replacement.
 5. Confirm that the movement changes the account pockets without changing revenue, expenses, or total team cash.
-6. Repeat the migration to verify consolidation across more than two generations.
-7. Simulate one failed generation scan and confirm that the remaining books load with an incomplete-history warning.
+6. Open the trial balance and confirm the redeployed pocket reads as separate rows — the original keeps its plain name, later deployments
+   are numbered and show a redeploy hint — and that drilling each row lists only that deployment's entries.
+7. Repeat the migration to verify consolidation across more than two generations.
+8. Simulate one failed generation scan and confirm that the remaining books load with an incomplete-history warning.
 
 ## Known Limitations
 
@@ -58,5 +68,9 @@ flowchart LR
 - [Migration wiring tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 - [Internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
 - [Internal-address tests](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts)
+- [Per-instance trial-balance split](../../../app/src/utils/accounting/generalLedger.ts)
+- [Trial-balance card and redeploy hint](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
+- [Instance-scoped drill-down](../../../app/src/utils/accounting/accountLedger.ts)
+- [Split and drill-down tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts)
 
 _[← Back to Accounting](./README.md)_

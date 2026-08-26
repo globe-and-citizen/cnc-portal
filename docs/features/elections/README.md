@@ -320,9 +320,6 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## Implementation Evidence
 
-- [Board-election routes](../../../app/src/router/index.ts) and
-  [Administration navigation](../../../app/src/composables/useSidebarNavItems.ts). The new Payment Gate routes and navigation entry do not
-  alter Election entry points.
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
 - [Election creation workflow](../../../app/src/components/sections/AdministrationView/CurrentBoDElectionSection.vue)
@@ -337,6 +334,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## Related Documentation
 
+- [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Elections contract behaviour](../../contracts/features/elections/README.md)
 - [Board of Directors contract behaviour](../../contracts/features/board-of-directors/README.md)
 - [Product feature inventory](../README.md)

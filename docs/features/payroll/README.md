@@ -472,11 +472,6 @@ status of a user story.
 
 ## Implementation Evidence
 
-The claim-submission and claim-history journeys remain unchanged; their current implementation evidence was reviewed with this update. The
-new Payment Gate sidebar entry does not alter Payroll's own entry points.
-
-- [Payroll navigation and routes](../../../app/src/composables/useSidebarNavItems.ts) were reviewed alongside the separate Accounting
-  classification route.
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
 - [Member wage overview](../../../app/src/components/sections/DashboardView/MemberSection.vue)
 - [Member claim action alerts](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue)
@@ -496,7 +491,6 @@ new Payment Gate sidebar entry does not alter Payroll's own entry points.
 - [Wage API](../../../backend/src/controllers/wageController.ts)
 - [Daily claim API](../../../backend/src/controllers/claimController.ts)
 - [Member wage API](../../../backend/src/controllers/teamController.ts)
-- [Shared persistence schema](../../../backend/prisma/schema.prisma), including Accounting classification records
 - [Wage routes](../../../backend/src/routes/wageRoute.ts)
 - [Wage request validation](../../../backend/src/validation/schemas/wage.ts)
 - [Payroll persistence models](../../../backend/prisma/schema.prisma)
@@ -513,6 +507,7 @@ new Payment Gate sidebar entry does not alter Payroll's own entry points.
 
 ## Related Documentation
 
+- [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Cash Remuneration contract](../../contracts/features/cash-remuneration/README.md)
 - [Bank contract](../../contracts/features/bank/README.md)
 - [ADR-0001: Use member-week identity for payroll claims](../../adr/0001-member-week-payroll-identity.md)

@@ -4,7 +4,8 @@ import {
   entriesForAccount,
   accountBalance,
   accountNet,
-  accountOpening
+  accountOpening,
+  type InstanceScope
 } from '@/utils/accounting/accountLedger'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
@@ -34,6 +35,8 @@ export function useLedgerDrilldown(
   const target = ref<string | string[]>('')
   const displayName = ref('')
   const lineTotal = ref('')
+  // The pocket-instance scope, when the line is one split row of a redeployed pocket.
+  const targetScope = ref<InstanceScope | undefined>(undefined)
 
   const isAggregate = computed(() => Array.isArray(target.value))
 
@@ -46,7 +49,7 @@ export function useLedgerDrilldown(
     const t = target.value
     if (!t || (Array.isArray(t) && t.length === 0)) return []
     const { from, to } = bounds()
-    return entriesForAccount(entries.value, t, from, to)
+    return entriesForAccount(entries.value, t, from, to, targetScope.value)
   })
 
   // A single account nets from its own postings; an aggregate can't (mixed
@@ -68,7 +71,9 @@ export function useLedgerDrilldown(
 
   // What the account brought into the window — the ledger's "Opening balance"
   // line. Nothing precedes an open-ended window, nor an aggregate line.
-  const opening = computed(() => accountOpening(entries.value, balanceAccount.value, bounds().from))
+  const opening = computed(() =>
+    accountOpening(entries.value, balanceAccount.value, bounds().from, targetScope.value)
+  )
 
   // Where the account is left once every posting in the window is booked — the
   // figure at the foot of the Balance column.
@@ -82,10 +87,16 @@ export function useLedgerDrilldown(
    * Open the popup for a line. Pass one account name, or a list of accounts plus
    * a `label` for an aggregate. `lineValue` is the figure shown on the line.
    */
-  function openFor(account: string | string[], lineValue: string, label?: string): void {
+  function openFor(
+    account: string | string[],
+    lineValue: string,
+    label?: string,
+    scope?: InstanceScope
+  ): void {
     target.value = account
     displayName.value = label ?? (typeof account === 'string' ? account : 'Aggregate')
     lineTotal.value = lineValue
+    targetScope.value = scope
     open.value = true
   }
 
@@ -104,6 +115,9 @@ export function useLedgerDrilldown(
       from,
       to,
       columns,
+      ...(targetScope.value?.instance
+        ? { instance: targetScope.value.instance, includeBlank: targetScope.value.includeBlank }
+        : {}),
       ...(isAggregate.value ? { accountLabel: line.label, accountTotal: line.total } : {})
     }
     if (format === 'excel') {

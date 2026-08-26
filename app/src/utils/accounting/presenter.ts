@@ -63,7 +63,16 @@ export interface SummaryBanner {
 }
 
 export interface TrialRow {
+  /** Base account name — the drill-down key (a split pocket's instances share it). */
   account: string
+  /** Display name — the account, suffixed ` #2` / ` #3` for a redeployed pocket's later instances. */
+  label: string
+  /** The pocket contract instance this row rolls up, when split across redeploys. */
+  instance?: string
+  /** True when this account is split across several instances (a redeploy) — drives the redeploy hint. */
+  split: boolean
+  /** True on the primary (earliest) instance row — the one that also carries un-instanced legs. */
+  isPrimaryInstance: boolean
   nature: TrialNature
   natureClass: string
   dr: string
@@ -273,6 +282,11 @@ export function presentTrial(ledger: GeneralLedger): {
       r.accountClass === 'CONTRA_EQUITY'
     return {
       account: r.account,
+      label: r.accountLabel,
+      ...(r.instance ? { instance: r.instance } : {}),
+      split: r.split,
+      // The primary (earliest) instance row also carries the pocket's un-instanced legs.
+      isPrimaryInstance: r.isPrimaryInstance,
       nature: natureOf(r.account),
       natureClass: NATURE_BADGE[natureOf(r.account)],
       dr: debitSide ? money(r.balance) : '—',

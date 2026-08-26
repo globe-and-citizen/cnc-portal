@@ -39,6 +39,7 @@ export const GET_BANK_EVENTS = gql`
     ) {
       items {
         id
+        contractAddress
         sender
         to
         amount
@@ -53,6 +54,7 @@ export const GET_BANK_EVENTS = gql`
     ) {
       items {
         id
+        contractAddress
         sender
         to
         token

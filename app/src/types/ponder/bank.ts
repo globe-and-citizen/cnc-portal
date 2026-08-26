@@ -17,6 +17,7 @@ export type BankTokenDepositRow = {
 
 export type BankTransferRow = {
   id: string
+  contractAddress: string
   sender: string
   to: string
   amount: string
@@ -25,6 +26,7 @@ export type BankTransferRow = {
 
 export type BankTokenTransferRow = {
   id: string
+  contractAddress: string
   sender: string
   to: string
   token: string
