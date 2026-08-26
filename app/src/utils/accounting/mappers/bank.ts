@@ -36,7 +36,13 @@ const BANK = 'Cash — Bank' as const
 
 /** Map a single Bank deposit (native or token) to its ledger entry. */
 function mapDeposit(
-  row: { id: string; depositor: string; amount: string; timestamp: number },
+  row: {
+    id: string
+    contractAddress: string
+    depositor: string
+    amount: string
+    timestamp: number
+  },
   token: string | null,
   ctx: MapperContext
 ): LedgerEntry {
@@ -50,7 +56,9 @@ function mapDeposit(
         timestamp: row.timestamp,
         useCase: 'INTERNAL',
         debit: BANK,
+        debitInstance: row.contractAddress,
         credit: sourcePocket,
+        creditInstance: row.depositor,
         amountUsd,
         token: ctx.tokenIdOf(token),
         rawAmount: row.amount,
@@ -63,6 +71,7 @@ function mapDeposit(
         timestamp: row.timestamp,
         useCase: isFounder ? 'UC-BANK-01' : 'UC-BANK-02',
         debit: BANK,
+        debitInstance: row.contractAddress,
         credit: isFounder ? 'Owner Capital' : 'Service Revenue',
         amountUsd,
         token: ctx.tokenIdOf(token),
@@ -76,7 +85,7 @@ function mapDeposit(
 
 /** Map a single Bank transfer-out (native or token) to its ledger entry. */
 function mapTransfer(
-  row: { id: string; to: string; amount: string; timestamp: number },
+  row: { id: string; contractAddress: string; to: string; amount: string; timestamp: number },
   token: string | null,
   ctx: MapperContext
 ): LedgerEntry {
@@ -90,7 +99,9 @@ function mapTransfer(
         timestamp: row.timestamp,
         useCase: 'UC-BANK-03',
         debit: destPocket,
+        debitInstance: row.to,
         credit: BANK,
+        creditInstance: row.contractAddress,
         amountUsd,
         token: tokenId,
         rawAmount: row.amount,
@@ -106,6 +117,7 @@ function mapTransfer(
         useCase: 'CASH-OUT',
         debit: 'Operating Expense',
         credit: BANK,
+        creditInstance: row.contractAddress,
         amountUsd,
         token: tokenId,
         rawAmount: row.amount,
