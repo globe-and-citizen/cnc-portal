@@ -8,23 +8,25 @@
  * Every row here is a confirmed on-chain deposit event — there's no
  * pending/failed state to represent; a reverted or still-pending payment
  * never emitted the event this reads in the first place.
+ *
+ * Shaped as `TransactionHistoryItemRow` (plus `factureId`) so the history
+ * card can render and link out to `TransactionDetailModal` exactly like
+ * every other transaction table in the app.
  */
 import { computed, type MaybeRefOrGetter } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { getPublicClient } from '@wagmi/core'
-import type { Address, Hex } from 'viem'
+import { formatUnits, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
 import { SUPPORTED_TOKENS } from '@/constant'
-import { formatTokenUnits } from '@/utils/format'
 import { decodeFactureIdFromCalldata } from '@/utils/paymentGate/factureCalldata'
 import { extractTxHashFromId } from '@/utils/rawTransactionsUtil'
+import { formatBankTransactionDate } from '@/utils/bankTransactionUtil'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
+import type { TransactionHistoryItemRow } from '@/types/transaction-history'
 
-export interface FacturePayment {
+export interface FacturePayment extends TransactionHistoryItemRow {
   factureId: string
-  amount: string
-  token: string
-  txHash: Hex
 }
 
 export function useFactureHistory(bankAddress: MaybeRefOrGetter<Address | undefined>) {
@@ -76,11 +78,15 @@ export function useFactureHistory(bankAddress: MaybeRefOrGetter<Address | undefi
       return [
         {
           factureId,
-          amount: token
-            ? formatTokenUnits(BigInt(item.amount), token.decimals, token.symbol)
-            : item.amount,
+          txHash: txHash as Hex,
+          date: formatBankTransactionDate(Number(item.timestamp)),
+          from: item.depositor,
+          to: item.contractAddress,
+          amount: token ? formatUnits(BigInt(item.amount), token.decimals) : item.amount,
+          amountUSD: 0,
+          tokenAddress: item.token,
           token: token?.symbol ?? item.token,
-          txHash: txHash as Hex
+          type: 'tokenDeposit'
         }
       ]
     })

@@ -23,18 +23,47 @@
       :loading="loading"
       data-test="payment-gate-history-table"
     >
+      <template #date-cell="{ row }">
+        <div class="font-medium">{{ formatDateRelative(String(row.original.date)) }}</div>
+        <div class="text-muted text-xs">{{ formatDateUTC(String(row.original.date)) }}</div>
+      </template>
+
+      <template #value-cell="{ row }">
+        <div class="text-success font-medium">
+          +{{ formatCryptoAmount(row.original.amount) }} {{ row.original.token }}
+        </div>
+      </template>
+
+      <template #tx-cell="{ row }">
+        <UTooltip text="View transaction details">
+          <UButton
+            :label="formatTxHash(row.original.txHash)"
+            trailing-icon="heroicons:arrow-top-right-on-square"
+            color="primary"
+            variant="outline"
+            size="sm"
+            data-test="payment-gate-history-detail-button"
+            @click="openDetail(row.original)"
+          />
+        </UTooltip>
+      </template>
+
       <template #empty>
         <p class="text-muted py-6 text-center text-sm">No payments yet.</p>
       </template>
     </UTable>
   </UCard>
+
+  <TransactionDetailModal v-if="selectedTx" v-model:open="showDetail" :transaction="selectedTx" />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { useTeamStore } from '@/stores'
-import { formatTxHash } from '@/utils/format'
+import { formatTxHash, formatCryptoAmount } from '@/utils'
+import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
 import { useFactureHistory, type FacturePayment } from '@/composables/paymentGate/useFactureHistory'
 
 const teamStore = useTeamStore()
@@ -44,12 +73,16 @@ const { payments, loading, error } = useFactureHistory(bankAddress)
 
 const columns: TableColumn<FacturePayment>[] = [
   { accessorKey: 'factureId', header: 'Facture ID' },
-  { accessorKey: 'amount', header: 'Amount' },
-  { accessorKey: 'token', header: 'Token' },
-  {
-    accessorKey: 'txHash',
-    header: 'Tx',
-    cell: ({ row }) => formatTxHash(row.original.txHash)
-  }
+  { accessorKey: 'date', header: 'Date' },
+  { accessorKey: 'value', header: 'Amount' },
+  { accessorKey: 'tx', header: 'Tx Hash' }
 ]
+
+const selectedTx = ref<FacturePayment>()
+const showDetail = ref(false)
+
+function openDetail(payment: FacturePayment) {
+  selectedTx.value = payment
+  showDetail.value = true
+}
 </script>
