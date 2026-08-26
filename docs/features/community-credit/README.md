@@ -221,8 +221,6 @@ directions remain in the [detailed flow and implementation analysis](./user-flow
 
 ## Implementation Evidence
 
-- [Community Credit routes](../../../app/src/router/index.ts); the Accounting classification route and new Payment Gate routes remain
-  outside this feature
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
@@ -244,6 +242,7 @@ directions remain in the [detailed flow and implementation analysis](./user-flow
 
 ## Related Documentation
 
+- [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Detailed flow and implementation analysis](./user-flow-analysis.md)
 - [Community Credit accounting rules](../accounting/cnc-accounting-spec.md)
 - [Product Feature Inventory](../README.md)
