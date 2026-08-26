@@ -83,6 +83,7 @@ describe('ClaimHistoryDailyBreakdown', () => {
         stubs: {
           ClaimActions: {
             name: 'ClaimActions',
+            props: ['claim', 'weekClaims'],
             template: '<div data-test="claim-actions" />'
           },
           ExpandableFileGallery: {
@@ -116,12 +117,16 @@ describe('ClaimHistoryDailyBreakdown', () => {
   })
 
   it('shows claim details, attachments, and actions when claims are modifiable', () => {
-    const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })
+    const weeklyClaim = createWeeklyClaim()
+    const wrapper = createWrapper({ weeklyClaim })
 
     expect(wrapper.text()).toContain('Daily coding')
     expect(wrapper.text()).toContain('Review PR')
     expect(wrapper.text()).toContain('Docs update')
     expect(wrapper.findAll('[data-test="claim-actions"]').length).toBe(3)
+    expect(wrapper.findComponent({ name: 'ClaimActions' }).props('weekClaims')).toEqual(
+      weeklyClaim.claims
+    )
   })
 
   it('computes file previews with image and non-image branches', () => {

@@ -1,29 +1,34 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { defineComponent } from 'vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 import { renderWithProviders } from '@/tests/mocks'
 import { MAX_FILES } from '@/types/upload'
 
-const UFileUploadStub = defineComponent({
-  name: 'UFileUpload',
-  props: {
-    disabled: { type: Boolean, default: false }
-  },
-  emits: ['update:model-value', 'open'],
-  methods: {
-    open() {
-      if (!this.disabled) {
-        this.$emit('open')
+const { UFileUploadStub } = vi.hoisted(() => ({
+  UFileUploadStub: {
+    name: 'UFileUpload',
+    props: {
+      disabled: { type: Boolean, default: false }
+    },
+    emits: ['update:model-value', 'open'],
+    methods: {
+      open() {
+        if (!this.disabled) {
+          this.$emit('open')
+        }
       }
-    }
-  },
-  template: `
-    <div data-test="file-input">
-      <slot :open="open" />
-    </div>
-  `
-})
+    },
+    template: `
+      <div data-test="file-input">
+        <slot :open="open" />
+      </div>
+    `
+  }
+}))
+
+vi.mock('@nuxt/ui/components/FileUpload.vue', () => ({
+  default: UFileUploadStub
+}))
 
 describe('UploadFileDB', () => {
   let wrapper: ReturnType<typeof mount>
@@ -42,7 +47,6 @@ describe('UploadFileDB', () => {
       },
       global: {
         stubs: {
-          UFileUpload: UFileUploadStub,
           FilePreviewGallery: true
         }
       }
@@ -50,11 +54,8 @@ describe('UploadFileDB', () => {
   }
 
   const emitFilesUpdate = async (files: File[] | File | null | undefined) => {
-    // eslint-disable-next-line no-restricted-syntax -- onFilesUpdate is the @update:model-value handler for the auto-imported UFileUpload; auto-imported Nuxt UI components bypass test stubs, so there is no reachable child instance to emit from
-    const vm = wrapper.vm as unknown as {
-      onFilesUpdate: (newFiles: File[] | File | null | undefined) => void
-    }
-    vm.onFilesUpdate(files)
+    const fileUpload = wrapper.findComponent(UFileUploadStub)
+    fileUpload.vm.$emit('update:model-value', files)
     await flushPromises()
   }
 
@@ -211,23 +212,7 @@ describe('UploadFileDB', () => {
     })
   })
 
-  describe('Reset Functionality', () => {
-    it('should reset uploaded files when resetUpload is called', async () => {
-      wrapper = createWrapper()
-
-      const file = new File(['content'], 'test.png', { type: 'image/png' })
-
-      await emitFilesUpdate([file])
-
-      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(1)
-
-      // Call exposed resetUpload method
-      await wrapper.vm.resetUpload()
-      await flushPromises()
-
-      expect(wrapper.emitted('update:files')?.[1]?.[0]).toHaveLength(0)
-    })
-
+  describe('File removal', () => {
     it('should remove a file when gallery emits remove', async () => {
       const revokeObjectURLSpy = vi
         .spyOn(URL, 'revokeObjectURL')
@@ -269,43 +254,6 @@ describe('UploadFileDB', () => {
 
       expect(createObjectURLSpy).toHaveBeenCalledTimes(1)
       expect(revokeObjectURLSpy).not.toHaveBeenCalled()
-    })
-
-    it('should reset gracefully when file input ref is missing', async () => {
-      wrapper = createWrapper()
-
-      expect(() => wrapper.vm.resetUpload()).not.toThrow()
-    })
-
-    it('should reset without revoking when previewUrl is empty', async () => {
-      const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('')
-      const revokeObjectURLSpy = vi
-        .spyOn(URL, 'revokeObjectURL')
-        .mockImplementation(() => undefined)
-
-      wrapper = createWrapper()
-      const file = new File(['content'], 'test.png', { type: 'image/png' })
-
-      await emitFilesUpdate([file])
-
-      wrapper.vm.resetUpload()
-      await flushPromises()
-
-      expect(createObjectURLSpy).toHaveBeenCalledTimes(1)
-      expect(revokeObjectURLSpy).not.toHaveBeenCalled()
-    })
-
-    it('should apply disabled upload state when isUploading is true', async () => {
-      wrapper = createWrapper()
-      // eslint-disable-next-line no-restricted-syntax -- isUploading has no public setter; the component never flips it on its own (reserved for a future async upload flow), so the disabled/loading template branch can only be exercised by setting the internal ref directly
-      ;(wrapper.vm as unknown as { isUploading: boolean }).isUploading = true
-      await flushPromises()
-
-      const zone = wrapper.find(SELECTORS.uploadZone)
-      const button = wrapper.find('button')
-
-      expect(zone.attributes('data-disabled')).toBe('true')
-      expect(button.attributes('disabled')).toBeDefined()
     })
   })
 })

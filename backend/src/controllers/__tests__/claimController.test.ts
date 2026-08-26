@@ -5,6 +5,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import claimRoutes from '../../routes/claimRoute';
 import { prisma } from '../../utils';
+import { DAILY_CLAIM_MEMO_MAX_LENGTH } from '../../validation';
 
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
@@ -25,6 +26,7 @@ vi.mock('../../utils', async () => {
         findFirst: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
+        upsert: vi.fn(),
         update: vi.fn(),
         delete: vi.fn(),
       },
@@ -58,13 +60,13 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
   getCashRemunerationOwner: vi.fn(),
 }));
 
-// Mock the wage resolution utility so addClaim's resolveWageForWeek call
+// Mock the wage resolution utility so addClaim's resolveCurrentWage call
 // returns whatever we set up per-test via mockResolveWageForWeek.
 const { mockResolveWageForWeek } = vi.hoisted(() => ({
   mockResolveWageForWeek: vi.fn(),
 }));
 vi.mock('../../utils/wageResolution', () => ({
-  resolveWageForWeek: mockResolveWageForWeek,
+  resolveCurrentWage: mockResolveWageForWeek,
 }));
 
 // Mock the storage service
@@ -227,10 +229,6 @@ app.use('/', claimRoutes);
 const invalidBodyScenarios = [
   { body: { teamId: 1, descpription: '' }, description: 'memo is missing' },
   { body: { teamId: 1, minutesWorked: 300, memo: ' ' }, description: 'memo is only spaces' },
-  {
-    body: { teamId: 1, minutesWorked: 300, memo: Array(3001).fill('word').join(' ') },
-    description: 'memo exceeds 3000 words',
-  },
   { body: {}, description: 'required fields are missing' },
   { body: { teamId: 1, minutesWorked: -5, memo: '' }, description: 'minutesWorked is invalid' },
 ];
@@ -250,6 +248,41 @@ describe('Claim Controller', () => {
         expect(response.status).toBe(400);
         expect(response.body.message).toContain('Invalid request body');
       });
+    });
+
+    it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
+      'should create a claim with a trimmed %i-character memo',
+      async (length) => {
+        const memo = ` ${'m'.repeat(length)} `;
+        const mockWage = createMockWage();
+        mockResolveWageForWeek.mockResolvedValue(mockWage);
+        vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(
+          createMockWeeklyClaim({ claims: [] })
+        );
+        const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+
+        const response = await request(app).post('/').send({ teamId: 1, minutesWorked: 300, memo });
+
+        expect(response.status).toBe(201);
+        expect(createSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ memo: memo.trim() }) })
+        );
+      }
+    );
+
+    it('should reject a memo over the character limit', async () => {
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: 1,
+          minutesWorked: 300,
+          memo: 'm'.repeat(DAILY_CLAIM_MEMO_MAX_LENGTH + 1),
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        `Memo must not exceed ${DAILY_CLAIM_MEMO_MAX_LENGTH} characters`
+      );
     });
 
     it("should return 400 if user doesn't have wage", async () => {
@@ -286,6 +319,33 @@ describe('Claim Controller', () => {
 
       expect(response.status).toBe(409);
       expect(response.body.message).toContain('Daily allowance: 6h');
+      expect(mockResolveWageForWeek).not.toHaveBeenCalled();
+    });
+
+    it('keeps the first submitted wage weekly cap after a mid-week wage change', async () => {
+      const workedDay = dayjs.utc().subtract(1, 'day').startOf('day').toDate();
+      const submittedWeek = createMockWeeklyClaim({
+        wageId: 1,
+        wage: createMockWage({ id: 1, maximumHoursPerWeek: 40 }),
+      } as Partial<WeeklyClaim>);
+      (submittedWeek as any).claims = [
+        { id: 1, dayWorked: workedDay, hoursWorked: 39, minutesWorked: 2340 },
+      ];
+
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(submittedWeek);
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ id: 2, maximumHoursPerWeek: 60 }));
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: 1,
+          minutesWorked: 120,
+          memo: 'memo',
+          dayWorked: dayjs.utc().startOf('day').toISOString(),
+        });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('weekly hours limit would be exceeded');
       expect(mockResolveWageForWeek).not.toHaveBeenCalled();
     });
 
@@ -406,7 +466,7 @@ describe('Claim Controller', () => {
       vi.mocked(getEffectiveStatus).mockResolvedValueOnce('disabled');
       mockResolveWageForWeek.mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
-      vi.spyOn(prisma.weeklyClaim, 'create').mockResolvedValue(createMockWeeklyClaim());
+      vi.spyOn(prisma.weeklyClaim, 'upsert').mockResolvedValue(createMockWeeklyClaim());
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
 
       const outOfWindow = dayjs.utc().subtract(10, 'day').startOf('day').toISOString();
@@ -424,7 +484,7 @@ describe('Claim Controller', () => {
 
       mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
-      vi.spyOn(prisma.weeklyClaim, 'create').mockResolvedValue(mockWeeklyClaims);
+      vi.spyOn(prisma.weeklyClaim, 'upsert').mockResolvedValue(mockWeeklyClaims);
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 
       const response = await request(app)
@@ -440,6 +500,18 @@ describe('Claim Controller', () => {
         wageId: mockClaim.wageId,
         weeklyClaimId: mockClaim.weeklyClaimId,
       });
+      expect(prisma.weeklyClaim.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            teamId_memberAddress_weekStart: expect.objectContaining({
+              teamId: 1,
+              memberAddress: TEST_ADDRESS,
+            }),
+          },
+          create: expect.objectContaining({ wageId: mockWage.id, status: 'pending' }),
+          update: {},
+        })
+      );
     });
 
     it('should create new claims with legacy hoursWorked set to 0', async () => {
@@ -666,6 +738,37 @@ describe('Claim Controller', () => {
         },
       } as any);
     };
+
+    it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
+      'should update a claim with a trimmed %i-character memo',
+      async (length) => {
+        const memo = ` ${'m'.repeat(length)} `;
+        setupMockClaim();
+        const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({ id: 1 } as any);
+
+        const response = await request(app).put('/1').send({ memo });
+
+        expect(response.status).toBe(200);
+        expect(updateSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ memo: memo.trim() }) })
+        );
+      }
+    );
+
+    it.each([
+      ['empty', 'Memo cannot be empty', ''],
+      ['whitespace-only', 'Memo cannot be empty', '   '],
+      [
+        'overlong',
+        `Memo must not exceed ${DAILY_CLAIM_MEMO_MAX_LENGTH} characters`,
+        'm'.repeat(DAILY_CLAIM_MEMO_MAX_LENGTH + 1),
+      ],
+    ])('should reject a %s memo on update', async (_description, message, memo) => {
+      const response = await request(app).put('/1').send({ memo });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(message);
+    });
 
     // Helper function for authorization tests
     const testAuthorization = async (

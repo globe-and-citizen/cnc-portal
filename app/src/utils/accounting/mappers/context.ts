@@ -12,6 +12,7 @@ import type { TokenId } from '@/constant'
 import { resolveTokenIdByAddress } from '@/utils/constantUtil'
 import { toUsd as toUsdUtil, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import type { ClassificationOverride } from '@/utils/accounting/classification'
 import type { ContractType, TeamContract } from '@/types/teamContract'
 
 export interface MapperContext {
@@ -34,6 +35,12 @@ export interface MapperContext {
   tokenIdOf: (tokenAddress: string | null | undefined) => TokenId
   /** The Cash pocket account of a CNC-owned address, or `null` if external. */
   pocketOf: (address: string | null | undefined) => AccountName | null
+  /**
+   * The manual classification a team owner attached to a transaction (keyed by the
+   * ledger entry id, i.e. `${txHash}-${logIndex}`), or `undefined` when none exists.
+   * The Bank/Safe mappers apply it on top of their address inference (issue #2457).
+   */
+  classificationOf: (id: string) => ClassificationOverride | undefined
 }
 
 /** Maps each CNC money-pocket contract type to its Cash account in the chart.
@@ -79,6 +86,8 @@ export interface BuildMapperContextInput {
   sherTokenAddress?: Address | string | null
   /** FX resolver for non-pegged tokens (native, SHER) — see {@link toUsdUtil}. */
   rateOfRecord?: UsdRateOfRecord
+  /** Manual transaction classifications, keyed by ledger entry id (issue #2457). */
+  classifications?: ReadonlyMap<string, ClassificationOverride>
 }
 
 /** Normalize a loose address iterable into a checksum-keyed set. */
@@ -124,6 +133,10 @@ export function buildMapperContext(input: BuildMapperContextInput): MapperContex
     return Math.round((usd / usdPerSher) * 1e6) / 1e6
   }
 
+  const classifications = input.classifications
+  const classificationOf = (id: string): ClassificationOverride | undefined =>
+    classifications?.get(id)
+
   return {
     internalAddresses: input.internalAddresses,
     founderAddresses: toAddressSet(input.founderAddresses),
@@ -131,7 +144,8 @@ export function buildMapperContext(input: BuildMapperContextInput): MapperContex
     toUsd: (amount, token, at) => toUsdUtil(amount, token, at, input.rateOfRecord),
     sherForUsd,
     tokenIdOf,
-    pocketOf
+    pocketOf,
+    classificationOf
   }
 }
 

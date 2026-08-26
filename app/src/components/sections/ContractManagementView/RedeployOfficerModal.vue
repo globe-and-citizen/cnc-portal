@@ -202,18 +202,18 @@ const { data: currentInvestorName } = useInvestorName()
 const { data: currentInvestorSymbol } = useInvestorSymbol()
 const { data: currentShareholders } = useInvestorShareholders()
 
-const {
-  redeploy,
-  retryMigration,
-  skipMigration,
-  reset,
-  isRunning,
-  migrationFailed,
-  deployError,
-  registerError,
-  migrationError,
-  workflowError
-} = useOfficerRedeploy()
+const { redeploy, retryMigration, skipMigration, reset, isRunning, failure, migrationRecovery } =
+  useOfficerRedeploy()
+
+const deployError = computed(() => (failure.value?.stage === 'deploy' ? failure.value.error : null))
+const registerError = computed(() =>
+  failure.value?.stage === 'registration' ? failure.value.error : null
+)
+const workflowError = computed(() =>
+  failure.value?.stage === 'workflow' ? failure.value.error : null
+)
+const migrationFailed = computed(() => migrationRecovery.value !== null)
+const migrationError = computed(() => migrationRecovery.value?.error ?? null)
 
 const canRedeploy = computed(() => !!form.value.name.trim() && !!form.value.symbol.trim())
 
@@ -247,12 +247,7 @@ const onRedeploy = async () => {
   // Keep the modal open whenever any error ref is populated so the user can
   // read the UAlert; the watch on isOpen fires reset() on close, which would
   // wipe the error refs before they're ever shown.
-  if (
-    !migrationFailed.value &&
-    !deployError.value &&
-    !registerError.value &&
-    !workflowError.value
-  ) {
+  if (!migrationRecovery.value && !failure.value) {
     isOpen.value = false
   }
 }

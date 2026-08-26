@@ -53,10 +53,9 @@
         <hr class="mt-6" />
         <SelectMemberInput
           v-model="input"
-          :disable-team-members="false"
           :hidden-members="[]"
-          showOnFocus
-          only-team-members
+          show-on-focus
+          member-scope="team-members"
           @selectMember="selectMember"
         />
         <UAlert v-if="addressError" color="error" :description="addressError" class="mt-2" />

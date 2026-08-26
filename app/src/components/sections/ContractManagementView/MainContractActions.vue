@@ -136,15 +136,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { useClipboard } from '@vueuse/core'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { Abi, Address } from 'viem'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { NETWORK } from '@/constant'
-import { useMainContractActions } from '@/composables/contracts/useMainContractActions'
+import { useBodIsBodAction } from '@/composables/bod/reads'
+import { useBodApproveAction } from '@/composables/bod/writes'
+import { useContractOwnershipTransfer } from '@/composables/contracts/useContractOwnershipTransfer'
+import { useContractStatusChange } from '@/composables/contracts/useContractStatusChange'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useGetBodActionsQuery } from '@/queries'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { TableRow } from '@/types/table'
-import { getContractPresentation } from '@/utils'
+import { filterAndFormatActions, getContractPresentation } from '@/utils'
 import BodApprovalModal from './BodApprovalModal.vue'
 import ContractReadDataSection from './ContractReadDataSection.vue'
 import PendingEventsList from './PendingEventsList.vue'
@@ -159,30 +165,77 @@ const emit = defineEmits<{
 }>()
 const toast = useToast()
 const { copy } = useClipboard()
+const teamStore = useTeamStore()
+const userDataStore = useUserDataStore()
+const { isWriteDisabled } = useTeamWriteGuard()
+const approveActionMutation = useBodApproveAction()
 const showDetails = ref(false)
+const showTransferModal = ref(false)
+const showApprovalModal = ref(false)
+const selectedRow = ref<TableRow>({})
+const currentStep = ref<0 | 1 | 2>(0)
+const rowRef = toRef(props, 'row')
 const presentation = computed(() => getContractPresentation(props.row.type))
 const contractAddress = computed(() => props.row.address as Address)
 const contractAbi = computed<Abi>(() => props.row.abi ?? [])
-
+const { isBodAction } = useBodIsBodAction(contractAddress)
+const actionsDisabled = computed(
+  () => isWriteDisabled.value || !(props.row.owner === userDataStore.address || isBodAction.value)
+)
+const modalWidth = computed(() =>
+  currentStep.value === 1 ? 'w-full sm:max-w-4xl' : 'w-full sm:max-w-xl'
+)
+const { data: bodActions } = useGetBodActionsQuery({
+  queryParams: {
+    teamId: computed(() => teamStore.currentTeamId),
+    isExecuted: false
+  }
+})
+const formattedActions = computed(() =>
+  filterAndFormatActions(props.row.address, bodActions.value, teamStore.currentTeam?.members || [])
+)
+const pendingActionsDisabled = computed(
+  () => isWriteDisabled.value || !isBodAction.value || formattedActions.value.length === 0
+)
+const isLoadingApproveAction = approveActionMutation.isPending
+const approveAction = approveActionMutation.executeApproveAction
 const {
-  actionsDisabled,
-  pendingActionsDisabled,
-  isBodAction,
-  formattedActions,
-  modalWidth,
-  showTransferModal,
-  showApprovalModal,
-  transferOwnershipErrorMessage,
-  selectedRow,
-  currentStep,
-  isLoadingTransfer,
-  isLoadingApproveAction,
-  approveAction,
-  openPendingActions,
-  viewPendingAction,
-  transferOwnership,
-  changeContractStatus
-} = useMainContractActions(toRef(props, 'row'), () => emit('contract-status-changed'))
+  errorMessage: transferOwnershipErrorMessage,
+  isLoading: isLoadingTransfer,
+  transferOwnership
+} = useContractOwnershipTransfer(rowRef, isBodAction, handleOwnershipTransferred)
+const { changeContractStatus } = useContractStatusChange(
+  contractAddress,
+  handleContractStatusChanged
+)
+
+watch(approveActionMutation.isSuccess, (isApproved) => {
+  if (isApproved) handleApprovalComplete()
+})
+
+function handleContractStatusChanged() {
+  emit('contract-status-changed')
+}
+
+function handleOwnershipTransferred() {
+  showTransferModal.value = false
+  handleContractStatusChanged()
+}
+
+function handleApprovalComplete() {
+  showApprovalModal.value = false
+  handleContractStatusChanged()
+}
+
+function openPendingActions() {
+  showApprovalModal.value = true
+  currentStep.value = 1
+}
+
+function viewPendingAction(action: TableRow) {
+  selectedRow.value = action
+  currentStep.value = 2
+}
 
 function copyAddress() {
   void copy(props.row.address)

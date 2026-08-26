@@ -236,11 +236,9 @@ export function useCashOutAll(options: CashOutOptions = {}) {
 
   return {
     steps,
-    currentIndex,
     isRunning,
     isComplete,
     hasFailed,
-    failedStep,
     start,
     retry,
     reset

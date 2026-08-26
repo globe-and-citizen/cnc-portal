@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document summarizes the major architectural refactorings completed to improve contract design, reduce code duplication, and standardize interfaces across the CNC Portal smart contracts.
+This document summarizes the major architectural refactorings completed to improve contract design, reduce code duplication, and standardize
+interfaces across the CNC Portal smart contracts.
 
 ---
 

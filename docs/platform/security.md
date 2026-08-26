@@ -7,8 +7,7 @@
 
 ## Overview
 
-This document defines security standards and requirements for all features in the CNC Portal
-platform.
+This document defines security standards and requirements for all features in the CNC Portal platform.
 
 ## Authentication
 
@@ -75,27 +74,23 @@ Issued At: [Timestamp]
 
 **Team-scoped routes — two layers, always both:**
 
-Authentication only proves _who_ the caller is, never _what they may touch_. Every route that
-mutates a team-owned resource applies two independent checks:
+Authentication only proves _who_ the caller is, never _what they may touch_. Every route that mutates a team-owned resource applies two
+independent checks:
 
-1. **Route layer** — `requireTeamMember` / `requireTeamOwner` from
-   `backend/src/middleware/teamAuthzMiddleware.ts`. This keeps outsiders away from the resource
-   entirely. When the request carries a resource id rather than a team id (`params.weeklyClaimId`,
-   `params.claimId`, `params.expenseId`, …), the guard resolves the owning team from that row, so
-   the label in the middleware call does not have to match the path parameter name.
-2. **Controller layer** — the per-action rule (claim owner, team owner, contract owner). A route
-   guard alone is not enough: teammates are legitimate callers of the route but not of every action
-   on it.
+1. **Route layer** — `requireTeamMember` / `requireTeamOwner` from `backend/src/middleware/teamAuthzMiddleware.ts`. This keeps outsiders
+   away from the resource entirely. When the request carries a resource id rather than a team id (`params.weeklyClaimId`, `params.claimId`,
+   `params.expenseId`, …), the guard resolves the owning team from that row, so the label in the middleware call does not have to match the
+   path parameter name.
+2. **Controller layer** — the per-action rule (claim owner, team owner, contract owner). A route guard alone is not enough: teammates are
+   legitimate callers of the route but not of every action on it.
 
 Two traps this closes:
 
-- **Uneven action guards.** When one endpoint multiplexes several actions behind a query parameter,
-  an unguarded branch is easy to miss because its siblings look safe. Review such handlers branch by
-  branch, not endpoint by endpoint.
-- **Self-healing assumptions.** Do not rely on a reconciliation job to repair a wrongly written
-  status. Reconcilers usually re-read a subset of rows, so a bad write that lands outside that
-  subset becomes permanent. Denial of service counts as a security impact even when no funds can
-  move.
+- **Uneven action guards.** When one endpoint multiplexes several actions behind a query parameter, an unguarded branch is easy to miss
+  because its siblings look safe. Review such handlers branch by branch, not endpoint by endpoint.
+- **Self-healing assumptions.** Do not rely on a reconciliation job to repair a wrongly written status. Reconcilers usually re-read a subset
+  of rows, so a bad write that lands outside that subset becomes permanent. Denial of service counts as a security impact even when no funds
+  can move.
 
 **Middleware Implementation:**
 
@@ -431,5 +426,4 @@ When implementing new features, ensure:
 
 ---
 
-For feature-specific security considerations, see individual feature specifications in
-`/docs/features/`.
+For feature-specific security considerations, see each canonical feature README under `/docs/features/`.
