@@ -496,7 +496,8 @@ status of a user story.
 
 ## Implementation Evidence
 
-The claim-submission and claim-history journeys remain unchanged; their current implementation evidence was reviewed with this update.
+The claim-submission and claim-history journeys remain unchanged; their current implementation evidence was reviewed with this update. The
+new Payment Gate sidebar entry does not alter Payroll's own entry points.
 
 - [Payroll navigation and routes](../../../app/src/composables/useSidebarNavItems.ts) were reviewed alongside the separate Accounting
   classification route.

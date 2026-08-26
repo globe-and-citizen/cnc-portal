@@ -114,6 +114,21 @@ describe('SidebarLayout.vue', () => {
           path: '/teams/:id/community-credit',
           name: 'community-credit',
           component: { template: '<div>Community Credit</div>' }
+        },
+        {
+          path: '/teams/:id/payment-gate',
+          name: 'payment-gate',
+          component: { template: '<div>Payment Gate</div>' }
+        },
+        {
+          path: '/teams/:id/payment-gate/reference',
+          name: 'payment-gate-reference',
+          component: { template: '<div>Payment Gate Reference</div>' }
+        },
+        {
+          path: '/teams/:id/payment-gate/history',
+          name: 'payment-gate-history',
+          component: { template: '<div>Payment Gate History</div>' }
         }
       ]
     })
