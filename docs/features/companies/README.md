@@ -53,43 +53,14 @@ flowchart LR
 
 | User Story       | Title                                     | Actor        | Status        |
 | ---------------- | ----------------------------------------- | ------------ | ------------- |
-| US-COMPANIES-003 | Browse and open my companies              | Team member  | 🧪 Validation |
 | US-COMPANIES-001 | Create a team workspace                   | Team creator | 🧪 Validation |
 | US-COMPANIES-002 | Deploy the initial Officer contract suite | Team owner   | 🧪 Validation |
+| US-COMPANIES-003 | Browse and open my companies              | Team member  | 🧪 Validation |
 | US-COMPANIES-004 | Update company details                    | Team owner   | 🧪 Validation |
 | US-COMPANIES-005 | Manage company members                    | Team owner   | 🧪 Validation |
 | US-COMPANIES-006 | Archive or restore a company              | Team owner   | 🧪 Validation |
 | US-COMPANIES-007 | Control my company-list visibility        | Team member  | 🧪 Validation |
 | US-COMPANIES-008 | Permanently delete a company              | Team owner   | 🧪 Validation |
-
-## US-COMPANIES-003: Browse and Open My Companies
-
-**As a** team member\
-**I want to** find and open the companies I belong to\
-**So that** I can enter the workspace I need to use
-
-### Acceptance Criteria
-
-#### Happy Path
-
-- [x] A member can view their active, visible companies and open one workspace from the Companies route.
-- [x] An opened workspace exposes the company metadata, members, lifecycle state, and the feature-specific workspace routes available to
-      that company.
-- [x] A member can include hidden and archived companies when browsing their list.
-
-#### Business Rules
-
-- [x] The Companies list is scoped to the connected member; a member cannot request another member's company list.
-- [x] The company-detail API permits a current member to read the workspace and rejects a requester who is not a member.
-- [x] A hidden or archived state remains visible when that company is included in the member's list.
-
-#### Edge & Error Cases
-
-- [x] A member with no matching companies receives an empty result instead of a stale workspace entry.
-- [x] A failed company-list request reports that the list could not be retrieved.
-- [x] An unavailable workspace distinguishes a removed or unknown company from another loading failure.
-
-**Dependencies:** Connected user with a portal account
 
 ## US-COMPANIES-001: Create a Team Workspace
 
@@ -144,6 +115,35 @@ flowchart LR
 - [x] A failed Officer registration is shown separately from a failed deployment and does not report setup success.
 
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
+
+## US-COMPANIES-003: Browse and Open My Companies
+
+**As a** team member\
+**I want to** find and open the companies I belong to\
+**So that** I can enter the workspace I need to use
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] A member can view their active, visible companies and open one workspace from the Companies route.
+- [x] An opened workspace exposes the company metadata, members, lifecycle state, and the feature-specific workspace routes available to
+      that company.
+- [x] A member can include hidden and archived companies when browsing their list.
+
+#### Business Rules
+
+- [x] The Companies list is scoped to the connected member; a member cannot request another member's company list.
+- [x] The company-detail API permits a current member to read the workspace and rejects a requester who is not a member.
+- [x] A hidden or archived state remains visible when that company is included in the member's list.
+
+#### Edge & Error Cases
+
+- [x] A member with no matching companies receives an empty result instead of a stale workspace entry.
+- [x] A failed company-list request reports that the list could not be retrieved.
+- [x] An unavailable workspace distinguishes a removed or unknown company from another loading failure.
+
+**Dependencies:** Connected user with a portal account
 
 ## US-COMPANIES-004: Update Company Details
 
