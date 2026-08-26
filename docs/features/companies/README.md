@@ -97,9 +97,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-- [Companies and child-feature routes](../../../app/src/router/index.ts), reviewed with the separate Accounting classification route, and
-  [team-creation form](../../../app/src/components/forms/AddTeamForm.vue). The new Payment Gate child routes follow the same
-  `/teams/:id/...` pattern as every other team feature.
+- [Team-creation form](../../../app/src/components/forms/AddTeamForm.vue)
 - [Team creation endpoint](../../../backend/src/controllers/teamController.ts) and
   [request validation](../../../backend/src/validation/schemas/team.ts)
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue) and
@@ -109,6 +107,7 @@ flowchart LR
 
 ## Related Documentation
 
+- [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Accounts](../accounts/README.md)
 - [Contract Management](../contract-management/README.md)
 - [Product feature inventory](../README.md)

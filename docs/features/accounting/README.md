@@ -247,8 +247,6 @@ flowchart LR
 
 ## Implementation Evidence
 
-- [Accounting routes](../../../app/src/router/index.ts) and [Accounting navigation](../../../app/src/composables/useSidebarNavItems.ts). The
-  Community Credit round-detail view parameter and the new Payment Gate entry do not alter Accounting entry points.
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
@@ -280,6 +278,7 @@ flowchart LR
 
 ## Related Documentation
 
+- [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Money Flow Catalogue](./money-flow-catalogue.md)
 - [Accounting Specification and Scope](./cnc-accounting-spec.md)
 - [Contract Migration History](./contract-migration-history.md)
