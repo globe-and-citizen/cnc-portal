@@ -18,6 +18,9 @@ wage that is current at submission time.
 A wage change creates a new current version immediately. Payroll does not schedule wage changes or delay their effective date. Existing
 weekly claims keep their stored wage so historical hours, limits, approvals, and payments are not repriced.
 
+Member-wage summaries in team-list responses remain scoped to the requesting member's explicitly selected teams. They do not make
+platform-wide team or payroll data available to regular users.
+
 When historical data contains more than one weekly claim for the same team member and ISO week, the database migration stops before it
 changes the uniqueness rule. The affected claims, goals, signatures, and terminal states must be reconciled explicitly; no payroll data is
 silently merged or discarded.

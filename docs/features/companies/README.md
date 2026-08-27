@@ -17,6 +17,8 @@ These acceptance criteria follow the
   lifecycle state: it removes the company from the normal list and freezes company writes until its owner restores it.
 - The connected creator becomes the team owner and is added to the team's members. A team can share a display name with another team; the
   backend assigns a unique slug for routing and storage.
+- The Companies client always requests the connected member's explicitly scoped list. Platform-wide team inspection is an administrator-only
+  Backoffice capability, not another way for a member to discover companies.
 - Initial **Officer-contract setup** is separate from team creation. The owner supplies the SHER name and symbol, deploys the Officer suite,
   and registers the resulting Officer generation with the team.
 - The owner may defer Officer setup or Safe setup. Safe deployment and import are documented by
@@ -133,7 +135,8 @@ flowchart LR
 
 #### Business Rules
 
-- [x] The Companies list is scoped to the connected member; a member cannot request another member's company list.
+- [x] The Companies list is scoped to the connected member; a member cannot request another member's company list or an unfiltered
+      platform-wide list. _(API)_
 - [x] The company-detail API permits a current member to read the workspace and rejects a requester who is not a member.
 - [x] A hidden or archived state remains visible when that company is included in the member's list.
 
