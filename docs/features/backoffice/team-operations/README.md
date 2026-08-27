@@ -12,8 +12,7 @@ These acceptance criteria follow the
 
 - **Team operations** is the administrator dashboard's read-only oversight capability. It does not create, edit, archive, delete, or change
   a team's membership; those workspace actions belong to [Companies and workspace](../../companies/README.md).
-- Dashboard navigation requires an authenticated `ROLE_ADMIN` or `ROLE_SUPER_ADMIN` user. The list's backend authorization must enforce the
-  same platform-wide boundary; its current omission is recorded in [#2602](https://github.com/globe-and-citizen/cnc-portal/issues/2602).
+- Dashboard navigation and the platform-wide team-list API both require an authenticated `ROLE_ADMIN` or `ROLE_SUPER_ADMIN` user.
 - The default platform list includes active teams only. It exposes a membership count, not the identities of individual team members, and it
   does not provide a control to include archived teams.
 - An **Officer generation** is one deployed Officer for a team. The current generation is the head of its succession chain; older
@@ -41,11 +40,11 @@ flowchart LR
 
 ## Status Overview
 
-| User Story      | Title                                      | Actor                  | Status         |
-| --------------- | ------------------------------------------ | ---------------------- | -------------- |
-| US-TEAM-OPS-001 | Access and inspect platform teams          | Platform administrator | 🚧 In Progress |
-| US-TEAM-OPS-002 | Inspect a team profile                     | Platform administrator | 🧪 Validation  |
-| US-TEAM-OPS-003 | Investigate Officer contracts and balances | Platform administrator | 🧪 Validation  |
+| User Story      | Title                                      | Actor                  | Status        |
+| --------------- | ------------------------------------------ | ---------------------- | ------------- |
+| US-TEAM-OPS-001 | Access and inspect platform teams          | Platform administrator | 🧪 Validation |
+| US-TEAM-OPS-002 | Inspect a team profile                     | Platform administrator | 🧪 Validation |
+| US-TEAM-OPS-003 | Investigate Officer contracts and balances | Platform administrator | 🧪 Validation |
 
 ## US-TEAM-OPS-001: Access and Inspect Platform Teams
 
@@ -70,8 +69,7 @@ flowchart LR
       before using the dashboard journey.
 - [x] The default platform list excludes archived teams.
 - [x] The list exposes each team's membership count rather than individual member identities.
-- [ ] The platform-wide team-list API independently restricts unfiltered results to administrator roles.
-      ([#2602](https://github.com/globe-and-citizen/cnc-portal/issues/2602))
+- [x] The platform-wide team-list API independently restricts unfiltered results to administrator roles. _(API)_
 
 #### Edge & Error Cases
 
@@ -137,12 +135,6 @@ flowchart LR
 - [x] A failed event-log request reports the retrieval failure instead of presenting an empty event history as successful.
 
 **Dependencies:** US-TEAM-OPS-002 and available backend and chain data
-
-## Known Gaps
-
-- The backend's unfiltered platform team-list endpoint does not independently enforce the administrator-role boundary. This allows an
-  authenticated non-administrator to request active platform-team data outside the dashboard route guard. Remediation is tracked in
-  [#2602](https://github.com/globe-and-citizen/cnc-portal/issues/2602) (`US-TEAM-OPS-001`).
 
 ## Implementation Evidence
 
