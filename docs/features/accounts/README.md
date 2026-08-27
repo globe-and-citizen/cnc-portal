@@ -16,6 +16,8 @@ These acceptance criteria follow the
   receiving custody of the whole account.
 - Bank and Expense Account actions use the current contracts selected for the team. Safe actions use the Safe registered to the team on the
   active network.
+- A Bank transfer with a positive `BANK` fee sends that fee to the global FeeCollector. Native transfers assess the configured rate, while
+  ERC-20 transfers are fee-bearing only when the token is supported by the FeeCollector.
 - A Bank owner can cash out available treasury funds by first consolidating Cash Remuneration and Expense Account balances into the Bank,
   then moving the Bank's held assets to the connected wallet. A historic generation can instead forward its available funds to the team's
   current Bank.
@@ -114,7 +116,10 @@ flowchart LR
 - [x] A transfer amount must be positive and cannot exceed the available balance after protocol fees.
 - [x] A transfer recipient cannot be the zero address. _(contract)_
 - [x] SHER transfers are not available through the Bank transfer journey.
-- [x] Fee-bearing transfers include the protocol fee in the amount deducted from the Bank.
+- [x] A native Bank transfer with a positive `BANK` rate pays its calculated fee to the global FeeCollector and delivers the net amount to
+      the recipient. _(contract)_
+- [x] An ERC-20 Bank transfer with a positive `BANK` rate pays its calculated fee to the global FeeCollector only when that token is
+      FeeCollector-supported; otherwise it delivers the full amount to the recipient. _(contract)_
 
 #### Edge & Error Cases
 
@@ -524,6 +529,7 @@ flowchart LR
 - [Bank contract](../../contracts/features/bank/README.md)
 - [Expense Account contract](../../contracts/features/expense-account/README.md)
 - [Safe Deposit Router contract](../../contracts/features/safe-deposit-router/README.md)
+- [Backoffice Micropayments](../backoffice/micropayments/README.md)
 - [Accounting](../accounting/README.md)
 - [Payroll & Cash Remuneration](../payroll/README.md)
 - [Community Credit](../community-credit/README.md)
