@@ -2,7 +2,7 @@
 
 **Scope:** Administrator-only capabilities exposed by the Nuxt dashboard
 
-**Last verified:** 2026-08-23
+**Last verified:** 2026-08-27
 
 The backoffice is one product surface containing several administrator capabilities. This README owns their grouping and navigation. Each
 capability can gain its own canonical user stories under `docs/features/backoffice/<capability>/README.md` as it is migrated to the current
@@ -30,7 +30,7 @@ flowchart TB
 | Capability              | User-visible outcome                                                                           | Routes                                      | Documentation                                         |
 | ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
 | Overview and statistics | Inspect platform, team, user, claim, wage, expense, contract, governance, and activity metrics | `/`                                         | [Canonical stories](./statistics/README.md)           |
-| Team operations         | Inspect teams, their members, balances, contracts, and Officer generations                     | `/teams`, `/teams/:id`                      | Alignment due                                         |
+| Team operations         | Inspect teams, membership counts, balances, contracts, and Officer generations                 | `/teams`, `/teams/:id`                      | [Canonical stories](./team-operations/README.md)      |
 | Micropayments           | Inspect FeeCollector versions and withdraw collected fees                                      | `/micropayments`                            | Alignment due                                         |
 | Polymarket accounting   | Reconstruct a wallet's statements, activity, and positions                                     | `/accounting`                               | Alignment due                                         |
 | Feature restrictions    | Manage global feature states and team overrides                                                | `/features`, `/features/:id`                | [Canonical stories](./feature-restrictions/README.md) |
