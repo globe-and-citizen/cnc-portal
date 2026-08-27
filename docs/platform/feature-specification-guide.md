@@ -2,7 +2,7 @@
 
 **Status:** Current — applied to every canonical product feature user story
 
-**Last updated:** 2026-08-23
+**Last updated:** 2026-08-27
 
 **Purpose:** Define the canonical, reviewable documentation contract for CNC Portal features
 
@@ -157,6 +157,9 @@ Summarize the complete feature before the detailed stories.
 | US-FEATURE-001 | Observable outcome | Main actor | 🚧 In Progress |
 
 Use stable IDs. Do not reuse or silently renumber an ID after it has been referenced by code, tests, issues, or documentation.
+
+List the status overview rows and detailed `## US-...` sections in ascending stable user-story-ID order. A lifecycle can show the actual
+journey and its branches, but it must not change that documentation order.
 
 The status overview is the sole delivery-state record for each story. It records implementation and human-validation progress, not planning
 priority or estimation. Detailed stories do not repeat their status after the acceptance criteria.
@@ -337,7 +340,7 @@ This rule applies to every committed documentation file, not only feature README
 
 1. Verify that the capability and its grouping match current navigation, linked routes, and access guards.
 2. Inspect the current feature README, product entry points, business rules, tests, and linked contract behaviour.
-3. Define or update the lifecycle and stable story boundaries.
+3. Define or update the lifecycle and stable story boundaries, then order the status overview and detailed stories by ascending stable ID.
 4. Write atomic and cohesive functional acceptance criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`, including
    material boundaries and recovery outcomes without prescribing UI or UX choices.
 5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from the human product-review state.
@@ -352,7 +355,7 @@ This rule applies to every committed documentation file, not only feature README
 - [ ] The README covers one complete product capability.
 - [ ] The capability is reachable through a current user journey and grouped under the correct product surface.
 - [ ] Scope, versions, actors, and system boundaries are explicit.
-- [ ] The lifecycle matches the story order.
+- [ ] The lifecycle is internally coherent, while the status overview and detailed stories are ordered by ascending stable user-story ID.
 - [ ] Every story uses `As a`, `I want to`, and `So that` on separate lines.
 - [ ] Every story organizes its criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`.
 - [ ] Every criterion contains one cohesive observable behaviour or one independently verifiable business rule.

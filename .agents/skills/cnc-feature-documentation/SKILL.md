@@ -39,7 +39,8 @@ requested or required by the active GitHub workflow.
 ## Write or revise the feature contract
 
 - Keep one canonical `README.md` for the complete capability and preserve stable user-story IDs.
-- Order the lifecycle, status overview, and detailed stories consistently with the journey.
+- List the status overview and detailed stories in ascending stable user-story-ID order. A lifecycle can show the actual journey and its
+  branches without changing that documentation order.
 - Give each story one actor, one action, and one user-visible benefit.
 - Keep the three clauses on consecutive source and rendered lines, with no blank lines:
 
