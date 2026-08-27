@@ -59,14 +59,14 @@ entry journey.
 All administrator-dashboard capabilities are grouped under [`docs/features/backoffice/`](./backoffice/README.md). They are not separate
 top-level product features.
 
-| Administrator capability | Current entry points                        | Documentation coverage                                           |
-| ------------------------ | ------------------------------------------- | ---------------------------------------------------------------- |
-| Overview and statistics  | `/`                                         | [Canonical stories](./backoffice/statistics/README.md)           |
-| Companies operations     | `/teams`, `/teams/:id`                      | [Canonical stories](./backoffice/companies-operations/README.md) |
-| Micropayments            | `/micropayments`                            | [Canonical stories](./backoffice/micropayments/README.md)        |
-| Polymarket accounting    | `/accounting`                               | Canonical stories not yet written                                |
-| Feature restrictions     | `/features`, `/features/:id`                | [Canonical stories](./backoffice/feature-restrictions/README.md) |
-| Contract operations      | `/contracts/history`, `/contracts/versions` | Canonical stories not yet written                                |
+| Administrator capability | Current entry points                        | Documentation coverage                                            |
+| ------------------------ | ------------------------------------------- | ----------------------------------------------------------------- |
+| Overview and statistics  | `/`                                         | [Canonical stories](./backoffice/statistics/README.md)            |
+| Companies operations     | `/teams`, `/teams/:id`                      | [Canonical stories](./backoffice/companies-operations/README.md)  |
+| Micropayments            | `/micropayments`                            | [Canonical stories](./backoffice/micropayments/README.md)         |
+| Polymarket accounting    | `/accounting`                               | [Canonical stories](./backoffice/polymarket-accounting/README.md) |
+| Feature restrictions     | `/features`, `/features/:id`                | [Canonical stories](./backoffice/feature-restrictions/README.md)  |
+| Contract operations      | `/contracts/history`, `/contracts/versions` | Canonical stories not yet written                                 |
 
 ## Excluded from the Product Inventory
 
