@@ -28,7 +28,7 @@ flowchart LR
   app --> paymentGate[Payment Gate]
 
   backoffice --> overview[Overview and statistics]
-  backoffice --> teams[Team operations]
+  backoffice --> companies[Companies operations]
   backoffice --> fees[Micropayments]
   backoffice --> polymarket[Polymarket accounting]
   backoffice --> restrictions[Feature restrictions]
@@ -62,7 +62,7 @@ top-level product features.
 | Administrator capability | Current entry points                        | Documentation coverage                                           |
 | ------------------------ | ------------------------------------------- | ---------------------------------------------------------------- |
 | Overview and statistics  | `/`                                         | [Canonical stories](./backoffice/statistics/README.md)           |
-| Team operations          | `/teams`, `/teams/:id`                      | Canonical stories not yet written                                |
+| Companies operations     | `/teams`, `/teams/:id`                      | [Canonical stories](./backoffice/companies-operations/README.md) |
 | Micropayments            | `/micropayments`                            | Canonical stories not yet written                                |
 | Polymarket accounting    | `/accounting`                               | Canonical stories not yet written                                |
 | Feature restrictions     | `/features`, `/features/:id`                | [Canonical stories](./backoffice/feature-restrictions/README.md) |

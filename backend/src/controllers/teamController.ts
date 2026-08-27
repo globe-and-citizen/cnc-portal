@@ -289,6 +289,8 @@ const getAllTeams = async (req: Request, res: Response) => {
   const showHidden = isTruthyQueryFlag(req.query.showHidden);
   const showArchived = isTruthyQueryFlag(req.query.showArchived);
   try {
+    const callerRoles = (req.user?.roles ?? []) as UserRoles;
+
     // If userAddress is provided, verify the caller is requesting their own teams
     if (userAddress) {
       if (userAddress !== callerAddress) {
@@ -401,7 +403,13 @@ const getAllTeams = async (req: Request, res: Response) => {
       );
     }
 
-    // No userAddress provided - return all teams
+    // The unfiltered list is the platform-wide administrator view. Member
+    // lists remain available only through the explicit self filter above.
+    if (!isAdmin(callerRoles)) {
+      return errorResponse(403, 'Unauthorized', res);
+    }
+
+    // No userAddress provided - return all teams for an administrator.
     const allTeamsWhere = showArchived ? {} : { isArchived: false };
 
     const allTeams = await prisma.team.findMany({
