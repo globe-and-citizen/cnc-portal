@@ -35,7 +35,16 @@ export type CncPayStatusCallback = (
 ) => void
 
 export interface CncPayApi {
-  /** Sets the facture ID for the next `show()` call. */
+  /**
+   * Sets the facture ID for the next `show()` call. Must be a short
+   * identifier — up to {@link FACTURE_ID_MAX_LENGTH} characters from
+   * {@link FACTURE_ID_PATTERN} (letters, digits, `-_./:`) — not free text;
+   * it's permanently readable on-chain and rendered as-is in every
+   * transaction table. Throws synchronously on an invalid value — this is
+   * an integration bug, not something a shopper should ever see silently
+   * pass through, so it surfaces to the merchant's own code in every build
+   * rather than being swallowed.
+   */
   setFactureId(factureId: string): void
   /** Sets the amount (in the token's display units, e.g. "25.00") for the next `show()` call. */
   setAmount(amount: string): void
@@ -86,6 +95,21 @@ function resolveToken(tokenSymbol: string): WidgetToken | undefined {
   // depositToken() targets (USDC/USDCe).
   if (!token || token.id === 'native') return undefined
   return { address: token.address, symbol: token.symbol, decimals: token.decimals }
+}
+
+// A facture ID is an order reference, not free text — it's permanently
+// readable on-chain and rendered as-is in every transaction table, so it's
+// worth rejecting obvious misuse (a sentence, a pasted note) at the source
+// instead of letting it travel all the way to an on-chain tx.
+const FACTURE_ID_MAX_LENGTH = 64
+const FACTURE_ID_PATTERN = /^[A-Za-z0-9\-_./:]+$/
+
+function isValidFactureId(factureId: string): boolean {
+  return (
+    factureId.length > 0 &&
+    factureId.length <= FACTURE_ID_MAX_LENGTH &&
+    FACTURE_ID_PATTERN.test(factureId)
+  )
 }
 
 const scriptConfig = readScriptConfig()
@@ -142,6 +166,11 @@ function show(target: HTMLElement | string): void {
 
 window.CncPay = {
   setFactureId(factureId) {
+    if (!isValidFactureId(factureId)) {
+      throw new Error(
+        `[CNC Pay] Invalid facture ID ${JSON.stringify(factureId)} — must be 1-${FACTURE_ID_MAX_LENGTH} characters matching ${FACTURE_ID_PATTERN}, not free text.`
+      )
+    }
     state.factureId = factureId
   },
   setAmount(amount) {
