@@ -20,6 +20,8 @@ These acceptance criteria follow the
   configurations. The displayed beneficiary is the owner when the stored beneficiary is unset.
 - V1 withdrawals sweep the native balance and every supported ERC-20 balance to the configured beneficiary, or to the owner when no
   beneficiary is configured. A withdrawal has no per-token or partial-amount control.
+- A company Bank transfer with a positive `BANK` fee is a FeeCollector funding source. The company payment journey owns the detailed
+  transfer and fee-applicability rules.
 - V0 and V0.1 are historical deployments. Their panels warn about that status and expose the functionality available in their historical
   ABI, including separate native and token withdrawals; they do not expose V1 beneficiary management.
 
@@ -77,6 +79,10 @@ flowchart LR
       deployment.
 - [x] A dashboard administrator who is not the selected FeeCollector owner can inspect its state but cannot see management controls.
 - [x] An unset V1 beneficiary is displayed as an owner fallback because the contract sends withdrawals to the owner in that state.
+- [x] A native company Bank transfer with a positive `BANK` rate pays the calculated fee to the global FeeCollector and emits `FeePaid`.
+      _(contract)_
+- [x] An ERC-20 company Bank transfer pays a positive `BANK` fee to the global FeeCollector only when that token is FeeCollector-supported;
+      otherwise it delivers the full amount to the recipient. _(contract)_
 
 #### Edge & Error Cases
 
@@ -290,5 +296,6 @@ flowchart LR
 - [Backoffice Feature Inventory](../README.md)
 - [Product Feature Inventory](../../README.md)
 - [FeeCollector contract documentation](../../../contracts/features/fee-collector/README.md)
+- [Bank transfer journey](../../accounts/README.md#us-bank-002-transfer-bank-funds)
 
 _[← Back to feature inventory](../../README.md)_
