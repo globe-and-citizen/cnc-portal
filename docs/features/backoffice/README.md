@@ -18,7 +18,7 @@ flowchart TB
   guard -->|Yes| dashboard[Backoffice dashboard]
 
   dashboard --> overview[Overview and statistics]
-  dashboard --> teams[Team operations]
+  dashboard --> companies[Companies operations]
   dashboard --> fees[Micropayments]
   dashboard --> accounting[Polymarket accounting]
   dashboard --> restrictions[Feature restrictions]
@@ -27,14 +27,14 @@ flowchart TB
 
 ## Current Capabilities
 
-| Capability              | User-visible outcome                                                                           | Routes                                      | Documentation                                         |
-| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
-| Overview and statistics | Inspect platform, team, user, claim, wage, expense, contract, governance, and activity metrics | `/`                                         | [Canonical stories](./statistics/README.md)           |
-| Team operations         | Inspect teams, membership counts, balances, contracts, and Officer generations                 | `/teams`, `/teams/:id`                      | [Canonical stories](./team-operations/README.md)      |
-| Micropayments           | Inspect FeeCollector versions and withdraw collected fees                                      | `/micropayments`                            | Alignment due                                         |
-| Polymarket accounting   | Reconstruct a wallet's statements, activity, and positions                                     | `/accounting`                               | Alignment due                                         |
-| Feature restrictions    | Manage global feature states and team overrides                                                | `/features`, `/features/:id`                | [Canonical stories](./feature-restrictions/README.md) |
-| Contract operations     | Inspect deployment history and synchronize Officer version metadata                            | `/contracts/history`, `/contracts/versions` | Alignment due                                         |
+| Capability              | User-visible outcome                                                                             | Routes                                      | Documentation                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------- | ----------------------------------------------------- |
+| Overview and statistics | Inspect platform company, user, claim, wage, expense, contract, governance, and activity metrics | `/`                                         | [Canonical stories](./statistics/README.md)           |
+| Companies operations    | Inspect companies, membership counts, balances, contracts, and Officer generations               | `/teams`, `/teams/:id`                      | [Canonical stories](./companies-operations/README.md) |
+| Micropayments           | Inspect FeeCollector versions and withdraw collected fees                                        | `/micropayments`                            | Alignment due                                         |
+| Polymarket accounting   | Reconstruct a wallet's statements, activity, and positions                                       | `/accounting`                               | Alignment due                                         |
+| Feature restrictions    | Manage global feature states and company overrides                                               | `/features`, `/features/:id`                | [Canonical stories](./feature-restrictions/README.md) |
+| Contract operations     | Inspect deployment history and synchronize Officer version metadata                              | `/contracts/history`, `/contracts/versions` | Alignment due                                         |
 
 `Alignment due` means that the product surface exists but no canonical feature README has yet been reviewed under the current model. It is
 not a delivery-status claim.
@@ -58,7 +58,7 @@ is not sufficient.
 - [Dashboard navigation and module entry points](../../../dashboard/app/layouts/default.vue)
 - [Administrator access guard](../../../dashboard/app/middleware/auth.global.ts)
 - [Overview and statistics page](../../../dashboard/app/pages/index.vue)
-- [Team operations](../../../dashboard/app/pages/teams/index.vue)
+- [Companies operations](../../../dashboard/app/pages/teams/index.vue)
 - [Micropayments](../../../dashboard/app/pages/micropayments.vue)
 - [Polymarket accounting](../../../dashboard/app/pages/accounting.vue)
 - [Feature restrictions](../../../dashboard/app/pages/features/index.vue)
