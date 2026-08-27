@@ -2,7 +2,7 @@
 
 **Status:** Navigation-derived inventory
 
-**Last verified:** 2026-08-25
+**Last verified:** 2026-08-27
 
 This inventory names the product capabilities that a user can currently reach in the CNC Portal client or its administrator dashboard. It is
 derived from the current navigation, routes, access guards, and linked product actions. The presence of a source directory, API, contract,
@@ -51,7 +51,6 @@ entry journey.
 | Contract Management     | `/teams/:id/contract-management`                                    | [Canonical stories](./contract-management/README.md)    |
 | Shareholder Management  | `/teams/:id/sher-token`                                             | [Canonical stories](./shareholder-management/README.md) |
 | Board elections         | Board-election overview and election details                        | [Canonical stories](./elections/README.md)              |
-| Board proposals         | Board proposals and proposal details                                | Canonical stories not yet written                       |
 | Vesting                 | `/teams/:id/vesting`                                                | [Canonical stories](./vesting/README.md)                |
 | Payment Gate            | `/teams/:id/payment-gate`, `/reference`, `/history`                 | [Canonical stories](./payment-gate/README.md)           |
 
@@ -76,6 +75,8 @@ top-level product features.
 - RBAC and runtime wake-up are architectural capabilities under `docs/implementation/`. Database seeding is development tooling. None is a
   direct user goal.
 - Login guards, access-denied pages, error pages, and development playgrounds are journey states or tooling, not standalone features.
+- Board Proposals is suspended and not in current product planning. Its route remains in the codebase, but it is not an active feature,
+  documentation target, or validation target until a maintained user journey is restored.
 - The dashboard's customer, inbox, profile, notification, and member-settings screens still use template or static fixture data. They are
   not CNC Portal features until a real product journey exposes them.
 - The dashboard `/contracts` landing page is a placeholder. The implemented history and Officer version-sync journeys are grouped as
