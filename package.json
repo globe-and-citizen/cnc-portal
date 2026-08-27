@@ -11,7 +11,8 @@
   },
   "lint-staged": {
     "app/**/*.{ts,vue}": "npm run --prefix app format:files --",
-    "backend/**/*.ts": "npm run --prefix backend format:files --"
+    "backend/**/*.ts": "npm run --prefix backend format:files --",
+    "**/*.md": "prettier --config .prettier-markdown.json --write"
   },
   "devDependencies": {
     "conventional-changelog-angular": "^8.1.0",

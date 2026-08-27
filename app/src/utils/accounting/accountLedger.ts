@@ -10,15 +10,47 @@ import type { AccountName } from './chartOfAccounts'
  * a general ledger: the opening balance heads the page, each posting moves it,
  * and the closing balance lands at the foot.
  */
+/**
+ * Scope a drill-down to a single pocket **instance** (a redeployed Bank / Payroll /
+ * Expense). `instance` is the contract address the trial-balance row rolls up; only
+ * postings whose matching leg carries that address are kept. `includeBlank` adds the
+ * legs that carry no address at all (a FixedReturn sweep straight to Bank, an owner
+ * treasury sweep) — folded into the pocket's primary instance in the trial balance,
+ * so the primary row's drill-down must show them too. Unset for a non-split account.
+ */
+export interface InstanceScope {
+  instance?: string | null
+  includeBlank?: boolean
+}
+
+/** Whether an entry touches `account` on a leg that matches the instance scope. */
+function touchesAccount(
+  entry: LedgerEntry,
+  wanted: ReadonlySet<string>,
+  scope?: InstanceScope
+): boolean {
+  const inst = scope?.instance?.toLowerCase()
+  const legMatches = (leg: string | null, legInstance?: string): boolean => {
+    if (!wanted.has(leg ?? '')) return false
+    if (!inst) return true
+    if (legInstance && legInstance.toLowerCase() === inst) return true
+    return Boolean(scope?.includeBlank) && !legInstance
+  }
+  return (
+    legMatches(entry.debit, entry.debitInstance) || legMatches(entry.credit, entry.creditInstance)
+  )
+}
+
 export function entriesForAccount(
   entries: readonly LedgerEntry[],
   account: string | readonly string[],
   from?: Date | null,
-  to?: Date | null
+  to?: Date | null,
+  scope?: InstanceScope
 ): LedgerEntry[] {
   const wanted = new Set(typeof account === 'string' ? [account] : account)
   return filterByPeriod(entries, from, to)
-    .filter((e) => wanted.has(e.debit ?? '') || wanted.has(e.credit ?? ''))
+    .filter((e) => touchesAccount(e, wanted, scope))
     .slice()
     .sort((a, b) => a.timestamp - b.timestamp)
 }
@@ -87,11 +119,12 @@ export const NO_OPENING: AccountOpening = { debits: 0, credits: 0, balance: 0 }
 export function accountOpening(
   entries: readonly LedgerEntry[],
   account: string,
-  from?: Date | null
+  from?: Date | null,
+  scope?: InstanceScope
 ): AccountOpening {
   if (!from || !account) return NO_OPENING
   // `filterByPeriod` is inclusive, so cut one second short of the window.
-  const prior = entriesForAccount(entries, account, null, new Date(from.getTime() - 1000))
+  const prior = entriesForAccount(entries, account, null, new Date(from.getTime() - 1000), scope)
   let debits = 0
   let credits = 0
   for (const entry of prior) {
@@ -131,9 +164,10 @@ export function presentAccountLedger(
   account: string | readonly string[],
   from?: Date | null,
   to?: Date | null,
-  total?: string
+  total?: string,
+  scope?: InstanceScope
 ): LedgerView {
-  const scoped = entriesForAccount(entries, account, from, to)
+  const scoped = entriesForAccount(entries, account, from, to, scope)
   return {
     rows: ledgerRows(scoped),
     total: total ?? accountBalance(scoped, typeof account === 'string' ? account : ''),

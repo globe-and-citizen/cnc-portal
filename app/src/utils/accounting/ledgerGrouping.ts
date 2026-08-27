@@ -1,18 +1,19 @@
 /**
  * How the general-ledger journal folds several postings into one compound entry.
  *
- * Two source events produce more than one balanced pair — a wage paid across
- * several currencies, and a Community Credit round — and both read better as a
- * single entry than as repeated postings. Each has its own key and its own
- * rendering shape ({@link ./payrollGrouping}, {@link ./creditGrouping}); this
- * module is only the dispatcher the presenter calls, so neither has to know the
- * other exists.
+ * Three source events produce more than one balanced pair — a wage paid across
+ * several currencies, a Community Credit round, and a dividend distribution — and
+ * all read better as a single entry than as repeated postings. Each has its own
+ * key and its own rendering shape ({@link ./payrollGrouping},
+ * {@link ./creditGrouping}, {@link ./dividendGrouping}); this module is only the
+ * dispatcher the presenter calls, so none has to know the others exist.
  *
  * Presentation-only: the canonical feed is untouched, so the statements and the
  * trial balance never see any of it.
  */
 import { payrollGroupKey, compoundLedgerRows } from './payrollGrouping'
 import { creditGroupKey, compoundCreditRows } from './creditGrouping'
+import { dividendGroupKey, compoundDividendRows } from './dividendGrouping'
 import type { LedgerEntry } from './ledgerEntry'
 import type { LedgerRow } from './ledgerPresenter'
 
@@ -31,7 +32,8 @@ type Compound = (
  */
 const RENDERERS: Record<string, { render: Compound; solo?: boolean }> = {
   payroll: { render: compoundLedgerRows },
-  credit: { render: compoundCreditRows, solo: true }
+  credit: { render: compoundCreditRows, solo: true },
+  dividend: { render: compoundDividendRows }
 }
 
 /** The group an entry belongs to, or `null` when it always stands alone. */
@@ -39,7 +41,9 @@ function groupOf(entry: LedgerEntry): { key: string; kind: string } | null {
   const payroll = payrollGroupKey(entry)
   if (payroll) return { key: `payroll:${payroll}`, kind: 'payroll' }
   const credit = creditGroupKey(entry)
-  return credit ? { key: `credit:${credit}`, kind: 'credit' } : null
+  if (credit) return { key: `credit:${credit}`, kind: 'credit' }
+  const dividend = dividendGroupKey(entry)
+  return dividend ? { key: `dividend:${dividend}`, kind: 'dividend' } : null
 }
 
 /**

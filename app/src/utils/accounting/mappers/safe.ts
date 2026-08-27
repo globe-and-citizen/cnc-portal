@@ -45,12 +45,13 @@ function sameAddress(a: string, b: string): boolean {
   return isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
 }
 
-function inferInflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
+function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
     timestamp: row.timestamp,
     debit: SAFE,
+    debitInstance: safeAddress,
     amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
@@ -63,6 +64,7 @@ function inferInflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
       ...base,
       useCase: 'INTERNAL',
       credit: sourcePocket,
+      creditInstance: row.from,
       internal: true,
       memo: `Internal funding into Safe from ${sourcePocket}`
     })
@@ -97,12 +99,13 @@ function inferInflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
   })
 }
 
-function inferOutflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
+function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
     timestamp: row.timestamp,
     credit: SAFE,
+    creditInstance: safeAddress,
     amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
@@ -115,6 +118,7 @@ function inferOutflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
       ...base,
       useCase: 'INTERNAL',
       debit: destPocket,
+      debitInstance: row.to,
       internal: true,
       memo: `Internal move Safe → ${destPocket}`
     })
@@ -134,9 +138,9 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Le
   const entries: LedgerEntry[] = []
   for (const row of input.transfers ?? []) {
     if (sameAddress(row.to, input.safeAddress)) {
-      entries.push(applyClassification(inferInflow(row, ctx), 'in', SAFE, ctx))
+      entries.push(applyClassification(inferInflow(row, ctx, input.safeAddress), 'in', SAFE, ctx))
     } else if (sameAddress(row.from, input.safeAddress)) {
-      entries.push(applyClassification(inferOutflow(row, ctx), 'out', SAFE, ctx))
+      entries.push(applyClassification(inferOutflow(row, ctx, input.safeAddress), 'out', SAFE, ctx))
     }
     // A transfer touching neither side of the Safe is not a Safe move — skip it.
   }

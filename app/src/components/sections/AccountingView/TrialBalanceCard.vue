@@ -37,16 +37,28 @@
         @select="onRowSelect"
       >
         <template #account-cell="{ row: { original: row } }">
-          <span v-if="row.isTotal" class="font-extrabold">{{ row.account }}</span>
+          <span v-if="row.isTotal" class="font-extrabold">{{ row.label }}</span>
           <div v-else class="flex w-full items-center justify-between gap-3">
-            <button
-              type="button"
-              class="focus-visible:ring-neutral truncate rounded font-semibold focus-visible:ring-2 focus-visible:outline-none"
-              :data-test="`drilldown-${row.account}`"
-              @click.stop="openDrilldown(row)"
-            >
-              {{ row.account }}
-            </button>
+            <div class="flex min-w-0 items-center gap-1.5">
+              <button
+                type="button"
+                class="focus-visible:ring-neutral truncate rounded font-semibold focus-visible:ring-2 focus-visible:outline-none"
+                :data-test="`drilldown-${row.label}`"
+                @click.stop="openDrilldown(row)"
+              >
+                {{ row.label }}
+              </button>
+              <UTooltip
+                v-if="row.split && !row.isPrimaryInstance"
+                :text="REDEPLOY_HINT"
+                :data-test="`redeploy-hint-${row.label}`"
+              >
+                <UIcon
+                  name="i-heroicons-information-circle"
+                  class="text-warning size-4 flex-shrink-0 cursor-help"
+                />
+              </UTooltip>
+            </div>
             <span
               class="bg-neutral/10 text-neutral inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100"
             >
@@ -126,6 +138,14 @@ import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 interface TrialTableRow {
   account: string
+  /** Display name — differs from `account` only for a redeployed pocket's later instances (` #2`). */
+  label: string
+  /** Pocket contract instance this row rolls up, when split across redeploys. */
+  instance?: string
+  /** True when this account is split across several instances (a redeploy) — shows the hint. */
+  split?: boolean
+  /** True on the primary instance row — it also carries the pocket's un-instanced legs. */
+  isPrimaryInstance?: boolean
   nature: string
   natureClass: string
   dr: string
@@ -134,6 +154,11 @@ interface TrialTableRow {
   crMuted: boolean
   isTotal: boolean
 }
+
+// Shown on the hint icon beside a redeployed pocket's later line(s) — not the
+// original deployment. It explains why the account reads as several numbered lines.
+const REDEPLOY_HINT =
+  'This account was redeployed to a new contract. This line is that later deployment and shows only its own transactions.'
 
 // Point-in-time "as of" date (date mode) — defaults to end of today. The trial
 // balance is rebuilt from the slice of entries up to this date.
@@ -148,6 +173,8 @@ const tableRows = computed<TrialTableRow[]>(() => [
   ...trial.value.rows.map((r) => ({ ...r, isTotal: false })),
   {
     account: 'Total',
+    label: 'Total',
+    split: false,
     nature: '',
     natureClass: '',
     dr: trial.value.total,
@@ -194,7 +221,18 @@ const {
 
 function openDrilldown(row: TrialTableRow): void {
   // The line's balance sits in whichever column isn't the em-dash placeholder.
-  openFor(row.account, row.dr === '—' ? row.cr : row.dr)
+  const value = row.dr === '—' ? row.cr : row.dr
+  // A split-pocket row scopes its ledger to that one contract instance (and, on the
+  // primary row, the pocket's un-instanced legs) so each deployment shows only its
+  // own events; a plain row drills the whole account as before.
+  if (row.instance) {
+    openFor(row.account, value, row.label, {
+      instance: row.instance,
+      includeBlank: row.isPrimaryInstance
+    })
+  } else {
+    openFor(row.account, value)
+  }
 }
 
 // Export the current, as-of-filtered trial balance. The filename carries the
