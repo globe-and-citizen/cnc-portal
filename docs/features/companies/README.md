@@ -3,7 +3,7 @@
 **Scope:** Finding, creating, opening, managing, pausing, hiding, and permanently deleting a team workspace, including its initial
 Officer-contract setup and membership
 
-**Last reviewed:** Not yet reviewed
+**Last reviewed:** 2026-08-27
 
 These acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
@@ -51,16 +51,16 @@ flowchart LR
 
 ## Status Overview
 
-| User Story       | Title                                     | Actor        | Status        |
-| ---------------- | ----------------------------------------- | ------------ | ------------- |
-| US-COMPANIES-001 | Create a team workspace                   | Team creator | 🧪 Validation |
-| US-COMPANIES-002 | Deploy the initial Officer contract suite | Team owner   | 🧪 Validation |
-| US-COMPANIES-003 | Browse and open my companies              | Team member  | 🧪 Validation |
-| US-COMPANIES-004 | Update company details                    | Team owner   | 🧪 Validation |
-| US-COMPANIES-005 | Manage company members                    | Team owner   | 🧪 Validation |
-| US-COMPANIES-006 | Archive or restore a company              | Team owner   | 🧪 Validation |
-| US-COMPANIES-007 | Control my company-list visibility        | Team member  | 🧪 Validation |
-| US-COMPANIES-008 | Permanently delete a company              | Team owner   | 🧪 Validation |
+| User Story       | Title                                     | Actor        | Status  |
+| ---------------- | ----------------------------------------- | ------------ | ------- |
+| US-COMPANIES-001 | Create a team workspace                   | Team creator | ✅ Done |
+| US-COMPANIES-002 | Deploy the initial Officer contract suite | Team owner   | ✅ Done |
+| US-COMPANIES-003 | Browse and open my companies              | Team member  | ✅ Done |
+| US-COMPANIES-004 | Update company details                    | Team owner   | ✅ Done |
+| US-COMPANIES-005 | Manage company members                    | Team owner   | ✅ Done |
+| US-COMPANIES-006 | Archive or restore a company              | Team owner   | ✅ Done |
+| US-COMPANIES-007 | Control my company-list visibility        | Team member  | ✅ Done |
+| US-COMPANIES-008 | Permanently delete a company              | Team owner   | ✅ Done |
 
 ## US-COMPANIES-001: Create a Team Workspace
 
@@ -274,6 +274,11 @@ flowchart LR
 - [x] A rejected deletion leaves the company available and reports the failure.
 
 **Dependencies:** US-COMPANIES-003
+
+## Human Validation
+
+Validated on 2026-08-27 against the reviewed Companies journeys, role and archived-state boundaries, and the implementation evidence below.
+This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
