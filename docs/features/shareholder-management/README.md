@@ -14,7 +14,7 @@ SHER token.
 
 ## Product Model
 
-- The current **Investor contract** is the team's SHER share token and the on-chain shareholder register. It exposes the current supply,
+- The current **Investor contract** is the company's SHER share token and the on-chain shareholder register. It exposes the current supply,
   holder balances, shareholder set, share issuance, dividend distribution, and migration state.
 - A **shareholder** is an address with a non-zero Investor balance. Its ownership percentage is its balance divided by the current total
   supply.
@@ -41,7 +41,7 @@ SHER token.
 
 ```mermaid
 flowchart LR
-    Member[Team member] --> Review[Review holdings, cap table, and activity]
+    Member[Company member] --> Review[Review holdings, cap table, and activity]
     RouterOwner[Router owner] --> Configure[Configure Safe and investment terms]
     Investor[Investor] --> Invest[Invest through the Safe Deposit Router]
     InvestorOwner[Investor owner with minter role] --> Issue[Issue SHER]
@@ -57,87 +57,34 @@ flowchart LR
 
 | User Story  | Title                                    | Actor                           | Status         |
 | ----------- | ---------------------------------------- | ------------------------------- | -------------- |
-| US-SHER-001 | Invest in the Safe and receive SHER      | Team member                     | 🧪 Validation  |
+| US-SHER-001 | Invest in the Safe and receive SHER      | Company member                  | 🧪 Validation  |
 | US-SHER-002 | Distribute dividends to shareholders     | Bank owner / Board member       | 🧪 Validation  |
-| US-SHER-003 | Review shareholder position and activity | Team member                     | 🧪 Validation  |
+| US-SHER-003 | Review shareholder position and activity | Company member                  | 🧪 Validation  |
 | US-SHER-004 | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress |
 | US-SHER-005 | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  |
 | US-SHER-006 | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  |
 | US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🚧 In Progress |
-| US-SHER-008 | Start a shareholder migration            | Team owner                      | 🔗 Reference   |
-
-## US-SHER-003: Review Shareholder Position and Activity
-
-**As a** team member\
-**I want to** review the Investor contract's holdings, shareholders, and activity\
-**So that** I can understand the current ownership and its changes
-
-### Acceptance Criteria
-
-#### Happy Path
-
-- [x] A team member can review the Investor token symbol, their SHER balance, total supply, and current shareholder count.
-- [x] A team member can review every current shareholder's address, SHER balance, and ownership percentage.
-- [x] A team member can review Investor and Safe Deposit Router activity, filter it by date and type, and open a transaction's details.
-
-#### Business Rules
-
-- [x] A shareholder's displayed ownership percentage is calculated from its current Investor balance and total supply.
-- [x] A shareholder list with no issued SHER remains distinguishable from a list with holders.
-
-#### Edge & Error Cases
-
-- [x] Missing token data is presented as unavailable rather than as a fabricated balance or supply.
-- [x] A failed shareholder or activity read is reported without replacing known values with successful-looking data.
-
-**Dependencies:** Current Investor contract and team access
-
-## US-SHER-005: Configure Shareholder Investment
-
-**As a** Safe Deposit Router owner\
-**I want to** connect the team Safe and configure shareholder investment terms\
-**So that** eligible deposits can issue SHER into the intended treasury
-
-### Acceptance Criteria
-
-#### Happy Path
-
-- [x] The router owner can set the team's registered Safe as the router's Safe when it is not already synchronized.
-- [x] The router owner can enable or disable deposits after the router points to the team Safe.
-- [x] The router owner can set the SHER multiplier used to calculate investment issuance.
-
-#### Business Rules
-
-- [x] Only the Safe Deposit Router owner can change its Safe address, deposit state, or multiplier.
-- [x] Deposits cannot be enabled while the router Safe does not match the team's registered Safe.
-- [x] A multiplier must be a valid number within the configured range and at least one.
-- [x] An archived team cannot start a router configuration write.
-
-#### Edge & Error Cases
-
-- [x] A missing router or team Safe prevents the corresponding configuration write.
-- [x] A rejected or failed router write does not report the configuration as updated.
-
-**Dependencies:** US-SAFE-001, an active Safe Deposit Router, and a connected router owner
+| US-SHER-008 | Start a shareholder migration            | Company owner                   | 🔗 Reference   |
 
 ## US-SHER-001: Invest in the Safe and Receive SHER
 
-**As a** team member\
+**As a** company member\
 **I want to** invest supported funds through the Safe Deposit Router\
-**So that** I receive SHER and the team receives investment capital
+**So that** I receive SHER and the company receives investment capital
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] A team member can open the investment form when the team has a registered Safe and router deposits are enabled.
+- [x] A company member can open the investment form when the company has a registered Safe and router deposits are enabled.
 - [x] The investment form accepts USDC and calculates the corresponding SHER amount from the current router multiplier.
 - [x] A successful investment approves USDC only when the allowance is insufficient, then deposits the selected amount through the router.
 - [x] The resulting accounting event is recorded as `UC-SDR-01`, increasing Cash — Safe and Investor Equity rather than Service Revenue.
 
 #### Business Rules
 
-- [x] The investment action is unavailable while the router is paused, deposits are disabled, the Safe is missing, or the team is archived.
+- [x] The investment action is unavailable while the router is paused, deposits are disabled, the Safe is missing, or the company is
+      archived.
 - [x] The deposit amount must be positive, valid for USDC precision, and no greater than the connected wallet's displayed USDC balance.
 - [x] The form blocks the deposit when the router address, selected token, or router multiplier needed to calculate SHER is unavailable.
 
@@ -148,35 +95,6 @@ flowchart LR
 - [x] Cancelling the form resets its amount and closes the investment modal.
 
 **Dependencies:** US-SHER-005, an active Safe Deposit Router, a connected wallet, and a USDC balance
-
-## US-SHER-004: Issue SHER to a Shareholder
-
-**As a** connected issuer with `MINTER_ROLE`\
-**I want to** issue SHER to one selected shareholder\
-**So that** the Investor contract records the intended ownership allocation
-
-### Acceptance Criteria
-
-#### Happy Path
-
-- [x] An authorized portal user can choose a team member or supported contract recipient and calculate an additive or ending ownership
-      stake.
-- [x] A successful individual issuance mints the computed incremental SHER amount and refreshes the relevant Investor reads.
-
-#### Business Rules
-
-- [x] The Investor contract requires `MINTER_ROLE` for an individual issuance. _(contract)_
-- [x] The recipient address and incremental issuance amount must be valid and greater than zero.
-- [x] An archived team cannot start an issuance write.
-- [ ] The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both individual-issuance
-      entry points.
-
-#### Edge & Error Cases
-
-- [x] An invalid recipient or invalid stake does not submit an individual issuance.
-- [x] A rejected or failed individual issuance does not report SHER as issued.
-
-**Dependencies:** Current Investor contract, a connected issuer with `MINTER_ROLE`, and a connected wallet
 
 ## US-SHER-002: Distribute Dividends to Shareholders
 
@@ -198,7 +116,7 @@ flowchart LR
 - [x] A user who is neither the Bank owner nor eligible for the Board action cannot open the dividend form.
 - [x] The dividend token list excludes SHER.
 - [x] The Investor contract rejects dividends while a shareholder migration remains open. _(contract)_
-- [x] An archived team cannot start a dividend action.
+- [x] An archived company cannot start a dividend action.
 
 #### Edge & Error Cases
 
@@ -208,17 +126,88 @@ flowchart LR
 
 **Dependencies:** US-SHER-001, US-BANK-001, a current Bank owner or eligible Board member, and at least one shareholder
 
-## US-SHER-008: Start a Shareholder Migration
+## US-SHER-003: Review Shareholder Position and Activity
 
-**As a** team owner\
-**I want to** commit the previous Investor's frozen shareholder snapshot to the new Investor\
-**So that** each previous shareholder can claim their allocation after an Officer redeployment
+**As a** company member\
+**I want to** review the Investor contract's holdings, shareholders, and activity\
+**So that** I can understand the current ownership and its changes
 
-This journey is owned by [US-CONTRACT-005](../contract-management/README.md#us-contract-005-redeploy-an-officer-generation), which covers
-the redeployment and migration-root commit. Shareholder Management exposes the migration status and uses the resulting snapshot for
-`US-SHER-006` and `US-SHER-007`.
+### Acceptance Criteria
 
-**Dependencies:** US-CONTRACT-005 and a previous Investor generation
+#### Happy Path
+
+- [x] A company member can review the Investor token symbol, their SHER balance, total supply, and current shareholder count.
+- [x] A company member can review every current shareholder's address, SHER balance, and ownership percentage.
+- [x] A company member can review Investor and Safe Deposit Router activity, filter it by date and type, and open a transaction's details.
+
+#### Business Rules
+
+- [x] A shareholder's displayed ownership percentage is calculated from its current Investor balance and total supply.
+- [x] A shareholder list with no issued SHER remains distinguishable from a list with holders.
+
+#### Edge & Error Cases
+
+- [x] Missing token data is presented as unavailable rather than as a fabricated balance or supply.
+- [x] A failed shareholder or activity read is reported without replacing known values with successful-looking data.
+
+**Dependencies:** Current Investor contract and company access
+
+## US-SHER-004: Issue SHER to a Shareholder
+
+**As a** connected issuer with `MINTER_ROLE`\
+**I want to** issue SHER to one selected shareholder\
+**So that** the Investor contract records the intended ownership allocation
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] An authorized portal user can choose a company member or supported contract recipient and calculate an additive or ending ownership
+      stake.
+- [x] A successful individual issuance mints the computed incremental SHER amount and refreshes the relevant Investor reads.
+
+#### Business Rules
+
+- [x] The Investor contract requires `MINTER_ROLE` for an individual issuance. _(contract)_
+- [x] The recipient address and incremental issuance amount must be valid and greater than zero.
+- [x] An archived company cannot start an issuance write.
+- [ ] The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both individual-issuance
+      entry points.
+
+#### Edge & Error Cases
+
+- [x] An invalid recipient or invalid stake does not submit an individual issuance.
+- [x] A rejected or failed individual issuance does not report SHER as issued.
+
+**Dependencies:** Current Investor contract, a connected issuer with `MINTER_ROLE`, and a connected wallet
+
+## US-SHER-005: Configure Shareholder Investment
+
+**As a** Safe Deposit Router owner\
+**I want to** connect the company Safe and configure shareholder investment terms\
+**So that** eligible deposits can issue SHER into the intended treasury
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] The router owner can set the company's registered Safe as the router's Safe when it is not already synchronized.
+- [x] The router owner can enable or disable deposits after the router points to the company Safe.
+- [x] The router owner can set the SHER multiplier used to calculate investment issuance.
+
+#### Business Rules
+
+- [x] Only the Safe Deposit Router owner can change its Safe address, deposit state, or multiplier.
+- [x] Deposits cannot be enabled while the router Safe does not match the company's registered Safe.
+- [x] A multiplier must be a valid number within the configured range and at least one.
+- [x] An archived company cannot start a router configuration write.
+
+#### Edge & Error Cases
+
+- [x] A missing router or company Safe prevents the corresponding configuration write.
+- [x] A rejected or failed router write does not report the configuration as updated.
+
+**Dependencies:** US-SAFE-001, an active Safe Deposit Router, and a connected router owner
 
 ## US-SHER-006: Claim a Migrated Shareholding
 
@@ -265,7 +254,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 - [x] Dispatch uses the persisted snapshot's holder addresses, amounts, and Merkle proofs.
 - [x] The Investor contract restricts dispatch and closure to its owner. _(contract)_
-- [ ] The portal verifies that the connected team owner is also the Investor owner before enabling dispatch or closure.
+- [ ] The portal verifies that the connected company owner is also the Investor owner before enabling dispatch or closure.
 
 #### Edge & Error Cases
 
@@ -274,13 +263,25 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 **Dependencies:** US-SHER-008 and an Investor owner
 
+## US-SHER-008: Start a Shareholder Migration
+
+**As a** company owner\
+**I want to** commit the previous Investor's frozen shareholder snapshot to the new Investor\
+**So that** each previous shareholder can claim their allocation after an Officer redeployment
+
+This journey is owned by [US-CONTRACT-005](../contract-management/README.md#us-contract-005-redeploy-an-officer-generation), which covers
+the redeployment and migration-root commit. Shareholder Management exposes the migration status and uses the resulting snapshot for
+`US-SHER-006` and `US-SHER-007`.
+
+**Dependencies:** US-CONTRACT-005 and a previous Investor generation
+
 ## Known Gaps
 
 - Bulk initial issuance through `distributeMint` is a disabled, coming-soon portal control. The Investor contract implements it, but no
   current portal story claims that a user can complete it.
-- The main issuance action is exposed to the Investor owner and the shareholder-list entry point to the team owner, while the contract
+- The main issuance action is exposed to the Investor owner and the shareholder-list entry point to the company owner, while the contract
   requires `MINTER_ROLE`. Neither control preflights that role, so the portal needs one contract-aligned authorization rule (`US-SHER-004`).
-- Migration dispatch and closure are surfaced to the team owner, while the contract restricts them to the Investor owner. The portal does
+- Migration dispatch and closure are surfaced to the company owner, while the contract restricts them to the Investor owner. The portal does
   not yet verify that both roles resolve to the connected user (`US-SHER-007`).
 
 ## Implementation Evidence

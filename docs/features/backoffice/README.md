@@ -2,7 +2,7 @@
 
 **Scope:** Administrator-only capabilities exposed by the Nuxt dashboard
 
-**Last verified:** 2026-08-27
+**Last verified:** 2026-08-28
 
 The backoffice is one product surface containing several administrator capabilities. This README owns their grouping and navigation. Each
 capability can gain its own canonical user stories under `docs/features/backoffice/<capability>/README.md` as it is migrated to the current
@@ -34,10 +34,7 @@ flowchart TB
 | Micropayments           | Inspect versioned FeeCollectors and manage fee policy, recipients, and collected funds           | `/micropayments`                            | [Canonical stories](./micropayments/README.md)         |
 | Polymarket accounting   | Reconstruct a wallet's statements, activity, and positions                                       | `/accounting`                               | [Canonical stories](./polymarket-accounting/README.md) |
 | Feature restrictions    | Manage global feature states and company overrides                                               | `/features`, `/features/:id`                | [Canonical stories](./feature-restrictions/README.md)  |
-| Contract operations     | Inspect deployment history and synchronize Officer version metadata                              | `/contracts/history`, `/contracts/versions` | Alignment due                                          |
-
-`Alignment due` means that the product surface exists but no canonical feature README has yet been reviewed under the current model. It is
-not a delivery-status claim.
+| Contract operations     | Inspect deployment history and synchronize Officer version metadata                              | `/contracts/history`, `/contracts/versions` | [Canonical stories](./contract-operations/README.md)   |
 
 ## Routes That Do Not Define Backoffice Features
 
