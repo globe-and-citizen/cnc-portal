@@ -18,11 +18,12 @@ These acceptance criteria follow the
 - Accounting includes every known contract generation. Individual account pages intentionally remain scoped to their current contract.
 - Off-platform activity without a connected data source, including infrastructure bills, is outside the current automated books.
 
-- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter — the contracts
-  the CNC actually uses.
+- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter, Vesting — the
+  contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
   booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); each company books CNC
-  usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue.
+  usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** recognises the
+  shares **at release** (`Dr Deferred SHER Compensation · Cr Investor Equity`, off the income statement — see catalogue §5.6).
 - **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a company owner can **manually classify** each
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
@@ -270,6 +271,9 @@ flowchart LR
 - [Classification persistence schema](../../../backend/prisma/schema.prisma) and
   [classification migrations](../../../backend/prisma/migrations/20260821000000_add_transaction_classification/)
 - [Statement-line drill-down](../../../app/src/composables/accounting/useLedgerDrilldown.ts)
+- [Ledger Activity destination resolver](../../../app/src/composables/accounting/useActivityDestination.ts)
+- [Share-vesting event feed (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts) and
+  [vesting source mapper](../../../app/src/utils/accounting/mappers/vesting.ts)
 - [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [general ledger](../../../app/src/utils/accounting/generalLedger.ts),

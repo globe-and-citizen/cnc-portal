@@ -32,6 +32,7 @@ export type LedgerSection =
   | 'community-credit'
   | 'credit-round'
   | 'sher-token'
+  | 'vesting'
 
 export interface ActivityDestination {
   section: LedgerSection
@@ -52,7 +53,8 @@ const SECTION_LABEL: Record<LedgerSection, string> = {
   'payroll-history': 'Open the payroll history',
   'community-credit': 'Open Community Credit',
   'credit-round': 'Open the credit round',
-  'sher-token': 'Open the SHER Token page'
+  'sher-token': 'Open the SHER Token page',
+  vesting: 'Open the Vesting page'
 }
 
 /**
@@ -101,6 +103,10 @@ function sectionOfUseCase(entry: LedgerEntry): ActivityDestination | null {
     case 'DEFAULT-D':
     case 'UC-INV-01':
       return to('sher-token')
+    case 'UC-VEST-01':
+    case 'UC-VEST-02':
+    case 'UC-VEST-03':
+      return to('vesting')
     default:
       return null
   }

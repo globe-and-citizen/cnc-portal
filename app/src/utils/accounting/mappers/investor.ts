@@ -6,9 +6,11 @@
  * `WithdrawToken` in SHER), or a direct mint. So we correlate each mint with the
  * deposits/withdraws that *already* booked the equity, and:
  *
- * - **backed** mint (matches a SafeDepositRouter deposit or a SHER wage withdraw)
- *   → emit nothing: the Investor Equity was booked by UC-SDR-01 / UC-CASH-03.
- *   Re-booking it here would double-count the equity.
+ * - **backed** mint (matches a SafeDepositRouter deposit, a SHER wage withdraw, or
+ *   a Vesting `TokensReleased`) → emit nothing: the Investor Equity was booked by
+ *   UC-SDR-01 / UC-CASH-03 / UC-VEST-02. Re-booking it here would double-count the
+ *   equity (and, for vesting, drive `SHERS To Be Issued` negative — see money-flow
+ *   catalogue §5.4 "Default D").
  * - **unbacked** mint → **Default D**: a direct share issuance. The SHER were
  *   accrued into `SHERS To Be Issued` (the wage accrual, UC-CASH-02) and are now
  *   formally issued, so we clear that equity-pending into contributed equity —
@@ -28,6 +30,7 @@ import type {
   SafeDepositRow
 } from '@/types/ponder/investor'
 import type { CashRemunerationWithdrawTokenRow } from '@/types/ponder/cash-remuneration'
+import type { VestingTokensReleasedRow } from '@/types/ponder/vesting'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { atDate, type MapperContext } from './context'
 
@@ -38,6 +41,8 @@ export interface InvestorMapperInput {
   safeDepositRouterDeposits?: readonly SafeDepositRow[]
   /** CashRemuneration `WithdrawToken` rows, to recognise wage-in-shares mints. */
   cashRemunerationWithdrawTokens?: readonly CashRemunerationWithdrawTokenRow[]
+  /** Vesting `TokensReleased` rows, to recognise vested-share mints (UC-VEST-02). */
+  vestingReleases?: readonly VestingTokensReleasedRow[]
 }
 
 /** `${shareholder}|${sherBaseUnits}` — keys a mint to the move that backs it. */
@@ -55,6 +60,9 @@ function buildBackedMints(input: InvestorMapperInput, ctx: MapperContext): Map<s
   }
   for (const row of input.cashRemunerationWithdrawTokens ?? []) {
     if (ctx.tokenIdOf(row.tokenAddress) === 'sher') add(backingKey(row.withdrawer, row.amount))
+  }
+  for (const row of input.vestingReleases ?? []) {
+    add(backingKey(row.member, row.amount))
   }
   return counts
 }
