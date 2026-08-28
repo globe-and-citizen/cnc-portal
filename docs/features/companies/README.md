@@ -1,6 +1,6 @@
 # Companies and Workspace — User Stories
 
-**Scope:** Finding, creating, opening, managing, pausing, hiding, and permanently deleting a team workspace, including its initial
+**Scope:** Finding, creating, opening, managing, pausing, hiding, and permanently deleting a company workspace, including its initial
 Officer-contract setup and membership
 
 **Last reviewed:** 2026-08-27
@@ -10,15 +10,18 @@ These acceptance criteria follow the
 
 ## Product Model
 
-- A **team workspace** is a company that its members can discover from the Companies route and open at `/teams/:id`.
-- A **team owner** is the connected creator. The owner can change the company metadata, manage membership, archive or restore the workspace,
-  and delete it. A **team member** can open its workspace and choose whether it appears in their own Companies list.
+- A **company workspace** is a company represented by the technical `team` record. Members can discover it from the Companies route and open
+  it at `/teams/:id`; this document uses _company_ for the product outcome and _team_ only for technical identifiers.
+- A **company owner** is the connected creator. The owner can change the company metadata, manage membership, archive or restore the
+  workspace, and delete it. A **company member** can open its workspace and choose whether it appears in their own Companies list.
 - **Hidden** is a per-member list preference: it does not change the workspace or another member's list. **Archived** is a workspace
   lifecycle state: it removes the company from the normal list and freezes company writes until its owner restores it.
-- The connected creator becomes the team owner and is added to the team's members. A team can share a display name with another team; the
-  backend assigns a unique slug for routing and storage.
-- Initial **Officer-contract setup** is separate from team creation. The owner supplies the SHER name and symbol, deploys the Officer suite,
-  and registers the resulting Officer generation with the team.
+- The connected creator becomes the company owner and is added to the company's members. A company can share a display name with another
+  company; the backend assigns a unique slug for routing and storage.
+- The Companies client always requests the connected member's explicitly scoped list. Platform-wide company inspection is an
+  administrator-only Backoffice capability, not another way for a member to discover companies.
+- Initial **Officer-contract setup** is separate from company creation. The owner supplies the SHER name and symbol, deploys the Officer
+  suite, and registers the resulting Officer generation with the company.
 - The owner may defer Officer setup or Safe setup. Safe deployment and import are documented by
   [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-a-safe).
 - The shared `/teams/:id/...` route namespace also hosts feature-specific child routes. Community Credit's optional round-view segment is
@@ -31,7 +34,7 @@ flowchart LR
     List[Member opens Companies] --> Existing[Browse accessible active companies]
     List --> Details[Enter company details]
     Details --> Members[Optionally add initial members]
-    Members --> Workspace[Create team workspace]
+    Members --> Workspace[Create company workspace]
     Workspace --> Officer[Choose SHER name and symbol]
     Officer --> Deploy[Deploy and register Officer suite]
     Officer --> DeferOfficer[Set up Officer later]
@@ -51,20 +54,20 @@ flowchart LR
 
 ## Status Overview
 
-| User Story       | Title                                     | Actor        | Status  |
-| ---------------- | ----------------------------------------- | ------------ | ------- |
-| US-COMPANIES-001 | Create a team workspace                   | Team creator | ✅ Done |
-| US-COMPANIES-002 | Deploy the initial Officer contract suite | Team owner   | ✅ Done |
-| US-COMPANIES-003 | Browse and open my companies              | Team member  | ✅ Done |
-| US-COMPANIES-004 | Update company details                    | Team owner   | ✅ Done |
-| US-COMPANIES-005 | Manage company members                    | Team owner   | ✅ Done |
-| US-COMPANIES-006 | Archive or restore a company              | Team owner   | ✅ Done |
-| US-COMPANIES-007 | Control my company-list visibility        | Team member  | ✅ Done |
-| US-COMPANIES-008 | Permanently delete a company              | Team owner   | ✅ Done |
+| User Story       | Title                                     | Actor           | Status  |
+| ---------------- | ----------------------------------------- | --------------- | ------- |
+| US-COMPANIES-001 | Create a company workspace                | Company creator | ✅ Done |
+| US-COMPANIES-002 | Deploy the initial Officer contract suite | Company owner   | ✅ Done |
+| US-COMPANIES-003 | Browse and open my companies              | Company member  | ✅ Done |
+| US-COMPANIES-004 | Update company details                    | Company owner   | ✅ Done |
+| US-COMPANIES-005 | Manage company members                    | Company owner   | ✅ Done |
+| US-COMPANIES-006 | Archive or restore a company              | Company owner   | ✅ Done |
+| US-COMPANIES-007 | Control my company-list visibility        | Company member  | ✅ Done |
+| US-COMPANIES-008 | Permanently delete a company              | Company owner   | ✅ Done |
 
-## US-COMPANIES-001: Create a Team Workspace
+## US-COMPANIES-001: Create a Company Workspace
 
-**As a** team creator\
+**As a** company creator\
 **I want to** create a workspace and choose its initial members\
 **So that** I can begin managing my company in CNC Portal
 
@@ -74,13 +77,13 @@ flowchart LR
 
 - [x] A creator can enter a required company name and an optional description.
 - [x] A creator can add zero or more members by wallet address before creating the workspace.
-- [x] A successful creation adds the creator as owner and member, persists the workspace, and advances to initial Officer setup.
+- [x] A successful creation adds the creator as company owner and member, persists the workspace, and advances to initial Officer setup.
 
 #### Business Rules
 
 - [x] A company name is required before the form can advance or submit.
 - [x] Every selected member address must be a valid wallet address before the workspace can be created.
-- [x] Teams with the same display name remain distinguishable by a generated unique slug.
+- [x] Companies with the same display name remain distinguishable by a generated unique slug.
 
 #### Edge & Error Cases
 
@@ -91,22 +94,22 @@ flowchart LR
 
 ## US-COMPANIES-002: Deploy the Initial Officer Contract Suite
 
-**As a** team owner\
+**As a** company owner\
 **I want to** deploy and register the initial Officer contract suite\
-**So that** my team can use CNC Portal's contract-backed features
+**So that** my company can use CNC Portal's contract-backed features
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] A team owner can enter the initial SHER name and symbol after the workspace is created.
-- [x] A successful deployment registers the deployed Officer address and deployment metadata with the team.
+- [x] A company owner can enter the initial SHER name and symbol after the workspace is created.
+- [x] A successful deployment registers the deployed Officer address and deployment metadata with the company.
 - [x] After registration, the portal refreshes Officer data and continues to the Safe-setup step.
 
 #### Business Rules
 
 - [x] Both the SHER name and symbol are required before deployment can start.
-- [x] An archived team cannot start the deployment.
+- [x] An archived company cannot start the deployment.
 - [x] The owner can defer the Officer deployment and return to it later.
 
 #### Edge & Error Cases
@@ -118,7 +121,7 @@ flowchart LR
 
 ## US-COMPANIES-003: Browse and Open My Companies
 
-**As a** team member\
+**As a** company member\
 **I want to** find and open the companies I belong to\
 **So that** I can enter the workspace I need to use
 
@@ -133,7 +136,8 @@ flowchart LR
 
 #### Business Rules
 
-- [x] The Companies list is scoped to the connected member; a member cannot request another member's company list.
+- [x] The Companies list is scoped to the connected member; a member cannot request another member's company list or an unfiltered
+      platform-wide list. _(API)_
 - [x] The company-detail API permits a current member to read the workspace and rejects a requester who is not a member.
 - [x] A hidden or archived state remains visible when that company is included in the member's list.
 
@@ -147,7 +151,7 @@ flowchart LR
 
 ## US-COMPANIES-004: Update Company Details
 
-**As a** team owner\
+**As a** company owner\
 **I want to** update my company's name and description\
 **So that** its workspace remains accurate
 
@@ -159,7 +163,7 @@ flowchart LR
 
 #### Business Rules
 
-- [x] Only the team owner can update company metadata.
+- [x] Only the company owner can update company metadata.
 - [x] Company metadata must pass the update form's validation before it is submitted.
 - [x] An archived company must be restored before its metadata can be changed.
 
@@ -172,7 +176,7 @@ flowchart LR
 
 ## US-COMPANIES-005: Manage Company Members
 
-**As a** team owner\
+**As a** company owner\
 **I want to** add or remove company members\
 **So that** the workspace has the right participants
 
@@ -186,7 +190,7 @@ flowchart LR
 
 #### Business Rules
 
-- [x] Only the team owner can add or remove members.
+- [x] Only the company owner can add or remove members.
 - [x] Each added member must provide a valid wallet address and cannot already belong to the company.
 - [x] The company owner cannot be removed from its own workspace.
 - [x] An archived company cannot add or remove members.
@@ -201,7 +205,7 @@ flowchart LR
 
 ## US-COMPANIES-006: Archive or Restore a Company
 
-**As a** team owner\
+**As a** company owner\
 **I want to** archive or restore a company\
 **So that** I can pause its operations without deleting it
 
@@ -215,7 +219,7 @@ flowchart LR
 
 #### Business Rules
 
-- [x] Only the team owner can archive or restore a company.
+- [x] Only the company owner can archive or restore a company.
 - [x] Archiving freezes company settings, membership, contract operations, and claims until the company is restored.
 
 #### Edge & Error Cases
@@ -227,7 +231,7 @@ flowchart LR
 
 ## US-COMPANIES-007: Control My Company-List Visibility
 
-**As a** team member\
+**As a** company member\
 **I want to** hide or show a company in my Companies list\
 **So that** I can focus on the workspaces relevant to me
 
@@ -252,7 +256,7 @@ flowchart LR
 
 ## US-COMPANIES-008: Permanently Delete a Company
 
-**As a** team owner\
+**As a** company owner\
 **I want to** permanently delete a company\
 **So that** a workspace that is no longer needed is removed
 
@@ -261,11 +265,11 @@ flowchart LR
 #### Happy Path
 
 - [x] An owner can confirm permanent deletion of a company and is returned to the Companies list after it succeeds.
-- [x] Deleting a company removes its related team records through the database's cascading relationships.
+- [x] Deleting a company removes its related company records through the database's cascading relationships.
 
 #### Business Rules
 
-- [x] Only the team owner can permanently delete a company.
+- [x] Only the company owner can permanently delete a company.
 - [x] Permanent deletion is irreversible; a member must create a new workspace instead of restoring a deleted company.
 
 #### Edge & Error Cases
@@ -286,11 +290,11 @@ This validation does not attest to a live on-chain Officer deployment.
   [company card permissions](../../../app/src/components/sections/TeamView/TeamCard.vue), and
   [list action tests](../../../app/src/views/team/__tests__/ListIndex.actions.spec.ts)
 - [Workspace route and unavailable-state handling](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue),
-  [team queries](../../../app/src/queries/team.queries.ts), [team endpoints](../../../backend/src/routes/teamRoutes.ts), and
-  [team controller](../../../backend/src/controllers/teamController.ts)
-- [Team-creation form](../../../app/src/components/forms/AddTeamForm.vue),
+  [company queries](../../../app/src/queries/team.queries.ts), [company endpoints](../../../backend/src/routes/teamRoutes.ts), and
+  [company controller](../../../backend/src/controllers/teamController.ts)
+- [Company-creation form](../../../app/src/components/forms/AddTeamForm.vue),
   [request validation](../../../backend/src/validation/schemas/team.ts), and
-  [team-creation tests](../../../app/src/components/forms/__tests__/AddTeamForm.spec.ts)
+  [company-creation tests](../../../app/src/components/forms/__tests__/AddTeamForm.spec.ts)
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue),
   [Officer deployment composable](../../../app/src/composables/contracts/useOfficerDeployment.ts), and
   [initial Officer setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/InvestorContractStep.spec.ts)
@@ -302,7 +306,7 @@ This validation does not attest to a live on-chain Officer deployment.
   [member controller](../../../backend/src/controllers/memberController.ts), and
   [archived-workspace action tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaActions.archived.spec.ts)
 - [Archived-workspace authorization](../../../backend/src/middleware/teamAuthzMiddleware.ts) and
-  [team controller tests](../../../backend/src/controllers/__tests__/teamController.test.ts)
+  [company-controller tests](../../../backend/src/controllers/__tests__/teamController.test.ts)
 
 ## Related Documentation
 

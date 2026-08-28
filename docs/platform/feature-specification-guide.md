@@ -68,6 +68,8 @@ portal journey, while `docs/contracts/features/vesting/README.md` owns the Solid
 - Link focused documents from the relevant story; do not repeat their detailed content.
 - Link shared architectural behaviour to its implementation owner; do not copy components, invariants, or runtime failure paths into the
   product journey.
+- In product documentation, call the user-facing workspace a **company**. Use _team_ only when paired with _company_ to identify a technical
+  model, API, source identifier, or `/teams` route; do not use it as the product-facing name of the workspace.
 
 ## Human Review Contract
 

@@ -172,7 +172,8 @@ teamRoutes.post('/', validateBody(addTeamBodySchema), addTeam);
  *   tags: [Teams]
  *   security:
  *     - bearerAuth: []
- *   description: Retrieves all teams, or teams filtered by userAddress if provided. Caller can only request their own teams.
+ *   description: Retrieves every active team for an administrator, or the caller's own teams when userAddress is provided. A caller can
+ *                request only their own member-scoped list.
  *   parameters:
  *     - in: query
  *       name: userAddress
@@ -196,7 +197,7 @@ teamRoutes.post('/', validateBody(addTeamBodySchema), addTeam);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  *     403:
- *       description: Forbidden - cannot request teams for another user
+ *       description: Forbidden - caller is not an administrator for the platform-wide list or requested another user's teams
  *       content:
  *         application/json:
  *           schema:

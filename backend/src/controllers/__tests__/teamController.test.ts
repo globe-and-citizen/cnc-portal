@@ -507,9 +507,11 @@ describe('Team Controller', () => {
   describe('getAllTeams', () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      mockCaller.roles = ['ROLE_USER'];
     });
 
-    it('should return 200 and all teams when no userAddress is provided', async () => {
+    it('should return 200 and all teams for an administrator when no userAddress is provided', async () => {
+      mockCaller.roles = ['ROLE_ADMIN'];
       const mockTeams = [
         {
           id: 1,
@@ -562,6 +564,28 @@ describe('Team Controller', () => {
           teamContracts: { where: { officerId: null } },
         },
       });
+    });
+
+    it('should return 200 and all teams for a super administrator when no userAddress is provided', async () => {
+      mockCaller.roles = ['ROLE_SUPER_ADMIN'];
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue([] as never);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([] as never);
+
+      const response = await request(app).get('/');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+      expect(prisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { isArchived: false } })
+      );
+    });
+
+    it('should return 403 when a regular user requests the unfiltered platform list', async () => {
+      const response = await request(app).get('/');
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Unauthorized');
+      expect(prisma.team.findMany).not.toHaveBeenCalled();
     });
 
     it('should return 200 and only user teams when userAddress matches callerAddress', async () => {
@@ -750,6 +774,7 @@ describe('Team Controller', () => {
     });
 
     it('should return 500 if an error occurs', async () => {
+      mockCaller.roles = ['ROLE_ADMIN'];
       vi.spyOn(prisma.team, 'findMany').mockRejectedValue(new Error('Database failure'));
 
       const response = await request(app).get('/');
@@ -759,6 +784,7 @@ describe('Team Controller', () => {
     });
 
     it('should return 500 if getAllTeams throws non-Error value', async () => {
+      mockCaller.roles = ['ROLE_ADMIN'];
       vi.spyOn(prisma.team, 'findMany').mockRejectedValue('failure' as never);
 
       const response = await request(app).get('/');
