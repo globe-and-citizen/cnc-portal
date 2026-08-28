@@ -32,6 +32,7 @@ import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsV
 import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedReturnEventsViaLogs'
 import { useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
 import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
+import { useVestingEventsViaLogs } from '@/composables/vesting/useVestingEventsViaLogs'
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
@@ -195,6 +196,7 @@ export function useCNCAccounting(
   const expenseTargets = targetsOf('ExpenseAccountEIP712')
   const fixedReturnTargets = targetsOf('FixedReturn')
   const investorTargets = targetsOf('Investor', 'InvestorV1')
+  const vestingTargets = targetsOf('Vesting')
   const routerTargets = targetsOf('SafeDepositRouter')
 
   const bank = useBankEventsViaLogs(bankTargets)
@@ -202,6 +204,7 @@ export function useCNCAccounting(
   const expense = useExpenseEventsViaLogs(expenseTargets)
   const fixedReturn = useFixedReturnEventsViaLogs(fixedReturnTargets)
   const investor = useInvestorEventsViaLogs(investorTargets)
+  const vesting = useVestingEventsViaLogs(vestingTargets)
   const router = useSafeDepositRouterEventsViaLogs(routerTargets)
 
   // ── Contract read: the router's live SHER multiplier. The `MultiplierUpdated`
@@ -289,6 +292,7 @@ export function useCNCAccounting(
     fixedReturnEvents: fixedReturn.result.value,
     fixedReturnOfferTerms: fixedReturnOfferTerms.value,
     investorEvents: investor.result.value,
+    vestingEvents: vesting.result.value,
     safeDepositRouterEvents: router.result.value,
     safeTransfers: safeTransfers.data.value,
     safeOutgoingTransactions: safeOutgoing.data.value,
@@ -339,6 +343,7 @@ export function useCNCAccounting(
         ['Expense', expense],
         ['FixedReturn', fixedReturn],
         ['Investor', investor],
+        ['Vesting', vesting],
         ['SafeDepositRouter', router]
       ] as const
     ).flatMap(([source, feed]) => feed.gaps.value.map((gap) => ({ source, address: gap.address })))
@@ -356,6 +361,7 @@ export function useCNCAccounting(
       expense.loading.value ||
       fixedReturn.loading.value ||
       investor.loading.value ||
+      vesting.loading.value ||
       router.loading.value ||
       weeklyClaims.isLoading.value ||
       expenses.isLoading.value
@@ -375,6 +381,7 @@ export function useCNCAccounting(
         fixedReturn,
         fixedReturnOffers,
         investor,
+        vesting,
         router,
         routerMultiplier,
         weeklyClaims,

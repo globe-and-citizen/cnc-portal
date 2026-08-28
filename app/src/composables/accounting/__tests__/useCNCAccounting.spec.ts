@@ -27,6 +27,9 @@ vi.mock('@/composables/fixedReturn/useFixedReturnEventsViaLogs', () => ({
 vi.mock('@/composables/investor/useInvestorEventsViaLogs', () => ({
   useInvestorEventsViaLogs: () => emptyLogsFeed()
 }))
+vi.mock('@/composables/vesting/useVestingEventsViaLogs', () => ({
+  useVestingEventsViaLogs: () => emptyLogsFeed()
+}))
 vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', () => ({
   useSafeDepositRouterEventsViaLogs: () => emptyLogsFeed()
 }))

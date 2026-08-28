@@ -57,4 +57,18 @@ describe('CreateVesting.vue — configuration', () => {
     expect(wrapper.text()).toContain('Enter the total number of shares')
     expect(wrapper.text()).toContain('Choose an end date and time')
   })
+
+  it('clears the beneficiary error once a non-checksummed member address is selected', async () => {
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Choose a valid team member')
+
+    await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
+      name: 'Komla',
+      address: '0x1234567890abcdef1234567890abcdef12345678'
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Choose a valid team member')
+  })
 })

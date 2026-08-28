@@ -218,6 +218,7 @@ implementation; this validation records the product review.
 - [Vesting beneficiary selection](../../../app/src/components/sections/VestingView/forms/VestingGrantDetails.vue)
 - [Frontend vesting reads](../../../app/src/composables/vesting/reads.ts)
 - [Frontend vesting writes](../../../app/src/composables/vesting/writes.ts)
+- [Vesting event feed for accounting (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts)
 - [Current Vesting contract](../../../contract/contracts/Vesting.sol)
 - [Contract behaviour tests](../../../contract/test/Vesting.spec.ts)
 
