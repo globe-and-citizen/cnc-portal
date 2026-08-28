@@ -270,6 +270,9 @@ flowchart LR
 - [Classification persistence schema](../../../backend/prisma/schema.prisma) and
   [classification migrations](../../../backend/prisma/migrations/20260821000000_add_transaction_classification/)
 - [Statement-line drill-down](../../../app/src/composables/accounting/useLedgerDrilldown.ts)
+- [Ledger Activity destination resolver](../../../app/src/composables/accounting/useActivityDestination.ts)
+- [Share-vesting event feed (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts) and
+  [vesting source mapper](../../../app/src/utils/accounting/mappers/vesting.ts)
 - [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [general ledger](../../../app/src/utils/accounting/generalLedger.ts),
