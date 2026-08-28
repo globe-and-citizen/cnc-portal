@@ -1,6 +1,6 @@
 # Feature Restrictions — User Stories
 
-**Scope:** Administrator management of global feature states and team-specific overrides
+**Scope:** Administrator management of global feature states and company-specific overrides
 
 **Last reviewed:** Not yet reviewed
 
@@ -9,8 +9,8 @@ These acceptance criteria follow the
 
 ## Product Model
 
-A feature restriction has a stable function name and one global status: `enabled`, `disabled`, or `beta`. An administrator can add a team
-override so that one team uses a different status from the global value. The consuming product feature decides what each status means for
+A feature restriction has a stable function name and one global status: `enabled`, `disabled`, or `beta`. An administrator can add a company
+override so that one company uses a different status from the global value. The consuming product feature decides what each status means for
 its user journey.
 
 Only authenticated administrators can access this backoffice capability.
@@ -22,7 +22,7 @@ flowchart LR
   list[List restrictions] --> create[Create restriction]
   list --> detail[Open restriction]
   detail --> global[Change global status]
-  detail --> add[Add team override]
+  detail --> add[Add company override]
   add --> update[Change override status]
   update --> remove[Remove override]
   detail --> delete[Delete restriction and overrides]
@@ -33,7 +33,7 @@ flowchart LR
 | User Story  | Title                        | Actor                  | Status         |
 | ----------- | ---------------------------- | ---------------------- | -------------- |
 | US-FLAG-001 | Manage global restrictions   | Platform administrator | 🧪 Validation  |
-| US-FLAG-002 | Manage team overrides        | Platform administrator | 🚧 In Progress |
+| US-FLAG-002 | Manage company overrides     | Platform administrator | 🚧 In Progress |
 | US-FLAG-003 | Remove obsolete restrictions | Platform administrator | 🚧 In Progress |
 
 ## US-FLAG-001: Manage Global Restrictions
@@ -63,27 +63,27 @@ flowchart LR
 - [x] Updating a missing restriction is rejected without creating a record.
 - [x] An invalid global status update is rejected without changing the persisted restriction.
 
-## US-FLAG-002: Manage Team Overrides
+## US-FLAG-002: Manage Company Overrides
 
 **As a** platform administrator\
-**I want to** assign a team-specific status to a restriction\
-**So that** one team can use behaviour different from the global default
+**I want to** assign a company-specific status to a restriction\
+**So that** one company can use behaviour different from the global default
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [ ] Restriction details include every configured team override.
-- [x] An administrator can add an override for an existing team.
+- [ ] Restriction details include every configured company override.
+- [x] An administrator can add an override for an existing company.
 - [x] An administrator can change an override's status.
-- [x] Removing an override returns the team to the restriction's global status.
+- [x] Removing an override returns the company to the restriction's global status.
 
 #### Business Rules
 
-- [x] A team can have at most one override for each restriction.
+- [x] A company can have at most one override for each restriction.
 - [x] An override status must be `enabled`, `disabled`, or `beta`.
-- [x] A team's override takes precedence over the restriction's global status.
-- [x] An override can reference only an existing restriction and team.
+- [x] A company's override takes precedence over the restriction's global status.
+- [x] An override can reference only an existing restriction and company.
 
 #### Edge & Error Cases
 
@@ -103,7 +103,7 @@ flowchart LR
 #### Happy Path
 
 - [x] An administrator can delete an existing restriction.
-- [x] Successful deletion removes the restriction and all its team overrides.
+- [x] Successful deletion removes the restriction and all its company overrides.
 
 #### Business Rules
 
@@ -114,24 +114,20 @@ flowchart LR
 - [x] Cancelling deletion leaves the restriction and its overrides unchanged.
 - [x] Deleting a missing restriction is rejected.
 - [x] A failed deletion is reported as a failure rather than success.
-- [ ] A failed deletion leaves the restriction and all its team overrides unchanged.
+- [ ] A failed deletion leaves the restriction and all its company overrides unchanged.
 
 ## Known Gaps
 
-- Restriction details return at most 100 team overrides, so additional overrides are omitted.
+- Restriction details return at most 100 company overrides, so additional overrides are omitted.
 - Restriction deletion removes overrides before deleting the restriction without a database transaction, so a partial failure can remove
   overrides while preserving the restriction.
-
-## UI/UX Notes
-
-- The backoffice asks for confirmation before deleting a restriction and allows the administrator to cancel that confirmation.
 
 ## Implementation Evidence
 
 - [Feature list page](../../../../dashboard/app/pages/features/index.vue)
 - [Feature detail page](../../../../dashboard/app/pages/features/[id].vue)
 - [Global restriction component](../../../../dashboard/app/components/features/FeatureGlobalRestriction.vue)
-- [Team override component](../../../../dashboard/app/components/features/TeamOverridesSection.vue)
+- [Company override component](../../../../dashboard/app/components/features/TeamOverridesSection.vue)
 - [Feature queries](../../../../dashboard/app/queries/feature.query.ts)
 - [Backend feature controller](../../../../backend/src/controllers/featureController.ts)
 - [Backend feature validation](../../../../backend/src/validation/featureValidation.ts)

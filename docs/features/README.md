@@ -2,7 +2,7 @@
 
 **Status:** Navigation-derived inventory
 
-**Last verified:** 2026-08-27
+**Last verified:** 2026-08-28
 
 This inventory names the product capabilities that a user can currently reach in the CNC Portal client or its administrator dashboard. It is
 derived from the current navigation, routes, access guards, and linked product actions. The presence of a source directory, API, contract,
@@ -66,7 +66,7 @@ top-level product features.
 | Micropayments            | `/micropayments`                            | [Canonical stories](./backoffice/micropayments/README.md)         |
 | Polymarket accounting    | `/accounting`                               | [Canonical stories](./backoffice/polymarket-accounting/README.md) |
 | Feature restrictions     | `/features`, `/features/:id`                | [Canonical stories](./backoffice/feature-restrictions/README.md)  |
-| Contract operations      | `/contracts/history`, `/contracts/versions` | Canonical stories not yet written                                 |
+| Contract operations      | `/contracts/history`, `/contracts/versions` | [Canonical stories](./backoffice/contract-operations/README.md)   |
 
 ## Excluded from the Product Inventory
 
