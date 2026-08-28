@@ -128,10 +128,10 @@ Not decided yet — to review before considering v0 complete.
 
 - [Integration setup view](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
-  [accepted-token configuration](../../../app/src/components/sections/PaymentGateView/TokenConfigCard.vue), and a
-  [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue) (`US-PAYGATE-V0-001` and `002`).
+  [accepted-token configuration](../../../app/src/components/sections/PaymentGateView/TokenConfigCard.vue), a
+  [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue), and their shared
+  [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-V0-001` and `002`).
 - [Payment history view](../../../app/src/views/team/[id]/PaymentGate/HistoryView.vue) and its
   [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue) (`US-PAYGATE-V0-004`).
 - [Recall/reference view](../../../app/src/views/team/[id]/PaymentGate/ReferenceView.vue) and its
   [recheck-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-V0-005`).
-- [Mock shared state](../../../app/src/composables/usePaymentGateMockState.ts) driving the setup page's cards before a backend exists.

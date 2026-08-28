@@ -24,9 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePaymentGateMockState } from '@/composables/usePaymentGateMockState'
-
 const tokenOptions = ['USDC', 'USDCe', 'POL'] as const
 
-const { selectedToken } = usePaymentGateMockState()
+const selectedToken = defineModel<'USDC' | 'USDCe' | 'POL'>('selectedToken', { required: true })
 </script>
