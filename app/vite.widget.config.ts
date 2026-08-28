@@ -18,7 +18,11 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
  * installed deps, `bankAbi`, and `@/utils/format` (see `app/vite.config.ts`
  * for the SPA build these settings deliberately diverge from).
  *
- * Build: `npm run build:widget` -> `dist-widget/widget.js`.
+ * Build: `npm run build:widget` -> `dist-widget/widget.js`, plus
+ * `widget-public/`'s contents copied alongside it (currently just a static
+ * `index.html` so the widget's hosting domain shows something presentable
+ * instead of the static file server's raw directory listing — it's not
+ * part of the embeddable widget, just a landing page for the bare domain).
  * Dev: `npm run dev:widget` -> serves `widget-dev/index.html` at `/`, opened
  * automatically. `root` only moves in dev (`command === 'serve'`) — build
  * keeps resolving `outDir`/`lib.entry` exactly as before, from `app/`.
@@ -29,7 +33,11 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 export default defineConfig(({ command }) => ({
   // The SPA's `public/` (favicon, logos, …) has nothing to do with this
   // build — without this, Vite copies it into `dist-widget/` by default.
-  publicDir: false,
+  // `widget-public/` is this build's own, much smaller equivalent, copied
+  // only when actually building (dev serves `widget-dev/index.html` directly,
+  // it doesn't need a landing page for a bare domain).
+  publicDir:
+    command === 'build' ? fileURLToPath(new URL('./widget-public', import.meta.url)) : false,
   ...(command === 'serve'
     ? {
         root: fileURLToPath(new URL('./widget-dev', import.meta.url)),
