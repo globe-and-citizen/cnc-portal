@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
-import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/assemble'
+import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
 import { ADDR } from './fixtures'
 
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
