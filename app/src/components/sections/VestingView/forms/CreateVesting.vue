@@ -4,6 +4,7 @@
 
     <UForm
       v-if="!showSummary"
+      ref="form"
       :schema="schema"
       :state="formState"
       class="flex flex-col gap-6"
@@ -142,7 +143,8 @@
 
 <script setup lang="ts">
 /* eslint-disable max-lines -- The form owns its reactive state; extracting a controller would recreate the removed one-consumer composable. */
-import { computed, ref, type Ref } from 'vue'
+import { computed, ref, useTemplateRef, watch, type Ref } from 'vue'
+import { isAddress } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
 import VestingSchedulePreview from '@/components/sections/VestingView/VestingSchedulePreview.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
@@ -187,8 +189,21 @@ const stepperItems = [{ title: 'Configure' }, { title: 'Review' }]
 const toast = useToast()
 const initialStart = nextVestingMinute()
 
+const form = useTemplateRef<{ clear: (path?: string) => void }>('form')
 const member = ref({ name: '', address: '' })
 const totalAmount = ref('')
+
+/**
+ * The beneficiary is picked through a custom selector, not a native form input,
+ * so UForm never revalidates `memberAddress` on its own. Clear any stale field
+ * error as soon as a valid member is chosen.
+ */
+watch(
+  () => member.value.address,
+  (address) => {
+    if (address && isAddress(address, { strict: false })) form.value?.clear('memberAddress')
+  }
+)
 const startDay = ref<Date | null>(initialStart)
 const startTime = ref(formatTimeOfDay(initialStart))
 const endDay = ref<Date | null>(null)
