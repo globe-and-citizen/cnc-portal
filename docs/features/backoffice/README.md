@@ -27,14 +27,14 @@ flowchart TB
 
 ## Current Capabilities
 
-| Capability              | User-visible outcome                                                                             | Routes                                      | Documentation                                         |
-| ----------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------- | ----------------------------------------------------- |
-| Overview and statistics | Inspect platform company, user, claim, wage, expense, contract, governance, and activity metrics | `/`                                         | [Canonical stories](./statistics/README.md)           |
-| Companies operations    | Inspect companies, membership counts, balances, contracts, and Officer generations               | `/teams`, `/teams/:id`                      | [Canonical stories](./companies-operations/README.md) |
-| Micropayments           | Inspect versioned FeeCollectors and manage fee policy, recipients, and collected funds           | `/micropayments`                            | [Canonical stories](./micropayments/README.md)        |
-| Polymarket accounting   | Reconstruct a wallet's statements, activity, and positions                                       | `/accounting`                               | Alignment due                                         |
-| Feature restrictions    | Manage global feature states and company overrides                                               | `/features`, `/features/:id`                | [Canonical stories](./feature-restrictions/README.md) |
-| Contract operations     | Inspect deployment history and synchronize Officer version metadata                              | `/contracts/history`, `/contracts/versions` | Alignment due                                         |
+| Capability              | User-visible outcome                                                                             | Routes                                      | Documentation                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------- | ------------------------------------------------------ |
+| Overview and statistics | Inspect platform company, user, claim, wage, expense, contract, governance, and activity metrics | `/`                                         | [Canonical stories](./statistics/README.md)            |
+| Companies operations    | Inspect companies, membership counts, balances, contracts, and Officer generations               | `/teams`, `/teams/:id`                      | [Canonical stories](./companies-operations/README.md)  |
+| Micropayments           | Inspect versioned FeeCollectors and manage fee policy, recipients, and collected funds           | `/micropayments`                            | [Canonical stories](./micropayments/README.md)         |
+| Polymarket accounting   | Reconstruct a wallet's statements, activity, and positions                                       | `/accounting`                               | [Canonical stories](./polymarket-accounting/README.md) |
+| Feature restrictions    | Manage global feature states and company overrides                                               | `/features`, `/features/:id`                | [Canonical stories](./feature-restrictions/README.md)  |
+| Contract operations     | Inspect deployment history and synchronize Officer version metadata                              | `/contracts/history`, `/contracts/versions` | Alignment due                                          |
 
 `Alignment due` means that the product surface exists but no canonical feature README has yet been reviewed under the current model. It is
 not a delivery-status claim.

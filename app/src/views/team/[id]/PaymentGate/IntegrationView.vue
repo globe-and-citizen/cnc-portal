@@ -14,19 +14,22 @@
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div class="space-y-6 lg:col-span-2">
-        <IntegrationCard />
-        <TokenConfigCard />
+        <IntegrationCard :selected-token="selectedToken" />
+        <TokenConfigCard v-model:selected-token="selectedToken" />
       </div>
 
       <div class="lg:sticky lg:top-6 lg:self-start">
-        <WidgetPreviewCard />
+        <WidgetPreviewCard :selected-token="selectedToken" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import IntegrationCard from '@/components/sections/PaymentGateView/IntegrationCard.vue'
 import TokenConfigCard from '@/components/sections/PaymentGateView/TokenConfigCard.vue'
 import WidgetPreviewCard from '@/components/sections/PaymentGateView/WidgetPreviewCard.vue'
+
+const selectedToken = ref<'USDC' | 'USDCe' | 'POL'>('USDC')
 </script>

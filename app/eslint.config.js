@@ -139,6 +139,12 @@ const globalMockReMockSelectors = bannedGlobalMockPaths.map((path) => ({
 //   - `src/composables/useContractFunctions.ts` — contract *deployment*
 //     path; `waitForTransactionReceipt` awaits a deploy receipt, not a
 //     write. Deployment is out of scope for the V3 writes migration.
+//   - `src/widget/**` — the standalone Payment Gate embed script. It runs
+//     outside the SPA's Vue/TanStack tree (no component instance, no
+//     QueryClient to inject), so `useContractWritesV3` isn't reachable, and
+//     it submits raw calldata (facture ID appended after the ABI-encoded
+//     call — see `src/utils/paymentGate/factureCalldata.ts`) that V3's
+//     ABI-only encoding can't produce anyway.
 //   - test-only mock setup files under `tests/`.
 const v3WriteRestrictedImports = {
   paths: [
@@ -220,6 +226,7 @@ export default [
     ignores: [
       '**/dist/**',
       '**/dist-ssr/**',
+      '**/dist-widget/**',
       '**/coverage/**',
       '**/playwright-report/**',
       '**/.cache-synpress/**',
@@ -274,7 +281,8 @@ export default [
       '**/*.spec.ts',
       '**/*.spec.tsx',
       'tests/**',
-      'src/composables/useContractFunctions.ts'
+      'src/composables/useContractFunctions.ts',
+      'src/widget/**'
     ],
     rules: {
       'no-restricted-imports': ['error', v3WriteRestrictedImports]
