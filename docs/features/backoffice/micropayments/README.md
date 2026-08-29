@@ -282,8 +282,9 @@ flowchart LR
   [version selection state](../../../../dashboard/app/composables/FeeCollector/useFeeCollectorVersion.ts)
 - [V1 management panel](../../../../dashboard/app/components/sections/FeeCollectorView/FeeCollectorPanelV1.vue),
   [current holdings and withdrawal](../../../../dashboard/app/components/sections/FeeCollectorView/TokenHoldingsTable.vue),
-  [owner and beneficiary controls](../../../../dashboard/app/components/sections/FeeCollectorView/FeeCollectorStats.vue), and
-  [fee configuration form](../../../../dashboard/app/components/sections/FeeCollectorView/FeeConfigFormModal.vue)
+  [owner and beneficiary controls](../../../../dashboard/app/components/sections/FeeCollectorView/FeeCollectorStats.vue),
+  [fee configuration form](../../../../dashboard/app/components/sections/FeeCollectorView/FeeConfigFormModal.vue), and
+  [fee configuration list](../../../../dashboard/app/components/sections/FeeCollectorView/FeeConfigList.vue)
 - [Legacy V0 panel](../../../../dashboard/app/components/sections/FeeCollectorView/legacy/FeeCollectorPanelV0.vue),
   [legacy V0.1 panel](../../../../dashboard/app/components/sections/FeeCollectorView/legacy/FeeCollectorPanelV01.vue), and
   [legacy actions](../../../../dashboard/app/components/sections/FeeCollectorView/legacy/FeeCollectorLegacyActions.vue)

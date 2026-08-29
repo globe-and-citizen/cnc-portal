@@ -4,12 +4,9 @@ import type { Column } from '@tanstack/table-core'
 import { getPaginationRowModel } from '@tanstack/table-core'
 import type { Address } from 'viem'
 import type { Team } from '~/types'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
 import UserIdentity from '~/components/UserIdentity.vue'
 import TeamOfficersCell from '~/components/teams/TeamOfficersCell.vue'
-
-dayjs.extend(relativeTime)
+import { formatDate, formatDateRelative } from '~/utils/format'
 
 const UButton = resolveComponent('UButton')
 
@@ -200,10 +197,10 @@ const pagination = computed({
       <template #createdAt-cell="{ row }">
         <div class="flex flex-col">
           <p class="text-sm">
-            {{ dayjs(row.original.createdAt).fromNow() }}
+            {{ formatDateRelative(row.original.createdAt) }}
           </p>
           <p class="text-xs text-muted">
-            {{ dayjs(row.original.createdAt).format('MMM D, YYYY') }}
+            {{ formatDate(row.original.createdAt) }}
           </p>
         </div>
       </template>

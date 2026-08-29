@@ -36,44 +36,6 @@ const formattingSelectors = [
   }
 ]
 
-// Migration debt — every file that still formats by hand. This list only ever
-// shrinks. If you're about to add an entry, extend `app/utils/format/` instead:
-// the ceiling below fails lint at config load if the list grows.
-const formattingLegacyFiles = [
-  'app/components/accounting/AccountingIdentitiesCard.vue',
-  'app/components/accounting/AccountingIncomeStatement.vue',
-  'app/components/accounting/AccountingLedger.vue',
-  'app/components/accounting/AccountingPositions.vue',
-  'app/components/contracts/ContractHistoryCard.vue',
-  'app/components/features/TeamOverridesSection.vue',
-  'app/components/sections/FeeCollectorView/FeeConfigList.vue',
-  'app/components/stats/StatsActivitySection.vue',
-  'app/components/stats/StatsOverviewSection.vue',
-  'app/components/teams/ContractBalance.vue',
-  'app/components/teams/ProjectTvlCard.vue',
-  'app/components/teams/TeamOfficersCell.vue',
-  'app/components/teams/TeamsList.vue',
-  'app/composables/useTeamsBalanceRecaps.ts',
-  'app/pages/contracts/history.vue',
-  'app/pages/features/index.vue',
-  // Escaped: an unescaped `[id]` would read as a glob character class.
-  'app/pages/teams/\\[id\\].vue',
-  'app/queries/contractTokenBalances.query.ts',
-  'app/utils/currency.ts',
-  'app/utils/datePicker.ts',
-  'app/utils/generalUtil.ts',
-  'app/utils/mergedLedger.ts'
-]
-
-const FORMATTING_LEGACY_MAX = 22
-if (formattingLegacyFiles.length > FORMATTING_LEGACY_MAX) {
-  throw new Error(
-    `formattingLegacyFiles has ${formattingLegacyFiles.length} entries (ceiling ${FORMATTING_LEGACY_MAX}). `
-    + 'Format through `app/utils/format` instead of whitelisting a new file — see '
-    + '.github/copilot-instructions/formatting-standards.md.'
-  )
-}
-
 export default withNuxt(
   {
     rules: {
@@ -86,8 +48,7 @@ export default withNuxt(
     files: ['app/**/*.{ts,vue}', 'server/**/*.ts'],
     ignores: [
       // The canonical implementation — the one place the primitives belong.
-      'app/utils/format/**',
-      ...formattingLegacyFiles
+      'app/utils/format/**'
     ],
     rules: {
       // Two rules, one selector list: the core rule only walks `<script>`,

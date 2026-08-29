@@ -7,6 +7,7 @@ import { getTeamOfficers } from '~/api/contract'
 import { getTeam } from '~/api/teams'
 import { USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS } from '~/constant'
 import type { Team } from '~/types'
+import { formatNumber } from '~/utils/format'
 
 const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11' as const
 const MULTICALL3_ABI = parseAbi(['function getEthBalance(address) view returns (uint256)'])
@@ -299,7 +300,7 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
 // round to a misleading "0" as "<0.01" so it's not mistaken for empty.
 const formatAmount = (value: number) => {
   if (value > 0 && value < 0.01) return '<0.01'
-  return value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  return formatNumber(value, { maxDecimals: 2 })
 }
 
 export const formatNative = (raw: bigint) => formatAmount(Number(formatEther(raw)))

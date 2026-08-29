@@ -34,7 +34,7 @@
               {{ config.contractType }}
             </td>
             <td class="px-4 py-4">
-              {{ config.feeBps }} BPS ({{ (config.feeBps / 100).toFixed(2) }}%)
+              {{ config.feeBps }} BPS ({{ formatPercent(config.feeBps / 10_000, { decimals: 2 }) }})
             </td>
             <td class="px-4 py-4">
               <UButton
@@ -69,6 +69,7 @@ import { ref } from 'vue'
 import FeeConfigFormModal from '@/components/sections/FeeCollectorView/FeeConfigFormModal.vue'
 import FeeConfigAddActions from '@/components/sections/FeeCollectorView/FeeConfigAddActions.vue'
 import { isFeeCollectorOwner, useFeeConfigs } from '~/composables/FeeCollector/read'
+import { formatPercent } from '~/utils/format'
 
 const { data: feeConfigs, isLoading } = useFeeConfigs()
 const isFeeOwner = isFeeCollectorOwner()

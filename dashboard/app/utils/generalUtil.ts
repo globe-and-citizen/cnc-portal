@@ -1,9 +1,10 @@
+import { formatAddress } from '~/utils/format'
+
 const isDevelopment = import.meta.env.MODE === 'development'
 // const isVerbose = true
 
 const getTimestamp = (): string => {
-  const now = new Date()
-  return `${now.toLocaleString()}`
+  return new Date().toISOString()
 }
 
 export const log = {
@@ -31,8 +32,7 @@ export const log = {
 }
 
 export const shortenAddress = (address: string | undefined) => {
-  if (!address) return ''
-  return address.slice(0, 6) + '...' + address.slice(-4)
+  return formatAddress(address)
 }
 
 /**

@@ -185,7 +185,6 @@
 
 <script setup lang="ts">
 import { useSessionStorage } from '@vueuse/core'
-import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import {
   CATEGORY_META,
@@ -207,6 +206,7 @@ import {
   type MergedLedgerRow
 } from '~/utils/mergedLedger'
 import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
+import { formatDateTime, formatNumber, formatUsd, fromUnix } from '~/utils/format'
 import AccountingCategoryFilter, {
   type CategoryOption
 } from './AccountingCategoryFilter.vue'
@@ -369,22 +369,19 @@ const columns = computed(() => {
 })
 
 function formatDate(ts: number): string {
-  return ts ? format(new Date(ts * 1000), 'MMM d, yyyy HH:mm') : '—'
+  return ts ? formatDateTime(fromUnix(ts)) : '—'
 }
 
 function formatQty(qty: number | undefined): string {
-  return qty == null ? '—' : qty.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  return qty == null ? '—' : formatNumber(qty, { maxDecimals: 2 })
 }
 
 function formatPrice(price: number | undefined): string {
-  return price == null ? '—' : `$${price.toFixed(4)}`
+  return price == null ? '—' : formatUsd(price, { decimals: 4 })
 }
 
 function formatUsd2(value: number | undefined): string {
-  if (value == null || Number.isNaN(value)) {
-    return '—'
-  }
-  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatUsd(value)
 }
 
 function marketUrl(entry: LedgerEntry): string | null {

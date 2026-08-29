@@ -1,9 +1,5 @@
+import { formatUsd } from '~/utils/format'
+
 export function formatUSD(amount: number): string {
-  if (isNaN(amount) || amount === 0) return '$0.00'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: amount % 1 === 0 ? 2 : 4,
-    maximumFractionDigits: amount % 1 === 0 ? 2 : 4
-  }).format(amount)
+  return formatUsd(amount, { decimals: Number.isFinite(amount) && amount % 1 !== 0 ? 4 : 2 })
 }

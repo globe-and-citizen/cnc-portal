@@ -61,6 +61,7 @@ is not sufficient.
 - [Feature restrictions](../../../dashboard/app/pages/features/index.vue)
 - [Contract history](../../../dashboard/app/pages/contracts/history.vue)
 - [Officer version synchronization](../../../dashboard/app/pages/contracts/versions.vue)
+- [Canonical dashboard display formatting](../../../dashboard/app/utils/format/), shared by every current backoffice route
 
 ## Related Documentation
 

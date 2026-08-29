@@ -4,6 +4,7 @@ import type {
   JournalLine
 } from '~/utils/generalLedger'
 import type { RealizedTrade } from '~/utils/incomeStatement'
+import { formatNumber } from '~/utils/format'
 
 /**
  * Merges the per-activity LedgerEntry feed with the double-entry journal so
@@ -242,13 +243,13 @@ export function mergedLedgerToCsv(rows: MergedLedgerRow[]): string {
       showEntry ? entry.description : '',
       showEntry ? entry.outcome ?? '' : '',
       showEntry && entry.quantity != null ? String(entry.quantity) : '',
-      showEntry && entry.unitPrice != null ? entry.unitPrice.toFixed(4) : '',
-      showEntry ? entry.amount.toFixed(2) : '',
-      showEntry ? entry.cashFlow.toFixed(2) : '',
+      showEntry && entry.unitPrice != null ? formatNumber(entry.unitPrice, { minDecimals: 4, maxDecimals: 4 }) : '',
+      showEntry ? formatNumber(entry.amount, { minDecimals: 2, maxDecimals: 2 }) : '',
+      showEntry ? formatNumber(entry.cashFlow, { minDecimals: 2, maxDecimals: 2 }) : '',
       showEntry ? entry.counterparty ?? '' : '',
       row.account,
-      row.debit ? row.debit.toFixed(6) : '',
-      row.credit ? row.credit.toFixed(6) : '',
+      row.debit ? formatNumber(row.debit, { minDecimals: 6, maxDecimals: 6 }) : '',
+      row.credit ? formatNumber(row.credit, { minDecimals: 6, maxDecimals: 6 }) : '',
       showEntry ? entry.source : '',
       showEntry ? entry.txHash ?? '' : ''
     ]

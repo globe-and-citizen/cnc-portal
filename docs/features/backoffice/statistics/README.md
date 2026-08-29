@@ -183,7 +183,9 @@ flowchart LR
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
   [dashboard overview](../../../../dashboard/app/pages/index.vue)
 - [Statistics integration](../../../../dashboard/app/composables/useStats.ts),
-  [statistics sections](../../../../dashboard/app/components/stats), and [statistics types](../../../../dashboard/app/types/index.d.ts)
+  [statistics sections](../../../../dashboard/app/components/stats),
+  [canonical dashboard formatter](../../../../dashboard/app/utils/format/), and
+  [statistics types](../../../../dashboard/app/types/index.d.ts)
 - [Statistics routes](../../../../backend/src/routes/statsRoute.ts),
   [administrator API guard](../../../../backend/src/config/serverConfig.ts), and
   [statistics controller](../../../../backend/src/controllers/statsController.ts)

@@ -128,6 +128,7 @@ flowchart LR
 - [Feature detail page](../../../../dashboard/app/pages/features/[id].vue)
 - [Global restriction component](../../../../dashboard/app/components/features/FeatureGlobalRestriction.vue)
 - [Company override component](../../../../dashboard/app/components/features/TeamOverridesSection.vue)
+- [Canonical dashboard formatter](../../../../dashboard/app/utils/format/) for the feature and override timestamps
 - [Feature queries](../../../../dashboard/app/queries/feature.query.ts)
 - [Backend feature controller](../../../../backend/src/controllers/featureController.ts)
 - [Backend feature validation](../../../../backend/src/validation/featureValidation.ts)

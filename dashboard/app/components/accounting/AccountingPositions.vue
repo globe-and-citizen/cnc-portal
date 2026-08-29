@@ -108,8 +108,9 @@
 import { computed, ref, watch } from 'vue'
 import type { PolymarketPosition } from '~/types/polymarket'
 import { usePagination } from '~/composables/usePagination'
-import { formatSignedUsd, formatUsd, signClass } from '~/utils/accounting'
+import { formatSignedUsd, signClass } from '~/utils/accounting'
 import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
+import { formatNumber, formatPercent as formatRatioPercent, formatUsd } from '~/utils/format'
 import AccountingPagination from './AccountingPagination.vue'
 import AccountingTableSearch from './AccountingTableSearch.vue'
 
@@ -171,15 +172,15 @@ const columns = [
 ]
 
 function formatShares(value: number | undefined): string {
-  return value == null ? '—' : value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  return value == null ? '—' : formatNumber(value, { maxDecimals: 2 })
 }
 
 function formatPrice(value: number | undefined): string {
-  return value == null ? '—' : `$${value.toFixed(4)}`
+  return value == null ? '—' : formatUsd(value, { decimals: 4 })
 }
 
 function formatPercent(value: number | undefined): string {
-  return value == null ? '' : ` (${value > 0 ? '+' : ''}${value.toFixed(1)}%)`
+  return value == null ? '' : ` (${formatRatioPercent(value / 100, { decimals: 1, signed: true })})`
 }
 
 function marketUrl(position: PolymarketPosition): string | null {
