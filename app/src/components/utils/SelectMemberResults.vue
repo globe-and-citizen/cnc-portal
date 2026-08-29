@@ -40,7 +40,7 @@
 
 <script lang="ts" setup>
 import { toRef } from 'vue'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import CreditAvatar from '@/components/sections/CommunityCreditView/CreditAvatar.vue'
 import { formatAddress } from '@/utils/formatAddress'
 import { gradientForAddress } from '@/utils'

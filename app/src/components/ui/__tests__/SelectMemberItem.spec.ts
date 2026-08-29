@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import SelectMemberItem from '@/components/SelectMemberItem.vue'
+import SelectMemberItem from '@/components/ui/SelectMemberItem.vue'
 import { mockTeamStore, mockRouterPush } from '@/tests/mocks/index'
 import type { Address } from 'viem'
 

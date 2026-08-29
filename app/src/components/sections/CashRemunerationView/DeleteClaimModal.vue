@@ -43,7 +43,7 @@ import type { Claim } from '@/types'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
 import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 import { formatDate } from '@/utils/format'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
 const props = defineProps<{

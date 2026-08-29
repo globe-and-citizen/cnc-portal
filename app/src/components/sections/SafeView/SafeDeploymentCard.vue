@@ -99,8 +99,8 @@ import { useCreateContractMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { NETWORK } from '@/constant'
 import { useToast } from '@nuxt/ui/composables'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 
 interface Props {
   teamId: number

@@ -38,8 +38,8 @@
 import { computed } from 'vue'
 import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import SelectMemberItem from '@/components/SelectMemberItem.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import SelectMemberItem from '@/components/ui/SelectMemberItem.vue'
 
 interface Props {
   memberAddress: Address

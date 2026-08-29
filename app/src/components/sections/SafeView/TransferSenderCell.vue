@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Address } from 'viem'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { useGetUserQuery } from '@/queries/user.queries'
 
 interface Props {
