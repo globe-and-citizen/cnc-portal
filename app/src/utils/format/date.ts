@@ -9,11 +9,13 @@
  */
 
 import dayjs, { type Dayjs } from 'dayjs'
+import quarterOfYear from 'dayjs/plugin/quarterOfYear'
 import utc from 'dayjs/plugin/utc'
 
 import { EMPTY_VALUE } from './shared'
 
 dayjs.extend(utc)
+dayjs.extend(quarterOfYear)
 
 /**
  * Anything a date formatter accepts.
@@ -67,6 +69,11 @@ export function formatDateShort(value: DateInput | null | undefined): string {
   return toDayjs(value)?.format('MMM D') ?? EMPTY_VALUE
 }
 
+/** `Jan 8, 14:05` — a compact timestamp for dense activity and message rows. */
+export function formatDateShortTime(value: DateInput | null | undefined): string {
+  return toDayjs(value)?.format('MMM D, HH:mm') ?? EMPTY_VALUE
+}
+
 /** `Mon` — compact weekday label for chart axes. */
 export function formatWeekdayShort(value: DateInput | null | undefined): string {
   return toDayjs(value)?.format('ddd') ?? EMPTY_VALUE
@@ -80,6 +87,19 @@ export function formatDateWeekdayShort(value: DateInput | null | undefined): str
 /** `January 2026` — period headers. */
 export function formatMonthYear(value: DateInput | null | undefined): string {
   return toDayjs(value)?.format('MMMM YYYY') ?? EMPTY_VALUE
+}
+
+/** `2026` — a period label when the surrounding control already establishes the unit. */
+export function formatYear(value: DateInput | null | undefined): string {
+  return toDayjs(value)?.format('YYYY') ?? EMPTY_VALUE
+}
+
+/** `Jul – Sep 2025` — a compact, navigable quarter-period label. */
+export function formatQuarterRange(value: DateInput | null | undefined): string {
+  const date = toDayjs(value)
+  if (!date) return EMPTY_VALUE
+
+  return `${date.startOf('quarter').format('MMM')} – ${date.endOf('quarter').format('MMM')} ${formatYear(date)}`
 }
 
 /**
