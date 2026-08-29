@@ -14,7 +14,7 @@ import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import { computed, watch } from 'vue'
 import { log } from '@/utils'
-import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 
 const teamStore = useTeamStore()
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))

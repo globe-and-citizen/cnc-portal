@@ -70,7 +70,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { Icon as IconifyIcon } from '@iconify/vue'

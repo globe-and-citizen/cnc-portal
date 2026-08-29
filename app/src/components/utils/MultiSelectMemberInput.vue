@@ -24,7 +24,7 @@
 </template>
 
 <script lang="ts" setup>
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { ref } from 'vue'
 import type { MemberSelectionScope, User } from '@/types'

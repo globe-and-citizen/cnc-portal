@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import type { User } from '@/types'
 
 interface VestingMember {

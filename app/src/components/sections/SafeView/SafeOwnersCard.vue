@@ -150,7 +150,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
 import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
 import RemoveOwnerButton from './RemoveOwnerButton.vue'

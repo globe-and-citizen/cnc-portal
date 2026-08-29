@@ -21,8 +21,8 @@ import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/M
 import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
 import { useTeamStore } from '@/stores'
 import { computed } from 'vue'
-import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
-import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import GenericTokenHoldingsSection from '@/components/ui/GenericTokenHoldingsSection.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 //#endregion
 const teamStore = useTeamStore()
 

@@ -160,8 +160,8 @@ import { useUserDataStore, useTeamStore } from '@/stores'
 import { useInspectSafe } from '@/composables/safe/useSafeImport'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { NETWORK } from '@/constant'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 interface Props {
   teamId: number

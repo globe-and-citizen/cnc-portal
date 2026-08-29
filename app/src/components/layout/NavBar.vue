@@ -12,7 +12,7 @@
         </UTooltip>
 
         <UButton color="neutral" variant="ghost">
-          <img src="../assets/Ethereum.png" class="h-4 w-4 sm:h-5 sm:w-5" alt="Ethereum Icon" />
+          <img src="../../assets/Ethereum.png" class="h-4 w-4 sm:h-5 sm:w-5" alt="Ethereum Icon" />
           <span
             class="hidden font-mono text-xs sm:inline-block sm:text-sm"
             data-test="balance-with-symbol"
@@ -55,7 +55,7 @@
 import { currentChainId, NETWORK } from '@/constant/index'
 import { latestDeployedVersionForChain } from '@/artifacts/registry'
 import { useAuth } from '@/composables/useAuth'
-import NotificationDropdown from '@/components/NotificationDropdown.vue'
+import NotificationDropdown from '@/components/layout/NotificationDropdown.vue'
 import { useUserDataStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import type { DropdownMenuItem } from '@nuxt/ui'

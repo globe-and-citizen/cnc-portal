@@ -7,7 +7,7 @@ import {
   type AdvertisingCampaign
 } from '@/composables/campaign/reads'
 import { formatTokenUnits } from '@/utils/format'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import CreateAdvertisingCampaign from './forms/CreateAdvertisingCampaign.vue'
 import WithdrawAdvertisingCampaign from './forms/WithdrawAdvertisingCampaign.vue'
 import AdvertisingCampaignDetailsSlideover from './AdvertisingCampaignDetailsSlideover.vue'

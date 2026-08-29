@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import RateDotList from '@/components/RateDotList.vue'
+import RateDotList from '@/components/ui/RateDotList.vue'
 import { NETWORK } from '@/constant'
 
 describe('RateDotList', () => {

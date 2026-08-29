@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import UserAvatarComponent from '@/components/UserAvatarComponent.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import UserAvatarComponent from '@/components/ui/UserAvatarComponent.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import { useTeamStore } from '@/stores/'
 import { type User } from '@/types/user'
 import type { Member } from '@/types/member'

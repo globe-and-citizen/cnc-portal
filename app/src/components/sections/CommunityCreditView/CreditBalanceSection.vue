@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
 

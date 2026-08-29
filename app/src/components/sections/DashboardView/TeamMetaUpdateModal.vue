@@ -79,7 +79,7 @@ import { z } from 'zod'
 import type { Team } from '@/types/team'
 import { useTeamStore } from '@/stores'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
 import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 

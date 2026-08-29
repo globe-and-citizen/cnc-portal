@@ -137,7 +137,7 @@ import { watch } from 'vue'
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types'
-import RateDotList from '@/components/RateDotList.vue'
+import RateDotList from '@/components/ui/RateDotList.vue'
 
 const emit = defineEmits<{ validated: []; back: [] }>()
 
