@@ -32,7 +32,7 @@
 
 ## Implementation Evidence
 
-- [Bank deposit form](../../../../app/src/components/forms/DepositBankForm.vue)
+- [Bank deposit form](../../../../app/src/components/sections/BankView/forms/DepositBankForm.vue)
 
 ---
 

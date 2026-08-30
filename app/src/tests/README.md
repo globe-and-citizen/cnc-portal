@@ -289,7 +289,7 @@ Code review will quote the `--` reason, so make it specific.
 
 | Pattern                                      | Reference spec                                                                                     |
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Canonical (DOM + emit + props)               | `app/src/components/forms/__tests__/TokenAmount.spec.ts`                                           |
+| Canonical (DOM + emit + props)               | `app/src/components/ui/inputs/__tests__/TokenAmountInput.spec.ts`                                  |
 | UTable / USelect / CustomDatePicker drive    | `app/src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts`                 |
 | Child form `$emit('submit', ...)`            | `app/src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts`   |
 | Heavy state mutation → DOM-driven helper     | `app/src/components/sections/VestingView/forms/__tests__/CreateVestingInitial.spec.ts`             |

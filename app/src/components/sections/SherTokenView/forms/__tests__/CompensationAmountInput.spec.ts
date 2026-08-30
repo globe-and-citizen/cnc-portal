@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import CompensationAmount from '../CompensationAmount.vue'
+import CompensationAmountInput from '../CompensationAmountInput.vue'
 import { nextTick } from 'vue'
 import { mockInvestorReads } from '@/tests/mocks'
 
@@ -28,14 +28,14 @@ const MOCK_DATA = {
   highRate: '2.5'
 } as const
 
-describe('CompensationAmount', () => {
+describe('CompensationAmountInput', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvestorReads.symbol.data.value = MOCK_DATA.tokenSymbol
   })
 
   const createWrapper = (props = {}) => {
-    return mount(CompensationAmount, {
+    return mount(CompensationAmountInput, {
       props: {
         modelValue: MOCK_DATA.defaultValue,
         depositTokenSymbol: MOCK_DATA.depositSymbol,

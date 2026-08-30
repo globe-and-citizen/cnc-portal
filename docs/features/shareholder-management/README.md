@@ -298,7 +298,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   [deposit control](../../../app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue), and
   [multiplier action](../../../app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue)
 - [Investment action](../../../app/src/components/sections/SherTokenView/InvestorActions/InvestInSafeAction.vue),
-  [investment form](../../../app/src/components/forms/SafeDepositRouterForm.vue), and
+  [investment form](../../../app/src/components/sections/SherTokenView/forms/SafeDepositRouterForm.vue), and
   [router investment ledger mapper](../../../app/src/utils/accounting/mappers/safeDepositRouter.ts)
 - [Dividend action](../../../app/src/components/sections/SherTokenView/InvestorActions/PayDividendsAction.vue) and
   [dividend form](../../../app/src/components/sections/SherTokenView/forms/PayDividendsForm.vue)

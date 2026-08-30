@@ -39,8 +39,8 @@ import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useStorage } from '@vueuse/core'
 import { type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
-import TransferModal from '@/components/forms/TransferModal.vue'
-import DepositModal from '@/components/forms/DepositModal.vue'
+import TransferModal from '@/components/sections/BankView/forms/TransferModal.vue'
+import DepositModal from '@/components/sections/BankView/forms/DepositModal.vue'
 
 const props = defineProps<{
   bankAddress: Address

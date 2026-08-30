@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import { zeroAddress, type Address } from 'viem'
-import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import DepositBankForm from '@/components/sections/BankView/forms/DepositBankForm.vue'
 import {
   mockTransactionFunctions,
   mockUseSafeSendTransaction,
@@ -42,7 +42,7 @@ const setTokenAmount = async (
   tokenId: string,
   isValid: boolean = true
 ) => {
-  const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+  const tokenAmount = wrapper.findComponent({ name: 'TokenAmountInput' })
   await tokenAmount.vm.$emit('update:modelValue', { amount: value, tokenId })
   await tokenAmount.vm.$emit('validation', isValid)
   await nextTick()
@@ -74,10 +74,10 @@ describe('DepositBankForm.vue', () => {
     await submitForm(wrapper)
     await flushPromises()
 
-    // Cancel and assert TokenAmount returns to native + empty
+    // Cancel and assert TokenAmountInput returns to native + empty
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
 
-    const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+    const tokenAmount = wrapper.findComponent({ name: 'TokenAmountInput' })
     expect(tokenAmount.props('modelValue')).toEqual({ amount: '', tokenId: 'native' })
     expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
@@ -120,7 +120,7 @@ describe('DepositBankForm.vue', () => {
 
     // Default: native selected → no Approval/Deposit stepper labels rendered
     expect(wrapper.text()).not.toContain('Approval')
-    expect(wrapper.findComponent({ name: 'TokenAmount' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'TokenAmountInput' }).exists()).toBe(true)
 
     // Switch to usdc → stepper appears (renders Approval/Deposit labels)
     await setTokenAmount(wrapper, '0', 'usdc', false)

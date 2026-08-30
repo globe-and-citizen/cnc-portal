@@ -40,7 +40,7 @@ const setTokenAmount = async (
   tokenId: string,
   isValid: boolean = true
 ) => {
-  const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+  const tokenAmount = wrapper.findComponent({ name: 'TokenAmountInput' })
   await tokenAmount.vm.$emit('update:modelValue', { amount: value, tokenId })
   await tokenAmount.vm.$emit('validation', isValid)
   await wrapper.vm.$nextTick()
@@ -87,10 +87,10 @@ describe('SafeDepositRouterForm.vue', () => {
   it('handles bidirectional amount calculations and cancel/reset paths', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
-    const compensation = () => wrapper.findComponent({ name: 'CompensationAmount' })
-    const tokenAmount = () => wrapper.findComponent({ name: 'TokenAmount' })
+    const compensation = () => wrapper.findComponent({ name: 'CompensationAmountInput' })
+    const tokenAmount = () => wrapper.findComponent({ name: 'TokenAmountInput' })
 
-    // CompensationAmount is bound `v-model:modelValue="sherAmount" @update:modelValue="handleSherAmountChange"`,
+    // CompensationAmountInput is bound `v-model:modelValue="sherAmount" @update:modelValue="handleSherAmountChange"`,
     // so emitting its model drives the SHER→amount calculation exactly as user typing does.
     compensation().vm.$emit('update:modelValue', '')
     expect(vm.amount).toBe('0')
@@ -171,8 +171,8 @@ describe('SafeDepositRouterForm.vue', () => {
       { args: ['0xA3492D046095AFFE351cFac15de9b86425E235dB', 1000000n] },
       expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
     )
-    expect(wrapper.findComponent({ name: 'TokenAmount' }).props('modelValue').amount).toBe('')
-    expect(wrapper.findComponent({ name: 'CompensationAmount' }).props('modelValue')).toBe('0')
+    expect(wrapper.findComponent({ name: 'TokenAmountInput' }).props('modelValue').amount).toBe('')
+    expect(wrapper.findComponent({ name: 'CompensationAmountInput' }).props('modelValue')).toBe('0')
     expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
 

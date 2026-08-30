@@ -163,6 +163,7 @@
 import { useRouter, useRoute } from 'vue-router'
 import { useUserDataStore } from '@/stores'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
+import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import TeamMetaArchiveModal from '@/components/sections/DashboardView/TeamMetaArchiveModal.vue'
 import TeamMetaDeleteModal from '@/components/sections/DashboardView/TeamMetaDeleteModal.vue'

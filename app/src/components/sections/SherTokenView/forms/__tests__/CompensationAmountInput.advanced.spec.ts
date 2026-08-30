@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import CompensationAmount from '../CompensationAmount.vue'
+import CompensationAmountInput from '../CompensationAmountInput.vue'
 import { nextTick } from 'vue'
 import { mockInvestorReads } from '@/tests/mocks'
 
@@ -18,14 +18,14 @@ const MOCK_DATA = {
   defaultRate: '1.5'
 } as const
 
-describe('CompensationAmount - Advanced Features', () => {
+describe('CompensationAmountInput - Advanced Features', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvestorReads.symbol.data.value = MOCK_DATA.tokenSymbol
   })
 
   const createWrapper = (props = {}) => {
-    return mount(CompensationAmount, {
+    return mount(CompensationAmountInput, {
       props: {
         modelValue: '0',
         depositTokenSymbol: MOCK_DATA.depositSymbol,
@@ -79,7 +79,7 @@ describe('CompensationAmount - Advanced Features', () => {
 
   describe('Slot Customization', () => {
     it('should allow custom label via slot', () => {
-      const wrapper = mount(CompensationAmount, {
+      const wrapper = mount(CompensationAmountInput, {
         props: {
           modelValue: '0',
           rate: '1.5'
@@ -187,7 +187,7 @@ describe('CompensationAmount - Advanced Features', () => {
     })
 
     it('should use default values for optional props', () => {
-      const wrapper = mount(CompensationAmount, {
+      const wrapper = mount(CompensationAmountInput, {
         props: {
           modelValue: '0',
           rate: '1'
@@ -203,7 +203,7 @@ describe('CompensationAmount - Advanced Features', () => {
 
   describe('Error Handling', () => {
     it('should handle invalid prop types gracefully', () => {
-      const wrapper = mount(CompensationAmount, {
+      const wrapper = mount(CompensationAmountInput, {
         props: {
           modelValue: '0',
           // @ts-expect-error Testing invalid prop type
@@ -216,7 +216,7 @@ describe('CompensationAmount - Advanced Features', () => {
     })
 
     it('should handle undefined decimals prop', () => {
-      const wrapper = mount(CompensationAmount, {
+      const wrapper = mount(CompensationAmountInput, {
         props: {
           modelValue: '100.123456',
           rate: '1.5',

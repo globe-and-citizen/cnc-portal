@@ -294,9 +294,9 @@ This validation does not attest to a live on-chain Officer deployment.
 - [Workspace route and unavailable-state handling](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue),
   [company queries](../../../app/src/queries/team.queries.ts), [company endpoints](../../../backend/src/routes/teamRoutes.ts), and
   [company controller](../../../backend/src/controllers/teamController.ts)
-- [Company-creation form](../../../app/src/components/forms/AddTeamForm.vue),
+- [Company-creation form](../../../app/src/components/sections/TeamView/forms/AddTeamForm.vue),
   [request validation](../../../backend/src/validation/schemas/team.ts), and
-  [company-creation tests](../../../app/src/components/forms/__tests__/AddTeamForm.spec.ts)
+  [company-creation tests](../../../app/src/components/sections/TeamView/forms/__tests__/AddTeamForm.spec.ts)
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue),
   [Officer deployment composable](../../../app/src/composables/contracts/useOfficerDeployment.ts), and
   [initial Officer setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/InvestorContractStep.spec.ts)

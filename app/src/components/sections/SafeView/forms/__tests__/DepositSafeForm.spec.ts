@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import { type Address } from 'viem'
-import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
+import DepositSafeForm from '@/components/sections/SafeView/forms/DepositSafeForm.vue'
 import {
   mockTransactionFunctions,
   mockUseSafeSendTransaction,
@@ -42,7 +42,7 @@ describe('DepositSafeForm.vue', () => {
     tokenId: string,
     isValid: boolean = true
   ): Promise<void> => {
-    const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+    const tokenAmount = wrapper.findComponent({ name: 'TokenAmountInput' })
     await tokenAmount.vm.$emit('update:modelValue', { amount: value, tokenId })
     await tokenAmount.vm.$emit('validation', isValid)
     await nextTick()

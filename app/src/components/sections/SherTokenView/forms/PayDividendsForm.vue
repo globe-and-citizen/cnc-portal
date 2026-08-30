@@ -29,7 +29,7 @@
       data-test="bank-empty-warning"
     />
 
-    <TokenAmount v-model="tokenAmountModel" :tokens="tokens" :loading="loading">
+    <TokenAmountInput v-model="tokenAmountModel" :tokens="tokens" :loading="loading">
       <template #label>
         <div class="flex w-full items-center justify-between text-sm font-medium">
           <span>Amount</span>
@@ -38,7 +38,7 @@
           >
         </div>
       </template>
-    </TokenAmount>
+    </TokenAmountInput>
 
     <div class="text-center">
       <UButton
@@ -64,7 +64,7 @@ import { useTeamStore } from '@/stores'
 import type { TokenId } from '@/constant'
 import type { TokenOption } from '@/types'
 import { useContractBalance } from '@/composables/useContractBalance'
-import TokenAmount from '@/components/forms/TokenAmount.vue'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 import type { Address } from 'viem'
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')
