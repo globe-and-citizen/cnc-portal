@@ -57,7 +57,7 @@ import { RouterView, useRoute } from 'vue-router'
 
 import LockScreen from '@/components/layout/LockScreen.vue'
 import NavBar from '@/components/layout/NavBar.vue'
-import NavBreadcrumb from '@/components/NavBreadcrumb.vue'
+import NavBreadcrumb from '@/components/layout/NavBreadcrumb.vue'
 import TeamSelectMenu from '@/components/layout/TeamSelectMenu.vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
