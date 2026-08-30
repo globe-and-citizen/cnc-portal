@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { BaseError, ContractFunctionRevertedError } from 'viem'
 import type { CreditRound } from '@/types'
 
 import {
@@ -306,6 +307,34 @@ describe('Community Credit views', () => {
           params: { id: '1', roundId: '1' }
         })
       )
+    })
+
+    it('shows a classified repayment failure without refreshing or redirecting', async () => {
+      store.isOwner = true
+      mockBankReads.owner.data.value = MOCK_USER_ADDRESS
+      const reverted = new ContractFunctionRevertedError({
+        abi: [],
+        data: `0x${'00'.repeat(4)}`,
+        functionName: 'fundFixedReturnRepayment'
+      })
+      ;(reverted as unknown as { data: { errorName: string } }).data = {
+        errorName: 'SomethingNobodyMapped'
+      }
+      mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockRejectedValueOnce(
+        new BaseError('reverted', { cause: reverted })
+      )
+      mockFixedReturnReads.offerLenders.data.value = [
+        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
+      ]
+      const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'repay')
+      await flushPromises()
+
+      await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="repay-error"]').text()).toContain('Bank action failed')
+      expect(mockInvalidateQueries).not.toHaveBeenCalled()
+      expect(mockRouterPush).not.toHaveBeenCalled()
     })
   })
 })
