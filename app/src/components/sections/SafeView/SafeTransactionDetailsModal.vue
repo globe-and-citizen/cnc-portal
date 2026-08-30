@@ -28,7 +28,7 @@
           >
             <span class="text-sm text-gray-500">{{ detail.label }}</span>
             <span v-if="detail.type === 'address'" class="font-mono text-sm break-all">
-              <AddressToolTip :address="detail.value" slice />
+              <AddressTooltip :address="detail.value" slice />
             </span>
             <span v-else class="text-sm font-medium break-all">{{ detail.value }}</span>
           </div>
@@ -53,7 +53,7 @@
 import { computed } from 'vue'
 import type { SafeTransaction } from '@/types/safe'
 import type { SafeTransactionStateMeta } from '@/utils/safeTransactionState'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
 

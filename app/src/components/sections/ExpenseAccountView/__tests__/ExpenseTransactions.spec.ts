@@ -13,7 +13,7 @@ import {
 } from '@/tests/mocks'
 import ExpenseTransactions from '../ExpenseTransactions.vue'
 import {
-  AddressToolTipStub,
+  AddressTooltipStub,
   CustomDatePickerStub,
   EXPENSE_ADDRESS,
   TablePaginationStub,
@@ -22,7 +22,7 @@ import {
   USelectStub,
   UTableStub,
   USDC_ADDRESS,
-  UserComponentStub,
+  UserIdentityStub,
   ZERO_ADDRESS,
   buildExpenseQueryResult,
   buildGroupedExpenseQueryResult,
@@ -58,15 +58,15 @@ const createWrapper = (expenseAddress: Address = EXPENSE_ADDRESS): VueWrapper =>
         Select: USelectStub,
         UBadge: UBadgeStub,
         Badge: UBadgeStub,
-        AddressToolTip: AddressToolTipStub,
+        AddressTooltip: AddressTooltipStub,
         CustomDatePicker: CustomDatePickerStub,
-        UserComponent: UserComponentStub,
+        UserIdentity: UserIdentityStub,
         TablePagination: TablePaginationStub,
         'u-card': UCardStub,
         'u-table': UTableStub,
         'u-select': USelectStub,
         'u-badge': UBadgeStub,
-        'user-component': UserComponentStub,
+        'user-component': UserIdentityStub,
         'table-pagination': TablePaginationStub
       }
     }

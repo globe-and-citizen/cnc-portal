@@ -106,7 +106,7 @@ describe('SafeTransactions', () => {
           SafeTransactionActions: true,
           SafeTransactionsTable: true,
           TablePagination: true,
-          AddressToolTip: true,
+          AddressTooltip: true,
           UTable: true
         }
       }

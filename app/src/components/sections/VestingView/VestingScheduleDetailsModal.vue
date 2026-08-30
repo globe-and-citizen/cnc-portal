@@ -11,7 +11,7 @@
         <div class="flex items-center justify-between gap-3">
           <div>
             <p class="font-medium">{{ memberName(schedule.member) }}</p>
-            <AddressToolTip :address="schedule.member" slice class="text-muted text-xs" />
+            <AddressTooltip :address="schedule.member" slice class="text-muted text-xs" />
           </div>
           <UBadge :color="stateMeta(schedule.state).color" variant="soft">
             {{ stateMeta(schedule.state).label }}
@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import type { VestingSchedule } from '@/types/vesting'
 import { formatDateUtc, fromUnix } from '@/utils/format'
 import {

@@ -64,9 +64,9 @@ sufficient: update the affected journey, rules, criteria, gap, or verification s
 5. Run the relevant Markdown and subproject validations.
 
 The validator is intentionally conservative: an unrelated refactor inside a documented directory still requires an explicit documentation
-review. It excludes only pure source relocations and the matching local import or static-asset-reference updates needed to preserve the same
-targets; these changes leave the documented runtime behaviour unchanged. If the observable behaviour is unchanged for any other change,
-record that fact through the normal review process while keeping the existing statements accurate.
+review. It excludes only pure source relocations or renames and the matching local import, component-identifier, or static-asset-reference
+updates needed to preserve the same targets; these changes leave the documented runtime behaviour unchanged. If the observable behaviour is
+unchanged for any other change, record that fact through the normal review process while keeping the existing statements accurate.
 
 ## Validation
 

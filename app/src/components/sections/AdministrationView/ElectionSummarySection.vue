@@ -60,7 +60,7 @@
         <ElectionStats :formatted-election="formattedElection" />
       </div>
     </div>
-    <CurrentBoDElection404
+    <ElectionSummaryEmptyState
       v-else
       @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
     />
@@ -76,7 +76,7 @@ import { classifyError, log } from '@/utils'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from './ElectionActions.vue'
-import CurrentBoDElection404 from './CurrentBoDElection404.vue'
+import ElectionSummaryEmptyState from './ElectionSummaryEmptyState.vue'
 import { useBoDElections, useElectionsCreateElection } from '@/composables/elections'
 import { useCreateElectionNotificationsMutation } from '@/queries/action.queries'
 

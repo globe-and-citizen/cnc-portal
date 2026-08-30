@@ -60,7 +60,7 @@ describe('ShareholderList', () => {
         stubs: {
           TableComponent: TableComponentStub,
           MintForm: MintFormStub,
-          UserComponent: true
+          UserIdentity: true
         }
       }
     })

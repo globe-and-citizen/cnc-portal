@@ -24,6 +24,31 @@ Keep the requested change scoped. A component should describe what it renders:
 If adjacent code materially risks correctness, security, or the behaviour being edited, report it and create or use a follow-up issue. Do
 not expand a focused change into opportunistic component refactoring.
 
+## Naming
+
+Name every component in PascalCase as **domain or subject + rendered role**. A reader should be able to tell what the component renders and
+whether it owns a dialog shell from its filename and import alone.
+
+| Role             | Use when the component renders…                                                               |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| `Form`           | Field collection, validation, and submission content; it can be mounted inside another shell. |
+| `Modal`          | A dialog shell that owns its `UModal` or equivalent dialog surface.                           |
+| `Slideover`      | A slide-over shell that owns its `USlideover` surface.                                        |
+| `Content`        | Content mounted by a parent-owned dialog or slide-over shell.                                 |
+| `Card`           | One bounded information or action panel.                                                      |
+| `Section`        | A coherent page region, potentially composed of cards, a table, or actions.                   |
+| `Table` / `List` | A tabular collection / a non-tabular collection respectively.                                 |
+| `Cell`           | A compact value presentation for a table row or dense list.                                   |
+| `Identity`       | An avatar, name, role, or address representation of one person or entity.                     |
+| `EmptyState`     | The no-data state for an otherwise populated region; do not call it `404`.                    |
+
+- Do not use `Component`, `Generic`, or `Custom` as a name suffix or prefix when the rendered role is known.
+- Use one spelling and casing for shared terms: `Tooltip` (not `ToolTip`) and `Bod` for Board-of-Directors component names.
+- `Modal` describes the shell, not merely content that happens to appear in a modal. Name parent-supplied dialog content with its actual
+  role, such as `DeleteClaimConfirmation` or `BodApprovalContent`.
+- Before renaming an existing component, audit its rendered responsibility and production consumers. Rename the source with `git mv`, then
+  update imports, local test stubs, documentation links, and generated declarations together. Do not apply blanket suffix substitutions.
+
 ## Props
 
 Define with TypeScript interface; use `withDefaults` for optionals:

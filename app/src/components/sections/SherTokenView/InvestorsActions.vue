@@ -5,7 +5,7 @@
         <h3 class="text-lg font-medium text-neutral-900 dark:text-white">Investor actions</h3>
         <div class="flex items-center gap-2">
           <span class="">Contract Address :</span>
-          <AddressToolTip :address="investorAddress" v-if="investorAddress" />
+          <AddressTooltip :address="investorAddress" v-if="investorAddress" />
         </div>
       </div>
     </template>
@@ -52,7 +52,7 @@
 import { computed, watch } from 'vue'
 import { useTeamStore } from '@/stores'
 import { log } from '@/utils'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
 import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'

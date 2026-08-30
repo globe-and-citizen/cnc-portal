@@ -10,7 +10,7 @@
         :key="index"
         class="overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-t from-emerald-100 to-emerald-50 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
       >
-        <UserComponentCol
+        <UserIdentity
           :user="
             teamStore.currentTeamMeta?.data?.members.find(
               (m) => m.address === memberAddress
@@ -25,13 +25,13 @@
     <!-- <div v-else class="col-span-full text-center text-gray-500">
       No Board of Directors members found.
     </div> -->
-    <CurrentBoDSection404 v-else />
+    <BodMembersEmptyState v-else />
   </UCard>
 </template>
 <script setup lang="ts">
 import { boardOfDirectorsAbi, electionsAbi } from '@/artifacts/abi/generated'
-import UserComponentCol from '@/components/ui/UserComponent.vue'
-import CurrentBoDSection404 from './CurrentBoDSection404.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import BodMembersEmptyState from './BodMembersEmptyState.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'

@@ -33,10 +33,10 @@ vi.mock('@nuxt/ui/components/Card.vue', () => ({
   }
 }))
 
-import TransactionDetailModal from '../TransactionDetailModal.vue'
+import TransactionDetailSlideover from '../TransactionDetailSlideover.vue'
 
-const AddressToolTipStub = defineComponent({
-  name: 'AddressToolTip',
+const AddressTooltipStub = defineComponent({
+  name: 'AddressTooltip',
   props: {
     address: { type: String, required: true },
     slice: { type: Boolean, required: false },
@@ -45,8 +45,8 @@ const AddressToolTipStub = defineComponent({
   template: '<span data-test="address-tooltip">{{ address }}</span>'
 })
 
-const UserComponentStub = defineComponent({
-  name: 'UserComponent',
+const UserIdentityStub = defineComponent({
+  name: 'UserIdentity',
   props: {
     user: { type: Object, required: false }
   },
@@ -67,20 +67,20 @@ const BASE_TRANSACTION: TransactionHistoryItemRow = {
 }
 
 const mountComponent = (overrides: Partial<TransactionHistoryItemRow> = {}, open = true) =>
-  mount(TransactionDetailModal, {
+  mount(TransactionDetailSlideover, {
     props: {
       transaction: { ...BASE_TRANSACTION, ...overrides },
       open
     },
     global: {
       stubs: {
-        AddressToolTip: AddressToolTipStub,
-        UserComponent: UserComponentStub
+        AddressTooltip: AddressTooltipStub,
+        UserIdentity: UserIdentityStub
       }
     }
   })
 
-describe('TransactionDetailModal', () => {
+describe('TransactionDetailSlideover', () => {
   it('displays the friendly type label in the event badge', () => {
     const wrapper = mountComponent({ type: 'tokenTransfer' })
 

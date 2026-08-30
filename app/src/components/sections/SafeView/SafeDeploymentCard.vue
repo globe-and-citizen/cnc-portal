@@ -14,7 +14,7 @@
       <div class="space-y-2 text-sm">
         <div class="flex flex-col gap-1">
           <span class="text-gray-500">Owner:</span>
-          <AddressToolTip
+          <AddressTooltip
             v-if="userDataStore.address"
             :address="userDataStore.address"
             class="max-w-full font-mono text-xs break-all"
@@ -100,7 +100,7 @@ import { log } from '@/utils'
 import { NETWORK } from '@/constant'
 import { useToast } from '@nuxt/ui/composables'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 
 interface Props {
   teamId: number

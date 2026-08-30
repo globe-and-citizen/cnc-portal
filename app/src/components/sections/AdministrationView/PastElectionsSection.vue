@@ -8,9 +8,9 @@
     <!-- <div v-else-if="elections.length === 0" class="flex w-full h-96 justify-center items-center">
       <div class="text-gray-500">No past elections available</div>
     </div> -->
-    <PastBoDElection404 v-else-if="pastElections?.length === 0" :is-loading="isLoading" />
+    <PastElectionsEmptyState v-else-if="pastElections?.length === 0" :is-loading="isLoading" />
     <div v-else class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <PastBoDElectionCard
+      <PastElectionCard
         v-for="(election, index) in pastElections"
         :key="index"
         :election="election"
@@ -20,8 +20,8 @@
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
-import PastBoDElectionCard from './PastBoDElectionCard.vue'
-import PastBoDElection404 from './PastBoDElection404.vue'
+import PastElectionCard from './PastElectionCard.vue'
+import PastElectionsEmptyState from './PastElectionsEmptyState.vue'
 import { useTeamStore } from '@/stores'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { config } from '@/wagmi.config'

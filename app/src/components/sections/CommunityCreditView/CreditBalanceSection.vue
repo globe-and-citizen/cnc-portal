@@ -21,7 +21,7 @@
       </div>
       <div v-if="fixedReturnAddress" class="flex items-center gap-2">
         <div class="text-sm text-gray-600">Contract Address:</div>
-        <AddressToolTip :address="fixedReturnAddress" />
+        <AddressTooltip :address="fixedReturnAddress" />
       </div>
     </div>
   </UCard>
@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
 

@@ -133,7 +133,11 @@ Not decided yet — to review before considering v0 complete.
   [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-V0-001` and `002`).
 - [Payment history view](../../../app/src/views/team/[id]/PaymentGate/HistoryView.vue),
   [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue),
-  [transaction-detail modal](../../../app/src/components/ui/TransactionDetailModal.vue), and
+  [transaction-detail slide-over](../../../app/src/components/ui/TransactionDetailSlideover.vue), and
   [useFactureHistory](../../../app/src/composables/paymentGate/useFactureHistory.ts) (`US-PAYGATE-V0-004`).
 - [Recall/reference view](../../../app/src/views/team/[id]/PaymentGate/ReferenceView.vue) and its
   [recheck-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-V0-005`).
+
+## Related Documentation
+
+- [Transaction History implementation](../../implementation/transaction-history/README.md)

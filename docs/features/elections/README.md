@@ -322,7 +322,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
-- [Election creation workflow](../../../app/src/components/sections/AdministrationView/CurrentBoDElectionSection.vue)
+- [Election creation workflow](../../../app/src/components/sections/AdministrationView/ElectionSummarySection.vue)
 - [Election creation form](../../../app/src/components/sections/AdministrationView/forms/CreateElectionForm.vue)
 - [Election action guards](../../../app/src/components/sections/AdministrationView/ElectionActions.vue)
 - [Election reads and writes](../../../app/src/composables/elections/)

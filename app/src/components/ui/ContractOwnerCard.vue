@@ -23,7 +23,7 @@
       <div class="text-lg text-gray-500">
         <span class="flex items-center gap-4">
           Owner address:
-          <AddressToolTip :address="ownerUser.address" />
+          <AddressTooltip :address="ownerUser.address" />
         </span>
       </div>
     </div>
@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useTeamStore } from '@/stores/'
 import { type User } from '@/types/user'
 import type { Member } from '@/types/member'

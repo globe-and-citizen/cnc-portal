@@ -5,7 +5,7 @@
   </div>
   <div class="grid grid-cols-2 gap-4" data-test="members-list">
     <div class="flex items-center" v-for="member of teamMembers" :key="member.address">
-      <UserComponent
+      <UserIdentity
         class="bg-muted grow rounded-lg p-4 hover:cursor-pointer"
         :user="member"
         @click="addMember(member)"
@@ -24,7 +24,7 @@
 </template>
 
 <script lang="ts" setup>
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
 import { ref } from 'vue'
 import type { MemberSelectionScope, User } from '@/types'

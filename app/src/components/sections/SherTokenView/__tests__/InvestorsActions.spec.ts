@@ -54,7 +54,7 @@ describe('InvestorsActions.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          AddressToolTip: true,
+          AddressTooltip: true,
           DistributeMintAction: DistributeMintActionStub,
           MintTokenAction: MintTokenActionStub,
           PayDividendsAction: PayDividendsActionStub,

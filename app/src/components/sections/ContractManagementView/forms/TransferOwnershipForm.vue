@@ -51,7 +51,7 @@
         />
 
         <div class="h-20">
-          <UserComponent
+          <UserIdentity
             class="bg-muted grow rounded-lg p-4 hover:cursor-pointer"
             v-if="input.address"
             :user="input"
@@ -107,7 +107,7 @@ import { useTeamStore } from '@/stores'
 import { isAddress, type Address } from 'viem'
 import { z } from 'zod'
 import type { User } from '@/types'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 
 const props = defineProps<{ loading: boolean; isBodAction: boolean }>()
 const emits = defineEmits(['transfer-ownership'])

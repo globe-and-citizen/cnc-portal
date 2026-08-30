@@ -23,7 +23,7 @@ describe('ContractOwnerCard', () => {
   })
 
   const globalStubs = {
-    AddressToolTip: {
+    AddressTooltip: {
       props: ['address'],
       template: '<span class="addr">{{ address }}</span>'
     }

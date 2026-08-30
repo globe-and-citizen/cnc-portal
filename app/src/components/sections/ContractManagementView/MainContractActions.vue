@@ -55,19 +55,19 @@
             </div>
             <div class="py-4">
               <dt class="text-muted">Contract address</dt>
-              <dd class="mt-2"><AddressToolTip :address="row.address" :slice="true" /></dd>
+              <dd class="mt-2"><AddressTooltip :address="row.address" :slice="true" /></dd>
             </div>
             <div class="py-4">
               <dt class="text-muted">Owner</dt>
               <dd class="mt-2">
-                <AddressToolTip v-if="row.owner" :address="row.owner" :slice="true" />
+                <AddressTooltip v-if="row.owner" :address="row.owner" :slice="true" />
                 <span v-else class="text-muted">Not available</span>
               </dd>
             </div>
             <div class="py-4">
               <dt class="text-muted">Deployer</dt>
               <dd class="mt-2">
-                <AddressToolTip v-if="row.deployer" :address="row.deployer" :slice="true" />
+                <AddressTooltip v-if="row.deployer" :address="row.deployer" :slice="true" />
                 <span v-else class="text-muted">Not available</span>
               </dd>
             </div>
@@ -123,7 +123,7 @@
           :pending-actions="formattedActions"
           @view-details="viewPendingAction"
         />
-        <BodApprovalModal
+        <BodApprovalContent
           v-if="showApprovalModal && currentStep === 2"
           :row="selectedRow"
           :loading="isLoadingApproveAction"
@@ -140,7 +140,7 @@ import { computed, ref, toRef, watch } from 'vue'
 import { useClipboard } from '@vueuse/core'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { Abi, Address } from 'viem'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { NETWORK } from '@/constant'
 import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useBodApproveAction } from '@/composables/bod/writes'
@@ -151,7 +151,7 @@ import { useGetBodActionsQuery } from '@/queries'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { TableRow } from '@/types/table'
 import { filterAndFormatActions, getContractPresentation } from '@/utils'
-import BodApprovalModal from './BodApprovalModal.vue'
+import BodApprovalContent from './BodApprovalContent.vue'
 import ContractReadDataSection from './ContractReadDataSection.vue'
 import PendingEventsList from './PendingEventsList.vue'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'

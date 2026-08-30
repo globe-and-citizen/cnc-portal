@@ -22,7 +22,7 @@
 
             <div class="flex items-center gap-2">
               <img :src="addressIconPath" alt="" class="h-4 w-4" />
-              <AddressToolTip :address="displayedMember?.address" data-test="claim-user-address" />
+              <AddressTooltip :address="displayedMember?.address" data-test="claim-user-address" />
             </div>
           </div>
         </div>
@@ -50,7 +50,7 @@ import { computed } from 'vue'
 import type { Address } from 'viem'
 import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 
 interface Props {
   memberAddress: Address

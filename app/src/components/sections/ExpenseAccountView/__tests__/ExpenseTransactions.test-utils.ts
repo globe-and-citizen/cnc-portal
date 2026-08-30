@@ -98,8 +98,8 @@ export const CustomDatePickerStub = defineComponent({
   `
 })
 
-export const AddressToolTipStub = defineComponent({
-  name: 'AddressToolTip',
+export const AddressTooltipStub = defineComponent({
+  name: 'AddressTooltip',
   template: '<div />'
 })
 
@@ -108,8 +108,8 @@ export const UBadgeStub = defineComponent({
   template: '<span><slot /></span>'
 })
 
-export const UserComponentStub = defineComponent({
-  name: 'UserComponent',
+export const UserIdentityStub = defineComponent({
+  name: 'UserIdentity',
   props: {
     user: { type: Object, required: false }
   },

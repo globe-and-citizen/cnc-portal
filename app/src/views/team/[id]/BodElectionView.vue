@@ -1,14 +1,14 @@
 <template>
-  <CurrentBoDSection />
-  <CurrentBoDElectionSection v-if="nextElectionId" :election-id="currentElectionId" />
-  <PastBoDElectionsSection />
+  <BodMembersSection />
+  <ElectionSummarySection v-if="nextElectionId" :election-id="currentElectionId" />
+  <PastElectionsSection />
   <ContractOwnerCard v-if="electionsAddress" :contractAddress="electionsAddress" />
 </template>
 
 <script setup lang="ts">
-import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
-import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
-import PastBoDElectionsSection from '@/components/sections/AdministrationView/PastBoDElectionsSection.vue'
+import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
+import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
+import PastElectionsSection from '@/components/sections/AdministrationView/PastElectionsSection.vue'
 import { useReadContract } from '@wagmi/vue'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'

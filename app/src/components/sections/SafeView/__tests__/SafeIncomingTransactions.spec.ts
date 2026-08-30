@@ -97,7 +97,7 @@ const TableStub = defineComponent({
   `
 })
 
-const AddressToolTipStub = defineComponent({
+const AddressTooltipStub = defineComponent({
   props: ['address', 'slice', 'type'],
   template: '<div data-test="address-tooltip">{{ address }}</div>'
 })
@@ -108,7 +108,7 @@ const createWrapper = (props = {}): VueWrapper =>
     global: {
       stubs: {
         TableComponent: TableStub,
-        AddressToolTip: AddressToolTipStub
+        AddressTooltip: AddressTooltipStub
       }
     }
   })

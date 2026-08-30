@@ -44,7 +44,7 @@
       ]"
     >
       <template #address-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.address" class="text-xs" />
+        <AddressTooltip :address="row.address" class="text-xs" />
       </template>
 
       <template #action-cell="{ row: { original: row } }">
@@ -72,7 +72,7 @@ import { ref, watch, computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import type { TeamContract } from '@/types'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
 import type { Address } from 'viem'

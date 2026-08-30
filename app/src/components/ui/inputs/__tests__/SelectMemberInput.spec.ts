@@ -37,8 +37,8 @@ const stubs = {
     props: ['text'],
     template: '<div><slot /></div>'
   },
-  UserComponent: {
-    name: 'UserComponent',
+  UserIdentity: {
+    name: 'UserIdentity',
     props: ['user'],
     template: '<div>{{ user.name }}</div>'
   }
