@@ -17,6 +17,9 @@ import {
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
 const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
+const repaymentLenderData = [
+  { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
+]
 
 const { store } = vi.hoisted(() => {
   const store = {
@@ -41,6 +44,10 @@ const { store } = vi.hoisted(() => {
 
 vi.mock('@/stores/communityCredit', () => ({
   useCommunityCreditStore: () => store
+}))
+
+vi.mock('@/components/sections/CommunityCreditView/CreditAccountTransactions.vue', () => ({
+  default: { template: '<div data-test="credit-transactions" />' }
 }))
 
 import IndexView from '../IndexView.vue'
@@ -69,6 +76,7 @@ describe('Community Credit views', () => {
     resetStore()
     mockRouterPush.mockClear()
     mockInvalidateQueries.mockClear()
+    mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockResolvedValue(undefined)
     mockFixedReturnReads.getLendingOffer.data.value = null
     mockFixedReturnReads.offerLenders.data.value = []
     mockFixedReturnReads.allOffers.data.value = []
@@ -271,9 +279,7 @@ describe('Community Credit views', () => {
 
     it('renders the Repay tab straight from its route param, same panel as the Repay round button', async () => {
       store.isOwner = true
-      mockFixedReturnReads.offerLenders.data.value = [
-        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-      ]
+      mockFixedReturnReads.offerLenders.data.value = repaymentLenderData
       const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'repay')
       await flushPromises()
 
@@ -285,9 +291,7 @@ describe('Community Credit views', () => {
     it('keeps repayment writes and cache refreshes in the route-owning view', async () => {
       store.isOwner = true
       mockBankReads.owner.data.value = MOCK_USER_ADDRESS
-      mockFixedReturnReads.offerLenders.data.value = [
-        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-      ]
+      mockFixedReturnReads.offerLenders.data.value = repaymentLenderData
       const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'repay')
       await flushPromises()
 
@@ -321,9 +325,7 @@ describe('Community Credit views', () => {
       mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockRejectedValueOnce(
         new BaseError('reverted', { cause: reverted })
       )
-      mockFixedReturnReads.offerLenders.data.value = [
-        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-      ]
+      mockFixedReturnReads.offerLenders.data.value = repaymentLenderData
       const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'repay')
       await flushPromises()
 
