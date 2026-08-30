@@ -3,7 +3,7 @@
 **Scope:** The shared client-side selection of one or more users across team setup, member administration, elections, Safe signers,
 ownership transfers, and Vesting beneficiaries
 
-**Last verified:** 2026-08-24
+**Last verified:** 2026-08-30
 
 This capability provides the common selection behaviour used by several product journeys. Product permissions and outcomes remain owned by
 their feature documentation; this document owns only the shared selection boundary.
@@ -38,6 +38,8 @@ flowchart LR
 - A current team member cannot be selected when the scope excludes team members.
 - A current Safe owner cannot be selected as a new signer.
 - Team-member scope reads the current team members; the other scopes use the user-search query.
+- The Contract Management ownership-transfer consumer keeps Board-approval information separate from the selected-member scope, so the
+  approval route never changes who is eligible for selection.
 
 ## Implementation Evidence
 

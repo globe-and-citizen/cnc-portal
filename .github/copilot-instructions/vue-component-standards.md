@@ -1,7 +1,7 @@
 # Vue Component Standards
 
-> **Canonical reference**: `app/src/components/ui/__tests__/SelectComponent.spec.ts` shows the props/emits/data-test contract from the test
-> side.
+> **Canonical reference**: `app/src/components/utils/__tests__/SelectMemberWithTokenInput.spec.ts` shows the Nuxt UI props/data-test
+> contract from the test side.
 >
 > See [the frontend-change skill](../../.agents/skills/cnc-frontend-change/SKILL.md) for the workflow that routes frontend changes to these
 > standards.

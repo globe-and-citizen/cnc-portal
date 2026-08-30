@@ -38,7 +38,6 @@ const mountComponent = (props = {}) =>
       stubs: {
         TransferOptionCard: TransferOptionCardStub,
         SelectMemberInput: SelectMemberInputStub,
-        BodAlert: { template: '<div data-test="bod-alert" />' },
         UserComponent: { template: '<div data-test="user-component" />', props: ['user'] },
         IconifyIcon: { template: '<span />' },
         UAlert: {
@@ -193,10 +192,11 @@ describe('TransferOwnershipForm.vue', () => {
       expect(wrapper.find('[data-test="back-button"]').exists()).toBe(false)
     })
 
-    it('shows BodAlert when isBodAction=true', async () => {
+    it('shows the Board approval notice when isBodAction=true', async () => {
       const wrapper = mountComponent({ isBodAction: true })
       await nextTick()
-      expect(wrapper.find('[data-test="bod-alert"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="bod-action-alert"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('This will create a BOD action')
     })
 
     it('transfer button uses full justify-end layout when isBodAction=true', async () => {

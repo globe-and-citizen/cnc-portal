@@ -29,16 +29,13 @@
         placeholder="Member Address"
       />
       |
-      <SelectComponent
+      <USelect
         v-if="filteredMembers.length > 0"
         v-model="input.token"
-        :options="options"
+        :items="options"
         :disabled="teamStore.currentTeamMeta.isPending"
-        :format-value="
-          (value: string) => {
-            return value === `SepoliaETH` ? `SepETH` : value
-          }
-        "
+        aria-label="Select token"
+        data-test="token-selector"
       />
     </div>
     <!-- Dropdown positioned relative to the input -->
@@ -73,7 +70,6 @@
 import { computed, ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
-import SelectComponent from '@/components/ui/SelectComponent.vue'
 import { useTeamStore } from '@/stores'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '../ui/UserComponent.vue'
@@ -102,7 +98,7 @@ const tokens = ref({
 const options = computed(() => {
   return Object.entries(tokens.value).map(([symbol, address]) => ({
     value: address,
-    label: symbol
+    label: symbol === 'SepoliaETH' ? 'SepETH' : symbol
   }))
 })
 

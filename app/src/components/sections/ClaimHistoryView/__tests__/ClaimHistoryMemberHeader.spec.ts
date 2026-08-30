@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ClaimHistoryMemberHeader from '@/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue'
-import { mockTeamData, mockTeamStore, renderWithProviders } from '@/tests/mocks'
+import { mockRouterPush, mockTeamData, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
 describe('ClaimHistoryMemberHeader', () => {
   const baseMembers = [...mockTeamData.members]
@@ -14,6 +14,7 @@ describe('ClaimHistoryMemberHeader', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRouterPush.mockClear()
     mockTeamStore.currentTeamMeta = {
       isPending: false,
       data: {
@@ -65,7 +66,7 @@ describe('ClaimHistoryMemberHeader', () => {
     expect(wrapper.find('[data-test="member-header"]').exists()).toBe(false)
   })
 
-  it('renders header but hides selector when memberAddress is falsy', () => {
+  it('renders header but hides member selector when memberAddress is falsy', () => {
     mockTeamStore.currentTeamMeta = {
       isPending: false,
       data: {
@@ -82,7 +83,26 @@ describe('ClaimHistoryMemberHeader', () => {
     const wrapper = createWrapper('')
 
     expect(wrapper.find('[data-test="member-header"]').exists()).toBe(true)
-    expect(wrapper.findComponent({ name: 'SelectMemberItem' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'USelectMenu' }).exists()).toBe(false)
+  })
+
+  it('routes to the selected member claim history from the searchable selector', async () => {
+    const member = mockTeamData.members[0]
+    const nextMember = mockTeamData.members[1]
+    if (!member || !nextMember) throw new Error('Mock member data is required')
+
+    const wrapper = createWrapper(member.address)
+    const selector = wrapper.findComponent({ name: 'USelectMenu' })
+
+    expect(selector.props('searchInput')).toEqual({ placeholder: 'Search members…' })
+    expect(selector.props('filterFields')).toEqual(['label', 'description'])
+
+    await selector.vm.$emit('update:modelValue', nextMember.address)
+
+    expect(mockRouterPush).toHaveBeenCalledWith({
+      name: 'payroll-history',
+      params: { id: mockTeamStore.currentTeamId, memberAddress: nextMember.address }
+    })
   })
 
   it('handles undefined memberAddress safely', () => {
