@@ -289,6 +289,7 @@ flowchart LR
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
+- [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Money Flow Catalogue](./money-flow-catalogue.md)
 - [Accounting Specification and Scope](./cnc-accounting-spec.md)
 - [Contract Migration History](./contract-migration-history.md)

@@ -137,7 +137,7 @@ import { isAddress } from 'viem'
 import { z } from 'zod'
 import type { User } from '@/types'
 import { today, getLocalTimeZone, type CalendarDate } from '@internationalized/date'
-import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
+import SelectMemberWithTokenInput from '@/components/ui/inputs/SelectMemberWithTokenInput.vue'
 
 const props = defineProps<{
   loadingApprove: boolean

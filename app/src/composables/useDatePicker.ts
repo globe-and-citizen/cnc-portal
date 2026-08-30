@@ -21,7 +21,7 @@ import {
 } from '@/utils/datePicker'
 
 /**
- * Reactive state for the dual-mode {@link AccountingDatePicker}. Ported from the dashboard.
+ * Reactive state for the dual-mode {@link DatePicker}. Ported from the dashboard.
  *
  * Each steppable preset keeps its own independent anchor, so the dropdown can show
  * `End of month → February 2026` next to `End of quarter → Jul – Sep 2025`. The active

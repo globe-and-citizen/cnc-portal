@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
 import { z } from 'zod'
-import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
+import SelectMemberContractsInput from '../ui/inputs/SelectMemberContractsInput.vue'
 import TokenAmount from './TokenAmount.vue'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import { isValidPositiveTokenAmount } from '@/utils/constantUtil'

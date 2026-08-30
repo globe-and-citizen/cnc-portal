@@ -5,7 +5,7 @@ import { useDatePicker } from '@/composables/useDatePicker'
 import type { DatePickerMode, DatePickerValue } from '@/utils/datePicker'
 
 /**
- * Dual-mode accounting date picker. Ported from the dashboard so both apps share the picker.
+ * Dual-mode date picker shared by accounting reports and transaction histories.
  *
  * - `mode="date"` selects a single "as of" date (Balance Sheet, Positions, …); `v-model` is a `Date`.
  * - `mode="range"` selects a from/to period (Income Statement, Ledger, …); `v-model` is a `Range`.

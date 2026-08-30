@@ -2,7 +2,7 @@
 <!--
   Range date filter for the transaction-history tables.
 
-  Thin adapter over the ported `AccountingDatePicker` (run in `range` mode): it keeps the
+  Thin adapter over the shared `DatePicker` (run in `range` mode): it keeps the
   legacy tuple contract (`v-model: [Date, Date] | null`) so the existing tables, their test
   stubs and `useTransactionTable` bind it unchanged, while delegating all of the UI and date
   logic to the shared picker. Defaults to "All time" and persists each table's selection
@@ -10,7 +10,7 @@
 -->
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import type { DatePickerValue } from '@/utils/datePicker'
 
 interface Props {
@@ -26,7 +26,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: [Date, Date] | null): void
 }>()
 
-// Inner Range model handed to AccountingDatePicker; seeded from the incoming tuple (if any).
+// Inner Range model handed to DatePicker; seeded from the incoming tuple (if any).
 const range = ref<DatePickerValue | undefined>(
   props.modelValue ? { start: props.modelValue[0], end: props.modelValue[1] } : undefined
 )
@@ -41,7 +41,7 @@ watch(range, (value) => {
 
 <template>
   <div :data-test="`${dataTestPrefix}-date-select`">
-    <AccountingDatePicker
+    <DatePicker
       v-model="range"
       mode="range"
       :storage-key="`transaction-history-range-${dataTestPrefix}`"

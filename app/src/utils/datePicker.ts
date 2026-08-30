@@ -7,7 +7,7 @@ import { formatDate, formatDateShort, formatMonthYear } from '@/utils/format'
 dayjs.extend(quarterOfYear)
 
 /**
- * Pure date logic shared by the dual-mode {@link AccountingDatePicker}.
+ * Pure date logic shared by the dual-mode {@link DatePicker}.
  *
  * Ported verbatim from the dashboard so both apps share the same picker behaviour.
  *

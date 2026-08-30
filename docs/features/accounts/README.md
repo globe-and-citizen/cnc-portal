@@ -520,7 +520,7 @@ flowchart LR
   [Safe conflict warning tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactionsWarning.spec.ts)
 - [Expense Account page](../../../app/src/views/team/%5Bid%5D/Accounts/ExpenseAccountView.vue),
   [expense approval form](../../../app/src/components/forms/ApproveUsersEIP712Form.vue),
-  [member and token selector](../../../app/src/components/utils/SelectMemberWithTokenInput.vue),
+  [member and token selector](../../../app/src/components/ui/inputs/SelectMemberWithTokenInput.vue),
   [Expense API controller](../../../backend/src/controllers/expenseController.ts), and
   [Expense Account contract](../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Expense component tests](../../../app/src/components/sections/ExpenseAccountView/__tests__),
@@ -530,6 +530,7 @@ flowchart LR
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
+- [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Bank contract](../../contracts/features/bank/README.md)
 - [Expense Account contract](../../contracts/features/expense-account/README.md)
 - [Safe Deposit Router contract](../../contracts/features/safe-deposit-router/README.md)

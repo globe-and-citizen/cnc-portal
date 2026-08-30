@@ -4,8 +4,8 @@ import { mount } from '@vue/test-utils'
 import CustomDatePicker from '../CustomDatePicker.vue'
 
 // Stub the shared picker: capture its props and let tests drive its `update:modelValue`.
-const AccountingDatePickerStub = defineComponent({
-  name: 'AccountingDatePicker',
+const DatePickerStub = defineComponent({
+  name: 'DatePicker',
   props: ['modelValue', 'mode', 'storageKey'],
   emits: ['update:modelValue'],
   setup() {
@@ -18,11 +18,10 @@ const PREFIX = 'expense-transaction-history'
 const mountComponent = (modelValue: [Date, Date] | null = null) =>
   mount(CustomDatePicker, {
     props: { modelValue, dataTestPrefix: PREFIX },
-    global: { stubs: { AccountingDatePicker: AccountingDatePickerStub } }
+    global: { stubs: { DatePicker: DatePickerStub } }
   })
 
-const picker = (wrapper: ReturnType<typeof mountComponent>) =>
-  wrapper.findComponent(AccountingDatePickerStub)
+const picker = (wrapper: ReturnType<typeof mountComponent>) => wrapper.findComponent(DatePickerStub)
 
 describe('CustomDatePicker', () => {
   it('renders the shared picker inside the prefixed test wrapper', () => {

@@ -13,11 +13,7 @@
             </span>
             <span class="text-[15px] font-semibold">Balance sheet</span>
           </div>
-          <AccountingDatePicker
-            v-model="asOf"
-            mode="date"
-            storage-key="cnc-accounting-balance-asof"
-          />
+          <DatePicker v-model="asOf" mode="date" storage-key="cnc-accounting-balance-asof" />
         </div>
       </template>
 
@@ -86,7 +82,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
 import StatementLine from './StatementLine.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'

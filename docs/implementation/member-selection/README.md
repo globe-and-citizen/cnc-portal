@@ -43,8 +43,8 @@ flowchart LR
 
 ## Implementation Evidence
 
-- [Shared multi-selection control](../../../app/src/components/utils/MultiSelectMemberInput.vue)
-- [Single-member search and selection control](../../../app/src/components/utils/SelectMemberInput.vue)
+- [Shared multi-selection control](../../../app/src/components/ui/inputs/MultiSelectMemberInput.vue)
+- [Single-member search and selection control](../../../app/src/components/ui/inputs/SelectMemberInput.vue)
 - [Selection scope type](../../../app/src/types/member.ts)
 - [Team setup consumer](../../../app/src/components/forms/AddTeamForm.vue)
 - [Team member administration consumer](../../../app/src/components/sections/DashboardView/forms/AddMemberForm.vue)
@@ -52,8 +52,8 @@ flowchart LR
 - [Safe signer consumer](../../../app/src/components/sections/SafeView/forms/AddSignerModal.vue)
 - [Contract ownership recipient consumer](../../../app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue)
 - [Vesting beneficiary consumer](../../../app/src/components/sections/VestingView/forms/VestingGrantDetails.vue)
-- [Selection scope behaviour tests](../../../app/src/components/utils/__tests__/SelectMemberInput.spec.ts)
-- [Multi-selection behaviour tests](../../../app/src/components/utils/__tests__/MultiSelectMemberInput.spec.ts)
+- [Selection scope behaviour tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberInput.spec.ts)
+- [Multi-selection behaviour tests](../../../app/src/components/ui/inputs/__tests__/MultiSelectMemberInput.spec.ts)
 
 ## Related Documentation
 

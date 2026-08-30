@@ -59,8 +59,8 @@
 import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { watchDebounced } from '@vueuse/core'
-import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
-import SelectContractResults from '@/components/utils/SelectContractResults.vue'
+import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
+import SelectContractResults from '@/components/ui/inputs/SelectContractResults.vue'
 import type { Member, TeamContract } from '@/types'
 import { filter } from '@/utils'
 

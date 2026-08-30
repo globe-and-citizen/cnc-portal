@@ -61,7 +61,7 @@
 import { z } from 'zod'
 import { isAddress, parseUnits } from 'viem'
 import { reactive, ref, computed, watch } from 'vue'
-import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
+import SelectMemberContractsInput from '@/components/ui/inputs/SelectMemberContractsInput.vue'
 import MintStakeSection from './MintStakeSection.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useIndividualMint } from '@/composables/investor/writes'

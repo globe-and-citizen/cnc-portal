@@ -143,7 +143,7 @@
 import type { OldProposal, User } from '@/types'
 import { computed, reactive, ref, onMounted, onUnmounted } from 'vue'
 import { z } from 'zod'
-import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
+import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 import { combineDayAndTime, dateToCalendarDate } from '@/utils/dayUtils'
 import { formatDate, formatDuration, formatTimeOfDay } from '@/utils/format'

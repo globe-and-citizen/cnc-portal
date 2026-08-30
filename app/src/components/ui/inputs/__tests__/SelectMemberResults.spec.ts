@@ -1,4 +1,4 @@
-import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
+import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
 import UserComponent from '@/components/ui/UserComponent.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
