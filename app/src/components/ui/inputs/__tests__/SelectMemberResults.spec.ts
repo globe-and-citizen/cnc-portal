@@ -1,5 +1,5 @@
 import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
@@ -37,7 +37,7 @@ const createWrapper = (props = {}) => {
       ...props
     },
     global: {
-      components: { UserComponent }
+      components: { UserIdentity }
     }
   })
 }
@@ -69,7 +69,7 @@ describe('SelectMemberResults', () => {
     expect(rows.length).toBe(3)
   })
 
-  it('should render UserComponent for each member', async () => {
+  it('should render UserIdentity for each member', async () => {
     wrapper = createWrapper({ members: MOCK_MEMBERS })
     await nextTick()
 

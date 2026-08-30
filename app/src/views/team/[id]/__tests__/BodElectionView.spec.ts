@@ -3,9 +3,9 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
-import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
-import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
-import PastBoDElectionsSection from '@/components/sections/AdministrationView/PastBoDElectionsSection.vue'
+import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
+import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
+import PastElectionsSection from '@/components/sections/AdministrationView/PastElectionsSection.vue'
 import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 import { mockLog, useReadContractFn, mockTeamStore } from '@/tests/mocks'
 import { useTeamStore } from '@/stores'
@@ -37,9 +37,9 @@ describe('BodElectionView.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          CurrentBoDSection: true,
-          CurrentBoDElectionSection: true,
-          PastBoDElectionsSection: true,
+          BodMembersSection: true,
+          ElectionSummarySection: true,
+          PastElectionsSection: true,
           ContractOwnerCard: true
         }
       }
@@ -72,29 +72,29 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = 5n
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDSection).exists()).toBe(true)
-      expect(wrapper.findComponent(PastBoDElectionsSection).exists()).toBe(true)
+      expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
+      expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
     })
 
-    it('should render CurrentBoDElectionSection when nextElectionId exists', () => {
+    it('should render ElectionSummarySection when nextElectionId exists', () => {
       mockUseReadContractData.value = 5n
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(true)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(true)
     })
 
-    it('should not render CurrentBoDElectionSection when nextElectionId is null', () => {
+    it('should not render ElectionSummarySection when nextElectionId is null', () => {
       mockUseReadContractData.value = null
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(false)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
     })
 
-    it('should not render CurrentBoDElectionSection when nextElectionId is 0', () => {
+    it('should not render ElectionSummarySection when nextElectionId is 0', () => {
       mockUseReadContractData.value = 0n
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(false)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
     })
 
     it('should render ContractOwnerCard when electionsAddress exists', () => {
@@ -143,7 +143,7 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = 5n
       wrapper = mountComponent()
 
-      const currentElectionSection = wrapper.findComponent(CurrentBoDElectionSection)
+      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
       expect(currentElectionSection.props('electionId')).toBe(4n)
     })
 
@@ -151,7 +151,7 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = 10
       wrapper = mountComponent()
 
-      const currentElectionSection = wrapper.findComponent(CurrentBoDElectionSection)
+      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
       expect(currentElectionSection.props('electionId')).toBe(9n)
     })
 
@@ -159,7 +159,7 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = 1n
       wrapper = mountComponent()
 
-      const currentElectionSection = wrapper.findComponent(CurrentBoDElectionSection)
+      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
       expect(currentElectionSection.props('electionId')).toBe(0n)
     })
 
@@ -167,22 +167,22 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = null
       wrapper = mountComponent()
 
-      // Should not render CurrentBoDElectionSection
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(false)
+      // Should not render ElectionSummarySection
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
     })
 
     it('should return 0n when nextElectionId is undefined', () => {
       mockUseReadContractData.value = null
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(false)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
     })
 
     it('should handle very large election IDs', () => {
       mockUseReadContractData.value = 1000000n
       wrapper = mountComponent()
 
-      const currentElectionSection = wrapper.findComponent(CurrentBoDElectionSection)
+      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
       expect(currentElectionSection.props('electionId')).toBe(999999n)
     })
   })
@@ -201,8 +201,8 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractError.value = new Error('Contract not found')
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDSection).exists()).toBe(true)
-      expect(wrapper.findComponent(PastBoDElectionsSection).exists()).toBe(true)
+      expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
+      expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
     })
   })
 
@@ -212,8 +212,8 @@ describe('BodElectionView.vue', () => {
       wrapper = mountComponent()
 
       // Component should still render basic sections during loading
-      expect(wrapper.findComponent(CurrentBoDSection).exists()).toBe(true)
-      expect(wrapper.findComponent(PastBoDElectionsSection).exists()).toBe(true)
+      expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
+      expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
     })
 
     it('should not show current election section while loading', () => {
@@ -221,16 +221,16 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = null
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(false)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
     })
   })
 
   describe('Component Props', () => {
-    it('should pass correct electionId prop to CurrentBoDElectionSection', () => {
+    it('should pass correct electionId prop to ElectionSummarySection', () => {
       mockUseReadContractData.value = 7n
       wrapper = mountComponent()
 
-      const currentElectionSection = wrapper.findComponent(CurrentBoDElectionSection)
+      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
       expect(currentElectionSection.props('electionId')).toBe(6n)
     })
 
@@ -248,26 +248,26 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = 5n
       wrapper = mountComponent()
 
-      let currentElectionSection = wrapper.findComponent(CurrentBoDElectionSection)
+      let currentElectionSection = wrapper.findComponent(ElectionSummarySection)
       expect(currentElectionSection.props('electionId')).toBe(4n)
 
       mockUseReadContractData.value = 10n
       await wrapper.vm.$nextTick()
 
-      currentElectionSection = wrapper.findComponent(CurrentBoDElectionSection)
+      currentElectionSection = wrapper.findComponent(ElectionSummarySection)
       expect(currentElectionSection.props('electionId')).toBe(9n)
     })
 
-    it('should show/hide CurrentBoDElectionSection based on nextElectionId', async () => {
+    it('should show/hide ElectionSummarySection based on nextElectionId', async () => {
       mockUseReadContractData.value = 5n
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(true)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(true)
 
       mockUseReadContractData.value = null
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(false)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
     })
   })
 
@@ -276,7 +276,7 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = 0n
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(false)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
     })
 
     it('should handle very large bigint values', () => {
@@ -284,7 +284,7 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = largeValue
       wrapper = mountComponent()
 
-      const currentElectionSection = wrapper.findComponent(CurrentBoDElectionSection)
+      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
       expect(currentElectionSection.props('electionId')).toBe(largeValue - 1n)
     })
 
@@ -298,7 +298,7 @@ describe('BodElectionView.vue', () => {
         await wrapper.vm.$nextTick()
       }
 
-      const currentElectionSection = wrapper.findComponent(CurrentBoDElectionSection)
+      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
       expect(currentElectionSection.props('electionId')).toBe(9n)
     })
 
@@ -306,13 +306,13 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = null
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(false)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
 
       mockUseReadContractData.value = 3n
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.findComponent(CurrentBoDElectionSection).exists()).toBe(true)
-      expect(wrapper.findComponent(CurrentBoDElectionSection).props('electionId')).toBe(2n)
+      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(true)
+      expect(wrapper.findComponent(ElectionSummarySection).props('electionId')).toBe(2n)
     })
   })
 
@@ -338,12 +338,12 @@ describe('BodElectionView.vue', () => {
       mockUseReadContractData.value = 5n
       wrapper = mountComponent()
 
-      const initialElectionId = wrapper.findComponent(CurrentBoDElectionSection).props('electionId')
+      const initialElectionId = wrapper.findComponent(ElectionSummarySection).props('electionId')
 
       await wrapper.vm.$forceUpdate()
 
       const afterRerenderElectionId = wrapper
-        .findComponent(CurrentBoDElectionSection)
+        .findComponent(ElectionSummarySection)
         .props('electionId')
       expect(afterRerenderElectionId).toBe(initialElectionId)
     })
@@ -371,24 +371,24 @@ describe('BodElectionView.vue', () => {
   })
 
   // describe('Conditional Rendering Logic', () => {
-  //   it('should always render CurrentBoDSection regardless of election data', () => {
+  //   it('should always render BodMembersSection regardless of election data', () => {
   //     mockUseReadContractData.value = null
   //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(CurrentBoDSection).exists()).toBe(true)
+  //     expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
 
   //     mockUseReadContractData.value = 5n
   //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(CurrentBoDSection).exists()).toBe(true)
+  //     expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
   //   })
 
-  //   it('should always render PastBoDElectionsSection', () => {
+  //   it('should always render PastElectionsSection', () => {
   //     mockUseReadContractData.value = null
   //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(PastBoDElectionsSection).exists()).toBe(true)
+  //     expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
 
   //     mockUseReadContractData.value = 5n
   //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(PastBoDElectionsSection).exists()).toBe(true)
+  //     expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
   //   })
 
   //   it('should conditionally render ContractOwnerCard based on electionsAddress', () => {

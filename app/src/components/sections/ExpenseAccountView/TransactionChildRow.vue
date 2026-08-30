@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center gap-2 py-0.5 pl-4">
     <UBadge :color="color" variant="soft">{{ getTransactionTypeLabel(type) }}</UBadge>
-    <UserComponent :user="resolveUser(otherAddress)" />
+    <UserIdentity :user="resolveUser(otherAddress)" />
     <span v-if="percentage" class="text-muted text-xs">— {{ percentage }}</span>
     <span v-if="Number(amount) > 0 && token !== '-'" class="text-muted text-xs">
       · {{ formatCryptoAmount(String(amount)) }} {{ token }}
@@ -15,7 +15,7 @@ import { computed } from 'vue'
 import { resolveUser, formatCryptoAmount, getTransactionTypeLabel } from '@/utils'
 import { formatPercent } from '@/utils/format'
 import type { UBadgeColor } from '@/types/ui'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 
 const props = withDefaults(
   defineProps<{

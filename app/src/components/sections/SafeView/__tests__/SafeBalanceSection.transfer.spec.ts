@@ -98,7 +98,7 @@ const MOCK_DATA = {
 }
 
 // Component stubs
-const AddressToolTipStub = defineComponent({ template: '<div></div>' })
+const AddressTooltipStub = defineComponent({ template: '<div></div>' })
 const TransferFormStub = defineComponent({
   emits: ['transfer', 'closeModal', 'update:modelValue'],
   props: ['modelValue', 'loading', 'tokens'],
@@ -119,7 +119,7 @@ describe('SafeBalanceSection', () => {
       },
       global: {
         stubs: {
-          AddressToolTip: AddressToolTipStub,
+          AddressTooltip: AddressTooltipStub,
           TransferForm: TransferFormStub
         }
       }

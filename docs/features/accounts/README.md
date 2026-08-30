@@ -526,11 +526,13 @@ flowchart LR
 - [Expense component tests](../../../app/src/components/sections/ExpenseAccountView/__tests__),
   [Expense API tests](../../../backend/src/controllers/__tests__/expenseController.test.ts), and
   [Expense contract tests](../../../contract/test/ExpenseAccountEIP712.spec.ts)
+- [Cash Remuneration account page](../../../app/src/views/team/%5Bid%5D/Accounts/CashRemunerationView.vue)
 
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
+- [Transaction History implementation](../../implementation/transaction-history/README.md)
 - [Bank contract](../../contracts/features/bank/README.md)
 - [Expense Account contract](../../contracts/features/expense-account/README.md)
 - [Safe Deposit Router contract](../../contracts/features/safe-deposit-router/README.md)

@@ -41,8 +41,8 @@ const CustomDatePickerStub = defineComponent({
   template: '<div data-test="investor-date-filter"></div>'
 })
 
-const AddressToolTipStub = defineComponent({
-  name: 'AddressToolTip',
+const AddressTooltipStub = defineComponent({
+  name: 'AddressTooltip',
   template: '<div />'
 })
 
@@ -110,8 +110,8 @@ export const createWrapper = (): VueWrapper =>
         'u-select': USelectStub,
         UBadge: UBadgeStub,
         'u-badge': UBadgeStub,
-        AddressToolTip: AddressToolTipStub,
-        'address-tool-tip': AddressToolTipStub,
+        AddressTooltip: AddressTooltipStub,
+        'address-tool-tip': AddressTooltipStub,
         CustomDatePicker: CustomDatePickerStub,
         'custom-date-picker': CustomDatePickerStub
       }

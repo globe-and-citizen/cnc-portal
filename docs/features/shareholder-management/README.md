@@ -317,6 +317,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 - [Accounts](../accounts/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
+- [Transaction History implementation](../../implementation/transaction-history/README.md)
 - [Accounting](../accounting/README.md)
 - [Contract Management](../contract-management/README.md)
 - [Shareholder migration flow](../../contracts/features/shareholder-migration-flow.md)

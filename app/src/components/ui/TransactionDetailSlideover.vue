@@ -8,11 +8,11 @@
           <div class="space-y-2">
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted">Tx hash</span>
-              <AddressToolTip :address="transaction.txHash" :slice="true" type="transaction" />
+              <AddressTooltip :address="transaction.txHash" :slice="true" type="transaction" />
             </div>
             <div v-if="txSender" class="flex items-center justify-between text-sm">
               <span class="text-muted">Initiator</span>
-              <UserComponent :user="resolveUser(txSender)" />
+              <UserIdentity :user="resolveUser(txSender)" />
             </div>
             <template v-if="receipt">
               <div class="flex items-center justify-between text-sm">
@@ -70,7 +70,7 @@
                 class="flex items-center justify-between gap-4 text-sm"
               >
                 <span class="text-muted shrink-0 font-mono text-xs">{{ param.name }}</span>
-                <AddressToolTip
+                <AddressTooltip
                   v-if="param.isAddress"
                   :address="param.display"
                   :slice="true"
@@ -101,11 +101,11 @@
               <template v-if="event.token === '-'">
                 <div v-if="event.from" class="flex items-center justify-between text-sm">
                   <span class="text-muted text-xs">From</span>
-                  <UserComponent :user="resolveUser(event.from)" />
+                  <UserIdentity :user="resolveUser(event.from)" />
                 </div>
                 <div v-if="event.to" class="flex items-center justify-between text-sm">
                   <span class="text-muted text-xs">To</span>
-                  <UserComponent :user="resolveUser(event.to)" />
+                  <UserIdentity :user="resolveUser(event.to)" />
                 </div>
               </template>
               <template v-else>
@@ -113,7 +113,7 @@
                   <span class="text-muted text-xs">Token</span>
                   <div class="flex items-center gap-1.5">
                     <span class="font-medium">{{ event.token }}</span>
-                    <AddressToolTip
+                    <AddressTooltip
                       v-if="event.tokenAddress"
                       :address="event.tokenAddress"
                       :slice="true"
@@ -126,7 +126,7 @@
                   class="flex items-center justify-between text-sm"
                 >
                   <span class="text-muted text-xs">To</span>
-                  <UserComponent :user="resolveUser(event.to)" />
+                  <UserIdentity :user="resolveUser(event.to)" />
                 </div>
               </template>
               <div v-if="Number(event.amount) > 0" class="flex items-center justify-between">
@@ -180,8 +180,8 @@ import { computed, ref, watch } from 'vue'
 import { decodeFunctionData } from 'viem'
 import type { TransactionReceipt, AbiFunction } from 'viem'
 import type { GroupedTransactionRow, TransactionHistoryItemRow } from '@/types/transaction-history'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import {
   resolveUser,
   formatCryptoAmount,

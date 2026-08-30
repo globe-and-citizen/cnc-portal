@@ -17,7 +17,7 @@
           }"
           class="flex items-center gap-2 text-emerald-700 hover:underline"
         >
-          <UserComponent :user="row.member" />
+          <UserIdentity :user="row.member" />
         </RouterLink>
         <span v-else>-</span>
       </template>
@@ -148,7 +148,7 @@
 import RatePerHourList from '@/components/sections/WeeklyClaimView/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/sections/WeeklyClaimView/RatePerHourTotalList.vue'
 import type { TableColumn } from '@nuxt/ui'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import type { TokenId } from '@/constant'
 import { NETWORK } from '@/constant'
 import { useCurrencyStore, useTeamStore /*, useUserDataStore*/ } from '@/stores'

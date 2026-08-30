@@ -28,7 +28,7 @@
         data-test="user-row"
         @click="handleSelect(member)"
       >
-        <UserComponent
+        <UserIdentity
           class="hover:bg-elevated flex-grow rounded-lg bg-white p-4"
           :user="member"
           :data-test="`user-dropdown-${member.address}`"
@@ -40,7 +40,7 @@
 
 <script lang="ts" setup>
 import { toRef } from 'vue'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import CreditAvatar from '@/components/sections/CommunityCreditView/CreditAvatar.vue'
 import { formatAddress } from '@/utils/formatAddress'
 import { gradientForAddress } from '@/utils'

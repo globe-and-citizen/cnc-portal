@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MultiSelectMemberInput from '../MultiSelectMemberInput.vue'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { createTestingPinia } from '@pinia/testing'
 
 interface Member {
@@ -137,7 +137,7 @@ describe('MultiSelectMemberInput', () => {
       await wrapper.vm.$nextTick()
 
       // Second click - remove member
-      const userComponents = wrapper.findAllComponents(UserComponent)
+      const userComponents = wrapper.findAllComponents(UserIdentity)
       await userComponents[0].trigger('click')
       await wrapper.vm.$nextTick()
 

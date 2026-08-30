@@ -33,7 +33,7 @@
         >
           <p class="text-xs font-medium text-gray-500">Safe address</p>
           <div class="mt-1 font-mono text-sm">
-            <AddressToolTip :address="safeAddress" />
+            <AddressTooltip :address="safeAddress" />
           </div>
         </div>
       </div>
@@ -76,7 +76,7 @@
       </div>
       <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
         <div class="min-w-0 xl:col-span-3">
-          <GenericTokenHoldingsSection :key="safeAddress" :address="safeAddress" class="h-full" />
+          <TokenHoldingsSection :key="safeAddress" :address="safeAddress" class="h-full" />
         </div>
         <div id="safe-control" class="min-w-0 scroll-mt-4 xl:col-span-2">
           <SafeOwnersCard :address="safeAddress" />
@@ -179,10 +179,10 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isAddress, type Address } from 'viem'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSection.vue'
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
-import GenericTokenHoldingsSection from '@/components/ui/GenericTokenHoldingsSection.vue'
+import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'

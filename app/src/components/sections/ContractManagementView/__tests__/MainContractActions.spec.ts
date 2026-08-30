@@ -71,8 +71,8 @@ const stubs = {
     emits: ['view-details'],
     template: '<div data-test="pending-events-list"></div>'
   },
-  BodApprovalModal: {
-    name: 'BodApprovalModal',
+  BodApprovalContent: {
+    name: 'BodApprovalContent',
     props: ['row', 'loading'],
     emits: ['approve-action', 'close'],
     template:

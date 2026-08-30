@@ -10,7 +10,7 @@
 
     <div class="border-default rounded-lg border p-3">
       <p class="text-muted text-xs">Advertising revenue destination</p>
-      <AddressToolTip
+      <AddressTooltip
         v-if="bankAddress"
         :address="bankAddress"
         :slice="false"
@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { parseUnits, type Address } from 'viem'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import {
   useSetCampaignCostPerClick,

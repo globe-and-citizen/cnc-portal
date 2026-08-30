@@ -10,7 +10,7 @@
         </div>
         <div v-if="address" class="min-w-0 text-left sm:text-right">
           <p class="text-xs font-medium text-gray-500">Safe address</p>
-          <AddressToolTip :address="address" class="mt-1 max-w-full" />
+          <AddressTooltip :address="address" class="mt-1 max-w-full" />
         </div>
       </div>
     </template>
@@ -162,7 +162,7 @@ import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
 import { useToast } from '@nuxt/ui/composables'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { useUserDataStore } from '@/stores'
 import { useContractBalance } from '@/composables/useContractBalance'

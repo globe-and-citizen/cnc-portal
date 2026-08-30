@@ -90,7 +90,7 @@ const makeWrapper = () =>
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
-        UserComponent: { template: '<div data-test="user-component" />' },
+        UserIdentity: { template: '<div data-test="user-component" />' },
         RateDotList: { template: '<div data-test="rate-dot-list" />' },
         AddMemberForm: {
           emits: ['memberAdded'],

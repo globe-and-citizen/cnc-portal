@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ElectionUserComponent from '@/components/sections/AdministrationView/ElectionUserComponent.vue'
+import ElectionCandidateIdentity from '@/components/sections/AdministrationView/ElectionCandidateIdentity.vue'
 
-describe('ElectionUserComponent', () => {
+describe('ElectionCandidateIdentity', () => {
   const baseUser = {
     address: '0x1234567890abcdef1234567890abcdef12345678',
     name: 'Alice Example',
@@ -11,7 +11,7 @@ describe('ElectionUserComponent', () => {
   }
 
   it('renders name, address and image (default layout)', () => {
-    const wrapper = mount(ElectionUserComponent, { props: { user: baseUser } })
+    const wrapper = mount(ElectionCandidateIdentity, { props: { user: baseUser } })
 
     const name = wrapper.find('[data-test="user-name"]')
     expect(name.exists()).toBe(true)
@@ -28,7 +28,9 @@ describe('ElectionUserComponent', () => {
   })
 
   it('shows role and address in alternate layout', () => {
-    const wrapper = mount(ElectionUserComponent, { props: { user: baseUser, layout: 'alternate' } })
+    const wrapper = mount(ElectionCandidateIdentity, {
+      props: { user: baseUser, layout: 'alternate' }
+    })
 
     const role = wrapper.find('[data-test="user-role"]')
     expect(role.exists()).toBe(true)
@@ -39,7 +41,7 @@ describe('ElectionUserComponent', () => {
   })
 
   it('shows detailed view with role visible when isDetailedView=true', () => {
-    const wrapper = mount(ElectionUserComponent, {
+    const wrapper = mount(ElectionCandidateIdentity, {
       props: { user: baseUser, isDetailedView: true }
     })
 
@@ -49,7 +51,9 @@ describe('ElectionUserComponent', () => {
   })
 
   it('hides name and details when collapsed', () => {
-    const wrapper = mount(ElectionUserComponent, { props: { user: baseUser, isCollapsed: true } })
+    const wrapper = mount(ElectionCandidateIdentity, {
+      props: { user: baseUser, isCollapsed: true }
+    })
 
     // In collapsed state the detailed content should not be rendered
     const name = wrapper.find('[data-test="user-name"]')
@@ -61,7 +65,7 @@ describe('ElectionUserComponent', () => {
 
   it('uses default avatar when imageUrl is missing', () => {
     const user = { ...baseUser, imageUrl: '' }
-    const wrapper = mount(ElectionUserComponent, { props: { user } })
+    const wrapper = mount(ElectionCandidateIdentity, { props: { user } })
 
     const img = wrapper.find('img')
     expect(img.exists()).toBe(true)

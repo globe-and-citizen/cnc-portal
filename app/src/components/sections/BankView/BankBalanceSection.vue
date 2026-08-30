@@ -27,7 +27,7 @@
         </div>
         <div class="flex items-center gap-2" v-if="bankAddress">
           <div class="text-sm text-gray-600">Contract Address:</div>
-          <AddressToolTip :address="bankAddress" />
+          <AddressTooltip :address="bankAddress" />
         </div>
       </div>
     </div>
@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useStorage } from '@vueuse/core'
 import { type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'

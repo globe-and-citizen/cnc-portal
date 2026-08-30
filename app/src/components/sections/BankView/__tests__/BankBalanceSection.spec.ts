@@ -35,7 +35,7 @@ describe('BankBalanceSection', () => {
         stubs: {
           DepositModal: defineComponent({ name: 'DepositModal', template: '<div />' }),
           TransferModal: defineComponent({ name: 'TransferModal', template: '<div />' }),
-          AddressToolTip: defineComponent({ props: ['address'], template: '<div />' })
+          AddressTooltip: defineComponent({ props: ['address'], template: '<div />' })
         }
       }
     })

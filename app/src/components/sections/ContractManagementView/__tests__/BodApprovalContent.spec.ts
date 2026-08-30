@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 import type { TableRow } from '@/types/table'
-import BodApprovalModal from '@/components/sections/ContractManagementView/BodApprovalModal.vue'
+import BodApprovalContent from '@/components/sections/ContractManagementView/BodApprovalContent.vue'
 import {
   useReadContractFn,
   mockTeamStore,
@@ -36,7 +36,7 @@ function mountComponent(overrides?: { alreadyApproved?: boolean }) {
   }
   const row = baseRow as unknown as TableRow
 
-  return renderWithProviders(BodApprovalModal, {
+  return renderWithProviders(BodApprovalContent, {
     props: {
       loading: false,
       row
@@ -44,7 +44,7 @@ function mountComponent(overrides?: { alreadyApproved?: boolean }) {
   })
 }
 
-describe('BodApprovalModal', () => {
+describe('BodApprovalContent', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Configure store mocks

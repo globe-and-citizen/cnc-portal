@@ -4,7 +4,7 @@ import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import type { TeamContract } from '@/types'
 import { useCampaignManagerSettings } from '@/composables/campaign/reads'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
 import AdvertisingCampaignWorkspace from './AdvertisingCampaignWorkspace.vue'
@@ -96,7 +96,7 @@ function openSettings(manager: TeamContract) {
               <h3 class="text-highlighted font-semibold">Campaign Manager</h3>
               <UBadge color="success" variant="subtle" size="sm">Ready</UBadge>
             </div>
-            <AddressToolTip
+            <AddressTooltip
               :address="selectedManager.address"
               :slice="false"
               class="mt-1 text-xs"

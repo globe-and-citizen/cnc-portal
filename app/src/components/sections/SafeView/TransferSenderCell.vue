@@ -1,12 +1,12 @@
 <template>
   <USkeleton v-if="isLoading" class="h-10 w-32" />
-  <UserComponent v-else :user="userInfo" />
+  <UserIdentity v-else :user="userInfo" />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Address } from 'viem'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useGetUserQuery } from '@/queries/user.queries'
 
 interface Props {
@@ -20,7 +20,7 @@ const { data: userData, isLoading } = useGetUserQuery({
   pathParams: { address: computed(() => props.address) }
 })
 
-// Prepare user info for UserComponent with fallback
+// Prepare user info for UserIdentity with fallback
 const userInfo = computed(() => ({
   name: userData.value?.name || undefined,
   address: props.address,

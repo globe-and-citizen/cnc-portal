@@ -121,7 +121,7 @@ const MOCK_DATA = {
   }
 }
 
-const AddressToolTipStub = defineComponent({
+const AddressTooltipStub = defineComponent({
   template: '<div data-test="address-tooltip"></div>'
 })
 
@@ -145,7 +145,7 @@ describe('SafeBalanceSection', () => {
       },
       global: {
         stubs: {
-          AddressToolTip: AddressToolTipStub,
+          AddressTooltip: AddressTooltipStub,
           TransferForm: TransferFormStub
         }
       }

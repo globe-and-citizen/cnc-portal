@@ -3,8 +3,8 @@ import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import TransactionChildRow from '../TransactionChildRow.vue'
 
-const UserComponentStub = defineComponent({
-  name: 'UserComponent',
+const UserIdentityStub = defineComponent({
+  name: 'UserIdentity',
   props: {
     user: { type: Object, required: false },
     compact: { type: Boolean, required: false }
@@ -27,7 +27,7 @@ const mountComponent = (
     },
     global: {
       stubs: {
-        UserComponent: UserComponentStub
+        UserIdentity: UserIdentityStub
       }
     }
   })

@@ -12,21 +12,21 @@
     @click="linkable && emit('open')"
   >
     <template v-if="activity.kind === 'actor'">
-      <UserComponent compact size="sm" hide-address :user="resolveUser(activity.actor)" />
+      <UserIdentity compact size="sm" hide-address :user="resolveUser(activity.actor)" />
       <span class="text-muted">{{ activity.text }}</span>
     </template>
     <template v-else-if="activity.kind === 'transfer'">
       <template v-if="activity.actor">
-        <UserComponent compact size="sm" hide-address :user="resolveUser(activity.actor)" />
+        <UserIdentity compact size="sm" hide-address :user="resolveUser(activity.actor)" />
         <span class="text-muted">transferred money from</span>
-        <UserComponent compact size="sm" hide-address :user="pocketUser(activity.from)" />
+        <UserIdentity compact size="sm" hide-address :user="pocketUser(activity.from)" />
         <span class="text-muted">to</span>
-        <UserComponent compact size="sm" hide-address :user="pocketUser(activity.to)" />
+        <UserIdentity compact size="sm" hide-address :user="pocketUser(activity.to)" />
       </template>
       <template v-else>
-        <UserComponent compact size="sm" hide-address :user="pocketUser(activity.from)" />
+        <UserIdentity compact size="sm" hide-address :user="pocketUser(activity.from)" />
         <span class="text-muted">transferred money to</span>
-        <UserComponent compact size="sm" hide-address :user="pocketUser(activity.to)" />
+        <UserIdentity compact size="sm" hide-address :user="pocketUser(activity.to)" />
       </template>
     </template>
     <span v-else-if="activity.text" class="text-muted">{{ activity.text }}</span>
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { resolveUser } from '@/utils/transactionHistoryUtil'
 import type { ActivityCell } from '@/utils/accounting/describeEntry'
 import type { ActivityDestination } from '@/utils/accounting/activityDestination'

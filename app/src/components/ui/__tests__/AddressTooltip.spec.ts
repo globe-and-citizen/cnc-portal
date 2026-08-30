@@ -1,17 +1,17 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { NETWORK } from '@/constant'
 import { mockUseClipboard } from '@/tests/mocks'
 
-describe('AddressToolTip.vue', () => {
+describe('AddressTooltip.vue', () => {
   let wrapper: ReturnType<typeof mount>
   const props = {
     address: '0xd6307a4B12661a5254CEbB67eFA869E37d0421E6'
   }
 
   beforeEach(() => {
-    wrapper = mount(AddressToolTip, {
+    wrapper = mount(AddressTooltip, {
       props: { ...props }
     })
   })
@@ -70,7 +70,7 @@ describe('AddressToolTip.vue', () => {
       )
     })
     it('should open the transaction with correct url', async () => {
-      wrapper = mount(AddressToolTip, {
+      wrapper = mount(AddressTooltip, {
         props: { ...props, type: 'transaction' }
       })
 

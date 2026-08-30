@@ -63,7 +63,7 @@
       </template>
 
       <template #member-cell="{ row }">
-        <UserComponent
+        <UserIdentity
           :user="{
             name: row.original.name,
             address: row.original.address,
@@ -134,7 +134,7 @@ import type { TableColumn } from '@nuxt/ui'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useToggleWageStatusMutation } from '@/queries/wage.queries'
 import { teamKeys } from '@/queries/team.queries'
 import { useQueryClient } from '@tanstack/vue-query'

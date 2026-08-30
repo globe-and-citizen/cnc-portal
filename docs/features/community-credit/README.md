@@ -230,6 +230,7 @@ The following verified gaps have technical evidence and remediation directions i
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
+- [Transaction History implementation](../../implementation/transaction-history/README.md)
 - [Detailed flow and implementation analysis](./user-flow-analysis.md)
 - [Community Credit accounting rules](../accounting/cnc-accounting-spec.md)
 - [Product Feature Inventory](../README.md)
