@@ -109,12 +109,14 @@ describe('BankTransactions', () => {
   it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
-    wrapper
-      .getComponent({ name: 'CustomDatePicker' })
-      .vm.$emit('update:modelValue', [
-        new Date('2020-01-01T00:00:00Z'),
-        new Date('2020-01-01T23:59:59Z')
-      ])
+    expect(wrapper.get('[data-test="bank-transaction-history-date-select"]').exists()).toBe(true)
+    const picker = wrapper.getComponent({ name: 'DatePicker' })
+    expect(picker.props('mode')).toBe('range')
+    expect(picker.props('storageKey')).toBe('transaction-history-range-bank-transaction-history')
+    picker.vm.$emit('update:modelValue', {
+      start: new Date('2020-01-01T00:00:00Z'),
+      end: new Date('2020-01-01T23:59:59Z')
+    })
     await nextTick()
 
     expect(tableData(wrapper)).toHaveLength(0)

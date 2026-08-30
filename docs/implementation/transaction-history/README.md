@@ -16,7 +16,7 @@
 ```mermaid
 flowchart LR
   views[Feature views] --> histories[Transaction history sections]
-  histories --> dateFilter[Date range filter]
+  histories --> dateFilter[DatePicker range filter]
   histories --> tableState[useTransactionTable]
   tableState --> pagination[Route-bound pagination]
   tableState --> rows[Filtered grouped rows]
@@ -26,6 +26,8 @@ flowchart LR
 ## Invariants and Failure Behaviour
 
 - History sections retain ownership of their query data; `useTransactionTable` only derives filtered, grouped, and paginated rows.
+- History sections bind the shared `DatePicker` directly to a `{ start, end } | undefined` range. Their stable storage keys and date-filter
+  test selectors are retained.
 - A date or type-filter change resets the page and collapses expanded rows without reacting to query refreshes.
 - A selected row opens its detail in `TransactionDetailSlideover`; closing it does not alter the applied filters.
 - Date-range selection is documented by the [Date Picker capability](../date-picker/README.md).

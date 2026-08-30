@@ -230,7 +230,8 @@ The following verified gaps have technical evidence and remediation directions i
 - [Repayment lifecycle status](../../../app/src/utils/communityCreditRoundStatusUtil.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
 - [Credit-call terms step](../../../app/src/components/sections/CommunityCreditView/CreditCallTermsStep.vue)
-- [Credit Account transaction history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue)
+- [Credit Account transaction history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue), including
+  its direct shared date-range selection
 - [Credit round history](../../../app/src/components/sections/CommunityCreditView/CreditHistoryTable.vue)
 - [Lending modal](../../../app/src/components/sections/CommunityCreditView/CreditLendModal.vue)
 - [Repayment panel](../../../app/src/components/sections/CommunityCreditView/CreditRepayPanel.vue)

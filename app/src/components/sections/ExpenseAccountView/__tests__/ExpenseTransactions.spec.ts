@@ -14,7 +14,7 @@ import {
 import ExpenseTransactions from '../ExpenseTransactions.vue'
 import {
   AddressTooltipStub,
-  CustomDatePickerStub,
+  DatePickerStub,
   EXPENSE_ADDRESS,
   TablePaginationStub,
   UBadgeStub,
@@ -59,7 +59,7 @@ const createWrapper = (expenseAddress: Address = EXPENSE_ADDRESS): VueWrapper =>
         UBadge: UBadgeStub,
         Badge: UBadgeStub,
         AddressTooltip: AddressTooltipStub,
-        CustomDatePicker: CustomDatePickerStub,
+        DatePicker: DatePickerStub,
         UserIdentity: UserIdentityStub,
         TablePagination: TablePaginationStub,
         'u-card': UCardStub,
@@ -164,6 +164,10 @@ describe('ExpenseTransactions', () => {
   it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
+    expect(wrapper.get('[data-test="expense-transaction-history-date-select"]').exists()).toBe(true)
+    const picker = wrapper.getComponent({ name: 'DatePicker' })
+    expect(picker.props('mode')).toBe('range')
+    expect(picker.props('storageKey')).toBe('transaction-history-range-expense-transaction-history')
     await wrapper.find('[data-test="date-filter-set-2020"]').trigger('click')
     await nextTick()
 

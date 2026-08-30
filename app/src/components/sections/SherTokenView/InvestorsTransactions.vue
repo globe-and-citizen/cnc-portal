@@ -4,11 +4,13 @@
       <div class="flex items-center justify-between">
         <span>Transactions History</span>
         <div class="flex items-center gap-2">
-          <CustomDatePicker
-            v-model="dateRange"
-            class="min-w-[140px]"
-            data-test-prefix="investor-transaction-history"
-          />
+          <div class="min-w-[140px]" data-test="investor-transaction-history-date-select">
+            <DatePicker
+              v-model="dateRange"
+              mode="range"
+              storage-key="transaction-history-range-investor-transaction-history"
+            />
+          </div>
           <USelect
             v-model="selectedType"
             :items="typeOptions"
@@ -187,7 +189,7 @@
 
 <script setup lang="ts">
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import CustomDatePicker from '@/components/ui/CustomDatePicker.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
 import type { TokenId } from '@/constant'
