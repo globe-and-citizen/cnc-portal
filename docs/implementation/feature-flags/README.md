@@ -64,6 +64,7 @@ only decides whether a submitted work date falls inside the claim-submission win
 - [Feature controller tests](../../../backend/src/controllers/__tests__/featureController.test.ts)
 - [Backoffice feature queries](../../../dashboard/app/queries/feature.query.ts)
 - [Backoffice feature list](../../../dashboard/app/pages/features/index.vue)
+- [Canonical dashboard formatter](../../../dashboard/app/utils/format/) for the feature lifecycle timestamps
 - [Claim enforcement](../../../backend/src/controllers/claimController.ts)
 
 ## Related Documentation

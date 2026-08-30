@@ -162,7 +162,8 @@ flowchart LR
   [contract history page](../../../../dashboard/app/pages/contracts/history.vue), and
   [Officer-version synchronization page](../../../../dashboard/app/pages/contracts/versions.vue)
 - [Version registry integration](../../../../dashboard/app/composables/useContractRegistry.ts) and
-  [contract-history card](../../../../dashboard/app/components/contracts/ContractHistoryCard.vue)
+  [contract-history card](../../../../dashboard/app/components/contracts/ContractHistoryCard.vue), whose deployment dates use the
+  [canonical dashboard formatter](../../../../dashboard/app/utils/format/)
 - [Officer-version audit](../../../../dashboard/app/composables/useOfficerVersionAudit.ts),
   [version synchronization mutation](../../../../dashboard/app/queries/contract.query.ts), and
   [Officer-version table](../../../../dashboard/app/components/contracts/OfficerVersionTable.vue)

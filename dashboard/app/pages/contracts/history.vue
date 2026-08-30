@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import { useContractRegistry } from '~/composables/useContractRegistry'
+import { formatDate } from '~/utils/format'
 
 const { versions, contracts } = useContractRegistry()
 </script>
@@ -57,7 +57,7 @@ const { versions, contracts } = useContractRegistry()
                 Deployed
               </dt>
               <dd class="text-muted">
-                {{ dayjs(v.deployedAt).format('MMM D, YYYY') }}
+                {{ formatDate(v.deployedAt) }}
               </dd>
             </div>
             <div class="flex items-center gap-2">

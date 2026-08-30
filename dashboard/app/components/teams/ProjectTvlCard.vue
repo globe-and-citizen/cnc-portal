@@ -2,13 +2,14 @@
 import { computed } from 'vue'
 import { formatEther, formatUnits } from 'viem'
 import type { ProjectTvl } from '~/composables/useTeamsBalanceRecaps'
+import { formatNumber } from '~/utils/format'
 
 const props = defineProps<{
   tvl: ProjectTvl
 }>()
 
 const fmt = (value: number, digits = 2) =>
-  value.toLocaleString(undefined, { maximumFractionDigits: digits })
+  formatNumber(value, { maxDecimals: digits })
 
 // Stablecoin TVL ≈ USD (all tracked stablecoins are ~1 USD).
 const stableUsd = computed(() => fmt(props.tvl.stableValue))
