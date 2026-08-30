@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
+import DeleteClaimConfirmation from '@/components/sections/CashRemunerationView/DeleteClaimConfirmation.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { Claim } from '@/types'
@@ -32,7 +32,7 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-describe('DeleteClaimModal', () => {
+describe('DeleteClaimConfirmation', () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
@@ -53,7 +53,7 @@ describe('DeleteClaimModal', () => {
       reset: vi.fn()
     } as unknown as ReturnType<typeof useDeleteClaimMutation>)
 
-    return mount(DeleteClaimModal, {
+    return mount(DeleteClaimConfirmation, {
       props: {
         claim: defaultClaim,
         ...props
@@ -107,7 +107,7 @@ describe('DeleteClaimModal', () => {
     })
   })
 
-  describe('Modal Interactions', () => {
+  describe('Confirmation interactions', () => {
     it('should emit close when cancel button is clicked', async () => {
       const wrapper = createWrapper()
 

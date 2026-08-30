@@ -29,7 +29,7 @@
     <!-- Delete Modal -->
     <UModal v-model:open="showDeleteModal" title="Delete Claim">
       <template #body>
-        <DeleteClaimModal :claim="claim" @close="showDeleteModal = false" />
+        <DeleteClaimConfirmation :claim="claim" @close="showDeleteModal = false" />
       </template>
     </UModal>
   </div>
@@ -39,7 +39,7 @@
 import { ref } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
-import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
+import DeleteClaimConfirmation from '@/components/sections/CashRemunerationView/DeleteClaimConfirmation.vue'
 import type { Claim } from '@/types'
 
 defineProps<{

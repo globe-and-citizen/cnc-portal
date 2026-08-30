@@ -123,7 +123,7 @@
           :pending-actions="formattedActions"
           @view-details="viewPendingAction"
         />
-        <BodApprovalModal
+        <BodApprovalContent
           v-if="showApprovalModal && currentStep === 2"
           :row="selectedRow"
           :loading="isLoadingApproveAction"
@@ -151,7 +151,7 @@ import { useGetBodActionsQuery } from '@/queries'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { TableRow } from '@/types/table'
 import { filterAndFormatActions, getContractPresentation } from '@/utils'
-import BodApprovalModal from './BodApprovalModal.vue'
+import BodApprovalContent from './BodApprovalContent.vue'
 import ContractReadDataSection from './ContractReadDataSection.vue'
 import PendingEventsList from './PendingEventsList.vue'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
