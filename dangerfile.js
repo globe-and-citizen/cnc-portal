@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Danger configuration — PR size cap.
+ * Danger configuration — PR review checks.
  *
  * Large PRs erase the reviewer's bandwidth. This rule budgets *meaningful*
  * changed lines and, when a budget is exceeded, posts a comment suggesting how
@@ -20,10 +20,19 @@
  *     non-empty body text following that heading). Without the note the
  *     override is rejected and the size warning still fires.
  *
+ * The UI/UX reviewer-journey contract uses the same workflow. It requires each
+ * PR to classify user-facing impact and makes applicable review steps
+ * reproducible without duplicating canonical feature documentation.
+ *
  * Runs in CI via `.github/workflows/danger.yml` on pull_request events.
  */
 
 const { danger, warn, message, markdown, fail } = require("danger");
+const path = require("node:path");
+const {
+  canonicalStoryIdsFrom,
+  validateUiUxReview,
+} = require("./scripts/lib/ui-ux-review-contract.cjs");
 
 /** Maximum meaningful changed lines of PRODUCTION code before we warn. */
 const MAX_PROD_LINES = 400;
@@ -119,6 +128,33 @@ function getJustification(body) {
   return match[1].replace(/^\s*[-*]?\s*/, "").trim();
 }
 
+function checkUiUxReviewerJourney() {
+  const changedFiles = [
+    ...danger.git.modified_files,
+    ...danger.git.created_files,
+    ...danger.git.deleted_files,
+  ];
+  const result = validateUiUxReview({
+    body: danger.github.pr.body || "",
+    changedFiles,
+    canonicalStoryIds: canonicalStoryIdsFrom(
+      path.join(__dirname, "docs", "features"),
+    ),
+  });
+
+  for (const error of result.errors) {
+    fail(`UI/UX reviewer journey: ${error}`);
+  }
+
+  for (const warning of result.warnings) {
+    warn(`UI/UX reviewer journey: ${warning}`);
+  }
+
+  if (result.errors.length === 0) {
+    message(`✅ UI/UX review — impact: \`${result.impact}\`.`);
+  }
+}
+
 async function checkPrSize() {
   const pr = danger.github.pr;
   const allChanged = [
@@ -201,8 +237,11 @@ async function checkPrSize() {
   );
 }
 
-checkPrSize().catch((error) => {
-  fail(
-    `Danger PR-size check failed to run: ${error && error.message ? error.message : error}`,
-  );
-});
+Promise.resolve()
+  .then(checkUiUxReviewerJourney)
+  .then(checkPrSize)
+  .catch((error) => {
+    fail(
+      `Danger PR-size check failed to run: ${error && error.message ? error.message : error}`,
+    );
+  });
