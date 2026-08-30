@@ -4,6 +4,11 @@
 
 Before submitting code for review, ensure the following items are completed:
 
+### UI/UX Reviewer Journey
+
+For every pull request, select one impact level and complete the applicable review material in the PR description. Follow the
+[UI/UX Reviewer Journey guide](./ui-ux-review.md); it links the reviewer protocol to canonical feature stories without duplicating them.
+
 ### General Code Quality
 
 - [ ] **TypeScript Compilation**: Code compiles without TypeScript errors
