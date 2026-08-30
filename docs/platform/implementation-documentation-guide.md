@@ -2,7 +2,7 @@
 
 **Status:** Current
 
-**Last updated:** 2026-08-21
+**Last updated:** 2026-08-30
 
 **Purpose:** Define where CNC Portal architectural capabilities live and how their current runtime behaviour is documented
 
@@ -79,15 +79,19 @@ specialised filenames may remain when they have a clear audience and the README 
 5. **Main flow** — use Mermaid when sequence, state, hierarchy, or branching matters.
 6. **Invariants and failure behaviour** — state what must remain true and what happens on failure.
 7. **Known gaps** — record only gaps verified in the current implementation.
-8. **Implementation evidence** — link the smallest useful set of current code and tests.
+8. **Implementation evidence and revision** — link the smallest useful set of current code and tests, then record the full immutable SHA
+   reviewed in the form `**Implementation evidence reviewed against:** \`<full commit SHA>\``.
 9. **Related documentation** — link feature, contract, platform, or development owners.
 
 Implementation documents do not contain product user stories, acceptance checkboxes, priorities, or `✅ Done` status. Those semantics belong
-to feature review. Use `Last verified`, not a historical version or branch name, to communicate freshness.
+to feature review. `Last verified` records the human inspection date; the implementation-evidence SHA is a technical attestation of the
+source revision inspected. It does not communicate a release version or replace human review.
 
 ## Current Behaviour and History
 
 - Describe only behaviour verified against the current branch.
+- After reviewing changed evidence, update the implementation-evidence SHA to the exact source revision inspected. Do not add delivery
+  history or review prose when the current capability description is unchanged.
 - Put durable proposed behaviour, migration choices, and their trade-offs in an ADR; keep active delivery plans in GitHub issues.
 - Keep historical explanations in Git, issues, pull requests, or explicitly labelled historical references.
 - Do not infer runtime correctness from an old completion status, branch name, or test count.
@@ -111,8 +115,8 @@ Follow the [Mermaid-only diagram rule](./feature-specification-guide.md#diagram-
 4. Write the compact capability README and add details only when needed.
 5. Update `docs/implementation/README.md` and every affected feature or platform backlink.
 6. Preserve delivery history outside the current-behaviour document.
-7. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md) so each changed runtime source and every document that
-   owns it are reviewed in the same pull request.
+7. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md): commit the runtime source, review every owning document
+   against that revision, and refresh its implementation-evidence attestation in the same pull request.
 8. Run the repository documentation validations.
 
 ## Review Checklist
@@ -122,6 +126,7 @@ Follow the [Mermaid-only diagram rule](./feature-specification-guide.md#diagram-
 - [ ] The document describes verified current behaviour, not planned or historical behaviour.
 - [ ] Boundaries, consumers, invariants, failures, and known gaps are explicit.
 - [ ] Evidence links resolve to current code or tests.
+- [ ] The implementation-evidence SHA identifies the reviewed source revision.
 - [ ] Exact interfaces are linked rather than duplicated.
 - [ ] Every diagram is purposeful and implemented in Mermaid.
 - [ ] The implementation inventory and affected feature indexes are current.

@@ -287,11 +287,12 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `a6e9f9373a08046e2d65501d48d90ae3f3982db1`
+
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
 - [Shareholder list](../../../app/src/components/sections/SherTokenView/ShareholderList.vue) and
-  [Investor and router transaction history](../../../app/src/components/sections/SherTokenView/InvestorsTransactions.vue), including its
-  direct shared date-range selection
+  [Investor and router transaction history](../../../app/src/components/sections/SherTokenView/InvestorsTransactions.vue)
 - [Individual issuance action](../../../app/src/components/sections/SherTokenView/InvestorActions/MintTokenAction.vue),
   [issuance form](../../../app/src/components/sections/SherTokenView/forms/MintForm.vue), and
   [Investor writes](../../../app/src/composables/investor/writes.ts)
