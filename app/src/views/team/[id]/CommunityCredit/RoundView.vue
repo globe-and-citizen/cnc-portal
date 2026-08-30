@@ -1,48 +1,6 @@
 <template>
   <div v-if="round" class="flex flex-col gap-4.5">
-    <!-- Back -->
-    <button
-      type="button"
-      class="text-muted hover:text-default flex cursor-pointer items-center gap-2 text-sm"
-      @click="goList"
-    >
-      <UIcon name="heroicons:arrow-left" class="size-4" />
-      All rounds
-    </button>
-
-    <!-- Header -->
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div class="min-w-0">
-        <div class="flex flex-wrap items-center gap-2.5">
-          <h1 class="text-2xl font-bold tracking-tight">{{ round.name }}</h1>
-          <UBadge :color="status.color" variant="subtle" :label="status.label" size="lg" />
-          <span
-            class="border-default bg-muted inline-flex items-center gap-1.5 rounded-full border py-1 pr-2.5 pl-1.5 text-xs font-semibold"
-          >
-            <span
-              class="bg-primary/15 text-primary flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold"
-            >
-              $
-            </span>
-            {{ round.token }}
-          </span>
-        </div>
-        <p class="text-muted mt-1.5 max-w-2xl text-sm leading-relaxed">{{ round.desc }}</p>
-      </div>
-      <div class="flex items-center gap-2.5">
-        <UButton
-          v-for="action in ctas"
-          :key="action.test"
-          :color="action.color"
-          :variant="action.variant"
-          :icon="action.icon"
-          :label="action.label"
-          :loading="action.loading"
-          :data-test="action.test"
-          @click="action.run"
-        />
-      </div>
-    </div>
+    <CreditRoundHeader :round="round" :status="status" :ctas="ctas" @back="goList" />
 
     <!-- Layout exploration + Repay, each its own route param (see activeVariant). Styled to
          match the old hand-rolled CreditLayoutSwitcher: a dashed, tinted container with the
@@ -75,8 +33,17 @@
         <CreditRoundTimeline :round="round" />
       </template>
       <template #repay>
-        <!-- CreditRepayPanel reads roundId/teamId straight from this page's own route params. -->
-        <CreditRepayPanel />
+        <CreditRepayPanel
+          :round="round"
+          :rows="repaymentRows"
+          :outstanding="repayment.outstanding"
+          :treasury-balance="repayment.treasuryBalance"
+          :is-owner="store.isOwner"
+          :can-repay-via-bank="repayment.canRepayViaBank"
+          :submission="repayment.submission"
+          @repay="repayRound"
+          @cancel="goRound"
+        />
       </template>
     </UTabs>
 
@@ -103,7 +70,7 @@ import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { zeroAddress } from 'viem'
 import { useCommunityCreditStore, useUserDataStore } from '@/stores'
-import { useBankOwner } from '@/composables/bank/reads'
+import { useCreditRoundRepayment } from '@/composables/useCreditRoundRepayment'
 import {
   useFixedReturnAddress,
   useFixedReturnGetLendingOffer,
@@ -116,16 +83,19 @@ import {
 } from '@/composables/fixedReturn/writes'
 import {
   classifyError,
-  isBankOwner,
+  formatAmount,
   offerLenderToCreditLender,
   resolveUser,
   ROUND_VARIANT_TAB_ITEMS,
+  roundToDisplayPrecision,
   statusMeta
 } from '@/utils'
 import type { CreditRound, Cta, LendingOfferStruct, RoundDetailVariant } from '@/types'
 import CreditAccountTransactions from '@/components/sections/CommunityCreditView/CreditAccountTransactions.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 import CreditRepayPanel from '@/components/sections/CommunityCreditView/CreditRepayPanel.vue'
+import type { RepayBreakdownRow } from '@/components/sections/CommunityCreditView/CreditRepayBreakdownTable.vue'
+import CreditRoundHeader from '@/components/sections/CommunityCreditView/CreditRoundHeader.vue'
 import CreditRoundGauge from '@/components/sections/CommunityCreditView/CreditRoundGauge.vue'
 import CreditRoundLedger from '@/components/sections/CommunityCreditView/CreditRoundLedger.vue'
 import CreditRoundTimeline from '@/components/sections/CommunityCreditView/CreditRoundTimeline.vue'
@@ -169,7 +139,7 @@ const activeVariant = computed<RoundDetailVariant>({
 
 const fixedReturnAddress = useFixedReturnAddress()
 const baseRound = computed(() => store.getRound(roundId.value))
-const { data: rawOffer } = useFixedReturnGetLendingOffer(offerId)
+const { data: rawOffer, refetch: refetchOffer } = useFixedReturnGetLendingOffer(offerId)
 const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)
 const tokenAddress = computed(() => offer.value?.token ?? zeroAddress)
 const { data: lenderData } = useFixedReturnOfferLenders(roundId, tokenAddress)
@@ -194,6 +164,22 @@ const round = computed<CreditRound | undefined>(() => {
 const status = computed(() => statusMeta(round.value?.status ?? 'open'))
 const lendRound = ref<CreditRound | null>(null)
 
+/** Display-ready repayment rows share the round detail's single lender mapping. */
+const repaymentRows = computed<RepayBreakdownRow[]>(() =>
+  (round.value?.lenders ?? []).map((lender) => ({
+    ...lender,
+    interest: lender.expected - lender.amount,
+    total: lender.expected,
+    remaining: Math.max(0, roundToDisplayPrecision(lender.expected - lender.paid))
+  }))
+)
+const { presentation: repayment, repay } = useCreditRoundRepayment({
+  offerId,
+  round,
+  repaymentRows,
+  offerQuery: { offer, refetch: refetchOffer }
+})
+
 const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
 // Restricted rounds only accept deposits from whitelisted addresses — lenderAllocation
 // reads back 0 for anyone not on the whitelist, owner included. The contract already
@@ -216,13 +202,15 @@ const canAcceptPartialFunding = computed(
   () => canRefundLenders.value && (round.value?.raised ?? 0) > 0
 )
 
-// Repay calls Bank.fundFixedReturnRepayment, onlyOwner on Bank's own Ownable — a
-// separate owner slot from FixedReturn's (store.isOwner).
-const { data: bankOwner } = useBankOwner()
-const canRepayViaBank = computed(() => isBankOwner(bankOwner.value, userStore.address))
-
 function goList() {
   router.push({ name: 'community-credit', params: { id: teamId.value } })
+}
+
+function goRound() {
+  router.push({
+    name: 'community-credit-round',
+    params: { id: teamId.value, roundId: roundId.value }
+  })
 }
 
 // Redirect away only once the offer list has settled and the round genuinely doesn't exist.
@@ -283,6 +271,18 @@ async function acceptPartialFunding() {
   }
 }
 
+async function repayRound(amount: string) {
+  const outcome = await repay(amount)
+  if (!outcome || !round.value) return
+  toast.add({
+    title: outcome.isFullRepayment
+      ? 'Round repaid — principal + interest returned'
+      : `Repaid ${formatAmount(outcome.amount, round.value.token)} towards the outstanding balance`,
+    color: 'success'
+  })
+  if (outcome.isFullRepayment) goRound()
+}
+
 function onLent() {
   lendRound.value = null
 }
@@ -307,7 +307,7 @@ const ctas = computed<Cta[]>(() => {
 
   if (store.isOwner) {
     const isRepayStatus = r.status === 'active' || r.status === 'funded' || r.status === 'overdue'
-    if (isRepayStatus && canRepayViaBank.value) {
+    if (isRepayStatus && repayment.value.canRepayViaBank) {
       list.push({
         test: 'round-cta-repay',
         label: 'Repay round',

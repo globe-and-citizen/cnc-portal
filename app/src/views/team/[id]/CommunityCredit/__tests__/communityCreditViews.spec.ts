@@ -1,12 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import type { CreditRound, LendingOfferStruct } from '@/types'
-import { USDC_ADDRESS } from '@/constant'
-import { MINUTES_PER_DAY } from '@/utils'
+import type { CreditRound } from '@/types'
 
-// vue-router is globally mocked (composables.setup.ts); useRouter().push is
-// mockRouterPush and useRoute() reads the shared reactive mockRoute.
 import {
   mockRouterPush,
   mockRouterReplace,
@@ -15,7 +11,8 @@ import {
   mockInvalidateQueries,
   mockFixedReturnReads,
   mockFixedReturnWrites,
-  mockBankReads
+  mockBankReads,
+  mockBankWrites
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
 
@@ -56,49 +53,7 @@ import IndexView from '../IndexView.vue'
 import RoundView from '../RoundView.vue'
 import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
-
-function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
-  return {
-    id: '1',
-    name: 'Q3 runway bridge',
-    token: 'USDC',
-    target: 40000,
-    raised: 23400,
-    totalRepaid: 0,
-    rate: 5,
-    period: 90 * MINUTES_PER_DAY,
-    termLabel: '90 days',
-    status: 'open',
-    fundable: true,
-    opened: 'Jun 1',
-    deadline: 'Jun 28',
-    maturity: 'Oct 26',
-    restricted: false,
-    cap: null,
-    desc: 'Working capital.',
-    lenders: [],
-    ...over
-  }
-}
-
-/** A raw on-chain offer, as useFixedReturnGetLendingOffer returns it. Defaults are USDC,
- * Open, with a subscription deadline in the past (so canMarkRefundable holds). */
-function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
-  return {
-    token: USDC_ADDRESS,
-    fundingTarget: 40_000_000000n,
-    interestRateBps: 500n,
-    maturityDate: 1_700_000_000n + BigInt(90 * 86_400),
-    subscriptionDeadline: 1_700_000_000n,
-    fundingAccess: 0,
-    isCapEnabled: false,
-    lenderCap: 0n,
-    totalFunded: 23_400_000000n,
-    totalRepaidByIssuer: 0n,
-    state: 0,
-    ...over
-  }
-}
+import { offerStruct, sampleRound } from './communityCreditFixtures'
 
 function resetStore() {
   Object.assign(store, {
@@ -230,6 +185,16 @@ describe('Community Credit views', () => {
       )
     })
 
+    it('returns to the round list from the presentation header', async () => {
+      const wrapper = mountRound(sampleRound())
+
+      await wrapper.get('[data-test="round-back"]').trigger('click')
+
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'community-credit', params: { id: '1' } })
+      )
+    })
+
     it('switches to the Repay tab (route param) for a round in repayment, same as the tab itself', async () => {
       store.isOwner = true
       mockBankReads.owner.data.value = MOCK_USER_ADDRESS
@@ -316,6 +281,31 @@ describe('Community Credit views', () => {
       expect(wrapper.text()).toContain('Repayment breakdown')
       expect(wrapper.text()).toContain('5,250')
       expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
+    })
+
+    it('keeps repayment writes and cache refreshes in the route-owning view', async () => {
+      store.isOwner = true
+      mockBankReads.owner.data.value = MOCK_USER_ADDRESS
+      mockFixedReturnReads.offerLenders.data.value = [
+        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
+      ]
+      const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'repay')
+      await flushPromises()
+
+      await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+      await flushPromises()
+
+      expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).toHaveBeenCalledWith({
+        args: [1n, 5250_000000n]
+      })
+      expect(mockFixedReturnReads.getLendingOffer.refetch).toHaveBeenCalled()
+      expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['fixedReturnOfferLenders'] })
+      expect(mockRouterPush).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          name: 'community-credit-round',
+          params: { id: '1', roundId: '1' }
+        })
+      )
     })
   })
 })

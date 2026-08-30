@@ -166,6 +166,12 @@ automatically when a deadline or maturity date passes.
 **I want to** repay principal and fixed interest from the company treasury\
 **So that** every lender receives their proportional entitlement
 
+### How It Works
+
+1. The selected round exposes its current obligation and each lender's settlement progress before the issuer submits an installment.
+2. A full repayment returns to that round's default detail after the settlement data refreshes; a partial repayment keeps the issuer in the
+   repayment view with refreshed figures.
+
 ### Acceptance Criteria
 
 #### Happy Path
@@ -212,6 +218,7 @@ The following verified gaps have technical evidence and remediation directions i
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
+- [Credit round repayment boundary](../../../app/src/composables/useCreditRoundRepayment.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
 - [Credit-call terms step](../../../app/src/components/sections/CommunityCreditView/CreditCallTermsStep.vue)
 - [Credit Account transaction history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue)
@@ -219,6 +226,8 @@ The following verified gaps have technical evidence and remediation directions i
 - [Lending modal](../../../app/src/components/sections/CommunityCreditView/CreditLendModal.vue)
 - [Repayment panel](../../../app/src/components/sections/CommunityCreditView/CreditRepayPanel.vue)
 - [Repayment breakdown](../../../app/src/components/sections/CommunityCreditView/CreditRepayBreakdownTable.vue)
+- [Repayment panel component tests](../../../app/src/components/sections/CommunityCreditView/__tests__/CreditRepayPanel.spec.ts)
+- [Credit round header](../../../app/src/components/sections/CommunityCreditView/CreditRoundHeader.vue)
 - [Credit round ledger](../../../app/src/components/sections/CommunityCreditView/CreditRoundLedger.vue)
 - [Whitelist allocation editor](../../../app/src/components/sections/CommunityCreditView/CreditWhitelistEditor.vue)
 - [FixedReturn contract](../../../contract/contracts/FixedReturn.sol)

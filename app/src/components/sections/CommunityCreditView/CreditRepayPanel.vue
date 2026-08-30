@@ -1,5 +1,5 @@
 <template>
-  <div v-if="round" class="flex flex-col gap-5">
+  <div class="flex flex-col gap-5">
     <!-- Header -->
     <div>
       <div class="flex items-center gap-2.5">
@@ -12,11 +12,11 @@
       </p>
     </div>
 
-    <div class="grid items-start gap-5" :class="store.isOwner ? 'lg:grid-cols-[1.55fr_1fr]' : ''">
+    <div class="grid items-start gap-5" :class="isOwner ? 'lg:grid-cols-[1.55fr_1fr]' : ''">
       <CreditRepayBreakdownTable :rows="rows" :token="round.token" />
 
       <!-- Confirm -->
-      <div v-if="store.isOwner" class="flex flex-col gap-4">
+      <div v-if="isOwner" class="flex flex-col gap-4">
         <div
           class="border-primary/20 from-primary/5 to-default rounded-2xl border bg-gradient-to-br p-6 shadow-sm"
         >
@@ -65,11 +65,11 @@
         />
 
         <UAlert
-          v-if="submitError"
+          v-if="submission.errorMessage"
           color="error"
           variant="soft"
           icon="i-lucide-circle-alert"
-          :description="submitError"
+          :description="submission.errorMessage"
           data-test="repay-error"
         />
 
@@ -79,9 +79,11 @@
             size="xl"
             block
             icon="heroicons:check-circle"
-            :label="isSubmitting ? 'Signing…' : `Repay `"
-            :loading="isSubmitting"
-            :disabled="isSubmitting || numericAmount <= 0 || !isRepayable || !canRepayViaBank"
+            :label="submission.isSubmitting ? 'Signing…' : `Repay `"
+            :loading="submission.isSubmitting"
+            :disabled="
+              submission.isSubmitting || numericAmount <= 0 || !isRepayable || !canRepayViaBank
+            "
             data-test="confirm-repay"
             @click="confirmRepay"
           />
@@ -91,63 +93,46 @@
             size="xl"
             block
             label="Cancel"
-            :disabled="isSubmitting"
-            @click="goRound"
+            :disabled="submission.isSubmitting"
+            data-test="cancel-repay"
+            @click="emit('cancel')"
           />
         </div>
       </div>
     </div>
   </div>
-
-  <div v-else-if="store.isLoading" class="flex flex-col gap-4" data-test="repay-loading">
-    <USkeleton class="h-8 w-64" />
-    <USkeleton class="h-64 rounded-2xl" />
-  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useToast } from '@nuxt/ui/composables'
-import { useQueryClient } from '@tanstack/vue-query'
-import { formatUnits, parseUnits, zeroAddress } from 'viem'
-import { useCommunityCreditStore, useUserDataStore } from '@/stores'
-import {
-  useFixedReturnGetLendingOffer,
-  useFixedReturnOfferLenders
-} from '@/composables/fixedReturn/reads'
-import { useBankAddress, useBankOwner } from '@/composables/bank/reads'
-import { useFundFixedReturnRepayment } from '@/composables/bank/writes'
-import { useErc20BalanceOf } from '@/composables/erc20/reads'
-import {
-  classifyError,
-  decimalsForFixedReturnToken,
-  formatAmount,
-  isBankOwner,
-  offerLenderToCreditLender,
-  repayableCeiling,
-  resolveUser,
-  roundToDisplayPrecision,
-  statusMeta
-} from '@/utils'
-import type { LendingOfferStruct, RoundStatus } from '@/types'
+import { formatAmount, repayableCeiling, statusMeta } from '@/utils'
+import type { CreditRound, RoundStatus } from '@/types'
 import CreditRepayBreakdownTable from './CreditRepayBreakdownTable.vue'
+import type { RepayBreakdownRow } from './CreditRepayBreakdownTable.vue'
 import RepayAmountPanel from './RepayAmountPanel.vue'
 
-const route = useRoute()
-const router = useRouter()
-const toast = useToast()
-const queryClient = useQueryClient()
-const store = useCommunityCreditStore()
-const userStore = useUserDataStore()
-const bankAddress = useBankAddress()
+interface RepaymentSubmission {
+  isSubmitting: boolean
+  errorMessage: string | null
+}
 
-const teamId = computed(() => String(route.params.id))
-const roundId = computed(() => String(route.params.roundId))
-const offerId = computed(() => BigInt(roundId.value || '0'))
+interface Props {
+  round: CreditRound
+  rows: RepayBreakdownRow[]
+  outstanding: number
+  treasuryBalance: number | null
+  isOwner: boolean
+  canRepayViaBank: boolean
+  submission: RepaymentSubmission
+}
 
-const round = computed(() => store.getRound(roundId.value))
-const status = computed(() => statusMeta(round.value?.status ?? 'active'))
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  repay: [amount: string]
+  cancel: []
+}>()
+
+const status = computed(() => statusMeta(props.round.status))
 
 // Mirrors FixedReturn.sol's repayLenders gate (OfferState.Funded/Repaying only) —
 // without this, the tab was reachable and submittable on a still-Open round (raising,
@@ -155,79 +140,17 @@ const status = computed(() => statusMeta(round.value?.status ?? 'active'))
 // FixedReturn__OfferNotFunded() revert that the error classifier can't decode into a
 // friendly message (it only has Bank.json's ABI loaded, not FixedReturn's).
 const REPAYABLE_STATUSES: RoundStatus[] = ['funded', 'active', 'overdue']
-const isRepayable = computed(() => !!round.value && REPAYABLE_STATUSES.includes(round.value.status))
-
-// This panel is reachable directly via the /repay route regardless of whether the
-// round-page CTA (which hides this case) was shown, so it needs its own check too.
-const { data: bankOwner } = useBankOwner()
-const canRepayViaBank = computed(() => isBankOwner(bankOwner.value, userStore.address))
+const isRepayable = computed(() => REPAYABLE_STATUSES.includes(props.round.status))
 
 // The "hasn't reached its funding target yet" wording only makes sense while the round
 // is still actively raising — a 'stalled'/'refunded'/'repaid' round already resolved one
 // way or the other, so repeating "repayment opens once it's fully funded" there would be
 // inaccurate (refunded never will be; repaid already was).
-const isStillRaising = computed(() => round.value?.status === 'open')
-
-const { data: rawOffer, refetch: refetchOffer } = useFixedReturnGetLendingOffer(offerId)
-const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)
-const tokenAddress = computed(() => offer.value?.token ?? zeroAddress)
-const decimals = computed(() =>
-  offer.value ? (decimalsForFixedReturnToken(offer.value.token) ?? 6) : 6
-)
-const { data: lenderData } = useFixedReturnOfferLenders(roundId, tokenAddress)
-
-const principalTotal = computed(() =>
-  (lenderData.value ?? []).reduce((sum, lender) => sum + lender.principal, 0)
-)
-const grandTotal = computed(() =>
-  (lenderData.value ?? []).reduce((sum, lender) => sum + lender.expected, 0)
-)
-const interestTotal = computed(() => grandTotal.value - principalTotal.value)
-
-// Already-repaid + treasury balance, so a round can be repaid in installments instead of
-// only ever in one shot — the contract itself places no such restriction.
-const alreadyRepaid = computed(() =>
-  offer.value ? Number(formatUnits(offer.value.totalRepaidByIssuer, decimals.value)) : 0
-)
-const outstanding = computed(() =>
-  Math.max(0, roundToDisplayPrecision(grandTotal.value - alreadyRepaid.value))
-)
-
-const rows = computed(() =>
-  (lenderData.value ?? []).map((lender) => {
-    const mapped = offerLenderToCreditLender(
-      lender,
-      (address) => resolveUser(address).name,
-      userStore.address,
-      round.value
-    )
-    return {
-      ...mapped,
-      interest: lender.expected - lender.principal,
-      total: lender.expected,
-      remaining: Math.max(0, roundToDisplayPrecision(lender.expected - mapped.paid))
-    }
-  })
-)
-
-const { data: treasuryBalanceRaw, refetch: refetchTreasuryBalance } = useErc20BalanceOf(
-  tokenAddress,
-  computed(() => bankAddress.value ?? zeroAddress)
-)
-const treasuryBalance = computed(() =>
-  typeof treasuryBalanceRaw.value === 'bigint'
-    ? Number(formatUnits(treasuryBalanceRaw.value, decimals.value))
-    : null
-)
+const isStillRaising = computed(() => props.round.status === 'open')
+const principalTotal = computed(() => props.rows.reduce((sum, lender) => sum + lender.amount, 0))
+const interestTotal = computed(() => props.rows.reduce((sum, lender) => sum + lender.interest, 0))
 const amount = ref('')
 const numericAmount = computed(() => Math.max(0, Number(amount.value) || 0))
-const amountUnits = computed(() => {
-  try {
-    return parseUnits(amount.value || '0', decimals.value)
-  } catch {
-    return 0n
-  }
-})
 const amountPanelRef = ref<{ validate: () => boolean } | null>(null)
 
 // Prefill once with the full repayable amount — the first click still repays everything,
@@ -237,7 +160,7 @@ const amountPanelRef = ref<{ validate: () => boolean } | null>(null)
 // non-immediate watch to observe, so it would otherwise never fire.
 const amountInitialized = ref(false)
 watch(
-  () => repayableCeiling(outstanding.value, treasuryBalance.value),
+  () => repayableCeiling(props.outstanding, props.treasuryBalance),
   (value) => {
     if (!amountInitialized.value && value > 0) {
       amount.value = String(value)
@@ -247,61 +170,9 @@ watch(
   { immediate: true }
 )
 
-const repayResult = useFundFixedReturnRepayment()
-const isSubmitting = computed(() => repayResult.isPending.value)
-const submitError = ref<string | null>(null)
-
-function goList() {
-  router.push({ name: 'community-credit', params: { id: teamId.value } })
-}
-function goRound() {
-  router.push({
-    name: 'community-credit-round',
-    params: { id: teamId.value, roundId: roundId.value }
-  })
-}
-
-// Redirect only once the offer list has settled and the round genuinely doesn't exist.
-watch(
-  [round, () => store.isLoading],
-  ([value, loading]) => {
-    if (!loading && !value) goList()
-  },
-  { immediate: true }
-)
-
-async function confirmRepay() {
-  if (!bankAddress.value || numericAmount.value <= 0 || !isRepayable.value) return
-  if (!canRepayViaBank.value) return
-  submitError.value = null
+function confirmRepay() {
+  if (numericAmount.value <= 0 || !isRepayable.value || !props.canRepayViaBank) return
   if (!amountPanelRef.value?.validate()) return
-
-  try {
-    await repayResult.mutateAsync({ args: [offerId.value, amountUnits.value] })
-    const isFullRepay = numericAmount.value >= outstanding.value
-    toast.add({
-      title: isFullRepay
-        ? 'Round repaid — principal + interest returned'
-        : `Repaid ${formatAmount(numericAmount.value, round.value?.token)} towards the outstanding balance`,
-      color: 'success'
-    })
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixed-return-events-logs'] })
-    ])
-    // `offer` is a separate wagmi-managed read (its own internal query key, not the
-    // ['fixedReturnAllOffers', …] key invalidated above), so totalRepaidByIssuer here
-    // — and therefore alreadyRepaid/outstanding — would otherwise stay stale after a
-    // repay while the breakdown table's per-lender "Paid so far" (sourced from `round`,
-    // which does live under 'fixedReturnAllOffers') updates immediately. Refetch both
-    // so a second, same-session installment repay starts from consistent figures.
-    refetchOffer()
-    refetchTreasuryBalance()
-    if (isFullRepay) goRound()
-  } catch (error) {
-    submitError.value = classifyError(error, { contract: 'Bank' }).userMessage
-  }
+  emit('repay', amount.value)
 }
 </script>
