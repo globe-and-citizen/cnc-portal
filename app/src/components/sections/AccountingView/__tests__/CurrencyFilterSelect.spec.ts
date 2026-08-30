@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import CurrencyFilterSelect from '@/components/CurrencyFilterSelect.vue'
+import CurrencyFilterSelect from '@/components/sections/AccountingView/CurrencyFilterSelect.vue'
 
 const currencies = ['POL', 'USDC', 'SHER']
 

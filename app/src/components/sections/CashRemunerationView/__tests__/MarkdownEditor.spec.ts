@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
-import MarkdownEditor from '@/components/MarkdownEditor.vue'
+import MarkdownEditor from '@/components/sections/CashRemunerationView/MarkdownEditor.vue'
 
 // The real UEditor is a TipTap/ProseMirror WYSIWYG editor that is heavy and
 // unstable under jsdom, so we stub it (and its toolbar) to a plain element that
