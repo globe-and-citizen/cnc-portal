@@ -169,8 +169,10 @@ automatically when a deadline or maturity date passes.
 
 ### How It Works
 
-1. The selected round exposes its current obligation and each lender's settlement progress before the issuer submits an installment.
-2. A full repayment returns to that round's default detail after the settlement data refreshes; a partial repayment keeps the issuer in the
+1. The selected round exposes its current obligation, Bank balance, and each lender's settlement progress before the issuer submits an
+   installment.
+2. The portal validates the requested amount in token base units and waits for the Bank balance before submitting an installment.
+3. A full repayment returns to that round's default detail after the settlement data refreshes; a partial repayment keeps the issuer in the
    repayment view with refreshed figures.
 
 ### Acceptance Criteria
@@ -189,6 +191,7 @@ automatically when a deadline or maturity date passes.
 - [x] A repayment amount must be greater than 0.
 - [x] A repayment amount cannot exceed the outstanding obligation.
 - [x] A repayment amount cannot exceed the Bank's token balance.
+- [x] The portal does not submit a repayment until the Bank balance is available and the amount passes the exact token-unit limits.
 - [x] The Bank rejects repayment from an account other than its current owner.
 - [x] A paused Bank rejects repayment.
 - [x] The repayment action is unavailable to a wallet other than the current Bank owner.
@@ -218,10 +221,13 @@ The following verified gaps have technical evidence and remediation directions i
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
 - [Credit round header](../../../app/src/components/sections/CommunityCreditView/CreditRoundHeader.vue)
+- [Credit round actions](../../../app/src/components/sections/CommunityCreditView/CreditRoundActions.vue)
+- [Credit round detail section](../../../app/src/components/sections/CommunityCreditView/CreditRoundDetailSection.vue)
 - [Credit round read states](../../../app/src/components/sections/CommunityCreditView/CreditRoundReadState.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
-- [Credit round repayment boundary](../../../app/src/composables/useCreditRoundRepayment.ts)
+- [Repayment amount validation](../../../app/src/types/communityCredit.schemas.ts)
+- [Repayment lifecycle status](../../../app/src/utils/communityCreditRoundStatusUtil.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
 - [Credit-call terms step](../../../app/src/components/sections/CommunityCreditView/CreditCallTermsStep.vue)
 - [Credit Account transaction history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue)

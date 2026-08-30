@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import type { CreditRound } from '@/types'
 import { MINUTES_PER_DAY } from '@/utils'
 import CreditRepayPanel from '../CreditRepayPanel.vue'
+import type { RepaymentPanelState } from '../CreditRepayPanel.vue'
 import type { RepayBreakdownRow } from '../CreditRepayBreakdownTable.vue'
 
 function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
@@ -50,22 +51,29 @@ function sampleRows(): RepayBreakdownRow[] {
 interface PanelProps {
   round: CreditRound
   rows: RepayBreakdownRow[]
-  outstanding: number
-  treasuryBalance: number | null
   isOwner: boolean
-  canRepayViaBank: boolean
-  submission: { isSubmitting: boolean; errorMessage: string | null }
+  repayment: RepaymentPanelState
+}
+
+function repaymentState(overrides: Partial<RepaymentPanelState> = {}): RepaymentPanelState {
+  return {
+    outstanding: 5250,
+    treasuryBalance: 10000,
+    isReady: true,
+    isRepayable: true,
+    canRepayViaBank: true,
+    isSubmitting: false,
+    errorMessage: null,
+    ...overrides
+  }
 }
 
 function panelProps(overrides: Partial<PanelProps> = {}): PanelProps {
   return {
     round: sampleRound(),
     rows: sampleRows(),
-    outstanding: 5250,
-    treasuryBalance: 10000,
     isOwner: true,
-    canRepayViaBank: true,
-    submission: { isSubmitting: false, errorMessage: null },
+    repayment: repaymentState(),
     ...overrides
   }
 }
@@ -90,7 +98,7 @@ describe('CreditRepayPanel', () => {
             remaining: 4250
           }
         ],
-        outstanding: 4250
+        repayment: repaymentState({ outstanding: 4250 })
       })
     })
     await flushPromises()
@@ -102,7 +110,7 @@ describe('CreditRepayPanel', () => {
   it('grays out and disables Repay once nothing is left outstanding', async () => {
     const wrapper = mount(CreditRepayPanel, {
       props: panelProps({
-        outstanding: 0,
+        repayment: repaymentState({ outstanding: 0 }),
         rows: [
           {
             ...sampleRows()[0],
@@ -121,7 +129,7 @@ describe('CreditRepayPanel', () => {
 
   it('renders the submission error supplied by the owning view', () => {
     const wrapper = mount(CreditRepayPanel, {
-      props: panelProps({ submission: { isSubmitting: false, errorMessage: 'Transaction failed' } })
+      props: panelProps({ repayment: repaymentState({ errorMessage: 'Transaction failed' }) })
     })
 
     expect(wrapper.find('[data-test="repay-error"]').text()).toContain('Transaction failed')
@@ -129,7 +137,7 @@ describe('CreditRepayPanel', () => {
 
   it('disables Repay and explains why when the connected wallet is not the Bank owner', async () => {
     const wrapper = mount(CreditRepayPanel, {
-      props: panelProps({ canRepayViaBank: false })
+      props: panelProps({ repayment: repaymentState({ canRepayViaBank: false }) })
     })
     await flushPromises()
 
@@ -142,7 +150,10 @@ describe('CreditRepayPanel', () => {
 
   it('disables Repay and explains why on a round still open for funding', async () => {
     const wrapper = mount(CreditRepayPanel, {
-      props: panelProps({ round: sampleRound({ status: 'open' }) })
+      props: panelProps({
+        round: sampleRound({ status: 'open' }),
+        repayment: repaymentState({ isRepayable: false })
+      })
     })
     await flushPromises()
 
@@ -154,7 +165,10 @@ describe('CreditRepayPanel', () => {
     'disables Repay without the not-yet-funded message on a %s round',
     async (status) => {
       const wrapper = mount(CreditRepayPanel, {
-        props: panelProps({ round: sampleRound({ status }) })
+        props: panelProps({
+          round: sampleRound({ status }),
+          repayment: repaymentState({ isRepayable: false })
+        })
       })
       await flushPromises()
 
@@ -162,6 +176,22 @@ describe('CreditRepayPanel', () => {
       expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
     }
   )
+
+  it('keeps repayment disabled while the exact treasury balance is loading', async () => {
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({
+        repayment: repaymentState({
+          outstanding: null,
+          treasuryBalance: null,
+          isReady: false
+        })
+      })
+    })
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="repay-details-loading"]').exists()).toBe(true)
+    expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
+  })
 
   it('shows only the breakdown table for a non-owner, with no repayment form', () => {
     const wrapper = mount(CreditRepayPanel, {

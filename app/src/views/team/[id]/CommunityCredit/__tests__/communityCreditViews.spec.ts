@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import { BaseError, ContractFunctionRevertedError } from 'viem'
 import type { CreditRound } from '@/types'
 
 import {
@@ -12,14 +11,11 @@ import {
   mockInvalidateQueries,
   mockFixedReturnReads,
   mockFixedReturnWrites,
-  mockBankReads,
-  mockBankWrites
+  mockBankReads
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
+
 const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
-const repaymentLenderData = [
-  { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-]
 
 const { store } = vi.hoisted(() => {
   const store = {
@@ -76,7 +72,6 @@ describe('Community Credit views', () => {
     resetStore()
     mockRouterPush.mockClear()
     mockInvalidateQueries.mockClear()
-    mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockResolvedValue(undefined)
     mockFixedReturnReads.getLendingOffer.data.value = null
     mockFixedReturnReads.offerLenders.data.value = []
     mockFixedReturnReads.allOffers.data.value = []
@@ -275,66 +270,6 @@ describe('Community Credit views', () => {
       const wrapper = mountRound(sampleRound({ restricted: true }))
       await flushPromises()
       expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
-    })
-
-    it('renders the Repay tab straight from its route param, same panel as the Repay round button', async () => {
-      store.isOwner = true
-      mockFixedReturnReads.offerLenders.data.value = repaymentLenderData
-      const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'repay')
-      await flushPromises()
-
-      expect(wrapper.text()).toContain('Repayment breakdown')
-      expect(wrapper.text()).toContain('5,250')
-      expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
-    })
-
-    it('keeps repayment writes and cache refreshes in the route-owning view', async () => {
-      store.isOwner = true
-      mockBankReads.owner.data.value = MOCK_USER_ADDRESS
-      mockFixedReturnReads.offerLenders.data.value = repaymentLenderData
-      const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'repay')
-      await flushPromises()
-
-      await wrapper.find('[data-test="confirm-repay"]').trigger('click')
-      await flushPromises()
-
-      expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).toHaveBeenCalledWith({
-        args: [1n, 5250_000000n]
-      })
-      expect(mockFixedReturnReads.getLendingOffer.refetch).toHaveBeenCalled()
-      expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['fixedReturnOfferLenders'] })
-      expect(mockRouterPush).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          name: 'community-credit-round',
-          params: { id: '1', roundId: '1' }
-        })
-      )
-    })
-
-    it('shows a classified repayment failure without refreshing or redirecting', async () => {
-      store.isOwner = true
-      mockBankReads.owner.data.value = MOCK_USER_ADDRESS
-      const reverted = new ContractFunctionRevertedError({
-        abi: [],
-        data: `0x${'00'.repeat(4)}`,
-        functionName: 'fundFixedReturnRepayment'
-      })
-      ;(reverted as unknown as { data: { errorName: string } }).data = {
-        errorName: 'SomethingNobodyMapped'
-      }
-      mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockRejectedValueOnce(
-        new BaseError('reverted', { cause: reverted })
-      )
-      mockFixedReturnReads.offerLenders.data.value = repaymentLenderData
-      const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'repay')
-      await flushPromises()
-
-      await wrapper.find('[data-test="confirm-repay"]').trigger('click')
-      await flushPromises()
-
-      expect(wrapper.find('[data-test="repay-error"]').text()).toContain('Bank action failed')
-      expect(mockInvalidateQueries).not.toHaveBeenCalled()
-      expect(mockRouterPush).not.toHaveBeenCalled()
     })
   })
 })

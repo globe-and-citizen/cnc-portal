@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   createCreditCallAccessSchema,
   createCreditCallTermsSchema,
-  createRepayAmountSchema
+  validateRepaymentAmount
 } from '../communityCredit.schemas'
 import { addCreditTerm, MINUTES_PER_DAY } from '@/utils'
 
@@ -253,62 +253,65 @@ describe('createCreditCallAccessSchema — whitelist addresses must be unique', 
   })
 })
 
-describe('createRepayAmountSchema', () => {
-  it('validates repayment amounts against the outstanding balance', () => {
-    const schema = createRepayAmountSchema({
-      outstanding: 50.5,
-      treasuryBalance: Infinity,
-      tokenSymbol: 'USDC'
+describe('validateRepaymentAmount', () => {
+  const baseContext = {
+    decimals: 6,
+    outstanding: 50_500000n,
+    treasuryBalance: 80_000000n
+  }
+
+  it('accepts an exact partial amount and identifies full repayment in base units', () => {
+    expect(validateRepaymentAmount({ ...baseContext, amount: '50.5' })).toEqual({
+      valid: true,
+      amountUnits: 50_500000n,
+      isFullRepayment: true
     })
-
-    expect(schema.safeParse({ amount: 0 }).success).toBe(false)
-    expect(schema.safeParse({ amount: 50.5 }).success).toBe(true)
-
-    const overLimit = schema.safeParse({ amount: 51 })
-    expect(overLimit.success).toBe(false)
-    if (!overLimit.success) {
-      expect(overLimit.error.issues[0]?.message).toContain('50.5 USDC')
-    }
+    expect(validateRepaymentAmount({ ...baseContext, amount: '0.000001' })).toEqual({
+      valid: true,
+      amountUnits: 1n,
+      isFullRepayment: false
+    })
   })
 
-  it('rejects an amount that exceeds the treasury balance with a treasury-cap message', () => {
-    // outstanding=100, treasuryBalance=30 → entering 50 hits treasury cap only
-    const schema = createRepayAmountSchema({
-      outstanding: 100,
-      treasuryBalance: 30,
-      tokenSymbol: 'USDC'
+  it('rejects malformed, zero, and over-precision amounts before a contract write', () => {
+    expect(validateRepaymentAmount({ ...baseContext, amount: '1e2' })).toEqual({
+      valid: false,
+      errorMessage: 'Enter a valid token amount.'
     })
-
-    const result = schema.safeParse({ amount: 50 })
-    expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toContain('treasury balance')
-      expect(result.error.issues[0]?.message).toContain('30')
-    }
+    expect(validateRepaymentAmount({ ...baseContext, amount: '0' })).toEqual({
+      valid: false,
+      errorMessage: 'Amount must be greater than 0.'
+    })
+    expect(validateRepaymentAmount({ ...baseContext, amount: '0.0000001' })).toEqual({
+      valid: false,
+      errorMessage: 'Enter a valid token amount.'
+    })
   })
 
-  it('rejects an amount that exceeds the outstanding balance with an outstanding message', () => {
-    // outstanding=20, treasuryBalance=100 → entering 30 hits outstanding cap only
-    const schema = createRepayAmountSchema({
-      outstanding: 20,
-      treasuryBalance: 100,
-      tokenSymbol: 'USDC'
+  it('rejects amounts above the outstanding obligation or exact Bank balance', () => {
+    expect(validateRepaymentAmount({ ...baseContext, amount: '50.500001' })).toEqual({
+      valid: false,
+      errorMessage: 'Cannot exceed the outstanding balance.'
     })
-
-    const result = schema.safeParse({ amount: 30 })
-    expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toContain('outstanding balance')
-      expect(result.error.issues[0]?.message).toContain('20')
-    }
+    expect(
+      validateRepaymentAmount({
+        ...baseContext,
+        amount: '50.5',
+        outstanding: 100_000000n,
+        treasuryBalance: 30_000000n
+      })
+    ).toEqual({
+      valid: false,
+      errorMessage: 'Cannot exceed the treasury balance.'
+    })
   })
 
-  it('accepts an amount within both outstanding and treasury limits', () => {
-    const schema = createRepayAmountSchema({
-      outstanding: 100,
-      treasuryBalance: 80,
-      tokenSymbol: 'USDC'
-    })
-    expect(schema.safeParse({ amount: 50 }).success).toBe(true)
+  it('blocks repayment until the Bank balance is known', () => {
+    expect(validateRepaymentAmount({ ...baseContext, amount: '1', treasuryBalance: null })).toEqual(
+      {
+        valid: false,
+        errorMessage: 'Treasury balance is still loading.'
+      }
+    )
   })
 })
