@@ -1,10 +1,21 @@
 <template>
   <div v-if="round" class="flex flex-col gap-4.5">
-    <CreditRoundHeader :round="round" :status="status" :ctas="ctas" @back="goList" />
-
-    <!-- Layout exploration + Repay, each its own route param (see activeVariant). Styled to
-         match the old hand-rolled CreditLayoutSwitcher: a dashed, tinted container with the
-         icon+label pushed left (list-leading + mr-auto) and compact pill tabs on the right. -->
+    <button
+      type="button"
+      class="text-muted hover:text-default flex cursor-pointer items-center gap-2 text-sm"
+      data-test="round-back"
+      @click="goList"
+    >
+      <UIcon name="heroicons:arrow-left" class="size-4" />
+      All rounds
+    </button>
+    <CreditRoundReadState
+      v-if="store.isError"
+      :has-round="true"
+      :is-loading="store.isLoading"
+      :is-error="store.isError"
+    />
+    <CreditRoundHeader :round="round" :ctas="ctas" />
     <UTabs
       v-model="activeVariant"
       :items="ROUND_VARIANT_TAB_ITEMS"
@@ -46,25 +57,24 @@
         />
       </template>
     </UTabs>
-
     <CreditAccountTransactions
       v-if="fixedReturnAddress"
       :fixed-return-address="fixedReturnAddress"
       :round-id="roundId"
     />
-
     <CreditLendModal :round="lendRound" @close="lendRound = null" @lent="onLent" />
   </div>
-
-  <!-- Loading -->
-  <div v-else-if="store.isLoading" class="flex flex-col gap-4" data-test="round-loading">
-    <USkeleton class="h-8 w-64" />
-    <USkeleton class="h-64 rounded-2xl" />
-  </div>
+  <CreditRoundReadState
+    v-else
+    :has-round="false"
+    :is-loading="store.isLoading"
+    :is-error="store.isError"
+    @back="goList"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -87,18 +97,18 @@ import {
   offerLenderToCreditLender,
   resolveUser,
   ROUND_VARIANT_TAB_ITEMS,
-  roundToDisplayPrecision,
-  statusMeta
+  roundToDisplayPrecision
 } from '@/utils'
 import type { CreditRound, Cta, LendingOfferStruct, RoundDetailVariant } from '@/types'
 import CreditAccountTransactions from '@/components/sections/CommunityCreditView/CreditAccountTransactions.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 import CreditRepayPanel from '@/components/sections/CommunityCreditView/CreditRepayPanel.vue'
 import type { RepayBreakdownRow } from '@/components/sections/CommunityCreditView/CreditRepayBreakdownTable.vue'
-import CreditRoundHeader from '@/components/sections/CommunityCreditView/CreditRoundHeader.vue'
 import CreditRoundGauge from '@/components/sections/CommunityCreditView/CreditRoundGauge.vue'
+import CreditRoundHeader from '@/components/sections/CommunityCreditView/CreditRoundHeader.vue'
 import CreditRoundLedger from '@/components/sections/CommunityCreditView/CreditRoundLedger.vue'
 import CreditRoundTimeline from '@/components/sections/CommunityCreditView/CreditRoundTimeline.vue'
+import CreditRoundReadState from '@/components/sections/CommunityCreditView/CreditRoundReadState.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -106,17 +116,12 @@ const toast = useToast()
 const queryClient = useQueryClient()
 const store = useCommunityCreditStore()
 const userStore = useUserDataStore()
-
 const teamId = computed(() => String(route.params.id))
 const roundId = computed(() => String(route.params.roundId))
 const offerId = computed(() => BigInt(roundId.value || '0'))
-
 const DEFAULT_VARIANT: RoundDetailVariant = 'ledger'
 
-// Which round-detail tab is showing (layout exploration + Repay) — a route param, not
-// app state, so a given tab is bookmarkable/shareable/reload-safe and never leaks across
-// rounds (each mount reads its own route.params.roundId + view). Mirrored via
-// router.replace (no history spam), same convention as IndexView's tab query param.
+// Kept in the route so each tab is bookmarkable, reload-safe, and does not leak across rounds.
 const activeVariant = computed<RoundDetailVariant>({
   get: () => {
     const raw = route.params.view
@@ -136,7 +141,6 @@ const activeVariant = computed<RoundDetailVariant>({
     })
   }
 })
-
 const fixedReturnAddress = useFixedReturnAddress()
 const baseRound = computed(() => store.getRound(roundId.value))
 const { data: rawOffer, refetch: refetchOffer } = useFixedReturnGetLendingOffer(offerId)
@@ -144,7 +148,7 @@ const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)
 const tokenAddress = computed(() => offer.value?.token ?? zeroAddress)
 const { data: lenderData } = useFixedReturnOfferLenders(roundId, tokenAddress)
 
-/** The list-level round (name/desc/status/amounts) enriched with its on-chain lenders. */
+/** The list-level round enriched with its on-chain lenders. */
 const round = computed<CreditRound | undefined>(() => {
   const base = baseRound.value
   if (!base) return undefined
@@ -160,8 +164,6 @@ const round = computed<CreditRound | undefined>(() => {
     )
   }
 })
-
-const status = computed(() => statusMeta(round.value?.status ?? 'open'))
 const lendRound = ref<CreditRound | null>(null)
 
 /** Display-ready repayment rows share the round detail's single lender mapping. */
@@ -181,23 +183,18 @@ const { presentation: repayment, repay } = useCreditRoundRepayment({
 })
 
 const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
-// Restricted rounds only accept deposits from whitelisted addresses — lenderAllocation
-// reads back 0 for anyone not on the whitelist, owner included. The contract already
-// reverts lendFunds for them; hide the Lend action too instead of offering a button
-// that's guaranteed to fail on-chain.
+
+// Restricted rounds require a non-zero whitelist allocation, owner included.
 const canLend = computed(() => {
   if (!round.value || !round.value.restricted) return true
   const position = myLenderPositions.value?.get(Number(round.value.id))
   return !!position && position.allocation > 0n
 })
 
-/** Stalled: still Open on-chain, but the deadline passed without reaching target —
- *  owner can refund. round.status is the single source of truth for this (derived in
- *  offerStateToRoundStatus from the same offer/deadline check this used to duplicate). */
+// A stalled round is still Open on-chain; the portal derives the owner refund outcome.
 const canRefundLenders = computed(() => round.value?.status === 'stalled')
 
-/** Same stalled-round eligibility as canRefundLenders, plus something to actually keep —
- *  acceptPartialFunding reverts on-chain if nothing was raised. */
+// Partial acceptance is only viable when the stalled round raised a positive amount.
 const canAcceptPartialFunding = computed(
   () => canRefundLenders.value && (round.value?.raised ?? 0) > 0
 )
@@ -213,15 +210,6 @@ function goRound() {
   })
 }
 
-// Redirect away only once the offer list has settled and the round genuinely doesn't exist.
-watch(
-  [round, () => store.isLoading],
-  ([value, loading]) => {
-    if (!loading && !value) goList()
-  },
-  { immediate: true }
-)
-
 const refundLendersResult = useFixedReturnRefundLenders()
 const acceptPartialFundingResult = useFixedReturnAcceptPartialFunding()
 
@@ -234,9 +222,7 @@ async function invalidateRound() {
   ])
 }
 
-// Single owner-triggered step: refundLenders checks the deadline itself and pushes
-// every lender's principal back in the same transaction — no separate "mark
-// refundable" step, and no individual lender claim action anymore.
+// The contract refunds every lender in one owner-triggered transaction.
 async function refundLenders() {
   try {
     await refundLendersResult.mutateAsync({ args: [offerId.value] })
@@ -253,8 +239,7 @@ async function refundLenders() {
   }
 }
 
-// Alternative to refundLenders on the same stalled round: keep whatever was raised
-// and proceed as if fully funded, instead of returning it to lenders.
+// Partial acceptance keeps the raised amount in the round instead of refunding it.
 async function acceptPartialFunding() {
   try {
     await acceptPartialFundingResult.mutateAsync({ args: [offerId.value] })
@@ -292,8 +277,7 @@ const ctas = computed<Cta[]>(() => {
   if (!r) return []
   const list: Cta[] = []
 
-  // Anyone eligible can lend to an open round — the owner is a member too, but a
-  // restricted round still needs a whitelist allocation, owner included.
+  // The contract enforces the same eligibility; hiding this action prevents a doomed write.
   if (r.status === 'open' && canLend.value) {
     list.push({
       test: 'round-cta-lend',
@@ -314,7 +298,7 @@ const ctas = computed<Cta[]>(() => {
         icon: 'heroicons:arrow-uturn-left',
         color: 'primary',
         variant: 'solid',
-        // Same behavior as clicking the "Repay" layout-exploration tab.
+        // This is the same destination as the Repay tab.
         run: () => (activeVariant.value = 'repay')
       })
     } else if (r.status === 'stalled') {

@@ -16,15 +16,8 @@ import {
   mockBankWrites
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
-
-// Connected wallet address the global user-store mock defaults to (store.setup.ts) —
-// Repay is gated on Bank's owner matching this, alongside store.isOwner.
 const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
 
-// The Community Credit store is the contract-backed read hub. We mock it so the views
-// can be driven deterministically; mocking the submodule propagates through the
-// `@/stores` barrel (see tests/setup/store.setup.ts convention). The fixedReturn / erc20
-// composables the views call directly are already mocked globally.
 const { store } = vi.hoisted(() => {
   const store = {
     hasContract: true,
@@ -177,10 +170,15 @@ describe('Community Credit views', () => {
       return mount(RoundView)
     }
 
-    it('redirects to the list when the round is unknown', async () => {
+    it('keeps the missing round visible until the user chooses route recovery', async () => {
       setMockRoute({ params: { id: '1', roundId: '99' } })
-      mount(RoundView)
+      const wrapper = mount(RoundView)
       await flushPromises()
+      expect(wrapper.find('[data-test="round-not-found"]').exists()).toBe(true)
+      expect(mockRouterPush).not.toHaveBeenCalled()
+
+      await wrapper.find('[data-test="round-not-found-back"]').trigger('click')
+
       expect(mockRouterPush).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'community-credit' })
       )

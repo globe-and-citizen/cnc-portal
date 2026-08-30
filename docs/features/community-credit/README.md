@@ -71,7 +71,8 @@ automatically when a deadline or maturity date passes.
 #### Edge & Error Cases
 
 - [x] A company without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
-- [x] The Credit Account journey distinguishes loading, read-failure, no-round, and populated outcomes.
+- [x] The Credit Account journey distinguishes loading, an unavailable read with recovery, a confirmed missing round, and populated
+      outcomes.
 
 ## US-CC-002: Publish a Credit Call
 
@@ -216,6 +217,8 @@ The following verified gaps have technical evidence and remediation directions i
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
+- [Credit round header](../../../app/src/components/sections/CommunityCreditView/CreditRoundHeader.vue)
+- [Credit round read states](../../../app/src/components/sections/CommunityCreditView/CreditRoundReadState.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
 - [Credit round repayment boundary](../../../app/src/composables/useCreditRoundRepayment.ts)
@@ -227,7 +230,6 @@ The following verified gaps have technical evidence and remediation directions i
 - [Repayment panel](../../../app/src/components/sections/CommunityCreditView/CreditRepayPanel.vue)
 - [Repayment breakdown](../../../app/src/components/sections/CommunityCreditView/CreditRepayBreakdownTable.vue)
 - [Repayment panel component tests](../../../app/src/components/sections/CommunityCreditView/__tests__/CreditRepayPanel.spec.ts)
-- [Credit round header](../../../app/src/components/sections/CommunityCreditView/CreditRoundHeader.vue)
 - [Credit round ledger](../../../app/src/components/sections/CommunityCreditView/CreditRoundLedger.vue)
 - [Whitelist allocation editor](../../../app/src/components/sections/CommunityCreditView/CreditWhitelistEditor.vue)
 - [FixedReturn contract](../../../contract/contracts/FixedReturn.sol)
@@ -237,6 +239,7 @@ The following verified gaps have technical evidence and remediation directions i
 
 ## Related Documentation
 
+- [Async UI State Framework](../../platform/async-ui-state-framework.md)
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Transaction History implementation](../../implementation/transaction-history/README.md)
