@@ -45,7 +45,7 @@ describe('ListIndex - Team List View', () => {
             name: 'TeamCard',
             template:
               '<div :data-test="`team-card-${team.id}`" class="team-card"><strong>{{ team.name }}</strong></div>',
-            props: ['team', 'to']
+            props: ['team', 'treasury', 'to']
           }
         }
       }
@@ -224,6 +224,19 @@ describe('ListIndex - Team List View', () => {
   })
 
   describe('Company links', () => {
+    it('passes an explicit treasury display model to every company card', async () => {
+      const wrapper = createWrapper(mockTeamsData)
+      await wrapper.vm.$nextTick()
+
+      const card = wrapper.findComponent({ name: 'TeamCard' })
+
+      expect(card.props('treasury')).toMatchObject({
+        state: 'unavailable',
+        formattedTotal: '—',
+        accountShares: []
+      })
+    })
+
     it('should give each team card a route to its company overview', async () => {
       const wrapper = createWrapper(mockTeamsData)
       await wrapper.vm.$nextTick()
@@ -306,7 +319,7 @@ describe('ListIndex - Team List View', () => {
           plugins: [createTestingPinia({ createSpy: vi.fn })],
           stubs: {
             AddTeamCard: { template: '<div data-test="add-team-card"></div>' },
-            TeamCard: { template: '<div></div>', props: ['team'] }
+            TeamCard: { template: '<div></div>', props: ['team', 'treasury'] }
           }
         }
       })
