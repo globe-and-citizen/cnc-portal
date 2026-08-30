@@ -67,10 +67,12 @@ const USelectStub = defineComponent({
   template: '<div data-test="investor-type-filter"></div>'
 })
 
-const CustomDatePickerStub = defineComponent({
-  name: 'CustomDatePicker',
+const DatePickerStub = defineComponent({
+  name: 'DatePicker',
   props: {
-    modelValue: { type: Array, required: false }
+    modelValue: { type: Object, required: false },
+    mode: { type: String, required: false },
+    storageKey: { type: String, required: false }
   },
   emits: ['update:modelValue'],
   template: '<div data-test="investor-date-filter"></div>'
@@ -142,7 +144,7 @@ export const createWrapper = (): VueWrapper =>
         USelect: USelectStub,
         UBadge: UBadgeStub,
         AddressTooltip: AddressTooltipStub,
-        CustomDatePicker: CustomDatePickerStub
+        DatePicker: DatePickerStub
       }
     }
   })

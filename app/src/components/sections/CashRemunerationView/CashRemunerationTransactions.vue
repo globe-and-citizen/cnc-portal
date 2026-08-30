@@ -4,11 +4,13 @@
       <div class="flex items-center justify-between">
         <span>Cash Remuneration Transactions History</span>
         <div class="flex items-center gap-2">
-          <CustomDatePicker
-            v-model="dateRange"
-            class="min-w-[140px]"
-            data-test-prefix="cash-remuneration-transaction-history"
-          />
+          <div class="min-w-[140px]" data-test="cash-remuneration-transaction-history-date-select">
+            <DatePicker
+              v-model="dateRange"
+              mode="range"
+              storage-key="transaction-history-range-cash-remuneration-transaction-history"
+            />
+          </div>
           <USelect
             v-model="selectedType"
             :items="typeOptions"
@@ -162,7 +164,7 @@ import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import CustomDatePicker from '@/components/ui/CustomDatePicker.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
