@@ -71,7 +71,8 @@ automatically when a deadline or maturity date passes.
 #### Edge & Error Cases
 
 - [x] A company without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
-- [x] The Credit Account journey distinguishes loading, read-failure, no-round, and populated outcomes.
+- [x] The Credit Account journey distinguishes loading, an unavailable read with recovery, a confirmed missing round, and populated
+      outcomes.
 
 ## US-CC-002: Publish a Credit Call
 
@@ -210,6 +211,8 @@ The following verified gaps have technical evidence and remediation directions i
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
+- [Credit round header](../../../app/src/components/sections/CommunityCreditView/CreditRoundHeader.vue)
+- [Credit round read states](../../../app/src/components/sections/CommunityCreditView/CreditRoundReadState.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
@@ -228,6 +231,7 @@ The following verified gaps have technical evidence and remediation directions i
 
 ## Related Documentation
 
+- [Async UI State Framework](../../platform/async-ui-state-framework.md)
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Detailed flow and implementation analysis](./user-flow-analysis.md)

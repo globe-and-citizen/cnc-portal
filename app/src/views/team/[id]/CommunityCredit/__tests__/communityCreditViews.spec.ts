@@ -4,9 +4,6 @@ import { nextTick } from 'vue'
 import type { CreditRound, LendingOfferStruct } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import { MINUTES_PER_DAY } from '@/utils'
-
-// vue-router is globally mocked (composables.setup.ts); useRouter().push is
-// mockRouterPush and useRoute() reads the shared reactive mockRoute.
 import {
   mockRouterPush,
   mockRouterReplace,
@@ -18,15 +15,8 @@ import {
   mockBankReads
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
-
-// Connected wallet address the global user-store mock defaults to (store.setup.ts) —
-// Repay is gated on Bank's owner matching this, alongside store.isOwner.
 const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
 
-// The Community Credit store is the contract-backed read hub. We mock it so the views
-// can be driven deterministically; mocking the submodule propagates through the
-// `@/stores` barrel (see tests/setup/store.setup.ts convention). The fixedReturn / erc20
-// composables the views call directly are already mocked globally.
 const { store } = vi.hoisted(() => {
   const store = {
     hasContract: true,
@@ -81,8 +71,6 @@ function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
   }
 }
 
-/** A raw on-chain offer, as useFixedReturnGetLendingOffer returns it. Defaults are USDC,
- * Open, with a subscription deadline in the past (so canMarkRefundable holds). */
 function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
   return {
     token: USDC_ADDRESS,
@@ -220,15 +208,6 @@ describe('Community Credit views', () => {
       setMockRoute({ params: { id: '1', roundId: round.id, ...(view ? { view } : {}) } })
       return mount(RoundView)
     }
-
-    it('redirects to the list when the round is unknown', async () => {
-      setMockRoute({ params: { id: '1', roundId: '99' } })
-      mount(RoundView)
-      await flushPromises()
-      expect(mockRouterPush).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'community-credit' })
-      )
-    })
 
     it('switches to the Repay tab (route param) for a round in repayment, same as the tab itself', async () => {
       store.isOwner = true

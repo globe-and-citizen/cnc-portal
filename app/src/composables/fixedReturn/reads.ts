@@ -178,35 +178,31 @@ export function useFixedReturnAllOffers(address?: MaybeRefOrGetter<string | unde
 
       const offers: FixedReturnRawOffer[] = []
       for (let offerId = count; offerId >= 1; offerId--) {
-        try {
-          const [offer, lenderAddresses] = await Promise.all([
-            readContract(config, {
-              address,
-              abi: fixedReturnAbi,
-              functionName: 'getLendingOffer',
-              args: [BigInt(offerId)]
-            }) as Promise<LendingOfferStruct>,
-            readContract(config, {
-              address,
-              abi: fixedReturnAbi,
-              functionName: 'getOfferLenders',
-              args: [BigInt(offerId)]
-            }) as Promise<Address[]>
-          ])
-          offers.push({
-            offerId,
-            offer,
-            decimals: decimalsForFixedReturnToken(offer.token) ?? 6,
-            lenderAddresses
-          })
-        } catch (error) {
-          log.error(`Failed to fetch FixedReturn offer #${offerId}:`, error)
-        }
+        const [offer, lenderAddresses] = await Promise.all([
+          readContract(config, {
+            address,
+            abi: fixedReturnAbi,
+            functionName: 'getLendingOffer',
+            args: [BigInt(offerId)]
+          }) as Promise<LendingOfferStruct>,
+          readContract(config, {
+            address,
+            abi: fixedReturnAbi,
+            functionName: 'getOfferLenders',
+            args: [BigInt(offerId)]
+          }) as Promise<Address[]>
+        ])
+        offers.push({
+          offerId,
+          offer,
+          decimals: decimalsForFixedReturnToken(offer.token) ?? 6,
+          lenderAddresses
+        })
       }
       return offers
     } catch (error) {
       log.error('Failed to fetch FixedReturn offerings:', error)
-      return []
+      throw error
     }
   }
 
