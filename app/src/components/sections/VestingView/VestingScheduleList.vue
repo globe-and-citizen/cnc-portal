@@ -108,7 +108,7 @@
 
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import ScheduleActions from './VestingScheduleActions.vue'
 import type { VestingSchedule } from '@/types/vesting'
 import {

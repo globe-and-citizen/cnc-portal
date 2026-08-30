@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import BodAlert from '@/components/BodAlert.vue'
+import BodAlert from '@/components/ui/BodAlert.vue'
 
 describe('BodAlert', () => {
   it('renders title, message and an icon', () => {

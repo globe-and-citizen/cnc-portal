@@ -81,7 +81,7 @@
 
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import type { SafeTransaction } from '@/types/safe'
 import { type SafeTransactionQueueRow } from '@/utils/safeTransactionState'
 import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'

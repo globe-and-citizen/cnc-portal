@@ -155,7 +155,7 @@
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import CashOutStepList from '@/components/CashOutStepList.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useBankOwner } from '@/composables/bank/reads'

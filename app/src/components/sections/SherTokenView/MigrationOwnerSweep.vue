@@ -64,7 +64,7 @@ import {
   useSweepMigrationMutation
 } from '@/composables/investor/useSweepMigration'
 import { useToast } from '@nuxt/ui/composables'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import type { InvestorMigration } from '@/queries/investorMigration.queries'
 
 interface Props {

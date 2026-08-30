@@ -9,8 +9,8 @@ import { useTeamStore } from '@/stores'
 import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager'
 import { useCreateContractMutation } from '@/queries/contract.queries'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import { formatToken } from '@/utils/format'
 
 const emit = defineEmits(['closeAddCampaignModal'])

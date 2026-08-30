@@ -90,7 +90,7 @@
 <script setup lang="ts">
 import { toRef } from 'vue'
 import type { Abi, Address } from 'viem'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import { useContractReadData } from '@/composables/contracts/useContractReadData'
 
 const props = defineProps<{

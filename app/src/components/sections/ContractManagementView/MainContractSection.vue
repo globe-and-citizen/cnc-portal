@@ -62,8 +62,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'

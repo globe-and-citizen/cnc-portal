@@ -159,8 +159,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { Abi } from 'viem'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { useTeamStore } from '@/stores'
 import type { TeamContract, User } from '@/types'
 import { getContractPresentation, getTeamContracts } from '@/utils'

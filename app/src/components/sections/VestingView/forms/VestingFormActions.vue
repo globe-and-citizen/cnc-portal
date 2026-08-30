@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 defineProps<{
   loading: boolean

@@ -80,7 +80,7 @@
 import { computed, ref, watch } from 'vue'
 import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
-import TablePagination from '@/components/TablePagination.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
 import SafeTransactionStatusFilter from './SafeTransactionStatusFilter.vue'

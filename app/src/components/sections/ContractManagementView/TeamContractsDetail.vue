@@ -72,8 +72,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { parseUnits, type Address } from 'viem'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import {
   useSetCampaignCostPerClick,
   useSetCampaignCostPerImpression

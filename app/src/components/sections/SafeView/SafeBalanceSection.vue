@@ -162,7 +162,7 @@ import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
 import { useToast } from '@nuxt/ui/composables'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { useUserDataStore } from '@/stores'
 import { useContractBalance } from '@/composables/useContractBalance'
@@ -171,7 +171,7 @@ import TransferForm, { type TransferModel } from '@/components/forms/TransferFor
 import type { TokenOption } from '@/types'
 import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{ address: Address }>()

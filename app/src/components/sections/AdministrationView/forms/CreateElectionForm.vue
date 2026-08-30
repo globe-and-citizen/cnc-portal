@@ -147,7 +147,7 @@ import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vu
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 import { combineDayAndTime, dateToCalendarDate } from '@/utils/dayUtils'
 import { formatDate, formatDuration, formatTimeOfDay } from '@/utils/format'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 /**
  * How far ahead a ballot opens when the owner does not pick a day, and the

@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { resolveUser } from '@/utils/transactionHistoryUtil'
 import type { ActivityCell } from '@/utils/accounting/describeEntry'
 import type { ActivityDestination } from '@/utils/accounting/activityDestination'

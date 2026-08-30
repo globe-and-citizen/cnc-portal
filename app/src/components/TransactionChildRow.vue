@@ -15,7 +15,7 @@ import { computed } from 'vue'
 import { resolveUser, formatCryptoAmount, getTransactionTypeLabel } from '@/utils'
 import { formatPercent } from '@/utils/format'
 import type { UBadgeColor } from '@/types/ui'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 
 const props = withDefaults(
   defineProps<{

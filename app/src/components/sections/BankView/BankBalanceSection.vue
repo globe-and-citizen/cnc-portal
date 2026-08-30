@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import { useStorage } from '@vueuse/core'
 import { type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'

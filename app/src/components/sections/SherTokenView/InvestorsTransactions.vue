@@ -182,10 +182,10 @@
 </template>
 
 <script setup lang="ts">
-import UserComponent from '@/components/UserComponent.vue'
-import CustomDatePicker from '@/components/CustomDatePicker.vue'
-import TablePagination from '@/components/TablePagination.vue'
-import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
+import CustomDatePicker from '@/components/ui/CustomDatePicker.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import TransactionDetailModal from '@/components/ui/TransactionDetailModal.vue'
 import type { TokenId } from '@/constant'
 import {
   buildRawInvestorTransactions,
