@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import TransferForm from '../TransferForm.vue'
-import TokenAmount from '../TokenAmount.vue'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 import SelectMemberContractsInput from '@/components/ui/inputs/SelectMemberContractsInput.vue'
 import { NETWORK, type TokenId } from '@/constant'
 import type { TokenOption } from '@/types'
@@ -71,7 +71,7 @@ async function emitTokenAmount(
   wrapper: ReturnType<typeof factory>,
   value: { amount?: string; tokenId?: TokenId }
 ) {
-  await wrapper.findComponent(TokenAmount).vm.$emit('update:modelValue', value)
+  await wrapper.findComponent(TokenAmountInput).vm.$emit('update:modelValue', value)
   await wrapper.vm.$nextTick()
 }
 
@@ -221,7 +221,7 @@ describe('TransferForm.vue', () => {
   })
 
   describe('Null-safety fallback branches', () => {
-    it('passes the fallback token id to TokenAmount when the model token id is missing', () => {
+    it('passes the fallback token id to TokenAmountInput when the model token id is missing', () => {
       const w = factory({
         tokens: [],
         modelValue: createModelValue({
@@ -235,15 +235,17 @@ describe('TransferForm.vue', () => {
         })
       })
 
-      expect(w.findComponent(TokenAmount).props('modelValue')).toMatchObject({ tokenId: 'usdc' })
+      expect(w.findComponent(TokenAmountInput).props('modelValue')).toMatchObject({
+        tokenId: 'usdc'
+      })
     })
 
-    it('passes an empty amount to TokenAmount when the model amount is undefined', () => {
+    it('passes an empty amount to TokenAmountInput when the model amount is undefined', () => {
       const w = factory({
         modelValue: createModelValue({ amount: undefined as unknown as string })
       })
 
-      expect(w.findComponent(TokenAmount).props('modelValue')).toMatchObject({ amount: '' })
+      expect(w.findComponent(TokenAmountInput).props('modelValue')).toMatchObject({ amount: '' })
     })
 
     it('tokenAmountModel setter handles undefined amount', async () => {

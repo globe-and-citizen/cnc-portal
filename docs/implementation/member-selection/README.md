@@ -46,7 +46,7 @@ flowchart LR
 - [Shared multi-selection control](../../../app/src/components/ui/inputs/MultiSelectMemberInput.vue)
 - [Single-member search and selection control](../../../app/src/components/ui/inputs/SelectMemberInput.vue)
 - [Selection scope type](../../../app/src/types/member.ts)
-- [Team setup consumer](../../../app/src/components/forms/AddTeamForm.vue)
+- [Team setup consumer](../../../app/src/components/sections/TeamView/forms/AddTeamForm.vue)
 - [Team member administration consumer](../../../app/src/components/sections/DashboardView/forms/AddMemberForm.vue)
 - [Election candidate consumer](../../../app/src/components/sections/AdministrationView/forms/CreateElectionForm.vue)
 - [Safe signer consumer](../../../app/src/components/sections/SafeView/forms/AddSignerModal.vue)

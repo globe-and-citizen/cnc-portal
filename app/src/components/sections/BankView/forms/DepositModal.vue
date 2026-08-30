@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import DepositBankForm from './DepositBankForm.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { ref, watch } from 'vue'

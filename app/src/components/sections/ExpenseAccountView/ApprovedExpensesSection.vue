@@ -80,7 +80,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
-import ApproveUsersEIP712Form from '@/components/forms/ApproveUsersEIP712Form.vue'
+import ApproveUsersEIP712Form from '@/components/sections/ExpenseAccountView/forms/ApproveUsersEIP712Form.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
@@ -88,7 +88,7 @@ import { parseEther, zeroAddress, type Address } from 'viem'
 import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import type { User, BudgetLimit } from '@/types'
 import { getAxiosErrorMessage, log } from '@/utils'
-import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
+import ApproveExpenseSummaryForm from '@/components/sections/ExpenseAccountView/forms/ApproveExpenseSummaryForm.vue'
 import { useCreateExpenseMutation } from '@/queries/expense.queries'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
