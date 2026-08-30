@@ -18,17 +18,7 @@
       <p class="text-muted mt-1.5 max-w-2xl text-sm leading-relaxed">{{ round.desc }}</p>
     </div>
     <div class="flex items-center gap-2.5">
-      <UButton
-        v-for="action in ctas"
-        :key="action.test"
-        :color="action.color"
-        :variant="action.variant"
-        :icon="action.icon"
-        :label="action.label"
-        :loading="action.loading"
-        :data-test="action.test"
-        @click="action.run"
-      />
+      <slot name="actions" />
     </div>
   </div>
 </template>
@@ -36,12 +26,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { statusMeta } from '@/utils'
-import type { CreditRound, Cta } from '@/types'
+import type { CreditRound } from '@/types'
 
-const props = defineProps<{
-  round: CreditRound
-  ctas: Cta[]
-}>()
+const props = defineProps<{ round: CreditRound }>()
 
 const status = computed(() => statusMeta(props.round.status))
 </script>
