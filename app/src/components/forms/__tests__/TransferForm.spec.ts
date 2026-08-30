@@ -3,7 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import TransferForm from '../TransferForm.vue'
 import TokenAmount from '../TokenAmount.vue'
-import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
+import SelectMemberContractsInput from '@/components/ui/inputs/SelectMemberContractsInput.vue'
 import { NETWORK, type TokenId } from '@/constant'
 import type { TokenOption } from '@/types'
 

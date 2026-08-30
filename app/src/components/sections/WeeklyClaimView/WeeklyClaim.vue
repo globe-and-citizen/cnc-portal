@@ -145,8 +145,8 @@
 </template>
 
 <script setup lang="ts">
-import RatePerHourList from '@/components/RatePerHourList.vue'
-import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
+import RatePerHourList from '@/components/sections/WeeklyClaimView/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/sections/WeeklyClaimView/RatePerHourTotalList.vue'
 import type { TableColumn } from '@nuxt/ui'
 import UserComponent from '@/components/ui/UserComponent.vue'
 import type { TokenId } from '@/constant'

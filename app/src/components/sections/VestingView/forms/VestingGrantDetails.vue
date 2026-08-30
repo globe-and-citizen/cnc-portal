@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
 import UserComponent from '@/components/ui/UserComponent.vue'
 import type { User } from '@/types'
 

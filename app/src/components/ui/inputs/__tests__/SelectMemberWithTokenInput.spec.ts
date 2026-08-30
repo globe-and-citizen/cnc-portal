@@ -1,4 +1,4 @@
-import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
+import SelectMemberWithTokenInput from '@/components/ui/inputs/SelectMemberWithTokenInput.vue'
 import { it, describe, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'

@@ -119,7 +119,7 @@ import { computed, ref } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import type { CreditWhitelistEntry, Member } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
-import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
+import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
 import { formatAddress } from '@/utils/formatAddress'
 import { useTeamStore } from '@/stores/teamStore'
 import {

@@ -124,7 +124,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { TableColumn, TableRow } from '@nuxt/ui'
-import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import AccountingDatePicker from '@/components/ui/AccountingDatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/datePicker'

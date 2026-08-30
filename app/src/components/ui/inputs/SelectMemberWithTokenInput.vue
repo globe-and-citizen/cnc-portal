@@ -72,7 +72,7 @@ import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import { useTeamStore } from '@/stores'
 import { useFocus, watchDebounced } from '@vueuse/core'
-import UserComponent from '../ui/UserComponent.vue'
+import UserComponent from '../UserComponent.vue'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({

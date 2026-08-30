@@ -86,7 +86,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import AccountingDatePicker from '@/components/ui/AccountingDatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
 import StatementLine from './StatementLine.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'

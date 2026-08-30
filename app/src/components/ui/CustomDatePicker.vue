@@ -10,7 +10,7 @@
 -->
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import AccountingDatePicker from '@/components/ui/AccountingDatePicker.vue'
 import type { DatePickerValue } from '@/utils/datePicker'
 
 interface Props {
