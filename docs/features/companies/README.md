@@ -287,6 +287,8 @@ This validation does not attest to a live on-chain Officer deployment.
 ## Implementation Evidence
 
 - [Companies list and action routing](../../../app/src/views/team/ListIndex.vue),
+  [list-owned treasury preparation](../../../app/src/composables/useTeamListTreasuryBalances.ts),
+  [company-card display model](../../../app/src/utils/teamTreasury.ts),
   [company card permissions](../../../app/src/components/sections/TeamView/TeamCard.vue), and
   [list action tests](../../../app/src/views/team/__tests__/ListIndex.actions.spec.ts)
 - [Workspace route and unavailable-state handling](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue),
