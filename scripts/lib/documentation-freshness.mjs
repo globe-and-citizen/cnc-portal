@@ -20,6 +20,15 @@ const BEHAVIORAL_SOURCE_PATTERNS = [
 
 const TEST_SOURCE_PATTERN = /(?:^|\/)(?:__tests__|tests?)(?:\/|$)|\.(?:spec|test)\.[^/]+$/
 const MARKDOWN_FILE_PATTERN = /\.md$/i
+const IMPLEMENTATION_EVIDENCE_REVISION_LABEL = 'Implementation evidence reviewed against'
+const IMPLEMENTATION_EVIDENCE_REVISION_PATTERN = new RegExp(
+  `^\\*\\*${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}:\\*\\*\\s*\`([0-9a-f]{40})\`\\s*$`,
+  'im'
+)
+const IMPLEMENTATION_EVIDENCE_REVISION_LINE_PATTERN = new RegExp(
+  `^\\*\\*${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}:\\*\\*`,
+  'im'
+)
 
 function normalizePath(path) {
   return path.split(sep).join('/').replace(/^\.\//, '').replace(/\/$/, '')
@@ -98,10 +107,20 @@ export function sourcePathsFromMarkdown(markdown, documentPath, repositoryRoot) 
   return [...paths].sort()
 }
 
+export function implementationEvidenceRevisionFromMarkdown(markdown) {
+  return markdown.match(IMPLEMENTATION_EVIDENCE_REVISION_PATTERN)?.[1].toLowerCase() ?? null
+}
+
+function hasImplementationEvidenceRevisionAttestation(markdown) {
+  return IMPLEMENTATION_EVIDENCE_REVISION_LINE_PATTERN.test(markdown)
+}
+
 export function buildDocumentationOwners(documents, repositoryRoot) {
   return documents.map((document) => ({
     path: normalizePath(document.path),
-    sourcePaths: sourcePathsFromMarkdown(document.content, document.path, repositoryRoot)
+    sourcePaths: sourcePathsFromMarkdown(document.content, document.path, repositoryRoot),
+    implementationEvidenceRevision: implementationEvidenceRevisionFromMarkdown(document.content),
+    hasImplementationEvidenceRevisionAttestation: hasImplementationEvidenceRevisionAttestation(document.content)
   }))
 }
 
@@ -109,13 +128,13 @@ function sourceIsOwnedBy(changedPath, declaredPath) {
   return changedPath === declaredPath || changedPath.startsWith(`${declaredPath}/`)
 }
 
-export function validateDocumentationFreshness({ changedPaths, documents, repositoryRoot }) {
+export function validateDocumentationFreshness({
+  changedPaths,
+  documents,
+  repositoryRoot,
+  implementationEvidenceRevisionStatus = () => 'stale'
+}) {
   const owners = buildDocumentationOwners(documents, repositoryRoot)
-  const changedDocumentationPaths = new Set(
-    changedPaths
-      .map(normalizePath)
-      .filter((path) => DOCUMENTATION_ROOTS.some((root) => path.startsWith(`${root}/`) || path === `${root}.md`))
-  )
   const errors = []
 
   for (const changedPath of [...new Set(changedPaths.map(normalizePath))].sort()) {
@@ -133,15 +152,49 @@ export function validateDocumentationFreshness({ changedPaths, documents, reposi
     }
 
     for (const owner of sourceOwners) {
-      if (!changedDocumentationPaths.has(owner.path)) {
+      if (!owner.implementationEvidenceRevision) {
+        const attestationProblem = owner.hasImplementationEvidenceRevisionAttestation
+          ? `has an invalid "${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}" revision`
+          : `has no "${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}" revision`
+
         errors.push(
-          `${changedPath} is owned by ${owner.path}, which was not updated; review and update that document in this change.`
+          `${changedPath} is owned by ${owner.path}, which ${attestationProblem}; review the current source and attest a reachable full commit SHA.`
         )
+        continue
       }
+
+      const status = implementationEvidenceRevisionStatus(owner.implementationEvidenceRevision, changedPath)
+      if (status === 'current') continue
+
+      const statusProblem = status === 'unreachable' ? 'does not resolve to a reachable commit' : 'predates the changed source'
+      errors.push(
+        `${changedPath} is owned by ${owner.path}, whose "${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}" revision ${owner.implementationEvidenceRevision} ${statusProblem}; review the current source and refresh the attestation.`
+      )
     }
   }
 
   return errors
+}
+
+function gitSucceeds(repositoryRoot, args) {
+  try {
+    execFileSync('git', args, { cwd: repositoryRoot, stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
+}
+
+function implementationEvidenceRevisionStatus(repositoryRoot, revision, sourcePath) {
+  if (!gitSucceeds(repositoryRoot, ['rev-parse', '--verify', `${revision}^{commit}`])) return 'unreachable'
+  if (!gitSucceeds(repositoryRoot, ['merge-base', '--is-ancestor', revision, 'HEAD'])) return 'unreachable'
+  if (!gitSucceeds(repositoryRoot, ['cat-file', '-e', `${revision}:${sourcePath}`])) return 'stale'
+
+  const committedSourceIsCurrent = gitSucceeds(repositoryRoot, ['diff', '--quiet', `${revision}..HEAD`, '--', sourcePath])
+  const stagedSourceIsCurrent = gitSucceeds(repositoryRoot, ['diff', '--cached', '--quiet', '--', sourcePath])
+  const workingTreeSourceIsCurrent = gitSucceeds(repositoryRoot, ['diff', '--quiet', 'HEAD', '--', sourcePath])
+
+  return committedSourceIsCurrent && stagedSourceIsCurrent && workingTreeSourceIsCurrent ? 'current' : 'stale'
 }
 
 function walkCanonicalDocuments(directory, repositoryRoot) {
@@ -358,7 +411,9 @@ export function validateCurrentRepository(repositoryRoot, configuredBase) {
     errors: validateDocumentationFreshness({
       changedPaths: changedPaths.filter((path) => !nonBehavioralPaths.has(path)),
       documents,
-      repositoryRoot
+      repositoryRoot,
+      implementationEvidenceRevisionStatus: (revision, sourcePath) =>
+        implementationEvidenceRevisionStatus(repositoryRoot, revision, sourcePath)
     })
   }
 }
