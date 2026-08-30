@@ -7,6 +7,7 @@
     "lint:docs-freshness": "node scripts/validate-documentation-freshness.mjs",
     "lint:md": "markdownlint-cli2",
     "test:docs-freshness": "node --test scripts/documentation-freshness.test.mjs",
+    "test:ui-ux-review-contract": "node --test scripts/ui-ux-review-contract.test.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
