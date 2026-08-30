@@ -2,7 +2,7 @@
   <UCard>
     <template #header>Candidates</template>
     <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <ElectionDetailsCard
+      <ElectionCandidateCard
         v-for="(election, index) in candidates"
         :key="index"
         :election="election"
@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts" setup>
-import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
+import ElectionCandidateCard from './ElectionCandidateCard.vue'
 import { computed, reactive, watch } from 'vue'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'

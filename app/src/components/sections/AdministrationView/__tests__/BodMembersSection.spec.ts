@@ -2,21 +2,21 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, nextTick } from 'vue'
 
-import CurrentBoDSection from '../CurrentBoDSection.vue'
+import BodMembersSection from '../BodMembersSection.vue'
 import { useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
 import { log } from '@/utils'
 
 const NotFoundStub = { template: '<div data-test="not-found">no-members</div>' }
 
-// Stub for UserIdentityCol to expose passed props via attributes
-const UserColStub = {
+// Stub for UserIdentity to expose passed props via attributes
+const UserIdentityStub = {
   props: ['user', 'isDetailedView'],
   template:
     '<div data-test="user-col" :data-address="user?.address" :data-name="user?.name" :data-detailed="String(isDetailedView)"></div>'
 }
 
-describe('CurrentBoDSection', () => {
+describe('BodMembersSection', () => {
   type TeamMember = { address: string; name: string }
   type TeamStoreMock = {
     getContractAddressByType: (type: string) => string
@@ -57,11 +57,11 @@ describe('CurrentBoDSection', () => {
       return { data: ref([]), error: ref(null) }
     })
 
-    const wrapper = mount(CurrentBoDSection, {
+    const wrapper = mount(BodMembersSection, {
       global: {
         stubs: {
-          UserIdentityCol: UserColStub,
-          CurrentBoDSection404: NotFoundStub
+          UserIdentity: UserIdentityStub,
+          BodMembersEmptyState: NotFoundStub
         }
       }
     })
@@ -75,11 +75,11 @@ describe('CurrentBoDSection', () => {
       isFetching: ref(false)
     }))
 
-    const wrapper = mount(CurrentBoDSection, {
+    const wrapper = mount(BodMembersSection, {
       global: {
         stubs: {
-          UserIdentityCol: UserColStub,
-          CurrentBoDSection404: NotFoundStub
+          UserIdentity: UserIdentityStub,
+          BodMembersEmptyState: NotFoundStub
         }
       }
     })
@@ -95,11 +95,11 @@ describe('CurrentBoDSection', () => {
       return { data: ref([]), error: ref(null) }
     })
 
-    const wrapper = mount(CurrentBoDSection, {
+    const wrapper = mount(BodMembersSection, {
       global: {
         stubs: {
-          UserIdentityCol: UserColStub,
-          CurrentBoDSection404: NotFoundStub
+          UserIdentity: UserIdentityStub,
+          BodMembersEmptyState: NotFoundStub
         }
       }
     })
@@ -119,12 +119,12 @@ describe('CurrentBoDSection', () => {
       return { data: ref(['0x2']), error: ref(null) }
     })
 
-    const wrapper = mount(CurrentBoDSection, {
+    const wrapper = mount(BodMembersSection, {
       props: { electionId: 1n },
       global: {
         stubs: {
-          UserIdentityCol: UserColStub,
-          CurrentBoDSection404: NotFoundStub
+          UserIdentity: UserIdentityStub,
+          BodMembersEmptyState: NotFoundStub
         }
       }
     })
@@ -152,11 +152,11 @@ describe('CurrentBoDSection', () => {
       return { data: ref([]), error: ref(null) }
     })
 
-    const wrapper = mount(CurrentBoDSection, {
+    const wrapper = mount(BodMembersSection, {
       global: {
         stubs: {
-          UserIdentityCol: UserColStub,
-          CurrentBoDSection404: NotFoundStub
+          UserIdentity: UserIdentityStub,
+          BodMembersEmptyState: NotFoundStub
         }
       }
     })
@@ -176,12 +176,12 @@ describe('CurrentBoDSection', () => {
       return { data: ref([]), isFetching: ref(false) }
     })
 
-    mount(CurrentBoDSection, {
+    mount(BodMembersSection, {
       props: { electionId: 1n },
       global: {
         stubs: {
-          UserIdentityCol: UserColStub,
-          CurrentBoDSection404: NotFoundStub
+          UserIdentity: UserIdentityStub,
+          BodMembersEmptyState: NotFoundStub
         }
       }
     })
@@ -202,12 +202,12 @@ describe('CurrentBoDSection', () => {
       return { data: ref([]), isFetching: ref(false) }
     })
 
-    mount(CurrentBoDSection, {
+    mount(BodMembersSection, {
       props: { electionId: 1n },
       global: {
         stubs: {
-          UserIdentityCol: UserColStub,
-          CurrentBoDSection404: NotFoundStub
+          UserIdentity: UserIdentityStub,
+          BodMembersEmptyState: NotFoundStub
         }
       }
     })

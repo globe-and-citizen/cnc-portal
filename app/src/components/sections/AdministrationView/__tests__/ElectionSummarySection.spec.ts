@@ -1,11 +1,11 @@
-// ElectionComponent.test.ts
+// ElectionSummarySection.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import ElectionComponent from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
+import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import { mockElectionsReads, mockElectionsWrites } from '@/tests/mocks'
 
-describe('ElectionComponent', () => {
+describe('ElectionSummarySection', () => {
   let wrapper: ReturnType<typeof mount> | undefined
 
   beforeEach(() => {
@@ -26,7 +26,7 @@ describe('ElectionComponent', () => {
   })
 
   const createWrapper = (props = {}) => {
-    return mount(ElectionComponent, {
+    return mount(ElectionSummarySection, {
       props: {
         electionId: 123n,
         isDetails: false,
@@ -49,7 +49,7 @@ describe('ElectionComponent', () => {
             template:
               '<button data-test="open-create-election" @click="$emit(\'showCreateElectionModal\')"></button>'
           },
-          CurrentBoDElection404: true
+          ElectionSummaryEmptyState: true
         }
       }
     })

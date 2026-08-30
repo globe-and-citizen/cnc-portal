@@ -2,13 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { ref } from 'vue'
-import PastBoDElectionCard from '@/components/sections/AdministrationView/PastBoDElectionCard.vue'
+import PastElectionCard from '@/components/sections/AdministrationView/PastElectionCard.vue'
 import { mockTeamStore, useReadContractFn, mockUseReadContract } from '@/tests/mocks'
 
 const memberA = '0x000000000000000000000000000000000000aaaa'
 const memberB = '0x000000000000000000000000000000000000bbbb'
 
-describe('PastBoDElectionCard', () => {
+describe('PastElectionCard', () => {
   const election = {
     id: 7n,
     title: 'Past Election',
@@ -47,7 +47,7 @@ describe('PastBoDElectionCard', () => {
   })
 
   it('renders the title, vote count and elected members', () => {
-    const wrapper = mount(PastBoDElectionCard, { props: { election } })
+    const wrapper = mount(PastElectionCard, { props: { election } })
     expect(wrapper.text()).toContain('Past Election')
     expect(wrapper.text()).toContain('Completed')
     expect(wrapper.text()).toContain('12')
