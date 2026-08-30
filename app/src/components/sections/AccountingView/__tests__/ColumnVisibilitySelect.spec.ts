@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import ColumnVisibilitySelect from '@/components/ColumnVisibilitySelect.vue'
+import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
 
 const items = [
   { value: 'a', label: 'Col A' },

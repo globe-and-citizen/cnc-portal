@@ -123,7 +123,7 @@ import { useBankOwner } from '@/composables/bank/reads'
 import { buildCashOutPlan, useCashOutAll } from '@/composables/cashOut'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
-import CashOutStepList from '@/components/CashOutStepList.vue'
+import CashOutStepList from '@/components/ui/CashOutStepList.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 const teamStore = useTeamStore()
