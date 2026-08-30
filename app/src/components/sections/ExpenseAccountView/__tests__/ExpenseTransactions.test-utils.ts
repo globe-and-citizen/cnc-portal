@@ -81,19 +81,23 @@ export const USelectStub = defineComponent({
   `
 })
 
-export const CustomDatePickerStub = defineComponent({
-  name: 'CustomDatePicker',
-  props: { modelValue: { type: Array, required: false } },
+export const DatePickerStub = defineComponent({
+  name: 'DatePicker',
+  props: {
+    modelValue: { type: Object, required: false },
+    mode: { type: String, required: false },
+    storageKey: { type: String, required: false }
+  },
   emits: ['update:modelValue'],
   template: `
     <div data-test="date-filter">
       <button
         data-test="date-filter-set-2020"
-        @click="$emit('update:modelValue', [new Date('2020-01-01T00:00:00Z'), new Date('2020-01-01T23:59:59Z')])"
+        @click="$emit('update:modelValue', { start: new Date('2020-01-01T00:00:00Z'), end: new Date('2020-01-01T23:59:59Z') })"
       >
         set-range
       </button>
-      <button data-test="date-filter-clear" @click="$emit('update:modelValue', null)">clear-range</button>
+      <button data-test="date-filter-clear" @click="$emit('update:modelValue', undefined)">clear-range</button>
     </div>
   `
 })
