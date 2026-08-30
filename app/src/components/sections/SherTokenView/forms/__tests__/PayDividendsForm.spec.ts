@@ -7,7 +7,8 @@ import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks'
 
 const makeBalance = makeTokenBalance
 
-const TokenAmountStub = {
+const TokenAmountInputStub = {
+  name: 'TokenAmountInput',
   props: ['modelValue', 'tokens', 'loading'],
   emits: ['update:modelValue'],
   template: `
@@ -86,7 +87,7 @@ describe('PayDividendsForm.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          TokenAmount: TokenAmountStub
+          TokenAmountInput: TokenAmountInputStub
         }
       }
     })
@@ -164,11 +165,11 @@ describe('PayDividendsForm.vue', () => {
     expect(submitEvents?.[0]).toEqual([2500000n, 'usdc'])
   })
 
-  it('passes non-sher tokens to TokenAmount', () => {
+  it('passes non-sher tokens to TokenAmountInput', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
-    const tokensProp = wrapper.findComponent(TokenAmountStub).props('tokens') as Array<{
+    const tokensProp = wrapper.findComponent(TokenAmountInputStub).props('tokens') as Array<{
       tokenId: string
     }>
 

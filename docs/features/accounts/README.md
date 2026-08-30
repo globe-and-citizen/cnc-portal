@@ -505,8 +505,8 @@ flowchart LR
   [current-treasury action tests](../../../app/src/components/sections/DashboardView/__tests__/CashOutAllAction.spec.ts), and
   [historic-generation action tests](../../../app/src/components/sections/ContractManagementView/__tests__/LegacyGenerationWithdrawAction.spec.ts)
 - [Safe page](../../../app/src/views/team/%5Bid%5D/Accounts/SafeView.vue),
-  [Safe deposit form](../../../app/src/components/forms/DepositSafeForm.vue), [Safe composables](../../../app/src/composables/safe/), and
-  [Safe transaction state](../../../app/src/utils/safeTransactionState.ts)
+  [Safe deposit form](../../../app/src/components/sections/SafeView/forms/DepositSafeForm.vue),
+  [Safe composables](../../../app/src/composables/safe/), and [Safe transaction state](../../../app/src/utils/safeTransactionState.ts)
 - [Safe transaction queue](../../../app/src/components/sections/SafeView/SafeTransactions.vue),
   [Safe transaction table](../../../app/src/components/sections/SafeView/SafeTransactionsTable.vue), and
   [Safe mobile transaction list](../../../app/src/components/sections/SafeView/SafeTransactionMobileList.vue),
@@ -519,7 +519,7 @@ flowchart LR
   [Safe transaction state tests](../../../app/src/utils/__tests__/safeTransactionState.spec.ts), and
   [Safe conflict warning tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactionsWarning.spec.ts)
 - [Expense Account page](../../../app/src/views/team/%5Bid%5D/Accounts/ExpenseAccountView.vue),
-  [expense approval form](../../../app/src/components/forms/ApproveUsersEIP712Form.vue),
+  [expense approval form](../../../app/src/components/sections/ExpenseAccountView/forms/ApproveUsersEIP712Form.vue),
   [member and token selector](../../../app/src/components/ui/inputs/SelectMemberWithTokenInput.vue),
   [Expense API controller](../../../backend/src/controllers/expenseController.ts), and
   [Expense Account contract](../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)

@@ -5,7 +5,7 @@
 
   <UForm :schema="formSchema" :state="{ amount }" @submit="submitForm">
     <UFormField name="amount" class="w-full">
-      <TokenAmount
+      <TokenAmountInput
         :tokens="tokenList"
         v-model="tokenAmountModel"
         :isLoading="isLoading"
@@ -23,10 +23,10 @@
             </span>
           </div>
         </template>
-      </TokenAmount>
+      </TokenAmountInput>
     </UFormField>
 
-    <CompensationAmount
+    <CompensationAmountInput
       v-model:modelValue="sherAmount"
       :deposit-token-symbol="selectedToken?.token.symbol || 'USDC'"
       :rate="formattedMultiplier"
@@ -84,8 +84,8 @@ import {
   calculateDepositFromSher,
   buildDepositAmountSchema
 } from '@/utils/safeDepositRouterUtil'
-import TokenAmount from './TokenAmount.vue'
-import CompensationAmount from './CompensationAmount.vue'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
+import CompensationAmountInput from './CompensationAmountInput.vue'
 import {
   useSafeDepositRouterAddress,
   useSafeDepositRouterMultiplier

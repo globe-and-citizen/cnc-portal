@@ -1,7 +1,7 @@
 import { describe, it, vi, expect, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import AddTeamForm from '@/components/forms/AddTeamForm.vue'
+import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 import { createMockMutationResponse, mockTeamData } from '@/tests/mocks/query.mock'
 import { defineComponent, h } from 'vue'

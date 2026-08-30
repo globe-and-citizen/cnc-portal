@@ -170,7 +170,7 @@ import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
 import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
-import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
+import DepositSafeForm from '@/components/sections/SafeView/forms/DepositSafeForm.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 

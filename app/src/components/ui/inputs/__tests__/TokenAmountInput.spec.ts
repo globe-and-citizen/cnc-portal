@@ -1,7 +1,7 @@
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
 import { nextTick, type ComponentPublicInstance } from 'vue'
-import TokenAmount from '../TokenAmount.vue'
+import TokenAmountInput from '../TokenAmountInput.vue'
 import type { TokenOption } from '@/types'
 import type { TokenId } from '@/constant'
 
@@ -17,7 +17,7 @@ const defaultProps = {
 }
 
 const createWrapper = (overrides: Record<string, unknown> = {}) =>
-  mount(TokenAmount, { props: { ...defaultProps, ...overrides } })
+  mount(TokenAmountInput, { props: { ...defaultProps, ...overrides } })
 
 const lastEmitted = <T>(
   wrapper: VueWrapper<ComponentPublicInstance>,
@@ -44,7 +44,7 @@ const selectToken = (
   tokenId: string
 ): Promise<void> => findTokenSelect(wrapper).setValue(tokenId)
 
-describe('TokenAmount.vue', () => {
+describe('TokenAmountInput.vue', () => {
   it('renders the available token options and balance', () => {
     const wrapper = createWrapper({ modelValue: { amount: '0', tokenId: 'native' } })
 

@@ -18,7 +18,7 @@
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <UFormField class="w-full" name="amount">
-      <TokenAmount
+      <TokenAmountInput
         :tokens="tokens"
         v-model="tokenAmountModel"
         :isLoading="props.loading"
@@ -34,7 +34,7 @@
             </div>
           </slot>
         </template>
-      </TokenAmount>
+      </TokenAmountInput>
     </UFormField>
 
     <!-- Fee breakdown -->
@@ -112,7 +112,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { z } from 'zod'
 import SelectMemberContractsInput from '../ui/inputs/SelectMemberContractsInput.vue'
-import TokenAmount from './TokenAmount.vue'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import { isValidPositiveTokenAmount } from '@/utils/constantUtil'
 import type { TokenOption } from '@/types'
