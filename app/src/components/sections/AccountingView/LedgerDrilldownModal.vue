@@ -65,7 +65,7 @@ import { computed, ref, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import LedgerTable from './LedgerTable.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import ColumnVisibilitySelect from '@/components/ColumnVisibilitySelect.vue'
+import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
 import {
   ledgerRows,
   LEDGER_COLUMNS,

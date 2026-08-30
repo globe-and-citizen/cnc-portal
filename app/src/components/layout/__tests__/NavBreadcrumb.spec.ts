@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import NavBreadcrumb from '@/components/NavBreadcrumb.vue'
+import NavBreadcrumb from '@/components/layout/NavBreadcrumb.vue'
 import { mockTeamData } from '@/tests/mocks/index'
 import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
 import { setMockRoute } from '@/tests/mocks/router.mock'
