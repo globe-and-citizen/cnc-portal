@@ -217,6 +217,8 @@ The following verified gaps have technical evidence and remediation directions i
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `6f7b802a3c6c1d594f63736e31c87b1d83a2a7f7`
+
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
@@ -230,8 +232,7 @@ The following verified gaps have technical evidence and remediation directions i
 - [Repayment lifecycle status](../../../app/src/utils/communityCreditRoundStatusUtil.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
 - [Credit-call terms step](../../../app/src/components/sections/CommunityCreditView/CreditCallTermsStep.vue)
-- [Credit Account transaction history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue), including
-  its direct shared date-range selection
+- [Credit Account transaction history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue)
 - [Credit round history](../../../app/src/components/sections/CommunityCreditView/CreditHistoryTable.vue)
 - [Lending modal](../../../app/src/components/sections/CommunityCreditView/CreditLendModal.vue)
 - [Repayment panel](../../../app/src/components/sections/CommunityCreditView/CreditRepayPanel.vue)

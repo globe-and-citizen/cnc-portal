@@ -2,7 +2,7 @@
 
 **Status:** Current — applied to every canonical product feature user story
 
-**Last updated:** 2026-08-27
+**Last updated:** 2026-08-30
 
 **Purpose:** Define the canonical, reviewable documentation contract for CNC Portal features
 
@@ -227,6 +227,17 @@ Link to the smallest useful set of current sources:
 
 Evidence links prove where behaviour comes from. They do not turn the feature README into a file inventory.
 
+When an evidence-linked behavioural source changes, put this line directly below the `## Implementation Evidence` heading after reviewing
+the evidence:
+
+```markdown
+**Implementation evidence reviewed against:** `<full immutable commit SHA>`
+```
+
+This SHA is a technical attestation of the source revision inspected. It does not replace the `Last reviewed` human-validation date or add
+release history to the feature contract. When the journey and criteria remain current, update the attestation without adding review-history
+prose to evidence labels.
+
 ### 8. Related Documentation and Known Gaps
 
 Link contract behaviour, focused feature rules, API references, or another feature that owns a referenced story.
@@ -346,11 +357,11 @@ This rule applies to every committed documentation file, not only feature README
 4. Write atomic and cohesive functional acceptance criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`, including
    material boundaries and recovery outcomes without prescribing UI or UX choices.
 5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from the human product-review state.
-6. Refresh focused evidence links and related documentation.
+6. Refresh focused evidence links, their implementation-evidence attestation, and related documentation.
 7. Update `docs/features/README.md` and `docs/README.md` only when navigation or canonical ownership changes.
 8. Keep historical explanations in Git, issues, pull requests, or ADRs rather than the current feature contract.
 9. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md): every changed behavioural source must be linked by, and
-   reviewed through, its canonical feature owner in the same pull request.
+   reviewed through, its canonical feature owner in the same pull request. Commit the source before setting the owner's evidence SHA.
 
 ## Review Checklist
 

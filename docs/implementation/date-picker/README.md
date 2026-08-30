@@ -32,6 +32,8 @@ flowchart LR
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `6f7b802a3c6c1d594f63736e31c87b1d83a2a7f7`
+
 - [Shared DatePicker](../../../app/src/components/ui/DatePicker.vue) and
   [transaction-history filtering](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Reactive selection state](../../../app/src/composables/useDatePicker.ts) and
