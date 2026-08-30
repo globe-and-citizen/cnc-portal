@@ -83,9 +83,10 @@ describe('TransferForm.vue', () => {
   })
 
   describe('Actions', () => {
-    it('renders BodAlert when the form is used in bod mode', () => {
+    it('renders the Board approval notice when the form is used in bod mode', () => {
       const w = factory({ isBodAction: true })
 
+      expect(w.find('[data-test="bod-action-alert"]').exists()).toBe(true)
       expect(w.text()).toContain('This will create a BOD action')
     })
 

@@ -2,9 +2,22 @@
   <UCard>
     <div v-if="ownerUser.address" class="flex items-center justify-between">
       <div class="text-lg text-gray-500">
-        <span class="flex items-center gap-4">
-          <UserAvatarComponent :user="ownerUser" class="" />
-        </span>
+        <div class="flex items-center gap-4">
+          <UAvatar
+            :src="ownerUser.imageUrl"
+            :alt="`${ownerUser.name || 'User'} avatar`"
+            :text="ownerUser.name?.slice(0, 1).toUpperCase() || 'U'"
+            icon="i-lucide-user"
+            size="lg"
+            data-test="contract-owner-avatar"
+          />
+          <div>
+            <span class="text-gray-500">Owner name:</span>
+            <p class="font-bold text-gray-800" data-test="contract-owner-name">
+              {{ ownerUser.name || 'User' }}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div class="text-lg text-gray-500">
@@ -22,7 +35,6 @@
 </template>
 
 <script setup lang="ts">
-import UserAvatarComponent from '@/components/ui/UserAvatarComponent.vue'
 import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import { useTeamStore } from '@/stores/'
 import { type User } from '@/types/user'

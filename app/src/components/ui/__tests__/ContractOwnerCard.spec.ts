@@ -46,6 +46,8 @@ describe('ContractOwnerCard', () => {
 
     expect(wrapper.text()).toContain('Board of Directors')
     expect(wrapper.text()).toContain(boardAddr)
+    expect(wrapper.find('[data-test="contract-owner-avatar"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="contract-owner-name"]').text()).toContain('Board of Directors')
     expect(mockWagmiCore.readContract).toHaveBeenCalled()
   })
 
@@ -68,6 +70,8 @@ describe('ContractOwnerCard', () => {
 
     expect(wrapper.text()).toContain('Alice')
     expect(wrapper.text()).toContain(ownerAddr)
+    expect(wrapper.find('[data-test="contract-owner-avatar"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="contract-owner-name"]').text()).toContain('Alice')
   })
 
   it('falls back to address when owner is unknown', async () => {

@@ -1,5 +1,13 @@
 <template>
-  <BodAlert v-if="isBodAction" />
+  <UAlert
+    v-if="isBodAction"
+    title="Info"
+    description="This will create a BOD action which requires approval from at least half of the BOD members."
+    icon="i-lucide-info"
+    color="info"
+    variant="soft"
+    data-test="bod-action-alert"
+  />
 
   <UForm
     :schema="validationSchema"
@@ -104,7 +112,6 @@
 import { computed, onMounted, watch } from 'vue'
 import { z } from 'zod'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
-import BodAlert from '@/components/ui/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import { isValidPositiveTokenAmount } from '@/utils/constantUtil'

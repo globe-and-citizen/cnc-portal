@@ -132,7 +132,8 @@ Not decided yet — to review before considering v0 complete.
   [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue), and their shared
   [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-V0-001` and `002`).
 - [Payment history view](../../../app/src/views/team/[id]/PaymentGate/HistoryView.vue),
-  [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue), and
+  [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue),
+  [transaction-detail modal](../../../app/src/components/ui/TransactionDetailModal.vue), and
   [useFactureHistory](../../../app/src/composables/paymentGate/useFactureHistory.ts) (`US-PAYGATE-V0-004`).
 - [Recall/reference view](../../../app/src/views/team/[id]/PaymentGate/ReferenceView.vue) and its
   [recheck-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-V0-005`).

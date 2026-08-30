@@ -95,6 +95,7 @@ flowchart LR
 - [x] Direct contract actions are unavailable to users who are neither the current owner nor an eligible Board member for a Board-owned
       contract.
 - [x] A Board-owned contract uses a Board action for an ownership transfer instead of a direct ownership write.
+- [x] A Board-submitted ownership transfer identifies its approval requirement before submission.
 - [x] An archived company cannot initiate a contract operation or approve a pending Board action.
 
 #### Edge & Error Cases

@@ -81,7 +81,7 @@ fi
 echo
 echo "── Canonical reference files ────────────────────────────────"
 CANONICAL=(
-  "app/src/components/ui/__tests__/SelectComponent.spec.ts"
+  "app/src/components/utils/__tests__/SelectMemberWithTokenInput.spec.ts"
   "app/src/composables/__tests__/useContractFunction.spec.ts"
   "app/src/__tests__/wagmi.spec.ts"
   "app/src/utils/__tests__/currencyUtil.spec.ts"

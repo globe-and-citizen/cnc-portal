@@ -34,10 +34,6 @@ const TokenAmountStub = {
   `
 }
 
-const BodAlertStub = {
-  template: `<div data-test="bod-alert" />`
-}
-
 const defaultBalances = () => [
   makeBalance({
     amount: 10,
@@ -90,8 +86,7 @@ describe('PayDividendsForm.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          TokenAmount: TokenAmountStub,
-          BodAlert: BodAlertStub
+          TokenAmount: TokenAmountStub
         }
       }
     })
@@ -181,10 +176,11 @@ describe('PayDividendsForm.vue', () => {
     expect(tokensProp.some((token) => token.tokenId === 'sher')).toBe(false)
   })
 
-  it('shows BodAlert when bod action is required', () => {
+  it('shows the Board approval notice when a Board action is required', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent({ isBodAction: true })
-    expect(wrapper.find('[data-test="bod-alert"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="bod-action-alert"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('This will create a BOD action')
   })
 })

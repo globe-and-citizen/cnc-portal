@@ -113,6 +113,7 @@ flowchart LR
 #### Business Rules
 
 - [x] Only the Bank owner can execute a direct transfer. _(contract)_
+- [x] A Board-submitted transfer identifies its approval requirement before submission.
 - [x] A transfer amount must be positive and cannot exceed the available balance after protocol fees.
 - [x] A transfer recipient cannot be the zero address. _(contract)_
 - [x] SHER transfers are not available through the Bank transfer journey.
@@ -496,6 +497,7 @@ flowchart LR
   [Bank event queries](../../../app/src/queries/ponder/bank.queries.ts), and [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
+- [Bank transfer form](../../../app/src/components/forms/TransferForm.vue)
 - [Current treasury cash-out action](../../../app/src/components/sections/DashboardView/CashOutAllAction.vue),
   [historic-generation withdrawal action](../../../app/src/components/sections/ContractManagementView/LegacyGenerationWithdrawAction.vue),
   and [cash-out orchestration](../../../app/src/composables/cashOut/useCashOutAll.ts)
@@ -517,6 +519,8 @@ flowchart LR
   [Safe transaction state tests](../../../app/src/utils/__tests__/safeTransactionState.spec.ts), and
   [Safe conflict warning tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactionsWarning.spec.ts)
 - [Expense Account page](../../../app/src/views/team/%5Bid%5D/Accounts/ExpenseAccountView.vue),
+  [expense approval form](../../../app/src/components/forms/ApproveUsersEIP712Form.vue),
+  [member and token selector](../../../app/src/components/utils/SelectMemberWithTokenInput.vue),
   [Expense API controller](../../../backend/src/controllers/expenseController.ts), and
   [Expense Account contract](../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Expense component tests](../../../app/src/components/sections/ExpenseAccountView/__tests__),

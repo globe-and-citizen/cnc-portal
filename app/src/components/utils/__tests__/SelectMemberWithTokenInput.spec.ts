@@ -97,4 +97,11 @@ describe('SelectMemberWithTokenInput.vue', () => {
 
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(false)
   })
+
+  it('renders the Nuxt UI token selector with an accessible label', () => {
+    const tokenSelector = wrapper.find('[data-test="token-selector"]')
+
+    expect(tokenSelector.exists()).toBe(true)
+    expect(tokenSelector.attributes('aria-label')).toBe('Select token')
+  })
 })

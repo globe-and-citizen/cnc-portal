@@ -63,7 +63,7 @@ import type { TableColumn } from '@nuxt/ui'
 import { useTeamStore } from '@/stores'
 import { formatTxHash, formatCryptoAmount } from '@/utils'
 import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
-import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
+import TransactionDetailModal from '@/components/ui/TransactionDetailModal.vue'
 import { useFactureHistory, type FacturePayment } from '@/composables/paymentGate/useFactureHistory'
 
 const teamStore = useTeamStore()

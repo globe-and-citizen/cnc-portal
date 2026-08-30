@@ -438,6 +438,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] A member can review each weekly claim's status, total duration, token amounts, daily breakdown, goals, and attachments.
 - [x] Company-wide payroll history provides each claim's member, week, duration, rates, computed amounts, status, and valid transitions.
+- [x] A company member can select another current member to review that member's claim history.
 - [x] _(API)_ Weekly claims can be filtered by status.
 - [x] _(API)_ Weekly claims can be filtered by member.
 - [x] _(API)_ Weekly-claim total minutes are derived from their daily claims.
@@ -480,6 +481,7 @@ Functional gaps map to unchecked acceptance criteria.
 - [Claim editing flow](../../../app/src/components/sections/CashRemunerationView/EditClaims.vue)
 - [Claim history daily breakdown](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue)
 - [Claim history claim actions](../../../app/src/components/sections/ClaimHistoryView/ClaimActions.vue)
+- [Claim history member selector](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue)
 - [Daily claim form rules](../../../app/src/utils/claimFormUtil.ts)
 - [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)

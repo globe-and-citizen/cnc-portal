@@ -1,6 +1,14 @@
 <template>
   <div class="flex flex-col gap-4">
-    <BodAlert v-if="isBodAction" />
+    <UAlert
+      v-if="isBodAction"
+      title="Info"
+      description="This will create a BOD action which requires approval from at least half of the BOD members."
+      icon="i-lucide-info"
+      color="info"
+      variant="soft"
+      data-test="bod-action-alert"
+    />
     <h3>
       Please input amount to divide to the shareholders. This will move funds from bank contract to
       the shareholders
@@ -52,7 +60,6 @@ import type { Team } from '@/types'
 import { parseUnits } from 'viem'
 import { computed, ref } from 'vue'
 import { useTeamStore } from '@/stores'
-import BodAlert from '@/components/ui/BodAlert.vue'
 
 import type { TokenId } from '@/constant'
 import type { TokenOption } from '@/types'

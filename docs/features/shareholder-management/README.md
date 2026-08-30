@@ -114,6 +114,7 @@ flowchart LR
 
 - [x] The action is available only when a SHER token symbol and at least one shareholder are available.
 - [x] A user who is neither the Bank owner nor eligible for the Board action cannot open the dividend form.
+- [x] A Board-submitted dividend identifies its approval requirement before submission.
 - [x] The dividend token list excludes SHER.
 - [x] The Investor contract rejects dividends while a shareholder migration remains open. _(contract)_
 - [x] An archived company cannot start a dividend action.
