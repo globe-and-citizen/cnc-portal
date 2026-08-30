@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import GenericTokenHoldingsSection from '@/components/ui/GenericTokenHoldingsSection.vue'
+import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 
-describe('GenericTokenHoldingsSection', () => {
+describe('TokenHoldingsSection', () => {
   it('renders table with a USDC row and correct values', () => {
-    const wrapper = mount(GenericTokenHoldingsSection, {
+    const wrapper = mount(TokenHoldingsSection, {
       props: { address: '0x123' },
       global: {
         components: {

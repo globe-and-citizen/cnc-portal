@@ -9,7 +9,7 @@
         data-test="contract-row"
         @click="handleSelect(contract)"
       >
-        <UserComponent
+        <UserIdentity
           class="hover:bg-elevated grow rounded-lg bg-white p-4"
           :user="{ name: contract.type, address: contract.address, imageUrl: contract.imageUrl }"
           :data-test="`contract-dropdown-${contract.address}`"
@@ -21,7 +21,7 @@
 
 <script lang="ts" setup>
 import { toRef } from 'vue'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import type { TeamContract } from '@/types'
 
 const props = defineProps<{

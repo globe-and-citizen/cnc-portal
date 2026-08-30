@@ -6,7 +6,7 @@
           <p class="font-medium capitalize">{{ getSafeTransactionMethod(row.transaction) }}</p>
           <div class="mt-1 flex items-center gap-1 text-xs text-gray-500">
             <span>To</span>
-            <AddressToolTip :address="row.transaction.to" slice />
+            <AddressTooltip :address="row.transaction.to" slice />
           </div>
         </div>
       </template>
@@ -81,7 +81,7 @@
 
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import type { SafeTransaction } from '@/types/safe'
 import { type SafeTransactionQueueRow } from '@/utils/safeTransactionState'
 import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'

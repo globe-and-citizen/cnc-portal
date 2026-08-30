@@ -27,7 +27,7 @@ const stubs = {
     template: '<div v-bind="$attrs">{{ title }} {{ description }}</div>'
   },
   USkeleton: { template: '<div data-test="u-skeleton" />' },
-  AddressToolTip: {
+  AddressTooltip: {
     props: ['address'],
     template: '<span data-test="read-address">{{ address }}</span>'
   }

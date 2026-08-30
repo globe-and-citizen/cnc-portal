@@ -85,9 +85,9 @@
               v-if="getInlineUser(row.original) || row.original.type === 'ownershipTransferred'"
             >
               <div class="mt-1 flex items-center gap-1 text-xs">
-                <UserComponent :user="resolveUser(row.original.from)" />
+                <UserIdentity :user="resolveUser(row.original.from)" />
                 <span class="text-muted text-lg font-bold">→</span>
-                <UserComponent :user="resolveUser(row.original.to)" />
+                <UserIdentity :user="resolveUser(row.original.to)" />
               </div>
             </template>
           </div>
@@ -102,7 +102,7 @@
       </template>
 
       <template #counterparty-cell="{ row }">
-        <UserComponent
+        <UserIdentity
           v-if="getTransactionCounterparty(row.original).address"
           :user="resolveUser(getTransactionCounterparty(row.original).address!)"
         />
@@ -147,7 +147,11 @@
     </template>
   </UCard>
 
-  <TransactionDetailModal v-if="selectedTx" v-model:open="showDetail" :transaction="selectedTx" />
+  <TransactionDetailSlideover
+    v-if="selectedTx"
+    v-model:open="showDetail"
+    :transaction="selectedTx"
+  />
 </template>
 
 <script setup lang="ts">
@@ -157,10 +161,10 @@ import { useTransactionInline } from '@/composables/transactions/useTransactionI
 import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import CustomDatePicker from '@/components/ui/CustomDatePicker.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import TransactionDetailModal from '@/components/ui/TransactionDetailModal.vue'
+import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import type { CashRemunerationTransaction } from '@/types/transactions'
 import type { TransactionEventValue } from '@/types/transaction-history'

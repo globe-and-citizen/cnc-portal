@@ -10,7 +10,7 @@
         :key="index"
         class="overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-t from-emerald-100 to-emerald-50 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
       >
-        <UserComponentCol
+        <UserIdentityCol
           :user="
             teamStore.currentTeamMeta?.data?.members.find(
               (m) => m.address === memberAddress
@@ -30,7 +30,7 @@
 </template>
 <script setup lang="ts">
 import { boardOfDirectorsAbi, electionsAbi } from '@/artifacts/abi/generated'
-import UserComponentCol from '@/components/ui/UserComponent.vue'
+import UserIdentityCol from '@/components/ui/UserIdentity.vue'
 import CurrentBoDSection404 from './CurrentBoDSection404.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'

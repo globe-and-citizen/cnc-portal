@@ -1,5 +1,5 @@
 import SelectContractResults from '@/components/ui/inputs/SelectContractResults.vue'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
@@ -42,7 +42,7 @@ const createWrapper = (props = {}) => {
       ...props
     },
     global: {
-      components: { UserComponent }
+      components: { UserIdentity }
     }
   })
 }
@@ -74,7 +74,7 @@ describe('SelectContractResults', () => {
     expect(rows.length).toBe(3)
   })
 
-  it('should render UserComponent for each contract', async () => {
+  it('should render UserIdentity for each contract', async () => {
     wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
     await nextTick()
 
@@ -139,11 +139,11 @@ describe('SelectContractResults', () => {
     expect(wrapper.findAll(SELECTORS.contractRow).length).toBe(3)
   })
 
-  it('should pass correct props to UserComponent', async () => {
+  it('should pass correct props to UserIdentity', async () => {
     wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
     await nextTick()
 
-    const userComponents = wrapper.findAllComponents(UserComponent)
+    const userComponents = wrapper.findAllComponents(UserIdentity)
 
     expect(userComponents.length).toBe(3)
 

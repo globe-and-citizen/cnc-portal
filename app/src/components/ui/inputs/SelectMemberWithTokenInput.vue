@@ -54,7 +54,7 @@
             class="flex cursor-pointer items-center"
             data-test="user-row"
           >
-            <UserComponent
+            <UserIdentity
               class="bg-muted hover:bg-elevated grow rounded-lg p-4"
               :user="user"
               :data-test="`user-dropdown-${user.address}`"
@@ -72,7 +72,7 @@ import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import { useTeamStore } from '@/stores'
 import { useFocus, watchDebounced } from '@vueuse/core'
-import UserComponent from '../UserComponent.vue'
+import UserIdentity from '../UserIdentity.vue'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({

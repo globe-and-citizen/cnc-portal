@@ -82,8 +82,8 @@ const CustomDatePickerStub = defineComponent({
   template: '<div data-test="date-filter"></div>'
 })
 
-const AddressToolTipStub = defineComponent({
-  name: 'AddressToolTip',
+const AddressTooltipStub = defineComponent({
+  name: 'AddressTooltip',
   template: '<div />'
 })
 
@@ -92,8 +92,8 @@ const UBadgeStub = defineComponent({
   template: '<span><slot /></span>'
 })
 
-const UserComponentStub = defineComponent({
-  name: 'UserComponent',
+const UserIdentityStub = defineComponent({
+  name: 'UserIdentity',
   props: {
     user: { type: Object, required: false }
   },
@@ -159,9 +159,9 @@ export const createWrapper = (bankAddress: Address = BANK_ADDRESS): VueWrapper =
         UTable: UTableStub,
         USelect: USelectStub,
         UBadge: UBadgeStub,
-        AddressToolTip: AddressToolTipStub,
+        AddressTooltip: AddressTooltipStub,
         CustomDatePicker: CustomDatePickerStub,
-        UserComponent: UserComponentStub
+        UserIdentity: UserIdentityStub
       }
     }
   })

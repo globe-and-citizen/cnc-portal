@@ -37,7 +37,7 @@
       :key="approval.id"
       class="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2"
     >
-      <UserComponent :user="{ name: approval.name, address: approval.address }" />
+      <UserIdentity :user="{ name: approval.name, address: approval.address }" />
       <UBadge
         :color="
           approval.status === 'approved'
@@ -77,7 +77,7 @@
 import { computed, ref, watch } from 'vue'
 import type { TableRow } from '@/types/table'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { boardOfDirectorsAbi } from '@/artifacts/abi/generated'

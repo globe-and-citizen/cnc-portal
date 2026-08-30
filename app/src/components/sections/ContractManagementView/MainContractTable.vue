@@ -58,7 +58,7 @@
             </div>
             <div class="min-w-0">
               <p class="text-highlighted font-medium">{{ presentation(contract.type).label }}</p>
-              <AddressToolTip
+              <AddressTooltip
                 :address="contract.address"
                 class="text-muted mt-1 font-mono text-xs whitespace-nowrap"
               />
@@ -87,7 +87,7 @@
         </template>
 
         <template #owner-cell="{ row: { original: contract } }">
-          <UserComponent :user="getUser(contract.owner)" />
+          <UserIdentity :user="getUser(contract.owner)" />
         </template>
 
         <template v-if="showActions" #actions-cell="{ row: { original: contract } }">
@@ -110,7 +110,7 @@
               </div>
               <div class="min-w-0">
                 <p class="text-highlighted font-medium">{{ presentation(contract.type).label }}</p>
-                <AddressToolTip :address="contract.address" :slice="true" class="mt-1 text-xs" />
+                <AddressTooltip :address="contract.address" :slice="true" class="mt-1 text-xs" />
               </div>
             </div>
             <UBadge :color="contract.paused ? 'warning' : 'success'" variant="subtle" size="sm">
@@ -131,7 +131,7 @@
             </div>
             <div>
               <dt class="text-muted">Owner</dt>
-              <dd class="mt-1"><UserComponent :user="getUser(contract.owner)" /></dd>
+              <dd class="mt-1"><UserIdentity :user="getUser(contract.owner)" /></dd>
             </div>
           </dl>
 
@@ -159,8 +159,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { Abi } from 'viem'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useTeamStore } from '@/stores'
 import type { TeamContract, User } from '@/types'
 import { getContractPresentation, getTeamContracts } from '@/utils'

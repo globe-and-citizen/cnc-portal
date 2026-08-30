@@ -24,7 +24,7 @@
             </div>
             <div class="mt-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
               <p class="text-highlighted text-xl font-semibold">Active Officer</p>
-              <AddressToolTip :address="generation.officerAddress" :slice="true" class="text-xs" />
+              <AddressTooltip :address="generation.officerAddress" :slice="true" class="text-xs" />
             </div>
             <p class="text-muted mt-2 text-sm">
               This generation currently controls {{ currentContracts.length }} workspace contracts.
@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore } from '@/stores'

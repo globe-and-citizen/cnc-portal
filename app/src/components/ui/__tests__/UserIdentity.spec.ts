@@ -1,9 +1,9 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import type { User } from '@/types'
 
-describe('UserComponent.vue', () => {
+describe('UserIdentity.vue', () => {
   const mockUser: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string } = {
     address: '0x1234567890123456789012345678901234567890',
     name: 'John Doe',
@@ -13,7 +13,7 @@ describe('UserComponent.vue', () => {
 
   describe('Component Rendering', () => {
     it('should render with user data', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserIdentity, {
         props: { user: mockUser }
       })
 
@@ -26,7 +26,7 @@ describe('UserComponent.vue', () => {
     })
 
     it('should display defaults when user data is missing', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserIdentity, {
         props: {
           user: { address: undefined, name: undefined, imageUrl: undefined }
         }
@@ -44,7 +44,7 @@ describe('UserComponent.vue', () => {
 
   describe('isCollapsed prop', () => {
     it('should hide user info when collapsed', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserIdentity, {
         props: { user: mockUser, isCollapsed: true }
       })
 
@@ -53,7 +53,7 @@ describe('UserComponent.vue', () => {
     })
 
     it('should show user info when not collapsed', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserIdentity, {
         props: { user: mockUser, isCollapsed: false }
       })
 
@@ -64,7 +64,7 @@ describe('UserComponent.vue', () => {
 
   describe('isDetailedView prop', () => {
     it('should show larger avatar and role in detailed view', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserIdentity, {
         props: { user: mockUser, isDetailedView: true }
       })
 
@@ -77,7 +77,7 @@ describe('UserComponent.vue', () => {
     })
 
     it('should show smaller avatar and no role when not in detailed view', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserIdentity, {
         props: { user: mockUser, isDetailedView: false }
       })
 
@@ -91,7 +91,7 @@ describe('UserComponent.vue', () => {
 
   describe('Accessibility', () => {
     it('should have proper aria attributes', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserIdentity, {
         props: { user: mockUser }
       })
 

@@ -40,9 +40,9 @@
 
       <template #flow-cell="{ row: { original: row } }">
         <div class="flex items-center gap-1.5">
-          <UserComponent compact size="sm" hide-address :user="nodeUser(row.flow.from)" />
+          <UserIdentity compact size="sm" hide-address :user="nodeUser(row.flow.from)" />
           <UIcon name="i-heroicons-arrow-long-right" class="text-dimmed size-4 shrink-0" />
-          <UserComponent compact size="sm" hide-address :user="nodeUser(row.flow.to)" />
+          <UserIdentity compact size="sm" hide-address :user="nodeUser(row.flow.to)" />
         </div>
       </template>
 
@@ -93,7 +93,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import type { TableColumn } from '@nuxt/ui'
 import LedgerClassificationCell from './LedgerClassificationCell.vue'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useUserDataStore } from '@/stores/user'
@@ -160,7 +160,7 @@ const rows = computed<ClassifyRow[]>(() =>
     })
 )
 
-/** Resolve a flow endpoint to a {@link UserComponent} user — a contract pocket or an external party. */
+/** Resolve a flow endpoint to a {@link UserIdentity} user — a contract pocket or an external party. */
 function nodeUser(node: FlowNode) {
   if (node.kind === 'pocket') {
     return {

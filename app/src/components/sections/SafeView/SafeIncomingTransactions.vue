@@ -86,7 +86,7 @@
             <span class="text-sm text-gray-600">{{ formatDateShort(row.executionDate) }}</span>
           </template>
           <template #transactionHash-cell="{ row: { original: row } }">
-            <AddressToolTip :address="row.transactionHash" type="transaction" slice />
+            <AddressTooltip :address="row.transactionHash" type="transaction" slice />
           </template>
         </UTable>
       </div>
@@ -112,7 +112,7 @@
             class="mt-4 flex items-center justify-between gap-3 border-t pt-3 dark:border-gray-800"
           >
             <TransferSenderCell :address="transfer.from" />
-            <AddressToolTip :address="transfer.transactionHash" type="transaction" slice />
+            <AddressTooltip :address="transfer.transactionHash" type="transaction" slice />
           </div>
         </li>
       </ul>
@@ -125,7 +125,7 @@ import { computed } from 'vue'
 import type { Address } from 'viem'
 import type { TableColumn } from '@nuxt/ui'
 import type { UBadgeColor } from '@/types/ui'
-import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TransferSenderCell from './TransferSenderCell.vue'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
 import { formatSafeTransferType, formatSafeTransferAmount } from '@/utils/safe'

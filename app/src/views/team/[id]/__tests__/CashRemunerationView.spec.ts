@@ -19,10 +19,10 @@ describe('CashRemunerationView.vue', () => {
     mockTeamStore.currentTeamMeta = originalTeamMeta
   })
 
-  it('should pass correct props to GenericTokenHoldingsSection', () => {
+  it('should pass correct props to TokenHoldingsSection', () => {
     const wrapper = createComponent()
     const genericTokenHoldingSection = wrapper.findComponent({
-      name: 'GenericTokenHoldingsSection'
+      name: 'TokenHoldingsSection'
     })
 
     expect(genericTokenHoldingSection.exists()).toBeTruthy()

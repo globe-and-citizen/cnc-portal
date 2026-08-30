@@ -73,7 +73,7 @@ describe('TeamContractsDetail.vue', () => {
   it('renders business-friendly rate fields and the Bank destination', () => {
     const datas = [
       { key: 'costPerClick', value: '0.1' }, // should render input
-      { key: 'bankAddress', value: '0xABC' }, // should render AddressToolTip
+      { key: 'bankAddress', value: '0xABC' }, // should render AddressTooltip
       { key: 'status', value: 'active' }
     ]
     const wrapper = mount(TeamContractsDetail, {
@@ -83,7 +83,7 @@ describe('TeamContractsDetail.vue', () => {
     expect(wrapper.text()).toContain('Cost per impression')
     expect(wrapper.text()).toContain('POL')
     expect(wrapper.findAll('input[type="number"]')).toHaveLength(2)
-    const addressCell = wrapper.findComponent({ name: 'AddressToolTip' })
+    const addressCell = wrapper.findComponent({ name: 'AddressTooltip' })
     expect(addressCell.exists()).toBe(true)
   })
 

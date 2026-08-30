@@ -9,7 +9,7 @@ import { log } from '@/utils'
 
 const NotFoundStub = { template: '<div data-test="not-found">no-members</div>' }
 
-// Stub for UserComponentCol to expose passed props via attributes
+// Stub for UserIdentityCol to expose passed props via attributes
 const UserColStub = {
   props: ['user', 'isDetailedView'],
   template:
@@ -60,7 +60,7 @@ describe('CurrentBoDSection', () => {
     const wrapper = mount(CurrentBoDSection, {
       global: {
         stubs: {
-          UserComponentCol: UserColStub,
+          UserIdentityCol: UserColStub,
           CurrentBoDSection404: NotFoundStub
         }
       }
@@ -78,7 +78,7 @@ describe('CurrentBoDSection', () => {
     const wrapper = mount(CurrentBoDSection, {
       global: {
         stubs: {
-          UserComponentCol: UserColStub,
+          UserIdentityCol: UserColStub,
           CurrentBoDSection404: NotFoundStub
         }
       }
@@ -98,7 +98,7 @@ describe('CurrentBoDSection', () => {
     const wrapper = mount(CurrentBoDSection, {
       global: {
         stubs: {
-          UserComponentCol: UserColStub,
+          UserIdentityCol: UserColStub,
           CurrentBoDSection404: NotFoundStub
         }
       }
@@ -123,7 +123,7 @@ describe('CurrentBoDSection', () => {
       props: { electionId: 1n },
       global: {
         stubs: {
-          UserComponentCol: UserColStub,
+          UserIdentityCol: UserColStub,
           CurrentBoDSection404: NotFoundStub
         }
       }
@@ -155,7 +155,7 @@ describe('CurrentBoDSection', () => {
     const wrapper = mount(CurrentBoDSection, {
       global: {
         stubs: {
-          UserComponentCol: UserColStub,
+          UserIdentityCol: UserColStub,
           CurrentBoDSection404: NotFoundStub
         }
       }
@@ -180,7 +180,7 @@ describe('CurrentBoDSection', () => {
       props: { electionId: 1n },
       global: {
         stubs: {
-          UserComponentCol: UserColStub,
+          UserIdentityCol: UserColStub,
           CurrentBoDSection404: NotFoundStub
         }
       }
@@ -206,7 +206,7 @@ describe('CurrentBoDSection', () => {
       props: { electionId: 1n },
       global: {
         stubs: {
-          UserComponentCol: UserColStub,
+          UserIdentityCol: UserColStub,
           CurrentBoDSection404: NotFoundStub
         }
       }

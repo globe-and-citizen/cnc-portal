@@ -10,7 +10,7 @@
  * never emitted the event this reads in the first place.
  *
  * Shaped as `TransactionHistoryItemRow` (plus `factureId`) so the history
- * card can render and link out to `TransactionDetailModal` exactly like
+ * card can render and link out to `TransactionDetailSlideover` exactly like
  * every other transaction table in the app.
  */
 import { computed, type MaybeRefOrGetter } from 'vue'

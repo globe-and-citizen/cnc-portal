@@ -49,7 +49,7 @@
                 "
                 class="grow"
               >
-                <UserComponent
+                <UserIdentity
                   class="grow rounded-lg p-4"
                   :class="[
                     isExistingTeamMember(user)
@@ -76,7 +76,7 @@
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
-import UserComponent from '@/components/ui/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import type { MemberSelectionScope, User } from '@/types'
 import { useTeamStore } from '@/stores/teamStore'
 import { useGetSearchUsersQuery } from '@/queries'
