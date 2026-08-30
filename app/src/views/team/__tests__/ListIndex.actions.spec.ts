@@ -46,7 +46,7 @@ describe('ListIndex - card actions', () => {
           AddTeamForm: true,
           TeamCard: {
             name: 'TeamCard',
-            props: ['team', 'to'],
+            props: ['team', 'treasury', 'to'],
             template: '<div :data-test="`team-card-${team.id}`" />'
           },
           ...Object.fromEntries(Object.values(MODAL_FOR).map((name) => [name, modalStub(name)]))

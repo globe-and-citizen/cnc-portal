@@ -99,6 +99,7 @@
         v-for="team in teams"
         :key="team.id"
         :team="team"
+        :treasury="treasuryFor(team)"
         :to="{ name: 'show-team', params: { id: team.id } }"
         :data-test="`team-card-${team.id}`"
         class="cursor-pointer transition duration-300 hover:-translate-y-0.5 hover:shadow-md"
@@ -167,8 +168,11 @@ import TeamMetaArchiveModal from '@/components/sections/DashboardView/TeamMetaAr
 import TeamMetaDeleteModal from '@/components/sections/DashboardView/TeamMetaDeleteModal.vue'
 import TeamMetaUpdateModal from '@/components/sections/DashboardView/TeamMetaUpdateModal.vue'
 import TeamMetaVisibilityModal from '@/components/sections/DashboardView/TeamMetaVisibilityModal.vue'
+import { useTeamListTreasuryBalances } from '@/composables/useTeamListTreasuryBalances'
 import { useGetTeamsQuery } from '@/queries/team.queries'
 import type { Team } from '@/types/team'
+import type { TeamTreasuryDisplay } from '@/utils/teamTreasury'
+import { EMPTY_VALUE } from '@/utils/format'
 import { computed, ref, watch } from 'vue'
 
 const openModal = ref(false)
@@ -189,6 +193,14 @@ const {
     showArchived
   }
 })
+
+const { treasuryByTeamId } = useTeamListTreasuryBalances(teams)
+const unavailableTreasury: TeamTreasuryDisplay = {
+  state: 'unavailable',
+  formattedTotal: EMPTY_VALUE,
+  accountShares: []
+}
+const treasuryFor = (team: Team) => treasuryByTeamId.value[team.id] ?? unavailableTreasury
 
 const hasVisibleTeams = computed(
   () =>
