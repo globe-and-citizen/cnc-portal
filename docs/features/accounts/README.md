@@ -530,6 +530,7 @@ flowchart LR
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
+- [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Bank contract](../../contracts/features/bank/README.md)
 - [Expense Account contract](../../contracts/features/expense-account/README.md)
 - [Safe Deposit Router contract](../../contracts/features/safe-deposit-router/README.md)

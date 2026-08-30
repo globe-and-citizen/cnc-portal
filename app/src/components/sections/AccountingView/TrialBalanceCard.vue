@@ -20,7 +20,7 @@
             :label="trial.balanced ? 'In balance' : 'Out of balance'"
             class="rounded-full"
           />
-          <AccountingDatePicker
+          <DatePicker
             v-model="asOf"
             mode="date"
             storage-key="cnc-accounting-trial-asof"
@@ -124,7 +124,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { TableColumn, TableRow } from '@nuxt/ui'
-import AccountingDatePicker from '@/components/ui/AccountingDatePicker.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/datePicker'
