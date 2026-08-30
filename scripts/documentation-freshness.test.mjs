@@ -99,6 +99,29 @@ rename to app/src/components/layout/NavBar.vue
   ])
 })
 
+test('exempts pure component renames and matching consumer identifiers', () => {
+  const diffs = [
+    `diff --git a/app/src/components/ui/UserComponent.vue b/app/src/components/ui/UserIdentity.vue
+similarity index 100%
+rename from app/src/components/ui/UserComponent.vue
+rename to app/src/components/ui/UserIdentity.vue
+diff --git a/app/src/components/TransactionRow.vue b/app/src/components/TransactionRow.vue
+index 111111111..222222222 100644
+--- a/app/src/components/TransactionRow.vue
++++ b/app/src/components/TransactionRow.vue
+@@ -1,2 +1,2 @@
+-import UserComponent from '@/components/ui/UserComponent.vue'
+-<UserComponent :user="user" />
++import UserIdentity from '@/components/ui/UserIdentity.vue'
++<UserIdentity :user="user" />`
+  ]
+
+  assert.deepEqual(nonBehavioralPathsFromDiffs(diffs, repositoryRoot), [
+    'app/src/components/TransactionRow.vue',
+    'app/src/components/ui/UserIdentity.vue'
+  ])
+})
+
 test('does not exempt a relocation that changes behaviour', () => {
   const diffs = [
     `diff --git a/app/src/components/UserComponent.vue b/app/src/components/ui/UserComponent.vue
@@ -107,6 +130,22 @@ rename from app/src/components/UserComponent.vue
 rename to app/src/components/ui/UserComponent.vue
 --- a/app/src/components/UserComponent.vue
 +++ b/app/src/components/ui/UserComponent.vue
+@@ -1 +1 @@
+-const label = 'User'
++const label = 'Member'`
+  ]
+
+  assert.deepEqual(nonBehavioralPathsFromDiffs(diffs, repositoryRoot), [])
+})
+
+test('does not exempt a component rename that also changes behaviour', () => {
+  const diffs = [
+    `diff --git a/app/src/components/ui/UserComponent.vue b/app/src/components/ui/UserIdentity.vue
+similarity index 90%
+rename from app/src/components/ui/UserComponent.vue
+rename to app/src/components/ui/UserIdentity.vue
+--- a/app/src/components/ui/UserComponent.vue
++++ b/app/src/components/ui/UserIdentity.vue
 @@ -1 +1 @@
 -const label = 'User'
 +const label = 'Member'`

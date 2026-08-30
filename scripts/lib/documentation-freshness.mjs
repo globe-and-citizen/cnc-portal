@@ -215,6 +215,14 @@ function referencedRepositoryPath(reference, sourcePath, repositoryRoot) {
   return isRepositoryPath(repositoryPath) ? repositoryPath : null
 }
 
+function defaultImportBinding(line) {
+  return line.match(/^\s*import\s+([A-Za-z_$][\w$]*)\s+from\s+['"]/)?.[1] ?? null
+}
+
+function replaceIdentifier(line, previous, next) {
+  return line.replace(new RegExp(`\\b${previous}\\b`, 'g'), next)
+}
+
 function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot) {
   const paths = pathsFromDiffSection(section)
   if (!paths) return null
@@ -234,11 +242,13 @@ function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot)
 
   if (removed.length === 0 || removed.length !== added.length) return null
 
+  const renamedBindings = new Map()
+
   for (let index = 0; index < removed.length; index += 1) {
     const before = localReferencesFromLine(removed[index])
     const after = localReferencesFromLine(added[index])
 
-    if (!before || !after || before.normalized !== after.normalized) return null
+    if (!before || !after) continue
     if (before.references.length !== after.references.length) return null
 
     for (let referenceIndex = 0; referenceIndex < before.references.length; referenceIndex += 1) {
@@ -260,16 +270,38 @@ function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot)
       ) {
         return null
       }
+
+      if (previousTarget !== nextTarget) {
+        const previousBinding = defaultImportBinding(removed[index])
+        const nextBinding = defaultImportBinding(added[index])
+        if (previousBinding && nextBinding) {
+          renamedBindings.set(previousBinding, nextBinding)
+        }
+      }
     }
+  }
+
+  for (let index = 0; index < removed.length; index += 1) {
+    const before = localReferencesFromLine(removed[index])
+    const after = localReferencesFromLine(added[index])
+
+    let normalizedBefore = before?.normalized ?? removed[index]
+    const normalizedAfter = after?.normalized ?? added[index]
+
+    for (const [previousBinding, nextBinding] of renamedBindings) {
+      normalizedBefore = replaceIdentifier(normalizedBefore, previousBinding, nextBinding)
+    }
+
+    if (normalizedBefore !== normalizedAfter) return null
   }
 
   return paths.to
 }
 
 /**
- * Identifies source paths whose diff only keeps imports or local asset references valid after a
- * source relocation. These paths do not change runtime behaviour, so their existing canonical
- * documentation remains current.
+ * Identifies source paths whose diff only keeps imports, local asset references, and component
+ * identifiers valid after a source relocation or rename. These paths do not change runtime
+ * behaviour, so their existing canonical documentation remains current.
  */
 export function nonBehavioralPathsFromDiffs(diffs, repositoryRoot) {
   const sections = diffs.flatMap(splitDiffSections)
