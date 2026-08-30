@@ -37,113 +37,43 @@
     </div>
 
     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-      <UTable
-        v-if="displayedContracts.length || isRefreshing"
-        class="hidden md:block"
-        :data="displayedContracts"
-        :columns="columns"
-        :loading="isRefreshing"
-        :ui="{
-          th: 'text-xs uppercase tracking-wide text-muted',
-          td: 'py-4',
-          tr: 'hover:bg-elevated/40 transition-colors'
-        }"
-      >
-        <template #contract-cell="{ row: { original: contract } }">
-          <div class="flex min-w-96 items-center gap-3">
-            <div
-              class="bg-primary/10 text-primary grid size-10 shrink-0 place-items-center rounded-xl"
-            >
-              <UIcon :name="presentation(contract.type).icon" class="size-5" />
-            </div>
-            <div class="min-w-0">
-              <p class="text-highlighted font-medium">{{ presentation(contract.type).label }}</p>
-              <AddressTooltip
-                :address="contract.address"
-                class="text-muted mt-1 font-mono text-xs whitespace-nowrap"
-              />
-            </div>
-          </div>
-        </template>
-
-        <template #status-cell="{ row: { original: contract } }">
-          <UBadge
-            :color="contract.paused ? 'warning' : 'success'"
-            variant="subtle"
-            size="sm"
-            class="gap-1.5"
-          >
-            <span
-              class="size-1.5 rounded-full"
-              :class="contract.paused ? 'bg-warning' : 'bg-success'"
-            />
-            {{ contract.paused ? 'Paused' : 'Active' }}
-          </UBadge>
-        </template>
-
-        <template #balance-cell="{ row: { original: contract } }">
-          <MainContractBalanceCell v-if="holdsValue(contract.type)" :address="contract.address" />
-          <span v-else class="text-muted text-xs">No balance</span>
-        </template>
-
-        <template #owner-cell="{ row: { original: contract } }">
-          <UserIdentity :user="getUser(contract.owner)" />
-        </template>
-
-        <template v-if="showActions" #actions-cell="{ row: { original: contract } }">
-          <MainContractActions
-            :row="contract"
-            :version="version"
-            @contract-status-changed="refresh"
-          />
-        </template>
-      </UTable>
+      <MainContractDesktopTable
+        :rows="displayedContractRows"
+        :is-refreshing="isRefreshing"
+        :show-actions="showActions"
+        @view-details="openContractAction($event, 'details')"
+        @copy-contract-address="copyContractAddress"
+        @open-in-explorer="openContractInExplorer"
+        @review-pending-actions="openContractAction($event, 'approval')"
+        @transfer-ownership="openContractAction($event, 'transfer')"
+        @change-status="requestStatusChange"
+      />
 
       <div v-if="displayedContracts.length" class="divide-default divide-y md:hidden">
-        <article v-for="contract in displayedContracts" :key="contract.address" class="p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex min-w-0 items-center gap-3">
-              <div
-                class="bg-primary/10 text-primary grid size-10 shrink-0 place-items-center rounded-xl"
-              >
-                <UIcon :name="presentation(contract.type).icon" class="size-5" />
-              </div>
-              <div class="min-w-0">
-                <p class="text-highlighted font-medium">{{ presentation(contract.type).label }}</p>
-                <AddressTooltip :address="contract.address" :slice="true" class="mt-1 text-xs" />
-              </div>
-            </div>
-            <UBadge :color="contract.paused ? 'warning' : 'success'" variant="subtle" size="sm">
-              {{ contract.paused ? 'Paused' : 'Active' }}
-            </UBadge>
-          </div>
-
-          <dl class="mt-4 grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <dt class="text-muted">Balance</dt>
-              <dd class="text-default mt-1">
-                <MainContractBalanceCell
-                  v-if="holdsValue(contract.type)"
-                  :address="contract.address"
-                />
-                <span v-else>No balance</span>
-              </dd>
-            </div>
-            <div>
-              <dt class="text-muted">Owner</dt>
-              <dd class="mt-1"><UserIdentity :user="getUser(contract.owner)" /></dd>
-            </div>
-          </dl>
-
-          <div v-if="showActions" class="border-default mt-4 border-t pt-3">
-            <MainContractActions
-              :row="contract"
-              :version="version"
-              @contract-status-changed="refresh"
-            />
-          </div>
-        </article>
+        <MainContractMobileCard
+          v-for="row in displayedContractRows"
+          :key="row.contract.address"
+          :row="row"
+          @view-details="openContractAction($event, 'details')"
+          @copy-contract-address="copyContractAddress"
+          @open-in-explorer="openContractInExplorer"
+          @review-pending-actions="openContractAction($event, 'approval')"
+          @transfer-ownership="openContractAction($event, 'transfer')"
+          @change-status="requestStatusChange"
+        />
       </div>
+
+      <MainContractActions
+        v-if="showActions"
+        :row="selectedContract"
+        :version="version"
+        :pending-actions="selectedPendingActions"
+        :is-bod-action="selectedIsBodAction"
+        :open="selectedActionSurface"
+        :status-change-request="statusChangeRequest"
+        @update:open="selectedActionSurface = $event"
+        @contract-status-changed="refresh"
+      />
 
       <UEmpty
         v-if="!displayedContracts.length && !isRefreshing"
@@ -158,20 +88,34 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { Abi } from 'viem'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { useTeamStore } from '@/stores'
+import { useClipboard } from '@vueuse/core'
+import type { Abi, Address } from 'viem'
+import { NETWORK } from '@/constant'
+import { useBodIsMember } from '@/composables/bod/reads'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useGetBodActionsQuery } from '@/queries'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { TeamContract, User } from '@/types'
-import { getContractPresentation, getTeamContracts } from '@/utils'
+import type { TableRow } from '@/types/table'
+import type { FormattedAction } from '@/utils'
+import { filterAndFormatActions, getContractPresentation, getTeamContracts } from '@/utils'
 import MainContractActions from './MainContractActions.vue'
-import MainContractBalanceCell from './MainContractBalanceCell.vue'
+import MainContractDesktopTable from './MainContractDesktopTable.vue'
+import MainContractMobileCard from './MainContractMobileCard.vue'
+import type { ContractActionState, ContractTableRow } from './MainContractTable.types'
 
 interface EnrichedContract extends Omit<TeamContract, 'admins'> {
   admins?: string[]
   owner: string | null
   paused: boolean | null
   abi: Abi
+}
+
+type ContractActionSurface = 'details' | 'transfer' | 'approval' | null
+
+interface ContractStatusChangeRequest {
+  id: number
+  paused: boolean
 }
 
 const props = withDefaults(
@@ -184,11 +128,29 @@ const props = withDefaults(
 )
 
 const teamStore = useTeamStore()
+const userDataStore = useUserDataStore()
+const toast = useToast()
+const { copy } = useClipboard()
+const { isWriteDisabled } = useTeamWriteGuard()
 const enrichedContracts = ref<EnrichedContract[]>([])
 const isRefreshing = ref(false)
 const statusFilter = ref<'all' | 'active' | 'paused'>('all')
 const sortOrder = ref<'contract' | 'status'>('contract')
+const selectedContract = ref<EnrichedContract | null>(null)
+const selectedActionSurface = ref<ContractActionSurface>(null)
+const statusChangeRequest = ref<ContractStatusChangeRequest | null>(null)
+const nextStatusChangeRequestId = ref(0)
 const showActions = computed(() => props.showActions)
+const bodMemberAddress = computed<Address>(
+  () => (showActions.value ? userDataStore.address : '') as Address
+)
+const { data: isCurrentUserBodMember } = useBodIsMember(bodMemberAddress)
+const { data: bodActions } = useGetBodActionsQuery({
+  queryParams: {
+    teamId: computed(() => (showActions.value ? teamStore.currentTeamId : null)),
+    isExecuted: false
+  }
+})
 const statusOptions = [
   { label: 'All statuses', value: 'all' },
   { label: 'Active', value: 'active' },
@@ -198,14 +160,6 @@ const sortOptions = [
   { label: 'Sort: Contract', value: 'contract' },
   { label: 'Sort: Status', value: 'status' }
 ]
-const columns = computed(() => [
-  { accessorKey: 'contract', header: 'Contract' },
-  { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'balance', header: 'Balance' },
-  { accessorKey: 'owner', header: 'Owner' },
-  ...(showActions.value ? [{ accessorKey: 'actions', header: 'Pending / Actions' }] : [])
-])
-
 const displayedContracts = computed(() => {
   const filtered = enrichedContracts.value.filter((contract) => {
     if (statusFilter.value === 'paused') return contract.paused === true
@@ -221,6 +175,25 @@ const displayedContracts = computed(() => {
 const pausedCount = computed(
   () => enrichedContracts.value.filter((contract) => contract.paused === true).length
 )
+const pendingActionsByContract = computed(
+  () =>
+    new Map<string, FormattedAction>(
+      enrichedContracts.value.map((contract) => [
+        contract.address,
+        filterAndFormatActions(
+          contract.address,
+          bodActions.value,
+          teamStore.currentTeam?.members || []
+        )
+      ])
+    )
+)
+const selectedPendingActions = computed(() =>
+  selectedContract.value ? pendingActionsFor(selectedContract.value) : []
+)
+const selectedIsBodAction = computed(() =>
+  selectedContract.value ? isBodAction(selectedContract.value) : false
+)
 
 const VALUE_HOLDING_TYPES = new Set([
   'Bank',
@@ -230,6 +203,23 @@ const VALUE_HOLDING_TYPES = new Set([
 ])
 const holdsValue = (type: string) => VALUE_HOLDING_TYPES.has(type)
 const presentation = (type: string) => getContractPresentation(type)
+const pendingActionsFor = (contract: EnrichedContract): FormattedAction =>
+  pendingActionsByContract.value.get(contract.address) ?? []
+const isBodAction = (contract: EnrichedContract) =>
+  contract.owner === teamStore.getContractAddressByType('BoardOfDirectors') &&
+  isCurrentUserBodMember.value === true
+const canManage = (contract: EnrichedContract) =>
+  !isWriteDisabled.value && (contract.owner === userDataStore.address || isBodAction(contract))
+const canReviewPendingActions = (contract: EnrichedContract) =>
+  !isWriteDisabled.value && isBodAction(contract) && pendingActionsFor(contract).length > 0
+const actionStateFor = (contract: EnrichedContract): ContractActionState | undefined =>
+  showActions.value
+    ? {
+        pendingActionCount: pendingActionsFor(contract).length,
+        canManage: canManage(contract),
+        canReviewPendingActions: canReviewPendingActions(contract)
+      }
+    : undefined
 
 const getUser = (address: string | null): User => {
   if (address && address === teamStore.getContractAddressByType('BoardOfDirectors')) {
@@ -243,6 +233,15 @@ const getUser = (address: string | null): User => {
   )
 }
 
+const displayedContractRows = computed<ContractTableRow[]>(() =>
+  displayedContracts.value.map((contract) => ({
+    contract,
+    owner: getUser(contract.owner),
+    holdsValue: holdsValue(contract.type),
+    actionState: actionStateFor(contract)
+  }))
+)
+
 async function refresh() {
   isRefreshing.value = true
   try {
@@ -251,6 +250,30 @@ async function refresh() {
   } finally {
     isRefreshing.value = false
   }
+}
+
+function openContractAction(contract: TableRow, surface: ContractActionSurface) {
+  selectedContract.value = contract as EnrichedContract
+  selectedActionSurface.value = surface
+}
+
+function requestStatusChange(contract: TableRow, paused: boolean) {
+  selectedContract.value = contract as EnrichedContract
+  selectedActionSurface.value = null
+  nextStatusChangeRequestId.value += 1
+  statusChangeRequest.value = {
+    id: nextStatusChangeRequestId.value,
+    paused
+  }
+}
+
+function copyContractAddress(address: string) {
+  void copy(address)
+  toast.add({ title: 'Contract address copied', color: 'success', icon: 'i-lucide-check' })
+}
+
+function openContractInExplorer(address: string) {
+  window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
 
 watch(() => props.contracts, refresh, { immediate: true })
