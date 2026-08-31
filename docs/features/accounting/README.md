@@ -21,9 +21,9 @@ These acceptance criteria follow the
 - **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter, Vesting — the
   contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
-  booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); each company books CNC
-  usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** recognises the
-  shares **at release** (`Dr Deferred SHER Compensation · Cr Investor Equity`, off the income statement — see catalogue §5.6).
+  booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; each company books CNC usage fees as
+  an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** books the **whole award when
+  the schedule is defined** and issues it as shares are released (a restricted-stock grant, off the income statement — see catalogue §5.6).
 - **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a company owner can **manually classify** each
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
@@ -291,6 +291,7 @@ flowchart LR
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Money Flow Catalogue](./money-flow-catalogue.md)
+- [Share Vesting Accounting — Restricted-Stock grant](./vesting-accounting-restricted-stock.md)
 - [Accounting Specification and Scope](./cnc-accounting-spec.md)
 - [Contract Migration History](./contract-migration-history.md)
 - [Full Accounting Test Scenario](./accounting-test-plan.md)
