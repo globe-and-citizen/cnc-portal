@@ -1,8 +1,26 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
 import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
-import { useDatePicker } from '@/composables/useDatePicker'
-import type { DatePickerMode, DatePickerValue } from '@/utils/datePicker'
+import { computed, reactive, ref, watch } from 'vue'
+import {
+  defaultPresetId,
+  formatAnchorLabel,
+  formatAsOfLabel,
+  formatRangeLabel,
+  isValidRange,
+  presetsForMode,
+  resolveAsOfDate,
+  resolveRange,
+  startOfMonth,
+  startOfToday,
+  stepAnchor,
+  type AnchorUnit,
+  type DatePickerMode,
+  type DatePickerPreset,
+  type DatePickerPresetId,
+  type DatePickerValue,
+  type Range
+} from '@/utils/datePicker'
 
 /**
  * Dual-mode date picker shared by accounting reports and transaction histories.
@@ -12,7 +30,7 @@ import type { DatePickerMode, DatePickerValue } from '@/utils/datePicker'
  *
  * Presets come first with ◀ / ▶ steppers; a UCalendar is the fallback (single in `date` mode,
  * range in `range` mode). All date logic lives in `@/utils/datePicker`, all reactive state in
- * `@/composables/useDatePicker`.
+ * this one-consumer component.
  */
 const props = withDefaults(
   defineProps<{
@@ -25,18 +43,179 @@ const props = withDefaults(
 
 const model = defineModel<DatePickerValue>()
 
-const {
-  presets,
-  activePreset,
-  triggerLabel,
-  customDate,
-  customStart,
-  customEnd,
-  select,
-  step,
-  anchorLabel,
-  isActive
-} = useDatePicker(props.mode, model, props.storageKey)
+interface DatePickerSnapshot {
+  activeId: DatePickerPresetId
+  anchors: Record<AnchorUnit, number>
+  customDate: number
+  customStart: number | null
+  customEnd: number | null
+}
+
+const presets = presetsForMode(props.mode)
+const activeId = ref<DatePickerPresetId>(defaultPresetId(props.mode))
+
+// One independent anchor per steppable unit, all starting at today.
+const anchors = reactive<Record<AnchorUnit, Date>>({
+  month: startOfToday(),
+  quarter: startOfToday(),
+  year: startOfToday()
+})
+
+// Specific date (single UCalendar selection).
+const customDate = ref<Date>(startOfToday())
+
+// Custom range. `customStart` / `customEnd` mirror the UCalendar range selection exactly —
+// reka-ui emits a partial `{ start, end: undefined }` mid-selection, so these stay nullable
+// and are never merged with stale values. `committedCustom` keeps the last complete, ordered
+// range and is what actually resolves to the model.
+const customStart = ref<Date | null>(startOfMonth(startOfToday()))
+const customEnd = ref<Date | null>(startOfToday())
+const committedCustom = ref<Range>({ start: startOfMonth(startOfToday()), end: startOfToday() })
+
+function isValidSnapshot(snapshot: unknown): snapshot is DatePickerSnapshot {
+  if (!snapshot || typeof snapshot !== 'object') {
+    return false
+  }
+  const candidate = snapshot as Partial<DatePickerSnapshot>
+  return !!candidate.anchors && typeof candidate.anchors.month === 'number'
+}
+
+function applySnapshot(snapshot: DatePickerSnapshot) {
+  activeId.value = snapshot.activeId
+  anchors.month = new Date(snapshot.anchors.month)
+  anchors.quarter = new Date(snapshot.anchors.quarter)
+  anchors.year = new Date(snapshot.anchors.year)
+  customDate.value = new Date(snapshot.customDate)
+  customStart.value = snapshot.customStart == null ? null : new Date(snapshot.customStart)
+  customEnd.value = snapshot.customEnd == null ? null : new Date(snapshot.customEnd)
+  if (snapshot.customStart != null && snapshot.customEnd != null) {
+    committedCustom.value = {
+      start: new Date(snapshot.customStart),
+      end: new Date(snapshot.customEnd)
+    }
+  }
+}
+
+function takeSnapshot(): DatePickerSnapshot {
+  return {
+    activeId: activeId.value,
+    anchors: {
+      month: anchors.month.getTime(),
+      quarter: anchors.quarter.getTime(),
+      year: anchors.year.getTime()
+    },
+    customDate: customDate.value.getTime(),
+    customStart: customStart.value?.getTime() ?? null,
+    customEnd: customEnd.value?.getTime() ?? null
+  }
+}
+
+// Persisted selection. An explicit JSON serializer is required: with a `null` default
+// vueuse would otherwise coerce the object via `String()` and write "[object Object]",
+// which then throws on read. `read` tolerates any pre-existing corrupt value.
+const stored = props.storageKey
+  ? useLocalStorage<DatePickerSnapshot | null>(props.storageKey, null, {
+      serializer: {
+        read: (raw): DatePickerSnapshot | null => {
+          try {
+            return JSON.parse(raw) as DatePickerSnapshot
+          } catch {
+            return null
+          }
+        },
+        write: (value) => JSON.stringify(value)
+      }
+    })
+  : null
+
+if (stored?.value && isValidSnapshot(stored.value)) {
+  applySnapshot(stored.value)
+} else if (!props.storageKey) {
+  // Uncontrolled (e.g. the demo): reflect an externally provided value instead.
+  if (model.value instanceof Date && props.mode === 'date') {
+    activeId.value = 'specific'
+    customDate.value = model.value
+  } else if (model.value && !(model.value instanceof Date) && props.mode === 'range') {
+    activeId.value = 'custom'
+    customStart.value = model.value.start
+    customEnd.value = model.value.end
+    committedCustom.value = { start: model.value.start, end: model.value.end }
+  }
+}
+
+if (stored) {
+  watch(
+    [
+      activeId,
+      customDate,
+      customStart,
+      customEnd,
+      () => anchors.month,
+      () => anchors.quarter,
+      () => anchors.year
+    ],
+    () => {
+      stored.value = takeSnapshot()
+    }
+  )
+}
+
+// Commit a custom selection only once both ends are present and ordered.
+watch([customStart, customEnd], ([start, end]) => {
+  if (start && end && start.getTime() <= end.getTime()) {
+    committedCustom.value = { start, end }
+  }
+})
+
+const activePreset = computed<DatePickerPreset>(
+  () => presets.find((preset) => preset.id === activeId.value) ?? presets[0]!
+)
+
+const activeAnchor = computed<Date>(() =>
+  activePreset.value.unit ? anchors[activePreset.value.unit] : startOfToday()
+)
+
+const resolved = computed<DatePickerValue>(() =>
+  props.mode === 'date'
+    ? resolveAsOfDate(activePreset.value, activeAnchor.value, customDate.value)
+    : resolveRange(activePreset.value, activeAnchor.value, committedCustom.value)
+)
+
+const triggerLabel = computed(() => {
+  if (activePreset.value.id === 'allTime') {
+    return 'All time'
+  }
+  return props.mode === 'date'
+    ? formatAsOfLabel(resolved.value as Date)
+    : formatRangeLabel(resolved.value as Range)
+})
+
+function select(id: DatePickerPresetId) {
+  activeId.value = id
+}
+
+/** Step a preset's anchor and make it the active selection. */
+function step(preset: DatePickerPreset, direction: -1 | 1) {
+  if (!preset.unit) return
+  anchors[preset.unit] = stepAnchor(anchors[preset.unit], preset.unit, direction)
+  activeId.value = preset.id
+}
+
+function anchorLabel(preset: DatePickerPreset): string {
+  return preset.unit ? formatAnchorLabel(anchors[preset.unit], preset.unit) : ''
+}
+
+const isActive = (id: DatePickerPresetId) => activeId.value === id
+
+// Emit the resolved value to the model; never emit an invalid (backwards) range.
+watch(
+  resolved,
+  (value) => {
+    if (props.mode === 'range' && !isValidRange(value as Range)) return
+    model.value = value
+  },
+  { immediate: true }
+)
 
 // @internationalized/date interop for UCalendar.
 const toCalendarDate = (date: Date) =>
@@ -74,6 +253,7 @@ const calendarRange = computed({
       variant="outline"
       icon="i-heroicons-calendar-days"
       class="group data-[state=open]:bg-elevated"
+      data-test="date-picker-trigger"
     >
       <span class="truncate">{{ triggerLabel }}</span>
 
@@ -96,6 +276,7 @@ const calendarRange = computed({
           <button
             type="button"
             class="flex grow items-center gap-2 px-2 py-1.5 text-left text-sm"
+            :data-test="`date-picker-preset-${preset.id}`"
             @click="select(preset.id)"
           >
             <UIcon
@@ -113,6 +294,7 @@ const calendarRange = computed({
               variant="ghost"
               size="xs"
               :aria-label="`Previous ${preset.unit}`"
+              :data-test="`date-picker-${preset.id}-previous`"
               @click="step(preset, -1)"
             />
             <span class="w-32 text-center text-sm tabular-nums">{{ anchorLabel(preset) }}</span>
@@ -122,6 +304,7 @@ const calendarRange = computed({
               variant="ghost"
               size="xs"
               :aria-label="`Next ${preset.unit}`"
+              :data-test="`date-picker-${preset.id}-next`"
               @click="step(preset, 1)"
             />
           </div>
@@ -129,10 +312,19 @@ const calendarRange = computed({
 
         <!-- Presets first, calendar last. -->
         <div v-if="activePreset.id === 'specific'" class="border-default mt-1 border-t pt-2">
-          <UCalendar v-model="calendarDate" :prevent-deselect="true" />
+          <UCalendar
+            v-model="calendarDate"
+            data-test="date-picker-calendar"
+            :prevent-deselect="true"
+          />
         </div>
         <div v-else-if="activePreset.id === 'custom'" class="border-default mt-1 border-t pt-2">
-          <UCalendar v-model="calendarRange" range :number-of-months="2" />
+          <UCalendar
+            v-model="calendarRange"
+            data-test="date-picker-calendar"
+            range
+            :number-of-months="2"
+          />
         </div>
       </div>
     </template>

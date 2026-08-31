@@ -36,12 +36,6 @@
       "subject": "component",
       "metric": "componentExposedMembers",
       "allowed": 1
-    },
-    {
-      "path": "src/composables/useDatePicker.ts",
-      "subject": "useDatePicker",
-      "metric": "composableReturnMembers",
-      "allowed": 10
     }
   ]
 }
