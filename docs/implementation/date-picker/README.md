@@ -1,8 +1,9 @@
 # Date Picker
 
-**Scope:** Shared period and as-of-date selection for accounting reports and transaction histories.
+**Scope:** Shared period and as-of-date selection for client accounting reports, transaction histories, and the matching dashboard
+accounting picker.
 
-**Last verified:** 2026-08-30
+**Last verified:** 2026-08-31
 
 ## Consumers
 
@@ -10,21 +11,29 @@
 - [Accounts](../../features/accounts/README.md), [Community Credit](../../features/community-credit/README.md), and
   [Shareholder Management](../../features/shareholder-management/README.md) use the shared range picker directly in their transaction
   histories.
+- The dashboard exposes its matching accounting picker on the public `/date-picker-demo` playground for QA and report integration.
 
 ## Runtime Model
 
 ```mermaid
 flowchart LR
-  reports[Accounting reports] --> picker[DatePicker]
-  histories[Transaction histories] --> picker[DatePicker]
-  picker --> state[useDatePicker]
-  state --> presets[datePicker utilities]
-  state --> storage[Optional local storage]
+  reports[Accounting reports] --> clientPicker[Client DatePicker]
+  histories[Transaction histories] --> clientPicker
+  dashboardDemo[Dashboard date picker demo] --> dashboardPicker[Dashboard AccountingDatePicker]
+  clientPicker --> clientState[Component-owned reactive state]
+  dashboardPicker --> dashboardState[Component-owned reactive state]
+  clientState --> clientUtilities[Client datePicker utilities]
+  dashboardState --> dashboardUtilities[Dashboard datePicker utilities]
+  clientState --> clientStorage[Optional local storage]
+  dashboardState --> dashboardStorage[Optional local storage]
 ```
 
 ## Invariants and Failure Behaviour
 
-- `DatePicker` supports a single as-of date and a start/end range without owning server or chain state.
+- The client `DatePicker` and dashboard `AccountingDatePicker` support a single as-of date and a start/end range without owning server or
+  chain state.
+- Each picker component owns the reactive selection, persistence, and interaction state used only to render that picker; its frontend-local
+  `datePicker.ts` utility owns pure resolution and formatting rules.
 - Transaction histories bind their `Range | undefined` filter model directly to `DatePicker` in `range` mode. Their existing storage keys
   and `data-test` selectors remain stable.
 - A custom range is committed only when both boundaries exist and the start is not after the end.
@@ -32,13 +41,15 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a6e9f9373a08046e2d65501d48d90ae3f3982db1`
+**Implementation evidence reviewed against:** `8e3bbc3274b2da8524d097dc827db58a796c5c8f`
 
-- [Shared DatePicker](../../../app/src/components/ui/DatePicker.vue) and
+- [Client DatePicker](../../../app/src/components/ui/DatePicker.vue),
+  [dashboard AccountingDatePicker](../../../dashboard/app/components/AccountingDatePicker.vue), and
   [transaction-history filtering](../../../app/src/composables/transactions/useTransactionTable.ts)
-- [Reactive selection state](../../../app/src/composables/useDatePicker.ts) and
-  [date preset utilities](../../../app/src/utils/datePicker.ts)
-- [Transaction-history filter tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts) and
+- [Client date preset utilities](../../../app/src/utils/datePicker.ts) and
+  [dashboard date preset utilities](../../../dashboard/app/utils/datePicker.ts)
+- [Client picker behaviour tests](../../../app/src/components/ui/__tests__/DatePicker.spec.ts),
+  [transaction-history filter tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts), and
   [date utility tests](../../../app/src/utils/__tests__/datePicker.spec.ts)
 
 ## Related Documentation
