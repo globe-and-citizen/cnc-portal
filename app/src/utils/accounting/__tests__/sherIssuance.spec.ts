@@ -112,4 +112,32 @@ describe('settleWithdrawnSher', () => {
     expect(find(settled, 'mine').amountUsd).toBe(25) // stays pending → 50 × 0.50
     expect(find(settled, 'other').amountUsd).toBe(10) // withdrawal keeps its own value
   })
+
+  it('keeps a member’s wage promise and their vesting grant in separate lanes', () => {
+    // The same member holds an older vesting grant and a later wage accrual; a wage
+    // withdrawal must settle the wage, not eat into the grant.
+    const grant = accrual(60, { id: 'grant', useCase: 'UC-VEST-01', timestamp: 100 })
+    const wage = accrual(40, { id: 'wage', timestamp: 150 })
+    const paid = withdrawal(40, 0.2, { id: 'paid', timestamp: 200 })
+    const settled = settleWithdrawnSher([grant, wage, paid], 0.5)
+
+    expect(find(settled, 'wage').amountUsd).toBe(8) // frozen at 40 × 0.20
+    expect(find(settled, 'grant').amountUsd).toBe(30) // untouched → 60 × 0.50
+  })
+
+  it('clears a vesting grant against its release and the stop that cancels the rest', () => {
+    const grant = accrual(100, { id: 'grant', useCase: 'UC-VEST-01', timestamp: 100 })
+    const released = withdrawal(25, 0.2, { id: 'released', useCase: 'UC-VEST-02', timestamp: 200 })
+    const cancelled = withdrawal(75, 0.4, {
+      id: 'cancelled',
+      useCase: 'UC-VEST-03',
+      credit: 'Deferred SHER Compensation',
+      timestamp: 300
+    })
+    const settled = settleWithdrawnSher([grant, released, cancelled], 0.5)
+
+    // 25 frozen at the release rate + 75 at the stop rate — the current rate never applies.
+    expect(find(settled, 'grant').amountUsd).toBe(35)
+    expect(shersToBeIssuedNet(settled)).toBe(0)
+  })
 })
