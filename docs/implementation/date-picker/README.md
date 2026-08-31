@@ -19,7 +19,7 @@ accounting picker.
 flowchart LR
   reports[Accounting reports] --> clientPicker[Client DatePicker]
   histories[Transaction histories] --> clientPicker
-  dashboardDemo[Dashboard date picker demo] --> dashboardPicker[Dashboard AccountingDatePicker]
+  dashboardDemo[Dashboard date picker demo] --> dashboardPicker[Dashboard DatePicker]
   clientPicker --> clientState[Component-owned reactive state]
   dashboardPicker --> dashboardState[Component-owned reactive state]
   clientState --> clientUtilities[Client datePicker utilities]
@@ -30,8 +30,7 @@ flowchart LR
 
 ## Invariants and Failure Behaviour
 
-- The client `DatePicker` and dashboard `AccountingDatePicker` support a single as-of date and a start/end range without owning server or
-  chain state.
+- The client and dashboard `DatePicker` components support a single as-of date and a start/end range without owning server or chain state.
 - Each picker component owns the reactive selection, persistence, and interaction state used only to render that picker; its frontend-local
   `datePicker.ts` utility owns pure resolution and formatting rules.
 - Transaction histories bind their `Range | undefined` filter model directly to `DatePicker` in `range` mode. Their existing storage keys
@@ -41,10 +40,11 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8e3bbc3274b2da8524d097dc827db58a796c5c8f`
+**Implementation evidence reviewed against:** `88d98f8413b332376d860df979c963dae885d37f`
 
 - [Client DatePicker](../../../app/src/components/ui/DatePicker.vue),
-  [dashboard AccountingDatePicker](../../../dashboard/app/components/AccountingDatePicker.vue), and
+  [dashboard DatePicker](../../../dashboard/app/components/DatePicker.vue),
+  [dashboard date picker demo](../../../dashboard/app/pages/date-picker-demo.vue), and
   [transaction-history filtering](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Client date preset utilities](../../../app/src/utils/datePicker.ts) and
   [dashboard date preset utilities](../../../dashboard/app/utils/datePicker.ts)
