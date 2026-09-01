@@ -22,6 +22,11 @@ const {
   resolveUser: vi.fn(() => ({ name: 'Ali' }))
 }))
 
+// The composable takes `useToast` from @nuxt/ui's auto-import, which resolves to the
+// runtime file rather than the '@nuxt/ui/composables' entry the global setup mocks.
+vi.mock('../../../../node_modules/@nuxt/ui/dist/runtime/composables/useToast.js', () => ({
+  useToast: () => mockToast
+}))
 vi.mock('@/lib/accounting/pdf', () => ({ buildTables, exportTablesPdf }))
 vi.mock('@/lib/accounting/spreadsheet', () => ({ buildSheets, exportSheetsExcel }))
 vi.mock('@/composables/transactions/useTransactionPresentation', () => ({
