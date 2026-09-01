@@ -126,6 +126,8 @@ Not decided yet — to review before considering v0 complete.
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `eee370352579b5a1880a2b33ef7e80536620fff2`
+
 - [Integration setup view](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
   [accepted-token configuration](../../../app/src/components/sections/PaymentGateView/TokenConfigCard.vue), a
