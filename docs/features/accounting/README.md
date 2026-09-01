@@ -100,13 +100,15 @@ flowchart LR
 #### Happy Path
 
 - [x] The ledger exposes each posting's date, activity, accounts, currency, quantity, rate, debit, and credit amounts.
-- [x] A company member can filter entries by accounting category, reporting period, and available currencies.
+- [x] A company member can filter entries by accounting category, reporting period, available currencies, and one or more specific accounts.
 - [x] A company member can inspect the entries and running balance for one account from a report line.
+- [x] Selecting an account on a ledger entry opens that account's transactions in the trial-balance drill-down.
 - [x] A known activity destination can be followed to its owning product journey.
 
 #### Business Rules
 
 - [x] Pagination does not change the totals for the complete filtered ledger.
+- [x] Filtering the ledger by account keeps whole postings, so each shown entry still carries its debit and credit legs.
 - [x] Compound transactions retain all debit and credit legs under one posting.
 - [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
       community-credit round — is shown as a single ledger entry that still names each beneficiary and their share, with one credit for the
@@ -254,7 +256,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `22a6332fb74fe6b6f44f5bac1c0d518d5614296e`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
