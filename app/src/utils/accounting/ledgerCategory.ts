@@ -60,6 +60,21 @@ export const ledgerCategories: Array<LedgerCategory | 'All' | typeof FEE_FILTER>
   FEE_FILTER
 ]
 
+/**
+ * The label shown on the "Action" badge (and carried into the ledger exports).
+ * Usually the plain {@link categoryOf} name, but the two payroll phases spell out
+ * which one it is — `"Payroll: Claim"` for a wage submitted / accrued
+ * (`UC-CASH-02`) and `"Payroll: Withdraw"` for one actually paid out
+ * (`UC-CASH-03`) — so the journal reads clearly instead of a bare "Payroll" for
+ * both. The filter pills and badge colour still key off {@link categoryOf}, so the
+ * "Payroll" filter keeps gathering both phases.
+ */
+export function categoryLabelOf(entry: LedgerEntry): string {
+  if (entry.useCase === 'UC-CASH-02') return 'Payroll: Claim'
+  if (entry.useCase === 'UC-CASH-03') return 'Payroll: Withdraw'
+  return categoryOf(entry)
+}
+
 /** The display category a ledger entry falls under, from its use case. */
 export function categoryOf(entry: LedgerEntry): LedgerCategory {
   const byUseCase: Partial<Record<UseCase, LedgerCategory>> = {

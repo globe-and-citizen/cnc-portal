@@ -44,8 +44,18 @@
     </template>
 
     <template #account-cell="{ row: { original: row } }">
+      <button
+        v-if="!row.isTotal && linkAccount && !row.accountDimmed && row.account"
+        type="button"
+        class="focus-visible:ring-neutral rounded text-sm tabular-nums underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:outline-none"
+        :class="row.accountMuted ? 'text-muted' : 'text-default'"
+        :data-test="`ledger-account-link-${row.account}`"
+        @click="emit('accountSelect', row.account)"
+      >
+        {{ row.account }}
+      </button>
       <span
-        v-if="!row.isTotal"
+        v-else-if="!row.isTotal"
         class="text-sm tabular-nums"
         :class="
           row.accountDimmed ? 'text-dimmed' : row.accountMuted ? 'text-muted' : 'text-default'
@@ -137,7 +147,13 @@ const props = defineProps<{
   /** What the account is left standing at — the foot of the Balance column.
    *  Defaults to `total` when the ledger carries nothing forward. */
   closingBalance?: string
+  /** Render each real account name as a link that emits `accountSelect` (the
+   *  General Ledger uses this to jump to that account's Trial Balance drill-down).
+   *  Off by default so the drill-down modal's own ledger stays plain text. */
+  linkAccount?: boolean
 }>()
+
+const emit = defineEmits<{ accountSelect: [account: string] }>()
 
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
 
