@@ -12,7 +12,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { resolveUser, formatCryptoAmount, getTransactionTypeLabel } from '@/utils'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
+import { formatCryptoAmount } from '@/utils/currency/display'
+import { getTransactionTypeLabel } from '@/utils/transactions/registry'
 import { formatPercent } from '@/utils/format'
 import type { UBadgeColor } from '@/types/ui'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
@@ -29,6 +31,7 @@ const props = withDefaults(
   }>(),
   { color: 'primary' }
 )
+const { resolveUser } = useTransactionPresentation()
 
 const percentage = computed(() => {
   const parentAmt = Number(props.parentAmount)

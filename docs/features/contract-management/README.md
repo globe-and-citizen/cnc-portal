@@ -183,6 +183,13 @@ flowchart LR
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+
+- [Contract Management components](../../../app/src/components/sections/ContractManagementView/),
+  [Board writes](../../../app/src/composables/bod/writes.ts),
+  [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
+  [shared contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts)
+- [Proposal creation](../../../app/src/components/sections/ProposalsView/forms/CreateProposalForm.vue)
 - [Contract Management page and Officer-generation derivation](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
 - [Current contract section](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
 - [Current contract table and selected action boundary](../../../app/src/components/sections/ContractManagementView/MainContractTable.vue)

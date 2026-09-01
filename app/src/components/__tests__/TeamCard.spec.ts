@@ -5,7 +5,7 @@ import { useCurrencyStore } from '@/stores/currencyStore'
 import { makeCurrencyStoreMock, mockUserStore } from '@/tests/mocks'
 import { UDropdownStub } from '@/tests/stubs/nuxt-ui.stubs'
 import type { Team } from '@/types'
-import type { TeamTreasuryDisplay } from '@/utils/teamTreasury'
+import type { TeamTreasuryDisplay } from '@/utils/teams/treasury'
 import type { Address } from 'viem'
 
 // `makeCurrencyStoreMock` exposes `localCurrency` unwrapped (as a real Pinia

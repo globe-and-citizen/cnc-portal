@@ -217,8 +217,9 @@ The following verified gaps have technical evidence and remediation directions i
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a6e9f9373a08046e2d65501d48d90ae3f3982db1`
+**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
 
+- [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
@@ -229,7 +230,7 @@ The following verified gaps have technical evidence and remediation directions i
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
 - [Repayment amount validation](../../../app/src/types/communityCredit.schemas.ts)
-- [Repayment lifecycle status](../../../app/src/utils/communityCreditRoundStatusUtil.ts)
+- [Repayment lifecycle status](../../../app/src/utils/communityCredit/roundStatus.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
 - [Credit-call terms step](../../../app/src/components/sections/CommunityCreditView/CreditCallTermsStep.vue)
 - [Credit Account transaction history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue)

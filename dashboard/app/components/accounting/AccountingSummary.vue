@@ -5,7 +5,7 @@
       <h3 class="font-semibold text-black dark:text-white">
         Summary
       </h3>
-      <AccountingDatePicker
+      <DatePicker
         v-model="asOf"
         mode="date"
         storage-key="dashboard-accounting-summary-asof"

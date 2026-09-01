@@ -48,7 +48,7 @@
 import { formatUnits } from 'viem'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { round6 } from '@/utils/accounting/toUsd'
-import { getTokenDecimals } from '@/utils/constantUtil'
+import { getTokenDecimals } from '@/utils/tokens/metadata'
 
 const SHERS_TO_BE_ISSUED = 'SHERS To Be Issued'
 const INVESTOR_EQUITY = 'Investor Equity'

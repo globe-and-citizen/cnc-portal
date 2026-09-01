@@ -62,7 +62,7 @@ import { useReadContract } from '@wagmi/vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import type { Address } from 'viem'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import { useBoDElections } from '@/composables/elections'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 

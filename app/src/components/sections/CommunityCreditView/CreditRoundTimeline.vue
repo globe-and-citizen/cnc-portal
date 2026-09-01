@@ -124,7 +124,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatAmount, percentOf, roundInterest, roundTotalDue } from '@/utils'
+import { formatAmount, roundInterest, roundTotalDue } from '@/utils/communityCredit/model'
+import { percentOf } from '@/utils/communityCredit/offer'
 import type { CreditRound, RoundStatus } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
 

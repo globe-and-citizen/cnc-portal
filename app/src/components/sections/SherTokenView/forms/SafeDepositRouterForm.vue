@@ -77,13 +77,13 @@ import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useUserDataStore } from '@/stores'
-import { classifyError } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
 import {
   formatSafeDepositRouterMultiplier,
   calculateSherCompensation,
   calculateDepositFromSher,
   buildDepositAmountSchema
-} from '@/utils/safeDepositRouterUtil'
+} from '@/utils/safeDepositRouter/model'
 import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 import CompensationAmountInput from './CompensationAmountInput.vue'
 import {

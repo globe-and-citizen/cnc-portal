@@ -159,13 +159,13 @@ import {
   addVestingMonths,
   buildAddVestingArgs,
   buildVestingCreation,
-  classifyError,
   formatVestingDuration,
   nextVestingMinute,
   resolveVestingBoundary,
   resolveVestingTokenSymbol,
   vestingCreationSchema
-} from '@/utils'
+} from '@/utils/vesting/schedule'
+import { classifyError } from '@/utils/errors/classifyContractError'
 
 const emit = defineEmits<{
   closeAddVestingModal: []

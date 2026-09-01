@@ -29,7 +29,8 @@ import {
   useSafeDepositRouterOwner
 } from '@/composables/safeDepositRouter/reads'
 import { useTeamStore } from '@/stores'
-import { classifyError, log } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()

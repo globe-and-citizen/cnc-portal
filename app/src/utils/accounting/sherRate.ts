@@ -22,7 +22,7 @@
  */
 import { formatUnits } from 'viem'
 import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/ponder/investor'
-import { resolveTokenIdByAddress, getTokenDecimals } from '@/utils/constantUtil'
+import { resolveTokenIdByAddress, getTokenDecimals } from '@/utils/tokens/metadata'
 import { isUsdPegged } from '@/utils/accounting/toUsd'
 
 const MULTIPLIER_DECIMALS = 6

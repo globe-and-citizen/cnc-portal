@@ -70,16 +70,16 @@ import {
   useFixedReturnRefundLenders,
   useFixedReturnAcceptPartialFunding
 } from '@/composables/fixedReturn/writes'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
 import {
-  classifyError,
-  decimalsForFixedReturnToken,
   formatAmount,
-  isRepayableRoundStatus,
   offerOutstandingObligation,
   offerLenderToCreditLender,
-  resolveUser,
   ROUND_VARIANT_TAB_ITEMS
-} from '@/utils'
+} from '@/utils/communityCredit/model'
+import { isRepayableRoundStatus } from '@/utils/communityCredit/roundStatus'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import {
   validateRepaymentAmount,
   type CreditRound,
@@ -98,6 +98,7 @@ const toast = useToast()
 const queryClient = useQueryClient()
 const store = useCommunityCreditStore()
 const userStore = useUserDataStore()
+const { resolveUser } = useTransactionPresentation()
 const teamId = computed(() => String(route.params.id))
 const roundId = computed(() => String(route.params.roundId))
 const offerId = computed(() => BigInt(roundId.value || '0'))

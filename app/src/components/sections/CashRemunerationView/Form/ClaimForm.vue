@@ -162,7 +162,7 @@ import {
   type ClaimSubmissionRules,
   type ClaimFormFileData,
   type CalendarSelectionValue
-} from '@/utils/claimFormUtil'
+} from '@/utils/claims/form'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()

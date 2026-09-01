@@ -157,16 +157,15 @@ import {
 } from '@/composables/fixedReturn/reads'
 import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writes'
 import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffering.queries'
+import { applyZodFieldErrors, toCreditCallOfferParams } from '@/utils/communityCredit/model'
 import {
-  applyZodFieldErrors,
   buildCreditOfferingForm,
-  classifyError,
   creditCallDeadlineContext,
   creditChipClass,
-  createDefaultCreditCallForm,
-  getSupportedCreditTokenOptions,
-  toCreditCallOfferParams
-} from '@/utils'
+  createDefaultCreditCallForm
+} from '@/utils/communityCredit/wizard'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { getSupportedCreditTokenOptions } from '@/utils/communityCredit/offer'
 import { createCreditCallTermsSchema, creditCallBasicsSchema, type CreditCallForm } from '@/types'
 import StepIndicator from '@/components/ui/StepIndicator.vue'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'

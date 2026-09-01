@@ -13,7 +13,7 @@ import { useReadContract } from '@wagmi/vue'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import { computed, watch } from 'vue'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 
 const teamStore = useTeamStore()

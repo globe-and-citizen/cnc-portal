@@ -52,10 +52,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SafeTransaction } from '@/types/safe'
-import type { SafeTransactionStateMeta } from '@/utils/safeTransactionState'
+import type { SafeTransactionStateMeta } from '@/utils/safe/transactionState'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
-import { formatDateShort } from '@/utils/dayUtils'
+import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils/safe/model'
+import { formatDateShort } from '@/utils/dates/calendar'
 
 interface Props {
   transaction: SafeTransaction | null

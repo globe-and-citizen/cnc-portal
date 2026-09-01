@@ -117,7 +117,7 @@
 
 <script setup lang="ts">
 import { useGetSearchUsersQuery } from '@/queries/user.queries'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { z } from 'zod'
 import { parseUnits, isAddress } from 'viem'

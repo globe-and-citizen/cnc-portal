@@ -5,7 +5,7 @@
         <h3 class="font-semibold text-black dark:text-white">
           Income Statement
         </h3>
-        <AccountingDatePicker
+        <DatePicker
           v-model="period"
           mode="range"
           storage-key="dashboard-accounting-income-period"

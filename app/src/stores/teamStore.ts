@@ -1,6 +1,6 @@
 import type { ContractType } from '@/types'
 // import type { Team } from '@/types/team'
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 import { defineStore } from 'pinia'
 import type { Address } from 'viem'
 import { ref, watch } from 'vue'

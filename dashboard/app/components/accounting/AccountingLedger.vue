@@ -8,7 +8,7 @@
         <!-- Single row: all filters/buttons stay on one line, scrolling horizontally on
              narrow screens rather than wrapping. -->
         <div class="flex items-center gap-2 overflow-x-auto pb-1 justify-end">
-          <AccountingDatePicker
+          <DatePicker
             v-model="period"
             mode="range"
             storage-key="dashboard-accounting-ledger-period"

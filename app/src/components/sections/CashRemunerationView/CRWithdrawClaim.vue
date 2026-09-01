@@ -45,7 +45,9 @@
 <script setup lang="ts">
 import { useTeamStore } from '@/stores'
 import { useToast } from '@nuxt/ui/composables'
-import { buildWageClaimPayload, classifyError, log } from '@/utils'
+import { buildWageClaimPayload } from '@/utils/wages/model'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 import { recoverTypedDataAddress, zeroAddress, type Address } from 'viem'
 import { readContract } from '@wagmi/core'
 import { useChainId } from '@wagmi/vue'

@@ -83,7 +83,7 @@
 <script setup lang="ts">
 import VestingSchedulePreview from './VestingSchedulePreview.vue'
 import { formatToken } from '@/utils/format'
-import { formatVestingDuration } from '@/utils'
+import { formatVestingDuration } from '@/utils/vesting/schedule'
 import { type VestingCreation } from '@/types/vesting'
 
 defineProps<{

@@ -128,8 +128,8 @@ import type { UBadgeColor } from '@/types/ui'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TransferSenderCell from './TransferSenderCell.vue'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
-import { formatSafeTransferType, formatSafeTransferAmount } from '@/utils/safe'
-import { formatDateShort } from '@/utils/dayUtils'
+import { formatSafeTransferType, formatSafeTransferAmount } from '@/utils/safe/model'
+import { formatDateShort } from '@/utils/dates/calendar'
 import type { SafeIncomingTransfer } from '@/types'
 
 interface Props {

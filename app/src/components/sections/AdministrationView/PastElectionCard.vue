@@ -56,7 +56,7 @@
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import type { Election } from '@/types'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import { formatDate } from '@/utils/format'
 import { useReadContract } from '@wagmi/vue'
 import { useRouter } from 'vue-router'
