@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import dayjs from 'dayjs'
 import type { Address } from 'viem'
 import { useTeamQuery } from '~/queries/team.query'
+import { formatDate } from '~/utils/format'
 
 const route = useRoute()
 const teamId = computed(() => Number(route.params.id))
@@ -85,7 +85,7 @@ const sharedContracts = computed(() =>
               Created
             </dt>
             <dd class="text-sm">
-              {{ dayjs(team.createdAt).format('MMM D, YYYY') }}
+              {{ formatDate(team.createdAt) }}
             </dd>
           </div>
         </dl>

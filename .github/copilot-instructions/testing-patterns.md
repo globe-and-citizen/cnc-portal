@@ -7,7 +7,7 @@
 
 ## Component rendering with `data-test`
 
-→ `app/src/components/__tests__/SelectComponent.spec.ts` — full mount + selectors + props/emits.
+→ `app/src/components/ui/inputs/__tests__/SelectMemberWithTokenInput.spec.ts` — full mount + selectors + Nuxt UI props.
 
 Key shape (mirror this in new specs):
 

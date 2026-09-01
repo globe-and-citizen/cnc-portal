@@ -92,7 +92,7 @@ const SELECTORS = {
   openSafeAppFooter: '[data-test="open-safe-app-footer"]'
 } as const
 
-const AddressToolTipStub = defineComponent({
+const AddressTooltipStub = defineComponent({
   props: ['address'],
   template: '<div data-test="address-tooltip">{{ address }}</div>'
 })
@@ -128,7 +128,7 @@ describe('SafeOwnersCard', () => {
       props: { ...defaultProps, ...props },
       global: {
         stubs: {
-          AddressToolTip: AddressToolTipStub,
+          AddressTooltip: AddressTooltipStub,
           RemoveOwnerButton: RemoveOwnerButtonStub,
           AddSignerModal: AddSignerModalStub,
           UpdateThresholdModal: UpdateThresholdModalStub

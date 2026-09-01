@@ -238,9 +238,11 @@ flowchart LR
   [transfer-history pagination](../../../../dashboard/server/utils/etherscan.ts)
 - [Ledger reconstruction](../../../../dashboard/app/utils/accounting.ts),
   [lot accounting](../../../../dashboard/app/utils/incomeStatement.ts),
-  [balance-sheet reconstruction](../../../../dashboard/app/utils/balanceSheet.ts), and
-  [general-ledger reconstruction](../../../../dashboard/app/utils/generalLedger.ts)
+  [balance-sheet reconstruction](../../../../dashboard/app/utils/balanceSheet.ts),
+  [general-ledger reconstruction](../../../../dashboard/app/utils/generalLedger.ts), and
+  [CSV ledger serialization](../../../../dashboard/app/utils/mergedLedger.ts)
 - [Summary](../../../../dashboard/app/components/accounting/AccountingSummary.vue),
+  [accounting identities](../../../../dashboard/app/components/accounting/AccountingIdentitiesCard.vue),
   [income statement](../../../../dashboard/app/components/accounting/AccountingIncomeStatement.vue),
   [balance sheet](../../../../dashboard/app/components/accounting/AccountingBalanceSheet.vue),
   [activity ledger](../../../../dashboard/app/components/accounting/AccountingLedger.vue), and

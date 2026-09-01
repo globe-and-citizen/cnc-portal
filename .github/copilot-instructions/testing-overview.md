@@ -2,7 +2,7 @@
 
 > **Canonical references in the codebase** (read these instead of trusting outdated snippets):
 >
-> - Component spec — `app/src/components/__tests__/SelectComponent.spec.ts`
+> - Component spec — `app/src/components/ui/inputs/__tests__/SelectMemberWithTokenInput.spec.ts`
 > - Composable spec with `vi.hoisted` — `app/src/composables/__tests__/useContractFunction.spec.ts`
 > - Web3 / wagmi spec — `app/src/__tests__/wagmi.spec.ts`
 > - Pure-utility spec — `app/src/utils/__tests__/currencyUtil.spec.ts`

@@ -3,7 +3,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { BaseError, UserRejectedRequestError } from 'viem'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
 import { mockVestingWrites, resetContractMocks } from '@/tests/mocks'
 
 describe('CreateVesting.vue — write feedback', () => {

@@ -3,6 +3,7 @@ import type { ComputedRef } from 'vue'
 import { groupTransactionsByTxHash, getTransactionTypeLabel } from '@/utils'
 import type { GroupedTransactionRow } from '@/types/transaction-history'
 import { usePagination } from '@/composables/usePagination'
+import type { Range } from '@/utils/datePicker'
 
 type TransactionBase = {
   txHash: string
@@ -34,7 +35,7 @@ export const useTransactionTable = <T extends TransactionBase>(
   transactions: ComputedRef<T[]>,
   options: UseTransactionTableOptions = {}
 ) => {
-  const dateRange = ref<[Date, Date] | null>(null)
+  const dateRange = ref<Range | undefined>()
   const selectedType = ref('all')
 
   const uniqueTypes = computed(() => {
@@ -53,7 +54,7 @@ export const useTransactionTable = <T extends TransactionBase>(
     let filtered = transactions.value
 
     if (dateRange.value) {
-      const [startDate, endDate] = dateRange.value
+      const { start: startDate, end: endDate } = dateRange.value
       filtered = filtered.filter((tx) => {
         const txDate = new Date(tx.date)
         return txDate >= startDate && txDate <= endDate

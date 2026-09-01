@@ -10,8 +10,8 @@ These acceptance criteria follow the
 
 ## Product Model
 
-A Board election is an on-chain record created by the Elections contract owner for one team. The owner selects candidates and the number of
-seats; the portal submits every current team member as an eligible voter. That voter list is fixed at creation time.
+A Board election is an on-chain record created by the Elections contract owner for one company. The owner selects candidates and the number
+of seats; the portal submits every current company member as an eligible voter. That voter list is fixed at creation time.
 
 Eligible voters can cast one public on-chain vote for one candidate while the election is active. Results can be published after every
 eligible voter has cast a vote or after the end time. Publication sets the election's winners and replaces the Board of Directors membership
@@ -21,10 +21,10 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## Lifecycle
 
-1. The team owner creates an election with candidates, a seat count, and a voting window.
-2. The portal requests notifications for current team members.
+1. The company owner creates an election with candidates, a seat count, and a voting window.
+2. The portal requests notifications for current company members.
 3. Eligible voters review the active election and cast a vote.
-4. The team follows the election status, dates, turnout, and candidate vote counts.
+4. The company follows the election status, dates, turnout, and candidate vote counts.
 5. The owner publishes results once the election is ready.
 6. The portal shows the elected Board and makes published elections available in history.
 
@@ -32,31 +32,31 @@ Only one unpublished election can exist at a time. An ended election still block
 
 | User Story | Title                                    | Actor          | Status         |
 | ---------- | ---------------------------------------- | -------------- | -------------- |
-| US-EL-01   | Create a board election                  | Team owner     | 🧪 Validation  |
+| US-EL-01   | Create a board election                  | Company owner  | 🧪 Validation  |
 | US-EL-02   | Cast a vote                              | Eligible voter | 🚧 In Progress |
-| US-EL-03   | Publish election results                 | Team owner     | 🚧 In Progress |
-| US-EL-04   | Receive an election-created notification | Team member    | 🚧 In Progress |
-| US-EL-05   | Follow the election schedule             | Team member    | 🧪 Validation  |
-| US-EL-06   | Follow election turnout and vote counts  | Team member    | 🚧 In Progress |
-| US-EL-07   | View the current Board of Directors      | Team member    | 🧪 Validation  |
-| US-EL-08   | Review a published election              | Team member    | 🚧 In Progress |
-| US-EL-09   | Receive a result-published notification  | Team member    | 📝 Draft       |
-| US-EL-10   | Understand voter eligibility             | Team member    | 🚧 In Progress |
-| US-EL-11   | Cancel an election                       | Team owner     | 📝 Draft       |
+| US-EL-03   | Publish election results                 | Company owner  | 🚧 In Progress |
+| US-EL-04   | Receive an election-created notification | Company member | 🚧 In Progress |
+| US-EL-05   | Follow the election schedule             | Company member | 🧪 Validation  |
+| US-EL-06   | Follow election turnout and vote counts  | Company member | 🚧 In Progress |
+| US-EL-07   | View the current Board of Directors      | Company member | 🧪 Validation  |
+| US-EL-08   | Review a published election              | Company member | 🚧 In Progress |
+| US-EL-09   | Receive a result-published notification  | Company member | 📝 Draft       |
+| US-EL-10   | Understand voter eligibility             | Company member | 🚧 In Progress |
+| US-EL-11   | Cancel an election                       | Company owner  | 📝 Draft       |
 
 ## US-EL-01: Create a Board Election
 
-**As a** team owner\
+**As a** company owner\
 **I want to** create a board election with a voting window and candidates\
-**So that** the team can elect its Board of Directors through an auditable process
+**So that** the company can elect its Board of Directors through an auditable process
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] A team owner can create an election with a title, description, start time, end time, seat count, and candidates.
-- [x] A successful creation makes the new election available as the team's current election.
-- [x] Current team members are submitted as the election's eligible voters.
+- [x] A company owner can create an election with a title, description, start time, end time, seat count, and candidates.
+- [x] A successful creation makes the new election available as the company's current election.
+- [x] Current company members are submitted as the election's eligible voters.
 
 #### Business Rules
 
@@ -70,7 +70,7 @@ Only one unpublished election can exist at a time. An ended election still block
 - [x] Cancelling the wallet signature or closing the form does not create an election.
 - [x] A rejected creation preserves a recoverable error state in the creation flow.
 
-**Dependencies:** Current team, Elections contract, and connected team-owner wallet
+**Dependencies:** Current company, Elections contract, and connected company-owner wallet
 
 ## US-EL-02: Cast a Vote
 
@@ -101,7 +101,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## US-EL-03: Publish Election Results
 
-**As a** team owner\
+**As a** company owner\
 **I want to** publish a completed election's results\
 **So that** the elected members become the Board of Directors
 
@@ -129,7 +129,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## US-EL-04: Receive an Election-Created Notification
 
-**As a** team member\
+**As a** company member\
 **I want to** receive a notification when a board election is created\
 **So that** I can review the election in time to participate
 
@@ -137,8 +137,8 @@ Only one unpublished election can exist at a time. An ended election still block
 
 #### Happy Path
 
-- [x] After an election is created, the portal requests notifications for the team's current members.
-- [x] An election notification routes a recipient to the team's board-election page.
+- [x] After an election is created, the portal requests notifications for the company's current members.
+- [x] An election notification routes a recipient to the company's board-election page.
 
 #### Business Rules
 
@@ -153,7 +153,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## US-EL-05: Follow the Election Schedule
 
-**As a** team member\
+**As a** company member\
 **I want to** see an election's current status and time boundaries\
 **So that** I know whether voting is upcoming, active, or complete
 
@@ -178,7 +178,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## US-EL-06: Follow Election Turnout and Vote Counts
 
-**As a** team member\
+**As a** company member\
 **I want to** see turnout and candidate vote counts\
 **So that** I can follow the progress of the election
 
@@ -202,9 +202,9 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## US-EL-07: View the Current Board of Directors
 
-**As a** team member\
+**As a** company member\
 **I want to** view the current Board of Directors\
-**So that** I know who currently represents the team
+**So that** I know who currently represents the company
 
 ### Acceptance Criteria
 
@@ -225,7 +225,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## US-EL-08: Review a Published Election
 
-**As a** team member\
+**As a** company member\
 **I want to** open a published election and inspect its result\
 **So that** I can understand how a Board was selected
 
@@ -249,15 +249,15 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## US-EL-09: Receive a Result-Published Notification
 
-**As a** team member\
+**As a** company member\
 **I want to** receive a notification when election results are published\
-**So that** I can learn who now represents the team without polling the election page
+**So that** I can learn who now represents the company without polling the election page
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [ ] Publishing results notifies current team members that a new Board of Directors is in place.
+- [ ] Publishing results notifies current company members that a new Board of Directors is in place.
 - [ ] The notification links recipients to the published election result.
 
 #### Business Rules
@@ -272,7 +272,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## US-EL-10: Understand Voter Eligibility
 
-**As a** team member\
+**As a** company member\
 **I want to** understand whether I can vote in an election\
 **So that** I know how my membership affects participation
 
@@ -284,7 +284,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 #### Business Rules
 
-- [x] Joining or leaving the team after creation does not change that election's eligible-voter list.
+- [x] Joining or leaving the company after creation does not change that election's eligible-voter list.
 - [ ] The portal shows a member whether they are eligible for the election before they attempt to vote.
 
 #### Edge & Error Cases
@@ -296,9 +296,9 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## US-EL-11: Cancel an Election
 
-**As a** team owner\
+**As a** company owner\
 **I want to** cancel an election created in error\
-**So that** the team can correct its election without waiting for an unintended process to finish
+**So that** the company can correct its election without waiting for an unintended process to finish
 
 ### Acceptance Criteria
 
@@ -322,7 +322,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
-- [Election creation workflow](../../../app/src/components/sections/AdministrationView/CurrentBoDElectionSection.vue)
+- [Election creation workflow](../../../app/src/components/sections/AdministrationView/ElectionSummarySection.vue)
 - [Election creation form](../../../app/src/components/sections/AdministrationView/forms/CreateElectionForm.vue)
 - [Election action guards](../../../app/src/components/sections/AdministrationView/ElectionActions.vue)
 - [Election reads and writes](../../../app/src/composables/elections/)
@@ -343,7 +343,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 - The current contract deterministically seats candidates when an election with zero votes is published; it does not preserve the existing
   Board (US-EL-03).
-- Result publication does not currently request team-member notifications (US-EL-09).
+- Result publication does not currently request company-member notifications (US-EL-09).
 - The eligible-voter list is a creation-time snapshot, but the portal does not yet explain ineligibility or expose that list for review
   (US-EL-10).
 - The portal supports only the most recent portion of election history rather than an unbounded published-election archive (US-EL-08).

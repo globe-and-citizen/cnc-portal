@@ -2,7 +2,7 @@
 import type { AdvertisingCampaign } from '@/composables/campaign/reads'
 import type { ExtendedEvent } from '@/lib/campaign/events'
 import { formatPercent, formatTokenUnits } from '@/utils/format'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 
 defineProps<{
   campaign: AdvertisingCampaign | null
@@ -71,7 +71,7 @@ function handleOpenChange(open: boolean) {
 
         <div>
           <p class="text-muted mb-2 text-sm">Advertiser</p>
-          <AddressToolTip :address="campaign.advertiser" :slice="false" />
+          <AddressTooltip :address="campaign.advertiser" :slice="false" />
         </div>
 
         <USeparator />

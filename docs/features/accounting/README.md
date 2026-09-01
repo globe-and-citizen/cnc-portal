@@ -1,6 +1,6 @@
 # Accounting — User Stories
 
-**Scope:** The complete team Accounting journey exposed by the portal
+**Scope:** The complete company Accounting journey exposed by the portal
 
 **Last reviewed:** Not yet reviewed
 
@@ -9,22 +9,24 @@ These acceptance criteria follow the
 
 ## Product Model
 
-- Accounting presents one consolidated set of double-entry books for the team across its money-moving contracts and relevant portal records.
+- Accounting presents one consolidated set of double-entry books for the company across its money-moving contracts and relevant portal
+  records.
 - The general ledger is the source for the summary, income statement, balance sheet, and trial balance.
 - Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
-- Transfers between the team's own accounts are internal movements, not revenue or expenses.
+- Transfers between the company's own accounts are internal movements, not revenue or expenses.
 - Accounting includes every known contract generation. Individual account pages intentionally remain scoped to their current contract.
 - Off-platform activity without a connected data source, including infrastructure bills, is outside the current automated books.
 
-- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter — the contracts
-  the CNC actually uses.
+- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter, Vesting — the
+  contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
-  booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); each team books CNC
-  usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue.
-- **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a team owner can **manually classify** each one
-  into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan) —
-  persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
+  booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); each company books CNC
+  usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** recognises the
+  shares **at release** (`Dr Deferred SHER Compensation · Cr Investor Equity`, off the income statement — see catalogue §5.6).
+- **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a company owner can **manually classify** each
+  one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
+  — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
 
 ## Lifecycle
@@ -47,19 +49,19 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                      | Actor       | Status         |
-| ----------- | ------------------------------------------ | ----------- | -------------- |
-| US-ACCT-001 | Review the consolidated accounting summary | Team member | 🚧 In Progress |
-| US-ACCT-002 | Explore the general ledger                 | Team member | 🧪 Validation  |
-| US-ACCT-003 | Review the financial statements            | Team member | 🧪 Validation  |
-| US-ACCT-004 | Export accounting reports                  | Team member | 🧪 Validation  |
-| US-ACCT-005 | Preserve books across contract migrations  | Team member | 🚧 In Progress |
-| US-ACCT-006 | Classify a Bank transaction                | Team owner  | 📝 Draft       |
+| User Story  | Title                                      | Actor          | Status         |
+| ----------- | ------------------------------------------ | -------------- | -------------- |
+| US-ACCT-001 | Review the consolidated accounting summary | Company member | 🚧 In Progress |
+| US-ACCT-002 | Explore the general ledger                 | Company member | 🧪 Validation  |
+| US-ACCT-003 | Review the financial statements            | Company member | 🧪 Validation  |
+| US-ACCT-004 | Export accounting reports                  | Company member | 🧪 Validation  |
+| US-ACCT-005 | Preserve books across contract migrations  | Company member | 🚧 In Progress |
+| US-ACCT-006 | Classify a Bank transaction                | Company owner  | 📝 Draft       |
 
 ## US-ACCT-001: Review the Consolidated Accounting Summary
 
-**As a** team member\
-**I want to** review the team's consolidated accounting summary\
+**As a** company member\
+**I want to** review the company's consolidated accounting summary\
 **So that** I can understand its current financial position
 
 ### Acceptance Criteria
@@ -75,22 +77,22 @@ flowchart LR
 - [x] Every journal posting has equal debit and credit totals.
 - [x] USD-pegged tokens use a one-dollar rate, while native tokens and SHER use their configured rates of record.
 - [x] Payroll obligations are recognized when an eligible work week ends, before settlement.
-- [x] Internal transfers between known team accounts do not change revenue or expenses.
+- [x] Internal transfers between known company accounts do not change revenue or expenses.
 - [ ] Reported closing cash balances are reconciled against the corresponding on-chain balances.
 
 #### Edge & Error Cases
 
-- [x] A team with no accounting activity produces balanced zero-value books.
-- [x] Failure to load the team prevents Accounting from presenting books for an unknown contract set.
+- [x] A company with no accounting activity produces balanced zero-value books.
+- [x] Failure to load the company prevents Accounting from presenting books for an unknown contract set.
 - [x] A failed contract-generation scan preserves available books and identifies the affected source as incomplete.
 - [ ] Every unavailable optional or enrichment source that can make the books incomplete is identified to the reviewer.
 
-**Dependencies:** Current team, contract-event providers, and accounting enrichment records
+**Dependencies:** Current company, contract-event providers, and accounting enrichment records
 
 ## US-ACCT-002: Explore the General Ledger
 
-**As a** team member\
-**I want to** explore the team's journal entries\
+**As a** company member\
+**I want to** explore the company's journal entries\
 **So that** I can trace each reported amount to its accounting movements
 
 ### Acceptance Criteria
@@ -98,8 +100,8 @@ flowchart LR
 #### Happy Path
 
 - [x] The ledger exposes each posting's date, activity, accounts, currency, quantity, rate, debit, and credit amounts.
-- [x] A team member can filter entries by accounting category, reporting period, and available currencies.
-- [x] A team member can inspect the entries and running balance for one account from a report line.
+- [x] A company member can filter entries by accounting category, reporting period, and available currencies.
+- [x] A company member can inspect the entries and running balance for one account from a report line.
 - [x] A known activity destination can be followed to its owning product journey.
 
 #### Business Rules
@@ -122,8 +124,8 @@ flowchart LR
 
 ## US-ACCT-003: Review the Financial Statements
 
-**As a** team member\
-**I want to** review the team's financial statements\
+**As a** company member\
+**I want to** review the company's financial statements\
 **So that** I can assess performance, position, and ledger balance
 
 ### Acceptance Criteria
@@ -133,7 +135,7 @@ flowchart LR
 - [x] The income statement reports revenue, expenses, and net income for the selected reporting period.
 - [x] The balance sheet reports assets, liabilities, and equity as of the selected date.
 - [x] The trial balance reports each account on its normal debit or credit side as of the selected date.
-- [x] A team member can inspect the ledger entries behind a statement line.
+- [x] A company member can inspect the ledger entries behind a statement line.
 
 #### Business Rules
 
@@ -152,7 +154,7 @@ flowchart LR
 
 ## US-ACCT-004: Export Accounting Reports
 
-**As a** team member\
+**As a** company member\
 **I want to** export accounting reports\
 **So that** I can review or share the same financial information outside the portal
 
@@ -160,8 +162,8 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A team member can export the general ledger and each financial statement to Excel.
-- [x] A team member can export the general ledger and each financial statement to PDF.
+- [x] A company member can export the general ledger and each financial statement to Excel.
+- [x] A company member can export the general ledger and each financial statement to PDF.
 - [x] A summary export can include multiple selected accounting sections in one report.
 - [x] A statement-line drill-down can be exported independently.
 
@@ -180,9 +182,9 @@ flowchart LR
 
 ## US-ACCT-005: Preserve Books Across Contract Migrations
 
-**As a** team member\
+**As a** company member\
 **I want to** keep historical accounting entries after contract migrations\
-**So that** redeploying team contracts does not erase or misclassify the team's books
+**So that** redeploying company contracts does not erase or misclassify the company's books
 
 ### Acceptance Criteria
 
@@ -191,14 +193,14 @@ flowchart LR
 - [x] Accounting consolidates entries from every known contract generation into the same books.
 - [x] Each contract generation is scanned from its own deployment boundary.
 - [x] Transactions made before and after a migration contribute to the same reports.
-- [x] A treasury sweep between old and replacement team contracts remains an internal transfer.
+- [x] A treasury sweep between old and replacement company contracts remains an internal transfer.
 - [x] The trial balance presents a redeployed cash pocket as one row per contract generation, and drilling a generation's row shows only
       that generation's entries.
 
 #### Business Rules
 
-- [x] Contracts from every known generation are recognized as team-owned when classifying internal transfers.
-- [x] The persistent team Safe and other officerless accounts are included once across generations.
+- [x] Contracts from every known generation are recognized as company-owned when classifying internal transfers.
+- [x] The persistent company Safe and other officerless accounts are included once across generations.
 - [x] Merged generation events are deduplicated by their on-chain identity.
 - [ ] Historical Community Credit terms and SHER valuation inputs are resolved from their owning contract generation.
 
@@ -212,7 +214,7 @@ flowchart LR
 
 ## US-ACCT-006: Classify a Bank Transaction
 
-**As a** team owner\
+**As a** company owner\
 **I want to** assign the economic classification of a Bank deposit or withdrawal\
 **So that** the books record why funds moved instead of assuming it from the on-chain address
 
@@ -220,26 +222,26 @@ flowchart LR
 
 #### Happy Path
 
-- [ ] The team owner can classify a Bank transaction with a supported accounting category and an optional memo.
-- [ ] The team owner can deposit funds received off-chain from a client and classify the Bank deposit as Service Revenue (`UC-BANK-02`).
-- [ ] The team owner who is the economic client can classify their own Bank deposit as Service Revenue (`UC-BANK-02`).
-- [ ] The team owner can classify a contribution that receives no SHER as Owner Capital (`UC-BANK-01`).
+- [ ] The company owner can classify a Bank transaction with a supported accounting category and an optional memo.
+- [ ] The company owner can deposit funds received off-chain from a client and classify the Bank deposit as Service Revenue (`UC-BANK-02`).
+- [ ] The company owner who is the economic client can classify their own Bank deposit as Service Revenue (`UC-BANK-02`).
+- [ ] The company owner can classify a contribution that receives no SHER as Owner Capital (`UC-BANK-01`).
 - [ ] A saved classification remains visible in the accounting books after a refresh.
 
 #### Business Rules
 
 - [ ] A classification is stored against a stable on-chain transaction identity and deterministically produces balanced ledger entries.
 - [ ] Address-based inference remains visible only when no manual classification exists.
-- [ ] A guaranteed transfer between team-owned pockets remains an internal transfer and cannot be reclassified as income or expense.
+- [ ] A guaranteed transfer between company-owned pockets remains an internal transfer and cannot be reclassified as income or expense.
 - [ ] The classification action is available for supported native-token and ERC-20 Bank deposits and withdrawals.
-- [ ] Only the team owner can create or change a classification.
+- [ ] Only the company owner can create or change a classification.
 
 #### Edge & Error Cases
 
 - [ ] An unknown transaction, invalid category, duplicate submission, or concurrent edit is rejected without changing the existing books.
 - [ ] A failed save leaves the previous classification visible and explains that the change was not applied.
 
-**Dependencies:** US-ACCT-002, a team-owned Bank transaction, and the planned Bank-classification delivery
+**Dependencies:** US-ACCT-002, a company-owned Bank transaction, and the planned Bank-classification delivery
 
 ## Known Gaps
 
@@ -269,6 +271,9 @@ flowchart LR
 - [Classification persistence schema](../../../backend/prisma/schema.prisma) and
   [classification migrations](../../../backend/prisma/migrations/20260821000000_add_transaction_classification/)
 - [Statement-line drill-down](../../../app/src/composables/accounting/useLedgerDrilldown.ts)
+- [Ledger Activity destination resolver](../../../app/src/composables/accounting/useActivityDestination.ts)
+- [Share-vesting event feed (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts) and
+  [vesting source mapper](../../../app/src/utils/accounting/mappers/vesting.ts)
 - [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [general ledger](../../../app/src/utils/accounting/generalLedger.ts),
@@ -284,6 +289,7 @@ flowchart LR
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
+- [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Money Flow Catalogue](./money-flow-catalogue.md)
 - [Accounting Specification and Scope](./cnc-accounting-spec.md)
 - [Contract Migration History](./contract-migration-history.md)

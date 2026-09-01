@@ -109,10 +109,10 @@ describe('useTransactionTable', () => {
     const source = ref(buildTransactions(10))
     const table = useTransactionTable(computed(() => source.value))
 
-    table.dateRange.value = [
-      new Date(Date.UTC(2025, 0, 3)),
-      new Date(Date.UTC(2025, 0, 5, 23, 59, 59))
-    ]
+    table.dateRange.value = {
+      start: new Date(Date.UTC(2025, 0, 3)),
+      end: new Date(Date.UTC(2025, 0, 5, 23, 59, 59))
+    }
     await nextTick()
 
     expect(table.displayedTransactions.value).toHaveLength(3)

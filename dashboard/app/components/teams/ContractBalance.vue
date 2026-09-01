@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { formatEther } from 'viem'
 import { useContractBalanceQuery } from '~/queries/contractBalance.query'
 import { useContractTokenBalancesQuery } from '~/queries/contractTokenBalances.query'
+import { formatNumber } from '~/utils/format'
 
 const props = defineProps<{
   address: string
@@ -17,7 +18,7 @@ const isLoading = computed(() => nativeLoading.value || tokensLoading.value)
 const nativeFormatted = computed(() => {
   if (native.value === null || native.value === undefined) return null
   const value = Number(formatEther(native.value))
-  return value.toLocaleString(undefined, { maximumFractionDigits: 4 })
+  return formatNumber(value, { maxDecimals: 4 })
 })
 
 const hasNative = computed(() => nativeFormatted.value !== null && native.value !== 0n)

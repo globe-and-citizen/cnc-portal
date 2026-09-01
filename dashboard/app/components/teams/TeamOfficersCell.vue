@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
 import { useTeamOfficersQuery } from '~/queries/contract.query'
+import { formatDateRelative, formatDateTime } from '~/utils/format'
 import { shortenAddress } from '~/utils/generalUtil'
-
-dayjs.extend(relativeTime)
 
 const props = defineProps<{
   teamId: number
@@ -128,8 +125,8 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
                 Deployed
               </dt>
               <dd class="text-muted">
-                {{ dayjs(officer.deployedAt).format('MMM D, YYYY HH:mm') }}
-                <span class="text-dimmed">· {{ dayjs(officer.deployedAt).fromNow() }}</span>
+                {{ formatDateTime(officer.deployedAt) }}
+                <span class="text-dimmed">· {{ formatDateRelative(officer.deployedAt) }}</span>
               </dd>
             </div>
 

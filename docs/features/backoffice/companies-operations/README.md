@@ -151,11 +151,14 @@ investigation, and the independent API role enforcement described below.
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
   [Companies operations entry page](../../../../dashboard/app/pages/teams/index.vue)
 - [Company list, filtering, sorting, pagination, and value overview](../../../../dashboard/app/components/teams/TeamsList.vue),
+  [project TVL summary](../../../../dashboard/app/components/teams/ProjectTvlCard.vue),
+  [Officer history](../../../../dashboard/app/components/teams/TeamOfficersCell.vue),
   [company-list integration](../../../../dashboard/app/composables/useTeams.ts), and
   [supported balance recap](../../../../dashboard/app/composables/useTeamsBalanceRecaps.ts)
 - [Company profile](../../../../dashboard/app/pages/teams/%5Bid%5D.vue),
   [Officer and contract grouping](../../../../dashboard/app/components/teams/TeamContractGroups.vue),
-  [contract balances](../../../../dashboard/app/components/teams/ContractBalance.vue), and
+  [contract balances](../../../../dashboard/app/components/teams/ContractBalance.vue),
+  [stablecoin balance query](../../../../dashboard/app/queries/contractTokenBalances.query.ts), and
   [contract logs](../../../../dashboard/app/components/teams/ContractLogs.vue)
 - [Company routes](../../../../backend/src/routes/teamRoutes.ts),
   [company controller](../../../../backend/src/controllers/teamController.ts), and

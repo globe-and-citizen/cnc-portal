@@ -49,9 +49,12 @@ Same surface in both front-ends (`app/src/utils/format/`, `dashboard/app/utils/f
 | `formatDate(value)`             | `Jan 8, 2026`           | The default for a date shown on its own.                                   |
 | `formatDateTime(value)`         | `Jan 8, 2026, 14:05:32` | Chronologically ordered rows — same-day entries must stay distinguishable. |
 | `formatDateShort(value)`        | `Jan 8`                 | Chart axes, dense tables where the year is established.                    |
+| `formatDateShortTime(value)`    | `Jan 8, 14:05`          | Dense activity and message rows.                                           |
 | `formatWeekdayShort(value)`     | `Mon`                   | Compact weekday labels, such as a chart axis.                              |
 | `formatDateWeekdayShort(value)` | `Mon, Jan 8`            | Daily activity rows where the weekday adds context.                        |
 | `formatMonthYear(value)`        | `January 2026`          | Period headers.                                                            |
+| `formatYear(value)`             | `2026`                  | A period label when its control already establishes the unit.              |
+| `formatQuarterRange(value)`     | `Jul – Sep 2025`        | A compact label for a navigable calendar quarter.                          |
 | `formatDateIso(value)`          | `2026-01-08`            | Filenames, CSV columns, API payloads — never UI copy.                      |
 | `formatDateUtc(value)`          | `2026-01-08 14:05 UTC`  | Anything a user lines up against a block explorer or a deadline.           |
 | `formatDateRelative(value)`     | `3 min ago`             | Freshness cues. Falls back to `formatDate` past a week.                    |

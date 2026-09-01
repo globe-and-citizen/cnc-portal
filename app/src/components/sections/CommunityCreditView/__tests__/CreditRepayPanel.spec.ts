@@ -1,43 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import type { CreditRound, LendingOfferStruct } from '@/types'
-import { USDC_ADDRESS } from '@/constant'
+import { describe, expect, it } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import type { CreditRound } from '@/types'
 import { MINUTES_PER_DAY } from '@/utils'
-
-// vue-router is globally mocked (composables.setup.ts); useRouter().push is
-// mockRouterPush and useRoute() reads the shared reactive mockRoute.
-import {
-  mockRouterPush,
-  setMockRoute,
-  useQueryClientFn,
-  mockInvalidateQueries,
-  mockFixedReturnReads,
-  mockBankReads,
-  mockBankWrites
-} from '@/tests/mocks'
-
-// Connected wallet address the global user-store mock defaults to (store.setup.ts) —
-// Repay is gated on Bank's owner matching this, alongside store.isOwner.
-const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
-
-// The Community Credit store is the contract-backed read hub — mocked so the panel can
-// be driven deterministically, mirroring the RoundView/IndexView test convention (see
-// communityCreditViews.spec.ts).
-const { store } = vi.hoisted(() => {
-  const store = {
-    isLoading: false,
-    isOwner: true,
-    rounds: [] as CreditRound[],
-    getRound: (id: string): CreditRound | undefined => store.rounds.find((r) => r.id === id)
-  }
-  return { store }
-})
-
-vi.mock('@/stores/communityCredit', () => ({
-  useCommunityCreditStore: () => store
-}))
-
 import CreditRepayPanel from '../CreditRepayPanel.vue'
+import type { RepaymentPanelState } from '../CreditRepayPanel.vue'
+import type { RepayBreakdownRow } from '../CreditRepayBreakdownTable.vue'
 
 function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
   return {
@@ -63,210 +30,184 @@ function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
   }
 }
 
-function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
+function sampleRows(): RepayBreakdownRow[] {
+  return [
+    {
+      name: 'Alice',
+      addr: '0x0000...00a1',
+      gradient: '#000000,#ffffff',
+      amount: 5000,
+      expected: 5250,
+      paid: 0,
+      date: '',
+      you: false,
+      interest: 250,
+      total: 5250,
+      remaining: 5250
+    }
+  ]
+}
+
+interface PanelProps {
+  round: CreditRound
+  rows: RepayBreakdownRow[]
+  isOwner: boolean
+  repayment: RepaymentPanelState
+}
+
+function repaymentState(overrides: Partial<RepaymentPanelState> = {}): RepaymentPanelState {
   return {
-    token: USDC_ADDRESS,
-    fundingTarget: 40_000_000000n,
-    interestRateBps: 500n,
-    maturityDate: 1_700_000_000n + BigInt(90 * 86_400),
-    subscriptionDeadline: 1_700_000_000n,
-    fundingAccess: 0,
-    isCapEnabled: false,
-    lenderCap: 0n,
-    totalFunded: 23_400_000000n,
-    totalRepaidByIssuer: 0n,
-    state: 0,
-    ...over
+    outstanding: 5250,
+    treasuryBalance: 10000,
+    isReady: true,
+    isRepayable: true,
+    canRepayViaBank: true,
+    isSubmitting: false,
+    errorMessage: null,
+    ...overrides
+  }
+}
+
+function panelProps(overrides: Partial<PanelProps> = {}): PanelProps {
+  return {
+    round: sampleRound(),
+    rows: sampleRows(),
+    isOwner: true,
+    repayment: repaymentState(),
+    ...overrides
   }
 }
 
 describe('CreditRepayPanel', () => {
-  beforeEach(() => {
-    store.isLoading = false
-    store.isOwner = true
-    store.rounds = []
-    mockRouterPush.mockClear()
-    mockInvalidateQueries.mockClear()
-    mockFixedReturnReads.getLendingOffer.data.value = null
-    mockFixedReturnReads.offerLenders.data.value = []
-    mockBankReads.owner.data.value = MOCK_USER_ADDRESS
-    useQueryClientFn.mockReturnValue({
-      invalidateQueries: mockInvalidateQueries,
-      getQueryData: vi.fn(),
-      setQueryData: vi.fn(),
-      removeQueries: vi.fn()
-    })
-    setMockRoute({ params: { id: '1' } })
-  })
-
-  it('redirects to the list when the round is unknown', async () => {
-    setMockRoute({ params: { id: '1', roundId: '99' } })
-    mount(CreditRepayPanel)
-    await flushPromises()
-    expect(mockRouterPush).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'community-credit' })
-    )
-  })
-
-  it('repays every lender their principal + interest on confirm', async () => {
-    store.rounds = [sampleRound()]
-    mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
-    mockFixedReturnReads.offerLenders.data.value = [
-      { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-    ]
-    setMockRoute({ params: { id: '1', roundId: '1' } })
-    const wrapper = mount(CreditRepayPanel)
+  it('emits the prefilled full repayment amount when the issuer confirms', async () => {
+    const wrapper = mount(CreditRepayPanel, { props: panelProps() })
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Repayment breakdown')
     await wrapper.find('[data-test="confirm-repay"]').trigger('click')
-    await flushPromises()
 
-    expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).toHaveBeenCalledWith({
-      args: [1n, 5250_000000n]
-    })
-    // Regression: `offer` is a separate wagmi-managed read, not covered by the
-    // ['fixedReturnAllOffers', …] invalidation above — without an explicit refetch,
-    // alreadyRepaid/outstanding would stay stale on a same-session installment repay
-    // while the breakdown table's per-lender "Paid so far" (sourced from `round`)
-    // updates immediately, showing inconsistent figures on the same page.
-    expect(mockFixedReturnReads.getLendingOffer.refetch).toHaveBeenCalled()
+    expect(wrapper.emitted('repay')).toEqual([['5250']])
   })
 
   it("shows each lender's paid-so-far share in the breakdown table", async () => {
-    store.rounds = [sampleRound({ raised: 5000, totalRepaid: 1000 })]
-    mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
-    mockFixedReturnReads.offerLenders.data.value = [
-      { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-    ]
-    setMockRoute({ params: { id: '1', roundId: '1' } })
-    const wrapper = mount(CreditRepayPanel)
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({
+        rows: [
+          {
+            ...sampleRows()[0],
+            paid: 1000,
+            remaining: 4250
+          }
+        ],
+        repayment: repaymentState({ outstanding: 4250 })
+      })
+    })
     await flushPromises()
 
     expect(wrapper.text()).toContain('Paid so far')
-    // Sole lender holds 100% of raised, so their share of totalRepaid (1000) is 1000.
     expect(wrapper.text()).toContain('1,000 USDC')
   })
 
-  it('grays out and disables the Repay button once nothing is left outstanding', async () => {
-    store.rounds = [sampleRound()]
-    mockFixedReturnReads.getLendingOffer.data.value = offerStruct({
-      totalRepaidByIssuer: 5_250_000000n
+  it('grays out and disables Repay once nothing is left outstanding', async () => {
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({
+        repayment: repaymentState({ outstanding: 0 }),
+        rows: [
+          {
+            ...sampleRows()[0],
+            paid: 5250,
+            remaining: 0
+          }
+        ]
+      })
     })
-    mockFixedReturnReads.offerLenders.data.value = [
-      { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-    ]
-    setMockRoute({ params: { id: '1', roundId: '1' } })
-    const wrapper = mount(CreditRepayPanel)
     await flushPromises()
 
-    expect(wrapper.text()).toContain('0 USDC')
     const button = wrapper.findComponent('[data-test="confirm-repay"]')
     expect(button.props('disabled')).toBe(true)
     expect(button.props('color')).toBe('neutral')
   })
 
-  it('surfaces a repay error when the treasury transaction fails', async () => {
-    mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockRejectedValueOnce(new Error('boom'))
-    store.rounds = [sampleRound()]
-    mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
-    mockFixedReturnReads.offerLenders.data.value = [
-      { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-    ]
-    setMockRoute({ params: { id: '1', roundId: '1' } })
-    const wrapper = mount(CreditRepayPanel)
-    await flushPromises()
-    await wrapper.find('[data-test="confirm-repay"]').trigger('click')
-    await flushPromises()
+  it('renders the submission error supplied by the owning view', () => {
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({ repayment: repaymentState({ errorMessage: 'Transaction failed' }) })
+    })
 
-    expect(wrapper.find('[data-test="repay-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="repay-error"]').text()).toContain('Transaction failed')
   })
 
-  it('disables Repay and explains why when the connected wallet is not Bank’s owner', async () => {
-    // fundFixedReturnRepayment is onlyOwner on Bank's own Ownable — a separate owner
-    // slot from FixedReturn's (store.isOwner). Both start out the same address at
-    // deploy time but are independently transferable.
-    mockBankReads.owner.data.value = '0x00000000000000000000000000000000000bad'
-    store.rounds = [sampleRound()]
-    mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
-    mockFixedReturnReads.offerLenders.data.value = [
-      { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-    ]
-    setMockRoute({ params: { id: '1', roundId: '1' } })
-    const wrapper = mount(CreditRepayPanel)
+  it('disables Repay and explains why when the connected wallet is not the Bank owner', async () => {
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({ repayment: repaymentState({ canRepayViaBank: false }) })
+    })
     await flushPromises()
 
     expect(wrapper.find('[data-test="repay-bank-blocked"]').exists()).toBe(true)
-    const button = wrapper.findComponent('[data-test="confirm-repay"]')
-    expect(button.props('disabled')).toBe(true)
+    expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
 
     await wrapper.find('[data-test="confirm-repay"]').trigger('click')
-    await flushPromises()
-    expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).not.toHaveBeenCalled()
+    expect(wrapper.emitted('repay')).toBeUndefined()
   })
 
-  it('disables the Repay button and explains why on a round still Open (not yet funded)', async () => {
-    // Regression for known-issues.md #13: the tab used to be reachable and submittable
-    // on a still-raising round, wasting a transaction on a guaranteed
-    // FixedReturn__OfferNotFunded() revert the error classifier couldn't even decode.
-    store.rounds = [sampleRound({ status: 'open', raised: 10000, target: 25000 })]
-    mockFixedReturnReads.getLendingOffer.data.value = offerStruct({
-      fundingTarget: 25_000_000000n,
-      totalFunded: 10_000_000000n
+  it('disables Repay and explains why on a round still open for funding', async () => {
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({
+        round: sampleRound({ status: 'open' }),
+        repayment: repaymentState({ isRepayable: false })
+      })
     })
-    mockFixedReturnReads.offerLenders.data.value = [
-      { address: '0x00000000000000000000000000000000000000a1', principal: 10000, expected: 10600 }
-    ]
-    setMockRoute({ params: { id: '1', roundId: '1' } })
-    const wrapper = mount(CreditRepayPanel)
     await flushPromises()
 
     expect(wrapper.find('[data-test="repay-not-funded"]').exists()).toBe(true)
-    const button = wrapper.findComponent('[data-test="confirm-repay"]')
-    expect(button.props('disabled')).toBe(true)
-
-    await wrapper.find('[data-test="confirm-repay"]').trigger('click')
-    await flushPromises()
-    expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).not.toHaveBeenCalled()
+    expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
   })
 
   it.each(['stalled', 'refunded', 'repaid'] as const)(
-    'disables Repay but does not show the "not yet funded" message on a %s round',
+    'disables Repay without the not-yet-funded message on a %s round',
     async (status) => {
-      // Regression: the alert's wording ("hasn't reached its funding target yet —
-      // repayment opens once it's fully funded") is only true while a round is still
-      // actively raising ('open'). It previously showed for every non-repayable status,
-      // which is misleading for 'stalled' (deadline passed, awaiting a refund/accept
-      // decision — may never be funded), 'refunded' (never will be funded), and 'repaid'
-      // (already was funded and fully repaid).
-      store.rounds = [sampleRound({ status, raised: 5000, target: 5000 })]
-      mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
-      mockFixedReturnReads.offerLenders.data.value = [
-        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-      ]
-      setMockRoute({ params: { id: '1', roundId: '1' } })
-      const wrapper = mount(CreditRepayPanel)
+      const wrapper = mount(CreditRepayPanel, {
+        props: panelProps({
+          round: sampleRound({ status }),
+          repayment: repaymentState({ isRepayable: false })
+        })
+      })
       await flushPromises()
 
       expect(wrapper.find('[data-test="repay-not-funded"]').exists()).toBe(false)
-      const button = wrapper.findComponent('[data-test="confirm-repay"]')
-      expect(button.props('disabled')).toBe(true)
+      expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
     }
   )
 
-  it('shows only the breakdown table for a non-owner, with no repay form', async () => {
-    store.isOwner = false
-    store.rounds = [sampleRound()]
-    mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
-    mockFixedReturnReads.offerLenders.data.value = [
-      { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-    ]
-    setMockRoute({ params: { id: '1', roundId: '1' } })
-    const wrapper = mount(CreditRepayPanel)
+  it('keeps repayment disabled while the exact treasury balance is loading', async () => {
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({
+        repayment: repaymentState({
+          outstanding: null,
+          treasuryBalance: null,
+          isReady: false
+        })
+      })
+    })
     await flushPromises()
+
+    expect(wrapper.find('[data-test="repay-details-loading"]').exists()).toBe(true)
+    expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
+  })
+
+  it('shows only the breakdown table for a non-owner, with no repayment form', () => {
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({ isOwner: false })
+    })
 
     expect(wrapper.text()).toContain('Repayment breakdown')
     expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('Outstanding')
+  })
+
+  it('emits cancel instead of routing directly', async () => {
+    const wrapper = mount(CreditRepayPanel, { props: panelProps() })
+
+    await wrapper.get('[data-test="cancel-repay"]').trigger('click')
+
+    expect(wrapper.emitted('cancel')).toEqual([[]])
   })
 })

@@ -41,15 +41,19 @@
     <!-- Treasury -->
     <div>
       <span class="text-muted text-xs font-medium">Total balance</span>
-      <USkeleton v-if="isLoadingBalances" class="mt-1 h-7 w-32" data-test="balance-loading" />
+      <USkeleton
+        v-if="treasury.state === 'loading'"
+        class="mt-1 h-7 w-32"
+        data-test="balance-loading"
+      />
       <p v-else class="mt-0.5 text-2xl leading-tight font-extrabold" data-test="total-balance">
-        {{ formattedTotal }}
+        {{ treasury.formattedTotal }}
       </p>
 
       <div class="mt-3 flex h-[7px] gap-px overflow-hidden rounded-full" data-test="account-bar">
-        <template v-if="accountShares.length > 0">
+        <template v-if="treasury.accountShares.length > 0">
           <div
-            v-for="account in accountShares"
+            v-for="account in treasury.accountShares"
             :key="account.label"
             :class="account.barClass"
             :style="{ width: `${account.percent}%` }"
@@ -57,9 +61,9 @@
         </template>
         <div v-else class="bg-elevated w-full" />
       </div>
-      <div v-if="accountShares.length > 0" class="mt-2 flex flex-wrap gap-2.5">
+      <div v-if="treasury.accountShares.length > 0" class="mt-2 flex flex-wrap gap-2.5">
         <span
-          v-for="account in accountShares"
+          v-for="account in treasury.accountShares"
           :key="account.label"
           class="text-muted inline-flex items-center gap-1.5 text-[10px]"
         >
@@ -138,15 +142,15 @@ import { computed } from 'vue'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import { useUserDataStore, useCurrencyStore } from '@/stores'
-import { useContractBalance } from '@/composables/useContractBalance'
-import { EMPTY_VALUE, formatCurrency, formatPercent } from '@/utils/format'
+import { formatCurrency } from '@/utils/format'
 import type { TokenId } from '@/constant'
 import type { Team } from '@/types'
-import type { ContractType } from '@/types/teamContract'
+import type { TeamTreasuryDisplay } from '@/utils/teamTreasury'
 
 interface Props {
   team: Team
   to: RouteLocationRaw
+  treasury: TeamTreasuryDisplay
 }
 
 const props = defineProps<Props>()
@@ -170,73 +174,7 @@ const isOnLegacyContracts = computed(
   () => !!props.team.currentOfficer?.address && props.team.isMigrated === false
 )
 
-// --- Treasury -------------------------------------------------------------
-// `useContractBalance` opens a query per address, so the four calls have to be
-// unconditional and in a stable order. An account the team does not have
-// resolves to an undefined address, which leaves that query disabled.
-const contractAddress = (type: ContractType) =>
-  computed(() => props.team.teamContracts?.find((contract) => contract.type === type)?.address)
-
-const bankBalance = useContractBalance(contractAddress('Bank'))
-const safeBalance = useContractBalance(contractAddress('Safe'))
-const expenseBalance = useContractBalance(contractAddress('ExpenseAccountEIP712'))
-const cashBalance = useContractBalance(contractAddress('CashRemunerationEIP712'))
-
 const currencyCode = computed(() => currencyStore.localCurrency.code)
-
-const isLoadingBalances = computed(() =>
-  [bankBalance, safeBalance, expenseBalance, cashBalance].some((account) => account.isLoading.value)
-)
-
-// `data` stays undefined until a read lands, so an account still loading — or
-// one the team does not hold — is never folded in as a zero.
-const accounts = computed(() => [
-  // Bank and Safe are both primary; the design separates them by weight, which
-  // the theme expresses as opacity rather than a numeric colour scale.
-  { label: 'Bank', amount: bankBalance.data.value?.total.local.value, barClass: 'bg-primary/40' },
-  { label: 'Safe', amount: safeBalance.data.value?.total.local.value, barClass: 'bg-primary' },
-  {
-    label: 'Expense',
-    amount: expenseBalance.data.value?.total.local.value,
-    barClass: 'bg-accent'
-  },
-  { label: 'Cash', amount: cashBalance.data.value?.total.local.value, barClass: 'bg-warning' }
-])
-
-type ReadAccount = { label: string; amount: number; barClass: string }
-
-const readAccounts = computed(() =>
-  accounts.value.filter((account): account is ReadAccount => account.amount !== undefined)
-)
-
-const totalBalance = computed(() =>
-  readAccounts.value.reduce((sum, account) => sum + account.amount, 0)
-)
-
-// A treasury we could not read is not a treasury holding nothing. Until at
-// least one account has landed, a confident "$0.00" would read as drained.
-// Balances are priced in the viewer's currency, so they are formatted with it
-// too — `formatUsd` would stamp a `$` on a EUR figure.
-const formattedTotal = computed(() =>
-  readAccounts.value.length > 0
-    ? formatCurrency(totalBalance.value, { currency: currencyCode.value })
-    : EMPTY_VALUE
-)
-
-// Only funded accounts get a segment, so an empty account never renders a
-// zero-width sliver or a "Bank 0%" legend entry.
-const accountShares = computed(() => {
-  const total = totalBalance.value
-  if (total <= 0) return []
-  return readAccounts.value
-    .filter((account) => account.amount > 0)
-    .map((account) => ({
-      ...account,
-      // Numeric share drives the bar width; the label is the same ratio, formatted.
-      percent: (account.amount / total) * 100,
-      percentLabel: formatPercent(account.amount / total, { decimals: 0 })
-    }))
-})
 
 // --- Roster ---------------------------------------------------------------
 const MAX_AVATARS = 3

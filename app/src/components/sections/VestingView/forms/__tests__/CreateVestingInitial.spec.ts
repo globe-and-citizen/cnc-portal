@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
 import { resetContractMocks } from '@/tests/mocks'
 
 describe('CreateVesting.vue — configuration', () => {
@@ -56,5 +56,19 @@ describe('CreateVesting.vue — configuration', () => {
     expect(wrapper.text()).toContain('Choose a valid team member')
     expect(wrapper.text()).toContain('Enter the total number of shares')
     expect(wrapper.text()).toContain('Choose an end date and time')
+  })
+
+  it('clears the beneficiary error once a non-checksummed member address is selected', async () => {
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Choose a valid team member')
+
+    await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
+      name: 'Komla',
+      address: '0x1234567890abcdef1234567890abcdef12345678'
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Choose a valid team member')
   })
 })

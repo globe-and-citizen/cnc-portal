@@ -127,16 +127,6 @@ export interface StatusMeta {
   color: UBadgeColor
 }
 
-export type Cta = {
-  test: string
-  label: string
-  icon: string
-  color: 'primary' | 'neutral' | 'warning'
-  variant: 'solid' | 'soft'
-  loading?: boolean
-  run: () => void
-}
-
 export type CreditAccess = 'everyone' | 'restricted'
 
 /** Community Credit's own whitelist entry — same shape as a FixedReturnWhitelistEntry

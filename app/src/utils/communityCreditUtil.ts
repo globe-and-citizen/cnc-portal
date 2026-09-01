@@ -108,15 +108,6 @@ export function reachedFundingTarget(round: Pick<CreditRound, 'raised' | 'target
   return round.raised >= round.target
 }
 
-/** Whether the connected wallet is Bank's owner — used to gate Repay, which calls
- *  Bank.fundFixedReturnRepayment (onlyOwner on Bank's own Ownable, a separate owner
- *  slot from FixedReturn's). Same pattern as CashOutAllAction.vue /
- *  LegacyGenerationWithdrawAction.vue, just shared instead of re-inlined. */
-export function isBankOwner(bankOwner: unknown, userAddress: string | undefined): boolean {
-  if (!bankOwner || !userAddress) return false
-  return String(bankOwner).toLowerCase() === userAddress.toLowerCase()
-}
-
 /** Display label + badge color for every round status. */
 export const ROUND_STATUS_META: Record<RoundStatus, StatusMeta> = {
   open: { label: 'Open', color: 'primary' },
@@ -249,8 +240,14 @@ export function creditTermLabel(
 // ───────── on-chain → CreditRound adapters ─────────
 
 /** Full principal + flat interest the issuer owes across the whole funded amount. */
-function offerExpectedTotal(offer: LendingOfferStruct): bigint {
+export function offerExpectedTotal(offer: LendingOfferStruct): bigint {
   return offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000n
+}
+
+/** Exact remaining obligation for an offer, in the token's smallest unit. */
+export function offerOutstandingObligation(offer: LendingOfferStruct): bigint {
+  const total = offerExpectedTotal(offer)
+  return total > offer.totalRepaidByIssuer ? total - offer.totalRepaidByIssuer : 0n
 }
 
 /** True once `now` has passed an offer's maturity date (subscriptionDeadline + term) —

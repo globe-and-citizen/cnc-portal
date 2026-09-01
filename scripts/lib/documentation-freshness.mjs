@@ -20,6 +20,15 @@ const BEHAVIORAL_SOURCE_PATTERNS = [
 
 const TEST_SOURCE_PATTERN = /(?:^|\/)(?:__tests__|tests?)(?:\/|$)|\.(?:spec|test)\.[^/]+$/
 const MARKDOWN_FILE_PATTERN = /\.md$/i
+const IMPLEMENTATION_EVIDENCE_REVISION_LABEL = 'Implementation evidence reviewed against'
+const IMPLEMENTATION_EVIDENCE_REVISION_PATTERN = new RegExp(
+  `^\\*\\*${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}:\\*\\*\\s*\`([0-9a-f]{40})\`\\s*$`,
+  'im'
+)
+const IMPLEMENTATION_EVIDENCE_REVISION_LINE_PATTERN = new RegExp(
+  `^\\*\\*${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}:\\*\\*`,
+  'im'
+)
 
 function normalizePath(path) {
   return path.split(sep).join('/').replace(/^\.\//, '').replace(/\/$/, '')
@@ -98,10 +107,20 @@ export function sourcePathsFromMarkdown(markdown, documentPath, repositoryRoot) 
   return [...paths].sort()
 }
 
+export function implementationEvidenceRevisionFromMarkdown(markdown) {
+  return markdown.match(IMPLEMENTATION_EVIDENCE_REVISION_PATTERN)?.[1].toLowerCase() ?? null
+}
+
+function hasImplementationEvidenceRevisionAttestation(markdown) {
+  return IMPLEMENTATION_EVIDENCE_REVISION_LINE_PATTERN.test(markdown)
+}
+
 export function buildDocumentationOwners(documents, repositoryRoot) {
   return documents.map((document) => ({
     path: normalizePath(document.path),
-    sourcePaths: sourcePathsFromMarkdown(document.content, document.path, repositoryRoot)
+    sourcePaths: sourcePathsFromMarkdown(document.content, document.path, repositoryRoot),
+    implementationEvidenceRevision: implementationEvidenceRevisionFromMarkdown(document.content),
+    hasImplementationEvidenceRevisionAttestation: hasImplementationEvidenceRevisionAttestation(document.content)
   }))
 }
 
@@ -109,13 +128,13 @@ function sourceIsOwnedBy(changedPath, declaredPath) {
   return changedPath === declaredPath || changedPath.startsWith(`${declaredPath}/`)
 }
 
-export function validateDocumentationFreshness({ changedPaths, documents, repositoryRoot }) {
+export function validateDocumentationFreshness({
+  changedPaths,
+  documents,
+  repositoryRoot,
+  implementationEvidenceRevisionStatus = () => 'stale'
+}) {
   const owners = buildDocumentationOwners(documents, repositoryRoot)
-  const changedDocumentationPaths = new Set(
-    changedPaths
-      .map(normalizePath)
-      .filter((path) => DOCUMENTATION_ROOTS.some((root) => path.startsWith(`${root}/`) || path === `${root}.md`))
-  )
   const errors = []
 
   for (const changedPath of [...new Set(changedPaths.map(normalizePath))].sort()) {
@@ -133,15 +152,49 @@ export function validateDocumentationFreshness({ changedPaths, documents, reposi
     }
 
     for (const owner of sourceOwners) {
-      if (!changedDocumentationPaths.has(owner.path)) {
+      if (!owner.implementationEvidenceRevision) {
+        const attestationProblem = owner.hasImplementationEvidenceRevisionAttestation
+          ? `has an invalid "${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}" revision`
+          : `has no "${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}" revision`
+
         errors.push(
-          `${changedPath} is owned by ${owner.path}, which was not updated; review and update that document in this change.`
+          `${changedPath} is owned by ${owner.path}, which ${attestationProblem}; review the current source and attest a reachable full commit SHA.`
         )
+        continue
       }
+
+      const status = implementationEvidenceRevisionStatus(owner.implementationEvidenceRevision, changedPath)
+      if (status === 'current') continue
+
+      const statusProblem = status === 'unreachable' ? 'does not resolve to a reachable commit' : 'predates the changed source'
+      errors.push(
+        `${changedPath} is owned by ${owner.path}, whose "${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}" revision ${owner.implementationEvidenceRevision} ${statusProblem}; review the current source and refresh the attestation.`
+      )
     }
   }
 
   return errors
+}
+
+function gitSucceeds(repositoryRoot, args) {
+  try {
+    execFileSync('git', args, { cwd: repositoryRoot, stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
+}
+
+function implementationEvidenceRevisionStatus(repositoryRoot, revision, sourcePath) {
+  if (!gitSucceeds(repositoryRoot, ['rev-parse', '--verify', `${revision}^{commit}`])) return 'unreachable'
+  if (!gitSucceeds(repositoryRoot, ['merge-base', '--is-ancestor', revision, 'HEAD'])) return 'unreachable'
+  if (!gitSucceeds(repositoryRoot, ['cat-file', '-e', `${revision}:${sourcePath}`])) return 'stale'
+
+  const committedSourceIsCurrent = gitSucceeds(repositoryRoot, ['diff', '--quiet', `${revision}..HEAD`, '--', sourcePath])
+  const stagedSourceIsCurrent = gitSucceeds(repositoryRoot, ['diff', '--cached', '--quiet', '--', sourcePath])
+  const workingTreeSourceIsCurrent = gitSucceeds(repositoryRoot, ['diff', '--quiet', 'HEAD', '--', sourcePath])
+
+  return committedSourceIsCurrent && stagedSourceIsCurrent && workingTreeSourceIsCurrent ? 'current' : 'stale'
 }
 
 function walkCanonicalDocuments(directory, repositoryRoot) {
@@ -183,6 +236,193 @@ function splitGitPaths(output) {
   return output ? output.split('\n').filter(Boolean).map(normalizePath) : []
 }
 
+function splitDiffSections(diff) {
+  return diff
+    .split(/^diff --git /m)
+    .filter(Boolean)
+    .map((section) => `diff --git ${section}`)
+}
+
+function pathsFromDiffSection(section) {
+  const match = section.match(/^diff --git a\/(.+?) b\/(.+)$/m)
+
+  return match ? { from: normalizePath(match[1]), to: normalizePath(match[2]) } : null
+}
+
+function localReferencesFromLine(line) {
+  const references = []
+  const normalized = line.replace(/(['"])(@\/|\.{1,2}\/)[^'"]*\1/g, (match, quote) => {
+    references.push(match.slice(1, -1))
+    return `${quote}<local-reference>${quote}`
+  })
+
+  return references.length > 0 ? { normalized, references } : null
+}
+
+function referencedRepositoryPath(reference, sourcePath, repositoryRoot) {
+  if (reference.startsWith('@/')) return `app/src/${reference.slice(2)}`
+
+  const target = resolve(repositoryRoot, dirname(sourcePath), reference)
+  const repositoryPath = normalizePath(relative(repositoryRoot, target))
+
+  return isRepositoryPath(repositoryPath) ? repositoryPath : null
+}
+
+function defaultImportBinding(line) {
+  return line.match(/^\s*import\s+([A-Za-z_$][\w$]*)\s+from\s+['"]/)?.[1] ?? null
+}
+
+function replaceIdentifier(line, previous, next) {
+  return line.replace(new RegExp(`\\b${previous}\\b`, 'g'), next)
+}
+
+function componentIdentifierFromPath(path) {
+  const fileName = basename(path)
+  return fileName.endsWith('.vue') ? fileName.slice(0, -'.vue'.length) : null
+}
+
+function replaceAutoImportedComponentIdentifier(line, previous, next) {
+  return line
+    .replace(new RegExp(`<${previous}\\b`, 'g'), `<${next}`)
+    .replace(new RegExp(`</${previous}>`, 'g'), `</${next}>`)
+}
+
+function changedLines(section) {
+  const removed = []
+  const added = []
+
+  for (const line of section.split('\n')) {
+    if (line.startsWith('--- ') || line.startsWith('+++ ')) continue
+    if (line.startsWith('-')) removed.push(line.slice(1))
+    if (line.startsWith('+')) added.push(line.slice(1))
+  }
+
+  return { removed, added }
+}
+
+function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot) {
+  const paths = pathsFromDiffSection(section)
+  if (!paths) return null
+
+  const { removed, added } = changedLines(section)
+
+  if (removed.length === 0 && added.length === 0) {
+    return /^rename from /m.test(section) ? paths.to : null
+  }
+
+  if (removed.length === 0 || removed.length !== added.length) return null
+
+  const renamedBindings = new Map()
+  const renamedAutoImportedComponents = new Map(
+    [...relocationMap]
+      .map(([previousPath, nextPath]) => [
+        componentIdentifierFromPath(previousPath),
+        componentIdentifierFromPath(nextPath)
+      ])
+      .filter(([previousName, nextName]) => previousName && nextName && previousName !== nextName)
+  )
+
+  for (let index = 0; index < removed.length; index += 1) {
+    const before = localReferencesFromLine(removed[index])
+    const after = localReferencesFromLine(added[index])
+
+    if (!before || !after) continue
+    if (before.references.length !== after.references.length) return null
+
+    for (let referenceIndex = 0; referenceIndex < before.references.length; referenceIndex += 1) {
+      const previousTarget = referencedRepositoryPath(
+        before.references[referenceIndex],
+        paths.from,
+        repositoryRoot
+      )
+      const nextTarget = referencedRepositoryPath(
+        after.references[referenceIndex],
+        paths.to,
+        repositoryRoot
+      )
+
+      if (
+        !previousTarget ||
+        !nextTarget ||
+        (previousTarget !== nextTarget && relocationMap.get(previousTarget) !== nextTarget)
+      ) {
+        return null
+      }
+
+      if (previousTarget !== nextTarget) {
+        const previousBinding = defaultImportBinding(removed[index])
+        const nextBinding = defaultImportBinding(added[index])
+        if (previousBinding && nextBinding) {
+          renamedBindings.set(previousBinding, nextBinding)
+        }
+      }
+    }
+  }
+
+  for (let index = 0; index < removed.length; index += 1) {
+    const before = localReferencesFromLine(removed[index])
+    const after = localReferencesFromLine(added[index])
+
+    let normalizedBefore = before?.normalized ?? removed[index]
+    const normalizedAfter = after?.normalized ?? added[index]
+
+    for (const [previousBinding, nextBinding] of renamedBindings) {
+      normalizedBefore = replaceIdentifier(normalizedBefore, previousBinding, nextBinding)
+    }
+
+    for (const [previousComponent, nextComponent] of renamedAutoImportedComponents) {
+      normalizedBefore = replaceAutoImportedComponentIdentifier(
+        normalizedBefore,
+        previousComponent,
+        nextComponent
+      )
+    }
+
+    if (normalizedBefore !== normalizedAfter) return null
+  }
+
+  return paths.to
+}
+
+function pureRelocationsFromDiffs(diffs) {
+  const relocationMap = new Map()
+
+  for (const section of diffs.flatMap(splitDiffSections)) {
+    const paths = pathsFromDiffSection(section)
+    if (!paths || !/^rename from /m.test(section)) continue
+
+    const { removed, added } = changedLines(section)
+    if (removed.length === 0 && added.length === 0) {
+      relocationMap.set(paths.from, paths.to)
+    }
+  }
+
+  return relocationMap
+}
+
+/**
+ * Identifies source paths whose diff only keeps imports, local asset references, and component
+ * identifiers valid after a source relocation or rename. These paths do not change runtime
+ * behaviour, so their existing canonical documentation remains current.
+ */
+export function nonBehavioralPathsFromDiffs(diffs, repositoryRoot, priorRelocations = new Map()) {
+  const sections = diffs.flatMap(splitDiffSections)
+  const relocationMap = new Map(priorRelocations)
+
+  for (const section of sections) {
+    const paths = pathsFromDiffSection(section)
+    if (paths && /^rename from /m.test(section)) relocationMap.set(paths.from, paths.to)
+  }
+
+  return [
+    ...new Set(
+      sections
+        .map((section) => onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot))
+        .filter(Boolean)
+    )
+  ].sort()
+}
+
 export function changedRepositoryPaths(repositoryRoot, baseCommit) {
   const changed = [
     git(repositoryRoot, [
@@ -198,9 +438,35 @@ export function changedRepositoryPaths(repositoryRoot, baseCommit) {
   return [...new Set(changed.flatMap(splitGitPaths))].sort()
 }
 
+function changedRepositoryDiffs(repositoryRoot, baseCommit) {
+  return [
+    git(repositoryRoot, ['diff', '--unified=0', '--find-renames=50%', `${baseCommit}...HEAD`]),
+    git(repositoryRoot, ['diff', '--unified=0', '--find-renames=50%', 'HEAD'])
+  ]
+}
+
+function pureRelocationsSince(repositoryRoot, baseCommit) {
+  const commits = splitGitPaths(
+    git(repositoryRoot, ['rev-list', '--reverse', `${baseCommit}..HEAD`])
+  )
+  const commitDiffs = commits.map((commit) =>
+    git(repositoryRoot, ['show', '--format=', '--unified=0', '--find-renames=50%', commit])
+  )
+
+  return pureRelocationsFromDiffs(commitDiffs)
+}
+
 export function validateCurrentRepository(repositoryRoot, configuredBase) {
   const baseCommit = documentationBaseCommit(repositoryRoot, configuredBase)
   const changedPaths = changedRepositoryPaths(repositoryRoot, baseCommit)
+  const repositoryDiffs = changedRepositoryDiffs(repositoryRoot, baseCommit)
+  const nonBehavioralPaths = new Set(
+    nonBehavioralPathsFromDiffs(
+      repositoryDiffs,
+      repositoryRoot,
+      pureRelocationsSince(repositoryRoot, baseCommit)
+    )
+  )
   const documents = readCanonicalDocuments(repositoryRoot)
 
   return {
@@ -208,9 +474,11 @@ export function validateCurrentRepository(repositoryRoot, configuredBase) {
     changedPaths,
     documents,
     errors: validateDocumentationFreshness({
-      changedPaths,
+      changedPaths: changedPaths.filter((path) => !nonBehavioralPaths.has(path)),
       documents,
-      repositoryRoot
+      repositoryRoot,
+      implementationEvidenceRevisionStatus: (revision, sourcePath) =>
+        implementationEvidenceRevisionStatus(repositoryRoot, revision, sourcePath)
     })
   }
 }

@@ -22,7 +22,7 @@
 
     <!-- Second Card -->
     <BodApprovalDetailsCard title="Recipient">
-      <UserComponent
+      <UserIdentity
         :user="
           getUser(
             row.description.split(' ')[type === 'Bank Transfer Request' ? 4 : 5].trim(),
@@ -36,7 +36,7 @@
 
     <!-- Third Card -->
     <BodApprovalDetailsCard title="Requestor">
-      <UserComponent :user="row.requestedBy" />
+      <UserIdentity :user="row.requestedBy" />
     </BodApprovalDetailsCard>
 
     <!-- Fourth Card -->
@@ -46,7 +46,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useTeamStore } from '@/stores'
 import type { TableRow } from '@/types/table'
 import { getUser, formatCryptoAmount } from '@/utils'

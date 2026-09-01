@@ -37,7 +37,9 @@ export {
   formatDate,
   formatDateIso,
   formatDateRelative,
+  formatQuarterRange,
   formatDateShort,
+  formatDateShortTime,
   formatDateWeekdayShort,
   formatDateTime,
   formatDateUtc,
@@ -45,6 +47,7 @@ export {
   formatMonthYear,
   formatTimeOfDay,
   formatWeekdayShort,
+  formatYear,
   fromUnix,
   type DateInput
 } from './date'

@@ -4,7 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { CalendarDate, Time } from '@internationalized/date'
 import { parseUnits } from 'viem'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
 import { mockInvestorReads, mockVestingWrites, resetContractMocks } from '@/tests/mocks'
 
 describe('CreateVesting.vue — submission', () => {

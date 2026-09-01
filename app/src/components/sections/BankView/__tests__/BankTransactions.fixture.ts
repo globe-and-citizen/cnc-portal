@@ -73,17 +73,19 @@ const USelectStub = defineComponent({
   template: '<div data-test="type-filter"></div>'
 })
 
-const CustomDatePickerStub = defineComponent({
-  name: 'CustomDatePicker',
+const DatePickerStub = defineComponent({
+  name: 'DatePicker',
   props: {
-    modelValue: { type: Array, required: false }
+    modelValue: { type: Object, required: false },
+    mode: { type: String, required: false },
+    storageKey: { type: String, required: false }
   },
   emits: ['update:modelValue'],
   template: '<div data-test="date-filter"></div>'
 })
 
-const AddressToolTipStub = defineComponent({
-  name: 'AddressToolTip',
+const AddressTooltipStub = defineComponent({
+  name: 'AddressTooltip',
   template: '<div />'
 })
 
@@ -92,8 +94,8 @@ const UBadgeStub = defineComponent({
   template: '<span><slot /></span>'
 })
 
-const UserComponentStub = defineComponent({
-  name: 'UserComponent',
+const UserIdentityStub = defineComponent({
+  name: 'UserIdentity',
   props: {
     user: { type: Object, required: false }
   },
@@ -159,9 +161,9 @@ export const createWrapper = (bankAddress: Address = BANK_ADDRESS): VueWrapper =
         UTable: UTableStub,
         USelect: USelectStub,
         UBadge: UBadgeStub,
-        AddressToolTip: AddressToolTipStub,
-        CustomDatePicker: CustomDatePickerStub,
-        UserComponent: UserComponentStub
+        AddressTooltip: AddressTooltipStub,
+        DatePicker: DatePickerStub,
+        UserIdentity: UserIdentityStub
       }
     }
   })

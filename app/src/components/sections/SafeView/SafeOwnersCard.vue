@@ -110,7 +110,7 @@
             </div>
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
-                <AddressToolTip :address="owner" slice />
+                <AddressTooltip :address="owner" slice />
                 <UBadge v-if="isCurrentUserAddress(owner)" color="primary" variant="soft" size="sm">
                   Connected wallet
                 </UBadge>
@@ -150,7 +150,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
 import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
 import RemoveOwnerButton from './RemoveOwnerButton.vue'

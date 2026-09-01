@@ -10,7 +10,7 @@ These acceptance criteria follow the
 ## Product Model
 
 A wage is an off-chain, versioned record that defines a member's standard and optional overtime rates, weekly allowance, and daily
-allowance. A daily claim records work in ten-minute increments. Each team member has at most one weekly claim per ISO week. The first
+allowance. A daily claim records work in ten-minute increments. Each company member has at most one weekly claim per ISO week. The first
 submitted daily claim binds that weekly claim to the current wage; every later claim for the same week reuses that row and wage, even when
 the owner changes the member's current wage. A goals-only weekly row has priced no work yet, so its first daily claim can bind it to the
 wage that is current at submission time.
@@ -18,10 +18,10 @@ wage that is current at submission time.
 A wage change creates a new current version immediately. Payroll does not schedule wage changes or delay their effective date. Existing
 weekly claims keep their stored wage so historical hours, limits, approvals, and payments are not repriced.
 
-Member-wage summaries in team-list responses remain scoped to the requesting member's explicitly selected teams. They do not make
-platform-wide team or payroll data available to regular users.
+Member-wage summaries in company-list responses remain scoped to the requesting member's explicitly selected companies. They do not make
+platform-wide company or payroll data available to regular users.
 
-When historical data contains more than one weekly claim for the same team member and ISO week, the database migration stops before it
+When historical data contains more than one weekly claim for the same company member and ISO week, the database migration stops before it
 changes the uniqueness rule. The affected claims, goals, signatures, and terminal states must be reconciled explicitly; no payroll data is
 silently merged or discarded.
 
@@ -29,12 +29,12 @@ Approval is an EIP-712 signature from the current Cash Remuneration contract own
 weekly claim on-chain to receive native tokens and supported ERC-20 assets; SHER compensation is minted when the current contract
 configuration supports it.
 
-The team Bank can fund the Cash Remuneration contract through its normal transfer actions. This is not a `transferFrom` operation, and its
-complete journey belongs to the Accounts feature.
+The company Bank can fund the Cash Remuneration contract through its normal transfer actions. This is not a `transferFrom` operation, and
+its complete journey belongs to the Accounts feature.
 
 ## Lifecycle
 
-1. The team owner sets a wage for the member.
+1. The company owner sets a wage for the member.
 2. The owner funds the Cash Remuneration contract when non-mintable assets are required.
 3. The member optionally sets weekly goals and submits daily claims.
 4. The member can edit or delete claims while the week is pending.
@@ -44,26 +44,26 @@ complete journey belongs to the Accounts feature.
 
 ## Status Overview
 
-| User Story     | Title                                      | Actor               | Status         |
-| -------------- | ------------------------------------------ | ------------------- | -------------- |
-| US-PAYROLL-001 | Set a member's wage                        | Team owner          | 🧪 Validation  |
-| US-PAYROLL-002 | Pause or resume a member's wage            | Team owner          | 🧪 Validation  |
-| US-PAYROLL-003 | Fund the Payroll contract                  | Team owner          | 🔗 Reference   |
-| US-PAYROLL-004 | Set weekly goals                           | Team member         | 🧪 Validation  |
-| US-PAYROLL-005 | Submit a daily claim                       | Team member         | 🧪 Validation  |
-| US-PAYROLL-006 | Edit a daily claim                         | Team member         | 🚧 In Progress |
-| US-PAYROLL-007 | Delete a daily claim                       | Team member         | 🚧 In Progress |
-| US-PAYROLL-008 | Sign a completed weekly claim              | Contract owner      | 🚧 In Progress |
-| US-PAYROLL-009 | Disable or re-enable a signed weekly claim | Contract owner      | 🚧 In Progress |
-| US-PAYROLL-010 | Withdraw an approved weekly claim          | Paid member         | 🧪 Validation  |
-| US-PAYROLL-011 | Reconcile weekly claims with the chain     | System              | 🧪 Validation  |
-| US-PAYROLL-012 | Review payroll history                     | Team member / owner | 🧪 Validation  |
+| User Story     | Title                                      | Actor                  | Status         |
+| -------------- | ------------------------------------------ | ---------------------- | -------------- |
+| US-PAYROLL-001 | Set a member's wage                        | Company owner          | 🧪 Validation  |
+| US-PAYROLL-002 | Pause or resume a member's wage            | Company owner          | 🧪 Validation  |
+| US-PAYROLL-003 | Fund the Payroll contract                  | Company owner          | 🔗 Reference   |
+| US-PAYROLL-004 | Set weekly goals                           | Company member         | 🧪 Validation  |
+| US-PAYROLL-005 | Submit a daily claim                       | Company member         | 🧪 Validation  |
+| US-PAYROLL-006 | Edit a daily claim                         | Company member         | 🚧 In Progress |
+| US-PAYROLL-007 | Delete a daily claim                       | Company member         | 🚧 In Progress |
+| US-PAYROLL-008 | Sign a completed weekly claim              | Contract owner         | 🚧 In Progress |
+| US-PAYROLL-009 | Disable or re-enable a signed weekly claim | Contract owner         | 🚧 In Progress |
+| US-PAYROLL-010 | Withdraw an approved weekly claim          | Paid member            | 🧪 Validation  |
+| US-PAYROLL-011 | Reconcile weekly claims with the chain     | System                 | 🧪 Validation  |
+| US-PAYROLL-012 | Review payroll history                     | Company member / owner | 🧪 Validation  |
 
 Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal alone.
 
 ## US-PAYROLL-001: Set a Member's Wage
 
-**As a** team owner\
+**As a** company owner\
 **I want to** set a member's hourly rates and hour limits\
 **So that** they can submit claims for fair, bounded compensation
 
@@ -71,7 +71,7 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 
 #### Happy Path
 
-- [x] A team owner can set a wage for any team member.
+- [x] A company owner can set a wage for any company member.
 - [x] A successful wage request persists a new version that subsequent member-wage reads return.
 - [x] Member-wage reads expose the standard rates, overtime rates, weekly allowance, and daily allowance.
 
@@ -91,11 +91,11 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] A new wage version becomes current immediately without a future activation option.
 - [x] A weekly claim containing daily claims retains its initial wage for the pricing and validation of all later claims in that ISO week.
 - [x] The first daily claim in a goals-only weekly row uses the member's current wage.
-- [x] _(database)_ At most one weekly claim can exist for each team, member, and ISO week.
+- [x] _(database)_ At most one weekly claim can exist for each company, member, and ISO week.
 - [x] _(migration)_ Legacy duplicate member-week records stop the migration for explicit reconciliation instead of losing claims, goals,
       signatures, or terminal states.
 - [x] The wage lifecycle has no cancellation operation.
-- [x] Only team owners can set wages.
+- [x] Only company owners can set wages.
 - [x] Every wage version is stored off-chain.
 - [x] The wage endpoint returns the current wage.
 
@@ -103,14 +103,14 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 
 - [x] Member-wage reads distinguish members who do not have a wage.
 - [x] A disabled wage cannot be replaced until the owner resumes it.
-- [x] Archived teams cannot create wages.
-- [x] Archived teams cannot replace wages.
+- [x] Archived companies cannot create wages.
+- [x] Archived companies cannot replace wages.
 
 **Dependencies:** Companies and Workspace
 
 ## US-PAYROLL-002: Pause or Resume a Member's Wage
 
-**As a** team owner\
+**As a** company owner\
 **I want to** pause a member's wage and resume it later\
 **So that** I can freeze payroll activity without deleting wage history
 
@@ -135,13 +135,13 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 
 - [x] The status of a missing wage cannot be changed.
 - [x] The status of a historical wage cannot be changed.
-- [x] The wage status of an archived team cannot be changed.
+- [x] The wage status of an archived company cannot be changed.
 
 **Dependencies:** US-PAYROLL-001
 
 ## US-PAYROLL-003: Fund the Payroll Contract
 
-**As a** team owner\
+**As a** company owner\
 **I want to** transfer treasury assets to the Cash Remuneration contract\
 **So that** members can withdraw compensation paid in non-mintable assets
 
@@ -168,7 +168,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ## US-PAYROLL-004: Set Weekly Goals
 
-**As a** team member\
+**As a** company member\
 **I want to** record my goals for an ISO week\
 **So that** my planned work is visible beside my submitted claims
 
@@ -191,14 +191,14 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Goals are read-only once the week is signed.
 - [x] Goals are read-only once the week is withdrawn.
 - [x] Goals are read-only once the week is disabled.
-- [x] Archived teams cannot create weekly goals.
-- [x] Archived teams cannot update weekly goals.
+- [x] Archived companies cannot create weekly goals.
+- [x] Archived companies cannot update weekly goals.
 
 **Dependencies:** US-PAYROLL-001
 
 ## US-PAYROLL-005: Submit a Daily Claim
 
-**As a** team member\
+**As a** company member\
 **I want to** log the work completed on a given day\
 **So that** it can be included in my weekly compensation
 
@@ -240,7 +240,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ## US-PAYROLL-006: Edit a Daily Claim
 
-**As a** team member\
+**As a** company member\
 **I want to** correct a daily claim\
 **So that** mistakes can be fixed before the week is approved
 
@@ -266,13 +266,13 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] A paused wage blocks claim editing.
 - [x] A rejected edit leaves the stored claim unchanged and returns its rejection reason.
-- [x] Archived teams cannot edit claims.
+- [x] Archived companies cannot edit claims.
 
 **Dependencies:** US-PAYROLL-005
 
 ## US-PAYROLL-007: Delete a Daily Claim
 
-**As a** team member\
+**As a** company member\
 **I want to** delete a daily claim entered by mistake\
 **So that** it is removed before the week is approved
 
@@ -292,7 +292,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 #### Edge & Error Cases
 
 - [x] A paused wage blocks claim deletion.
-- [x] Archived teams cannot delete claims.
+- [x] Archived companies cannot delete claims.
 - [x] A failed deletion leaves the stored claim unchanged and returns a failure outcome.
 
 **Dependencies:** US-PAYROLL-005
@@ -318,15 +318,15 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Normal signing applies only to pending weeks.
 - [x] A disabled claim uses the explicit re-sign flow.
 - [x] Re-signing a disabled current-contract claim re-enables its existing signature before storing the replacement.
-- [x] _(API)_ The signed-against contract must match the team's current Cash Remuneration contract.
+- [x] _(API)_ The signed-against contract must match the company's current Cash Remuneration contract.
 - [x] _(API)_ The recovered signer must match the caller.
 
 #### Edge & Error Cases
 
 - [x] The current week cannot be signed.
 - [x] A future week cannot be signed.
-- [x] Archived teams cannot sign weekly claims.
-- [x] Teams that have not migrated to the current Officer generation cannot sign weekly claims.
+- [x] Archived companies cannot sign weekly claims.
+- [x] Companies that have not migrated to the current Officer generation cannot sign weekly claims.
 - [x] Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
 - [x] Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
 
@@ -361,7 +361,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ## US-PAYROLL-010: Withdraw an Approved Weekly Claim
 
-**As a** paid team member\
+**As a** paid company member\
 **I want to** withdraw my signed weekly claim\
 **So that** I receive the approved compensation in my wallet
 
@@ -385,7 +385,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 #### Edge & Error Cases
 
 - [x] A paid claim cannot be withdrawn.
-- [x] A claim belonging to an archived team cannot be withdrawn.
+- [x] A claim belonging to an archived company cannot be withdrawn.
 - [x] _(contract)_ A paid claim reverts.
 - [x] _(contract)_ A disabled claim reverts.
 - [x] _(contract)_ A claim with an unsupported token reverts.
@@ -408,7 +408,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Reconciliation evaluates every signed or disabled weekly claim.
 - [x] Reconciliation updates a paid weekly claim to withdrawn.
 - [x] Reconciliation updates an on-chain-disabled weekly claim to disabled.
-- [x] Reconciliation runs when team data loads.
+- [x] Reconciliation runs when company data loads.
 - [x] Reconciliation runs after a successful withdrawal.
 - [x] Reconciliation runs after a successful disable operation.
 - [x] Reconciliation runs after a successful enable operation.
@@ -428,7 +428,7 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ## US-PAYROLL-012: Review Payroll History
 
-**As a** team member or owner\
+**As a** company member or owner\
 **I want to** review weekly claims and their status\
 **So that** I can track recorded work and completed payments
 
@@ -437,16 +437,18 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 #### Happy Path
 
 - [x] A member can review each weekly claim's status, total duration, token amounts, daily breakdown, goals, and attachments.
-- [x] Team-wide payroll history provides each claim's member, week, duration, rates, computed amounts, status, and valid transitions.
+- [x] Company-wide payroll history provides each claim's member, week, duration, rates, computed amounts, status, and valid transitions.
+- [x] A company member can select another current member to review that member's claim history.
 - [x] _(API)_ Weekly claims can be filtered by status.
 - [x] _(API)_ Weekly claims can be filtered by member.
 - [x] _(API)_ Weekly-claim total minutes are derived from their daily claims.
 
 #### Business Rules
 
-- [x] Paginated team-wide payroll history returns at most 100 rows per page.
-- [x] Unpaginated team-wide payroll history uses the `{ data, total }` response shape.
-- [x] Every authenticated team member can retrieve team-wide payroll records so that compensation remains transparent within the team.
+- [x] Paginated company-wide payroll history returns at most 100 rows per page.
+- [x] Unpaginated company-wide payroll history uses the `{ data, total }` response shape.
+- [x] Every authenticated company member can retrieve company-wide payroll records so that compensation remains transparent within the
+      company.
 
 #### Edge & Error Cases
 
@@ -459,19 +461,13 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 ## Known Gaps
 
-Functional gaps map to unchecked acceptance criteria. UI/UX notes remain visible separately but do not define the functional completion
-status of a user story.
+Functional gaps map to unchecked acceptance criteria.
 
 ### Functional Gaps
 
 - The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
   week is pending.
 - The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
-
-### UI/UX Notes
-
-- The Submit Claim copy says that only one claim can be submitted per week, while the implemented model allows multiple daily claims in the
-  same weekly claim.
 
 ## Implementation Evidence
 
@@ -485,6 +481,7 @@ status of a user story.
 - [Claim editing flow](../../../app/src/components/sections/CashRemunerationView/EditClaims.vue)
 - [Claim history daily breakdown](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue)
 - [Claim history claim actions](../../../app/src/components/sections/ClaimHistoryView/ClaimActions.vue)
+- [Claim history member selector](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue)
 - [Daily claim form rules](../../../app/src/utils/claimFormUtil.ts)
 - [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)

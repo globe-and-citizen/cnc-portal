@@ -4,7 +4,7 @@
       <template #beneficiary-cell="{ row: { original: schedule } }">
         <div class="min-w-44">
           <p class="font-medium">{{ memberName(schedule.member) }}</p>
-          <AddressToolTip :address="schedule.member" slice class="text-muted text-xs" />
+          <AddressTooltip :address="schedule.member" slice class="text-muted text-xs" />
         </div>
       </template>
 
@@ -67,7 +67,7 @@
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
           <p class="truncate font-medium">{{ memberName(schedule.member) }}</p>
-          <AddressToolTip :address="schedule.member" slice class="text-muted text-xs" />
+          <AddressTooltip :address="schedule.member" slice class="text-muted text-xs" />
         </div>
         <UBadge :color="stateMeta(schedule.state).color" variant="soft">
           {{ stateMeta(schedule.state).label }}
@@ -108,7 +108,7 @@
 
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import ScheduleActions from './VestingScheduleActions.vue'
 import type { VestingSchedule } from '@/types/vesting'
 import {

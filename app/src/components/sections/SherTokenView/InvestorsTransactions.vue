@@ -4,11 +4,13 @@
       <div class="flex items-center justify-between">
         <span>Transactions History</span>
         <div class="flex items-center gap-2">
-          <CustomDatePicker
-            v-model="dateRange"
-            class="min-w-[140px]"
-            data-test-prefix="investor-transaction-history"
-          />
+          <div class="min-w-[140px]" data-test="investor-transaction-history-date-select">
+            <DatePicker
+              v-model="dateRange"
+              mode="range"
+              storage-key="transaction-history-range-investor-transaction-history"
+            />
+          </div>
           <USelect
             v-model="selectedType"
             :items="typeOptions"
@@ -93,9 +95,9 @@
               "
             >
               <div class="mt-1 flex items-center gap-1 text-xs">
-                <UserComponent :user="resolveUser(row.original.from)" />
+                <UserIdentity :user="resolveUser(row.original.from)" />
                 <span class="text-muted text-lg font-bold">→</span>
-                <UserComponent :user="resolveUser(row.original.to)" />
+                <UserIdentity :user="resolveUser(row.original.to)" />
               </div>
             </template>
           </div>
@@ -112,14 +114,14 @@
 
       <template #counterparty-cell="{ row }">
         <template v-if="row.depth === 0">
-          <UserComponent
+          <UserIdentity
             v-if="getTransactionCounterparty(row.original).address"
             :user="resolveUser(getTransactionCounterparty(row.original).address!)"
           />
           <span v-else class="text-muted">—</span>
         </template>
         <template v-else>
-          <UserComponent v-if="row.original.to" :user="resolveUser(row.original.to)" />
+          <UserIdentity v-if="row.original.to" :user="resolveUser(row.original.to)" />
           <span v-else class="text-muted">—</span>
         </template>
       </template>
@@ -178,14 +180,18 @@
     </template>
   </UCard>
 
-  <TransactionDetailModal v-if="selectedTx" v-model:open="showDetail" :transaction="selectedTx" />
+  <TransactionDetailSlideover
+    v-if="selectedTx"
+    v-model:open="showDetail"
+    :transaction="selectedTx"
+  />
 </template>
 
 <script setup lang="ts">
-import UserComponent from '@/components/UserComponent.vue'
-import CustomDatePicker from '@/components/CustomDatePicker.vue'
-import TablePagination from '@/components/TablePagination.vue'
-import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
 import type { TokenId } from '@/constant'
 import {
   buildRawInvestorTransactions,

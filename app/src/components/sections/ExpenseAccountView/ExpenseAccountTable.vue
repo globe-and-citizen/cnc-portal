@@ -41,7 +41,7 @@
         </UTooltip>
       </template>
       <template #member-cell="{ row: { original: row } }">
-        <UserComponent :user="resolveUser(row.userAddress)"></UserComponent>
+        <UserIdentity :user="resolveUser(row.userAddress)"></UserIdentity>
       </template>
       <template #startDate-cell="{ row: { original: row } }">
         <span>{{ formatDateTime(fromUnix(row.startDate)) }}</span>
@@ -101,7 +101,7 @@ import {
   useExpenseAccountActivateApproval,
   useExpenseAccountDeactivateApproval
 } from '@/composables/expenseAccount/writes'
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useGetExpensesQuery, expenseKeys } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils'

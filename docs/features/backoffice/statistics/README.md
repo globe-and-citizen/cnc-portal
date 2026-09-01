@@ -13,7 +13,7 @@ These acceptance criteria follow the
 - `ROLE_ADMIN` and `ROLE_SUPER_ADMIN` users can access the dashboard and statistics API; other users are denied.
 - Period-based metrics use the last 7, 30, or 90 days, or all recorded time. Project TVL is a current on-chain value and is independent of
   the selected database period.
-- The overview combines teams, users, claims, wages, expenses, contracts, Board actions, notifications, and recent activity.
+- The overview combines companies, users, claims, wages, expenses, contracts, Board actions, notifications, and recent activity.
 - A dashboard section is not considered complete merely because its API returns more fields than the administrator can inspect.
 - The unlinked `/stats` route duplicates the overview implementation and is not treated as a separate product feature.
 
@@ -82,9 +82,9 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The overview reports team, member, claim, contract, expense, action, notification, and worked-time metrics.
-- [x] The overview reports growth for teams, members, and claims over a selected finite period.
-- [x] The overview reports the current project-wide TVL from supported team accounts.
+- [x] The overview reports company, member, claim, contract, expense, action, notification, and worked-time metrics.
+- [x] The overview reports growth for companies, members, and claims over a selected finite period.
+- [x] The overview reports the current project-wide TVL from supported company accounts.
 - [x] An administrator can use 7-day, 30-day, 90-day, and all-time reporting periods.
 - [x] Refreshing the overview requests fresh values for every statistics section.
 
@@ -94,7 +94,7 @@ flowchart LR
 - [x] Finite-period growth compares the selected period with the immediately preceding period of equal length.
 - [x] Percentage metrics return zero rather than dividing by zero when the comparison population is empty.
 - [x] Project TVL reflects current supported on-chain balances and does not change its scope with the database reporting period.
-- [ ] Active-team totals include teams with qualifying activity in the period regardless of when the team was created.
+- [ ] Active-company totals include companies with qualifying activity in the period regardless of when the company was created.
 - [ ] The all-time overview does not present a finite-period growth comparison as an all-time trend.
 
 #### Edge & Error Cases
@@ -109,16 +109,16 @@ flowchart LR
 
 **As an** administrator\
 **I want to** explore statistics by platform category\
-**So that** I can identify the teams and behaviours behind the overview totals
+**So that** I can identify the companies and behaviours behind the overview totals
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] An administrator can inspect headline metrics for teams, users, claims, wages, expenses, contracts, and Board actions.
+- [x] An administrator can inspect headline metrics for companies, users, claims, wages, expenses, contracts, and Board actions.
 - [x] Changing the reporting period reloads every period-based category.
-- [ ] Each category exposes the available distributions, averages, statuses, rankings, and team breakdowns returned for that category.
-- [ ] An administrator can scope supported category statistics to one team.
+- [ ] Each category exposes the available distributions, averages, statuses, rankings, and company breakdowns returned for that category.
+- [ ] An administrator can scope supported category statistics to one company.
 - [ ] An administrator can access every page of a paginated category result.
 
 #### Business Rules
@@ -127,7 +127,7 @@ flowchart LR
 - [x] Wage statistics aggregate the supported rate types recorded in current wage data.
 - [x] Expense statistics group approvals by their persisted status.
 - [x] Board-action execution rates use executed actions divided by total actions for the selected scope.
-- [ ] Top-team ranking is calculated across the complete selected population before pagination.
+- [ ] Top-company ranking is calculated across the complete selected population before pagination.
 
 #### Edge & Error Cases
 
@@ -142,14 +142,14 @@ flowchart LR
 
 **As an** administrator\
 **I want to** review recent activity across the platform\
-**So that** I can understand what teams have done most recently
+**So that** I can understand what companies have done most recently
 
 ### Acceptance Criteria
 
 #### Happy Path
 
 - [x] Recent activity combines weekly claims, expenses, Board actions, and contract deployments.
-- [x] Each activity identifies its type, description, team, status, and creation time.
+- [x] Each activity identifies its type, description, company, status, and creation time.
 - [x] Activities from different sources are ordered from newest to oldest before the result limit is applied.
 
 #### Business Rules
@@ -168,12 +168,13 @@ flowchart LR
 
 ## Known Gaps
 
-- Active-team totals exclude older teams even when they have qualifying activity in the selected period (`US-STATS-002`).
+- Active-company totals exclude older companies even when they have qualifying activity in the selected period (`US-STATS-002`).
 - All-time growth compares all recorded activity with a synthetic pre-epoch period and can report a misleading trend (`US-STATS-002`).
 - Category sections expose only headline values while their API responses contain additional breakdowns (`US-STATS-003`).
 - Wage, Expense, and Contract sections reference response fields that their APIs do not return (`US-STATS-003`).
-- Team filtering and pagination are not available in the administrator journey (`US-STATS-003`).
-- The Top Teams endpoint paginates before sorting by membership and therefore does not guarantee a platform-wide ranking (`US-STATS-003`).
+- Company filtering and pagination are not available in the administrator journey (`US-STATS-003`).
+- The top-companies endpoint paginates before sorting by membership and therefore does not guarantee a platform-wide ranking
+  (`US-STATS-003`).
 - The selected reporting period does not constrain recent activity (`US-STATS-004`).
 
 ## Implementation Evidence
@@ -182,7 +183,9 @@ flowchart LR
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
   [dashboard overview](../../../../dashboard/app/pages/index.vue)
 - [Statistics integration](../../../../dashboard/app/composables/useStats.ts),
-  [statistics sections](../../../../dashboard/app/components/stats), and [statistics types](../../../../dashboard/app/types/index.d.ts)
+  [statistics sections](../../../../dashboard/app/components/stats),
+  [canonical dashboard formatter](../../../../dashboard/app/utils/format/), and
+  [statistics types](../../../../dashboard/app/types/index.d.ts)
 - [Statistics routes](../../../../backend/src/routes/statsRoute.ts),
   [administrator API guard](../../../../backend/src/config/serverConfig.ts), and
   [statistics controller](../../../../backend/src/controllers/statsController.ts)

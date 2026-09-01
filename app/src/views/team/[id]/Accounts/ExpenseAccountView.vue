@@ -3,7 +3,7 @@
     <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
     <!-- Cash Remuneration stats: Only apear for owner -->
     <ExpenseStatsSection />
-    <GenericTokenHoldingsSection v-if="expenseContractAddress" :address="expenseContractAddress!" />
+    <TokenHoldingsSection v-if="expenseContractAddress" :address="expenseContractAddress!" />
 
     <MyApprovedExpenseSection />
 
@@ -21,8 +21,8 @@ import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/M
 import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
 import { useTeamStore } from '@/stores'
 import { computed } from 'vue'
-import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
-import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 //#endregion
 const teamStore = useTeamStore()
 

@@ -18,9 +18,9 @@ const ONE_MINUTE_MS = VESTING_MINUTE_MS
 
 export const vestingCreationSchema = z
   .object({
-    memberAddress: z
-      .string()
-      .refine((value) => isAddress(value), { message: 'Choose a valid team member.' }),
+    memberAddress: z.string().refine((value) => isAddress(value, { strict: false }), {
+      message: 'Choose a valid team member.'
+    }),
     totalAmount: z
       .string()
       .trim()

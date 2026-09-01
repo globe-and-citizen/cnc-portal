@@ -60,7 +60,7 @@
         <div class="flex flex-col gap-1">
           <dt class="text-gray-500">Address</dt>
           <dd class="min-w-0">
-            <AddressToolTip
+            <AddressTooltip
               :address="inspectedSafe.address"
               class="max-w-full font-mono text-xs break-all"
             />
@@ -84,7 +84,7 @@
                   :key="owner"
                   class="flex items-center justify-between gap-3"
                 >
-                  <AddressToolTip :address="owner" slice class="min-w-0" />
+                  <AddressTooltip :address="owner" slice class="min-w-0" />
                   <span
                     v-if="isConnectedAddress(owner)"
                     class="text-primary shrink-0 text-xs font-medium"
@@ -160,8 +160,8 @@ import { useUserDataStore, useTeamStore } from '@/stores'
 import { useInspectSafe } from '@/composables/safe/useSafeImport'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { NETWORK } from '@/constant'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 interface Props {
   teamId: number

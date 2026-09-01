@@ -1,13 +1,14 @@
 import dayjs from 'dayjs'
 import quarterOfYear from 'dayjs/plugin/quarterOfYear'
 import type { Range } from '~/types'
+import { formatDate, formatMonthYear, formatQuarterRange, formatYear } from '~/utils/format'
 
 // `quarterOfYear` enables startOf/endOf/add with the 'quarter' unit (matches the dayjs
 // convention used in app/ — see app/src/utils/dayUtils.ts).
 dayjs.extend(quarterOfYear)
 
 /**
- * Pure date logic shared by the dual-mode {@link AccountingDatePicker}.
+ * Pure date logic shared by the dual-mode {@link DatePicker}.
  *
  * - `date` mode resolves a single inclusive "as of" {@link Date}.
  * - `range` mode resolves an inclusive `{ start, end }` {@link Range}.
@@ -69,14 +70,13 @@ export function stepAnchor(anchor: Date, unit: AnchorUnit, direction: -1 | 1): D
 
 /** Label shown between the ◀ / ▶ controls, e.g. `February 2026`, `Jul – Sep 2025`, `2022`. */
 export function formatAnchorLabel(anchor: Date, unit: AnchorUnit): string {
-  const d = dayjs(anchor)
   switch (unit) {
     case 'month':
-      return d.format('MMMM YYYY')
+      return formatMonthYear(anchor)
     case 'year':
-      return d.format('YYYY')
+      return formatYear(anchor)
     case 'quarter':
-      return `${d.startOf('quarter').format('MMM')} – ${d.endOf('quarter').format('MMM')} ${d.format('YYYY')}`
+      return formatQuarterRange(anchor)
   }
 }
 
@@ -114,16 +114,14 @@ export function isValidRange(range: Range): boolean {
   return range.start.getTime() <= range.end.getTime()
 }
 
-const DAY_FORMAT = 'MMM D, YYYY'
-
 /** Trigger-button label for `date` mode, e.g. `As of Jun 3, 2026`. */
 export function formatAsOfLabel(date: Date): string {
-  return `As of ${dayjs(date).format(DAY_FORMAT)}`
+  return `As of ${formatDate(date)}`
 }
 
 /** Trigger-button label for `range` mode, e.g. `From Jan 12, 2026 to Dec 25, 2026`. */
 export function formatRangeLabel(range: Range): string {
-  return `From ${dayjs(range.start).format(DAY_FORMAT)} to ${dayjs(range.end).format(DAY_FORMAT)}`
+  return `From ${formatDate(range.start)} to ${formatDate(range.end)}`
 }
 
 /** Start of the current day (default anchor for every preset). */

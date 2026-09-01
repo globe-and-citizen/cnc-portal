@@ -40,10 +40,18 @@
       <div v-else-if="selectedOption === 'member'" data-test="step-3">
         <h2>Select member</h2>
 
-        <BodAlert v-if="isBodAction" />
+        <UAlert
+          v-if="isBodAction"
+          title="Info"
+          description="This will create a BOD action which requires approval from at least half of the BOD members."
+          icon="i-lucide-info"
+          color="info"
+          variant="soft"
+          data-test="bod-action-alert"
+        />
 
         <div class="h-20">
-          <UserComponent
+          <UserIdentity
             class="bg-muted grow rounded-lg p-4 hover:cursor-pointer"
             v-if="input.address"
             :user="input"
@@ -91,16 +99,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import TransferOptionCard from '../TransferOptionCard.vue'
 import { useTeamStore } from '@/stores'
 import { isAddress, type Address } from 'viem'
-import BodAlert from '@/components/BodAlert.vue'
 import { z } from 'zod'
 import type { User } from '@/types'
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 
 const props = defineProps<{ loading: boolean; isBodAction: boolean }>()
 const emits = defineEmits(['transfer-ownership'])

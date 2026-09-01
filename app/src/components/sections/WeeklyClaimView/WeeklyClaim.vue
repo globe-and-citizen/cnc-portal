@@ -17,7 +17,7 @@
           }"
           class="flex items-center gap-2 text-emerald-700 hover:underline"
         >
-          <UserComponent :user="row.member" />
+          <UserIdentity :user="row.member" />
         </RouterLink>
         <span v-else>-</span>
       </template>
@@ -145,10 +145,10 @@
 </template>
 
 <script setup lang="ts">
-import RatePerHourList from '@/components/RatePerHourList.vue'
-import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
+import RatePerHourList from '@/components/sections/WeeklyClaimView/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/sections/WeeklyClaimView/RatePerHourTotalList.vue'
 import type { TableColumn } from '@nuxt/ui'
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import type { TokenId } from '@/constant'
 import { NETWORK } from '@/constant'
 import { useCurrencyStore, useTeamStore /*, useUserDataStore*/ } from '@/stores'
@@ -164,7 +164,7 @@ import { RouterLink } from 'vue-router'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
-import TablePagination from '@/components/TablePagination.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import { usePagination } from '@/composables/usePagination'
 import type { Address } from 'viem'
 import { computeClaimTokenAmounts, formatMinutesAsDuration } from '@/utils/wageUtil'

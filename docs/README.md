@@ -89,6 +89,7 @@ passed human review.
 
 ## Platform Guides
 
+- [Async UI State Framework](./platform/async-ui-state-framework.md)
 - [Feature Documentation Guide](./platform/feature-specification-guide.md)
 - [Implementation Documentation Guide](./platform/implementation-documentation-guide.md)
 - [Architecture Overview](./platform/architecture.md)

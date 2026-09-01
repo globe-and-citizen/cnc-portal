@@ -1,9 +1,10 @@
-name: Danger PR size check
+name: Danger PR review checks
 
 # Caps PR size at 400 meaningful changed lines (lockfiles, generated files,
 # and snapshots excluded) and comments a split suggestion when exceeded.
 # Override: add the `large-pr-justified` label AND a justification note under a
-# `## Large PR justification` heading in the PR body. See ./dangerfile.js.
+# `## Large PR justification` heading in the PR body. It also enforces the
+# UI/UX reviewer-journey contract. See ./dangerfile.js.
 
 permissions:
   contents: read
@@ -37,6 +38,9 @@ jobs:
 
       - name: ⚙️ NPM install
         run: npm ci
+
+      - name: 🧪 Test UI/UX reviewer-journey contract
+        run: npm run test:ui-ux-review-contract
 
       - name: 🚨 Run Danger
         run: npx danger ci --failOnErrors

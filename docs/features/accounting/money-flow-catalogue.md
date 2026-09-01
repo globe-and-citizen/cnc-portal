@@ -344,6 +344,28 @@ debited and the category account credited; on a **withdrawal** it is the reverse
 - **Authorization.** Only the team owner may create, edit or remove a classification; everyone else sees it read-only. Enforced on the
   backend, independent of the UI.
 
+### 5.6 Share vesting — grant, release, stop
+
+A vesting schedule is an **agreement only**: no tokens move when it is created, and its shares (the team's Investor/SHER share token) are
+minted on demand — capped to what has actually vested — when the member calls `release` (or when the owner `stopVesting`s). So the books
+recognise the equity **at the mint**, on a settlement basis, mirroring the SHER-wage treatment (§4, share-based compensation is an equity
+transaction, never an income-statement expense):
+
+| Event (on-chain)                  | Use case       | Entry                                                              |
+| --------------------------------- | -------------- | ------------------------------------------------------------------ |
+| `VestingCreated` (grant)          | **UC-VEST-01** | memo-only — records the promised share count, no monetary legs     |
+| `TokensReleased` (release / stop) | **UC-VEST-02** | Dr Deferred SHER Compensation · Cr Investor Equity (minted amount) |
+| `VestingStopped` (stop)           | **UC-VEST-03** | memo-only — the unvested remainder is dropped, never minted        |
+
+The release posting is the two SHER-wage legs (accrual + issuance) **collapsed**: a release vests-and-mints atomically, so the shares issued
+(`Investor Equity` ↑) are neutralised by the contra-equity (`Deferred SHER Compensation` ↑) — net book equity unchanged, nothing on the
+income statement, nothing in cash.
+
+> **No double count.** A `release` mints through the same Investor `individualMint`, so it also emits a `Minted` event in the **same
+> transaction**. That mint is recognised as **backed** (§5.4) by the member + amount of the `TokensReleased` and is **not** re-booked as a
+> direct mint (Default D) — which is exactly what would otherwise drive `SHERS To Be Issued` negative (the "known edge" in §5.4), since a
+> vesting grant never accrued into it.
+
 ---
 
 ## 6. Worked example — a full period

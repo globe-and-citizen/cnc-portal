@@ -34,7 +34,7 @@
 import { ref, computed } from 'vue'
 import type { Team } from '@/types'
 import InvestorContractStep from './InvestorContractStep.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 const props = defineProps<{
   team: Team

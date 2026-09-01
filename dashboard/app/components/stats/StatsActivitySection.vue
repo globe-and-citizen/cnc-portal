@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RecentActivity } from '~/types'
+import { formatDateShortTime } from '~/utils/format'
 
 defineProps<{
   data: RecentActivity | null | undefined
@@ -16,15 +17,7 @@ const getActivityIcon = (type: string) => {
   }
 }
 
-const formatTimestamp = (timestamp: string) => {
-  const date = new Date(timestamp)
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+const formatTimestamp = (timestamp: string) => formatDateShortTime(timestamp)
 </script>
 
 <template>

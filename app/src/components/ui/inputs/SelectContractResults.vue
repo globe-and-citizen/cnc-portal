@@ -1,0 +1,40 @@
+<template>
+  <div v-if="contracts.length > 0">
+    <div class="pb-1 text-xs text-gray-500 uppercase">Contracts</div>
+    <div class="grid grid-cols-2 gap-4 px-2 pb-3" data-test="contract-search-results">
+      <div
+        v-for="contract in contracts"
+        :key="contract.address"
+        class="group relative flex cursor-pointer items-center"
+        data-test="contract-row"
+        @click="handleSelect(contract)"
+      >
+        <UserIdentity
+          class="hover:bg-elevated grow rounded-lg bg-white p-4"
+          :user="{ name: contract.type, address: contract.address, imageUrl: contract.imageUrl }"
+          :data-test="`contract-dropdown-${contract.address}`"
+        />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { toRef } from 'vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import type { TeamContract } from '@/types'
+
+const props = defineProps<{
+  contracts: TeamContract[]
+}>()
+
+const emit = defineEmits<{
+  select: [contract: TeamContract]
+}>()
+
+const contracts = toRef(props, 'contracts')
+
+const handleSelect = (contract: TeamContract) => {
+  emit('select', contract)
+}
+</script>

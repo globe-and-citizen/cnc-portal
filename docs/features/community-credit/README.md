@@ -1,6 +1,6 @@
 # Community Credit — User Stories
 
-**Scope:** Team credit rounds from issuer creation through member lending, deadline resolution, refund, and repayment
+**Scope:** Company credit rounds from issuer creation through member lending, deadline resolution, refund, and repayment
 
 **Last reviewed:** Not yet reviewed
 
@@ -9,15 +9,15 @@ These acceptance criteria follow the
 
 ## Product Model
 
-Community Credit lets a team raise working capital from its members. The portal calls one on-chain `FixedReturn` lending offer a **round**
-and the team's deployed `FixedReturn` instance its **Credit Account**. The current contract reports version `3.0.0`.
+Community Credit lets a company raise working capital from its members. The portal calls one on-chain `FixedReturn` lending offer a
+**round** and the company's deployed `FixedReturn` instance its **Credit Account**. The current contract reports version `3.0.0`.
 
 Each round defines an ERC-20 token, funding target, flat interest rate for the complete term, subscription deadline, maturity date, and
-either general or restricted lender access. The **issuer** is the Credit Account owner. A **lender** is an eligible team member; the issuer
-can also lend when the round's access rules allow it.
+either general or restricted lender access. The **issuer** is the Credit Account owner. A **lender** is an eligible company member; the
+issuer can also lend when the round's access rules allow it.
 
 Deposits remain in the Credit Account while a round is raising. Reaching the target, or accepting a partial raise after the deadline, moves
-the principal to the team Bank. Refunds and repayments are pushed to every lender by an issuer transaction; lenders do not claim them
+the principal to the company Bank. Refunds and repayments are pushed to every lender by an issuer transaction; lenders do not claim them
 individually. The round name and purpose are stored off-chain, while its financial terms and settlement state remain on-chain.
 
 ## Lifecycle
@@ -42,18 +42,18 @@ automatically when a deadline or maturity date passes.
 
 ## Status Overview
 
-| User Story | Title                      | Actor       | Status         |
-| ---------- | -------------------------- | ----------- | -------------- |
-| US-CC-001  | Inspect the Credit Account | Team member | 🚧 In Progress |
-| US-CC-002  | Publish a credit call      | Team issuer | 🚧 In Progress |
-| US-CC-003  | Lend to an open round      | Team member | 🚧 In Progress |
-| US-CC-004  | Resolve a stalled round    | Team issuer | 🧪 Validation  |
-| US-CC-005  | Repay lenders              | Team issuer | 🚧 In Progress |
+| User Story | Title                      | Actor          | Status         |
+| ---------- | -------------------------- | -------------- | -------------- |
+| US-CC-001  | Inspect the Credit Account | Company member | 🚧 In Progress |
+| US-CC-002  | Publish a credit call      | Company issuer | 🚧 In Progress |
+| US-CC-003  | Lend to an open round      | Company member | 🚧 In Progress |
+| US-CC-004  | Resolve a stalled round    | Company issuer | 🧪 Validation  |
+| US-CC-005  | Repay lenders              | Company issuer | 🚧 In Progress |
 
 ## US-CC-001: Inspect the Credit Account
 
-**As a** team member\
-**I want to** inspect the team's credit rounds and their current state\
+**As a** company member\
+**I want to** inspect the company's credit rounds and their current state\
 **So that** I can understand what is raising, awaiting action, or settled
 
 ### Acceptance Criteria
@@ -70,21 +70,22 @@ automatically when a deadline or maturity date passes.
 
 #### Edge & Error Cases
 
-- [x] A team without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
-- [x] The Credit Account journey distinguishes loading, read-failure, no-round, and populated outcomes.
+- [x] A company without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
+- [x] The Credit Account journey distinguishes loading, an unavailable read with recovery, a confirmed missing round, and populated
+      outcomes.
 
 ## US-CC-002: Publish a Credit Call
 
-**As a** team issuer\
+**As a** company issuer\
 **I want to** publish a credit round with its funding terms and lender access\
-**So that** eligible members can provide working capital to the team
+**So that** eligible members can provide working capital to the company
 
 ### Acceptance Criteria
 
 #### Happy Path
 
 - [x] The issuer can define a round name of at least three characters and an optional purpose.
-- [x] The issuer can select an ERC-20 token supported by the team's Credit Account.
+- [x] The issuer can select an ERC-20 token supported by the company's Credit Account.
 - [x] The issuer can define a positive funding target.
 - [x] The issuer can define a flat interest rate from 0% to 100% for the complete term.
 - [x] The issuer can define a future subscription deadline and a positive term of at most 30 years.
@@ -108,9 +109,9 @@ automatically when a deadline or maturity date passes.
 
 ## US-CC-003: Lend to an Open Round
 
-**As a** team member\
+**As a** company member\
 **I want to** lend an allowed amount to an open credit round\
-**So that** I can fund the team and receive the stated fixed return
+**So that** I can fund the company and receive the stated fixed return
 
 ### Acceptance Criteria
 
@@ -137,7 +138,7 @@ automatically when a deadline or maturity date passes.
 
 ## US-CC-004: Resolve a Stalled Round
 
-**As a** team issuer\
+**As a** company issuer\
 **I want to** refund lenders or accept a partial raise after the deadline\
 **So that** an underfunded round reaches an explicit financial outcome
 
@@ -147,7 +148,7 @@ automatically when a deadline or maturity date passes.
 
 - [x] The issuer can refund a stalled round, returning every lender's principal in one transaction.
 - [x] The issuer can accept a positive partial raise and continue the round using the actual funded amount.
-- [x] Accepting a partial raise transfers the raised principal to the team Bank.
+- [x] Accepting a partial raise transfers the raised principal to the company Bank.
 - [x] A successful resolution refreshes the round and lender data.
 
 #### Business Rules
@@ -162,15 +163,23 @@ automatically when a deadline or maturity date passes.
 
 ## US-CC-005: Repay Lenders
 
-**As a** team issuer\
-**I want to** repay principal and fixed interest from the team treasury\
+**As a** company issuer\
+**I want to** repay principal and fixed interest from the company treasury\
 **So that** every lender receives their proportional entitlement
+
+### How It Works
+
+1. The selected round exposes its current obligation, Bank balance, and each lender's settlement progress before the issuer submits an
+   installment.
+2. The portal validates the requested amount in token base units and waits for the Bank balance before submitting an installment.
+3. A full repayment returns to that round's default detail after the settlement data refreshes; a partial repayment keeps the issuer in the
+   repayment view with refreshed figures.
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] The issuer can repay a funded, partially repaid, or overdue round from the team Bank.
+- [x] The issuer can repay a funded, partially repaid, or overdue round from the company Bank.
 - [x] An installment distributes each lender's cumulative proportional entitlement without overpaying the round or leaving rounding dust.
 - [x] A successful installment refreshes repayment progress and lender settlement data.
 - [x] A successful installment refreshes the matching activity feed before another decision.
@@ -182,6 +191,7 @@ automatically when a deadline or maturity date passes.
 - [x] A repayment amount must be greater than 0.
 - [x] A repayment amount cannot exceed the outstanding obligation.
 - [x] A repayment amount cannot exceed the Bank's token balance.
+- [x] The portal does not submit a repayment until the Bank balance is available and the amount passes the exact token-unit limits.
 - [x] The Bank rejects repayment from an account other than its current owner.
 - [x] A paused Bank rejects repayment.
 - [x] The repayment action is unavailable to a wallet other than the current Bank owner.
@@ -195,27 +205,31 @@ automatically when a deadline or maturity date passes.
 
 ## Known Gaps
 
-The following gaps were rechecked against the current feature entry points on 2026-08-21. Their technical evidence and remediation
-directions remain in the [detailed flow and implementation analysis](./user-flow-analysis.md#8-findings).
+The following verified gaps have technical evidence and remediation directions in the
+[detailed flow and implementation analysis](./user-flow-analysis.md#8-findings).
 
 ### Functional Gaps
 
 - Rounds that require an issuer action are grouped with settled history.
-- Lenders cannot review their personal deposited and expected-return positions separately from the team's debt.
+- Lenders cannot review their personal deposited and expected-return positions separately from the company's debt.
 - Lending and repayment refresh the matching activity feed but not every affected token balance.
 - The main repayment CTA requires both the Credit Account and Bank owner, and the product does not yet reflect the Bank pause state.
 
-### UI/UX Notes
-
-- Repayment has a stable, bookmarkable route state but remains presented beside the layout-exploration tabs.
-
 ## Implementation Evidence
+
+**Implementation evidence reviewed against:** `a6e9f9373a08046e2d65501d48d90ae3f3982db1`
 
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
+- [Credit round header](../../../app/src/components/sections/CommunityCreditView/CreditRoundHeader.vue)
+- [Credit round actions](../../../app/src/components/sections/CommunityCreditView/CreditRoundActions.vue)
+- [Credit round detail section](../../../app/src/components/sections/CommunityCreditView/CreditRoundDetailSection.vue)
+- [Credit round read states](../../../app/src/components/sections/CommunityCreditView/CreditRoundReadState.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
+- [Repayment amount validation](../../../app/src/types/communityCredit.schemas.ts)
+- [Repayment lifecycle status](../../../app/src/utils/communityCreditRoundStatusUtil.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
 - [Credit-call terms step](../../../app/src/components/sections/CommunityCreditView/CreditCallTermsStep.vue)
 - [Credit Account transaction history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue)
@@ -223,6 +237,7 @@ directions remain in the [detailed flow and implementation analysis](./user-flow
 - [Lending modal](../../../app/src/components/sections/CommunityCreditView/CreditLendModal.vue)
 - [Repayment panel](../../../app/src/components/sections/CommunityCreditView/CreditRepayPanel.vue)
 - [Repayment breakdown](../../../app/src/components/sections/CommunityCreditView/CreditRepayBreakdownTable.vue)
+- [Repayment panel component tests](../../../app/src/components/sections/CommunityCreditView/__tests__/CreditRepayPanel.spec.ts)
 - [Credit round ledger](../../../app/src/components/sections/CommunityCreditView/CreditRoundLedger.vue)
 - [Whitelist allocation editor](../../../app/src/components/sections/CommunityCreditView/CreditWhitelistEditor.vue)
 - [FixedReturn contract](../../../contract/contracts/FixedReturn.sol)
@@ -232,7 +247,10 @@ directions remain in the [detailed flow and implementation analysis](./user-flow
 
 ## Related Documentation
 
+- [Async UI State Framework](../../platform/async-ui-state-framework.md)
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
+- [Date Picker implementation](../../implementation/date-picker/README.md)
+- [Transaction History implementation](../../implementation/transaction-history/README.md)
 - [Detailed flow and implementation analysis](./user-flow-analysis.md)
 - [Community Credit accounting rules](../accounting/cnc-accounting-spec.md)
 - [Product Feature Inventory](../README.md)

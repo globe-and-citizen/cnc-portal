@@ -3,7 +3,7 @@
 **Scope:** The shared client-side selection of one or more users across team setup, member administration, elections, Safe signers,
 ownership transfers, and Vesting beneficiaries
 
-**Last verified:** 2026-08-24
+**Last verified:** 2026-08-30
 
 This capability provides the common selection behaviour used by several product journeys. Product permissions and outcomes remain owned by
 their feature documentation; this document owns only the shared selection boundary.
@@ -38,20 +38,22 @@ flowchart LR
 - A current team member cannot be selected when the scope excludes team members.
 - A current Safe owner cannot be selected as a new signer.
 - Team-member scope reads the current team members; the other scopes use the user-search query.
+- The Contract Management ownership-transfer consumer keeps Board-approval information separate from the selected-member scope, so the
+  approval route never changes who is eligible for selection.
 
 ## Implementation Evidence
 
-- [Shared multi-selection control](../../../app/src/components/utils/MultiSelectMemberInput.vue)
-- [Single-member search and selection control](../../../app/src/components/utils/SelectMemberInput.vue)
+- [Shared multi-selection control](../../../app/src/components/ui/inputs/MultiSelectMemberInput.vue)
+- [Single-member search and selection control](../../../app/src/components/ui/inputs/SelectMemberInput.vue)
 - [Selection scope type](../../../app/src/types/member.ts)
-- [Team setup consumer](../../../app/src/components/forms/AddTeamForm.vue)
+- [Team setup consumer](../../../app/src/components/sections/TeamView/forms/AddTeamForm.vue)
 - [Team member administration consumer](../../../app/src/components/sections/DashboardView/forms/AddMemberForm.vue)
 - [Election candidate consumer](../../../app/src/components/sections/AdministrationView/forms/CreateElectionForm.vue)
 - [Safe signer consumer](../../../app/src/components/sections/SafeView/forms/AddSignerModal.vue)
 - [Contract ownership recipient consumer](../../../app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue)
 - [Vesting beneficiary consumer](../../../app/src/components/sections/VestingView/forms/VestingGrantDetails.vue)
-- [Selection scope behaviour tests](../../../app/src/components/utils/__tests__/SelectMemberInput.spec.ts)
-- [Multi-selection behaviour tests](../../../app/src/components/utils/__tests__/MultiSelectMemberInput.spec.ts)
+- [Selection scope behaviour tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberInput.spec.ts)
+- [Multi-selection behaviour tests](../../../app/src/components/ui/inputs/__tests__/MultiSelectMemberInput.spec.ts)
 
 ## Related Documentation
 

@@ -287,14 +287,16 @@ This validation does not attest to a live on-chain Officer deployment.
 ## Implementation Evidence
 
 - [Companies list and action routing](../../../app/src/views/team/ListIndex.vue),
+  [list-owned treasury preparation](../../../app/src/composables/useTeamListTreasuryBalances.ts),
+  [company-card display model](../../../app/src/utils/teamTreasury.ts),
   [company card permissions](../../../app/src/components/sections/TeamView/TeamCard.vue), and
   [list action tests](../../../app/src/views/team/__tests__/ListIndex.actions.spec.ts)
 - [Workspace route and unavailable-state handling](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue),
   [company queries](../../../app/src/queries/team.queries.ts), [company endpoints](../../../backend/src/routes/teamRoutes.ts), and
   [company controller](../../../backend/src/controllers/teamController.ts)
-- [Company-creation form](../../../app/src/components/forms/AddTeamForm.vue),
+- [Company-creation form](../../../app/src/components/sections/TeamView/forms/AddTeamForm.vue),
   [request validation](../../../backend/src/validation/schemas/team.ts), and
-  [company-creation tests](../../../app/src/components/forms/__tests__/AddTeamForm.spec.ts)
+  [company-creation tests](../../../app/src/components/sections/TeamView/forms/__tests__/AddTeamForm.spec.ts)
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue),
   [Officer deployment composable](../../../app/src/composables/contracts/useOfficerDeployment.ts), and
   [initial Officer setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/InvestorContractStep.spec.ts)

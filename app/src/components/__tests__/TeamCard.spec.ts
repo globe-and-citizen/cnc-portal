@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, RouterLinkStub } from '@vue/test-utils'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { makeCurrencyStoreMock, mockUseContractBalance, mockUserStore } from '@/tests/mocks'
+import { makeCurrencyStoreMock, mockUserStore } from '@/tests/mocks'
 import { UDropdownStub } from '@/tests/stubs/nuxt-ui.stubs'
 import type { Team } from '@/types'
+import type { TeamTreasuryDisplay } from '@/utils/teamTreasury'
 import type { Address } from 'viem'
 
 // `makeCurrencyStoreMock` exposes `localCurrency` unwrapped (as a real Pinia
@@ -27,9 +28,6 @@ beforeEach(() => {
 const OWNER = '0x0000000000000000000000000000000000000001' as Address
 const OUTSIDER = '0x4b6Bf5cD91446408290725879F5666dcd9785F62' as Address
 
-// The four money-holding accounts the card breaks the treasury down by. Every
-// address resolves to the same shared useContractBalance mock, so each account
-// reports $50.5K and the four split the total evenly.
 const TEAM_CONTRACTS = [
   { type: 'Bank', address: '0x1111111111111111111111111111111111111111' },
   { type: 'Safe', address: '0x2222222222222222222222222222222222222222' },
@@ -51,9 +49,21 @@ const makeTeam = (overrides: Partial<Team> = {}): Team =>
     ...overrides
   }) as Team
 
-const mountCard = (team: Team = makeTeam()) =>
+const makeTreasury = (overrides: Partial<TeamTreasuryDisplay> = {}): TeamTreasuryDisplay => ({
+  state: 'ready',
+  formattedTotal: '$202,000.00',
+  accountShares: [
+    { label: 'Bank', barClass: 'bg-primary/40', percent: 25, percentLabel: '25%' },
+    { label: 'Safe', barClass: 'bg-primary', percent: 25, percentLabel: '25%' },
+    { label: 'Expense', barClass: 'bg-accent', percent: 25, percentLabel: '25%' },
+    { label: 'Cash', barClass: 'bg-warning', percent: 25, percentLabel: '25%' }
+  ],
+  ...overrides
+})
+
+const mountCard = (team: Team = makeTeam(), treasury = makeTreasury()) =>
   mount(TeamCard, {
-    props: { team, to: { name: 'show-team', params: { id: team.id } } },
+    props: { team, treasury, to: { name: 'show-team', params: { id: team.id } } },
     global: { stubs: { RouterLink: RouterLinkStub } }
   })
 
@@ -106,8 +116,6 @@ describe('TeamCard', () => {
   })
 
   describe('Treasury', () => {
-    // Every account resolves to the shared useContractBalance mock ($50.5K),
-    // so four funded accounts total $202,000 and each holds a quarter.
     it('totals the balance across the four team accounts', () => {
       const wrapper = mountCard()
 
@@ -123,16 +131,24 @@ describe('TeamCard', () => {
       expect(text).toContain('Cash 25%')
     })
 
-    // Before the first read lands — or when the team holds none of these
-    // accounts — the treasury is unknown, not empty. "$0.00" would read as a
-    // drained account.
     it('reports an unknown treasury rather than claiming zero', () => {
-      mockUseContractBalance.hasData.value = false
-
-      const wrapper = mountCard(makeTeam({ teamContracts: [] }))
+      const wrapper = mountCard(
+        makeTeam({ teamContracts: [] }),
+        makeTreasury({ state: 'unavailable', formattedTotal: '—', accountShares: [] })
+      )
 
       expect(wrapper.find('[data-test="total-balance"]').text()).toBe('—')
       expect(wrapper.text()).not.toContain('Bank')
+    })
+
+    it('shows the collection-owned loading state before a balance arrives', () => {
+      const wrapper = mountCard(
+        makeTeam(),
+        makeTreasury({ state: 'loading', formattedTotal: '—', accountShares: [] })
+      )
+
+      expect(wrapper.find('[data-test="balance-loading"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="total-balance"]').exists()).toBe(false)
     })
 
     it('renders a bar segment per funded account', () => {

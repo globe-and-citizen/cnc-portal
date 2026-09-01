@@ -38,8 +38,7 @@ const mountComponent = (props = {}) =>
       stubs: {
         TransferOptionCard: TransferOptionCardStub,
         SelectMemberInput: SelectMemberInputStub,
-        BodAlert: { template: '<div data-test="bod-alert" />' },
-        UserComponent: { template: '<div data-test="user-component" />', props: ['user'] },
+        UserIdentity: { template: '<div data-test="user-component" />', props: ['user'] },
         IconifyIcon: { template: '<span />' },
         UAlert: {
           name: 'UAlert',
@@ -139,7 +138,7 @@ describe('TransferOwnershipForm.vue', () => {
       expect(wrapper.find('[data-test="step-3"]').exists()).toBe(true)
     })
 
-    it('shows UserComponent when input has a valid address', async () => {
+    it('shows UserIdentity when input has a valid address', async () => {
       const wrapper = mountComponent()
       await goToMemberStep(wrapper)
       await wrapper.find('[data-test="select-valid-member"]').trigger('click')
@@ -147,7 +146,7 @@ describe('TransferOwnershipForm.vue', () => {
       expect(wrapper.find('[data-test="user-component"]').exists()).toBe(true)
     })
 
-    it('does not show UserComponent when input has no address', async () => {
+    it('does not show UserIdentity when input has no address', async () => {
       const wrapper = mountComponent()
       await goToMemberStep(wrapper)
       expect(wrapper.find('[data-test="user-component"]').exists()).toBe(false)
@@ -193,10 +192,11 @@ describe('TransferOwnershipForm.vue', () => {
       expect(wrapper.find('[data-test="back-button"]').exists()).toBe(false)
     })
 
-    it('shows BodAlert when isBodAction=true', async () => {
+    it('shows the Board approval notice when isBodAction=true', async () => {
       const wrapper = mountComponent({ isBodAction: true })
       await nextTick()
-      expect(wrapper.find('[data-test="bod-alert"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="bod-action-alert"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('This will create a BOD action')
     })
 
     it('transfer button uses full justify-end layout when isBodAction=true', async () => {

@@ -12,7 +12,7 @@
       required
     >
       <div v-if="member.address" class="flex items-center gap-2">
-        <UserComponent
+        <UserIdentity
           class="bg-muted min-w-0 grow rounded-lg p-3"
           :user="member"
           data-test="selected-member"
@@ -61,8 +61,8 @@
 </template>
 
 <script setup lang="ts">
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import type { User } from '@/types'
 
 interface VestingMember {
