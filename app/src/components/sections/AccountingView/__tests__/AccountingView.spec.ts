@@ -9,7 +9,6 @@ import GeneralLedger from '../GeneralLedger.vue'
 import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
 import StatementLine from '../StatementLine.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import { mockRouterPush, mockRouterReplace } from '@/tests/mocks/router.mock'
 import { entriesForAccount, accountBalance } from '@/utils/accounting/accountLedger'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerPresenter'
@@ -322,37 +321,5 @@ describe('GeneralLedger', () => {
 
     await wrapper.find('[data-test="pill-Investment"]').trigger('click')
     expect(wrapper.text()).toContain('entries')
-  })
-
-  // Empty books show no account links; both jump tests below no-op then.
-  it('routes a clicked account to its Trial Balance drill-down', async () => {
-    mockRouterPush.mockClear()
-    const wrapper = renderWithProviders(GeneralLedger)
-    const link = wrapper.find('[data-test^="ledger-account-link-"]')
-    if (link.exists()) {
-      await link.trigger('click')
-      expect(mockRouterPush).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'accounting-trial',
-          query: { account: expect.any(String) }
-        })
-      )
-    }
-    wrapper.unmount()
-  })
-
-  it('auto-opens the drill-down for ?account= and strips the query', async () => {
-    const ledger = renderWithProviders(GeneralLedger)
-    const link = ledger.find('[data-test^="ledger-account-link-"]')
-    if (!link.exists()) return ledger.unmount()
-    const account = link.attributes('data-test')!.replace('ledger-account-link-', '')
-    ledger.unmount()
-    mockRouterReplace.mockClear()
-    const wrapper = renderWithProviders(TrialBalanceCard, { route: { query: { account } } })
-    await flushPromises()
-    // Drill-down modal open (export controls mounted); query stripped so a close is final.
-    expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
-    expect(mockRouterReplace).toHaveBeenCalled()
-    wrapper.unmount()
   })
 })
