@@ -142,22 +142,24 @@ export function mapVestingEvents(input: VestingMapperInput, ctx: MapperContext):
   const remainders = unvestedRemainders(input)
   for (const row of input.stoppeds ?? []) {
     const remainder = remainders.get(row.id) ?? 0n
-    const monetary = remainder > 0n
+    // A stop with nothing unvested left (schedule already fully released, or its
+    // grant predates the indexed window) has no value to reverse, so it is not a
+    // ledger posting at all — the on-chain stop stays visible in the vesting
+    // history, but the books only record actual movements.
+    if (remainder <= 0n) continue
     entries.push(
       makeEntry({
         id: row.id,
         timestamp: row.timestamp,
         useCase: 'UC-VEST-03',
-        debit: monetary ? 'SHERS To Be Issued' : null,
-        credit: monetary ? 'Deferred SHER Compensation' : null,
-        amountUsd: monetary ? ctx.toUsd(remainder, 'sher', atDate(row.timestamp)) : 0,
+        debit: 'SHERS To Be Issued',
+        credit: 'Deferred SHER Compensation',
+        amountUsd: ctx.toUsd(remainder, 'sher', atDate(row.timestamp)),
         token: 'sher',
         rawAmount: remainder.toString(),
         counterparty: row.member,
-        ...(monetary ? { shares: shareCount(remainder.toString()) } : {}),
-        memo: monetary
-          ? 'Vesting stopped — unvested remainder of the grant cancelled'
-          : 'Vesting stopped — nothing unvested left to cancel'
+        shares: shareCount(remainder.toString()),
+        memo: 'Vesting stopped — unvested remainder of the grant cancelled'
       })
     )
   }

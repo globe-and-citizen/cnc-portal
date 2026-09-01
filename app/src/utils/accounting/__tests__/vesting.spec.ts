@@ -78,8 +78,9 @@ describe('mapVestingEvents', () => {
     expect(stopped).toMatchObject({ amountUsd: 50, shares: 100 })
   })
 
-  it('leaves a stop with nothing unvested as a memo-only entry', () => {
-    // Everything was released before the stop, so there is no grant left to reverse.
+  it('omits a stop with nothing unvested left to cancel', () => {
+    // Everything was released before the stop, so there is no grant left to reverse
+    // and the stop is not a ledger posting at all.
     const entries = mapVestingEvents(
       {
         createds: [grant('100000000')],
@@ -88,17 +89,16 @@ describe('mapVestingEvents', () => {
       },
       ctx
     )
-    const stopped = entries.find((entry) => entry.useCase === 'UC-VEST-03')
 
-    expect(stopped).toMatchObject({ debit: null, credit: null, amountUsd: 0 })
-    expect(stopped?.shares).toBeUndefined()
+    expect(entries.some((entry) => entry.useCase === 'UC-VEST-03')).toBe(false)
   })
 
   it('books no reversal for a schedule whose grant is not in the feed', () => {
-    // The grant predates the indexed window, so it was never booked — nothing to unwind.
+    // The grant predates the indexed window, so it was never booked — nothing to
+    // unwind, and no posting is produced.
     const entries = mapVestingEvents({ stoppeds: [stop()] }, ctx)
 
-    expect(entries[0]).toMatchObject({ useCase: 'UC-VEST-03', debit: null, credit: null })
+    expect(entries).toHaveLength(0)
   })
 
   it('reverses each schedule against its own grant, not another schedule of the same member', () => {
