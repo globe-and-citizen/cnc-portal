@@ -14,9 +14,9 @@ import { filterLedgerByCurrency } from './ledgerCurrency'
 import {
   badgeClassOf,
   categoryOf,
+  categoryLabelOf,
   FEE_ACCOUNT,
-  FEE_FILTER,
-  type LedgerCategory
+  FEE_FILTER
 } from './ledgerCategory'
 import type { LedgerEntry } from './ledgerEntry'
 import type { TokenId } from '@/constant'
@@ -31,6 +31,7 @@ export type { ActivityDestination, LedgerSection } from './activityDestination'
 export {
   badgeClassOf,
   categoryOf,
+  categoryLabelOf,
   CATEGORY_BADGE,
   FEE_ACCOUNT,
   FEE_FILTER,
@@ -55,7 +56,9 @@ export interface LedgerRow {
   /** The section the Activity links to ({@link ./activityDestination}); absent on
    *  a continuation row, and on a posting with no portal surface of its own. */
   destination?: ActivityDestination | null
-  cat: LedgerCategory | ''
+  /** The "Action" badge text — {@link categoryLabelOf} (a plain category, or a
+   *  spelled-out payroll phase); empty on a posting's continuation rows. */
+  cat: string
   catClass: string
   account: string
   accountMuted: boolean
@@ -134,7 +137,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     label: entryLabel(entry),
     activity: activityOf(entry),
     destination: activityDestinationOf(entry),
-    cat: categoryOf(entry),
+    cat: categoryLabelOf(entry),
     catClass: badgeClassOf(entry)
   }
   // The same token move backs every leg, so the movement columns show once, on the

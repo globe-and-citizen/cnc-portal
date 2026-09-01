@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   badgeClassOf,
   categoryOf,
+  categoryLabelOf,
   CATEGORY_BADGE,
   ledgerRows
 } from '@/utils/accounting/ledgerPresenter'
@@ -33,6 +34,21 @@ describe('categoryOf', () => {
     expect(categoryOf(entry('UC-CREDIT-04'))).toBe('Credit')
     // The funded-offer sweep moves money between two CNC pockets.
     expect(categoryOf(entry('UC-CREDIT-02'))).toBe('Transfer')
+  })
+})
+
+describe('categoryLabelOf', () => {
+  it('spells out the two payroll phases while keeping the Payroll category', () => {
+    expect(categoryLabelOf(entry('UC-CASH-02'))).toBe('Payroll: Claim')
+    expect(categoryLabelOf(entry('UC-CASH-03'))).toBe('Payroll: Withdraw')
+    // Both still fall under the single "Payroll" filter category.
+    expect(categoryOf(entry('UC-CASH-02'))).toBe('Payroll')
+    expect(categoryOf(entry('UC-CASH-03'))).toBe('Payroll')
+  })
+
+  it('leaves non-payroll entries on their plain category name', () => {
+    expect(categoryLabelOf(entry('UC-CREDIT-01'))).toBe('Credit')
+    expect(categoryLabelOf(entry('UC-EXP-01'))).toBe('Expense')
   })
 })
 
