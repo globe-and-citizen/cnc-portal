@@ -2,7 +2,7 @@
 
 **Status:** Current documentation index
 
-**Last updated:** 2026-08-30
+**Last updated:** 2026-09-01
 
 This index owns CNC Portal's shared architectural capabilities. Product features remain in the
 [Product Feature Inventory](../features/README.md), contract behaviour remains under [`docs/contracts/`](../contracts/README.md), and
@@ -25,6 +25,8 @@ flowchart LR
   transactionHistory[Transaction History] --> reports
   selection[Member Selection] --> forms[Team and contract forms]
   owner[Contract Owner Resolution] --> cards[Shared contract owner cards]
+  utilities[Client Utilities] --> client
+  utilities --> reports
 ```
 
 | Capability                                                         | System guarantee                                 | Main consumers                   | Last verified |
@@ -38,6 +40,7 @@ flowchart LR
 | [Runtime Wake-Up](./runtime-wake-up/README.md)                     | Non-blocking process wake and database readiness | Client, dashboard, deployment    | 2026-08-21    |
 | [Member Selection](./member-selection/README.md)                   | Scoped user selection and exclusions             | Team, Safe, elections, Vesting   | 2026-08-24    |
 | [Contract Owner Resolution](./contract-owner-resolution/README.md) | Resolves and presents a contract owner           | Accounts, shareholder management | 2026-08-30    |
+| [Client Utilities](./client-utilities/README.md)                   | Pure, explicit client data-shaping boundaries    | All client product surfaces      | 2026-09-01    |
 
 ## Updating This Index
 

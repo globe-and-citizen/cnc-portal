@@ -5,7 +5,7 @@
 > - Component spec — `app/src/components/ui/inputs/__tests__/SelectMemberWithTokenInput.spec.ts`
 > - Composable spec with `vi.hoisted` — `app/src/composables/__tests__/useContractFunction.spec.ts`
 > - Web3 / wagmi spec — `app/src/__tests__/wagmi.spec.ts`
-> - Pure-utility spec — `app/src/utils/__tests__/currencyUtil.spec.ts`
+> - Pure-utility spec — `app/src/utils/currency/__tests__/display.spec.ts`
 > - Mutation + query spec — `app/src/queries/__tests__/weeklyClaim.queries.spec.ts`
 
 This file documents _principles_. When you need to write a new test, copy the structure from the closest canonical reference above — those
@@ -32,8 +32,8 @@ src/components/Foo.vue
 src/components/__tests__/Foo.spec.ts
 src/composables/useFoo.ts
 src/composables/__tests__/useFoo.spec.ts
-src/utils/foo.ts
-src/utils/__tests__/foo.spec.ts
+src/utils/foo/model.ts
+src/utils/foo/__tests__/model.spec.ts
 ```
 
 Naming:
@@ -56,9 +56,9 @@ Naming:
 
 **Reuse the global mocks. Do not re-mock them locally.** `app/vitest.config.ts` loads setup files from `app/src/tests/setup/` that
 `vi.mock(...)` every commonly used dependency (wagmi, viem, TanStack Query, Apollo, Pinia stores, the
-`@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives, `@/lib/axios`, `@/utils`, `@/queries/*.queries`, …).
-Per-test override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) come from `@/tests/mocks`. ESLint blocks
-`vi.mock('<globally-mocked-path>')` in specs (`bannedGlobalMockPaths` in `app/eslint.config.js`); see
+`@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives, `@/lib/axios`, `@/lib/logging`, `@/utils/expenses/model`,
+`@/queries/*.queries`, …). Per-test override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) come from `@/tests/mocks`.
+ESLint blocks `vi.mock('<globally-mocked-path>')` in specs (`bannedGlobalMockPaths` in `app/eslint.config.js`); see
 [`testing-anti-patterns.md`](./testing-anti-patterns.md) and `app/src/tests/README.md`.
 
 The canonical pattern is `vi.hoisted` for mocks that need to be referenced inside `vi.mock` factories. See lines 9–19 of
