@@ -36,7 +36,13 @@
         </div>
       </template>
 
-      <LedgerTable :rows="pageRows" :total="grandTotal" :visible-columns="visibleColumns" />
+      <LedgerTable
+        :rows="pageRows"
+        :total="grandTotal"
+        :visible-columns="visibleColumns"
+        link-account
+        @account-select="openInTrialBalance"
+      />
 
       <template #footer>
         <TablePagination
@@ -53,6 +59,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import SegmentedPills, { type PillItem } from './SegmentedPills.vue'
 import LedgerTable from './LedgerTable.vue'
@@ -102,6 +109,21 @@ const period = ref<Range>(defaultValueForMode('range') as Range)
 const categoryItems: PillItem[] = ledgerCategories.map((c) => ({ value: c, label: c }))
 
 const acc = useAccountingContext()
+
+const route = useRoute()
+const router = useRouter()
+
+/**
+ * Jump to the Trial Balance for a clicked account — it reads the `account` query
+ * param and auto-opens that account's drill-down (its own transactions).
+ */
+function openInTrialBalance(account: string): void {
+  router.push({
+    name: 'accounting-trial',
+    params: { id: route.params.id },
+    query: { account }
+  })
+}
 
 // Filter once, paginate by entry (a posting spans two rows), then flatten the
 // current page into table rows. The "Total movements" figure stays the grand
