@@ -113,8 +113,7 @@ const bannedGlobalMockPaths = [
   // axios.setup.ts
   '@/lib/axios',
   // utils.setup.ts
-  '@/lib/logging',
-  '@/utils/expenses/model'
+  '@/lib/logging'
 ]
 
 const globalMockMessage = (path) =>
