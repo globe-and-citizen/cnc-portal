@@ -206,6 +206,40 @@ describe('bankTransactionUtil', () => {
     })
   })
 
+  it('drops raw token transfers already accounted for by a Bank event', () => {
+    const events = buildBankEvents()
+    // A raw incoming transfer sharing a tx + token with the tokenDeposit above
+    // is the same movement — it must not surface a second time.
+    events.rawContractTokenTransfers.items.push({
+      id: '0xtokendeposithash-1',
+      tokenAddress: USDC_ADDRESS,
+      contractAddress: BANK_ADDRESS,
+      direction: 'in',
+      from: USER_A,
+      to: BANK_ADDRESS,
+      amount: '3000000',
+      timestamp: 20
+    })
+    // A raw incoming transfer with no matching Bank event (e.g. a credit funding
+    // sweep) must be kept.
+    events.rawContractTokenTransfers.items.push({
+      id: '0xcreditsweep-0',
+      tokenAddress: USDC_ADDRESS,
+      contractAddress: BANK_ADDRESS,
+      direction: 'in',
+      from: USER_B,
+      to: BANK_ADDRESS,
+      amount: '4000000',
+      timestamp: 90
+    })
+
+    const transactions = buildRawBankTransactions(events)
+    const rawIns = transactions.filter((row) => row.type === 'rawTokenIn')
+
+    expect(rawIns.some((row) => row.txHash === '0xtokendeposithash')).toBe(false)
+    expect(rawIns.some((row) => row.txHash === '0xcreditsweep')).toBe(true)
+  })
+
   it('returns an empty array when query data is undefined', () => {
     expect(buildRawBankTransactions()).toEqual([])
     expect(buildRawBankTransactions(null)).toEqual([])

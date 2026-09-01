@@ -148,6 +148,9 @@ flowchart LR
 
 - [x] Every company member can inspect Bank balances and history regardless of transfer permission.
 - [x] Grouped events from one transaction remain attributable to the same transaction hash.
+- [x] Bank history surfaces money that arrives at or leaves the Bank by a direct token transfer, even when the Bank emitted no event of its
+      own — for example, the funds swept in when a Community Credit round is funded. A movement a Bank event already records is not shown a
+      second time.
 
 #### Edge & Error Cases
 
@@ -490,7 +493,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `9ad9e135a6fc8d49f95fc2bee1b5d3dcbd5eb41e`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
