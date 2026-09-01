@@ -43,7 +43,7 @@ import type { Address } from 'viem'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { useDistributeMint } from '@/composables/investor/writes'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 
 interface Props {
   tokenSymbol: string

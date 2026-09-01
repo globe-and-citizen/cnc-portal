@@ -209,10 +209,13 @@ implementation; this validation records the product review.
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+
+- [Vesting components](../../../app/src/components/sections/VestingView/)
 - [Vesting page](../../../app/src/views/team/%5Bid%5D/VestingView.vue)
 - [Schedule overview and actions](../../../app/src/components/sections/VestingView/VestingFlow.vue)
 - [V2 schedule read model](../../../app/src/composables/vesting/useVestingSchedules.ts)
-- [V2 schedule calculations](../../../app/src/utils/vestingScheduleUtil.ts)
+- [V2 schedule calculations](../../../app/src/utils/vesting/schedule.ts)
 - [Release and Stop review](../../../app/src/components/sections/VestingView/VestingActionReviewModal.vue)
 - [Schedule creation, validation, and submission](../../../app/src/components/sections/VestingView/forms/)
 - [Vesting beneficiary selection](../../../app/src/components/sections/VestingView/forms/VestingGrantDetails.vue)

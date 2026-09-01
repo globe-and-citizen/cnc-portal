@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { computed, nextTick, useTemplateRef } from 'vue'
 import { useInvestorSymbol, useInvestorTotalSupply } from '@/composables/investor/reads'
-import { formatAmountWithPrecision } from '@/utils/currencyUtil'
+import { formatAmountWithPrecision } from '@/utils/currency/display'
 
 const props = defineProps<{
   percentage: number

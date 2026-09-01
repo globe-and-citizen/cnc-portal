@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, type DOMWrapper, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
-import * as utils from '@/utils'
+import { log } from '@/lib/logging'
 import { useQuery } from '@vue/apollo-composable'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import {
@@ -269,7 +269,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('logs query errors', async () => {
-    const logErrorSpy = vi.spyOn(utils.log, 'error')
+    const logErrorSpy = vi.spyOn(log, 'error')
     wrapper = createWrapper()
 
     const error = new Error('expense query failed')

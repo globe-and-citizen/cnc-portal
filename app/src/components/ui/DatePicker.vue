@@ -20,7 +20,7 @@ import {
   type DatePickerPresetId,
   type DatePickerValue,
   type Range
-} from '@/utils/datePicker'
+} from '@/utils/dates/picker'
 
 /**
  * Dual-mode date picker shared by accounting reports and transaction histories.
@@ -29,7 +29,7 @@ import {
  * - `mode="range"` selects a from/to period (Income Statement, Ledger, …); `v-model` is a `Range`.
  *
  * Presets come first with ◀ / ▶ steppers; a UCalendar is the fallback (single in `date` mode,
- * range in `range` mode). All date logic lives in `@/utils/datePicker`, all reactive state in
+ * range in `range` mode). All date logic lives in `@/utils/dates/picker`, all reactive state in
  * this one-consumer component.
  */
 const props = withDefaults(

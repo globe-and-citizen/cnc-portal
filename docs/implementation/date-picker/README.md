@@ -22,7 +22,7 @@ flowchart LR
   dashboardDemo[Dashboard date picker demo] --> dashboardPicker[Dashboard DatePicker]
   clientPicker --> clientState[Component-owned reactive state]
   dashboardPicker --> dashboardState[Component-owned reactive state]
-  clientState --> clientUtilities[Client datePicker utilities]
+  clientState --> clientUtilities[Client date picker utilities]
   dashboardState --> dashboardUtilities[Dashboard datePicker utilities]
   clientState --> clientStorage[Optional local storage]
   dashboardState --> dashboardStorage[Optional local storage]
@@ -32,7 +32,7 @@ flowchart LR
 
 - The client and dashboard `DatePicker` components support a single as-of date and a start/end range without owning server or chain state.
 - Each picker component owns the reactive selection, persistence, and interaction state used only to render that picker; its frontend-local
-  `datePicker.ts` utility owns pure resolution and formatting rules.
+  date-picker utility owns pure resolution and formatting rules.
 - Transaction histories bind their `Range | undefined` filter model directly to `DatePicker` in `range` mode. Their existing storage keys
   and `data-test` selectors remain stable.
 - A custom range is committed only when both boundaries exist and the start is not after the end.
@@ -40,17 +40,17 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `88d98f8413b332376d860df979c963dae885d37f`
+**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
 
 - [Client DatePicker](../../../app/src/components/ui/DatePicker.vue),
   [dashboard DatePicker](../../../dashboard/app/components/DatePicker.vue),
   [dashboard date picker demo](../../../dashboard/app/pages/date-picker-demo.vue), and
   [transaction-history filtering](../../../app/src/composables/transactions/useTransactionTable.ts)
-- [Client date preset utilities](../../../app/src/utils/datePicker.ts) and
+- [Client date preset utilities](../../../app/src/utils/dates/picker.ts) and
   [dashboard date preset utilities](../../../dashboard/app/utils/datePicker.ts)
 - [Client picker behaviour tests](../../../app/src/components/ui/__tests__/DatePicker.spec.ts),
   [transaction-history filter tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts), and
-  [date utility tests](../../../app/src/utils/__tests__/datePicker.spec.ts)
+  [date utility tests](../../../app/src/utils/dates/__tests__/picker.spec.ts)
 
 ## Related Documentation
 

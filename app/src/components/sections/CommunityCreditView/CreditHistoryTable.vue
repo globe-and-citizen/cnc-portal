@@ -63,7 +63,7 @@
 import { computed } from 'vue'
 import type { TableRow } from '@nuxt/ui'
 import { useCommunityCreditStore } from '@/stores'
-import { formatAmount, statusMeta } from '@/utils'
+import { formatAmount, statusMeta } from '@/utils/communityCredit/model'
 import type { CreditRound } from '@/types'
 
 const emit = defineEmits<{ select: [round: CreditRound] }>()

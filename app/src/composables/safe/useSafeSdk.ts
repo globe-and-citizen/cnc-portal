@@ -1,8 +1,8 @@
 import Safe from '@safe-global/protocol-kit'
 import { useConnection } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { getInjectedProvider } from '@/utils/safe'
-import { getConnectedSigner } from '@/utils/walletUtil'
+import { getInjectedProvider } from '@/lib/safe/browser'
+import { getConnectedSigner } from '@/utils/wallet/address'
 
 const safeInstanceCache = new Map<string, Promise<Safe>>()
 

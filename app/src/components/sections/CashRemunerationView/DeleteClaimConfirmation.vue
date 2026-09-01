@@ -40,8 +40,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Claim } from '@/types'
-import { formatMinutesAsDuration } from '@/utils/wageUtil'
-import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
+import { formatMinutesAsDuration } from '@/utils/wages/model'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import { formatDate } from '@/utils/format'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'

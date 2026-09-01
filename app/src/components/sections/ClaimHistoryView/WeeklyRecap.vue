@@ -119,7 +119,7 @@ import {
   computeClaimTokenAmounts,
   formatMinutesAsDuration,
   splitClaimMinutes
-} from '@/utils/wageUtil'
+} from '@/utils/wages/model'
 
 const props = defineProps<{
   weeklyClaim?: WeeklyClaim

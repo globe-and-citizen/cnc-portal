@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { isRepayableRoundStatus } from '@/utils'
+import { isRepayableRoundStatus } from '@/utils/communityCredit/roundStatus'
 import type { CreditRound } from '@/types'
 
 interface Props {

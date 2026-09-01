@@ -101,7 +101,7 @@
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
 import { computed, ref, watch } from 'vue'
-import { formatAddress } from '@/utils/formatAddress'
+import { formatAddress } from '@/utils/format'
 import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
 
 const userStore = useUserDataStore()

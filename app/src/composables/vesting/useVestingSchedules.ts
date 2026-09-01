@@ -9,7 +9,7 @@ import {
   buildVestingSchedules,
   resolveVestingTokenSymbol,
   summarizeVestingSchedules
-} from '@/utils'
+} from '@/utils/vesting/schedule'
 
 /** One V2 read model shared by summary cards, filters, details, and actions. */
 export function useVestingSchedules() {

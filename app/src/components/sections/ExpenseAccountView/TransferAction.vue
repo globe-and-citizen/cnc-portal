@@ -94,7 +94,9 @@ import { type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore } from '@/stores'
-import { budgetLimitTypes, buildContractBudgetLimit, classifyError, getTokens, log } from '@/utils'
+import { budgetLimitTypes, buildContractBudgetLimit, getTokens } from '@/utils/expenses/model'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 import {
   encodeFunctionData,
   parseEther,

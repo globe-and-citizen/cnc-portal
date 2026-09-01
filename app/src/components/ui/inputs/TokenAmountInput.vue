@@ -87,7 +87,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { z } from 'zod'
-import { formatCurrencyShort } from '@/utils/currencyUtil'
+import { formatCurrencyShort } from '@/utils/currency/display'
 import { useStorage } from '@vueuse/core'
 import type { TokenOption } from '@/types'
 import { type TokenId } from '@/constant'

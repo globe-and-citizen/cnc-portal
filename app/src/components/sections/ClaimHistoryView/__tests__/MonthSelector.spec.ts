@@ -4,7 +4,7 @@ import MonthSelector from '@/components/sections/ClaimHistoryView/MonthSelector.
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { formatIsoWeekRange } from '@/utils/dayUtils'
+import { formatIsoWeekRange } from '@/utils/dates/calendar'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

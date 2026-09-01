@@ -22,7 +22,7 @@
   </UTable>
 </template>
 <script setup lang="ts">
-import type { FormattedAction } from '@/utils'
+import type { FormattedAction } from '@/utils/contracts/management'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useBodIsActionExecuted } from '@/composables/bod/reads'
 import { computed } from 'vue'

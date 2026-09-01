@@ -81,7 +81,7 @@
 <script lang="ts" setup>
 import type { User } from '@/types'
 import { computed } from 'vue'
-import { formatAddress } from '@/utils/formatAddress'
+import { formatAddress } from '@/utils/format'
 
 const props = defineProps<{
   user: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string }

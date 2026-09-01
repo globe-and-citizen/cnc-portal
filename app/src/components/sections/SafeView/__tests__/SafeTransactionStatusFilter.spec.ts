@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import SafeTransactionStatusFilter from '../SafeTransactionStatusFilter.vue'
-import type { SafeTransactionFilterCounts } from '@/utils/safeTransactionState'
+import type { SafeTransactionFilterCounts } from '@/utils/safe/transactionState'
 
 const counts: SafeTransactionFilterCounts = {
   all: 12,

@@ -96,7 +96,7 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 
 import { useDeploySafe } from '@/composables/safe/useSafeDeployment'
 import { useCreateContractMutation } from '@/queries/contract.queries'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import { NETWORK } from '@/constant'
 import { useToast } from '@nuxt/ui/composables'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'

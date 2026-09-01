@@ -40,7 +40,7 @@
 import type {
   SafeTransactionFilterCounts,
   SafeTransactionStatusFilter
-} from '@/utils/safeTransactionState'
+} from '@/utils/safe/transactionState'
 
 interface Props {
   counts: SafeTransactionFilterCounts

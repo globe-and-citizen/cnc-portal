@@ -78,8 +78,8 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import type { Week } from '@/utils/dayUtils'
-import { formatIsoWeekRange, formatMonthYear } from '@/utils/dayUtils'
+import type { Week } from '@/utils/dates/calendar'
+import { formatIsoWeekRange, formatMonthYear } from '@/utils/dates/calendar'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

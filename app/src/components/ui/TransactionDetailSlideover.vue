@@ -182,17 +182,16 @@ import type { TransactionReceipt, AbiFunction } from 'viem'
 import type { GroupedTransactionRow, TransactionHistoryItemRow } from '@/types/transaction-history'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { getTransactionSummary } from '@/utils/transactions/history'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { getTransactionTypeLabel } from '@/utils/transactions/registry'
 import {
-  resolveUser,
-  formatCryptoAmount,
-  formatCurrencyShort,
-  getTransactionSummary,
-  getTransactionTypeLabel,
   formatDecodedValue,
   CONTRACT_ABI_MAP,
   type DecodedParam,
   type DecodedInputData
-} from '@/utils'
+} from '@/utils/contracts/abiDecode'
 import { formatDateRelative, formatDateUtc, formatNumber } from '@/utils/format'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { getPublicClient } from '@wagmi/core'
@@ -207,6 +206,7 @@ const open = defineModel<boolean>('open', { default: false })
 
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
+const { resolveUser } = useTransactionPresentation()
 
 const receipt = ref<TransactionReceipt | null>(null)
 const decodedInput = ref<DecodedInputData | null>(null)

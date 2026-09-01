@@ -83,8 +83,8 @@ import {
   useInvestorTotalSupply
 } from '@/composables/investor/reads'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { log } from '@/utils'
-import { formatStakePercentageFromSupply } from '@/utils/investorMintAllocation'
+import { log } from '@/lib/logging'
+import { formatStakePercentageFromSupply } from '@/utils/investors/mintAllocation'
 import { formatUnits, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'

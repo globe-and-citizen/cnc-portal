@@ -23,7 +23,7 @@
 import { useDisconnect, useConnection } from '@wagmi/vue'
 import type { User } from '@/types'
 import { computed } from 'vue'
-import { formatAddress } from '@/utils/formatAddress'
+import { formatAddress } from '@/utils/format'
 
 const disconnect = useDisconnect()
 const connection = useConnection()

@@ -141,7 +141,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { ref, computed, toRef } from 'vue'
-import { getFileIcon, truncateFileName, getFileExtension } from '@/utils/fileUtil'
+import { getFileIcon, truncateFileName, getFileExtension } from '@/utils/files/presentation'
 import { useFilePreviewGallery } from '@/composables/useFilePreviewGallery'
 import type { FilePreviewItem } from '@/types/file-preview'
 

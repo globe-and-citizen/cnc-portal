@@ -59,7 +59,7 @@ import {
   computeIssuedAmountFromAmountInput,
   computePercentageFromAmountInput,
   TOKEN_DECIMALS
-} from '@/utils/investorMintAllocation'
+} from '@/utils/investors/mintAllocation'
 import { type StakeMode, type StakePayload } from '@/types/investor'
 import TwinAmountInputs from './TwinAmountInputs.vue'
 import MintRecapCard from './MintRecapCard.vue'

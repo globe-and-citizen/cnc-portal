@@ -1,5 +1,5 @@
 import { beforeEach, vi } from 'vitest'
-import { mockGetTokens, mockLog, resetUtilsMocks } from '../mocks/utils.mock'
+import { mockLog, resetUtilsMocks } from '../mocks/utils.mock'
 
 // Clear the shared log spies before every test (call history only;
 // implementations are preserved).
@@ -9,7 +9,7 @@ beforeEach(() => {
 
 // `classifyError` is deliberately left un-mocked: specs assert the message a
 // user actually sees, which is the whole point of routing through the catalog.
-vi.mock('@/utils', async (importOriginal) => {
+vi.mock('@/lib/logging', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>
   const actualLog = (actual.log as Record<string, unknown> | undefined) ?? {}
 
@@ -18,7 +18,6 @@ vi.mock('@/utils', async (importOriginal) => {
     log: {
       ...actualLog,
       ...mockLog
-    },
-    getTokens: mockGetTokens
+    }
   }
 })

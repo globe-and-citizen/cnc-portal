@@ -1,6 +1,6 @@
 import { isAddress } from 'viem'
 import { z } from 'zod'
-import { isValidPositiveTokenAmount, isSupportedTokenId } from '@/utils/constantUtil'
+import { isValidPositiveTokenAmount, isSupportedTokenId } from '@/utils/tokens/metadata'
 import type { TokenId } from '@/constant'
 
 export const deploySafeSchema = z

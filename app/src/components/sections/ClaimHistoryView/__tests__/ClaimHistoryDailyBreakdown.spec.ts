@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import ClaimHistoryDailyBreakdown from '@/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue'
-import { getMonthWeeks } from '@/utils/dayUtils'
+import { getMonthWeeks } from '@/utils/dates/calendar'
 import { mockUserStore, mockWeeklyClaimData } from '@/tests/mocks'
 
 dayjs.extend(utc)

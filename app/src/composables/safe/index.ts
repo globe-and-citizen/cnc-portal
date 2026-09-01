@@ -7,7 +7,8 @@
 export * from '@/types/safe'
 
 // Utilities - use centralized utils
-export { randomSaltNonce, getSafeHomeUrl, getSafeSettingsUrl, openSafeAppUrl } from '@/utils/safe'
+export { getSafeHomeUrl, getSafeSettingsUrl } from '@/utils/safe/model'
+export { randomSaltNonce, openSafeAppUrl } from '@/lib/safe/browser'
 
 // SDK Management - centralized
 export { useSafeSDK } from './useSafeSdk'

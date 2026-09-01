@@ -9,15 +9,16 @@
  */
 import { useAccountingContext } from './useAccountingContext'
 import type { CncAccounting } from '@/utils/accounting/assemble'
-import { resolveUser } from '@/utils/transactionHistoryUtil'
-import { log } from '@/utils'
-import { buildTables, exportTablesPdf, type ExportPdfOptions } from '@/utils/accountingPdf'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
+import { log } from '@/lib/logging'
+import { buildTables, exportTablesPdf, type ExportPdfOptions } from '@/lib/accounting/pdf'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
-import { buildSheets, exportSheetsExcel } from '@/utils/accountingExport'
+import { buildSheets, exportSheetsExcel } from '@/lib/accounting/spreadsheet'
 
 export function useAccountingExport() {
   const acc = useAccountingContext()
   const toast = useToast()
+  const { resolveUser } = useTransactionPresentation()
 
   // Resolve a ledger party's address to its member/contract display name for the
   // "Activity" column, mirroring what the on-screen ledger shows via avatars.

@@ -79,7 +79,8 @@
 import { computed } from 'vue'
 import { useCommunityCreditStore } from '@/stores'
 import { useFixedReturnMyLenderPositions } from '@/composables/fixedReturn/reads'
-import { formatAmount, percentOf, reachedFundingTarget, statusMeta } from '@/utils'
+import { formatAmount, reachedFundingTarget, statusMeta } from '@/utils/communityCredit/model'
+import { percentOf } from '@/utils/communityCredit/offer'
 import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
 

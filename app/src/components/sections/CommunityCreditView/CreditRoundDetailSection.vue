@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ROUND_VARIANT_TAB_ITEMS, roundToDisplayPrecision } from '@/utils'
+import { ROUND_VARIANT_TAB_ITEMS, roundToDisplayPrecision } from '@/utils/communityCredit/model'
 import type { CreditRound, RoundDetailVariant } from '@/types'
 import CreditAccountTransactions from './CreditAccountTransactions.vue'
 import CreditRepayPanel from './CreditRepayPanel.vue'
