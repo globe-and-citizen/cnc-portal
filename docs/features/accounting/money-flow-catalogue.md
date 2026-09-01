@@ -1,6 +1,7 @@
 # CNC — Money-Flow Catalogue & Accounting Exercise
 
-This document stands on its own. It lists **every way money can move** across the CNC contracts, maps each one to a journal entry, and then runs a **full worked example** end to end: general ledger → T-accounts → trial balance → income statement → balance sheet.
+This document stands on its own. It lists **every way money can move** across the CNC contracts, maps each one to a journal entry, and then
+runs a **full worked example** end to end: general ledger → T-accounts → trial balance → income statement → balance sheet.
 
 > **Scope note.** Only the contracts the CNC actually uses today are catalogued; deployed-but-unused contracts are out of scope.
 
@@ -10,37 +11,40 @@ This document stands on its own. It lists **every way money can move** across th
 
 Plain-English meaning of the terms used throughout, so anyone on the team can follow.
 
-| Term                         | Meaning                                                                                                                                               |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Use case (UC)**            | One specific way money moves, with an ID like `UC-BANK-01`, reusable in tickets and tests.                                                            |
-| **Debit (Dr) / Credit (Cr)** | The two sides of every entry. Every entry has equal debits and credits — that is what keeps the books balanced.                                       |
-| **Account types**            | **Asset** (what the CNC owns), **Liability** (what it owes), **Equity** (the owners' stake), **Income** (revenue/gains), **Expense** (costs/losses).  |
-| **Normal balance**           | Assets & Expenses sit on the **debit** side; Liabilities, Equity & Income sit on the **credit** side.                                                 |
-| **Mint**                     | Creating new **SHER** units. SHER is the CNC ownership token (a share), issued by `InvestorV1`.                                                       |
-| **Native vs ERC-20**         | _Native_ = the chain's own coin (POL on Polygon). _ERC-20_ = a token such as USDC or USDT.                                                            |
-| **Cash basis vs accrual**    | _Cash basis_ = recorded when money actually moves on-chain. _Accrual_ = recorded when earned/owed (used for payroll, via a `Wage Payable` liability). |
-| **GL / IS / BS**             | General ledger (the journal) / income statement (profit & loss) / balance sheet.                                                                      |
+| Term                         | Meaning                                                                                                                                                                                                               |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Use case (UC)**            | One specific way money moves, with an ID like `UC-BANK-01`, reusable in tickets and tests.                                                                                                                            |
+| **Debit (Dr) / Credit (Cr)** | The two sides of every entry. Every entry has equal debits and credits — that is what keeps the books balanced.                                                                                                       |
+| **Account types**            | **Asset** (what the CNC owns), **Liability** (what it owes), **Equity** (the owners' stake), **Contra-equity** (reduces equity — e.g. deferred compensation), **Income** (revenue/gains), **Expense** (costs/losses). |
+| **Normal balance**           | Assets, Expenses & Contra-equity sit on the **debit** side; Liabilities, Equity & Income sit on the **credit** side.                                                                                                  |
+| **Mint**                     | Creating new **SHER** units. SHER is the CNC ownership token (a share), issued by `InvestorV1`.                                                                                                                       |
+| **Native vs ERC-20**         | _Native_ = the chain's own coin (POL on Polygon). _ERC-20_ = a token such as USDC or USDT.                                                                                                                            |
+| **Cash basis vs accrual**    | _Cash basis_ = recorded when money actually moves on-chain. _Accrual_ = recorded when earned/owed (used for payroll, via a `Wage Payable` liability).                                                                 |
+| **GL / IS / BS**             | General ledger (the journal) / income statement (profit & loss) / balance sheet.                                                                                                                                      |
 
 ---
 
 ## 1. The CNC entity
 
-The CNC "company" is the **protocol entity**: its treasury contracts plus its equity contract. We keep **one consolidated set of books** for it; cash is tracked per on-chain account ("pocket"), but they all roll up into total Cash.
+The CNC "company" is the **protocol entity**: its global fee treasury plus its equity contract. Each team also has its own operational
+contract set and books. The shared `FeeCollector` is not a team's pocket: every team pays its CNC usage fees into that global treasury, and
+the CNC recognises the corresponding protocol-fee revenue.
 
-| Inside the CNC books  | On-chain home            |
-| --------------------- | ------------------------ |
-| Operating treasury    | `Bank`                   |
-| Protocol fee treasury | `FeeCollector`           |
-| Payroll               | `CashRemunerationEIP712` |
-| Expense budget        | `ExpenseAccountEIP712`   |
-| Equity / dividends    | `InvestorV1` (SHER)      |
-| Capital raises → Safe | `SafeDepositRouter`      |
+| Inside the CNC books         | On-chain home            |
+| ---------------------------- | ------------------------ |
+| Operating treasury           | `Bank`                   |
+| Global protocol fee treasury | `FeeCollector`           |
+| Payroll                      | `CashRemunerationEIP712` |
+| Expense budget               | `ExpenseAccountEIP712`   |
+| Equity / dividends           | `InvestorV1` (SHER)      |
+| Capital raises → Safe        | `SafeDepositRouter`      |
 
 ---
 
 ## 2. Contracts that move money (Step 1)
 
-Source: `app/src/artifacts/deployed_addresses/chain-31337.json` + `contract/contracts/`. Confirmed against what is actually deployed **and used**.
+Source: `app/src/artifacts/deployed_addresses/chain-31337.json` + `contract/contracts/`. Confirmed against what is actually deployed **and
+used**.
 
 | #   | Contract                   | Native | ERC-20 | Role                                                                         |
 | --- | -------------------------- | :----: | :----: | ---------------------------------------------------------------------------- |
@@ -51,13 +55,15 @@ Source: `app/src/artifacts/deployed_addresses/chain-31337.json` + `contract/cont
 | 5   | **InvestorV1**             |   ✅   |   ✅   | Equity (SHER mints) and dividend distribution                                |
 | 6   | **SafeDepositRouter**      |   ❌   |   ✅   | "Invest & get SHER" — deposits land in the Safe, mints SHER at a fixed price |
 
-Deployed contracts that **do not move money** (governance / wiring, out of scope): `BoardOfDirectors`, `Proposals`, `Elections`, `Officer`, proxies/beacons, `Voting`. `Officer` is only read (fee lookup via `getFeeFor`); it holds no funds.
+Deployed contracts that **do not move money** (governance / wiring, out of scope): `BoardOfDirectors`, `Proposals`, `Elections`, `Officer`,
+proxies/beacons, `Voting`. `Officer` is only read (fee lookup via `getFeeFor`); it holds no funds.
 
 ---
 
 ## 3. Monetary interactions per contract (Step 2)
 
-Direction: **IN** (money in), **OUT** (money out), **INT** (internal transfer between CNC accounts), **MINT** (creates new shares).
+Direction: **IN** (money in), **OUT** (money out), **INT** (internal transfer within one team's accounts), **FEE** (team-to-CNC protocol
+payment), **MINT** (creates new shares).
 
 ### 3.1 Bank — treasury
 
@@ -72,10 +78,10 @@ Direction: **IN** (money in), **OUT** (money out), **INT** (internal transfer be
 
 ### 3.2 FeeCollector — protocol fees
 
-| Function                     | Asset           | Direction         | Caller           | Event                         |
-| ---------------------------- | --------------- | ----------------- | ---------------- | ----------------------------- |
-| `payFee()` / `payFeeToken()` | native / ERC-20 | IN                | billing contract | `FeePaid`                     |
-| `withdraw()`                 | native + ERC-20 | OUT → beneficiary | owner            | `Withdrawn`, `TokenWithdrawn` |
+| Function                     | Asset           | Direction         | Caller                      | Event                         |
+| ---------------------------- | --------------- | ----------------- | --------------------------- | ----------------------------- |
+| `payFee()` / `payFeeToken()` | native / ERC-20 | IN                | team contract (e.g. `Bank`) | `FeePaid`                     |
+| `withdraw()`                 | native + ERC-20 | OUT → beneficiary | owner                       | `Withdrawn`, `TokenWithdrawn` |
 
 ### 3.3 CashRemunerationEIP712 — payroll
 
@@ -100,6 +106,11 @@ Direction: **IN** (money in), **OUT** (money out), **INT** (internal transfer be
 | `distributeMint()` / `individualMint()`                      | SHER shares     | MINT           | owner / MINTER_ROLE | `Minted`                              |
 | `distributeNativeDividends()` / `distributeTokenDividends()` | native / ERC-20 | OUT (pro-rata) | Bank                | `DividendDistributed`, `DividendPaid` |
 
+A distribution emits one `DividendPaid` per shareholder, so the canonical journal books one posting per shareholder (UC-INV-01, one token —
+distributions are mono-currency). The general-ledger **view** folds those legs into one entry — one debit line per beneficiary under
+Dividend Expense, then a single aggregated credit out of Cash — Bank — since the whole distribution is one on-chain transaction. This is
+presentation-only: the underlying postings, the statements, the trial balance, and the per-line drill-down are unchanged.
+
 ### 3.6 SafeDepositRouter — invest → SHER mint
 
 | Function                              | Asset  | Direction             | Caller | Event       |
@@ -112,48 +123,63 @@ Direction: **IN** (money in), **OUT** (money out), **INT** (internal transfer be
 
 The accounts used across the use cases and the worked example.
 
-| Account                                                   | Type      | Normal balance | Notes                                                       |
-| --------------------------------------------------------- | --------- | -------------- | ----------------------------------------------------------- |
-| **Cash — Bank / Safe / Payroll / Expense / FeeCollector** | Asset     | Debit          | One pocket per on-chain account; rolls up into total Cash   |
-| **Trading account**                                       | Asset     | Debit          | Capital deployed to an external trader, carried at cost     |
-| **Wage Payable**                                          | Liability | Credit         | Payroll earned but not yet paid (accrual)                   |
-| **Shares to be issued**                                   | Liability | Credit         | SHER earned but not yet taken; floats at the current multiplier while pending, then clears into equity frozen at the withdraw-date value |
-| **Owner Capital**                                         | Equity    | Credit         | Founder deposits with no shares in return                   |
-| **Investor Equity**                                       | Equity    | Credit         | SHER share capital — capital raises, wages paid in shares, and direct mints |
-| **Retained Earnings**                                     | Equity    | Credit         | Cumulative net income                                       |
-| **Service Revenue**                                       | Income    | Credit         | Payment from a client for a service                         |
-| **Trading Gain**                                          | Income    | Credit         | Profit returned by the trader                               |
-| **Payroll Expense**                                       | Expense   | Debit          | Wages earned                                                |
-| **Operating Expense**                                     | Expense   | Debit          | Approved expense payouts                                    |
-| **Trading Loss**                                          | Expense   | Debit          | Loss on capital deployed to the trader                      |
-| **Dividend Expense**                                      | Expense   | Debit          | Dividend distributed to shareholders                        |
+| Account                                                   | Type      | Normal balance | Notes                                                                                                                                             |
+| --------------------------------------------------------- | --------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cash — Bank / Safe / Payroll / Expense / FeeCollector** | Asset     | Debit          | Team pockets plus the global FeeCollector treasury; report them separately before any consolidation                                               |
+| **Trading account**                                       | Asset     | Debit          | Capital deployed to an external trader, carried at cost                                                                                           |
+| **Wage Payable**                                          | Liability | Credit         | Payroll earned but not yet paid (accrual)                                                                                                         |
+| **SHERS To Be Issued**                                    | Equity    | Credit         | SHER earned but not yet taken; floats at the current multiplier while pending, then clears into Investor Equity frozen at the withdraw-date value |
+| **Deferred SHER Compensation**                            | Contra-eq | Debit          | SHER wages recognised but not yet settled — reduces total equity until issuance                                                                   |
+| **Owner Capital**                                         | Equity    | Credit         | Founder deposits with no shares in return                                                                                                         |
+| **Investor Equity**                                       | Equity    | Credit         | SHER share capital — capital raises, wages paid in shares, and direct mints                                                                       |
+| **Retained Earnings**                                     | Equity    | Credit         | Cumulative net income                                                                                                                             |
+| **Service Revenue**                                       | Income    | Credit         | Payment from a client for a service                                                                                                               |
+| **Protocol Fee Revenue**                                  | Income    | Credit         | CNC usage fees paid by teams into the global FeeCollector                                                                                         |
+| **Trading Gain**                                          | Income    | Credit         | Profit returned by the trader                                                                                                                     |
+| **Payroll Expense**                                       | Expense   | Debit          | Wages earned                                                                                                                                      |
+| **Operating Expense**                                     | Expense   | Debit          | Approved expense payouts                                                                                                                          |
+| **CNC Usage Fee Expense**                                 | Expense   | Debit          | Fees paid by a team for using CNC services                                                                                                        |
+| **Trading Loss**                                          | Expense   | Debit          | Loss on capital deployed to the trader                                                                                                            |
+| **Dividend Expense**                                      | Expense   | Debit          | Dividend distributed to shareholders                                                                                                              |
 
-> **Fees.** A fee on a Bank transfer moves cash from Bank to `Cash — FeeCollector` — both are CNC pockets, so it is an **internal move**, not revenue. (If you ever bill an external team, recognise it as `Protocol Fee Revenue` at FeeCollector instead.)
+> **Fees.** A fee on a team's Bank transfer is paid to the shared global `FeeCollector`. In the team's books it is `CNC Usage Fee Expense`;
+> in the CNC protocol's books it is `Protocol Fee Revenue` and an increase in `Cash — FeeCollector`. It is not an internal move within the
+> paying team.
 
 ### Currency & valuation (rate of record)
 
-Every entry is reported in **USD**. The **quantity** of each currency is what actually moved on-chain and never changes; only its USD equivalence does. How each currency is converted:
+Every entry is reported in **USD**. The **quantity** of each currency is what actually moved on-chain and never changes; only its USD
+equivalence does. How each currency is converted:
 
-| Currency          | Rate of record                                     | Behaviour when the rate moves                                                                                                                                                                                          |
-| ----------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **USDC / USDT**   | pegged **$1.00**                                    | never moves                                                                                                                                                                                                            |
-| **POL (native)**  | the **current live price** (CoinGecko)             | The POL quantity is fixed; only its USD value moves. **Every** POL posting — past and present — is shown at **today's** price, so the whole POL book re-values together and stays balanced (no per-date historical rate). |
-| **SHER**          | the router **compensation multiplier** (1 SHER = `1 / multiplier` USD) | **Realization model** — a *taken* leg freezes, a *pending* leg floats (see below).                                                                                                     |
+| Currency         | Rate of record                                                         | Behaviour when the rate moves                                                                                                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **USDC / USDT**  | pegged **$1.00**                                                       | never moves                                                                                                                                                                                                               |
+| **POL (native)** | the **current live price** (CoinGecko)                                 | The POL quantity is fixed; only its USD value moves. **Every** POL posting — past and present — is shown at **today's** price, so the whole POL book re-values together and stays balanced (no per-date historical rate). |
+| **SHER**         | the router **compensation multiplier** (1 SHER = `1 / multiplier` USD) | **Realization model** — a _taken_ leg freezes, a _pending_ leg floats (see below).                                                                                                                                        |
 
-**SHER — freeze at withdrawal, float while pending.** A wage is a **fixed quantity of SHER** (e.g. 10 h × 5 SHER/h = 50 SHER, whatever the multiplier is); the multiplier only changes its USD value, never the number of SHER minted. So:
+**SHER — freeze at withdrawal, float while pending.** A wage is a **fixed quantity of SHER** (e.g. 10 h × 5 SHER/h = 50 SHER, whatever the
+multiplier is); the multiplier only changes its USD value, never the number of SHER minted. So:
 
-- a **withdrawal / mint** (UC-CASH-03 / Default D) is **frozen at the multiplier of its own date** — the value at which the shares were *taken* — and never moves again;
-- a **pending accrual** (SHER earned but not yet withdrawn, held in `Shares to be issued`, UC-CASH-02) **floats at the current multiplier** — re-valued every time the multiplier moves, until it is withdrawn.
+- a **withdrawal / mint** (UC-CASH-03 / Default D) is **frozen at the multiplier of its own date** — the value at which the shares were
+  _taken_ — and never moves again;
+- a **pending accrual** (SHER earned but not yet withdrawn, held in `SHERS To Be Issued` / `Deferred SHER Compensation`, UC-CASH-02)
+  **floats at the current multiplier** — re-valued every time the multiplier moves, until it is withdrawn.
 
-When a withdrawal settles an accrual, both legs carry the **withdrawal-date** value, so `Shares to be issued` nets to zero with no revaluation account. A partly-withdrawn accrual is quantity-weighted: the withdrawn part frozen, the rest still floating.
+When a withdrawal settles an accrual, both legs carry the **withdrawal-date** value, so `SHERS To Be Issued` nets to zero with no
+revaluation account. A partly-withdrawn accrual is quantity-weighted: the withdrawn part frozen, the rest still floating.
 
-> **Why POL and SHER differ.** Pending SHER is a *promise* the company still owes (a liability), so marking it to the current rate just restates what is owed; once withdrawn it is *realized* equity and locks. POL is cash the company *holds* — its dollar-equivalence is simply recomputed at the current price, and because both sides of every POL entry move together the books never fall out of balance.
+> **Why POL and SHER differ.** Pending SHER is _deferred compensation_ the company has committed to (contra-equity), so marking it to the
+> current rate just restates what is committed; once withdrawn it is _realized_ equity and locks. POL is cash the company _holds_ — its
+> dollar-equivalence is simply recomputed at the current price, and because both sides of every POL entry move together the books never fall
+> out of balance.
 
 ---
 
 ## 5. Use cases + journal entries (Step 3)
 
-**How to read the graphs:** the arrow goes from the **credited** account (where the value comes from) to the **debited** account (where it lands) — the direction of the money. Colour = account type: 🟦 Asset · 🟪 Equity · 🟩 Income · 🟥 Expense · 🟨 Liability. A **dotted** arrow = an internal transfer between CNC pockets.
+**How to read the graphs:** the arrow goes from the **credited** account (where the value comes from) to the **debited** account (where it
+lands) — the direction of the money. Colour = account type: 🟦 Asset · 🟪 Equity · 🟩 Income · 🟥 Expense · 🟨 Liability. A **dotted** arrow
+= an internal transfer between CNC pockets.
 
 ### 5.1 Money coming in
 
@@ -186,7 +212,8 @@ flowchart LR
 | **UC-SDR-01**  | invest & get SHER (owner **or** member) | Dr Cash — Safe · Cr Investor Equity                                      |
 | **UC-TRD-02**  | trader returns capital + profit         | Dr Cash — Safe · Cr Trading account (capital) · Cr Trading Gain (profit) |
 
-> **Owner Capital vs Investor Equity.** A founder _depositing_ money (no shares) → Owner Capital. Anyone (owner **or** member) who _invests and receives SHER_ → Investor Equity, because they get shares. The same person can do both.
+> **Owner Capital vs Investor Equity.** A founder _depositing_ money (no shares) → Owner Capital. Anyone (owner **or** member) who _invests
+> and receives SHER_ → Investor Equity, because they get shares. The same person can do both.
 
 ### 5.2 Money going out
 
@@ -195,11 +222,12 @@ flowchart LR
   bank[("Cash — Bank")]:::asset
   payCash[("Cash — Payroll")]:::asset
   expCash[("Cash — Expense")]:::asset
-  feeCash[("Cash — FeeCollector")]:::asset
+  feeCash[("Cash — FeeCollector<br/>(global CNC treasury)")]:::asset
   trading[Trading account]:::asset
   invEq[Investor Equity]:::equity
   wagePay[Wage Payable]:::liability
-  sharesIssue[Shares to be issued]:::liability
+  shersIssue[SHERS To Be Issued]:::equity
+  deferSher[Deferred SHER Compensation]:::contraeq
 
   payroll[Payroll Expense]:::expense
   opex[Operating Expense]:::expense
@@ -207,44 +235,54 @@ flowchart LR
   tradeLoss[Trading Loss]:::expense
 
   payroll -->|"UC-CASH-02 · cash wage earned"| wagePay
-  payroll -->|"UC-CASH-02 · SHER wage promised"| sharesIssue
+  deferSher -->|"UC-CASH-02 · SHER wage promised"| shersIssue
   wagePay -->|"UC-CASH-03 · paid in cash"| payCash
-  sharesIssue -->|"UC-CASH-03 · minted to equity at withdraw"| invEq
+  shersIssue -->|"UC-CASH-03 · minted to equity at withdraw"| invEq
   expCash -->|"UC-EXP-01 · approved expense"| opex
   bank -->|"UC-INV-01 · pro-rata dividend"| divExp
   bank -->|"UC-TRD-01 · deploy to trader"| trading
   trading -->|"UC-TRD-03 · trader loses capital"| tradeLoss
 
   bank -.->|"UC-BANK-03 · fund payroll / expense"| payCash
-  bank -.->|"fee on transfer"| feeCash
+  feeExpense["CNC Usage Fee Expense<br/>(team books)"]:::expense
+  protocolFee["Protocol Fee Revenue<br/>(CNC books)"]:::income
+  bank -.->|"UC-FEE-01 · team usage fee"| feeExpense
+  protocolFee -->|"FeePaid · global revenue"| feeCash
 
   classDef asset fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
   classDef equity fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95;
   classDef expense fill:#fee2e2,stroke:#ef4444,color:#7f1d1d;
   classDef liability fill:#fef3c7,stroke:#f59e0b,color:#78350f;
+  classDef contraeq fill:#fce7f3,stroke:#ec4899,color:#831843;
 ```
 
-| UC             | Interaction                            | Journal entry                                                                                   |
-| -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **UC-CASH-02** | wage earned (accrual, at claim)        | Dr Payroll Expense · Cr Wage Payable (cash part) · Cr Shares to be issued (SHER part)           |
-| **UC-CASH-03** | wage paid (at withdraw)                | Dr Wage Payable · Cr Cash — Payroll · Dr Shares to be issued · Cr Investor Equity (SHER minted) |
-| **UC-EXP-01**  | approved expense paid (cash basis)     | Dr Operating Expense · Cr Cash — Expense                                                        |
-| **UC-INV-01**  | dividend paid pro-rata                 | Dr Dividend Expense · Cr Cash — Bank                                                            |
-| **UC-BANK-03** | fund payroll/expense from Bank (+ fee) | Dr Cash — Payroll/Expense · Dr Cash — FeeCollector (fee) · Cr Cash — Bank                       |
-| **UC-TRD-01**  | deploy capital to trader               | Dr Trading account · Cr Cash — Bank                                                             |
-| **UC-TRD-03**  | trader loses part of the capital       | Dr Cash (returned) · Dr Trading Loss · Cr Trading account                                       |
+| UC             | Interaction                        | Journal entry                                                                                                        |
+| -------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **UC-CASH-02** | wage earned (accrual, at claim)    | Dr Payroll Expense · Cr Wage Payable (cash part) · Dr Deferred SHER Compensation · Cr SHERS To Be Issued (SHER part) |
+| **UC-CASH-03** | wage paid (at withdraw)            | Dr Wage Payable · Cr Cash — Payroll · Dr SHERS To Be Issued · Cr Investor Equity (SHER minted)                       |
+| **UC-EXP-01**  | approved expense paid (cash basis) | Dr Operating Expense · Cr Cash — Expense                                                                             |
+| **UC-INV-01**  | dividend paid pro-rata             | Dr Dividend Expense · Cr Cash — Bank                                                                                 |
+| **UC-BANK-03** | fund payroll/expense from Bank     | Dr Cash — Payroll/Expense · Cr Cash — Bank                                                                           |
+| **UC-FEE-01**  | team pays CNC usage fee            | Team: Dr CNC Usage Fee Expense · Cr Cash — Bank; CNC: Dr Cash — FeeCollector · Cr Protocol Fee Revenue               |
+| **UC-TRD-01**  | deploy capital to trader           | Dr Trading account · Cr Cash — Bank                                                                                  |
+| **UC-TRD-03**  | trader loses part of the capital   | Dr Cash (returned) · Dr Trading Loss · Cr Trading account                                                            |
 
 ### 5.3 Payroll is accrual; expense is cash basis
 
-Payroll is recognised **when earned** (the claim), against a `Wage Payable` liability, then settled at the withdraw. Expense is recognised **only when paid**. The SHER part of a wage is **not** booked to equity at the claim: the contract only mints (`individualMint`) when the employee calls `withdraw()`. So the SHER promised sits in a `Shares to be issued` liability from claim to withdraw, and becomes `Investor Equity` **only at withdraw** — matching the on-chain `WithdrawToken` / `Minted` events. It never touches `Wage Payable`.
+Payroll is recognised **when earned** (the claim), against a `Wage Payable` liability, then settled at the withdraw. Expense is recognised
+**only when paid**. The SHER part of a wage is **not** booked to equity at the claim: the contract only mints (`individualMint`) when the
+employee calls `withdraw()`. So the SHER promised sits in `SHERS To Be Issued` (equity) from claim to withdraw, offset by
+`Deferred SHER Compensation` (contra-equity), and becomes `Investor Equity` **only at withdraw** — matching the on-chain `WithdrawToken` /
+`Minted` events. It never touches `Wage Payable` or the income statement.
 
 ```
-CLAIM    Dr Payroll Expense        X
-            Cr Wage Payable             (cash + POL part)
-            Cr Shares to be issued      (SHER part)
+CLAIM    Dr Payroll Expense             (cash + POL part)
+            Cr Wage Payable
+         Dr Deferred SHER Compensation  (SHER part — contra-equity)
+            Cr SHERS To Be Issued
 WITHDRAW Dr Wage Payable             (cash + POL part)
             Cr Cash — Payroll
-         Dr Shares to be issued      (SHER part)
+         Dr SHERS To Be Issued       (SHER part)
             Cr Investor Equity          (minted at withdraw)
 ```
 
@@ -256,21 +294,86 @@ Every mint **credits `Investor Equity` in shares**; what changes is the **debit*
 flowchart TD
   minted{{"Minted(shareholder, amount)"}}:::evt
   minted -->|"+ Deposited (SafeDepositRouter)"| cap["Capital raise — UC-SDR-01<br/>Dr Cash (Safe) · Cr Investor Equity"]:::ok
-  minted -->|"+ WithdrawToken (CashRemuneration)"| pay["Pay in shares — UC-CASH-03 (at withdraw)<br/>Dr Shares to be issued · Cr Investor Equity"]:::ok
-  minted ==>|"Minted alone (direct mint) · DEFAULT D"| d["Direct mint — Default D<br/>Dr Shares to be issued · Cr Investor Equity"]:::def
+  minted -->|"+ WithdrawToken (CashRemuneration)"| pay["Pay in shares — UC-CASH-03 (at withdraw)<br/>Dr SHERS To Be Issued · Cr Investor Equity"]:::ok
+  minted ==>|"Minted alone (direct mint) · DEFAULT D"| d["Direct mint — Default D<br/>Dr SHERS To Be Issued · Cr Investor Equity"]:::def
 
   classDef evt fill:#e0e7ff,stroke:#6366f1,color:#312e81;
   classDef ok fill:#dcfce7,stroke:#22c55e,color:#14532d;
   classDef def fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:3px;
 ```
 
-> **Default D.** A direct `individualMint` / `distributeMint` issues shares straight to equity — **Dr Shares to be issued · Cr Investor Equity**, valued at the SHER rate frozen at the mint date. When the mint corresponds to earlier wage accruals it clears them out of `Shares to be issued`; a mint with **no accrual behind it** debits `Shares to be issued` into a **contra (negative) balance** — a known edge to reconcile (`Σ Minted` = on-chain supply, checked against the value in `Investor Equity`).
+> **Default D.** A direct `individualMint` / `distributeMint` issues shares straight to equity — **Dr SHERS To Be Issued · Cr Investor
+> Equity**, valued at the SHER rate frozen at the mint date. When the mint corresponds to earlier wage accruals it clears them out of
+> `SHERS To Be Issued`; a mint with **no accrual behind it** debits `SHERS To Be Issued` into a **contra (negative) balance** — a known edge
+> to reconcile (`Σ Minted` = on-chain supply, checked against the value in `Investor Equity`).
+
+### 5.5 Manual classification of Bank & Safe deposits and withdrawals
+
+Every Bank and Safe deposit/withdrawal is first booked from **address inference** (§5.1–§5.2): the direction and counterparty decide the
+entry. That inference is the **visible fallback**. A team owner can override it by classifying the transaction into one accounting category;
+the classification is keyed to the transaction's stable on-chain identity (`${txHash}-${logIndex}`), persisted, and shared across the team.
+Native and ERC‑20 transfers are covered identically. (Feature: issue #2457. The dedicated **Classification** page lists every classifiable
+transaction.)
+
+A classification re-resolves the two balanced legs deterministically. On a **deposit** the cash pocket (`Cash — Bank` / `Cash — Safe`) is
+debited and the category account credited; on a **withdrawal** it is the reverse — so the entry always balances by construction.
+
+| Classification        | Deposit (cash in)            | Withdrawal (cash out)          |
+| --------------------- | ---------------------------- | ------------------------------ |
+| **Revenue**           | Dr Cash · Cr Service Revenue | —                              |
+| **Expense**           | —                            | Dr Operating Expense · Cr Cash |
+| **Payroll**           | —                            | Dr Payroll Expense · Cr Cash   |
+| **Interest**          | —                            | Dr Interest Expense · Cr Cash  |
+| **Dividend**          | —                            | Dr Dividend Expense · Cr Cash  |
+| **Owner Capital**     | Dr Cash · Cr Owner Capital   | Dr Owner Capital · Cr Cash     |
+| **Shareholder Loan**  | Dr Cash · Cr Loan Payable    | Dr Loan Payable · Cr Cash      |
+| **Internal Transfer** | Dr Cash · Cr _source pocket_ | Dr _dest pocket_ · Cr Cash     |
+
+- **Direction-aware.** `Revenue` is offered only on an inflow; the expense categories (`Expense`, `Payroll`, `Interest`, `Dividend`) only on
+  an outflow; `Owner Capital` and `Shareholder Loan` are meaningful both ways (contribution/draw, borrow/repay).
+- **Not exposed for manual pick.** `Investor Equity` (it must track SHER shares, so it is only booked by a mint) and the `Trading` lines
+  (their live feed is the deferred Polymarket/GC:Trader integration, spec §1) are intentionally left out of the constrained set.
+- **`Internal Transfer` is auto-detected, not hand-picked.** The engine books it only against a known CNC pocket (its inference already does
+  this for pocket-to-pocket moves), so it never appears as a manual choice for an external counterparty.
+- **Guaranteed-internal invariant.** A movement between two CNC-owned pockets is provably an internal transfer and can **never** be
+  reclassified into income or expense — that override is refused and the inferred internal entry stands. This keeps a treasury sweep from
+  being misread as revenue or a cost.
+- **Reversible.** Removing a classification restores the address-inferred fallback. Reclassifying updates the general ledger, income
+  statement and balance sheet consistently (a deposit moved from `Service Revenue` to `Loan Payable` leaves the income statement and lands
+  on liabilities, still balanced).
+- **Authorization.** Only the team owner may create, edit or remove a classification; everyone else sees it read-only. Enforced on the
+  backend, independent of the UI.
+
+### 5.6 Share vesting — grant, release, stop
+
+A vesting schedule is an **agreement only**: no tokens move when it is created, and its shares (the team's Investor/SHER share token) are
+minted on demand — capped to what has actually vested — when the member calls `release` (or when the owner `stopVesting`s). So the books
+recognise the equity **at the mint**, on a settlement basis, mirroring the SHER-wage treatment (§4, share-based compensation is an equity
+transaction, never an income-statement expense):
+
+| Event (on-chain)                  | Use case       | Entry                                                              |
+| --------------------------------- | -------------- | ------------------------------------------------------------------ |
+| `VestingCreated` (grant)          | **UC-VEST-01** | memo-only — records the promised share count, no monetary legs     |
+| `TokensReleased` (release / stop) | **UC-VEST-02** | Dr Deferred SHER Compensation · Cr Investor Equity (minted amount) |
+| `VestingStopped` (stop)           | **UC-VEST-03** | memo-only — the unvested remainder is dropped, never minted        |
+
+The release posting is the two SHER-wage legs (accrual + issuance) **collapsed**: a release vests-and-mints atomically, so the shares issued
+(`Investor Equity` ↑) are neutralised by the contra-equity (`Deferred SHER Compensation` ↑) — net book equity unchanged, nothing on the
+income statement, nothing in cash.
+
+> **No double count.** A `release` mints through the same Investor `individualMint`, so it also emits a `Minted` event in the **same
+> transaction**. That mint is recognised as **backed** (§5.4) by the member + amount of the `TokensReleased` and is **not** re-booked as a
+> direct mint (Default D) — which is exactly what would otherwise drive `SHERS To Be Issued` negative (the "known edge" in §5.4), since a
+> vesting grant never accrued into it.
 
 ---
 
 ## 6. Worked example — a full period
 
-This is the scenario in the companion spreadsheet, booked end to end. Amounts in USD — POL at its current price, SHER at the router multiplier (see [Currency & valuation](#currency--valuation-rate-of-record)). This period has **no rate change**, so every SHER is valued at $1 and every POL amount is stable; the realization/float rules only bite once a rate moves. It balances at every level.
+This is the scenario in the companion spreadsheet, booked end to end for **one team**. Amounts in USD — POL at its current price, SHER at
+the router multiplier (see [Currency & valuation](#currency--valuation-rate-of-record)). This period has **no rate change**, so every SHER
+is valued at $1 and every POL amount is stable; the realization/float rules only bite once a rate moves. Team usage fees are expenses in
+this ledger; the corresponding CNC revenue entry is shown in §6.7.
 
 ### 6.1 The events
 
@@ -297,7 +400,9 @@ The period runs **1 – 28 March 2026**. Each transaction is dated below, and th
 | 17  | 2026-03-26 | Ravi mints 30 SHER for himself (Default D)    |
 | 18  | 2026-03-28 | Ravi pays $20 dividend                        |
 
-> **Claim vs withdraw timing.** Geor's wage claim (#9, 13 Mar) and withdrawal (#10, 15 Mar) are two days apart. The cash + POL owed sits in `Wage Payable` and the SHER promised sits in `Shares to be issued` until the withdrawal settles both — see §5.3.
+> **Claim vs withdraw timing.** Geor's wage claim (#9, 13 Mar) and withdrawal (#10, 15 Mar) are two days apart. The cash + POL owed sits in
+> `Wage Payable` and the SHER promised sits in `SHERS To Be Issued` (offset by `Deferred SHER Compensation`) until the withdrawal settles
+> both — see §5.3.
 
 ### 6.2 General ledger (journal)
 
@@ -317,20 +422,21 @@ The period runs **1 – 28 March 2026**. Each transaction is dated below, and th
 | 2026-03-11 | Transfer Safe → Bank (fund operations) | Cash — Bank                      |      71.75 |            |
 |            |                                        | Cash — Safe                      |            |      71.75 |
 | 2026-03-12 | Ravi funds payroll $50.02              | Cash — Payroll                   |         50 |            |
-|            |                                        | Cash — FeeCollector              |       0.02 |            |
+|            |                                        | CNC Usage Fee Expense            |       0.02 |            |
 |            |                                        | Cash — Bank                      |            |      50.02 |
 | 2026-03-12 | Ravi funds payroll 22 POL              | Cash — Payroll                   |       1.72 |            |
-|            |                                        | Cash — FeeCollector              |       0.01 |            |
+|            |                                        | CNC Usage Fee Expense            |       0.01 |            |
 |            |                                        | Cash — Bank                      |            |       1.73 |
-| 2026-03-13 | Geor claims $40 + 10 POL + 10 SHER     | Payroll Expense                  |       50.8 |            |
+| 2026-03-13 | Geor claims $40 + 10 POL + 10 SHER     | Payroll Expense                  |       40.8 |            |
 |            |                                        | Wage Payable                     |            |       40.8 |
-|            |                                        | Shares to be issued (10 SHER)    |            |         10 |
+|            |                                        | Deferred SHER Compensation       |         10 |            |
+|            |                                        | SHERS To Be Issued (10 SHER)     |            |         10 |
 | 2026-03-15 | Geor withdraws $40 + 10 POL + 10 SHER  | Wage Payable                     |       40.8 |            |
 |            |                                        | Cash — Payroll                   |            |       40.8 |
-|            |                                        | Shares to be issued              |         10 |            |
+|            |                                        | SHERS To Be Issued               |         10 |            |
 |            |                                        | Investor Equity (10 SHER minted) |            |         10 |
 | 2026-03-16 | Ravi funds expense $50                 | Cash — Expense                   |       49.8 |            |
-|            |                                        | Cash — FeeCollector              |        0.2 |            |
+|            |                                        | CNC Usage Fee Expense            |        0.2 |            |
 |            |                                        | Cash — Bank                      |            |         50 |
 | 2026-03-17 | Geor withdraws $20 expense             | Operating Expense                |         20 |            |
 |            |                                        | Cash — Expense                   |            |         20 |
@@ -343,17 +449,20 @@ The period runs **1 – 28 March 2026**. Each transaction is dated below, and th
 |            |                                        | Investor Equity                  |            |         10 |
 | 2026-03-25 | GRG invests $8 & gets SHER             | Cash — Safe                      |          8 |            |
 |            |                                        | Investor Equity                  |            |          8 |
-| 2026-03-26 | Ravi mints 30 SHER (Default D)         | Shares to be issued (30 SHER)    |         30 |            |
+| 2026-03-26 | Ravi mints 30 SHER (Default D)         | SHERS To Be Issued (30 SHER)     |         30 |            |
 |            |                                        | Investor Equity                  |            |         30 |
 | 2026-03-28 | Ravi pays $20 dividend                 | Dividend Expense                 |         20 |            |
 |            |                                        | Cash — Bank                      |            |         20 |
 | **TOTAL**  |                                        |                                  | **708.10** | **708.10** |
 
-> **Ravi's direct mint (#17).** It has **no wage accrual behind it** (Ravi never claimed those 30 SHER), so the `Dr Shares to be issued` has nothing to cancel: `Shares to be issued` is pushed to a **−30 contra balance** and `Investor Equity` rises by 30. The books still balance (the entry is 30 = 30); this is the known unbacked-direct-mint edge from [§5.4](#54-sher-mints--three-paths-one-minted-event).
+> **Ravi's direct mint (#17).** It has **no wage accrual behind it** (Ravi never claimed those 30 SHER), so the `Dr SHERS To Be Issued` has
+> nothing to cancel: `SHERS To Be Issued` is pushed to a **−30 debit balance** and `Investor Equity` rises by 30. The books still balance
+> (the entry is 30 = 30); this is the known unbacked-direct-mint edge from [§5.4](#54-sher-mints--three-paths-one-minted-event).
 
 ### 6.3 T-accounts (per account)
 
-Each posting is tagged with the transaction number `#N` from §6.1 / §6.2, so every line traces back to a journal entry (Dr = left, Cr = right).
+Each posting is tagged with the transaction number `#N` from §6.1 / §6.2, so every line traces back to a journal entry (Dr = left, Cr =
+right).
 
 ```
 Cash — Safe (Asset)
@@ -381,7 +490,7 @@ Dr                       | Cr
 #8  from Bank POL   1.72 |
 Solde              10.92 |
 
-Cash — FeeCollector (Asset)
+CNC Usage Fee Expense (Expense)
 Dr                       | Cr
 #7  fee payroll     0.02 |
 #8  fee POL         0.01 |
@@ -424,36 +533,44 @@ Dr                       | Cr
 #10 Geor withdraw   40.8 | #9  Geor claim       40.8
 Solde                  0 |
 
-Shares to be issued (Liability)
+SHERS To Be Issued (Equity)
 Dr                       | Cr
 #10 Geor withdraw     10 | #9  Geor claim (SHER)  10
 #17 Ravi direct mint  30 |
 Solde (Dr, contra)    30 |   (unbacked direct mint — see #17)
 
-Payroll Expense   (Dr) 50.8  — #9
+Deferred SHER Compensation (Contra-equity)
+Dr                       | Cr
+#9  Geor claim (SHER) 10 |
+Solde (Dr)             10 |
+
+Payroll Expense   (Dr) 40.8  — #9 (cash + POL only)
 Operating Expense (Dr) 20    — #12
 Trading Loss      (Dr) 20    — #14
 Dividend Expense  (Dr) 20    — #18
+CNC Usage Fee Expense (Dr) 0.23 — #7, #8, #11
 Owner Capital          0     (empty — everyone got shares or it was revenue)
 ```
 
 ### 6.4 Trial balance
 
-| Account             | Type      |      Debit |     Credit |
-| ------------------- | --------- | ---------: | ---------: |
-| Cash                | Asset     |     142.20 |            |
-| Trading account     | Asset     |          0 |            |
-| Owner Capital       | Equity    |            |          0 |
-| Investor Equity     | Equity    |            |        168 |
-| Service Revenue     | Income    |            |        100 |
-| Trading Gain        | Income    |            |         15 |
-| Wage Payable        | Liability |          0 |          0 |
-| Shares to be issued | Liability |      30.00 |            |
-| Payroll Expense     | Expense   |      50.80 |            |
-| Operating Expense   | Expense   |         20 |            |
-| Trading Loss        | Expense   |         20 |            |
-| Dividend Expense    | Expense   |         20 |            |
-| **TOTAL**           |           | **283.00** | **283.00** |
+| Account                    | Type      |      Debit |     Credit |
+| -------------------------- | --------- | ---------: | ---------: |
+| Cash                       | Asset     |     141.97 |            |
+| Trading account            | Asset     |          0 |            |
+| Owner Capital              | Equity    |            |          0 |
+| Investor Equity            | Equity    |            |        168 |
+| SHERS To Be Issued         | Equity    |      30.00 |            |
+| Deferred SHER Compensation | Contra-eq |      10.00 |            |
+| Service Revenue            | Income    |            |        100 |
+| Trading Gain               | Income    |            |         15 |
+| Wage Payable               | Liability |          0 |          0 |
+| Payroll Expense            | Expense   |      40.80 |            |
+| Operating Expense          | Expense   |         20 |            |
+| CNC Usage Fee Expense      | Expense   |       0.23 |            |
+| Trading Loss               | Expense   |         20 |            |
+| Dividend Expense           | Expense   |         20 |            |
+| **TOTAL**                  |           | **283.00** | **283.00** |
 
 ### 6.5 Income statement
 
@@ -462,49 +579,79 @@ Owner Capital          0     (empty — everyone got shares or it was revenue)
 | Service Revenue         |     +100.00 |
 | Trading Gain            |      +15.00 |
 | **Total revenue**       | **+115.00** |
-| Payroll Expense         |      −50.80 |
+| Payroll Expense         |      −40.80 |
 | Operating Expense       |      −20.00 |
+| CNC Usage Fee Expense   |       −0.23 |
 | Trading Loss            |      −20.00 |
 | Dividend Expense        |      −20.00 |
-| **Total expenses**      | **−110.80** |
-| **Net income (profit)** |   **+4.20** |
+| **Total expenses**      | **−101.03** |
+| **Net income (profit)** |  **+13.97** |
+
+> **SHER compensation off the income statement.** The SHER part of Geor's wage ($10) is booked as `Deferred SHER Compensation`
+> (contra-equity), not an expense. It reduces total equity directly and never appears in revenue, expenses, or net income.
 
 ### 6.6 Balance sheet
 
-|                                                   |                      $ |
-| ------------------------------------------------- | ---------------------: |
-| **ASSETS**                                        |                        |
-| Cash (USDC + POL)                                 |                 142.20 |
-| Trading account (at cost)                         |                   0.00 |
-| **Total assets**                                  |             **142.20** |
-| **LIABILITIES**                                   |                        |
-| Wage Payable (settled)                            |                   0.00 |
-| Shares to be issued (unbacked direct mint, contra) |                −30.00 |
-| **Total liabilities**                             |              **−30.00** |
-| **EQUITY**                                        |                        |
-| Owner capital                                     |                   0.00 |
-| Investor equity (SHER)                            |                 168.00 |
-| Retained earnings (net profit)                    |                   4.20 |
-| **Total equity**                                  |             **172.20** |
-| **Assets = Liabilities + Equity**                 | **142.20 = −30.00 + 172.20** ✅ |
+|                                                   |                          $ |
+| ------------------------------------------------- | -------------------------: |
+| **ASSETS**                                        |                            |
+| Cash (USDC + POL)                                 |                     141.97 |
+| Trading account (at cost)                         |                       0.00 |
+| **Total assets**                                  |                 **141.97** |
+| **LIABILITIES**                                   |                            |
+| Wage Payable (settled)                            |                       0.00 |
+| **Total liabilities**                             |                   **0.00** |
+| **EQUITY**                                        |                            |
+| Owner capital                                     |                       0.00 |
+| Investor equity (SHER)                            |                     168.00 |
+| SHERS To Be Issued (unbacked direct mint, contra) |                     −30.00 |
+| Deferred SHER Compensation (contra-equity)        |                     −10.00 |
+| Retained earnings (net profit)                    |                      13.97 |
+| **Total equity**                                  |                 **141.97** |
+| **Assets = Liabilities + Equity**                 | **141.97 = 0 + 141.97** ✅ |
+
+### 6.7 Global CNC fee ledger
+
+The team ledger above records the $0.23 of usage fees as `CNC Usage Fee Expense` and reduces the team's cash accordingly. The shared CNC
+`FeeCollector` records the other side in the protocol ledger:
+
+```
+Dr Cash — FeeCollector       0.23
+   Cr Protocol Fee Revenue   0.23
+```
+
+The `FeePaid` event links this CNC revenue to the paying team through its `payer` address and the `TeamContract` mapping. The two entries
+belong to different reporting layers; the fee is not an internal transfer within the team.
 
 ---
 
 ## 7. Reconciliation & notes
 
-- **It balances at every level:** journal 708.10 = 708.10 · trial balance 283 = 283 · assets 142.20 = liabilities −30 + equity 172.20.
-- **Internal transfers don't touch the statements.** Funding payroll/expense from Bank, and the Safe → Bank transfer, only move cash between pockets — no effect on the income statement, balance-sheet totals, or net trial balance. The Safe → Bank transfer of 71.75 exists only because operating payments (payroll, expense, dividend, trader) leave from Bank while the funding (investments) lands in Safe.
-- **Fees stay inside Cash.** The $0.23 of fees moved from Bank to FeeCollector — both CNC pockets — so no revenue is recognised here.
-- **Shares vs value.** `Investor Equity` ($168) counts capital raises ($100 + $10 + $10 + $8), the SHER paid as a wage ($10) and Ravi's direct mint ($30). Ravi's mint (**Default D**) issues 30 SHER straight to equity; because he never accrued them, the offsetting `Dr Shares to be issued` has nothing to cancel and leaves that liability at **−30** (contra) — the known unbacked-direct-mint edge. Still reconcile shares (`Σ Minted` = on-chain supply) against the value in `Investor Equity`.
-- **SHER wages are recognised at withdraw, not at claim.** From the claim until the withdrawal, the SHER part of a wage sits in the `Shares to be issued` liability — **floating at the current multiplier** while it is pending. Only at `withdraw()` does `individualMint` fire and the value move into `Investor Equity`, **frozen at the withdraw-date multiplier**. This matches the on-chain `WithdrawToken` / `Minted` events. The withdraw nets the liability to $0, so it never appears on the balance sheet at period end — but in a period where a claim is open without a matching withdrawal, `Shares to be issued` carries the promised SHER, re-valued at the current multiplier.
-- **Owner Capital is $0** in this period: everyone who put money in either received shares (Investor Equity) or it was a client payment (Service Revenue) — nobody made a pure founder deposit.
+- **It balances at every level:** journal 708.10 = 708.10 · trial balance 283 = 283 · assets 141.97 = liabilities 0 + equity 141.97.
+- **Internal transfers don't touch the statements.** Funding payroll/expense from Bank, and the Safe → Bank transfer, only move cash between
+  pockets — no effect on the income statement, balance-sheet totals, or net trial balance. The Safe → Bank transfer of 71.75 exists only
+  because operating payments (payroll, expense, dividend, trader) leave from Bank while the funding (investments) lands in Safe.
+- **Fees are cross-entity charges.** The team books $0.23 of `CNC Usage Fee Expense`, reducing team cash to $141.97 and team net income to
+  $13.97. The CNC protocol separately books $0.23 of `Protocol Fee Revenue` and `Cash — FeeCollector` in §6.7.
+- **Shares vs value.** `Investor Equity` ($168) counts capital raises ($100 + $10 + $10 + $8), the SHER paid as a wage ($10) and Ravi's
+  direct mint ($30). Ravi's mint (**Default D**) issues 30 SHER straight to equity; because he never accrued them, the offsetting
+  `Dr SHERS To Be Issued` has nothing to cancel and pushes that equity account to a **−30 debit balance** — the known unbacked-direct-mint
+  edge. Still reconcile shares (`Σ Minted` = on-chain supply) against the value in `Investor Equity`.
+- **SHER compensation is contra-equity, not an expense.** The SHER part of a wage is booked as `Deferred SHER Compensation` (contra-equity)
+  against `SHERS To Be Issued` (equity). This keeps SHER off the income statement entirely — net income reflects only cash operations. From
+  the claim until the withdrawal, the SHER compensation **floats at the current multiplier**. Only at `withdraw()` does `individualMint`
+  fire and the value move into `Investor Equity`, **frozen at the withdraw-date multiplier**. The withdraw nets `SHERS To Be Issued` to $0,
+  but `Deferred SHER Compensation` remains as the cost of committed SHER; in a period where a claim is open without a matching withdrawal,
+  both accounts carry the promised SHER, re-valued at the current multiplier.
+- **Owner Capital is $0** in this period: everyone who put money in either received shares (Investor Equity) or it was a client payment
+  (Service Revenue) — nobody made a pure founder deposit.
 
 ### Coverage scorecard
 
-| Step                          | Coverage                                                |
-| ----------------------------- | ------------------------------------------------------- |
-| 1 — Contracts that move money | ✅ 6 used contracts (§2)                                |
-| 2 — Monetary interactions     | ✅ listed per contract (§3)                             |
-| 3 — Use cases + entries       | ✅ UC-BANK / SDR / CASH / EXP / INV / TRD (§5)          |
-| 4 — Chart of accounts         | ✅ asset / liability / equity / income / expense (§4)   |
-| 5 — Reconciliation            | ✅ full worked example, balanced at every level (§6–§7) |
+| Step                          | Coverage                                                                     |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| 1 — Contracts that move money | ✅ 6 used contracts (§2)                                                     |
+| 2 — Monetary interactions     | ✅ listed per contract (§3)                                                  |
+| 3 — Use cases + entries       | ✅ UC-BANK / SDR / CASH / EXP / INV / TRD + manual classification (§5, §5.5) |
+| 4 — Chart of accounts         | ✅ asset / liability / equity / income / expense (§4)                        |
+| 5 — Reconciliation            | ✅ full worked example, balanced at every level (§6–§7)                      |

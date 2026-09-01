@@ -3,11 +3,17 @@ import {
   formatDate,
   formatDateIso,
   formatDateRelative,
+  formatQuarterRange,
   formatDateShort,
+  formatDateShortTime,
+  formatDateWeekdayShort,
   formatDateTime,
   formatDateUtc,
   formatDuration,
   formatMonthYear,
+  formatTimeOfDay,
+  formatWeekdayShort,
+  formatYear,
   fromUnix
 } from '@/utils/format/date'
 import { EMPTY_VALUE } from '@/utils/format/shared'
@@ -27,9 +33,15 @@ describe('date styles', () => {
   it('renders each named style', () => {
     expect(formatDate(ISO)).toBe('Jan 8, 2026')
     expect(formatDateShort(ISO)).toBe('Jan 8')
+    expect(formatDateShortTime(ISO)).toBe('Jan 8, 14:05')
+    expect(formatWeekdayShort(ISO)).toBe('Thu')
+    expect(formatDateWeekdayShort(ISO)).toBe('Thu, Jan 8')
     expect(formatMonthYear(ISO)).toBe('January 2026')
+    expect(formatYear(ISO)).toBe('2026')
+    expect(formatQuarterRange(ISO)).toBe('Jan – Mar 2026')
     expect(formatDateIso(ISO)).toBe('2026-01-08')
     expect(formatDateUtc(ISO)).toBe('2026-01-08 14:05 UTC')
+    expect(formatTimeOfDay(ISO)).toBe('14:05')
   })
 
   it('keeps the time of day so same-day rows stay ordered', () => {

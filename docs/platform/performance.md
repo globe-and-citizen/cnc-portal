@@ -11,26 +11,26 @@
 
 All API endpoints should meet these response time targets:
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| p50 (median) | < 200ms | 50th percentile |
-| p95 | < 500ms | 95th percentile |
-| p99 | < 1000ms | 99th percentile |
+| Metric       | Target   | Measurement     |
+| ------------ | -------- | --------------- |
+| p50 (median) | < 200ms  | 50th percentile |
+| p95          | < 500ms  | 95th percentile |
+| p99          | < 1000ms | 99th percentile |
 
 ### Frontend Performance
 
-| Metric | Target |
-|--------|--------|
-| First Contentful Paint (FCP) | < 1.5s |
-| Largest Contentful Paint (LCP) | < 2.5s |
-| Time to Interactive (TTI) | < 3.5s |
-| Cumulative Layout Shift (CLS) | < 0.1 |
-| First Input Delay (FID) | < 100ms |
+| Metric                         | Target  |
+| ------------------------------ | ------- |
+| First Contentful Paint (FCP)   | < 1.5s  |
+| Largest Contentful Paint (LCP) | < 2.5s  |
+| Time to Interactive (TTI)      | < 3.5s  |
+| Cumulative Layout Shift (CLS)  | < 0.1   |
+| First Input Delay (FID)        | < 100ms |
 
 ### Database Query Performance
 
 - Single record queries: < 50ms
-- Aggregation queries: < 100ms  
+- Aggregation queries: < 100ms
 - Complex joins: < 200ms
 - Full-text search: < 300ms
 
@@ -148,4 +148,4 @@ Monitor these metrics in production:
 
 ---
 
-For feature-specific performance considerations, see individual feature specifications.
+For feature-specific performance considerations, see the canonical feature README.

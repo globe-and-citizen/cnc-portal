@@ -88,6 +88,7 @@ export const mockCashRemunerationReads = {
 }
 
 export const mockCashRemunerationWrites = {
+  withdraw: createContractWriteV3Mock(),
   ownerWithdrawAllToBank: createContractWriteV3Mock(),
   enableClaim: createContractWriteV3Mock(),
   disableClaim: createContractWriteV3Mock()
@@ -114,6 +115,11 @@ export const mockVestingWrites = {
   addVesting: createContractWriteV3Mock(),
   stopVesting: createContractWriteV3Mock(),
   release: createContractWriteV3Mock()
+}
+
+export const mockVestingReads = {
+  vestingsWithMembers: createContractReadMock<unknown>([[], [], []]),
+  archivedVestingsFlat: createContractReadMock<unknown>([[], [], []])
 }
 
 /**
@@ -193,6 +199,7 @@ export const resetContractMocks = () => {
     mockInvestorReads,
     mockCashRemunerationReads,
     mockExpenseAccountReads,
+    mockVestingReads,
     mockFixedReturnReads
   ]
 

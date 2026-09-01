@@ -42,34 +42,6 @@ export const {
   }
 })
 
-vi.mock('@vue/apollo-composable', async () => {
-  const { ref } = await import('vue')
-  apolloState.investorResult = ref()
-  apolloState.investorError = ref<Error | null>(null)
-  apolloState.investorLoading = ref(false)
-  apolloState.safeResult = ref()
-  apolloState.safeError = ref<Error | null>(null)
-  apolloState.safeLoading = ref(false)
-  return { useQuery: mockUseQuery }
-})
-
-vi.mock('@/stores', () => ({
-  useTeamStore: () => ({
-    getContractAddressByType: mockGetContractAddressByType
-  }),
-  useCurrencyStore: () => ({
-    localCurrency: { code: 'USD' },
-    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
-    getTokenPrice: mockGetTokenPrice
-  })
-}))
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: () => ({
-    data: mockInvestorSymbolData
-  })
-}))
-
 const UCardStub = defineComponent({
   name: 'UCard',
   template: '<div><slot name="header" /><slot /></div>'
@@ -95,17 +67,19 @@ const USelectStub = defineComponent({
   template: '<div data-test="investor-type-filter"></div>'
 })
 
-const CustomDatePickerStub = defineComponent({
-  name: 'CustomDatePicker',
+const DatePickerStub = defineComponent({
+  name: 'DatePicker',
   props: {
-    modelValue: { type: Array, required: false }
+    modelValue: { type: Object, required: false },
+    mode: { type: String, required: false },
+    storageKey: { type: String, required: false }
   },
   emits: ['update:modelValue'],
   template: '<div data-test="investor-date-filter"></div>'
 })
 
-const AddressToolTipStub = defineComponent({
-  name: 'AddressToolTip',
+const AddressTooltipStub = defineComponent({
+  name: 'AddressTooltip',
   template: '<div />'
 })
 
@@ -169,8 +143,8 @@ export const createWrapper = (): VueWrapper =>
         UTable: UTableStub,
         USelect: USelectStub,
         UBadge: UBadgeStub,
-        AddressToolTip: AddressToolTipStub,
-        CustomDatePicker: CustomDatePickerStub
+        AddressTooltip: AddressTooltipStub,
+        DatePicker: DatePickerStub
       }
     }
   })

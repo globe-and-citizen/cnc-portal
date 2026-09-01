@@ -194,28 +194,65 @@ export function createCreditCallAccessSchema(context: CreditCallAccessSchemaCont
     })
 }
 
-interface RepayAmountSchemaContext {
-  outstanding: number
-  treasuryBalance: number
-  tokenSymbol?: string
+interface RepaymentAmountValidationContext {
+  amount: string | number
+  decimals: number
+  outstanding: bigint
+  treasuryBalance: bigint | null
 }
 
-export function createRepayAmountSchema({
+export type RepaymentAmountValidationResult =
+  | { valid: true; amountUnits: bigint; isFullRepayment: boolean }
+  | { valid: false; errorMessage: string }
+
+/**
+ * Validates a repayment in token base units so the portal applies the same ceilings as
+ * FixedReturn.sol without rounding a user-entered amount through JavaScript numbers.
+ */
+export function validateRepaymentAmount({
+  amount,
+  decimals,
   outstanding,
-  treasuryBalance,
-  tokenSymbol = 'Token'
-}: RepayAmountSchemaContext) {
-  return z.object({
-    amount: z
-      .number()
-      .positive('Amount must be greater than 0.')
-      .refine((value) => value <= outstanding, {
-        message: `Cannot exceed outstanding balance of ${formatAmountWithPrecision(outstanding, 0, 4)} ${tokenSymbol}.`
-      })
-      .refine((value) => value <= treasuryBalance, {
-        message: `Cannot exceed treasury balance of ${formatAmountWithPrecision(treasuryBalance, 0, 4)} ${tokenSymbol}.`
-      })
-  })
+  treasuryBalance
+}: RepaymentAmountValidationContext): RepaymentAmountValidationResult {
+  if (treasuryBalance === null) {
+    return { valid: false, errorMessage: 'Treasury balance is still loading.' }
+  }
+
+  const normalizedAmount = String(amount).trim()
+  const decimalPart = normalizedAmount.split('.')[1]
+  if (
+    !/^\d+(?:\.\d+)?$/.test(normalizedAmount) ||
+    (decimalPart !== undefined && decimalPart.length > decimals)
+  ) {
+    return { valid: false, errorMessage: 'Enter a valid token amount.' }
+  }
+
+  let amountUnits: bigint
+  try {
+    amountUnits = parseUnits(normalizedAmount, decimals)
+  } catch {
+    return { valid: false, errorMessage: 'Enter a valid token amount.' }
+  }
+
+  if (amountUnits <= 0n) {
+    return { valid: false, errorMessage: 'Amount must be greater than 0.' }
+  }
+  if (outstanding <= 0n) {
+    return { valid: false, errorMessage: 'This round has no outstanding balance.' }
+  }
+  if (amountUnits > outstanding) {
+    return { valid: false, errorMessage: 'Cannot exceed the outstanding balance.' }
+  }
+  if (amountUnits > treasuryBalance) {
+    return { valid: false, errorMessage: 'Cannot exceed the treasury balance.' }
+  }
+
+  return {
+    valid: true,
+    amountUnits,
+    isFullRepayment: amountUnits === outstanding
+  }
 }
 
 interface LendAmountSchemaContext {

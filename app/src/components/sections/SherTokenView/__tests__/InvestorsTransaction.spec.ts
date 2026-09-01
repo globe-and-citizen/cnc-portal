@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { useTeamStore } from '@/stores'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { mockInvestorReads } from '@/tests/mocks'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mocking the
@@ -41,48 +44,30 @@ const tableColumns = (wrapper: VueWrapper) =>
 const tableLoading = (wrapper: VueWrapper) =>
   wrapper.findComponent({ name: 'UTable' }).props('loading') as boolean
 
-const {
-  apolloState,
-  mockUseQuery,
-  mockGetTokenPrice,
-  mockInvestorSymbolData,
-  mockGetContractAddressByType
-} = vi.hoisted(() => {
-  const apolloState = {
-    investorResult: null as unknown as { value: unknown },
-    investorError: null as unknown as { value: Error | null },
-    investorLoading: null as unknown as { value: boolean },
-    safeResult: null as unknown as { value: unknown },
-    safeError: null as unknown as { value: Error | null },
-    safeLoading: null as unknown as { value: boolean }
-  }
-  const mockUseQuery = vi.fn()
-  const mockGetTokenPrice = vi.fn(() => 1)
-  const mockInvestorSymbolData = { value: 'SHER' }
-  const mockGetContractAddressByType = vi.fn((type: string) => {
-    if (type === 'InvestorV1') return INVESTOR_ADDRESS
-    if (type === 'SafeDepositRouter') return SAFE_ROUTER_ADDRESS
-    return null
+const { apolloState, mockGetTokenPrice, mockInvestorSymbolData, mockGetContractAddressByType } =
+  vi.hoisted(() => {
+    const apolloState = {
+      investorResult: null as unknown as { value: unknown },
+      investorError: null as unknown as { value: Error | null },
+      investorLoading: null as unknown as { value: boolean },
+      safeResult: null as unknown as { value: unknown },
+      safeError: null as unknown as { value: Error | null },
+      safeLoading: null as unknown as { value: boolean }
+    }
+    const mockGetTokenPrice = vi.fn(() => 1)
+    const mockInvestorSymbolData = { value: 'SHER' }
+    const mockGetContractAddressByType = vi.fn((type: string) => {
+      if (type === 'InvestorV1') return INVESTOR_ADDRESS
+      if (type === 'SafeDepositRouter') return SAFE_ROUTER_ADDRESS
+      return null
+    })
+    return {
+      apolloState,
+      mockGetTokenPrice,
+      mockInvestorSymbolData,
+      mockGetContractAddressByType
+    }
   })
-  return {
-    apolloState,
-    mockUseQuery,
-    mockGetTokenPrice,
-    mockInvestorSymbolData,
-    mockGetContractAddressByType
-  }
-})
-
-vi.mock('@vue/apollo-composable', async () => {
-  const { ref } = await import('vue')
-  apolloState.investorResult = ref()
-  apolloState.investorError = ref<Error | null>(null)
-  apolloState.investorLoading = ref(false)
-  apolloState.safeResult = ref()
-  apolloState.safeError = ref<Error | null>(null)
-  apolloState.safeLoading = ref(false)
-  return { useQuery: mockUseQuery }
-})
 
 vi.mock('@/composables/investor/useInvestorEventsViaLogs', async () => {
   const { ref } = await import('vue')
@@ -112,31 +97,6 @@ vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => 
   }
 })
 
-vi.mock('@/stores', () => ({
-  useTeamStore: () => ({
-    getContractAddressByType: mockGetContractAddressByType
-  }),
-  useCurrencyStore: () => ({
-    localCurrency: { code: 'USD' },
-    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
-    getTokenPrice: mockGetTokenPrice
-  })
-}))
-
-vi.mock('@/stores/currencyStore', () => ({
-  useCurrencyStore: () => ({
-    localCurrency: { code: 'USD' },
-    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
-    getTokenPrice: mockGetTokenPrice
-  })
-}))
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: () => ({
-    data: mockInvestorSymbolData
-  })
-}))
-
 describe('InvestorsTransactions', () => {
   let wrapper: VueWrapper
 
@@ -150,23 +110,20 @@ describe('InvestorsTransactions', () => {
     apolloState.safeLoading.value = false
     mockGetTokenPrice.mockReturnValue(1)
     mockInvestorSymbolData.value = 'SHER'
+    mockInvestorReads.symbol.data.value = 'SHER'
     mockGetContractAddressByType.mockImplementation((type: string) => {
       if (type === 'InvestorV1') return INVESTOR_ADDRESS
       if (type === 'SafeDepositRouter') return SAFE_ROUTER_ADDRESS
       return null
     })
-    mockUseQuery.mockReset()
-    mockUseQuery
-      .mockReturnValueOnce({
-        result: apolloState.investorResult,
-        error: apolloState.investorError,
-        loading: apolloState.investorLoading
-      })
-      .mockReturnValueOnce({
-        result: apolloState.safeResult,
-        error: apolloState.safeError,
-        loading: apolloState.safeLoading
-      })
+    vi.mocked(useTeamStore).mockReturnValue({
+      getContractAddressByType: mockGetContractAddressByType
+    } as never)
+    vi.mocked(useCurrencyStore).mockReturnValue({
+      localCurrency: { code: 'USD' },
+      supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
+      getTokenPrice: mockGetTokenPrice
+    } as never)
   })
 
   afterEach(() => {
@@ -203,12 +160,18 @@ describe('InvestorsTransactions', () => {
 
   it('filters rows by date range', async () => {
     wrapper = createWrapper()
-    wrapper
-      .getComponent('[data-test="investor-date-filter"]')
-      .vm.$emit('update:modelValue', [
-        new Date('2020-01-01T00:00:00Z'),
-        new Date('2020-01-01T23:59:59Z')
-      ])
+    expect(wrapper.get('[data-test="investor-transaction-history-date-select"]').exists()).toBe(
+      true
+    )
+    const picker = wrapper.getComponent({ name: 'DatePicker' })
+    expect(picker.props('mode')).toBe('range')
+    expect(picker.props('storageKey')).toBe(
+      'transaction-history-range-investor-transaction-history'
+    )
+    picker.vm.$emit('update:modelValue', {
+      start: new Date('2020-01-01T00:00:00Z'),
+      end: new Date('2020-01-01T23:59:59Z')
+    })
     await nextTick()
     expect(tableData(wrapper)).toHaveLength(0)
   })

@@ -131,6 +131,7 @@ The current E2E tests and coverage gaps are:
    - Previous E2E test file (`test/e2e/teams.spec.ts`) was removed in this PR
    - Team creation and related contract-interaction flows are currently **not covered** by E2E tests
    - A new teams test suite should be designed, including required contract deployment interactions
+
 ### Potential Test Fixes Needed
 
 1. **Selector Issues**

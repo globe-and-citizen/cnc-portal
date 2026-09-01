@@ -49,7 +49,7 @@
               :class="!w.custom && 'text-muted cursor-pointer'"
               data-test="whitelist-amount-input"
               @focus="!w.custom && $emit('update-custom', i, true)"
-              @update:model-value="(v) => $emit('update-amount', i, v)"
+              @update:model-value="(value: string | number) => $emit('update-amount', i, value)"
             >
               <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
             </UInput>
@@ -119,7 +119,7 @@ import { computed, ref } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import type { CreditWhitelistEntry, Member } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
-import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
+import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
 import { formatAddress } from '@/utils/formatAddress'
 import { useTeamStore } from '@/stores/teamStore'
 import {

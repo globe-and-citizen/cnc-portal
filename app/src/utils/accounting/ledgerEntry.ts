@@ -14,6 +14,7 @@
 import { getAddress, isAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
 import type { AccountName } from './chartOfAccounts'
+import type { ClassificationCategory } from './classification'
 
 /**
  * The use case (catalogue §5 / spec §4) a ledger entry realises. The `UC-*`
@@ -51,7 +52,14 @@ export type UseCase =
   | 'UC-EXP-01'
   /** Dividend paid to a shareholder. */
   | 'UC-INV-01'
-  /** Direct SHER mint: issue shares into equity — Dr Shares to be issued · Cr Investor Equity. */
+  /** Vesting grant created — agreement only, no tokens move (memo-only entry). */
+  | 'UC-VEST-01'
+  /** Vested shares released/minted to a member — Dr Deferred SHER Compensation ·
+   *  Cr Investor Equity (the equity dilution, off the income statement). */
+  | 'UC-VEST-02'
+  /** Vesting schedule stopped — its unvested remainder is dropped (memo-only entry). */
+  | 'UC-VEST-03'
+  /** Direct SHER mint: issue shares into equity — Dr SHERS To Be Issued · Cr Investor Equity. */
   | 'DEFAULT-D'
   /** Bank protocol fee skimmed to the FeeCollector — a Transaction Fee Expense. */
   | 'FEE'
@@ -81,6 +89,17 @@ export interface LedgerEntry {
   debit: AccountName | null
   /** Account credited. `null` only for memo-only entries (no monetary legs). */
   credit: AccountName | null
+  /**
+   * The pocket **contract instance** holding the debited cash (checksum address).
+   * Set only on a cash-pocket debit leg: it lets the trial balance split one pocket
+   * across redeploys — a team that redeploys its Bank shows `Cash — Bank` (up to the
+   * redeploy) and `Cash — Bank #2` (the new deposits) as separate lines. Presentation
+   * metadata only: every roll-up (summary, income statement, balance sheet) keys off
+   * the base {@link debit} account, so totals are unchanged.
+   */
+  debitInstance?: Address
+  /** The pocket contract instance holding the credited cash — see {@link debitInstance}. */
+  creditInstance?: Address
   /** Absolute USD amount. `0` for memo-only entries. */
   amountUsd: number
   /** Token actually moved on-chain — the entry's currency (spec §2 "Devise"). */
@@ -170,6 +189,13 @@ export interface LedgerEntry {
     /** USD rate of record, when resolved. */
     rate?: number
   }
+  /**
+   * The manual category a team owner classified the source transaction as
+   * (issue #2457), overriding the address inference. Absent means the entry is
+   * address-inferred — the visible fallback the UI flags as such. Set only on
+   * Bank/Safe deposit/withdrawal entries whose transaction has a classification.
+   */
+  classified?: ClassificationCategory
   /** Off-chain enrichment status. */
   enrichment: EnrichmentStatus
 }
@@ -188,17 +214,35 @@ export function normalizeCounterparty(
  * what differs. `counterparty` is checksum-normalized; nullish/invalid is dropped.
  */
 export function makeEntry(
-  fields: Omit<LedgerEntry, 'internal' | 'enrichment' | 'counterparty'> &
+  fields: Omit<
+    LedgerEntry,
+    'internal' | 'enrichment' | 'counterparty' | 'debitInstance' | 'creditInstance'
+  > &
     Partial<Pick<LedgerEntry, 'internal' | 'enrichment'>> & {
       counterparty?: Address | string | null
+      /** Cash-pocket instance for the debit leg — checksum-normalized, invalid dropped. */
+      debitInstance?: Address | string | null
+      /** Cash-pocket instance for the credit leg — checksum-normalized, invalid dropped. */
+      creditInstance?: Address | string | null
     }
 ): LedgerEntry {
-  const { counterparty, internal = false, enrichment = 'not-applicable', ...rest } = fields
+  const {
+    counterparty,
+    debitInstance,
+    creditInstance,
+    internal = false,
+    enrichment = 'not-applicable',
+    ...rest
+  } = fields
   const normalized = normalizeCounterparty(counterparty)
+  const debitAt = normalizeCounterparty(debitInstance)
+  const creditAt = normalizeCounterparty(creditInstance)
   return {
     ...rest,
     internal,
     enrichment,
-    ...(normalized ? { counterparty: normalized } : {})
+    ...(normalized ? { counterparty: normalized } : {}),
+    ...(debitAt ? { debitInstance: debitAt } : {}),
+    ...(creditAt ? { creditInstance: creditAt } : {})
   }
 }

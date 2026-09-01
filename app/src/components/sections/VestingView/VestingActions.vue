@@ -1,15 +1,17 @@
 <template>
   <div>
-    <UButton
-      v-if="teamStore.currentTeam?.ownerAddress === userStore.address"
-      size="sm"
-      color="primary"
-      class="w-max"
-      @click="addVestingModal = { mount: true, show: true }"
-      data-test="createAddVesting"
-      leading-icon="heroicons-outline:plus-circle"
-      label="add vesting"
-    />
+    <TeamArchivedTooltip v-if="isOwner" v-slot="{ disabled }">
+      <UButton
+        size="sm"
+        color="primary"
+        class="w-max"
+        :disabled="disabled"
+        data-test="createAddVesting"
+        leading-icon="heroicons-outline:plus-circle"
+        label="Create schedule"
+        @click="addVestingModal = { mount: true, show: true }"
+      />
+    </TeamArchivedTooltip>
 
     <UModal
       v-if="addVestingModal.mount"
@@ -20,37 +22,30 @@
         }
       }"
       title="Add Vesting Schedule"
-      description="Create a new vesting schedule for your team members."
+      description="Create a minute-precise share vesting schedule for a team member."
+      :ui="{ content: 'sm:max-w-5xl' }"
     >
       <template #body>
-        <CreateVesting
-          v-if="teamStore.currentTeamId"
-          @closeAddVestingModal="handleClose"
-          @reload="handleReload"
-        />
+        <CreateVesting v-if="teamStore.currentTeamId" @closeAddVestingModal="handleClose" />
       </template>
     </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
-
-defineProps<{
-  reloadKey: number
-}>()
-
-const emit = defineEmits(['reload'])
 
 const addVestingModal = ref({ mount: false, show: false })
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
-
-const handleReload = () => {
-  emit('reload') // Propagate reload up
-}
+const isOwner = computed(
+  () =>
+    !!teamStore.currentTeam?.ownerAddress &&
+    teamStore.currentTeam.ownerAddress.toLowerCase() === userStore.address?.toLowerCase()
+)
 
 const handleClose = () => {
   addVestingModal.value = { mount: false, show: false }

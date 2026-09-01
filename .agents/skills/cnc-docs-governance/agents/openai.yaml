@@ -1,0 +1,4 @@
+interface:
+  display_name: "CNC Docs Governance"
+  short_description: "Maintain CNC agent and implementation documentation safely."
+  default_prompt: "Use $cnc-docs-governance to update this CNC Portal documentation."

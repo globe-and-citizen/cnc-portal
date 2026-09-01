@@ -1247,11 +1247,6 @@ export const cashRemunerationEip712Abi = [
   },
   {
     type: 'error',
-    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
-    name: 'CashRemunerationEIP712__TokenTransferFailed'
-  },
-  {
-    type: 'error',
     inputs: [
       { name: 'expected', internalType: 'address', type: 'address' },
       { name: 'received', internalType: 'address', type: 'address' }
@@ -1299,6 +1294,11 @@ export const cashRemunerationEip712Abi = [
     name: 'OwnableUnauthorizedAccount'
   },
   { type: 'error', inputs: [], name: 'ReentrancyGuardReentrantCall' },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'SafeERC20FailedOperation'
+  },
   {
     type: 'error',
     inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
@@ -2235,11 +2235,6 @@ export const expenseAccountEip712Abi = [
   },
   {
     type: 'error',
-    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
-    name: 'ExpenseAccountEIP712__TokenTransferFailed'
-  },
-  {
-    type: 'error',
     inputs: [],
     name: 'ExpenseAccountEIP712__TransferNotAllowed'
   },
@@ -2275,6 +2270,11 @@ export const expenseAccountEip712Abi = [
     name: 'OwnableUnauthorizedAccount'
   },
   { type: 'error', inputs: [], name: 'ReentrancyGuardReentrantCall' },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'SafeERC20FailedOperation'
+  },
   {
     type: 'error',
     inputs: [{ name: 'token', internalType: 'address', type: 'address' }],

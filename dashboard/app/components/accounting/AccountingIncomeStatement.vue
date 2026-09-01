@@ -5,7 +5,7 @@
         <h3 class="font-semibold text-black dark:text-white">
           Income Statement
         </h3>
-        <AccountingDatePicker
+        <DatePicker
           v-model="period"
           mode="range"
           storage-key="dashboard-accounting-income-period"
@@ -223,7 +223,6 @@
 <script setup lang="ts">
 import { getGroupedRowModel } from '@tanstack/vue-table'
 import type { GroupingOptions, Row } from '@tanstack/vue-table'
-import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import type { Range } from '~/types'
@@ -232,6 +231,7 @@ import { formatSignedUsd, formatUsd, type LedgerCategoryColor, signClass } from 
 import { defaultValueForMode, toUnixSeconds } from '~/utils/datePicker'
 import { buildIncomeStatement } from '~/utils/incomeStatement'
 import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
+import { formatDateTime, formatNumber, fromUnix } from '~/utils/format'
 import AccountingPagination from './AccountingPagination.vue'
 import AccountingTableSearch from './AccountingTableSearch.vue'
 
@@ -460,16 +460,16 @@ function groupSoldShares(row: Row<PositionTrade>): number {
 }
 
 function formatDate(ts: number): string {
-  return ts ? format(new Date(ts * 1000), 'MMM d, yyyy HH:mm') : '—'
+  return ts ? formatDateTime(fromUnix(ts)) : '—'
 }
 
 function formatShares(value: number | undefined): string {
-  return value ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'
+  return value ? formatNumber(value, { maxDecimals: 2 }) : '—'
 }
 
 /** Like formatShares but renders 0 as "0" (used for the bought / sold pair). */
 function formatShareCount(value: number): string {
-  return value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  return formatNumber(value, { maxDecimals: 2 })
 }
 
 /**

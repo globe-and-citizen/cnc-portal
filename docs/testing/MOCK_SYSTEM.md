@@ -322,9 +322,7 @@ The system is designed for easy extension. Here's how to add different types of 
 1. **Add mock data** (`query.mock.ts`):
 
 ```typescript
-export const mockMyNewData: MyType = {
-  /* realistic data */
-};
+export const mockMyNewData: MyType = {/* realistic data */};
 ```
 
 2. **Add to queryMocks object** (`query.mock.ts`):

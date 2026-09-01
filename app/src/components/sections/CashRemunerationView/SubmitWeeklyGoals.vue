@@ -71,8 +71,8 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { useToast } from '@nuxt/ui/composables'
-import MarkdownEditor from '@/components/MarkdownEditor.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import MarkdownEditor from '@/components/sections/CashRemunerationView/MarkdownEditor.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamStore } from '@/stores'
 import { useSubmitWeeklyGoalsMutation } from '@/queries/weeklyClaim.queries'
 import type { WeeklyClaim } from '@/types'
@@ -154,6 +154,4 @@ const handleSubmit = async () => {
     errorMessage.value = getAxiosErrorMessage(error, 'Failed to save weekly goals')
   }
 }
-
-defineExpose({ modal, goals, handleSubmit, openModal })
 </script>

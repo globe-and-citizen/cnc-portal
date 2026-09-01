@@ -8,6 +8,14 @@
   >
     <template #body>
       <div v-if="transaction" class="flex w-full flex-col gap-4">
+        <div v-if="state" class="rounded-lg border p-3" data-test="transaction-state-summary">
+          <div class="flex flex-wrap items-center gap-2">
+            <UBadge :color="state.color" variant="soft">{{ state.label }}</UBadge>
+            <span class="text-sm text-gray-600 dark:text-gray-300">{{ state.description }}</span>
+          </div>
+          <p class="mt-2 text-sm font-medium">Next: {{ state.nextStep }}</p>
+        </div>
+
         <div class="rounded-lg bg-gray-50 p-3">
           <p class="text-sm text-gray-700">{{ actionSummary }}</p>
         </div>
@@ -20,14 +28,21 @@
           >
             <span class="text-sm text-gray-500">{{ detail.label }}</span>
             <span v-if="detail.type === 'address'" class="font-mono text-sm break-all">
-              <AddressToolTip :address="detail.value" slice />
+              <AddressTooltip :address="detail.value" slice />
             </span>
             <span v-else class="text-sm font-medium break-all">{{ detail.value }}</span>
           </div>
         </div>
 
         <div class="flex justify-end pt-2">
-          <UButton color="neutral" variant="ghost" @click="handleClose">Close</UButton>
+          <UButton
+            color="neutral"
+            variant="ghost"
+            data-test="close-transaction-details-button"
+            @click="handleClose"
+          >
+            Close
+          </UButton>
         </div>
       </div>
     </template>
@@ -37,12 +52,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SafeTransaction } from '@/types/safe'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import type { SafeTransactionStateMeta } from '@/utils/safeTransactionState'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
 
 interface Props {
   transaction: SafeTransaction | null
+  state?: SafeTransactionStateMeta
 }
 
 interface DetailItem {

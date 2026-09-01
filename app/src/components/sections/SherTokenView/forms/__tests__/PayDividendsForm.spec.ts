@@ -7,7 +7,8 @@ import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks'
 
 const makeBalance = makeTokenBalance
 
-const TokenAmountStub = {
+const TokenAmountInputStub = {
+  name: 'TokenAmountInput',
   props: ['modelValue', 'tokens', 'loading'],
   emits: ['update:modelValue'],
   template: `
@@ -32,10 +33,6 @@ const TokenAmountStub = {
       <slot />
     </div>
   `
-}
-
-const BodAlertStub = {
-  template: `<div data-test="bod-alert" />`
 }
 
 const defaultBalances = () => [
@@ -90,8 +87,7 @@ describe('PayDividendsForm.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          TokenAmount: TokenAmountStub,
-          BodAlert: BodAlertStub
+          TokenAmountInput: TokenAmountInputStub
         }
       }
     })
@@ -169,11 +165,11 @@ describe('PayDividendsForm.vue', () => {
     expect(submitEvents?.[0]).toEqual([2500000n, 'usdc'])
   })
 
-  it('passes non-sher tokens to TokenAmount', () => {
+  it('passes non-sher tokens to TokenAmountInput', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
-    const tokensProp = wrapper.findComponent(TokenAmountStub).props('tokens') as Array<{
+    const tokensProp = wrapper.findComponent(TokenAmountInputStub).props('tokens') as Array<{
       tokenId: string
     }>
 
@@ -181,10 +177,11 @@ describe('PayDividendsForm.vue', () => {
     expect(tokensProp.some((token) => token.tokenId === 'sher')).toBe(false)
   })
 
-  it('shows BodAlert when bod action is required', () => {
+  it('shows the Board approval notice when a Board action is required', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent({ isBodAction: true })
-    expect(wrapper.find('[data-test="bod-alert"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="bod-action-alert"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('This will create a BOD action')
   })
 })

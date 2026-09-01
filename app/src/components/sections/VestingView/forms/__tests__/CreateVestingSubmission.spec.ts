@@ -1,99 +1,93 @@
-import { describe, it, vi, expect, beforeEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
+import { CalendarDate, Time } from '@internationalized/date'
 import { parseUnits } from 'viem'
-import { mockVestingWrites } from '@/tests/mocks/contract.mock'
-import { CalendarDate } from '@internationalized/date'
+import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
+import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
+import { mockInvestorReads, mockVestingWrites, resetContractMocks } from '@/tests/mocks'
 
-describe('CreateVesting.vue', () => {
+describe('CreateVesting.vue — submission', () => {
   let wrapper: VueWrapper
-  const submitForm = async () => {
-    await wrapper.find('[data-test="submit-btn"]').trigger('click')
-    await wrapper.vm.$nextTick()
-  }
-
-  const mountComponent = () =>
-    mount(CreateVesting, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-
-  /**
-   * Drive the form via real DOM/component events instead of mutating vm state:
-   * - SelectMemberInput emits `selectMember`
-   * - UCalendar emits `update:modelValue` with CalendarDate range
-   * - amount and cliff are native inputs reached via `data-test` selectors
-   */
-  const fillFormWithValidData = async (
-    wrapper: VueWrapper,
-    memberAddr = '0x120000000000000000000000000000000000dead'
-  ) => {
-    await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
-      name: 'Test User',
-      address: memberAddr
-    })
-    await wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
-      start: new CalendarDate(2025, 6, 13),
-      end: new CalendarDate(2025, 7, 13)
-    })
-    await wrapper.vm.$nextTick()
-    await wrapper.find('[data-test="cliff"]').setValue('5')
-    await wrapper.find('[data-test="total-amount"]').setValue('5')
-    await wrapper.vm.$nextTick()
-  }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Default: mutate invokes onSuccess to simulate a confirmed write.
-    mockVestingWrites.addVesting.mutate
-      .mockReset()
-      .mockImplementation(
-        (_vars: unknown, opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
-          opts?.onSuccess?.()
-        }
-      )
-    wrapper = mountComponent()
+    resetContractMocks()
+    mockInvestorReads.symbol.data.value = 'SHR'
+    mockVestingWrites.addVesting.mutateAsync.mockResolvedValue({ hash: '0xvesting' })
+    wrapper = mount(CreateVesting, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
   })
 
-  describe('Create Vesting Submission', () => {
-    it('calls addVesting with the share-token amount when confirming a valid form', async () => {
-      await fillFormWithValidData(wrapper, '0x120000000000000000000000000000000000dead')
-
-      const submitBtn = wrapper.find('[data-test="submit-btn"]')
-      expect(submitBtn.attributes('disabled')).toBeUndefined()
-      await submitForm()
-
-      const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
-      await confirmBtn.trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(mockVestingWrites.addVesting.mutate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          args: expect.arrayContaining([parseUnits('5', 6)])
-        }),
-        expect.any(Object)
-      )
-
-      // mutate's onSuccess (configured in beforeEach) resets the form, so the
-      // form view re-mounts with the default amount/cliff inputs at 0.
-      await wrapper.vm.$nextTick()
-      expect((wrapper.find('[data-test="total-amount"]').element as HTMLInputElement).value).toBe(
-        '0'
-      )
-      expect((wrapper.find('[data-test="cliff"]').element as HTMLInputElement).value).toBe('0')
+  async function fillGrant() {
+    await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
+      name: 'Test User',
+      address: '0x120000000000000000000000000000000000dead'
     })
+    await wrapper.find('[data-test="total-amount"]').setValue('100000.125')
 
-    it('prevents submission when form is invalid', async () => {
-      // Empty form (no member, no date, default totalAmount=0) fails schema
-      // validation; submit() never runs and the summary never renders.
-      await submitForm()
+    const calendars = wrapper.findAllComponents({ name: 'UCalendar' })
+    const times = wrapper.findAllComponents({ name: 'UInputTime' })
+    await calendars[0].vm.$emit('update:modelValue', new CalendarDate(2026, 8, 21))
+    await times[0].vm.$emit('update:modelValue', new Time(9, 37))
+    await flushPromises()
+  }
 
-      const summary = wrapper.findComponent({ name: 'VestingSummary' })
-      expect(summary.exists()).toBe(false)
-      expect(mockVestingWrites.addVesting.mutate).not.toHaveBeenCalled()
+  async function reviewAndConfirm() {
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.find('[data-test="confirm-btn"]').exists()).toBe(true)
+    await wrapper.find('[data-test="confirm-btn"]').trigger('click')
+    await flushPromises()
+  }
+
+  it('preserves the selected minute and submits exact duration and cliff seconds', async () => {
+    await fillGrant()
+    await wrapper.find('[data-test="duration-48"]').trigger('click')
+    await wrapper.find('[data-test="cliff-12"]').trigger('click')
+
+    expect(wrapper.find('[data-test="duration-readout"]').text()).toContain('4 years')
+    expect(wrapper.find('[data-test="cliff-duration-readout"]').text()).toContain('1 year')
+    expect(wrapper.find('[data-test="claim-preview"]').text()).toContain('24,982.919661 SHR')
+
+    await reviewAndConfirm()
+
+    const start = new Date(2026, 7, 21, 9, 37, 0, 0)
+    const end = new Date(2030, 7, 21, 9, 37, 0, 0)
+    const cliffEnd = new Date(2027, 7, 21, 9, 37, 0, 0)
+
+    expect(mockVestingWrites.addVesting.mutateAsync).toHaveBeenCalledWith({
+      args: [
+        '0x120000000000000000000000000000000000dead',
+        BigInt(Math.floor(start.getTime() / 1000)),
+        BigInt((end.getTime() - start.getTime()) / 1000),
+        BigInt((cliffEnd.getTime() - start.getTime()) / 1000),
+        parseUnits('100000.125', 6)
+      ]
     })
+  })
+
+  it('submits a zero-second cliff when no cliff is selected', async () => {
+    await fillGrant()
+    await wrapper.find('[data-test="duration-12"]').trigger('click')
+    await reviewAndConfirm()
+
+    const args = mockVestingWrites.addVesting.mutateAsync.mock.calls[0]?.[0].args
+    expect(args[3]).toBe(0n)
+  })
+
+  it('rejects an end boundary less than one minute after the start', async () => {
+    await fillGrant()
+
+    const calendars = wrapper.findAllComponents({ name: 'UCalendar' })
+    const times = wrapper.findAllComponents({ name: 'UInputTime' })
+    await calendars[1].vm.$emit('update:modelValue', new CalendarDate(2026, 8, 21))
+    await times[1].vm.$emit('update:modelValue', new Time(9, 37))
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="confirm-btn"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('End must be at least one minute after start')
   })
 })

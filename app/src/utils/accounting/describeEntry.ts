@@ -34,6 +34,9 @@ const ENTRY_LABEL: Record<UseCase, string> = {
   'UC-CASH-03': 'Wage settlement',
   'UC-EXP-01': 'Operating expense',
   'UC-INV-01': 'Dividend paid',
+  'UC-VEST-01': 'Vesting grant',
+  'UC-VEST-02': 'Vested shares released',
+  'UC-VEST-03': 'Vesting stopped',
   'DEFAULT-D': 'Share issuance',
   FEE: 'Transaction fee',
   INTERNAL: 'Internal transfer',
@@ -78,6 +81,9 @@ const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'UC-CREDIT-05',
   'UC-EXP-01',
   'UC-INV-01',
+  'UC-VEST-01',
+  'UC-VEST-02',
+  'UC-VEST-03',
   'DEFAULT-D'
 ])
 
@@ -159,6 +165,12 @@ function predicate(entry: LedgerEntry): string {
       return `received a ${amount} dividend`
     case 'DEFAULT-D':
       return entry.shares ? `was issued ${entry.shares} SHER` : entryLabel(entry)
+    case 'UC-VEST-01':
+      return entry.shares ? `was granted ${entry.shares} SHER vesting` : entryLabel(entry)
+    case 'UC-VEST-02':
+      return entry.shares ? `vested ${entry.shares} SHER` : entryLabel(entry)
+    case 'UC-VEST-03':
+      return 'had a vesting schedule stopped'
     default:
       return entryLabel(entry)
   }

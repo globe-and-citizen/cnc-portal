@@ -1,40 +1,56 @@
-# Description
+# Summary
 
-## Intial Issue Description
+Describe the user or developer outcome, the implementation boundary, and any intentionally deferred work.
 
-The description of the issue (in the kanban board) that this PR addresses. Please include the issue number in the title of the PR.
+## Tracking issue
 
-> Link to the issue in the kanban board
-> If no issue exists, please create one and link it here.
-Fixes # (issue)
+Closes #<issue-number>
 
-## Issues introduced and fixed (Optional)
+## Validation
 
-If exit: The description of issues you find and fix in this PR.
+- [ ] Relevant automated checks passed locally.
+- [ ] Documentation freshness was checked for every behavioural change.
+- [ ] Manual validation or its explicit limitation is recorded below.
 
-## PR Summary Or Solution description
+## UI/UX Reviewer Journey
 
-The summary should be a short description of the change, what you have done to fixe the issue. Please include the motivation for the change and how it was implemented. If applicable, please include screenshots or code snippets to illustrate the changes.
+Select exactly one impact level. See `.github/copilot-instructions/ui-ux-review.md` for the contract.
 
-## Contribution
+- [ ] `none` — no user-facing visual or interaction impact
+- [ ] `visual` — presentation or interaction feedback changed, but not the product flow
+- [x] `journey` — a user-facing action, permission boundary, state transition, route, or flow changed
 
-For your PR please add a comment to each file edited to explain the changes you made.
+### Visual review
 
-## Type of change
+Complete this section when `visual` is selected.
 
-Please delete options that are not relevant.
+**Surface / entry point:** <route, modal, or product surface>
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change requires a documentation update
+**Review scope:** <viewports, keyboard path, or assistive interaction to review>
 
-- **Please check if the PR fulfills these requirements**
+**Expected result:** <what the reviewer should observe>
 
-- [ ] The commit message follows our guidelines
-- [ ] Tests for the changes have been added (for bug fixes/features)
-- [ ] Docs have been added / updated (for bug fixes / features)
+**Evidence:** <screenshots, recording, or repeatable manual check>
 
-## Contribution checklist
+### Journey review
 
-Before submitting the PR, please make sure you have applied the rules in [CONTRIBUTION.md](./../CONTRIBUTION.md)
+Complete this section when `journey` is selected. A user story stays canonical in `docs/features/`; do not copy its status or acceptance
+criteria here.
+
+**Canonical stories / use cases:** <US-... identifiers>
+
+**Entry point:** <route or discoverable product entry>
+
+**Prerequisites:** <test data, role, wallet, feature state, or None>
+
+**Actors:** <one actor, or Actor A → Actor B for a permission hand-off>
+
+**Evidence:** <automated test, recording, or repeatable manual check>
+
+| Step | Actor   | Action            | Expected result     |
+| ---- | ------- | ----------------- | ------------------- |
+| 1    | <actor> | <reviewer action> | <observable result> |
+
+## Review notes
+
+List known gaps, follow-up issues, migration notes, or reviewer attention points. State `None` when no additional notes apply.

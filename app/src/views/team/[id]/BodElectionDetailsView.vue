@@ -1,28 +1,27 @@
 <template>
-  <CurrentBoDElectionSection
+  <ElectionSummarySection
     v-if="currentElectionId"
     :election-id="currentElectionId"
     :is-details="formattedElection?.resultsPublished"
   />
-  <CurrentBoDSection
+  <BodMembersSection
     v-if="formattedElection?.resultsPublished && currentElectionId"
     :election-id="currentElectionId"
   />
-  <ElectionDetailsSection v-if="currentElectionId" :election-id="currentElectionId" />
+  <ElectionCandidatesSection v-if="currentElectionId" :election-id="currentElectionId" />
 </template>
 
 <script setup lang="ts">
-import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
-import ElectionDetailsSection from '@/components/sections/AdministrationView/BoDElectionDetailsSection.vue'
-import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
+import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
+import ElectionCandidatesSection from '@/components/sections/AdministrationView/ElectionCandidatesSection.vue'
+import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
 import { useTeamStore } from '@/stores'
-import { computed, watch, provide } from 'vue'
+import { computed, watch } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useRouter } from 'vue-router'
 import { log } from '@/utils'
 
-provide('showPublishResultBtn', true)
 const teamStore = useTeamStore()
 const router = useRouter()
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))

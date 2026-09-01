@@ -18,7 +18,7 @@ const PRIMARY_ADDRESS = mockTeamData.members[0]!.address as Address
 const SECONDARY_ADDRESS = mockTeamData.members[1]!.address as Address
 const PRIMARY_USER = mockTeamData.members[0]! as Partial<User>
 
-const UserComponentStub = defineComponent({
+const UserIdentityStub = defineComponent({
   props: ['user'],
   template: `
     <div data-test="user-component">
@@ -34,7 +34,7 @@ const createWrapper = (address: Address = PRIMARY_ADDRESS): VueWrapper =>
     props: { address },
     global: {
       stubs: {
-        UserComponent: UserComponentStub
+        UserIdentity: UserIdentityStub
       }
     }
   })
@@ -67,7 +67,7 @@ describe('TransferSenderCell', () => {
     mockedUseGetUserQuery.mockReturnValue(buildUserQueryReturn({ address: PRIMARY_ADDRESS }))
 
     const wrapper = createWrapper()
-    const userProps = wrapper.findComponent(UserComponentStub).props('user') as {
+    const userProps = wrapper.findComponent(UserIdentityStub).props('user') as {
       name?: string
       address: Address
       imageUrl?: string

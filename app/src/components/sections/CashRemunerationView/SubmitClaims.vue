@@ -25,13 +25,18 @@
     <template #body>
       <div class="mb-20 flex flex-col gap-4">
         <ClaimForm
-          ref="claimFormRef"
           :initial-data="formInitialData"
-          :is-loading="isWageClaimAdding"
-          :disabled-week-starts="props.signedWeekStarts"
-          :restrict-submit="isRestricted"
-          :error-message="addWageClaimError && errorMessage ? errorMessage.message : ''"
-          error-title="Failed to submit claim"
+          :loading="isWageClaimAdding"
+          :submission-rules="{
+            disabledWeekStarts: props.signedWeekStarts,
+            restrictSubmit: isRestricted,
+            maximumHoursPerDay: props.maximumHoursPerDay,
+            existingClaims: props.existingClaims
+          }"
+          :error="{
+            message: addWageClaimError && errorMessage ? errorMessage.message : '',
+            title: 'Failed to submit claim'
+          }"
           @submit="handleSubmit"
         />
       </div>
@@ -46,10 +51,10 @@ import utc from 'dayjs/plugin/utc'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
-import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
+import type { ClaimFormData, ClaimSubmitPayload, Claim } from '@/types'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
 import { startOfWeek } from '@/utils/dayUtils'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
 
 dayjs.extend(utc)
@@ -64,7 +69,6 @@ const modal = ref({
 })
 const errorMessage = ref<{ message: string } | null>(null)
 const addWageClaimError = ref(false)
-const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const resolveInitialDayWorked = (selectedWeekStart?: string): string => {
   const today = dayjs.utc().startOf('day')
   if (!selectedWeekStart) return today.toISOString()
@@ -89,6 +93,8 @@ const props = defineProps<{
   }
   signedWeekStarts?: string[]
   selectedWeekStart?: string
+  maximumHoursPerDay?: number
+  existingClaims?: Pick<Claim, 'minutesWorked' | 'dayWorked'>[]
 }>()
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))
@@ -112,7 +118,6 @@ const openModalForDay = (dayIso: string) => {
 }
 
 const closeModal = () => {
-  claimFormRef.value?.resetForm()
   errorMessage.value = null
   addWageClaimError.value = false
   modal.value = { mount: false, show: false }
@@ -219,11 +224,5 @@ onMounted(async () => {
   }
 })
 
-defineExpose({
-  handleSubmit,
-  modal,
-  errorMessage,
-  formInitialData,
-  openModalForDay
-})
+defineExpose({ openModalForDay })
 </script>

@@ -2,6 +2,7 @@ import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
 import type { ExpenseEventsQuery, RawExpenseTransaction } from '@/types/ponder/expense'
 import type { UBadgeColor } from '@/types/ui'
 import { zeroAddress } from 'viem'
+import { formatDateTime, fromUnix } from '@/utils/format'
 import {
   buildRawTransactions,
   extractTxHashFromId,
@@ -133,7 +134,7 @@ export const buildRawExpenseTransactions = (
 }
 
 export const formatExpenseTransactionDate = (timestamp: number): string =>
-  new Date(timestamp * 1000).toLocaleString('en-US')
+  formatDateTime(fromUnix(timestamp))
 
 export const getExpenseTransactionTypeColor = (type: string): UBadgeColor => {
   const normalizedType = type.toLowerCase()

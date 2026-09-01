@@ -19,10 +19,22 @@
  * - The Bank protocol fee (`FeePaid`) *is* booked, as a real cost leaving the
  *   treasury: `Transaction Fee Expense`. The fee is skimmed to the protocol-wide
  *   FeeCollector (not a team pocket), so it is an expense, not an internal move.
+ *
+ * SHER compensation treatment (issue #2458):
+ * - SHER wages are **not** an expense — they are a non-cash equity transaction.
+ *   The accrual debits `Deferred SHER Compensation` (contra-equity, debit-normal)
+ *   and credits `SHERS To Be Issued` (equity). When the shares are minted /
+ *   withdrawn, `SHERS To Be Issued` is debited and `Investor Equity` credited.
+ *   This keeps SHER off the income statement entirely.
  */
 
-/** The five fundamental account classes of double-entry bookkeeping. */
-export type AccountClass = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'INCOME' | 'EXPENSE'
+/**
+ * The account classes of double-entry bookkeeping, extended with
+ * `CONTRA_EQUITY` — a debit-normal equity class that reduces total equity
+ * (e.g. treasury shares, deferred compensation). It appears on the equity
+ * section of the balance sheet as a negative, never on the income statement.
+ */
+export type AccountClass = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'CONTRA_EQUITY' | 'INCOME' | 'EXPENSE'
 
 /**
  * Every account the CNC books touch. Cash is split per on-chain pocket
@@ -40,14 +52,14 @@ export const ACCOUNT_NAMES = [
   'Wage Payable',
   'Loan Payable',
   'Interest Payable',
-  'Shares to be issued',
+  'Deferred SHER Compensation',
+  'SHERS To Be Issued',
   'Owner Capital',
   'Investor Equity',
   'Retained Earnings',
   'Service Revenue',
   'Trading Gain',
   'Payroll Expense',
-  'Share-based Compensation',
   'Operating Expense',
   'Interest Expense',
   'Dividend Expense',
@@ -74,14 +86,14 @@ export const CHART_OF_ACCOUNTS: Readonly<Record<AccountName, AccountClass>> = {
   'Wage Payable': 'LIABILITY',
   'Loan Payable': 'LIABILITY',
   'Interest Payable': 'LIABILITY',
-  'Shares to be issued': 'LIABILITY',
+  'Deferred SHER Compensation': 'CONTRA_EQUITY',
+  'SHERS To Be Issued': 'EQUITY',
   'Owner Capital': 'EQUITY',
   'Investor Equity': 'EQUITY',
   'Retained Earnings': 'EQUITY',
   'Service Revenue': 'INCOME',
   'Trading Gain': 'INCOME',
   'Payroll Expense': 'EXPENSE',
-  'Share-based Compensation': 'EXPENSE',
   'Operating Expense': 'EXPENSE',
   'Interest Expense': 'EXPENSE',
   'Dividend Expense': 'EXPENSE',
@@ -100,18 +112,47 @@ export function classOf(account: AccountName): AccountClass {
   return CHART_OF_ACCOUNTS[account]
 }
 
-/** Classes whose normal balance sits on the debit side. */
-const DEBIT_NORMAL_CLASSES: ReadonlySet<AccountClass> = new Set<AccountClass>(['ASSET', 'EXPENSE'])
+/**
+ * Cash pockets that split into **per-contract sub-accounts** when a team redeploys,
+ * so the trial balance shows each deployment's balance on its own line (`Cash — Bank`
+ * / `Cash — Bank #2`), each carrying only its own contract's events.
+ *
+ * `Cash — Safe` is **excluded**: the Gnosis Safe's address survives redeploys (it is
+ * governed by no Officer — see `useCNCAccounting`), so there is only ever one Safe
+ * instance to show. `Cash — FeeCollector` is the protocol-wide collector (a single
+ * shared instance) and `Trading account` is a derived position, so neither splits.
+ */
+const INSTANCED_POCKETS: ReadonlySet<AccountName> = new Set<AccountName>([
+  'Cash — Bank',
+  'Cash — Payroll',
+  'Cash — Expense',
+  'Cash — Credit'
+])
 
-/** Whether a class's normal balance is a debit (ASSET / EXPENSE) vs a credit. */
+/** Whether an account is a cash pocket whose trial-balance line splits per contract instance (redeploy). */
+export function isInstancedPocket(account: AccountName): boolean {
+  return INSTANCED_POCKETS.has(account)
+}
+
+/**
+ * Classes whose normal balance sits on the debit side.
+ * CONTRA_EQUITY is debit-normal: it increases with debits and reduces equity.
+ */
+const DEBIT_NORMAL_CLASSES: ReadonlySet<AccountClass> = new Set<AccountClass>([
+  'ASSET',
+  'EXPENSE',
+  'CONTRA_EQUITY'
+])
+
+/** Whether a class's normal balance is a debit (ASSET / EXPENSE / CONTRA_EQUITY) vs a credit. */
 export function isDebitNormalClass(accountClass: AccountClass): boolean {
   return DEBIT_NORMAL_CLASSES.has(accountClass)
 }
 
 /**
  * Whether an account's normal balance is on the **debit** side.
- * ASSET and EXPENSE accounts are debit-normal; LIABILITY, EQUITY and INCOME
- * accounts are credit-normal.
+ * ASSET, EXPENSE and CONTRA_EQUITY accounts are debit-normal; LIABILITY,
+ * EQUITY and INCOME accounts are credit-normal.
  */
 export function isDebitNormal(account: AccountName): boolean {
   return isDebitNormalClass(classOf(account))

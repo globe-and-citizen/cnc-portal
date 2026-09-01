@@ -1,143 +1,81 @@
 # AGENTS.md
 
-Guidance for AI coding agents (GitHub Copilot, Cursor, Codex, Claude Code, etc.) working in this repository. Human contributors should read `README.md` and `CONTRIBUTION.md`.
+Operational guidance for AI coding agents working in this repository. Human contributors should start with [README.md](./README.md) and
+[CONTRIBUTION.md](./CONTRIBUTION.md).
 
-> Detailed area guides live in `.github/copilot-instructions/` (Vue standards, testing patterns, Web3 testing anti-patterns, review checklist, Solidity audit checklist, commit conventions). Consult them for specifics; this file is the orientation layer.
->
-> **Working todolist**: a gitignored `todolist.md` at the repo root is the shared working list between the dev and any AI agent. Read it at the start of a session, keep it accurate as you work (mark items in_progress / done, add discoveries, remove stale items). Don't commit it. If it doesn't exist, create one with the same convention. **Respect dependencies**: tasks marked `(blocked by: …)` must not be started until their blocker is `[x]`; do not fan blocked tasks out in parallel with their blockers.
+## Start here
 
-## Repository layout
+1. Read the gitignored root `todolist.md`. Keep it accurate while working; use `(in_progress)` for active work and `[x]` only when it is
+   complete. Do not commit it. Do not start work marked `(blocked by: …)` until its blocker is complete.
+2. Work in the subproject you touch. This monorepo has no workspace tool: each subproject owns its `package.json` and dependencies.
+3. Read the specialised guide for the affected area. Do not treat this file as a replacement for the implementation guides.
 
-Monorepo without a workspace tool — each subproject has its own `package.json` and `node_modules`. Run commands from the relevant subdirectory.
+## Repository skills
 
-- `app/` — **active** Vue 3 SPA. TypeScript, Vite, Pinia, wagmi/viem, TanStack Query, Apollo Client, Tailwind v4, Nuxt UI v4. The main user-facing product.
-- `dashboard/` — separate Nuxt app for stats/dashboards (not the SPA).
-- `backend/` — Express + TypeScript REST API, Prisma ORM (PostgreSQL), JWT auth. Bruno collections in `backend/bruno/`.
-- `contract/` — Hardhat + Solidity. Deployed addresses are mirrored from `contract/ignition/deployments/` into `app/src/artifacts/deployed_addresses/chain-*.json` and `dashboard/app/artifacts/deployed_addresses/`.
-- `ponder/` — Ponder indexer.
-- `the-graph/` — The Graph subgraph.
+Task-specific workflows are versioned under `.agents/skills/`. Use only the one that matches the work:
 
-Frontend talks to backend over REST and to chain via wagmi/viem. Backend is a thin auth + data gateway; on-chain governance/contribution logic lives in `contract/`.
+- `cnc-work-orchestrator` — plan dependencies and bounded multi-agent work.
+- `cnc-github-flow` — issues, Sprint hierarchy, PRs, reviews, and publishing.
+- `cnc-pr-review` — issue conformance and code-quality review.
+- `cnc-docs-governance` — agent and implementation documentation.
+- `cnc-feature-documentation` — implementation-backed product feature stories and acceptance.
+- `cnc-frontend-change` — Vue client and Nuxt dashboard changes.
+- `cnc-contract-change` — Solidity and ABI changes.
 
-## Setup
+`AGENTS.md` remains the universal contract. Skills contain procedures; detailed standards remain in their specialised guides.
 
-- Node.js v22.18.0+
-- PostgreSQL (or `docker-compose -f docker-compose.dev.yml up` to get one)
-- Required env vars:
-  - Backend: `SECRET_KEY`, `DATABASE_URL`, `FRONTEND_URL`, `CHAIN_ID`
-  - Frontend: `VITE_APP_BACKEND_URL`, `VITE_APP_NETWORK_ALIAS`, `VITE_APP_ETHERSCAN_URL`
-  - Contracts: `ALCHEMY_API_KEY`, `ALCHEMY_HTTP`, `PRIVATE_KEY`
+## Repository map
 
-After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`, `contract/`, etc.).
+- `app/` — Vue 3 SPA, the main product.
+- `dashboard/` — separate Nuxt statistics dashboard.
+- `backend/` — Express API and Prisma.
+- `contract/` — Hardhat and Solidity contracts.
+- `ponder/` and `the-graph/` — indexers.
 
-## Commands
+The frontend uses REST for backend data and wagmi/viem for chain interactions. Contract deployment addresses are mirrored into the frontend
+artifacts; after changing a contract interface, run `npm run generate-abi` in `contract/` and commit the generated frontend ABI.
 
-### Frontend (`app/`)
+## Implementation rules
 
-- `npm run dev` — Vite dev server
-- `npm run build` — `type-check` + `build-only` in parallel
-- `npm run type-check` — `vue-tsc --build tsconfig.app.json --force`
-- `npm run lint` — check the codebase with ESLint
-- `npm run lint:fix` — fix auto-fixable ESLint violations
-- `npm run format` / `format-check`
-- `npm run test:unit` — Vitest. Single file: `npx vitest run path/to/file.spec.ts`. Single test: append `-t "name"`.
-- `npm run test:e2e` (`:headed`, `:ui`, `:debug`) — Playwright. Web3 flows use an in-browser wagmi mock connector (`VITE_E2E=true`); see `app/test/README.md`.
+- Keep a change scoped to the requested outcome. Report adjacent drift that materially affects correctness, security, or the edited
+  behaviour; track it separately unless it blocks the current work.
+- Treat documentation as part of every behavioural change. Before editing a product, contract, or shared-runtime source, identify and update
+  every canonical owner required by the [Documentation Freshness Policy](./docs/platform/documentation-freshness-policy.md). The CI gate
+  rejects changed behavioural sources that have no owner or whose owner was not updated in the same pull request.
+- Write every documentation diagram in Mermaid. Follow the
+  [diagram format rule](./docs/platform/feature-specification-guide.md#diagram-format); do not add ASCII, PlantUML, Draw.io, or image-only
+  diagrams.
+- Use the [query guide](./app/src/queries/README.md) for frontend API queries and mutations. In particular, mutations are pure async
+  functions wrapped by a `useXxxMutation` composable, and one hook serves one endpoint rather than each UI action.
+- Use the [Vue component standards](./.github/copilot-instructions/vue-component-standards.md) when editing Vue components: components
+  describe UI, utilities own pure shaping, composables own reactive logic, and server state remains in its query cache.
+- All feature on-chain writes use `useContractWritesV3`. Read the [contract-write guide](./app/src/composables/contracts/README.md) before
+  adding or changing a write.
+- Read the [testing overview](./.github/copilot-instructions/testing-overview.md) before adding frontend tests; its global mocks must be
+  reused, not re-declared in individual specs.
+- All display formatting goes through the canonical modules documented in
+  [formatting standards](./.github/copilot-instructions/formatting-standards.md).
 
-### Backend (`backend/`)
+## Workflow and public hygiene
 
-- `npm run start` — nodemon on `src/index.ts`
-- `npm run build` — `tsc` + Sentry sourcemap upload (Sentry creds required; run `tsc` directly for plain local builds)
-- `npm run test` / `test:unit` / `test:e2e` — Vitest (separate configs)
-- `npm run test:bruno` — runs the Bruno API collection (auto-runs auth setup)
-- `npx prisma generate` — required after editing the schema
-- `npm run prisma:migrate` / `npm run seed` (`:dev` / `:test` / `:staging` / `:reset`)
-- `npm run lint` / `lint:fix`
+- Use Conventional Commits with the matching gitmoji. Keep commits atomic. GitHub artifacts and user-facing UI strings are in English; see
+  [commit conventions](./.github/copilot-instructions/commit-conventions.md).
+- Before opening a PR, search for a suitable issue or create one, assign it to the current authenticated GitHub user unless the task names
+  another owner, and use `Closes #N` or `Fixes #N` in the PR body.
+- Create every GitHub issue and PR from its repository template. After publishing, read it back with `gh issue view` or `gh pr view` and
+  confirm its headings, Markdown spacing, links, and closing keyword rendered as intended before treating the artifact as complete.
+- For multiline GitHub Markdown, write a body file and pass it with `gh issue|pr ... --body-file`. Never pass escaped `\n` in a shell
+  `--body` string. Verify the raw body contains real line breaks before considering the rendered artifact valid.
+- Treat all repository text as public. Never include infrastructure identifiers or connection strings in commits, issues, PRs, reviews, or
+  committed documentation. Refer to a managed provider or a placeholder instead.
 
-### Contracts (`contract/`)
+## Required validation before pushing
 
-- `npm run compile`, `npm run test` (single file: `npx hardhat test test/Foo.test.ts`), `npm run coverage`
-- `npm run deploy` (localhost) / `npm run deploy:polygon`
-- `npm run validate-upgrade[:polygon|:local]` — OpenZeppelin upgrade safety check
-- `npm run generate-abi` — regenerates `app/src/artifacts/abi/generated.ts` from the compiled
-  artifacts via `@wagmi/cli` (config in `contract/wagmi.config.ts`). Run it after changing a
-  contract and commit the output — `contract/artifacts` is gitignored, so `app/` needs the
-  checked-in copy to type-check. The ABIs are emitted `as const` so viem can resolve write
-  `args` tuples and read return types; never hand-write an `as Abi` wrapper.
-- `npm run lint` (solhint + eslint), `npm run format`
+Run every applicable check in each subproject you changed, and fix failures before pushing.
 
-### Whole stack
-
-- `docker-compose -f docker-compose.dev.yml up` — dev stack including Postgres
-- `docker-compose up` — full stack
-
-## Architecture notes
-
-**Frontend mutation pattern.** Mutations are a pure async function plus a `useXxxMutation` composable wrapping `@tanstack/vue-query`. Use `onSuccess` / `onError` callbacks rather than awaiting + try/catch in components. Surface errors reactively via `UAlert`. Issue #1776 documents the canonical pattern.
-
-**One hook per endpoint, not per action.** In `app/src/queries/**`, do not create multiple mutation or query hooks that share the same `method` + `endpoint` and differ only by request body or query params. Reuse the single existing hook and vary the input at the call site; on the read side, add a query param instead of forking the hook. Example: archive / unarchive / hide / show all reuse `useUpdateTeamMutation` — they do not need their own hooks. Reason: forking creates near-duplicate code, multiplies the query-key surface, and forces components to import N hooks where one would do. See issue #1903.
-
-```ts
-const { mutate: updateTeam, reset } = useUpdateTeamMutation();
-
-function archive() {
-  updateTeam(
-    { pathParams: { id: teamId }, body: { isArchived: true } },
-    { onSuccess: () => reset() },
-  );
-}
-```
-
-**Single source of truth.** Prefer deriving values (computed / selectors) over denormalizing or duplicating state. Don't mirror server data into Pinia stores when a query already owns it — even if the refactor is non-trivial.
-
-**Chain config.** Deployed contract addresses are per-chain JSON files committed under `app/src/artifacts/deployed_addresses/`. After local deploys, `app/package.json` exposes `git:ignore-locally` to keep local-only `chain-31337.json` edits out of commits.
-
-**Auth.** Backend issues JWTs; frontend stores via Pinia.
-
-**Web3 stack.** wagmi + viem for chain reads/writes, Apollo Client for subgraph queries, Safe SDK (`@safe-global/*`) for multisig flows.
-
-**Contract writes — always V3.** All on-chain writes go through `useContractWritesV3` from `@/composables/contracts`. Do **not** import `useWriteContract` / `useWaitForTransactionReceipt` from `@wagmi/vue`, and do **not** import `writeContract` / `waitForTransactionReceipt` from `@wagmi/core` in feature code (components, services, feature composables). Read paths — `readContract`, `estimateGas`, `simulateContract` — stay as-is. The V3 composable owns simulation, send, receipt-wait, error classification, and lifecycle callbacks; reaching past it splinters error handling and breaks the migration tracked in #1798. The rule is enforced by ESLint (`no-restricted-imports` in `app/eslint.config.js`); a legacy allow-list there names the files still pending migration, and each migration PR removes its file from that list.
-
-**Frontend tests — reuse the global mocks.** `app/vitest.config.ts` auto-loads setup files from `app/src/tests/setup/` that `vi.mock(...)` every commonly used dependency (wagmi, viem, TanStack Query, Apollo, Pinia stores, the `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives, `@/lib/axios`, `@/utils`, `@/queries/*.queries`, …). Per-test override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) are re-exported from `@/tests/mocks`. New specs must override the shared mocks; they must not re-declare `vi.mock('<same-path>', …)`. ESLint enforces this (`bannedGlobalMockPaths` in `app/eslint.config.js`, issue #2014). If a module isn't globally mocked but you need it across multiple specs, add it to `src/tests/setup/` and export the override hook from `src/tests/mocks/index.ts` rather than per-spec `vi.mock` calls. See `app/src/tests/README.md` and `.github/copilot-instructions/testing-anti-patterns.md`.
-
-**Frontend authoring — keep components small and readable (DX-first).** A component should fit on a screen and read like a description of the UI, not like a script. Whenever you edit a Vue file, take it as an opportunity to make it leaner.
-
-- **Extract logic, not just markup.** Push pure data shaping into `app/src/utils/` (utility functions) and stateful/reactive logic into `app/src/composables/` (`useXxx`). The component is left declaring _what_ it shows — the _how_ lives outside.
-- **Search before you create.** Before adding a new utility, grep `app/src/utils/` for one that already does the job (or can be generalized). Same rule for composables in `app/src/composables/` — reuse `useXxxMutation`, `useSiwe`, formatters, address/amount helpers, etc. rather than reinventing them. Prefer extending an existing helper to introducing a near-duplicate.
-- **Split when a component grows.** Signs that it's time to refactor: the `<script setup>` block is longer than the `<template>`, multiple unrelated `ref`s/`watch`es, more than one `try/catch`, repeated bits of logic that could be a composable, or formatting/derivation work inline that belongs in a util.
-- **One responsibility per composable / util.** Name it for what it returns (`useTeamRoster`, `formatTokenAmount`) — if you can't name it cleanly, it's doing too much.
-- **Keep the mutation pattern**: pure async fn (often a util) + `useXxxMutation` composable. Components consume them; they don't orchestrate fetch/mutate logic inline.
-
-**Surface drift proactively.** When you open a file to do work and notice it doesn't follow the rules above (oversized component, inline try/catch around mutations, duplicated util, denormalized state, dead `useToastStore` references, etc.), **don't silently ignore it and don't unilaterally rewrite the whole file either**. Tell the developer:
-
-1. What you noticed (be specific — file + the rule it violates).
-2. Why fixing it now is worth it (concrete DX/reviewability/maintenance benefit, not generic platitudes).
-3. That these are exactly the items reviewers check during PR review per `.github/copilot-instructions/review-checklist.md` — fixing in the same PR avoids a follow-up round.
-
-Then ask whether to do it now (scoped to this PR), defer (open a tracking issue), or skip. Default to _proposing_, not _imposing_ — but always raise it.
-
-## Conventions
-
-- **Conventional Commits with gitmoji**: `<type><emoji>: <subject>` — `feat: ✨ ...`, `fix: 🐛 ...`, `refactor: ♻️ ...`, `docs: 📝 ...`, `test: ✅ ...`, `chore: 🔧 ...`, `perf: ⚡️ ...`, `build: 📦 ...`, `ci: 👷 ...`, `style: 💄 ...`. Same format for issue and PR titles. See `.github/copilot-instructions/commit-conventions.md`.
-- **Atomic commits** — commit each logical change as it lands. Don't squash an entire PR into one commit at the end.
-- Issues, PRs, commit messages, and user-facing UI strings/toasts are **English**.
-- Vue components: `<script setup lang="ts">` Composition API. Pinia for global state, TanStack Query for server state.
-- **Display formatting**: never format by hand. Money, token amounts, dates, addresses go through the canonical module — `@/utils/format` in `app/`, `~/utils/format` in `dashboard/`. `Intl.*`, `toLocaleString`, `toFixed` and dayjs pattern strings are ESLint errors outside it. See `.github/copilot-instructions/formatting-standards.md`.
-- TypeScript strict mode across frontend and backend.
-
-## Public-repo hygiene
-
-This repository is **public on GitHub** (`globe-and-citizen/cnc-portal`). Default-treat everything that lands in the repo as world-readable.
-
-- **Never include infrastructure identifiers** — hostnames, ports, bucket names, or cloud provider names — in issues, PR descriptions, commit messages, committed docs, or review comments. Use abstract placeholders: `postgresql://<user>:<password>@<host>:<port>/<db>`. The hostname alone is a credential-stuffing target, even with the password redacted.
-- Refer to providers generically in public text ("our managed provider", "the secrets manager"). Internal docs that need to name them should live outside the repo (e.g. a private wiki).
-- When documenting an ops procedure that needs real credentials, the doc tells the reader _where_ to find them (internal dashboard, CLI tool) but never embeds them.
-- Add an explicit safety note to any ops procedure: _"Don't paste the prod connection string anywhere public — issues, PR descriptions, Slack, commit messages."_
-
-## Code quality gate (mandatory before pushing)
-
-Every subproject ships its own quality checks and CI runs them. **Before pushing to GitHub, run the full check set in every subproject you touched and make sure all of them pass with zero errors.** Do not push with a failing or skipped check — fix the root cause.
-
-Per-subproject checklist:
+Before every GitHub push, agents must also run `npm run lint:docs-freshness` from the repository root. The Husky pre-push hook repeats this
+validation and blocks a push when a behavioural change has no current canonical documentation owner or its owner was not reviewed in the
+same change. Do not bypass the hook with `--no-verify`; update the affected documentation and rerun the validator instead.
 
 ### `app/`
 
@@ -155,7 +93,7 @@ npm run test:unit -- --run
 cd backend
 npm run lint
 npm run format:check
-npx prisma generate   # if you touched prisma/schema.prisma
+npx prisma generate # when prisma/schema.prisma changed
 npm run test:unit -- --run
 ```
 
@@ -163,27 +101,21 @@ npm run test:unit -- --run
 
 ```bash
 cd contract
-npm run lint           # solhint + eslint
-npm run format-check   # sol + ts
+npm run lint
+npm run format-check
 npm run compile
 npm run test
 ```
 
-### `dashboard/`, `ponder/`, `the-graph/`
-
-Run whatever lint / type-check / test scripts the subproject's `package.json` exposes. If a script exists, it must pass.
-
-### Docs (if you touched any `.md` agent-instruction file)
+For `dashboard/`, `ponder/`, and `the-graph/`, run every relevant lint, format, type-check, build, and test script exposed by that
+subproject. Contract PRs also require the [Solidity audit checklist](./.github/copilot-instructions/solidity-audit-checklist.md). When
+changing agent-instruction Markdown, run:
 
 ```bash
+npm run lint:md
+# Markdown style lives in .prettier-markdown.json. Checks all tracked Markdown files; subproject format checks exclude Markdown.
+npm run format:md:check
+npm run test:docs-freshness
+npm run lint:docs-freshness
 bash scripts/audit-doc-drift.sh
 ```
-
-Greps for known-stale terms, broken intra-doc links, and missing canonical reference files. Runs in CI on every PR that touches agent docs.
-
-## Before opening a PR
-
-1. The code quality gate above passed in every touched subproject.
-2. Reviewed against `.github/copilot-instructions/review-checklist.md`. **For any PR touching `contract/`, also work through `.github/copilot-instructions/solidity-audit-checklist.md`** — Slither runs in CI (`.github/workflows/contract-slither.yml`) and blocks on new high/medium findings.
-3. PR title follows Conventional Commits + gitmoji. Use the template in `.github/pull_request_template.md`.
-4. **Every PR must be linked to a GitHub issue.** Search existing open issues first; if none fits, open one before (or alongside) the PR and reference it in the PR body with a closing keyword (`Closes #N`, `Fixes #N`). Trivial chores (typo fix, doc drift, dependency bump) follow the same rule — open a small tracking issue rather than skipping it. The issue is the "why"; the PR is the "how".

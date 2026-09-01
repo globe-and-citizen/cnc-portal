@@ -1,12 +1,13 @@
 import dayjs from 'dayjs'
 import quarterOfYear from 'dayjs/plugin/quarterOfYear'
+import { formatDate, formatDateShort, formatMonthYear } from '@/utils/format'
 
 // `quarterOfYear` enables startOf/endOf/add with the 'quarter' unit. Extending here keeps
 // this module self-contained (app/src/utils/dayUtils.ts extends utc/isoWeek/weekday only).
 dayjs.extend(quarterOfYear)
 
 /**
- * Pure date logic shared by the dual-mode {@link AccountingDatePicker}.
+ * Pure date logic shared by the dual-mode {@link DatePicker}.
  *
  * Ported verbatim from the dashboard so both apps share the same picker behaviour.
  *
@@ -76,14 +77,16 @@ export function stepAnchor(anchor: Date, unit: AnchorUnit, direction: -1 | 1): D
 
 /** Label shown between the ◀ / ▶ controls, e.g. `February 2026`, `Jul – Sep 2025`, `2022`. */
 export function formatAnchorLabel(anchor: Date, unit: AnchorUnit): string {
-  const d = dayjs(anchor)
   switch (unit) {
     case 'month':
-      return d.format('MMMM YYYY')
+      return formatMonthYear(anchor)
     case 'year':
-      return d.format('YYYY')
-    case 'quarter':
-      return `${d.startOf('quarter').format('MMM')} – ${d.endOf('quarter').format('MMM')} ${d.format('YYYY')}`
+      return String(anchor.getFullYear())
+    case 'quarter': {
+      const startMonth = formatDateShort(dayjs(anchor).startOf('quarter')).split(' ')[0]
+      const endMonth = formatDateShort(dayjs(anchor).endOf('quarter')).split(' ')[0]
+      return `${startMonth} – ${endMonth} ${anchor.getFullYear()}`
+    }
   }
 }
 
@@ -136,16 +139,14 @@ export function isAllTimeRange(range: { start?: Date | null }): boolean {
   return !range.start || range.start.getTime() === 0
 }
 
-const DAY_FORMAT = 'MMM D, YYYY'
-
 /** Trigger-button label for `date` mode, e.g. `As of Jun 3, 2026`. */
 export function formatAsOfLabel(date: Date): string {
-  return `As of ${dayjs(date).format(DAY_FORMAT)}`
+  return `As of ${formatDate(date)}`
 }
 
 /** Trigger-button label for `range` mode, e.g. `From Jan 12, 2026 to Dec 25, 2026`. */
 export function formatRangeLabel(range: Range): string {
-  return `From ${dayjs(range.start).format(DAY_FORMAT)} to ${dayjs(range.end).format(DAY_FORMAT)}`
+  return `From ${formatDate(range.start)} to ${formatDate(range.end)}`
 }
 
 /** Start of the current day (default anchor for every preset). */

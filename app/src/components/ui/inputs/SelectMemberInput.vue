@@ -1,0 +1,182 @@
+<template>
+  <div
+    class="relative"
+    :class="isFetching ? 'animate-pulse' : ''"
+    data-test="member-input"
+    :data-loading="isFetching || undefined"
+  >
+    <UInput
+      type="text"
+      v-model="input"
+      ref="inputSearch"
+      placeholder="Search by name or address"
+      data-test="member-input"
+      :disabled="disabled"
+      class="w-full"
+    />
+    <div v-if="!showOnFocus || (showOnFocus && showDropdown)">
+      <div
+        v-if="filteredUsers.length > 0"
+        class="top-full left-0 mt-4 w-full"
+        data-test="user-dropdown"
+      >
+        <div class="mb-2 text-sm text-gray-500" data-test="select-member-hint">
+          Click to select a member
+        </div>
+        <div class="rounded-xl bg-white shadow-sm">
+          <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
+            <div
+              v-for="user in filteredUsers.slice(0, 8)"
+              :key="user.address"
+              @click="handleSelectMember(user)"
+              class="flex items-center"
+              :class="
+                isSafeOwner(user)
+                  ? 'cursor-not-allowed'
+                  : isExistingTeamMember(user)
+                    ? 'cursor-not-allowed'
+                    : 'cursor-pointer'
+              "
+              data-test="user-row"
+            >
+              <UTooltip
+                :text="
+                  isExistingTeamMember(user)
+                    ? 'Already in your team'
+                    : isSafeOwner(user)
+                      ? 'Already a safe owner'
+                      : undefined
+                "
+                class="grow"
+              >
+                <UserIdentity
+                  class="grow rounded-lg p-4"
+                  :class="[
+                    isExistingTeamMember(user)
+                      ? 'bg-gray-200 opacity-60'
+                      : isSafeOwner(user)
+                        ? 'bg-gray-100 opacity-60'
+                        : 'bg-white hover:bg-gray-100'
+                  ]"
+                  :user="user"
+                  :data-test="`user-dropdown-${user.address}`"
+                />
+              </UTooltip>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p v-else-if="input" class="mt-3 text-sm text-gray-400" data-test="no-members-found">
+        No members found
+      </p>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { ref, computed, watch } from 'vue'
+import { useFocus, watchDebounced } from '@vueuse/core'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import type { MemberSelectionScope, User } from '@/types'
+import { useTeamStore } from '@/stores/teamStore'
+import { useGetSearchUsersQuery } from '@/queries'
+
+interface Props {
+  disabled?: boolean
+  showOnFocus?: boolean
+  memberScope?: MemberSelectionScope
+  hiddenMembers: User[]
+  currentSafeOwners?: string[]
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  showOnFocus: false,
+  memberScope: 'all-users',
+  hiddenMembers: () => [],
+  currentSafeOwners: () => []
+})
+
+const teamStore = useTeamStore()
+
+const emit = defineEmits<{
+  selectMember: [member: User]
+}>()
+
+const input = ref('')
+const inputSearch = ref<{ focus: () => void; inputRef: HTMLInputElement } | null>(null)
+const { focused: searchInputFocus } = useFocus(computed(() => inputSearch.value?.inputRef ?? null))
+const showDropdown = ref(false)
+
+const lower = (a?: string) => (a ?? '').toLowerCase()
+
+const searchQuery = computed(() => {
+  const query = input.value
+  if (!query) return undefined
+  return query
+})
+
+const {
+  data: users,
+  isFetching,
+  refetch: refetchUsers
+} = useGetSearchUsersQuery({
+  queryParams: { search: searchQuery, limit: 100 }
+})
+
+const isTeamMember = (user: User): boolean => {
+  const members: User[] = teamStore.currentTeamMeta.data?.members ?? []
+  return members.some((member) => lower(member.address) === lower(user.address))
+}
+
+const isExistingTeamMember = (user: User): boolean =>
+  props.memberScope === 'non-team-members' && isTeamMember(user)
+
+const isSafeOwner = (user: User): boolean => {
+  return props.currentSafeOwners?.some((owner) => lower(owner) === lower(user.address)) ?? false
+}
+
+const filteredUsers = computed<User[]>(() => {
+  let members: User[] = []
+  if (props.memberScope === 'team-members') {
+    members = teamStore.currentTeamMeta.data?.members ?? []
+  } else {
+    members = users.value ? (users.value.users as User[]) : []
+  }
+
+  return members.filter(
+    (user) => !props.hiddenMembers.some((hiddenMember) => hiddenMember.address === user.address)
+  )
+})
+
+watchDebounced(
+  input,
+  async () => {
+    if (props.memberScope !== 'team-members') {
+      await refetchUsers()
+    }
+  },
+  { debounce: 500, maxWait: 5000 }
+)
+
+watch(searchInputFocus, (newVal) => {
+  if (props.showOnFocus && newVal) {
+    showDropdown.value = true
+  }
+})
+
+const handleSelectMember = async (member: User) => {
+  if (isSafeOwner(member)) {
+    return
+  }
+
+  if (isExistingTeamMember(member)) {
+    return
+  }
+
+  showDropdown.value = false
+  input.value = ''
+  emit('selectMember', member)
+  await refetchUsers()
+  inputSearch.value?.focus()
+}
+</script>

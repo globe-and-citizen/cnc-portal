@@ -1,0 +1,116 @@
+<template>
+  <UCard>
+    <div v-if="ownerUser.address" class="flex items-center justify-between">
+      <div class="text-lg text-gray-500">
+        <div class="flex items-center gap-4">
+          <UAvatar
+            :src="ownerUser.imageUrl"
+            :alt="`${ownerUser.name || 'User'} avatar`"
+            :text="ownerUser.name?.slice(0, 1).toUpperCase() || 'U'"
+            icon="i-lucide-user"
+            size="lg"
+            data-test="contract-owner-avatar"
+          />
+          <div>
+            <span class="text-gray-500">Owner name:</span>
+            <p class="font-bold text-gray-800" data-test="contract-owner-name">
+              {{ ownerUser.name || 'User' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-lg text-gray-500">
+        <span class="flex items-center gap-4">
+          Owner address:
+          <AddressTooltip :address="ownerUser.address" />
+        </span>
+      </div>
+    </div>
+
+    <div v-else class="flex items-center justify-center py-4">
+      <span class="text-gray-500">Loading owner information...</span>
+    </div>
+  </UCard>
+</template>
+
+<script setup lang="ts">
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import { useTeamStore } from '@/stores/'
+import { type User } from '@/types/user'
+import type { Member } from '@/types/member'
+import { ref, watch, computed } from 'vue'
+import { readContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
+import type { Abi, Address } from 'viem'
+
+const props = defineProps<{
+  contractAddress?: Address
+}>()
+
+const teamStore = useTeamStore()
+
+// Minimal ABI to read owner() from arbitrary contract
+const OWNER_ABI: Abi = [
+  {
+    name: 'owner',
+    stateMutability: 'view',
+    type: 'function',
+    inputs: [],
+    outputs: [{ type: 'address' }]
+  }
+]
+
+const ownerUser = ref<User>({
+  name: '',
+  address: undefined
+})
+
+// prefer explicit prop
+const contractAddress = computed<Address | undefined>(
+  () => props.contractAddress as Address | undefined
+)
+
+const resolveOwnerFromContract = async () => {
+  const contractAddr = contractAddress.value!
+
+  try {
+    const chainOwner = await readContract(config, {
+      address: contractAddr,
+      abi: OWNER_ABI,
+      functionName: 'owner'
+    })
+
+    const ownerAddr = typeof chainOwner === 'string' ? chainOwner : String(chainOwner)
+
+    const member = teamStore.currentTeam?.members.find((m: Member) => {
+      return (m.address || '').toLowerCase() === ownerAddr.toLowerCase()
+    })
+
+    const boardAddress = teamStore.getContractAddressByType('BoardOfDirectors')
+    const isBoard = boardAddress && boardAddress.toLowerCase() === ownerAddr.toLowerCase()
+
+    if (isBoard) {
+      ownerUser.value = { name: 'Board of Directors', address: ownerAddr }
+    } else if (member) {
+      ownerUser.value = {
+        name: member.name || ownerAddr,
+        address: ownerAddr,
+        imageUrl: member.imageUrl || undefined
+      }
+    } else {
+      ownerUser.value = { name: ownerAddr, address: ownerAddr }
+    }
+  } catch (error) {
+    console.error('Failed to resolve contract owner:', error)
+  }
+}
+
+watch(
+  contractAddress,
+  () => {
+    resolveOwnerFromContract()
+  },
+  { immediate: true }
+)
+</script>

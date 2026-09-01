@@ -23,6 +23,7 @@ import type {
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import { atDate, type MapperContext } from './context'
+import { applyClassification } from './applyClassification'
 
 export interface BankMapperInput {
   deposits?: readonly BankDepositRow[]
@@ -35,7 +36,13 @@ const BANK = 'Cash — Bank' as const
 
 /** Map a single Bank deposit (native or token) to its ledger entry. */
 function mapDeposit(
-  row: { id: string; depositor: string; amount: string; timestamp: number },
+  row: {
+    id: string
+    contractAddress: string
+    depositor: string
+    amount: string
+    timestamp: number
+  },
   token: string | null,
   ctx: MapperContext
 ): LedgerEntry {
@@ -43,39 +50,42 @@ function mapDeposit(
   const sourcePocket = ctx.pocketOf(row.depositor)
   const isFounder = ctx.founderAddresses.has(row.depositor as `0x${string}`)
 
-  if (sourcePocket) {
-    return makeEntry({
-      id: row.id,
-      timestamp: row.timestamp,
-      useCase: 'INTERNAL',
-      debit: BANK,
-      credit: sourcePocket,
-      amountUsd,
-      token: ctx.tokenIdOf(token),
-      rawAmount: row.amount,
-      counterparty: row.depositor,
-      internal: true,
-      memo: `Internal funding into Bank from ${sourcePocket}`
-    })
-  }
+  const inferred = sourcePocket
+    ? makeEntry({
+        id: row.id,
+        timestamp: row.timestamp,
+        useCase: 'INTERNAL',
+        debit: BANK,
+        debitInstance: row.contractAddress,
+        credit: sourcePocket,
+        creditInstance: row.depositor,
+        amountUsd,
+        token: ctx.tokenIdOf(token),
+        rawAmount: row.amount,
+        counterparty: row.depositor,
+        internal: true,
+        memo: `Internal funding into Bank from ${sourcePocket}`
+      })
+    : makeEntry({
+        id: row.id,
+        timestamp: row.timestamp,
+        useCase: isFounder ? 'UC-BANK-01' : 'UC-BANK-02',
+        debit: BANK,
+        debitInstance: row.contractAddress,
+        credit: isFounder ? 'Owner Capital' : 'Service Revenue',
+        amountUsd,
+        token: ctx.tokenIdOf(token),
+        rawAmount: row.amount,
+        counterparty: row.depositor,
+        memo: isFounder ? 'Founder deposit into Bank' : 'Client payment into Bank'
+      })
 
-  return makeEntry({
-    id: row.id,
-    timestamp: row.timestamp,
-    useCase: isFounder ? 'UC-BANK-01' : 'UC-BANK-02',
-    debit: BANK,
-    credit: isFounder ? 'Owner Capital' : 'Service Revenue',
-    amountUsd,
-    token: ctx.tokenIdOf(token),
-    rawAmount: row.amount,
-    counterparty: row.depositor,
-    memo: isFounder ? 'Founder deposit into Bank' : 'Client payment into Bank'
-  })
+  return applyClassification(inferred, 'in', BANK, ctx)
 }
 
 /** Map a single Bank transfer-out (native or token) to its ledger entry. */
 function mapTransfer(
-  row: { id: string; to: string; amount: string; timestamp: number },
+  row: { id: string; contractAddress: string; to: string; amount: string; timestamp: number },
   token: string | null,
   ctx: MapperContext
 ): LedgerEntry {
@@ -83,38 +93,41 @@ function mapTransfer(
   const amountUsd = ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp))
   const destPocket = ctx.pocketOf(row.to)
 
-  if (destPocket) {
-    return makeEntry({
-      id: row.id,
-      timestamp: row.timestamp,
-      useCase: 'UC-BANK-03',
-      debit: destPocket,
-      credit: BANK,
-      amountUsd,
-      token: tokenId,
-      rawAmount: row.amount,
-      counterparty: row.to,
-      internal: true,
-      memo: `Fund ${destPocket} from Bank`
-    })
-  }
+  const inferred = destPocket
+    ? makeEntry({
+        id: row.id,
+        timestamp: row.timestamp,
+        useCase: 'UC-BANK-03',
+        debit: destPocket,
+        debitInstance: row.to,
+        credit: BANK,
+        creditInstance: row.contractAddress,
+        amountUsd,
+        token: tokenId,
+        rawAmount: row.amount,
+        counterparty: row.to,
+        internal: true,
+        memo: `Fund ${destPocket} from Bank`
+      })
+    : // External outflow with no Phase-1 use case — provisionally an operating cost,
+      // flagged so an off-chain / manual review can reclassify it (spec §6).
+      makeEntry({
+        id: row.id,
+        timestamp: row.timestamp,
+        useCase: 'CASH-OUT',
+        debit: 'Operating Expense',
+        credit: BANK,
+        creditInstance: row.contractAddress,
+        amountUsd,
+        token: tokenId,
+        rawAmount: row.amount,
+        counterparty: row.to,
+        internal: isInternalAddress(row.to, ctx.internalAddresses),
+        memo: 'Unclassified Bank outflow to external address',
+        enrichment: 'needs-off-chain-data'
+      })
 
-  // External outflow with no Phase-1 use case — provisionally an operating cost,
-  // flagged so an off-chain / manual review can reclassify it (spec §6).
-  return makeEntry({
-    id: row.id,
-    timestamp: row.timestamp,
-    useCase: 'CASH-OUT',
-    debit: 'Operating Expense',
-    credit: BANK,
-    amountUsd,
-    token: tokenId,
-    rawAmount: row.amount,
-    counterparty: row.to,
-    internal: isInternalAddress(row.to, ctx.internalAddresses),
-    memo: 'Unclassified Bank outflow to external address',
-    enrichment: 'needs-off-chain-data'
-  })
+  return applyClassification(inferred, 'out', BANK, ctx)
 }
 
 /** Map every indexed Bank event in `input` to ledger entries. */

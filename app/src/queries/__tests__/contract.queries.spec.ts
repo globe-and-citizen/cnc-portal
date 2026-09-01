@@ -7,17 +7,6 @@ import apiClient from '@/lib/axios'
 vi.unmock('@/queries/contract.queries')
 vi.unmock('@/queries/team.queries')
 
-// Stub axios so mutationFn doesn't hit the network.
-vi.mock('@/lib/axios', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn()
-  }
-}))
-
 describe('contract.queries', () => {
   beforeEach(async () => {
     vi.clearAllMocks()

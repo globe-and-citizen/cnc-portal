@@ -39,6 +39,45 @@ describe('accountLedger — statement-line drill-down', () => {
       expect(times).toEqual([...times].sort((a, b) => a - b))
     })
 
+    it('scopes a drill-down to one pocket instance (each redeploy shows only its events)', () => {
+      const bank1 = '0x1111111111111111111111111111111111111111'
+      const bank2 = '0x2222222222222222222222222222222222222222'
+      const dep = (
+        id: string,
+        instance: string
+      ): import('@/utils/accounting/ledgerEntry').LedgerEntry => ({
+        id,
+        timestamp: Number(id),
+        useCase: 'UC-BANK-02',
+        debit: 'Cash — Bank',
+        debitInstance: instance as `0x${string}`,
+        credit: 'Service Revenue',
+        amountUsd: 10,
+        token: 'usdc',
+        rawAmount: '10000000',
+        internal: false,
+        memo: '',
+        enrichment: 'not-applicable'
+      })
+      // A blank-instance bank leg (a FixedReturn sweep) belongs to the primary row.
+      const blank = {
+        ...dep('4', bank1),
+        debitInstance: undefined,
+        useCase: 'UC-CREDIT-01' as const
+      }
+      const feed = [dep('1', bank1), dep('2', bank2), dep('3', bank1), blank]
+
+      const onBank2 = entriesForAccount(feed, 'Cash — Bank', null, null, { instance: bank2 })
+      expect(onBank2.map((e) => e.id)).toEqual(['2']) // only the second deployment's event
+
+      // The primary row includes its own instance's legs plus the un-instanced one.
+      const onBank1 = entriesForAccount(feed, 'Cash — Bank', null, null, {
+        instance: bank1,
+        includeBlank: true
+      })
+      expect(onBank1.map((e) => e.id).sort()).toEqual(['1', '3', '4'])
+    })
+
     it('honours the as-of cutoff (to), excluding later postings', () => {
       const all = entriesForAccount(catalogueLedger, 'Cash — Safe')
       const cutoff = new Date(Math.min(...all.map((e) => e.timestamp)) * 1000)
@@ -56,10 +95,10 @@ describe('accountLedger — statement-line drill-down', () => {
     })
 
     it('accepts a list of accounts (aggregate line) — the union of their postings', () => {
-      const group: AccountName[] = ['Payroll Expense', 'Share-based Compensation']
+      const group: AccountName[] = ['Payroll Expense', 'Deferred SHER Compensation']
       const scoped = entriesForAccount(catalogueLedger, group)
       const a = entriesForAccount(catalogueLedger, 'Payroll Expense')
-      const b = entriesForAccount(catalogueLedger, 'Share-based Compensation')
+      const b = entriesForAccount(catalogueLedger, 'Deferred SHER Compensation')
       // Every posting touches at least one of the accounts…
       expect(
         scoped.every(
@@ -79,7 +118,7 @@ describe('accountLedger — statement-line drill-down', () => {
       'Cash — Expense',
       'Investor Equity',
       'Payroll Expense',
-      'Share-based Compensation'
+      'Deferred SHER Compensation'
     ]
     for (const account of cases) {
       it(`${account} nets to its trial-balance value`, () => {
@@ -203,7 +242,7 @@ describe('accountLedger — statement-line drill-down', () => {
     })
 
     it('keeps the supplied total for an aggregate line', () => {
-      const group: AccountName[] = ['Payroll Expense', 'Share-based Compensation']
+      const group: AccountName[] = ['Payroll Expense', 'Deferred SHER Compensation']
       const view = presentAccountLedger(catalogueLedger, group, null, null, '-$50.00')
       expect(view.entryCount).toBe(entriesForAccount(catalogueLedger, group).length)
       // Mixed classes can't be netted, so the caller's figure is kept verbatim.
@@ -211,7 +250,7 @@ describe('accountLedger — statement-line drill-down', () => {
     })
 
     it('nets to zero for an aggregate line with no supplied total', () => {
-      const group: AccountName[] = ['Payroll Expense', 'Share-based Compensation']
+      const group: AccountName[] = ['Payroll Expense', 'Deferred SHER Compensation']
       const view = presentAccountLedger(catalogueLedger, group)
       // With no single account to net against, the balance falls back to $0.00.
       expect(view.total).toBe(money(0))

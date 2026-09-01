@@ -5,6 +5,8 @@ import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
 import { isAddress, zeroAddress, type Address } from 'viem'
 
+export { getSafeInfraAddresses, type SafeInfraAddresses } from './safeInfra'
+
 export const NETWORK = getNetwork()
 
 interface TokenAddresses {
@@ -232,6 +234,10 @@ export const FIXED_RETURN_IMPL_ADDRESS = safeResolveAddress('FixedReturnBeaconMo
 export const FIXED_RETURN_BEACON_ADDRESS = safeResolveAddress('FixedReturnBeaconModule#Beacon')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
+
+// The embeddable Payment Gate widget script's base URL — differs per
+// environment (local dev server, staging, the real pay.cncportal.io CDN).
+export const WIDGET_SCRIPT_URL = import.meta.env.VITE_APP_WIDGET_URL
 
 // GraphQL poll interval for transaction queries (in milliseconds)
 export const GRAPHQL_POLL_INTERVAL = 12000

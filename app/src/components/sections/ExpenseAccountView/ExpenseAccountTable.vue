@@ -41,13 +41,13 @@
         </UTooltip>
       </template>
       <template #member-cell="{ row: { original: row } }">
-        <UserComponent :user="resolveUser(row.userAddress)"></UserComponent>
+        <UserIdentity :user="resolveUser(row.userAddress)"></UserIdentity>
       </template>
       <template #startDate-cell="{ row: { original: row } }">
-        <span>{{ new Date(Number(row.startDate) * 1000).toLocaleString('en-US') }}</span>
+        <span>{{ formatDateTime(fromUnix(row.startDate)) }}</span>
       </template>
       <template #endDate-cell="{ row: { original: row } }">
-        <span>{{ new Date(Number(row.endDate) * 1000).toLocaleString('en-US') }}</span>
+        <span>{{ formatDateTime(fromUnix(row.endDate)) }}</span>
       </template>
       <template #status-cell="{ row: { original: row } }">
         <UBadge
@@ -101,11 +101,12 @@ import {
   useExpenseAccountActivateApproval,
   useExpenseAccountDeactivateApproval
 } from '@/composables/expenseAccount/writes'
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useGetExpensesQuery, expenseKeys } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { formatDateTime, fromUnix } from '@/utils/format'
 
 const teamStore = useTeamStore()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()

@@ -2,7 +2,8 @@
 
 ## 📋 Overview
 
-This document outlines the comprehensive test suite created for all Bank composables in the CNC Portal application. The test suite covers 100% of the bank composable functionality with robust test cases.
+This document outlines the comprehensive test suite created for all Bank composables in the CNC Portal application. The test suite covers
+100% of the bank composable functionality with robust test cases.
 
 ## 🧪 Test Files Created
 
@@ -21,12 +22,12 @@ This document outlines the comprehensive test suite created for all Bank composa
 **Key Test Areas**:
 
 ```typescript
-describe('useBankReads', () => {
+describe("useBankReads", () => {
   // Bank Address Management
   // Bank Read Functions
   // Query Enablement Logic
   // Return Interface
-})
+});
 ```
 
 ### 2. `bank-utils.spec.ts` - Utility Functions Tests
@@ -44,10 +45,10 @@ describe('useBankReads', () => {
 **Key Test Areas**:
 
 ```typescript
-describe('useValidation', () => {
+describe("useValidation", () => {
   // validateAmount()
   // validateAddress()
-})
+});
 ```
 
 ### 3. `bank-types.spec.ts` - Type System Tests
@@ -65,15 +66,15 @@ describe('useValidation', () => {
 **Key Test Areas**:
 
 ```typescript
-describe('BANK_FUNCTION_NAMES', () => {
+describe("BANK_FUNCTION_NAMES", () => {
   // Read/Write function name validation
   // Immutability testing
-})
+});
 
-describe('isValidBankFunction', () => {
+describe("isValidBankFunction", () => {
   // Valid/Invalid function validation
   // Type safety and edge cases
-})
+});
 ```
 
 ### 4. `bank-writes.spec.ts` - Write Operations Tests
@@ -93,7 +94,7 @@ describe('isValidBankFunction', () => {
 **Key Test Areas**:
 
 ```typescript
-describe('useBankWrites', () => {
+describe("useBankWrites", () => {
   // Initialization
   // executeWrite
   // estimateGas
@@ -101,7 +102,7 @@ describe('useBankWrites', () => {
   // invalidateBankQueries
   // Return Interface
   // Edge Cases
-})
+});
 ```
 
 ### 5. `bank-functions-new.spec.ts` - High-Level Function Tests
@@ -119,13 +120,13 @@ describe('useBankWrites', () => {
 **Key Test Areas**:
 
 ```typescript
-describe('useBankWritesFunctions', () => {
+describe("useBankWritesFunctions", () => {
   // Admin Functions
   // Transfer Functions
   // Return Interface
   // Validation Integration
   // Amount Conversion
-})
+});
 ```
 
 ### 6. `bank-index.spec.ts` - Main Composable Integration Tests
@@ -145,7 +146,7 @@ describe('useBankWritesFunctions', () => {
 **Key Test Areas**:
 
 ```typescript
-describe('useBankContract', () => {
+describe("useBankContract", () => {
   // Initialization
   // Combined Interface
   // Spread Operator Functionality
@@ -153,7 +154,7 @@ describe('useBankContract', () => {
   // Property Override Behavior
   // Real-world Usage Patterns
   // Composable Isolation
-})
+});
 ```
 
 ## 🎯 Test Coverage Summary
@@ -184,38 +185,38 @@ describe('useBankContract', () => {
 // Hoisted mocks for consistent behavior
 const { mockUseBankWrites, mockUseValidation } = vi.hoisted(() => ({
   mockUseBankWrites: vi.fn(),
-  mockUseValidation: vi.fn()
-}))
+  mockUseValidation: vi.fn(),
+}));
 
 // External dependency mocking
-vi.mock('@wagmi/vue', () => ({ useReadContract: mockUseReadContract }))
-vi.mock('@/stores', () => ({ useToastStore: mockToastStore }))
+vi.mock("@wagmi/vue", () => ({ useReadContract: mockUseReadContract }));
+vi.mock("@/stores", () => ({ useToastStore: mockToastStore }));
 ```
 
 ### Test Data Constants
 
 ```typescript
 const MOCK_DATA = {
-  validAddress: '0x1234567890123456789012345678901234567890',
-  validAmount: '1.5',
-  tokenSymbol: 'USDC',
-  addresses: ['0x...', '0x...'],
-  amountInWei: BigInt('1500000000000000000')
-}
+  validAddress: "0x1234567890123456789012345678901234567890",
+  validAmount: "1.5",
+  tokenSymbol: "USDC",
+  addresses: ["0x...", "0x..."],
+  amountInWei: BigInt("1500000000000000000"),
+};
 ```
 
 ### Validation Patterns
 
 ```typescript
 // Function call validation
-expect(mockFunction).toHaveBeenCalledWith(expectedArgs)
+expect(mockFunction).toHaveBeenCalledWith(expectedArgs);
 
 // Return value validation
-expect(result).toBeDefined()
-expect(typeof result.functionName).toBe('function')
+expect(result).toBeDefined();
+expect(typeof result.functionName).toBe("function");
 
 // Error case validation
-expect(mockErrorToast).toHaveBeenCalledWith('Expected error message')
+expect(mockErrorToast).toHaveBeenCalledWith("Expected error message");
 ```
 
 ## 🚀 Test Execution

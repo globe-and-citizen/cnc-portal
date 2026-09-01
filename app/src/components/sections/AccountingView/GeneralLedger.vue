@@ -25,11 +25,7 @@
 
           <!-- Reporting period + currency filter + show/hide columns -->
           <div class="flex flex-wrap items-center justify-end gap-2.5">
-            <AccountingDatePicker
-              v-model="period"
-              mode="range"
-              storage-key="cnc-accounting-ledger-period"
-            />
+            <DatePicker v-model="period" mode="range" storage-key="cnc-accounting-ledger-period" />
             <CurrencyFilterSelect
               v-if="showCurrencyFilter"
               v-model="selectedCurrencies"
@@ -61,10 +57,10 @@ import { useLocalStorage } from '@vueuse/core'
 import SegmentedPills, { type PillItem } from './SegmentedPills.vue'
 import LedgerTable from './LedgerTable.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
-import TablePagination from '@/components/TablePagination.vue'
-import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
-import ColumnVisibilitySelect from '@/components/ColumnVisibilitySelect.vue'
-import CurrencyFilterSelect from '@/components/CurrencyFilterSelect.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
+import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
+import CurrencyFilterSelect from '@/components/sections/AccountingView/CurrencyFilterSelect.vue'
 import { usePagination } from '@/composables/usePagination'
 import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'

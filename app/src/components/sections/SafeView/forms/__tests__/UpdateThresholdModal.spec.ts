@@ -3,6 +3,7 @@ import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThr
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick, type ComponentPublicInstance } from 'vue'
 import { mount } from '@vue/test-utils'
+import { mockUseChainId } from '@/tests/mocks'
 
 interface UpdateThresholdModalVm extends ComponentPublicInstance {
   formState: {
@@ -12,19 +13,10 @@ interface UpdateThresholdModalVm extends ComponentPublicInstance {
   handleUpdateThreshold: () => Promise<void>
 }
 
-const { mockChainId, mockUpdateOwnersMutate, mockUpdateOwnersPending } = vi.hoisted(() => ({
-  mockChainId: { value: 137 },
+const { mockUpdateOwnersMutate, mockUpdateOwnersPending } = vi.hoisted(() => ({
   mockUpdateOwnersMutate: vi.fn(),
   mockUpdateOwnersPending: { value: false }
 }))
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@wagmi/vue')>()
-  return {
-    ...actual,
-    useChainId: vi.fn(() => mockChainId)
-  }
-})
 
 vi.mock('@/queries/safe.mutations', () => ({
   useUpdateSafeOwnersMutation: () => ({
@@ -103,7 +95,7 @@ const mountComponent = (props = {}) =>
 describe('UpdateThresholdModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockChainId.value = 137
+    mockUseChainId.value = 137
     mockUpdateOwnersPending.value = false
     mockUpdateOwnersMutate.mockImplementation(() => undefined)
     vi.spyOn(console, 'error').mockImplementation(() => undefined)

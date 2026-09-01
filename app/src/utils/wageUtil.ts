@@ -6,6 +6,7 @@ import type {
   WeeklyClaim
 } from '@/types'
 import { parseEther, parseUnits, type Address } from 'viem'
+import { NETWORK } from '@/constant'
 
 const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
 
@@ -21,6 +22,14 @@ export const formatMinutesAsDuration = (totalMinutes: number): string => {
   if (h === 0) return `${m}min`
   return `${h}h ${m}min`
 }
+
+/**
+ * Ticker shown for a rate. The `native` type is stored generically but has to be
+ * displayed as the chain's own symbol — "NATIVE" is a database value, not
+ * something a user recognises.
+ */
+export const rateSymbol = (type: string): string =>
+  type === 'native' ? NETWORK.currencySymbol : type.toUpperCase()
 
 export const normalizeRatePerHour = (rates?: RatePerHour[] | null): RatePerHourWithEnabled[] => {
   return requiredRateTypes.map((type) => {

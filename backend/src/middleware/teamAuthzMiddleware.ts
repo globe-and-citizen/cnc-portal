@@ -20,45 +20,6 @@ const extractTeamId = (req: Request, location: TeamIdLocation): number | null =>
   return Number.isInteger(n) && n > 0 ? n : null;
 };
 
-export const requireTeamOwner =
-  (location: TeamIdLocation) => async (req: Request, res: Response, next: NextFunction) => {
-    const callerAddress = req.address;
-    const teamId = extractTeamId(req, location);
-    if (teamId === null) return errorResponse(400, `Missing or invalid teamId at ${location}`, res);
-
-    try {
-      const team = await prisma.team.findUnique({
-        where: { id: teamId },
-        select: { ownerAddress: true },
-      });
-      if (!team) return errorResponse(404, 'Team not found', res);
-      if (team.ownerAddress !== callerAddress) {
-        return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
-      }
-      return next();
-    } catch (error) {
-      return errorResponse(500, error, res);
-    }
-  };
-
-export const requireTeamMember =
-  (location: TeamIdLocation) => async (req: Request, res: Response, next: NextFunction) => {
-    const callerAddress = req.address;
-    const teamId = extractTeamId(req, location);
-    if (teamId === null) return errorResponse(400, `Missing or invalid teamId at ${location}`, res);
-
-    try {
-      const team = await prisma.team.findFirst({
-        where: { id: teamId, members: { some: { address: callerAddress } } },
-        select: { id: true },
-      });
-      if (!team) return errorResponse(403, 'Caller is not a member of the team', res);
-      return next();
-    } catch (error) {
-      return errorResponse(500, error, res);
-    }
-  };
-
 const DIRECT_TEAM_ID_LOCATIONS = new Set<TeamIdLocation>([
   'body.teamId',
   'query.teamId',
@@ -66,7 +27,14 @@ const DIRECT_TEAM_ID_LOCATIONS = new Set<TeamIdLocation>([
   'params.teamId',
 ]);
 
-const resolveTeamId = async (req: Request, location: TeamIdLocation): Promise<number | null> => {
+/**Per-request memo of resolved team ids, keyed by location. Several of these
+guards are chained on the same route (e.g. requireTeamMember + rejectIfArchived on PUT /weekly-claim/:id) */
+const resolvedTeamIds = new WeakMap<Request, Map<TeamIdLocation, number | null>>();
+
+const resolveTeamIdUncached = async (
+  req: Request,
+  location: TeamIdLocation
+): Promise<number | null> => {
   if (DIRECT_TEAM_ID_LOCATIONS.has(location)) {
     return extractTeamId(req, location);
   }
@@ -125,6 +93,58 @@ const resolveTeamId = async (req: Request, location: TeamIdLocation): Promise<nu
     return null;
   }
 };
+
+const resolveTeamId = async (req: Request, location: TeamIdLocation): Promise<number | null> => {
+  let perRequest = resolvedTeamIds.get(req);
+  if (!perRequest) {
+    perRequest = new Map();
+    resolvedTeamIds.set(req, perRequest);
+  }
+  if (perRequest.has(location)) return perRequest.get(location) ?? null;
+
+  const teamId = await resolveTeamIdUncached(req, location);
+  perRequest.set(location, teamId);
+  return teamId;
+};
+
+export const requireTeamOwner =
+  (location: TeamIdLocation) => async (req: Request, res: Response, next: NextFunction) => {
+    const callerAddress = req.address;
+    const teamId = await resolveTeamId(req, location);
+    if (teamId === null) return errorResponse(400, `Missing or invalid teamId at ${location}`, res);
+
+    try {
+      const team = await prisma.team.findUnique({
+        where: { id: teamId },
+        select: { ownerAddress: true },
+      });
+      if (!team) return errorResponse(404, 'Team not found', res);
+      if (team.ownerAddress !== callerAddress) {
+        return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
+      }
+      return next();
+    } catch (error) {
+      return errorResponse(500, error, res);
+    }
+  };
+
+export const requireTeamMember =
+  (location: TeamIdLocation) => async (req: Request, res: Response, next: NextFunction) => {
+    const callerAddress = req.address;
+    const teamId = await resolveTeamId(req, location);
+    if (teamId === null) return errorResponse(400, `Missing or invalid teamId at ${location}`, res);
+
+    try {
+      const team = await prisma.team.findFirst({
+        where: { id: teamId, members: { some: { address: callerAddress } } },
+        select: { id: true },
+      });
+      if (!team) return errorResponse(403, 'Caller is not a member of the team', res);
+      return next();
+    } catch (error) {
+      return errorResponse(500, error, res);
+    }
+  };
 
 export const rejectIfArchived =
   (location: TeamIdLocation) => async (req: Request, res: Response, next: NextFunction) => {

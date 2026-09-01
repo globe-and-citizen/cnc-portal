@@ -88,7 +88,7 @@
 
         <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <span>Destination</span>
-          <AddressToolTip v-if="destination" :address="destination" class="text-xs" />
+          <AddressTooltip v-if="destination" :address="destination" class="text-xs" />
         </div>
 
         <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -155,8 +155,8 @@
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import CashOutStepList from '@/components/CashOutStepList.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import CashOutStepList from '@/components/ui/CashOutStepList.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useBankOwner } from '@/composables/bank/reads'
 import {

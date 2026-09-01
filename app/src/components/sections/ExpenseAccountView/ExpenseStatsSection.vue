@@ -13,14 +13,14 @@
       data-test="expense-account-address"
     >
       <span class="text-sm">Expense Account Address</span>
-      <AddressToolTip :address="expenseAccountEip712Address ?? ''" class="text-sm font-bold" />
+      <AddressTooltip :address="expenseAccountEip712Address ?? ''" class="text-sm font-bold" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useTeamStore } from '@/stores'
 import { type Address } from 'viem'
 import ExpenseAccountBalance from '@/components/sections/ExpenseAccountView/ExpenseAccountBalance.vue'

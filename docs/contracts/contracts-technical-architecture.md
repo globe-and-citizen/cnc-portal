@@ -16,7 +16,8 @@
 
 ## Overview
 
-The CNC Portal smart contract system is a comprehensive organizational governance and financial management platform built on Ethereum. It enables decentralized teams to manage:
+The CNC Portal smart contract system is a comprehensive organizational governance and financial management platform built on Ethereum. It
+enables decentralized teams to manage:
 
 - **Financial Operations**: Banking, dividends, expense accounts, and cash remuneration
 - **Governance**: Elections, proposals, and board of directors management
@@ -270,12 +271,12 @@ Each team deploys their own set of contract instances:
 
 ### Deployment Code Locations
 
-| Component       | Path                                                                    |
-| --------------- | ----------------------------------------------------------------------- |
-| Beacon Modules  | `/contract/ignition/modules/*BeaconModule.ts`                           |
-| Officer Module  | `/contract/ignition/modules/OfficerModule.ts`                           |
+| Component       | Path                                                                   |
+| --------------- | ---------------------------------------------------------------------- |
+| Beacon Modules  | `/contract/ignition/modules/*BeaconModule.ts`                          |
+| Officer Module  | `/contract/ignition/modules/OfficerModule.ts`                          |
 | Frontend Deploy | `/app/src/components/sections/TeamView/forms/InvestorContractStep.vue` |
-| Constants       | `/app/src/constant.ts`                                                  |
+| Constants       | `/app/src/constant.ts`                                                 |
 
 ---
 
@@ -283,7 +284,8 @@ Each team deploys their own set of contract instances:
 
 ### 1. Dividend Distribution Flow
 
-Distribution is **push-based**: a single transaction by the owner funds InvestorV1, which immediately sends each shareholder their proportional share. There is no claim step.
+Distribution is **push-based**: a single transaction by the owner funds InvestorV1, which immediately sends each shareholder their
+proportional share. There is no claim step.
 
 **ETH Dividends**:
 
@@ -1085,10 +1087,10 @@ CashRemunerationBeacon:  0x... (TBD)
 
 ### Useful Links
 
-- **Repository**: https://github.com/globe-and-citizen/cnc-portal
-- **OpenZeppelin Docs**: https://docs.openzeppelin.com/contracts
-- **EIP-712**: https://eips.ethereum.org/EIPS/eip-712
-- **Beacon Proxy Pattern**: https://docs.openzeppelin.com/contracts/api/proxy#beacon
+- [Repository](https://github.com/globe-and-citizen/cnc-portal)
+- [OpenZeppelin documentation](https://docs.openzeppelin.com/contracts)
+- [EIP-712](https://eips.ethereum.org/EIPS/eip-712)
+- [Beacon proxy pattern](https://docs.openzeppelin.com/contracts/api/proxy#beacon)
 
 ---
 
@@ -1112,6 +1114,4 @@ CashRemunerationBeacon:  0x... (TBD)
 
 ---
 
-_Document Version: 1.1_
-_Last Updated: March 2026_
-_Maintained by: CNC Portal Team_
+_Document Version: 1.1_ _Last Updated: March 2026_ _Maintained by: CNC Portal Team_

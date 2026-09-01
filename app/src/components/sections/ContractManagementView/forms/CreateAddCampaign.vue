@@ -9,8 +9,8 @@ import { useTeamStore } from '@/stores'
 import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager'
 import { useCreateContractMutation } from '@/queries/contract.queries'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { formatToken } from '@/utils/format'
 
 const emit = defineEmits(['closeAddCampaignModal'])
@@ -103,15 +103,6 @@ watch(contractAddress, (newAddress) => {
   )
 })
 
-function reset() {
-  formState.costPerClick = ''
-  formState.costPerImpression = ''
-  submissionError.value = bankMissing.value
-    ? 'A Bank contract is required before setting up the manager.'
-    : null
-}
-defineExpose({ reset })
-
 function deployCampaignManager(event: FormSubmitEvent<CampaignFormSchema>) {
   if (!event.data.bankAddress) {
     submissionError.value = 'A Bank contract is required before setting up the manager.'
@@ -166,7 +157,7 @@ function viewContractCode() {
     <div class="border-default rounded-lg border p-3">
       <p class="text-muted text-xs">Advertising revenue destination</p>
       <div v-if="formState.bankAddress" class="mt-1">
-        <AddressToolTip :address="formState.bankAddress" :slice="false" />
+        <AddressTooltip :address="formState.bankAddress" :slice="false" />
       </div>
       <p v-else class="text-error mt-1 text-sm">No Bank contract configured</p>
       <input v-model="formState.bankAddress" type="hidden" data-testid="bank-address-input" />

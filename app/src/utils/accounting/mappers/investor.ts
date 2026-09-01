@@ -6,14 +6,16 @@
  * `WithdrawToken` in SHER), or a direct mint. So we correlate each mint with the
  * deposits/withdraws that *already* booked the equity, and:
  *
- * - **backed** mint (matches a SafeDepositRouter deposit or a SHER wage withdraw)
- *   → emit nothing: the Investor Equity was booked by UC-SDR-01 / UC-CASH-03.
- *   Re-booking it here would double-count the equity.
+ * - **backed** mint (matches a SafeDepositRouter deposit, a SHER wage withdraw, or
+ *   a Vesting `TokensReleased`) → emit nothing: the Investor Equity was booked by
+ *   UC-SDR-01 / UC-CASH-03 / UC-VEST-02. Re-booking it here would double-count the
+ *   equity (and, for vesting, drive `SHERS To Be Issued` negative — see money-flow
+ *   catalogue §5.4 "Default D").
  * - **unbacked** mint → **Default D**: a direct share issuance. The SHER were
- *   accrued into `Shares to be issued` (the wage accrual, UC-CASH-02) and are now
- *   formally issued, so we clear that liability into equity —
- *   Dr Shares to be issued · Cr Investor Equity — valued at the SHER rate of
- *   record. (It no longer emits a value-0 memo, which left `Shares to be issued`
+ *   accrued into `SHERS To Be Issued` (the wage accrual, UC-CASH-02) and are now
+ *   formally issued, so we clear that equity-pending into contributed equity —
+ *   Dr SHERS To Be Issued · Cr Investor Equity — valued at the SHER rate of
+ *   record. (It no longer emits a value-0 memo, which left `SHERS To Be Issued`
  *   permanently inflated.)
  *
  * `DividendPaid` → UC-INV-01 (Dr Dividend Expense · Cr Cash — Bank). The summary
@@ -28,6 +30,7 @@ import type {
   SafeDepositRow
 } from '@/types/ponder/investor'
 import type { CashRemunerationWithdrawTokenRow } from '@/types/ponder/cash-remuneration'
+import type { VestingTokensReleasedRow } from '@/types/ponder/vesting'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { atDate, type MapperContext } from './context'
 
@@ -38,6 +41,8 @@ export interface InvestorMapperInput {
   safeDepositRouterDeposits?: readonly SafeDepositRow[]
   /** CashRemuneration `WithdrawToken` rows, to recognise wage-in-shares mints. */
   cashRemunerationWithdrawTokens?: readonly CashRemunerationWithdrawTokenRow[]
+  /** Vesting `TokensReleased` rows, to recognise vested-share mints (UC-VEST-02). */
+  vestingReleases?: readonly VestingTokensReleasedRow[]
 }
 
 /** `${shareholder}|${sherBaseUnits}` — keys a mint to the move that backs it. */
@@ -55,6 +60,9 @@ function buildBackedMints(input: InvestorMapperInput, ctx: MapperContext): Map<s
   }
   for (const row of input.cashRemunerationWithdrawTokens ?? []) {
     if (ctx.tokenIdOf(row.tokenAddress) === 'sher') add(backingKey(row.withdrawer, row.amount))
+  }
+  for (const row of input.vestingReleases ?? []) {
+    add(backingKey(row.member, row.amount))
   }
   return counts
 }
@@ -76,7 +84,7 @@ export function mapInvestorEvents(input: InvestorMapperInput, ctx: MapperContext
         id: row.id,
         timestamp: row.timestamp,
         useCase: 'DEFAULT-D',
-        debit: 'Shares to be issued',
+        debit: 'SHERS To Be Issued',
         credit: 'Investor Equity',
         amountUsd: ctx.toUsd(BigInt(row.amount), 'sher', atDate(row.timestamp)),
         token: 'sher',

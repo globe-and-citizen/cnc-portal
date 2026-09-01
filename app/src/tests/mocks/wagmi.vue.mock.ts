@@ -42,7 +42,17 @@ export const mockWagmiCore = {
   getWalletClient: vi.fn(),
   estimateGas: vi.fn(),
   getPublicClient: vi.fn(),
-  getConnections: vi.fn(() => [])
+  getConnections: vi.fn(() => []),
+  getConnection: vi.fn(),
+  connect: vi.fn(),
+  switchChain: vi.fn(),
+  signMessage: vi.fn(),
+  // `call` / `sendTransaction`: raw-calldata actions used by the widget's
+  // payment flow (src/widget/payment.ts) — it can't go through
+  // simulateContract/writeContract since those re-derive calldata from an
+  // ABI and would drop the facture-id suffix appended to depositToken.
+  call: vi.fn(),
+  sendTransaction: vi.fn()
 }
 
 // Mock useConnection composable

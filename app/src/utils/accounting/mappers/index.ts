@@ -14,6 +14,7 @@ import { mapCashRemunerationEvents, type CashRemunerationMapperInput } from './c
 import { mapExpenseAccountEvents, type ExpenseMapperInput } from './expenseAccount'
 import { mapFixedReturnEvents, type FixedReturnMapperInput } from './fixedReturn'
 import { mapInvestorEvents, type InvestorMapperInput } from './investor'
+import { mapVestingEvents, type VestingMapperInput } from './vesting'
 import { mapSafeTransfers, type SafeMapperInput } from './safe'
 import { mapSafeDepositRouterEvents, type SafeDepositRouterMapperInput } from './safeDepositRouter'
 import { mapPayrollAccruals } from './payrollAccrual'
@@ -28,6 +29,7 @@ export * from './cashRemuneration'
 export * from './expenseAccount'
 export * from './fixedReturn'
 export * from './investor'
+export * from './vesting'
 export * from './safe'
 export * from './safeDepositRouter'
 
@@ -39,6 +41,7 @@ export interface LedgerSources {
   expenseAccount?: ExpenseMapperInput
   fixedReturn?: FixedReturnMapperInput
   investor?: InvestorMapperInput
+  vesting?: VestingMapperInput
   safe?: SafeMapperInput
   safeDepositRouter?: SafeDepositRouterMapperInput
 }
@@ -64,6 +67,7 @@ export function mapAllSources(
   }
   if (sources.fixedReturn) entries.push(...mapFixedReturnEvents(sources.fixedReturn, ctx))
   if (sources.investor) entries.push(...mapInvestorEvents(sources.investor, ctx))
+  if (sources.vesting) entries.push(...mapVestingEvents(sources.vesting, ctx))
   if (sources.safe) entries.push(...mapSafeTransfers(sources.safe, ctx))
   if (sources.safeDepositRouter) {
     entries.push(...mapSafeDepositRouterEvents(sources.safeDepositRouter, ctx))

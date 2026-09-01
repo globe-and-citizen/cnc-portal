@@ -56,9 +56,10 @@ import type { Address } from 'viem'
 import { getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useTeamStore } from '@/stores'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
-import MonthSelector from '@/components/MonthSelector.vue'
+import MonthSelector from '@/components/sections/ClaimHistoryView/MonthSelector.vue'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
 import { formatWeekTooltipText, getClaimStatusColor } from '@/utils/claimHistoryWeekNavigator'
+import { formatNumber, formatWeekdayShort } from '@/utils/format'
 
 import { use } from 'echarts/core'
 import { BarChart } from 'echarts/charts'
@@ -132,7 +133,7 @@ const barChartOption = computed(() => {
 
   for (let i = 0; i < 7; i++) {
     const date = weekStart.add(i, 'day')
-    labels.push(dayjs(date).format('dd'))
+    labels.push(formatWeekdayShort(date))
     const dailyTimes =
       selectedWeekWeeklyClaim.value?.claims
         .filter((claim) => dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day'))
@@ -186,7 +187,7 @@ const barChartOption = computed(() => {
       type: 'value',
       min: 0,
       max: yMax,
-      axisLabel: { formatter: (val: number) => `${parseFloat(val.toFixed(1))} h` }
+      axisLabel: { formatter: (val: number) => `${formatNumber(val, { maxDecimals: 1 })} h` }
     },
     series: [
       {

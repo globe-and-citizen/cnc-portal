@@ -5,6 +5,7 @@ import { formatUnits, parseAbi, type Address } from 'viem'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import { USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS } from '~/constant'
+import { formatNumber } from '~/utils/format'
 
 const ERC20_ABI = parseAbi(['function balanceOf(address) view returns (uint256)'])
 
@@ -57,9 +58,7 @@ export const useContractTokenBalancesQuery = (
           symbol: token.symbol,
           address: token.address,
           raw,
-          formatted: Number(formatUnits(raw, token.decimals)).toLocaleString(undefined, {
-            maximumFractionDigits: 2
-          })
+          formatted: formatNumber(Number(formatUnits(raw, token.decimals)), { maxDecimals: 2 })
         }]
       })
     },

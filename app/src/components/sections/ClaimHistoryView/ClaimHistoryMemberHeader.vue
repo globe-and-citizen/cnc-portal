@@ -22,12 +22,23 @@
 
             <div class="flex items-center gap-2">
               <img :src="addressIconPath" alt="" class="h-4 w-4" />
-              <AddressToolTip :address="displayedMember?.address" data-test="claim-user-address" />
+              <AddressTooltip :address="displayedMember?.address" data-test="claim-user-address" />
             </div>
           </div>
         </div>
         <div class="w-60">
-          <SelectMemberItem v-if="memberAddress" :address="memberAddress" />
+          <USelectMenu
+            v-if="memberAddress"
+            v-model="selectedMemberAddress"
+            :items="memberOptions"
+            value-key="value"
+            :search-input="{ placeholder: 'Search members…' }"
+            :filter-fields="['label', 'description']"
+            placeholder="Select a user"
+            aria-label="Select a user"
+            class="w-full"
+            data-test="claim-history-member-select"
+          />
         </div>
       </div>
     </UCard>
@@ -37,9 +48,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Address } from 'viem'
+import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import SelectMemberItem from '@/components/SelectMemberItem.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 
 interface Props {
   memberAddress: Address
@@ -48,11 +59,40 @@ interface Props {
 const props = defineProps<Props>()
 
 const teamStore = useTeamStore()
+const router = useRouter()
 const addressIconPath = '/Vector.png'
 
+const members = computed(() => teamStore.currentTeamMeta?.data?.members || [])
+
 const displayedMember = computed(() => {
-  return (teamStore.currentTeamMeta?.data?.members || []).find(
+  return members.value.find(
     (member) => member.address.toLowerCase() === props.memberAddress?.toLowerCase()
   )
+})
+
+const memberOptions = computed(() =>
+  members.value.map((member) => ({
+    value: member.address,
+    label: member.name || member.address,
+    description: member.address,
+    avatar: member.imageUrl
+      ? { src: member.imageUrl, alt: `${member.name || 'User'} avatar` }
+      : undefined
+  }))
+)
+
+const selectedMemberAddress = computed({
+  get: () => props.memberAddress,
+  set: (address: string) => {
+    if (!address || address.toLowerCase() === props.memberAddress?.toLowerCase()) return
+
+    const teamId = teamStore.currentTeamId
+    if (!teamId) return
+
+    router.push({
+      name: 'payroll-history',
+      params: { id: teamId, memberAddress: address }
+    })
+  }
 })
 </script>

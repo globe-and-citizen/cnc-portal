@@ -75,30 +75,27 @@
 
 ## 3. Smart Contracts
 
-**Milestone:** M1–M4
-**Status:** ✅ Complete
-**Progress:** 15/15 contract groups done (74/74 stories)
+**Milestone:** M1–M4 **Status:** ✅ Complete **Progress:** 15/15 contract groups done (74/74 stories)
 
-| Contract             | Stories | Contract | Frontend | Notes                                              |
-| -------------------- | ------- | -------- | -------- | -------------------------------------------------- |
-| Officer              | 5/5     | ✅       | 🚫       | Deploy and orchestrate all team contracts          |
-| Bank                 | 7/7     | ✅       | 🚫       | Hold treasury funds and distribute dividends       |
-| InvestorV1           | 6/6     | ✅       | 🚫       | Issue and track equity tokens with push dividends  |
-| Elections            | 5/5     | ✅       | 🚫       | Run formal board elections                         |
-| BoardOfDirectors     | 6/6     | ✅       | 🚫       | Multi-sig governance for board decisions           |
-| Proposals            | 4/4     | ✅       | 🚫       | Board proposal creation and voting                 |
-| ExpenseAccount       | 6/6     | ✅       | 🚫       | EIP-712 signed expense budgets for employees       |
-| CashRemuneration     | 5/5     | ✅       | 🚫       | EIP-712 signed wage claims with equity minting     |
-| Vesting              | 5/5     | ✅       | 🚫       | Linear ERC20 token vesting with cliff periods      |
-| FeeCollector         | 4/4     | ✅       | ✅       | Global fee vault with per-type configuration       |
-| SafeDepositRouter    | 5/5     | ✅       | 🚫       | Deposit tokens, receive SHER equity tokens         |
-| AdCampaignManager    | 5/5     | ✅       | 🚫       | Advertiser-funded campaigns with per-click payouts |
-| Voting               | 4/4     | ✅       | 🚫       | Combined directive and election voting             |
-| Infrastructure       | 3/3     | ✅       | —        | FactoryBeacon, Beacon, UserBeaconProxy             |
+| Contract          | Stories | Contract | Frontend | Notes                                              |
+| ----------------- | ------- | -------- | -------- | -------------------------------------------------- |
+| Officer           | 5/5     | ✅       | 🚫       | Deploy and orchestrate all team contracts          |
+| Bank              | 7/7     | ✅       | 🚫       | Hold treasury funds and distribute dividends       |
+| InvestorV1        | 6/6     | ✅       | 🚫       | Issue and track equity tokens with push dividends  |
+| Elections         | 5/5     | ✅       | 🚫       | Run formal board elections                         |
+| BoardOfDirectors  | 6/6     | ✅       | 🚫       | Multi-sig governance for board decisions           |
+| Proposals         | 4/4     | ✅       | 🚫       | Board proposal creation and voting                 |
+| ExpenseAccount    | 6/6     | ✅       | 🚫       | EIP-712 signed expense budgets for employees       |
+| CashRemuneration  | 5/5     | ✅       | 🚫       | EIP-712 signed wage claims with equity minting     |
+| Vesting           | 5/5     | ✅       | 🚫       | Linear ERC20 token vesting with cliff periods      |
+| FeeCollector      | 4/4     | ✅       | ✅       | Global fee vault with per-type configuration       |
+| SafeDepositRouter | 5/5     | ✅       | 🚫       | Deposit tokens, receive SHER equity tokens         |
+| AdCampaignManager | 5/5     | ✅       | 🚫       | Advertiser-funded campaigns with per-click payouts |
+| Voting            | 4/4     | ✅       | 🚫       | Combined directive and election voting             |
+| Infrastructure    | 3/3     | ✅       | —        | FactoryBeacon, Beacon, UserBeaconProxy             |
 
-**Coverage:** 95%+ line coverage ✅
-**Frontend:** 1/14 contracts have UI (FeeCollector). Remaining frontends tracked per feature module above.
-**Next Steps:** Security audit in M7; Safe wallet integration in M7; production deployment in M8
+**Coverage:** 95%+ line coverage ✅ **Frontend:** 1/14 contracts have UI (FeeCollector). Remaining frontends tracked per feature module
+above. **Next Steps:** Security audit in M7; Safe wallet integration in M7; production deployment in M8
 
 ---
 
@@ -205,19 +202,20 @@
 
 Contract groups in parentheses indicate which contracts were delivered in that milestone.
 
-| Milestone                  | Status | Features | Complete | Start    | Target  |
-| -------------------------- | ------ | -------- | -------- | -------- | ------- |
-| M1 — Foundation            | ✅     | 7        | 100%     | 2024 Q4  | 2024 Q4 |
-| M2 — Compensation          | ✅     | 12       | 100%     | 2024 Q4  | 2024 Q4 |
-| M3 — Governance            | ✅     | 10       | 100%     | 2024 Q4  | 2024 Q4 |
-| M4 — Vesting               | ✅     | 10       | 100%     | 2024 Q4  | 2024 Q4 |
-| M5 — Analytics             | 🔄     | 6        | 33%      | Mar 2026 | Q1 2026 |
-| M6 — Backoffice            | 🔄     | 6        | 17%      | Mar 2026 | Q1 2026 |
-| M7 — Hardening & Safe      | ⏳     | 16       | 0%       | Apr 2026 | Q2 2026 |
-| M8 — Production            | ⏳     | 4        | 0%       | May 2026 | Q2 2026 |
-| M9 — Scale                 | ⏳     | 11       | 0%       | Jun 2026 | Q3 2026 |
+| Milestone             | Status | Features | Complete | Start    | Target  |
+| --------------------- | ------ | -------- | -------- | -------- | ------- |
+| M1 — Foundation       | ✅     | 7        | 100%     | 2024 Q4  | 2024 Q4 |
+| M2 — Compensation     | ✅     | 12       | 100%     | 2024 Q4  | 2024 Q4 |
+| M3 — Governance       | ✅     | 10       | 100%     | 2024 Q4  | 2024 Q4 |
+| M4 — Vesting          | ✅     | 10       | 100%     | 2024 Q4  | 2024 Q4 |
+| M5 — Analytics        | 🔄     | 6        | 33%      | Mar 2026 | Q1 2026 |
+| M6 — Backoffice       | 🔄     | 6        | 17%      | Mar 2026 | Q1 2026 |
+| M7 — Hardening & Safe | ⏳     | 16       | 0%       | Apr 2026 | Q2 2026 |
+| M8 — Production       | ⏳     | 4        | 0%       | May 2026 | Q2 2026 |
+| M9 — Scale            | ⏳     | 11       | 0%       | Jun 2026 | Q3 2026 |
 
 **Contract milestone mapping:**
+
 - M1: Officer, Infrastructure, Bank
 - M2: CashRemuneration, ExpenseAccount, FeeCollector
 - M3: Elections, BoardOfDirectors, Proposals, Voting
@@ -286,7 +284,7 @@ Contract groups in parentheses indicate which contracts were delivered in that m
 
 - Review status by test type in **Quality & Testing** section
 - Plan test efforts based on feature completion status
-- Reference **User Stories** for acceptance criteria
+- Open the relevant feature README from the [Product Feature Inventory](./features/README.md) for acceptance criteria
 
 ---
 

@@ -115,6 +115,24 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/SherTokenView.vue')
         },
         {
+          path: '/teams/:id/payment-gate',
+          name: 'payment-gate',
+          meta: { name: 'Setup' },
+          component: () => import('@/views/team/[id]/PaymentGate/IntegrationView.vue')
+        },
+        {
+          path: '/teams/:id/payment-gate/reference',
+          name: 'payment-gate-reference',
+          meta: { name: 'Reference' },
+          component: () => import('@/views/team/[id]/PaymentGate/ReferenceView.vue')
+        },
+        {
+          path: '/teams/:id/payment-gate/history',
+          name: 'payment-gate-history',
+          meta: { name: 'History' },
+          component: () => import('@/views/team/[id]/PaymentGate/HistoryView.vue')
+        },
+        {
           path: '/teams/:id/accounting',
           name: 'accounting',
           redirect: { name: 'accounting-summary' }
@@ -150,6 +168,12 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/Accounting/GeneralLedgerView.vue')
         },
         {
+          path: '/teams/:id/accounting/classification',
+          name: 'accounting-classification',
+          meta: { name: 'Classification' },
+          component: () => import('@/views/team/[id]/Accounting/ClassificationView.vue')
+        },
+        {
           path: '/teams/:id/community-credit',
           name: 'community-credit',
           meta: { name: 'Community Credit' },
@@ -162,7 +186,10 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/CommunityCredit/NewView.vue')
         },
         {
-          path: '/teams/:id/community-credit/:roundId',
+          // :view is optional and selects the round-detail tab (ledger/gauge/timeline/repay,
+          // default ledger when omitted) — a real route param, not app state, so a given tab
+          // is bookmarkable/reload-safe. See RoundView.vue's activeVariant.
+          path: '/teams/:id/community-credit/:roundId/:view?',
           name: 'community-credit-round',
           meta: { name: 'Credit Round' },
           component: () => import('@/views/team/[id]/CommunityCredit/RoundView.vue')

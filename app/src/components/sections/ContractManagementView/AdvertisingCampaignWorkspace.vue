@@ -7,7 +7,7 @@ import {
   type AdvertisingCampaign
 } from '@/composables/campaign/reads'
 import { formatTokenUnits } from '@/utils/format'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import CreateAdvertisingCampaign from './forms/CreateAdvertisingCampaign.vue'
 import WithdrawAdvertisingCampaign from './forms/WithdrawAdvertisingCampaign.vue'
 import AdvertisingCampaignDetailsSlideover from './AdvertisingCampaignDetailsSlideover.vue'
@@ -173,7 +173,7 @@ function refresh() {
           {{ formatTokenUnits(campaign.remainingBudget, 18, 'POL') }}
         </template>
         <template #advertiser-cell="{ row: { original: campaign } }">
-          <AddressToolTip :address="campaign.advertiser" :slice="true" class="text-xs" />
+          <AddressTooltip :address="campaign.advertiser" :slice="true" class="text-xs" />
         </template>
         <template #actions-cell="{ row: { original: campaign } }">
           <UDropdownMenu
@@ -210,7 +210,7 @@ function refresh() {
             <div class="flex items-start justify-between gap-3">
               <div>
                 <p class="text-highlighted font-medium break-all">{{ campaign.code }}</p>
-                <AddressToolTip :address="campaign.advertiser" :slice="true" class="mt-1 text-xs" />
+                <AddressTooltip :address="campaign.advertiser" :slice="true" class="mt-1 text-xs" />
               </div>
               <UBadge
                 :color="campaign.status === 'active' ? 'success' : 'neutral'"
@@ -277,7 +277,7 @@ function refresh() {
       :open="!!withdrawCampaign"
       title="Withdraw remaining campaign budget"
       :description="withdrawCampaign ? `Review the final spend for ${withdrawCampaign.code}.` : ''"
-      @update:open="(open) => !open && (withdrawCampaign = null)"
+      @update:open="(open: boolean) => !open && (withdrawCampaign = null)"
     >
       <template #body>
         <WithdrawAdvertisingCampaign

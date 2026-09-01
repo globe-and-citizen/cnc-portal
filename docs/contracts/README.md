@@ -1,25 +1,27 @@
 # CNC Portal - Smart Contracts Overview
 
+For contract-specific behaviour and contract-scoped stories, start with the [Contract Behaviour Index](./features/README.md).
+
 ## All Contracts
 
-| Contract                                          | File                                                 | Upgradeable       | Purpose                              |
-| ------------------------------------------------- | ---------------------------------------------------- | ----------------- | ------------------------------------ |
-| [Officer](#officer)                               | `contracts/Officer.sol`                              | Yes (Beacon)      | Central orchestrator & factory       |
-| [Bank](#bank)                                     | `contracts/Bank.sol`                                 | Yes (Beacon)      | Treasury & dividend management       |
-| [InvestorV1](#investorv1)                         | `contracts/Investor/InvestorV1.sol`                  | Yes (Beacon)      | Equity token (ERC20/shares)          |
-| [Elections](#elections)                           | `contracts/Elections/Elections.sol`                  | Yes (Beacon)      | Board of Directors elections         |
-| [BoardOfDirectors](#boardofdirectors)             | `contracts/BoardOfDirectors.sol`                     | Yes (Beacon)      | Multi-sig governance                 |
-| [Proposals](#proposals)                           | `contracts/Proposals/Proposals.sol`                  | Yes (Beacon)      | Board proposal voting                |
-| [ExpenseAccountEIP712](#expenseaccounteip712)     | `contracts/expense-account/ExpenseAccountEIP712.sol` | Yes (Beacon)      | Expense reimbursement                |
-| [CashRemunerationEIP712](#cashremunerationeip712) | `contracts/CashRemunerationEIP712.sol`               | Yes (Beacon)      | Wage payment with equity             |
-| [Vesting](#vesting)                               | `contracts/Vesting.sol`                              | Yes (Beacon)      | Per-team share vesting (mint-on-release) |
-| [AdCampaignManager](#adcampaignmanager)           | `contracts/AdCampaignManager.sol`                    | No                | Ad campaign & payment                |
-| [SafeDepositRouter](#safedepositrouter)           | `contracts/SafeDepositRouter.sol`                    | Yes               | Token deposit → SHER minting         |
-| [FeeCollector](#feecollector)                     | `contracts/FeeCollector.sol`                         | Yes               | Global fee vault                     |
-| [Voting](#voting-contract)                        | `contracts/Voting/Voting.sol`                        | Yes (Beacon)      | Combined directive + election voting |
-| [FactoryBeacon](#factorybeacon)                   | `contracts/beacons/FactoryBeacon.sol`                | —                 | Officer instance factory             |
-| [Beacon](#beacon)                                 | `contracts/beacons/Beacon.sol`                       | —                 | Implementation pointer               |
-| [UserBeaconProxy](#userbeaconproxy)               | `contracts/beacons/UserBeaconProxy.sol`              | —                 | Beacon proxy instance                |
+| Contract                                          | File                                                 | Upgradeable  | Purpose                                  |
+| ------------------------------------------------- | ---------------------------------------------------- | ------------ | ---------------------------------------- |
+| [Officer](#officer)                               | `contracts/Officer.sol`                              | Yes (Beacon) | Central orchestrator & factory           |
+| [Bank](#bank)                                     | `contracts/Bank.sol`                                 | Yes (Beacon) | Treasury & dividend management           |
+| [InvestorV1](#investorv1)                         | `contracts/Investor/InvestorV1.sol`                  | Yes (Beacon) | Equity token (ERC20/shares)              |
+| [Elections](#elections)                           | `contracts/Elections/Elections.sol`                  | Yes (Beacon) | Board of Directors elections             |
+| [BoardOfDirectors](#boardofdirectors)             | `contracts/BoardOfDirectors.sol`                     | Yes (Beacon) | Multi-sig governance                     |
+| [Proposals](#proposals)                           | `contracts/Proposals/Proposals.sol`                  | Yes (Beacon) | Board proposal voting                    |
+| [ExpenseAccountEIP712](#expenseaccounteip712)     | `contracts/expense-account/ExpenseAccountEIP712.sol` | Yes (Beacon) | Expense reimbursement                    |
+| [CashRemunerationEIP712](#cashremunerationeip712) | `contracts/CashRemunerationEIP712.sol`               | Yes (Beacon) | Wage payment with equity                 |
+| [Vesting](#vesting)                               | `contracts/Vesting.sol`                              | Yes (Beacon) | Per-team share vesting (mint-on-release) |
+| [AdCampaignManager](#adcampaignmanager)           | `contracts/AdCampaignManager.sol`                    | No           | Ad campaign & payment                    |
+| [SafeDepositRouter](#safedepositrouter)           | `contracts/SafeDepositRouter.sol`                    | Yes          | Token deposit → SHER minting             |
+| [FeeCollector](#feecollector)                     | `contracts/FeeCollector.sol`                         | Yes          | Global fee vault                         |
+| [Voting](#voting-contract)                        | `contracts/Voting/Voting.sol`                        | Yes (Beacon) | Combined directive + election voting     |
+| [FactoryBeacon](#factorybeacon)                   | `contracts/beacons/FactoryBeacon.sol`                | —            | Officer instance factory                 |
+| [Beacon](#beacon)                                 | `contracts/beacons/Beacon.sol`                       | —            | Implementation pointer                   |
+| [UserBeaconProxy](#userbeaconproxy)               | `contracts/beacons/UserBeaconProxy.sol`              | —            | Beacon proxy instance                    |
 
 ---
 
@@ -59,7 +61,8 @@ isFeeCollectorToken(tokenAddress) → bool
 
 **Path**: `contracts/Bank.sol`
 
-Organizational treasury. Holds ETH and ERC20 tokens, routes transfers with protocol fees, and triggers push-based dividend distributions via InvestorV1.
+Organizational treasury. Holds ETH and ERC20 tokens, routes transfers with protocol fees, and triggers push-based dividend distributions via
+InvestorV1.
 
 **Features**:
 
@@ -245,25 +248,20 @@ disableClaim(signatureHash)                       // Revoke claim before use
 
 **Path**: `contracts/Vesting.sol`
 
-Per-team linear vesting with cliff periods. Deployed per team via the Officer
-beacon registry; schedules are **agreements only** — share tokens are minted on
-demand, never pre-funded.
+Per-team linear vesting with cliff periods. Deployed per team via the Officer beacon registry; schedules are **agreements only** — share
+tokens are minted on demand, never pre-funded.
 
 **Features**:
 
 - Per-team: deployed per Officer, owned by the team owner (no `teamId` keys)
-- Agreement-then-mint: `addVesting` moves no tokens; `release` mints only what
-  has vested from the team's `InvestorV1` via `individualMint`
-- Investor resolved through the Officer (`findDeployedContract('InvestorV1')`);
-  no configurable token address
-- Multiple schedules per member: each grant is appended to the member's
-  `vestings` array and addressed by its index (initial grant, refreshers, …)
+- Agreement-then-mint: `addVesting` moves no tokens; `release` mints only what has vested from the team's `InvestorV1` via `individualMint`
+- Investor resolved through the Officer (`findDeployedContract('InvestorV1')`); no configurable token address
+- Multiple schedules per member: each grant is appended to the member's `vestings` array and addressed by its index (initial grant,
+  refreshers, …)
 - Cliff period: no tokens releasable until cliff elapses
 - Linear vesting: tokens unlock proportionally after cliff
-- Team owner can stop a schedule: releasable amount is minted to the member, the
-  unvested remainder is simply never minted (no refund path)
-- Schedules are append-only: a stopped one is kept with `active = false`, a
-  fully-released one stays `active = true`
+- Team owner can stop a schedule: releasable amount is minted to the member, the unvested remainder is simply never minted (no refund path)
+- Schedules are append-only: a stopped one is kept with `active = false`, a fully-released one stays `active = true`
 - Requires `MINTER_ROLE` on `InvestorV1` (granted by Officer at deployment)
 - Upgradeable, Pausable, ReentrancyGuard
 
@@ -379,7 +377,8 @@ getTokenBalance(token) → uint256
 
 **Path**: `contracts/Voting/Voting.sol`
 
-Combined directive and election voting contract. Earlier/alternative to the separate Proposals + Elections contracts. Integrates directly with BoardOfDirectors via Officer.
+Combined directive and election voting contract. Earlier/alternative to the separate Proposals + Elections contracts. Integrates directly
+with BoardOfDirectors via Officer.
 
 **Features**:
 
@@ -420,13 +419,15 @@ Singleton factory that creates Officer instances via `createBeaconProxy()`. Entr
 
 **Path**: `contracts/beacons/Beacon.sol`
 
-Stores a single implementation address. All proxies pointing to this beacon share the same logic. Owner calls `upgradeTo(newImpl)` to upgrade all instances at once.
+Stores a single implementation address. All proxies pointing to this beacon share the same logic. Owner calls `upgradeTo(newImpl)` to
+upgrade all instances at once.
 
 ### UserBeaconProxy
 
 **Path**: `contracts/beacons/UserBeaconProxy.sol`
 
-Lightweight proxy that delegates all calls to the implementation returned by its beacon. Created by FactoryBeacon or Officer for each contract instance.
+Lightweight proxy that delegates all calls to the implementation returned by its beacon. Created by FactoryBeacon or Officer for each
+contract instance.
 
 ---
 

@@ -112,7 +112,9 @@
           placeholder="180"
           class="max-w-30"
           data-test="cc-term-value"
-          @update:model-value="(val) => recalcPeriod(String(val ?? ''), form.periodUnit)"
+          @update:model-value="
+            (value: string | number) => recalcPeriod(String(value), form.periodUnit)
+          "
         />
         <div
           class="border-default bg-muted flex max-w-[260px] flex-1 gap-0.5 rounded-lg border p-0.5"
@@ -161,6 +163,7 @@ import {
   MINUTES_PER_DAY
 } from '@/utils'
 import { createCreditCallTermsSchema, type CreditCallForm, type CreditTermUnit } from '@/types'
+import { formatDate } from '@/utils/format'
 
 const form = defineModel<CreditCallForm>('form', { required: true })
 
@@ -256,7 +259,7 @@ const localDeadlineTime = computed(() => timeStrToTime(localDeadline.value.time)
 const deadlineLabel = computed(() => {
   const cd = deadlineCalendarDate.value
   if (!cd) return 'Select a date'
-  return `${cd.toDate(getLocalTimeZone()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  return formatDate(cd.toDate(getLocalTimeZone()))
 })
 
 function onSelectDeadlineDate(value: CalendarDate | null | undefined) {

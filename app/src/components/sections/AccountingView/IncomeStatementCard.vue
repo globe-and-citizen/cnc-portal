@@ -15,11 +15,7 @@
             </span>
             <span class="text-[15px] font-semibold">Income statement</span>
           </div>
-          <AccountingDatePicker
-            v-model="period"
-            mode="range"
-            storage-key="cnc-accounting-income-period"
-          />
+          <DatePicker v-model="period" mode="range" storage-key="cnc-accounting-income-period" />
         </div>
       </template>
 
@@ -78,13 +74,13 @@
 
     <LedgerDrilldownModal
       v-model:open="drilldownOpen"
-      v-model:columns="drilldownColumns"
-      :account="drilldownAccount"
-      :total="drilldownTotal"
+      :account="drilldownLine?.label ?? ''"
+      :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
       :balance-account="drilldownBalanceAccount"
       :opening="drilldownOpening"
       :closing="drilldownClosing"
+      columns-storage-key="cnc-accounting-income-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
   </div>
@@ -92,7 +88,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
 import StatementLine from './StatementLine.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
@@ -119,23 +115,17 @@ const dateSelected = computed(() => !isAllTimeRange(period.value))
 // Per-line drill-down — over the same reporting period the statement shows.
 const {
   open: drilldownOpen,
-  account: drilldownAccount,
-  total: drilldownTotal,
-  columns: drilldownColumns,
+  selectedLine: drilldownLine,
   balanceAccount: drilldownBalanceAccount,
   opening: drilldownOpening,
   closing: drilldownClosing,
   drilldownEntries,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(
-  acc.entries,
-  () => ({
-    from: dateSelected.value ? period.value.start : null,
-    to: dateSelected.value ? period.value.end : null
-  }),
-  'cnc-accounting-income-drilldown-columns-v1'
-)
+} = useLedgerDrilldown(acc.entries, () => ({
+  from: dateSelected.value ? period.value.start : null,
+  to: dateSelected.value ? period.value.end : null
+}))
 
 function openDrilldown(line: StatementLineView): void {
   if (line.account) openFor(line.account, line.value)

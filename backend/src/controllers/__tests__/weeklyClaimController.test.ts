@@ -72,6 +72,14 @@ vi.mock('../../utils/viem.config', () => ({
   default: { readContract: readContractMock },
 }));
 
+// Mock the wage resolution utility used by submitWeeklyGoals.
+const { mockResolveWageForWeek } = vi.hoisted(() => ({
+  mockResolveWageForWeek: vi.fn(),
+}));
+vi.mock('../../utils/wageResolution', () => ({
+  resolveCurrentWage: mockResolveWageForWeek,
+}));
+
 // Mock viem's recoverTypedDataAddress so tests can drive the recovery result
 // (matching CALLER vs mismatch vs throw) without producing real signatures.
 // vi.mock is hoisted; the inline 0x1234...7890 mirrors the CALLER constant.
@@ -101,9 +109,13 @@ vi.mock('../../utils', async () => {
         findFirst: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
+        upsert: vi.fn(),
         update: vi.fn(),
         findUnique: vi.fn(),
         count: vi.fn().mockResolvedValue(0),
+      },
+      claim: {
+        count: vi.fn().mockResolvedValue(1),
       },
       teamContract: {
         findFirst: vi.fn(),
@@ -113,10 +125,15 @@ vi.mock('../../utils', async () => {
   };
 });
 
+// Authenticated caller for the request under test. Defaults to CALLER; a test
+// sets this to exercise a different identity (e.g. checksum casing) and
+// beforeEach resets it.
+let callerAddressOverride: string | null = null;
+
 const app = express();
 app.use(express.json());
 app.use((req, _res, next) => {
-  req.address = CALLER;
+  req.address = (callerAddressOverride ?? CALLER) as Address;
   next();
 });
 app.use('/', weeklyClaimRoutes);
@@ -147,8 +164,10 @@ const putAction = (
 describe('Weekly Claim Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    callerAddressOverride = null;
     vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: false } as never);
     vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 1 } as never);
+    vi.mocked(prisma.claim.count).mockResolvedValue(1);
     vi.mocked(isCashRemunerationOwner).mockResolvedValue(true);
     // Default: the team's current CashRemunerationEIP712 matches what the
     // sign body declares it signed against. Individual tests can override
@@ -224,11 +243,12 @@ describe('Weekly Claim Controller', () => {
         message: 'Weekly claim already withdrawn',
       },
       {
-        title: 'sign unauthorized',
+        title: 'sign when the team owner is not the current Cash Remuneration owner',
         action: 'sign',
-        claim: weeklyClaimFactory({ status: 'pending', wage: ownerWage('0x456') }),
+        claim: weeklyClaimFactory({ status: 'pending', wage: ownerWage(CALLER) }),
         ownerOk: false,
-        message: 'Caller is not the Cash Remuneration owner or the team owner',
+        expectedStatus: 403,
+        message: 'Caller is not the current Cash Remuneration owner',
       },
       {
         title: 'sign week not completed',
@@ -254,23 +274,107 @@ describe('Weekly Claim Controller', () => {
       {
         title: 'withdraw requires signed',
         action: 'withdraw',
-        claim: weeklyClaimFactory({ status: 'pending' }),
+        claim: weeklyClaimFactory({ status: 'pending', memberAddress: CALLER }),
         ownerOk: true,
         message: 'Weekly claim must be signed before it can be withdrawn',
       },
       {
         title: 'withdraw already withdrawn',
         action: 'withdraw',
-        claim: weeklyClaimFactory({ status: 'withdrawn' }),
+        claim: weeklyClaimFactory({ status: 'withdrawn', memberAddress: CALLER }),
         ownerOk: true,
         message: 'Weekly claim already withdrawn',
       },
-    ])('should return 400 for $title', async ({ action, claim, ownerOk, message }) => {
-      vi.mocked(isCashRemunerationOwner).mockResolvedValue(ownerOk);
-      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(claim as any);
-      const response = await putAction(action);
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message });
+    ])(
+      'should return the expected rejection for $title',
+      async ({ action, claim, ownerOk, message, expectedStatus = 400 }) => {
+        vi.mocked(isCashRemunerationOwner).mockResolvedValue(ownerOk);
+        vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(claim as any);
+        const response = await putAction(action);
+        expect(response.status).toBe(expectedStatus);
+        expect(response.body).toEqual({ message });
+        if (action === 'sign' && expectedStatus === 403) {
+          expect(prisma.$transaction).not.toHaveBeenCalled();
+          expect(recoverTypedDataAddress).not.toHaveBeenCalled();
+        }
+      }
+    );
+
+    // Authorization on `withdraw` (issue #2471). Before the fix any
+    // authenticated user could flip any team's signed claim to `withdrawn`,
+    // and syncWeeklyClaims — which only re-reads `signed`/`disabled` rows —
+    // would never reconcile it back, permanently costing the real member
+    // their Withdraw button.
+    describe('withdraw authorization', () => {
+      const signedClaimOfSomeoneElse = () =>
+        weeklyClaimFactory({
+          status: 'signed',
+          signature: '0xabc',
+          memberAddress: '0x1111111111111111111111111111111111111111',
+        });
+
+      it('should return 403 when the caller is not a member of the team', async () => {
+        vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+          signedClaimOfSomeoneElse() as never
+        );
+        vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null as never);
+
+        const response = await putAction('withdraw');
+
+        expect(response.status).toBe(403);
+        expect(response.body).toEqual({ message: 'Caller is not a member of the team' });
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+      });
+
+      it('should return 403 when a team member withdraws a claim that is not theirs', async () => {
+        vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+          signedClaimOfSomeoneElse() as never
+        );
+
+        const response = await putAction('withdraw');
+
+        expect(response.status).toBe(403);
+        expect(response.body).toEqual({ message: 'Caller is not the owner of this weekly claim' });
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+      });
+
+      it('should return 403 when the team owner withdraws a member claim', async () => {
+        // The team / Cash Remuneration owner signs, but the on-chain payout
+        // goes to the member — so withdraw stays the member's action alone.
+        vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue({
+          ...signedClaimOfSomeoneElse(),
+          wage: ownerWage(CALLER),
+        } as never);
+        vi.mocked(isCashRemunerationOwner).mockResolvedValue(true);
+
+        const response = await putAction('withdraw');
+
+        expect(response.status).toBe(403);
+        expect(response.body).toEqual({ message: 'Caller is not the owner of this weekly claim' });
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+      });
+
+      it('should accept the claim owner when checksum casing differs', async () => {
+        // The caller address comes from the JWT and the claim address from the
+        // database; the two are not guaranteed to agree on checksum casing.
+        const mixedCase = '0xAbCdEf0123456789AbCdEf0123456789AbCdEf01';
+        callerAddressOverride = mixedCase;
+        vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+          weeklyClaimFactory({
+            status: 'signed',
+            signature: '0xabc',
+            memberAddress: mixedCase.toLowerCase(),
+          }) as never
+        );
+        vi.spyOn(prisma, '$transaction').mockResolvedValue([
+          weeklyClaimFactory({ status: 'withdrawn' }) as never,
+        ]);
+
+        const response = await putAction('withdraw');
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('status', 'withdrawn');
+      });
     });
 
     it('should return 400 for invalid action', async () => {
@@ -365,6 +469,24 @@ describe('Weekly Claim Controller', () => {
       expect(response.body.message).toContain('Failed to verify signature');
     });
 
+    it('rejects a goals-only weekly claim before verifying or persisting a signature', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        weeklyClaimFactory({ status: 'pending' }) as any
+      );
+      vi.mocked(prisma.claim.count).mockResolvedValue(0);
+
+      const response = await putAction('sign');
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'At least one daily claim is required before signing a weekly claim',
+      });
+      expect(prisma.claim.count).toHaveBeenCalledWith({ where: { weeklyClaimId: 1 } });
+      expect(recoverTypedDataAddress).not.toHaveBeenCalled();
+      expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
     it('should persist signedAgainstContractAddress on successful sign', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
         weeklyClaimFactory({ status: 'pending' }) as any
@@ -376,6 +498,7 @@ describe('Weekly Claim Controller', () => {
 
       const response = await putAction('sign');
       expect(response.status).toBe(200);
+      expect(prisma.claim.count).toHaveBeenCalledWith({ where: { weeklyClaimId: 1 } });
       expect(updateSpy).toHaveBeenCalled();
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -427,7 +550,11 @@ describe('Weekly Claim Controller', () => {
       {
         title: 'withdraw success',
         action: 'withdraw',
-        claim: weeklyClaimFactory({ status: 'signed', signature: '0xabc' }),
+        claim: weeklyClaimFactory({
+          status: 'signed',
+          signature: '0xabc',
+          memberAddress: CALLER,
+        }),
         txResult: weeklyClaimFactory({ status: 'withdrawn', signature: '0xabc' }),
         expected: 'withdrawn',
       },
@@ -941,18 +1068,24 @@ describe('Weekly Claim Controller', () => {
     const currentWage = { id: 7, teamId: 1, userAddress: CALLER, nextWageId: null };
 
     it('creates a claim-less weekly claim when none exists yet', async () => {
-      vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
+      mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null as never);
-      vi.mocked(prisma.weeklyClaim.create).mockResolvedValue(
+      vi.mocked(prisma.weeklyClaim.upsert).mockResolvedValue(
         weeklyClaimFactory({ id: 42, weeklyGoals: GOALS_BODY.weeklyGoals }) as never
       );
 
       const response = await request(app).put('/goals').send(GOALS_BODY);
 
       expect(response.status).toBe(200);
-      expect(prisma.weeklyClaim.create).toHaveBeenCalledWith(
+      expect(prisma.weeklyClaim.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
+          where: {
+            teamId_memberAddress_weekStart: expect.objectContaining({
+              teamId: 1,
+              memberAddress: CALLER,
+            }),
+          },
+          create: expect.objectContaining({
             wageId: currentWage.id,
             memberAddress: CALLER,
             teamId: 1,
@@ -965,7 +1098,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('updates the memo on an existing pending weekly claim', async () => {
-      vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
+      mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
         weeklyClaimFactory({ id: 5, status: 'pending', signature: null }) as never
       );
@@ -980,11 +1113,11 @@ describe('Weekly Claim Controller', () => {
         where: { id: 5 },
         data: { weeklyGoals: GOALS_BODY.weeklyGoals },
       });
-      expect(prisma.weeklyClaim.create).not.toHaveBeenCalled();
+      expect(prisma.weeklyClaim.upsert).not.toHaveBeenCalled();
     });
 
     it('rejects with 409 when the week is already signed', async () => {
-      vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
+      mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
         weeklyClaimFactory({ id: 5, status: 'signed', signature: '0xabc' }) as never
       );
@@ -993,11 +1126,14 @@ describe('Weekly Claim Controller', () => {
 
       expect(response.status).toBe(409);
       expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
-      expect(prisma.weeklyClaim.create).not.toHaveBeenCalled();
+      expect(prisma.weeklyClaim.upsert).not.toHaveBeenCalled();
     });
 
     it('returns 400 when the caller has no current wage', async () => {
-      vi.mocked(prisma.wage.findFirst).mockResolvedValue(null as never);
+      // Only reachable on a week nobody has opened: an open week already
+      // carries the wage that prices it, so no resolution is needed.
+      vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null);
+      mockResolveWageForWeek.mockResolvedValue(null);
 
       const response = await request(app).put('/goals').send(GOALS_BODY);
 

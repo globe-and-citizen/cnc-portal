@@ -90,10 +90,9 @@ const withCurrentOfficerAndContracts = <
   };
 };
 
-// The team list card shows the viewer's own wage status ("Wage set" vs "No wage
-// set"), not the whole roster's. Fetch just the caller's active wage (the row
-// with no successor) across the listed teams in a single query and index it by
-// team, so the list stays one extra query rather than one per team.
+// The team list card shows the viewer's own current wage status ("Wage set"
+// vs "No wage set"), not the whole roster's. The leaf of each wage chain is
+// the current version because changes now take effect immediately.
 const findCallerWagesByTeamId = async (callerAddress: string, teamIds: number[]) => {
   if (teamIds.length === 0) return new Map<number, Wage>();
 
@@ -226,10 +225,9 @@ const getTeam = async (req: Request, res: Response) => {
             imageUrl: true,
             Wage: {
               where: {
-                teamId: Number(id), // wage de cette équipe uniquement
-                nextWageId: null, // nextWageId null = wage actuel (pas de successeur)
+                teamId: Number(id),
+                nextWageId: null,
               },
-              take: 1,
             },
           },
         },
@@ -250,12 +248,14 @@ const getTeam = async (req: Request, res: Response) => {
     }
 
     const membersWithResolvedImages = await Promise.all(
-      team.members.map(async (member) => ({
-        ...member,
-        imageUrl: await resolveStorageImageUrl(member.imageUrl),
-        currentWage: member.Wage[0] ?? null, // aplatir le tableau
-        Wage: undefined, // retirer le tableau brut
-      }))
+      team.members.map(async (member) => {
+        return {
+          ...member,
+          imageUrl: await resolveStorageImageUrl(member.imageUrl),
+          currentWage: member.Wage[0] ?? null,
+          Wage: undefined,
+        };
+      })
     );
 
     const callerMemberData = await prisma.memberTeamsData.findUnique({
@@ -289,6 +289,8 @@ const getAllTeams = async (req: Request, res: Response) => {
   const showHidden = isTruthyQueryFlag(req.query.showHidden);
   const showArchived = isTruthyQueryFlag(req.query.showArchived);
   try {
+    const callerRoles = (req.user?.roles ?? []) as UserRoles;
+
     // If userAddress is provided, verify the caller is requesting their own teams
     if (userAddress) {
       if (userAddress !== callerAddress) {
@@ -401,7 +403,13 @@ const getAllTeams = async (req: Request, res: Response) => {
       );
     }
 
-    // No userAddress provided - return all teams
+    // The unfiltered list is the platform-wide administrator view. Member
+    // lists remain available only through the explicit self filter above.
+    if (!isAdmin(callerRoles)) {
+      return errorResponse(403, 'Unauthorized', res);
+    }
+
+    // No userAddress provided - return all teams for an administrator.
     const allTeamsWhere = showArchived ? {} : { isArchived: false };
 
     const allTeams = await prisma.team.findMany({

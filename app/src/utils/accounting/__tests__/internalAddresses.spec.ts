@@ -55,6 +55,18 @@ describe('collectInternalAddresses', () => {
     expect(set).toEqual(new Set([getAddress(INVESTOR), getAddress(BANK)]))
   })
 
+  // After a migration a team owns several Bank generations; both must be internal
+  // so a treasury sweep from the old Bank to its replacement reads as an internal
+  // move, never revenue or expense (issue #2456).
+  it('treats every generation of a contract type as internal', () => {
+    const OLD_BANK = '0x6666666666666666666666666666666666666666'
+    const NEW_BANK = '0x7777777777777777777777777777777777777777'
+    const set = collectInternalAddresses([contract('Bank', OLD_BANK), contract('Bank', NEW_BANK)])
+
+    expect(isInternalAddress(OLD_BANK, set)).toBe(true)
+    expect(isInternalAddress(NEW_BANK, set)).toBe(true)
+  })
+
   it('folds in extra protocol-wide addresses (e.g. the global FeeCollector)', () => {
     const set = collectInternalAddresses([contract('Bank', BANK)], [FEE_COLLECTOR])
     expect(set.has(getAddress(FEE_COLLECTOR))).toBe(true)

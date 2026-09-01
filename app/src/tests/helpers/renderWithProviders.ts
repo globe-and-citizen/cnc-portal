@@ -66,7 +66,7 @@ const resolveQueryClient = (option: QueryClient | boolean | undefined): QueryCli
  * `props`, `emitted()`, `setProps`, `findComponent`, etc. all behave as usual.
  *
  * @example
- * const wrapper = renderWithProviders(BodApprovalModal, { props: { loading: false, row } })
+ * const wrapper = renderWithProviders(BodApprovalContent, { props: { loading: false, row } })
  *
  * @example // opt out of Pinia, point the route at a different team
  * renderWithProviders(MyView, { pinia: false, route: { params: { id: '42' } } })

@@ -1,106 +1,147 @@
-<!-- filepath: app/src/components/sections/SafeView/SafeBalanceSection.vue -->
 <template>
-  <UCard :ui="{ root: 'shadow-md' }">
+  <UCard :ui="{ root: 'shadow-md' }" data-test="safe-wallet-overview-card">
     <template #header>
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <h3 class="text-lg font-semibold">Balance</h3>
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">Wallet overview</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Balance, approval policy, and primary wallet actions.
+          </p>
         </div>
-        <div class="flex items-center gap-2"></div>
+        <div v-if="address" class="min-w-0 text-left sm:text-right">
+          <p class="text-xs font-medium text-gray-500">Safe address</p>
+          <AddressTooltip :address="address" class="mt-1 max-w-full" />
+        </div>
       </div>
     </template>
 
-    <div class="flex items-start justify-between">
-      <div class="flex flex-col gap-2">
-        <div class="flex items-baseline gap-2">
-          <span class="text-4xl font-bold">
-            <span class="inline-block h-10 min-w-16">
-              <UIcon
-                v-if="isLoading"
-                name="i-lucide-loader-circle"
-                class="text-primary h-10 w-10 animate-spin"
-                data-test="safe-balance-loading"
-              />
-              <span v-else>{{ balance?.total.usd.formatted ?? 0 }}</span>
-            </span>
+    <UAlert
+      v-if="balanceError || safeInfoError"
+      class="mb-5"
+      color="error"
+      variant="soft"
+      icon="i-lucide-circle-alert"
+      title="Some wallet details are unavailable"
+      description="The Safe address remains available. Check your connection and retry the balance and signer details."
+      data-test="safe-overview-error"
+    >
+      <template #actions>
+        <UButton
+          color="error"
+          variant="outline"
+          size="xs"
+          label="Try again"
+          data-test="retry-safe-overview-button"
+          @click="retryOverview"
+        />
+      </template>
+    </UAlert>
+
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+      <div class="min-w-0">
+        <p class="text-sm font-medium text-gray-500">Total wallet value</p>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="inline-block min-h-10 text-3xl font-bold sm:text-4xl">
+            <UIcon
+              v-if="isLoading"
+              name="i-lucide-loader-circle"
+              class="text-primary h-9 w-9 animate-spin"
+              data-test="safe-balance-loading"
+            />
+            <span v-else>{{ balance?.total.usd.formatted ?? '—' }}</span>
           </span>
-          <span class="text-gray-600">USD</span>
+          <span class="text-sm text-gray-600">USD</span>
         </div>
-        <div class="mt-1 text-sm text-gray-500">
-          ≈ {{ balance?.total.local.formatted ?? 0 }} {{ currency.code }}
-        </div>
-        <div class="mt-2 flex flex-col gap-1 text-sm text-gray-600">
-          <div>
-            <span class="font-medium">{{ safeInfo?.threshold ?? '-' }}</span> of
-            <span class="font-medium">{{ safeInfo?.owners.length || 0 }}</span> signatures required
+        <p class="mt-1 text-sm text-gray-500">
+          ≈ {{ balance?.total.local.formatted ?? '—' }} {{ currency.code }}
+        </p>
+
+        <div class="mt-5 flex flex-wrap gap-3">
+          <div class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60">
+            <p class="text-xs text-gray-500">Required approvals</p>
+            <p class="mt-1 font-semibold" data-test="safe-threshold-summary">
+              {{ safeInfo?.threshold ?? '—' }} of {{ safeInfo?.owners.length ?? '—' }} signers
+            </p>
           </div>
-          <div class="text-xs text-gray-500">Safe Balance</div>
+          <div class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60">
+            <p class="text-xs text-gray-500">Your role</p>
+            <p class="mt-1 font-semibold" data-test="safe-user-role">
+              {{ roleLabel }}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div class="flex flex-col items-end gap-4">
-        <div class="flex gap-2">
+      <div class="w-full lg:max-w-xl">
+        <UAlert
+          class="mb-4"
+          :color="isSafeInfoLoading ? 'neutral' : isConnectedUserOwner ? 'success' : 'info'"
+          variant="soft"
+          :icon="isConnectedUserOwner ? 'i-lucide-key-round' : 'i-lucide-info'"
+          :title="roleNoticeTitle"
+          :description="roleDescription"
+          data-test="safe-role-notice"
+        />
+
+        <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
           <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
             <UButton
               color="secondary"
-              data-test="deposit-button"
-              leading-icon="heroicons-outline:plus"
-              label="Deposit"
+              leading-icon="i-lucide-plus"
+              label="Deposit funds"
               :disabled="archivedDisabled"
+              class="justify-center"
+              data-test="deposit-button"
               @click="openDepositModal"
             />
           </TeamArchivedTooltip>
 
           <UButton
             color="secondary"
-            data-test="transfer-button"
-            leading-icon="heroicons-outline:arrows-right-left"
-            label="Transfer"
+            leading-icon="i-lucide-arrow-right-left"
+            label="Create transfer"
             :disabled="!isConnectedUserOwner"
+            :title="transferPermissionHint"
+            class="justify-center"
+            data-test="transfer-button"
             @click="openTransferModal"
           />
 
           <UButton
             v-if="address"
             color="primary"
+            leading-icon="i-lucide-external-link"
+            label="Open in Safe"
+            class="justify-center"
             data-test="open-safe-app-button"
-            leading-icon="heroicons-outline:external-link"
-            label="Open in Safe App"
             @click="openInSafeApp"
           />
-        </div>
-        <div class="flex items-center gap-2" v-if="address">
-          <div class="text-sm text-gray-600">Safe Address:</div>
-          <AddressToolTip :address="address" />
         </div>
       </div>
     </div>
 
-    <!-- Deposit Modal -->
     <UModal
       v-if="depositModal.mount"
       v-model:open="depositModal.show"
-      @update:open="handleDepositModalOpen"
-      data-test="deposit-modal"
-      title="Deposit to Safe Contract"
-      description="Deposit assets to the Safe contract to fund your team’s operations."
+      title="Deposit funds"
+      description="Send supported assets to the team Safe. Deposits do not require signer approval."
       :close="{ onClick: () => closeDepositModal() }"
+      data-test="deposit-modal"
+      @update:open="handleDepositModalOpen"
     >
       <template #body>
         <DepositSafeForm v-if="address" :safe-address="address" @close-modal="closeDepositModal" />
       </template>
     </UModal>
 
-    <!-- Transfer Modal -->
-
     <UModal
       v-if="transferModal.mount"
       v-model:open="transferModal.show"
-      @update:open="handleTransferModalOpen"
-      data-test="transfer-modal"
-      title="Transfer from Safe Contract"
-      :description="`Current contract balance: ${transferData.token.balance} ${transferData.token.symbol}`"
+      title="Create a Safe transfer"
+      :description="`Current wallet balance: ${transferData.token.balance} ${transferData.token.symbol}`"
       :close="{ onClick: () => resetTransferValues() }"
+      data-test="transfer-modal"
+      @update:open="handleTransferModalOpen"
     >
       <template #body>
         <TransferForm
@@ -108,7 +149,7 @@
           :tokens="tokens"
           :loading="isTransferring"
           @transfer="handleTransfer"
-          @closeModal="resetTransferValues"
+          @close-modal="resetTransferValues"
         />
       </template>
     </UModal>
@@ -120,7 +161,8 @@ import { computed, ref, type Ref } from 'vue'
 import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import { useToast } from '@nuxt/ui/composables'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { useUserDataStore } from '@/stores'
 import { useContractBalance } from '@/composables/useContractBalance'
@@ -128,65 +170,79 @@ import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
 import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
-import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import DepositSafeForm from '@/components/sections/SafeView/forms/DepositSafeForm.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
+const props = defineProps<{ address: Address }>()
 const chainId = useChainId()
 const userDataStore = useUserDataStore()
-const currency = useStorage('currency', {
-  code: 'USD',
-  name: 'US Dollar',
-  symbol: '$'
-})
-
-interface Props {
-  address: Address
-}
-
-const props = defineProps<Props>()
+const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const { isWriteDisabled } = useTeamWriteGuard()
 
-const { data: balance, isLoading } = useContractBalance(props.address)
+const {
+  data: balance,
+  isLoading,
+  error: balanceError,
+  refetch: refetchBalance
+} = useContractBalance(props.address)
+const {
+  data: safeInfo,
+  isLoading: isSafeInfoLoading,
+  error: safeInfoError,
+  refetch: refetchSafeInfo
+} = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
 
-const getTokens = (): TokenOption[] =>
+const tokens = computed<TokenOption[]>(() =>
   (balance.value?.balances ?? [])
-    .map((b) => ({
-      symbol: b.token.symbol,
-      balance: b.amount,
-      tokenId: b.token.id,
-      price: b.price.usd.value,
-      name: b.token.name,
-      code: b.token.code
+    .map((item) => ({
+      symbol: item.token.symbol,
+      balance: item.amount,
+      tokenId: item.token.id,
+      price: item.price.usd.value,
+      name: item.token.name,
+      code: item.token.code
     }))
-    .filter((b) => b.tokenId !== 'sher')
+    .filter((item) => item.tokenId !== 'sher')
+)
 
-const tokens = computed(() => getTokens())
-
-// Add refs for modals and form data
-const depositModal = ref({
-  mount: false,
-  show: false
-})
-
-const transferModal = ref({
-  mount: false,
-  show: false
-})
-
-const toast = useToast()
-const { mutate: transferFromSafe, isPending: isTransferring, reset } = useTransferFromSafeMutation()
-
-const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
-
-// Refactored to use computed with direct logic
 const isConnectedUserOwner = computed(() => {
   if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
-
   return safeInfo.value.owners.some(
-    (owner) => owner.toLowerCase() === userDataStore.address.toLowerCase()
+    (owner) => owner.toLowerCase() === userDataStore.address?.toLowerCase()
   )
 })
+
+const roleDescription = computed(() =>
+  isSafeInfoLoading.value
+    ? 'Checking the connected wallet against the Safe owner list.'
+    : isConnectedUserOwner.value
+      ? 'You can propose transfers, approve pending actions, and execute transactions once the threshold is reached.'
+      : 'You can review activity and deposit funds. Connect a Safe signer wallet to propose transfers or approve actions.'
+)
+
+const roleLabel = computed(() => {
+  if (isSafeInfoLoading.value) return 'Checking permissions…'
+  return isConnectedUserOwner.value ? 'Safe signer' : 'Viewer / depositor'
+})
+
+const roleNoticeTitle = computed(() => {
+  if (isSafeInfoLoading.value) return 'Checking signer permissions'
+  return isConnectedUserOwner.value
+    ? 'Signer wallet connected'
+    : 'Safe information is read-only for this wallet'
+})
+
+const transferPermissionHint = computed(() =>
+  isConnectedUserOwner.value
+    ? 'Create a transfer proposal for signer approval.'
+    : 'Only a Safe signer can create a transfer proposal.'
+)
+
+const depositModal = ref({ mount: false, show: false })
+const transferModal = ref({ mount: false, show: false })
+const toast = useToast()
+const { mutate: transferFromSafe, isPending: isTransferring, reset } = useTransferFromSafeMutation()
 
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]
@@ -204,10 +260,14 @@ const initialTransferDataValue = (): TransferModel => {
   }
 }
 
-const openInSafeApp = () => {
-  const safeAppUrl = getSafeHomeUrl(chainId.value, props.address)
-  openSafeAppUrl(safeAppUrl)
+const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
+
+const retryOverview = () => {
+  void refetchBalance()
+  void refetchSafeInfo()
 }
+
+const openInSafeApp = () => openSafeAppUrl(getSafeHomeUrl(chainId.value, props.address))
 
 const openDepositModal = () => {
   if (isWriteDisabled.value) return
@@ -219,33 +279,28 @@ const openTransferModal = () => {
   transferModal.value = { mount: true, show: true }
 }
 
-const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
-
 const resetTransferValues = () => {
   transferModal.value = { mount: false, show: false }
   transferData.value = initialTransferDataValue()
 }
 
-const handleTransfer = (transferData: TransferModel) => {
-  const safeAddress = props.address
-  if (!safeAddress) return
-
-  const options = {
-    to: transferData.address.address,
-    amount: transferData.amount,
-    tokenId: transferData.token.tokenId
-  }
-
+const handleTransfer = (model: TransferModel) => {
   transferFromSafe(
     {
-      pathParams: { safeAddress },
-      body: { options }
+      pathParams: { safeAddress: props.address },
+      body: {
+        options: {
+          to: model.address.address,
+          amount: model.amount,
+          tokenId: model.token.tokenId
+        }
+      }
     },
     {
       onSuccess: () => {
         toast.add({
-          title: 'Success',
-          description: 'Transfer submitted successfully',
+          title: 'Transfer proposed',
+          description: 'The proposal is now waiting for the required signer approvals.',
           color: 'success'
         })
         resetTransferValues()
@@ -255,25 +310,19 @@ const handleTransfer = (transferData: TransferModel) => {
         const message = error.message.includes('User rejected')
           ? 'Transaction approval rejected'
           : error.message
-        toast.add({ title: 'Error', description: message, color: 'error' })
+        toast.add({ title: 'Transfer proposal failed', description: message, color: 'error' })
       }
     }
   )
 }
 
-const closeDepositModal = () => {
-  depositModal.value = { mount: false, show: false }
-}
+const closeDepositModal = () => void (depositModal.value = { mount: false, show: false })
 
 const handleDepositModalOpen = (open: boolean) => {
-  if (!open) {
-    closeDepositModal()
-  }
+  if (!open) closeDepositModal()
 }
 
 const handleTransferModalOpen = (open: boolean) => {
-  if (!open) {
-    resetTransferValues()
-  }
+  if (!open) resetTransferValues()
 }
 </script>

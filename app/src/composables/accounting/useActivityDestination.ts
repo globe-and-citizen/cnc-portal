@@ -53,6 +53,8 @@ export function useActivityDestination() {
           : null
       case 'sher-token':
         return { name: 'sher-token', params: { id } }
+      case 'vesting':
+        return { name: 'vesting', params: { id } }
     }
   }
 

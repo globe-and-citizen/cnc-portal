@@ -14,21 +14,20 @@
  *             → buildLedger (#2117 consolidation: dedupe twins + summary)
  *             → general ledger / income statement / balance sheet (#2117)
  */
-import { getAddress, isAddress, type Address } from 'viem'
+import { type Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
+import type { TransactionClassificationRecord } from '@/types/accounting-classification'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
 import type { ExpenseEventsQuery } from '@/types/ponder/expense'
 import type { FixedReturnEventsQuery } from '@/types/ponder/fixedReturn'
-import type {
-  InvestorEventsQuery,
-  SafeDepositRouterEventsQuery,
-  SafeDepositRow
-} from '@/types/ponder/investor'
+import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
+import type { VestingEventsQuery } from '@/types/ponder/vesting'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
+import type { ClassificationOverride } from '@/utils/accounting/classification'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
@@ -45,7 +44,7 @@ import {
 } from '@/utils/accounting/sherRate'
 import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
-import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
+import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
 export interface CncAccountingInput {
@@ -80,6 +79,7 @@ export interface CncAccountingInput {
    *  lets the interest be accrued over the term instead of expensed at payment. */
   fixedReturnOfferTerms?: readonly CreditOfferTerms[] | null
   investorEvents?: InvestorEventsQuery | null
+  vestingEvents?: VestingEventsQuery | null
   safeDepositRouterEvents?: SafeDepositRouterEventsQuery | null
   safeTransfers?: readonly SafeIncomingTransfer[] | null
   /** Executed multisig transactions — outflows from the Safe. */
@@ -87,6 +87,8 @@ export interface CncAccountingInput {
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
   weeklyClaims?: readonly WeeklyClaim[]
   expenses?: readonly ExpenseResponse[]
+  /** Manual Bank/Safe transaction classifications, overriding address inference (#2457). */
+  classifications?: readonly TransactionClassificationRecord[] | null
 }
 
 /** The consolidated ledger + the three statements a team's books resolve to. */
@@ -115,119 +117,19 @@ function items<T>(field: { items: T[] } | null | undefined): T[] {
   return field?.items ?? []
 }
 
-/** A SHER value transfer carries no cash; skip NFT moves entirely. */
-function isMonetaryTransfer(t: SafeIncomingTransfer): boolean {
-  return t.type === 'ETHER_TRANSFER' || t.type === 'ERC20_TRANSFER'
-}
-
-function sameAddress(a: string | null | undefined, b: string | null | undefined): boolean {
-  return !!a && !!b && isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
-}
-
-/** `${depositor}|${amount}` — keys a Safe inflow to the router deposit that backs it. */
-function routedKey(depositor: string, amount: string): string {
-  return `${depositor.toLowerCase()}|${amount}`
-}
-
 /**
- * A consumable multiset of the (depositor, deposited-amount) pairs that arrived
- * through the SafeDepositRouter, so the matching Safe inflows can be excluded.
+ * Index the manual classifications by their transaction identity so the mapper
+ * context can look one up per ledger entry. Keys are lowercased to match the entry
+ * ids (`${txHash}-${logIndex}`), guarding against a mixed-case hash from the API.
  */
-function buildRoutedDeposits(
-  deposits: readonly SafeDepositRow[] | null | undefined
-): Map<string, number> {
-  const counts = new Map<string, number>()
-  for (const d of deposits ?? []) {
-    const key = routedKey(d.depositor, d.tokenAmount)
-    counts.set(key, (counts.get(key) ?? 0) + 1)
+function toClassificationMap(
+  records: readonly TransactionClassificationRecord[] | null | undefined
+): Map<string, ClassificationOverride> {
+  const map = new Map<string, ClassificationOverride>()
+  for (const record of records ?? []) {
+    map.set(record.txId.toLowerCase(), { category: record.category, memo: record.memo })
   }
-  return counts
-}
-
-/**
- * Adapt the Safe Transaction Service incoming transfers into the mapper's
- * {@link SafeTransferRow} shape. ERC-721 moves are dropped (no cash); the ISO
- * `executionDate` becomes Unix seconds.
- *
- * Investments routed through the SafeDepositRouter also land in the Safe and are
- * booked from the router event (UC-SDR-01 → Investor Equity), so the matching
- * Safe inflow is excluded to avoid double-counting it **and** misreading it as a
- * client payment (Service Revenue). The router forwards funds with `from = the
- * depositor` (not the router address), so excluding only `from === router` is not
- * enough: we also drop inflows that match a router deposit by (depositor, amount).
- */
-export function toSafeTransferRows(
-  transfers: readonly SafeIncomingTransfer[] | null | undefined,
-  routerAddress?: Address | string | null,
-  routerDeposits?: readonly SafeDepositRow[] | null
-): SafeTransferRow[] {
-  const routed = buildRoutedDeposits(routerDeposits)
-  const rows: SafeTransferRow[] = []
-  transfers?.forEach((t, index) => {
-    if (!isMonetaryTransfer(t)) return
-    if (routerAddress && sameAddress(t.from, routerAddress)) return
-    const remaining = routed.get(routedKey(t.from, t.value)) ?? 0
-    if (remaining > 0) {
-      routed.set(routedKey(t.from, t.value), remaining - 1) // routed investment — booked by UC-SDR-01
-      return
-    }
-    rows.push({
-      id: `${t.transactionHash}-${index}`,
-      from: t.from,
-      to: t.to,
-      token: t.type === 'ERC20_TRANSFER' ? (t.tokenAddress ?? null) : null,
-      amount: t.value,
-      timestamp: Math.floor(new Date(t.executionDate).getTime() / 1000),
-      txHash: t.transactionHash
-    })
-  })
-  return rows
-}
-
-/**
- * Convert executed Safe multisig transactions into {@link SafeTransferRow}s so the
- * mapper can book outflows (Cr Cash — Safe). Handles native transfers (`value > 0`)
- * and ERC-20 `transfer(to, amount)` calls (decoded by the Transaction Service).
- */
-export function toSafeOutgoingTransferRows(
-  transactions: readonly SafeTransaction[] | null | undefined,
-  safeAddress: string
-): SafeTransferRow[] {
-  const rows: SafeTransferRow[] = []
-  for (const tx of transactions ?? []) {
-    if (!tx.isExecuted || tx.isSuccessful === false || !tx.executionDate) continue
-    const timestamp = Math.floor(new Date(tx.executionDate).getTime() / 1000)
-    const txHash = tx.transactionHash ?? tx.safeTxHash
-
-    if (tx.dataDecoded?.method === 'transfer' && tx.dataDecoded.parameters?.length >= 2) {
-      const recipient = tx.dataDecoded.parameters[0]?.value
-      const amount = tx.dataDecoded.parameters[1]?.value
-      if (recipient && amount && amount !== '0') {
-        rows.push({
-          id: `out-${txHash}-erc20`,
-          from: safeAddress,
-          to: recipient,
-          token: tx.to,
-          amount,
-          timestamp,
-          txHash
-        })
-      }
-    }
-
-    if (tx.value && tx.value !== '0') {
-      rows.push({
-        id: `out-${txHash}-native`,
-        from: safeAddress,
-        to: tx.to,
-        token: null,
-        amount: tx.value,
-        timestamp,
-        txHash
-      })
-    }
-  }
-  return rows
+  return map
 }
 
 /** Build the {@link LedgerSources} the mappers consume from the raw query results. */
@@ -283,17 +185,33 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
     sources.safeDepositRouter = { deposits: items(input.safeDepositRouterEvents.safeDeposits) }
   }
 
+  if (input.vestingEvents) {
+    sources.vesting = {
+      createds: items(input.vestingEvents.vestingCreateds),
+      releases: items(input.vestingEvents.vestingTokensReleaseds),
+      stoppeds: items(input.vestingEvents.vestingStoppeds)
+    }
+  }
+
   // The investor mapper correlates each mint with the deposits/withdraws that
   // already booked the equity (catalogue §5.4), so it needs those cross-source
-  // rows even when there are no Investor events of its own to map.
-  if (input.investorEvents || input.safeDepositRouterEvents || input.cashRemunerationEvents) {
+  // rows even when there are no Investor events of its own to map. A vesting
+  // release mints through the same Investor `individualMint`, so its rows back the
+  // matching mint too (UC-VEST-02), preventing a double-counted Default-D.
+  if (
+    input.investorEvents ||
+    input.safeDepositRouterEvents ||
+    input.cashRemunerationEvents ||
+    input.vestingEvents
+  ) {
     sources.investor = {
       mints: items(input.investorEvents?.investorMints),
       dividendPaids: items(input.investorEvents?.investorDividendPaids),
       safeDepositRouterDeposits: items(input.safeDepositRouterEvents?.safeDeposits),
       cashRemunerationWithdrawTokens: items(
         input.cashRemunerationEvents?.cashRemunerationWithdrawTokens
-      )
+      ),
+      vestingReleases: items(input.vestingEvents?.vestingTokensReleaseds)
     }
   }
 
@@ -360,7 +278,8 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     memberAddresses: input.memberAddresses,
     feeCollectorAddress: input.feeCollectorAddress,
     sherTokenAddress: input.sherTokenAddress,
-    rateOfRecord
+    rateOfRecord,
+    classifications: toClassificationMap(input.classifications)
   })
 
   const rawEntries = buildCncLedgerEntries(toLedgerSources(input), ctx, {
@@ -379,7 +298,7 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
 
   // Freeze the withdrawn SHER at its realization rate and float the pending accruals
   // at the current multiplier: matched accrual quantity cancels its issuance in
-  // `Shares to be issued`, the rest floats until it is taken.
+  // `SHERS To Be Issued`, the rest floats until it is taken.
   const currentRate = currentSherUsdRate(
     input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
     input.safeDepositRouterEvents?.safeDeposits?.items,

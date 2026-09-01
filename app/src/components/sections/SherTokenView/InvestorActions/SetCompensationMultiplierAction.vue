@@ -105,7 +105,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { useToast } from '@nuxt/ui/composables'
 import { useConnection } from '@wagmi/vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useSetMultiplier } from '@/composables/safeDepositRouter/writes'
 import {
@@ -279,6 +279,4 @@ async function handleSetMultiplier(event?: FormSubmitEvent<MultiplierFormSchema>
 
   await setMultiplierWrite.mutateAsync({ args: [multiplierInWei] })
 }
-
-defineExpose({ handleSetMultiplier })
 </script>

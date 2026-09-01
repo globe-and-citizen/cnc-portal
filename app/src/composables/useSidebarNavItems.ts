@@ -57,6 +57,7 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
     const inCommunity = name.startsWith('community-credit')
     const inAccounting = name.startsWith('accounting')
     const inAdministration = name.startsWith('bod-')
+    const inPaymentGate = name.startsWith('payment-gate')
 
     return [
       [
@@ -199,6 +200,11 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
               label: 'General Ledger',
               active: name === 'accounting-ledger',
               to: { name: 'accounting-ledger', params: teamParams() }
+            },
+            {
+              label: 'Classification',
+              active: name === 'accounting-classification',
+              to: { name: 'accounting-classification', params: teamParams() }
             }
           ]
         },
@@ -215,6 +221,32 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
           active: route.name === 'sher-token',
           disabled,
           to: { name: 'sher-token', params: teamParams() }
+        },
+        {
+          label: 'Payment Gate',
+          icon: 'heroicons:credit-card',
+          value: 'payment-gate',
+          active: inPaymentGate,
+          disabled,
+          to: { name: 'payment-gate', params: teamParams() },
+          defaultOpen: hasCompany.value && inPaymentGate,
+          children: [
+            {
+              label: 'Setup',
+              active: name === 'payment-gate',
+              to: { name: 'payment-gate', params: teamParams() }
+            },
+            {
+              label: 'Reference',
+              active: name === 'payment-gate-reference',
+              to: { name: 'payment-gate-reference', params: teamParams() }
+            },
+            {
+              label: 'History',
+              active: name === 'payment-gate-history',
+              to: { name: 'payment-gate-history', params: teamParams() }
+            }
+          ]
         },
         {
           label: 'Administration',

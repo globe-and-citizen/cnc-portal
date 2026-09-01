@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import { type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'

@@ -5,6 +5,7 @@ import { readContract } from '@wagmi/core'
 import { log } from '@/utils'
 import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 import { CONTRACT_ABI_MAP } from '@/utils/abiDecodeUtil'
+import { formatDate } from '@/utils/format'
 
 export type FormattedAction = (Action & {
   requestedBy: User
@@ -42,7 +43,7 @@ export const filterAndFormatActions = (
     .map((action) => ({
       ...action,
       requestedBy: getUser(action.userAddress, members),
-      dateCreated: action.createdAt ? new Date(action.createdAt).toLocaleDateString() : '',
+      dateCreated: action.createdAt ? formatDate(action.createdAt) : '',
       description: JSON.parse(action.description).text,
       title: JSON.parse(action.description).title
     }))

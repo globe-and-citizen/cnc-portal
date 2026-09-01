@@ -4,11 +4,13 @@
       <div class="flex items-center justify-between">
         <span>Expense Account Transactions History</span>
         <div class="flex items-center gap-2">
-          <CustomDatePicker
-            v-model="dateRange"
-            class="min-w-[140px]"
-            data-test-prefix="expense-transaction-history"
-          />
+          <div class="min-w-[140px]" data-test="expense-transaction-history-date-select">
+            <DatePicker
+              v-model="dateRange"
+              mode="range"
+              storage-key="transaction-history-range-expense-transaction-history"
+            />
+          </div>
           <USelect
             v-model="selectedType"
             :items="typeOptions"
@@ -85,9 +87,9 @@
               v-if="getInlineUser(row.original) || row.original.type === 'ownershipTransferred'"
             >
               <div class="mt-1 flex items-center gap-1 text-xs">
-                <UserComponent :user="resolveUser(row.original.from)" />
+                <UserIdentity :user="resolveUser(row.original.from)" />
                 <span class="text-muted text-lg font-bold">→</span>
-                <UserComponent :user="resolveUser(row.original.to)" />
+                <UserIdentity :user="resolveUser(row.original.to)" />
               </div>
             </template>
           </div>
@@ -103,7 +105,7 @@
       </template>
 
       <template #counterparty-cell="{ row }">
-        <UserComponent
+        <UserIdentity
           v-if="row.depth === 0 && getTransactionCounterparty(row.original).address"
           :user="resolveUser(getTransactionCounterparty(row.original).address!)"
         />
@@ -164,7 +166,11 @@
     </template>
   </UCard>
 
-  <TransactionDetailModal v-if="selectedTx" v-model:open="showDetail" :transaction="selectedTx" />
+  <TransactionDetailSlideover
+    v-if="selectedTx"
+    v-model:open="showDetail"
+    :transaction="selectedTx"
+  />
 </template>
 
 <script setup lang="ts">
@@ -172,11 +178,11 @@ import { computed, watch } from 'vue'
 import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
-import UserComponent from '@/components/UserComponent.vue'
-import CustomDatePicker from '@/components/CustomDatePicker.vue'
-import TablePagination from '@/components/TablePagination.vue'
-import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
-import TransactionChildRow from '@/components/TransactionChildRow.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
+import TransactionChildRow from '@/components/sections/ExpenseAccountView/TransactionChildRow.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'

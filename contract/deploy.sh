@@ -27,3 +27,12 @@ npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network "$1"
 if [ "$2" == "mock" ]; then
   npx hardhat ignition deploy ignition/modules/MockTokensModule.ts --network "$1"
 fi
+
+if [ "$1" == "localhost" ] || [ "$1" == "hardhat" ]; then
+  # Safe v1.4.1 infra (Singleton, ProxyFactory, CompatibilityFallbackHandler) is
+  # already live at fixed canonical addresses on every real supported network
+  # (see app/src/constant/index.ts). A fresh local Hardhat node has none of it,
+  # so we deploy our own copies here purely for local dev/test. Deployed last so
+  # it never shifts the nonce-derived addresses of every other local contract.
+  npx hardhat ignition deploy ignition/modules/SafeInfraModule.ts --network "$1"
+fi

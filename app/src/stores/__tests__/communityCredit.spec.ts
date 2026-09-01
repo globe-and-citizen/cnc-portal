@@ -70,7 +70,12 @@ function offer(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
   }
 }
 
-const OPEN_OFFER: FixedReturnRawOffer = { offerId: 2, decimals: 6, offer: offer() }
+const OPEN_OFFER: FixedReturnRawOffer = {
+  offerId: 2,
+  decimals: 6,
+  offer: offer(),
+  lenderAddresses: []
+}
 const REPAID_OFFER: FixedReturnRawOffer = {
   offerId: 1,
   decimals: 6,
@@ -79,7 +84,8 @@ const REPAID_OFFER: FixedReturnRawOffer = {
     totalFunded: 18_000_000000n,
     totalRepaidByIssuer: 18_990_000000n, // 18000 + 5.5% → fully repaid
     state: 3
-  })
+  }),
+  lenderAddresses: []
 }
 const FUNDED_OFFER: FixedReturnRawOffer = {
   offerId: 3,
@@ -91,14 +97,16 @@ const FUNDED_OFFER: FixedReturnRawOffer = {
     totalFunded: 40_000_000000n,
     state: 1,
     maturityDate: 1_999_000_000n + BigInt(90 * 86_400)
-  })
+  }),
+  lenderAddresses: []
 }
 // Still contract-state Open, but its subscription window closed without reaching
 // target — no longer fundable; offerStateToRoundStatus resolves this to 'stalled'.
 const EXPIRED_OPEN_OFFER: FixedReturnRawOffer = {
   offerId: 4,
   decimals: 6,
-  offer: offer({ subscriptionDeadline: 1_700_500_000n })
+  offer: offer({ subscriptionDeadline: 1_700_500_000n }),
+  lenderAddresses: []
 }
 
 describe('Community Credit store (contract-backed)', () => {
@@ -184,12 +192,14 @@ describe('Community Credit store (contract-backed)', () => {
     const laterOffer: FixedReturnRawOffer = {
       offerId: 5,
       decimals: 6,
-      offer: offer({ maturityDate: 2_200_000_000n })
+      offer: offer({ maturityDate: 2_200_000_000n }),
+      lenderAddresses: []
     }
     const soonerOffer: FixedReturnRawOffer = {
       offerId: 6,
       decimals: 6,
-      offer: offer({ maturityDate: 2_100_000_000n })
+      offer: offer({ maturityDate: 2_100_000_000n }),
+      lenderAddresses: []
     }
     mockFixedReturnReads.allOffers.data.value = [laterOffer, soonerOffer]
     const store = useCommunityCreditStore()
@@ -235,11 +245,8 @@ describe('Community Credit store (contract-backed)', () => {
     )
   })
 
-  it('reflects the loading state and toggles the layout variant', () => {
+  it('reflects the loading state', () => {
     const store = useCommunityCreditStore()
-    expect(store.variant).toBe('ledger')
-    store.setVariant('gauge')
-    expect(store.variant).toBe('gauge')
     mockFixedReturnReads.allOffers.isLoading.value = true
     expect(store.isLoading).toBe(true)
   })

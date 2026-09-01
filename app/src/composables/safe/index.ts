@@ -11,7 +11,3 @@ export { randomSaltNonce, getSafeHomeUrl, getSafeSettingsUrl, openSafeAppUrl } f
 
 // SDK Management - centralized
 export { useSafeSDK } from './useSafeSdk'
-
-// Mutations (actions)
-export { useSafeTransactionConflicts } from './useSafeTransactionConflicts'
-export { useSafeTransactionActions } from './useSafeTransactionActions'

@@ -13,8 +13,8 @@ import {
 } from '@/tests/mocks'
 import ExpenseTransactions from '../ExpenseTransactions.vue'
 import {
-  AddressToolTipStub,
-  CustomDatePickerStub,
+  AddressTooltipStub,
+  DatePickerStub,
   EXPENSE_ADDRESS,
   TablePaginationStub,
   UBadgeStub,
@@ -22,7 +22,7 @@ import {
   USelectStub,
   UTableStub,
   USDC_ADDRESS,
-  UserComponentStub,
+  UserIdentityStub,
   ZERO_ADDRESS,
   buildExpenseQueryResult,
   buildGroupedExpenseQueryResult,
@@ -58,15 +58,15 @@ const createWrapper = (expenseAddress: Address = EXPENSE_ADDRESS): VueWrapper =>
         Select: USelectStub,
         UBadge: UBadgeStub,
         Badge: UBadgeStub,
-        AddressToolTip: AddressToolTipStub,
-        CustomDatePicker: CustomDatePickerStub,
-        UserComponent: UserComponentStub,
+        AddressTooltip: AddressTooltipStub,
+        DatePicker: DatePickerStub,
+        UserIdentity: UserIdentityStub,
         TablePagination: TablePaginationStub,
         'u-card': UCardStub,
         'u-table': UTableStub,
         'u-select': USelectStub,
         'u-badge': UBadgeStub,
-        'user-component': UserComponentStub,
+        'user-component': UserIdentityStub,
         'table-pagination': TablePaginationStub
       }
     }
@@ -164,6 +164,10 @@ describe('ExpenseTransactions', () => {
   it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
+    expect(wrapper.get('[data-test="expense-transaction-history-date-select"]').exists()).toBe(true)
+    const picker = wrapper.getComponent({ name: 'DatePicker' })
+    expect(picker.props('mode')).toBe('range')
+    expect(picker.props('storageKey')).toBe('transaction-history-range-expense-transaction-history')
     await wrapper.find('[data-test="date-filter-set-2020"]').trigger('click')
     await nextTick()
 

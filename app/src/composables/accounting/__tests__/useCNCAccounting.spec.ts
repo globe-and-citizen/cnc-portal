@@ -7,6 +7,7 @@ import { ref } from 'vue'
 // logic without touching the RPC. `refetch` resolves so the refresh test passes.
 const emptyLogsFeed = () => ({
   result: ref(null),
+  gaps: ref([]),
   loading: ref(false),
   error: ref(null),
   refetch: vi.fn().mockResolvedValue(undefined)
@@ -25,6 +26,9 @@ vi.mock('@/composables/fixedReturn/useFixedReturnEventsViaLogs', () => ({
 }))
 vi.mock('@/composables/investor/useInvestorEventsViaLogs', () => ({
   useInvestorEventsViaLogs: () => emptyLogsFeed()
+}))
+vi.mock('@/composables/vesting/useVestingEventsViaLogs', () => ({
+  useVestingEventsViaLogs: () => emptyLogsFeed()
 }))
 vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', () => ({
   useSafeDepositRouterEventsViaLogs: () => emptyLogsFeed()
@@ -45,10 +49,10 @@ describe('useCNCAccounting', () => {
     // Every posting is balanced by construction, so the books balance regardless
     // of whether the mocked feeds produce any entries (e.g. payroll accruals).
     expect(Array.isArray(acc.entries.value)).toBe(true)
-    expect(acc.summary.value).toHaveProperty('cash')
-    expect(acc.generalLedger.value.balanced).toBe(true)
-    expect(typeof acc.incomeStatement.value.netIncome).toBe('number')
-    expect(acc.balanceSheet.value.balanced).toBe(true)
+    expect(acc.reports.value.summary).toHaveProperty('cash')
+    expect(acc.reports.value.generalLedger.balanced).toBe(true)
+    expect(typeof acc.reports.value.incomeStatement.netIncome).toBe('number')
+    expect(acc.reports.value.balanceSheet.balanced).toBe(true)
   })
 
   it('surfaces the team query loading / error state', () => {
@@ -65,6 +69,6 @@ describe('useCNCAccounting', () => {
   it('degrades gracefully when the team id is null (no contracts)', () => {
     const acc = useCNCAccounting(null)
     expect(Array.isArray(acc.entries.value)).toBe(true)
-    expect(acc.balanceSheet.value.balanced).toBe(true)
+    expect(acc.reports.value.balanceSheet.balanced).toBe(true)
   })
 })

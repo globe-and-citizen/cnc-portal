@@ -1,15 +1,15 @@
 import { computed, ref, type Ref } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
 import { useAccountingExport } from './useAccountingExport'
 import {
   entriesForAccount,
   accountBalance,
   accountNet,
-  accountOpening
+  accountOpening,
+  type InstanceScope
 } from '@/utils/accounting/accountLedger'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
-import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
+import type { LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
@@ -19,23 +19,24 @@ export interface DrilldownBounds {
   to: Date | null
 }
 
+/** The statement line currently shown in the drill-down modal. */
+export interface LedgerDrilldownLine {
+  accounts: string | string[]
+  label: string
+  total: string
+}
+
 export function useLedgerDrilldown(
   entries: Ref<readonly LedgerEntry[]>,
-  bounds: () => DrilldownBounds,
-  columnsStorageKey: string
+  bounds: () => DrilldownBounds
 ) {
   const open = ref(false)
   // The account(s) the popup scopes to, and the name/figure shown for the line.
   const target = ref<string | string[]>('')
   const displayName = ref('')
   const lineTotal = ref('')
-
-  // Show/hide drill-down columns — persisted so the choice sticks across
-  // sessions, on a per-statement key so each card stays independent.
-  const columns = useLocalStorage<LedgerColumnKey[]>(
-    columnsStorageKey,
-    LEDGER_COLUMNS.map((c) => c.value)
-  )
+  // The pocket-instance scope, when the line is one split row of a redeployed pocket.
+  const targetScope = ref<InstanceScope | undefined>(undefined)
 
   const isAggregate = computed(() => Array.isArray(target.value))
 
@@ -48,7 +49,7 @@ export function useLedgerDrilldown(
     const t = target.value
     if (!t || (Array.isArray(t) && t.length === 0)) return []
     const { from, to } = bounds()
-    return entriesForAccount(entries.value, t, from, to)
+    return entriesForAccount(entries.value, t, from, to, targetScope.value)
   })
 
   // A single account nets from its own postings; an aggregate can't (mixed
@@ -59,9 +60,20 @@ export function useLedgerDrilldown(
       : lineTotal.value
   )
 
+  const selectedLine = computed<LedgerDrilldownLine | null>(() => {
+    if (!target.value || (Array.isArray(target.value) && target.value.length === 0)) return null
+    return {
+      accounts: target.value,
+      label: displayName.value,
+      total: total.value
+    }
+  })
+
   // What the account brought into the window — the ledger's "Opening balance"
   // line. Nothing precedes an open-ended window, nor an aggregate line.
-  const opening = computed(() => accountOpening(entries.value, balanceAccount.value, bounds().from))
+  const opening = computed(() =>
+    accountOpening(entries.value, balanceAccount.value, bounds().from, targetScope.value)
+  )
 
   // Where the account is left once every posting in the window is booked — the
   // figure at the foot of the Balance column.
@@ -75,10 +87,16 @@ export function useLedgerDrilldown(
    * Open the popup for a line. Pass one account name, or a list of accounts plus
    * a `label` for an aggregate. `lineValue` is the figure shown on the line.
    */
-  function openFor(account: string | string[], lineValue: string, label?: string): void {
+  function openFor(
+    account: string | string[],
+    lineValue: string,
+    label?: string,
+    scope?: InstanceScope
+  ): void {
     target.value = account
     displayName.value = label ?? (typeof account === 'string' ? account : 'Aggregate')
     lineTotal.value = lineValue
+    targetScope.value = scope
     open.value = true
   }
 
@@ -87,36 +105,35 @@ export function useLedgerDrilldown(
   // Export exactly the drilled-in ledger, over the same window and columns,
   // through the shared PDF / Excel pipeline. An aggregate carries its label and
   // total, which the pipeline can't recompute.
-  function onExport(format: 'pdf' | 'excel'): void {
+  function onExport(format: 'pdf' | 'excel', columns: LedgerColumnKey[]): void {
+    const line = selectedLine.value
+    if (!line) return
     const { from, to } = bounds()
     const spec: SectionSpec = {
       key: 'ledger',
-      account: target.value,
+      account: line.accounts,
       from,
       to,
-      columns: columns.value,
-      ...(isAggregate.value ? { accountLabel: displayName.value, accountTotal: total.value } : {})
+      columns,
+      ...(targetScope.value?.instance
+        ? { instance: targetScope.value.instance, includeBlank: targetScope.value.includeBlank }
+        : {}),
+      ...(isAggregate.value ? { accountLabel: line.label, accountTotal: line.total } : {})
     }
     if (format === 'excel') {
-      exportExcel(
-        [spec],
-        exportFilename(spec, 'xlsx'),
-        `${displayName.value} ledger exported to Excel`
-      )
+      exportExcel([spec], exportFilename(spec, 'xlsx'), `${line.label} ledger exported to Excel`)
     } else {
       exportPdf(
         [spec],
         { filename: exportFilename(spec, 'pdf') },
-        `${displayName.value} ledger exported to PDF`
+        `${line.label} ledger exported to PDF`
       )
     }
   }
 
   return {
     open,
-    account: displayName,
-    total,
-    columns,
+    selectedLine,
     balanceAccount,
     opening,
     closing,

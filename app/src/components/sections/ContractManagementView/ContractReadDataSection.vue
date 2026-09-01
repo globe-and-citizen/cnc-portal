@@ -64,7 +64,7 @@
             <code class="text-dimmed text-xs">{{ field.functionName }}()</code>
           </dt>
           <dd class="text-highlighted mt-1.5 min-w-0 font-medium">
-            <AddressToolTip
+            <AddressTooltip
               v-if="field.isAddress"
               :address="field.value"
               class="font-mono text-xs break-all"
@@ -90,7 +90,7 @@
 <script setup lang="ts">
 import { toRef } from 'vue'
 import type { Abi, Address } from 'viem'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useContractReadData } from '@/composables/contracts/useContractReadData'
 
 const props = defineProps<{

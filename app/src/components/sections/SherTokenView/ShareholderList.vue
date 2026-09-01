@@ -21,7 +21,7 @@
     >
       <template #address-cell="{ row: { original: row } }">
         <div class="flex w-full">
-          <UserComponent
+          <UserIdentity
             :user="
               teamStore.currentTeam?.members?.find((member) => member.address === row.address) || {
                 address: row.address,
@@ -76,7 +76,7 @@
 </template>
 <script setup lang="ts">
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import {
   useInvestorShareholders,
   useInvestorSymbol,

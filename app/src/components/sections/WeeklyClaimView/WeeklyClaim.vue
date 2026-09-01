@@ -17,14 +17,14 @@
           }"
           class="flex items-center gap-2 text-emerald-700 hover:underline"
         >
-          <UserComponent :user="row.member" />
+          <UserIdentity :user="row.member" />
         </RouterLink>
         <span v-else>-</span>
       </template>
 
       <template #weekStart-cell="{ row: { original: row } }">
         <span class="font-bold">{{
-          dayjs(row.weekStart).utc().startOf('isoWeek').format('MMMM YYYY')
+          formatMonthYear(dayjs(row.weekStart).utc().startOf('isoWeek'))
         }}</span>
         <br />
         <span>{{ formatIsoWeekRange(dayjs(row.weekStart).utc().startOf('isoWeek')) }}</span>
@@ -50,7 +50,7 @@
             :class="'font-bold'"
           />
           <span class="">
-            ≃ ${{ row.derived.hourlyRateInUserCurrency.toFixed(2) }}
+            ≃ {{ formatCurrency(row.derived.hourlyRateInUserCurrency, localCurrencyFormatOptions) }}
             {{ currencyStore.localCurrency.code }} / Hour
           </span>
           <template v-if="row.derived.hasOvertime">
@@ -61,7 +61,13 @@
               :class="'font-bold'"
             />
             <span class="">
-              ≃ ${{ row.derived.overtimeHourlyRateInUserCurrency.toFixed(2) }}
+              ≃
+              {{
+                formatCurrency(
+                  row.derived.overtimeHourlyRateInUserCurrency,
+                  localCurrencyFormatOptions
+                )
+              }}
               {{ currencyStore.localCurrency.code }} / Hour
             </span>
           </template>
@@ -77,7 +83,7 @@
             :class="'font-bold'"
           />
           <span class="">
-            ≃ ${{ row.derived.totalInUserCurrency.toFixed(2) }}
+            ≃ {{ formatCurrency(row.derived.totalInUserCurrency, localCurrencyFormatOptions) }}
             {{ currencyStore.localCurrency.code }}
           </span>
         </div>
@@ -139,10 +145,10 @@
 </template>
 
 <script setup lang="ts">
-import RatePerHourList from '@/components/RatePerHourList.vue'
-import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
+import RatePerHourList from '@/components/sections/WeeklyClaimView/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/sections/WeeklyClaimView/RatePerHourTotalList.vue'
 import type { TableColumn } from '@nuxt/ui'
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import type { TokenId } from '@/constant'
 import { NETWORK } from '@/constant'
 import { useCurrencyStore, useTeamStore /*, useUserDataStore*/ } from '@/stores'
@@ -158,10 +164,11 @@ import { RouterLink } from 'vue-router'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
-import TablePagination from '@/components/TablePagination.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import { usePagination } from '@/composables/usePagination'
 import type { Address } from 'viem'
 import { computeClaimTokenAmounts, formatMinutesAsDuration } from '@/utils/wageUtil'
+import { formatCurrency, formatMonthYear } from '@/utils/format'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -262,6 +269,7 @@ watch(() => props.memberAddress, reset)
 const isTeamClaimDataFetching = computed(() => !fetchedData.value && !error.value)
 
 const currencyStore = useCurrencyStore()
+const localCurrencyFormatOptions = computed(() => ({ currency: currencyStore.localCurrency.code }))
 
 // Converts a list of token amounts (rates or payouts) into the user's local
 // currency. Reused for hourly rate, overtime rate and the weekly total.

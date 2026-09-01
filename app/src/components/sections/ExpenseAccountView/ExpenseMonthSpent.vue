@@ -25,9 +25,10 @@
 <script setup lang="ts">
 import cartIcon from '@/assets/cart.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
-import OverviewCard from '@/components/OverviewCard.vue'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
+import { formatNumber } from '@/utils/format'
 import { formatUnits, zeroAddress } from 'viem'
 import { computed, watch } from 'vue'
 import { SUPPORTED_TOKENS } from '@/constant'
@@ -106,7 +107,7 @@ const spendingDelta = computed<{ percent: string; direction: 'up' | 'down' } | n
   if (previous <= 0) return null
   const change = ((monthlySpentLocal.value - previous) / previous) * 100
   return {
-    percent: Math.abs(change).toFixed(1),
+    percent: formatNumber(Math.abs(change), { minDecimals: 1, maxDecimals: 1 }),
     direction: change >= 0 ? 'up' : 'down'
   }
 })

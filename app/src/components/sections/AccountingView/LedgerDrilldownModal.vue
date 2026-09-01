@@ -27,7 +27,7 @@
               icon="i-heroicons-arrow-down-tray"
               label="Excel"
               data-test="drilldown-export-excel"
-              @click="emit('export', 'excel')"
+              @click="exportDrilldown('excel')"
             />
             <UButton
               color="neutral"
@@ -35,7 +35,7 @@
               icon="i-heroicons-printer"
               label="PDF"
               data-test="drilldown-export-pdf"
-              @click="emit('export', 'pdf')"
+              @click="exportDrilldown('pdf')"
             />
           </div>
         </div>
@@ -62,9 +62,10 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
 import LedgerTable from './LedgerTable.vue'
-import TablePagination from '@/components/TablePagination.vue'
-import ColumnVisibilitySelect from '@/components/ColumnVisibilitySelect.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
 import {
   ledgerRows,
   LEDGER_COLUMNS,
@@ -91,15 +92,18 @@ const props = defineProps<{
   opening?: AccountOpening
   /** What the account is left standing at, once every posting is booked. */
   closing?: string
+  /** Storage key for this statement's persisted column preference. */
+  columnsStorageKey: string
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
-// Which ledger columns to show — owned by the parent so the drill-down export
-// matches what's on screen; defaults to all when left unbound.
-const visibleColumns = defineModel<LedgerColumnKey[]>('columns', {
-  default: () => LEDGER_COLUMNS.map((c) => c.value)
-})
-const emit = defineEmits<{ export: [format: 'pdf' | 'excel'] }>()
+// The column preference belongs to this modal. It is persisted per statement and
+// emitted with each export so the file matches what the user sees.
+const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
+  props.columnsStorageKey,
+  LEDGER_COLUMNS.map((column) => column.value)
+)
+const emit = defineEmits<{ export: [format: 'pdf' | 'excel', columns: LedgerColumnKey[]] }>()
 
 const columnItems = [...LEDGER_COLUMNS]
 
@@ -107,6 +111,10 @@ const entryCount = computed(() => props.entries.length)
 
 const page = ref(1)
 const pageSize = ref(10)
+
+function exportDrilldown(format: 'pdf' | 'excel'): void {
+  emit('export', format, visibleColumns.value)
+}
 
 // A different line (or a reopen) starts back at page one.
 watch(

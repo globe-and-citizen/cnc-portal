@@ -15,16 +15,23 @@ import type {
   FixedReturnOfferParams,
   FixedReturnRawOffer,
   LendingOfferStruct,
+  RoundDetailVariant,
   RoundStatus,
   StatusMeta
 } from '@/types'
 import {
   getCreditTokenSymbol,
+  gradientForAddress,
   isLendingOfferAcceptingFunds,
   sumWhitelistAmount,
   toFixedReturnOfferParams
 } from './communityCreditOfferUtil'
 import { shortenAddress } from './generalUtil'
+import {
+  formatDateShort,
+  formatDateUtc,
+  formatNumber as formatCanonicalNumber
+} from '@/utils/format'
 
 /** Clears `errors`, then repopulates it from a failed `safeParse` result (first issue
  *  per field wins). Returns whether the parse succeeded — the shared shape behind every
@@ -46,8 +53,7 @@ export function applyZodFieldErrors(
 /** Format an amount with a token suffix, e.g. `23,400.5 USDC`. Up to 4 decimals by
  *  default, since every Community Credit amount (raised, cap, interest, a lender's
  *  position, …) can be fractional — a value like 0.2 must not silently round to "0".
- *  `toLocaleString` only caps fraction digits (no `minimumFractionDigits`), so trailing
- *  zeros are trimmed and a value that's genuinely 0 still renders as "0", never
+ *  The canonical formatter trims trailing zeros, so a value that's genuinely 0 renders as "0", never
  *  "0.0000". */
 export function formatAmount(n: number, token = 'USDC', maximumFractionDigits = 4): string {
   return `${formatNumber(n, maximumFractionDigits)} ${token}`
@@ -55,7 +61,7 @@ export function formatAmount(n: number, token = 'USDC', maximumFractionDigits = 
 
 /** Format a number with thousands separators, up to 4 decimals by default (see formatAmount). */
 export function formatNumber(n: number, maximumFractionDigits = 4): string {
-  return Number(n).toLocaleString('en-US', { maximumFractionDigits })
+  return formatCanonicalNumber(n, { maxDecimals: maximumFractionDigits })
 }
 
 /** Rounds to 4 decimal places — enough to kill floating-point noise (e.g. 0.1 + 0.2)
@@ -112,6 +118,15 @@ export const ROUND_STATUS_META: Record<RoundStatus, StatusMeta> = {
   repaid: { label: 'Repaid', color: 'success' },
   refunded: { label: 'Refunded', color: 'neutral' }
 }
+
+/** UTabs `items` for the round-detail Ledger/Gauge/Timeline/Repay switcher. */
+export const ROUND_VARIANT_TAB_ITEMS: { label: string; value: RoundDetailVariant; slot: string }[] =
+  [
+    { label: 'Ledger', value: 'ledger', slot: 'ledger' },
+    { label: 'Gauge', value: 'gauge', slot: 'gauge' },
+    { label: 'Timeline', value: 'timeline', slot: 'timeline' },
+    { label: 'Repay', value: 'repay', slot: 'repay' }
+  ]
 
 export function statusMeta(status: RoundStatus): StatusMeta {
   return ROUND_STATUS_META[status]
@@ -224,23 +239,15 @@ export function creditTermLabel(
 
 // ───────── on-chain → CreditRound adapters ─────────
 
-/** Avatar gradient palette — lenders have no on-chain color, so derive one by address. */
-const CREDIT_GRADIENT_STOPS = ['#00bf7a', '#00b8d9', '#3366ff', '#0f3d2e', '#00925c']
-
-/** Deterministic two-color gradient for an address (stable across renders). */
-export function gradientForAddress(address: string): string {
-  let hash = 0
-  for (let i = 0; i < address.length; i++) hash = (hash * 31 + address.charCodeAt(i)) >>> 0
-  const first = CREDIT_GRADIENT_STOPS[hash % CREDIT_GRADIENT_STOPS.length]
-  const second = CREDIT_GRADIENT_STOPS[(hash >> 4) % CREDIT_GRADIENT_STOPS.length]
-  const distinct =
-    first === second ? CREDIT_GRADIENT_STOPS[(hash + 1) % CREDIT_GRADIENT_STOPS.length] : second
-  return `${first},${distinct}`
+/** Full principal + flat interest the issuer owes across the whole funded amount. */
+export function offerExpectedTotal(offer: LendingOfferStruct): bigint {
+  return offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000n
 }
 
-/** Full principal + flat interest the issuer owes across the whole funded amount. */
-function offerExpectedTotal(offer: LendingOfferStruct): bigint {
-  return offer.totalFunded + (offer.totalFunded * offer.interestRateBps) / 10_000n
+/** Exact remaining obligation for an offer, in the token's smallest unit. */
+export function offerOutstandingObligation(offer: LendingOfferStruct): bigint {
+  const total = offerExpectedTotal(offer)
+  return total > offer.totalRepaidByIssuer ? total - offer.totalRepaidByIssuer : 0n
 }
 
 /** True once `now` has passed an offer's maturity date (subscriptionDeadline + term) —
@@ -294,7 +301,7 @@ export function offerStateToRoundStatus(
  *  for every viewer regardless of OS/browser. */
 function formatOfferDate(unixSeconds: bigint): string {
   const secs = Number(unixSeconds)
-  return secs > 0 ? dayjs.utc(secs * 1000).format('MMM D, h:mm A [UTC]') : '—'
+  return secs > 0 ? formatDateUtc(secs * 1000) : '—'
 }
 
 /** Absolute maturity of an offer, for sorting/comparison. */
@@ -306,9 +313,11 @@ export function offerMaturityDate(offer: LendingOfferStruct): Date {
  * Maps one on-chain offer (from useFixedReturnAllOffers) to the CreditRound the
  * Community Credit UI renders. Amounts are scaled by the offer's token decimals; the
  * title/purpose come from the off-chain metadata endpoint (FixedReturn.sol stores
- * neither), falling back to generic copy. `lenders` is left empty — the per-round lender
- * list is a separate on-chain read (useFixedReturnOfferLenders) that the round detail
- * view fetches on demand, so the list doesn't pay for it.
+ * neither), falling back to generic copy. `lenders` here is address-only (no
+ * principal/expected/paid — those need the per-lender reads useFixedReturnOfferLenders
+ * does, which the round detail view fetches on demand) — just enough for the round
+ * card's lender count and avatar stack to be accurate without paying for the full
+ * breakdown on every round in the list.
  */
 export function lendingOfferToCreditRound(
   raw: FixedReturnRawOffer,
@@ -318,7 +327,7 @@ export function lendingOfferToCreditRound(
 ): CreditRound {
   const { offerId, offer, decimals } = raw
   const status = offerStateToRoundStatus(offer, now)
-  const maturity = dayjs.utc(offerMaturityDate(offer)).format('MMM D')
+  const maturity = formatDateShort(offerMaturityDate(offer))
   const period = Math.round((Number(offer.maturityDate) - Number(offer.subscriptionDeadline)) / 60)
 
   return {
@@ -343,7 +352,15 @@ export function lendingOfferToCreditRound(
     restricted: offer.fundingAccess === 1,
     cap: offer.isCapEnabled ? Number(formatUnits(offer.lenderCap, decimals)) : null,
     desc: purpose || 'On-chain fixed-return credit round.',
-    lenders: []
+    lenders: raw.lenderAddresses.map((address) => ({
+      name: shortenAddress(address),
+      addr: shortenAddress(address),
+      gradient: gradientForAddress(address),
+      amount: 0,
+      expected: 0,
+      paid: 0,
+      date: ''
+    }))
   }
 }
 

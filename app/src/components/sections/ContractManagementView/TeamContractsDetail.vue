@@ -10,7 +10,7 @@
 
     <div class="border-default rounded-lg border p-3">
       <p class="text-muted text-xs">Advertising revenue destination</p>
-      <AddressToolTip
+      <AddressTooltip
         v-if="bankAddress"
         :address="bankAddress"
         :slice="false"
@@ -61,6 +61,7 @@
           label="Save changes"
           :loading="isLoading"
           :disabled="isLoading || !hasChanges || archivedDisabled"
+          data-test="campaign-rate-save"
           @click="submit"
         />
       </TeamArchivedTooltip>
@@ -69,13 +70,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef } from 'vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { computed, ref, watch } from 'vue'
+import { parseUnits, type Address } from 'viem'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import {
-  useCampaignContractDetails,
-  type CampaignContractDatum
-} from '@/composables/contracts/useCampaignContractDetails'
+  useSetCampaignCostPerClick,
+  useSetCampaignCostPerImpression
+} from '@/composables/campaign/writes'
+
+interface CampaignContractDatum {
+  key: string
+  value: string
+}
 
 const props = defineProps<{
   datas: CampaignContractDatum[]
@@ -86,21 +93,16 @@ const emit = defineEmits<{
   (event: 'update:datas', value: CampaignContractDatum[]): void
   (event: 'closeContractDataDialog'): void
 }>()
-
-const {
-  initialized,
-  originalValues,
-  originalCostPerClick,
-  originalCostPerImpression,
-  pendingTransactions,
-  isLoading,
-  submit
-} = useCampaignContractDetails({
-  datas: toRef(props, 'datas'),
-  contractAddress: toRef(props, 'contractAddress'),
-  reset: toRef(props, 'reset'),
-  onClose: () => emit('closeContractDataDialog')
-})
+const toast = useToast()
+const initialized = ref(false)
+const pendingTransactions = ref(0)
+const originalRates = ref({ costPerClick: 0, costPerImpression: 0 })
+const campaignAddress = computed(() => props.contractAddress as Address)
+const setCostPerClick = useSetCampaignCostPerClick(campaignAddress)
+const setCostPerImpression = useSetCampaignCostPerImpression(campaignAddress)
+const isLoading = computed(
+  () => setCostPerClick.isPending.value || setCostPerImpression.isPending.value
+)
 
 const costPerClick = computed(
   () => props.datas.find((data) => data.key === 'costPerClick')?.value ?? ''
@@ -113,17 +115,9 @@ const bankAddress = computed(
 )
 const hasChanges = computed(
   () =>
-    Number.parseFloat(costPerClick.value || '0') !== originalCostPerClick.value ||
-    Number.parseFloat(costPerImpression.value || '0') !== originalCostPerImpression.value
+    Number.parseFloat(costPerClick.value || '0') !== originalRates.value.costPerClick ||
+    Number.parseFloat(costPerImpression.value || '0') !== originalRates.value.costPerImpression
 )
-
-defineExpose({
-  initialized,
-  originalValues,
-  originalCostPerClick,
-  originalCostPerImpression,
-  pendingTransactions
-})
 
 function updateCost(key: string, value: string | number) {
   const updatedDatas = props.datas.map((data) =>
@@ -133,4 +127,79 @@ function updateCost(key: string, value: string | number) {
   )
   emit('update:datas', updatedDatas)
 }
+
+function initializeRates(datas: CampaignContractDatum[]) {
+  if (initialized.value || !datas.length) return
+
+  originalRates.value = {
+    costPerClick: Number.parseFloat(
+      datas.find((data) => data.key === 'costPerClick')?.value || '0'
+    ),
+    costPerImpression: Number.parseFloat(
+      datas.find((data) => data.key === 'costPerImpression')?.value || '0'
+    )
+  }
+  initialized.value = true
+}
+
+function completeTransaction(key: 'costPerClick' | 'costPerImpression', value: number) {
+  pendingTransactions.value--
+  originalRates.value[key] = value
+  if (pendingTransactions.value === 0) emit('closeContractDataDialog')
+}
+
+function submit() {
+  const clickRate = Number.parseFloat(costPerClick.value)
+  const impressionRate = Number.parseFloat(costPerImpression.value)
+  if (!Number.isFinite(clickRate) || !Number.isFinite(impressionRate)) return
+
+  const clickChanged = originalRates.value.costPerClick !== clickRate
+  const impressionChanged = originalRates.value.costPerImpression !== impressionRate
+
+  if (clickChanged && clickRate <= 0) {
+    toast.add({ title: 'Cost per click should be greater than 0', color: 'error' })
+    return
+  }
+  if (impressionChanged && impressionRate <= 0) {
+    toast.add({ title: 'Cost per impression should be greater than 0', color: 'error' })
+    return
+  }
+
+  try {
+    pendingTransactions.value = Number(clickChanged) + Number(impressionChanged)
+    if (clickChanged) {
+      setCostPerClick.mutate(
+        { args: [parseUnits(String(clickRate), 18)] },
+        { onSuccess: () => completeTransaction('costPerClick', clickRate) }
+      )
+    }
+    if (impressionChanged) {
+      setCostPerImpression.mutate(
+        { args: [parseUnits(String(impressionRate), 18)] },
+        { onSuccess: () => completeTransaction('costPerImpression', impressionRate) }
+      )
+    }
+  } catch (error) {
+    pendingTransactions.value = 0
+    toast.add({
+      title: 'An error occurred while updating the costs. Please try again.',
+      color: 'error'
+    })
+    console.error('Error:', error)
+  }
+}
+
+watch(
+  () => props.reset,
+  (reset) => {
+    if (reset) initialized.value = false
+  }
+)
+watch(() => props.datas, initializeRates, { deep: true })
+watch(setCostPerClick.error, (error) => {
+  if (error) toast.add({ title: 'Set cost per click failed', color: 'error' })
+})
+watch(setCostPerImpression.error, (error) => {
+  if (error) toast.add({ title: 'Set cost per impression failed', color: 'error' })
+})
 </script>

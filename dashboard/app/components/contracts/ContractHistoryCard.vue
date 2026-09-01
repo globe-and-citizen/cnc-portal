@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import type { ContractHistory } from '~/composables/useContractRegistry'
+import { formatDate } from '~/utils/format'
 
 defineProps<{
   contract: ContractHistory
@@ -57,7 +57,7 @@ defineProps<{
           </div>
 
           <p class="mt-1.5 text-xs text-dimmed">
-            {{ dayjs(d.deployedAt).format('MMM D, YYYY') }}
+            {{ formatDate(d.deployedAt) }}
           </p>
 
           <!-- Beacon + implementation -->

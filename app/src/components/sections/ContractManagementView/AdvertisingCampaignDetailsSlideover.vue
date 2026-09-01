@@ -2,7 +2,7 @@
 import type { AdvertisingCampaign } from '@/composables/campaign/reads'
 import type { ExtendedEvent } from '@/lib/campaign/events'
 import { formatPercent, formatTokenUnits } from '@/utils/format'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 
 defineProps<{
   campaign: AdvertisingCampaign | null
@@ -18,6 +18,10 @@ function progress(campaign: AdvertisingCampaign) {
 function eventLabel(eventName: ExtendedEvent['eventName']) {
   return eventName.replace(/([A-Z])/g, ' $1').trim()
 }
+
+function handleOpenChange(open: boolean) {
+  if (!open) emit('close')
+}
 </script>
 
 <template>
@@ -26,7 +30,7 @@ function eventLabel(eventName: ExtendedEvent['eventName']) {
     title="Campaign details"
     description="Budget, advertiser and on-chain activity for this campaign."
     :ui="{ content: 'sm:max-w-xl' }"
-    @update:open="(open) => !open && emit('close')"
+    @update:open="handleOpenChange"
   >
     <template #body>
       <div v-if="campaign" class="space-y-6">
@@ -67,7 +71,7 @@ function eventLabel(eventName: ExtendedEvent['eventName']) {
 
         <div>
           <p class="text-muted mb-2 text-sm">Advertiser</p>
-          <AddressToolTip :address="campaign.advertiser" :slice="false" />
+          <AddressTooltip :address="campaign.advertiser" :slice="false" />
         </div>
 
         <USeparator />

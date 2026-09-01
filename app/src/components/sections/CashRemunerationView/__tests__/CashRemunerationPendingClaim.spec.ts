@@ -4,7 +4,7 @@ import { shallowMount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { mockTeamStore } from '@/tests/mocks'
-import OverviewCard from '@/components/OverviewCard.vue'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
 import * as queries from '@/queries'
 import { mockLog } from '@/tests/mocks/utils.mock'
 

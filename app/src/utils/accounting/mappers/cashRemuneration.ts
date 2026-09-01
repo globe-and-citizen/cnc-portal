@@ -6,7 +6,7 @@
  *   so the enrichment step can attach the `Wage`/`Claim` category (rate, minutes,
  *   memo).
  * - `WithdrawToken` where the token is **SHER**: the wage is paid in shares —
- *   Dr Shares to be issued · Cr Investor Equity (the equity leg of UC-CASH-03).
+ *   Dr SHERS To Be Issued · Cr Investor Equity (the equity leg of UC-CASH-03).
  *   The matching `Investor Minted` is therefore *not* re-booked by the investor
  *   mapper (it would double-count the equity).
  * - `Deposited`: internal funding of the payroll pocket from Bank — internal move.
@@ -39,7 +39,13 @@ const BANK = 'Cash — Bank' as const
 
 /** Cash leg: settle the wage liability from the payroll pocket. */
 function cashSettlement(
-  row: { id: string; withdrawer: string; amount: string; timestamp: number },
+  row: {
+    id: string
+    contractAddress: string
+    withdrawer: string
+    amount: string
+    timestamp: number
+  },
   token: string | null,
   ctx: MapperContext
 ): LedgerEntry {
@@ -50,6 +56,7 @@ function cashSettlement(
     useCase: 'UC-CASH-03',
     debit: 'Wage Payable',
     credit: PAYROLL,
+    creditInstance: row.contractAddress,
     amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
@@ -65,7 +72,7 @@ function shareSettlement(row: CashRemunerationWithdrawTokenRow, ctx: MapperConte
     id: row.id,
     timestamp: row.timestamp,
     useCase: 'UC-CASH-03',
-    debit: 'Shares to be issued',
+    debit: 'SHERS To Be Issued',
     credit: 'Investor Equity',
     amountUsd: ctx.toUsd(BigInt(row.amount), 'sher', atDate(row.timestamp)),
     token: 'sher',
@@ -82,7 +89,14 @@ function internalMove(
   row: { id: string; amount: string; timestamp: number },
   token: string | null,
   ctx: MapperContext,
-  opts: { debit: AccountName; credit: AccountName; counterparty?: string; memo: string }
+  opts: {
+    debit: AccountName
+    credit: AccountName
+    debitInstance?: string
+    creditInstance?: string
+    counterparty?: string
+    memo: string
+  }
 ): LedgerEntry {
   const tokenId = ctx.tokenIdOf(token)
   return makeEntry({
@@ -90,7 +104,9 @@ function internalMove(
     timestamp: row.timestamp,
     useCase: 'INTERNAL',
     debit: opts.debit,
+    debitInstance: opts.debitInstance,
     credit: opts.credit,
+    creditInstance: opts.creditInstance,
     amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
@@ -111,7 +127,9 @@ export function mapCashRemunerationEvents(
     entries.push(
       internalMove(row, null, ctx, {
         debit: PAYROLL,
+        debitInstance: row.contractAddress,
         credit: ctx.pocketOf(row.depositor) ?? BANK,
+        creditInstance: row.depositor,
         counterparty: row.depositor,
         memo: 'Internal funding into Payroll'
       })
@@ -136,6 +154,7 @@ export function mapCashRemunerationEvents(
       internalMove(row, null, ctx, {
         debit: BANK,
         credit: PAYROLL,
+        creditInstance: row.contractAddress,
         counterparty: row.ownerAddress,
         memo: 'Owner sweep Payroll → Bank'
       })
@@ -147,6 +166,7 @@ export function mapCashRemunerationEvents(
       internalMove(row, row.tokenAddress, ctx, {
         debit: BANK,
         credit: PAYROLL,
+        creditInstance: row.contractAddress,
         counterparty: row.ownerAddress,
         memo: 'Owner sweep Payroll → Bank'
       })

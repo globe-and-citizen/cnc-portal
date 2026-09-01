@@ -43,7 +43,7 @@
           </div>
           <div class="flex flex-wrap items-center gap-2 text-sm font-normal">
             <span class="text-muted">Officer</span>
-            <AddressToolTip :address="generation.officerAddress" :slice="true" class="text-xs" />
+            <AddressTooltip :address="generation.officerAddress" :slice="true" class="text-xs" />
             <span class="text-muted">· {{ generation.contracts.length }} contracts</span>
           </div>
         </div>
@@ -75,8 +75,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import type { ContractGeneration } from '@/composables/contracts/useContractManagementGenerations'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import type { ContractGeneration } from '@/types/deployments'
 import LegacyGenerationWithdrawAction from './LegacyGenerationWithdrawAction.vue'
 import MainContractTable from './MainContractTable.vue'
 

@@ -5,6 +5,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import claimRoutes from '../../routes/claimRoute';
 import { prisma } from '../../utils';
+import { DAILY_CLAIM_MEMO_MAX_LENGTH } from '../../validation';
 
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
@@ -25,6 +26,7 @@ vi.mock('../../utils', async () => {
         findFirst: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
+        upsert: vi.fn(),
         update: vi.fn(),
         delete: vi.fn(),
       },
@@ -56,6 +58,15 @@ vi.mock('../../utils/featureUtils', async () => {
 vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn(),
   getCashRemunerationOwner: vi.fn(),
+}));
+
+// Mock the wage resolution utility so addClaim's resolveCurrentWage call
+// returns whatever we set up per-test via mockResolveWageForWeek.
+const { mockResolveWageForWeek } = vi.hoisted(() => ({
+  mockResolveWageForWeek: vi.fn(),
+}));
+vi.mock('../../utils/wageResolution', () => ({
+  resolveCurrentWage: mockResolveWageForWeek,
 }));
 
 // Mock the storage service
@@ -142,6 +153,9 @@ const createMockWeeklyClaim = (overrides: Partial<WeeklyClaim> = {}): WeeklyClai
     signature: null,
     claims: [{ hoursWorked: 30, minutesWorked: 1800 }],
     wageId: 1,
+    // addClaim always loads the week with its wage: once a week holds hours,
+    // that wage is what prices and caps them.
+    wage: createMockWage(),
 
     status: 'pending',
     ...overrides,
@@ -215,10 +229,6 @@ app.use('/', claimRoutes);
 const invalidBodyScenarios = [
   { body: { teamId: 1, descpription: '' }, description: 'memo is missing' },
   { body: { teamId: 1, minutesWorked: 300, memo: ' ' }, description: 'memo is only spaces' },
-  {
-    body: { teamId: 1, minutesWorked: 300, memo: Array(3001).fill('word').join(' ') },
-    description: 'memo exceeds 3000 words',
-  },
   { body: {}, description: 'required fields are missing' },
   { body: { teamId: 1, minutesWorked: -5, memo: '' }, description: 'minutesWorked is invalid' },
 ];
@@ -240,8 +250,43 @@ describe('Claim Controller', () => {
       });
     });
 
+    it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
+      'should create a claim with a trimmed %i-character memo',
+      async (length) => {
+        const memo = ` ${'m'.repeat(length)} `;
+        const mockWage = createMockWage();
+        mockResolveWageForWeek.mockResolvedValue(mockWage);
+        vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(
+          createMockWeeklyClaim({ claims: [] })
+        );
+        const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+
+        const response = await request(app).post('/').send({ teamId: 1, minutesWorked: 300, memo });
+
+        expect(response.status).toBe(201);
+        expect(createSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ memo: memo.trim() }) })
+        );
+      }
+    );
+
+    it('should reject a memo over the character limit', async () => {
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: 1,
+          minutesWorked: 300,
+          memo: 'm'.repeat(DAILY_CLAIM_MEMO_MAX_LENGTH + 1),
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        `Memo must not exceed ${DAILY_CLAIM_MEMO_MAX_LENGTH} characters`
+      );
+    });
+
     it("should return 400 if user doesn't have wage", async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      mockResolveWageForWeek.mockResolvedValue(null);
       const response = await request(app)
         .post('/')
         .send({ teamId: 1, minutesWorked: 300, memo: 'memo' });
@@ -249,16 +294,104 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
+    it('should price a week that already holds hours with their own wage', async () => {
+      // The owner raised the cap mid-week. Hours are already priced against the
+      // old wage, so the week keeps it: repricing would mean a second
+      // WeeklyClaim for the same week, hour counters restarting from zero.
+      const testDate = dayjs.utc().startOf('day').toDate();
+      const submittedWeek = createMockWeeklyClaim({
+        wageId: 1,
+        wage: createMockWage({ id: 1, maximumHoursPerDay: 6 }),
+      } as Partial<WeeklyClaim>);
+      (submittedWeek as any).claims = [
+        { id: 1, dayWorked: testDate, hoursWorked: 5, minutesWorked: 300 },
+      ];
+
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(submittedWeek);
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ id: 2, maximumHoursPerDay: 12 }));
+
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        minutesWorked: 120, // 5h + 2h is under the new 12h cap, over the old 6h one
+        memo: 'memo',
+        dayWorked: testDate.toISOString(),
+      });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Daily allowance: 6h');
+      expect(mockResolveWageForWeek).not.toHaveBeenCalled();
+    });
+
+    it('keeps the first submitted wage weekly cap after a mid-week wage change', async () => {
+      const workedDay = dayjs.utc().subtract(1, 'day').startOf('day').toDate();
+      const submittedWeek = createMockWeeklyClaim({
+        wageId: 1,
+        wage: createMockWage({ id: 1, maximumHoursPerWeek: 40 }),
+      } as Partial<WeeklyClaim>);
+      (submittedWeek as any).claims = [
+        { id: 1, dayWorked: workedDay, hoursWorked: 39, minutesWorked: 2340 },
+      ];
+
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(submittedWeek);
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ id: 2, maximumHoursPerWeek: 60 }));
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: 1,
+          minutesWorked: 120,
+          memo: 'memo',
+          dayWorked: dayjs.utc().startOf('day').toISOString(),
+        });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('weekly hours limit would be exceeded');
+      expect(mockResolveWageForWeek).not.toHaveBeenCalled();
+    });
+
+    it('should move a goals-only week onto the wage in force when hours arrive', async () => {
+      // Goals commit nothing: the member had not submitted their hours when the
+      // wage changed, so the first hours are priced at the new wage and the
+      // week's row follows them instead of pointing at the superseded one.
+      const testDate = dayjs.utc().startOf('day').toDate();
+      const goalsOnlyWeek = createMockWeeklyClaim({
+        id: 7,
+        wageId: 1,
+        wage: createMockWage({ id: 1, maximumHoursPerDay: 6 }),
+        weeklyGoals: 'ship the thing',
+      } as Partial<WeeklyClaim>);
+      (goalsOnlyWeek as any).claims = [];
+
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(goalsOnlyWeek);
+      const updateSpy = vi
+        .spyOn(prisma.weeklyClaim, 'update')
+        .mockResolvedValue(createMockWeeklyClaim({ id: 7, wageId: 2 }));
+      vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ id: 2, maximumHoursPerDay: 12 }));
+
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        minutesWorked: 600, // 10h: over the old 6h cap, within the new 12h one
+        memo: 'memo',
+        dayWorked: testDate.toISOString(),
+      });
+
+      expect(response.status).toBe(201);
+      expect(prisma.weeklyClaim.create).not.toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 7 }, data: { wageId: 2 } })
+      );
+    });
+
     it('should return 409 if the day total exceeds the wage daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
-      const modifiedWeeklyClaims = createMockWeeklyClaim();
+      const modifiedWeeklyClaims = createMockWeeklyClaim({
+        wage: createMockWage({ maximumHoursPerDay: 6 }),
+      } as Partial<WeeklyClaim>);
       (modifiedWeeklyClaims as any).claims = [
         { id: 1, dayWorked: testDate, hoursWorked: 5, minutesWorked: 300 },
       ];
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(
-        createMockWage({ maximumHoursPerDay: 6 })
-      );
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
 
       const response = await request(app).post('/').send({
@@ -281,7 +414,6 @@ describe('Claim Controller', () => {
         { id: 1, dayWorked: testDate, hoursWorked: 7, minutesWorked: 420 },
       ];
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
 
       const response = await request(app).post('/').send({
@@ -297,14 +429,13 @@ describe('Claim Controller', () => {
 
     it('should allow a claim that stays within the daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
-      const modifiedWeeklyClaims = createMockWeeklyClaim();
+      const modifiedWeeklyClaims = createMockWeeklyClaim({
+        wage: createMockWage({ maximumHoursPerDay: 8 }),
+      } as Partial<WeeklyClaim>);
       (modifiedWeeklyClaims as any).claims = [
         { id: 1, dayWorked: testDate, hoursWorked: 4, minutesWorked: 240 },
       ];
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(
-        createMockWage({ maximumHoursPerDay: 8 })
-      );
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
 
@@ -320,7 +451,7 @@ describe('Claim Controller', () => {
 
     it('should return 400 when SUBMIT_RESTRICTION is active and dayWorked is outside the allowed window', async () => {
       vi.mocked(getEffectiveStatus).mockResolvedValueOnce('enabled');
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
+      mockResolveWageForWeek.mockResolvedValue(createMockWage());
 
       const outOfWindow = dayjs.utc().subtract(10, 'day').startOf('day').toISOString();
       const response = await request(app)
@@ -333,9 +464,9 @@ describe('Claim Controller', () => {
 
     it('should allow submission outside the window when SUBMIT_RESTRICTION is disabled', async () => {
       vi.mocked(getEffectiveStatus).mockResolvedValueOnce('disabled');
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
+      mockResolveWageForWeek.mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
-      vi.spyOn(prisma.weeklyClaim, 'create').mockResolvedValue(createMockWeeklyClaim());
+      vi.spyOn(prisma.weeklyClaim, 'upsert').mockResolvedValue(createMockWeeklyClaim());
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
 
       const outOfWindow = dayjs.utc().subtract(10, 'day').startOf('day').toISOString();
@@ -351,9 +482,9 @@ describe('Claim Controller', () => {
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
-      vi.spyOn(prisma.weeklyClaim, 'create').mockResolvedValue(mockWeeklyClaims);
+      vi.spyOn(prisma.weeklyClaim, 'upsert').mockResolvedValue(mockWeeklyClaims);
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 
       const response = await request(app)
@@ -369,6 +500,18 @@ describe('Claim Controller', () => {
         wageId: mockClaim.wageId,
         weeklyClaimId: mockClaim.weeklyClaimId,
       });
+      expect(prisma.weeklyClaim.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            teamId_memberAddress_weekStart: expect.objectContaining({
+              teamId: 1,
+              memberAddress: TEST_ADDRESS,
+            }),
+          },
+          create: expect.objectContaining({ wageId: mockWage.id, status: 'pending' }),
+          update: {},
+        })
+      );
     });
 
     it('should create new claims with legacy hoursWorked set to 0', async () => {
@@ -376,7 +519,7 @@ describe('Claim Controller', () => {
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 
@@ -398,7 +541,7 @@ describe('Claim Controller', () => {
     it('should return 409 if the claim is already signed', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'signed', signature: '0xabc' });
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const response = await request(app)
         .post('/')
@@ -410,7 +553,7 @@ describe('Claim Controller', () => {
     it('should return 409 if the claim is already disabled', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'disabled' });
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const response = await request(app)
         .post('/')
@@ -422,7 +565,7 @@ describe('Claim Controller', () => {
     it('should return 409 if the claim is already withdrawn', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'withdrawn' });
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const response = await request(app)
         .post('/')
@@ -436,7 +579,7 @@ describe('Claim Controller', () => {
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
 
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      mockResolveWageForWeek.mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 
@@ -455,7 +598,9 @@ describe('Claim Controller', () => {
     });
 
     it('should return 500 if internal server error occurs', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockRejectedValue(new Error('DB error'));
+      // An untouched week, so the wage is resolved — and that is what fails.
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
+      mockResolveWageForWeek.mockRejectedValue(new Error('DB error'));
 
       const response = await request(app)
         .post('/')
@@ -481,7 +626,7 @@ describe('Claim Controller', () => {
           ],
         });
 
-        vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+        mockResolveWageForWeek.mockResolvedValue(mockWage);
         vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaim);
         const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 
@@ -593,6 +738,37 @@ describe('Claim Controller', () => {
         },
       } as any);
     };
+
+    it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
+      'should update a claim with a trimmed %i-character memo',
+      async (length) => {
+        const memo = ` ${'m'.repeat(length)} `;
+        setupMockClaim();
+        const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({ id: 1 } as any);
+
+        const response = await request(app).put('/1').send({ memo });
+
+        expect(response.status).toBe(200);
+        expect(updateSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ memo: memo.trim() }) })
+        );
+      }
+    );
+
+    it.each([
+      ['empty', 'Memo cannot be empty', ''],
+      ['whitespace-only', 'Memo cannot be empty', '   '],
+      [
+        'overlong',
+        `Memo must not exceed ${DAILY_CLAIM_MEMO_MAX_LENGTH} characters`,
+        'm'.repeat(DAILY_CLAIM_MEMO_MAX_LENGTH + 1),
+      ],
+    ])('should reject a %s memo on update', async (_description, message, memo) => {
+      const response = await request(app).put('/1').send({ memo });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(message);
+    });
 
     // Helper function for authorization tests
     const testAuthorization = async (

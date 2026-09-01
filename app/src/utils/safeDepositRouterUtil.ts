@@ -1,5 +1,6 @@
 import { formatUnits, parseUnits } from 'viem'
 import { z } from 'zod'
+import { formatNumber } from '@/utils/format'
 
 /**
  * Format multiplier from contract (bigint) to human-readable decimal string
@@ -53,10 +54,7 @@ export function calculateSherCompensation(
 
   const sherValue = amountNum * multiplier
 
-  return sherValue.toLocaleString('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals
-  })
+  return formatNumber(sherValue, { maxDecimals: decimals })
 }
 
 /**
@@ -82,8 +80,15 @@ export function calculateDepositFromSher(
   }
 
   const depositAmount = sherNum / multiplier
-
-  return depositAmount.toFixed(decimals).replace(/\.?0+$/, '') // Remove trailing zeros
+  const serializedAmount = String(depositAmount)
+  try {
+    // This is a contract input, not display copy: reject values the token cannot
+    // represent instead of rounding them into a different deposited amount.
+    parseUnits(serializedAmount, decimals)
+    return serializedAmount
+  } catch {
+    return '0'
+  }
 }
 
 /**
@@ -171,8 +176,5 @@ export function formatSherAmount(amount: string | number, decimals = 6): string 
 
   if (isNaN(numValue)) return '0'
 
-  return numValue.toLocaleString('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals
-  })
+  return formatNumber(numValue, { maxDecimals: decimals })
 }

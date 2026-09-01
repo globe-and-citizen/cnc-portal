@@ -1,7 +1,6 @@
 # validate-upgrade
 
-Script that checks whether upgradeable contracts can be safely upgraded in place
-on a given network, or whether a redeployment is required.
+Script that checks whether upgradeable contracts can be safely upgraded in place on a given network, or whether a redeployment is required.
 
 ## How it works
 
@@ -56,8 +55,7 @@ flowchart TD
 
 ## Bake mode
 
-When `BAKE=1` is set, the script skips validation and instead **writes** the
-current storage layout as the new baseline for that network.
+When `BAKE=1` is set, the script skips validation and instead **writes** the current storage layout as the new baseline for that network.
 
 ```mermaid
 flowchart TD
@@ -94,10 +92,9 @@ flowchart LR
     B2 -. "type changed → ERROR" .-> C2
 ```
 
-In this example, inserting `name` at slot 2 pushed `__gap` down — the script
-catches the type change at slot 2 and reports `FAIL`. The safe version would
-consume one `__gap` slot by placing `name` before the remaining `__gap` and
-shrinking the gap from 50 slots to 49 so `__gap` stays at the end.
+In this example, inserting `name` at slot 2 pushed `__gap` down — the script catches the type change at slot 2 and reports `FAIL`. The safe
+version would consume one `__gap` slot by placing `name` before the remaining `__gap` and shrinking the gap from 50 slots to 49 so `__gap`
+stays at the end.
 
 ## Commands
 
@@ -123,7 +120,5 @@ storage-baselines/
     ...
 ```
 
-Each JSON file contains the raw solc `storageLayout` output: the `storage` array
-(list of slots with label, type, offset) and the `types` map. These files are
-committed to git and serve as the source of truth for what is deployed on that
-network.
+Each JSON file contains the raw solc `storageLayout` output: the `storage` array (list of slots with label, type, offset) and the `types`
+map. These files are committed to git and serve as the source of truth for what is deployed on that network.

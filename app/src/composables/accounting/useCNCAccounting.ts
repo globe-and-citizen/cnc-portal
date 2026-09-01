@@ -24,23 +24,25 @@ import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
 import { FEE_COLLECTOR_ADDRESS } from '@/constant'
-import type { ContractType } from '@/types/teamContract'
+import type { ContractType, TeamContract } from '@/types/teamContract'
+import type { ScanTarget } from '@/composables/eventsViaLogs'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
 import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedReturnEventsViaLogs'
 import { useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
 import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
+import { useVestingEventsViaLogs } from '@/composables/vesting/useVestingEventsViaLogs'
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { useGetTeamQuery } from '@/queries/team.queries'
-import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
-import { useGetExpensesQuery } from '@/queries/expense.queries'
+import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import {
   useGetSafeIncomingTransfersQuery,
   useGetSafeOutgoingTransactionsQuery
 } from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransferInitiators } from './useTransferInitiators'
+import { useAccountingBackendFeeds } from './useAccountingBackendFeeds'
 import {
   assembleCncAccounting,
   type CncAccounting,
@@ -69,18 +71,34 @@ export interface UseCNCAccountingOptions {
 export interface UseCNCAccountingReturn {
   /** Consolidated, deduped ledger postings. */
   entries: ComputedRef<LedgerEntry[]>
-  /** Roll-up totals for the summary cards. */
-  summary: ComputedRef<AccountingSummary>
-  /** Double-entry journal + trial balance. */
-  generalLedger: ComputedRef<GeneralLedger>
-  incomeStatement: ComputedRef<IncomeStatement>
-  balanceSheet: ComputedRef<BalanceSheet>
+  /** The summary and financial reports computed from the consolidated ledger. */
+  reports: ComputedRef<AccountingReports>
   /** True while any required feed is still loading. */
   isLoading: ComputedRef<boolean>
   /** The team query error (the only fatal one); optional feeds degrade silently. */
   error: ComputedRef<unknown>
+  /** Contract generations whose on-chain scan failed — a partial-history warning. */
+  reconciliationGaps: ComputedRef<ReconciliationGap[]>
   /** Re-run every underlying query. */
   refetch: () => Promise<unknown>
+}
+
+/** The report set derived together from one consolidated accounting ledger. */
+export interface AccountingReports {
+  /** Roll-up totals for the summary cards. */
+  summary: AccountingSummary
+  /** Double-entry journal + trial balance. */
+  generalLedger: GeneralLedger
+  incomeStatement: IncomeStatement
+  balanceSheet: BalanceSheet
+}
+
+/** One contract generation that could not be loaded, for the UI gap warning. */
+export interface ReconciliationGap {
+  /** The money-pocket type whose generation failed (e.g. 'Bank'). */
+  source: string
+  /** The failed generation's contract address. */
+  address: string
 }
 
 export function useCNCAccounting(
@@ -90,7 +108,70 @@ export function useCNCAccounting(
   const team = useGetTeamQuery({ pathParams: { teamId } })
   const contracts = computed(() => team.data.value?.teamContracts ?? [])
 
-  /** Resolve a contract's lower-cased address by type (logs/args compare lowercase). */
+  // Every Officer generation with its contracts and deploy block, from the shared
+  // contract-history endpoint (`GET /contract/officers`) — reused rather than
+  // duplicated so the books survive contract migrations (issue #2456).
+  const officers = useGetTeamOfficersQuery({
+    queryParams: { teamId: computed(() => toValue(teamId) ?? '') }
+  })
+
+  /** One deployment generation: its contracts and the deploy block to scan from. */
+  interface Generation {
+    deployBlockNumber: string | null
+    contracts: { address: string; type: string; deployer?: string }[]
+  }
+
+  const generations = computed<Generation[]>(() => {
+    const officerList = officers.data.value ?? []
+    // No Officer history (older data): treat the current contracts as a single
+    // boundary-less generation so the books still load.
+    if (!officerList.length) {
+      return [{ deployBlockNumber: null, contracts: contracts.value }]
+    }
+    const gens: Generation[] = officerList.map((officer) => ({
+      deployBlockNumber: officer.deployBlockNumber,
+      contracts: officer.contracts
+    }))
+    // Officer-less pockets (Safe / SafeDepositRouter) survive redeploys and are
+    // governed by no Officer; add them once as a boundary-less generation.
+    const governed = new Set(
+      officerList.flatMap((officer) => officer.contracts.map((c) => c.address.toLowerCase()))
+    )
+    const officerless = contracts.value.filter((c) => !governed.has(c.address.toLowerCase()))
+    if (officerless.length) gens.push({ deployBlockNumber: null, contracts: officerless })
+    return gens
+  })
+
+  const allContracts = computed<TeamContract[]>(() =>
+    generations.value.flatMap((generation) =>
+      generation.contracts.map((c) => ({
+        address: c.address as Address,
+        type: c.type as ContractType,
+        deployer: (c.deployer ?? c.address) as Address,
+        admins: []
+      }))
+    )
+  )
+
+  /** Scan targets for a contract type across every generation, each with its deploy block. */
+  const targetsOf = (...types: ContractType[]): ComputedRef<ScanTarget[]> =>
+    computed(() => {
+      const wanted = new Set<string>(types)
+      const targets: ScanTarget[] = []
+      for (const generation of generations.value) {
+        const fromBlock = generation.deployBlockNumber
+          ? BigInt(generation.deployBlockNumber)
+          : undefined
+        for (const contract of generation.contracts) {
+          if (wanted.has(contract.type)) {
+            targets.push({ address: contract.address.toLowerCase(), fromBlock })
+          }
+        }
+      }
+      return targets
+    })
+
+  /** Current-generation address for reads that reflect live contract state. */
   const addressOf = (type: ContractType): ComputedRef<string> =>
     computed(() => contracts.value.find((c) => c.type === type)?.address?.toLowerCase() ?? '')
 
@@ -103,9 +184,6 @@ export function useCNCAccounting(
           ?.address?.toLowerCase() ?? ''
     )
 
-  const bankAddress = addressOf('Bank')
-  const cashRemAddress = addressOf('CashRemunerationEIP712')
-  const expenseAddress = addressOf('ExpenseAccountEIP712')
   const fixedReturnAddress = addressOf('FixedReturn')
   const investorAddress = addressOfInvestor()
   const routerAddress = addressOf('SafeDepositRouter')
@@ -113,16 +191,21 @@ export function useCNCAccounting(
     () => team.data.value?.safeAddress ?? contracts.value.find((c) => c.type === 'Safe')?.address
   )
 
-  // ── On-chain events via getLogs: one composable per deployed contract, each
-  // enabled only when its address resolves from the team. Every composable scans
-  // the contract from its deploy block and returns the exact same shape the Ponder
-  // queries did, so everything downstream (mappers, assemble) is unchanged. ──
-  const bank = useBankEventsViaLogs(bankAddress)
-  const cashRem = useCashRemunerationEventsViaLogs(cashRemAddress)
-  const expense = useExpenseEventsViaLogs(expenseAddress)
-  const fixedReturn = useFixedReturnEventsViaLogs(fixedReturnAddress)
-  const investor = useInvestorEventsViaLogs(investorAddress)
-  const router = useSafeDepositRouterEventsViaLogs(routerAddress)
+  const bankTargets = targetsOf('Bank')
+  const cashRemTargets = targetsOf('CashRemunerationEIP712')
+  const expenseTargets = targetsOf('ExpenseAccountEIP712')
+  const fixedReturnTargets = targetsOf('FixedReturn')
+  const investorTargets = targetsOf('Investor', 'InvestorV1')
+  const vestingTargets = targetsOf('Vesting')
+  const routerTargets = targetsOf('SafeDepositRouter')
+
+  const bank = useBankEventsViaLogs(bankTargets)
+  const cashRem = useCashRemunerationEventsViaLogs(cashRemTargets)
+  const expense = useExpenseEventsViaLogs(expenseTargets)
+  const fixedReturn = useFixedReturnEventsViaLogs(fixedReturnTargets)
+  const investor = useInvestorEventsViaLogs(investorTargets)
+  const vesting = useVestingEventsViaLogs(vestingTargets)
+  const router = useSafeDepositRouterEventsViaLogs(routerTargets)
 
   // ── Contract read: the router's live SHER multiplier. The `MultiplierUpdated`
   // events historise *changes*, but the initial multiplier is set in the
@@ -158,9 +241,8 @@ export function useCNCAccounting(
     }))
   )
 
-  // ── Backend DB: weekly claims + approved expenses (off-chain enrichment) ──
-  const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
-  const expenses = useGetExpensesQuery({ queryParams: { teamId } })
+  // ── Backend DB: the off-chain enrichment feeds (claims, expenses, classifications) ──
+  const { weeklyClaims, expenses, classifications } = useAccountingBackendFeeds(teamId)
 
   // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
   const safeTransfers = useGetSafeIncomingTransfersQuery({
@@ -195,7 +277,7 @@ export function useCNCAccounting(
   // The raw feeds + the live-price fallback — everything the ledger needs except
   // the resolved historical rate.
   const baseInput = computed<CncAccountingInput>(() => ({
-    contracts: contracts.value,
+    contracts: allContracts.value,
     safeAddress: safeAddress.value,
     founderAddresses: founderAddresses.value,
     memberAddresses: memberAddresses.value,
@@ -210,11 +292,13 @@ export function useCNCAccounting(
     fixedReturnEvents: fixedReturn.result.value,
     fixedReturnOfferTerms: fixedReturnOfferTerms.value,
     investorEvents: investor.result.value,
+    vestingEvents: vesting.result.value,
     safeDepositRouterEvents: router.result.value,
     safeTransfers: safeTransfers.data.value,
     safeOutgoingTransactions: safeOutgoing.data.value,
     weeklyClaims: weeklyClaims.data.value?.data,
-    expenses: expenses.data.value
+    expenses: expenses.data.value,
+    classifications: classifications.data.value
   }))
 
   // Native (POL/ETH) is valued at the **current** live price (currency store /
@@ -248,17 +332,36 @@ export function useCNCAccounting(
     )
   })
 
+  // A generation whose on-chain scan failed is surfaced as a reconciliation gap
+  // (rather than silently dropping the whole contract type), so the view can warn
+  // that history may be partial (issue #2456).
+  const reconciliationGaps = computed<ReconciliationGap[]>(() =>
+    (
+      [
+        ['Bank', bank],
+        ['CashRemuneration', cashRem],
+        ['Expense', expense],
+        ['FixedReturn', fixedReturn],
+        ['Investor', investor],
+        ['Vesting', vesting],
+        ['SafeDepositRouter', router]
+      ] as const
+    ).flatMap(([source, feed]) => feed.gaps.value.map((gap) => ({ source, address: gap.address })))
+  )
+
   // The team query is the only fatal one — without contracts there are no books.
   // Loading reflects the team + on-chain + enrichment feeds; the Safe service is
   // optional, so it is excluded to keep a slow/flaky transfer feed from blocking.
   const isLoading = computed(
     () =>
       team.isLoading.value ||
+      officers.isPending.value ||
       bank.loading.value ||
       cashRem.loading.value ||
       expense.loading.value ||
       fixedReturn.loading.value ||
       investor.loading.value ||
+      vesting.loading.value ||
       router.loading.value ||
       weeklyClaims.isLoading.value ||
       expenses.isLoading.value
@@ -271,16 +374,19 @@ export function useCNCAccounting(
     return Promise.allSettled(
       [
         team,
+        officers,
         bank,
         cashRem,
         expense,
         fixedReturn,
         fixedReturnOffers,
         investor,
+        vesting,
         router,
         routerMultiplier,
         weeklyClaims,
         expenses,
+        classifications,
         safeTransfers,
         safeOutgoing
       ].map(run)
@@ -289,12 +395,15 @@ export function useCNCAccounting(
 
   return {
     entries,
-    summary: computed(() => accounting.value.summary),
-    generalLedger: computed(() => accounting.value.generalLedger),
-    incomeStatement: computed(() => accounting.value.incomeStatement),
-    balanceSheet: computed(() => accounting.value.balanceSheet),
+    reports: computed<AccountingReports>(() => ({
+      summary: accounting.value.summary,
+      generalLedger: accounting.value.generalLedger,
+      incomeStatement: accounting.value.incomeStatement,
+      balanceSheet: accounting.value.balanceSheet
+    })),
     isLoading,
     error,
+    reconciliationGaps,
     refetch
   }
 }
