@@ -11,7 +11,7 @@
 
     <div class="flex gap-2" data-test="payment-gate-token-options">
       <UButton
-        v-for="option in tokenOptions"
+        v-for="option in enabledTokenOptions"
         :key="option"
         :color="selectedToken === option ? 'primary' : 'neutral'"
         :variant="selectedToken === option ? 'solid' : 'outline'"
@@ -19,12 +19,26 @@
         :label="option"
         @click="selectedToken = option"
       />
+      <UTooltip :text="POL_DISABLED_REASON">
+        <UButton
+          disabled
+          color="neutral"
+          variant="outline"
+          class="flex-1 justify-center"
+          label="POL"
+          data-test="payment-gate-token-option-pol-disabled"
+        />
+      </UTooltip>
     </div>
   </UCard>
 </template>
 
 <script setup lang="ts">
-const tokenOptions = ['USDC', 'USDCe', 'POL'] as const
+// POL isn't offered: native transfers can't carry a facture ID — Bank.sol's
+// receive() reverts on non-empty calldata and has no fallback() — so v0
+// payments only support depositToken() targets (see src/widget/main.ts).
+const enabledTokenOptions = ['USDC', 'USDCe'] as const
+const POL_DISABLED_REASON = "POL can't carry a facture ID — v0 only supports USDC/USDCe payments."
 
 const selectedToken = defineModel<'USDC' | 'USDCe' | 'POL'>('selectedToken', { required: true })
 </script>
