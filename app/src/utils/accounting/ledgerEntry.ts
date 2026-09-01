@@ -52,12 +52,14 @@ export type UseCase =
   | 'UC-EXP-01'
   /** Dividend paid to a shareholder. */
   | 'UC-INV-01'
-  /** Vesting grant created — agreement only, no tokens move (memo-only entry). */
+  /** Vesting grant defined — the full award booked upfront (restricted stock):
+   *  Dr Deferred SHER Compensation · Cr SHERS To Be Issued, no mint yet. */
   | 'UC-VEST-01'
-  /** Vested shares released/minted to a member — Dr Deferred SHER Compensation ·
-   *  Cr Investor Equity (the equity dilution, off the income statement). */
+  /** Vested shares released/minted to a member — Dr SHERS To Be Issued ·
+   *  Cr Investor Equity (promised shares become issued, off the income statement). */
   | 'UC-VEST-02'
-  /** Vesting schedule stopped — its unvested remainder is dropped (memo-only entry). */
+  /** Vesting schedule stopped — the unvested remainder of the grant is reversed:
+   *  Dr SHERS To Be Issued · Cr Deferred SHER Compensation. */
   | 'UC-VEST-03'
   /** Direct SHER mint: issue shares into equity — Dr SHERS To Be Issued · Cr Investor Equity. */
   | 'DEFAULT-D'

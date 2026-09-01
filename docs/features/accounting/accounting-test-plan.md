@@ -41,3 +41,10 @@ cases.
 - [ ] **31.** Open a **line drill-down** (loupe / Details) on an account.
 - [ ] **32.** **Export** the ledger / a statement.
 - [ ] **33.** Refresh and re-open the page on an **empty team**, and with a **failed / NFT** transfer present.
+- [ ] **34.** **Create a vesting schedule** of **10 SHER** for Hermann (short duration, no cliff) — confirm the books show the **whole 10
+      SHER promised** the same day, with **no profit impact** and **no change in total equity**.
+- [ ] **35.** Hermann **releases** part of the schedule once some of it has vested — confirm the released shares move from **promised** to
+      **issued**, that the issued amount matches the SHER he actually received, and that the release is booked **once**.
+- [ ] **36.** **Stop** the schedule before it fully vests — confirm the vested part stays issued and the **unvested remainder is
+      cancelled**, leaving no promised shares for that schedule.
+- [ ] **37.** Create a second schedule and **stop it before anything vests** — confirm the whole award is cancelled and nothing was issued.

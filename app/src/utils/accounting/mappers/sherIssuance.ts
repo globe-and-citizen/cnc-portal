@@ -2,11 +2,23 @@
  * SHER realization settlement — freeze what has been withdrawn, float what is still
  * pending.
  *
- * The SHER lifecycle is two postings:
+ * The SHER lifecycle is two postings, in two independent **lanes** — wages and
+ * share vesting — that both flow through `SHERS To Be Issued`:
  *
- *   accrual   (UC-CASH-02)              Cr SHERS To Be Issued   · shares *earned*
- *   issuance  (UC-CASH-03 / DEFAULT-D)  Dr SHERS To Be Issued · Cr Investor Equity
- *                                       · shares *taken* (withdrawal or direct mint)
+ *   wage lane
+ *     accrual   (UC-CASH-02)              Cr SHERS To Be Issued   · shares *earned*
+ *     issuance  (UC-CASH-03 / DEFAULT-D)  Dr SHERS To Be Issued · Cr Investor Equity
+ *                                         · shares *taken* (withdrawal or direct mint)
+ *   vesting lane (restricted-stock grant, UC-VEST-01/02/03)
+ *     accrual   (UC-VEST-01)              Cr SHERS To Be Issued   · the *whole award*
+ *     issuance  (UC-VEST-02)              Dr SHERS To Be Issued · Cr Investor Equity
+ *                                         · shares *released* (minted)
+ *     issuance  (UC-VEST-03)              Dr SHERS To Be Issued · Cr Deferred SHER
+ *                                         Compensation · the unvested remainder
+ *                                         cancelled by a stop
+ *
+ * The lanes are matched separately (a wage withdrawal never consumes a vesting grant,
+ * and vice versa), so each member's two promises are valued on their own terms.
  *
  * Every leg is first stamped at the multiplier of its **own date** (see `sherRate.ts`),
  * so an **issuance is already frozen at its withdraw/mint-date value** — the realization
@@ -26,6 +38,12 @@
  * quantity with no accrual behind it keeps its own-date value (cash-for-shares on the
  * day). An accrual that is partly withdrawn carries a quantity-weighted value: the
  * withdrawn part frozen, the rest current.
+ *
+ * In the vesting lane the same rule is what makes a grant net out exactly: the released
+ * quantity is frozen at its release-date rate (so `SHERS To Be Issued` clears against
+ * UC-VEST-02) and a stopped remainder at its stop-date rate (so the cancellation clears
+ * against UC-VEST-03), leaving `Deferred SHER Compensation` equal to the shares actually
+ * issued — net equity zero, nothing on the income statement.
  */
 import { formatUnits } from 'viem'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -34,6 +52,7 @@ import { getTokenDecimals } from '@/utils/tokens/metadata'
 
 const SHERS_TO_BE_ISSUED = 'SHERS To Be Issued'
 const INVESTOR_EQUITY = 'Investor Equity'
+const DEFERRED_SHER_COMP = 'Deferred SHER Compensation'
 const SHER_DECIMALS = getTokenDecimals('sher')
 
 /** An accrual being consumed FIFO: the value frozen so far + the quantity still open. */
@@ -54,42 +73,63 @@ function sherQty(entry: LedgerEntry): number {
   }
 }
 
-/** The SHER equity leg that issues the shares — a wage withdrawal or a direct mint. */
-function isSherIssuance(entry: LedgerEntry): boolean {
-  return (
-    (entry.useCase === 'UC-CASH-03' || entry.useCase === 'DEFAULT-D') &&
-    entry.token === 'sher' &&
-    entry.debit === SHERS_TO_BE_ISSUED &&
-    entry.credit === INVESTOR_EQUITY
-  )
+/** The two promises that flow through `SHERS To Be Issued`, matched separately. */
+type SherLane = 'wage' | 'vesting'
+
+/**
+ * The lane of the leg that **clears** `SHERS To Be Issued` — a wage withdrawal or
+ * direct mint, a vesting release, or the cancellation of a stopped grant — or
+ * `null` when the entry is not such a leg.
+ */
+function issuanceLane(entry: LedgerEntry): SherLane | null {
+  if (entry.token !== 'sher' || entry.debit !== SHERS_TO_BE_ISSUED) return null
+  if (entry.useCase === 'UC-CASH-03' || entry.useCase === 'DEFAULT-D') {
+    return entry.credit === INVESTOR_EQUITY ? 'wage' : null
+  }
+  if (entry.useCase === 'UC-VEST-02') return entry.credit === INVESTOR_EQUITY ? 'vesting' : null
+  if (entry.useCase === 'UC-VEST-03') return entry.credit === DEFERRED_SHER_COMP ? 'vesting' : null
+  return null
 }
 
-function isSherAccrual(entry: LedgerEntry): boolean {
-  return (
-    entry.useCase === 'UC-CASH-02' && entry.token === 'sher' && entry.credit === SHERS_TO_BE_ISSUED
-  )
+/** The lane of the leg that **opens** `SHERS To Be Issued` — a wage accrual or a grant. */
+function accrualLane(entry: LedgerEntry): SherLane | null {
+  if (entry.token !== 'sher' || entry.credit !== SHERS_TO_BE_ISSUED) return null
+  if (entry.useCase === 'UC-CASH-02') return 'wage'
+  if (entry.useCase === 'UC-VEST-01') return 'vesting'
+  return null
 }
 
-function memberKey(entry: LedgerEntry): string {
-  return (entry.counterparty ?? '').toLowerCase()
+/** `${lane}|${member}` — a wage promise and a vesting grant queue independently. */
+function laneKey(lane: SherLane, entry: LedgerEntry): string {
+  return `${lane}|${(entry.counterparty ?? '').toLowerCase()}`
 }
 
-/** FIFO queues of open accrual states, keyed by member (lowercased counterparty). */
+/** Narrow a `(entry, lane)` pair to the legs that belong to a lane. */
+function isLaned(candidate: { entry: LedgerEntry; lane: SherLane | null }): candidate is {
+  entry: LedgerEntry
+  lane: SherLane
+} {
+  return candidate.lane !== null
+}
+
+/** FIFO queues of open accrual states, keyed by lane + member ({@link laneKey}). */
 function buildAccrualQueues(entries: readonly LedgerEntry[]): {
   states: Map<string, AccrualState>
   queues: Map<string, AccrualState[]>
 } {
   const states = new Map<string, AccrualState>()
   const queues = new Map<string, AccrualState[]>()
-  const accruals = entries.filter(isSherAccrual).sort((a, b) => a.timestamp - b.timestamp)
-  for (const accrual of accruals) {
-    const qty = sherQty(accrual)
+  const accruals = entries
+    .map((entry) => ({ entry, lane: accrualLane(entry) }))
+    .filter(isLaned)
+    .sort((a, b) => a.entry.timestamp - b.entry.timestamp)
+  for (const { entry, lane } of accruals) {
+    const qty = sherQty(entry)
     if (qty <= 0) continue
-    const state: AccrualState = { entry: accrual, totalQty: qty, matchedQty: 0, frozenValue: 0 }
-    states.set(accrual.id, state)
-    const queue = queues.get(memberKey(accrual)) ?? []
-    queue.push(state)
-    queues.set(memberKey(accrual), queue)
+    const state: AccrualState = { entry, totalQty: qty, matchedQty: 0, frozenValue: 0 }
+    states.set(entry.id, state)
+    const key = laneKey(lane, entry)
+    queues.set(key, [...(queues.get(key) ?? []), state])
   }
   return { states, queues }
 }
@@ -131,15 +171,18 @@ export function settleWithdrawnSher(
 ): LedgerEntry[] {
   const { states, queues } = buildAccrualQueues(entries)
 
-  // Issuances consume the accrual queues in chronological order (FIFO).
-  const issuances = entries.filter(isSherIssuance).sort((a, b) => a.timestamp - b.timestamp)
-  for (const issuance of issuances) {
-    consumeAccruals(issuance, queues.get(memberKey(issuance)))
+  // Issuances consume their own lane's accrual queue, in chronological order (FIFO).
+  const issuances = entries
+    .map((entry) => ({ entry, lane: issuanceLane(entry) }))
+    .filter(isLaned)
+    .sort((a, b) => a.entry.timestamp - b.entry.timestamp)
+  for (const { entry, lane } of issuances) {
+    consumeAccruals(entry, queues.get(laneKey(lane, entry)))
   }
 
   return entries.map((entry) => {
     const state = states.get(entry.id)
-    if (!state || !isSherAccrual(entry)) return entry
+    if (!state || accrualLane(entry) === null) return entry
     const pendingQty = state.totalQty - state.matchedQty
     const amountUsd = round6(state.frozenValue + pendingQty * currentSherRate)
     return { ...entry, amountUsd, rate: round6(amountUsd / state.totalQty) }
