@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useLocalStorage } from '@vueuse/core'
 import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
-import { computed, reactive, ref, watch } from 'vue'
 import {
   defaultPresetId,
   formatAnchorLabel,
@@ -18,18 +17,18 @@ import {
   type DatePickerMode,
   type DatePickerPreset,
   type DatePickerPresetId,
-  type DatePickerValue,
-  type Range
-} from '@/utils/datePicker'
+  type DatePickerValue
+} from '~/utils/datePicker'
+import type { Range } from '~/types'
 
 /**
- * Dual-mode date picker shared by accounting reports and transaction histories.
+ * Dual-mode accounting date picker.
  *
  * - `mode="date"` selects a single "as of" date (Balance Sheet, Positions, …); `v-model` is a `Date`.
  * - `mode="range"` selects a from/to period (Income Statement, Ledger, …); `v-model` is a `Range`.
  *
  * Presets come first with ◀ / ▶ steppers; a UCalendar is the fallback (single in `date` mode,
- * range in `range` mode). All date logic lives in `@/utils/datePicker`, all reactive state in
+ * range in `range` mode). All date logic lives in `~/utils/datePicker`, all reactive state in
  * this one-consumer component.
  */
 const props = withDefaults(
@@ -70,7 +69,10 @@ const customDate = ref<Date>(startOfToday())
 // range and is what actually resolves to the model.
 const customStart = ref<Date | null>(startOfMonth(startOfToday()))
 const customEnd = ref<Date | null>(startOfToday())
-const committedCustom = ref<Range>({ start: startOfMonth(startOfToday()), end: startOfToday() })
+const committedCustom = ref<Range>({
+  start: startOfMonth(startOfToday()),
+  end: startOfToday()
+})
 
 function isValidSnapshot(snapshot: unknown): snapshot is DatePickerSnapshot {
   if (!snapshot || typeof snapshot !== 'object') {
@@ -86,8 +88,10 @@ function applySnapshot(snapshot: DatePickerSnapshot) {
   anchors.quarter = new Date(snapshot.anchors.quarter)
   anchors.year = new Date(snapshot.anchors.year)
   customDate.value = new Date(snapshot.customDate)
-  customStart.value = snapshot.customStart == null ? null : new Date(snapshot.customStart)
-  customEnd.value = snapshot.customEnd == null ? null : new Date(snapshot.customEnd)
+  customStart.value
+    = snapshot.customStart == null ? null : new Date(snapshot.customStart)
+  customEnd.value
+    = snapshot.customEnd == null ? null : new Date(snapshot.customEnd)
   if (snapshot.customStart != null && snapshot.customEnd != null) {
     committedCustom.value = {
       start: new Date(snapshot.customStart),
@@ -123,7 +127,7 @@ const stored = props.storageKey
             return null
           }
         },
-        write: (value) => JSON.stringify(value)
+        write: value => JSON.stringify(value)
       }
     })
   : null
@@ -135,7 +139,11 @@ if (stored?.value && isValidSnapshot(stored.value)) {
   if (model.value instanceof Date && props.mode === 'date') {
     activeId.value = 'specific'
     customDate.value = model.value
-  } else if (model.value && !(model.value instanceof Date) && props.mode === 'range') {
+  } else if (
+    model.value
+    && !(model.value instanceof Date)
+    && props.mode === 'range'
+  ) {
     activeId.value = 'custom'
     customStart.value = model.value.start
     customEnd.value = model.value.end
@@ -168,7 +176,7 @@ watch([customStart, customEnd], ([start, end]) => {
 })
 
 const activePreset = computed<DatePickerPreset>(
-  () => presets.find((preset) => preset.id === activeId.value) ?? presets[0]!
+  () => presets.find(preset => preset.id === activeId.value) ?? presets[0]!
 )
 
 const activeAnchor = computed<Date>(() =>
@@ -178,7 +186,11 @@ const activeAnchor = computed<Date>(() =>
 const resolved = computed<DatePickerValue>(() =>
   props.mode === 'date'
     ? resolveAsOfDate(activePreset.value, activeAnchor.value, customDate.value)
-    : resolveRange(activePreset.value, activeAnchor.value, committedCustom.value)
+    : resolveRange(
+        activePreset.value,
+        activeAnchor.value,
+        committedCustom.value
+      )
 )
 
 const triggerLabel = computed(() => {
@@ -197,12 +209,18 @@ function select(id: DatePickerPresetId) {
 /** Step a preset's anchor and make it the active selection. */
 function step(preset: DatePickerPreset, direction: -1 | 1) {
   if (!preset.unit) return
-  anchors[preset.unit] = stepAnchor(anchors[preset.unit], preset.unit, direction)
+  anchors[preset.unit] = stepAnchor(
+    anchors[preset.unit],
+    preset.unit,
+    direction
+  )
   activeId.value = preset.id
 }
 
 function anchorLabel(preset: DatePickerPreset): string {
-  return preset.unit ? formatAnchorLabel(anchors[preset.unit], preset.unit) : ''
+  return preset.unit
+    ? formatAnchorLabel(anchors[preset.unit], preset.unit)
+    : ''
 }
 
 const isActive = (id: DatePickerPresetId) => activeId.value === id
@@ -220,7 +238,8 @@ watch(
 // @internationalized/date interop for UCalendar.
 const toCalendarDate = (date: Date) =>
   new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
-const fromCalendarDate = (date: CalendarDate) => date.toDate(getLocalTimeZone())
+const fromCalendarDate = (date: CalendarDate) =>
+  date.toDate(getLocalTimeZone())
 
 const calendarDate = computed({
   get: () => toCalendarDate(customDate.value),
@@ -238,7 +257,7 @@ const calendarRange = computed({
     start: customStart.value ? toCalendarDate(customStart.value) : undefined,
     end: customEnd.value ? toCalendarDate(customEnd.value) : undefined
   }),
-  set: (value: { start: CalendarDate | null; end: CalendarDate | null }) => {
+  set: (value: { start: CalendarDate | null, end: CalendarDate | null }) => {
     customStart.value = value.start ? fromCalendarDate(value.start) : null
     customEnd.value = value.end ? fromCalendarDate(value.end) : null
     select('custom')
@@ -251,16 +270,16 @@ const calendarRange = computed({
     <UButton
       color="neutral"
       variant="outline"
-      icon="i-heroicons-calendar-days"
-      class="group data-[state=open]:bg-elevated"
+      icon="i-lucide-calendar"
+      class="data-[state=open]:bg-elevated group"
       data-test="date-picker-trigger"
     >
       <span class="truncate">{{ triggerLabel }}</span>
 
       <template #trailing>
         <UIcon
-          name="i-heroicons-chevron-down"
-          class="text-dimmed size-5 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
+          name="i-lucide-chevron-down"
+          class="shrink-0 text-dimmed size-5 group-data-[state=open]:rotate-180 transition-transform duration-200"
         />
       </template>
     </UButton>
@@ -280,8 +299,8 @@ const calendarRange = computed({
             @click="select(preset.id)"
           >
             <UIcon
-              name="i-heroicons-check"
-              class="text-primary size-4 shrink-0"
+              name="i-lucide-check"
+              class="size-4 shrink-0 text-primary"
               :class="isActive(preset.id) ? 'opacity-100' : 'opacity-0'"
             />
             {{ preset.label }}
@@ -289,7 +308,7 @@ const calendarRange = computed({
 
           <div v-if="preset.unit" class="flex shrink-0 items-center gap-1">
             <UButton
-              icon="i-heroicons-chevron-left"
+              icon="i-lucide-chevron-left"
               color="neutral"
               variant="ghost"
               size="xs"
@@ -297,9 +316,11 @@ const calendarRange = computed({
               :data-test="`date-picker-${preset.id}-previous`"
               @click="step(preset, -1)"
             />
-            <span class="w-32 text-center text-sm tabular-nums">{{ anchorLabel(preset) }}</span>
+            <span class="w-32 text-center text-sm tabular-nums">{{
+              anchorLabel(preset)
+            }}</span>
             <UButton
-              icon="i-heroicons-chevron-right"
+              icon="i-lucide-chevron-right"
               color="neutral"
               variant="ghost"
               size="xs"
@@ -311,14 +332,20 @@ const calendarRange = computed({
         </div>
 
         <!-- Presets first, calendar last. -->
-        <div v-if="activePreset.id === 'specific'" class="border-default mt-1 border-t pt-2">
+        <div
+          v-if="activePreset.id === 'specific'"
+          class="mt-1 border-t border-default pt-2"
+        >
           <UCalendar
             v-model="calendarDate"
             data-test="date-picker-calendar"
             :prevent-deselect="true"
           />
         </div>
-        <div v-else-if="activePreset.id === 'custom'" class="border-default mt-1 border-t pt-2">
+        <div
+          v-else-if="activePreset.id === 'custom'"
+          class="mt-1 border-t border-default pt-2"
+        >
           <UCalendar
             v-model="calendarRange"
             data-test="date-picker-calendar"

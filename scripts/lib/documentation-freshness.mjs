@@ -276,10 +276,18 @@ function replaceIdentifier(line, previous, next) {
   return line.replace(new RegExp(`\\b${previous}\\b`, 'g'), next)
 }
 
-function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot) {
-  const paths = pathsFromDiffSection(section)
-  if (!paths) return null
+function componentIdentifierFromPath(path) {
+  const fileName = basename(path)
+  return fileName.endsWith('.vue') ? fileName.slice(0, -'.vue'.length) : null
+}
 
+function replaceAutoImportedComponentIdentifier(line, previous, next) {
+  return line
+    .replace(new RegExp(`<${previous}\\b`, 'g'), `<${next}`)
+    .replace(new RegExp(`</${previous}>`, 'g'), `</${next}>`)
+}
+
+function changedLines(section) {
   const removed = []
   const added = []
 
@@ -289,6 +297,15 @@ function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot)
     if (line.startsWith('+')) added.push(line.slice(1))
   }
 
+  return { removed, added }
+}
+
+function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot) {
+  const paths = pathsFromDiffSection(section)
+  if (!paths) return null
+
+  const { removed, added } = changedLines(section)
+
   if (removed.length === 0 && added.length === 0) {
     return /^rename from /m.test(section) ? paths.to : null
   }
@@ -296,6 +313,14 @@ function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot)
   if (removed.length === 0 || removed.length !== added.length) return null
 
   const renamedBindings = new Map()
+  const renamedAutoImportedComponents = new Map(
+    [...relocationMap]
+      .map(([previousPath, nextPath]) => [
+        componentIdentifierFromPath(previousPath),
+        componentIdentifierFromPath(nextPath)
+      ])
+      .filter(([previousName, nextName]) => previousName && nextName && previousName !== nextName)
+  )
 
   for (let index = 0; index < removed.length; index += 1) {
     const before = localReferencesFromLine(removed[index])
@@ -345,10 +370,34 @@ function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot)
       normalizedBefore = replaceIdentifier(normalizedBefore, previousBinding, nextBinding)
     }
 
+    for (const [previousComponent, nextComponent] of renamedAutoImportedComponents) {
+      normalizedBefore = replaceAutoImportedComponentIdentifier(
+        normalizedBefore,
+        previousComponent,
+        nextComponent
+      )
+    }
+
     if (normalizedBefore !== normalizedAfter) return null
   }
 
   return paths.to
+}
+
+function pureRelocationsFromDiffs(diffs) {
+  const relocationMap = new Map()
+
+  for (const section of diffs.flatMap(splitDiffSections)) {
+    const paths = pathsFromDiffSection(section)
+    if (!paths || !/^rename from /m.test(section)) continue
+
+    const { removed, added } = changedLines(section)
+    if (removed.length === 0 && added.length === 0) {
+      relocationMap.set(paths.from, paths.to)
+    }
+  }
+
+  return relocationMap
 }
 
 /**
@@ -356,9 +405,9 @@ function onlyRelocationReferencesChanged(section, relocationMap, repositoryRoot)
  * identifiers valid after a source relocation or rename. These paths do not change runtime
  * behaviour, so their existing canonical documentation remains current.
  */
-export function nonBehavioralPathsFromDiffs(diffs, repositoryRoot) {
+export function nonBehavioralPathsFromDiffs(diffs, repositoryRoot, priorRelocations = new Map()) {
   const sections = diffs.flatMap(splitDiffSections)
-  const relocationMap = new Map()
+  const relocationMap = new Map(priorRelocations)
 
   for (const section of sections) {
     const paths = pathsFromDiffSection(section)
@@ -396,11 +445,27 @@ function changedRepositoryDiffs(repositoryRoot, baseCommit) {
   ]
 }
 
+function pureRelocationsSince(repositoryRoot, baseCommit) {
+  const commits = splitGitPaths(
+    git(repositoryRoot, ['rev-list', '--reverse', `${baseCommit}..HEAD`])
+  )
+  const commitDiffs = commits.map((commit) =>
+    git(repositoryRoot, ['show', '--format=', '--unified=0', '--find-renames=50%', commit])
+  )
+
+  return pureRelocationsFromDiffs(commitDiffs)
+}
+
 export function validateCurrentRepository(repositoryRoot, configuredBase) {
   const baseCommit = documentationBaseCommit(repositoryRoot, configuredBase)
   const changedPaths = changedRepositoryPaths(repositoryRoot, baseCommit)
+  const repositoryDiffs = changedRepositoryDiffs(repositoryRoot, baseCommit)
   const nonBehavioralPaths = new Set(
-    nonBehavioralPathsFromDiffs(changedRepositoryDiffs(repositoryRoot, baseCommit), repositoryRoot)
+    nonBehavioralPathsFromDiffs(
+      repositoryDiffs,
+      repositoryRoot,
+      pureRelocationsSince(repositoryRoot, baseCommit)
+    )
   )
   const documents = readCanonicalDocuments(repositoryRoot)
 

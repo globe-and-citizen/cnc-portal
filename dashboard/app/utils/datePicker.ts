@@ -8,7 +8,7 @@ import { formatDate, formatMonthYear, formatQuarterRange, formatYear } from '~/u
 dayjs.extend(quarterOfYear)
 
 /**
- * Pure date logic shared by the dual-mode {@link AccountingDatePicker}.
+ * Pure date logic shared by the dual-mode {@link DatePicker}.
  *
  * - `date` mode resolves a single inclusive "as of" {@link Date}.
  * - `range` mode resolves an inclusive `{ start, end }` {@link Range}.

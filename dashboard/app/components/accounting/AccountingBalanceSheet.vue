@@ -35,7 +35,7 @@ const balances = computed(() => Math.abs(sheet.value.identityGap) < 0.01)
       <h3 class="font-semibold text-black dark:text-white">
         Balance Sheet
       </h3>
-      <AccountingDatePicker
+      <DatePicker
         v-model="asOf"
         mode="date"
         storage-key="dashboard-accounting-balance-asof"
