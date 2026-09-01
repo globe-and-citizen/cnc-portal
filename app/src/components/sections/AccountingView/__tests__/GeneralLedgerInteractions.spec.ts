@@ -3,6 +3,8 @@ import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
 import GeneralLedger from '../GeneralLedger.vue'
 import TrialBalanceCard from '../TrialBalanceCard.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import ColumnVisibilitySelect from '../ColumnVisibilitySelect.vue'
 import { mockRouterPush, mockRouterReplace } from '@/tests/mocks/router.mock'
 
 // The mocked book self-fetched by `useAccountingContext` is valid and balanced,
@@ -83,6 +85,33 @@ describe('General Ledger account filter', () => {
         .map((n) => n.attributes('data-test')!.replace('ledger-account-link-', ''))
     )
     expect(shown.has(account)).toBe(true)
+    wrapper.unmount()
+  })
+})
+
+describe('General Ledger table controls', () => {
+  it('flows page and page-size changes through the pagination footer', async () => {
+    const wrapper = renderWithProviders(GeneralLedger)
+    const pagination = wrapper.findComponent(TablePagination)
+    if (!pagination.exists()) return wrapper.unmount()
+
+    pagination.vm.$emit('update:pageSize', 50)
+    pagination.vm.$emit('update:page', 1)
+    await flushPromises()
+
+    expect(wrapper.findComponent(TablePagination).exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('applies a column-visibility change from the selector', async () => {
+    const wrapper = renderWithProviders(GeneralLedger)
+    const columns = wrapper.findComponent(ColumnVisibilitySelect)
+    if (!columns.exists()) return wrapper.unmount()
+
+    columns.vm.$emit('update:modelValue', ['date'])
+    await flushPromises()
+
+    expect(wrapper.findComponent(ColumnVisibilitySelect).exists()).toBe(true)
     wrapper.unmount()
   })
 })

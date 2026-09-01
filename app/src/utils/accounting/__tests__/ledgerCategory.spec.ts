@@ -35,6 +35,10 @@ describe('categoryOf', () => {
     // The funded-offer sweep moves money between two CNC pockets.
     expect(categoryOf(entry('UC-CREDIT-02'))).toBe('Transfer')
   })
+
+  it('falls back to Transfer for an unmapped use case', () => {
+    expect(categoryOf(entry('UC-UNKNOWN' as UseCase))).toBe('Transfer')
+  })
 })
 
 describe('categoryLabelOf', () => {
