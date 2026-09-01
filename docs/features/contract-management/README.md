@@ -183,7 +183,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `787921e5cf9dd1cf46fd0f69f651dba7d8785374`
 
 - [Contract Management components](../../../app/src/components/sections/ContractManagementView/),
   [Board writes](../../../app/src/composables/bod/writes.ts),
@@ -204,6 +204,8 @@ flowchart LR
 - [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
 - [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertiseContractSection.vue)
 - [Advertising campaign workspace](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue)
+- [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue) and
+  [Campaign Manager deployment mutation](../../../app/src/composables/useContractFunctions.ts)
 - [Deployment history section](../../../app/src/components/sections/ContractManagementView/DeploymentHistorySection.vue)
 - [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
 - [Officer redeploy form and recovery actions](../../../app/src/components/sections/ContractManagementView/RedeployOfficerModal.vue)

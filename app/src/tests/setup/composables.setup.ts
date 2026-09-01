@@ -14,9 +14,11 @@ import {
   mockUseFetch,
   mockUseSubmitRestriction,
   mockUseDeployContract,
+  mockUseUploadFileMutation,
   mockBlockTimestamp,
   resetComposableMocks,
-  resetDeployState
+  resetDeployState,
+  resetUploadFileState
 } from '@/tests/mocks/composables.mock'
 import { mockGetFileUrlApi, mockUploadFileApi } from '@/tests/mocks/api.mock'
 import {
@@ -32,6 +34,7 @@ import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock
 beforeEach(() => {
   resetComposableMocks()
   resetDeployState()
+  resetUploadFileState()
   resetNotificationsMock()
   resetMockRoute()
 })
@@ -265,6 +268,19 @@ vi.mock('@/queries/contract.queries', () => ({
   useSyncContractsMutation: vi.fn(queryMocks.useSyncContractsMutation),
   useCreateOfficerMutation: vi.fn(queryMocks.useCreateOfficerMutation)
 }))
+
+/**
+ * Mock File Queries (file.queries.ts)
+ * Keeps the real `uploadSingleFile` pure function (its own spec exercises it)
+ * while swapping the `useUploadFileMutation` hook for an inert mutation mock.
+ */
+vi.mock('@/queries/file.queries', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useUploadFileMutation: mockUseUploadFileMutation
+  }
+})
 
 /**
  * Mock Investor Migration Queries (investorMigration.queries.ts)
