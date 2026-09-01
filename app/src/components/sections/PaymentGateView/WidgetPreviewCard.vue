@@ -1,36 +1,22 @@
 <template>
-  <div class="space-y-3">
-    <div class="flex items-center justify-end gap-2">
-      <span class="text-muted text-xs">Preview outcome on Pay:</span>
-      <USwitch
-        v-model="previewFailure"
-        data-test="payment-gate-preview-outcome-toggle"
-        unchecked-icon="i-lucide-check"
-        checked-icon="i-lucide-x"
-        color="neutral"
-      />
-    </div>
-
-    <PaymentGateWidgetView
-      network-name="Polygon"
-      :token-symbol="selectedToken"
-      :token-symbol-raw="selectedToken"
-      :order="{ amount, factureId }"
-      :state="{
-        pane,
-        paymentStep,
-        confirmedStatus,
-        txHash: pane === 'confirmed' && confirmedStatus === 'success' ? mockTxHash : undefined
-      }"
-      @pay="simulate"
-    />
-  </div>
+  <PaymentGateWidgetView
+    network-name="Polygon"
+    :token-symbol="selectedToken"
+    :token-symbol-raw="selectedToken"
+    :order="{ amount, factureId }"
+    :state="{
+      pane,
+      paymentStep,
+      confirmedStatus: 'success',
+      txHash: pane === 'confirmed' ? mockTxHash : undefined
+    }"
+    @pay="simulate"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import PaymentGateWidgetView, {
-  type WidgetConfirmedStatus,
   type WidgetPane,
   type WidgetPaymentStep
 } from './PaymentGateWidgetView.vue'
@@ -39,9 +25,6 @@ const { selectedToken } = defineProps<{ selectedToken: 'USDC' | 'USDCe' | 'POL' 
 
 const pane = ref<WidgetPane>('review')
 const paymentStep = ref<WidgetPaymentStep>('connecting')
-const confirmedStatus = ref<WidgetConfirmedStatus>('success')
-/** Preview-only control (not part of the real widget): which outcome the next simulated pay ends in. */
-const previewFailure = ref(false)
 
 const amount = '128'
 const factureId = 'order_8842'
@@ -50,10 +33,9 @@ const mockTxHash = '0x4f2a1234567890abcdef1234567890abcdef1234567890abcdef123456
 const STEP_DELAY_MS = 500
 
 /**
- * Plays through the same connecting -> approving -> paying sequence the
- * real widget goes through, purely on a timer (there's no wallet or chain
- * behind this preview), then lands on whichever outcome `previewFailure`
- * currently selects.
+ * Plays through the same connecting -> approving -> paying sequence the real
+ * widget goes through, purely on a timer (there's no wallet or chain behind
+ * this preview), always landing on success.
  */
 function simulate() {
   pane.value = 'paying'
@@ -61,9 +43,6 @@ function simulate() {
 
   setTimeout(() => (paymentStep.value = 'approving'), STEP_DELAY_MS)
   setTimeout(() => (paymentStep.value = 'paying'), STEP_DELAY_MS * 2)
-  setTimeout(() => {
-    confirmedStatus.value = previewFailure.value ? 'failed' : 'success'
-    pane.value = 'confirmed'
-  }, STEP_DELAY_MS * 3)
+  setTimeout(() => (pane.value = 'confirmed'), STEP_DELAY_MS * 3)
 }
 </script>
