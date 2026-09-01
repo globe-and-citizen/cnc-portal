@@ -1,0 +1,230 @@
+import { describe, it, expect } from 'vitest'
+import {
+  money,
+  fmtDate,
+  fmtDateTime,
+  presentIncome,
+  presentBalance,
+  presentTrial,
+  filterByPeriod,
+  incomeExportTitle,
+  balanceExportTitle,
+  trialExportTitle,
+  currencySymbol
+} from '@/utils/accounting/presenter'
+import { presentLedger, categoryOf } from '@/utils/accounting/ledgerPresenter'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { sampleBooks } from './fixtures'
+
+/** The shared live book: a $100 client deposit and a $30 expense payout. */
+const books = sampleBooks
+
+describe('formatters', () => {
+  it('money formats USD with two decimals', () => {
+    expect(money(142.2)).toBe('$142.20')
+    expect(money(0)).toBe('$0.00')
+  })
+
+  it('money collapses a negative-zero / sub-cent residue to a clean $0.00', () => {
+    expect(money(-0)).toBe('$0.00') // never "$-0.00"
+    expect(money(-0.004)).toBe('$0.00') // rounds to zero, no stray minus sign
+    expect(money(-0.002 + -0.002)).toBe('$0.00') // sub-cent residue stays clean
+    expect(money(-0.01)).toBe('-$0.01') // a real cent still reads negative
+  })
+
+  it('fmtDate renders a unix-seconds timestamp', () => {
+    expect(fmtDate(Math.floor(Date.parse('2026-03-01T00:00:00Z') / 1000))).toContain('2026')
+  })
+
+  it('fmtDateTime keeps the time of day (per-second precision)', () => {
+    const out = fmtDateTime(Math.floor(Date.parse('2026-03-01T14:05:32Z') / 1000))
+    expect(out).toContain('2026')
+    expect(out).toMatch(/\d{2}:\d{2}:\d{2}/) // HH:mm:ss present
+  })
+})
+
+describe('presentIncome', () => {
+  it('lists revenue and expense lines for the full period', () => {
+    const income = presentIncome(books().entries)
+    expect(income.revLines).toContainEqual({
+      label: 'Service Revenue',
+      value: '$100.00',
+      account: 'Service Revenue'
+    })
+    expect(income.expLines).toContainEqual({
+      label: 'Operating Expense',
+      value: '$30.00',
+      account: 'Operating Expense'
+    })
+    expect(income.netIncome).toBe('$70.00')
+  })
+
+  it('narrows to a reporting period', () => {
+    // Window that excludes the ts=200 expense, keeping only the ts=100 revenue.
+    const income = presentIncome(books().entries, new Date(50_000), new Date(150_000))
+    expect(income.totalRevenue).toBe('$100.00')
+    expect(income.totalExpenses).toBe('$0.00')
+  })
+})
+
+describe('presentBalance', () => {
+  it('rolls cash into a single line plus equity breakdown', () => {
+    const balance = presentBalance(books().entries)
+    expect(balance.assetLines[0].label).toBe('Cash (all pockets)')
+    expect(balance.equityLines.map((l) => l.label)).toEqual([
+      'Owner capital',
+      'Investor equity (SHER)',
+      'Retained earnings (net profit)'
+    ])
+    expect(balance.liabLines).toContainEqual({ label: 'None (no debt)', value: '$0.00' })
+  })
+
+  it('breaks cash down by pocket and currency under the total', () => {
+    const balance = presentBalance(books().entries)
+    // The USDC deposit lands in the Bank pocket → a "• Bank · USDC" drill-down
+    // line that opens the Cash — Bank account.
+    expect(balance.assetLines).toContainEqual({
+      label: '• Bank · USDC',
+      value: '$100.00',
+      account: 'Cash — Bank'
+    })
+  })
+
+  const nativeLabel = `• Bank · ${currencySymbol('native')}`
+  const nativeEntry = (amountUsd: number): LedgerEntry => ({
+    id: 'pol',
+    timestamp: 1,
+    useCase: 'UC-BANK-02',
+    debit: 'Cash — Bank',
+    credit: 'Service Revenue',
+    amountUsd,
+    token: 'native',
+    rawAmount: '28953000000000000', // 0.028953 POL
+    internal: false,
+    memo: '',
+    enrichment: 'not-applicable'
+  })
+
+  it('shows a native holding as its quantity and its USD equivalent', () => {
+    // 0.028953 POL at ~$0.08 → ~$0.0023, which rounds to $0.00 — the quantity is
+    // what keeps the holding legible, but the $ equivalence is still printed.
+    const line = presentBalance([nativeEntry(0.002328)]).assetLines.find(
+      (l) => l.label === nativeLabel
+    )
+    expect(line?.value).toBe(`0.028953 ${currencySymbol('native')} ≈ $0.00`)
+  })
+
+  it('lists a non-cash asset (Trading account) as its own drillable asset line', () => {
+    const tradingEntry: LedgerEntry = {
+      id: 'trd',
+      timestamp: 1,
+      useCase: 'CASH-OUT',
+      debit: 'Trading account',
+      credit: 'Cash — Bank',
+      amountUsd: 30,
+      token: 'usdc',
+      rawAmount: '30000000',
+      internal: false,
+      memo: '',
+      enrichment: 'not-applicable'
+    }
+    const balance = presentBalance([tradingEntry])
+    expect(balance.assetLines).toContainEqual({
+      label: 'Trading account',
+      value: '$30.00',
+      account: 'Trading account'
+    })
+  })
+})
+
+describe('presentTrial', () => {
+  it('puts each account balance on its normal side and stays balanced', () => {
+    const trial = presentTrial(books().generalLedger)
+    expect(trial.balanced).toBe(true)
+    const revenue = trial.rows.find((r) => r.account === 'Service Revenue')
+    expect(revenue?.nature).toBe('Income')
+    expect(revenue?.cr).toBe('$100.00') // income is credit-normal
+    expect(revenue?.dr).toBe('—')
+  })
+})
+
+describe('presentLedger', () => {
+  it('emits two rows per posting and counts entries (not rows)', () => {
+    const ledger = presentLedger(books().entries, 'All')
+    expect(ledger.entryCount).toBe(2)
+    expect(ledger.rows).toHaveLength(4)
+    // First leg carries the date + label; the credit leg is blanked.
+    expect(ledger.rows[0].isFirst).toBe(true)
+    expect(ledger.rows[1].isFirst).toBe(false)
+  })
+
+  it('filters by category', () => {
+    const ledger = presentLedger(books().entries, 'Revenue')
+    expect(ledger.entryCount).toBe(1)
+    expect(ledger.rows[0].cat).toBe('Revenue')
+  })
+
+  it('categorizes the Bank protocol fee as an Expense (not a neutral Transfer)', () => {
+    const fee: LedgerEntry = {
+      id: 'fee-1',
+      timestamp: 100,
+      useCase: 'FEE',
+      debit: 'Transaction Fee Expense',
+      credit: 'Cash — Bank',
+      amountUsd: 0.5,
+      token: 'usdc',
+      rawAmount: '500000',
+      memo: 'Transaction fee skimmed from Bank',
+      enrichment: 'not-applicable'
+    }
+    expect(categoryOf(fee)).toBe('Expense')
+    const ledger = presentLedger([fee], 'Expense')
+    expect(ledger.entryCount).toBe(1)
+    expect(ledger.rows[0].cat).toBe('Expense')
+    expect(ledger.rows[0].label).toBe('Transaction fee')
+    expect(ledger.rows[0].account).toBe('Transaction Fee Expense')
+    expect(ledger.rows[0].dr).toBe('$0.50')
+  })
+
+  it('labels the transaction by its accounting entry, not the raw memo', () => {
+    const ledger = presentLedger(books().entries, 'Revenue')
+    expect(ledger.rows[0].label).toBe('Service revenue') // normalized UC-BANK-02 label
+  })
+
+  it('attaches a structured activity (actor + predicate) without touching the accounting label', () => {
+    const ledger = presentLedger(books().entries, 'Revenue')
+    expect(ledger.rows[0].label).toBe('Service revenue') // accounting label unchanged
+    expect(ledger.rows[0].activity).toMatchObject({
+      kind: 'actor',
+      text: 'paid $100.00 for services'
+    })
+    expect(ledger.rows[1].activity).toEqual({ kind: 'plain', text: '' }) // credit leg stays blank
+  })
+})
+
+describe('filterByPeriod', () => {
+  const entries = books().entries
+  it('keeps entries inside an inclusive window', () => {
+    expect(filterByPeriod(entries, new Date(150_000), null)).toHaveLength(1) // only ts=200
+    expect(filterByPeriod(entries, null, new Date(150_000))).toHaveLength(1) // only ts=100
+    expect(filterByPeriod(entries)).toHaveLength(2) // open both ends
+  })
+})
+
+describe('statement export titles', () => {
+  it('names the reporting period on the income statement only when one is set', () => {
+    expect(incomeExportTitle()).toBe('Income Statement')
+    expect(incomeExportTitle(null, null)).toBe('Income Statement')
+    const ranged = incomeExportTitle(new Date('2026-01-01'), new Date('2026-02-01'))
+    expect(ranged).toContain('Income Statement')
+    expect(ranged).toContain('Jan 1, 2026')
+    expect(ranged).toContain('Feb 1, 2026')
+  })
+
+  it('stamps the "as of" date on the balance sheet / trial balance when set', () => {
+    expect(balanceExportTitle()).toBe('Balance Sheet')
+    expect(balanceExportTitle(new Date('2026-07-08'))).toBe('Balance Sheet — As of Jul 8, 2026')
+    expect(trialExportTitle()).toBe('Trial Balance')
+    expect(trialExportTitle(new Date('2026-07-08'))).toBe('Trial Balance — As of Jul 8, 2026')
+  })
+})

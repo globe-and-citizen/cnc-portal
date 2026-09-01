@@ -6,10 +6,10 @@
         <TransferAction :row="row" />
       </template>
       <template #startDate-cell="{ row: { original: row } }">
-        <span>{{ new Date(Number(row.data.startDate) * 1000).toLocaleString('en-US') }}</span>
+        <span>{{ formatDateTime(fromUnix(Number(row.data.startDate))) }}</span>
       </template>
       <template #endDate-cell="{ row: { original: row } }">
-        <span>{{ new Date(Number(row.data.endDate) * 1000).toLocaleString('en-US') }}</span>
+        <span>{{ formatDateTime(fromUnix(Number(row.data.endDate))) }}</span>
       </template>
       <template #frequencyType-cell="{ row: { original: row } }">
         <span>
@@ -39,10 +39,12 @@
 //#region Imports
 import { computed } from 'vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
-import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
+import { tokenSymbol } from '@/utils/tokens/metadata'
+import { getCurrentUserExpenses } from '@/utils/expenses/model'
 import { useGetExpensesQuery } from '@/queries'
 import TransferAction from './TransferAction.vue'
-import { getFrequencyType, getCustomFrequency } from '@/utils'
+import { getFrequencyType, getCustomFrequency } from '@/utils/expenses/model'
+import { formatDateTime, fromUnix } from '@/utils/format'
 //#endregion
 
 const teamStore = useTeamStore()

@@ -1,18 +1,19 @@
 import express from 'express';
 import {
   getTeamWeeklyClaims,
+  submitWeeklyGoals,
   syncWeeklyClaims,
   updateWeeklyClaims,
 } from '../controllers/weeklyClaimController';
 import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
-  validate,
+  validateBody,
   validateQuery,
+  validateRequest,
   getWeeklyClaimsQuerySchema,
+  submitWeeklyGoalsBodySchema,
   syncWeeklyClaimsQuerySchema,
-  weeklyClaimIdParamsSchema,
-  updateWeeklyClaimQuerySchema,
-  updateWeeklyClaimBodySchema,
+  updateWeeklyClaimRequestSchema,
 } from '../validation';
 
 const weeklyClaimRoutes = express.Router();
@@ -234,13 +235,90 @@ weeklyClaimRoutes.post(
 
 /**
  * @openapi
+ * /weekly-claim/goals:
+ *  put:
+ *   summary: Submit or update the caller's weekly goals memo
+ *   tags: [Weekly Claims]
+ *   security:
+ *     - bearerAuth: []
+ *   description: |
+ *     Upserts the authenticated member's free-form Markdown goals memo for a
+ *     given ISO week. Exactly one memo exists per weekly claim. Submitting goals
+ *     for a week with no claims yet creates a claim-less weekly claim (status
+ *     `pending`). The memo is locked once the week is signed, withdrawn, or
+ *     disabled.
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           required: [teamId, weekStart, weeklyGoals]
+ *           properties:
+ *             teamId:
+ *               type: integer
+ *               minimum: 1
+ *             weekStart:
+ *               type: string
+ *               format: date-time
+ *               description: Any ISO datetime within the target week (normalized to the Monday isoWeek start).
+ *             weeklyGoals:
+ *               type: string
+ *               maxLength: 10000
+ *               description: Markdown memo. An empty string clears the saved memo.
+ *   responses:
+ *     200:
+ *       description: Weekly goals saved successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/WeeklyClaim'
+ *     400:
+ *       description: Bad request - invalid body or no wage for the caller
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     403:
+ *       description: Forbidden - caller is not a member of the team
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     409:
+ *       description: Conflict - the week is already signed, withdrawn, or disabled
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     500:
+ *       description: Internal server error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ */
+weeklyClaimRoutes.put(
+  '/goals',
+  validateBody(submitWeeklyGoalsBodySchema),
+  requireTeamMember('body.teamId'),
+  rejectIfArchived('body.teamId'),
+  submitWeeklyGoals
+);
+
+/**
+ * @openapi
  * /weekly-claim/{id}:
  *  put:
  *   summary: Update a weekly claim
  *   tags: [Weekly Claims]
  *   security:
  *     - bearerAuth: []
- *   description: Performs an action on a weekly claim (sign, withdraw, enable, or disable). Requires appropriate permissions.
+ *   description: |
+ *     Performs an action on a weekly claim (sign, withdraw, enable, or disable).
+ *     The caller must be a member of the claim's team. Beyond that, `sign`,
+ *     `disable` and `enable` require the Cash Remuneration owner or the team
+ *     owner, while `withdraw` is restricted to the member the claim belongs to.
  *   parameters:
  *     - in: path
  *       name: id
@@ -318,7 +396,9 @@ weeklyClaimRoutes.post(
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  *     403:
- *       description: Forbidden - caller is not the Cash Remuneration owner or team owner
+ *       description: |
+ *         Forbidden - the caller is not a member of the claim's team, or (for
+ *         `action=withdraw`) is not the member the claim belongs to.
  *       content:
  *         application/json:
  *           schema:
@@ -338,11 +418,8 @@ weeklyClaimRoutes.post(
  */
 weeklyClaimRoutes.put(
   '/:id',
-  validate({
-    params: weeklyClaimIdParamsSchema,
-    query: updateWeeklyClaimQuerySchema,
-    body: updateWeeklyClaimBodySchema,
-  }),
+  validateRequest(updateWeeklyClaimRequestSchema),
+  requireTeamMember('params.weeklyClaimId'),
   rejectIfArchived('params.weeklyClaimId'),
   updateWeeklyClaims
 );

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
@@ -9,12 +8,25 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 import type { Address } from 'viem'
 import type { WeeklyClaim } from '@/types'
 import ClaimHistoryWeekNavigator from '@/components/sections/ClaimHistoryView/ClaimHistoryWeekNavigator.vue'
-import { getMonthWeeks } from '@/utils/dayUtils'
+import { getMonthWeeks } from '@/utils/dates/calendar'
+import { getClaimStatusColor } from '@/utils/claims/weekNavigation'
 import { mockWeeklyClaimData } from '@/tests/mocks'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
+
+type ChartBar = number | { value: number; itemStyle?: { borderRadius?: number[] } }
+type ChartOption = {
+  yAxis: { max: number; axisLabel: { formatter: (value: number) => string } }
+  tooltip: {
+    formatter: (params: Array<{ name?: string; value?: number; dataIndex?: number }>) => string
+  }
+  series: [
+    { data: ChartBar[] },
+    { data: number[]; label?: { formatter?: (params: { dataIndex: number }) => string } }
+  ]
+}
 
 describe('ClaimHistoryWeekNavigator', () => {
   const baseWeeklyClaims = structuredClone(mockWeeklyClaimData)
@@ -47,6 +59,9 @@ describe('ClaimHistoryWeekNavigator', () => {
       }
     })
 
+  const getChartOption = (wrapper: ReturnType<typeof createWrapper>) =>
+    wrapper.findComponent({ name: 'MockVChart' }).props('option') as ChartOption
+
   beforeEach(() => {
     vi.clearAllMocks()
     mockWeeklyClaimData.splice(0, mockWeeklyClaimData.length, ...structuredClone(baseWeeklyClaims))
@@ -54,8 +69,8 @@ describe('ClaimHistoryWeekNavigator', () => {
 
   it('renders weeks, pending badge and chart data for selected week', () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as any
-    const weeklyClaimsSpy = useGetTeamWeeklyClaimsQuery as any
+    const chartOption = getChartOption(wrapper)
+    const weeklyClaimsSpy = vi.mocked(useGetTeamWeeklyClaimsQuery)
 
     expect(wrapper.find('[data-test="v-chart"]').exists()).toBe(true)
     expect(wrapper.find('.bg-primary').exists()).toBe(true)
@@ -65,8 +80,8 @@ describe('ClaimHistoryWeekNavigator', () => {
       baseWeeklyClaim.memberAddress
     )
 
-    expect(vm.barChartOption.yAxis.max).toBe(8)
-    const firstBar = vm.barChartOption.series[0]?.data[0]
+    expect(chartOption.yAxis.max).toBe(8)
+    const firstBar = chartOption.series[0].data[0]
     if (!firstBar || typeof firstBar === 'number' || !firstBar.itemStyle?.borderRadius) {
       throw new Error('Expected first bar item style data')
     }
@@ -110,14 +125,13 @@ describe('ClaimHistoryWeekNavigator', () => {
     } as WeeklyClaim
 
     const wrapper = createWrapper()
-    const vm = wrapper.vm as any
+    const chartOption = getChartOption(wrapper)
 
-    const regularSeriesValues =
-      vm.barChartOption.series[0]?.data.map((entry) =>
-        typeof entry === 'number' ? entry : entry.value
-      ) ?? []
+    const regularSeriesValues = chartOption.series[0].data.map((entry) =>
+      typeof entry === 'number' ? entry : entry.value
+    )
 
-    expect(vm.barChartOption.yAxis.max).toBe(24)
+    expect(chartOption.yAxis.max).toBe(24)
     expect(regularSeriesValues.every((value) => value === 0)).toBe(true)
   })
 
@@ -130,27 +144,23 @@ describe('ClaimHistoryWeekNavigator', () => {
     } as WeeklyClaim
 
     const wrapper = createWrapper()
-    const vm = wrapper.vm as any
+    const chartOption = getChartOption(wrapper)
 
-    const regularSeriesValues =
-      vm.barChartOption.series[0]?.data.map((entry) =>
-        typeof entry === 'number' ? entry : entry.value
-      ) ?? []
+    const regularSeriesValues = chartOption.series[0].data.map((entry) =>
+      typeof entry === 'number' ? entry : entry.value
+    )
 
     expect(wrapper.find('.bg-primary').exists()).toBe(false)
-    expect(vm.barChartOption.yAxis.max).toBe(24)
+    expect(chartOption.yAxis.max).toBe(24)
     expect(regularSeriesValues.every((value) => value === 0)).toBe(true)
   })
 
   it('returns correct colors for each claim status branch', () => {
-    const wrapper = createWrapper()
-    const getColor = (wrapper.vm as any).getColor
-
-    expect(getColor()).toBe('neutral')
-    expect(getColor({ status: 'pending' })).toBe('primary')
-    expect(getColor({ status: 'signed' })).toBe('warning')
-    expect(getColor({ status: 'withdrawn' })).toBe('info')
-    expect(getColor({ status: 'processing' })).toBe('neutral')
+    expect(getClaimStatusColor()).toBe('neutral')
+    expect(getClaimStatusColor({ status: 'pending' })).toBe('primary')
+    expect(getClaimStatusColor({ status: 'signed' })).toBe('warning')
+    expect(getClaimStatusColor({ status: 'withdrawn' })).toBe('info')
+    expect(getClaimStatusColor({ status: 'processing' })).toBe('neutral')
   })
 
   it('covers tooltip and label formatters and overtime bar styling', () => {
@@ -179,13 +189,16 @@ describe('ClaimHistoryWeekNavigator', () => {
     } as WeeklyClaim
 
     const wrapper = createWrapper()
-    const vm = wrapper.vm as any
+    const chartOption = getChartOption(wrapper)
 
-    const regularDayOne = vm.barChartOption.series[0]?.data[0] as any
+    const regularDayOne = chartOption.series[0].data[0]
+    if (typeof regularDayOne === 'number' || !regularDayOne?.itemStyle?.borderRadius) {
+      throw new Error('Expected first bar item style data')
+    }
     expect(regularDayOne.value).toBe(8)
     expect(regularDayOne.itemStyle.borderRadius).toEqual([0, 0, 0, 0])
 
-    const tooltipWithOvertime = vm.barChartOption.tooltip.formatter([
+    const tooltipWithOvertime = chartOption.tooltip.formatter([
       { name: 'Mo', value: 8 },
       { name: 'Mo', value: 2 }
     ])
@@ -194,21 +207,21 @@ describe('ClaimHistoryWeekNavigator', () => {
     expect(tooltipWithOvertime).toContain('Overtime: 2h')
     expect(tooltipWithOvertime).toContain('Total: 10h')
 
-    const tooltipWithoutOvertime = vm.barChartOption.tooltip.formatter([
+    const tooltipWithoutOvertime = chartOption.tooltip.formatter([
       { name: 'Tu', value: 0, dataIndex: 1 },
       { name: 'Tu', value: 0, dataIndex: 1 }
     ])
     expect(tooltipWithoutOvertime).toBe('Tu\n0h')
 
-    const tooltipWithEmptyParams = vm.barChartOption.tooltip.formatter([])
+    const tooltipWithEmptyParams = chartOption.tooltip.formatter([])
     expect(tooltipWithEmptyParams).toBe('Regular: 8h\nOvertime: 2h\nTotal: 10h')
 
-    const tooltipOutOfRange = vm.barChartOption.tooltip.formatter([{ name: 'Sa', dataIndex: 12 }])
+    const tooltipOutOfRange = chartOption.tooltip.formatter([{ name: 'Sa', dataIndex: 12 }])
     expect(tooltipOutOfRange).toBe('Sa\n0h')
 
-    expect(vm.barChartOption.yAxis.axisLabel.formatter(1.25)).toBe('1.3 h')
+    expect(chartOption.yAxis.axisLabel.formatter(1.25)).toBe('1.3 h')
 
-    const overtimeLabelFormatter = vm.barChartOption.series[1]?.label?.formatter
+    const overtimeLabelFormatter = chartOption.series[1].label?.formatter
     expect(overtimeLabelFormatter?.({ dataIndex: 0 })).toBe('10h')
     expect(overtimeLabelFormatter?.({ dataIndex: 6 })).toBe('')
     expect(overtimeLabelFormatter?.({ dataIndex: 99 })).toBe('')

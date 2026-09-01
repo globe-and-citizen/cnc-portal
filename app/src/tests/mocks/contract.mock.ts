@@ -1,6 +1,8 @@
 import { vi } from 'vitest'
 import { ref } from 'vue'
+import { zeroHash } from 'viem'
 import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
+import type { LendingOfferStruct } from '@/types'
 
 /**
  * Elections Contract Mocks
@@ -44,7 +46,8 @@ export const mockBankWrites = {
   transferOwnership: createContractWriteV3Mock(),
   renounceOwnership: createContractWriteV3Mock(),
   pause: createContractWriteV3Mock(),
-  unpause: createContractWriteV3Mock()
+  unpause: createContractWriteV3Mock(),
+  fundFixedReturnRepayment: createContractWriteV3Mock()
 }
 
 /**
@@ -85,6 +88,7 @@ export const mockCashRemunerationReads = {
 }
 
 export const mockCashRemunerationWrites = {
+  withdraw: createContractWriteV3Mock(),
   ownerWithdrawAllToBank: createContractWriteV3Mock(),
   enableClaim: createContractWriteV3Mock(),
   disableClaim: createContractWriteV3Mock()
@@ -113,6 +117,11 @@ export const mockVestingWrites = {
   release: createContractWriteV3Mock()
 }
 
+export const mockVestingReads = {
+  vestingsWithMembers: createContractReadMock<unknown>([[], [], []]),
+  archivedVestingsFlat: createContractReadMock<unknown>([[], [], []])
+}
+
 /**
  * Investor Contract Mocks
  */
@@ -127,7 +136,9 @@ export const mockInvestorReads = {
   totalInvested: createContractReadMock(0n),
   userInvestment: createContractReadMock(0n),
   dividendBalance: createContractReadMock(0n),
-  investorCount: createContractReadMock(0n)
+  investorCount: createContractReadMock(0n),
+  migrationRoot: createContractReadMock<`0x${string}`>(zeroHash),
+  migrationComplete: createContractReadMock(false)
 }
 
 export const mockInvestorWrites = {
@@ -146,6 +157,38 @@ export const mockInvestorWrites = {
 }
 
 /**
+ * FixedReturn Contract Mocks
+ */
+export const mockFixedReturnReads = {
+  owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
+  version: createContractReadMock('1.0.0'),
+  totalOfferings: createContractReadMock(0n),
+  getLendingOffer: createContractReadMock<Partial<LendingOfferStruct> | null>(null),
+  getOfferLenders: createContractReadMock<string[]>([]),
+  totalEntitlementOf: createContractReadMock(0n),
+  lenderDeposits: createContractReadMock(0n),
+  lenderAllocation: createContractReadMock(0n),
+  hasDeposited: createContractReadMock(false),
+  isTokenSupported: createContractReadMock(false),
+  getSupportedTokens: createContractReadMock<string[]>([]),
+  // useQuery-shaped (not a direct ABI read) — see useFixedReturnAllOffers/
+  // useFixedReturnOfferLenders/useFixedReturnMyLenderPositions in
+  // composables/fixedReturn/reads.ts.
+  allOffers: createContractReadMock<unknown[]>([]),
+  offerLenders: createContractReadMock<unknown[]>([]),
+  myLenderPositions: createContractReadMock<Map<number, unknown>>(new Map())
+}
+
+export const mockFixedReturnWrites = {
+  createLendingOffer: createContractWriteV3Mock(),
+  lendFunds: createContractWriteV3Mock(),
+  refundLenders: createContractWriteV3Mock(),
+  acceptPartialFunding: createContractWriteV3Mock(),
+  addTokenSupport: createContractWriteV3Mock(),
+  removeTokenSupport: createContractWriteV3Mock()
+}
+
+/**
  * Reset function for all contract mocks
  */
 export const resetContractMocks = () => {
@@ -155,7 +198,9 @@ export const resetContractMocks = () => {
     mockBODReads,
     mockInvestorReads,
     mockCashRemunerationReads,
-    mockExpenseAccountReads
+    mockExpenseAccountReads,
+    mockVestingReads,
+    mockFixedReturnReads
   ]
 
   const allWriteV3Mocks = [
@@ -164,7 +209,8 @@ export const resetContractMocks = () => {
     mockExpenseAccountWrites,
     mockElectionsWrites,
     mockInvestorWrites,
-    mockVestingWrites
+    mockVestingWrites,
+    mockFixedReturnWrites
   ]
 
   const allComposableV3Mocks = [mockBodAddAction, mockBodApproveAction]

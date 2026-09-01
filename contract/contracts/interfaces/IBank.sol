@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import './IPausable.sol';
-import './IOwnable.sol';
-import './ITokenSupport.sol';
+import {IOwnable} from "./IOwnable.sol";
+import {IPausable} from "./IPausable.sol";
+import {ITokenSupport} from "./ITokenSupport.sol";
 
 /**
  * @title IBank
@@ -20,30 +20,35 @@ interface IBank is IPausable, IOwnable, ITokenSupport {
   function deposit() external payable;
 
   /// @notice Deposit ERC20 tokens into the bank
-  /// @param _token Address of the token
-  /// @param _amount Amount to deposit
-  function depositToken(address _token, uint256 _amount) external;
+  /// @param token Address of the token
+  /// @param amount Amount to deposit
+  function depositToken(address token, uint256 amount) external;
 
   // ============ Transfers ============
   /// @notice Transfer native ETH from bank
-  /// @param _to Recipient address
-  /// @param _amount Amount to transfer
-  function transfer(address _to, uint256 _amount) external;
+  /// @param to Recipient address
+  /// @param amount Amount to transfer
+  function transfer(address to, uint256 amount) external;
 
   /// @notice Transfer ERC20 tokens from bank
-  /// @param _token Token address
-  /// @param _to Recipient address
-  /// @param _amount Amount to transfer
-  function transferToken(address _token, address _to, uint256 _amount) external;
+  /// @param token Token address
+  /// @param to Recipient address
+  /// @param amount Amount to transfer
+  function transferToken(address token, address to, uint256 amount) external;
 
   /// @notice Fund Investor and trigger native ETH dividends
-  /// @param _amount Total amount to distribute
-  function distributeNativeDividends(uint256 _amount) external;
+  /// @param amount Total amount to distribute
+  function distributeNativeDividends(uint256 amount) external;
 
   /// @notice Fund Investor and trigger ERC20 dividends
-  /// @param _token Token address
-  /// @param _amount Total amount to distribute
-  function distributeTokenDividends(address _token, uint256 _amount) external;
+  /// @param token Token address
+  /// @param amount Total amount to distribute
+  function distributeTokenDividends(address token, uint256 amount) external;
+
+  /// @notice Fund a FixedReturn repayment installment and trigger its distribution
+  /// @param offerId The lending offer being repaid
+  /// @param amount The installment amount to fund and distribute
+  function fundFixedReturnRepayment(uint256 offerId, uint256 amount) external;
 
   // ============ Balance Queries ============
   /// @notice Get current ETH balance
@@ -51,7 +56,7 @@ interface IBank is IPausable, IOwnable, ITokenSupport {
   function getBalance() external view returns (uint256);
 
   /// @notice Get token balance
-  /// @param _token Token address
+  /// @param token Token address
   /// @return Current token balance
-  function getTokenBalance(address _token) external view returns (uint256);
+  function getTokenBalance(address token) external view returns (uint256);
 }

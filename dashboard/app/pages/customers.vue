@@ -198,9 +198,21 @@ watch(
   }
 )
 
-const pagination = ref({
-  pageIndex: 0,
-  pageSize: 10
+// Route-bound page + size (shareable, reload-safe) with resize anchoring —
+// shared with the accounting/teams tables via usePagination. TanStack keeps
+// owning filtering/sorting/selection; we drive its (controlled) pagination state
+// from the composable and mirror its internal updates back.
+const filteredTotal = (): number =>
+  table.value?.tableApi?.getFilteredRowModel().rows.length ?? 0
+
+const { page, pageSize } = usePagination(filteredTotal, { key: 'customers' })
+
+const pagination = computed({
+  get: () => ({ pageIndex: page.value - 1, pageSize: pageSize.value }),
+  set: ({ pageIndex, pageSize: size }: { pageIndex: number, pageSize: number }) => {
+    if (pageIndex + 1 !== page.value) page.value = pageIndex + 1
+    if (size !== pageSize.value) pageSize.value = size
+  }
 })
 </script>
 
@@ -311,20 +323,18 @@ const pagination = ref({
         }"
       />
 
-      <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
-        <div class="text-sm text-muted">
+      <div class="mt-auto">
+        <div class="border-t border-default pt-4 text-sm text-muted">
           {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
           {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
         </div>
 
-        <div class="flex items-center gap-1.5">
-          <UPagination
-            :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-            :total="table?.tableApi?.getFilteredRowModel().rows.length"
-            @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
-          />
-        </div>
+        <AccountingPagination
+          v-model:page="page"
+          v-model:page-size="pageSize"
+          :total="table?.tableApi?.getFilteredRowModel().rows.length ?? 0"
+          noun="customers"
+        />
       </div>
     </template>
   </UDashboardPanel>

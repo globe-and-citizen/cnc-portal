@@ -34,6 +34,7 @@ import {
   cashRemunerationOfficerUpdated,
   cashRemunerationTokenSupportAdded,
   cashRemunerationTokenSupportRemoved,
+  cashRemunerationOwnershipTransferred,
   safeDeposit,
   safeDepositsEnabled,
   safeDepositsDisabled,
@@ -42,6 +43,9 @@ import {
   safeTokenSupportAdded,
   safeTokenSupportRemoved,
   safeTokensRecovered,
+  vestingCreated,
+  vestingTokensReleased,
+  vestingStopped,
   expenseDeposit,
   expenseTokenDeposit,
   expenseTransfer,
@@ -52,6 +56,7 @@ import {
   expenseTokenSupportAdded,
   expenseTokenSupportRemoved,
   expenseTokenAddressChanged,
+  expenseOwnershipTransferred,
   feeCollectorFeePaid,
   feeCollectorWithdrawn,
   feeCollectorTokenWithdrawn,
@@ -487,6 +492,50 @@ ponder.on("InvestorV1:DividendPaymentFailed", async ({ event, context }) => {
   });
 });
 
+// ─── Investor (v2) ────────────────────────────────────────────────────────────
+// Same Minted/DividendDistributed/DividendPaid shapes as InvestorV1 — shares
+// the same tables, distinguished only by contractAddress. Unlike InvestorV1,
+// Investor.sol has no DividendPaymentFailed event: a failed native transfer
+// reverts the whole distribution instead of being caught and skipped, so
+// there's nothing to index there. setMigrationRoot/claim/bulkClaim events
+// aren't indexed yet either (no consumer needs them until the claim UI ships).
+
+ponder.on("Investor:Minted", async ({ event, context }) => {
+  await context.db.insert(investorMint).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    shareholder: event.args.shareholder,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("Investor:DividendDistributed", async ({ event, context }) => {
+  await context.db.insert(investorDividendDistributed).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    distributor: event.args.distributor,
+    token: event.args.token,
+    totalAmount: event.args.totalAmount,
+    shareholderCount: event.args.shareholderCount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("Investor:DividendPaid", async ({ event, context }) => {
+  await context.db.insert(investorDividendPaid).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    shareholder: event.args.shareholder,
+    token: event.args.token,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
 // ─── CashRemunerationEIP712 ───────────────────────────────────────────────────
 
 ponder.on("CashRemunerationEIP712:Deposited", async ({ event, context }) => {
@@ -624,6 +673,20 @@ ponder.on(
   },
 );
 
+ponder.on(
+  "CashRemunerationEIP712:OwnershipTransferred",
+  async ({ event, context }) => {
+    await context.db.insert(cashRemunerationOwnershipTransferred).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      previousOwner: event.args.previousOwner,
+      newOwner: event.args.newOwner,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
+
 // ─── SafeDepositRouter ────────────────────────────────────────────────────────
 
 ponder.on("SafeDepositRouter:Deposited", async ({ event, context }) => {
@@ -733,6 +796,43 @@ ponder.on("SafeDepositRouter:TokensRecovered", async ({ event, context }) => {
     token: event.args.token,
     to: event.args.to,
     amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+// ─── Vesting ──────────────────────────────────────────────────────────────────
+
+ponder.on("Vesting:VestingCreated", async ({ event, context }) => {
+  await context.db.insert(vestingCreated).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    member: event.args.member,
+    scheduleIndex: event.args.index,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("Vesting:TokensReleased", async ({ event, context }) => {
+  await context.db.insert(vestingTokensReleased).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    member: event.args.member,
+    scheduleIndex: event.args.index,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("Vesting:VestingStopped", async ({ event, context }) => {
+  await context.db.insert(vestingStopped).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    member: event.args.member,
+    scheduleIndex: event.args.index,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });
@@ -881,6 +981,20 @@ ponder.on(
       tokenSymbol: event.args.tokenSymbol,
       oldAddress: event.args.oldAddress,
       newAddress: event.args.newAddress,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
+
+ponder.on(
+  "ExpenseAccountEIP712:OwnershipTransferred",
+  async ({ event, context }) => {
+    await context.db.insert(expenseOwnershipTransferred).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      previousOwner: event.args.previousOwner,
+      newOwner: event.args.newOwner,
       blockNumber: event.block.number,
       timestamp: Number(event.block.timestamp),
     });

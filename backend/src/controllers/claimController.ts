@@ -16,7 +16,14 @@ import {
   z,
   type FileAttachmentData,
 } from '../validation';
-import { formatMinutesAsDuration } from '../utils/wageUtil';
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY, formatMinutesAsDuration } from '../utils/wageUtil';
+import {
+  getEffectiveStatus,
+  isDayWithinSubmitWindow,
+  isSubmitRestricted,
+  SUBMIT_RESTRICTION_MAX_DAYS_BACK,
+} from '../utils/featureUtils';
+import { resolveCurrentWage } from '../utils/wageResolution';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -48,7 +55,48 @@ const buildWeeklyHoursExceededMessage = ({
   };
 };
 
-// TODO limit weeday only for the current week. Betwen Monday and the current day
+/**
+ * Daily ceiling of a wage, in minutes. Falls back to the default when the wage
+ * carries no usable value (legacy rows created before the column existed).
+ */
+const dailyLimitMinutes = (maximumHoursPerDay?: number | null) => {
+  const hours =
+    typeof maximumHoursPerDay === 'number' && maximumHoursPerDay > 0
+      ? maximumHoursPerDay
+      : DEFAULT_MAXIMUM_HOURS_PER_DAY;
+  return hours * 60;
+};
+
+const buildDailyHoursExceededMessage = ({
+  action,
+  maxDailyMinutes,
+  alreadyClaimedMinutes,
+}: {
+  action: 'submit' | 'update';
+  maxDailyMinutes: number;
+  alreadyClaimedMinutes: number;
+}) => {
+  const remainingMinutes = Math.max(0, maxDailyMinutes - alreadyClaimedMinutes);
+
+  return (
+    `Unable to ${action} this claim: your daily hours limit would be exceeded. ` +
+    `Daily allowance: ${formatMinutesAsDuration(maxDailyMinutes)}. ` +
+    `Already submitted for that day: ${formatMinutesAsDuration(alreadyClaimedMinutes)}. ` +
+    `Remaining to submit: ${formatMinutesAsDuration(remainingMinutes)}.`
+  );
+};
+
+/** Minutes already claimed for a given day, optionally ignoring one claim (edit case). */
+const minutesClaimedOnDay = (
+  claims: { dayWorked: Date | null; minutesWorked: number; id: number }[],
+  dayWorked: Date,
+  excludeClaimId?: number
+) =>
+  claims
+    .filter((claim) => excludeClaimId === undefined || claim.id !== excludeClaimId)
+    .filter((claim) => claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime())
+    .reduce((sum, claim) => sum + Number(claim.minutesWorked), 0);
+
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
 
@@ -67,10 +115,27 @@ export const addClaim = async (req: Request, res: Response) => {
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
   try {
-    // Get user current
-    const wage = await prisma.wage.findFirst({
-      where: { userAddress: callerAddress, nextWageId: null, teamId: teamId },
+    // A week is found by member and week, never by wage, so one week always has
+    // one row — the split that let hour caps restart from zero (issue #2479)
+    // has nowhere to happen.
+    let weeklyClaim = await prisma.weeklyClaim.findFirst({
+      where: {
+        teamId,
+        memberAddress: callerAddress,
+        weekStart,
+      },
+      include: { claims: true, wage: true },
     });
+
+    // Hours are what commit a week to a wage. Once the week holds claims it
+    // keeps the wage they were priced against, whatever the owner has saved
+    // since. A week holding only goals has committed to nothing, so it follows
+    // the change like an empty week would — the member had not submitted their
+    // hours, which is precisely the case the rule leaves to them.
+    const weekIsSubmitted = (weeklyClaim?.claims.length ?? 0) > 0;
+    const wage = weekIsSubmitted
+      ? weeklyClaim!.wage
+      : await resolveCurrentWage(teamId, callerAddress);
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
@@ -80,20 +145,17 @@ export const addClaim = async (req: Request, res: Response) => {
       return errorResponse(400, 'Cannot add claim: the wage is disabled', res);
     }
 
-    // get the member current wage
-
-    let weeklyClaim = await prisma.weeklyClaim.findFirst({
-      where: {
-        wage: {
-          teamId: teamId,
-          nextWageId: null,
-        },
-        weekStart: weekStart,
-        memberAddress: callerAddress,
-        teamId: teamId,
-      },
-      include: { claims: true },
-    });
+    // Enforce the SUBMIT_RESTRICTION feature server-side: when active (team
+    // override > global setting > default active), a claim can only target the
+    // current ISO week, at most SUBMIT_RESTRICTION_MAX_DAYS_BACK days in the past.
+    const submitStatus = await getEffectiveStatus('SUBMIT_RESTRICTION', teamId);
+    if (isSubmitRestricted(submitStatus) && !isDayWithinSubmitWindow(dayWorked)) {
+      return errorResponse(
+        400,
+        `Submission failed: claims can only be submitted for the current week, up to ${SUBMIT_RESTRICTION_MAX_DAYS_BACK} days in the past.`,
+        res
+      );
+    }
 
     if (weeklyClaim) {
       if (weeklyClaim.status === 'disabled') {
@@ -126,34 +188,56 @@ export const addClaim = async (req: Request, res: Response) => {
       return errorResponse(409, message, res);
     }
 
+    // Check the daily cap: hours beyond it are not claimable even when the
+    // weekly allowance still has room (issue: cap hours worked in a single day).
+    const maxDailyMinutes = dailyLimitMinutes(wage.maximumHoursPerDay);
+    const alreadyClaimedThatDay = minutesClaimedOnDay(weeklyClaim?.claims ?? [], dayWorked);
+
+    if (alreadyClaimedThatDay + Number(minutesWorked) > maxDailyMinutes) {
+      return errorResponse(
+        409,
+        buildDailyHoursExceededMessage({
+          action: 'submit',
+          maxDailyMinutes,
+          alreadyClaimedMinutes: alreadyClaimedThatDay,
+        }),
+        res
+      );
+    }
+
     if (!weeklyClaim) {
-      weeklyClaim = await prisma.weeklyClaim.create({
-        data: {
+      // The composite database key makes this operation converge when a daily
+      // claim and weekly goals (or two daily claims) arrive concurrently.
+      weeklyClaim = await prisma.weeklyClaim.upsert({
+        where: {
+          teamId_memberAddress_weekStart: {
+            teamId,
+            memberAddress: callerAddress,
+            weekStart,
+          },
+        },
+        create: {
           wageId: wage.id,
-          weekStart: weekStart,
+          weekStart,
           memberAddress: callerAddress,
-          teamId: teamId,
+          teamId,
           data: {},
           status: 'pending',
         },
-        include: {
-          claims: true,
-        },
+        update: {},
+        include: { claims: true, wage: true },
       });
     }
 
-    if (
-      (weeklyClaim?.claims
-        .filter((claim) => claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime())
-        .reduce((sum, claim) => sum + Number(claim.minutesWorked), 0) ?? 0) +
-        Number(minutesWorked) >
-      1440
-    ) {
-      return errorResponse(
-        400,
-        'Submission failed: the total number of hours for this day would exceed 24 hours (1440 minutes).',
-        res
-      );
+    if (weeklyClaim.claims.length === 0 && weeklyClaim.wageId !== wage.id) {
+      // Only reachable on a goals-only week whose wage changed since: these are
+      // the first hours in it, so the row moves to the wage that prices them
+      // instead of leaving the week pointing at the superseded one.
+      weeklyClaim = await prisma.weeklyClaim.update({
+        where: { id: weeklyClaim.id },
+        data: { wageId: wage.id },
+        include: { claims: true, wage: true },
+      });
     }
 
     // Validate pre-uploaded attachments count
@@ -301,6 +385,30 @@ export const updateClaim = async (req: Request, res: Response) => {
         });
         return errorResponse(409, message, res);
       }
+
+      // Same daily cap as on submission, ignoring the claim being edited.
+      // Legacy claims with no dayWorked can't be attributed to a day, so they
+      // only go through the weekly check above.
+      if (claim.dayWorked) {
+        const maxDailyMinutes = dailyLimitMinutes(wage.maximumHoursPerDay);
+        const alreadyClaimedThatDay = minutesClaimedOnDay(
+          weeklyClaim?.claims ?? [],
+          claim.dayWorked,
+          claim.id
+        );
+
+        if (alreadyClaimedThatDay + newMinutes > maxDailyMinutes) {
+          return errorResponse(
+            409,
+            buildDailyHoursExceededMessage({
+              action: 'update',
+              maxDailyMinutes,
+              alreadyClaimedMinutes: alreadyClaimedThatDay,
+            }),
+            res
+          );
+        }
+      }
     }
 
     // Build file attachments from uploaded files and merge with existing ones.
@@ -399,7 +507,9 @@ export const deleteClaim = async (req: Request, res: Response) => {
 
     if (weeklyClaim) {
       const remainingClaims = (weeklyClaim.claims ?? []).filter((c) => c.id !== claimId);
-      if (remainingClaims.length === 0) {
+      // Keep a claim-less weekly claim alive when it still carries a goals memo —
+      // deleting it here would silently wipe the member's weekly goals.
+      if (remainingClaims.length === 0 && !weeklyClaim.weeklyGoals) {
         await prisma.weeklyClaim.delete({
           where: { id: weeklyClaim.id },
         });

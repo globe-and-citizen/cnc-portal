@@ -1,6 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { defineComponent, ref } from 'vue'
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
 import { mockDeployState } from '@/tests/mocks/composables.mock'
 import { useCreateContractMutation } from '@/queries/contract.queries'
@@ -18,8 +17,9 @@ describe('CreateAddCampaign.vue', () => {
   describe('rendering', () => {
     it('renders the title and description', () => {
       const wrapper = mountComponent()
-      expect(wrapper.find('h4').text()).toBe('Deploy Advertisement Campaign contract')
-      expect(wrapper.find('h3').text()).toContain('By clicking "Deploy Advertisement Contract"')
+      expect(wrapper.text()).toContain('One-time company setup')
+      expect(wrapper.text()).toContain('Configure rates')
+      expect(wrapper.text()).toContain('Create funded campaigns')
     })
 
     it('pre-fills the bank address input from the team store', () => {
@@ -125,6 +125,30 @@ describe('CreateAddCampaign.vue', () => {
       )
     })
 
+    it('normalizes numeric input values before deploying', async () => {
+      const wrapper = mountComponent()
+      const setupState = wrapper.getCurrentComponent().setupState as Record<string, unknown>
+      const formState = setupState.formState as {
+        costPerClick: string | number
+        costPerImpression: string | number
+      }
+      formState.costPerClick = 1
+      formState.costPerImpression = 1
+
+      await wrapper.vm.$nextTick()
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(mockDeployState.mutate).toHaveBeenCalledWith(
+        {
+          bankAddress: mockTeamStore.getContractAddressByType('Bank'),
+          costPerClick: '1',
+          costPerImpression: '1'
+        },
+        { onSuccess: expect.any(Function) }
+      )
+    })
+
     it('sets submissionError and skips deploy when bankAddress is missing', async () => {
       vi.mocked(useTeamStore).mockReturnValueOnce({
         ...mockTeamStore,
@@ -144,15 +168,17 @@ describe('CreateAddCampaign.vue', () => {
 
     it('does not call deploy when costPerClick is invalid (empty)', async () => {
       const wrapper = mountComponent()
-      await wrapper.find('[data-test="confirm-button"]').trigger('click')
+      await wrapper.find('form').trigger('submit')
       await flushPromises()
       expect(mockDeployState.mutate).not.toHaveBeenCalled()
+      expect(wrapper.text()).toContain('Required')
+      expect(wrapper.text()).not.toContain('Invalid input')
     })
   })
 
   describe('deploy onSuccess (register contract)', () => {
     // Submit a valid form, then replay the onSuccess callback the component
-    // passed to `deploy(args, { onSuccess })` with a freshly deployed address.
+    // passed to `mutate(args, { onSuccess })` with a freshly deployed address.
     const replayDeploySuccess = async (
       wrapper: ReturnType<typeof mountComponent>,
       address = '0xDeployedContract'
@@ -222,49 +248,17 @@ describe('CreateAddCampaign.vue', () => {
     })
   })
 
-  describe('reset()', () => {
-    it('clears costPerClick, costPerImpression and form fields', async () => {
-      // `reset()` is a public API exposed via defineExpose for parent components
-      // to call by ref. Mount inside a parent harness and drive the child
-      // through its exposed instance — no vm cast required.
-      const ParentHarness = defineComponent({
-        components: { CreateAddCampaign },
-        setup() {
-          const child = ref<{ reset: () => void } | null>(null)
-          const callReset = () => child.value?.reset()
-          return { child, callReset }
-        },
-        template: `<CreateAddCampaign ref="child" />`
-      })
-      const wrapper = mount(ParentHarness)
-
-      await wrapper.find('input[placeholder="cost per click in matic"]').setValue('1')
-      await wrapper.find('input[placeholder="cost per in matic"]').setValue('2')
-
-      // `callReset` is provided by the harness and triggers the exposed reset()
-      ;(wrapper.vm.callReset as () => void)()
-      await wrapper.vm.$nextTick()
-
-      expect(
-        (wrapper.find('input[placeholder="cost per click in matic"]').element as HTMLInputElement)
-          .value
-      ).toBe('')
-      expect(
-        (wrapper.find('input[placeholder="cost per in matic"]').element as HTMLInputElement).value
-      ).toBe('')
-    })
-  })
-
   describe('viewContractCode()', () => {
     it('opens the correct URL in a new tab', async () => {
       const openSpy = vi.spyOn(window, 'open').mockImplementation(vi.fn())
       const wrapper = mountComponent()
-      // The "view code" button is the UButton in the h3 description (no data-test, label="view code")
-      const viewCodeBtn = wrapper.findAll('button').find((b) => b.text() === 'view code')
+      const viewCodeBtn = wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Review contract source')
       expect(viewCodeBtn).toBeDefined()
       await viewCodeBtn!.trigger('click')
       expect(openSpy).toHaveBeenCalledWith(
-        'https://polygonscan.com/address/0x30625FE0E430C3cCc27A60702B79dE7824BE7fD5#code',
+        'https://github.com/globe-and-citizen/cnc-portal/blob/develop/contract/contracts/AdCampaignManager.sol',
         '_blank'
       )
       openSpy.mockRestore()

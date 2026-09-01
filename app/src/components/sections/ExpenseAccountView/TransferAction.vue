@@ -16,11 +16,7 @@
       v-model:open="showModal.show"
       data-test="transfer-modal"
       title="Transfer from Expenses Contract"
-      :description="
-        expenseBalance
-          ? `Spendable balance: ${tokens[0]?.spendableBalance ?? tokens[0]?.balance ?? 0} ${transferData.token.symbol}`
-          : undefined
-      "
+      :description="spendableBalanceLabel"
       :close="{
         onClick: () => {
           showModal = { mount: false, show: false }
@@ -36,11 +32,36 @@
           :description="errorMessage"
           class="mb-4"
         />
+        <div
+          v-if="bodyState === 'loading'"
+          class="flex items-center justify-center gap-2 py-6 text-sm text-gray-500"
+          data-test="balance-loading"
+        >
+          <UIcon name="i-lucide-loader-circle" class="animate-spin" />
+          <span>Loading contract balance…</span>
+        </div>
+
+        <UAlert
+          v-else-if="bodyState === 'error'"
+          color="error"
+          variant="soft"
+          description="Failed to read the Expenses Contract balance. Close this dialog and try again."
+          data-test="balance-error"
+        />
+
+        <UAlert
+          v-else-if="bodyState === 'unsupported'"
+          color="warning"
+          variant="soft"
+          description="This expense is denominated in a token that is not supported."
+          data-test="balance-unsupported"
+        />
+
         <TransferForm
-          v-if="showModal.mount && tokens.length > 0"
+          v-else
           v-model="transferData"
           :tokens="tokens"
-          :loading="transferMutation.isPending.value || approveMutation.isPending.value"
+          :loading="transferMutation.isPending.value"
           @transfer="
             async (data) => {
               await transferFromExpenseAccount(data.address.address, data.amount)
@@ -67,20 +88,29 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
-import { USDC_ADDRESS, type TokenId } from '@/constant'
+import { type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import { getTokens, log, parseError } from '@/utils'
-import { encodeFunctionData, parseEther, zeroAddress, type Address } from 'viem'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { useTeamStore } from '@/stores'
+import { budgetLimitTypes, buildContractBudgetLimit, getTokens } from '@/utils/expenses/model'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
+import {
+  encodeFunctionData,
+  parseEther,
+  recoverTypedDataAddress,
+  zeroAddress,
+  type Address,
+  type Hex
+} from 'viem'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import { estimateGas, readContract } from '@wagmi/core'
+import { useChainId } from '@wagmi/vue'
 import { config } from '@/wagmi.config'
-import { ERC20_ABI } from '@/artifacts/abi/erc20'
-import { useERC20Approve } from '@/composables/erc20/writes'
 import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
+import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
 import { expenseKeys } from '@/queries'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { TableRow } from '@/types/table'
@@ -88,11 +118,22 @@ import type { TransferData } from '@/types'
 const props = defineProps<{ row: TableRow }>()
 
 const teamStore = useTeamStore()
-const userDataStore = useUserDataStore()
 const toast = useToast()
-const { balances } = useContractBalance(
-  ref(teamStore.getContractAddressByType('ExpenseAccountEIP712'))
+const chainId = useChainId()
+
+// A getter, not `ref(teamStore.getContractAddressByType(...))`: the address comes
+// from the team query, and this row can mount before that query resolves. A ref
+// would snapshot `undefined` and leave the balance query disabled forever.
+const expenseAccountEip712Address = computed(() =>
+  teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
+
+const {
+  data: balance,
+  isLoading: isBalanceLoading,
+  error: balanceError
+} = useContractBalance(expenseAccountEip712Address)
+const balances = computed(() => balance.value?.balances ?? [])
 const queryClient = useQueryClient()
 
 const showModal = ref({ mount: false, show: false })
@@ -112,36 +153,99 @@ const createDefaultTransferData = (): TransferData => ({
 })
 
 const transferData = ref(createDefaultTransferData())
-const expenseBalance = computed(() => {
-  const maxAmountData = props.row.data.amount
-  const amountTransferred = props.row.balances[1]
-  return maxAmountData && amountTransferred
-    ? Number(maxAmountData) - Number(amountTransferred)
-    : null
-})
-
-const expenseAccountEip712Address = computed(() =>
-  teamStore.getContractAddressByType('ExpenseAccountEIP712')
-)
 
 const tokens = computed(() => getTokens([props.row], props.row.signature, balances.value))
+const spendableToken = computed(() => tokens.value[0])
+
+/**
+ * What the modal body shows. `getTokens` yields nothing until the contract
+ * balance has been read, so an empty `tokens` is ambiguous on its own: the
+ * balance may still be in flight, the read may have failed, or the expense may
+ * be denominated in a token we do not support. Rendering the form only, with no
+ * `v-else`, turned all three into a blank modal.
+ */
+const bodyState = computed(() => {
+  if (spendableToken.value) return 'ready'
+  if (!expenseAccountEip712Address.value || isBalanceLoading.value) return 'loading'
+  if (balanceError.value) return 'error'
+  return 'unsupported'
+})
+
+const spendableBalanceLabel = computed(() => {
+  const token = spendableToken.value
+  if (!token) return undefined
+  return `Spendable balance: ${token.spendableBalance ?? token.balance} ${token.symbol}`
+})
 
 const transferMutation = useExpenseAccountTransfer()
-const approveMutation = useERC20Approve(computed(() => USDC_ADDRESS as Address))
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   errorMessage.value = ''
   const budgetLimit = props.row.data
   if (!expenseAccountEip712Address.value || !props.row) return
 
+  if (!(await verifyApprovalSignature(budgetLimit))) return
+
   if (budgetLimit.tokenAddress === zeroAddress) {
     await transferNativeToken(to, amount, budgetLimit)
   } else {
-    await transferErc20Token(to, amount, budgetLimit)
+    transferErc20Token(to, amount, budgetLimit)
   }
 }
 
-const submitExpenseAccountTransfer = (args: readonly unknown[]) => {
+const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
+  const currentContract = expenseAccountEip712Address.value
+  if (!currentContract) return false
+
+  if (
+    budgetLimit.signedAgainstContractAddress &&
+    budgetLimit.signedAgainstContractAddress.toLowerCase() !== currentContract.toLowerCase()
+  ) {
+    errorMessage.value = 'Signature issued for a different ExpenseAccount contract'
+    return false
+  }
+
+  if (budgetLimit.chainId && budgetLimit.chainId !== chainId.value) {
+    errorMessage.value = 'Signature issued for a different network'
+    return false
+  }
+
+  try {
+    const owner = (await readContract(config, {
+      address: currentContract,
+      abi: expenseAccountEip712Abi,
+      functionName: 'owner'
+    })) as Address
+
+    const recovered = await recoverTypedDataAddress({
+      domain: {
+        name: 'CNCExpenseAccount',
+        version: '1',
+        chainId: chainId.value,
+        verifyingContract: currentContract
+      },
+      types: budgetLimitTypes,
+      primaryType: 'BudgetLimit',
+      message: buildContractBudgetLimit(budgetLimit),
+      signature: props.row.signature as Hex
+    })
+
+    if (recovered.toLowerCase() !== owner.toLowerCase()) {
+      errorMessage.value = 'Signature issued for a different ExpenseAccount contract'
+      return false
+    }
+  } catch (error) {
+    log.error('Error verifying expense approval signature:', error)
+    errorMessage.value = 'Failed to verify expense approval signature'
+    return false
+  }
+
+  return true
+}
+
+type ExpenseTransferArgs = WriteFunctionArgs<typeof expenseAccountEip712Abi, 'transfer'>
+
+const submitExpenseAccountTransfer = (args: ExpenseTransferArgs) => {
   transferMutation.mutate(
     { args },
     {
@@ -151,8 +255,10 @@ const submitExpenseAccountTransfer = (args: readonly unknown[]) => {
         queryClient.invalidateQueries({ queryKey: expenseKeys.list(teamStore.currentTeamId) })
       },
       onError: (err) => {
-        log.error(parseError(err, EXPENSE_ACCOUNT_EIP712_ABI))
-        errorMessage.value = 'Failed to transfer'
+        log.error('Expense account transfer failed:', err)
+        const classified = classifyError(err, { contract: 'ExpenseAccount' })
+        if (classified.category === 'user_rejected') return
+        errorMessage.value = classified.userMessage
       }
     }
   )
@@ -163,88 +269,36 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
   const args = [
     to,
     parseEther(amount),
-    {
-      ...budgetLimit,
-      amount:
-        budgetLimit.tokenAddress === zeroAddress
-          ? parseEther(`${budgetLimit.amount}`)
-          : BigInt(Number(budgetLimit.amount) * 1e6),
-      frequencyType: Number(budgetLimit.frequencyType),
-      customFrequency: BigInt(Number(budgetLimit.customFrequency)),
-      startDate: Number(budgetLimit.startDate),
-      endDate: Number(budgetLimit.endDate)
-    },
+    buildContractBudgetLimit(budgetLimit),
     props.row.signature
   ] as const
 
   try {
     const data = encodeFunctionData({
-      abi: EXPENSE_ACCOUNT_EIP712_ABI,
+      abi: expenseAccountEip712Abi,
       functionName: 'transfer',
       args
     })
     await estimateGas(config, { to: expenseAccountEip712Address.value, data })
   } catch (error) {
-    log.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
-    errorMessage.value = parseError(error, EXPENSE_ACCOUNT_EIP712_ABI)
+    log.error('Error in transferNativeToken:', error)
+    errorMessage.value = classifyError(error, { contract: 'ExpenseAccount' }).userMessage
     return
   }
 
   submitExpenseAccountTransfer(args)
 }
 
-const transferErc20Token = async (to: string, amount: string, budgetLimit: BudgetLimit) => {
+// `transfer` pays out of the expense contract's own token balance — it never
+// calls `transferFrom` on the caller — so no ERC20 allowance is needed here.
+const transferErc20Token = (to: string, amount: string, budgetLimit: BudgetLimit) => {
   if (!expenseAccountEip712Address.value) return
 
-  const _amount = BigInt(Number(amount) * 1e6)
-  const tokenAddress = USDC_ADDRESS as Address
-
-  let allowance: bigint
-  try {
-    allowance = (await readContract(config, {
-      address: tokenAddress,
-      abi: ERC20_ABI,
-      functionName: 'allowance',
-      args: [userDataStore.address as Address, expenseAccountEip712Address.value]
-    })) as bigint
-  } catch (error) {
-    log.error('Error reading allowance:', parseError(error))
-    errorMessage.value = 'Failed to read allowance'
-    return
-  }
-
-  const buildArgs = () =>
-    [
-      to,
-      _amount,
-      {
-        ...budgetLimit,
-        amount: BigInt(Number(budgetLimit.amount) * 1e6),
-        frequencyType: Number(budgetLimit.frequencyType),
-        customFrequency: BigInt(Number(budgetLimit.customFrequency)),
-        startDate: Number(budgetLimit.startDate),
-        endDate: Number(budgetLimit.endDate)
-      },
-      props.row.signature
-    ] as const
-
-  if (allowance < _amount) {
-    approveMutation.mutate(
-      { args: [expenseAccountEip712Address.value, _amount] },
-      {
-        onSuccess: () => {
-          toast.add({ title: 'Approval granted successfully', color: 'success' })
-          submitExpenseAccountTransfer(buildArgs())
-        },
-        onError: (err) => {
-          log.error(parseError(err))
-          errorMessage.value = 'Failed to approve token spending'
-        }
-      }
-    )
-    return
-  }
-
-  submitExpenseAccountTransfer(buildArgs())
+  submitExpenseAccountTransfer([
+    to,
+    BigInt(Number(amount) * 1e6),
+    buildContractBudgetLimit(budgetLimit),
+    props.row.signature
+  ] as const)
 }
 </script>

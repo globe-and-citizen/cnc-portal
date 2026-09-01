@@ -7,9 +7,15 @@ import {
   type SimulateContractParameters,
   type WaitForTransactionReceiptParameters
 } from '@wagmi/core'
-import { BaseError, type Abi, type Address } from 'viem'
+import {
+  BaseError,
+  type Abi,
+  type Address,
+  type ContractFunctionArgs,
+  type ContractFunctionName
+} from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
-import { log, parseErrorV2 } from '@/utils'
+import { log, parseErrorV2 } from '@/lib/logging'
 
 type WagmiConfig = typeof wagmiConfigType
 type SimulateParams = SimulateContractParameters<Abi, string, readonly unknown[], WagmiConfig>
@@ -19,10 +25,28 @@ type WaitParams = WaitForTransactionReceiptParameters<WagmiConfig>
 // be validated structurally with `satisfies` rather than cast wholesale.
 type AppChainId = SimulateParams['chainId']
 
-export interface ContractWriteV3Config {
+/** State-changing function names of `abi`. */
+export type WriteFunctionName<abi extends Abi> = ContractFunctionName<abi, 'nonpayable' | 'payable'>
+
+/** The argument tuple `abi`'s `fn` declares. */
+export type WriteFunctionArgs<
+  abi extends Abi,
+  fn extends WriteFunctionName<abi>
+> = ContractFunctionArgs<abi, 'nonpayable' | 'payable', fn>
+
+export interface ContractWriteV3Config<
+  abi extends Abi = Abi,
+  fn extends WriteFunctionName<abi> = WriteFunctionName<abi>
+> {
   contractAddress: MaybeRef<Address | undefined>
-  abi: MaybeRef<Abi>
-  functionName: MaybeRef<string>
+  /**
+   * Plain value, not a `MaybeRef`: `args` is derived from it, and a reactive
+   * ABI would make that derivation the union of every function's tuple — which
+   * constrains nothing. No call site needs a reactive ABI; pass a different
+   * `abi`/`functionName` pair from a different composable instead.
+   */
+  abi: abi
+  functionName: fn
   chainId?: MaybeRef<number | undefined>
   config?: {
     log?: boolean
@@ -34,16 +58,19 @@ export interface ContractWriteV3Config {
    */
   onSuccess?: (
     result: ExecuteContractWriteResult,
-    variables: ExecuteWriteVariables
+    variables: ExecuteWriteVariables<abi, fn>
   ) => void | Promise<void>
   /**
    * Runs after the built-in error log. Must not throw.
    */
-  onError?: (error: Error, variables: ExecuteWriteVariables) => void
+  onError?: (error: Error, variables: ExecuteWriteVariables<abi, fn>) => void
 }
 
-export interface ExecuteWriteVariables {
-  args?: readonly unknown[]
+export interface ExecuteWriteVariables<
+  abi extends Abi = Abi,
+  fn extends WriteFunctionName<abi> = WriteFunctionName<abi>
+> {
+  args?: WriteFunctionArgs<abi, fn>
   value?: bigint
 }
 
@@ -53,7 +80,7 @@ export interface ExecuteWriteVariables {
  * can inspect gas used, logs, block number, etc. for debugging.
  *
  * Extends viem's `BaseError` and exposes the decoded revert reason via
- * `cause` so that `parseError(error, abi)` can `walk()` and extract the
+ * `cause` so that `classifyError(error)` can `walk()` and extract the
  * ABI-level error name (e.g. "InsufficientTokenBalance").
  */
 export class ContractWriteRevertedError extends BaseError {
@@ -195,25 +222,29 @@ export async function executeContractWrite(
  *   handler invalidates `useReadContract` queries for this address across
  *   *every* chain in the cache. Pin `chainId` to scope the invalidation.
  */
-export function useContractWritesV3(cfg: ContractWriteV3Config) {
+export function useContractWritesV3<const abi extends Abi, fn extends WriteFunctionName<abi>>(
+  cfg: ContractWriteV3Config<abi, fn>
+) {
   const queryClient = useQueryClient()
 
   const shouldLog = cfg.config?.log ?? true
 
   return useMutation({
-    mutationFn: async (variables: ExecuteWriteVariables = {}) => {
+    mutationFn: async (variables: ExecuteWriteVariables<abi, fn> = {}) => {
       const address = unref(cfg.contractAddress)
-      const functionName = unref(cfg.functionName)
+      const functionName = cfg.functionName
 
       if (!address) throw new Error('Contract address is undefined')
       if (!functionName) throw new Error('Function name is empty')
 
       return executeContractWrite({
         address,
-        abi: unref(cfg.abi),
+        abi: cfg.abi,
         functionName,
         chainId: unref(cfg.chainId),
-        args: variables.args,
+        // `executeContractWrite` is the framework-agnostic escape hatch and stays
+        // loosely typed; the tuple was already validated against the ABI above.
+        args: variables.args as readonly unknown[] | undefined,
         value: variables.value,
         onReplayError: shouldLog
           ? (err) =>
@@ -223,7 +254,7 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
     },
     onError: (error, variables) => {
       if (shouldLog) {
-        log.error(`useContractWritesV3(${unref(cfg.functionName)}) failed:\n`, parseErrorV2(error))
+        log.error(`useContractWritesV3(${cfg.functionName}) failed:\n`, parseErrorV2(error))
       }
       cfg.onError?.(error, variables)
     },

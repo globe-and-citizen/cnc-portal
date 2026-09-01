@@ -1,6 +1,14 @@
 <template>
   <div class="flex flex-col gap-4">
-    <BodAlert v-if="isBodAction" />
+    <UAlert
+      v-if="isBodAction"
+      title="Info"
+      description="This will create a BOD action which requires approval from at least half of the BOD members."
+      icon="i-lucide-info"
+      color="info"
+      variant="soft"
+      data-test="bod-action-alert"
+    />
     <h3>
       Please input amount to divide to the shareholders. This will move funds from bank contract to
       the shareholders
@@ -21,7 +29,7 @@
       data-test="bank-empty-warning"
     />
 
-    <TokenAmount v-model="tokenAmountModel" :tokens="tokens" :loading="loading">
+    <TokenAmountInput v-model="tokenAmountModel" :tokens="tokens" :loading="loading">
       <template #label>
         <div class="flex w-full items-center justify-between text-sm font-medium">
           <span>Amount</span>
@@ -30,7 +38,7 @@
           >
         </div>
       </template>
-    </TokenAmount>
+    </TokenAmountInput>
 
     <div class="text-center">
       <UButton
@@ -52,12 +60,11 @@ import type { Team } from '@/types'
 import { parseUnits } from 'viem'
 import { computed, ref } from 'vue'
 import { useTeamStore } from '@/stores'
-import BodAlert from '@/components/BodAlert.vue'
 
 import type { TokenId } from '@/constant'
 import type { TokenOption } from '@/types'
 import { useContractBalance } from '@/composables/useContractBalance'
-import TokenAmount from '@/components/forms/TokenAmount.vue'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 import type { Address } from 'viem'
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')
@@ -78,7 +85,9 @@ defineProps<{
 }>()
 
 const bankAddress = teamStore.getContractAddressByType('Bank')
-const { balances } = useContractBalance(bankAddress as Address)
+const { data: balance } = useContractBalance(bankAddress as Address)
+
+const balances = computed(() => balance.value?.balances ?? [])
 
 const getTokens = (): TokenOption[] =>
   balances.value
@@ -86,7 +95,7 @@ const getTokens = (): TokenOption[] =>
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.values['USD']?.price ?? 0,
+      price: b.price.usd.value,
       name: b.token.name,
       code: b.token.code
     }))

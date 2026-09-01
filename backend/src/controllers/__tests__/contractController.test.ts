@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { Prisma, Team, TeamOfficer } from '@prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
+import { getAddress } from 'viem';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import contractRoutes from '../../routes/contractRoutes';
 import { prisma } from '../../utils';
@@ -29,6 +30,7 @@ vi.mock('../../utils', async () => {
         createMany: vi.fn(),
         updateMany: vi.fn(),
         findMany: vi.fn(),
+        findFirst: vi.fn(),
         create: vi.fn(),
       },
       teamOfficer: {
@@ -88,6 +90,7 @@ describe('contractController', () => {
     vi.clearAllMocks();
     vi.mocked(publicClient.getChainId).mockResolvedValue(11155111);
     vi.mocked(prisma.teamContract.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.teamContract.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.teamContract.updateMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.teamOfficer.findFirst).mockResolvedValue(buildMockTeamOfficer());
     vi.mocked(prisma.teamOfficer.findUnique).mockResolvedValue(null);
@@ -386,6 +389,162 @@ describe('contractController', () => {
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
     });
+
+    it('should return 200 and register a Safe deployed through the ABI-based deployment path', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.teamContract, 'create').mockResolvedValue({
+        id: 1,
+        teamId: 1,
+        address: '0xSafeAddress',
+        type: 'Safe',
+        deployer: mockTeam.ownerAddress,
+        officerId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        contractAddress: faker.finance.ethereumAddress(),
+        contractType: 'Safe',
+      });
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ type: 'Safe', officerId: null });
+    });
+
+    it('should normalize and register a Safe when the team has no existing Safe', async () => {
+      const address = getAddress('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamContract.create).mockResolvedValue({
+        id: 1,
+        teamId: mockTeam.id,
+        address: address.toLowerCase(),
+        type: 'Safe',
+        deployer: mockTeam.ownerAddress,
+        officerId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const response = await request(app).post('/').send({
+        teamId: mockTeam.id,
+        contractAddress: address,
+        contractType: 'Safe',
+      });
+
+      expect(response.status).toBe(200);
+      expect(prisma.teamContract.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ address: address.toLowerCase(), type: 'Safe' }),
+      });
+    });
+
+    it('should return the existing Safe when a registration is retried for the same team', async () => {
+      const existingSafe = {
+        id: 1,
+        teamId: mockTeam.id,
+        address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        type: 'Safe',
+        deployer: mockTeam.ownerAddress,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamContract.findFirst).mockResolvedValueOnce(existingSafe as never);
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: mockTeam.id,
+          contractAddress: getAddress('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+          contractType: 'Safe',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ id: existingSafe.id });
+      expect(prisma.teamContract.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject a second Safe for the same team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamContract.findFirst).mockResolvedValueOnce({
+        id: 1,
+        teamId: mockTeam.id,
+        address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        type: 'Safe',
+        deployer: mockTeam.ownerAddress,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as never);
+
+      const response = await request(app).post('/').send({
+        teamId: mockTeam.id,
+        contractAddress: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        contractType: 'Safe',
+      });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Team already has a Safe account');
+    });
+
+    it('should reject a Safe address assigned to another team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamContract.findFirst)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 2,
+          teamId: 2,
+          address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          type: 'Safe',
+          deployer: '0x2222222222222222222222222222222222222222',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as never);
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: mockTeam.id,
+          contractAddress: getAddress('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+          contractType: 'Safe',
+        });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Safe address is already assigned to another team');
+    });
+
+    it('should return the registered Safe when concurrent registration retries after a conflict', async () => {
+      const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      const concurrentSafe = {
+        id: 1,
+        teamId: mockTeam.id,
+        address,
+        type: 'Safe',
+        deployer: mockTeam.ownerAddress,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamContract.findFirst)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(concurrentSafe as never);
+      vi.mocked(prisma.teamContract.create).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+        })
+      );
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: mockTeam.id,
+          contractAddress: getAddress(address),
+          contractType: 'Safe',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ id: concurrentSafe.id });
+    });
   });
 
   describe('POST: /officer', () => {
@@ -488,7 +647,7 @@ describe('contractController', () => {
             teamId: 1,
             deployBlockNumber: 12345,
             previousOfficerId: 7,
-            version: 'v0.10',
+            version: 'unknown',
           }),
         })
       );

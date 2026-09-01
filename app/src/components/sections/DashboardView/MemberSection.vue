@@ -63,7 +63,7 @@
       </template>
 
       <template #member-cell="{ row }">
-        <UserComponent
+        <UserIdentity
           :user="{
             name: row.original.name,
             address: row.original.address,
@@ -74,7 +74,20 @@
       <template #standard-cell="{ row }">
         <div v-if="row.original.currentWage">
           <RateDotList :rates="row.original.currentWage.ratePerHour" />
-          {{ row.original.currentWage.maximumHoursPerWeek + 'h/wk' }}
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span v-if="row.original.currentWage.maximumHoursPerWeek">
+              {{ row.original.currentWage.maximumHoursPerWeek + 'h/wk' }}
+            </span>
+            <span
+              v-if="row.original.currentWage.maximumHoursPerDay"
+              class="inline-flex items-center gap-1 rounded-full bg-[#FAEEDA] px-2 py-0.5 text-[11px] leading-none font-medium text-[#854F0B]"
+              :title="`Daily limit: ${row.original.currentWage.maximumHoursPerDay} hours`"
+              data-test="daily-cap-badge"
+            >
+              <UIcon name="i-heroicons-clock" aria-hidden="true" class="size-3" />
+              {{ row.original.currentWage.maximumHoursPerDay + 'h/d' }}
+            </span>
+          </div>
         </div>
         <div v-else>—</div>
       </template>
@@ -121,7 +134,7 @@ import type { TableColumn } from '@nuxt/ui'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useToggleWageStatusMutation } from '@/queries/wage.queries'
 import { teamKeys } from '@/queries/team.queries'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -129,8 +142,8 @@ import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
 import type { Member, Wage } from '@/types'
 import SetMemberWageModal from './SetMemberWageModal.vue'
-import RateDotList from '@/components/RateDotList.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import RateDotList from '@/components/ui/RateDotList.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 type MemberRow = Member & {

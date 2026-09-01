@@ -32,6 +32,7 @@ export const mockMembersData: User[] = [
 export const mockTeamData: Team = {
   id: '1',
   name: 'Test Team',
+  slug: 'test-team',
   description: 'Test Team Description',
   members: [
     mockMembersData[0] as Member,
@@ -156,6 +157,7 @@ export const mockWeeklyClaimData: WeeklyClaim[] = [
     data: {},
     signature: null,
     signedAgainstContractAddress: null,
+    weeklyGoals: null,
     wageId: 1,
     wage: mockWageData[0] as Wage,
     claims: [
@@ -354,6 +356,11 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useSyncContractsMutation: () => createMockMutationResponse(),
   useCreateOfficerMutation: () => createMockMutationResponse(),
 
+  // Investor migration queries - investorMigration.queries.ts
+  useCreateInvestorMigrationMutation: () => createMockMutationResponse(),
+  useGetInvestorMigrationQuery: () => createMockQueryResponse(null),
+  useGenerateMerkleSnapshotMutation: () => createMockMutationResponse(),
+
   // Health queries - health.queries.ts
   useGetBackendHealthQuery: () => ({
     ...createMockQueryResponse(mockHealthCheckData),
@@ -374,7 +381,6 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Safe queries - safe.queries.ts
   useGetSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
   useSafePendingTransactionsQuery: () => createMockQueryResponse([]),
-  useDeploySafeMutation: () => createMockMutationResponse(),
   useApproveTransactionMutation: () => createMockMutationResponse(),
   useExecuteTransactionMutation: () => createMockMutationResponse(),
 

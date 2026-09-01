@@ -20,7 +20,7 @@ vi.mock('@/queries/safe.queries', () => ({
   useGetSafeIncomingTransfersQuery: mockUseGetSafeIncomingTransfersQuery
 }))
 
-vi.mock('@/utils/safe', () => ({
+vi.mock('@/utils/safe/model', () => ({
   formatSafeTransferType: vi.fn((type: string) => {
     const types = { ETHER_TRANSFER: 'POL', ERC20_TRANSFER: 'ERC20', ERC721_TRANSFER: 'NFT' }
     return types[type as keyof typeof types] || type
@@ -34,7 +34,7 @@ vi.mock('@/utils/safe', () => ({
   })
 }))
 
-vi.mock('@/utils/dayUtils', () => ({
+vi.mock('@/utils/dates/calendar', () => ({
   formatDateShort: vi.fn(() => 'Jan 15, 10:30 AM')
 }))
 
@@ -97,7 +97,7 @@ const TableStub = defineComponent({
   `
 })
 
-const AddressToolTipStub = defineComponent({
+const AddressTooltipStub = defineComponent({
   props: ['address', 'slice', 'type'],
   template: '<div data-test="address-tooltip">{{ address }}</div>'
 })
@@ -108,7 +108,7 @@ const createWrapper = (props = {}): VueWrapper =>
     global: {
       stubs: {
         TableComponent: TableStub,
-        AddressToolTip: AddressToolTipStub
+        AddressTooltip: AddressTooltipStub
       }
     }
   })
@@ -162,7 +162,7 @@ describe('SafeIncomingTransactions', () => {
         error: ref(null)
       })
       wrapper = createWrapper()
-      const tokenSymbol = wrapper.find('.text-xs.text-gray-500')
+      const tokenSymbol = wrapper.find('[data-test="safe-deposit-token-symbol"]')
       expect(tokenSymbol.exists()).toBe(true)
       expect(tokenSymbol.text()).toBe('USDC')
     })
@@ -195,7 +195,7 @@ describe('SafeIncomingTransactions', () => {
         error: ref(null)
       })
       wrapper = createWrapper()
-      expect(wrapper.find('.text-xs.text-gray-500').exists()).toBe(false)
+      expect(wrapper.find('[data-test="safe-deposit-token-symbol"]').exists()).toBe(false)
     })
   })
 

@@ -6,20 +6,45 @@
     data-test="standard-wage-step"
     @submit="emit('validated')"
   >
-    <UFormField name="maximumHoursPerWeek">
-      <UInput
-        v-model="wageData.maximumHoursPerWeek"
-        class="w-full"
-        type="number"
-        size="xl"
-        placeholder="e.g. 40"
-        :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
-      >
-        <template #leading>
-          <p class="text-muted text-sm">Weekly cap (hrs)</p>
-        </template>
-      </UInput>
-    </UFormField>
+    <div class="space-y-2">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <UFormField name="maximumHoursPerWeek">
+          <UInput
+            v-model="wageData.maximumHoursPerWeek"
+            class="w-full"
+            type="number"
+            size="xl"
+            placeholder="e.g. 40"
+            :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
+          >
+            <template #leading>
+              <p class="text-muted text-sm">Weekly cap (hrs)</p>
+            </template>
+          </UInput>
+        </UFormField>
+
+        <UFormField name="maximumHoursPerDay">
+          <UInput
+            v-model="wageData.maximumHoursPerDay"
+            class="w-full"
+            type="number"
+            size="xl"
+            placeholder="e.g. 8"
+            data-test="daily-cap-input"
+            :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
+          >
+            <template #leading>
+              <p class="text-muted text-sm">Daily cap (hrs)</p>
+            </template>
+          </UInput>
+        </UFormField>
+      </div>
+
+      <p class="text-muted text-sm" data-test="daily-cap-hint">
+        Hours beyond <span class="text-default font-semibold">{{ dailyCapLabel }}</span> won't be
+        claimable, even if the weekly cap hasn't been reached.
+      </p>
+    </div>
 
     <UFormField name="ratePerHour">
       <div class="space-y-4">
@@ -127,9 +152,10 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils/wages/model'
 import type { Wage, WageWithForm } from '@/types'
 
 const emit = defineEmits<{ validated: []; cancel: []; reset: [] }>()
@@ -142,14 +168,12 @@ defineProps<{
   errorMessage?: string
 }>()
 
-watch(
-  () => wageData.value.ratePerHour.map((r) => Number(r.amount)),
-  (amounts) => {
-    wageData.value.ratePerHour.forEach((rate, i) => {
-      if (amounts[i] === 0 && rate.enabled) rate.enabled = false
-    })
-  }
-)
+const dailyCapLabel = computed(() => {
+  const hours = Number(wageData.value.maximumHoursPerDay)
+  return Number.isFinite(hours) && hours > 0
+    ? `${hours} hrs/day`
+    : `${DEFAULT_MAXIMUM_HOURS_PER_DAY} hrs/day`
+})
 
 watch(
   () => wageData.value.ratePerHour.map((r) => r.enabled),
@@ -172,6 +196,11 @@ const standardSchema = z.object({
     .int('Must be a whole number')
     .positive('Max weekly hours must be greater than 0')
     .max(40, 'Maximum regular hours per week cannot exceed 40 hours'),
+  maximumHoursPerDay: z.coerce
+    .number()
+    .int('Must be a whole number')
+    .positive('Max daily hours must be greater than 0')
+    .max(24, 'Maximum hours per day cannot exceed 24 hours'),
   ratePerHour: z.array(rateSchema).superRefine((rates, ctx) => {
     if (rates.filter((r) => r.enabled).length === 0) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [], message: 'Enable at least one rate' })

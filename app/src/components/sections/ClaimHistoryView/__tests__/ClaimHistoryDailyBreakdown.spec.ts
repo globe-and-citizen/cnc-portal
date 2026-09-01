@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import ClaimHistoryDailyBreakdown from '@/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue'
-import { getMonthWeeks } from '@/utils/dayUtils'
+import { getMonthWeeks } from '@/utils/dates/calendar'
 import { mockUserStore, mockWeeklyClaimData } from '@/tests/mocks'
 
 dayjs.extend(utc)
@@ -83,6 +83,7 @@ describe('ClaimHistoryDailyBreakdown', () => {
         stubs: {
           ClaimActions: {
             name: 'ClaimActions',
+            props: ['claim', 'weekClaims'],
             template: '<div data-test="claim-actions" />'
           },
           ExpandableFileGallery: {
@@ -116,12 +117,16 @@ describe('ClaimHistoryDailyBreakdown', () => {
   })
 
   it('shows claim details, attachments, and actions when claims are modifiable', () => {
-    const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })
+    const weeklyClaim = createWeeklyClaim()
+    const wrapper = createWrapper({ weeklyClaim })
 
     expect(wrapper.text()).toContain('Daily coding')
     expect(wrapper.text()).toContain('Review PR')
     expect(wrapper.text()).toContain('Docs update')
     expect(wrapper.findAll('[data-test="claim-actions"]').length).toBe(3)
+    expect(wrapper.findComponent({ name: 'ClaimActions' }).props('weekClaims')).toEqual(
+      weeklyClaim.claims
+    )
   })
 
   it('computes file previews with image and non-image branches', () => {
@@ -206,6 +211,39 @@ describe('ClaimHistoryDailyBreakdown', () => {
     expect(emitted.length).toBe(3)
     expect(emitted[0]?.[0]).toBe(day0)
     expect(emitted[1]?.[0]).toBe(day1)
+  })
+
+  it('hides quick-submit on out-of-window days when restriction is active', () => {
+    // selectedWeek is in 2024 → every day is outside the current submit window
+    const wrapper = createWrapper({
+      weeklyClaim: { ...createWeeklyClaim(), claims: [] },
+      isRestricted: true
+    })
+
+    expect(wrapper.findAll('[data-test="quick-submit-day-button"]').length).toBe(0)
+    expect(wrapper.findAll('[role="button"]').length).toBe(0)
+  })
+
+  it('keeps quick-submit available in the current week when restriction is active', () => {
+    const currentWeekStart = dayjs.utc().startOf('isoWeek')
+    const currentWeek = {
+      year: currentWeekStart.year(),
+      month: currentWeekStart.month(),
+      isoWeek: currentWeekStart.isoWeek(),
+      isoString: currentWeekStart.toISOString(),
+      formatted: 'Current week'
+    }
+
+    const wrapper = createWrapper({
+      weeklyClaim: { ...createWeeklyClaim(), claims: [] },
+      selectedWeek: currentWeek,
+      isRestricted: true
+    })
+
+    // At least "today" is always submittable; future days remain hidden
+    const buttons = wrapper.findAll('[data-test="quick-submit-day-button"]').length
+    expect(buttons).toBeGreaterThanOrEqual(1)
+    expect(buttons).toBeLessThanOrEqual(7)
   })
 
   it('does not emit quick-submit on filled days and hides quick button for non-owner', async () => {

@@ -60,6 +60,7 @@
 import { computed } from 'vue'
 import type { AccountingIdentity } from '~/utils/accountingIdentities'
 import { formatSignedUsd, formatUsd } from '~/utils/accounting'
+import { formatNumber } from '~/utils/format'
 
 /**
  * Lists the 8 accounting identities with a status badge + gap.
@@ -78,14 +79,14 @@ const allGood = computed(() => props.identities.every(id => id.holds || id.asOfT
 function gapDisplay(id: AccountingIdentity): string {
   // Lot cap is in shares, not USD — render as a plain number.
   if (id.id === 'LOT_CAP') {
-    return id.gap === 0 ? '0 shares' : `${id.gap.toFixed(4)} shares`
+    return id.gap === 0 ? '0 shares' : `${formatNumber(id.gap, { minDecimals: 4, maxDecimals: 4 })} shares`
   }
   return formatSignedUsd(id.gap)
 }
 
 function valueDisplay(id: AccountingIdentity, value: number): string {
   if (id.id === 'LOT_CAP') {
-    return value === 0 ? '0' : value.toFixed(4)
+    return value === 0 ? '0' : formatNumber(value, { minDecimals: 4, maxDecimals: 4 })
   }
   return formatUsd(value)
 }

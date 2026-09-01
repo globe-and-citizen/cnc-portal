@@ -49,6 +49,11 @@ describe('ClaimHistoryActionAlerts', () => {
         },
         template: '<div data-test="submit-claims">{{ signedWeekStarts.length }}</div>'
       }),
+      SubmitWeeklyGoals: {
+        name: 'SubmitWeeklyGoals',
+        props: ['weeklyClaim', 'selectedWeekStart'],
+        template: '<div data-test="submit-weekly-goals" />'
+      },
       CRSigne: {
         name: 'CRSigne',
         props: ['disabled'],

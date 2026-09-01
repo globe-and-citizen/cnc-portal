@@ -17,3 +17,8 @@ export type TransactionHistoryItemRow = {
 }
 
 export type ExpenseTransactionRow = GroupedTransactionRow<TransactionHistoryItemRow>
+
+export type TransactionEventValue = Pick<
+  TransactionHistoryItemRow,
+  'amount' | 'token' | 'amountLocal' | 'type' | 'from' | 'to'
+>

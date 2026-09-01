@@ -1,0 +1,81 @@
+<!-- TokenHoldingsSection.vue -->
+<template>
+  <UCard>
+    <template #header>Token Holding</template>
+    <UTable
+      :data="rows"
+      :loading="isLoading"
+      :columns="[
+        { accessorKey: 'rank', header: 'RANK' },
+        { accessorKey: 'token', header: 'Token', enableSorting: true },
+        { accessorKey: 'amount', header: 'Amount', enableSorting: true },
+        { accessorKey: 'price', header: 'Coin Price', enableSorting: true },
+        { accessorKey: 'balance', header: 'Balance', enableSorting: true }
+      ]"
+    >
+      <template #amount-cell="{ row: { original: row } }">
+        {{ row.amount }} {{ row.token.symbol }}
+      </template>
+      <template #price-cell="{ row: { original: row } }">
+        {{ row.priceLabel }} / {{ row.token.symbol }}
+      </template>
+
+      <template #balance-cell="{ row: { original: row } }">
+        {{ row.balanceLabel }}
+      </template>
+
+      <template #token-cell="{ row: { original: row } }">
+        <div class="flex items-center gap-2 lg:w-48">
+          <img v-if="row.icon" :src="row.icon" :alt="row.token.name" class="h-8 w-8 rounded-full" />
+          <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
+            <span class="text-gray-500">{{ row.token.name.charAt(0) }}</span>
+          </div>
+          <div class="flex flex-col">
+            <div class="font-medium">{{ row.token.name }}</div>
+            <div class="text-sm text-gray-500">{{ row.token.symbol }}</div>
+          </div>
+        </div>
+      </template>
+    </UTable>
+  </UCard>
+</template>
+
+<script setup lang="ts">
+import EthereumIcon from '@/assets/Ethereum.png'
+import USDCIcon from '@/assets/usdc.png'
+import MaticIcon from '@/assets/matic-logo.png'
+import { computed } from 'vue'
+import { useContractBalance } from '@/composables'
+import type { Address } from 'viem'
+
+const props = defineProps<{
+  address: Address
+}>()
+
+// Reactive state for balances: composable that fetches address balances
+const { data: balance, isLoading } = useContractBalance(props.address as Address)
+
+const iconFor = (symbol: string) => {
+  if (symbol === 'USDC' || symbol === 'USDCe') return USDCIcon
+  if (symbol === 'POL') return MaticIcon
+  if (symbol === 'ETH') return EthereumIcon
+  return null
+}
+
+/**
+ * `price` and `balance` are flattened to plain numbers because the table sorts
+ * on the accessor value, and a `CurrencyPair` object would not compare. The
+ * display strings ride alongside as `*Label`.
+ */
+const rows = computed(() =>
+  (balance.value?.balances ?? []).map((entry, index) => ({
+    ...entry,
+    rank: index + 1,
+    icon: iconFor(entry.token.symbol),
+    price: entry.price.local.value,
+    priceLabel: entry.price.local.formatted,
+    balance: entry.value.local.value,
+    balanceLabel: entry.value.local.formatted
+  }))
+)
+</script>

@@ -1,3 +1,4 @@
+import { formatUsd as canonicalFormatUsd } from '~/utils/format'
 import type { PolygonTokenTransfer } from '~/api/polygonscan'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import type { RealizedTrade } from '~/utils/incomeStatement'
@@ -80,6 +81,13 @@ export interface AccountingSummary {
   positionsRealizedPnl: number
   /** Unrealized P&L on open positions (from /positions). */
   unrealizedPnl: number
+  /**
+   * All-time P&L as Polymarket's profile page reports it — sourced from
+   * `user-pnl-api.polymarket.com` in {@link useAccounting} (latest chart point).
+   * `buildLedger()` seeds this as `positionsRealizedPnl + unrealizedPnl` until
+   * that feed loads; the two diverge once `/positions` rows go stale.
+   */
+  polymarketPnl: number
   /** Mark-to-market value of still-open positions. */
   openPositionsValue: number
   /**
@@ -103,6 +111,16 @@ export interface AccountingSummary {
   settlementAdjustments: number
   /** Number of distinct tx hashes that produced a settlement adjustment. */
   settlementAdjustmentCount: number
+  /**
+   * Trading fees/spread the user actually paid: sum over every trade of
+   * |quoted value − real fill| = |size × price − usdcSize|. Polymarket bakes its
+   * per-fill fee into the price (you pay above the quote on buys, receive below
+   * on sells), so it never appears as an on-chain delta — it must be read from
+   * the price gap. Mixes protocol fee and market-order slippage.
+   */
+  totalFees: number
+  /** Number of trades that carried a non-zero fee (maker / 0-fee fills excluded). */
+  feeTransactionCount: number
   /**
    * Cost-basis disagreement between Polymarket /positions (which reports
    * `cashPnl` against its own `initialValue`) and our /activity-derived basis
@@ -131,7 +149,7 @@ export interface AccountingLedger {
   summary: AccountingSummary
 }
 
-export interface BuildLedgerInput {
+interface BuildLedgerInput {
   proxyWallet: string
   activities: PolymarketActivity[]
   positions: PolymarketPosition[]
@@ -367,6 +385,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     realizedPnl: 0,
     positionsRealizedPnl: 0,
     unrealizedPnl: 0,
+    polymarketPnl: 0,
     openPositionsValue: 0,
     openContractsAtCost: 0,
     totalRewards: 0,
@@ -374,6 +393,8 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     tradeCount: 0,
     settlementAdjustments: 0,
     settlementAdjustmentCount: 0,
+    totalFees: 0,
+    feeTransactionCount: 0,
     positionBasisDrift: 0,
     currentCashBalance: 0,
     totalPortfolioValue: 0,
@@ -390,6 +411,17 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     } else if (entry.category === 'TRADE_BUY' || entry.category === 'TRADE_SELL') {
       summary.tradingVolume += entry.amount
       summary.tradeCount += 1
+      // Polymarket fees are baked into the fill price, not surfaced on-chain: the
+      // quoted price (unitPrice) differs from the real fill (amount / quantity).
+      // The gap is the fee/spread the user actually paid on this fill.
+      if (entry.unitPrice != null && entry.quantity != null) {
+        const quotedValue = entry.quantity * entry.unitPrice
+        const fee = Math.abs(quotedValue - entry.amount)
+        summary.totalFees += fee
+        if (fee > 1e-4) {
+          summary.feeTransactionCount += 1
+        }
+      }
     } else if (REWARD_CATEGORIES.has(entry.category)) {
       summary.totalRewards += entry.amount
     } else if (entry.category === 'SETTLEMENT_ADJUSTMENT') {
@@ -407,6 +439,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     summary.unrealizedPnl += position.cashPnl ?? 0
     summary.openPositionsValue += position.currentValue ?? 0
   }
+  summary.polymarketPnl = summary.positionsRealizedPnl + summary.unrealizedPnl
   // Canonical realizedPnl comes from lot accounting (Income Statement source);
   // falls back to Polymarket's reported figure when no realizedTrades supplied.
   if (input.realizedTrades) {
@@ -482,20 +515,23 @@ export const CATEGORY_META: Record<LedgerCategory, { label: string, color: Ledge
   OTHER: { label: 'Other', color: 'neutral' }
 }
 
-/** Formats a USD amount, e.g. 1234.5 → "$1,234.50". */
+/**
+ * Formats a USD amount, e.g. 1234.5 → "$1,234.50".
+ *
+ * @deprecated Import `formatUsd` from `~/utils/format` instead — this wrapper
+ * exists so the auto-imported name keeps working while call sites migrate.
+ */
 export function formatUsd(value: number | undefined): string {
-  if (value == null || Number.isNaN(value)) {
-    return '—'
-  }
-  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return canonicalFormatUsd(value)
 }
 
-/** Formats a USD amount with full USDC precision (6 decimals). */
+/**
+ * Formats a USD amount with full USDC precision (6 decimals).
+ *
+ * @deprecated Call `formatUsd(value, { decimals: 6 })` from `~/utils/format`.
+ */
 export function formatUsd6(value: number | undefined): string {
-  if (value == null || Number.isNaN(value)) {
-    return '—'
-  }
-  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 6, maximumFractionDigits: 6 })}`
+  return canonicalFormatUsd(value, { decimals: 6 })
 }
 
 /** Formats a signed USD amount, e.g. -12 → "−$12.00". */

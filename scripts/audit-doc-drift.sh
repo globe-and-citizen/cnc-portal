@@ -13,6 +13,8 @@ warn=0
 DOC_PATHS=(
   "AGENTS.md"
   "CLAUDE.md"
+  ".agents/skills"
+  ".claude/skills"
   ".github/copilot-instructions.md"
   ".github/copilot-instructions"
 )
@@ -68,7 +70,7 @@ while IFS= read -r f; do
       broken=1
     fi
   done < <(grep -oE '\]\(([^)]+\.md[^)]*)\)' "$f" 2>/dev/null | sed 's/^\](//')
-done < <(find AGENTS.md CLAUDE.md .github/copilot-instructions.md .github/copilot-instructions -type f -name '*.md' 2>/dev/null)
+done < <(find AGENTS.md CLAUDE.md .agents/skills .claude/skills .github/copilot-instructions.md .github/copilot-instructions -type f -name '*.md' 2>/dev/null)
 if [ $broken -eq 0 ]; then
   echo -e "${GREEN}✓ no broken links${NC}"
 else
@@ -79,10 +81,10 @@ fi
 echo
 echo "── Canonical reference files ────────────────────────────────"
 CANONICAL=(
-  "app/src/components/__tests__/SelectComponent.spec.ts"
+  "app/src/components/ui/inputs/__tests__/SelectMemberWithTokenInput.spec.ts"
   "app/src/composables/__tests__/useContractFunction.spec.ts"
   "app/src/__tests__/wagmi.spec.ts"
-  "app/src/utils/__tests__/currencyUtil.spec.ts"
+  "app/src/utils/currency/__tests__/display.spec.ts"
   "app/src/composables/useSiwe.ts"
 )
 section_fail=0

@@ -1,20 +1,20 @@
 <template>
-  <CurrentBoDSection />
-  <CurrentBoDElectionSection v-if="nextElectionId" :election-id="currentElectionId" />
-  <PastBoDElectionsSection />
+  <BodMembersSection />
+  <ElectionSummarySection v-if="nextElectionId" :election-id="currentElectionId" />
+  <PastElectionsSection />
   <ContractOwnerCard v-if="electionsAddress" :contractAddress="electionsAddress" />
 </template>
 
 <script setup lang="ts">
-import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
-import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
-import PastBoDElectionsSection from '@/components/sections/AdministrationView/PastBoDElectionsSection.vue'
+import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
+import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
+import PastElectionsSection from '@/components/sections/AdministrationView/PastElectionsSection.vue'
 import { useReadContract } from '@wagmi/vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import { computed, watch } from 'vue'
-import { log, parseError } from '@/utils'
-import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import { log } from '@/lib/logging'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 
 const teamStore = useTeamStore()
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
@@ -26,8 +26,8 @@ const {
   // isLoading: isLoadingNextElectionId,
 } = useReadContract({
   functionName: 'getNextElectionId',
-  address: electionsAddress.value,
-  abi: ELECTIONS_ABI,
+  address: electionsAddress,
+  abi: electionsAbi,
   query: {
     enabled: computed(() => !!electionsAddress.value)
   }
@@ -46,7 +46,7 @@ const currentElectionId = computed(() => {
 
 watch(errorGetNextElectionId, (error) => {
   if (error) {
-    log.error('Error fetching next election ID: ', parseError(error))
+    log.error('Error fetching next election ID: ', error)
   }
 })
 </script>

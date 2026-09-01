@@ -15,12 +15,17 @@ import {
   mockUseSubmitRestriction,
   mockUseDeployContract,
   mockUseUploadFileMutation,
+  mockBlockTimestamp,
   resetComposableMocks,
   resetDeployState,
   resetUploadFileState
 } from '@/tests/mocks/composables.mock'
-import { mockUploadFileApi } from '@/tests/mocks/api.mock'
-import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
+import { mockGetFileUrlApi, mockUploadFileApi } from '@/tests/mocks/api.mock'
+import {
+  mockGetBalance,
+  mockGetLogs,
+  mockReadContractAction
+} from '@/tests/mocks/viem.actions.mock'
 import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock'
 
 // Restore all shared composable mocks to their defaults before every test so
@@ -36,7 +41,7 @@ beforeEach(() => {
 
 declare global {
   var __mockFetch: ReturnType<typeof vi.fn> | undefined
-  var __mockUseStorageValue: string | undefined
+  var __mockUseStorageValue: unknown
 }
 
 if (!globalThis.__mockFetch) {
@@ -69,7 +74,8 @@ vi.mock('@/api', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    uploadFileApi: mockUploadFileApi
+    uploadFileApi: mockUploadFileApi,
+    getFileUrlApi: mockGetFileUrlApi
   }
 })
 
@@ -99,7 +105,16 @@ vi.mock('@vueuse/core', async (importOriginal) => {
     useClipboard: vi.fn(() => mockUseClipboard),
     useStorage: vi.fn((key: string, initialValue: unknown, ...rest: unknown[]) => {
       if (globalThis.__mockUseStorageValue !== undefined) {
-        return ref(globalThis.__mockUseStorageValue)
+        const configuredValue = globalThis.__mockUseStorageValue
+        if (
+          typeof configuredValue === 'object' &&
+          configuredValue !== null &&
+          'value' in configuredValue
+        ) {
+          return configuredValue
+        }
+
+        return ref(configuredValue)
       }
 
       if (typeof actual.useStorage === 'function') {
@@ -172,11 +187,23 @@ vi.mock('@/queries/member.queries', () => ({
 /**
  * Mock Wage Queries (wage.queries.ts)
  */
-vi.mock('@/queries/wage.queries', () => ({
-  useGetTeamWagesQuery: vi.fn(queryMocks.useGetTeamWagesQuery),
-  useSetMemberWageMutation: vi.fn(queryMocks.useSetMemberWageMutation),
-  useToggleWageStatusMutation: vi.fn(queryMocks.useToggleWageStatusMutation)
-}))
+vi.mock('@/queries/wage.queries', () => {
+  // Mirror the real `wageKeys` factory so query invalidations keep working under
+  // mock, regardless of test-file ordering. Duplicated rather than imported to
+  // avoid pulling the real module (which touches `@/constant`).
+  const wageKeys = {
+    all: ['wages'] as const,
+    teams: () => [...wageKeys.all, 'team'] as const,
+    team: (teamId: string | number | null) => [...wageKeys.teams(), { teamId }] as const
+  }
+
+  return {
+    wageKeys,
+    useGetTeamWagesQuery: vi.fn(queryMocks.useGetTeamWagesQuery),
+    useSetMemberWageMutation: vi.fn(queryMocks.useSetMemberWageMutation),
+    useToggleWageStatusMutation: vi.fn(queryMocks.useToggleWageStatusMutation)
+  }
+})
 
 /**
  * Mock Notification Queries (notification.queries.ts)
@@ -231,6 +258,12 @@ vi.mock('@/queries/auth.queries', () => ({
  */
 vi.mock('@/queries/contract.queries', () => ({
   contractKeys: { all: ['contracts'] as const },
+  useGetTeamOfficersQuery: vi.fn(() => ({
+    data: ref([]),
+    isPending: ref(false),
+    isError: ref(false),
+    refetch: vi.fn()
+  })),
   useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation),
   useSyncContractsMutation: vi.fn(queryMocks.useSyncContractsMutation),
   useCreateOfficerMutation: vi.fn(queryMocks.useCreateOfficerMutation)
@@ -250,6 +283,19 @@ vi.mock('@/queries/file.queries', async (importOriginal) => {
 })
 
 /**
+ * Mock Investor Migration Queries (investorMigration.queries.ts)
+ */
+vi.mock('@/queries/investorMigration.queries', () => ({
+  investorMigrationKeys: {
+    all: ['investorMigration'] as const,
+    team: (teamId: string | number) => ['investorMigration', String(teamId)] as const
+  },
+  useCreateInvestorMigrationMutation: vi.fn(queryMocks.useCreateInvestorMigrationMutation),
+  useGetInvestorMigrationQuery: vi.fn(queryMocks.useGetInvestorMigrationQuery),
+  useGenerateMerkleSnapshotMutation: vi.fn(queryMocks.useGenerateMerkleSnapshotMutation)
+}))
+
+/**
  * Mock Health Queries (health.queries.ts)
  */
 vi.mock('@/queries/health.queries', () => ({
@@ -259,17 +305,23 @@ vi.mock('@/queries/health.queries', () => ({
 /**
  * Mock Weekly Claim Queries (weeklyClaim.queries.ts)
  */
-vi.mock('@/queries/weeklyClaim.queries', () => ({
-  useGetTeamWeeklyClaimsQuery: vi.fn(queryMocks.useGetTeamWeeklyClaimsQuery),
-  useGetWeeklyClaimByIdQuery: vi.fn(queryMocks.useGetWeeklyClaimByIdQuery),
-  useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
-  useEditClaimMutation: vi.fn(queryMocks.useEditClaimMutation),
-  // useEditClaimMutation: vi.fn(() => queryMocks.useEditClaimMutation),
-  useEditClaimWithFilesMutation: vi.fn(queryMocks.useEditClaimWithFilesMutation),
-  useSubmitClaimMutation: vi.fn(queryMocks.useSubmitClaimMutation),
-  useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation),
-  useDeleteClaimMutation: vi.fn(queryMocks.useDeleteClaimMutation)
-}))
+vi.mock('@/queries/weeklyClaim.queries', async (importOriginal) => {
+  // Keep real non-hook exports (e.g. `weeklyClaimKeys`, response normalizers)
+  // so components that reference them at runtime still work; only the query /
+  // mutation hooks are swapped for mocks.
+  const actual = await importOriginal<typeof import('@/queries/weeklyClaim.queries')>()
+  return {
+    ...actual,
+    useGetTeamWeeklyClaimsQuery: vi.fn(queryMocks.useGetTeamWeeklyClaimsQuery),
+    useGetWeeklyClaimByIdQuery: vi.fn(queryMocks.useGetWeeklyClaimByIdQuery),
+    useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
+    useEditClaimMutation: vi.fn(queryMocks.useEditClaimMutation),
+    useEditClaimWithFilesMutation: vi.fn(queryMocks.useEditClaimWithFilesMutation),
+    useSubmitClaimMutation: vi.fn(queryMocks.useSubmitClaimMutation),
+    useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation),
+    useDeleteClaimMutation: vi.fn(queryMocks.useDeleteClaimMutation)
+  }
+})
 
 /**
  * Mock Safe Queries (safe.queries.ts)
@@ -277,7 +329,6 @@ vi.mock('@/queries/weeklyClaim.queries', () => ({
 vi.mock('@/queries/safe.mutations', () => ({
   useGetSafeInfoQuery: vi.fn(queryMocks.useGetSafeInfoQuery),
   useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
-  useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),
   useApproveTransactionMutation: vi.fn(queryMocks.useApproveTransactionMutation),
   useExecuteTransactionMutation: vi.fn(queryMocks.useExecuteTransactionMutation),
 
@@ -301,9 +352,15 @@ vi.mock('@/composables/useAuth', () => ({
 /**
  * Mock useContractBalance composable
  */
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
+// `importOriginal` keeps `contractBalanceKeys` real: specs assert on the key the
+// component invalidates, and a hand-written factory would leave it undefined.
+vi.mock('@/composables/useContractBalance', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useContractBalance: vi.fn(() => mockUseContractBalance)
+  }
+})
 
 /**
  * Mock useDeployContract composable
@@ -335,6 +392,13 @@ vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
 }))
 
 /**
+ * Mock useBlockTimestamp composable — the chain's own clock.
+ */
+vi.mock('@/composables/useBlockTimestamp', () => ({
+  useBlockTimestamp: vi.fn(() => mockBlockTimestamp)
+}))
+
+/**
  * Mock viem/actions getBalance
  */
 vi.mock('viem/actions', async (importOriginal) => {
@@ -342,7 +406,8 @@ vi.mock('viem/actions', async (importOriginal) => {
   return {
     ...actual,
     getBalance: mockGetBalance,
-    getLogs: mockGetLogs
+    getLogs: mockGetLogs,
+    readContract: mockReadContractAction
   }
 })
 

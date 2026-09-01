@@ -40,10 +40,10 @@
         class="mb-6"
       >
         <template #description>
-          After the new Officer is deployed, the current share token holders will be reissued the
-          same balances on the new Investor contract via
-          <code>distributeMint</code>. This is a separate transaction you'll need to sign right
-          after the deploy.
+          After the new Officer is deployed, a Merkle root committing the current share token
+          holders' balances is set on the new Investor contract. This is a separate transaction
+          you'll need to sign right after the deploy — holders then self-claim their balance from
+          the Share Token page.
         </template>
       </UAlert>
 
@@ -126,10 +126,6 @@
           <p v-if="migrationError" class="mt-2 font-mono text-xs opacity-70">
             {{ migrationError.message }}
           </p>
-          <p v-if="isInconsistent" class="mt-2">
-            Retry is blocked: the new InvestorV1 already has a totalSupply that does not match the
-            previous shareholders. Migrating again would double-mint.
-          </p>
         </template>
       </UAlert>
 
@@ -147,7 +143,7 @@
             v-if="migrationFailed"
             color="primary"
             :loading="isRunning"
-            :disabled="isRunning || isInconsistent || archivedDisabled"
+            :disabled="isRunning || archivedDisabled"
             @click="retryMigration()"
             data-test="retry-migration"
           >
@@ -179,7 +175,7 @@ import {
 } from '@/composables/investor/reads'
 import { useOfficerRedeploy } from '@/composables/contracts/useOfficerRedeploy'
 import { formatDeployError } from '@/composables/contracts/useOfficerDeployment'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 const isOpen = defineModel<boolean>('open', { default: false })
 
@@ -196,7 +192,7 @@ const whatHappensItems = [
 
 const whatYouLoseItems = [
   "Funds held in the <strong>old</strong> Bank, Expense Account and Cash Remuneration contracts are still on-chain but are no longer reachable through the new Officer's UI. Withdraw or migrate them first if you need them.",
-  'Existing share tokens issued by the old Investor contract remain valid on-chain but the new Investor contract starts from zero. Token holders must be redistributed manually.',
+  'Existing share tokens issued by the old Investor contract remain valid on-chain but the new Investor contract starts from zero. Token holders self-claim their balance on the new contract once the migration root is set.',
   'Voting and Board of Directors history attached to the old Officer remains visible in the archive but is not carried over.'
 ]
 
@@ -206,19 +202,18 @@ const { data: currentInvestorName } = useInvestorName()
 const { data: currentInvestorSymbol } = useInvestorSymbol()
 const { data: currentShareholders } = useInvestorShareholders()
 
-const {
-  redeploy,
-  retryMigration,
-  skipMigration,
-  reset,
-  isRunning,
-  migrationFailed,
-  isInconsistent,
-  deployError,
-  registerError,
-  migrationError,
-  workflowError
-} = useOfficerRedeploy()
+const { redeploy, retryMigration, skipMigration, reset, isRunning, failure, migrationRecovery } =
+  useOfficerRedeploy()
+
+const deployError = computed(() => (failure.value?.stage === 'deploy' ? failure.value.error : null))
+const registerError = computed(() =>
+  failure.value?.stage === 'registration' ? failure.value.error : null
+)
+const workflowError = computed(() =>
+  failure.value?.stage === 'workflow' ? failure.value.error : null
+)
+const migrationFailed = computed(() => migrationRecovery.value !== null)
+const migrationError = computed(() => migrationRecovery.value?.error ?? null)
 
 const canRedeploy = computed(() => !!form.value.name.trim() && !!form.value.symbol.trim())
 
@@ -252,12 +247,7 @@ const onRedeploy = async () => {
   // Keep the modal open whenever any error ref is populated so the user can
   // read the UAlert; the watch on isOpen fires reset() on close, which would
   // wipe the error refs before they're ever shown.
-  if (
-    !migrationFailed.value &&
-    !deployError.value &&
-    !registerError.value &&
-    !workflowError.value
-  ) {
+  if (!migrationRecovery.value && !failure.value) {
     isOpen.value = false
   }
 }

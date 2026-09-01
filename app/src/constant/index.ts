@@ -5,6 +5,8 @@ import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
 import { isAddress, zeroAddress, type Address } from 'viem'
 
+export { getSafeInfraAddresses, type SafeInfraAddresses } from './safeInfra'
+
 export const NETWORK = getNetwork()
 
 interface TokenAddresses {
@@ -32,7 +34,8 @@ interface AddressMapping {
   'CashRemunerationEIP712Module#CashRemunerationEIP712': string
   'InvestorsV1BeaconModule#Beacon'?: string
   'InvestorsV1BeaconModule#InvestorV1'?: string
-  'VestingModule#Vesting'?: string
+  'InvestorBeaconModule#Beacon'?: string
+  'InvestorBeaconModule#Investor'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
   'MockTokens#USDCe'?: string
@@ -40,6 +43,10 @@ interface AddressMapping {
   'ElectionsBeaconModule#Beacon'?: string
   'SafeDepositRouterBeaconModule#SafeDepositRouter'?: string
   'SafeDepositRouterBeaconModule#Beacon'?: string
+  'VestingBeaconModule#Beacon'?: string
+  'FeeCollectorModule#FeeCollector'?: string
+  'FixedReturnBeaconModule#FixedReturn'?: string
+  'FixedReturnBeaconModule#Beacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -143,7 +150,6 @@ export const USDT_ADDRESS = getUSDTAddress()
 
 export function validateAddresses() {
   const requiredKeys: (keyof AddressMapping)[] = [
-    'VestingModule#Vesting',
     'BankBeaconModule#Beacon',
     'BankBeaconModule#Bank',
     'ElectionsBeaconModule#Beacon',
@@ -156,12 +162,15 @@ export function validateAddresses() {
     'Officer#FactoryBeacon',
     'ExpenseAccountEIP712Module#ExpenseAccountEIP712',
     'ExpenseAccountEIP712Module#FactoryBeacon',
-    'InvestorsV1BeaconModule#Beacon',
-    'InvestorsV1BeaconModule#InvestorV1',
+    'InvestorBeaconModule#Beacon',
+    'InvestorBeaconModule#Investor',
     'CashRemunerationEIP712Module#FactoryBeacon',
     'CashRemunerationEIP712Module#CashRemunerationEIP712',
     'SafeDepositRouterBeaconModule#SafeDepositRouter',
     'SafeDepositRouterBeaconModule#Beacon'
+    // FixedReturn is intentionally excluded: not yet deployed on all networks
+    // (e.g. Polygon prod). It's wired in as an optional beacon — see
+    // getBeaconConfigs()/getDeploymentConfigs() in contractDeploymentUtil.ts.
   ]
 
   requiredKeys.forEach(resolveAddress)
@@ -181,7 +190,6 @@ try {
   console.error(error)
 }
 
-export const VESTING_ADDRESS = safeResolveAddress('VestingModule#Vesting')
 export const BANK_BEACON_ADDRESS = safeResolveAddress('BankBeaconModule#Beacon')
 export const BANK_IMPL_ADDRESS = safeResolveAddress('BankBeaconModule#Bank')
 
@@ -209,11 +217,27 @@ export const SAFE_DEPOSIT_ROUTER_IMPL_ADDRESS = safeResolveAddress(
 export const SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS = safeResolveAddress(
   'SafeDepositRouterBeaconModule#Beacon'
 )
+export const VESTING_BEACON_ADDRESS = safeResolveAddress('VestingBeaconModule#Beacon')
 export const OFFICER_ADDRESS = safeResolveAddress('Officer#Officer')
 export const OFFICER_BEACON = safeResolveAddress('Officer#FactoryBeacon')
 export const INVESTOR_V1_BEACON_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#Beacon')
+export const INVESTOR_BEACON_ADDRESS = safeResolveAddress('InvestorBeaconModule#Beacon')
+
+// Auto-detect which Investor beacon is available (V2 new, V1 legacy)
+export function getInvestorBeaconAddress(): Address | null {
+  return INVESTOR_BEACON_ADDRESS || INVESTOR_V1_BEACON_ADDRESS
+}
+
+export const FEE_COLLECTOR_ADDRESS = safeResolveAddress('FeeCollectorModule#FeeCollector')
+
+export const FIXED_RETURN_IMPL_ADDRESS = safeResolveAddress('FixedReturnBeaconModule#FixedReturn')
+export const FIXED_RETURN_BEACON_ADDRESS = safeResolveAddress('FixedReturnBeaconModule#Beacon')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
+
+// The embeddable Payment Gate widget script's base URL — differs per
+// environment (local dev server, staging, the real pay.cncportal.io CDN).
+export const WIDGET_SCRIPT_URL = import.meta.env.VITE_APP_WIDGET_URL
 
 // GraphQL poll interval for transaction queries (in milliseconds)
 export const GRAPHQL_POLL_INTERVAL = 12000

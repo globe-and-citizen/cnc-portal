@@ -39,7 +39,9 @@ import { computed } from 'vue'
 /**
  * Reusable table pagination footer: a "Showing X–Y of Z <noun>" summary, a
  * page-size selector (10/20/50/100) and the Nuxt UI page control. Both `page`
- * and `pageSize` are v-model bindings; changing the page size resets to page 1.
+ * and `pageSize` are v-model bindings; this component is purely presentational
+ * and emits the raw user intent — resize anchoring (which page to land on when
+ * the size changes) is decided by the owner (see `usePagination`).
  */
 const props = withDefaults(defineProps<{
   page: number
@@ -68,6 +70,5 @@ const rangeEnd = computed(() => Math.min(props.page * props.pageSize, props.tota
 
 function onPageSizeChange(value: number): void {
   emit('update:pageSize', value)
-  emit('update:page', 1)
 }
 </script>

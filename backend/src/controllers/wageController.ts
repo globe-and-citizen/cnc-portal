@@ -1,6 +1,5 @@
-import { Request, Response } from 'express';
-
 import { Prisma } from '@prisma/client';
+import { Request, Response } from 'express';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import {
@@ -19,6 +18,7 @@ export const setWage = async (req: Request, res: Response) => {
     teamId,
     userAddress,
     maximumHoursPerWeek,
+    maximumHoursPerDay,
     maximumOvertimeHoursPerWeek: rawOvertimeHours,
     ratePerHour,
     overtimeRatePerHour,
@@ -32,6 +32,7 @@ export const setWage = async (req: Request, res: Response) => {
     teamId,
     userAddress,
     maximumHoursPerWeek,
+    maximumHoursPerDay,
     maximumOvertimeHoursPerWeek,
     ratePerHour,
     overtimeRatePerHour: overtimeRatePerHourValue,
@@ -39,28 +40,22 @@ export const setWage = async (req: Request, res: Response) => {
 
   try {
     // authz enforced by requireTeamOwner middleware
-
-    // Check if the user has a current wage
-    const currentWage = await prisma.wage.findFirst({
-      where: {
-        teamId,
-        userAddress,
-        nextWageId: null,
-      },
+    const activeWage = await prisma.wage.findFirst({
+      where: { teamId, userAddress, nextWageId: null },
     });
 
-    if (currentWage) {
-      if (currentWage.disabled) {
+    if (activeWage) {
+      if (activeWage.disabled) {
         return errorResponse(400, 'Cannot set wage: the current wage is disabled', res);
       }
 
-      // Create wage and chain it to the previous wage. Done in a transaction
-      // so the deferrable Wage_active_unique constraint is checked at COMMIT,
-      // after the old wage's nextWageId has been set.
+      // A new version becomes current immediately. Existing weekly claims
+      // retain their wage reference, so this does not reprice or split a week
+      // that already contains submitted daily claims.
       const createdWage = await prisma.$transaction(async (tx) => {
         const newWage = await tx.wage.create({ data: wagePayload });
         await tx.wage.update({
-          where: { id: currentWage.id },
+          where: { id: activeWage.id },
           data: { nextWageId: newWage.id },
         });
         return newWage;
@@ -69,43 +64,28 @@ export const setWage = async (req: Request, res: Response) => {
       return res.status(201).json(createdWage);
     }
 
-    // Check if the user has wages not chained (should not be possible)
-    const wages = await prisma.wage.findMany({
-      where: { teamId, userAddress },
-    });
-
+    const wages = await prisma.wage.findMany({ where: { teamId, userAddress } });
     if (wages.length > 0) {
       return errorResponse(500, 'User has a wage not chained', res);
     }
 
-    // Create first wage
-    const createdWage = await prisma.wage.create({
-      data: wagePayload,
-    });
-
+    const createdWage = await prisma.wage.create({ data: wagePayload });
     return res.status(201).json(createdWage);
   } catch (error) {
     console.log('Error: ', error);
     return errorResponse(500, 'Internal server error', res);
   }
 };
+
 export const getWages = async (req: Request, res: Response) => {
   const { teamId } = req.query as unknown as z.infer<typeof getWagesQuerySchema>;
 
   try {
-    // authz enforced by requireTeamMember middleware
+    // authz enforced by requireTeamMember middleware. Only the current version
+    // is returned; historical versions remain attached to their weekly claims.
     const wages = await prisma.wage.findMany({
-      where: {
-        teamId,
-        nextWageId: null,
-      },
-      include: {
-        previousWage: {
-          select: {
-            id: true,
-          },
-        },
-      },
+      where: { teamId, nextWageId: null },
+      orderBy: { id: 'asc' },
     });
 
     return res.status(200).json(wages);

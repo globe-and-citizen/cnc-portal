@@ -41,13 +41,13 @@
         </UTooltip>
       </template>
       <template #member-cell="{ row: { original: row } }">
-        <UserComponent :user="resolveUser(row.userAddress)"></UserComponent>
+        <UserIdentity :user="resolveUser(row.userAddress)"></UserIdentity>
       </template>
       <template #startDate-cell="{ row: { original: row } }">
-        <span>{{ new Date(Number(row.startDate) * 1000).toLocaleString('en-US') }}</span>
+        <span>{{ formatDateTime(fromUnix(row.startDate)) }}</span>
       </template>
       <template #endDate-cell="{ row: { original: row } }">
-        <span>{{ new Date(Number(row.endDate) * 1000).toLocaleString('en-US') }}</span>
+        <span>{{ formatDateTime(fromUnix(row.endDate)) }}</span>
       </template>
       <template #status-cell="{ row: { original: row } }">
         <UBadge
@@ -92,22 +92,26 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { log, parseError, tokenSymbol, resolveUser } from '@/utils'
+import { log } from '@/lib/logging'
+import { tokenSymbol } from '@/utils/tokens/metadata'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { keccak256 } from 'viem'
 import { useReadContract } from '@wagmi/vue'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import {
   useExpenseAccountActivateApproval,
   useExpenseAccountDeactivateApproval
 } from '@/composables/expenseAccount/writes'
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useGetExpensesQuery, expenseKeys } from '@/queries'
-import { getFrequencyType, getCustomFrequency } from '@/utils'
+import { getFrequencyType, getCustomFrequency } from '@/utils/expenses/model'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { formatDateTime, fromUnix } from '@/utils/format'
 
 const teamStore = useTeamStore()
+const { resolveUser } = useTransactionPresentation()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 const userDataStore = useUserDataStore()
@@ -185,7 +189,7 @@ const columns = [
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address,
-  abi: EXPENSE_ACCOUNT_EIP712_ABI
+  abi: expenseAccountEip712Abi
 })
 
 const { mutate: executeDeactivateApproval } = useExpenseAccountDeactivateApproval()
@@ -221,7 +225,7 @@ const deactivateApproval = (signature: `0x{string}`) => {
       },
       onError: (err) => {
         isLoadingSetStatus.value = false
-        log.error(parseError(err))
+        log.error('Failed to deactivate approval:', err)
         toast.add({ title: 'Failed to deactivate approval', color: 'error' })
       }
     }
@@ -246,7 +250,7 @@ const activateApproval = (signature: `0x{string}`) => {
       },
       onError: (err) => {
         isLoadingSetStatus.value = false
-        log.error(parseError(err))
+        log.error('Failed to activate approval:', err)
         toast.add({ title: 'Failed to activate approval', color: 'error' })
       }
     }
@@ -258,7 +262,7 @@ const activateApproval = (signature: `0x{string}`) => {
 //#region Watch
 watch(errorGetOwner, (newVal) => {
   if (newVal) {
-    log.error(parseError(newVal))
+    log.error('Could not fetch contract owner:', newVal)
     toast.add({ title: 'Could not fetch contract owner', color: 'error' })
   }
 })

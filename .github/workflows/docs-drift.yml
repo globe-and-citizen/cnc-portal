@@ -1,17 +1,12 @@
-name: Docs drift check
+name: Documentation quality and freshness
 permissions:
   contents: read
 
 on:
   pull_request:
     branches: ["**"]
-    paths:
-      - "AGENTS.md"
-      - "CLAUDE.md"
-      - ".github/copilot-instructions.md"
-      - ".github/copilot-instructions/**"
-      - "scripts/audit-doc-drift.sh"
-      - ".github/workflows/docs-drift.yml"
+  push:
+    branches: [develop, main]
   workflow_dispatch:
 
 jobs:
@@ -20,6 +15,32 @@ jobs:
     steps:
       - name: 🛫 Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.16.0
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: ⚙️ Install root dependencies
+        run: npm ci
+
+      - name: 📝 Lint Markdown
+        run: npm run lint:md
+
+      - name: 💄 Check Markdown formatting
+        run: npm run format:md:check
+
+      - name: ✅ Test documentation freshness rules
+        run: npm run test:docs-freshness
+
+      - name: 🔄 Enforce documentation freshness
+        run: npm run lint:docs-freshness
+        env:
+          DOCS_BASE_COMMIT: ${{ github.event.pull_request.base.sha || github.event.before }}
 
       - name: 🔍 Audit AI-agent docs for drift
         run: bash scripts/audit-doc-drift.sh

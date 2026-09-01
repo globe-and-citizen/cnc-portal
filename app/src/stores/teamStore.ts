@@ -1,6 +1,6 @@
 import type { ContractType } from '@/types'
 // import type { Team } from '@/types/team'
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 import { defineStore } from 'pinia'
 import type { Address } from 'viem'
 import { ref, watch } from 'vue'
@@ -35,6 +35,11 @@ export const useTeamStore = defineStore('team', () => {
       ?.address
   }
 
+  // Auto-detect Investor address: V2 ('Investor') preferred, V1 ('InvestorV1') fallback
+  const getInvestorAddress = (): Address | undefined => {
+    return getContractAddressByType('Investor') || getContractAddressByType('InvestorV1')
+  }
+
   watch(currentTeamMeta.error, () => {
     if (currentTeamMeta.error.value) {
       log.error('Failed to load user team \n', currentTeamMeta.error.value)
@@ -50,6 +55,7 @@ export const useTeamStore = defineStore('team', () => {
      */
     currentTeam: currentTeamMeta.data,
     currentTeamMeta,
-    getContractAddressByType
+    getContractAddressByType,
+    getInvestorAddress
   }
 })

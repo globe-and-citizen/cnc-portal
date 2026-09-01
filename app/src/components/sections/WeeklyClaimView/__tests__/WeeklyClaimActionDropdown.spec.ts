@@ -13,12 +13,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { mockLog } from '@/tests/mocks/utils.mock'
-import * as utils from '@/utils'
-
-vi.mock('@/composables/cashRemuneration/writes', () => ({
-  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
-  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim)
-}))
+import * as contractErrors from '@/utils/errors/classifyContractError'
 
 describe('WeeklyClaimActionDropdown', () => {
   const weeklyClaim: WeeklyClaim = {
@@ -77,6 +72,8 @@ describe('WeeklyClaimActionDropdown', () => {
       },
       global: {
         stubs: {
+          // Render the teleported menu inline so `wrapper.find('ul')` can see it.
+          teleport: true,
           CRWithdrawClaim: {
             name: 'CRWithdrawClaim',
             template:
@@ -247,7 +244,7 @@ describe('WeeklyClaimActionDropdown', () => {
     const queryClient =
       useQueryClientFn.mock.results[useQueryClientFn.mock.results.length - 1]?.value
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['weekly-claims', '1']
+      queryKey: ['weeklyClaims', 'team']
     })
 
     expect(wrapper.find('ul').exists()).toBe(false)
@@ -273,11 +270,11 @@ describe('WeeklyClaimActionDropdown', () => {
   })
 
   it('swallows disable errors classified as user_rejected', async () => {
-    const classifySpy = vi.spyOn(utils, 'classifyError').mockReturnValue({
+    const classifySpy = vi.spyOn(contractErrors, 'classifyError').mockReturnValue({
       category: 'user_rejected',
       userMessage: 'rejected',
       raw: new Error('rejected')
-    } as ReturnType<typeof utils.classifyError>)
+    } as ReturnType<typeof contractErrors.classifyError>)
 
     mockCashRemunerationWrites.disableClaim.mutate = vi.fn(
       (_vars: unknown, opts?: { onError?: (err: unknown) => void }) => {
@@ -295,11 +292,11 @@ describe('WeeklyClaimActionDropdown', () => {
   })
 
   it('runs the onError toast branch for non-rejected disable errors', async () => {
-    vi.spyOn(utils, 'classifyError').mockReturnValue({
+    vi.spyOn(contractErrors, 'classifyError').mockReturnValue({
       category: 'unknown',
       userMessage: 'Could not disable',
       raw: new Error('boom')
-    } as ReturnType<typeof utils.classifyError>)
+    } as ReturnType<typeof contractErrors.classifyError>)
 
     mockCashRemunerationWrites.disableClaim.mutate = vi.fn(
       (_vars: unknown, opts?: { onError?: (err: unknown) => void }) => {

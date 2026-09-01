@@ -72,6 +72,26 @@ Issued At: [Timestamp]
 - Team-specific data filtered by team membership
 - Contract interactions verify on-chain ownership
 
+**Team-scoped routes — two layers, always both:**
+
+Authentication only proves _who_ the caller is, never _what they may touch_. Every route that mutates a team-owned resource applies two
+independent checks:
+
+1. **Route layer** — `requireTeamMember` / `requireTeamOwner` from `backend/src/middleware/teamAuthzMiddleware.ts`. This keeps outsiders
+   away from the resource entirely. When the request carries a resource id rather than a team id (`params.weeklyClaimId`, `params.claimId`,
+   `params.expenseId`, …), the guard resolves the owning team from that row, so the label in the middleware call does not have to match the
+   path parameter name.
+2. **Controller layer** — the per-action rule (claim owner, team owner, contract owner). A route guard alone is not enough: teammates are
+   legitimate callers of the route but not of every action on it.
+
+Two traps this closes:
+
+- **Uneven action guards.** When one endpoint multiplexes several actions behind a query parameter, an unguarded branch is easy to miss
+  because its siblings look safe. Review such handlers branch by branch, not endpoint by endpoint.
+- **Self-healing assumptions.** Do not rely on a reconciliation job to repair a wrongly written status. Reconcilers usually re-read a subset
+  of rows, so a bad write that lands outside that subset becomes permanent. Denial of service counts as a security impact even when no funds
+  can move.
+
 **Middleware Implementation:**
 
 ```typescript
@@ -79,23 +99,26 @@ Issued At: [Timestamp]
 const authorize = (requiredRole) => {
   return async (req, res, next) => {
     // 1. Verify JWT token
-    const token = req.headers.authorization?.split(' ')[1]
-    if (!token) return res.status(401).json({ error: 'Unauthorized' })
-    
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
     // 2. Extract user ID
-    const decoded = jwt.verify(token, JWT_SECRET)
-    
+    const decoded = jwt.verify(token, JWT_SECRET);
+
     // 3. If teamId parameter provided, verify access
     if (req.query.teamId) {
-      const hasAccess = await verifyTeamAccess(decoded.userId, req.query.teamId)
-      if (!hasAccess) return res.status(403).json({ error: 'Forbidden' })
+      const hasAccess = await verifyTeamAccess(
+        decoded.userId,
+        req.query.teamId,
+      );
+      if (!hasAccess) return res.status(403).json({ error: "Forbidden" });
     }
-    
+
     // 4. Attach user to request
-    req.user = decoded
-    next()
-  }
-}
+    req.user = decoded;
+    next();
+  };
+};
 ```
 
 ## Data Protection
@@ -152,17 +175,17 @@ const authorize = (requiredRole) => {
 **Implementation:**
 
 ```typescript
-import rateLimit from 'express-rate-limit'
+import rateLimit from "express-rate-limit";
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100000,
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Too many requests, please try again later'
-})
+  message: "Too many requests, please try again later",
+});
 
-app.use('/api/', apiLimiter)
+app.use("/api/", apiLimiter);
 ```
 
 ## Input Validation & Sanitization
@@ -186,13 +209,13 @@ app.use('/api/', apiLimiter)
 **Example Schema:**
 
 ```typescript
-import { z } from 'zod'
+import { z } from "zod";
 
 export const userInputSchema = z.object({
   walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   email: z.string().email().optional(),
-  teamId: z.string().uuid()
-})
+  teamId: z.string().uuid(),
+});
 ```
 
 ### XSS Prevention
@@ -221,11 +244,11 @@ export const userInputSchema = z.object({
 ```typescript
 // ✅ Good: Parameterized with Prisma
 const user = await prisma.user.findUnique({
-  where: { walletAddress: userInput }
-})
+  where: { walletAddress: userInput },
+});
 
 // ❌ Bad: String concatenation (don't do this)
-const query = `SELECT * FROM users WHERE walletAddress = '${userInput}'`
+const query = `SELECT * FROM users WHERE walletAddress = '${userInput}'`;
 ```
 
 ## Smart Contract Security
@@ -403,4 +426,4 @@ When implementing new features, ensure:
 
 ---
 
-For feature-specific security considerations, see individual feature specifications in `/docs/features/`.
+For feature-specific security considerations, see each canonical feature README under `/docs/features/`.

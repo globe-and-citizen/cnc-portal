@@ -14,17 +14,22 @@ This directory contains centralized mock definitions that provide consistent tes
 ## Quick Usage
 
 ```typescript
-import { mockERC20Reads, mockERC20Writes, mockToastStore, resetERC20Mocks } from '@/tests/mocks'
+import {
+  mockERC20Reads,
+  mockERC20Writes,
+  mockToastStore,
+  resetERC20Mocks,
+} from "@/tests/mocks";
 
 beforeEach(() => {
-  resetERC20Mocks() // Clean state between tests
-})
+  resetERC20Mocks(); // Clean state between tests
+});
 
-it('should handle token operations', () => {
-  mockERC20Reads.allowance.data.value = 1000n
-  mockERC20Writes.approve.executeWrite.mockResolvedValue(undefined)
+it("should handle token operations", () => {
+  mockERC20Reads.allowance.data.value = 1000n;
+  mockERC20Writes.approve.executeWrite.mockResolvedValue(undefined);
   // Test component...
-})
+});
 ```
 
 ## Philosophy

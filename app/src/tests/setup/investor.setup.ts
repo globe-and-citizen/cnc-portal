@@ -16,7 +16,9 @@ vi.mock('@/composables/investor/reads', () => ({
   useInvestorTotalSupply: vi.fn(() => mockInvestorReads.totalSupply),
   useInvestorOwner: vi.fn(() => mockInvestorReads.owner),
   useInvestorBalanceOf: vi.fn(() => mockInvestorReads.balanceOf),
-  useInvestorShareholders: vi.fn(() => mockInvestorReads.shareholders)
+  useInvestorShareholders: vi.fn(() => mockInvestorReads.shareholders),
+  useInvestorMigrationRoot: vi.fn(() => mockInvestorReads.migrationRoot),
+  useInvestorMigrationComplete: vi.fn(() => mockInvestorReads.migrationComplete)
 }))
 
 vi.mock('@/composables/investor/writes', () => ({

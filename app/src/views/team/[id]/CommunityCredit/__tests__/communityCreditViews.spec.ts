@@ -1,0 +1,275 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import { nextTick } from 'vue'
+import type { CreditRound } from '@/types'
+
+import {
+  mockRouterPush,
+  mockRouterReplace,
+  setMockRoute,
+  useQueryClientFn,
+  mockInvalidateQueries,
+  mockFixedReturnReads,
+  mockFixedReturnWrites,
+  mockBankReads
+} from '@/tests/mocks'
+import { mockToast } from '@/tests/mocks/store.mock'
+
+const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
+
+const { store } = vi.hoisted(() => {
+  const store = {
+    hasContract: true,
+    isLoading: false,
+    isError: false,
+    isOwner: true,
+    isLender: false,
+    rounds: [] as CreditRound[],
+    activeRounds: [] as CreditRound[],
+    historyRounds: [] as CreditRound[],
+    outstandingPrincipal: 0,
+    interestDue: 0,
+    raisedLifetime: 0,
+    repaidLifetime: 0,
+    nextMaturity: '—',
+    members: [] as unknown[],
+    getRound: (id: string): CreditRound | undefined => store.rounds.find((r) => r.id === id)
+  }
+  return { store }
+})
+
+vi.mock('@/stores/communityCredit', () => ({
+  useCommunityCreditStore: () => store
+}))
+
+vi.mock('@/components/sections/CommunityCreditView/CreditAccountTransactions.vue', () => ({
+  default: { template: '<div data-test="credit-transactions" />' }
+}))
+
+import IndexView from '../IndexView.vue'
+import RoundView from '../RoundView.vue'
+import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
+import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
+import { offerStruct, sampleRound } from './communityCreditFixtures'
+
+function resetStore() {
+  Object.assign(store, {
+    hasContract: true,
+    isLoading: false,
+    isError: false,
+    isOwner: true,
+    isLender: false,
+    rounds: [],
+    activeRounds: [],
+    historyRounds: [],
+    nextMaturity: '—',
+    members: []
+  })
+}
+
+describe('Community Credit views', () => {
+  beforeEach(() => {
+    resetStore()
+    mockRouterPush.mockClear()
+    mockInvalidateQueries.mockClear()
+    mockFixedReturnReads.getLendingOffer.data.value = null
+    mockFixedReturnReads.offerLenders.data.value = []
+    mockFixedReturnReads.allOffers.data.value = []
+    mockFixedReturnReads.myLenderPositions.data.value = new Map()
+    useQueryClientFn.mockReturnValue({
+      invalidateQueries: mockInvalidateQueries,
+      getQueryData: vi.fn(),
+      setQueryData: vi.fn(),
+      removeQueries: vi.fn()
+    })
+    setMockRoute({ params: { id: '1' } })
+  })
+
+  describe('IndexView', () => {
+    it('shows the no-contract empty state when the team has no Credit Account', () => {
+      store.hasContract = false
+      const wrapper = mount(IndexView)
+      expect(wrapper.find('[data-test="credit-no-contract"]').exists()).toBe(true)
+      expect(wrapper.findAllComponents(CreditRoundCard)).toHaveLength(0)
+    })
+
+    it('renders a card per active round and the owner new-call button', () => {
+      store.activeRounds = [sampleRound(), sampleRound({ id: '2', name: 'Hardware' })]
+      const wrapper = mount(IndexView)
+      expect(wrapper.findAllComponents(CreditRoundCard)).toHaveLength(2)
+      expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(true)
+    })
+
+    it('shows the loading skeletons while offers load', () => {
+      store.isLoading = true
+      const wrapper = mount(IndexView)
+      expect(wrapper.find('[data-test="credit-rounds-loading"]').exists()).toBe(true)
+    })
+
+    it('opens the lend modal and routes from round-card events', async () => {
+      store.activeRounds = [sampleRound()]
+      const wrapper = mount(IndexView)
+      const card = wrapper.findComponent(CreditRoundCard)
+
+      card.vm.$emit('open')
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'community-credit-round' })
+      )
+      card.vm.$emit('repay')
+      expect(mockRouterPush).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          name: 'community-credit-round',
+          params: expect.objectContaining({ view: 'repay' })
+        })
+      )
+      card.vm.$emit('lend')
+      await nextTick()
+      expect(wrapper.findComponent(CreditLendModal).props('round')).not.toBeNull()
+    })
+
+    it('shows a hint toast when a non-owner clicks "Lend to a round"', async () => {
+      store.isOwner = false
+      const wrapper = mount(IndexView)
+
+      expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(false)
+      await wrapper.find('[data-test="lend-hint-button"]').trigger('click')
+
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Pick an open round below to lend' })
+      )
+    })
+
+    it('renders the history table for settled rounds', () => {
+      store.historyRounds = [sampleRound({ id: '9', status: 'repaid', repaidOn: 'Apr 10' })]
+      const wrapper = mount(IndexView)
+      expect(wrapper.find('[data-test="credit-history-table"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('History')
+    })
+
+    it('lists a funded round in history too, labeled as awaiting repayment rather than repaid', () => {
+      store.historyRounds = [sampleRound({ id: '9', status: 'funded', maturity: 'Oct 26' })]
+      const wrapper = mount(IndexView)
+      const row = wrapper.find('tbody tr').text()
+      expect(row).toContain('Awaiting repayment')
+      expect(row).toContain('Oct 26')
+      expect(row).not.toContain('Repaid')
+    })
+
+    it('lists a stalled round in history labeled as awaiting a refund/accept decision, not Repaid', () => {
+      store.historyRounds = [sampleRound({ id: '9', status: 'stalled' })]
+      const wrapper = mount(IndexView)
+      const row = wrapper.find('tbody tr').text()
+      expect(row).toContain('Action needed')
+      expect(row).toContain('awaiting refund or acceptance')
+      expect(row).not.toContain('Repaid')
+    })
+  })
+
+  describe('RoundView', () => {
+    function mountRound(round: CreditRound, offer = offerStruct(), view?: string) {
+      store.rounds = [round]
+      mockFixedReturnReads.getLendingOffer.data.value = offer
+      setMockRoute({ params: { id: '1', roundId: round.id, ...(view ? { view } : {}) } })
+      return mount(RoundView)
+    }
+
+    it('keeps the missing round visible until the user chooses route recovery', async () => {
+      setMockRoute({ params: { id: '1', roundId: '99' } })
+      const wrapper = mount(RoundView)
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-not-found"]').exists()).toBe(true)
+      expect(mockRouterPush).not.toHaveBeenCalled()
+
+      await wrapper.find('[data-test="round-not-found-back"]').trigger('click')
+
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'community-credit' })
+      )
+    })
+
+    it('returns to the round list from the presentation header', async () => {
+      const wrapper = mountRound(sampleRound())
+
+      await wrapper.get('[data-test="round-back"]').trigger('click')
+
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'community-credit', params: { id: '1' } })
+      )
+    })
+
+    it('switches to the Repay tab (route param) for a round in repayment, same as the tab itself', async () => {
+      store.isOwner = true
+      mockBankReads.owner.data.value = MOCK_USER_ADDRESS
+      const wrapper = mountRound(sampleRound({ status: 'active' }))
+      await flushPromises()
+      await wrapper.find('[data-test="round-cta-repay"]').trigger('click')
+      expect(mockRouterReplace).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          name: 'community-credit-round',
+          params: expect.objectContaining({ view: 'repay' })
+        })
+      )
+    })
+
+    it('lets the owner push refunds to every lender on a stalled round in one step', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(sampleRound({ status: 'stalled' }), offerStruct({ state: 0 }))
+      await flushPromises()
+      await wrapper.find('[data-test="round-cta-refundable"]').trigger('click')
+      await flushPromises()
+      expect(mockFixedReturnWrites.refundLenders.mutateAsync).toHaveBeenCalledWith({
+        args: [1n]
+      })
+    })
+
+    it('lets the owner accept partial funding on a stalled round instead of refunding', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(
+        sampleRound({ status: 'stalled', raised: 23400 }),
+        offerStruct({ state: 0 })
+      )
+      await flushPromises()
+      await wrapper.find('[data-test="round-cta-accept-partial"]').trigger('click')
+      await flushPromises()
+      expect(mockFixedReturnWrites.acceptPartialFunding.mutateAsync).toHaveBeenCalledWith({
+        args: [1n]
+      })
+    })
+
+    it('hides the accept-partial-funding action when nothing was raised', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(
+        sampleRound({ status: 'stalled', raised: 0 }),
+        offerStruct({ state: 0, totalFunded: 0n })
+      )
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-accept-partial"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="round-cta-refundable"]').exists()).toBe(true)
+    })
+
+    it('does not offer to lend into a stalled round even though it is still Open on-chain', async () => {
+      store.isOwner = false
+      const wrapper = mountRound(sampleRound({ status: 'stalled' }), offerStruct({ state: 0 }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+    })
+
+    it('hides the Lend action on a restricted round when the owner has no whitelist allocation', async () => {
+      store.isOwner = true
+      mockFixedReturnReads.myLenderPositions.data.value = new Map()
+      const wrapper = mountRound(sampleRound({ restricted: true }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+    })
+
+    it('offers the Lend action on a restricted round once the owner has a whitelist allocation', async () => {
+      store.isOwner = true
+      mockFixedReturnReads.myLenderPositions.data.value = new Map([
+        [1, { allocation: 500n, deposited: 0n }]
+      ])
+      const wrapper = mountRound(sampleRound({ restricted: true }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
+    })
+  })
+})

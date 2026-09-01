@@ -69,6 +69,14 @@ export type CashRemunerationOfficerUpdatedRow = {
   timestamp: number
 }
 
+export type CashRemunerationOwnershipTransferredRow = {
+  id: string
+  contractAddress: string
+  previousOwner: string
+  newOwner: string
+  timestamp: number
+}
+
 export type CashRemunerationEventsQuery = {
   cashRemunerationDeposits: { items: CashRemunerationDepositRow[] }
   cashRemunerationWithdraws: { items: CashRemunerationWithdrawRow[] }
@@ -83,6 +91,7 @@ export type CashRemunerationEventsQuery = {
   cashRemunerationOfficerUpdateds: { items: CashRemunerationOfficerUpdatedRow[] }
   cashRemunerationTokenSupportAddeds: { items: CashRemunerationTokenSupportAddedRow[] }
   cashRemunerationTokenSupportRemoveds: { items: CashRemunerationTokenSupportRemovedRow[] }
+  cashRemunerationOwnershipTransferreds: { items: CashRemunerationOwnershipTransferredRow[] }
 }
 
 export type CashRemunerationTransactionType =
@@ -97,6 +106,7 @@ export type CashRemunerationTransactionType =
   | 'officerAddressUpdated'
   | 'tokenSupportAdded'
   | 'tokenSupportRemoved'
+  | 'ownershipTransferred'
 
 export type RawCashRemunerationTransaction = {
   txHash: string

@@ -2,16 +2,26 @@
   "scripts": {
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "changelog:first": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "format:md": "prettier --config .prettier-markdown.json --write \"**/*.md\"",
+    "format:md:check": "node scripts/check-markdown-format.mjs",
+    "lint:docs-freshness": "node scripts/validate-documentation-freshness.mjs",
+    "lint:md": "markdownlint-cli2",
+    "test:docs-freshness": "node --test scripts/documentation-freshness.test.mjs",
+    "test:ui-ux-review-contract": "node --test scripts/ui-ux-review-contract.test.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
     "app/**/*.{ts,vue}": "npm run --prefix app format:files --",
-    "backend/**/*.ts": "npm run --prefix backend format:files --"
+    "backend/**/*.ts": "npm run --prefix backend format:files --",
+    "**/*.md": "prettier --config .prettier-markdown.json --write"
   },
   "devDependencies": {
     "conventional-changelog-angular": "^8.1.0",
     "conventional-changelog-cli": "^5.0.0",
+    "danger": "^13.0.7",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.5"
+    "lint-staged": "^17.0.5",
+    "markdownlint-cli2": "^0.23.2",
+    "prettier": "^3.9.6"
   }
 }

@@ -4,7 +4,13 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseUnits } from 'viem'
 import MintForm from '../MintForm.vue'
-import { mockToast, mockTeamStore, mockInvestorWrites, useReadContractFn } from '@/tests/mocks'
+import {
+  mockToast,
+  mockTeamStore,
+  mockInvestorReads,
+  mockInvestorWrites,
+  useReadContractFn
+} from '@/tests/mocks'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
 
@@ -13,19 +19,9 @@ type MintOptions = {
   onError?: (e: unknown) => void
 }
 
-const symbolRef = ref('SHER')
-const totalSupplyRef = ref<bigint | undefined>(undefined)
-const recipientBalanceRef = ref<bigint | undefined>(undefined)
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: vi.fn(() => ({ data: symbolRef })),
-  useInvestorTotalSupply: vi.fn(() => ({ data: totalSupplyRef })),
-  useInvestorBalanceOf: vi.fn(() => ({ data: recipientBalanceRef }))
-}))
-
 const setSupplyAndBalance = (supply: bigint, balance: bigint) => {
-  totalSupplyRef.value = supply
-  recipientBalanceRef.value = balance
+  mockInvestorReads.totalSupply.data.value = supply
+  mockInvestorReads.balanceOf.data.value = balance
 }
 
 // Stake fields reach the form via an emitted payload, then UForm re-validates — let both
@@ -50,10 +46,13 @@ const mountForm = (props: Record<string, unknown> = {}) =>
         SelectMemberContractsInput: {
           name: 'SelectMemberContractsInput',
           props: ['modelValue', 'disabled'],
-          emits: ['update:modelValue'],
+          emits: ['update:modelValue', 'selectItem'],
           template: `<div data-test="address-input">
             <button data-test="emit-member-input"
-              @click="$emit('update:modelValue', { name: 'Alice', address: '${VALID_ADDRESS}' })">
+              @click="
+                $emit('update:modelValue', { name: 'Alice', address: '${VALID_ADDRESS}' });
+                $emit('selectItem', { name: 'Alice', address: '${VALID_ADDRESS}', type: 'member' })
+              ">
               select
             </button>
           </div>`
@@ -69,9 +68,9 @@ describe('MintForm.vue', () => {
     vi.clearAllMocks()
     vi.stubGlobal('useToast', () => mockToast)
 
-    symbolRef.value = 'SHER'
-    totalSupplyRef.value = undefined
-    recipientBalanceRef.value = undefined
+    mockInvestorReads.symbol.data.value = 'SHER'
+    mockInvestorReads.totalSupply.data.value = undefined
+    mockInvestorReads.balanceOf.data.value = undefined
 
     mockTeamStore.getContractAddressByType = vi.fn(
       () => '0x2222222222222222222222222222222222222222'
@@ -84,8 +83,8 @@ describe('MintForm.vue', () => {
     useReadContractFn
       .mockReset()
       .mockImplementation(({ functionName }: { functionName: string }) => {
-        if (functionName === 'symbol') return { data: symbolRef }
-        if (functionName === 'totalSupply') return { data: totalSupplyRef }
+        if (functionName === 'symbol') return { data: mockInvestorReads.symbol.data }
+        if (functionName === 'totalSupply') return { data: mockInvestorReads.totalSupply.data }
         return { data: ref(undefined) }
       })
   })

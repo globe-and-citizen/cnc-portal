@@ -1,0 +1,12 @@
+[
+  {
+    "inputs": [],
+    "name": "InvalidProposalContent",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidProposalDates",
+    "type": "error"
+  }
+]

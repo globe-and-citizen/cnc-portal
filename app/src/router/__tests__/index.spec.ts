@@ -17,27 +17,11 @@ import { nextTick } from 'vue'
  */
 
 // Hoist mocks to ensure they're available during module initialization
-const { mockIsAuth, mockUseStorage } = vi.hoisted(() => {
+const { mockIsAuth } = vi.hoisted(() => {
   const mockIsAuth = { value: false }
-  const mockUseStorage = vi.fn(() => mockIsAuth)
-  return { mockIsAuth, mockUseStorage }
+  globalThis.__mockUseStorageValue = mockIsAuth
+  return { mockIsAuth }
 })
-
-vi.mock('@vueuse/core', () => ({
-  useStorage: mockUseStorage,
-  // Minimal stub so composables using createFetch don't explode during dynamic imports
-  createFetch: () => {
-    const fakeJson = () => ({
-      isFetching: { value: false },
-      error: { value: null },
-      data: { value: [] },
-      statusCode: { value: 200 },
-      execute: vi.fn()
-    })
-    // Returned function signature: useCustomFetch(url, options)
-    return () => ({ json: fakeJson })
-  }
-}))
 
 // Mock all dynamic imports before importing router
 vi.mock('@/views/HomeView.vue', () => ({
@@ -96,10 +80,6 @@ vi.mock('@/views/team/[id]/ProposalsView.vue', () => ({
   default: { name: 'ProposalsView', template: '<div>Proposals</div>' }
 }))
 
-vi.mock('@/components/sections/ProposalsView/ProposalDetail.vue', () => ({
-  default: { name: 'ProposalDetail', template: '<div>Proposal Detail</div>' }
-}))
-
 vi.mock('@/views/team/[id]/BodElectionDetailsView.vue', () => ({
   default: { name: 'BodElectionDetailsView', template: '<div>BoD Election Details</div>' }
 }))
@@ -110,6 +90,26 @@ vi.mock('@/views/team/[id]/SherTokenView.vue', () => ({
 
 vi.mock('@/views/LockedView.vue', () => ({
   default: { name: 'LockedView', template: '<div>Locked View</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/SummaryView.vue', () => ({
+  default: { name: 'SummaryView', template: '<div>Accounting Summary</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/IncomeStatementView.vue', () => ({
+  default: { name: 'IncomeStatementView', template: '<div>Income Statement</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/BalanceSheetView.vue', () => ({
+  default: { name: 'BalanceSheetView', template: '<div>Balance Sheet</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/TrialBalanceView.vue', () => ({
+  default: { name: 'TrialBalanceView', template: '<div>Trial Balance</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/GeneralLedgerView.vue', () => ({
+  default: { name: 'GeneralLedgerView', template: '<div>General Ledger</div>' }
 }))
 
 import router from '@/router/index'
@@ -235,6 +235,28 @@ describe('Router Configuration', () => {
       await router.push('/teams/123/accounts/safe-account/0xabcdef')
       await nextTick()
       expect(router.currentRoute.value.name).toBe('safe-account')
+    })
+
+    it('redirects /accounting to the summary page and loads each accounting view', async () => {
+      mockIsAuth.value = true
+
+      await router.push('/teams/123/accounting')
+      await nextTick()
+      expect(router.currentRoute.value.name).toBe('accounting-summary')
+      expect(router.currentRoute.value.path).toBe('/teams/123/accounting/summary')
+
+      const accountingRoutes = [
+        { path: '/teams/123/accounting/income', name: 'accounting-income' },
+        { path: '/teams/123/accounting/balance', name: 'accounting-balance' },
+        { path: '/teams/123/accounting/trial', name: 'accounting-trial' },
+        { path: '/teams/123/accounting/ledger', name: 'accounting-ledger' }
+      ]
+      for (const { path, name } of accountingRoutes) {
+        await router.push(path)
+        await nextTick()
+        expect(router.currentRoute.value.name).toBe(name)
+        expect(router.currentRoute.value.params.id).toBe('123')
+      }
     })
   })
 

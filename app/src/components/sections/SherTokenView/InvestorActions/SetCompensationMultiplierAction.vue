@@ -102,9 +102,10 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { useToast } from '@nuxt/ui/composables'
 import { useConnection } from '@wagmi/vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useSetMultiplier } from '@/composables/safeDepositRouter/writes'
 import {
@@ -112,12 +113,13 @@ import {
   useSafeDepositRouterMultiplier,
   useSafeDepositRouterOwner
 } from '@/composables/safeDepositRouter/reads'
-import { parseError } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 import {
   formatSafeDepositRouterMultiplier,
   parseSafeDepositRouterMultiplier,
   formatSherAmount
-} from '@/utils/safeDepositRouterUtil'
+} from '@/utils/safeDepositRouter/model'
 
 const toast = useToast()
 const connection = useConnection()
@@ -195,16 +197,10 @@ watch(
   () => setMultiplierWrite.error.value,
   (error) => {
     if (error) {
-      console.error('Error setting multiplier:', error)
-      const errorMessage = parseError(error)
-
-      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        submissionError.value = 'Transaction cancelled by user'
-        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
-      } else {
-        submissionError.value = 'Failed to update multiplier'
-        toast.add({ title: 'Failed to update multiplier', color: 'error' })
-      }
+      log.error('Error setting multiplier:', error)
+      const classified = classifyError(error, { contract: 'SafeDepositRouter' })
+      submissionError.value = classified.userMessage
+      toast.add({ title: classified.userMessage, color: 'error' })
     }
   }
 )
@@ -284,6 +280,4 @@ async function handleSetMultiplier(event?: FormSubmitEvent<MultiplierFormSchema>
 
   await setMultiplierWrite.mutateAsync({ args: [multiplierInWei] })
 }
-
-defineExpose({ handleSetMultiplier })
 </script>

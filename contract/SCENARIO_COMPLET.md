@@ -1,6 +1,7 @@
 # 🏛️ CNC Portal & TechDAO — Full Scenario
 
-> _The story of a platform that rises, and a team that builds, governs, and grows together._ > _Every public function of every contract appears at least once in this scenario._
+> _The story of a platform that rises, and a team that builds, governs, and grows together._ > _Every public function of every contract
+> appears at least once in this scenario._
 
 ---
 
@@ -43,7 +44,6 @@ graph TD
     end
 
     subgraph STANDALONE["🔧 Standalone Tools"]
-        TIPS["🎁 Tips"]
         VEST["⏳ Vesting"]
         ADS["📣 AdCampaignManager"]
         ADS -->|revenue| BANK
@@ -66,7 +66,6 @@ timeline
     Week 1   : 👩‍💼 Alice creates TechDAO — sole owner of all contracts
     Month 1  : 💸 First mixed ETH+SHER salaries paid
              : 🧾 Expense account funded and used
-             : 🎁 First tips distributed
              : ⏳ Vesting schedules set up
              : 🔀 Investment gateway opened
     Month 2  : 🗳️ Elections organized and held
@@ -89,7 +88,8 @@ timeline
 
 ### The infrastructure goes live
 
-The CNC team deploys the platform. First, a **global fee vault** — the FeeCollector — is initialized with a 0.5% rate on bank transfers and support for USDC and USDT.
+The CNC team deploys the platform. First, a **global fee vault** — the FeeCollector — is initialized with a 0.5% rate on bank transfers and
+support for USDC and USDT.
 
 ```mermaid
 sequenceDiagram
@@ -113,7 +113,8 @@ sequenceDiagram
     Note over OFF: Returns [Bank, Elections, BoardOfDirectors,<br/>Proposals, InvestorV1, CashRemuneration,<br/>SafeDepositRouter, ExpenseAccountEIP712]
 ```
 
-> 💡 Each implementation is registered as a **beacon** — if CNC Portal improves a contract, all teams benefit from the upgrade automatically.
+> 💡 Each implementation is registered as a **beacon** — if CNC Portal improves a contract, all teams benefit from the upgrade
+> automatically.
 
 ---
 
@@ -173,18 +174,15 @@ sequenceDiagram
     Note over Alice: Alice is sole owner of every contract
 ```
 
-After deployment, Alice adds USDT to the Bank (not included in the initial list) and raises the Tips push limit for her larger team.
+After deployment, Alice adds USDT to the Bank (not included in the initial list).
 
 ```mermaid
 sequenceDiagram
     actor Alice as 👩‍💼 Alice
     participant Bank as 🏦 Bank
-    participant Tips as 🎁 Tips
     participant Vest as ⏳ Vesting
 
     Alice->>Bank: addTokenSupport(USDT)
-    Alice->>Tips: updatePushLimit(20)
-    Note over Tips: Raised from 10 to 20 to accommodate team size
 
     Alice->>Vest: createTeam(teamId: 1, owner: alice, token: SHER)
     Note over Vest: Team 1 created explicitly before adding vestings
@@ -196,7 +194,8 @@ sequenceDiagram
 
 ### Pre-election payroll
 
-Before elections, Alice is the sole owner of CashRemuneration and signs all wage claims herself. Every team member receives **a mix of ETH and SHER** in a single claim.
+Before elections, Alice is the sole owner of CashRemuneration and signs all wage claims herself. Every team member receives **a mix of ETH
+and SHER** in a single claim.
 
 ```mermaid
 sequenceDiagram
@@ -223,13 +222,15 @@ sequenceDiagram
     CR->>SHER: individualMint(Charlie, 640 SHER)
 ```
 
-> 💡 SHER is **minted on demand** when the claim is processed — no SHER pre-funding needed. The ETH is transferred from the contract's balance.
+> 💡 SHER is **minted on demand** when the claim is processed — no SHER pre-funding needed. The ETH is transferred from the contract's
+> balance.
 
 ---
 
 ### A mistaken claim is issued and revoked
 
-Alice accidentally signs a claim with the wrong amount. She immediately disables it before anyone uses it. Later, once the correct claim is issued, she re-enables the original to confirm it stays blocked.
+Alice accidentally signs a claim with the wrong amount. She immediately disables it before anyone uses it. Later, once the correct claim is
+issued, she re-enables the original to confirm it stays blocked.
 
 ```mermaid
 flowchart LR
@@ -243,7 +244,8 @@ flowchart LR
 
 ### Adding a new token to CashRemuneration
 
-The team negotiates a USDC salary component starting month 2. Alice adds USDC to the supported tokens and later removes it when the team switches back to pure SHER/ETH.
+The team negotiates a USDC salary component starting month 2. Alice adds USDC to the supported tokens and later removes it when the team
+switches back to pure SHER/ETH.
 
 ```mermaid
 sequenceDiagram
@@ -263,7 +265,8 @@ sequenceDiagram
 
 ### Bob's monthly cloud server budget (recurring)
 
-The Board funds the ExpenseAccount and Alice signs Bob a **monthly** budget to cover cloud infrastructure costs. The signature can be reused every month within its validity window.
+The Board funds the ExpenseAccount and Alice signs Bob a **monthly** budget to cover cloud infrastructure costs. The signature can be reused
+every month within its validity window.
 
 ```mermaid
 sequenceDiagram
@@ -352,63 +355,7 @@ sequenceDiagram
 
 ---
 
-## Act IV — 🎁 Community tips
-
-### Two modes of tipping
-
-```mermaid
-flowchart TD
-    subgraph PUSH["Push Mode — Instant delivery"]
-        C1["👤 Client\n0.3 ETH"] -->|pushTip| TIPS1["🎁 Tips"]
-        TIPS1 -->|"0.15 ETH instantly"| Bob1["👨‍💻 Bob"]
-        TIPS1 -->|"0.15 ETH instantly"| Charlie1["🧑‍💻 Charlie"]
-    end
-
-    subgraph SEND["Send Mode — Deferred withdrawal"]
-        C2["👤 Client 2\n0.2 ETH"] -->|sendTip| TIPS2["🎁 Tips"]
-        TIPS2 -->|"balance +0.10 ETH"| Bob2["👨‍💻 Bob"]
-        TIPS2 -->|"balance +0.10 ETH"| Charlie2["🧑‍💻 Charlie"]
-        Bob2 -->|"withdraw() anytime"| ETH["💸 0.1 ETH"]
-    end
-```
-
-Bob checks his pending balance before withdrawing. Alice checks the total contract balance.
-
-```mermaid
-sequenceDiagram
-    actor Bob as 👨‍💻 Bob
-    actor Alice as 👩‍💼 Alice
-    participant Tips as 🎁 Tips
-
-    Bob->>Tips: getBalance(Bob) → 0.10 ETH
-    Alice->>Tips: getContractBalance() → 0.10 ETH (Bob's undrawn portion)
-    Bob->>Tips: withdraw()
-    Bob-->>Bob: 0.10 ETH received
-```
-
----
-
-### Tips management
-
-```mermaid
-sequenceDiagram
-    actor Alice as 👩‍💼 Alice
-    participant Tips as 🎁 Tips
-
-    Note over Alice: TechDAO grows to 25 members
-    Alice->>Tips: updatePushLimit(25)
-
-    Note over Alice: Emergency — suspicious transactions
-    Alice->>Tips: pause()
-    Note over Tips: pushTip and sendTip blocked
-
-    Alice->>Tips: unpause()
-    Note over Tips: Resumed after investigation
-```
-
----
-
-## Act V — ⏳ Vesting
+## Act IV — ⏳ Vesting
 
 ### Setting up Bob's long-term commitment
 
@@ -481,7 +428,7 @@ sequenceDiagram
 
 ---
 
-## Act VI — 🔀 Investment Gateway
+## Act V — 🔀 Investment Gateway
 
 ### Investor1 deposits with slippage protection
 
@@ -543,7 +490,7 @@ sequenceDiagram
 
 ---
 
-## Act VII — 🗳️ Elections & Birth of the Board
+## Act VI — 🗳️ Elections & Birth of the Board
 
 ### Alice creates the election
 
@@ -625,7 +572,7 @@ sequenceDiagram
 
 ---
 
-## Act VIII — 🎩 The Board governs
+## Act VII — 🎩 The Board governs
 
 ### A revoked action (Diana submits a mistake)
 
@@ -698,7 +645,7 @@ sequenceDiagram
 
 ---
 
-## Act IX — 📋 Proposals
+## Act VIII — 📋 Proposals
 
 ### The Board votes on a remote work policy
 
@@ -750,7 +697,7 @@ sequenceDiagram
 
 ---
 
-## Act X — 🏦 Bank Operations
+## Act IX — 🏦 Bank Operations
 
 ### Clients deposit, Board manages the treasury
 
@@ -809,7 +756,7 @@ sequenceDiagram
 
 ---
 
-## Act XI — 📈 Dividends for SHER holders
+## Act X — 📈 Dividends for SHER holders
 
 ### The Board distributes profits
 
@@ -824,11 +771,12 @@ flowchart TD
     SHER -->|"proportional to SHER held"| Diana["👩‍⚖️ Diana"]
 ```
 
-> 💡 Bob and Diana both accumulated SHER through their mixed ETH+SHER salaries. Every SHER holder benefits at dividend time — employees, Board members, and external investors alike.
+> 💡 Bob and Diana both accumulated SHER through their mixed ETH+SHER salaries. Every SHER holder benefits at dividend time — employees,
+> Board members, and external investors alike.
 
 ---
 
-## Act XII — 📣 Ad Campaigns
+## Act XI — 📣 Ad Campaigns
 
 ### Advertiser lifecycle with admin management
 
@@ -869,7 +817,7 @@ sequenceDiagram
 
 ---
 
-## Act XIII — ⚙️ Platform-level governance
+## Act XII — ⚙️ Platform-level governance
 
 ### The Board adjusts platform fees
 
@@ -910,7 +858,6 @@ sequenceDiagram
 | 🧾 **ExpenseAccount**    | initialize, receive, depositToken, transfer, validateTransfer, getCurrentPeriod, isNewPeriod, deactivateApproval, activateApproval, addTokenSupport, removeTokenSupport, getBalance, getTokenBalance, pause, unpause                                    |
 | 🗳️ **Elections**         | initialize, createElection, castVote, publishResults, getElection, getElectionCandidates, getElectionEligibleVoters, getElectionWinners, getElectionResults, getVoterChoice, hasVoted, isEligibleVoter, getVoteCount, getNextElectionId, pause, unpause |
 | 📋 **Proposals**         | initialize, createProposal, castVote (Yes/No/Abstain), getProposal, tallyResults, getBoardOfDirectors, hasVoted                                                                                                                                         |
-| 🎁 **Tips**              | initialize, pushTip, sendTip, withdraw, getBalance, getContractBalance, updatePushLimit, pause, unpause                                                                                                                                                 |
 | ⏳ **Vesting**           | initialize, createTeam, addVesting, stopVesting, vestedAmount, releasable, release, getTeamMembers, getUserTeams, getTeamVestingsWithMembers, getTeamAllArchivedVestingsFlat, getCurrentTimestamp, pause, unpause                                       |
 | 📣 **AdCampaignManager** | constructor, createAdCampaign, claimPayment, requestAndApproveWithdrawal, addAdmin, removeAdmin, setBankContractAddress, setCostPerClick, setCostPerImpression, getAdCampaignByCode, getAdminList, pause, unpause, receive                              |
 
@@ -946,11 +893,9 @@ flowchart TD
     EXP -->|"ETH"| Diana
 
     Vest["⏳ Vesting"] -->|"SHER gradually"| Bob
-
-    Tips["🎁 Tips"] -->|"ETH"| Bob
-    Tips -->|"ETH"| Charlie
 ```
 
 ---
 
-> _CNC Portal is the infrastructure. TechDAO is the use case. Together, they form a coherent ecosystem where value flows transparently, without any trusted intermediary._
+> _CNC Portal is the infrastructure. TechDAO is the use case. Together, they form a coherent ecosystem where value flows transparently,
+> without any trusted intermediary._

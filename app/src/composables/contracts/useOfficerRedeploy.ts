@@ -5,8 +5,9 @@
  *     cache flush. The wrappers it composes are configured to stay silent
  *     and skip their own invalidation so the user sees exactly one toast
  *     and one refetch wave for the whole redeploy.
- *   - Errors: NEVER toast from here. Each mutation's `error` ref plus
- *     `workflowError` are exposed for reactive rendering (UAlert).
+ *   - Errors: NEVER toast from here. `failure` identifies a failed deploy,
+ *     registration, or workflow step. `migrationRecovery` describes the
+ *     separate retry-or-skip state after a migration failure.
  *   - Workflow state: `pendingMigration` and `workflowError` are the only
  *     manual refs — everything else is derived from the three mutations.
  */
@@ -14,23 +15,34 @@ import { computed, ref } from 'vue'
 import { readContract } from '@wagmi/core'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
+import { useToast } from '@nuxt/ui/composables'
 import { useTeamStore } from '@/stores'
 import {
   useDeployOfficer,
   useInvalidateOfficerQueries
 } from '@/composables/contracts/useOfficerDeployment'
-import {
-  useMigrateShareholders,
-  InconsistentSupplyError
-} from '@/composables/investor/useShareholderMigration'
+import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
-import { log } from '@/utils'
+import { officerAbi } from '@/artifacts/abi/generated'
+import { log } from '@/lib/logging'
+
+export type OfficerRedeployFailureStage = 'deploy' | 'registration' | 'workflow'
+
+/** One redeployment step failed before shareholder migration could complete. */
+export interface OfficerRedeployFailure {
+  stage: OfficerRedeployFailureStage
+  error: Error
+}
+
+/** A deployed Officer needs its shareholder migration retried or skipped. */
+export interface OfficerRedeployMigrationRecovery {
+  error: Error | null
+}
 
 /**
  * Orchestrates the full "redeploy Officer" lifecycle: deploy on-chain,
  * register in the backend, then migrate shareholders from the previous
- * InvestorV1. The migration step is retriable — if it fails we hold the
+ * Officer's share token. The migration step is retriable — if it fails we hold the
  * addresses in `pendingMigration` so the caller can drive a retry UI.
  *
  * All async operations delegate to TanStack mutations (`useDeployOfficer`,
@@ -38,11 +50,10 @@ import { log } from '@/utils'
  * loading/error state lives in TanStack — this composable only owns the
  * higher-level workflow state that spans multiple calls.
  *
- * Errors are **not** surfaced via toast from here. Each mutation's `error`
- * ref is exposed as-is plus a workflow-level `workflowError` for things that
- * don't belong to any single mutation (e.g. "new InvestorV1 not found in
- * getTeam()"). The consumer template is expected to render them via reactive
- * UAlert components.
+ * Errors are **not** surfaced via toast from here. `failure` combines a
+ * failed workflow stage with its error, while `migrationRecovery` represents
+ * the separate retry-or-skip decision after deployment completed. The consumer
+ * template renders those reactive states with the appropriate UAlert.
  */
 export function useOfficerRedeploy() {
   const teamStore = useTeamStore()
@@ -58,7 +69,9 @@ export function useOfficerRedeploy() {
 
   // Workflow-level state that spans multiple mutations.
   const pendingMigration = ref<{
+    teamId: string | number
     previousOfficerAddress: Address
+    previousInvestorAddress: Address
     newInvestorAddress: Address
   } | null>(null)
   // Workflow-level error that doesn't map to any single mutation (e.g. the
@@ -71,31 +84,63 @@ export function useOfficerRedeploy() {
       registerMutation.isPending.value ||
       migrateMutation.isPending.value
   )
-  const migrationFailed = computed(
-    () => pendingMigration.value !== null && !migrateMutation.isPending.value
-  )
-  const isInconsistent = computed(
-    () => migrateMutation.error.value instanceof InconsistentSupplyError
-  )
+  const failure = computed<OfficerRedeployFailure | null>(() => {
+    if (deployMutation.error.value) return { stage: 'deploy', error: deployMutation.error.value }
+    if (registerMutation.error.value)
+      return { stage: 'registration', error: registerMutation.error.value }
+    if (workflowError.value) return { stage: 'workflow', error: workflowError.value }
+    return null
+  })
 
-  const findNewInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
+  const migrationRecovery = computed<OfficerRedeployMigrationRecovery | null>(() => {
+    if (!pendingMigration.value || migrateMutation.isPending.value) return null
+    return { error: migrateMutation.error.value }
+  })
+
+  const findInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
     const contracts = (await readContract(config, {
       address: officerAddress,
-      abi: OFFICER_ABI,
+      abi: officerAbi,
       functionName: 'getTeam'
     })) as readonly { contractType: string; contractAddress: Address }[]
-    return contracts.find((c) => c.contractType === 'InvestorV1')?.contractAddress ?? null
+    return contracts.find((c) => c.contractType === 'Investor')?.contractAddress ?? null
+  }
+
+  const findPreviousInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
+    const contracts = (await readContract(config, {
+      address: officerAddress,
+      abi: officerAbi,
+      functionName: 'getTeam'
+    })) as readonly { contractType: string; contractAddress: Address }[]
+    // The previous Officer may be any generation: every legacy one (V0/V0.1/V1)
+    // registers its share token as 'InvestorV1', current ones as 'Investor'.
+    return (
+      contracts.find((c) => c.contractType === 'Investor' || c.contractType === 'InvestorV1')
+        ?.contractAddress ?? null
+    )
   }
 
   const tryMigration = async (ctx: {
+    teamId: string | number
     previousOfficerAddress: Address
+    previousInvestorAddress: Address
     newInvestorAddress: Address
   }) => {
-    // Wrapper is silent (orchestrator owns flow-level toasts).
-    // Errors remain on migrateMutation.error for the caller's retry UI.
-    await migrateMutation.mutateAsync(ctx)
-    if (migrateMutation.isSuccess.value) {
-      pendingMigration.value = null
+    try {
+      const result = await migrateMutation.mutateAsync({
+        teamId: ctx.teamId,
+        previousOfficerAddress: ctx.previousOfficerAddress,
+        newInvestorAddress: ctx.newInvestorAddress
+      })
+
+      if (result) {
+        // A no-op is a valid terminal state: there are no holders to migrate
+        // or the root was already committed.
+        pendingMigration.value = null
+      }
+    } catch {
+      // Keep pendingMigration so the modal can expose retry/skip controls.
+      // The child mutation owns the concrete error ref rendered by the UI.
     }
   }
 
@@ -134,8 +179,8 @@ export function useOfficerRedeploy() {
     reset()
 
     // Errors remain on deployMutation.error / registerMutation.error so the
-    // template can render them reactively. `` just aborts
-    // the sequence without leaking a rejection.
+    // template can render them reactively. A falsy result just aborts the
+    // sequence without leaking a rejection.
     const metadata = await deployMutation.mutateAsync({ investorInput, teamId })
     if (!metadata) return
 
@@ -153,16 +198,29 @@ export function useOfficerRedeploy() {
     const { previousOfficer } = registerResult
 
     if (previousOfficer) {
-      const newInvestorAddress = await findNewInvestorAddress(metadata.officerAddress)
-      if (!newInvestorAddress) {
-        log.error('New InvestorV1 address not found in Officer.getTeam()')
+      const previousInvestorAddress = await findPreviousInvestorAddress(
+        previousOfficer.address as Address
+      )
+      if (!previousInvestorAddress) {
+        log.error('Previous Investor address not found in Officer.getTeam()')
         workflowError.value = new Error(
-          'Officer redeployed, but the new InvestorV1 could not be located in Officer.getTeam(). Retry from the Share Token page.'
+          'Could not locate previous Investor contract. Retry from the Share Token page.'
+        )
+        return
+      }
+
+      const newInvestorAddress = await findInvestorAddress(metadata.officerAddress)
+      if (!newInvestorAddress) {
+        log.error('New Investor address not found in Officer.getTeam()')
+        workflowError.value = new Error(
+          'Officer redeployed, but the new Investor could not be located in Officer.getTeam(). Retry from the Share Token page.'
         )
         return
       }
       pendingMigration.value = {
+        teamId,
         previousOfficerAddress: previousOfficer.address as Address,
+        previousInvestorAddress,
         newInvestorAddress
       }
       await tryMigration(pendingMigration.value)
@@ -182,13 +240,7 @@ export function useOfficerRedeploy() {
 
     // State
     isRunning,
-    migrationFailed,
-    isInconsistent,
-
-    // Reactive errors — bind directly to UAlert in the template
-    deployError: deployMutation.error,
-    registerError: registerMutation.error,
-    migrationError: migrateMutation.error,
-    workflowError
+    failure,
+    migrationRecovery
   }
 }

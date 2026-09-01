@@ -2,30 +2,14 @@
   <div class="space-y-4">
     <UPageCard variant="subtle">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-          <h3 class="font-semibold text-black dark:text-white">
-            Income Statement
-          </h3>
-          <p class="text-sm text-muted mt-0.5">
-            {{ accountingPeriod.label }}
-          </p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <USelect
-            v-model="periodPreset"
-            :items="periodPresetOptions"
-            class="w-32"
-            size="sm"
-          />
-          <UInput
-            v-if="showAnchorPicker"
-            v-model="periodAnchor"
-            type="date"
-            :max="todayStr"
-            class="w-36"
-            size="sm"
-          />
-        </div>
+        <h3 class="font-semibold text-black dark:text-white">
+          Income Statement
+        </h3>
+        <DatePicker
+          v-model="period"
+          mode="range"
+          storage-key="dashboard-accounting-income-period"
+        />
       </div>
 
       <div v-if="!hasAddress" class="text-muted text-center py-8">
@@ -123,14 +107,22 @@
     </UPageCard>
 
     <UPageCard v-if="hasAddress" variant="subtle">
-      <h3 class="font-semibold text-black dark:text-white mb-1">
-        Trades by position · {{ totalPositions }} positions
-      </h3>
-      <p class="text-sm text-muted mb-4">
-        Each position groups its buys and sells. <strong>Net = returned − invested</strong> is your
-        profit on the position (cash basis — a still-open position doesn't yet credit the unsold shares).
-        Click a position to expand its trades.
-      </p>
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
+        <div>
+          <h3 class="font-semibold text-black dark:text-white mb-1">
+            Trades by position · {{ totalPositions }} positions
+          </h3>
+          <p class="text-sm text-muted">
+            Each position groups its buys and sells. <strong>Net = returned − invested</strong> is your
+            profit on the position (cash basis — a still-open position doesn't yet credit the unsold shares).
+            Click a position to expand its trades.
+          </p>
+        </div>
+        <AccountingTableSearch
+          v-model="tradesSearchQuery"
+          placeholder="Search position, outcome…"
+        />
+      </div>
 
       <UTable
         :data="pagedTrades"
@@ -140,7 +132,7 @@
         :meta="tableMeta"
         :loading="isLoading"
         :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
+          base: 'table-auto border-separate border-spacing-0',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
@@ -160,15 +152,15 @@
           <div v-if="row.getIsGrouped()" class="space-y-0.5">
             <button
               type="button"
-              class="flex items-center gap-2 text-left font-medium cursor-pointer"
+              class="flex items-start gap-2 text-left font-medium cursor-pointer"
               @click="row.toggleExpanded()"
             >
               <UIcon
                 :name="row.getIsExpanded() ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-                class="w-4 h-4 shrink-0 text-muted"
+                class="w-4 h-4 shrink-0 text-muted mt-0.5"
               />
-              <span class="truncate max-w-xs">{{ groupLabel(row) }}</span>
-              <span class="text-muted text-xs">({{ row.getLeafRows().length }})</span>
+              <span class="wrap-break-word min-w-48">{{ groupLabel(row) }}</span>
+              <span class="text-muted text-xs shrink-0">({{ row.getLeafRows().length }})</span>
             </button>
             <p class="pl-6 text-xs text-muted">
               Invested {{ formatUsd(groupInvested(row)) }} · Returned {{ formatUsd(groupReturned(row)) }}
@@ -219,7 +211,7 @@
       </UTable>
 
       <AccountingPagination
-        v-model:page="currentPage"
+        v-model:page="page"
         v-model:page-size="pageSize"
         :total="totalPositions"
         noun="positions"
@@ -231,13 +223,17 @@
 <script setup lang="ts">
 import { getGroupedRowModel } from '@tanstack/vue-table'
 import type { GroupingOptions, Row } from '@tanstack/vue-table'
-import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
-import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
+import type { Range } from '~/types'
+import { usePagination } from '~/composables/usePagination'
 import { formatSignedUsd, formatUsd, type LedgerCategoryColor, signClass } from '~/utils/accounting'
+import { defaultValueForMode, toUnixSeconds } from '~/utils/datePicker'
 import { buildIncomeStatement } from '~/utils/incomeStatement'
+import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
+import { formatDateTime, formatNumber, fromUnix } from '~/utils/format'
 import AccountingPagination from './AccountingPagination.vue'
+import AccountingTableSearch from './AccountingTableSearch.vue'
 
 const props = defineProps<{
   activities: PolymarketActivity[]
@@ -247,28 +243,23 @@ const props = defineProps<{
   walletAddress: string
 }>()
 
-const pageSize = ref(20)
-const currentPage = ref(1)
+const tradesSearchQuery = ref('')
 
-const {
-  todayStr,
-  preset: periodPreset,
-  anchorDateStr: periodAnchor,
-  range: accountingPeriod,
-  showAnchorPicker,
-  presetOptions: periodPresetOptions
-} = useAccountingPeriod()
+// Reporting period (range mode) — defaults to the current month.
+const period = ref<Range>(defaultValueForMode('range') as Range)
+const periodStart = computed(() => toUnixSeconds(period.value.start))
+const periodEnd = computed(() => toUnixSeconds(period.value.end))
 
-watch([() => props.walletAddress, accountingPeriod], () => {
-  currentPage.value = 1
-})
+const { page, pageSize, reset } = usePagination(() => totalPositions.value, { key: 'income' })
+
+watch([() => props.walletAddress, period, tradesSearchQuery], reset)
 
 const statement = computed(() =>
   buildIncomeStatement({
     activities: props.activities,
     positions: props.positions,
-    periodStart: accountingPeriod.value.start,
-    periodEnd: accountingPeriod.value.end
+    periodStart: periodStart.value,
+    periodEnd: periodEnd.value
   })
 )
 
@@ -276,6 +267,14 @@ const statement = computed(() =>
 const isReconciled = computed(() => Math.abs(statement.value.reconciliationGap) < 1)
 
 type PositionAction = 'BUY' | 'SELL' | 'SPLIT' | 'MERGE' | 'REDEEM'
+
+const ACTION_META: Record<PositionAction, { label: string, color: LedgerCategoryColor }> = {
+  BUY: { label: 'Buy', color: 'info' },
+  SELL: { label: 'Sell', color: 'warning' },
+  SPLIT: { label: 'Split', color: 'neutral' },
+  MERGE: { label: 'Merge', color: 'neutral' },
+  REDEEM: { label: 'Redeem', color: 'primary' }
+}
 
 interface PositionTrade {
   /** Market grouping key — conditionId when present, robust across buys & redeems. */
@@ -296,11 +295,7 @@ interface PositionTrade {
 
 /** True when an activity timestamp falls inside the selected reporting period. */
 function inPeriod(ts: number): boolean {
-  const { start, end } = accountingPeriod.value
-  if (start != null && ts < start) {
-    return false
-  }
-  return ts <= end
+  return ts >= periodStart.value && ts <= periodEnd.value
 }
 
 /** Maps a Polymarket contract activity to a position trade row (null = skip). */
@@ -356,19 +351,46 @@ const positionGroups = computed<PositionTrade[][]>(() => {
   }
   const lastTs = (trades: PositionTrade[]): number => Math.max(...trades.map(t => t.timestamp))
   for (const trades of byMarket.values()) {
-    trades.sort((a, b) => a.timestamp - b.timestamp) // chronological: buys before sells
+    trades.sort((a, b) => b.timestamp - a.timestamp) // most recent first when expanded
   }
   return [...byMarket.values()].sort((a, b) => lastTs(b) - lastTs(a))
 })
 
-const totalPositions = computed(() => positionGroups.value.length)
+function positionGroupMatchesSearch(group: PositionTrade[], query: string): boolean {
+  const sample = group[0]
+  if (!sample) {
+    return false
+  }
+  if (matchesAccountingSearch(query, sample.market, sample.outcome)) {
+    return true
+  }
+  return group.some(trade =>
+    matchesAccountingSearch(
+      query,
+      trade.market,
+      trade.outcome,
+      ACTION_META[trade.action].label
+    )
+  )
+}
+
+const filteredPositionGroups = computed(() => {
+  if (!normalizeAccountingSearchQuery(tradesSearchQuery.value)) {
+    return positionGroups.value
+  }
+  return positionGroups.value.filter(group =>
+    positionGroupMatchesSearch(group, tradesSearchQuery.value)
+  )
+})
+
+const totalPositions = computed(() => filteredPositionGroups.value.length)
 
 // Paginate by position, then hand the table a flat list of that page's trades —
 // UTable regroups them via the `position` grouping column. Each trade carries
 // its block's zebra parity so the whole position (header + leaves) shares a shade.
 const pagedTrades = computed<PositionTrade[]>(() =>
-  positionGroups.value
-    .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
+  filteredPositionGroups.value
+    .slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
     .flatMap((group, index) => group.map(trade => ({ ...trade, groupEven: index % 2 === 0 })))
 )
 
@@ -399,14 +421,6 @@ const tableMeta = {
       return row.getIsGrouped() ? `${zebra} font-semibold` : zebra
     }
   }
-}
-
-const ACTION_META: Record<PositionAction, { label: string, color: LedgerCategoryColor }> = {
-  BUY: { label: 'Buy', color: 'info' },
-  SELL: { label: 'Sell', color: 'warning' },
-  SPLIT: { label: 'Split', color: 'neutral' },
-  MERGE: { label: 'Merge', color: 'neutral' },
-  REDEEM: { label: 'Redeem', color: 'primary' }
 }
 
 /** Market title for a group header row (read off its first child trade). */
@@ -446,16 +460,16 @@ function groupSoldShares(row: Row<PositionTrade>): number {
 }
 
 function formatDate(ts: number): string {
-  return ts ? format(new Date(ts * 1000), 'MMM d, yyyy') : '—'
+  return ts ? formatDateTime(fromUnix(ts)) : '—'
 }
 
 function formatShares(value: number | undefined): string {
-  return value ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'
+  return value ? formatNumber(value, { maxDecimals: 2 }) : '—'
 }
 
 /** Like formatShares but renders 0 as "0" (used for the bought / sold pair). */
 function formatShareCount(value: number): string {
-  return value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  return formatNumber(value, { maxDecimals: 2 })
 }
 
 /**

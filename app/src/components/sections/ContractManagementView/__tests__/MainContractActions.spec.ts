@@ -1,14 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import MainContractActions from '../MainContractActions.vue'
-import { mockToast, mockUserStore } from '@/tests/mocks'
-import { mockBodAddAction, mockBodApproveAction, mockBodIsBodAction } from '@/tests/mocks'
+import { mockBodAddAction, mockBodApproveAction, mockToast, mockUserStore } from '@/tests/mocks'
 import { useQueryClientFn, mockInvalidateQueries } from '@/tests/mocks/composables.mock'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import { encodeFunctionData } from 'viem'
-import * as utils from '@/utils'
 import type { TableRow } from '@/types/table'
 
 type MutationMock = {
@@ -51,7 +49,15 @@ const DEFAULT_ROW: TableRow = {
   ],
   paused: false,
   owner: '0xOwner0000000000000000000000000000000001',
+  deployer: '0xDeployer0000000000000000000000000000001',
   type: 'Treasury'
+}
+
+type ControllerProps = {
+  isBodAction: boolean
+  open: 'details' | 'transfer' | 'approval' | null
+  pendingActions: TableRow[]
+  statusChangeRequest: { id: number; paused: boolean } | null
 }
 
 const stubs = {
@@ -70,8 +76,8 @@ const stubs = {
     emits: ['view-details'],
     template: '<div data-test="pending-events-list"></div>'
   },
-  BodApprovalModal: {
-    name: 'BodApprovalModal',
+  BodApprovalContent: {
+    name: 'BodApprovalContent',
     props: ['row', 'loading'],
     emits: ['approve-action', 'close'],
     template:
@@ -80,16 +86,36 @@ const stubs = {
       '<button data-test="emit-close" @click="$emit(\'close\')">Close</button>' +
       '</div>'
   },
+  ContractReadDataSection: {
+    name: 'ContractReadDataSection',
+    props: ['address', 'abi', 'contractType', 'enabled'],
+    template: '<section data-test="contract-read-data-section" />'
+  },
   UAlert: {
     name: 'UAlert',
     props: ['color', 'title', 'description', 'variant', 'icon'],
     template: '<div data-test="u-alert">{{ title }}{{ description }}</div>'
+  },
+  Slideover: {
+    name: 'USlideover',
+    props: ['open', 'title', 'description'],
+    template: '<aside v-if="open" data-test="contract-details"><slot name="body" /></aside>'
   }
 }
 
-function mountComponent(rowOverrides: Partial<TableRow> = {}) {
+function mountComponent(
+  rowOverrides: Partial<TableRow> = {},
+  controllerProps: Partial<ControllerProps> = {}
+) {
   return mount(MainContractActions, {
-    props: { row: { ...DEFAULT_ROW, ...rowOverrides } },
+    props: {
+      row: { ...DEFAULT_ROW, ...rowOverrides },
+      isBodAction: false,
+      open: null,
+      pendingActions: [],
+      statusChangeRequest: null,
+      ...controllerProps
+    },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs
@@ -98,10 +124,10 @@ function mountComponent(rowOverrides: Partial<TableRow> = {}) {
 }
 
 const resetMutationMocks = () => {
-  Object.values(mutationByFn).forEach((m) => {
-    m.mutate.mockReset()
-    m.isPending.value = false
-    m.error.value = null
+  Object.values(mutationByFn).forEach((mutation) => {
+    mutation.mutate.mockReset()
+    mutation.isPending.value = false
+    mutation.error.value = null
   })
 }
 
@@ -119,65 +145,42 @@ describe('MainContractActions.vue', () => {
     })
 
     mockUserStore.address = '0x0000000000000000000000000000000000000001'
-    mockBodIsBodAction.isBodAction.value = false
     mockBodAddAction.isSuccess.value = false
     mockBodAddAction.isPending.value = false
     mockBodApproveAction.isPending.value = false
     mockBodApproveAction.isSuccess.value = false
-
-    vi.spyOn(utils, 'filterAndFormatActions').mockReturnValue([])
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
   })
 
-  it('renders and toggles action button state from paused flag', () => {
-    const active = mountComponent({ paused: false })
-    const paused = mountComponent({ paused: true })
+  it('renders details for the selected contract only when requested', async () => {
+    const wrapper = mountComponent({}, { open: 'details' })
 
-    expect(active.text()).toContain('Transfer Ownership')
-    expect(active.text()).toContain('Pending Actions')
-    expect(active.findAllComponents({ name: 'UButton' })[0]?.props('color')).toBe('error')
-    expect(paused.findAllComponents({ name: 'UButton' })[0]?.props('color')).toBe('info')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="contract-details"]').exists()).toBe(true)
+    expect(wrapper.getComponent({ name: 'ContractReadDataSection' }).props()).toMatchObject({
+      address: DEFAULT_ROW.address,
+      abi: DEFAULT_ROW.abi,
+      contractType: DEFAULT_ROW.type,
+      enabled: true
+    })
   })
 
-  it('disables privileged actions for non-owner non-BOD user', () => {
-    const wrapper = mountComponent()
-    expect(wrapper.findAll('button')[0]?.attributes('disabled')).toBeDefined()
-    expect(wrapper.findAll('button')[1]?.attributes('disabled')).toBeDefined()
-  })
+  it('executes a direct ownership transfer for the selected owner', async () => {
+    const wrapper = mountComponent({ owner: mockUserStore.address }, { open: 'transfer' })
 
-  it('calls pause write when contract is active', async () => {
-    mockBodIsBodAction.isBodAction.value = true
-
-    const wrapper = mountComponent({ paused: false })
-    await wrapper.findAll('button')[0]?.trigger('click')
-    expect(mutationByFn.pause.mutate).toHaveBeenCalled()
-  })
-
-  it('calls unpause write when contract is paused', async () => {
-    mockBodIsBodAction.isBodAction.value = true
-
-    const wrapper = mountComponent({ paused: true })
-    await wrapper.findAll('button')[0]?.trigger('click')
-    expect(mutationByFn.unpause.mutate).toHaveBeenCalled()
-  })
-
-  it('opens transfer modal and executes transfer directly when not BOD', async () => {
-    const wrapper = mountComponent({ owner: mockUserStore.address })
-    await wrapper.findAll('button')[1]?.trigger('click')
-    await wrapper.find('[data-test="emit-transfer"]')?.trigger('click')
+    await wrapper.find('[data-test="emit-transfer"]').trigger('click')
 
     expect(mutationByFn.transferOwnership.mutate).toHaveBeenCalled()
   })
 
-  it('creates BOD action with encoded data when transfer is BOD-gated', async () => {
-    mockBodIsBodAction.isBodAction.value = true
-    const wrapper = mountComponent()
+  it('creates a Board action when the selected transfer is Board-gated', async () => {
+    const wrapper = mountComponent({}, { open: 'transfer', isBodAction: true })
 
-    await wrapper.findAll('button')[1]?.trigger('click')
-    await wrapper.find('[data-test="emit-transfer"]')?.trigger('click')
+    await wrapper.find('[data-test="emit-transfer"]').trigger('click')
     await flushPromises()
 
     expect(vi.mocked(encodeFunctionData)).toHaveBeenCalledWith(
@@ -186,105 +189,116 @@ describe('MainContractActions.vue', () => {
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalled()
   })
 
-  it('shows transfer error alert and logs error when transfer write fails', async () => {
-    const wrapper = mountComponent({ owner: mockUserStore.address })
-    await wrapper.findAll('button')[1]?.trigger('click')
-    await wrapper.find('[data-test="emit-transfer"]')?.trigger('click')
+  it('logs a direct ownership-transfer error without closing the selected modal', async () => {
+    const wrapper = mountComponent({ owner: mockUserStore.address }, { open: 'transfer' })
 
+    await wrapper.find('[data-test="emit-transfer"]').trigger('click')
     mutationByFn.transferOwnership.error.value = new Error('reverted')
     await flushPromises()
 
     expect(mockLog.error).toHaveBeenCalled()
+    expect(wrapper.find('[data-test="transfer-ownership-form"]').exists()).toBe(true)
   })
 
-  it('opens pending actions flow and approves selected action', async () => {
-    mockBodIsBodAction.isBodAction.value = true
-    vi.spyOn(utils, 'filterAndFormatActions').mockReturnValue([{ id: 1 } as never])
-    const wrapper = mountComponent()
+  it('opens a selected pending-actions flow and approves its chosen action', async () => {
+    const wrapper = mountComponent({}, { open: 'approval', pendingActions: [{ id: 1 }] })
 
-    await wrapper.findAll('button')[2]?.trigger('click')
+    await wrapper.vm.$nextTick()
     await wrapper.findComponent({ name: 'PendingEventsList' }).vm.$emit('view-details', { id: 1 })
-    await wrapper.find('[data-test="emit-approve"]')?.trigger('click')
+    await wrapper.find('[data-test="emit-approve"]').trigger('click')
 
     expect(mockBodApproveAction.executeApproveAction).toHaveBeenCalledWith(1, 2)
   })
 
-  it('closes approval modal on close event', async () => {
-    mockBodIsBodAction.isBodAction.value = true
-    vi.spyOn(utils, 'filterAndFormatActions').mockReturnValue([{ id: 1 } as never])
-    const wrapper = mountComponent()
+  it('asks the table to close the pending-actions flow', async () => {
+    const wrapper = mountComponent({}, { open: 'approval', pendingActions: [{ id: 1 }] })
 
-    await wrapper.findAll('button')[2]?.trigger('click')
+    await wrapper.vm.$nextTick()
     await wrapper.findComponent({ name: 'PendingEventsList' }).vm.$emit('view-details', { id: 1 })
-    await wrapper.find('[data-test="emit-close"]')?.trigger('click')
+    await wrapper.find('[data-test="emit-close"]').trigger('click')
 
-    expect(wrapper.find('[data-test="bod-approval-modal"]').exists()).toBe(false)
+    expect(wrapper.emitted('update:open')).toContainEqual([null])
   })
 
-  it('emits contract-status-changed when action add and approval succeed', async () => {
-    mockBodIsBodAction.isBodAction.value = true
-    vi.spyOn(utils, 'filterAndFormatActions').mockReturnValue([{ id: 1 } as never])
-    const wrapper = mountComponent()
+  it('notifies the table when a Board action or approval succeeds', async () => {
+    const wrapper = mountComponent({}, { open: 'approval', pendingActions: [{ id: 1 }] })
 
-    await wrapper.findAll('button')[1]?.trigger('click')
     mockBodAddAction.isSuccess.value = true
     await wrapper.vm.$nextTick()
 
-    await wrapper.findAll('button')[2]?.trigger('click')
     mockBodApproveAction.isSuccess.value = true
     await wrapper.vm.$nextTick()
 
     expect(wrapper.emitted('contract-status-changed')).toBeTruthy()
   })
 
-  it('emits and invalidates queries when transfer succeeds', async () => {
+  it('notifies the table and invalidates reads when direct transfer succeeds', async () => {
     type MutateOpts = { onSuccess?: () => void }
     mutationByFn.transferOwnership.mutate.mockImplementationOnce(
-      (_vars: unknown, opts?: MutateOpts) => opts?.onSuccess?.()
+      (_variables: unknown, options?: MutateOpts) => options?.onSuccess?.()
     )
-    const wrapper = mountComponent({ owner: mockUserStore.address })
-    await wrapper.findAll('button')[1]?.trigger('click')
-    await wrapper.find('[data-test="emit-transfer"]')?.trigger('click')
+    const wrapper = mountComponent({ owner: mockUserStore.address }, { open: 'transfer' })
+
+    await wrapper.find('[data-test="emit-transfer"]').trigger('click')
     await flushPromises()
 
     expect(mockInvalidateQueries).toHaveBeenCalledTimes(2)
     expect(wrapper.emitted('contract-status-changed')).toBeTruthy()
+    expect(wrapper.emitted('update:open')).toContainEqual([null])
   })
 
-  it('emits contract-status-changed when pause and unpause mutations succeed', async () => {
-    mockBodIsBodAction.isBodAction.value = true
-    type MutateOpts = { onSuccess?: () => void }
+  it('runs the selected contract status write once for each request', async () => {
+    const active = mountComponent({}, { statusChangeRequest: { id: 1, paused: false } })
+    await flushPromises()
+    expect(mutationByFn.pause.mutate).toHaveBeenCalledTimes(1)
 
-    mutationByFn.pause.mutate.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
-      opts?.onSuccess?.()
+    const paused = mountComponent(
+      { paused: true },
+      { statusChangeRequest: { id: 2, paused: true } }
     )
-    const pauseWrapper = mountComponent({ paused: false })
-    await pauseWrapper.findAll('button')[0]?.trigger('click')
+    await flushPromises()
+    expect(mutationByFn.unpause.mutate).toHaveBeenCalledTimes(1)
+
+    active.unmount()
+    paused.unmount()
+  })
+
+  it('notifies the table when the selected pause or resume write succeeds', async () => {
+    type MutateOpts = { onSuccess?: () => void }
+    mutationByFn.pause.mutate.mockImplementationOnce((_value: unknown, options?: MutateOpts) =>
+      options?.onSuccess?.()
+    )
+    const pauseWrapper = mountComponent({}, { statusChangeRequest: { id: 1, paused: false } })
     await flushPromises()
     expect(pauseWrapper.emitted('contract-status-changed')).toBeTruthy()
 
-    mutationByFn.unpause.mutate.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
-      opts?.onSuccess?.()
+    mutationByFn.unpause.mutate.mockImplementationOnce((_value: unknown, options?: MutateOpts) =>
+      options?.onSuccess?.()
     )
-    const unpauseWrapper = mountComponent({ paused: true })
-    await unpauseWrapper.findAll('button')[0]?.trigger('click')
+    const resumeWrapper = mountComponent(
+      { paused: true },
+      { statusChangeRequest: { id: 2, paused: true } }
+    )
     await flushPromises()
-    expect(unpauseWrapper.emitted('contract-status-changed')).toBeTruthy()
+    expect(resumeWrapper.emitted('contract-status-changed')).toBeTruthy()
   })
 
-  it('logs pause/unpause errors', async () => {
-    const wrapper = mountComponent()
-    mockLog.error.mockClear()
-
+  it('logs selected pause and resume errors', async () => {
+    const pauseWrapper = mountComponent({}, { statusChangeRequest: { id: 1, paused: false } })
     mutationByFn.pause.error.value = new Error('pause failed')
     await flushPromises()
     expect(mockLog.error).toHaveBeenCalled()
 
     mockLog.error.mockClear()
+    const resumeWrapper = mountComponent(
+      { paused: true },
+      { statusChangeRequest: { id: 2, paused: true } }
+    )
     mutationByFn.unpause.error.value = new Error('unpause failed')
     await flushPromises()
     expect(mockLog.error).toHaveBeenCalled()
 
-    wrapper.unmount()
+    pauseWrapper.unmount()
+    resumeWrapper.unmount()
   })
 })

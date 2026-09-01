@@ -83,6 +83,14 @@ export type ExpenseTokenAddressChangedRow = {
   timestamp: number
 }
 
+export type ExpenseOwnershipTransferredRow = {
+  id: string
+  contractAddress: string
+  previousOwner: string
+  newOwner: string
+  timestamp: number
+}
+
 export type ExpenseEventsQuery = {
   expenseDeposits: { items: ExpenseDepositRow[] }
   expenseTokenDeposits: { items: ExpenseTokenDepositRow[] }
@@ -94,6 +102,7 @@ export type ExpenseEventsQuery = {
   expenseTokenSupportAddeds: { items: ExpenseTokenSupportAddedRow[] }
   expenseTokenSupportRemoveds: { items: ExpenseTokenSupportRemovedRow[] }
   expenseTokenAddressChangeds: { items: ExpenseTokenAddressChangedRow[] }
+  expenseOwnershipTransferreds: { items: ExpenseOwnershipTransferredRow[] }
 }
 
 export type ExpenseTransactionType =
@@ -108,6 +117,7 @@ export type ExpenseTransactionType =
   | 'tokenSupportAdded'
   | 'tokenSupportRemoved'
   | 'tokenAddressChanged'
+  | 'ownershipTransferred'
 
 export type RawExpenseTransaction = {
   txHash: string

@@ -45,11 +45,13 @@
         :collapsed="collapsed"
         :items="items"
         orientation="vertical"
+        :model-value="openSections"
         :ui="{
           list: 'flex flex-col gap-2',
           link: 'text-md gap-3 px-4 py-3 rounded-xl',
           linkLeadingIcon: 'size-6'
         }"
+        @update:model-value="onMenuToggle"
       />
     </template>
 
@@ -97,161 +99,39 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore } from '@/stores/teamStore'
 import { useUserDataStore } from '@/stores/user'
-import type { NavigationMenuItem } from '@nuxt/ui'
-import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { formatAddress } from '@/utils/formatAddress'
+import { computed, ref, watch } from 'vue'
+import { formatAddress } from '@/utils/format'
+import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
 
-const route = useRoute()
 const userStore = useUserDataStore()
-const teamStore = useTeamStore()
 
 const open = ref(false)
 
-const items = computed<NavigationMenuItem[]>(() => [
-  {
-    label: 'Companies',
-    icon: 'heroicons:squares-2x2',
-    to: '/teams'
-  },
-  {
-    label: 'Company',
-    icon: 'heroicons:home',
-    active: route.name === 'show-team',
-    to: {
-      name: 'show-team',
-      params: { id: teamStore.currentTeamId || '1' }
-    }
-  },
-  {
-    label: 'Accounts',
-    icon: 'heroicons:currency-dollar',
-    to: {
-      name: 'bank-account',
-      params: { id: teamStore.currentTeamId || '1' }
-    },
-    defaultOpen: true,
-    children: [
-      {
-        label: 'Bank Account',
-        // icon: 'heroicons:banknotes',
-        to: {
-          name: 'bank-account',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      },
-      {
-        label: 'Safe Account',
-        // icon: 'heroicons:shield-check',
-        to: {
-          name: 'safe-account',
-          params: {
-            id: teamStore.currentTeamId || '1',
-            address: teamStore.getContractAddressByType('Safe') || '0x'
-          }
-        }
-      },
-      {
-        label: 'Expense Account',
-        // icon: 'heroicons:briefcase',
-        to: {
-          name: 'expense-account',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      }
-    ]
-  },
-  {
-    label: 'Payroll',
-    icon: 'heroicons:currency-dollar',
-    to: {
-      name: 'payroll-account',
-      params: { id: teamStore.currentTeamId || '1' }
-    },
-    defaultOpen: true,
-    children: [
-      {
-        // icon: 'heroicons:briefcase',
-        label: 'Payroll Account',
-        to: {
-          name: 'payroll-account',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      },
-      {
-        // icon: 'heroicons:briefcase',
-        label:
-          route.name === 'payroll-history' && route.params.memberAddress !== userStore.address
-            ? 'Member Payroll History'
-            : 'My Payroll History',
-        active: route.name === 'payroll-history',
-        to: {
-          name: 'payroll-history',
-          params: { id: teamStore.currentTeamId || '1', memberAddress: userStore.address }
-        }
-      },
-      {
-        // icon: 'heroicons:briefcase',
-        label: 'Company Payroll',
-        to: {
-          name: 'team-payroll',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      }
-    ]
-  },
-  {
-    label: 'Contract Management',
-    icon: 'heroicons:wrench',
-    to: {
-      name: 'contract-management',
-      params: { id: teamStore.currentTeamId || '1' }
-    }
-  },
-  {
-    label: 'SHER Token',
-    icon: 'heroicons:chart-pie',
-    to: {
-      name: 'sher-token',
-      params: { id: teamStore.currentTeamId || '1' }
-    }
-  },
+const items = useSidebarNavItems()
 
-  {
-    label: 'Administration',
-    icon: 'heroicons:chart-bar',
-    to: {
-      name: 'bod-elections',
-      params: { id: teamStore.currentTeamId || '1' }
-    },
-    children: [
-      {
-        label: 'Board Election',
-        to: {
-          name: 'bod-elections',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      },
-      {
-        label: 'Proposals',
-        to: {
-          name: 'bod-proposals',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      }
-    ]
-  },
-  {
-    label: 'Vesting',
-    icon: 'heroicons:lock-closed',
-    to: {
-      name: 'vesting',
-      params: { id: teamStore.currentTeamId || '1' }
-    }
-  }
-])
+// Controlled accordion so every parent menu follows one rule: the section of
+// the page you're on is open, the others are closed. `defaultOpen` on the items
+// marks that active section; navigating re-asserts it, and a manual click opens
+// only the clicked section (one open at a time).
+const activeOpen = computed<string[]>(() =>
+  items.value
+    .flat()
+    .filter((item) => item.defaultOpen && typeof item.value === 'string')
+    .map((item) => item.value as string)
+)
+
+const openSections = ref<string[]>(activeOpen.value)
+watch(activeOpen, (value) => {
+  openSections.value = value
+})
+
+function onMenuToggle(value: unknown): void {
+  if (!Array.isArray(value)) return
+  // Keep only the newly expanded section so a single one stays open at a time.
+  const added = (value as string[]).find((v) => !openSections.value.includes(v))
+  openSections.value = added ? [added] : []
+}
 
 const formatedUserAddress = computed(() => formatAddress(userStore.address))
 </script>

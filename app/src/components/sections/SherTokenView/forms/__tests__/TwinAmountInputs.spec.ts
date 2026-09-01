@@ -1,16 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import TwinAmountInputs from '../TwinAmountInputs.vue'
-
-const totalSupplyRef = ref<bigint | undefined>(undefined)
-const symbolRef = ref<string | undefined>('SHER')
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: vi.fn(() => ({ data: symbolRef })),
-  useInvestorTotalSupply: vi.fn(() => ({ data: totalSupplyRef }))
-}))
+import { mockInvestorReads } from '@/tests/mocks'
 
 const mountInputs = (props: Record<string, unknown> = {}) =>
   mount(TwinAmountInputs, {
@@ -30,8 +22,8 @@ const mountInputs = (props: Record<string, unknown> = {}) =>
 describe('TwinAmountInputs.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    totalSupplyRef.value = 100_000_000n
-    symbolRef.value = 'SHER'
+    mockInvestorReads.totalSupply.data.value = 100_000_000n
+    mockInvestorReads.symbol.data.value = 'SHER'
   })
 
   it('renders sync helper and token symbol', () => {
@@ -55,8 +47,16 @@ describe('TwinAmountInputs.vue', () => {
   })
 
   it('disables percentage input when total supply is zero', () => {
-    totalSupplyRef.value = 0n
+    mockInvestorReads.totalSupply.data.value = 0n
     const wrapper = mountInputs({ percentage: 40 })
+
+    const percentageInput = wrapper.find('input[data-test="percentage-input"]')
+    expect(percentageInput.attributes('disabled')).toBeDefined()
+    expect((percentageInput.element as HTMLInputElement).value).toBe('100')
+  })
+
+  it('disables percentage input when percentage editing is unavailable', () => {
+    const wrapper = mountInputs({ disablePercentage: true, percentage: 40 })
 
     const percentageInput = wrapper.find('input[data-test="percentage-input"]')
     expect(percentageInput.attributes('disabled')).toBeDefined()

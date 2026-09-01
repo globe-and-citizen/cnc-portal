@@ -80,15 +80,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
-import ApproveUsersEIP712Form from '@/components/forms/ApproveUsersEIP712Form.vue'
+import ApproveUsersEIP712Form from '@/components/sections/ExpenseAccountView/forms/ApproveUsersEIP712Form.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import type { User, BudgetLimit } from '@/types'
-import { getAxiosErrorMessage, log, parseError } from '@/utils'
-import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
+import { log } from '@/lib/logging'
+import ApproveExpenseSummaryForm from '@/components/sections/ExpenseAccountView/forms/ApproveExpenseSummaryForm.vue'
 import { useCreateExpenseMutation } from '@/queries/expense.queries'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
@@ -106,7 +107,7 @@ const userDataStore = useUserDataStore()
 const toast = useToast()
 const route = useRoute()
 const chainId = useChainId()
-const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
+const { signTypedDataAsync, error: signTypedDataError } = useSignTypedData()
 const { mutateAsync: addExpenseData, error: errorAddExpenseData } = useCreateExpenseMutation()
 
 const expenseAccountEip712Address = computed(
@@ -120,7 +121,7 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address,
-  abi: EXPENSE_ACCOUNT_EIP712_ABI,
+  abi: expenseAccountEip712Abi,
   query: {
     staleTime: Infinity
   }
@@ -182,7 +183,7 @@ const approveUser = async (data: BudgetLimit) => {
     endDate: Number(data.endDate)
   }
 
-  await signTypedDataAsync({
+  const signedApproval = await signTypedDataAsync({
     types,
     primaryType: 'BudgetLimit',
     message,
@@ -192,7 +193,9 @@ const approveUser = async (data: BudgetLimit) => {
   const expenseAccountData = {
     body: {
       data,
-      signature: signature.value,
+      signature: signedApproval,
+      signedAgainstContractAddress: verifyingContract,
+      chainId: chainId.value,
       teamId: route.params.id
     }
   }
@@ -205,7 +208,7 @@ const approveUser = async (data: BudgetLimit) => {
   toast.add({ title: 'User approved successfully', color: 'success' })
 }
 
-const errorMessage = (error: {}, message: string) =>
+const errorMessage = (error: object, message: string) =>
   'reason' in error ? (error.reason as string) : message
 
 const isBodAction = () => false
@@ -215,7 +218,7 @@ const isBodAction = () => false
 watch(errorAddExpenseData, (newVal) => {
   if (newVal) {
     approveErrorMessage.value = getAxiosErrorMessage(newVal, 'Error Adding Expense Data')
-    log.error('errorAddExpenseData.value', parseError(newVal))
+    log.error('errorAddExpenseData.value', newVal)
     loadingApprove.value = false
   }
 })
@@ -226,7 +229,7 @@ watch(errorGetOwner, (newVal) => {
 watch(signTypedDataError, async (newVal) => {
   if (newVal) {
     approveErrorMessage.value = 'Error signing expense data'
-    log.error('signTypedDataError.value', parseError(newVal))
+    log.error('signTypedDataError.value', newVal)
     loadingApprove.value = false
   }
 })

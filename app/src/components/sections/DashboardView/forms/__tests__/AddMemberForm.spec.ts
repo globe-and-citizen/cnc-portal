@@ -4,14 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useAddMembersMutation } from '@/queries/member.queries'
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 
 const mockMutate = vi.fn()
 
 const MultiSelectStub = {
   name: 'MultiSelectMemberInput',
   template: '<div data-test="multi-select-stub" />',
-  props: ['modelValue'],
+  props: ['modelValue', 'memberScope'],
   emits: ['update:modelValue']
 }
 
@@ -60,7 +60,9 @@ describe('AddMemberForm.vue', () => {
     const wrapper = mountComponent({ stubMultiSelect: true })
 
     // Verify the form renders with the member input + Add Members button
-    expect(wrapper.findComponent({ name: 'MultiSelectMemberInput' }).exists()).toBe(true)
+    const memberInput = wrapper.findComponent({ name: 'MultiSelectMemberInput' })
+    expect(memberInput.exists()).toBe(true)
+    expect(memberInput.props('memberScope')).toBe('non-team-members')
     const addBtn = wrapper
       .findAllComponents({ name: 'UButton' })
       .find((b) => b.text().includes('Add Members'))

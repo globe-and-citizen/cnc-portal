@@ -18,17 +18,14 @@
       <div class="ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-4">
         <span class="text-sm">Contract Address</span>
 
-        <AddressToolTip
+        <AddressTooltip
           v-if="cashRemunerationAddress"
           :address="cashRemunerationAddress"
           class="text-sm font-bold"
         />
       </div>
     </div>
-    <GenericTokenHoldingsSection
-      v-if="cashRemunerationAddress"
-      :address="cashRemunerationAddress"
-    />
+    <TokenHoldingsSection v-if="cashRemunerationAddress" :address="cashRemunerationAddress" />
 
     <MemberSection />
 
@@ -39,10 +36,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTeamStore } from '@/stores'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 
-import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
+import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
 import OwnerTreasuryWithdrawAction from '@/components/sections/OwnerTreasuryWithdrawAction.vue'
 

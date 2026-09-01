@@ -21,41 +21,46 @@ enum GlobalSettingStatus {
 }
 
 model User {
-  address                String                   @id @unique
+  address                String                      @id @unique
   name                   String?
   nonce                  String
   imageUrl               String?
-  roles                  String[]                 @default(["ROLE_USER"])
-  teams                  Team[]                   @relation("MemberTeams")
-  ownedTeams             Team[]                   @relation("OwnedTeams")
+  roles                  String[]                    @default(["ROLE_USER"])
+  teams                  Team[]                      @relation("MemberTeams")
+  ownedTeams             Team[]                      @relation("OwnedTeams")
   notifications          Notification[]
   BoardOfDirectorActions BoardOfDirectorActions[]
   memberTeamsData        MemberTeamsData[]
   Wage                   Wage[]
   weeklyClaims           WeeklyClaim[]
   Expense                Expense[]
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime                 @updatedAt
+  classifiedTransactions TransactionClassification[]
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
 }
 
 model Team {
-  id                     Int                      @id @default(autoincrement())
-  members                User[]                   @relation("MemberTeams")
-  owner                  User                     @relation("OwnedTeams", fields: [ownerAddress], references: [address], onDelete: Restrict)
-  ownerAddress           String
-  description            String?
-  name                   String                   @unique
-  isArchived             Boolean                  @default(false)
-  BoardOfDirectorActions BoardOfDirectorActions[]
-  teamContracts          TeamContract[]
-  teamOfficers           TeamOfficer[]
-  memberTeamsData        MemberTeamsData[]
-  Wage                   Wage[]
-  weeklyClaims           WeeklyClaim[]
-  Expense                Expense[]
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime                 @updatedAt
-  teamFunctionOverrides  TeamFunctionOverride[]
+  id                         Int                         @id @default(autoincrement())
+  members                    User[]                      @relation("MemberTeams")
+  owner                      User                        @relation("OwnedTeams", fields: [ownerAddress], references: [address], onDelete: Restrict)
+  ownerAddress               String
+  description                String?
+  name                       String
+  slug                       String                      @unique
+  isArchived                 Boolean                     @default(false)
+  BoardOfDirectorActions     BoardOfDirectorActions[]
+  teamContracts              TeamContract[]
+  teamOfficers               TeamOfficer[]
+  memberTeamsData            MemberTeamsData[]
+  Wage                       Wage[]
+  weeklyClaims               WeeklyClaim[]
+  Expense                    Expense[]
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  teamFunctionOverrides      TeamFunctionOverride[]
+  fixedReturnOfferings       FixedReturnOffering[]
+  investorMigrations         InvestorMigration[]
+  transactionClassifications TransactionClassification[]
 }
 
 model MemberTeamsData {
@@ -95,6 +100,7 @@ model Wage {
   overtimeRatePerHour         Json?
   maximumOvertimeHoursPerWeek Int           @default(0)
   maximumHoursPerWeek         Int
+  maximumHoursPerDay          Int           @default(8)
   disabled                    Boolean       @default(false)
   nextWageId                  Int?          @unique
   nextWage                    Wage?         @relation("wageRelated", fields: [nextWageId], references: [id], onDelete: SetNull)
@@ -108,6 +114,7 @@ model Wage {
   // Enforced by a deferrable EXCLUDE constraint (Wage_active_unique) in
   // migration 20260428_wage_active_deferrable. Deferrable so chained
   // create-and-relink can run inside a single transaction.
+  @@index([teamId, userAddress])
 }
 
 model Claim {
@@ -140,13 +147,18 @@ model WeeklyClaim {
   // for re-signing) when the team's CashRemunerationEIP712 contract is later
   // redeployed. Nullable for legacy rows signed before this column existed.
   signedAgainstContractAddress String?
+  // Free-form Markdown memo of the member's goals for the week. One per weekly
+  // claim (the [teamId, memberAddress, weekStart] tuple). Upserted independently of daily
+  // claims — a goals-only week creates a claim-less WeeklyClaim row. Nullable
+  // for weeks with no goals set.
+  weeklyGoals                  String?
   claims                       Claim[]  @relation("WeeklyClaimToClaims")
   wageId                       Int
   wage                         Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
   createdAt                    DateTime @default(now())
   updatedAt                    DateTime @updatedAt
 
-  @@unique([wageId, weekStart])
+  @@unique([teamId, memberAddress, weekStart])
   @@index([weekStart])
 }
 
@@ -243,4 +255,91 @@ model TeamFunctionOverride {
 
   @@unique([teamId, functionName], name: "unique_team_function")
   @@index([teamId])
+}
+
+// Off-chain metadata for a FixedReturn lending offer. FixedReturn.sol's
+// createLendingOffer intentionally has no title/description params — the contract's
+// NatSpec says the calling application persists them linked by the returned offerId.
+// The on-chain contract address is resolved via TeamContract (teamId + type
+// 'FixedReturn'), same as Expense resolves ExpenseAccountEIP712's address, rather than
+// duplicating it here.
+model FixedReturnOffering {
+  id        Int      @id @default(autoincrement())
+  teamId    Int
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  offerId   Int
+  title     String
+  purpose   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, offerId])
+  @@index([teamId])
+}
+
+// Frozen shareholder snapshot for an InvestorV1 -> Investor (v2) Merkle-pull
+// migration (issue #2286). The list is captured client-side at the moment
+// setMigrationRoot is called and persisted here so any shareholder can later
+// fetch their (amount, proof) to self-claim — Ponder cannot reconstruct this
+// after the fact since it never indexed InvestorV1 Transfer events, and the
+// on-chain root alone doesn't reveal the leaves it commits to.
+model InvestorMigration {
+  id                      Int      @id @default(autoincrement())
+  teamId                  Int
+  team                    Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  previousInvestorAddress String
+  newInvestorAddress      String   @unique
+  merkleRoot              String
+  blockNumber             BigInt
+  // [{ shareholder: Address, amount: string (uint256) }, ...] — the frozen
+  // snapshot StandardMerkleTree.of(...) was built from; proofs are
+  // recomputed on demand from this list rather than stored, since the tree
+  // is a pure deterministic function of it.
+  shareholders            Json
+  createdAt               DateTime @default(now())
+
+  @@index([teamId])
+}
+
+// The constrained set of accounting categories a Bank/Safe deposit or withdrawal
+// can be classified into (issue #2457). Direction (deposit vs withdrawal) decides
+// which categories are valid and which ledger accounts they map to — that resolution
+// lives in the accounting engine, so this enum stays a plain direction-agnostic set.
+enum TransactionClassificationCategory {
+  REVENUE
+  EXPENSE
+  SHAREHOLDER_LOAN
+  OWNER_CAPITAL
+  INTERNAL_TRANSFER
+  PAYROLL_EXPENSE
+  INTEREST_EXPENSE
+  DIVIDEND_EXPENSE
+}
+
+// One manual accounting classification for a single Bank or Safe deposit/withdrawal,
+// keyed by its stable on-chain identity. It overrides the address-inference fallback
+// in the accounting engine and is shared across the team; only the team owner may
+// create or edit one (issue #2457).
+model TransactionClassification {
+  id                  Int                               @id @default(autoincrement())
+  teamId              Int
+  team                Team                              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  // Stable transaction identity: the canonical lowercase `${txHash}-${logIndex}` of
+  // the source Bank/Safe event — the same id the accounting engine keys entries on.
+  txId                String
+  category            TransactionClassificationCategory
+  // Optional free-text note the classifier attaches to explain the booking.
+  memo                String?
+  // Address of the (owner) user who last set this classification. Attribution only,
+  // decoupled from the classification's lifecycle: removing a user nulls the credit
+  // rather than erasing the team's books (SetNull, not Cascade).
+  classifiedByAddress String?
+  classifiedBy        User?                             @relation(fields: [classifiedByAddress], references: [address], onDelete: SetNull)
+  createdAt           DateTime                          @default(now())
+  updatedAt           DateTime                          @updatedAt
+
+  // One classification per (team, transaction). This composite unique is also the
+  // only index the reads need: `GET ?teamId=` scans it by the `teamId` prefix, and
+  // the upsert / delete hit it as a point lookup — so no redundant `@@index([teamId])`.
+  @@unique([teamId, txId])
 }

@@ -1,18 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import MintStakeSection from '../MintStakeSection.vue'
+import { mockInvestorReads } from '@/tests/mocks'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
-
-const totalSupplyRef = ref<bigint | undefined>(undefined)
-const recipientBalanceRef = ref<bigint | undefined>(undefined)
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorTotalSupply: vi.fn(() => ({ data: totalSupplyRef })),
-  useInvestorBalanceOf: vi.fn(() => ({ data: recipientBalanceRef }))
-}))
 
 const mountSection = (recipientAddress = VALID_ADDRESS) =>
   mount(MintStakeSection, {
@@ -22,12 +14,20 @@ const mountSection = (recipientAddress = VALID_ADDRESS) =>
       stubs: {
         TwinAmountInputs: {
           name: 'TwinAmountInputs',
-          props: ['percentage', 'amount', 'inputColor', 'minPercentage', 'maxPercentage'],
+          props: [
+            'percentage',
+            'amount',
+            'inputColor',
+            'minPercentage',
+            'maxPercentage',
+            'disablePercentage'
+          ],
           emits: ['update:percentage', 'update:amount'],
           template: `<div data-test="twin-inputs-stub">
             <div data-test="stub-input-color">{{ inputColor }}</div>
             <div data-test="stub-min">{{ minPercentage }}</div>
             <div data-test="stub-max">{{ maxPercentage }}</div>
+            <div data-test="stub-disable-percentage">{{ disablePercentage }}</div>
             <button data-test="emit-percentage" @click="$emit('update:percentage', 20)">percentage</button>
             <button data-test="emit-amount" @click="$emit('update:amount', 30)">amount</button>
           </div>`
@@ -50,8 +50,8 @@ const mountSection = (recipientAddress = VALID_ADDRESS) =>
 describe('MintStakeSection.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    totalSupplyRef.value = 100_000_000n
-    recipientBalanceRef.value = 20_000_000n
+    mockInvestorReads.totalSupply.data.value = 100_000_000n
+    mockInvestorReads.balanceOf.data.value = 20_000_000n
   })
 
   it('renders mode buttons and child sections', () => {
@@ -96,8 +96,8 @@ describe('MintStakeSection.vue', () => {
   })
 
   it('converts ending amount to final stake percentage (not amount/supply)', async () => {
-    totalSupplyRef.value = 50_000_000n
-    recipientBalanceRef.value = 28_000_000n
+    mockInvestorReads.totalSupply.data.value = 50_000_000n
+    mockInvestorReads.balanceOf.data.value = 28_000_000n
     const wrapper = mountSection()
     wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:amount', 100)
     await flushPromises()
@@ -109,8 +109,8 @@ describe('MintStakeSection.vue', () => {
   })
 
   it('keeps add-mode percentage-to-amount sync for high percentages', async () => {
-    totalSupplyRef.value = 50_000_000n
-    recipientBalanceRef.value = undefined
+    mockInvestorReads.totalSupply.data.value = 50_000_000n
+    mockInvestorReads.balanceOf.data.value = undefined
     const wrapper = mountSection()
     await wrapper.find('[data-test="add-mode-button"]').trigger('click')
     wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:percentage', 99)
@@ -125,8 +125,8 @@ describe('MintStakeSection.vue', () => {
   })
 
   it('disables ending mode and defaults to add mode on empty supply', async () => {
-    totalSupplyRef.value = 0n
-    recipientBalanceRef.value = 0n
+    mockInvestorReads.totalSupply.data.value = 0n
+    mockInvestorReads.balanceOf.data.value = 0n
     const wrapper = mountSection()
     await flushPromises()
 
@@ -134,5 +134,15 @@ describe('MintStakeSection.vue', () => {
     expect(wrapper.find('[data-test="stub-min"]').text()).toBe('0')
     expect(wrapper.find('[data-test="stub-max"]').text()).toBe('100')
     expect(wrapper.find('[data-test="stub-input-color"]').text()).toBe('primary')
+  })
+
+  it('disables percentage editing when recipient already owns full supply', () => {
+    mockInvestorReads.totalSupply.data.value = 100_000_000n
+    mockInvestorReads.balanceOf.data.value = 100_000_000n
+    const wrapper = mountSection()
+
+    expect(wrapper.find('[data-test="stub-disable-percentage"]').text()).toBe('true')
+    expect(wrapper.find('[data-test="stub-min"]').text()).toBe('100')
+    expect(wrapper.find('[data-test="stub-max"]').text()).toBe('100')
   })
 })

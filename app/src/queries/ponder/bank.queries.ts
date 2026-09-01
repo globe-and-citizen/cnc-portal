@@ -39,6 +39,7 @@ export const GET_BANK_EVENTS = gql`
     ) {
       items {
         id
+        contractAddress
         sender
         to
         amount
@@ -53,6 +54,7 @@ export const GET_BANK_EVENTS = gql`
     ) {
       items {
         id
+        contractAddress
         sender
         to
         token
@@ -101,6 +103,32 @@ export const GET_BANK_EVENTS = gql`
         contractAddress
         previousOwner
         newOwner
+        timestamp
+      }
+    }
+    bankTokenSupportAddeds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        tokenAddress
+        timestamp
+      }
+    }
+    bankTokenSupportRemoveds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        tokenAddress
         timestamp
       }
     }

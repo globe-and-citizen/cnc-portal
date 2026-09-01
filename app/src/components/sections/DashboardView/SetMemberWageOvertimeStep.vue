@@ -137,7 +137,7 @@ import { watch } from 'vue'
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types'
-import RateDotList from '@/components/RateDotList.vue'
+import RateDotList from '@/components/ui/RateDotList.vue'
 
 const emit = defineEmits<{ validated: []; back: [] }>()
 
@@ -147,15 +147,6 @@ defineProps<{
   isPending: boolean
   errorMessage?: string
 }>()
-
-watch(
-  () => wageData.value.overtimeRatePerHour.map((r) => Number(r.amount)),
-  (amounts) => {
-    wageData.value.overtimeRatePerHour.forEach((rate, i) => {
-      if (amounts[i] === 0 && rate.enabled) rate.enabled = false
-    })
-  }
-)
 
 watch(
   () => wageData.value.overtimeRatePerHour.map((r) => r.enabled),

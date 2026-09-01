@@ -76,16 +76,6 @@ vi.mock('@/composables/safe', () => ({
   openSafeAppUrl: mockOpenSafeAppUrl
 }))
 
-// Mock utils
-vi.mock('@/utils', () => ({
-  log: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn()
-  }
-}))
-
 // Component stubs
 const SELECTORS = {
   card: '[data-test="card-component"]',
@@ -102,7 +92,7 @@ const SELECTORS = {
   openSafeAppFooter: '[data-test="open-safe-app-footer"]'
 } as const
 
-const AddressToolTipStub = defineComponent({
+const AddressTooltipStub = defineComponent({
   props: ['address'],
   template: '<div data-test="address-tooltip">{{ address }}</div>'
 })
@@ -138,7 +128,7 @@ describe('SafeOwnersCard', () => {
       props: { ...defaultProps, ...props },
       global: {
         stubs: {
-          AddressToolTip: AddressToolTipStub,
+          AddressTooltip: AddressTooltipStub,
           RemoveOwnerButton: RemoveOwnerButtonStub,
           AddSignerModal: AddSignerModalStub,
           UpdateThresholdModal: UpdateThresholdModalStub

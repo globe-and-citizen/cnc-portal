@@ -10,22 +10,40 @@
         :description="claimSubmitMessage"
       >
         <template #actions>
-          <SubmitClaims
-            ref="submitClaimsRef"
-            v-if="hasWage"
-            :weekly-claim="weeklyClaim"
-            :signed-week-starts="signedWeekStarts"
-            :selected-week-start="selectedWeekStart"
-          />
-          <UButton
-            v-else
-            color="success"
-            size="sm"
-            :disabled="true"
-            data-test="submit-claim-disabled-button"
-          >
-            Submit Claim
-          </UButton>
+          <template v-if="hasWage">
+            <SubmitClaims
+              ref="submitClaimsRef"
+              :weekly-claim="weeklyClaim"
+              :signed-week-starts="signedWeekStarts"
+              :selected-week-start="selectedWeekStart"
+              :maximum-hours-per-day="userWage?.maximumHoursPerDay"
+              :existing-claims="weeklyClaim?.claims"
+            />
+            <SubmitWeeklyGoals
+              :weekly-claim="weeklyClaim"
+              :selected-week-start="selectedWeekStart"
+            />
+          </template>
+          <template v-else>
+            <UButton
+              color="success"
+              size="sm"
+              :disabled="true"
+              data-test="submit-claim-disabled-button"
+            >
+              Submit Claim
+            </UButton>
+            <UButton
+              color="neutral"
+              variant="subtle"
+              size="sm"
+              icon="i-lucide-target"
+              :disabled="true"
+              data-test="submit-weekly-goals-disabled-button"
+            >
+              Submit Weekly Goals
+            </UButton>
+          </template>
         </template>
       </UAlert>
 
@@ -92,6 +110,7 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
 import type { WeeklyClaim } from '@/types'
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
+import SubmitWeeklyGoals from '../CashRemunerationView/SubmitWeeklyGoals.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 
@@ -121,12 +140,11 @@ const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
   }
 })
 
-const hasWage = computed(() => {
-  const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)
-  if (!userWage) return false
+const userWage = computed(() =>
+  teamWageData.value?.find((wage) => wage.userAddress === userStore.address)
+)
 
-  return true
-})
+const hasWage = computed(() => !!userWage.value)
 
 watch(teamWageDataError, (newVal) => {
   if (newVal) {

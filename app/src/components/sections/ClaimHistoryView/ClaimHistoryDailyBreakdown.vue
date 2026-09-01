@@ -25,7 +25,7 @@
             class="h-3 w-3 rounded-full"
             :class="entry.totalMinutes > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
           />
-          <span class="font-medium">{{ entry.date.format('ddd DD MMM') }}</span>
+          <span class="font-medium">{{ formatDateWeekdayShort(entry.date) }}</span>
 
           <!-- Attachment icon if files exist -->
           <span
@@ -45,7 +45,11 @@
               <div class="flex-1">
                 <p class="font-medium text-gray-700">{{ claim.memo }}</p>
               </div>
-              <ClaimActions v-if="canModifyClaims" :claim="claim" />
+              <ClaimActions
+                v-if="canModifyClaims"
+                :claim="claim"
+                :week-claims="props.weeklyClaim?.claims ?? []"
+              />
             </div>
             <!-- File gallery below memo -->
             <ExpandableFileGallery
@@ -87,8 +91,9 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { Icon } from '@iconify/vue'
 import type { Address } from 'viem'
-import type { Week } from '@/utils/dayUtils'
-import { formatMinutesAsDuration } from '@/utils/wageUtil'
+import type { Week } from '@/utils/dates/calendar'
+import { formatDateWeekdayShort } from '@/utils/format'
+import { formatMinutesAsDuration } from '@/utils/wages/model'
 import { useUserDataStore } from '@/stores'
 import type { WeeklyClaim, Claim } from '@/types'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
@@ -101,9 +106,18 @@ interface Props {
   weeklyClaim?: WeeklyClaim
   selectedWeek: Week
   memberAddress: Address
+  /**
+   * When true, quick-submit is only offered for days the backend would accept
+   * (current ISO week, up to SUBMIT_RESTRICTION_MAX_DAYS_BACK days in the past).
+   * Mirrors the claim calendar guard and the server-side enforcement
+   * in addClaim, so old/out-of-window days don't expose a "+" that 400s.
+   */
+  isRestricted?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isRestricted: false
+})
 const emit = defineEmits<{
   'quick-submit': [dayIso: string]
 }>()
@@ -169,8 +183,22 @@ type DayEntry = {
   totalMinutes: number
 }
 
+const SUBMIT_RESTRICTION_MAX_DAYS_BACK = 4
+
+const isDayWithinSubmitWindow = (date: dayjs.Dayjs): boolean => {
+  const d = date.utc().startOf('day')
+  const today = dayjs.utc().startOf('day')
+  const currentWeekStart = today.startOf('isoWeek')
+  const currentWeekEnd = today.endOf('isoWeek')
+  if (d.isBefore(currentWeekStart, 'day') || d.isAfter(currentWeekEnd, 'day')) return false
+  const daysDiff = today.diff(d, 'day')
+  return daysDiff >= 0 && daysDiff <= SUBMIT_RESTRICTION_MAX_DAYS_BACK
+}
+
 const canQuickSubmitDay = (entry: DayEntry): boolean => {
-  return entry.totalMinutes === 0 && props.memberAddress === userStore.address
+  if (entry.totalMinutes !== 0 || props.memberAddress !== userStore.address) return false
+  if (props.isRestricted && !isDayWithinSubmitWindow(entry.date)) return false
+  return true
 }
 
 const onQuickSubmitClick = (entry: DayEntry) => {

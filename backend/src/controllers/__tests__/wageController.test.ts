@@ -18,6 +18,7 @@ vi.mock('../../utils', async () => {
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
   };
   prismaMock.$transaction = vi.fn(async (cb: (tx: unknown) => unknown) => cb(prismaMock));
@@ -153,6 +154,68 @@ describe('Wage Controller', () => {
 
       expect(response.status).toBe(201);
       expect(prisma.wage.create).toHaveBeenCalled();
+    });
+
+    it('should default the daily cap to 8 hours when it is not provided', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
+      const createSpy = vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          maximumHoursPerWeek: 40,
+        });
+
+      expect(response.status).toBe(201);
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ maximumHoursPerDay: 8 }),
+        })
+      );
+    });
+
+    it('should persist the daily cap provided by the owner', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
+      const createSpy = vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          maximumHoursPerWeek: 40,
+          maximumHoursPerDay: 6,
+        });
+
+      expect(response.status).toBe(201);
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ maximumHoursPerDay: 6 }),
+        })
+      );
+    });
+
+    it('should reject a daily cap above 24 hours', async () => {
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          maximumHoursPerWeek: 40,
+          maximumHoursPerDay: 25,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid request body');
     });
 
     it('should store DbNull when overtimeRatePerHour is explicitly null', async () => {
@@ -415,6 +478,33 @@ describe('Wage Controller', () => {
 
       expect(response.status).toBe(201);
     });
+
+    const validBody = {
+      teamId: 1,
+      userAddress: '0x1234567890123456789012345678901234567890',
+      ratePerHour: [{ type: 'cash', amount: 60 }],
+      maximumHoursPerWeek: 40,
+    };
+
+    it('creates an immediate new wage version when a current wage exists', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      const createSpy = vi
+        .spyOn(prisma.wage, 'create')
+        .mockResolvedValue({ ...mockWage, id: 2 } as Wage);
+      const updateSpy = vi.spyOn(prisma.wage, 'update').mockResolvedValue(mockWage);
+
+      const response = await request(app).put('/setWage').send(validBody);
+
+      expect(response.status).toBe(201);
+      expect(createSpy).toHaveBeenCalledWith({
+        data: expect.not.objectContaining({ effectiveFrom: expect.anything() }),
+      });
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: mockWage.id },
+        data: { nextWageId: 2 },
+      });
+    });
   });
 
   describe('GET: /', () => {
@@ -476,6 +566,24 @@ describe('Wage Controller', () => {
 
       expect(response.status).toBe(500);
       expect(response.body.message).toContain('Internal server error');
+    });
+
+    it('returns only current wage versions without schedule metadata', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
+        { ...mockWage, id: 2, nextWageId: null } as never,
+      ]);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      expect(response.body[0]).toMatchObject({ id: 2 });
+      expect(response.body[0]).not.toHaveProperty('scheduledWage');
+      expect(response.body[0]).not.toHaveProperty('nextChangeEffectiveFrom');
+      expect(prisma.wage.findMany).toHaveBeenCalledWith({
+        where: { teamId: 1, nextWageId: null },
+        orderBy: { id: 'asc' },
+      });
     });
 
     it('should return wages with null maximumOvertimeHoursPerWeek for legacy records', async () => {
@@ -569,7 +677,8 @@ describe('Wage Controller', () => {
 
     it('should return 403 if caller is not the owner of the team', async () => {
       vi.spyOn(prisma.wage, 'findUnique').mockResolvedValue({ teamId: 1 } as never);
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+      vi.mocked(prisma.wage.findFirst).mockReset();
+      vi.mocked(prisma.wage.findFirst).mockResolvedValue({
         ...mockWage,
         team: { ownerAddress: '0x0000000000000000000000000000000000000000' },
       } as unknown as Wage);
@@ -581,7 +690,8 @@ describe('Wage Controller', () => {
     });
 
     it('should disable a wage', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+      vi.mocked(prisma.wage.findFirst).mockReset();
+      vi.mocked(prisma.wage.findFirst).mockResolvedValue({
         ...mockWage,
         team: { ownerAddress: mockTeam.ownerAddress },
       } as unknown as Wage);
@@ -597,7 +707,8 @@ describe('Wage Controller', () => {
     });
 
     it('should enable a wage', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+      vi.mocked(prisma.wage.findFirst).mockReset();
+      vi.mocked(prisma.wage.findFirst).mockResolvedValue({
         ...mockWage,
         disabled: true,
         team: { ownerAddress: mockTeam.ownerAddress },

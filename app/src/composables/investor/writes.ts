@@ -1,17 +1,19 @@
 import { computed } from 'vue'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { investorAbi } from '@/artifacts/abi/generated'
+import {
+  useContractWritesV3,
+  type WriteFunctionName
+} from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
-import type { ExtractAbiFunctionNames } from 'abitype'
 
-type InvestorFunctionNames = ExtractAbiFunctionNames<typeof INVESTOR_ABI>
+type InvestorFunctionNames = WriteFunctionName<typeof investorAbi>
 
-function useInvestorContractWrite(functionName: InvestorFunctionNames) {
+function useInvestorContractWrite<F extends InvestorFunctionNames>(functionName: F) {
   const teamStore = useTeamStore()
-  const contractAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
+  const contractAddress = computed(() => teamStore.getInvestorAddress())
   return useContractWritesV3({
     contractAddress,
-    abi: INVESTOR_ABI,
+    abi: investorAbi,
     functionName
   })
 }

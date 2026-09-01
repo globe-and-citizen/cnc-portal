@@ -1,0 +1,4 @@
+interface:
+  display_name: "CNC Contract Change"
+  short_description: "Implement and validate Solidity contract changes in CNC Portal."
+  default_prompt: "Use $cnc-contract-change to implement this CNC Portal contract change."

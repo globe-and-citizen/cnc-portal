@@ -1,83 +1,33 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { describe, expect, it, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { computed, ref } from 'vue'
 import VestingView from '../VestingView.vue'
-import { ref } from 'vue'
-import { useReadContractFn, mockTeamStore, mockUserStore } from '@/tests/mocks'
-import { useTeamStore, useUserDataStore } from '@/stores'
+import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
+import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 
-// Constants
-const memberAddress = '0x000000000000000000000000000000000000dead'
-// Mocks
-const mockVestingInfos = ref([
-  [memberAddress],
-  [
-    {
-      start: `${Math.floor(Date.now() / 1000) - 3600}`,
-      duration: `${30 * 86400}`,
-      cliff: '0',
-      totalAmount: BigInt(10e18),
-      released: BigInt(2e18),
-      active: true
-    }
-  ]
-])
-const refetchVestingInfos = vi.fn()
+const refetch = vi.fn()
+vi.mock('@/composables/vesting/useVestingSchedules', () => ({
+  useVestingSchedules: () => ({
+    schedules: ref([]),
+    totals: ref({ promised: 0n, vested: 0n, claimable: 0n, released: 0n }),
+    tokenSymbol: computed(() => 'SHR'),
+    isLoading: ref(false),
+    error: ref(null),
+    refetch
+  })
+}))
 
-const mockArchivedInfos = ref([[], []])
-
-const mockCurrentTeam = ref({
-  id: 1,
-  ownerAddress: memberAddress,
-  teamContracts: [
-    {
-      type: 'InvestorV1',
-      address: '0x000000000000000000000000000000000000beef'
-    }
-  ]
-})
-
-// Test suite
 describe('VestingView.vue', () => {
-  let wrapper: VueWrapper
-
-  const mountComponent = () => {
-    return mount(VestingView, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    useReadContractFn.mockImplementation(({ functionName }: { functionName: string }) => {
-      if (functionName === 'getTeamVestingsWithMembers') {
-        return { data: mockVestingInfos, error: ref(null), refetch: refetchVestingInfos }
-      }
-      if (functionName === 'getTeamAllArchivedVestingsFlat') {
-        return { data: mockArchivedInfos, error: ref(null), refetch: vi.fn() }
-      }
-      return { data: ref('TST'), error: ref(null), refetch: vi.fn() }
-    })
-    // Configure store mocks
-    vi.mocked(useUserDataStore).mockReturnValue({ ...mockUserStore, address: memberAddress })
-    vi.mocked(useTeamStore).mockReturnValue({
-      ...mockTeamStore,
-      currentTeam: mockCurrentTeam.value as ReturnType<typeof useTeamStore>['currentTeam'],
-      currentTeamId: mockCurrentTeam.value.id,
-      getContractAddressByType: vi.fn((type) =>
-        type ? '0x000000000000000000000000000000000000beef' : undefined
-      )
-    } as ReturnType<typeof useTeamStore>)
-    wrapper = mountComponent()
+  it('renders the vesting hero without an implementation-version label', () => {
+    const wrapper = mount(VestingView)
+    expect(wrapper.text()).not.toContain('V2')
+    expect(wrapper.findComponent(VestingStats).exists()).toBe(true)
+    expect(wrapper.findComponent(VestingFlow).exists()).toBe(true)
   })
 
-  it('passes correct props to CreateVesting', async () => {
-    const btn = wrapper.find('[data-test="createAddVesting"]')
-    await btn.trigger('click')
-
-    const component = wrapper.findComponent({ name: 'CreateVesting' })
-    expect(component.props('tokenAddress')).toBe('0x000000000000000000000000000000000000beef')
+  it('refreshes the shared read model only for an explicit retry', () => {
+    const wrapper = mount(VestingView)
+    wrapper.getComponent(VestingFlow).vm.$emit('retry')
+    expect(refetch).toHaveBeenCalledOnce()
   })
 })

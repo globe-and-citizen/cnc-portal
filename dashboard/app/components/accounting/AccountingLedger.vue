@@ -1,35 +1,25 @@
 <template>
   <div class="space-y-4">
     <UPageCard variant="subtle">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-          <h3 class="font-semibold text-black dark:text-white">
-            General Ledger · {{ totalActivities }} activities · {{ filteredRows.length }} journal lines
-          </h3>
-          <p class="text-sm text-muted mt-0.5">
-            {{ accountingPeriod.label }}
-          </p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <USelect
-            v-model="periodPreset"
-            :items="periodPresetOptions"
-            class="w-32"
-            size="sm"
+      <div class="flex flex-col gap-3 mb-4">
+        <h3 class="font-semibold text-black dark:text-white">
+          General Ledger · {{ totalActivities }} activities · {{ filteredRows.length }} journal lines
+        </h3>
+        <!-- Single row: all filters/buttons stay on one line, scrolling horizontally on
+             narrow screens rather than wrapping. -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 justify-end">
+          <DatePicker
+            v-model="period"
+            mode="range"
+            storage-key="dashboard-accounting-ledger-period"
           />
-          <UInput
-            v-if="showAnchorPicker"
-            v-model="periodAnchor"
-            type="date"
-            :max="todayStr"
-            class="w-36"
-            size="sm"
+          <AccountingTableSearch
+            v-model="searchQuery"
+            placeholder="Search market, account, tx…"
           />
-          <USelect
-            v-model="categoryFilter"
+          <AccountingCategoryFilter
+            v-model="selectedCategories"
             :items="categoryOptions"
-            class="w-44"
-            size="sm"
           />
           <AccountingColumnVisibility
             v-model="visibleColumns"
@@ -52,7 +42,7 @@
         :columns="columns"
         :loading="isLoading"
         :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
+          base: 'table-auto border-separate border-spacing-0',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
@@ -85,7 +75,7 @@
         </template>
 
         <template #market-cell="{ row }">
-          <div v-if="row.original.isFirst" class="flex items-center gap-2 max-w-xs">
+          <div v-if="row.original.isFirst" class="flex items-start gap-2 min-w-48">
             <img
               v-if="row.original.entry.icon"
               :src="row.original.entry.icon"
@@ -97,11 +87,11 @@
               :href="marketUrl(row.original.entry)!"
               target="_blank"
               rel="noopener noreferrer"
-              class="truncate hover:underline text-black dark:text-white"
+              class="wrap-break-word hover:underline text-black dark:text-white"
             >
               {{ row.original.entry.description }}
             </a>
-            <span v-else class="truncate">{{ row.original.entry.description }}</span>
+            <span v-else class="wrap-break-word">{{ row.original.entry.description }}</span>
           </div>
         </template>
 
@@ -179,7 +169,7 @@
       </UTable>
 
       <AccountingPagination
-        v-model:page="currentPage"
+        v-model:page="page"
         v-model:page-size="pageSize"
         :total="totalActivities"
         noun="transactions"
@@ -195,7 +185,6 @@
 
 <script setup lang="ts">
 import { useSessionStorage } from '@vueuse/core'
-import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import {
   CATEGORY_META,
@@ -205,7 +194,9 @@ import {
   type LedgerEntry,
   signClass
 } from '~/utils/accounting'
-import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
+import type { Range } from '~/types'
+import { usePagination } from '~/composables/usePagination'
+import { defaultValueForMode, toUnixSeconds } from '~/utils/datePicker'
 import { buildGeneralLedger } from '~/utils/generalLedger'
 import type { RealizedTrade } from '~/utils/incomeStatement'
 import {
@@ -214,6 +205,12 @@ import {
   type MergedColumnKey,
   type MergedLedgerRow
 } from '~/utils/mergedLedger'
+import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
+import { formatDateTime, formatNumber, formatUsd, fromUnix } from '~/utils/format'
+import AccountingCategoryFilter, {
+  type CategoryOption
+} from './AccountingCategoryFilter.vue'
+import AccountingTableSearch from './AccountingTableSearch.vue'
 import AccountingColumnVisibility, {
   type ColumnOption
 } from './AccountingColumnVisibility.vue'
@@ -228,39 +225,36 @@ const props = defineProps<{
   walletAddress: string
 }>()
 
-const {
-  todayStr,
-  preset: periodPreset,
-  anchorDateStr: periodAnchor,
-  range: accountingPeriod,
-  showAnchorPicker,
-  presetOptions: periodPresetOptions
-} = useAccountingPeriod()
+// Reporting period (range mode) — defaults to the current month.
+const period = ref<Range>(defaultValueForMode('range') as Range)
+const periodStart = computed(() => toUnixSeconds(period.value.start))
+const periodEnd = computed(() => toUnixSeconds(period.value.end))
 
 const generalLedger = computed(() =>
   buildGeneralLedger({
     ledgerEntries: props.entries,
     realizedTrades: props.realizedTrades,
-    periodStart: accountingPeriod.value.start,
-    asOf: accountingPeriod.value.end
+    periodStart: periodStart.value,
+    asOf: periodEnd.value
   })
 )
 
-const pageSize = ref(20)
-const currentPage = ref(1)
-const categoryFilter = ref<'ALL' | LedgerCategory>('ALL')
+const searchQuery = ref('')
 
-watch([() => props.walletAddress, categoryFilter, accountingPeriod], () => {
-  currentPage.value = 1
-})
+const { page, pageSize, reset } = usePagination(() => totalActivities.value, { key: 'ledger' })
 
-const categoryOptions = [
-  { label: 'All categories', value: 'ALL' as const },
-  ...Object.entries(CATEGORY_META).map(([value, meta]) => ({
+const categoryOptions: CategoryOption<LedgerCategory>[] = Object.entries(CATEGORY_META).map(
+  ([value, meta]) => ({
     label: meta.label,
     value: value as LedgerCategory
-  }))
-]
+  })
+)
+const allCategoryValues = categoryOptions.map(option => option.value)
+
+// Multi-select: every category selected == "All categories".
+const selectedCategories = ref<LedgerCategory[]>([...allCategoryValues])
+
+watch([() => props.walletAddress, selectedCategories, period, searchQuery], reset)
 
 // --- Build the merged row list (one row per journal line) ---
 const allRows = computed(() =>
@@ -268,19 +262,40 @@ const allRows = computed(() =>
 )
 
 function inSelectedPeriod(timestamp: number): boolean {
-  const { start, end } = accountingPeriod.value
-  if (start != null && timestamp < start) {
-    return false
-  }
-  return timestamp <= end
+  return timestamp >= periodStart.value && timestamp <= periodEnd.value
+}
+
+const selectedCategorySet = computed(() => new Set(selectedCategories.value))
+
+function ledgerRowMatchesSearch(row: MergedLedgerRow, query: string): boolean {
+  const meta = CATEGORY_META[row.entry.category]
+  return matchesAccountingSearch(
+    query,
+    row.entry.description,
+    row.entry.outcome,
+    meta.label,
+    row.entry.txHash,
+    row.entry.counterparty,
+    row.entry.marketSlug,
+    row.account
+  )
 }
 
 const filteredRows = computed(() => {
-  const rows = allRows.value.filter(row => inSelectedPeriod(row.entry.timestamp))
-  if (categoryFilter.value === 'ALL') {
+  let rows = allRows.value.filter(row => inSelectedPeriod(row.entry.timestamp))
+  if (selectedCategories.value.length !== allCategoryValues.length) {
+    rows = rows.filter(row => selectedCategorySet.value.has(row.entry.category))
+  }
+  if (!normalizeAccountingSearchQuery(searchQuery.value)) {
     return rows
   }
-  return rows.filter(row => row.entry.category === categoryFilter.value)
+  const matchingEntryIds = new Set<string>()
+  for (const row of rows) {
+    if (ledgerRowMatchesSearch(row, searchQuery.value)) {
+      matchingEntryIds.add(row.entry.id)
+    }
+  }
+  return rows.filter(row => matchingEntryIds.has(row.entry.id))
 })
 
 // Pagination counts ACTIVITIES (isFirst rows), not journal lines — a page of
@@ -298,7 +313,7 @@ const activityStarts = computed(() => {
 const totalActivities = computed(() => activityStarts.value.length)
 
 const pagedRows = computed<MergedLedgerRow[]>(() => {
-  const startActivityIdx = (currentPage.value - 1) * pageSize.value
+  const startActivityIdx = (page.value - 1) * pageSize.value
   const endActivityIdx = startActivityIdx + pageSize.value
   const start = activityStarts.value[startActivityIdx]
   const end = activityStarts.value[endActivityIdx] ?? filteredRows.value.length
@@ -354,22 +369,19 @@ const columns = computed(() => {
 })
 
 function formatDate(ts: number): string {
-  return ts ? format(new Date(ts * 1000), 'MMM d, yyyy HH:mm') : '—'
+  return ts ? formatDateTime(fromUnix(ts)) : '—'
 }
 
 function formatQty(qty: number | undefined): string {
-  return qty == null ? '—' : qty.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  return qty == null ? '—' : formatNumber(qty, { maxDecimals: 2 })
 }
 
 function formatPrice(price: number | undefined): string {
-  return price == null ? '—' : `$${price.toFixed(4)}`
+  return price == null ? '—' : formatUsd(price, { decimals: 4 })
 }
 
 function formatUsd2(value: number | undefined): string {
-  if (value == null || Number.isNaN(value)) {
-    return '—'
-  }
-  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatUsd(value)
 }
 
 function marketUrl(entry: LedgerEntry): string | null {

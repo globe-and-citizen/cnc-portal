@@ -74,6 +74,23 @@ describe('useTransactionTable', () => {
     expect(table.expandedRows.value).toEqual({})
   })
 
+  it('keeps expanded rows and page when the underlying data refreshes without a filter change', async () => {
+    const source = ref(buildTransactions(25))
+    const table = useTransactionTable(computed(() => source.value))
+
+    table.page.value = 2
+    await nextTick()
+    table.expandedRows.value = { '0': true }
+    await nextTick()
+
+    // Simulate a poll-driven refetch: new array reference, same shape.
+    source.value = buildTransactions(25)
+    await nextTick()
+
+    expect(table.page.value).toBe(2)
+    expect(table.expandedRows.value).toEqual({ '0': true })
+  })
+
   it('resets page to first page when page size changes', async () => {
     const source = ref(buildTransactions(25))
     const table = useTransactionTable(computed(() => source.value))
@@ -92,10 +109,10 @@ describe('useTransactionTable', () => {
     const source = ref(buildTransactions(10))
     const table = useTransactionTable(computed(() => source.value))
 
-    table.dateRange.value = [
-      new Date(Date.UTC(2025, 0, 3)),
-      new Date(Date.UTC(2025, 0, 5, 23, 59, 59))
-    ]
+    table.dateRange.value = {
+      start: new Date(Date.UTC(2025, 0, 3)),
+      end: new Date(Date.UTC(2025, 0, 5, 23, 59, 59))
+    }
     await nextTick()
 
     expect(table.displayedTransactions.value).toHaveLength(3)

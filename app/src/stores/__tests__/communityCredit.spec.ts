@@ -1,0 +1,264 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { computed, ref } from 'vue'
+import type { Address } from 'viem'
+import {
+  mockBlockTimestamp,
+  mockFixedReturnReads,
+  mockUserStore,
+  mockWagmiCore,
+  useQueryFn
+} from '@/tests/mocks'
+import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
+import type { FixedReturnRawOffer, LendingOfferStruct } from '@/types'
+
+// The store reads the offer list through useFixedReturnAllOffers (globally mocked) and
+// opens an owner useQuery (globally mocked as useQueryFn) plus the off-chain metadata
+// query. Drive the owner ref through useQueryFn and stub the metadata query so the store
+// instantiates without a live query client; the owner ref is what drives isOwner.
+const ownerData = ref<string | undefined>(undefined)
+const { metadataQueryState } = vi.hoisted(() => ({
+  metadataQueryState: {
+    options: undefined as { queryParams: { teamId: () => unknown } } | undefined
+  }
+}))
+vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  useGetFixedReturnOfferingsQuery: vi.fn((options) => {
+    metadataQueryState.options = options
+    return { data: ref([]) }
+  })
+}))
+
+// The store derives "has the deadline passed" from the chain's own clock, not the
+// device's — fixed comfortably between EXPIRED_OPEN_OFFER's deadline (must read as
+// past) and OPEN_OFFER's (must read as not yet reached). useBlockTimestamp itself is
+// globally mocked (see composables.setup.ts); just drive its shared ref.
+const NOW = 2_000_000_000n
+
+import { useCommunityCreditStore } from '@/stores/communityCredit'
+
+const TOKEN = '0x0000000000000000000000000000000000000abc' as Address
+
+type OwnerQueryOptions = {
+  enabled: { value: boolean }
+  queryFn: () => Promise<Address>
+}
+
+function getOwnerQueryOptions(): OwnerQueryOptions {
+  const lastCall = useQueryFn.mock.calls.at(-1) as unknown as [OwnerQueryOptions] | undefined
+  if (!lastCall) throw new Error('Expected owner query options')
+  return lastCall[0]
+}
+
+function offer(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
+  return {
+    token: TOKEN,
+    fundingTarget: 40_000_000000n,
+    interestRateBps: 500n, // 5%
+    maturityDate: 1_700_000_000n + BigInt(90 * 86_400), // arbitrary far-future instant
+    // Far enough in the future that isLendingOfferAcceptingFunds' real-clock deadline
+    // check treats an Open offer as still fundable, unless a test overrides it.
+    subscriptionDeadline: 9_999_999_999n,
+    fundingAccess: 0,
+    isCapEnabled: false,
+    lenderCap: 0n,
+    totalFunded: 23_400_000000n,
+    totalRepaidByIssuer: 0n,
+    state: 0, // Open
+    ...over
+  }
+}
+
+const OPEN_OFFER: FixedReturnRawOffer = {
+  offerId: 2,
+  decimals: 6,
+  offer: offer(),
+  lenderAddresses: []
+}
+const REPAID_OFFER: FixedReturnRawOffer = {
+  offerId: 1,
+  decimals: 6,
+  offer: offer({
+    interestRateBps: 550n,
+    totalFunded: 18_000_000000n,
+    totalRepaidByIssuer: 18_990_000000n, // 18000 + 5.5% → fully repaid
+    state: 3
+  }),
+  lenderAddresses: []
+}
+const FUNDED_OFFER: FixedReturnRawOffer = {
+  offerId: 3,
+  decimals: 6,
+  // maturityDate overridden so it lands after the mocked NOW — the default offer()'s
+  // maturityDate matured long before NOW, which would otherwise resolve this to
+  // 'overdue' instead of the plain 'funded' this test is about.
+  offer: offer({
+    totalFunded: 40_000_000000n,
+    state: 1,
+    maturityDate: 1_999_000_000n + BigInt(90 * 86_400)
+  }),
+  lenderAddresses: []
+}
+// Still contract-state Open, but its subscription window closed without reaching
+// target — no longer fundable; offerStateToRoundStatus resolves this to 'stalled'.
+const EXPIRED_OPEN_OFFER: FixedReturnRawOffer = {
+  offerId: 4,
+  decimals: 6,
+  offer: offer({ subscriptionDeadline: 1_700_500_000n }),
+  lenderAddresses: []
+}
+
+describe('Community Credit store (contract-backed)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.mocked(useFixedReturnAddress).mockReturnValue(
+      computed(() => '0x5234567890123456789012345678901234567890' as Address)
+    )
+    mockBlockTimestamp.value = NOW
+    mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, REPAID_OFFER]
+    mockFixedReturnReads.allOffers.isLoading.value = false
+    mockFixedReturnReads.allOffers.isError.value = false
+    ownerData.value = undefined
+    metadataQueryState.options = undefined
+    mockWagmiCore.readContract.mockReset()
+    useQueryFn.mockReset()
+    useQueryFn.mockReturnValue({
+      data: ownerData,
+      isLoading: ref(false),
+      error: ref(null)
+    } as unknown as ReturnType<typeof useQueryFn>)
+  })
+
+  it('maps each on-chain offer to a CreditRound and splits active vs history', () => {
+    const store = useCommunityCreditStore()
+    expect(store.hasContract).toBe(true)
+    expect(store.rounds.map((r) => r.id)).toEqual(['2', '1'])
+    expect(store.activeRounds.map((r) => r.id)).toEqual(['2'])
+    expect(store.historyRounds.map((r) => r.id)).toEqual(['1'])
+    expect(store.getRound('2')?.raised).toBe(23400)
+    expect(store.getRound('1')?.status).toBe('repaid')
+  })
+
+  it('moves a stalled (expired, unfunded) round to history and still counts its principal as outstanding', () => {
+    mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, EXPIRED_OPEN_OFFER]
+    const store = useCommunityCreditStore()
+
+    expect(store.getRound('4')?.status).toBe('stalled')
+    expect(store.activeRounds.map((r) => r.id)).toEqual(['2'])
+    expect(store.historyRounds.map((r) => r.id)).toContain('4')
+    // 23,400 (open) + 23,400 (stalled) — a stalled round's principal is still
+    // outstanding, awaiting the issuer's refund/accept decision.
+    expect(store.outstandingPrincipal).toBe(46800)
+  })
+
+  it('moves a funded round to history instead of the active list, but still counts its principal as outstanding', () => {
+    mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, REPAID_OFFER, FUNDED_OFFER]
+    const store = useCommunityCreditStore()
+
+    expect(store.activeRounds.map((r) => r.id)).toEqual(['2'])
+    expect(store.historyRounds.map((r) => r.id)).toEqual(['1', '3'])
+    expect(store.getRound('3')?.status).toBe('funded')
+    // 23,400 (open) + 40,000 (funded) — funded principal is still outstanding even
+    // though the round itself moved out of the active list.
+    expect(store.outstandingPrincipal).toBe(63400)
+  })
+
+  it('derives the account stats from the offers', () => {
+    const store = useCommunityCreditStore()
+    expect(store.outstandingPrincipal).toBe(23400)
+    expect(store.interestDue).toBe(1170) // 23400 × 5%
+    expect(store.raisedLifetime).toBe(41400)
+    expect(store.repaidLifetime).toBe(18990)
+    expect(store.nextMaturity).not.toBe('—')
+  })
+
+  it('passes the current team id into the off-chain metadata query', () => {
+    const store = useCommunityCreditStore()
+
+    expect(store.rounds).toHaveLength(2)
+    expect(metadataQueryState.options?.queryParams.teamId()).toBe('1')
+  })
+
+  it('reports no next maturity when there are no outstanding offers', () => {
+    mockFixedReturnReads.allOffers.data.value = [REPAID_OFFER]
+    const store = useCommunityCreditStore()
+
+    expect(store.outstandingPrincipal).toBe(0)
+    expect(store.nextMaturity).toBe('—')
+  })
+
+  it('chooses the soonest maturity from outstanding offers', () => {
+    const laterOffer: FixedReturnRawOffer = {
+      offerId: 5,
+      decimals: 6,
+      offer: offer({ maturityDate: 2_200_000_000n }),
+      lenderAddresses: []
+    }
+    const soonerOffer: FixedReturnRawOffer = {
+      offerId: 6,
+      decimals: 6,
+      offer: offer({ maturityDate: 2_100_000_000n }),
+      lenderAddresses: []
+    }
+    mockFixedReturnReads.allOffers.data.value = [laterOffer, soonerOffer]
+    const store = useCommunityCreditStore()
+
+    expect(store.nextMaturity).toBe('Jul 18')
+  })
+
+  it('reflects the read error state', () => {
+    mockFixedReturnReads.allOffers.isError.value = true
+    const store = useCommunityCreditStore()
+
+    expect(store.isError).toBe(true)
+  })
+
+  it('derives ownership from the connected wallet', () => {
+    const store = useCommunityCreditStore()
+    expect(store.isOwner).toBe(false)
+    ownerData.value = mockUserStore.address
+    expect(store.isOwner).toBe(true)
+    expect(store.isLender).toBe(false)
+  })
+
+  it('disables the owner query when the fixed return address is missing', () => {
+    vi.mocked(useFixedReturnAddress).mockReturnValue(computed(() => undefined))
+
+    const store = useCommunityCreditStore()
+
+    expect(store.hasContract).toBe(false)
+    expect(getOwnerQueryOptions().enabled.value).toBe(false)
+  })
+
+  it('builds the owner read with the fixed return contract address', async () => {
+    mockWagmiCore.readContract.mockResolvedValue(mockUserStore.address)
+    useCommunityCreditStore()
+
+    await expect(getOwnerQueryOptions().queryFn()).resolves.toBe(mockUserStore.address)
+    expect(mockWagmiCore.readContract).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        address: '0x5234567890123456789012345678901234567890',
+        functionName: 'owner'
+      })
+    )
+  })
+
+  it('reflects the loading state', () => {
+    const store = useCommunityCreditStore()
+    mockFixedReturnReads.allOffers.isLoading.value = true
+    expect(store.isLoading).toBe(true)
+  })
+
+  it('maps the team members eligible to lend', () => {
+    const store = useCommunityCreditStore()
+    expect(store.members.length).toBeGreaterThan(0)
+    expect(store.members[0]).toMatchObject({
+      id: expect.any(String),
+      name: expect.any(String),
+      addr: expect.any(String),
+      gradient: expect.stringContaining('#')
+    })
+  })
+})

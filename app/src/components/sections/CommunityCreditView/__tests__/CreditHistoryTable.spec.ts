@@ -1,0 +1,87 @@
+import { describe, expect, it, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
+import type { CreditRound } from '@/types'
+import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
+
+const { store } = vi.hoisted(() => ({ store: { historyRounds: [] as CreditRound[] } }))
+
+vi.mock('@/stores/communityCredit', () => ({
+  useCommunityCreditStore: () => store
+}))
+
+import CreditHistoryTable from '../CreditHistoryTable.vue'
+
+function makeRound(overrides: Partial<CreditRound> = {}): CreditRound {
+  return {
+    id: '9',
+    name: 'Q3 runway bridge',
+    token: 'USDC',
+    target: 40000,
+    raised: 40000,
+    totalRepaid: 0,
+    rate: 5,
+    period: 90 * MINUTES_PER_DAY,
+    termLabel: '90 days',
+    status: 'repaid',
+    fundable: false,
+    opened: 'Jun 1',
+    deadline: 'Jun 28',
+    maturity: 'Oct 26',
+    repaidOn: 'Oct 26',
+    restricted: false,
+    cap: null,
+    desc: 'Working capital.',
+    lenders: [],
+    ...overrides
+  }
+}
+
+describe('CreditHistoryTable', () => {
+  it('renders one row per history round with its status and outcome', () => {
+    store.historyRounds = [makeRound()]
+    const wrapper = mount(CreditHistoryTable)
+
+    const row = wrapper.find('tbody tr')
+    expect(row.text()).toContain('Q3 runway bridge')
+    expect(row.text()).toContain('Repaid')
+  })
+
+  it('emits select with the round when a history row is clicked', async () => {
+    const round = makeRound()
+    store.historyRounds = [round]
+    const wrapper = mount(CreditHistoryTable)
+
+    await wrapper.find('tbody tr').trigger('click')
+
+    expect(wrapper.emitted('select')).toEqual([[round]])
+  })
+
+  it('emits select with the round when the View button is clicked', async () => {
+    const round = makeRound()
+    store.historyRounds = [round]
+    const wrapper = mount(CreditHistoryTable)
+
+    await wrapper.find('button').trigger('click')
+
+    expect(wrapper.emitted('select')).toEqual([[round]])
+  })
+
+  it('renders the outcome copy for every history status', () => {
+    store.historyRounds = [
+      makeRound({ id: 'stalled', status: 'stalled' }),
+      makeRound({ id: 'refunded', status: 'refunded' }),
+      makeRound({ id: 'overdue', status: 'overdue' }),
+      makeRound({ id: 'funded', status: 'funded' }),
+      makeRound({ id: 'active', status: 'active' }),
+      makeRound({ id: 'repaid', status: 'repaid', repaidOn: undefined })
+    ]
+    const wrapper = mount(CreditHistoryTable)
+
+    expect(wrapper.text()).toContain('Deadline passed — awaiting refund or acceptance')
+    expect(wrapper.text()).toContain('Refunded — principal returned to lenders')
+    expect(wrapper.text()).toContain('Overdue — matured Oct 26, not yet repaid')
+    expect(wrapper.text()).toContain('Awaiting repayment · matures Oct 26')
+    expect(wrapper.text()).toContain('Repaying · matures Oct 26')
+    expect(wrapper.text()).toContain('Repaid Oct 26')
+  })
+})

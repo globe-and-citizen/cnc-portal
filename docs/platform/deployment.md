@@ -18,18 +18,18 @@ graph TB
     subgraph "Client Layer"
         Browser[Web Browser]
     end
-    
+
     subgraph "Application Layer"
         Frontend[Vue.js Frontend<br/>Port 80/443]
         API[Express.js API<br/>Port 3000]
     end
-    
+
     subgraph "Data Layer"
         DB[(PostgreSQL<br/>Port 5432)]
         Contracts[Smart Contracts<br/>Ethereum Network]
         Subgraph[The Graph<br/>Subgraph]
     end
-    
+
     Browser --> Frontend
     Frontend --> API
     Frontend --> Contracts
@@ -586,49 +586,49 @@ CMD ["nginx", "-g", "daemon off;"]
 ```yaml
 steps:
   # Run tests
-  - name: 'node:22'
-    entrypoint: 'npm'
-    args: ['ci']
-    dir: 'backend'
-    
-  - name: 'node:22'
-    entrypoint: 'npm'
-    args: ['test']
-    dir: 'backend'
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["ci"]
+    dir: "backend"
+
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["test"]
+    dir: "backend"
     env:
-      - 'DATABASE_URL=postgresql://test:test@localhost:5432/test'
+      - "DATABASE_URL=postgresql://test:test@localhost:5432/test"
 
   # Build Docker image
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'build'
-      - '--build-arg'
-      - 'NODE_ENV=production'
-      - '-t'
-      - '${LOCATION}-docker.pkg.dev/$PROJECT_ID/cnc-portal-api:$SHORT_SHA'
-      - './backend'
+      - "build"
+      - "--build-arg"
+      - "NODE_ENV=production"
+      - "-t"
+      - "${LOCATION}-docker.pkg.dev/$PROJECT_ID/cnc-portal-api:$SHORT_SHA"
+      - "./backend"
 
   # Push to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'push'
-      - '${LOCATION}-docker.pkg.dev/$PROJECT_ID/cnc-portal-api:$SHORT_SHA'
+      - "push"
+      - "${LOCATION}-docker.pkg.dev/$PROJECT_ID/cnc-portal-api:$SHORT_SHA"
 
   # Deploy to Cloud Run
-  - name: 'gcr.io/cloud-builders/gcloud'
+  - name: "gcr.io/cloud-builders/gcloud"
     args:
-      - 'run'
-      - 'deploy'
-      - 'cnc-portal-api'
-      - '--image'
-      - '${LOCATION}-docker.pkg.dev/$PROJECT_ID/cnc-portal-api:$SHORT_SHA'
-      - '--region'
-      - '${LOCATION}'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
+      - "run"
+      - "deploy"
+      - "cnc-portal-api"
+      - "--image"
+      - "${LOCATION}-docker.pkg.dev/$PROJECT_ID/cnc-portal-api:$SHORT_SHA"
+      - "--region"
+      - "${LOCATION}"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
 
-timeout: '1200s'
+timeout: "1200s"
 ```
 
 #### Frontend Pipeline (`/app/cloudbuild.prod.yaml`)
@@ -636,18 +636,18 @@ timeout: '1200s'
 ```yaml
 steps:
   # Build Docker image
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'build'
-      - '-f'
-      - 'frontend.Dockerfile'
-      - '--build-arg'
-      - 'VITE_APP_BACKEND_URL=$_VITE_APP_BACKEND_URL'
-      - '--build-arg'
-      - 'VITE_APP_NETWORK_ALIAS=$_VITE_APP_NETWORK_ALIAS'
-      - '-t'
-      - '${LOCATION}-docker.pkg.dev/$PROJECT_ID/cnc-portal-app:$SHORT_SHA'
-      - './app'
+      - "build"
+      - "-f"
+      - "frontend.Dockerfile"
+      - "--build-arg"
+      - "VITE_APP_BACKEND_URL=$_VITE_APP_BACKEND_URL"
+      - "--build-arg"
+      - "VITE_APP_NETWORK_ALIAS=$_VITE_APP_NETWORK_ALIAS"
+      - "-t"
+      - "${LOCATION}-docker.pkg.dev/$PROJECT_ID/cnc-portal-app:$SHORT_SHA"
+      - "./app"
 
   # Push and deploy (similar to backend)
 ```
@@ -787,39 +787,37 @@ gcloud logging read "resource.type=cloudsql_database" --limit=50
 
 ### Error Tracking
 
-Sentry is configured at two levels — frontend (Vue) and backend (Node.js) — with
-separate Sentry projects sharing the same organisation.
+Sentry is configured at two levels — frontend (Vue) and backend (Node.js) — with separate Sentry projects sharing the same organisation.
 
 **Required environment variables:**
 
-| Variable | Where | Purpose |
-|---|---|---|
-| `VITE_APP_SENTRY_DSN` | frontend (browser) | Frontend Sentry project DSN |
-| `SENTRY_DSN` | backend (Node.js) | Backend Sentry project DSN |
-| `SENTRY_FRONTEND_DSN` | backend (Node.js) | Frontend DSN used by the tunnel route |
-| `SENTRY_FRONTEND_PROJECT_ID` | backend (Node.js) | Project ID extracted from the frontend DSN |
-| `SENTRY_AUTH_TOKEN` | build-time only | Upload source maps to Sentry |
-| `SENTRY_ORG` | build-time only | Sentry organisation slug |
-| `SENTRY_PROJECT` | build-time only | Frontend project slug (default: `cnc-portal-app`) |
+| Variable                     | Where              | Purpose                                           |
+| ---------------------------- | ------------------ | ------------------------------------------------- |
+| `VITE_APP_SENTRY_DSN`        | frontend (browser) | Frontend Sentry project DSN                       |
+| `SENTRY_DSN`                 | backend (Node.js)  | Backend Sentry project DSN                        |
+| `SENTRY_FRONTEND_DSN`        | backend (Node.js)  | Frontend DSN used by the tunnel route             |
+| `SENTRY_FRONTEND_PROJECT_ID` | backend (Node.js)  | Project ID extracted from the frontend DSN        |
+| `SENTRY_AUTH_TOKEN`          | build-time only    | Upload source maps to Sentry                      |
+| `SENTRY_ORG`                 | build-time only    | Sentry organisation slug                          |
+| `SENTRY_PROJECT`             | build-time only    | Frontend project slug (default: `cnc-portal-app`) |
 
 **Backend** (`backend/src/instrument.ts`) — must be the first import in the server:
 
 ```typescript
-import * as Sentry from '@sentry/node';
+import * as Sentry from "@sentry/node";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV ?? 'development',
+  environment: process.env.NODE_ENV ?? "development",
   tracesSampleRate: 0.1,
   sendDefaultPii: true,
 });
 ```
 
-**Frontend** (`app/src/main.ts`) — events are routed through the backend tunnel
-to bypass ad-blockers (Brave Shields, uBlock Origin, etc.):
+**Frontend** (`app/src/main.ts`) — events are routed through the backend tunnel to bypass ad-blockers (Brave Shields, uBlock Origin, etc.):
 
 ```typescript
-import * as Sentry from '@sentry/vue';
+import * as Sentry from "@sentry/vue";
 
 Sentry.init({
   app,
@@ -830,9 +828,8 @@ Sentry.init({
 });
 ```
 
-**Source maps** are generated as `hidden` in production builds (not served to browsers)
-and uploaded to Sentry automatically by `@sentry/vite-plugin` during `npm run build`
-(frontend) and by `sentry-cli sourcemaps` during `npm run build` (backend).
+**Source maps** are generated as `hidden` in production builds (not served to browsers) and uploaded to Sentry automatically by
+`@sentry/vite-plugin` during `npm run build` (frontend) and by `sentry-cli sourcemaps` during `npm run build` (backend).
 
 ### Backup Procedures
 
@@ -1048,7 +1045,7 @@ npm run build
 
 ```yaml
 # Add to cloudbuild.yaml
-timeout: '1200s'  # 20 minutes
+timeout: "1200s" # 20 minutes
 ```
 
 #### Permission denied on Cloud Run

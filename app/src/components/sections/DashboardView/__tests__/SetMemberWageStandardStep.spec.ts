@@ -8,6 +8,7 @@ const createWageData = (overrides: Partial<WageWithForm> = {}): WageWithForm => 
   teamId: 1,
   userAddress: '0x123',
   maximumHoursPerWeek: 40,
+  maximumHoursPerDay: 8,
   maximumOvertimeHoursPerWeek: 0,
   enableOvertimeRules: false,
   ratePerHour: [
@@ -71,6 +72,24 @@ describe('SetMemberWageStandardStep.vue', () => {
     expect(wrapper.text()).toContain('USDC')
   })
 
+  it('binds the daily cap and reflects it in the hint', async () => {
+    const wageData = createWageData()
+    const wrapper = createWrapper(wageData)
+
+    expect(wrapper.find('[data-test="daily-cap-hint"]').text()).toContain('8 hrs/day')
+
+    await wrapper.find('input[data-test="daily-cap-input"]').setValue('6')
+
+    expect(wageData.maximumHoursPerDay).toBe(6)
+    expect(wrapper.find('[data-test="daily-cap-hint"]').text()).toContain('6 hrs/day')
+  })
+
+  it('falls back to the default daily cap in the hint when the field is emptied', async () => {
+    const wrapper = createWrapper(createWageData({ maximumHoursPerDay: 0 }))
+
+    expect(wrapper.find('[data-test="daily-cap-hint"]').text()).toContain('8 hrs/day')
+  })
+
   it('applies overtime card active state and button label when overtime is enabled', () => {
     const disabledWrapper = createWrapper(createWageData({ enableOvertimeRules: false }))
     const enabledWrapper = createWrapper(createWageData({ enableOvertimeRules: true }))
@@ -91,8 +110,9 @@ describe('SetMemberWageStandardStep.vue', () => {
     const numberInputs = wrapper.findAll('input[type="number"]')
     const checkboxInputs = wrapper.findAll('input[type="checkbox"]')
 
+    // 0 = weekly cap, 1 = daily cap, then one input per hourly rate
     await numberInputs[0]?.setValue('35')
-    await numberInputs[1]?.setValue('7')
+    await numberInputs[2]?.setValue('7')
     for (const checkbox of checkboxInputs) {
       await checkbox.setValue(true)
     }
@@ -159,7 +179,7 @@ describe('SetMemberWageStandardStep.vue', () => {
     expect(validWrapper.find('[data-test="add-wage-button"]').exists()).toBe(true)
   })
 
-  it('auto-disables the toggle when the rate amount is cleared to 0', async () => {
+  it('keeps the toggle on regardless of the amount value (0, decimal, or blank)', async () => {
     const wageData = createWageData({
       ratePerHour: [
         { type: 'native', amount: 10, enabled: true },
@@ -168,12 +188,20 @@ describe('SetMemberWageStandardStep.vue', () => {
       ]
     })
     const wrapper = createWrapper(wageData)
-    const firstAmountInput = wrapper.findAll('input[type="number"]')[1]
+    // Index 2: the two cap inputs (weekly, daily) come first
+    const firstAmountInput = wrapper.findAll('input[type="number"]')[2]
 
+    // The amount must never flip the toggle off — otherwise the transient "0"
+    // and empty "0." states while typing "0.01" would lock the input.
     await firstAmountInput?.setValue('0')
+    expect(wageData.ratePerHour[0]?.enabled).toBe(true)
 
-    expect(wageData.ratePerHour[0]?.enabled).toBe(false)
-    expect(Number(wageData.ratePerHour[0]?.amount)).toBe(0)
+    await firstAmountInput?.setValue('0.01')
+    expect(wageData.ratePerHour[0]?.enabled).toBe(true)
+    expect(Number(wageData.ratePerHour[0]?.amount)).toBe(0.01)
+
+    await firstAmountInput?.setValue('')
+    expect(wageData.ratePerHour[0]?.enabled).toBe(true)
   })
 
   it('auto-zeroes the rate amount when the toggle is turned off', async () => {

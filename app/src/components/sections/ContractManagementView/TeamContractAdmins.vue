@@ -44,7 +44,7 @@
       ]"
     >
       <template #address-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.address" class="text-xs" />
+        <AddressTooltip :address="row.address" class="text-xs" />
       </template>
 
       <template #action-cell="{ row: { original: row } }">
@@ -72,9 +72,9 @@ import { ref, watch, computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import type { TeamContract } from '@/types'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
 import type { Address } from 'viem'
 const toast = useToast()
 
@@ -96,7 +96,7 @@ const {
   isPending: loadingAddAdmin
 } = useContractWritesV3({
   contractAddress,
-  abi: AD_CAMPAIGN_MANAGER_ABI,
+  abi: adCampaignManagerAbi,
   functionName: 'addAdmin'
 })
 
@@ -106,7 +106,7 @@ const {
   isPending: loadingRemoveAdmin
 } = useContractWritesV3({
   contractAddress,
-  abi: AD_CAMPAIGN_MANAGER_ABI,
+  abi: adCampaignManagerAbi,
   functionName: 'removeAdmin'
 })
 
@@ -117,7 +117,7 @@ const {
 } = useReadContract({
   functionName: 'getAdminList',
   address: contractAddress,
-  abi: AD_CAMPAIGN_MANAGER_ABI
+  abi: adCampaignManagerAbi
 })
 
 const adminsList = computed<Address[]>(() => {

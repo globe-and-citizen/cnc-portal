@@ -63,7 +63,8 @@
           <RateDotList :rates="effectiveWage?.ratePerHour || []" :text-class="'text-center'" />
         </div>
         <div class="mt-1 text-center text-sm text-gray-500">
-          ≃ ${{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}/h
+          ≃ {{ formatCurrency(hourlyRateInUserCurrency, localCurrencyFormatOptions) }}
+          {{ currencyStore.localCurrency.code }}/h
         </div>
       </div>
 
@@ -78,7 +79,7 @@
         </div>
 
         <div class="mt-1 text-center text-sm text-gray-500">
-          ≃ ${{ overtimeHourlyRateInUserCurrency.toFixed(2) }}
+          ≃ {{ formatCurrency(overtimeHourlyRateInUserCurrency, localCurrencyFormatOptions) }}
           {{ currencyStore.localCurrency.code }}/h
         </div>
       </div>
@@ -98,7 +99,8 @@
         </div>
         <div class="mt-1 flex gap-2 text-center text-sm text-gray-500">
           <template v-if="props.weeklyClaim">
-            ≃ ${{ totalAmount }} {{ currencyStore.localCurrency.code }}
+            ≃ {{ formatCurrency(totalAmount, localCurrencyFormatOptions) }}
+            {{ currencyStore.localCurrency.code }}
           </template>
           <!-- <template v-else>Submit hours to calculate</template> -->
         </div>
@@ -110,9 +112,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
+import { formatCurrency } from '@/utils/format'
 import type { RatePerHour, Wage, WeeklyClaim } from '@/types/cash-remuneration'
-import RateDotList from '@/components/RateDotList.vue'
-import { formatMinutesAsDuration } from '@/utils/wageUtil'
+import RateDotList from '@/components/ui/RateDotList.vue'
+import {
+  computeClaimTokenAmounts,
+  formatMinutesAsDuration,
+  splitClaimMinutes
+} from '@/utils/wages/model'
 
 const props = defineProps<{
   weeklyClaim?: WeeklyClaim
@@ -120,6 +127,7 @@ const props = defineProps<{
 }>()
 
 const currencyStore = useCurrencyStore()
+const localCurrencyFormatOptions = computed(() => ({ currency: currencyStore.localCurrency.code }))
 
 const effectiveWage = computed(() => props.weeklyClaim?.wage ?? props.wage)
 const submittedTime = computed(() => props.weeklyClaim?.minutesWorked ?? 0)
@@ -133,17 +141,11 @@ const isSignedClaim = computed(
   () => props.weeklyClaim?.status === 'signed' || props.weeklyClaim?.status === 'withdrawn'
 )
 
-const regularMinutesWorked = computed(() => {
-  if (!hasOvertimeWage.value) return submittedTime.value
-  const maxRegularMinutes = (effectiveWage.value?.maximumHoursPerWeek ?? Infinity) * 60
-  return Math.min(submittedTime.value, maxRegularMinutes)
-})
+const claimMinutes = computed(() => splitClaimMinutes(submittedTime.value, effectiveWage.value))
 
-const overtimeMinutesWorked = computed(() => {
-  if (!hasOvertimeWage.value) return 0
-  const maxRegularMinutes = (effectiveWage.value?.maximumHoursPerWeek ?? Infinity) * 60
-  return Math.max(0, submittedTime.value - maxRegularMinutes)
-})
+const regularMinutesWorked = computed(() => claimMinutes.value.regularMinutes)
+
+const overtimeMinutesWorked = computed(() => claimMinutes.value.overtimeMinutes)
 
 function getHourlyRateInUserCurrency(
   ratePerHour: RatePerHour[],
@@ -168,27 +170,13 @@ const overtimeHourlyRateInUserCurrency = computed(() =>
     : 0
 )
 
-const combinedTokenAmounts = computed(() => {
-  const result = new Map<string, number>()
-  const regMinutes = regularMinutesWorked.value
-
-  for (const rate of effectiveWage.value?.ratePerHour ?? []) {
-    result.set(rate.type, (result.get(rate.type) ?? 0) + (rate.amount * regMinutes) / 60)
-  }
-
-  if (hasOvertimeWage.value) {
-    const otMinutes = overtimeMinutesWorked.value
-    for (const rate of (effectiveWage.value?.overtimeRatePerHour as RatePerHour[]) ?? []) {
-      result.set(rate.type, (result.get(rate.type) ?? 0) + (rate.amount * otMinutes) / 60)
-    }
-  }
-
-  return Array.from(result.entries()).map(([type, amount]) => ({ type, amount }))
-})
+const combinedTokenAmounts = computed(() =>
+  computeClaimTokenAmounts(submittedTime.value, effectiveWage.value)
+)
 
 const totalAmount = computed(() => {
   const regularTotal = (regularMinutesWorked.value / 60) * hourlyRateInUserCurrency.value
   const overtimeTotal = (overtimeMinutesWorked.value / 60) * overtimeHourlyRateInUserCurrency.value
-  return (regularTotal + overtimeTotal).toFixed(2)
+  return regularTotal + overtimeTotal
 })
 </script>

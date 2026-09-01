@@ -1,80 +1,98 @@
 <template>
-  <div class="flex w-full max-w-5xl flex-col gap-5">
-    <h4 class="text-lg font-bold">Review Vesting Details</h4>
+  <div class="flex flex-col gap-5">
+    <div>
+      <h3 class="text-lg font-semibold">Review vesting schedule</h3>
+      <p class="text-muted text-sm">Confirm the beneficiary, grant and exact boundaries.</p>
+    </div>
 
-    <div class="bg-muted grid grid-cols-1 gap-4 rounded-lg p-4 md:grid-cols-2">
-      <div class="flex flex-col gap-2">
-        <span class="text-xs text-gray-500">Member</span>
-        <span class="font-medium">{{
-          props.vesting.member.name || props.vesting.member.address
-        }}</span>
-
-        <span class="text-xs text-gray-500">Total Amount</span>
-        <span class="font-medium">{{ props.vesting.totalAmount }} Tokens</span>
+    <div class="border-default grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
+      <div>
+        <p class="text-muted text-xs font-medium tracking-wide uppercase">Beneficiary</p>
+        <p class="mt-1 font-medium" data-test="summary-member">
+          {{ vesting.member.name || vesting.member.address }}
+        </p>
+        <p v-if="vesting.member.name" class="text-muted text-xs">{{ vesting.member.address }}</p>
       </div>
 
-      <div class="flex flex-col gap-1"></div>
-
-      <div class="flex flex-col gap-1">
-        <span class="text-xs text-gray-500">Start Date</span>
-        <span class="font-medium">{{ formatDate(props.vesting.startDate) }}</span>
+      <div>
+        <p class="text-muted text-xs font-medium tracking-wide uppercase">Total grant</p>
+        <p class="mt-1 font-medium" data-test="summary-amount">
+          {{ formatToken(vesting.totalAmount, vesting.tokenSymbol, { maxDecimals: 6 }) }}
+        </p>
       </div>
 
-      <div class="flex flex-col gap-1">
-        <span class="text-xs text-gray-500">Duration</span>
-        <span class="font-medium">{{ formatDuration() }}</span>
+      <div>
+        <p class="text-muted text-xs font-medium tracking-wide uppercase">Exact duration</p>
+        <p class="mt-1 font-medium" data-test="summary-duration">
+          {{ formatVestingDuration(vesting.startAt, vesting.endAt) }}
+        </p>
       </div>
 
-      <div class="flex flex-col gap-1">
-        <span class="text-xs text-gray-500">Cliff Period</span>
-        <span class="font-medium">{{ props.vesting.cliff }} days</span>
-      </div>
-
-      <div class="flex flex-col gap-1">
-        <span class="text-xs text-gray-500">Vesting Rate</span>
-        <span class="font-medium"
-          >{{
-            (props.vesting.totalAmount / props.vesting.durationInDays).toFixed(2)
+      <div>
+        <p class="text-muted text-xs font-medium tracking-wide uppercase">Cliff</p>
+        <p class="mt-1 font-medium" data-test="summary-cliff">
+          {{
+            vesting.noCliff
+              ? 'No cliff'
+              : formatVestingDuration(vesting.startAt, vesting.cliffEndAt)
           }}
-          tokens/day</span
-        >
+        </p>
       </div>
     </div>
 
-    <div class="mt-4 flex justify-end gap-2">
-      <UButton variant="ghost" size="sm" @click="$emit('back')" label="Back to Edit" />
+    <VestingSchedulePreview
+      :start-at="vesting.startAt"
+      :end-at="vesting.endAt"
+      :cliff-end-at="vesting.cliffEndAt"
+      :no-cliff="vesting.noCliff"
+      :total-amount="vesting.totalAmount"
+      :token-symbol="vesting.tokenSymbol"
+    />
+
+    <UAlert
+      color="info"
+      variant="soft"
+      icon="i-lucide-info"
+      title="This creates an on-chain commitment"
+      description="No shares move now. Shares are minted only as they vest and the beneficiary claims them."
+    />
+
+    <div class="flex flex-col-reverse justify-end gap-2 sm:flex-row">
       <UButton
+        type="button"
+        color="neutral"
+        variant="ghost"
+        :disabled="loading"
+        label="Back to edit"
+        data-test="back-btn"
+        @click="emit('back')"
+      />
+      <UButton
+        type="button"
         color="primary"
-        size="sm"
         :loading="loading"
         :disabled="loading"
-        @click="$emit('confirm')"
+        :label="loading ? 'Creating schedule…' : 'Create schedule'"
         data-test="confirm-btn"
-        label="Confirm & Create"
+        @click="emit('confirm')"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { format } from '@/utils/dayUtils'
+import VestingSchedulePreview from './VestingSchedulePreview.vue'
+import { formatToken } from '@/utils/format'
+import { formatVestingDuration } from '@/utils/vesting/schedule'
 import { type VestingCreation } from '@/types/vesting'
-const props = defineProps<{
+
+defineProps<{
   vesting: VestingCreation
   loading: boolean
 }>()
 
-defineEmits(['back', 'confirm'])
-
-function formatDate(date: Date) {
-  return format(date, 'dd/MM/yyyy')
-}
-
-function formatDuration() {
-  const parts = []
-  if (props.vesting.duration.years) parts.push(`${props.vesting.duration.years} years`)
-  if (props.vesting.duration.months) parts.push(`${props.vesting.duration.months} months`)
-  if (props.vesting.duration.days) parts.push(`${props.vesting.duration.days} days`)
-  return parts.join(', ') || '0 days'
-}
+const emit = defineEmits<{
+  back: []
+  confirm: []
+}>()
 </script>

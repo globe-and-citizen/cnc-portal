@@ -665,6 +665,29 @@ export const cashRemunerationTokenSupportRemoved = onchainTable(
   }),
 );
 
+export const cashRemunerationOwnershipTransferred = onchainTable(
+  "cash_remuneration_ownership_transferred",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    previousOwner: t.hex().notNull(),
+    newOwner: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index(
+      "cash_rem_ownership_transferred_contract_index",
+    ).on(table.contractAddress),
+    previousOwnerIdx: index(
+      "cash_rem_ownership_transferred_previous_owner_index",
+    ).on(table.previousOwner),
+    newOwnerIdx: index("cash_rem_ownership_transferred_new_owner_index").on(
+      table.newOwner,
+    ),
+  }),
+);
+
 // SafeDepositRouter events
 export const safeDeposit = onchainTable(
   "safe_deposit",
@@ -1016,6 +1039,29 @@ export const expenseTokenAddressChanged = onchainTable(
   }),
 );
 
+export const expenseOwnershipTransferred = onchainTable(
+  "expense_ownership_transferred",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    previousOwner: t.hex().notNull(),
+    newOwner: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index(
+      "expense_ownership_transferred_contract_index",
+    ).on(table.contractAddress),
+    previousOwnerIdx: index(
+      "expense_ownership_transferred_previous_owner_index",
+    ).on(table.previousOwner),
+    newOwnerIdx: index("expense_ownership_transferred_new_owner_index").on(
+      table.newOwner,
+    ),
+  }),
+);
+
 // FeeCollector events
 export const feeCollectorFeePaid = onchainTable(
   "fee_collector_fee_paid",
@@ -1159,6 +1205,63 @@ export const feeCollectorTokenSupportRemoved = onchainTable(
     tokenIdx: index("fee_collector_token_removed_token_index").on(
       table.tokenAddress,
     ),
+  }),
+);
+
+// Vesting (per-team, Officer-scoped via contractAddress)
+export const vestingCreated = onchainTable(
+  "vesting_created",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    scheduleIndex: t.bigint().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_created_contract_index").on(
+      table.contractAddress,
+    ),
+    memberIdx: index("vesting_created_member_index").on(table.member),
+  }),
+);
+
+export const vestingTokensReleased = onchainTable(
+  "vesting_tokens_released",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    scheduleIndex: t.bigint().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_tokens_released_contract_index").on(
+      table.contractAddress,
+    ),
+    memberIdx: index("vesting_tokens_released_member_index").on(table.member),
+  }),
+);
+
+export const vestingStopped = onchainTable(
+  "vesting_stopped",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    scheduleIndex: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_stopped_contract_index").on(
+      table.contractAddress,
+    ),
+    memberIdx: index("vesting_stopped_member_index").on(table.member),
   }),
 );
 

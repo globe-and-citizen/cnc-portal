@@ -1,170 +1,50 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { type VueWrapper } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@/tests/mocks'
-
-// Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
-// Nuxt UI Vite plugin resolves them through their file path. Mock the module
-// so our stub renders and we can inspect props instead of reaching into vm.
-vi.mock('@nuxt/ui/components/Table.vue', () => ({
-  default: {
-    name: 'UTable',
-    props: ['data', 'columns', 'sticky', 'showPagination'],
-    template: `
-      <div data-test="vesting-stats-table">
-        <div v-for="(row, i) in data" :key="i" data-test="vesting-stats-row">
-          <slot name="totalVested-cell" :row="{ original: row }" />
-          <slot name="totalReleased-cell" :row="{ original: row }" />
-          <slot name="totalWithdrawn-cell" :row="{ original: row }" />
-        </div>
-      </div>
-    `
-  }
-}))
-
 import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 
-import { ref } from 'vue'
-
-// Constants
-const memberAddress = '0x000000000000000000000000000000000000dead'
-const mockSymbol = ref<string>('shr')
-const mockReloadKey = ref<number>(0)
-// Mocks
-const mockVestingInfos = ref<[string[], { totalAmount: number; released: number }[]]>([
-  [memberAddress],
-  [
-    {
-      totalAmount: 0,
-      released: 0
-    }
-  ]
-])
-
-const refetchVestingInfos = vi.fn()
-
-const mockArchivedInfos = ref([[], []])
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: vi.fn(() => ({
-    data: mockSymbol,
-    error: ref(null),
-    refetch: vi.fn()
-  }))
-}))
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
-      if (functionName === 'getTeamVestingsWithMembers') {
-        return {
-          data: mockVestingInfos,
-          error: ref(null),
-          refetch: refetchVestingInfos
-        }
-      }
-      if (functionName === 'getTeamAllArchivedVestingsFlat') {
-        return {
-          data: mockArchivedInfos,
-          error: ref(null),
-          refetch: vi.fn()
-        }
-      }
-      if (functionName === 'symbol') {
-        return {
-          data: mockSymbol,
-          error: ref(null),
-          refetch: vi.fn()
-        }
-      }
-      return {
-        data: ref('TST'),
-        error: ref(null),
-        refetch: vi.fn()
-      }
-    })
-  }
-})
-
-// Test suite
 describe('VestingStats.vue', () => {
-  let wrapper: VueWrapper
-
-  const mountComponent = () => {
-    return renderWithProviders(VestingStats, {
+  it('renders all four V2 totals with the token symbol', () => {
+    const wrapper = renderWithProviders(VestingStats, {
       props: {
-        reloadKey: mockReloadKey.value
+        totals: {
+          promised: 150_000_000n,
+          vested: 90_000_000n,
+          claimable: 60_000_000n,
+          released: 30_000_000n
+        },
+        tokenSymbol: 'SHR',
+        isLoading: false
       }
     })
-  }
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    wrapper = mountComponent()
+    expect(wrapper.get('[data-test="vesting-promised"]').text()).toBe('150 SHR')
+    expect(wrapper.get('[data-test="vesting-vested"]').text()).toBe('90 SHR')
+    expect(wrapper.get('[data-test="vesting-claimable"]').text()).toBe('60 SHR')
+    expect(wrapper.get('[data-test="vesting-released"]').text()).toBe('30 SHR')
   })
 
-  it('calculates token summary correctly from vestings data', async () => {
-    // Setup mock data with multiple vestings
-    mockVestingInfos.value = [
-      [memberAddress],
-      [
-        {
-          totalAmount: Number(BigInt(100000000)), // 100 tokens with 6 decimals
-          released: Number(BigInt(20000000)) // 20 tokens with 6 decimals
-        },
-        {
-          totalAmount: Number(BigInt(50000000)), // 50 tokens with 6 decimals
-          released: Number(BigInt(10000000)) // 10 tokens with 6 decimals
-        }
-      ]
-    ]
-
-    wrapper = mountComponent()
-    await wrapper.vm.$nextTick()
-
-    const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<{
-      symbol: string
-      totalVested: number
-      totalReleased: number
-    }>
-    expect(tableData).toHaveLength(1) // Should have one row per token symbol
-    expect(tableData[0]).toMatchObject({
-      symbol: mockSymbol.value,
-      totalVested: 150,
-      totalReleased: 30
+  it('shows skeletons while totals are loading', () => {
+    const wrapper = renderWithProviders(VestingStats, {
+      props: {
+        totals: { promised: 0n, vested: 0n, claimable: 0n, released: 0n },
+        tokenSymbol: 'SHR',
+        isLoading: true
+      }
     })
+
+    expect(wrapper.find('[data-test="vesting-promised"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-test="vesting-stat-skeleton"]')).toHaveLength(4)
   })
 
-  it('handles empty vestings array', () => {
-    mockVestingInfos.value = [[], []]
-    wrapper = mountComponent()
+  it('keeps a positive base-unit total visible', () => {
+    const wrapper = renderWithProviders(VestingStats, {
+      props: {
+        totals: { promised: 1n, vested: 1n, claimable: 1n, released: 0n },
+        tokenSymbol: 'SHR',
+        isLoading: false
+      }
+    })
 
-    const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<unknown>
-    expect(tableData).toHaveLength(1)
-  })
-
-  it('displays formatted token amounts with symbols', async () => {
-    mockSymbol.value = 'TEST'
-    mockVestingInfos.value = [
-      [memberAddress],
-      [
-        {
-          totalAmount: Number(BigInt(100000000)),
-          released: Number(BigInt(20000000))
-        }
-      ]
-    ]
-
-    wrapper = mountComponent()
-    await wrapper.vm.$nextTick()
-
-    const totalVestedText = wrapper.text()
-    expect(totalVestedText).toContain('100')
-    expect(totalVestedText).toContain('TEST')
-
-    const totalReleasedText = wrapper.text()
-    expect(totalReleasedText).toContain('20')
-    expect(totalReleasedText).toContain('TEST')
+    expect(wrapper.get('[data-test="vesting-claimable"]').text()).toBe('0.000001 SHR')
   })
 })

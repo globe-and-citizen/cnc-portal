@@ -1,0 +1,4 @@
+interface:
+  display_name: "CNC Work Orchestrator"
+  short_description: "Route CNC work safely across specialised skills."
+  default_prompt: "Use $cnc-work-orchestrator to plan and coordinate this CNC Portal task."

@@ -61,9 +61,13 @@ import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
 import type { Member, Wage, WageWithForm } from '@/types'
 import type { AxiosError } from 'axios'
-import { normalizeRatePerHour, buildRatePayload } from '@/utils'
+import {
+  normalizeRatePerHour,
+  buildRatePayload,
+  DEFAULT_MAXIMUM_HOURS_PER_DAY
+} from '@/utils/wages/model'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import type { StepperItem } from '@nuxt/ui'
 
 const currentStep = ref(0)
@@ -80,6 +84,7 @@ const initialWage = (): WageWithForm => {
   return props.wage
     ? {
         ...props.wage,
+        maximumHoursPerDay: props.wage.maximumHoursPerDay ?? DEFAULT_MAXIMUM_HOURS_PER_DAY,
         ratePerHour: normalizeRatePerHour(props.wage.ratePerHour),
         overtimeRatePerHour: normalizeRatePerHour(props.wage.overtimeRatePerHour),
         enableOvertimeRules: props.wage.overtimeRatePerHour
@@ -95,6 +100,7 @@ const initialWage = (): WageWithForm => {
         overtimeRatePerHour: normalizeRatePerHour(),
         enableOvertimeRules: false,
         maximumHoursPerWeek: 0,
+        maximumHoursPerDay: DEFAULT_MAXIMUM_HOURS_PER_DAY,
         nextWageId: null,
         createdAt: '',
         updatedAt: ''
@@ -162,7 +168,8 @@ const submitWage = () => {
         maximumOvertimeHoursPerWeek: wageData.value.enableOvertimeRules
           ? Number(wageData.value.maximumOvertimeHoursPerWeek ?? 0)
           : null,
-        maximumHoursPerWeek: Number(wageData.value.maximumHoursPerWeek)
+        maximumHoursPerWeek: Number(wageData.value.maximumHoursPerWeek),
+        maximumHoursPerDay: Number(wageData.value.maximumHoursPerDay)
       }
     },
     {

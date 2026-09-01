@@ -8,6 +8,7 @@ import {
   UCalendarStub,
   UDropdownStub,
   UIconStub,
+  UInputTimeStub,
   UPopoverStub,
   USelectMenuStub
 } from '../stubs/nuxt-ui.stubs'
@@ -25,14 +26,20 @@ vi.mock('@nuxt/ui/components/Modal.vue', () => ({
       open: { type: Boolean, default: false },
       ui: Object,
       title: String,
-      description: String
+      description: String,
+      close: { type: [Boolean, Object], default: true }
     },
-    emits: ['update:open'],
+    emits: ['update:open', 'after:leave'],
     template: `
       <div>
         <slot />
         <div v-if="open">
-          <button data-test="close-wage-modal-button" @click="$emit('update:open', false)" />
+          <button
+            v-if="close"
+            data-test="close-wage-modal-button"
+            v-bind="typeof close === 'object' ? close : {}"
+            @click="$emit('update:open', false); $emit('after:leave')"
+          />
           <slot name="header" />
           <slot name="body" />
         </div>
@@ -77,6 +84,12 @@ vi.mock('@nuxt/ui/components/Calendar.vue', async () => {
   return { default: UCalendarStub }
 })
 
+// InputTime vi.mock — complex reka-ui dependency (segmented TimeField inputs).
+vi.mock('@nuxt/ui/components/InputTime.vue', async () => {
+  const { UInputTimeStub } = await import('../stubs/nuxt-ui.stubs')
+  return { default: UInputTimeStub }
+})
+
 // Popover vi.mock so content slot is consistently available in tests.
 vi.mock('@nuxt/ui/components/Popover.vue', async () => {
   const { UPopoverStub } = await import('../stubs/nuxt-ui.stubs')
@@ -107,6 +120,8 @@ config.global.stubs = {
   SelectMenu: USelectMenuStub,
   UCalendar: UCalendarStub,
   Calendar: UCalendarStub,
+  UInputTime: UInputTimeStub,
+  InputTime: UInputTimeStub,
   UPopover: UPopoverStub,
   Popover: UPopoverStub
 }

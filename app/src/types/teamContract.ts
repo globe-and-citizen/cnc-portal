@@ -2,6 +2,7 @@ import type { Address } from 'viem'
 export type ContractType =
   | 'Bank'
   | 'InvestorV1'
+  | 'Investor'
   | 'Voting'
   | 'BoardOfDirectors'
   | 'ExpenseAccountEIP712'
@@ -9,9 +10,10 @@ export type ContractType =
   | 'Campaign'
   | 'Elections'
   | 'Proposals'
-  | 'VestingV1'
+  | 'Vesting'
   | 'SafeDepositRouter'
   | 'Safe'
+  | 'FixedReturn'
 export interface TeamContract {
   address: Address
   type: ContractType

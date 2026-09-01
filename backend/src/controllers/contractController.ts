@@ -1,8 +1,9 @@
 import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
-import { Address } from 'viem';
+import { getAddress, Address } from 'viem';
 import OFFICER_ABI from '../artifacts/officer_abi.json';
 import { errorResponse, prisma } from '../utils';
+import { resolveOfficerVersion } from '../utils/officerVersion';
 import publicClient from '../utils/viem.config';
 import {
   addContractBodySchema,
@@ -17,12 +18,14 @@ type SyncContractsBody = z.infer<typeof syncContractsBodySchema>;
 type CreateOfficerBody = z.infer<typeof createOfficerBodySchema>;
 type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
 
-// Officer-generation tag stamped on freshly registered Officers. Bumped when
-// the CashRemunerationEIP712 (or any other Officer-governed contract) ships a
-// breaking on-chain change — currently the WageClaim.hoursWorked →
-// minutesWorked typehash from PR #1816. The frontend reads this off the team
-// payload as `isMigrated` (true iff currentOfficer.version === this value).
-export const CURRENT_OFFICER_VERSION = 'v0.10';
+// Re-exported so consumers (teamController, tests) keep a single import path
+// while the detection itself lives in utils/officerVersion.
+export {
+  ACTIVE_OFFICER_FOLDER_BY_CHAIN,
+  getActiveOfficerFolder,
+  getActiveOfficerVersion,
+  isActiveOfficerVersion,
+} from '../utils/officerVersion';
 
 // Look up the head of a team's Officer linked list — the row with no
 // successor pointing back to it. Returns null if the team has never had an
@@ -51,15 +54,18 @@ const upsertOfficerAndSyncContracts = async (
     functionName: 'getTeam',
   })) as { contractType: string; contractAddress: string }[];
 
+  // Detect the Officer generation as a semver (v2+ via version(), older via the
+  // ERC-1967 beacon matched against the registry). 'unknown' when neither works.
+  const { version: detectedVersion } = await resolveOfficerVersion(officerAddress);
+
   // Caller is responsible for ensuring the officerAddress is not already
   // registered to a different team (createOfficer performs that guard and
   // returns 409 explicitly; syncContracts passes the team's own current Officer
   // address, so a mismatch is impossible there).
   //
-  // version: stamped 'v0.10' on insert. Existing rows (`update: {}`) keep
-  // whatever generation tag they already have — pre-feature rows backfilled
-  // to 'legacy' by the migration stay 'legacy' until a fresh Officer is
-  // deployed. This is what flips `isMigrated` for the team.
+  // version: detected on insert. Existing rows (`update: {}`) keep whatever
+  // generation tag they already have — realigning those is the job of
+  // POST /admin/officer-versions/sync, not of a contract sync.
   const officer = await prisma.teamOfficer.upsert({
     where: { address: officerAddress },
     create: {
@@ -69,7 +75,7 @@ const upsertOfficerAndSyncContracts = async (
       deployBlockNumber: deployBlockNumber ?? null,
       deployedAt: deployedAt ?? null,
       previousOfficerId,
-      version: CURRENT_OFFICER_VERSION,
+      version: detectedVersion ?? 'unknown',
     },
     update: {},
   });
@@ -254,6 +260,55 @@ export const addContract = async (req: Request, res: Response) => {
 
   try {
     // authz + existence enforced by requireTeamOwner middleware
+    if (contractType === 'Safe') {
+      const normalizedSafeAddress = getAddress(contractAddress).toLowerCase();
+      const existingTeamSafe = await prisma.teamContract.findFirst({
+        where: { teamId, type: 'Safe' },
+      });
+
+      if (existingTeamSafe) {
+        if (existingTeamSafe.address.toLowerCase() === normalizedSafeAddress) {
+          return res.status(200).json(existingTeamSafe);
+        }
+
+        return errorResponse(409, 'Team already has a Safe account', res);
+      }
+
+      const existingSafeAddress = await prisma.teamContract.findFirst({
+        where: {
+          address: { equals: normalizedSafeAddress, mode: 'insensitive' },
+        },
+      });
+
+      if (existingSafeAddress) {
+        return errorResponse(409, 'Safe address is already assigned to another team', res);
+      }
+
+      try {
+        const safe = await prisma.teamContract.create({
+          data: {
+            teamId,
+            address: normalizedSafeAddress,
+            deployer: callerAddress,
+            type: contractType,
+          },
+        });
+        return res.status(200).json(safe);
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          const concurrentSafe = await prisma.teamContract.findFirst({
+            where: { teamId, type: 'Safe' },
+          });
+          if (concurrentSafe?.address.toLowerCase() === normalizedSafeAddress) {
+            return res.status(200).json(concurrentSafe);
+          }
+
+          return errorResponse(409, 'Safe registration conflict. Refresh and retry.', res);
+        }
+        throw error;
+      }
+    }
+
     const contract = await prisma.teamContract.create({
       data: {
         teamId,

@@ -1,8 +1,9 @@
 import { isAddress } from 'viem'
-import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
+import type { PolymarketActivity, PolymarketPosition, PolymarketUserPnlPoint } from '~/types/polymarket'
 
 const POLYMARKET_ACTIVITY_URL = 'https://data-api.polymarket.com/activity'
 const POLYMARKET_POSITIONS_URL = 'https://data-api.polymarket.com/positions'
+const POLYMARKET_USER_PNL_URL = 'https://user-pnl-api.polymarket.com/user-pnl'
 
 export type PolymarketActivitySortBy = 'TIMESTAMP' | 'TOKENS' | 'CASH'
 export type PolymarketActivitySortDirection = 'ASC' | 'DESC'
@@ -144,4 +145,31 @@ export async function fetchAllPolymarketPositions(user: string): Promise<Polymar
     offset => fetchPolymarketPositions({ user, limit: pageSize, offset, sizeThreshold: 0 }),
     pageSize
   )
+}
+
+/**
+ * Fetches the all-time Profit/Loss time series Polymarket renders on profile pages.
+ * The latest `p` value matches polymarket.com/profile/{address} — unlike
+ * Σ `/positions` realizedPnl + cashPnl, which diverges once closed markets drop
+ * off the positions feed or carry stale per-row P&L.
+ */
+export async function fetchPolymarketUserPnl(user: string): Promise<PolymarketUserPnlPoint[]> {
+  const trimmed = user.trim()
+  if (!isAddress(trimmed as `0x${string}`)) {
+    throw new Error('Invalid Polymarket user address')
+  }
+  const url = new URL(POLYMARKET_USER_PNL_URL)
+  url.searchParams.set('user_address', trimmed)
+  return await $fetch<PolymarketUserPnlPoint[]>(url.toString())
+}
+
+/** Latest all-time P&L from {@link fetchPolymarketUserPnl}. */
+export async function fetchPolymarketLatestPnl(user: string): Promise<number> {
+  const points = await fetchPolymarketUserPnl(user)
+  if (points.length === 0) {
+    return 0
+  }
+  // Pick the most recent point by timestamp rather than trusting array order.
+  const latest = points.reduce((newest, point) => (point.t > newest.t ? point : newest))
+  return latest.p
 }

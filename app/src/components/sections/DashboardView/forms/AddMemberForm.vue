@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-5">
-    <MultiSelectMemberInput v-model="formData" :disable-team-members="true" />
+    <MultiSelectMemberInput v-model="formData" member-scope="non-team-members" />
 
     <template v-if="addMembersError">
       <UAlert
@@ -35,13 +35,13 @@
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
-import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
+import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import type { Member } from '@/types'
 import { useAddMembersMutation, type MemberInput } from '@/queries/member.queries'
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 
 const emits = defineEmits(['memberAdded'])
 const toast = useToast()

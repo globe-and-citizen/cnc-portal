@@ -135,6 +135,7 @@ export const useUpdateFeatureQuery = () => {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['features'] })
+      queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.functionName }] })
       toast.add({
         title: 'Feature Updated',
         description: `${variables.functionName} is now ${variables.status}`,

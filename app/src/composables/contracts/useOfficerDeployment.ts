@@ -14,23 +14,20 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getConnections } from '@wagmi/core'
-import { encodeFunctionData, type Address, type Hex } from 'viem'
-import { getLogs } from 'viem/actions'
+import { encodeFunctionData, parseEventLogs, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
-import { log, parseError } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import { teamKeys } from '@/queries/team.queries'
 import { contractKeys } from '@/queries/contract.queries'
 import {
   validateBeaconAddresses,
   getBeaconConfigs,
-  getDeploymentConfigs,
-  handleBeaconProxyCreatedLogs
-} from '@/utils/contractDeploymentUtil'
+  getDeploymentConfigs
+} from '@/utils/contracts/deployment'
 import { OFFICER_BEACON, validateAddresses } from '@/constant'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
-import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
-
+import { factoryBeaconAbi, officerAbi } from '@/artifacts/abi/generated'
 export interface OfficerDeploymentMetadata {
   officerAddress: Address
   deployBlockNumber: number
@@ -83,42 +80,44 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
   const deployments = getDeploymentConfigs(address, args.investorInput)
 
   const encodedFunction = encodeFunctionData({
-    abi: OFFICER_ABI,
+    abi: officerAbi,
     functionName: 'initialize',
     args: [address, beaconConfigs, deployments, true] as const
   })
 
   const { hash, receipt } = await executeContractWrite({
     address: OFFICER_BEACON,
-    abi: FACTORY_BEACON_ABI,
+    abi: factoryBeaconAbi,
     functionName: 'createBeaconProxy',
     args: [encodedFunction]
   })
 
   log.info('Officer contract deployment confirmed:', { hash, receipt })
 
-  const publicClient = config.getClient()
-  const blockNumber = receipt.blockNumber
-
-  const logs = await getLogs(publicClient, {
-    address: OFFICER_BEACON as Address,
-    event: {
-      type: 'event',
-      name: 'BeaconProxyCreated',
-      inputs: [
-        { type: 'address', name: 'proxy', indexed: true },
-        { type: 'address', name: 'deployer', indexed: true }
-      ]
-    },
-    fromBlock: blockNumber,
-    toBlock: blockNumber
+  // The deployment receipt already carries every log emitted by this exact
+  // transaction, so we decode the BeaconProxyCreated event straight from it
+  // instead of issuing a second `getLogs` RPC over the whole block (which
+  // could also surface proxies created by other txs in the same block).
+  const [event] = parseEventLogs({
+    abi: [
+      {
+        type: 'event',
+        name: 'BeaconProxyCreated',
+        inputs: [
+          { type: 'address', name: 'proxy', indexed: true },
+          { type: 'address', name: 'deployer', indexed: true }
+        ]
+      }
+    ] as const,
+    eventName: 'BeaconProxyCreated',
+    logs: receipt.logs
   })
 
-  const proxyAddress = handleBeaconProxyCreatedLogs(logs, hash, address)
-
-  if (!proxyAddress) {
+  if (!event) {
     throw new Error('Failed to extract Officer proxy address from deployment event')
   }
+
+  const proxyAddress = event.args.proxy
 
   log.info('Officer proxy address extracted:', proxyAddress)
 
@@ -126,7 +125,7 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
     hash,
     receipt,
     officerAddress: proxyAddress,
-    deployBlockNumber: Number(blockNumber),
+    deployBlockNumber: Number(receipt.blockNumber),
     deployedAt: new Date()
   }
 }
@@ -180,10 +179,10 @@ export function useDeployOfficer(options: UseDeployOfficerOptions = {}) {
 /**
  * Decodes an error from a deploy attempt into a human-readable message.
  * Templates use this when rendering `deployMutation.error.value` to show the
- * parsed ABI revert reason rather than the raw blockchain error.
+ * catalog-resolved revert reason rather than the raw blockchain error.
  */
 export function formatDeployError(error: unknown): string {
-  return parseError(error, FACTORY_BEACON_ABI)
+  return classifyError(error, { contract: 'Officer' }).userMessage
 }
 
 /**

@@ -16,7 +16,7 @@ const makeWrapper = () =>
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
-        UserComponent: {
+        UserIdentity: {
           props: ['user'],
           template: '<div data-test="member-user">{{ user.name }}</div>'
         }
@@ -56,7 +56,7 @@ describe('DeleteMemberModal.vue', () => {
       },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
-        stubs: { UserComponent: true }
+        stubs: { UserIdentity: true }
       }
     })
 

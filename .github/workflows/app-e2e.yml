@@ -18,6 +18,14 @@ jobs:
   app-e2e-test:
     if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
+    # Run inside the official Playwright image: Chromium and its system deps are
+    # preinstalled, so there is no browser download in the critical path.
+    # `playwright install` pulls Chromium from the azureedge.net CDN, which
+    # stalled for >20 min and timed the job out. Caching could not rescue it:
+    # actions/cache only writes in a post-step that is skipped when the job is
+    # cancelled, so a timed-out run never seeds the cache for the next one.
+    # Keep this tag in sync with @playwright/test in app/package.json.
+    container: mcr.microsoft.com/playwright:v1.48.2-noble
     timeout-minutes: 15
 
     steps:
@@ -35,10 +43,6 @@ jobs:
         run: npm ci
         working-directory: ./app
 
-      - name: 🎭 Install Playwright browsers
-        run: npx playwright install chromium --with-deps
-        working-directory: ./app
-
       - name: 🧪 Run E2E tests with coverage instrumentation
         run: npm run test:e2e:coverage
         working-directory: ./app
@@ -53,10 +57,16 @@ jobs:
 
       - name: ✅ Upload coverage to Codecov
         if: always()
-        continue-on-error: true # codecov-action@v4 occasionally EPIPEs on GPG verify
-        uses: codecov/codecov-action@v4.0.1
+        # Coverage upload must never gate the e2e job, but it must still work.
+        # v4.0.1 (a Node 20 action) sends `service: None` from inside the
+        # Playwright container and the upload silently fails; v5 fixes container
+        # detection and runs on Node 24. `slug` is passed explicitly so it never
+        # falls back to fragile git introspection inside the container.
+        continue-on-error: true
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ${{ github.repository }}
           files: ./app/coverage/e2e/lcov.info
           flags: app-e2e-tests
 

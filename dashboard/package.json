@@ -2,6 +2,10 @@
   "name": "dashboard",
   "type": "module",
   "private": true,
+  "packageManager": "npm@11.11.0",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -22,8 +26,9 @@
     "@vueuse/nuxt": "^13.9.0",
     "@wagmi/core": "^3.0.0",
     "@wagmi/vue": "^0.4.17",
-    "axios": "^1.13.5",
+    "axios": "^1.18.0",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
     "ethers": "^6.15.0",
     "nuxt": "^4.2.1",
     "pinia": "^3.0.4",

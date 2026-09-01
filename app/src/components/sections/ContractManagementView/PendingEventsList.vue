@@ -9,7 +9,7 @@
     </template>
 
     <template #requestedBy-cell="{ row: { original: row } }">
-      <UserComponent :user="row.requestedBy" />
+      <UserIdentity :user="row.requestedBy" />
     </template>
 
     <template #dateCreated-cell="{ row: { original: row } }">
@@ -22,8 +22,8 @@
   </UTable>
 </template>
 <script setup lang="ts">
-import type { FormattedAction } from '@/utils'
-import UserComponent from '@/components/UserComponent.vue'
+import type { FormattedAction } from '@/utils/contracts/management'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useBodIsActionExecuted } from '@/composables/bod/reads'
 import { computed } from 'vue'
 

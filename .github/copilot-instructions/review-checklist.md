@@ -4,6 +4,11 @@
 
 Before submitting code for review, ensure the following items are completed:
 
+### UI/UX Reviewer Journey
+
+For every pull request, select one impact level and complete the applicable review material in the PR description. Follow the
+[UI/UX Reviewer Journey guide](./ui-ux-review.md); it links the reviewer protocol to canonical feature stories without duplicating them.
+
 ### General Code Quality
 
 - [ ] **TypeScript Compilation**: Code compiles without TypeScript errors
@@ -12,6 +17,8 @@ Before submitting code for review, ensure the following items are completed:
 - [ ] **Type Safety**: No `any` types used unless absolutely necessary
 - [ ] **Import Organization**: Imports are organized (external → internal → relative)
 - [ ] **Console Logs**: No unnecessary console.log statements in production code
+- [ ] **Display Formatting**: Values are rendered through `utils/format` — no `Intl.*`, `toLocaleString`, `toFixed`, or dayjs pattern string
+      at the call site, and no on-chain amount rounded before `parseUnits`. See [`formatting-standards.md`](./formatting-standards.md)
 
 ### Vue.js Component Standards
 
@@ -38,7 +45,9 @@ Before submitting code for review, ensure the following items are completed:
 - [ ] **Actions**: Complex state mutations use store actions
 - [ ] **Getters**: Computed store values use getters
 - [ ] **Store Integration**: Components properly integrate with stores
-- [ ] **Store Usage**: Always create a store instance inside `setup()` or a composable (e.g., `const teamStore = useTeamStore()`) and access state, getters, and actions via that instance (e.g., `teamStore.currentTeamId`). Do not access store state directly at the top-level of a module.
+- [ ] **Store Usage**: Always create a store instance inside `setup()` or a composable (e.g., `const teamStore = useTeamStore()`) and access
+      state, getters, and actions via that instance (e.g., `teamStore.currentTeamId`). Do not access store state directly at the top-level
+      of a module.
 
 ### Testing Requirements
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title TokenSupport
@@ -12,7 +12,7 @@ abstract contract TokenSupport {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   /// @dev Set to track all supported token addresses for enumeration
-  EnumerableSet.AddressSet internal _supportedTokens;
+  EnumerableSet.AddressSet internal s_supportedTokens;
 
   /// @notice Emitted when a new token is added to the supported tokens list
   event TokenSupportAdded(address indexed tokenAddress);
@@ -21,36 +21,32 @@ abstract contract TokenSupport {
   event TokenSupportRemoved(address indexed tokenAddress);
 
   /// @dev A required token address argument was the zero address.
-  error TokenSupportZeroAddress();
+  error TokenSupport__ZeroAddress();
 
   /// @dev The token is already in the supported tokens list.
   /// @param token The token that was already supported.
-  error TokenSupportAlreadyAdded(address token);
+  error TokenSupport__AlreadyAdded(address token);
 
   /// @dev The token is not currently in the supported tokens list.
   /// @param token The token that was not found.
-  error TokenSupportNotFound(address token);
+  error TokenSupport__NotFound(address token);
 
   /**
-   * @notice Adds a supported token to the contract.
-   * @param _tokenAddress The address of the token contract.
-   * @dev Can only be called by contracts that implement onlyOwner or similar access control.
+   * @notice Adds a supported token to the contract
+   * @param tokenAddress The address of the token contract
+   * @dev Virtual function - override to add access control (e.g., onlyOwner)
    */
-  function _addTokenSupport(address _tokenAddress) internal {
-    if (_tokenAddress == address(0)) revert TokenSupportZeroAddress();
-    if (!_supportedTokens.add(_tokenAddress)) revert TokenSupportAlreadyAdded(_tokenAddress);
-    emit TokenSupportAdded(_tokenAddress);
+  function addTokenSupport(address tokenAddress) external virtual {
+    _addTokenSupport(tokenAddress);
   }
 
   /**
-   * @notice Removes a supported token from the contract.
-   * @param _tokenAddress The address of the token contract.
-   * @dev Can only be called by contracts that implement onlyOwner or similar access control.
+   * @notice Removes a supported token from the contract
+   * @param tokenAddress The address of the token contract
+   * @dev Virtual function - override to add access control (e.g., onlyOwner)
    */
-  function _removeTokenSupport(address _tokenAddress) internal {
-    if (_tokenAddress == address(0)) revert TokenSupportZeroAddress();
-    if (!_supportedTokens.remove(_tokenAddress)) revert TokenSupportNotFound(_tokenAddress);
-    emit TokenSupportRemoved(_tokenAddress);
+  function removeTokenSupport(address tokenAddress) external virtual {
+    _removeTokenSupport(tokenAddress);
   }
 
   /**
@@ -58,7 +54,7 @@ abstract contract TokenSupport {
    * @return Array of supported token addresses
    */
   function getSupportedTokens() external view returns (address[] memory) {
-    return _supportedTokens.values();
+    return s_supportedTokens.values();
   }
 
   /**
@@ -66,42 +62,54 @@ abstract contract TokenSupport {
    * @return Number of supported tokens
    */
   function getSupportedTokenCount() external view returns (uint256) {
-    return _supportedTokens.length();
-  }
-
-  /**
-   * @notice Checks if a token is supported
-   * @param _token The address of the token to check
-   * @return True if the token is supported, false otherwise
-   */
-  function _isTokenSupported(address _token) internal view returns (bool) {
-    return _supportedTokens.contains(_token);
+    return s_supportedTokens.length();
   }
 
   /**
    * @notice Public version: checks if a token is supported.
-   * @param _token The address of the token to check.
+   * @param token The address of the token to check.
    * @return True if token is supported, false otherwise.
    */
-  function isTokenSupported(address _token) public view returns (bool) {
-    return _supportedTokens.contains(_token);
+  function isTokenSupported(address token) public view returns (bool) {
+    return s_supportedTokens.contains(token);
   }
 
   /**
-   * @notice Adds a supported token to the contract
-   * @param _tokenAddress The address of the token contract
-   * @dev Virtual function - override to add access control (e.g., onlyOwner)
+   * @notice Adds a supported token to the contract.
+   * @param tokenAddress The address of the token contract.
+   * @dev Can only be called by contracts that implement onlyOwner or similar access control.
    */
-  function addTokenSupport(address _tokenAddress) external virtual {
-    _addTokenSupport(_tokenAddress);
+  function _addTokenSupport(address tokenAddress) internal {
+    if (tokenAddress == address(0)) revert TokenSupport__ZeroAddress();
+    if (!s_supportedTokens.add(tokenAddress)) revert TokenSupport__AlreadyAdded(tokenAddress);
+    emit TokenSupportAdded(tokenAddress);
   }
 
   /**
-   * @notice Removes a supported token from the contract
-   * @param _tokenAddress The address of the token contract
-   * @dev Virtual function - override to add access control (e.g., onlyOwner)
+   * @notice Removes a supported token from the contract.
+   * @param tokenAddress The address of the token contract.
+   * @dev Can only be called by contracts that implement onlyOwner or similar access control.
    */
-  function removeTokenSupport(address _tokenAddress) external virtual {
-    _removeTokenSupport(_tokenAddress);
+  function _removeTokenSupport(address tokenAddress) internal {
+    if (tokenAddress == address(0)) revert TokenSupport__ZeroAddress();
+    if (!s_supportedTokens.remove(tokenAddress)) revert TokenSupport__NotFound(tokenAddress);
+    emit TokenSupportRemoved(tokenAddress);
+  }
+
+  /**
+   * @notice Returns all supported token addresses (internal, avoids an external self-call)
+   * @return Array of supported token addresses
+   */
+  function _getSupportedTokens() internal view returns (address[] memory) {
+    return s_supportedTokens.values();
+  }
+
+  /**
+   * @notice Checks if a token is supported
+   * @param token The address of the token to check
+   * @return True if the token is supported, false otherwise
+   */
+  function _isTokenSupported(address token) internal view returns (bool) {
+    return s_supportedTokens.contains(token);
   }
 }

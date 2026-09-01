@@ -1,0 +1,175 @@
+import { defineStore } from 'pinia'
+import { computed } from 'vue'
+import { formatDateShort } from '@/utils/format'
+import { useQuery } from '@tanstack/vue-query'
+import { readContract } from '@wagmi/core'
+import { formatUnits, isAddress, type Address } from 'viem'
+import { config } from '@/wagmi.config'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
+import { useFixedReturnAddress, useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
+import { useGetFixedReturnOfferingsQuery } from '@/queries/fixedReturnOffering.queries'
+import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
+import { useTeamStore } from './teamStore'
+import { useUserDataStore } from './user'
+import { gradientForAddress } from '@/utils/communityCredit/offer'
+import {
+  lendingOfferToCreditRound,
+  offerMaturityDate,
+  offerStateToRoundStatus,
+  roundInterest
+} from '@/utils/communityCredit/model'
+import type { CreditMember, CreditRound } from '@/types'
+
+/**
+ * Community Credit is the member-facing UI for a team's on-chain FixedReturn contract:
+ * each "round" is a FixedReturn lending offer. This store surfaces the read side —
+ * the offer list (useFixedReturnAllOffers), their off-chain title/purpose metadata and
+ * the contract owner — mapped into the CreditRound shape the views render. Writes
+ * (lend / repay / create / refund) live in the views and modals, since they need ERC20
+ * approvals and toasts that only make sense in a component. The round-detail tab
+ * (ledger/gauge/timeline/repay) is a route param owned by RoundView.vue, not store state.
+ */
+export const useCommunityCreditStore = defineStore('communityCredit', () => {
+  const teamStore = useTeamStore()
+  const userStore = useUserDataStore()
+  const fixedReturnAddress = useFixedReturnAddress()
+
+  // ───────── on-chain reads ─────────
+  const offersQuery = useFixedReturnAllOffers()
+  const metadataQuery = useGetFixedReturnOfferingsQuery({
+    queryParams: { teamId: () => teamStore.currentTeamId }
+  })
+  const ownerQuery = useQuery({
+    queryKey: ['fixedReturnOwner', fixedReturnAddress],
+    queryFn: () =>
+      readContract(config, {
+        address: fixedReturnAddress.value as Address,
+        abi: fixedReturnAbi,
+        functionName: 'owner'
+      }) as Promise<Address>,
+    enabled: computed(() => !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value))
+  })
+
+  /** True once the team actually has a FixedReturn ("Credit Account") deployed. */
+  const hasContract = computed(() => !!fixedReturnAddress.value)
+  const isLoading = computed(() => offersQuery.isLoading.value)
+  const isError = computed(() => offersQuery.isError.value)
+
+  function titleFor(offerId: number): string | undefined {
+    return (metadataQuery.data.value ?? []).find((m) => m.offerId === offerId)?.title
+  }
+  function purposeFor(offerId: number): string | undefined {
+    return (metadataQuery.data.value ?? []).find((m) => m.offerId === offerId)?.purpose ?? undefined
+  }
+
+  // The chain's own clock, not the browser's — a round's "has the deadline passed"
+  // status must agree with what lendFunds itself checks (block.timestamp), or the UI
+  // can show a round as lendable/Open right up until the moment the transaction it
+  // just accepted reverts on-chain with OfferNotOpen. Falls back to the device clock
+  // only for the brief instant before the first block resolves.
+  const blockTimestamp = useBlockTimestamp()
+  const now = computed(() =>
+    blockTimestamp.value !== null ? new Date(Number(blockTimestamp.value) * 1000) : new Date()
+  )
+
+  /** Every offer as a CreditRound, newest first (lenders resolved lazily by the detail view). */
+  const rounds = computed<CreditRound[]>(() =>
+    (offersQuery.data.value ?? []).map((raw) =>
+      lendingOfferToCreditRound(raw, titleFor(raw.offerId), purposeFor(raw.offerId), now.value)
+    )
+  )
+
+  // ───────── role (derived from on-chain ownership, not a manual toggle) ─────────
+  const isOwner = computed(
+    () =>
+      !!userStore.address &&
+      !!ownerQuery.data.value &&
+      userStore.address.toLowerCase() === ownerQuery.data.value.toLowerCase()
+  )
+  const isLender = computed(() => !isOwner.value)
+
+  // ───────── derived round buckets ─────────
+  // "Open & active rounds" — only rounds a lender could still fund right now. Everything
+  // else (funded, mid-repayment, repaid, refundable, or stalled past its deadline) has
+  // nothing left for a lender to act on, so it lives in History instead.
+  const activeRounds = computed(() => rounds.value.filter((r) => r.fundable))
+  const historyRounds = computed(() => rounds.value.filter((r) => !r.fundable))
+
+  // ───────── account stats (from raw offers so token decimals stay correct) ─────────
+  // Broader than `activeRounds`: outstanding principal/interest covers every round with
+  // money out and not yet repaid, including funded rounds sitting in History awaiting
+  // a repay action, and stalled rounds awaiting the issuer's refund/accept decision —
+  // that principal is still very much outstanding in both cases.
+  const outstandingRounds = computed(() =>
+    rounds.value.filter(
+      (r) =>
+        r.status === 'open' ||
+        r.status === 'stalled' ||
+        r.status === 'funded' ||
+        r.status === 'active' ||
+        r.status === 'overdue'
+    )
+  )
+  const outstandingPrincipal = computed(() =>
+    outstandingRounds.value.reduce((sum, r) => sum + r.raised, 0)
+  )
+  const interestDue = computed(() =>
+    outstandingRounds.value.reduce((sum, r) => sum + roundInterest(r), 0)
+  )
+  const raisedLifetime = computed(() => rounds.value.reduce((sum, r) => sum + r.raised, 0))
+  const repaidLifetime = computed(() =>
+    (offersQuery.data.value ?? []).reduce(
+      (sum, raw) => sum + Number(formatUnits(raw.offer.totalRepaidByIssuer, raw.decimals)),
+      0
+    )
+  )
+  const nextMaturity = computed(() => {
+    const soonest = (offersQuery.data.value ?? [])
+      .filter((raw) => {
+        const s = offerStateToRoundStatus(raw.offer, now.value)
+        return (
+          s === 'open' || s === 'stalled' || s === 'funded' || s === 'active' || s === 'overdue'
+        )
+      })
+      .map((raw) => offerMaturityDate(raw.offer))
+      .sort((a, b) => a.getTime() - b.getTime())[0]
+    return soonest ? formatDateShort(soonest) : '—'
+  })
+
+  // ───────── team members eligible to lend (restricted-list picker) ─────────
+  const members = computed<CreditMember[]>(() =>
+    (teamStore.currentTeamMeta.data?.members ?? []).map((m) => ({
+      id: m.address,
+      name: m.name || m.address,
+      addr: m.address,
+      gradient: gradientForAddress(m.address)
+    }))
+  )
+
+  function getRound(id: string | undefined): CreditRound | undefined {
+    return rounds.value.find((r) => r.id === id)
+  }
+
+  return {
+    // status
+    hasContract,
+    isLoading,
+    isError,
+    // role
+    isOwner,
+    isLender,
+    // rounds
+    rounds,
+    activeRounds,
+    historyRounds,
+    getRound,
+    // account stats
+    outstandingPrincipal,
+    interestDue,
+    raisedLifetime,
+    repaidLifetime,
+    nextMaturity,
+    // members
+    members
+  }
+})

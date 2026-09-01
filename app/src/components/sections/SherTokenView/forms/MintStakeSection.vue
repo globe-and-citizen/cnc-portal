@@ -31,6 +31,7 @@
         :inputColor="state.stakeMode === 'add' ? 'primary' : 'neutral'"
         :minPercentage="state.stakeMode === 'add' ? 0 : stakeConstraints.endingMin"
         :maxPercentage="state.stakeMode === 'add' ? stakeConstraints.addMax : 100"
+        :disablePercentage="stakeConstraints.addMax === 0 && totalSupplyNumber > 0"
         @update:percentage="onPercentageChange"
         @update:amount="onAmountChange"
       />
@@ -58,7 +59,7 @@ import {
   computeIssuedAmountFromAmountInput,
   computePercentageFromAmountInput,
   TOKEN_DECIMALS
-} from '@/utils/investorMintAllocation'
+} from '@/utils/investors/mintAllocation'
 import { type StakeMode, type StakePayload } from '@/types/investor'
 import TwinAmountInputs from './TwinAmountInputs.vue'
 import MintRecapCard from './MintRecapCard.vue'

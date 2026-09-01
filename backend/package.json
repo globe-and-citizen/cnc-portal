@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
+  "packageManager": "npm@11.11.0",
+  "engines": {
+    "node": "24.x"
+  },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
@@ -67,6 +71,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.731.1",
     "@aws-sdk/s3-request-presigner": "^3.731.1",
+    "@openzeppelin/merkle-tree": "^1.0.8",
     "@prisma/client": "^6.15.0",
     "@sentry/cli": "^2.53.0",
     "@sentry/node": "^10.11.0",
@@ -78,11 +83,12 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "jsonwebtoken": "^9.0.2",
+    "merkletreejs": "^0.6.0",
     "multer": "^2.0.2",
     "siwe": "^3.0.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "viem": "^2.29.4",
     "yaml": "^2.8.2",
     "yamljs": "^0.3.0",

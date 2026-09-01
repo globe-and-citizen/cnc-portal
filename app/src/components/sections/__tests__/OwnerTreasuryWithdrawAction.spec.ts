@@ -14,7 +14,8 @@ import {
   mockUseChainId,
   mockUseContractBalance,
   mockUserStore,
-  useQueryClientFn
+  useQueryClientFn,
+  makeTokenBalance
 } from '@/tests/mocks'
 
 const OWNER_ADDRESS = '0x00000000000000000000000000000000000000aa'
@@ -25,29 +26,7 @@ const BUTTON = '[data-test="owner-withdraw-button"]'
 const CONFIRM = '[data-test="owner-withdraw-modal-confirm-button"]'
 const WARNING = '[data-test="owner-withdraw-modal-warning"]'
 
-const makeBalance = (amount: number) => ({
-  amount,
-  token: {
-    id: 'native',
-    name: 'ETH',
-    symbol: 'ETH',
-    code: 'ETH',
-    coingeckoId: 'ethereum',
-    decimals: 18,
-    address: '0x0000000000000000000000000000000000000000'
-  },
-  values: {
-    USD: {
-      value: amount,
-      formated: `$${amount}`,
-      id: 'usd',
-      code: 'USD',
-      symbol: '$',
-      price: 1,
-      formatedPrice: '$1'
-    }
-  }
-})
+const makeBalance = (amount: number) => makeTokenBalance({ amount, usdPrice: 1 })
 
 const createWrapper = (
   contractType: 'CashRemunerationEIP712' | 'ExpenseAccountEIP712' = 'CashRemunerationEIP712'

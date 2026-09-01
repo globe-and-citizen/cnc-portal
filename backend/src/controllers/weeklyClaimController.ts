@@ -1,3 +1,6 @@
+import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import utc from 'dayjs/plugin/utc';
 import { Request, Response } from 'express';
 import { errorResponse, getMondayStart, prisma } from '../utils';
 import { Prisma } from '@prisma/client';
@@ -10,6 +13,10 @@ import {
 import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
+import { signWeeklyClaimBodySchema, z } from '../validation';
+import { resolveCurrentWage } from '../utils/wageResolution';
+
+type SignWeeklyClaimBody = z.infer<typeof signWeeklyClaimBodySchema>;
 
 // EIP-712 typed-data envelope for the WageClaim signature, mirroring the
 // frontend definition in app/src/components/sections/CashRemunerationView/
@@ -28,12 +35,11 @@ const WAGE_CLAIM_TYPES = {
   ],
 } as const;
 
+dayjs.extend(utc);
+dayjs.extend(isoWeek);
+
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
-
-function isValidWeeklyClaimAction(action: unknown): action is WeeklyClaimAction {
-  return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action as string);
-}
 
 const deriveWeeklyClaimStatus = (isPaid: boolean, isDisabled: boolean): statusType => {
   if (isPaid) return 'withdrawn';
@@ -45,40 +51,11 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature, signedAgainstContractAddress, typedDataMessage, chainId } = req.body as {
-    signature?: string;
-    signedAgainstContractAddress?: string;
-    typedDataMessage?: {
-      employeeAddress: string;
-      minutesWorked: number;
-      date: string;
-      wages: { hourlyRate: string; tokenAddress: string }[];
-    };
-    chainId?: number;
-  };
-
-  // Validation stricte des actions autorisées
-  const errors: string[] = [];
-  if (!action || !isValidWeeklyClaimAction(action))
-    errors.push('Invalid action. Allowed actions are: sign, withdraw, disable, enable');
-
-  if (action == 'sign') {
-    if (!signature || !isHex(signature)) errors.push('Missing or invalid signature');
-    // signedAgainstContractAddress + typedDataMessage + chainId are required
-    // for sign so the backend can authenticate the EIP-712 signature and
-    // tag the row with the verifying contract for stale-detection.
-    if (!signedAgainstContractAddress || !isAddress(signedAgainstContractAddress))
-      errors.push('Missing or invalid signedAgainstContractAddress');
-    if (!typedDataMessage) errors.push('Missing typedDataMessage');
-    if (!chainId || !Number.isInteger(chainId) || chainId <= 0)
-      errors.push('Missing or invalid chainId');
-  }
-
-  if (!id || isNaN(id)) errors.push('Missing or invalid id');
-
-  if (errors.length > 0) {
-    return errorResponse(400, errors.join('; '), res);
-  }
+  // Route-level `validateRequest(updateWeeklyClaimRequestSchema)` already
+  // enforces that signedAgainstContractAddress / typedDataMessage / chainId
+  // are present for `action=sign` (see weeklyClaim.ts), so `id` and
+  // `signature` here are guaranteed valid — no re-checking needed.
+  const { signature } = req.body as { signature?: string };
 
   let data: Prisma.WeeklyClaimUpdateInput = {};
   // let singleClaimStatus: statusType = "pending";
@@ -166,17 +143,31 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         break;
       }
       case 'sign': {
+        const { signature, signedAgainstContractAddress, typedDataMessage, chainId } =
+          req.body as SignWeeklyClaimBody;
+
         const signErrors: string[] = [];
 
-        // Check if the caller is the Cash Remuneration owner
+        // Signing authorises a later contract withdrawal, so it must come
+        // from the current Cash Remuneration contract owner. A team owner may
+        // manage the team without holding that contract role after a redeploy.
         const isCallerCashRemunOwner = await isCashRemunerationOwner(
           callerAddress,
           weeklyClaim.wage.team.id
         );
+        if (!isCallerCashRemunOwner) {
+          return errorResponse(403, 'Caller is not the current Cash Remuneration owner', res);
+        }
 
-        // If not Cash Remuneration owner, check if they're the team owner
-        if (!isCallerCashRemunOwner && weeklyClaim.wage.team.ownerAddress !== callerAddress)
-          signErrors.push('Caller is not the Cash Remuneration owner or the team owner');
+        // Weekly goals can create a pending weekly claim before the member
+        // submits any hours. Goals are planning information, not a payable
+        // claim, so signing requires at least one linked daily claim.
+        const dailyClaimCount = await prisma.claim.count({
+          where: { weeklyClaimId: weeklyClaim.id },
+        });
+        if (dailyClaimCount === 0) {
+          signErrors.push('At least one daily claim is required before signing a weekly claim');
+        }
 
         // Check if the week is completed
         if (weeklyClaim.weekStart.getTime() >= getMondayStart(new Date()).getTime()) {
@@ -212,7 +203,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (
           !currentCashRemunerationContract ||
           currentCashRemunerationContract.address.toLowerCase() !==
-            (signedAgainstContractAddress as string).toLowerCase()
+            signedAgainstContractAddress.toLowerCase()
         ) {
           signErrors.push(
             'signedAgainstContractAddress does not match the team current CashRemunerationEIP712'
@@ -231,19 +222,19 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
               domain: {
                 name: 'CashRemuneration',
                 version: '1',
-                chainId: chainId as number,
+                chainId,
                 verifyingContract: signedAgainstContractAddress as Address,
               },
               types: WAGE_CLAIM_TYPES,
               primaryType: 'WageClaim',
               message: {
-                employeeAddress: typedDataMessage!.employeeAddress as Address,
-                minutesWorked: typedDataMessage!.minutesWorked,
-                wages: typedDataMessage!.wages.map((w) => ({
+                employeeAddress: typedDataMessage.employeeAddress as Address,
+                minutesWorked: typedDataMessage.minutesWorked,
+                wages: typedDataMessage.wages.map((w) => ({
                   hourlyRate: BigInt(w.hourlyRate),
                   tokenAddress: w.tokenAddress as Address,
                 })),
-                date: BigInt(typedDataMessage!.date),
+                date: BigInt(typedDataMessage.date),
               },
               signature: signature as Hex,
             });
@@ -265,13 +256,28 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         data = {
           signature,
           status: 'signed',
-          data: { ownerAddress: callerAddress },
+          data: {
+            ownerAddress: callerAddress,
+            contractAddress: signedAgainstContractAddress,
+            chainId,
+          },
           signedAgainstContractAddress,
         };
         // singleClaimStatus = "signed";
         break;
       }
       case 'withdraw': {
+        // Only the member the claim belongs to may mark it withdrawn. The
+        // on-chain withdrawal pays `employeeAddress`, so the claim owner is
+        // the only party the action can legitimately come from — unlike
+        // sign/disable/enable, which are owner actions. Without this check any
+        // authenticated user could flip an arbitrary claim to `withdrawn`, and
+        // because syncWeeklyClaims only re-reads `signed`/`disabled` rows the
+        // wrong status would never be reconciled back (issue #2471).
+        if (weeklyClaim.memberAddress.toLowerCase() !== callerAddress.toLowerCase()) {
+          return errorResponse(403, 'Caller is not the owner of this weekly claim', res);
+        }
+
         // Check if the weekly claim is already signed
         if (weeklyClaim.status !== 'signed') {
           let withdrawErrorMsg = 'Weekly claim must be signed before it can be withdrawn';
@@ -532,13 +538,13 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
           publicClient.readContract({
             address: teamContract.address as `0x${string}`,
             abi: CASH_REMUNERATION_ABI,
-            functionName: 'paidWageClaims',
+            functionName: 'getPaidWageClaim',
             args: [signatureHash],
           }),
           publicClient.readContract({
             address: teamContract.address as `0x${string}`,
             abi: CASH_REMUNERATION_ABI,
-            functionName: 'disabledWageClaims',
+            functionName: 'getDisabledWageClaim',
             args: [signatureHash],
           }),
         ]);
@@ -571,6 +577,99 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error syncing weekly claims:', error);
+    return errorResponse(500, error, res);
+  }
+};
+
+/**
+ * Upsert the member's weekly goals memo (free-form Markdown) for a given ISO
+ * week. Exactly one memo exists per weekly claim ([teamId, memberAddress,
+ * weekStart]). The
+ * caller can only set their own goals — `req.address` is the member address.
+ *
+ * The memo is decoupled from daily claims: submitting goals for a week that has
+ * no claims yet creates a claim-less WeeklyClaim row (status `pending`), so a
+ * member can plan the week before logging any hours. Once the week is signed /
+ * withdrawn / disabled the memo is locked, mirroring the addClaim guards.
+ */
+export const submitWeeklyGoals = async (req: Request, res: Response) => {
+  const callerAddress = req.address;
+  const {
+    teamId,
+    weekStart: weekStartInput,
+    weeklyGoals,
+  } = req.body as {
+    teamId: number;
+    weekStart: string;
+    weeklyGoals: string;
+  };
+
+  // Normalize to Monday 00:00 UTC the same way addClaim does, so goals and
+  // daily claims land on the same row for a given week.
+  const weekStart = dayjs.utc(weekStartInput).startOf('isoWeek').toDate();
+
+  try {
+    // Looked up by week rather than by wage, exactly as addClaim does, so goals
+    // never open a second row for a week whose wage has changed since. When the
+    // week holds no hours yet, the first claim moves the row onto the wage that
+    // prices it; goals alone never commit a week to a wage.
+    const existing = await prisma.weeklyClaim.findFirst({
+      where: {
+        teamId,
+        memberAddress: callerAddress,
+        weekStart,
+      },
+    });
+
+    if (existing) {
+      if (existing.status === 'disabled') {
+        return errorResponse(409, 'Week is disabled. Submission not allowed.', res);
+      }
+      if (existing.status === 'withdrawn') {
+        return errorResponse(409, 'Week already withdrawn. Submission not allowed.', res);
+      }
+      if (existing.status === 'signed' || !!existing.signature) {
+        return errorResponse(409, 'Week already signed. Submission not allowed.', res);
+      }
+
+      const updated = await prisma.weeklyClaim.update({
+        where: { id: existing.id },
+        data: { weeklyGoals },
+      });
+      return res.status(200).json(updated);
+    }
+
+    // A WeeklyClaim requires a wageId, so the member needs a wage before any
+    // goals can be recorded. Only reached for a week nobody has opened yet,
+    // so its first hours will use this current wage too.
+    const wage = await resolveCurrentWage(teamId, callerAddress);
+
+    if (!wage) {
+      return errorResponse(400, 'No wage found for the user', res);
+    }
+
+    const created = await prisma.weeklyClaim.upsert({
+      where: {
+        teamId_memberAddress_weekStart: {
+          teamId,
+          memberAddress: callerAddress,
+          weekStart,
+        },
+      },
+      create: {
+        wageId: wage.id,
+        weekStart,
+        memberAddress: callerAddress,
+        teamId,
+        data: {},
+        status: 'pending',
+        weeklyGoals,
+      },
+      update: { weeklyGoals },
+    });
+
+    return res.status(200).json(created);
+  } catch (error) {
     return errorResponse(500, error, res);
   }
 };

@@ -2,7 +2,7 @@
   <a
     data-test="enable-action"
     :class="[
-      'text-sm',
+      'block w-full cursor-pointer px-3 py-1.5 text-sm',
       { 'pointer-events-none opacity-50': enableTx.isPending.value || isTeamArchived }
     ]"
     :aria-disabled="enableTx.isPending.value || isTeamArchived"
@@ -25,9 +25,10 @@
   </a>
 </template>
 <script lang="ts" setup>
-import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
+import { useSyncWeeklyClaimsMutation, weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
 import { keccak256 } from 'viem'
-import { classifyError, log } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
@@ -65,7 +66,7 @@ const enableClaim = async () => {
         }
 
         queryClient.invalidateQueries({
-          queryKey: ['weekly-claims', teamStore.currentTeamId]
+          queryKey: weeklyClaimKeys.teams()
         })
 
         emit('close')

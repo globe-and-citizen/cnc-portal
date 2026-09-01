@@ -13,7 +13,7 @@ import type { RealizedTrade } from '~/utils/incomeStatement'
  * vague "reconciliation gap" alert.
  */
 
-export type AccountingIdentityId
+type AccountingIdentityId
   = | 'CASH_ONCHAIN'
     | 'NET_DEPOSITS'
     | 'BALANCE_SHEET'
@@ -44,7 +44,7 @@ export interface AccountingIdentity {
   asOfTodayOnly?: boolean
 }
 
-export interface ComputeIdentitiesInput {
+interface ComputeIdentitiesInput {
   summary: AccountingSummary
   balanceSheet: BalanceSheet
   generalLedger: GeneralLedger

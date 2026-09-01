@@ -1,157 +1,73 @@
 <template>
-  <UCard>
-    <template #header>Vesting Stats</template>
-    <UTable
-      :data="tokenSummaryRows"
-      :columns="tokenSummaryColumns"
-      :sticky="true"
-      :showPagination="true"
-    >
-      <template #totalReleased-cell="{ row: { original: row } }">
-        <span class="flex items-center gap-1 text-sm text-gray-700">
-          {{ row.totalReleased }}
-          <span class="text-xs">{{ tokenSymbolText }}</span>
-        </span>
-      </template>
-      <template #totalVested-cell="{ row: { original: row } }">
-        <span class="flex items-center gap-1 text-sm text-gray-700">
-          {{ row.totalVested }}
-          <span class="text-xs">{{ tokenSymbolText }}</span>
-        </span>
-      </template>
-      <template #totalWithdrawn-cell="{ row: { original: row } }">
-        <span class="flex items-center gap-1 text-sm text-gray-700">
-          {{ row.totalWithdrawn }}
-          <span class="text-xs">{{ tokenSymbolText }}</span>
-        </span>
-      </template>
-    </UTable>
-  </UCard>
+  <section aria-labelledby="vesting-summary-heading" data-test="vesting-summary">
+    <h2 id="vesting-summary-heading" class="sr-only">Vesting summary</h2>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <UCard v-for="metric in metrics" :key="metric.label" class="overflow-hidden">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-muted text-sm">{{ metric.label }}</p>
+            <USkeleton v-if="isLoading" class="mt-2 h-7 w-32" data-test="vesting-stat-skeleton" />
+            <p v-else class="mt-2 truncate text-xl font-semibold" :data-test="metric.testId">
+              {{ metric.value }}
+            </p>
+            <p class="text-muted mt-1 text-xs">{{ metric.description }}</p>
+          </div>
+          <div :class="metric.iconClass" class="rounded-xl p-2.5">
+            <UIcon :name="metric.icon" class="size-5" />
+          </div>
+        </div>
+      </UCard>
+    </div>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useTeamStore } from '@/stores'
-import { type TokenSummary } from '@/types/vesting'
-import { formatUnits } from 'viem'
-import { useInvestorSymbol } from '@/composables/investor/reads'
-import {
-  useVestingGetTeamAllArchivedVestingsFlat,
-  useVestingGetTeamVestingsWithMembers
-} from '@/composables/vesting/reads'
+import { computed } from 'vue'
+import type { VestingTotals } from '@/types/vesting'
+import { formatVestingAmount } from '@/utils/vesting/presentation'
 
-const teamStore = useTeamStore()
-const team = computed(() => teamStore.currentTeam)
+interface Props {
+  totals: VestingTotals
+  tokenSymbol: string
+  isLoading: boolean
+}
 
-const props = defineProps<{
-  reloadKey: number
-}>()
+const props = defineProps<Props>()
 
-const displayActive = ref(true)
+const amount = (value: bigint) => formatVestingAmount(value, props.tokenSymbol)
 
-watch(displayActive, async () => {
-  await getArchivedVestingInfos()
-  await getVestingInfos()
-})
-watch(
-  () => props.reloadKey,
-  async () => {
-    await getArchivedVestingInfos()
-    await getVestingInfos()
+const metrics = computed(() => [
+  {
+    label: 'Promised',
+    value: amount(props.totals.promised),
+    description: 'Total grants created',
+    icon: 'i-lucide-scroll-text',
+    iconClass: 'bg-primary/10 text-primary',
+    testId: 'vesting-promised'
+  },
+  {
+    label: 'Vested',
+    value: amount(props.totals.vested),
+    description: 'Earned across all schedules',
+    icon: 'i-lucide-chart-no-axes-column-increasing',
+    iconClass: 'bg-info/10 text-info',
+    testId: 'vesting-vested'
+  },
+  {
+    label: 'Claimable',
+    value: amount(props.totals.claimable),
+    description: 'Available to release now',
+    icon: 'i-lucide-hand-coins',
+    iconClass: 'bg-success/10 text-success',
+    testId: 'vesting-claimable'
+  },
+  {
+    label: 'Released',
+    value: amount(props.totals.released),
+    description: 'Shares already minted',
+    icon: 'i-lucide-circle-check-big',
+    iconClass: 'bg-neutral/10 text-muted',
+    testId: 'vesting-released'
   }
-)
-
-const totals = computed<{ totalAmount: number; totalReleased: number; totalWithdrawn: number }>(
-  () => {
-    const result = { totalAmount: 0, totalReleased: 0, totalWithdrawn: 0 }
-    // Process active vestings
-    if (
-      vestingInfos.value &&
-      Array.isArray(vestingInfos.value) &&
-      vestingInfos.value.length === 2
-    ) {
-      const [, activeVestingsRaw] = vestingInfos.value
-      if (Array.isArray(activeVestingsRaw)) {
-        activeVestingsRaw.forEach((v) => {
-          result.totalAmount += Number(formatUnits(v.totalAmount, 6))
-          result.totalReleased += Number(formatUnits(v.released, 6))
-        })
-      }
-    }
-    // Process archived vestings
-    if (
-      archivedVestingInfos.value &&
-      Array.isArray(archivedVestingInfos.value) &&
-      archivedVestingInfos.value.length === 2
-    ) {
-      const [, archivedVestingsRaw] = archivedVestingInfos.value
-      if (Array.isArray(archivedVestingsRaw)) {
-        archivedVestingsRaw.forEach((v) => {
-          result.totalAmount += Number(formatUnits(v.totalAmount, 6))
-          result.totalReleased += Number(formatUnits(v.released, 6))
-          result.totalWithdrawn +=
-            Number(formatUnits(v.totalAmount, 6)) - Number(formatUnits(v.released, 6))
-        })
-      }
-    }
-    return result
-  }
-)
-
-// Define columns including the new "Actions" column
-const toast = useToast()
-
-const {
-  data: archivedVestingInfos,
-  //isLoading: isLoadingArchivedVestingInfos,
-  error: errorGetArchivedVestingInfo,
-  refetch: getArchivedVestingInfos
-} = useVestingGetTeamAllArchivedVestingsFlat(computed(() => BigInt(team?.value?.id ?? 0)))
-
-watch(errorGetArchivedVestingInfo, () => {
-  if (errorGetArchivedVestingInfo.value) {
-    toast.add({ title: 'get archived  failed', color: 'error' })
-    console.error('get archived  failed ====', errorGetArchivedVestingInfo)
-  }
-})
-
-const {
-  data: tokenSymbol
-  //isLoading: isLoadingTokenSymbol
-  //error: tokenSymbolError
-} = useInvestorSymbol()
-
-const tokenSymbolText = computed(() =>
-  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : 'default'
-)
-
-const {
-  data: vestingInfos,
-  //isLoading: isLoadingVestingInfos,
-  error: errorGetVestingInfo,
-  refetch: getVestingInfos
-} = useVestingGetTeamVestingsWithMembers(computed(() => BigInt(team?.value?.id ?? 0)))
-watch(errorGetVestingInfo, () => {
-  if (errorGetVestingInfo.value) {
-    toast.add({ title: 'Add admin failed', color: 'error' })
-  }
-})
-
-const tokenSummaryColumns = [
-  { accessorKey: 'symbol', header: 'Token Symbol', enableSorting: false },
-  { accessorKey: 'totalVested', header: 'Total Vested', enableSorting: false },
-  { accessorKey: 'totalReleased', header: 'Total Released', enableSorting: false },
-  { accessorKey: 'totalWithdrawn', header: 'Total Withdrawn', enableSorting: false }
-]
-const tokenSummaryRows = computed(() => {
-  const defaultToken = tokenSymbolText.value
-  const summaryMap: Record<string, TokenSummary> = {}
-  summaryMap[defaultToken] = {
-    symbol: defaultToken,
-    totalVested: totals.value.totalAmount,
-    totalReleased: totals.value.totalReleased,
-    totalWithdrawn: totals.value.totalWithdrawn
-  }
-  return Object.values(summaryMap)
-})
+])
 </script>

@@ -19,7 +19,7 @@
     <template #body>
       <div class="flex flex-col gap-4">
         <div class="flex justify-center py-2">
-          <UserComponent :user="member" isDetailedView />
+          <UserIdentity :user="member" isDetailedView />
         </div>
 
         <USeparator />
@@ -66,10 +66,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
-import UserComponent from '@/components/UserComponent.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 const props = defineProps<{
   member: Partial<Member>
   teamId: number | string

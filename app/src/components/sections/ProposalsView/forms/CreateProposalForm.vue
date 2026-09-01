@@ -38,7 +38,7 @@
               :model-value="state.startDate ? dateToCalendarDate(state.startDate) : undefined"
               :min-value="today(getLocalTimeZone())"
               @update:model-value="
-                (val) => {
+                (val: unknown) => {
                   const minStart = new Date(Date.now() + MIN_START_DELAY_MS)
                   state.startDate = ensureFutureDate(
                     (val as CalendarDate).toDate(getLocalTimeZone()),
@@ -66,7 +66,7 @@
                 state.startDate ? dateToCalendarDate(state.startDate) : today(getLocalTimeZone())
               "
               @update:model-value="
-                (val) => {
+                (val: unknown) => {
                   state.endDate = (val as CalendarDate).toDate(getLocalTimeZone())
                   endDateOpen = false
                 }
@@ -109,7 +109,7 @@ import { reactive, ref, computed } from 'vue'
 import { z } from 'zod'
 import { useProposalsCreateProposal } from '@/composables/proposals/writes'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { formatDateMMDDYYYY, dateToCalendarDate, ensureFutureDate } from '@/utils/dayUtils'
+import { formatDateMMDDYYYY, dateToCalendarDate, ensureFutureDate } from '@/utils/dates/calendar'
 
 // 2 minutes buffer to ensure startDate is in the future when tx hits the chain
 const MIN_START_DELAY_MS = 2 * 60 * 1000

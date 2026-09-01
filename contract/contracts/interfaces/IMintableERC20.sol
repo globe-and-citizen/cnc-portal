@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title IMintableERC20
@@ -9,7 +9,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
  */
 interface IMintableERC20 is IERC20 {
   /// @notice Mints new tokens to a shareholder.
-  /// @param _shareholder Recipient of the minted tokens.
-  /// @param _amount Amount to mint.
-  function mint(address _shareholder, uint256 _amount) external;
+  /// @param shareholder Recipient of the minted tokens.
+  /// @param amount Amount to mint.
+  function mint(address shareholder, uint256 amount) external;
 }

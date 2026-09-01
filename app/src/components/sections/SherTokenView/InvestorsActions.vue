@@ -5,7 +5,7 @@
         <h3 class="text-lg font-medium text-neutral-900 dark:text-white">Investor actions</h3>
         <div class="flex items-center gap-2">
           <span class="">Contract Address :</span>
-          <AddressToolTip :address="investorAddress" v-if="investorAddress" />
+          <AddressTooltip :address="investorAddress" v-if="investorAddress" />
         </div>
       </div>
     </template>
@@ -20,7 +20,7 @@
       "
     >
       <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
-        <USkeleton v-for="i in 6" :key="i" class="h-20 rounded-lg" :data-test="`skeleton-${i}`" />
+        <USkeleton v-for="i in 7" :key="i" class="h-20 rounded-lg" :data-test="`skeleton-${i}`" />
       </div>
     </template>
     <template v-else>
@@ -39,6 +39,7 @@
           :investors-address="investorAddress"
           :bank-address="bankAddress"
         />
+        <SetSafeAddressAction />
         <ToggleSherCompensationAction />
         <SetCompensationMultiplierAction />
         <InvestInSafeAction />
@@ -50,11 +51,12 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useTeamStore } from '@/stores'
-import { log } from '@/utils'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import { log } from '@/lib/logging'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
 import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'
+import SetSafeAddressAction from './InvestorActions/SetSafeAddressAction.vue'
 import ToggleSherCompensationAction from './InvestorActions/ToggleSherCompensationAction.vue'
 import SetCompensationMultiplierAction from './InvestorActions/SetCompensationMultiplierAction.vue'
 import InvestInSafeAction from './InvestorActions/InvestInSafeAction.vue'
@@ -71,7 +73,7 @@ defineEmits<{
 const toast = useToast()
 const teamStore = useTeamStore()
 
-const investorAddress = teamStore.getContractAddressByType('InvestorV1')
+const investorAddress = computed(() => teamStore.getInvestorAddress())
 const bankAddress = teamStore.getContractAddressByType('Bank')
 
 const {

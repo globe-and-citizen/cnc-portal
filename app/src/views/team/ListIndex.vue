@@ -88,52 +88,74 @@
       />
     </div>
 
-    <!-- Teams List -->
-
+    <!-- Teams List — the create tile is the last cell, so it stays reachable
+         even before the first team exists -->
     <div
-      class="grid grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3"
+      class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] items-stretch gap-6"
       data-test="team-list"
-      v-if="Array.isArray(teams) && teams.length > 0"
+      v-if="!teamsError && !teamsAreFetching"
     >
       <TeamCard
         v-for="team in teams"
         :key="team.id"
         :team="team"
+        :treasury="treasuryFor(team)"
+        :to="{ name: 'show-team', params: { id: team.id } }"
         :data-test="`team-card-${team.id}`"
-        class="cursor-pointer transition duration-300 hover:scale-105"
-        @click="navigateToTeam(team.id)"
+        class="cursor-pointer transition duration-300 hover:-translate-y-0.5 hover:shadow-md"
+        @update="openAction(team, 'update')"
+        @archive="openAction(team, 'archive')"
+        @hide="openAction(team, 'hide')"
+        @delete="openAction(team, 'delete')"
       />
-    </div>
 
-    <!-- Add Team Button -->
-    <div
-      class="flex justify-center"
-      data-test="add-team-button"
-      v-if="!teamsError && !teamsAreFetching"
-    >
-      <UModal
-        v-model:open="openModal"
-        title="Create Company"
-        description="Create Your Company Step By Step"
-      >
-        <AddTeamCard
-          data-test="add-team-card"
-          @click="openModal = true"
-          class="animate-fade-in h-16 w-72 transform text-sm transition duration-300 hover:scale-105"
-        />
-
-        <template #body>
-          <AddTeamForm
-            @done="
-              () => {
-                console.log('Team created successfully, closing modal and refetching teams list')
-                openModal = false
-              }
-            "
+      <div class="flex" data-test="add-team-button">
+        <UModal
+          v-model:open="openModal"
+          title="Create Company"
+          description="Create Your Company Step By Step"
+          :ui="{ content: 'w-full' }"
+        >
+          <AddTeamCard
+            data-test="add-team-card"
+            @click="openModal = true"
+            class="animate-fade-in w-full cursor-pointer transition duration-300 hover:-translate-y-0.5"
           />
-        </template>
-      </UModal>
+
+          <template #body>
+            <AddTeamForm @done="() => (openModal = false)" />
+          </template>
+        </UModal>
+      </div>
     </div>
+
+    <!-- Card actions. One modal per action, retargeted at whichever card raised
+         it: these are the dashboard's own modals, which default to the open
+         team — a list has none, so the team is passed explicitly. -->
+    <TeamMetaUpdateModal
+      v-model:open="updateIsOpen"
+      :current-team="actionTeam"
+      :team-id="actionTeam?.id"
+      :with-trigger="false"
+    />
+    <TeamMetaArchiveModal
+      v-model:open="archiveIsOpen"
+      :current-team="actionTeam"
+      :team-id="actionTeam?.id"
+      :with-trigger="false"
+    />
+    <TeamMetaVisibilityModal
+      v-model:open="visibilityIsOpen"
+      :current-team="actionTeam"
+      :team-id="actionTeam?.id"
+      :with-trigger="false"
+    />
+    <TeamMetaDeleteModal
+      v-model:open="deleteIsOpen"
+      :current-team="actionTeam"
+      :team-id="actionTeam?.id"
+      :with-trigger="false"
+    />
   </div>
 </template>
 
@@ -141,9 +163,18 @@
 import { useRouter, useRoute } from 'vue-router'
 import { useUserDataStore } from '@/stores'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
+import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
+import TeamMetaArchiveModal from '@/components/sections/DashboardView/TeamMetaArchiveModal.vue'
+import TeamMetaDeleteModal from '@/components/sections/DashboardView/TeamMetaDeleteModal.vue'
+import TeamMetaUpdateModal from '@/components/sections/DashboardView/TeamMetaUpdateModal.vue'
+import TeamMetaVisibilityModal from '@/components/sections/DashboardView/TeamMetaVisibilityModal.vue'
+import { useTeamListTreasuryBalances } from '@/composables/useTeamListTreasuryBalances'
 import { useGetTeamsQuery } from '@/queries/team.queries'
-import { computed, ref } from 'vue'
+import type { Team } from '@/types/team'
+import type { TeamTreasuryDisplay } from '@/utils/teams/treasury'
+import { EMPTY_VALUE } from '@/utils/format'
+import { computed, ref, watch } from 'vue'
 
 const openModal = ref(false)
 const showHidden = ref(false)
@@ -164,6 +195,14 @@ const {
   }
 })
 
+const { treasuryByTeamId } = useTeamListTreasuryBalances(teams)
+const unavailableTreasury: TeamTreasuryDisplay = {
+  state: 'unavailable',
+  formattedTotal: EMPTY_VALUE,
+  accountShares: []
+}
+const treasuryFor = (team: Team) => treasuryByTeamId.value[team.id] ?? unavailableTreasury
+
 const hasVisibleTeams = computed(
   () =>
     !teamsAreFetching.value &&
@@ -174,7 +213,44 @@ const hasVisibleTeams = computed(
 
 const router = useRouter()
 
-const navigateToTeam = (id: number | string) => {
-  router.push(`/teams/${id}`)
+// Opened from the navbar team picker's "Create company" action (/teams?create=1):
+// auto-open the create modal, then strip the query so a refresh won't re-open it.
+watch(
+  () => route.query?.create,
+  (create) => {
+    if (create) {
+      openModal.value = true
+      router.replace({ query: {} })
+    }
+  },
+  { immediate: true }
+)
+
+// --- Card actions ---------------------------------------------------------
+// The cards only announce what was chosen; the list owns the modals so they
+// sit outside the card and their clicks never reach its navigation handler.
+type TeamAction = 'update' | 'archive' | 'hide' | 'delete'
+
+const actionTeam = ref<Team | null>(null)
+const activeAction = ref<TeamAction | null>(null)
+
+const openAction = (team: Team, action: TeamAction) => {
+  actionTeam.value = team
+  activeAction.value = action
 }
+
+// One shared `activeAction` rather than a flag per modal, so opening one action
+// cannot leave another still open behind it.
+const actionIsOpen = (action: TeamAction) =>
+  computed({
+    get: () => activeAction.value === action,
+    set: (isOpen: boolean) => {
+      activeAction.value = isOpen ? action : null
+    }
+  })
+
+const updateIsOpen = actionIsOpen('update')
+const archiveIsOpen = actionIsOpen('archive')
+const visibilityIsOpen = actionIsOpen('hide')
+const deleteIsOpen = actionIsOpen('delete')
 </script>

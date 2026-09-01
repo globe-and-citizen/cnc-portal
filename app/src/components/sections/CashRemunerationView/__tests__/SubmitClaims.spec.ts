@@ -5,26 +5,25 @@ import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import SubmitClaims from '../SubmitClaims.vue'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
-import { mockTeamStore, mockToast } from '@/tests/mocks'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { mockTeamStore, mockToast, mockUseSubmitRestriction } from '@/tests/mocks'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
-const claimFormResetMock = vi.fn()
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
 
 const ClaimFormStub = defineComponent({
   name: 'ClaimForm',
   props: {
     initialData: { type: Object, required: false },
-    isLoading: { type: Boolean, required: false },
-    disabledWeekStarts: { type: Array, required: false },
-    restrictSubmit: { type: Boolean, required: false },
-    errorMessage: { type: String, required: false, default: '' },
-    errorTitle: { type: String, required: false, default: '' }
+    loading: { type: Boolean, required: false },
+    submissionRules: { type: Object, required: false },
+    error: { type: Object, required: false }
   },
   emits: ['submit'],
-  setup(_, { expose }) {
-    expose({ resetForm: claimFormResetMock })
-    return () => null
-  }
+  template: '<div />'
 })
 
 const createComponent = (props: Record<string, unknown> = {}) => {
@@ -66,6 +65,67 @@ describe('SubmitClaims', () => {
     expect(submitButton.attributes('disabled')).toBeDefined()
   })
 
+  it('disables submit button on a non-current week when restriction is active', () => {
+    mockUseSubmitRestriction.isRestricted.value = true
+    try {
+      const wrapper = createComponent({
+        weeklyClaim: { status: 'pending' },
+        // a Monday two weeks before the current ISO week
+        selectedWeekStart: dayjs.utc().startOf('isoWeek').subtract(2, 'week').toISOString()
+      })
+      const submitButton = wrapper.find('[data-test="modal-submit-hours-button"]')
+      expect(submitButton.attributes('disabled')).toBeDefined()
+    } finally {
+      mockUseSubmitRestriction.isRestricted.value = false
+    }
+  })
+
+  it('keeps submit enabled on the current week when restriction is active', () => {
+    mockUseSubmitRestriction.isRestricted.value = true
+    try {
+      const wrapper = createComponent({
+        weeklyClaim: { status: 'pending' },
+        selectedWeekStart: dayjs.utc().startOf('isoWeek').toISOString()
+      })
+      const submitButton = wrapper.find('[data-test="modal-submit-hours-button"]')
+      expect(submitButton.attributes('disabled')).toBeUndefined()
+    } finally {
+      mockUseSubmitRestriction.isRestricted.value = false
+    }
+  })
+
+  it('wires a restriction tooltip on the submit button for a non-current week', () => {
+    mockUseSubmitRestriction.isRestricted.value = true
+    try {
+      const wrapper = createComponent({
+        weeklyClaim: { status: 'pending' },
+        selectedWeekStart: dayjs.utc().startOf('isoWeek').subtract(2, 'week').toISOString()
+      })
+      const texts = wrapper.findAllComponents({ name: 'UTooltip' }).map((t) => t.props('text'))
+      expect(texts).toContain(
+        'You can only submit claims for the current week, up to 4 days in the past.'
+      )
+    } finally {
+      mockUseSubmitRestriction.isRestricted.value = false
+    }
+  })
+
+  it('shows no restriction tooltip on the current week', () => {
+    mockUseSubmitRestriction.isRestricted.value = true
+    try {
+      const wrapper = createComponent({
+        weeklyClaim: { status: 'pending' },
+        selectedWeekStart: dayjs.utc().startOf('isoWeek').toISOString()
+      })
+      const texts = wrapper.findAllComponents({ name: 'UTooltip' }).map((t) => t.props('text'))
+      expect(texts).not.toContain(
+        'You can only submit claims for the current week, up to 4 days in the past.'
+      )
+    } finally {
+      mockUseSubmitRestriction.isRestricted.value = false
+    }
+  })
+
   it('keeps submit enabled on un-migrated teams (issue #1825 — submission is not frozen, only signing)', () => {
     const previous = mockTeamStore.currentTeamMeta
     mockTeamStore.currentTeamMeta = {
@@ -82,7 +142,7 @@ describe('SubmitClaims', () => {
     }
   })
 
-  it('shows success toast and resets form after successful claim submission', async () => {
+  it('closes the form after a successful claim submission', async () => {
     const wrapper = createComponent()
 
     await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
@@ -103,7 +163,6 @@ describe('SubmitClaims', () => {
     //   title: 'Wage claim added successfully',
     //   color: 'success'
     // })
-    expect(claimFormResetMock).toHaveBeenCalledTimes(1)
     expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(false)
   })
 
@@ -167,8 +226,11 @@ describe('SubmitClaims', () => {
     })
     await flushPromises()
 
-    // Error surfaces as the ClaimForm's error-message prop
-    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('errorMessage')).toBe(backendMessage)
+    // Error surfaces in the ClaimForm error contract.
+    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('error')).toEqual({
+      message: backendMessage,
+      title: 'Failed to submit claim'
+    })
     expect(mockToast.add).not.toHaveBeenCalledWith({ title: backendMessage, color: 'error' })
   })
 
@@ -191,9 +253,10 @@ describe('SubmitClaims', () => {
     })
     await flushPromises()
 
-    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('errorMessage')).toBe(
-      'Plain failure message'
-    )
+    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('error')).toEqual({
+      message: 'Plain failure message',
+      title: 'Failed to submit claim'
+    })
   })
 
   it('opens modal with clicked day when using openModalForDay', async () => {

@@ -1,14 +1,16 @@
 <template>
   <div class="mb-20 flex flex-col gap-4">
     <ClaimForm
-      ref="claimFormRef"
       :initial-data="claimFormInitialData"
-      :is-edit="true"
-      :is-loading="isUpdating"
-      :restrict-submit="isRestricted"
+      mode="edit"
+      :loading="isUpdating"
       :existing-files="existingFiles"
-      :error-message="updateClaimErrorMessage"
-      error-title="Failed to update claim"
+      :submission-rules="{
+        restrictSubmit: isRestricted,
+        maximumHoursPerDay: props.claim.wage?.maximumHoursPerDay,
+        existingClaims: otherWeekClaims
+      }"
+      :error="{ message: updateClaimErrorMessage, title: 'Failed to update claim' }"
       @submit="updateClaim"
       @cancel="$emit('close')"
       @delete-file="deleteFile"
@@ -23,17 +25,22 @@ import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 
-const props = defineProps<{
-  claim: Claim
-}>()
+const props = withDefaults(
+  defineProps<{
+    claim: Claim
+    weekClaims?: Claim[]
+  }>(),
+  {
+    weekClaims: () => []
+  }
+)
 
 const emit = defineEmits<{
   close: []
 }>()
 
-const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const toast = useToast()
 const teamStore = useTeamStore()
 const { isRestricted, checkRestriction } = useSubmitRestriction()
@@ -46,6 +53,10 @@ const claimFormInitialData = computed<ClaimFormData>(() => ({
   memo: props.claim.memo ?? '',
   dayWorked: props.claim.dayWorked
 }))
+
+const otherWeekClaims = computed(() =>
+  props.weekClaims.filter((weekClaim) => weekClaim.id !== props.claim.id)
+)
 
 const existingFiles = ref<
   Array<{
@@ -127,7 +138,6 @@ const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   toast.add({ title: 'Claim updated successfully', color: 'success' })
   deletedFileIndexes.value = []
 
-  claimFormRef.value?.resetForm()
   emit('close')
 }
 

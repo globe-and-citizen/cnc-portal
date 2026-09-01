@@ -1,0 +1,113 @@
+<template>
+  <div v-if="compact" class="flex flex-row items-center gap-1.5">
+    <div
+      data-test="avatar-container"
+      :data-size="size === 'sm' ? 'sm' : 'xs'"
+      class="relative shrink-0 overflow-hidden rounded-full"
+      :class="size === 'sm' ? 'h-6 w-6' : 'h-5 w-5'"
+    >
+      <UIcon v-if="user.icon" :name="user.icon" class="text-primary h-full w-full p-0.5" />
+      <img
+        v-else
+        data-test="avatar-image"
+        :alt="`${user.name ?? 'Unknown'}'s avatar`"
+        :src="
+          user.imageUrl ||
+          'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+        "
+        class="h-full w-full object-cover"
+      />
+    </div>
+    <span class="font-medium" :class="size === 'sm' ? 'text-sm' : 'text-xs'">
+      {{ user.name && user.name.length > 16 ? `${user.name.slice(0, 16)}…` : user.name || 'User' }}
+    </span>
+    <span v-if="!hideAddress" class="text-muted" :class="size === 'sm' ? 'text-sm' : 'text-xs'">{{
+      formatedUserAddress
+    }}</span>
+  </div>
+
+  <div
+    v-else
+    class="flex gap-4 transition-all duration-300"
+    :class="
+      isCollapsed || isDetailedView
+        ? 'flex-col items-center justify-center text-center'
+        : 'flex-row justify-start'
+    "
+  >
+    <div role="button" class="group relative">
+      <div
+        data-test="avatar-container"
+        :data-size="isDetailedView ? 'lg' : 'sm'"
+        class="relative overflow-hidden rounded-full"
+        :class="{
+          'h-24 w-24 ring-4 ring-gray-200': isDetailedView,
+          'h-11 w-11 ring-2 ring-white/50': !isDetailedView
+        }"
+      >
+        <UIcon v-if="user.icon" :name="user.icon" class="text-primary h-full w-full p-1.5" />
+        <img
+          v-else
+          data-test="avatar-image"
+          :alt="`${user.name ?? 'Unknown'}'s avatar`"
+          :src="
+            user.imageUrl ||
+            'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+          "
+          class="h-full w-full object-cover"
+        />
+      </div>
+    </div>
+    <div
+      v-if="!isCollapsed"
+      data-test="user-info-container"
+      class="flex min-w-0 flex-col text-gray-600"
+      :class="{ 'items-center text-center': isDetailedView }"
+    >
+      <p
+        class="font-bold"
+        :class="{ 'text-lg': isDetailedView, 'text-sm': !isDetailedView }"
+        data-test="user-name"
+      >
+        {{
+          props.user.name && props.user.name.length > 20
+            ? `${props.user.name.slice(0, 20)}...`
+            : props.user.name || 'User'
+        }}
+      </p>
+      <span
+        v-if="isDetailedView"
+        class="mt-2 inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700"
+        data-test="user-role"
+      >
+        {{ user.role || 'Member' }}
+      </span>
+      <p
+        class="mt-1.5 max-w-full text-gray-400"
+        :class="isDetailedView ? 'font-mono text-sm' : 'text-sm'"
+        data-test="formatted-address"
+      >
+        {{ formatedUserAddress }}
+      </p>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import type { User } from '@/types'
+import { computed } from 'vue'
+import { formatAddress } from '@/utils/format'
+
+const props = defineProps<{
+  user: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string; icon?: string }
+  isCollapsed?: boolean
+  isDetailedView?: boolean
+  compact?: boolean
+  /** Hide the truncated address in compact mode (avatar + name only). */
+  hideAddress?: boolean
+  /** Compact avatar/name size: `'sm'` bumps to text-sm + a 24px avatar (default 'xs'). */
+  size?: 'xs' | 'sm'
+}>()
+
+const formatedUserAddress = computed(() => formatAddress(props.user.address))
+</script>

@@ -1,0 +1,60 @@
+name: Contract Slither Analysis
+permissions:
+  contents: read
+  security-events: write
+
+on:
+  pull_request:
+    branches: "**"
+    paths:
+      - "contract/**"
+  workflow_dispatch:
+
+jobs:
+  slither:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout code
+        uses: actions/checkout@v6
+
+      - name: 🐍 Run Slither
+        id: slither
+        uses: crytic/slither-action@v0.4.2
+        with:
+          # crytic-compile sets up Node and installs the Hardhat project deps
+          # in `target` itself, so no separate `npm ci` step is needed.
+          target: "contract/"
+          node-version: 24
+          # Slither 0.11.5 pins crytic-compile <0.4.0, which cannot parse
+          # Hardhat 3's hh3-sol-build-info format. Use the Hardhat 3-compatible
+          # Slither source until that support is released on PyPI.
+          slither-version: "ff1bf3ff4a5ebdfa63e4b83cb4885f682624daad"
+          solc-version: "0.8.24"
+          slither-config: "contract/slither.config.json"
+          # Report-only while existing contracts carry a high/medium findings
+          # baseline. Blocking now would stall every contract PR. All findings
+          # are surfaced in the GitHub Security tab via the SARIF upload below.
+          # To enforce once the baseline is triaged: set `fail-on: high` (or
+          # medium) and re-add a gate step on `steps.slither.outcome`. Known
+          # false positives are silenced explicitly in contract/slither.config.json.
+          fail-on: none
+          sarif: results.sarif
+
+      - name: Check SARIF output
+        id: sarif
+        if: always()
+        shell: bash
+        run: |
+          if [[ -s results.sarif ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Slither did not produce a SARIF report."
+          fi
+
+      - name: 🛡 Upload SARIF to GitHub code scanning
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && steps.sarif.outputs.exists == 'true'
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}
+          category: slither

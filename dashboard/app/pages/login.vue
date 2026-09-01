@@ -1,108 +1,25 @@
 <script setup lang="ts">
-import { injected, useConnection, useChainId, useConnect, useSwitchChain } from '@wagmi/vue'
+import { useSiwe } from '~/composables/useSiwe'
 
 definePageMeta({
-  layout: 'auth',
-  ssr: false
+  layout: 'auth'
 })
 
 const router = useRouter()
-const runtimeConfig = useRuntimeConfig()
-const networkChainId = parseInt((runtimeConfig.public.chainId as string) || '31337')
 
-// State for SSR compatibility
-const isProcessing = ref(false)
-const error = ref<string | null>(null)
-const isConnected = ref(false)
-const address = ref<string | undefined>(undefined)
+// The dashboard is a client-only SPA (`ssr: false`), so the SIWE composable —
+// which owns wallet connection, signature, error classification, and loading
+// state — can be consumed directly here.
+const { isConnected, address, isProcessing, error, connectWallet, signIn } = useSiwe()
 
-// SIWE composable and Wagmi composables - initialized on client
-let siweInstance: ReturnType<typeof useSiwe> | null = null
-let connection: ReturnType<typeof useConnection> | null = null
-let chainId: ReturnType<typeof useChainId> | null = null
-let connectAsync: ReturnType<typeof useConnect>['connectAsync'] | null = null
-let switchChainAsync: ReturnType<typeof useSwitchChain>['switchChainAsync'] | null = null
-
-// Initialize on client side only after mount
-onMounted(() => {
-  // Initialize Wagmi composables
-  connection = useConnection()
-  chainId = useChainId()
-  const connectComposable = useConnect()
-  connectAsync = connectComposable.connectAsync
-  const switchComposable = useSwitchChain()
-  switchChainAsync = switchComposable.switchChainAsync
-
-  // Initialize SIWE
-  siweInstance = useSiwe()
-
-  // Sync all reactive state
-  watch(
-    () => siweInstance?.isProcessing.value,
-    (val) => {
-      isProcessing.value = val ?? false
-    },
-    { immediate: true }
-  )
-
-  // watch(
-  //   () => siweInerrorstance?.error.value,
-  //   (val) => {
-  //     error.value = val ?? null
-  //   },
-  //   { immediate: true }
-  // )
-
-  watch(
-    () => connection?.isConnected.value,
-    (val) => {
-      isConnected.value = val ?? false
-    },
-    { immediate: true }
-  )
-
-  watch(
-    () => connection?.address.value,
-    (val) => {
-      address.value = val
-    },
-    { immediate: true }
-  )
-})
-
-const handleSignIn = async () => {
-  if (siweInstance) {
-    const success = await siweInstance.signIn()
-    if (success) {
-      await router.push('/')
-    }
-  }
+const handleConnectWallet = () => {
+  connectWallet()
 }
 
-const handleConnectWallet = async () => {
-  if (!connection || !connectAsync || !switchChainAsync || !chainId) {
-    error.value = 'Wallet connection not initialized'
-    return
-  }
-
-  try {
-    error.value = null
-    isProcessing.value = true
-
-    // Ensure wallet is connected
-    if (!connection.isConnected.value || !connection.address.value) {
-      await connectAsync({ connector: injected(), chainId: networkChainId })
-
-      // check if the current chainId matches the required network
-      if (chainId.value !== networkChainId) {
-        await switchChainAsync({ chainId: networkChainId })
-      }
-    }
-  } catch (e: unknown) {
-    console.error('Failed to connect wallet:', e)
-    error.value = e instanceof Error ? e.message : 'Failed to connect wallet'
-  } finally {
-    isProcessing.value = false
+const handleSignIn = async () => {
+  const success = await signIn()
+  if (success) {
+    await router.push('/')
   }
 }
 

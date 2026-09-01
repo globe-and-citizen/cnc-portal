@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { formatUnits, type Address } from 'viem'
-import OverviewCard from '@/components/OverviewCard.vue'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
 import cartIcon from '@/assets/cart.svg'
 import bagIcon from '@/assets/bag.svg'
 import personIcon from '@/assets/person.svg'
@@ -49,7 +49,7 @@ import {
   useInvestorShareholders
 } from '@/composables/investor/reads'
 import { computed, watch } from 'vue'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 
 const teamStore = useTeamStore()
 const toast = useToast()

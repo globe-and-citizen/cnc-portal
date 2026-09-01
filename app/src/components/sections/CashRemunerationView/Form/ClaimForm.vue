@@ -70,7 +70,12 @@
     </UFormField>
 
     <!-- Memo -->
-    <UFormField label="Memo" name="memo" required :hint="`${String(formData.memo).length} / 3000`">
+    <UFormField
+      label="Memo"
+      name="memo"
+      required
+      :hint="`${String(formData.memo).length} / ${DAILY_CLAIM_MEMO_MAX_LENGTH}`"
+    >
       <UTextarea
         v-model="formData.memo"
         :placeholder="isEdit ? 'I worked on...' : 'I worked on the ....'"
@@ -81,7 +86,6 @@
     </UFormField>
 
     <UploadFileDB
-      ref="uploadFileRef"
       :disabled="isLoading"
       :existing-file-count="props.existingFiles?.length ?? 0"
       @update:files="onFilesUpdate"
@@ -89,7 +93,7 @@
 
     <!-- Existing Files Display - File Preview Gallery with Lightbox -->
     <div
-      v-if="isEdit && existingFiles && existingFiles.length > 0"
+      v-if="isEdit && props.existingFiles && props.existingFiles.length > 0"
       data-test="attached-files-section"
     >
       <h4 class="mb-3 text-sm font-semibold text-gray-700">Attached Files:</h4>
@@ -141,82 +145,137 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRef } from 'vue'
-import type { ClaimFormData } from '@/types'
+import { computed, ref, watch } from 'vue'
+import { parseDate } from '@internationalized/date'
+import type { CalendarDate, DateValue } from '@internationalized/date'
+import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
 import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
-import { useClaimForm, type ClaimFormFileData } from '@/composables/useClaimForm'
+import {
+  DAILY_CLAIM_MEMO_MAX_LENGTH,
+  buildClaimFormSchema,
+  createDefaultClaimFormData,
+  formatClaimDayUTC,
+  getClaimDayFromCalendarValue,
+  getClaimFilePreviews,
+  isClaimDateDisabled,
+  type ClaimSubmissionRules,
+  type ClaimFormFileData,
+  type CalendarSelectionValue
+} from '@/utils/claims/form'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
+interface ClaimFormError {
+  message?: string
+  title?: string
+}
+
 interface Props {
   initialData?: Partial<ClaimFormData>
-  isEdit?: boolean
-  isLoading?: boolean
-  disabledWeekStarts?: string[]
-  restrictSubmit?: boolean
-  existingFiles?: Partial<ClaimFormFileData>[]
-  deletingFileIndex?: number | null
-  errorMessage?: string
-  errorTitle?: string
+  mode?: 'create' | 'edit'
+  loading?: boolean
+  existingFiles?: Partial<ClaimFormFileData>[] | null
+  submissionRules?: ClaimSubmissionRules
+  error?: ClaimFormError
 }
 
 const toast = useToast()
 
 const props = withDefaults(defineProps<Props>(), {
-  isEdit: false,
-  isLoading: false,
-  disabledWeekStarts: () => [],
-  restrictSubmit: true,
+  mode: 'create',
+  loading: false,
   existingFiles: () => [],
-  deletingFileIndex: null,
-  errorMessage: '',
-  errorTitle: 'Failed to submit claim'
+  submissionRules: () => ({ restrictSubmit: true }),
+  error: () => ({ message: '', title: 'Failed to submit claim' })
 })
 
 const emit = defineEmits<{
-  submit: [data: { minutesWorked: number; memo: string; dayWorked: string; files?: File[] }]
+  submit: [data: ClaimSubmitPayload & { files?: File[] }]
   cancel: []
   'delete-file': [index: number]
 }>()
 
-const uploadFileRef = ref<InstanceType<typeof UploadFileDB> | null>(null)
-const {
-  claimSchema,
-  formData,
-  datePickerOpen,
-  minutesOptions,
-  existingFilePreviews,
-  calendarDisplayDate,
-  calendarValue,
-  isDateDisabledFn,
-  onFilesUpdate,
-  onDateSelect,
-  buildSubmitPayload,
-  resetUploadedFiles,
-  formatUTC
-} = useClaimForm({
-  initialData: toRef(props, 'initialData'),
-  existingFiles: toRef(props, 'existingFiles'),
-  disabledWeekStarts: toRef(props, 'disabledWeekStarts'),
-  restrictSubmit: toRef(props, 'restrictSubmit'),
-  toast
+const MAX_FILES = 10
+const minutesOptions = ['0', '10', '20', '30', '40', '50']
+const isEdit = computed(() => props.mode === 'edit')
+const isLoading = computed(() => props.loading)
+const errorMessage = computed(() => props.error.message ?? '')
+const errorTitle = computed(() => props.error.title ?? 'Failed to submit claim')
+const formData = ref<ClaimFormData>(createDefaultClaimFormData(props.initialData))
+const uploadedFiles = ref<File[]>([])
+const datePickerOpen = ref(false)
+
+watch(
+  () => props.initialData,
+  (initialData) => {
+    formData.value = createDefaultClaimFormData(initialData)
+  },
+  { deep: true }
+)
+
+const claimSchema = computed(() =>
+  buildClaimFormSchema(
+    props.submissionRules.maximumHoursPerDay,
+    props.submissionRules.existingClaims
+  )
+)
+const existingFilePreviews = computed(() => getClaimFilePreviews(props.existingFiles))
+const calendarDisplayDate = computed(() =>
+  formData.value.dayWorked ? formatClaimDayUTC(formData.value.dayWorked) : 'Select a date'
+)
+const calendarValue = computed<CalendarDate | undefined>(() => {
+  if (!formData.value.dayWorked) return undefined
+
+  try {
+    const [isoDate] = formData.value.dayWorked.split('T')
+    return isoDate ? (parseDate(isoDate) as CalendarDate) : undefined
+  } catch {
+    return undefined
+  }
 })
 
-const handleSubmit = async () => {
-  const payload = buildSubmitPayload()
-  if (!payload) return
-  emit('submit', payload)
+const isDateDisabledFn = computed(
+  () =>
+    (date: DateValue): boolean =>
+      isClaimDateDisabled(date, props.submissionRules)
+)
+
+const onDateSelect = (value: CalendarSelectionValue) => {
+  const dayWorked = getClaimDayFromCalendarValue(value)
+  if (!dayWorked) return
+
+  formData.value.dayWorked = dayWorked
+  datePickerOpen.value = false
 }
 
-const resetForm = () => {
-  uploadFileRef.value?.resetUpload()
-  resetUploadedFiles()
+const onFilesUpdate = (files: File[]) => {
+  uploadedFiles.value = files
 }
 
-defineExpose({
-  resetForm,
-  formatUTC
-})
+const handleSubmit = () => {
+  const totalFiles = (props.existingFiles?.length ?? 0) + uploadedFiles.value.length
+  if (totalFiles > MAX_FILES) {
+    toast.add({
+      title:
+        'Maximum ' +
+        MAX_FILES +
+        ' files allowed. Currently you have ' +
+        totalFiles +
+        ' files. Please remove ' +
+        (totalFiles - MAX_FILES) +
+        ' file(s).',
+      color: 'error'
+    })
+    return
+  }
+
+  emit('submit', {
+    minutesWorked: Number(formData.value.hoursWorked) * 60 + Number(formData.value.minutesWorked),
+    memo: formData.value.memo,
+    dayWorked: formData.value.dayWorked,
+    files: uploadedFiles.value.length ? uploadedFiles.value : undefined
+  })
+}
 </script>

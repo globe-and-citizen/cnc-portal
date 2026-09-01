@@ -1,13 +1,5 @@
 <template>
-  <!-- Navigation and breadcrumb -->
   <div class="flex w-full flex-col gap-6">
-    <div>
-      <UBreadcrumb v-if="!teamStore.currentTeamMeta.error" :items="breadcrumbItems">
-        <template #loader>
-          <USkeleton class="h-4 w-20" data-test="loader" />
-        </template>
-      </UBreadcrumb>
-    </div>
     <div v-if="teamStore.currentTeamMeta?.error" data-test="error-state">
       <UAlert
         v-if="teamStore.currentTeamMeta.error?.status == 404"
@@ -23,6 +15,7 @@
       />
     </div>
     <TeamArchivedBanner v-if="teamStore.currentTeamMeta?.data" />
+    <LegacyContractBanner v-if="teamStore.currentTeamMeta?.data" />
     <div
       v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.data"
       class="flex flex-col gap-6"
@@ -34,7 +27,9 @@
       <TeamMeta />
       <CompanyOverview />
     </div>
-    <RouterView v-if="teamStore.currentTeamId" :key="teamOutletKey" />
+    <RouterView v-if="teamStore.currentTeamId" v-slot="{ Component }">
+      <component :is="Component" :key="teamOutletKey" />
+    </RouterView>
   </div>
 </template>
 <script setup lang="ts">
@@ -44,6 +39,7 @@ import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 import TeamArchivedBanner from '@/components/sections/DashboardView/TeamArchivedBanner.vue'
+import LegacyContractBanner from '@/components/sections/DashboardView/LegacyContractBanner.vue'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import CompanyOverview from '@/components/sections/DashboardView/CompanyOverview.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
@@ -85,16 +81,6 @@ watch(teamStore.currentTeamMeta, () => {
 
 const hasContract = computed(() => {
   return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
-})
-
-const breadcrumbItems = computed(() => {
-  if (teamStore.currentTeamMeta?.isPending) {
-    return [{ slot: 'loader' as const }, { label: route.meta.name as string }]
-  }
-  if (teamStore.currentTeamMeta?.data) {
-    return [{ label: teamStore.currentTeamMeta.data?.name }, { label: route.meta.name as string }]
-  }
-  return [{ label: route.meta.name as string }]
 })
 
 watch(

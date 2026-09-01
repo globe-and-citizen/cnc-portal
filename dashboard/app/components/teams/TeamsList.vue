@@ -1,16 +1,23 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import type { Column } from '@tanstack/table-core'
 import { getPaginationRowModel } from '@tanstack/table-core'
+import type { Address } from 'viem'
 import type { Team } from '~/types'
-import { formatDistanceToNow } from 'date-fns'
+import UserIdentity from '~/components/UserIdentity.vue'
+import TeamOfficersCell from '~/components/teams/TeamOfficersCell.vue'
+import { formatDate, formatDateRelative } from '~/utils/format'
 
 const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
 
 const props = defineProps<{
   teams: Team[]
   isLoading?: boolean
 }>()
+
+// List-level on-chain balances: one map keyed by team id, so the cell can show a
+// per-contract breakdown and the column can sort on a numeric total.
+const { get: getBalanceRecap, totals: tvl } = useTeamsBalanceRecaps(() => props.teams)
 
 const table = useTemplateRef('table')
 
@@ -22,100 +29,84 @@ const columnFilters = ref([
 ])
 const columnVisibility = ref()
 
-const columns: TableColumn<Team>[] = [
-  {
-    accessorKey: 'id',
-    header: 'ID',
-    cell: ({ row }) => `#${row.original.id}`
-  },
-  {
-    accessorKey: 'name',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
+// Reusable sortable header: renders a ghost button whose icon reflects the
+// current sort direction and toggles asc/desc on click. Applied to every column.
+const sortableHeader = (label: string) => ({ column }: { column: Column<Team> }) => {
+  const isSorted = column.getIsSorted()
 
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Name',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    },
-    cell: ({ row }) => {
-      return h('div', { class: 'flex flex-col' }, [
-        h('p', { class: 'font-medium text-highlighted' }, row.original.name),
-        row.original.description
-          ? h('p', { class: 'text-sm text-muted truncate max-w-xs' }, row.original.description)
-          : null
-      ])
-    }
-  },
+  return h(UButton, {
+    color: 'neutral',
+    variant: 'ghost',
+    label,
+    icon: isSorted
+      ? isSorted === 'asc'
+        ? 'i-lucide-arrow-up-narrow-wide'
+        : 'i-lucide-arrow-down-wide-narrow'
+      : 'i-lucide-arrow-up-down',
+    class: '-mx-2.5',
+    onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+  })
+}
+
+// Column definitions stay minimal — just the accessor + a sortable header.
+// All cell rendering lives in the `#<column>-cell` template slots below, so the
+// per-column customization is readable directly in the template.
+const columns: TableColumn<Team>[] = [
+  { accessorKey: 'id', header: sortableHeader('ID') },
+  { accessorKey: 'name', header: sortableHeader('Name') },
   {
     id: 'members',
     accessorFn: row => row._count?.members || 0,
-    header: 'Members',
-    cell: ({ row }) => {
-      const count = row.original._count?.members || 0
-      return h(
-        UBadge,
-        {
-          color: 'neutral',
-          variant: 'subtle'
-        },
-        () => `${count} member${count !== 1 ? 's' : ''}`
-      )
-    }
+    header: sortableHeader('Members')
   },
+  { accessorKey: 'ownerAddress', header: sortableHeader('Owner') },
   {
-    accessorKey: 'ownerAddress',
-    header: 'Owner',
-    cell: ({ row }) => {
-      const address = row.original.ownerAddress
-      return h(
-        'span',
-        { class: 'font-mono text-sm' },
-        `${address.slice(0, 6)}...${address.slice(-4)}`
-      )
-    }
+    id: 'officerVersion',
+    accessorFn: row => row.currentOfficer?.version ?? null,
+    header: sortableHeader('Version')
   },
+  // On-chain balance recap across the team's value-holding contracts. Sorts on
+  // the summed stablecoin value; the cell shows the per-contract breakdown.
   {
-    accessorKey: 'currentOfficer',
-    header: 'Officer',
-    cell: ({ row }) => {
-      const address = row.original.currentOfficer?.address
-      if (!address) {
-        return h(UBadge, { color: 'warning', variant: 'subtle' }, () => 'Not Set')
-      }
-      return h(
-        'span',
-        { class: 'font-mono text-sm' },
-        `${address.slice(0, 6)}...${address.slice(-4)}`
-      )
-    }
+    id: 'balance',
+    accessorFn: row => getBalanceRecap(row.id).totalStableValue,
+    header: sortableHeader('Balances'),
+    meta: { class: { th: 'w-64', td: 'w-64 align-top' } }
   },
+  // Display-only column (no accessor → not sortable): the full Officer chain,
+  // fetched per-team via GET /contract/officers by TeamOfficersCell. Given a
+  // wide fixed width since it holds the richest per-row content.
   {
-    accessorKey: 'createdAt',
-    header: 'Created',
-    cell: ({ row }) => {
-      const date = new Date(row.original.createdAt)
-      return formatDistanceToNow(date, { addSuffix: true })
-    }
-  }
+    id: 'officerHistory',
+    header: 'Officer history'
+  },
+  { accessorKey: 'createdAt', header: sortableHeader('Created') }
 ]
 
-const pagination = ref({
-  pageIndex: 0,
-  pageSize: 10
+// Route-bound page + size (shareable, reload-safe) with resize anchoring —
+// shared with the accounting tables via usePagination. The TanStack table stays
+// in charge of filtering/sorting; we just drive its (controlled) pagination
+// state from the composable and mirror its internal updates back.
+const filteredTotal = (): number =>
+  table.value?.tableApi?.getFilteredRowModel().rows.length ?? 0
+
+const { page, pageSize } = usePagination(filteredTotal, { key: 'teams' })
+
+const pagination = computed({
+  get: () => ({ pageIndex: page.value - 1, pageSize: pageSize.value }),
+  set: ({ pageIndex, pageSize: size }: { pageIndex: number, pageSize: number }) => {
+    if (pageIndex + 1 !== page.value) page.value = pageIndex + 1
+    if (size !== pageSize.value) pageSize.value = size
+  }
 })
 </script>
 
 <template>
   <div class="space-y-4">
+    <ProjectTvlCard :tvl="tvl" />
+
+    <OfficerBeaconSummary :teams="teams" />
+
     <div class="flex flex-wrap items-center justify-between gap-1.5">
       <UInput
         :model-value="table?.tableApi?.getColumn('name')?.getFilterValue() as string"
@@ -151,26 +142,75 @@ const pagination = ref({
         td: 'border-b border-default',
         separator: 'h-0'
       }"
-    />
-
-    <div
-      v-if="teams.length > pagination.pageSize"
-      class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
     >
-      <div class="text-sm text-muted">
-        Showing {{ pagination.pageIndex * pagination.pageSize + 1 }} to
-        {{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, teams.length) }} of
-        {{ teams.length }} teams
-      </div>
+      <template #id-cell="{ row }">
+        #{{ row.original.id }}
+      </template>
 
-      <div class="flex items-center gap-1.5">
-        <UPagination
-          :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-          :total="table?.tableApi?.getFilteredRowModel().rows.length"
-          @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
-        />
-      </div>
-    </div>
+      <template #name-cell="{ row }">
+        <div class="flex flex-col">
+          <ULink
+            :to="`/teams/${row.original.id}`"
+            class="font-medium text-highlighted hover:text-primary"
+          >
+            {{ row.original.name }}
+          </ULink>
+          <p
+            v-if="row.original.description"
+            class="text-sm text-muted truncate max-w-xs"
+          >
+            {{ row.original.description }}
+          </p>
+        </div>
+      </template>
+
+      <template #members-cell="{ row }">
+        <UBadge color="neutral" variant="subtle">
+          {{ row.original._count?.members || 0 }}
+          member{{ (row.original._count?.members || 0) !== 1 ? 's' : '' }}
+        </UBadge>
+      </template>
+
+      <template #ownerAddress-cell="{ row }">
+        <UserIdentity :address="row.original.ownerAddress as Address" />
+      </template>
+
+      <template #officerVersion-cell="{ row }">
+        <UBadge
+          v-if="row.original.currentOfficer?.version"
+          color="neutral"
+          variant="subtle"
+        >
+          {{ row.original.currentOfficer.version }}
+        </UBadge>
+        <span v-else class="text-sm text-muted">—</span>
+      </template>
+
+      <template #balance-cell="{ row }">
+        <TeamBalanceRecap :recap="getBalanceRecap(row.original.id)" />
+      </template>
+
+      <template #officerHistory-cell="{ row }">
+        <TeamOfficersCell :team-id="row.original.id" />
+      </template>
+
+      <template #createdAt-cell="{ row }">
+        <div class="flex flex-col">
+          <p class="text-sm">
+            {{ formatDateRelative(row.original.createdAt) }}
+          </p>
+          <p class="text-xs text-muted">
+            {{ formatDate(row.original.createdAt) }}
+          </p>
+        </div>
+      </template>
+    </UTable>
+
+    <AccountingPagination
+      v-model:page="page"
+      v-model:page-size="pageSize"
+      :total="table?.tableApi?.getFilteredRowModel().rows.length ?? 0"
+      noun="teams"
+    />
   </div>
 </template>

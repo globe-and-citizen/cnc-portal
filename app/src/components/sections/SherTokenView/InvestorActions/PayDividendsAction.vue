@@ -38,7 +38,7 @@ import type { Address } from 'viem'
 import { encodeFunctionData, formatUnits, zeroAddress } from 'viem'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import { BANK_ABI } from '@/artifacts/abi/bank'
+import { bankAbi } from '@/artifacts/abi/generated'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
@@ -47,9 +47,9 @@ import {
   useDistributeNativeDividends,
   useDistributeTokenDividends
 } from '@/composables/bank/writes'
-import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
+import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils/tokens/metadata'
 import type { TokenId } from '@/constant'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 interface Props {
@@ -129,7 +129,7 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
   if (isBodAction.value) {
     if (!props.bankAddress) return
     const data = encodeFunctionData({
-      abi: BANK_ABI,
+      abi: bankAbi,
       functionName:
         selectedTokenId === 'native' ? 'distributeNativeDividends' : 'distributeTokenDividends',
       args:

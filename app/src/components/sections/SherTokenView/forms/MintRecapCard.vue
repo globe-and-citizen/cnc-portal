@@ -36,8 +36,8 @@ import {
   getMintRecap,
   formatStakePercentageFromSupply,
   TOKEN_DECIMALS
-} from '@/utils/investorMintAllocation'
-import { formatAmountWithPrecision } from '@/utils/currencyUtil'
+} from '@/utils/investors/mintAllocation'
+import { formatAmountWithPrecision } from '@/utils/currency/display'
 
 const props = defineProps<{
   recipientAddress: string
@@ -63,7 +63,7 @@ const balanceBeforeRaw = computed<bigint>(() =>
 const issuedRaw = computed<bigint>(() => {
   const issued = props.issuedAmount
   if (issued == null || !Number.isFinite(issued) || issued === 0) return 0n
-  return parseUnits(issued.toFixed(TOKEN_DECIMALS), TOKEN_DECIMALS)
+  return parseUnits(String(issued), TOKEN_DECIMALS)
 })
 
 const recap = computed(() =>

@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import * as utils from '@/utils'
+import { log } from '@/lib/logging'
+import { useTeamStore } from '@/stores'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { mockInvestorReads } from '@/tests/mocks'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mocking the
@@ -38,7 +41,7 @@ const tableData = (wrapper: VueWrapper) =>
 
 const {
   apolloState,
-  mockUseQuery,
+  capture,
   mockGetTokenPrice,
   mockInvestorSymbolData,
   mockGetContractAddressByType
@@ -51,7 +54,11 @@ const {
     safeError: null as unknown as { value: Error | null },
     safeLoading: null as unknown as { value: boolean }
   }
-  const mockUseQuery = vi.fn()
+  // Records the address ref passed to each getLogs composable.
+  const capture = {
+    investor: null as unknown as { value: string },
+    safe: null as unknown as { value: string }
+  }
   const mockGetTokenPrice = vi.fn(() => 1)
   const mockInvestorSymbolData = { value: 'SHER' }
   const mockGetContractAddressByType = vi.fn((type: string) => {
@@ -61,48 +68,46 @@ const {
   })
   return {
     apolloState,
-    mockUseQuery,
+    capture,
     mockGetTokenPrice,
     mockInvestorSymbolData,
     mockGetContractAddressByType
   }
 })
 
-vi.mock('@vue/apollo-composable', async () => {
+vi.mock('@/composables/investor/useInvestorEventsViaLogs', async () => {
   const { ref } = await import('vue')
   apolloState.investorResult = ref()
   apolloState.investorError = ref<Error | null>(null)
   apolloState.investorLoading = ref(false)
+  return {
+    useInvestorEventsViaLogs: (addr: { value: string }) => {
+      capture.investor = addr
+      return {
+        result: apolloState.investorResult,
+        error: apolloState.investorError,
+        loading: apolloState.investorLoading
+      }
+    }
+  }
+})
+
+vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => {
+  const { ref } = await import('vue')
   apolloState.safeResult = ref()
   apolloState.safeError = ref<Error | null>(null)
   apolloState.safeLoading = ref(false)
-  return { useQuery: mockUseQuery }
+  return {
+    useSafeDepositRouterEventsViaLogs: (addr: { value: string }) => {
+      capture.safe = addr
+      return {
+        result: apolloState.safeResult,
+        error: apolloState.safeError,
+        loading: apolloState.safeLoading
+      }
+    }
+  }
 })
-
-vi.mock('@/stores', () => ({
-  useTeamStore: () => ({
-    getContractAddressByType: mockGetContractAddressByType
-  }),
-  useCurrencyStore: () => ({
-    localCurrency: { code: 'USD' },
-    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
-    getTokenPrice: mockGetTokenPrice
-  })
-}))
-
-vi.mock('@/stores/currencyStore', () => ({
-  useCurrencyStore: () => ({
-    localCurrency: { code: 'USD' },
-    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
-    getTokenPrice: mockGetTokenPrice
-  })
-}))
-
-vi.mock('@/composables/investor/reads', () => ({
-  useInvestorSymbol: () => ({
-    data: mockInvestorSymbolData
-  })
-}))
 
 describe('InvestorsTransactions advanced', () => {
   let wrapper: VueWrapper
@@ -117,23 +122,22 @@ describe('InvestorsTransactions advanced', () => {
     apolloState.safeLoading.value = false
     mockGetTokenPrice.mockReturnValue(1)
     mockInvestorSymbolData.value = 'SHER'
+    mockInvestorReads.symbol.data.value = 'SHER'
     mockGetContractAddressByType.mockImplementation((type: string) => {
       if (type === 'InvestorV1') return INVESTOR_ADDRESS
       if (type === 'SafeDepositRouter') return SAFE_ROUTER_ADDRESS
       return null
     })
-    mockUseQuery.mockReset()
-    mockUseQuery
-      .mockReturnValueOnce({
-        result: apolloState.investorResult,
-        error: apolloState.investorError,
-        loading: apolloState.investorLoading
-      })
-      .mockReturnValueOnce({
-        result: apolloState.safeResult,
-        error: apolloState.safeError,
-        loading: apolloState.safeLoading
-      })
+    vi.mocked(useTeamStore).mockReturnValue({
+      getContractAddressByType: mockGetContractAddressByType,
+      getInvestorAddress: () =>
+        mockGetContractAddressByType('Investor') || mockGetContractAddressByType('InvestorV1')
+    } as never)
+    vi.mocked(useCurrencyStore).mockReturnValue({
+      localCurrency: { code: 'USD' },
+      supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
+      getTokenPrice: mockGetTokenPrice
+    } as never)
   })
 
   afterEach(() => {
@@ -143,15 +147,10 @@ describe('InvestorsTransactions advanced', () => {
   it('uses fallback defaults when addresses are missing', () => {
     mockGetContractAddressByType.mockReturnValue(null)
     wrapper = createWrapper()
-    const [investorCall, safeCall] = mockUseQuery.mock.calls
-    const investorVariables = investorCall?.[1] as { contractAddress: { value: string } }
-    const investorOptions = investorCall?.[2] as { enabled: { value: boolean } }
-    const safeVariables = safeCall?.[1] as { contractAddress: { value: string } }
-    const safeOptions = safeCall?.[2] as { enabled: { value: boolean } }
-    expect(investorVariables.contractAddress.value).toBe('')
-    expect(investorOptions.enabled.value).toBe(false)
-    expect(safeVariables.contractAddress.value).toBe('')
-    expect(safeOptions.enabled.value).toBe(false)
+    // The getLogs composables receive the address computeds, which fall back to
+    // '' when no contract is deployed (the composable then stays disabled).
+    expect(capture.investor.value).toBe('')
+    expect(capture.safe.value).toBe('')
   })
 
   it('handles parse failures and usd price fallbacks', () => {
@@ -200,7 +199,7 @@ describe('InvestorsTransactions advanced', () => {
   })
 
   it('logs investor and safe router query errors once per unique message', async () => {
-    const logErrorSpy = vi.spyOn(utils.log, 'error')
+    const logErrorSpy = vi.spyOn(log, 'error')
     wrapper = createWrapper()
     const investorQueryError = new Error('investor query failed')
     apolloState.investorError.value = investorQueryError

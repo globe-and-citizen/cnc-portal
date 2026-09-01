@@ -1,0 +1,149 @@
+<template>
+  <div
+    class="relative"
+    :class="isFetching ? 'animate-pulse' : ''"
+    ref="formRef"
+    data-test="member-contracts-input"
+    :data-loading="isFetching || undefined"
+  >
+    <UFieldGroup :data-test="`member-contracts-input`" class="w-full">
+      <UInput
+        v-model="input.name"
+        ref="nameInput"
+        placeholder="Name"
+        :data-test="`member-contracts-name-input`"
+        :disabled="disabled"
+        class="w-28"
+      />
+      <UInput
+        v-model="input.address"
+        ref="addressInput"
+        placeholder="Address"
+        :data-test="`member-contracts-address-input`"
+        :disabled="disabled"
+        class="flex-1"
+      />
+    </UFieldGroup>
+
+    <!-- Dropdown positioned relative to the input -->
+    <div
+      v-if="
+        showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
+      "
+      class="absolute top-full left-0 z-10 mt-1 w-full"
+      data-test="search-dropdown"
+    >
+      <UCard>
+        <SelectMemberResults :members="filteredMembers" @select="handleSelectMember" />
+        <SelectContractResults :contracts="filteredContracts" @select="handleSelectContract" />
+      </UCard>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+/**
+ * @component SelectMemberContractsInput
+ * @description
+ * Dual-input component for searching and selecting a team member, trader safe, or contract address.
+ * - Integrates with Pinia teamStore for live team data.
+ * - Shows a dropdown with filtered team members, trader safes (deployed only), and contracts as the user types.
+ * - Emits a 'selectItem' event with the selected item and its type ('member', 'trader-safe', or 'contract').
+ * - Debounced dropdown for performance.
+ * - Used in forms for user-friendly member/contract/safe selection.
+ *
+ * @emits selectItem - Fires when a user selects a member, trader safe, or contract from the dropdown.
+ * @model input - Two-way bound object: { name: string, address: string }
+ */
+
+import { ref, useTemplateRef, computed } from 'vue'
+import { useTeamStore } from '@/stores'
+import { watchDebounced } from '@vueuse/core'
+import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
+import SelectContractResults from '@/components/ui/inputs/SelectContractResults.vue'
+import type { Member, TeamContract } from '@/types'
+import { filterDirectoryItems } from '@/utils/teams/search'
+
+const props = defineProps<{ disabled?: boolean }>()
+
+const emit = defineEmits(['selectItem'])
+const input = defineModel({
+  default: {
+    name: '',
+    address: ''
+  }
+})
+
+const teamStore = useTeamStore()
+
+// computed for showDropdown
+const showDropdown = computed(() => {
+  return !props.disabled && _showDropdown.value
+})
+const _showDropdown = ref(false)
+const formRef = ref<HTMLElement | null>(null)
+const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
+const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
+
+const isFetching = computed(() => teamStore.currentTeamMeta.isPending)
+const members = computed(() => teamStore.currentTeamMeta?.data?.members ?? [])
+const contracts = computed(
+  () =>
+    teamStore.currentTeamMeta?.data?.teamContracts.map((contract) => ({
+      ...contract,
+      imageUrl: 'https://api.dicebear.com/9.x/bottts/svg?seed'
+    })) ?? []
+)
+
+const filteredMembers = computed(() => {
+  if (!members.value.length) return []
+  return filterDirectoryItems(members.value, input.value) as Member[]
+})
+
+const filteredContracts = computed(() => {
+  if (!contracts.value.length) return []
+  return filterDirectoryItems(contracts.value, input.value) as TeamContract[]
+})
+
+const selecting = ref(false)
+
+watchDebounced(
+  [() => input.value.name, () => input.value.address],
+  ([name, address]) => {
+    if (selecting.value) {
+      selecting.value = false
+      return
+    }
+
+    if (props.disabled) {
+      _showDropdown.value = false
+      return
+    }
+
+    if (name || address) {
+      _showDropdown.value = true
+    } else {
+      _showDropdown.value = false
+    }
+  },
+  { debounce: 300, maxWait: 1000 }
+)
+
+const selectItem = (
+  item: { name: string; address: string },
+  type: 'member' | 'trader-safe' | 'contract'
+) => {
+  selecting.value = true
+  input.value = item
+  emit('selectItem', { ...item, type })
+  _showDropdown.value = false
+}
+
+const handleSelectMember = (member: { name: string; address: string }) => {
+  selectItem(member, 'member')
+}
+
+const handleSelectContract = (contract: { type: string; address: string }) => {
+  selectItem({ name: contract.type, address: contract.address }, 'contract')
+}
+</script>

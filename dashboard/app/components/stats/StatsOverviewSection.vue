@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import type { StatsOverview } from '~/types'
+import { formatNumber as formatDisplayNumber, formatPercent as formatDisplayPercent } from '~/utils/format'
 
 defineProps<{
   data: StatsOverview | null | undefined
   isLoading: boolean
 }>()
 
-const formatNumber = (value: number) => value?.toLocaleString('en-US') || '0'
-const formatPercent = (value: number) => `${value >= 0 ? '+' : ''}${value?.toFixed(1) || 0}%`
+const formatNumber = (value: number) => formatDisplayNumber(value)
+const formatPercent = (value: number) => formatDisplayPercent(value / 100, { decimals: 1, signed: true })
 </script>
 
 <template>

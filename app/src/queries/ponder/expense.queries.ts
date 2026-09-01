@@ -147,5 +147,19 @@ export const GET_EXPENSE_EVENTS = gql`
         timestamp
       }
     }
+    expenseOwnershipTransferreds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        previousOwner
+        newOwner
+        timestamp
+      }
+    }
   }
 `

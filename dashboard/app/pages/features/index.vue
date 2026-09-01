@@ -103,6 +103,7 @@ import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Feature, FeatureStatus } from '~/types'
 import { useFeaturesQuery, useUpdateFeatureQuery } from '~/queries/feature.query'
+import { formatDateTime } from '~/utils/format'
 
 const USelect = resolveComponent('USelect')
 const UButton = resolveComponent('UButton')
@@ -126,17 +127,7 @@ const statusOptions = [
 ]
 
 // Utility methods
-const formatDate = (dateString?: string) => {
-  if (!dateString) return '—'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+const formatDate = formatDateTime
 
 // Table columns configuration
 const columns: TableColumn<Feature>[] = [

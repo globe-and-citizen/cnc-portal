@@ -1,5 +1,13 @@
 <template>
-  <BodAlert v-if="isBodAction" />
+  <UAlert
+    v-if="isBodAction"
+    title="Info"
+    description="This will create a BOD action which requires approval from at least half of the BOD members."
+    icon="i-lucide-info"
+    color="info"
+    variant="soft"
+    data-test="bod-action-alert"
+  />
 
   <UForm
     :schema="validationSchema"
@@ -10,7 +18,7 @@
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <UFormField class="w-full" name="amount">
-      <TokenAmount
+      <TokenAmountInput
         :tokens="tokens"
         v-model="tokenAmountModel"
         :isLoading="props.loading"
@@ -26,7 +34,7 @@
             </div>
           </slot>
         </template>
-      </TokenAmount>
+      </TokenAmountInput>
     </UFormField>
 
     <!-- Fee breakdown -->
@@ -92,8 +100,6 @@
         :disabled="loading"
         data-test="transferButton"
       >
-        <!-- {{ `Transfer${showFees ? ` ${totalToSend.toFixed(2)} ${model.token.symbol}` : ''}` }} -->
-
         {{
           `Transfer${showFees ? ` ${formatTransferAmount(totalToSend)} ${model.token.symbol}` : ''}`
         }}
@@ -105,11 +111,10 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
 import { z } from 'zod'
-import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
-import BodAlert from '@/components/BodAlert.vue'
-import TokenAmount from './TokenAmount.vue'
-import { formatAmountWithPrecision } from '@/utils/currencyUtil'
-import { isValidPositiveTokenAmount } from '@/utils/constantUtil'
+import SelectMemberContractsInput from '../ui/inputs/SelectMemberContractsInput.vue'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
+import { formatAmountWithPrecision } from '@/utils/currency/display'
+import { isValidPositiveTokenAmount } from '@/utils/tokens/metadata'
 import type { TokenOption } from '@/types'
 import type { TokenId } from '@/constant'
 
@@ -206,7 +211,10 @@ const validationSchema = computed(() =>
         const amount = parseFloat(value)
         const bps = props.feeBps ?? 0
         const fee = bps > 0 ? (amount * bps) / (10000 - bps) : 0
-        return amount + fee <= (model.value.token.balance ?? 0)
+        // Same number `TokenAmount` shows as available: for an expense that is
+        // the remaining approved budget, which is lower than the raw holdings.
+        const available = model.value.token.spendableBalance ?? model.value.token.balance ?? 0
+        return amount + fee <= available
       }, 'Amount + fees exceed available balance')
   })
 )

@@ -1,0 +1,214 @@
+import { CalendarDate } from '@internationalized/date'
+import dayjs from 'dayjs'
+
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import weekday from 'dayjs/plugin/weekday'
+import {
+  formatDateRelative as formatCanonicalDateRelative,
+  formatDateShort as formatCanonicalDateShort,
+  formatDateTime,
+  formatDateUtc,
+  formatMonthYear as formatCanonicalMonthYear
+} from '@/utils/format'
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
+
+export interface Week {
+  month: number // The month (0-11)
+  year: number // The year
+  isoWeek: number // The ISO week number (1-53)
+  isoString: string // ISO string of the Monday of that week (e.g. "2023-01-02T00:00:00.000Z")
+  formatted: string // Formatted string like "Jan 01 - Jan 07"
+}
+
+/**
+ * Get all ISO weeks of a month as Week objects
+ * @param year - e.g. 2025
+ * @param month - 0 = January, 11 = December
+ * @returns Array of Week for each ISO week in the month
+ */
+export function getMonthWeeks(year: number, month: number): Week[] {
+  const start = dayjs.utc().year(year).month(month).startOf('month')
+
+  const end = start.endOf('month')
+  const seen = new Set<string>()
+  const result: Week[] = []
+  let current = start.startOf('isoWeek') // Monday as start of week
+  while (current.isBefore(end) || current.isSame(end, 'day')) {
+    const week = current.isoWeek()
+    const weekYear = current.isoWeekYear()
+    const key = `${weekYear}-${week}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      result.push({
+        year: weekYear,
+        month: current.month(),
+        isoWeek: week,
+        isoString: current.startOf('isoWeek').toISOString(),
+        formatted: formatIsoWeekRange(current)
+      })
+    }
+    current = current.add(1, 'week')
+  }
+  return result
+}
+
+/**
+ * Format helpers (UTC-safe)
+ */
+export function formatMonthYear(year: number, month: number): string {
+  return formatCanonicalMonthYear(dayjs.utc().year(year).month(month))
+}
+
+/**
+ * Format an ISO week range (Monday to Sunday) from a given dayjs date
+ * @param base - A dayjs date within the desired week
+ * @returns A string representing the week range, e.g. "Jan 01 - Jan 07"
+ */
+export function formatIsoWeekRange(base: dayjs.Dayjs): string {
+  const start = base.startOf('isoWeek')
+  const end = base.endOf('isoWeek')
+  return `${formatCanonicalDateShort(start)} - ${formatCanonicalDateShort(end)}`
+}
+
+/**
+ * Return the UTC Monday (ISO week start) for the provided date-like value.
+ */
+export function startOfWeek(date: string | Date | dayjs.Dayjs): dayjs.Dayjs {
+  return dayjs.utc(date).startOf('isoWeek')
+}
+
+/* Calculates the number of calendar days between two dates.
+ * The calculation is done in UTC to avoid daylight saving time issues.
+ *
+ * @param endDate - The later date to compare
+ * @param startDate - The earlier date to compare
+ * @returns The number of calendar days between the two dates (rounded down)
+ *
+ * @example
+ * const start = new Date('2023-01-01');
+ * const end = new Date('2023-01-05');
+ * differenceInCalendarDays(end, start); // Returns 4
+ */
+export function differenceInCalendarDays(endDate: Date, startDate: Date): number {
+  const utc1 = Date.UTC(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+  const utc2 = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+  return Math.floor((utc1 - utc2) / (1000 * 60 * 60 * 24))
+}
+
+/**
+ * Calculates the difference in years between two dates, accounting for incomplete years
+ *
+ * @param endDate - The later date to compare
+ * @param startDate - The earlier date to compare
+ * @returns The number of complete years between the two dates
+ *
+ * @example
+ * const years = differenceInYears(new Date('2023-01-01'), new Date('2020-01-01'))
+ * console.log(years) // 3
+ *
+ * @example
+ * // Handles incomplete years
+ * const years = differenceInYears(new Date('2023-01-01'), new Date('2020-06-15'))
+ * console.log(years) // 2
+ */
+export function differenceInYears(endDate: Date, startDate: Date): number {
+  let years = endDate.getFullYear() - startDate.getFullYear()
+  const monthDiff = endDate.getMonth() - startDate.getMonth()
+  const dayDiff = endDate.getDate() - startDate.getDate()
+
+  // Adjust for incomplete years
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    years--
+  }
+  return years
+}
+
+/**
+ * Calculates the number of months between two dates.
+ *
+ * @param endDate - The later date to compare
+ * @param startDate - The earlier date to compare
+ * @returns The number of complete months between the two dates
+ *- The calculation includes both the year and month differences
+ */
+export function differenceInMonths(endDate: Date, startDate: Date): number {
+  let months = (endDate.getFullYear() - startDate.getFullYear()) * 12
+  months += endDate.getMonth() - startDate.getMonth()
+
+  // Adjust for incomplete months
+  if (endDate.getDate() < startDate.getDate()) {
+    months--
+  }
+  return months
+}
+
+/**
+ * Convert a Date to a CalendarDate from @internationalized/date
+ */
+export function dateToCalendarDate(date: Date): CalendarDate {
+  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+}
+
+/**
+ * Format a Date as MM/DD/YYYY
+ */
+export function formatDateMMDDYYYY(date: Date): string {
+  const mm = (date.getMonth() + 1).toString().padStart(2, '0')
+  const dd = date.getDate().toString().padStart(2, '0')
+  return `${mm}/${dd}/${date.getFullYear()}`
+}
+
+/**
+ * Ensure a calendar-selected date (midnight local) is in the future.
+ * If the selected date is today or earlier than minDate, returns minDate instead.
+ */
+export function ensureFutureDate(selectedDate: Date, minDate: Date): Date {
+  return selectedDate < minDate ? new Date(minDate) : selectedDate
+}
+
+/**
+ * Put a day picked on a calendar and a time of day typed as `hh:mm` back
+ * together into a single local instant.
+ *
+ * A calendar gives midnight, which is never the moment the user meant when a
+ * deadline is at stake. Returns `null` when the time cannot be read, so the
+ * caller can complain rather than silently deciding an hour on the user's
+ * behalf.
+ */
+export function combineDayAndTime(day: Date, timeOfDay: string): Date | null {
+  const parts = /^(\d{1,2}):(\d{2})$/.exec(timeOfDay.trim())
+  if (!parts) return null
+
+  const hours = Number(parts[1])
+  const minutes = Number(parts[2])
+  if (hours > 23 || minutes > 59) return null
+
+  const combined = new Date(day)
+  combined.setHours(hours, minutes, 0, 0)
+  return combined
+}
+
+export function format(date: Date, formatStr: string): string {
+  const day = date.getDate().toString().padStart(2, '0')
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const year = date.getFullYear()
+
+  return formatStr.replace('dd', day).replace('MM', month).replace('yyyy', year.toString())
+}
+
+// Helper to format date
+export const formatDateShort = (dateString: string): string => {
+  return formatDateTime(dateString)
+}
+
+export function formatDateRelative(dateString: string): string {
+  return formatCanonicalDateRelative(dateString)
+}
+
+export function formatDateUTC(dateString: string): string {
+  return formatDateUtc(dateString)
+}

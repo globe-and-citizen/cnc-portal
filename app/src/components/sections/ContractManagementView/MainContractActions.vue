@@ -1,49 +1,74 @@
 <template>
-  <div class="flex items-center gap-2">
-    <UTooltip :text="archivedTooltip">
-      <UButton
-        :color="row.paused ? 'info' : 'error'"
-        size="sm"
-        @click="changeContractStatus(row.paused)"
-        :loading="isLoadingPauseContract || isLoadingUnpauseContract"
-        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
-      >
-        <IconifyIcon
-          v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
-          :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
-        />
-      </UButton>
-    </UTooltip>
-    <UTooltip :text="archivedTooltip">
-      <UButton
-        color="success"
-        variant="outline"
-        size="sm"
-        @click="showModal = true"
-        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
-        label="Transfer Ownership"
-      />
-    </UTooltip>
-    <UTooltip :text="archivedTooltip">
-      <UButton
-        :disabled="isWriteDisabled || !isBodAction || formatedActions.length <= 0"
-        color="success"
-        variant="outline"
-        size="sm"
-        @click="
-          () => {
-            showApprovalModal = true
-            currentStep = 1
-          }
-        "
-        label="Pending Actions"
-      />
-    </UTooltip>
+  <template v-if="row">
+    <USlideover
+      :open="isDetailsOpen"
+      title="Contract details"
+      description="Technical identifiers and current on-chain state."
+      :ui="{ content: 'w-full sm:max-w-xl' }"
+      @update:open="updateOpen($event ? 'details' : null)"
+    >
+      <template #body>
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="bg-primary/10 text-primary grid size-11 place-items-center rounded-xl">
+              <UIcon :name="presentation.icon" class="size-5" />
+            </div>
+            <div>
+              <p class="text-highlighted font-semibold">{{ presentation.label }}</p>
+              <p class="text-muted text-sm">{{ row.type }}</p>
+            </div>
+          </div>
+
+          <dl class="divide-default divide-y text-sm">
+            <div class="py-4">
+              <dt class="text-muted">Status</dt>
+              <dd class="mt-2">
+                <UBadge :color="row.paused ? 'warning' : 'success'" variant="subtle">
+                  {{ row.paused ? 'Paused' : 'Active' }}
+                </UBadge>
+              </dd>
+            </div>
+            <div class="py-4">
+              <dt class="text-muted">Contract address</dt>
+              <dd class="mt-2"><AddressTooltip :address="row.address" :slice="true" /></dd>
+            </div>
+            <div class="py-4">
+              <dt class="text-muted">Owner</dt>
+              <dd class="mt-2">
+                <AddressTooltip v-if="row.owner" :address="row.owner" :slice="true" />
+                <span v-else class="text-muted">Not available</span>
+              </dd>
+            </div>
+            <div class="py-4">
+              <dt class="text-muted">Deployer</dt>
+              <dd class="mt-2">
+                <AddressTooltip v-if="row.deployer" :address="row.deployer" :slice="true" />
+                <span v-else class="text-muted">Not available</span>
+              </dd>
+            </div>
+            <div class="py-4">
+              <dt class="text-muted">Officer version</dt>
+              <dd class="text-highlighted mt-2">{{ version || 'Unknown' }}</dd>
+            </div>
+          </dl>
+
+          <USeparator />
+
+          <ContractReadDataSection
+            :address="contractAddress"
+            :abi="contractAbi"
+            :contract-type="row.type"
+            :enabled="isDetailsOpen"
+          />
+        </div>
+      </template>
+    </USlideover>
 
     <UModal
-      v-model:open="showModal"
+      :open="isTransferOpen"
       title="Transfer Ownership"
       description="Transfer contract ownership to a Board of Directors member or an individual team member."
+      @update:open="updateOpen($event ? 'transfer' : null)"
     >
       <template #body>
         <UAlert
@@ -54,248 +79,146 @@
           class="mb-4"
         />
         <TransferOwnershipForm
-          v-if="showModal"
+          v-if="isTransferOpen"
           :is-bod-action="isBodAction"
+          :loading="isLoadingTransfer"
           @transfer-ownership="transferOwnership"
-          :loading="isLoadingTransferOwnership || isLoadingAddAction"
         />
       </template>
     </UModal>
+
     <UModal
-      v-model:open="showApprovalModal"
+      :open="isApprovalOpen"
       :ui="{ content: modalWidth }"
       title="Review Pending Actions"
       description="Approve or reject pending board actions before execution."
+      @update:open="updateOpen($event ? 'approval' : null)"
     >
       <template #body>
         <PendingEventsList
-          :pending-actions="formatedActions"
-          @view-details="
-            (row) => {
-              selectedRow = row
-              currentStep = 2
-            }
-          "
-          v-if="showApprovalModal && currentStep === 1"
+          v-if="isApprovalOpen && currentStep === 1"
+          :pending-actions="pendingActions"
+          @view-details="viewPendingAction"
         />
-        <BodApprovalModal
-          v-if="showApprovalModal && currentStep === 2"
-          :row="selectedRow"
-          @approve-action="approveAction"
+        <BodApprovalContent
+          v-if="isApprovalOpen && currentStep === 2"
+          :row="selectedAction"
           :loading="isLoadingApproveAction"
-          @close="showApprovalModal = false"
+          @approve-action="approveAction"
+          @close="updateOpen(null)"
         />
       </template>
     </UModal>
-  </div>
+  </template>
 </template>
-<script setup lang="ts">
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { encodeFunctionData, type Abi, type Address } from 'viem'
-import type { TableRow } from '@/types/table'
-import { ref, computed, watch } from 'vue'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
-import { filterAndFormatActions, log, parseError } from '@/utils'
-import PendingEventsList from './PendingEventsList.vue'
-import BodApprovalModal from './BodApprovalModal.vue'
-import { useGetBodActionsQuery } from '@/queries'
-import { useBodAddAction, useBodApproveAction } from '@/composables/bod/writes'
-import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-import { useQueryClient } from '@tanstack/vue-query'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
-const props = defineProps<{
-  row: TableRow
+<script setup lang="ts">
+import { computed, ref, toRef, watch } from 'vue'
+import type { Abi, Address } from 'viem'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import { useBodApproveAction } from '@/composables/bod/writes'
+import { useContractOwnershipTransfer } from '@/composables/contracts/useContractOwnershipTransfer'
+import { useContractStatusChange } from '@/composables/contracts/useContractStatusChange'
+import type { TableRow } from '@/types/table'
+import type { FormattedAction } from '@/utils/contracts/management'
+import { getContractPresentation } from '@/utils/contracts/presentation'
+import BodApprovalContent from './BodApprovalContent.vue'
+import ContractReadDataSection from './ContractReadDataSection.vue'
+import PendingEventsList from './PendingEventsList.vue'
+import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
+
+type ContractActionSurface = 'details' | 'transfer' | 'approval' | null
+
+interface ContractStatusChangeRequest {
+  id: number
+  paused: boolean
+}
+
+interface Props {
+  row: TableRow | null
+  version?: string | null
+  pendingActions: FormattedAction
+  isBodAction: boolean
+  open: ContractActionSurface
+  statusChangeRequest: ContractStatusChangeRequest | null
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  'update:open': [surface: ContractActionSurface]
+  'contract-status-changed': []
 }>()
 
-const emits = defineEmits(['contract-status-changed'])
-
-const teamStore = useTeamStore()
-const toast = useToast()
-const userDataStore = useUserDataStore()
-const queryClient = useQueryClient()
-const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
-
-// BOD action composables
-const addActionComposable = useBodAddAction()
-const approveActionComposable = useBodApproveAction()
-
-const { isBodAction } = useBodIsBodAction(props.row.address as Address)
-
-// Destructure addAction properties
-const {
-  executeAddAction,
-  isPending: isLoadingAddAction,
-  isSuccess: isActionAdded
-} = addActionComposable
-
-// Destructure approveAction properties
-const {
-  executeApproveAction,
-  isPending: isLoadingApproveAction,
-  isSuccess: isActionApproved
-} = approveActionComposable
-
-// Create wrapper functions for template usage
-const addAction = executeAddAction
-const approveAction = executeApproveAction
-
-const showModal = ref(false)
-const showApprovalModal = ref(false)
-const transferOwnershipErrorMessage = ref('')
-const selectedRow = ref<TableRow>({})
+const approveActionMutation = useBodApproveAction()
+const selectedAction = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
-
-const { data: bodActions } = useGetBodActionsQuery({
-  queryParams: {
-    teamId: computed(() => teamStore.currentTeamId),
-    isExecuted: false
-  }
-})
-
-const modalWidth = computed(() => {
-  return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : 'w-1/3 max-w-4xl'
-})
-const formatedActions = computed(() => {
-  return filterAndFormatActions(
-    props.row.address,
-    bodActions.value,
-    teamStore.currentTeam?.members || []
-  )
-})
-
-const rowAddress = computed(() => props.row.address as Address)
-const rowAbi = computed(() => props.row.abi as Abi)
-
+const handledStatusChangeRequest = ref<number | null>(null)
+const rowRef = computed<TableRow>(() => props.row ?? {})
+const isBodActionRef = toRef(props, 'isBodAction')
+const presentation = computed(() => getContractPresentation(props.row?.type ?? ''))
+const contractAddress = computed(() => props.row?.address as Address)
+const contractAbi = computed<Abi>(() => props.row?.abi ?? [])
+const isDetailsOpen = computed(() => props.open === 'details')
+const isTransferOpen = computed(() => props.open === 'transfer')
+const isApprovalOpen = computed(() => props.open === 'approval')
+const modalWidth = computed(() =>
+  currentStep.value === 1 ? 'w-full sm:max-w-4xl' : 'w-full sm:max-w-xl'
+)
+const isLoadingApproveAction = approveActionMutation.isPending
+const approveAction = approveActionMutation.executeApproveAction
 const {
-  mutate: executeTransferOwnership,
-  isPending: isLoadingTransferOwnership,
-  error: errorTransferOwnership
-} = useContractWritesV3({
-  contractAddress: rowAddress,
-  abi: rowAbi,
-  functionName: 'transferOwnership'
+  errorMessage: transferOwnershipErrorMessage,
+  isLoading: isLoadingTransfer,
+  transferOwnership
+} = useContractOwnershipTransfer(rowRef, isBodActionRef, handleOwnershipTransferred)
+const { changeContractStatus } = useContractStatusChange(
+  contractAddress,
+  handleContractStatusChanged
+)
+
+watch(
+  () => props.open,
+  (surface) => {
+    if (surface === 'approval') currentStep.value = 1
+  },
+  { immediate: true }
+)
+
+watch(approveActionMutation.isSuccess, (isApproved) => {
+  if (isApproved) handleApprovalComplete()
 })
 
-const {
-  mutate: executePauseContract,
-  isPending: isLoadingPauseContract,
-  error: errorPauseContract
-} = useContractWritesV3({
-  contractAddress: rowAddress,
-  abi: rowAbi,
-  functionName: 'pause'
-})
+watch(
+  [() => props.row?.address, () => props.statusChangeRequest],
+  ([address, request]) => {
+    if (!address || !request || request.id === handledStatusChangeRequest.value) return
 
-const {
-  mutate: executeUnpauseContract,
-  isPending: isLoadingUnpauseContract,
-  error: errorUnpauseContract
-} = useContractWritesV3({
-  contractAddress: rowAddress,
-  abi: rowAbi,
-  functionName: 'unpause'
-})
+    handledStatusChangeRequest.value = request.id
+    changeContractStatus(request.paused)
+  },
+  { immediate: true }
+)
 
-const transferOwnership = async (address: Address) => {
-  if (isBodAction.value) {
-    const data = encodeFunctionData({
-      abi: props.row.abi,
-      functionName: 'transferOwnership',
-      args: [address]
-    })
-    const description = JSON.stringify({
-      text: `Transfer ownership of ${props.row.type} to ${address}`,
-      title: `Ownership Transfer Request`
-    })
-
-    await addAction({
-      targetAddress: props.row.address,
-      description,
-      data
-    })
-    return
-  }
-
-  executeTransferOwnership(
-    { args: [address] },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ['readContract', { functionName: 'isMember' }],
-          exact: false
-        })
-        queryClient.invalidateQueries({
-          queryKey: ['readContract', { functionName: 'owner' }],
-          exact: false
-        })
-        showModal.value = false
-        transferOwnershipErrorMessage.value = ''
-        toast.add({ title: 'Ownership transferred successfully!', color: 'success' })
-        emits('contract-status-changed')
-      }
-    }
-  )
+function handleContractStatusChanged() {
+  emit('contract-status-changed')
 }
 
-const changeContractStatus = (paused: boolean) => {
-  if (paused) {
-    executeUnpauseContract(
-      { args: [] },
-      {
-        onSuccess: () => {
-          toast.add({ title: 'Contract resumed successfully!', color: 'success' })
-          emits('contract-status-changed')
-        }
-      }
-    )
-  } else {
-    executePauseContract(
-      { args: [] },
-      {
-        onSuccess: () => {
-          toast.add({ title: 'Contract paused successfully!', color: 'success' })
-          emits('contract-status-changed')
-        }
-      }
-    )
-  }
+function handleOwnershipTransferred() {
+  updateOpen(null)
+  handleContractStatusChanged()
 }
 
-watch(isActionAdded, (isAdded) => {
-  if (isAdded) {
-    showModal.value = false
-    emits('contract-status-changed')
-  }
-})
+function handleApprovalComplete() {
+  updateOpen(null)
+  handleContractStatusChanged()
+}
 
-watch(isActionApproved, (isApproved) => {
-  if (isApproved) {
-    showApprovalModal.value = false
-    emits('contract-status-changed')
-  }
-})
+function viewPendingAction(action: TableRow) {
+  selectedAction.value = action
+  currentStep.value = 2
+}
 
-watch(errorTransferOwnership, (error) => {
-  if (error) {
-    transferOwnershipErrorMessage.value = parseError(error, props.row.abi)
-    log.error('errorTransferOwnership.value: ', error)
-  }
-})
-
-watch(errorPauseContract, (error) => {
-  if (error) {
-    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
-    log.error('errorPauseContract.value: ', error)
-  }
-})
-
-watch(errorUnpauseContract, (error) => {
-  if (error) {
-    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
-    log.error('errorUnpauseContract.value: ', error)
-  }
-})
+function updateOpen(surface: ContractActionSurface) {
+  emit('update:open', surface)
+}
 </script>

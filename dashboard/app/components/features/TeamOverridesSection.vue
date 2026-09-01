@@ -52,6 +52,7 @@ import type { Feature, TeamFunctionOverride, FeatureStatus } from '~/types'
 import type { TableColumn } from '@nuxt/ui'
 import { useUpdateFeatureTeamOverrideQuery } from '~/queries'
 import { FEATURE_STATUS_OPTIONS } from '~/api/features'
+import { formatDateTime } from '~/utils/format'
 
 const props = defineProps<{
   feature: Feature
@@ -85,13 +86,7 @@ const columns: TableColumn<TeamFunctionOverride>[] = [
     header: 'Last Updated',
     accessorKey: 'updatedAt',
     cell: ({ row }) => {
-      return new Date(row.original.updatedAt).toLocaleString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      return formatDateTime(row.original.updatedAt)
     },
     meta: {
       class: {

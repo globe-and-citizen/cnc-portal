@@ -3,75 +3,12 @@ import { mount } from '@vue/test-utils'
 import PayDividendsForm from '../PayDividendsForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types'
-import { mockUseContractBalance } from '@/tests/mocks'
+import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks'
 
-type BalanceEntry = {
-  amount: number
-  token: {
-    id: string
-    name: string
-    symbol: string
-    code: string
-    coingeckoId: string
-    decimals: number
-    address: string
-  }
-  values: {
-    USD: {
-      value: number
-      formated: string
-      id: string
-      code: string
-      symbol: string
-      price: number
-      formatedPrice: string
-    }
-  }
-}
+const makeBalance = makeTokenBalance
 
-type BalanceEntryOverrides = Partial<Omit<BalanceEntry, 'token' | 'values'>> & {
-  token?: Partial<BalanceEntry['token']>
-  values?: {
-    USD?: Partial<BalanceEntry['values']['USD']>
-  }
-}
-
-const makeBalance = (overrides: BalanceEntryOverrides = {}): BalanceEntry => {
-  const base: BalanceEntry = {
-    amount: 0,
-    token: {
-      id: 'native',
-      name: 'Token',
-      symbol: 'TKN',
-      code: 'TKN',
-      coingeckoId: 'token',
-      decimals: 18,
-      address: '0x0000000000000000000000000000000000000000'
-    },
-    values: {
-      USD: {
-        value: 0,
-        formated: '$0',
-        id: 'usd',
-        code: 'USD',
-        symbol: '$',
-        price: 1,
-        formatedPrice: '$1'
-      }
-    }
-  }
-
-  return {
-    ...base,
-    ...overrides,
-    token: { ...base.token, ...(overrides.token ?? {}) },
-    values: {
-      USD: { ...base.values.USD, ...(overrides.values?.USD ?? {}) }
-    }
-  }
-}
-
-const TokenAmountStub = {
+const TokenAmountInputStub = {
+  name: 'TokenAmountInput',
   props: ['modelValue', 'tokens', 'loading'],
   emits: ['update:modelValue'],
   template: `
@@ -98,10 +35,6 @@ const TokenAmountStub = {
   `
 }
 
-const BodAlertStub = {
-  template: `<div data-test="bod-alert" />`
-}
-
 const defaultBalances = () => [
   makeBalance({
     amount: 10,
@@ -113,17 +46,7 @@ const defaultBalances = () => [
       decimals: 18,
       address: '0x0000000000000000000000000000000000000001'
     },
-    values: {
-      USD: {
-        value: 20000,
-        formated: '$20K',
-        id: 'usd',
-        code: 'USD',
-        symbol: '$',
-        price: 2000,
-        formatedPrice: '$2K'
-      }
-    }
+    usdPrice: 2000
   }),
   makeBalance({
     amount: 25,
@@ -135,17 +58,7 @@ const defaultBalances = () => [
       decimals: 6,
       address: '0x0000000000000000000000000000000000000002'
     },
-    values: {
-      USD: {
-        value: 25,
-        formated: '$25',
-        id: 'usd',
-        code: 'USD',
-        symbol: '$',
-        price: 1,
-        formatedPrice: '$1'
-      }
-    }
+    usdPrice: 1
   }),
   makeBalance({
     amount: 5,
@@ -174,8 +87,7 @@ describe('PayDividendsForm.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          TokenAmount: TokenAmountStub,
-          BodAlert: BodAlertStub
+          TokenAmountInput: TokenAmountInputStub
         }
       }
     })
@@ -253,11 +165,11 @@ describe('PayDividendsForm.vue', () => {
     expect(submitEvents?.[0]).toEqual([2500000n, 'usdc'])
   })
 
-  it('passes non-sher tokens to TokenAmount', () => {
+  it('passes non-sher tokens to TokenAmountInput', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
-    const tokensProp = wrapper.findComponent(TokenAmountStub).props('tokens') as Array<{
+    const tokensProp = wrapper.findComponent(TokenAmountInputStub).props('tokens') as Array<{
       tokenId: string
     }>
 
@@ -265,10 +177,11 @@ describe('PayDividendsForm.vue', () => {
     expect(tokensProp.some((token) => token.tokenId === 'sher')).toBe(false)
   })
 
-  it('shows BodAlert when bod action is required', () => {
+  it('shows the Board approval notice when a Board action is required', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent({ isBodAction: true })
-    expect(wrapper.find('[data-test="bod-alert"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="bod-action-alert"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('This will create a BOD action')
   })
 })

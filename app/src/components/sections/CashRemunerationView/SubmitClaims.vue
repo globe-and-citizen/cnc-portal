@@ -1,15 +1,19 @@
 <template>
   <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
-    <UButton
-      :loading="isWageClaimAdding"
-      color="success"
-      size="sm"
-      data-test="modal-submit-hours-button"
-      :disabled="!canSubmitClaim || archivedDisabled"
-      @click="openModal()"
-    >
-      Submit Claim
-    </UButton>
+    <UTooltip :text="restrictedTooltip" :delay-duration="0">
+      <span class="inline-flex max-w-full">
+        <UButton
+          :loading="isWageClaimAdding"
+          color="success"
+          size="sm"
+          data-test="modal-submit-hours-button"
+          :disabled="!canSubmitClaim || archivedDisabled"
+          @click="openModal()"
+        >
+          Submit Claim
+        </UButton>
+      </span>
+    </UTooltip>
   </TeamArchivedTooltip>
 
   <UModal
@@ -21,13 +25,18 @@
     <template #body>
       <div class="mb-20 flex flex-col gap-4">
         <ClaimForm
-          ref="claimFormRef"
           :initial-data="formInitialData"
-          :is-loading="isWageClaimAdding"
-          :disabled-week-starts="props.signedWeekStarts"
-          :restrict-submit="isRestricted"
-          :error-message="addWageClaimError && errorMessage ? errorMessage.message : ''"
-          error-title="Failed to submit claim"
+          :loading="isWageClaimAdding"
+          :submission-rules="{
+            disabledWeekStarts: props.signedWeekStarts,
+            restrictSubmit: isRestricted,
+            maximumHoursPerDay: props.maximumHoursPerDay,
+            existingClaims: props.existingClaims
+          }"
+          :error="{
+            message: addWageClaimError && errorMessage ? errorMessage.message : '',
+            title: 'Failed to submit claim'
+          }"
           @submit="handleSubmit"
         />
       </div>
@@ -42,11 +51,11 @@ import utc from 'dayjs/plugin/utc'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
-import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
+import type { ClaimFormData, ClaimSubmitPayload, Claim } from '@/types'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
-import { startOfWeek } from '@/utils/dayUtils'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import { startOfWeek } from '@/utils/dates/calendar'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 
 dayjs.extend(utc)
 
@@ -60,7 +69,6 @@ const modal = ref({
 })
 const errorMessage = ref<{ message: string } | null>(null)
 const addWageClaimError = ref(false)
-const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const resolveInitialDayWorked = (selectedWeekStart?: string): string => {
   const today = dayjs.utc().startOf('day')
   if (!selectedWeekStart) return today.toISOString()
@@ -85,6 +93,8 @@ const props = defineProps<{
   }
   signedWeekStarts?: string[]
   selectedWeekStart?: string
+  maximumHoursPerDay?: number
+  existingClaims?: Pick<Claim, 'minutesWorked' | 'dayWorked'>[]
 }>()
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))
@@ -108,7 +118,6 @@ const openModalForDay = (dayIso: string) => {
 }
 
 const closeModal = () => {
-  claimFormRef.value?.resetForm()
   errorMessage.value = null
   addWageClaimError.value = false
   modal.value = { mount: false, show: false }
@@ -149,11 +158,30 @@ watch(
 // generation (issue #1825): submitting only creates a `pending` row that
 // the approver can sign once the team migrates. Only the sign action is
 // frozen — see CRSigne.vue.
+// When the restriction is active, only the current ISO week can accept a
+// submission, so the "Submit Claim" button is disabled on every other week
+// (mirrors the calendar guard and the backend enforcement). Reuses the existing
+// startOfWeek helper and the same week comparison used in ClaimHistoryActionAlerts.
+const isSelectedWeekSubmittable = computed(() => {
+  if (!isRestricted.value) return true
+  const selected = startOfWeek(props.selectedWeekStart ?? dayjs.utc())
+  return selected.isSame(startOfWeek(dayjs.utc()), 'day')
+})
+
 const canSubmitClaim = computed(() => {
+  if (!isSelectedWeekSubmittable.value) return false
   if (!props.weeklyClaim) return true
 
   return props.weeklyClaim.status === 'pending'
 })
+
+// Tooltip shown on hover when the button is disabled specifically because the
+// selected week is outside the submit window (undefined otherwise → no tooltip).
+const restrictedTooltip = computed(() =>
+  !isSelectedWeekSubmittable.value
+    ? 'You can only submit claims for the current week, up to 4 days in the past.'
+    : undefined
+)
 
 const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useSubmitClaimMutation()
 
@@ -167,6 +195,10 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   errorMessage.value = null
 
   try {
+    // Refresh the restriction status right before submitting so a dashboard
+    // change is reflected immediately (backend addClaim is the real guard).
+    await checkRestriction(teamId.value)
+
     await submitClaim({
       ...data,
       teamId: teamId.value
@@ -192,11 +224,5 @@ onMounted(async () => {
   }
 })
 
-defineExpose({
-  handleSubmit,
-  modal,
-  errorMessage,
-  formInitialData,
-  openModalForDay
-})
+defineExpose({ openModalForDay })
 </script>

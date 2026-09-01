@@ -22,7 +22,10 @@
   >
     <div
       data-test="sign-action"
-      :class="['text-sm', { disabled: isLoad || isSignFrozen }]"
+      :class="[
+        'block w-full cursor-pointer px-3 py-1.5 text-sm',
+        { disabled: isLoad || isSignFrozen }
+      ]"
       :aria-disabled="isLoad || isSignFrozen"
       :tabindex="isLoad || isSignFrozen ? -1 : 0"
       :style="{ pointerEvents: isLoad ? 'none' : undefined }"
@@ -35,11 +38,13 @@
 </template>
 
 <script setup lang="ts">
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
+import { useToast } from '@nuxt/ui/composables'
 import { USDC_ADDRESS } from '@/constant'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { buildWageClaimPayload, log } from '@/utils'
+import { buildWageClaimPayload } from '@/utils/wages/model'
+import { log } from '@/lib/logging'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import dayjs from 'dayjs'
@@ -48,6 +53,10 @@ import { computed, ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
 import { useEnableClaim } from '@/composables/cashRemuneration/writes'
+import {
+  CASH_REMUNERATION_EIP712_TYPES,
+  buildCashRemunerationDomain
+} from './cashRemunerationEip712'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { TEAM_ARCHIVED_TOOLTIP } from '@/composables/useTeamWriteGuard'
 
@@ -83,7 +92,7 @@ const isLoad = computed(() => isLoading.value)
 const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress.value,
-  abi: CASH_REMUNERATION_EIP712_ABI
+  abi: cashRemunerationEip712Abi
 })
 
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
@@ -108,33 +117,18 @@ const { error: claimError, mutateAsync: executeUpdateClaim } = useUpdateWeeklyCl
 
 const enableTx = useEnableClaim()
 
-// Domain configuration (constant)
-const typedDataDomain = computed(() => ({
-  name: 'CashRemuneration',
-  version: '1',
-  chainId: chainId.value,
-  verifyingContract: cashRemunerationAddress.value as Address
-}))
-
-// Type definitions (constant)
-const TYPED_DATA_TYPES = {
-  Wage: [
-    { name: 'hourlyRate', type: 'uint256' },
-    { name: 'tokenAddress', type: 'address' }
-  ],
-  WageClaim: [
-    { name: 'employeeAddress', type: 'address' },
-    { name: 'minutesWorked', type: 'uint16' },
-    { name: 'wages', type: 'Wage[]' },
-    { name: 'date', type: 'uint256' }
-  ]
-} as const
+const typedDataDomain = computed(() =>
+  buildCashRemunerationDomain({
+    chainId: chainId.value,
+    verifyingContract: cashRemunerationAddress.value as Address
+  })
+)
 
 // Helper functions
 const getTokenAddress = (type: string): Address => {
   if (type === 'native') return zeroAddress as Address
   if (type === 'usdc') return USDC_ADDRESS as Address
-  return teamStore.getContractAddressByType('InvestorV1') as Address
+  return teamStore.getInvestorAddress() as Address
 }
 
 const typedDataMessage = computed(() =>
@@ -154,8 +148,8 @@ const enableClaim = async (signature: `0x${string}`) => {
 
   const isDisabled = await readContract(config, {
     address: cashRemunerationAddress.value,
-    abi: CASH_REMUNERATION_EIP712_ABI,
-    functionName: 'disabledWageClaims',
+    abi: cashRemunerationEip712Abi,
+    functionName: 'getDisabledWageClaim',
     args: [keccak256(signature)]
   })
 
@@ -170,7 +164,7 @@ const approveClaim = async () => {
   try {
     const signature = await mutateAsync({
       domain: typedDataDomain.value,
-      types: TYPED_DATA_TYPES,
+      types: CASH_REMUNERATION_EIP712_TYPES,
       message: typedDataMessage.value,
       primaryType: 'WageClaim'
     })

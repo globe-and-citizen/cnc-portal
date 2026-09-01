@@ -11,13 +11,13 @@
           <span class="text-4xl font-bold">
             <span class="inline-block h-10 min-w-16">
               <USkeleton v-if="isLoading" class="h-10 w-16" data-test="loading-spinner" />
-              <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
+              <span v-else>{{ balance?.total.usd.formatted ?? 0 }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
         </div>
         <div class="mt-1 text-sm text-gray-500">
-          ≈ {{ total[currency.code]?.formated ?? 0 }} {{ currency.code }}
+          ≈ {{ balance?.total.local.formatted ?? 0 }} {{ currency.code }}
         </div>
       </div>
       <div class="flex flex-col items-end gap-4">
@@ -27,7 +27,7 @@
         </div>
         <div class="flex items-center gap-2" v-if="bankAddress">
           <div class="text-sm text-gray-600">Contract Address:</div>
-          <AddressToolTip :address="bankAddress" />
+          <AddressTooltip :address="bankAddress" />
         </div>
       </div>
     </div>
@@ -35,12 +35,12 @@
 </template>
 
 <script setup lang="ts">
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useStorage } from '@vueuse/core'
 import { type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
-import TransferModal from '@/components/forms/TransferModal.vue'
-import DepositModal from '@/components/forms/DepositModal.vue'
+import TransferModal from '@/components/sections/BankView/forms/TransferModal.vue'
+import DepositModal from '@/components/sections/BankView/forms/DepositModal.vue'
 
 const props = defineProps<{
   bankAddress: Address
@@ -53,5 +53,5 @@ const currency = useStorage('currency', {
 })
 
 // Use the contract balance composable
-const { total, isLoading } = useContractBalance(props.bankAddress)
+const { data: balance, isLoading } = useContractBalance(props.bankAddress)
 </script>
