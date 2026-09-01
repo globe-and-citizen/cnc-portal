@@ -73,7 +73,7 @@ describe('DeleteClaimConfirmation', () => {
     it('should display claim details', () => {
       const wrapper = createWrapper()
       expect(wrapper.text()).toContain('8h')
-      expect(wrapper.text()).toContain(dayjs(defaultClaim.dayWorked).format('MMM DD, YYYY'))
+      expect(wrapper.text()).toContain(dayjs(defaultClaim.dayWorked).format('MMM D, YYYY'))
     })
 
     it('should render action buttons', () => {
