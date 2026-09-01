@@ -47,7 +47,12 @@
         </template>
       </UAlert>
 
-      <UForm :state="form" class="mb-6 flex flex-col gap-4">
+      <UForm
+        :schema="redeploySchema"
+        :state="form"
+        class="mb-6 flex flex-col gap-4"
+        @submit="onRedeploy"
+      >
         <UFormField
           label="New share token name"
           name="name"
@@ -152,9 +157,9 @@
           <UButton
             v-else
             color="primary"
+            type="submit"
             :loading="isRunning"
             :disabled="!canRedeploy || isRunning || archivedDisabled"
-            @click="onRedeploy"
             data-test="confirm-redeploy-contracts"
           >
             Redeploy Officer
@@ -168,6 +173,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { Address } from 'viem'
+import { z } from 'zod'
 import {
   useInvestorName,
   useInvestorShareholders,
@@ -198,6 +204,15 @@ const whatYouLoseItems = [
 
 const form = ref({ name: '', symbol: '' })
 
+const redeploySchema = z.object({
+  name: z.string().refine((value) => value.trim().length > 0, {
+    message: 'Share token name is required'
+  }),
+  symbol: z.string().refine((value) => value.trim().length > 0, {
+    message: 'Share token symbol is required'
+  })
+})
+
 const { data: currentInvestorName } = useInvestorName()
 const { data: currentInvestorSymbol } = useInvestorSymbol()
 const { data: currentShareholders } = useInvestorShareholders()
@@ -215,7 +230,7 @@ const workflowError = computed(() =>
 const migrationFailed = computed(() => migrationRecovery.value !== null)
 const migrationError = computed(() => migrationRecovery.value?.error ?? null)
 
-const canRedeploy = computed(() => !!form.value.name.trim() && !!form.value.symbol.trim())
+const canRedeploy = computed(() => redeploySchema.safeParse(form.value).success)
 
 const shareholderCount = computed(() => {
   const list = currentShareholders.value as readonly Shareholder[] | undefined
