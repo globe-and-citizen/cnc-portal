@@ -49,6 +49,16 @@ const insufficientNativeBalance: RevertMessageResolver = (args) => {
   const [required, available] = args ?? []
   return `Insufficient native balance — needs ${required}, only ${available}`
 }
+// IERC20Errors (OZ v5's ERC20.sol) — `sender`/`spender` lead the tuple, unlike
+// this catalog's other (required, available) pairs.
+const erc20InsufficientBalance: RevertMessageResolver = (args) => {
+  const [, balance, needed] = args ?? []
+  return `Insufficient token balance — needs ${needed}, only ${balance} available`
+}
+const erc20InsufficientAllowance: RevertMessageResolver = (args) => {
+  const [, allowance, needed] = args ?? []
+  return `Token allowance too low — needs ${needed}, only ${allowance} approved`
+}
 
 /**
  * Single source of truth for contract revert → user message resolution.
@@ -84,6 +94,16 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
 
     // OZ v5.1+ generic — default to OZ's (balance, needed) shape
     InsufficientBalance: insufficientBalanceOZ,
+
+    // IERC20Errors (OZ v5's ERC20.sol) — bubbled unchanged through
+    // `SafeERC20.safeTransferFrom`, so any contract moving an ERC-20 can
+    // surface these directly, not just the token contract itself.
+    ERC20InsufficientBalance: erc20InsufficientBalance,
+    ERC20InsufficientAllowance: erc20InsufficientAllowance,
+    ERC20InvalidSender: 'Invalid token sender',
+    ERC20InvalidReceiver: 'Invalid token recipient',
+    ERC20InvalidApprover: 'Invalid token approver',
+    ERC20InvalidSpender: 'Invalid token spender',
 
     // TokenSupport base (shared across all contracts that extend it)
     TokenSupportZeroAddress: 'Token address cannot be zero',

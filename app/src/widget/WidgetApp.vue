@@ -17,6 +17,7 @@ import PaymentGateWidgetView, {
   type WidgetPane,
   type WidgetPaymentStep
 } from '@/components/sections/PaymentGateView/PaymentGateWidgetView.vue'
+import { describeWidgetError } from './errorMessage'
 import { payWithWidget, type WidgetPaymentStatus } from './payment'
 import { widgetChain } from './wagmiConfig'
 
@@ -77,7 +78,7 @@ async function runPayment() {
     props.onStatus?.('success', { hash, factureId: props.factureId })
   } catch (error) {
     confirmedStatus.value = 'failed'
-    errorMessage.value = error instanceof Error ? error.message : String(error)
+    errorMessage.value = describeWidgetError(error)
     pane.value = 'confirmed'
     props.onStatus?.('failed', { factureId: props.factureId, error: errorMessage.value })
   }

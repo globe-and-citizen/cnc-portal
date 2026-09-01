@@ -67,6 +67,9 @@ describe('resolveRevertMessage', () => {
         'Token 0xTOKEN is not supported'
       )
     })
+
+    // IERC20Errors coverage lives in errorCatalogs.ierc20.spec.ts — this file
+    // is already at the repo's max-lines limit.
   })
 
   describe('per-contract resolvers', () => {
