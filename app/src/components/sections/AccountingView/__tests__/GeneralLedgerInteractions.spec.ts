@@ -40,6 +40,19 @@ describe('General Ledger → Trial Balance jump', () => {
     expect(mockRouterReplace).toHaveBeenCalled()
     wrapper.unmount()
   })
+
+  it('still drills directly for a ?account= with no matching trial row', async () => {
+    // An account closed to a nil balance shows no trial row, so the watch takes the
+    // `openFor(account, '')` fallback rather than `openDrilldown(row)`.
+    mockRouterReplace.mockClear()
+    const wrapper = renderWithProviders(TrialBalanceCard, {
+      route: { query: { account: 'No Such Account — nil balance' } }
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
+    expect(mockRouterReplace).toHaveBeenCalled()
+    wrapper.unmount()
+  })
 })
 
 describe('General Ledger account filter', () => {
