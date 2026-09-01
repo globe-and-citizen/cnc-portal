@@ -20,7 +20,7 @@ import type { Address } from 'viem'
 // `export *` re-exports pull in every util module transitively, several of
 // which import Vue/Pinia — dead weight this standalone widget bundle
 // shouldn't pay for.
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { WidgetPaymentStatus } from './payment'
 import WidgetApp, { type WidgetToken } from './WidgetApp.vue'

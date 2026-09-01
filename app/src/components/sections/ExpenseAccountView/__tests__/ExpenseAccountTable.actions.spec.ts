@@ -5,7 +5,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
-import * as utils from '@/utils'
+import { log } from '@/lib/logging'
 import {
   createMockQueryResponse,
   mockExpenseAccountWrites,
@@ -179,7 +179,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
         (_v: unknown, opts?: MutationOpts) => opts?.onError?.(new Error('deactivate failed'))
       )
       const wrapper = createComponent()
-      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      const logErrorSpy = vi.spyOn(log, 'error')
       await wrapper.find('[data-test="disable-button"]').trigger('click')
       await flushPromises()
       expect(logErrorSpy).toHaveBeenCalled()
@@ -190,7 +190,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
         (_v: unknown, opts?: MutationOpts) => opts?.onError?.(new Error('activate failed'))
       )
       const wrapper = createComponent()
-      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      const logErrorSpy = vi.spyOn(log, 'error')
       await wrapper.find('[data-test="enable-button"]').trigger('click')
       await flushPromises()
       expect(logErrorSpy).toHaveBeenCalled()
@@ -199,7 +199,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
     it('short-circuits when the expense-account address is missing', async () => {
       vi.mocked(mockTeamStore.getContractAddressByType).mockReturnValueOnce(undefined)
       const wrapper = createComponent()
-      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      const logErrorSpy = vi.spyOn(log, 'error')
       await wrapper.find('[data-test="disable-button"]').trigger('click')
       await flushPromises()
       expect(mockExpenseAccountWrites.deactivateApproval.mutate).not.toHaveBeenCalled()
@@ -209,7 +209,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
     it('should notify error if error getting owner', async () => {
       mockUseReadContract.error.value = new Error('Error getting owner')
       const wrapper = createComponent()
-      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      const logErrorSpy = vi.spyOn(log, 'error')
       // Trigger watcher
       mockUseReadContract.error.value = new Error('changed')
       await wrapper.vm.$nextTick()

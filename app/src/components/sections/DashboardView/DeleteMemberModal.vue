@@ -66,7 +66,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
 import UserIdentity from '@/components/ui/UserIdentity.vue'

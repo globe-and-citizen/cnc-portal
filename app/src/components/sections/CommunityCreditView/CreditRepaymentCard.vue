@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatAmount, roundInterest, roundTotalDue } from '@/utils'
+import { formatAmount, roundInterest, roundTotalDue } from '@/utils/communityCredit/model'
 import type { CreditRound } from '@/types'
 
 const props = defineProps<{ round: CreditRound }>()

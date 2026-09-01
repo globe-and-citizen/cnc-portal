@@ -5,6 +5,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { Claim } from '@/types'
 import dayjs from 'dayjs'
+import { formatDate } from '@/utils/format'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
 // Test data
@@ -73,7 +74,7 @@ describe('DeleteClaimConfirmation', () => {
     it('should display claim details', () => {
       const wrapper = createWrapper()
       expect(wrapper.text()).toContain('8h')
-      expect(wrapper.text()).toContain(dayjs(defaultClaim.dayWorked).format('MMM DD, YYYY'))
+      expect(wrapper.text()).toContain(formatDate(defaultClaim.dayWorked))
     })
 
     it('should render action buttons', () => {

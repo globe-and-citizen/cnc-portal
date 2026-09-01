@@ -16,7 +16,7 @@
         {{ type === 'Ownership Transfer Request' ? '' : NETWORK.currencySymbol }}
       </div>
       <div class="text-sm text-gray-500" v-if="type === 'Ownership Transfer Request'">
-        {{ shortenAddress(teamStore.getContractAddressByType(row.description.split(' ')[3])) }}
+        {{ formatAddress(teamStore.getContractAddressByType(row.description.split(' ')[3])) }}
       </div>
     </BodApprovalDetailsCard>
 
@@ -49,10 +49,11 @@
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useTeamStore } from '@/stores'
 import type { TableRow } from '@/types/table'
-import { getUser, formatCryptoAmount } from '@/utils'
+import { getUser } from '@/utils/contracts/management'
+import { formatCryptoAmount } from '@/utils/currency/display'
 import { NETWORK } from '@/constant'
 import BodApprovalDetailsCard from './BodApprovalDetailsCard.vue'
-import { shortenAddress } from '@/utils'
+import { formatAddress } from '@/utils/format'
 
 defineProps<{
   row: TableRow

@@ -145,7 +145,7 @@ import { computed, reactive, ref, onMounted, onUnmounted } from 'vue'
 import { z } from 'zod'
 import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
-import { combineDayAndTime, dateToCalendarDate } from '@/utils/dayUtils'
+import { combineDayAndTime, dateToCalendarDate } from '@/utils/dates/calendar'
 import { formatDate, formatDuration, formatTimeOfDay } from '@/utils/format'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 

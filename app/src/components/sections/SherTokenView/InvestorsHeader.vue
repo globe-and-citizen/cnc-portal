@@ -49,7 +49,7 @@ import {
   useInvestorShareholders
 } from '@/composables/investor/reads'
 import { computed, watch } from 'vue'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 
 const teamStore = useTeamStore()
 const toast = useToast()

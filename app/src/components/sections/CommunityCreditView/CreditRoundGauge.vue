@@ -115,11 +115,11 @@
 import { computed } from 'vue'
 import {
   formatAmount,
-  percentOf,
   reachedFundingTarget,
   roundInterest,
   roundTotalDue
-} from '@/utils'
+} from '@/utils/communityCredit/model'
+import { percentOf } from '@/utils/communityCredit/offer'
 import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
 

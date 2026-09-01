@@ -9,7 +9,7 @@ import {
 import { getAddress, type Address } from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import { log, parseErrorV2 } from '@/utils'
+import { log, parseErrorV2 } from '@/lib/logging'
 
 type WagmiConfig = typeof wagmiConfigType
 type WaitParams = WaitForTransactionReceiptParameters<WagmiConfig>

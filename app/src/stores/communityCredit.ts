@@ -11,13 +11,13 @@ import { useGetFixedReturnOfferingsQuery } from '@/queries/fixedReturnOffering.q
 import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
 import { useTeamStore } from './teamStore'
 import { useUserDataStore } from './user'
+import { gradientForAddress } from '@/utils/communityCredit/offer'
 import {
-  gradientForAddress,
   lendingOfferToCreditRound,
   offerMaturityDate,
   offerStateToRoundStatus,
   roundInterest
-} from '@/utils'
+} from '@/utils/communityCredit/model'
 import type { CreditMember, CreditRound } from '@/types'
 
 /**

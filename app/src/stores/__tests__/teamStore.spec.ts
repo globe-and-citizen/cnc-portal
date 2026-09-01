@@ -10,7 +10,7 @@ vi.unmock('@/stores/teamStore')
 import { useTeamStore } from '@/stores/teamStore'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { mockTeamData } from '@/tests/mocks/query.mock'
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 
 type QueryReturn = ReturnType<typeof useGetTeamQuery>
 

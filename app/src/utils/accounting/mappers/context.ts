@@ -9,7 +9,7 @@
  */
 import { getAddress, isAddress, zeroAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
-import { resolveTokenIdByAddress } from '@/utils/constantUtil'
+import { resolveTokenIdByAddress } from '@/utils/tokens/metadata'
 import { toUsd as toUsdUtil, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { ClassificationOverride } from '@/utils/accounting/classification'

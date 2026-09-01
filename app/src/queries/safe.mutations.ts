@@ -11,7 +11,7 @@ import type {
 } from '@/types/safe.mutation'
 import { transferFromSafeSchema } from '@/types/safe.schemas'
 import { useSafeSDK } from '@/composables/safe/useSafeSdk'
-import { getTokenAddress } from '@/utils'
+import { getTokenAddress } from '@/utils/tokens/metadata'
 import {
   buildOwnerManagementTransactions,
   buildTokenTransferData,
@@ -19,9 +19,9 @@ import {
   extractTransactionHash,
   proposeSafeTransaction,
   waitForTransaction
-} from '@/utils/safe.mutations'
-import { getTxServiceUrl, transformToSafeMultisigResponse } from '@/utils/safe'
-import { getConnectedSigner } from '@/utils/walletUtil'
+} from '@/lib/safe/transactions'
+import { getTxServiceUrl, transformToSafeMultisigResponse } from '@/utils/safe/model'
+import { getConnectedSigner } from '@/utils/wallet/address'
 import { safeKeys } from './safe.queries'
 
 // ============================================================================

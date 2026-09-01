@@ -1,6 +1,6 @@
 import router from '@/router'
 import { useUserDataStore } from '@/stores'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import { useStorage } from '@vueuse/core'
 import { connect, switchChain, signMessage, getConnection } from '@wagmi/core'
 import { SiweMessage } from 'siwe'

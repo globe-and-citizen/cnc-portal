@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { CalendarDate, Time, getLocalTimeZone } from '@internationalized/date'
-import { dateToCalendarDate } from '@/utils/dayUtils'
+import { dateToCalendarDate } from '@/utils/dates/calendar'
 import { formatDate, formatDateUtc } from '@/utils/format'
 
 interface Props {

@@ -2,7 +2,7 @@ import { CalendarDate } from '@internationalized/date'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import DatePicker from '../DatePicker.vue'
-import type { Range } from '@/utils/datePicker'
+import type { Range } from '@/utils/dates/picker'
 
 const now = new Date('2026-06-18T12:00:00.000Z')
 

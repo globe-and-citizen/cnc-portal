@@ -1,0 +1,229 @@
+import { type Address, zeroAddress, formatUnits, isAddress } from 'viem'
+import type { SafeMultisigConfirmationResponse, SignatureType } from '@safe-global/types-kit'
+import { CHAIN_NAMES, TX_SERVICE_BY_CHAIN } from '@/types/safe'
+import {
+  type SafeConfirmation,
+  type SafeMultisigTransactionResponse,
+  type SafeTransaction
+} from '@/types/safe'
+
+import { NETWORK } from '@/constant'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import { type DecodedCall } from '@/types'
+import type { SafeIncomingTransfer } from '@/types'
+import { formatToken } from '@/utils/format'
+
+/**
+ * Get Safe transaction service URL for a given chain ID
+ */
+export function getTxServiceUrl(chainId: number): string {
+  const txService = TX_SERVICE_BY_CHAIN[chainId]
+  if (!txService) {
+    throw new Error(`Transaction service not configured for chain ${chainId}`)
+  }
+
+  return txService.url
+}
+
+/**
+ * Generate Safe app URLs (move from useSafeAppUrls composable)
+ */
+export function getSafeHomeUrl(chainId: number, safeAddress: Address): string {
+  const chainName = CHAIN_NAMES[chainId] || 'ethereum'
+  return `https://app.safe.global/home?safe=${chainName}:${safeAddress}`
+}
+
+export function getSafeSettingsUrl(chainId: number, safeAddress: string): string {
+  const chainName = CHAIN_NAMES[chainId] || 'ethereum'
+  return `https://app.safe.global/settings/setup?safe=${chainName}:${safeAddress}`
+}
+
+export function transformToSafeMultisigResponse(
+  transaction: SafeTransaction
+): SafeMultisigTransactionResponse {
+  const normalizeConfirmation = (
+    confirmation: SafeConfirmation
+  ): SafeMultisigConfirmationResponse => ({
+    owner: confirmation.owner,
+    submissionDate: confirmation.submissionDate,
+    transactionHash: confirmation.transactionHash ?? undefined,
+    confirmationType: (confirmation as { confirmationType?: string }).confirmationType,
+    signature: confirmation.signature,
+    signatureType: confirmation.signatureType as SignatureType
+  })
+
+  return {
+    safe: transaction.safe,
+    to: transaction.to,
+    value: transaction.value,
+    data: transaction.data ?? undefined,
+    operation: transaction.operation,
+    gasToken: transaction.gasToken,
+    safeTxGas: transaction.safeTxGas?.toString() || '0',
+    baseGas: transaction.baseGas?.toString() || '0',
+    gasPrice: transaction.gasPrice?.toString() || '0',
+    refundReceiver: transaction.refundReceiver ?? undefined,
+    nonce: transaction.nonce.toString(),
+    executionDate: transaction.executionDate ?? null,
+    submissionDate: transaction.submissionDate,
+    modified: transaction.modified,
+    blockNumber: transaction.blockNumber ?? null,
+    transactionHash: transaction.transactionHash ?? null,
+    safeTxHash: transaction.safeTxHash,
+    proposer: transaction.proposer ?? null,
+    proposedByDelegate:
+      typeof transaction.proposedByDelegate === 'string'
+        ? transaction.proposedByDelegate
+        : transaction.proposedByDelegate
+          ? (transaction.proposer ?? transaction.executor ?? null)
+          : null,
+    executor: transaction.executor ?? null,
+    isExecuted: transaction.isExecuted,
+    isSuccessful: transaction.isSuccessful ?? null,
+    ethGasPrice: transaction.ethGasPrice ?? null,
+    maxFeePerGas: transaction.maxFeePerGas ?? null,
+    maxPriorityFeePerGas: transaction.maxPriorityFeePerGas ?? null,
+    gasUsed: transaction.gasUsed ?? null,
+    fee: transaction.fee ?? null,
+    origin: transaction.origin ?? '',
+    dataDecoded: transaction.dataDecoded ?? undefined,
+    confirmationsRequired: transaction.confirmationsRequired,
+    confirmations: transaction.confirmations?.map(normalizeConfirmation),
+    trusted: transaction.trusted ?? true,
+    signatures: transaction.signatures ?? null
+  }
+}
+//new utility
+export const formatSafeTransactionValue = (
+  value: string,
+  data?: DecodedCall,
+  transactionTo?: string
+): string => {
+  const noValuePlaceholder = '...'
+  const normalizedMethod = data?.method?.toLowerCase()
+  const isTokenTransferMethod = normalizedMethod === 'transfer'
+
+  try {
+    // Handle ERC20 token transfers
+    if (data && isTokenTransferMethod && data.parameters?.length >= 2) {
+      const tokenAddress = transactionTo || '' // The contract address being called
+      const transferAmount = data.parameters[1]?.value
+
+      if (transferAmount && tokenAddress) {
+        const symbol = tokenSymbol(tokenAddress)
+
+        if (symbol) {
+          const formattedAmount = formatEtherUtil(BigInt(transferAmount), tokenAddress)
+          return formatToken(formattedAmount, symbol, { maxDecimals: 4 })
+        }
+      }
+    }
+    // Handle native token transfers or fallback
+    const parsedValue = BigInt(value)
+    if (parsedValue === 0n && normalizedMethod && !isTokenTransferMethod) {
+      return noValuePlaceholder
+    }
+
+    const formattedAmount = formatEtherUtil(parsedValue, zeroAddress)
+    return formatToken(formattedAmount, NETWORK.currencySymbol, { maxDecimals: 4 })
+  } catch {
+    // Fallback to basic formatting
+    return `0 ${NETWORK.currencySymbol}`
+  }
+}
+
+export const getSafeTransactionMethod = (
+  transaction: Pick<SafeTransaction, 'value' | 'dataDecoded'>
+): string => {
+  const decodedMethod = transaction.dataDecoded?.method?.trim().toLowerCase()
+
+  if (decodedMethod && decodedMethod !== 'unknown') {
+    return decodedMethod
+  }
+
+  try {
+    if (BigInt(transaction.value) > 0n) {
+      return 'transfer'
+    }
+  } catch {
+    // ignore invalid value parsing
+  }
+
+  return 'unknown'
+}
+
+export const getExecutedErc20TransferTokenAddress = (
+  transaction: Pick<SafeTransaction, 'to' | 'value' | 'dataDecoded'>
+): Address | null => {
+  const normalizedMethod = transaction.dataDecoded?.method?.trim().toLowerCase()
+
+  if (normalizedMethod !== 'transfer') {
+    return null
+  }
+
+  if (!isAddress(transaction.to)) {
+    return null
+  }
+
+  try {
+    return BigInt(transaction.value) === 0n ? transaction.to : null
+  } catch {
+    return null
+  }
+}
+
+export const formatSafeTransferAmount = (transfer: SafeIncomingTransfer): string => {
+  if (transfer.type === 'ERC721_TRANSFER') {
+    return 'NFT'
+  }
+  if (transfer.type === 'ERC20_TRANSFER' && transfer.tokenInfo) {
+    const amount = formatUnits(BigInt(transfer.value), transfer.tokenInfo.decimals)
+    return formatToken(amount, transfer.tokenInfo.symbol, { maxDecimals: 4 })
+  }
+  // ETHER_TRANSFER - Use existing formatEtherUtil from constantUtil
+  const formatted = formatEtherUtil(BigInt(transfer.value), zeroAddress)
+  return formatToken(formatted, NETWORK.currencySymbol, { maxDecimals: 6 })
+}
+
+export const formatSafeTransferType = (type: string): string => {
+  switch (type) {
+    case 'ETHER_TRANSFER':
+      return NETWORK.currencySymbol
+    case 'ERC20_TRANSFER':
+      return 'ERC20'
+    case 'ERC721_TRANSFER':
+      return 'NFT'
+    default:
+      return type
+  }
+}
+
+/**
+ * Safe transfer validation
+ */
+export interface SafeTransferOptions {
+  to: string
+  amount: string
+  tokenId?: string
+  tokenAddress?: string
+}
+
+export interface ValidationResult {
+  isValid: boolean
+  error?: string
+}
+
+/**
+ * Validate Safe transfer parameters
+ */
+export function validateSafeTransfer(options: SafeTransferOptions): ValidationResult {
+  if (!isAddress(options.to)) {
+    return { isValid: false, error: 'Invalid recipient address' }
+  }
+
+  if (!options.amount || parseFloat(options.amount) <= 0) {
+    return { isValid: false, error: 'Invalid transfer amount' }
+  }
+
+  return { isValid: true }
+}

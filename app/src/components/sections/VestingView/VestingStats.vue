@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { VestingTotals } from '@/types/vesting'
-import { formatVestingAmount } from '@/utils/vestingPresentation'
+import { formatVestingAmount } from '@/utils/vesting/presentation'
 
 interface Props {
   totals: VestingTotals

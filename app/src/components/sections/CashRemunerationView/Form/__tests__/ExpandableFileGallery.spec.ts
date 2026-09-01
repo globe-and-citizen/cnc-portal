@@ -9,7 +9,7 @@ vi.mock('@/composables/useFilePreviewGallery', () => ({
   useFilePreviewGallery: vi.fn()
 }))
 
-vi.mock('@/utils/fileUtil', () => ({
+vi.mock('@/utils/files/presentation', () => ({
   getFileIcon: vi.fn(() => 'mock-icon'),
   truncateFileName: vi.fn((name: string, length: number) => name.slice(0, length)),
   getFileExtension: vi.fn((name: string) => {

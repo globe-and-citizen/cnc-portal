@@ -1,6 +1,6 @@
 import { computed, ref, watch, type ComputedRef } from 'vue'
 import { useIntervalFn, useNow } from '@vueuse/core'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import {
   useElectionsAddress,
   useElectionsOwner,
