@@ -54,7 +54,10 @@ const ERC20_TRANSFER_EVENT = parseAbiItem(
  * received a transfer while supported must still be scanned even if support was
  * later dropped, so the union of ever-added tokens is the complete set.
  */
-async function supportedTokenAddresses(client: ChainClient, bank: Address): Promise<Address[]> {
+export async function supportedTokenAddresses(
+  client: ChainClient,
+  bank: Address
+): Promise<Address[]> {
   const logs = await client.getLogs({
     address: bank,
     event: TOKEN_SUPPORT_ADDED_EVENT,
@@ -70,7 +73,10 @@ async function supportedTokenAddresses(client: ChainClient, bank: Address): Prom
 }
 
 /** Raw ERC-20 `Transfer` logs where the Bank is the `to` or the `from`. */
-async function rawTokenTransferLogs(client: ChainClient, bank: Address): Promise<DecodedLogLike[]> {
+export async function rawTokenTransferLogs(
+  client: ChainClient,
+  bank: Address
+): Promise<DecodedLogLike[]> {
   const tokens = await supportedTokenAddresses(client, bank)
   const perToken = await Promise.all(
     tokens.map(async (token) => {
@@ -96,7 +102,7 @@ async function rawTokenTransferLogs(client: ChainClient, bank: Address): Promise
   return perToken.flat() as unknown as DecodedLogLike[]
 }
 
-const empty = (): BankEventsQuery => ({
+export const empty = (): BankEventsQuery => ({
   bankDeposits: { items: [] },
   bankTokenDeposits: { items: [] },
   bankTransfers: { items: [] },
@@ -196,6 +202,71 @@ const mapEvent = ({
   }
 }
 
+/**
+ * Two log sets the Bank doesn't emit itself: the FeeCollector's FeePaid for this
+ * Bank (filtered server-side on the indexed payer), and the raw ERC-20 Transfers
+ * to/from the Bank on its supported tokens.
+ */
+export async function bankExtraLogs(
+  client: ChainClient,
+  contract: Address
+): Promise<DecodedLogLike[]> {
+  const [fees, rawTransfers] = await Promise.all([
+    FEE_COLLECTOR_ADDRESS
+      ? client.getLogs({
+          address: FEE_COLLECTOR_ADDRESS as Address,
+          event: FEE_PAID_EVENT,
+          args: { payer: contract },
+          fromBlock: START_BLOCK,
+          toBlock: 'latest'
+        })
+      : Promise.resolve([]),
+    rawTokenTransferLogs(client, contract)
+  ])
+  return [...(fees as unknown as DecodedLogLike[]), ...rawTransfers]
+}
+
+/**
+ * Fold one `bankExtraLogs` entry into the accumulator. A raw ERC-20 `Transfer`
+ * becomes an incoming/outgoing/internal transfer keyed on whether the Bank is
+ * its `to`, its `from`, or both; anything else is a FeeCollector `FeePaid`.
+ */
+export function mapBankExtra({
+  out,
+  id,
+  timestamp,
+  contract,
+  eventName,
+  args,
+  log
+}: EventMapContext<BankEventsQuery>) {
+  if (eventName === 'Transfer') {
+    const from = String(args.from ?? '').toLowerCase()
+    const to = String(args.to ?? '').toLowerCase()
+    const bank = contract.toLowerCase()
+    const direction = to === bank ? (from === bank ? 'internal' : 'in') : 'out'
+    out.rawContractTokenTransfers.items.push({
+      id,
+      tokenAddress: log.address,
+      contractAddress: contract,
+      direction,
+      from: args.from as string,
+      to: args.to as string,
+      amount: str(args.value ?? 0n),
+      timestamp
+    })
+    return
+  }
+  out.bankFeePaids.items.push({
+    id,
+    contractAddress: contract,
+    feeCollector: log.address,
+    token: (args.token ?? '') as string,
+    amount: str(args.amount ?? 0n),
+    timestamp
+  })
+}
+
 export function useBankEventsViaLogs(contractAddress: MaybeRefOrGetter<ContractAddressInput>) {
   return useContractEventsViaLogs<BankEventsQuery>({
     contractAddress,
@@ -203,50 +274,7 @@ export function useBankEventsViaLogs(contractAddress: MaybeRefOrGetter<ContractA
     eventAbi: BANK_EVENT_ABI,
     empty,
     mapEvent,
-    // Two log sets the Bank doesn't emit itself: the FeeCollector's FeePaid for
-    // this Bank (filtered server-side on the indexed payer), and the raw ERC-20
-    // Transfers to/from the Bank on its supported tokens.
-    extraLogs: async (client, contract) => {
-      const [fees, rawTransfers] = await Promise.all([
-        FEE_COLLECTOR_ADDRESS
-          ? client.getLogs({
-              address: FEE_COLLECTOR_ADDRESS as Address,
-              event: FEE_PAID_EVENT,
-              args: { payer: contract },
-              fromBlock: START_BLOCK,
-              toBlock: 'latest'
-            })
-          : Promise.resolve([]),
-        rawTokenTransferLogs(client, contract)
-      ])
-      return [...(fees as unknown as DecodedLogLike[]), ...rawTransfers]
-    },
-    mapExtra: ({ out, id, timestamp, contract, eventName, args, log }) => {
-      if (eventName === 'Transfer') {
-        const from = String(args.from ?? '').toLowerCase()
-        const to = String(args.to ?? '').toLowerCase()
-        const bank = contract.toLowerCase()
-        const direction = to === bank ? (from === bank ? 'internal' : 'in') : 'out'
-        out.rawContractTokenTransfers.items.push({
-          id,
-          tokenAddress: log.address,
-          contractAddress: contract,
-          direction,
-          from: args.from as string,
-          to: args.to as string,
-          amount: str(args.value ?? 0n),
-          timestamp
-        })
-        return
-      }
-      out.bankFeePaids.items.push({
-        id,
-        contractAddress: contract,
-        feeCollector: log.address,
-        token: (args.token ?? '') as string,
-        amount: str(args.amount ?? 0n),
-        timestamp
-      })
-    }
+    extraLogs: bankExtraLogs,
+    mapExtra: mapBankExtra
   })
 }
