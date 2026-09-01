@@ -3,7 +3,7 @@
 **Scope:** Shared period and as-of-date selection for client accounting reports, transaction histories, and the matching dashboard
 accounting picker.
 
-**Last verified:** 2026-08-31
+**Last verified:** 2026-09-01
 
 ## Consumers
 
@@ -36,11 +36,12 @@ flowchart LR
 - Transaction histories bind their `Range | undefined` filter model directly to `DatePicker` in `range` mode. Their existing storage keys
   and `data-test` selectors remain stable.
 - A custom range is committed only when both boundaries exist and the start is not after the end.
-- When persistence is configured, invalid stored JSON is ignored and the picker uses its default state.
+- When persistence is configured, malformed, incomplete, stale, mode-incompatible, or unordered stored snapshots are ignored and the picker
+  uses its default state.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `41b9ea51d866a113a62969c73d9ba56c41a68b83`
 
 - [Client DatePicker](../../../app/src/components/ui/DatePicker.vue),
   [dashboard DatePicker](../../../dashboard/app/components/DatePicker.vue),
