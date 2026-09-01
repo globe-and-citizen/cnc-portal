@@ -18,6 +18,24 @@ export const buildRawBankTransactions = (
   const tokenSupportRemoveds = bankResult?.bankTokenSupportRemoveds?.items ?? []
   const rawTokenTransfers = bankResult?.rawContractTokenTransfers?.items ?? []
 
+  // A raw ERC-20 Transfer riding along a Bank event (a token deposit/transfer,
+  // a dividend, or a token fee) is the same on-chain movement already listed
+  // above — key those by tx + token so the raw copy can be dropped, leaving only
+  // transfers the Bank never emitted an event for (e.g. a credit funding sweep).
+  const accountedKey = (txHash: string, tokenAddress: string) =>
+    `${txHash}::${tokenAddress.toLowerCase()}`
+  const accountedTokenMoves = new Set<string>([
+    ...tokenDeposits.map((row) => accountedKey(extractTxHashFromId(row.id), row.token)),
+    ...tokenTransfers.map((row) => accountedKey(extractTxHashFromId(row.id), row.token)),
+    ...dividends.map((row) => accountedKey(extractTxHashFromId(row.id), row.token)),
+    ...fees
+      .filter((row) => row.token)
+      .map((row) => accountedKey(extractTxHashFromId(row.id), row.token as string))
+  ])
+  const unaccountedRawTransfers = rawTokenTransfers.filter(
+    (row) => !accountedTokenMoves.has(accountedKey(extractTxHashFromId(row.id), row.tokenAddress))
+  )
+
   const sections: RawBankTransaction[][] = [
     deposits.map((row) => ({
       txHash: extractTxHashFromId(row.id),
@@ -100,7 +118,7 @@ export const buildRawBankTransactions = (
       tokenAddress: row.tokenAddress,
       type: 'tokenSupportRemoved'
     })),
-    rawTokenTransfers.map((row) => ({
+    unaccountedRawTransfers.map((row) => ({
       txHash: extractTxHashFromId(row.id),
       timestamp: row.timestamp,
       from: row.from,
