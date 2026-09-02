@@ -258,7 +258,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a8d1bf8fd6b6c597f9002cd9f93f92e45b320157`
+**Implementation evidence reviewed against:** `8b41b5a9d549f6294cc308de92f0e98eb974e509`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
