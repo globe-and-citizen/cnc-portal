@@ -80,19 +80,19 @@ describe('useLedgerDrilldown', () => {
   it('runs the balance column on a single account, never on an aggregate', () => {
     const d = useLedgerDrilldown(entries, bounds)
     d.openFor('Investor Equity', '$999.00')
-    expect(d.balanceAccount.value).toBe('Investor Equity')
+    expect(d.balance.value.account).toBe('Investor Equity')
 
     d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00', 'Retained earnings')
     // Mixed classes share no natural side, so there is no balance to run.
-    expect(d.balanceAccount.value).toBe('')
+    expect(d.balance.value.account).toBe('')
   })
 
   it('carries nothing in and closes on the account balance over an open window', () => {
     const d = useLedgerDrilldown(entries, bounds)
     d.openFor('Investor Equity', '$999.00')
 
-    expect(d.opening.value).toEqual({ debits: 0, credits: 0, balance: 0 })
-    expect(d.closing.value).toBe(d.selectedLine.value?.total)
+    expect(d.balance.value.opening).toEqual({ debits: 0, credits: 0, balance: 0 })
+    expect(d.balance.value.closing).toBe(d.selectedLine.value?.total)
   })
 
   it('opens on what a dated window carries in, and closes on the remainder', () => {
@@ -103,9 +103,9 @@ describe('useLedgerDrilldown', () => {
     const d = useLedgerDrilldown(entries, () => ({ from, to: null }))
     d.openFor(account, '$1.00')
 
-    expect(d.opening.value.balance).not.toBe(0)
+    expect(d.balance.value.opening.balance).not.toBe(0)
     // Carried in + everything the window moves is the account's whole balance.
-    expect(d.closing.value).toBe(accountBalance(all, account))
+    expect(d.balance.value.closing).toBe(accountBalance(all, account))
   })
 
   it('does not export until a statement line is selected', () => {
