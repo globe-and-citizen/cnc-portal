@@ -23,7 +23,7 @@ import { buildIncomeStatement } from './incomeStatement'
 import type { LedgerEntry } from './ledgerEntry'
 import type { StatementLine } from './incomeStatement'
 import type { TokenId } from '@/constant'
-import { getTokenDecimals } from '@/utils/constantUtil'
+import { getTokenDecimals } from '@/utils/tokens/metadata'
 
 /** The on-chain cash pockets that roll up into the single Cash line. */
 const CASH_ACCOUNTS: ReadonlySet<AccountName> = new Set<AccountName>([

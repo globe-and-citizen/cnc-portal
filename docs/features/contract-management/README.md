@@ -170,6 +170,7 @@ flowchart LR
 #### Business Rules
 
 - [x] The redeploy action is available only to the current company owner and is unavailable for an archived company.
+- [x] The redeploy form requires a share token name and symbol that each contain non-whitespace text.
 - [x] A previous Officer generation and its workspace contracts remain visible in deployment history; they are not deleted by a
       redeployment.
 - [x] A shareholder migration can be skipped after a failure and completed later from the Share Token journey.
@@ -178,11 +179,19 @@ flowchart LR
 
 - [x] A failed deploy, Officer registration, or follow-up lookup keeps the form open and identifies the step that failed.
 - [x] A failed shareholder migration keeps the form open with options to retry the migration or skip it and close the form.
+- [x] A malformed pending Board-action description remains discoverable with fallback action details and does not hide other actions.
 
 **Dependencies:** US-CONTRACT-001, a current company owner, a connected wallet, and an active Officer generation
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `41b9ea51d866a113a62969c73d9ba56c41a68b83`
+
+- [Contract Management components](../../../app/src/components/sections/ContractManagementView/),
+  [Board writes](../../../app/src/composables/bod/writes.ts),
+  [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
+  [shared contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts)
+- [Proposal creation](../../../app/src/components/sections/ProposalsView/forms/CreateProposalForm.vue)
 - [Contract Management page and Officer-generation derivation](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
 - [Current contract section](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
 - [Current contract table and selected action boundary](../../../app/src/components/sections/ContractManagementView/MainContractTable.vue)
@@ -195,8 +204,11 @@ flowchart LR
 - [Ownership transfer behaviour](../../../app/src/composables/contracts/useContractOwnershipTransfer.ts)
 - [Contract-status behaviour](../../../app/src/composables/contracts/useContractStatusChange.ts)
 - [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
+- [Pending Board-action data formatting](../../../app/src/utils/contracts/management.ts)
 - [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertiseContractSection.vue)
 - [Advertising campaign workspace](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue)
+- [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue) and
+  [Campaign Manager deployment mutation](../../../app/src/composables/useContractFunctions.ts)
 - [Deployment history section](../../../app/src/components/sections/ContractManagementView/DeploymentHistorySection.vue)
 - [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
 - [Officer redeploy form and recovery actions](../../../app/src/components/sections/ContractManagementView/RedeployOfficerModal.vue)

@@ -81,7 +81,7 @@
           :memo="row.memo"
         />
         <UBadge v-else :color="row.category ? 'primary' : 'neutral'" variant="subtle" size="md">
-          {{ row.category ? CATEGORY_LABEL[row.category] : 'Inferred' }}
+          {{ categoryLabel(row.category) }}
         </UBadge>
       </template>
     </UTable>
@@ -102,7 +102,7 @@ import { CATEGORY_LABEL, type ClassificationCategory } from '@/utils/accounting/
 import type { ClassificationDirection } from '@/utils/accounting/classification'
 import { money, fmtDateTime, currencySymbol } from '@/utils/accounting/presenter'
 import { entryLabel } from '@/utils/accounting/describeEntry'
-import { resolveUser } from '@/utils/transactionHistoryUtil'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 
 /**
  * One end of a money flow: either a team cash pocket (Bank/Safe) or the external
@@ -125,6 +125,7 @@ interface ClassifyRow {
 }
 
 const acc = useAccountingContext()
+const { resolveUser } = useTransactionPresentation()
 
 const route = useRoute()
 const teamId = computed(() => (route.params.id as string) ?? '')
@@ -135,6 +136,9 @@ const isOwner = computed(() => {
   const me = userStore.address
   return !!owner && !!me && owner.toLowerCase() === me.toLowerCase()
 })
+
+const categoryLabel = (category?: ClassificationCategory): string =>
+  category ? CATEGORY_LABEL[category] : 'Inferred'
 
 /** The classifiable Bank/Safe deposits and withdrawals, newest first, as table rows. */
 const rows = computed<ClassifyRow[]>(() =>

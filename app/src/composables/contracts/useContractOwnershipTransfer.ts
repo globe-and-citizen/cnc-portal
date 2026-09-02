@@ -5,7 +5,8 @@ import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import type { TableRow } from '@/types/table'
-import { classifyError, log } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 
 export function useContractOwnershipTransfer(
   row: Ref<TableRow>,

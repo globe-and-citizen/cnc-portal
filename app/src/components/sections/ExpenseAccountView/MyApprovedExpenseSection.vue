@@ -39,10 +39,11 @@
 //#region Imports
 import { computed } from 'vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
-import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
+import { tokenSymbol } from '@/utils/tokens/metadata'
+import { getCurrentUserExpenses } from '@/utils/expenses/model'
 import { useGetExpensesQuery } from '@/queries'
 import TransferAction from './TransferAction.vue'
-import { getFrequencyType, getCustomFrequency } from '@/utils'
+import { getFrequencyType, getCustomFrequency } from '@/utils/expenses/model'
 import { formatDateTime, fromUnix } from '@/utils/format'
 //#endregion
 

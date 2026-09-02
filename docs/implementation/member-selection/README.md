@@ -43,6 +43,11 @@ flowchart LR
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+
+- [Shared user identity](../../../app/src/components/ui/UserIdentity.vue),
+  [contract member selector](../../../app/src/components/ui/inputs/SelectMemberContractsInput.vue), and
+  [member search results](../../../app/src/components/ui/inputs/SelectMemberResults.vue)
 - [Shared multi-selection control](../../../app/src/components/ui/inputs/MultiSelectMemberInput.vue)
 - [Single-member search and selection control](../../../app/src/components/ui/inputs/SelectMemberInput.vue)
 - [Selection scope type](../../../app/src/types/member.ts)

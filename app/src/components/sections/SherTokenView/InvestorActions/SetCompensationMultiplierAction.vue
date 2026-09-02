@@ -113,12 +113,13 @@ import {
   useSafeDepositRouterMultiplier,
   useSafeDepositRouterOwner
 } from '@/composables/safeDepositRouter/reads'
-import { classifyError, log } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 import {
   formatSafeDepositRouterMultiplier,
   parseSafeDepositRouterMultiplier,
   formatSherAmount
-} from '@/utils/safeDepositRouterUtil'
+} from '@/utils/safeDepositRouter/model'
 
 const toast = useToast()
 const connection = useConnection()

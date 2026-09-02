@@ -31,7 +31,7 @@ import type {
   ExpenseOwnerTreasuryWithdrawTokenRow
 } from '@/types/ponder/expense'
 import type { ExpenseResponse } from '@/types/expense-account'
-import { getTokenAddress, getTokenDecimals, tokenSymbol } from '@/utils/constantUtil'
+import { getTokenAddress, getTokenDecimals, tokenSymbol } from '@/utils/tokens/metadata'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { atDate, type MapperContext } from './context'

@@ -13,12 +13,8 @@ vi.mock('@safe-global/protocol-kit', () => ({
   }
 }))
 
-vi.mock('@/utils/safe', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/utils/safe')>()
-  return {
-    ...actual,
-    getInjectedProvider: mockGetInjectedProvider
-  }
+vi.mock('@/lib/safe/browser', () => {
+  return { getInjectedProvider: mockGetInjectedProvider }
 })
 
 describe('useSafeSDK', () => {

@@ -51,8 +51,8 @@
 </template>
 <script setup lang="ts">
 import type { BudgetLimit } from '@/types'
-import { tokenSymbol } from '@/utils'
-import { getFrequencyType } from '@/utils'
+import { tokenSymbol } from '@/utils/tokens/metadata'
+import { getFrequencyType } from '@/utils/expenses/model'
 import { formatDateTime, fromUnix } from '@/utils/format'
 
 defineEmits(['submit', 'close'])

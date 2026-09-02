@@ -98,7 +98,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TableRow } from '@nuxt/ui'
-import { formatAmount, percentOf, reachedFundingTarget } from '@/utils'
+import { formatAmount, reachedFundingTarget } from '@/utils/communityCredit/model'
+import { percentOf } from '@/utils/communityCredit/offer'
 import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
 import CreditConditionsCard from './CreditConditionsCard.vue'

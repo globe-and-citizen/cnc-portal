@@ -120,14 +120,12 @@ import { watchDebounced } from '@vueuse/core'
 import type { CreditWhitelistEntry, Member } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
 import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
-import { formatAddress } from '@/utils/formatAddress'
+import { formatAddress } from '@/utils/format'
 import { useTeamStore } from '@/stores/teamStore'
-import {
-  filter,
-  getCreditWhitelistAllocationSummary,
-  gradientForAddress,
-  resolveUser
-} from '@/utils'
+import { filterDirectoryItems } from '@/utils/teams/search'
+import { getCreditWhitelistAllocationSummary } from '@/utils/communityCredit/model'
+import { gradientForAddress } from '@/utils/communityCredit/offer'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 
 const props = defineProps<{
   whitelist: CreditWhitelistEntry[]
@@ -160,6 +158,7 @@ const emit = defineEmits<{
 }>()
 
 const teamStore = useTeamStore()
+const { resolveUser } = useTransactionPresentation()
 const search = ref({ name: '', address: '' })
 const showResults = ref(false)
 
@@ -167,7 +166,7 @@ const members = computed<Member[]>(() => teamStore.currentTeamMeta.data?.members
 
 const filteredMembers = computed<Member[]>(
   () =>
-    filter(members.value, search.value).filter(
+    filterDirectoryItems(members.value, search.value).filter(
       (m) => !props.whitelist.some((w) => w.address === m.address)
     ) as Member[]
 )

@@ -27,7 +27,7 @@ import { electionsAbi } from '@/artifacts/abi/generated'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import type { Election } from '@/types'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import { useQuery } from '@tanstack/vue-query'
 
 const teamStore = useTeamStore()

@@ -14,7 +14,8 @@
 <script lang="ts" setup>
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
-import { classifyError, log } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useElectionsPublishResults } from '@/composables/elections/writes'
 import { estimateGas } from '@wagmi/core'

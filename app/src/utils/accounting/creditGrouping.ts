@@ -31,7 +31,7 @@
  * untouched, each keeping its own lender, date and amount. Mirrors
  * {@link ./payrollGrouping}.
  */
-import { money } from './presenter'
+import { formatUsd } from '@/utils/format'
 import { FEE_ACCOUNT } from './ledgerCategory'
 import { makeEntry, type LedgerEntry, type UseCase } from './ledgerEntry'
 import type { ActivityCell } from './describeEntry'
@@ -218,7 +218,7 @@ function remainingOf(group: readonly LedgerEntry[]): number | null {
 function remainingTail(group: readonly LedgerEntry[], settled: string): string {
   const remaining = remainingOf(group)
   if (remaining == null) return ''
-  return remaining <= 0 ? ` · ${settled}` : ` · ${money(remaining)} still owed`
+  return remaining <= 0 ? ` · ${settled}` : ` · ${formatUsd(remaining)} still owed`
 }
 
 /** The narration of a funded round: what the team borrowed, and what it costs. */
@@ -229,12 +229,12 @@ function fundingActivity(group: readonly LedgerEntry[]): ActivityCell {
   // A round whose deposits are out of view (the interest leg alone survived a
   // filter) can only report the fee it owes.
   if (principal <= 0) {
-    return { kind: 'plain', text: `${money(interest)} of fixed return owed to the lenders` }
+    return { kind: 'plain', text: `${formatUsd(interest)} of fixed return owed to the lenders` }
   }
-  const tail = interest > 0 ? ` · ${money(interest)} of interest owed` : ''
+  const tail = interest > 0 ? ` · ${formatUsd(interest)} of interest owed` : ''
   return {
     kind: 'plain',
-    text: `Borrowed ${money(principal)}${from ? ` from ${from}` : ''}${tail}`
+    text: `Borrowed ${formatUsd(principal)}${from ? ` from ${from}` : ''}${tail}`
   }
 }
 
@@ -244,7 +244,7 @@ function paymentActivity(group: readonly LedgerEntry[]): ActivityCell {
   const to = lenders(lenderCount(group))
   return {
     kind: 'plain',
-    text: `Repaid ${money(paid)}${to ? ` to ${to}` : ''}${remainingTail(group, 'loan fully repaid')}`
+    text: `Repaid ${formatUsd(paid)}${to ? ` to ${to}` : ''}${remainingTail(group, 'loan fully repaid')}`
   }
 }
 

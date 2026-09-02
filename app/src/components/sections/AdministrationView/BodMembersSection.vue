@@ -36,7 +36,7 @@ import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import { computed, watch } from 'vue'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 
 const props = defineProps<{
   electionId?: bigint

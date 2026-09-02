@@ -7,7 +7,7 @@
  * each module stays focused. Pure and unit-testable; the presenter re-exports
  * everything here, so callers can keep importing from it.
  */
-import { money } from './presenter'
+import { formatUsd } from '@/utils/format'
 import type { AccountingSummary } from './buildLedger'
 import type { BalanceSheet } from './balanceSheet'
 import type { IncomeStatement } from './incomeStatement'
@@ -62,7 +62,7 @@ export function presentSummaryCards(
   return [
     {
       label: 'Net income',
-      value: money(income.netIncome),
+      value: formatUsd(income.netIncome),
       valueClass: profitable ? 'text-primary' : 'text-error',
       sub: 'Profit · revenue − expenses',
       icon: 'i-heroicons-sparkles',
@@ -73,42 +73,42 @@ export function presentSummaryCards(
     },
     metric(
       'Total revenue',
-      money(income.totalRevenue),
+      formatUsd(income.totalRevenue),
       'Service + trading gain',
       'i-heroicons-arrow-trending-up',
       'bg-success/10 text-success'
     ),
     metric(
       'Total expenses',
-      money(income.totalExpenses),
+      formatUsd(income.totalExpenses),
       'Payroll · ops · trading · dividend',
       'i-heroicons-arrow-trending-down',
       'bg-warning/10 text-warning'
     ),
     metric(
       'Total transaction fees',
-      money(summary.transactionFees),
+      formatUsd(summary.transactionFees),
       'Bank protocol fee skimmed on transfers',
       'i-heroicons-receipt-percent',
       'bg-warning/10 text-warning'
     ),
     metric(
       'Total assets',
-      money(balance.totalAssets),
+      formatUsd(balance.totalAssets),
       'Cash + trading account',
       'i-heroicons-wallet',
       'bg-info/10 text-info'
     ),
     metric(
       'Total equity',
-      money(balance.totalEquity),
+      formatUsd(balance.totalEquity),
       'Investors + retained earnings',
       'i-heroicons-user-group',
       'bg-primary/10 text-primary'
     ),
     metric(
       'Outstanding debt',
-      money(outstandingDebt(balance)),
+      formatUsd(outstandingDebt(balance)),
       'Principal + fixed return owed to lenders',
       'i-heroicons-banknotes',
       CREDIT_CHIP
@@ -120,7 +120,7 @@ export function presentSummaryCards(
       ? [
           metric(
             'Debt repaid',
-            money(summary.debtRepaid),
+            formatUsd(summary.debtRepaid),
             'Principal + fixed return returned to lenders',
             'i-heroicons-arrow-uturn-left',
             CREDIT_CHIP

@@ -31,7 +31,10 @@
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `787921e5cf9dd1cf46fd0f69f651dba7d8785374`
+
 - [Campaign manager setup form](../../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue)
+- [Campaign Manager deployment mutation](../../../../app/src/composables/useContractFunctions.ts)
 - [Campaign rate configuration](../../../../app/src/components/sections/ContractManagementView/TeamContractsDetail.vue)
 - [Campaign rate write hooks](../../../../app/src/composables/campaign/writes.ts) — one focused hook for each rate-setting contract function
 

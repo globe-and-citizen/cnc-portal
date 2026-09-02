@@ -20,7 +20,7 @@ vi.mock('@/queries/safe.queries', () => ({
   useGetSafeIncomingTransfersQuery: mockUseGetSafeIncomingTransfersQuery
 }))
 
-vi.mock('@/utils/safe', () => ({
+vi.mock('@/utils/safe/model', () => ({
   formatSafeTransferType: vi.fn((type: string) => {
     const types = { ETHER_TRANSFER: 'POL', ERC20_TRANSFER: 'ERC20', ERC721_TRANSFER: 'NFT' }
     return types[type as keyof typeof types] || type
@@ -34,7 +34,7 @@ vi.mock('@/utils/safe', () => ({
   })
 }))
 
-vi.mock('@/utils/dayUtils', () => ({
+vi.mock('@/utils/dates/calendar', () => ({
   formatDateShort: vi.fn(() => 'Jan 15, 10:30 AM')
 }))
 

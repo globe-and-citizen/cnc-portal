@@ -160,6 +160,7 @@
 import { computed, watch } from 'vue'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
@@ -172,22 +173,19 @@ import type { CashRemunerationTransaction } from '@/types/transactions'
 import type { TransactionEventValue } from '@/types/transaction-history'
 import {
   buildRawCashRemunerationTransactions,
-  formatCashRemunerationTransactionDate,
+  formatCashRemunerationTransactionDate
+} from '@/utils/transactions/cashRemuneration'
+import {
   getTransactionTypeColor,
   getTransactionTypeLabel,
   getTransactionCounterparty,
-  formatTxHash,
-  formatCryptoAmount,
-  formatCurrencyShort,
-  formatEtherUtil,
-  parseBigIntOrZero,
-  resolveUser,
-  getTransactionSummary,
-  log,
-  tokenSymbol,
-  enrichTransaction
-} from '@/utils'
-import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+  formatTxHash
+} from '@/utils/transactions/registry'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import { parseBigIntOrZero, getTransactionSummary } from '@/utils/transactions/history'
+import { log } from '@/lib/logging'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { GET_INCOMING_BANK_TOKEN_TRANSFERS } from '@/queries/ponder/bank.queries'
 import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
@@ -197,6 +195,7 @@ const props = defineProps<{
 }>()
 
 const currencyStore = useCurrencyStore()
+const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.cashRemunerationAddress.toLowerCase())
 
 // EXPERIMENT: source the payroll contract's own events from the RPC (eth_getLogs)

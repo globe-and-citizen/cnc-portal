@@ -24,7 +24,7 @@ import {
 import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
 import { officerAbi } from '@/artifacts/abi/generated'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 
 export type OfficerRedeployFailureStage = 'deploy' | 'registration' | 'workflow'
 

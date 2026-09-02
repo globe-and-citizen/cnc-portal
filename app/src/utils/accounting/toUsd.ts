@@ -18,7 +18,7 @@
  */
 import { formatUnits } from 'viem'
 import type { TokenId } from '@/constant'
-import { getTokenDecimals } from '@/utils/constantUtil'
+import { getTokenDecimals } from '@/utils/tokens/metadata'
 
 /**
  * Storage / internal-calculation precision (spec §3): every ledger value — the

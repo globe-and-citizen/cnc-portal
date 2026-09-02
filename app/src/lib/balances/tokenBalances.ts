@@ -1,7 +1,7 @@
 import { erc20Abi, formatUnits, type Address } from 'viem'
 import { getBalance, readContract, type Config } from '@wagmi/core'
 import type { TokenConfig, TokenId } from '@/constant'
-import { formatCurrencyShort } from '@/utils/currencyUtil'
+import { formatCurrencyShort } from '@/utils/currency/display'
 import type { ContractBalances, CurrencyPair, Money, TokenBalance } from '@/types'
 
 /**

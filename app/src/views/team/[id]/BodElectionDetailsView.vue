@@ -20,7 +20,7 @@ import { computed, watch } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { electionsAbi } from '@/artifacts/abi/generated'
 import { useRouter } from 'vue-router'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 
 const teamStore = useTeamStore()
 const router = useRouter()

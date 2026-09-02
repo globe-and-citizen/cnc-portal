@@ -53,9 +53,9 @@ import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload, Claim } from '@/types'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
-import { startOfWeek } from '@/utils/dayUtils'
+import { startOfWeek } from '@/utils/dates/calendar'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 
 dayjs.extend(utc)
 

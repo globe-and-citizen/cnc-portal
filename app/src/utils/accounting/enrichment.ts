@@ -18,7 +18,7 @@ import { getAddress, isAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
 import type { Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
-import { buildClaimRatesWithOvertime } from '@/utils/wageUtil'
+import { buildClaimRatesWithOvertime } from '@/utils/wages/model'
 import type { LedgerEntry } from './ledgerEntry'
 
 export interface EnrichmentSources {

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { Hex } from 'viem'
+import type { Address, Hex } from 'viem'
 import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
@@ -46,17 +46,12 @@ const submissionError = ref<string | null>(
   formState.bankAddress ? null : 'A Bank contract is required before setting up the manager.'
 )
 const bankMissing = computed(() => !formState.bankAddress)
-const {
-  deploy,
-  isDeploying,
-  contractAddress,
-  error: deployError
-} = useDeployContract(adCampaignManagerAbi, campaignBytecode)
+const deployContract = useDeployContract(adCampaignManagerAbi, campaignBytecode)
 const createContract = useCreateContractMutation()
-const loading = computed(() => isDeploying.value || createContract.isPending.value)
+const loading = computed(() => deployContract.isPending.value || createContract.isPending.value)
 const errorMessage = computed(() => {
   if (submissionError.value) return submissionError.value
-  const error = deployError.value ?? createContract.error.value
+  const error = deployContract.error.value ?? createContract.error.value
   if (!error) return null
   const message =
     (error as { shortMessage?: string; message?: string }).shortMessage ?? error.message
@@ -65,24 +60,15 @@ const errorMessage = computed(() => {
     : (message ?? 'Campaign Manager setup failed. Please retry.')
 })
 
-const rateSummary = computed(() => [
-  {
-    label: 'Per click',
-    value: formState.costPerClick ? formatToken(formState.costPerClick, 'POL') : 'Not set'
-  },
-  {
-    label: 'Per impression',
-    value: formState.costPerImpression ? formatToken(formState.costPerImpression, 'POL') : 'Not set'
-  }
-])
+const registerDeployedContract = (contractAddress: Address) => {
+  const team = teamStore.currentTeam
+  if (!team) return
 
-watch(contractAddress, (newAddress) => {
-  if (!newAddress || !teamStore.currentTeam) return
   createContract.mutate(
     {
       body: {
-        teamId: String(teamStore.currentTeam.id),
-        contractAddress: newAddress,
+        teamId: String(team.id),
+        contractAddress,
         contractType: 'Campaign',
         deployer: userDataStore.address
       }
@@ -101,7 +87,18 @@ watch(contractAddress, (newAddress) => {
       }
     }
   )
-})
+}
+
+const rateSummary = computed(() => [
+  {
+    label: 'Per click',
+    value: formState.costPerClick ? formatToken(formState.costPerClick, 'POL') : 'Not set'
+  },
+  {
+    label: 'Per impression',
+    value: formState.costPerImpression ? formatToken(formState.costPerImpression, 'POL') : 'Not set'
+  }
+])
 
 function deployCampaignManager(event: FormSubmitEvent<CampaignFormSchema>) {
   if (!event.data.bankAddress) {
@@ -109,7 +106,14 @@ function deployCampaignManager(event: FormSubmitEvent<CampaignFormSchema>) {
     return
   }
   submissionError.value = null
-  deploy(event.data.bankAddress, event.data.costPerClick, event.data.costPerImpression)
+  deployContract.mutate(
+    {
+      bankAddress: event.data.bankAddress as Address,
+      costPerClick: event.data.costPerClick,
+      costPerImpression: event.data.costPerImpression
+    },
+    { onSuccess: registerDeployedContract }
+  )
 }
 
 function viewContractCode() {

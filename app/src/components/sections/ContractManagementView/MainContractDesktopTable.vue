@@ -70,7 +70,7 @@
 import { computed } from 'vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { getContractPresentation } from '@/utils'
+import { getContractPresentation } from '@/utils/contracts/presentation'
 import MainContractActionMenu from './MainContractActionMenu.vue'
 import MainContractBalanceCell from './MainContractBalanceCell.vue'
 import type { ContractTableRow } from './MainContractTable.types'

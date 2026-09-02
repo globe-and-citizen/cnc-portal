@@ -1,6 +1,6 @@
 import type { CreditRound, LendingOfferStruct } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
-import { MINUTES_PER_DAY } from '@/utils'
+import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
 
 export function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
   return {

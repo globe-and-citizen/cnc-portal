@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import { isAddress, type Abi, type AbiFunction, type Address } from 'viem'
 import { config } from '@/wagmi.config'
-import { formatDecodedValue } from '@/utils/abiDecodeUtil'
-import { formatContractFunctionLabel } from '@/utils/contractPresentation'
+import { formatDecodedValue } from '@/utils/contracts/abiDecode'
+import { formatContractFunctionLabel } from '@/utils/contracts/presentation'
 
 export interface ContractReadDatum {
   functionName: string

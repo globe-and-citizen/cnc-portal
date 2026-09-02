@@ -5,7 +5,7 @@
  * entries and the statements they feed are untouched. Mirrors
  * {@link ./payrollGrouping} and {@link ./creditGrouping}.
  */
-import { money } from './presenter'
+import { formatUsd } from '@/utils/format'
 import type { LedgerEntry } from './ledgerEntry'
 import type { LedgerRow } from './ledgerPresenter'
 
@@ -36,7 +36,7 @@ export function compoundDividendRows(
     .map((entry) => rowsOf(entry)[0])
     .filter((row): row is LedgerRow => row != null)
   const creditRow = rowsOf(ordered[0]!)[1]
-  const rows = creditRow ? [...debitRows, { ...creditRow, cr: money(total) }] : debitRows
+  const rows = creditRow ? [...debitRows, { ...creditRow, cr: formatUsd(total) }] : debitRows
 
   return rows.map((row, i) =>
     i === 0
