@@ -87,6 +87,44 @@ describe('mapFees', () => {
     expect(entries).toHaveLength(2)
   })
 
+  it('scopes the credit leg to the emitting Bank, so a redeploy keeps its own fees', () => {
+    const [entry] = mapFees(
+      {
+        bankFeePaids: [
+          {
+            id: 'f1',
+            contractAddress: ADDR.bank,
+            feeCollector: ADDR.feeCollector,
+            token: ADDR.usdcToken,
+            amount: '1000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entry.creditInstance?.toLowerCase()).toBe(ADDR.bank)
+  })
+
+  it('scopes a FeeCollector-only fee to the paying Bank', () => {
+    const [entry] = mapFees(
+      {
+        feeCollectorFeePaids: [
+          {
+            id: 'f2',
+            contractAddress: ADDR.feeCollector,
+            payer: ADDR.bank,
+            token: ADDR.usdcToken,
+            amount: '1000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entry.creditInstance?.toLowerCase()).toBe(ADDR.bank)
+  })
+
   it('handles a native fee (null token)', () => {
     const [entry] = mapFees(
       {
