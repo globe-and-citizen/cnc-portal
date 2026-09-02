@@ -2,11 +2,13 @@ import { computed, ref, type Ref } from 'vue'
 import { useAccountingExport } from './useAccountingExport'
 import {
   entriesForAccount,
-  accountBalance,
-  accountNet,
+  scopedNet,
   accountOpening,
+  type AccountOpening,
   type InstanceScope
 } from '@/utils/accounting/accountLedger'
+import { buildPocketInstances } from '@/utils/accounting/pocketInstances'
+import { mergeBankFees } from '@/utils/accounting/mergeBankFees'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
 import type { LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
@@ -17,6 +19,21 @@ import type { SectionSpec } from '@/utils/accounting/exportSpec'
 export interface DrilldownBounds {
   from: Date | null
   to: Date | null
+}
+
+/**
+ * The running "Balance" column of a drill-down: the one account it runs on, what
+ * that account carries into the window and where it is left once every posting is
+ * booked. An aggregate line carries an empty `account` — accounts of mixed classes
+ * share no natural side, so there is no balance to run.
+ */
+export interface DrilldownBalance {
+  account: string
+  opening: AccountOpening
+  closing: string
+  /** The pocket-instance scope the balance runs within (a redeployed pocket's own
+   *  deployment); the running-balance walk counts only the legs on this instance. */
+  scope?: InstanceScope
 }
 
 /** The statement line currently shown in the drill-down modal. */
@@ -40,23 +57,31 @@ export function useLedgerDrilldown(
 
   const isAggregate = computed(() => Array.isArray(target.value))
 
+  // Deployment numbering over the whole book — the drilled slice alone can't tell
+  // which contract of a redeployed pocket it holds.
+  const instances = computed(() => buildPocketInstances(entries.value))
+
   // The one account the running-balance column runs on — empty for an aggregate,
   // whose accounts span classes and so share no natural side.
   const balanceAccount = computed(() => (isAggregate.value ? '' : (target.value as string)))
 
-  // The postings composing the drilled-in line, over the statement's own window.
+  // The postings composing the drilled-in line, over the statement's own window,
+  // with each Bank fee folded into its transfer ({@link mergeBankFees}) — so a
+  // transfer-plus-fee reads as one compound entry here exactly as in the general
+  // ledger, instead of two separate rows. The net roll-up stays correct: a folded
+  // fee is re-booked in {@link netBalanceByAccountRaw}.
   const drilldownEntries = computed(() => {
     const t = target.value
     if (!t || (Array.isArray(t) && t.length === 0)) return []
     const { from, to } = bounds()
-    return entriesForAccount(entries.value, t, from, to, targetScope.value)
+    return mergeBankFees(entriesForAccount(entries.value, t, from, to, targetScope.value))
   })
 
   // A single account nets from its own postings; an aggregate can't (mixed
   // classes), so it keeps the figure the line already shows.
   const total = computed(() =>
     typeof target.value === 'string' && target.value
-      ? accountBalance(drilldownEntries.value, target.value)
+      ? money(scopedNet(drilldownEntries.value, target.value, targetScope.value))
       : lineTotal.value
   )
 
@@ -79,7 +104,10 @@ export function useLedgerDrilldown(
   // figure at the foot of the Balance column.
   const closing = computed(() =>
     balanceAccount.value
-      ? money(opening.value.balance + accountNet(drilldownEntries.value, balanceAccount.value))
+      ? money(
+          opening.value.balance +
+            scopedNet(drilldownEntries.value, balanceAccount.value, targetScope.value)
+        )
       : total.value
   )
 
@@ -131,13 +159,20 @@ export function useLedgerDrilldown(
     }
   }
 
+  // The three running-balance figures travel together, as one prop on the modal.
+  const balance = computed<DrilldownBalance>(() => ({
+    account: balanceAccount.value,
+    opening: opening.value,
+    closing: closing.value,
+    ...(targetScope.value ? { scope: targetScope.value } : {})
+  }))
+
   return {
     open,
     selectedLine,
-    balanceAccount,
-    opening,
-    closing,
+    balance,
     drilldownEntries,
+    instances,
     openFor,
     onExport
   }

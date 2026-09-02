@@ -141,7 +141,7 @@ const LEDGER_PDF_CELL: Record<
   action: { align: 'left', pick: (r) => r.cat },
   transaction: { align: 'left', pick: (r) => r.label },
   activity: { align: 'left', pick: (r, resolveName) => activityText(r.activity, resolveName) },
-  account: { align: 'left', pick: (r) => r.account },
+  account: { align: 'left', pick: (r) => r.accountLabel ?? r.account },
   dr: { align: 'right', pick: (r) => r.dr },
   cr: { align: 'right', pick: (r) => r.cr },
   currency: { align: 'left', pick: (r) => r.currency },

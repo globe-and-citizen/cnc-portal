@@ -9,7 +9,7 @@ import GeneralLedger from '../GeneralLedger.vue'
 import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
 import StatementLine from '../StatementLine.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import { entriesForAccount, accountBalance } from '@/utils/accounting/accountLedger'
+import { entriesForAccount, accountBalance, NO_OPENING } from '@/utils/accounting/accountLedger'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerPresenter'
 import type { StatementLineView } from '@/utils/accounting/presenter'
@@ -210,7 +210,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
         account,
         total: '$138.00',
         entries,
-        balanceAccount: account,
+        balance: { account, opening: NO_OPENING, closing: '$138.00' },
         columnsStorageKey
       }
     })
@@ -237,9 +237,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
         account,
         total: '$138.00',
         entries,
-        balanceAccount: account,
-        opening,
-        closing: '$238.00',
+        balance: { account, opening, closing: '$238.00' },
         columnsStorageKey
       }
     })

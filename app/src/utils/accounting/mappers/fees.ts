@@ -46,7 +46,13 @@ export function mapFees(input: FeeMapperInput, ctx: MapperContext): LedgerEntry[
   const seen = new Set<string>()
   const entries: LedgerEntry[] = []
 
-  const push = (row: { id: string; token: string | null; amount: string; timestamp: number }) => {
+  const push = (
+    row: { id: string; token: string | null; amount: string; timestamp: number },
+    // The Bank contract the fee's cash left, so the credit leg is scoped to the
+    // same deployment as the transfer it was skimmed on — a redeployed Bank shows
+    // its own fees under `Cash — Bank 2` rather than folding them into the first.
+    instance: string
+  ) => {
     const key = feeKey(row)
     if (seen.has(key)) return
     seen.add(key)
@@ -58,6 +64,7 @@ export function mapFees(input: FeeMapperInput, ctx: MapperContext): LedgerEntry[
         useCase: 'FEE',
         debit: 'Transaction Fee Expense',
         credit: 'Cash — Bank',
+        creditInstance: instance,
         amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
         token: tokenId,
         rawAmount: row.amount,
@@ -66,8 +73,10 @@ export function mapFees(input: FeeMapperInput, ctx: MapperContext): LedgerEntry[
     )
   }
 
-  // Bank rows first so they win the dedup as the canonical source.
-  for (const row of input.bankFeePaids ?? []) push(row)
-  for (const row of input.feeCollectorFeePaids ?? []) push(row)
+  // Bank rows first so they win the dedup as the canonical source. The Bank log
+  // names the emitting Bank in `contractAddress`; the FeeCollector twin names the
+  // Bank as the `payer`, so either way the credit is scoped to the paying Bank.
+  for (const row of input.bankFeePaids ?? []) push(row, row.contractAddress)
+  for (const row of input.feeCollectorFeePaids ?? []) push(row, row.payer)
   return entries
 }

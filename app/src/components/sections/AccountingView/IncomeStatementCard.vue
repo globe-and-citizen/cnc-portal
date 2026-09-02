@@ -77,9 +77,8 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
-      :balance-account="drilldownBalanceAccount"
-      :opening="drilldownOpening"
-      :closing="drilldownClosing"
+      :balance="drilldownBalance"
+      :instances="drilldownInstances"
       columns-storage-key="cnc-accounting-income-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
@@ -116,10 +115,9 @@ const dateSelected = computed(() => !isAllTimeRange(period.value))
 const {
   open: drilldownOpen,
   selectedLine: drilldownLine,
-  balanceAccount: drilldownBalanceAccount,
-  opening: drilldownOpening,
-  closing: drilldownClosing,
+  balance: drilldownBalance,
   drilldownEntries,
+  instances: drilldownInstances,
   openFor,
   onExport: onDrilldownExport
 } = useLedgerDrilldown(acc.entries, () => ({

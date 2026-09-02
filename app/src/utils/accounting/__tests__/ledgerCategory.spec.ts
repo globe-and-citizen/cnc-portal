@@ -36,6 +36,22 @@ describe('categoryOf', () => {
     expect(categoryOf(entry('UC-CREDIT-02'))).toBe('Transfer')
   })
 
+  it('files an owner/founder deposit under Revenue', () => {
+    expect(categoryOf(entry('UC-BANK-01'))).toBe('Revenue')
+  })
+
+  it('lets a manual classification drive the badge, not the CASH-IN/OUT use case', () => {
+    // Owner's deliberate call wins over the generic collapsed use case.
+    expect(categoryOf(entry('CASH-IN', { classified: 'OWNER_CAPITAL' }))).toBe('Investment')
+    expect(categoryOf(entry('CASH-IN', { classified: 'SHAREHOLDER_LOAN' }))).toBe('Credit')
+    expect(categoryOf(entry('CASH-IN', { classified: 'REVENUE' }))).toBe('Revenue')
+    expect(categoryOf(entry('CASH-OUT', { classified: 'PAYROLL_EXPENSE' }))).toBe('Payroll')
+    expect(categoryOf(entry('CASH-OUT', { classified: 'INTEREST_EXPENSE' }))).toBe('Credit')
+    expect(categoryOf(entry('CASH-OUT', { classified: 'DIVIDEND_EXPENSE' }))).toBe('Dividend')
+    // An unclassified inflow keeps the plain Revenue category.
+    expect(categoryOf(entry('CASH-IN'))).toBe('Revenue')
+  })
+
   it('falls back to Transfer for an unmapped use case', () => {
     expect(categoryOf(entry('UC-UNKNOWN' as UseCase))).toBe('Transfer')
   })

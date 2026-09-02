@@ -7,6 +7,7 @@
  * Pure and unit-testable.
  */
 import type { LedgerEntry, UseCase } from './ledgerEntry'
+import type { ClassificationCategory } from './classification'
 
 /** Exact chart-of-accounts label for a protocol-fee leg; drives badge + filter. */
 export const FEE_ACCOUNT = 'Transaction Fee Expense'
@@ -75,10 +76,34 @@ export function categoryLabelOf(entry: LedgerEntry): string {
   return categoryOf(entry)
 }
 
+/**
+ * The badge a manual classification maps to. A classified Bank/Safe movement collapses
+ * to the generic `CASH-IN` / `CASH-OUT` use case, which alone would read as a bare
+ * "Revenue" / "Expense" — so a shareholder loan, a payroll run or a dividend would all
+ * be mislabelled. This restores each classification to the pill that matches its nature
+ * (a loan under Credit, a capital contribution under Investment, and so on).
+ */
+const CLASSIFIED_CATEGORY: Record<ClassificationCategory, LedgerCategory> = {
+  REVENUE: 'Revenue',
+  EXPENSE: 'Expense',
+  OWNER_CAPITAL: 'Investment',
+  SHAREHOLDER_LOAN: 'Credit',
+  INTERNAL_TRANSFER: 'Transfer',
+  PAYROLL_EXPENSE: 'Payroll',
+  INTEREST_EXPENSE: 'Credit',
+  DIVIDEND_EXPENSE: 'Dividend'
+}
+
 /** The display category a ledger entry falls under, from its use case. */
 export function categoryOf(entry: LedgerEntry): LedgerCategory {
+  // A manual classification wins: the badge follows the owner's deliberate call rather
+  // than the CASH-IN / CASH-OUT use case that classified entries all collapse to.
+  if (entry.classified) return CLASSIFIED_CATEGORY[entry.classified]
+
   const byUseCase: Partial<Record<UseCase, LedgerCategory>> = {
-    'UC-BANK-01': 'Investment',
+    // An owner/founder deposit into a treasury pocket files under Revenue (it still
+    // credits Owner Capital — this is the business-activity label, not the account).
+    'UC-BANK-01': 'Revenue',
     'UC-SDR-01': 'Investment',
     'UC-MEMBER-01': 'Investment',
     'UC-CREDIT-01': 'Credit',

@@ -44,25 +44,37 @@
     </template>
 
     <template #account-cell="{ row: { original: row } }">
-      <button
-        v-if="!row.isTotal && linkAccount && !row.accountDimmed && row.account"
-        type="button"
-        class="focus-visible:ring-neutral rounded text-sm tabular-nums underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:outline-none"
-        :class="row.accountMuted ? 'text-muted' : 'text-default'"
-        :data-test="`ledger-account-link-${row.account}`"
-        @click="emit('accountSelect', row.account)"
-      >
-        {{ row.account }}
-      </button>
-      <span
-        v-else-if="!row.isTotal"
-        class="text-sm tabular-nums"
-        :class="
-          row.accountDimmed ? 'text-dimmed' : row.accountMuted ? 'text-muted' : 'text-default'
-        "
-      >
-        {{ row.account }}
-      </span>
+      <div v-if="!row.isTotal" class="flex items-center gap-1.5">
+        <button
+          v-if="linkAccount && !row.accountDimmed && row.account"
+          type="button"
+          class="focus-visible:ring-neutral rounded text-sm tabular-nums underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:outline-none"
+          :class="row.accountMuted ? 'text-muted' : 'text-default'"
+          :data-test="`ledger-account-link-${row.account}`"
+          @click="emit('accountSelect', row.account, row.accountInstance)"
+        >
+          {{ row.accountLabel ?? row.account }}
+        </button>
+        <span
+          v-else
+          class="text-sm tabular-nums"
+          :class="
+            row.accountDimmed ? 'text-dimmed' : row.accountMuted ? 'text-muted' : 'text-default'
+          "
+        >
+          {{ row.accountLabel ?? row.account }}
+        </span>
+        <UTooltip
+          v-if="(row.instanceNumber ?? 1) > 1"
+          :text="REDEPLOY_HINT"
+          :data-test="`ledger-redeploy-hint-${row.accountLabel}`"
+        >
+          <UIcon
+            name="i-heroicons-information-circle"
+            class="text-warning size-4 shrink-0 cursor-help"
+          />
+        </UTooltip>
+      </div>
     </template>
 
     <template #currency-cell="{ row: { original: row } }">
@@ -153,7 +165,12 @@ const props = defineProps<{
   linkAccount?: boolean
 }>()
 
-const emit = defineEmits<{ accountSelect: [account: string] }>()
+const emit = defineEmits<{ accountSelect: [account: string, instance?: string] }>()
+
+// Shown beside a leg posted to a redeployed pocket's later contract — the same
+// explanation the trial balance gives on its numbered lines.
+const REDEPLOY_HINT =
+  'This account was redeployed to a new contract. This posting moved that later deployment.'
 
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
 

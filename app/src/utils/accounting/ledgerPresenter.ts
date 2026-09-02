@@ -11,6 +11,7 @@ import { activityDestinationOf, type ActivityDestination } from './activityDesti
 import { mergeBankFees } from './mergeBankFees'
 import { flattenLedgerRows } from './ledgerGrouping'
 import { filterLedgerByCurrency } from './ledgerCurrency'
+import { buildPocketInstances, NO_POCKET_INSTANCES } from './pocketInstances'
 import {
   badgeClassOf,
   categoryOf,
@@ -18,6 +19,7 @@ import {
   FEE_ACCOUNT,
   FEE_FILTER
 } from './ledgerCategory'
+import type { PocketInstanceIndex } from './pocketInstances'
 import type { LedgerEntry } from './ledgerEntry'
 import type { TokenId } from '@/constant'
 import { formatNumber } from '@/utils/format'
@@ -38,6 +40,10 @@ export {
   ledgerCategories,
   type LedgerCategory
 } from './ledgerCategory'
+
+// So does the pocket-deployment numbering a redeployed account reads under.
+export { buildPocketInstances, NO_POCKET_INSTANCES } from './pocketInstances'
+export type { PocketInstance, PocketInstanceIndex } from './pocketInstances'
 
 // So does the column list the table, the selector and the exporters share.
 export { LEDGER_COLUMNS, resolveLedgerColumns, ledgerTotalRow } from './ledgerColumns'
@@ -61,6 +67,14 @@ export interface LedgerRow {
   cat: string
   catClass: string
   account: string
+  /** Display name for the account — `Cash — Bank 2` on a redeployed pocket's later
+   *  deployment ({@link ./pocketInstances}), else exactly {@link account}. Absent
+   *  when the account never split, so a normal book reads as before. */
+  accountLabel?: string
+  /** The pocket contract this leg's cash sits in — set only on a redeployed account. */
+  accountInstance?: string
+  /** 1-based deployment number of {@link accountInstance} (1 = the original). */
+  instanceNumber?: number
   accountMuted: boolean
   accountDimmed: boolean
   dr: string
@@ -113,6 +127,31 @@ export function filterLedgerByAccount(
   return entries.filter((e) => wanted.has(e.debit ?? '') || wanted.has(e.credit ?? ''))
 }
 
+/** The account fields of one journal line: its name, and which deployment it moved. */
+type LegAccount = Pick<LedgerRow, 'account' | 'accountLabel' | 'accountInstance' | 'instanceNumber'>
+
+/**
+ * One leg's account fields — plain for a normal account, carrying the deployment's
+ * numbered label when the pocket was redeployed, so the journal says which contract
+ * moved without changing what the account **is** (the filters and the account jump
+ * keep reading {@link LedgerRow.account}).
+ */
+function legAccount(
+  account: string,
+  instance: string | undefined,
+  instances: PocketInstanceIndex
+): LegAccount {
+  const found = instances.instanceOf(account, instance)
+  return found
+    ? {
+        account,
+        accountLabel: found.label,
+        accountInstance: found.instance,
+        instanceNumber: found.number
+      }
+    : { account }
+}
+
 /** The Devise / Quantité / Taux columns of one token move (spec §2). */
 type Movement = Pick<LedgerRow, 'currency' | 'quantity' | 'rate'>
 
@@ -137,7 +176,7 @@ function movementOf(rawAmount: string, token: TokenId, rate?: number): Movement 
 
 /** A posting's second and later lines — the lead row alone carries date / action / activity. */
 function continuationRow(
-  account: string,
+  leg: LegAccount,
   amounts: { dr?: string; cr?: string; accountMuted?: boolean; isFee?: boolean },
   movement: Movement = NO_MOVEMENT
 ): LedgerRow {
@@ -148,7 +187,7 @@ function continuationRow(
     activity: NO_ACTIVITY,
     cat: '',
     catClass: '',
-    account,
+    ...leg,
     accountMuted: amounts.accountMuted ?? false,
     accountDimmed: false,
     dr: amounts.dr ?? '',
@@ -159,7 +198,7 @@ function continuationRow(
 }
 
 /** The journal-line rows (debit then credit) a posting renders as. */
-function rowsOf(entry: LedgerEntry): LedgerRow[] {
+function rowsOf(entry: LedgerEntry, instances: PocketInstanceIndex): LedgerRow[] {
   const head = {
     isFirst: true,
     date: fmtDateTime(entry.timestamp),
@@ -197,18 +236,18 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
       {
         ...head,
         ...movement,
-        account: entry.debit,
+        ...legAccount(entry.debit, entry.debitInstance, instances),
         accountMuted: false,
         accountDimmed: false,
         dr: money(entry.amountUsd),
         cr: ''
       },
       continuationRow(
-        FEE_ACCOUNT,
+        { account: FEE_ACCOUNT },
         { dr: money(fee.amountUsd), isFee: true },
         movementOf(fee.rawAmount, fee.token, fee.rate)
       ),
-      continuationRow(entry.credit, {
+      continuationRow(legAccount(entry.credit, entry.creditInstance, instances), {
         cr: money(entry.amountUsd + fee.amountUsd),
         accountMuted: true
       })
@@ -220,7 +259,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     rows.push({
       ...head,
       ...movement,
-      account: entry.debit,
+      ...legAccount(entry.debit, entry.debitInstance, instances),
       accountMuted: false,
       accountDimmed: false,
       dr: money(entry.amountUsd),
@@ -231,11 +270,14 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
   if (entry.credit) {
     rows.push(
       rows.length
-        ? continuationRow(entry.credit, { cr: money(entry.amountUsd), accountMuted: true })
+        ? continuationRow(legAccount(entry.credit, entry.creditInstance, instances), {
+            cr: money(entry.amountUsd),
+            accountMuted: true
+          })
         : {
             ...head,
             ...movement,
-            account: entry.credit,
+            ...legAccount(entry.credit, entry.creditInstance, instances),
             accountMuted: true,
             accountDimmed: false,
             dr: '',
@@ -272,8 +314,11 @@ export function filterLedgerEntries(
 /** Flatten postings into rows, folding a wage event's per-currency legs and a
  *  credit round's per-lender legs into one compound posting each
  *  ({@link ./ledgerGrouping}); every other entry stays two rows. */
-export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
-  return flattenLedgerRows(entries, rowsOf)
+export function ledgerRows(
+  entries: readonly LedgerEntry[],
+  instances: PocketInstanceIndex = NO_POCKET_INSTANCES
+): LedgerRow[] {
+  return flattenLedgerRows(entries, (entry) => rowsOf(entry, instances))
 }
 
 /** True when an entry carries a {@link FEE_ACCOUNT} leg (folded or standalone). */
@@ -286,9 +331,12 @@ export function entryHasFee(entry: LedgerEntry): boolean {
  * emits (its own amount + movement), promoted to a lead row so the isolated line
  * keeps its date / activity (a folded fee's leg is a blank continuation).
  */
-export function ledgerFeeRows(entries: readonly LedgerEntry[]): LedgerRow[] {
+export function ledgerFeeRows(
+  entries: readonly LedgerEntry[],
+  instances: PocketInstanceIndex = NO_POCKET_INSTANCES
+): LedgerRow[] {
   return entries.filter(entryHasFee).map((entry) => ({
-    ...(rowsOf(entry).find((r) => r.isFee) as LedgerRow),
+    ...(rowsOf(entry, instances).find((r) => r.isFee) as LedgerRow),
     isFirst: true,
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
@@ -329,7 +377,11 @@ export function presentLedger(
   currencies?: readonly string[] | null
 ): LedgerView {
   const shown = filterLedgerEntries(entries, filter, from, to, currencies)
-  const rows = filter === FEE_FILTER ? ledgerFeeRows(shown) : ledgerRows(shown)
+  // Numbered off the **whole** feed, not the filtered slice, so a deployment keeps
+  // the same number whatever the active filter.
+  const instances = buildPocketInstances(entries)
+  const rows =
+    filter === FEE_FILTER ? ledgerFeeRows(shown, instances) : ledgerRows(shown, instances)
   const total = filter === FEE_FILTER ? ledgerFeeTotal(shown) : ledgerTotal(shown)
   return { rows, total, entryCount: shown.length }
 }

@@ -255,6 +255,48 @@ describe('accountLedger — statement-line drill-down', () => {
       // With no single account to net against, the balance falls back to $0.00.
       expect(view.total).toBe(money(0))
     })
+
+    it('folds a Bank fee into its transfer, like the general ledger (issue: drill-down parity)', () => {
+      type Entry = import('@/utils/accounting/ledgerEntry').LedgerEntry
+      const transfer: Entry = {
+        id: '0xabc-5',
+        timestamp: 100,
+        useCase: 'UC-BANK-03',
+        debit: 'Cash — Payroll',
+        credit: 'Cash — Bank',
+        amountUsd: 2,
+        token: 'usdc',
+        rawAmount: '2000000',
+        rate: 1,
+        internal: true,
+        memo: 'Fund Cash — Payroll from Bank',
+        enrichment: 'not-applicable'
+      }
+      const fee: Entry = {
+        id: '0xabc-3',
+        timestamp: 100,
+        useCase: 'FEE',
+        debit: 'Transaction Fee Expense',
+        credit: 'Cash — Bank',
+        amountUsd: 0.5,
+        token: 'usdc',
+        rawAmount: '500000',
+        rate: 1,
+        internal: false,
+        memo: 'Transaction fee skimmed from Bank',
+        enrichment: 'not-applicable'
+      }
+      const view = presentAccountLedger([transfer, fee], 'Cash — Bank')
+      // One compound entry of three lines, not two separate postings.
+      expect(view.entryCount).toBe(1)
+      expect(view.rows.map((r) => r.account)).toEqual([
+        'Cash — Payroll',
+        'Transaction Fee Expense',
+        'Cash — Bank'
+      ])
+      // The account still nets to the gross it lost — the fold changes only display.
+      expect(view.total).toBe(money(-2.5))
+    })
   })
 
   describe('accountLedgerTitle', () => {
