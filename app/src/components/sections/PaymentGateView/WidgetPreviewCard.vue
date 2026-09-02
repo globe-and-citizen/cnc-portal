@@ -11,6 +11,7 @@
       txHash: pane === 'confirmed' ? mockTxHash : undefined
     }"
     @pay="simulate"
+    @retry="simulate"
   />
 </template>
 
