@@ -1,145 +1,228 @@
-# Payment Gate — v0 (Light)
+# Payment Gate — User Stories
 
-Scoped to what v0 actually needs to ship. Just wiring an embeddable widget on top of what already exists.
+**Scope:** Configuring, embedding, and paying through the CNC Pay widget from a company's Setup, Reference, and History pages at
+`/teams/:id/payment-gate`, `/reference`, and `/history`
 
-## Feature description
+**Last reviewed:** Not yet reviewed
 
-CNC Pay lets a merchant — here called **Layer8** — embed a widget on their own page so their customers can pay them directly. Layer8 needs a
-CNC account; payments land straight into that team's existing Bank contract.
+These acceptance criteria follow the
+[feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
 
-CNC Pay's job stops at collecting the payment: we receive an amount Y and a facture ID Z, and we charge Y for Z. What Z represents isn't our
-concern — that's Layer8's to define and interpret. This base already makes both **Pay now** and **Pay as you go** work; it's up to Layer8 to
-decide how to use it, e.g. what a facture ID represents for pay-as-you-go usage.
+`US-PAYGATE-V0-*` identifiers are retained because the Sprint 18 validation script and related documentation already reference them. `v0`
+names the current, and so far only, delivery boundary of this capability — not a historical planning label superseded by a later version.
 
-### Payment flow (v0)
+## Product Model
 
-1. A customer triggers a payment on Layer8's page — e.g. usage under a pay-as-you-go plan. Layer8 already knows the amount and shows the
-   customer their facture (invoice).
-2. Layer8 mounts the widget for that facture — amount + facture ID.
-3. The widget shows a payment recap: amount and facture ID.
-4. The customer pays.
-5. The widget shows the conclusion of the transaction.
+- **CNC Pay** is an embeddable widget: a merchant — called **Layer8** in this document — drops one script tag on their own page so their
+  customers can pay them directly. Payments settle straight into Layer8's existing CNC company Bank contract; no separate CNC Pay account or
+  key exists.
+- A **facture ID** is an opaque, merchant-defined order reference (e.g. an invoice or usage-period ID). CNC Pay does not interpret it — it
+  is carried as length-prefixed bytes appended after the standard `depositToken(token, amount)` calldata (see
+  [`factureCalldata.ts`](../../../app/src/utils/paymentGate/factureCalldata.ts)) and read back later to reconstruct history.
+- This version only supports **`depositToken()` targets** (USDC, USDCe). Native POL cannot carry a facture ID: `Bank.sol`'s `receive()`
+  reverts on any non-empty calldata and has no `fallback()`, so the widget itself always refuses a native-token configuration (see
+  `US-PAYGATE-V0-003`).
+- **No backend exists for this capability.** Payment history is read directly from the Bank contract's deposit events (see
+  `US-PAYGATE-V0-004`); recalling a payment by facture ID (`US-PAYGATE-V0-005`) has no implemented mechanism yet, on-chain or off-chain.
 
----
+## Lifecycle
+
+1. The merchant selects the token the widget will accept on the Setup page and gets a copyable embed snippet built around their company's
+   Bank address.
+2. The merchant pastes that snippet onto their own page. Whatever triggers checkout for a specific order calls
+   `CncPay.setFactureId`/`setAmount`/`show()` with that order's real ID and amount.
+3. The widget shows a payment recap (amount and facture ID), then the customer pays.
+4. The widget reports the outcome — success or failure, with the facture ID — to the merchant's page through the `onStatus` callback.
+5. Confirmed payments become visible on the merchant's History page, read directly from their Bank contract.
 
 ## Status Overview
 
-| User Story        | Title                                   | Actor             |     Status     | Priority | Effort |
-| ----------------- | --------------------------------------- | ----------------- | :------------: | :------: | ------ |
-| US-PAYGATE-V0-001 | Configure the widget                    | Merchant          | 🔲 Not started |    P1    | S      |
-| US-PAYGATE-V0-002 | Embed the widget on the merchant's page | Merchant          | 🔲 Not started |    P1    | M      |
-| US-PAYGATE-V0-003 | Pay through the widget                  | Layer8's customer | 🔲 Not started |    P1    | L      |
-| US-PAYGATE-V0-004 | Payment history                         | Merchant          | 🔲 Not started |    P2    | M      |
-| US-PAYGATE-V0-005 | Recall (Recheck) a payment's status     | Merchant          | 🔲 Not started |    P2    | M      |
+| User Story        | Title                                   | Actor           | Status        |
+| ----------------- | --------------------------------------- | --------------- | ------------- |
+| US-PAYGATE-V0-001 | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation |
+| US-PAYGATE-V0-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation |
+| US-PAYGATE-V0-003 | Pay Through the Widget                  | Layer8 customer | 🧪 Validation |
+| US-PAYGATE-V0-004 | Review Payment History                  | Merchant        | 🧪 Validation |
+| US-PAYGATE-V0-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft      |
 
----
+## US-PAYGATE-V0-001: Configure the Widget's Accepted Token
 
-## US-PAYGATE-V0-001: Configure the Widget
+**As a** merchant\
+**I want to** choose which token the widget accepts\
+**So that** my embed snippet and live preview reflect a payment configuration my customers can actually complete
 
-**As a** merchant **I want to** configure the widget **so that** it matches my integration
+### Acceptance Criteria
 
-**Acceptance Criteria:**
+#### Happy Path
 
-- [ ] The merchant configures the widget by specifying the accepted token (USDC, USDCe, POL)
-- [ ] A widget preview shows the placement of the configured elements (amount, selected token)
-- [ ] The token is the only element the merchant can configure — style and layout aren't editable in v0
+- [x] The merchant can select an accepted token from the options offered on the Setup page, and the embed snippet and live preview update
+      immediately to reflect that choice.
 
-**Priority:** P1 (Critical) · **Effort:** S · **Status:** 🔲 Not started · **Dependencies:** —
+#### Business Rules
 
----
+- [x] No product element other than the accepted token is configurable in this version — style and layout are fixed.
+- [ ] Only tokens the widget can actually accept payment in are offered as selectable options.
+
+**Dependencies:** none — this is the capability's entry point
 
 ## US-PAYGATE-V0-002: Embed the Widget on the Merchant's Page
 
-**As a** merchant (Layer8) **I want to** insert a script on my own page **so that** my customers can pay me directly
+**As a** merchant (Layer8)\
+**I want to** copy a ready-to-use script snippet carrying my company's Bank address and configured token\
+**So that** I can accept payments on my own page without creating or managing a separate account or key
 
-**Acceptance Criteria:**
+### Acceptance Criteria
 
-- [ ] The merchant has a CNC account, and payments land on their team's Bank
-- [ ] The script embeds the widget on the merchant's page, with the Bank address and the token configured in US-PAYGATE-V0-001
-- [ ] For a specific order, the merchant passes the corresponding facture ID to the widget
+#### Happy Path
 
-**Priority:** P1 (Critical) · **Effort:** M · **Status:** 🔲 Not started · **Dependencies:** US-PAYGATE-V0-001
+- [x] The merchant can view and copy their company's Bank address.
+- [x] The merchant can view and copy a complete embed snippet — script tag, mount point, and example checkout wiring — reflecting the
+      current Bank address and selected token.
 
----
+#### Business Rules
+
+- [x] The Bank address shown is the company's own existing Bank contract; embedding the widget requires no separate account or key.
+
+#### Edge & Error Cases
+
+- [ ] When the company has no deployed Bank contract yet, the Setup page shows an explicit "no Bank" state instead of a snippet built around
+      a placeholder address.
+
+**Dependencies:** US-PAYGATE-V0-001 and a company with a deployed Bank contract
 
 ## US-PAYGATE-V0-003: Pay Through the Widget
 
-**As a** Layer8 customer **I want to** pay directly from the widget **so that** I can settle my facture without leaving the merchant's page
+**As a** Layer8 customer\
+**I want to** pay directly from the embedded widget\
+**So that** I can settle my facture without leaving the merchant's page
 
-**Acceptance Criteria:**
+### How It Works
 
-- [ ] The widget shows a payment recap: amount and facture ID
-- [ ] The customer pays that amount for that facture ID — the widget doesn't distinguish Pay now from Pay as you go, it's up to Layer8 to
-      interpret the facture ID
-- [ ] The widget shows the conclusion of the transaction (pending/success/failed)
-- [ ] Once the transaction broadcasts, the widget reports the `txHash` with the facture ID to CNC Pay — this record is what feeds the
-      payment history (US-PAYGATE-V0-004)
+1. The widget shows a recap of the amount and facture ID.
+2. On submit, it connects the customer's wallet, approves the token spend only if the existing allowance is insufficient, then submits the
+   payment.
+3. It reports the outcome to the merchant's page through `onStatus`.
 
-**Priority:** P1 (Critical) · **Effort:** L · **Status:** 🔲 Not started · **Dependencies:** US-PAYGATE-V0-002
+### Acceptance Criteria
 
----
+#### Happy Path
 
-## US-PAYGATE-V0-004: Payment History
+- [x] The widget shows a payment recap — amount and facture ID — before the customer pays.
+- [x] A successful payment settles the exact configured amount to the company's Bank and shows the customer a confirmation with the amount,
+      facture ID, and transaction hash.
+- [x] The widget reports the payment's outcome — success or failure, with the facture ID — to the merchant's page through the `onStatus`
+      callback.
 
-**As a** merchant **I want to** see the history of payments made through the widget **so that** I can track what my customers have paid
+#### Business Rules
 
-**Acceptance Criteria:**
+- [x] Configuring the widget with an unsupported payment token (including native POL) shows an explicit "unsupported token" message instead
+      of a payment form.
+- [x] The widget only requests an ERC-20 approval when the customer's existing allowance is insufficient for the configured amount.
+- [x] The facture ID must be 1-64 characters of letters, digits, and `- _ . / :` before use; an invalid value throws synchronously to the
+      merchant's own integration code rather than reaching the chain. _(system)_
 
-- [ ] The merchant can view the list of past payments made through the widget
-- [ ] Each entry shows at minimum the amount, the facture ID, and the status
+#### Edge & Error Cases
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🔲 Not started · **Dependencies:** US-PAYGATE-V0-003
+- [ ] A transaction confirmed on-chain is only reported as a successful payment when the Bank's deposit event for that payment is present in
+      the receipt. _(contract)_
+- [x] A transaction that reverts on-chain after broadcast is reported to the customer as failed, not successful.
+- [ ] A wallet-rejected payment shows a clear cancellation message, not the raw wallet/SDK error.
+- [ ] An on-chain revert (e.g. insufficient balance) shows a decoded, readable reason, not the raw contract/SDK error.
+- [ ] After a failed payment, the customer can retry without leaving the widget or the merchant reloading their page.
 
----
+**Dependencies:** US-PAYGATE-V0-002, a connected wallet, and a sufficient token balance
 
-## US-PAYGATE-V0-005: Recall (Recheck) a Payment's Status
+## US-PAYGATE-V0-004: Review Payment History
 
-**As a** merchant **I want to** ask CNC Pay again for a payment's status by facture ID **so that** I can find that payment if I wasn't able
-to record its status myself at payment time
+**As a** merchant\
+**I want to** see the payments made through the widget\
+**So that** I can track what my customers have paid without a separate backend record
 
-**Acceptance Criteria:**
+### Acceptance Criteria
 
-- [ ] The merchant can request a facture ID's status directly from CNC Pay (fallback, not the default path)
-- [ ] This lookup only works if the `txHash` was registered beforehand (US-PAYGATE-V0-003) — without it, nothing links the facture ID to a
-      transaction
+#### Happy Path
 
-**Priority:** P2 (High) · **Effort:** M · **Status:** 🔲 Not started · **Dependencies:** US-PAYGATE-V0-003
+- [x] The merchant can view a table of confirmed payments made through the widget, each showing its facture ID, date, amount and token, and
+      a link to the underlying transaction.
+- [x] Selecting a payment's transaction opens its on-chain detail — initiator, block, timestamp, status, decoded call, and events.
 
----
+#### Business Rules
 
-## Edge Cases (for team discussion)
+- [x] History is derived directly from the company's Bank contract's token-deposit events; no separate backend record exists to fall out of
+      sync.
+- [x] Only deposits carrying a decodable facture ID are listed; a plain, non-widget Bank deposit is excluded.
 
-Not decided yet — to review before considering v0 complete.
+#### Edge & Error Cases
 
-| Case                                       | Description                                                                                                                          | What needs deciding                                                                                                                                      | Proposal                                                                                                                                                                        |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing or empty facture ID                | The merchant mounts the widget without `data-facture-id`                                                                             | Should the widget refuse to render, or show an explicit error?                                                                                           | Show an explicit error, e.g.: _"Invalid configuration: no facture ID provided."_                                                                                                |
-| Token not configured                       | The merchant hasn't chosen a token on the widget yet                                                                                 | Is there a default token, or does the widget stay blocked until one is configured?                                                                       | Default token: USDC                                                                                                                                                             |
-| Customer closes the page mid-transaction   | The payment is pending (`en cours`) when the customer leaves or reloads the page                                                     | Does the merchant have a way to recover the real status afterward, or is the payment just lost from view?                                                | Yes, via an endpoint. Two options: a contract function that takes the facture ID and amount, or registering the `txHash` directly in the database as soon as MetaMask validates |
-| On-chain transaction failure (revert)      | The payment moves from "pending" to "failed"                                                                                         | Does the widget show the failure reason, or just "failed" with no detail?                                                                                | Show the reason, reworded to stay understandable for a human                                                                                                                    |
-| Duplicate submission                       | The customer clicks pay twice, or reopens the widget for the same facture ID                                                         | Nothing today prevents a double payment for the same facture ID                                                                                          | The loader is meant to prevent the double-click. Still open: how to handle a duplicate facture ID (the widget reopened on an already-paid facture)                              |
-| Zero or negative amount                    | Merchant-side configuration error                                                                                                    | Should the widget validate the amount before rendering anything?                                                                                         | Yes, validate, and show a warning on the widget                                                                                                                                 |
-| The `txHash` report never reaches CNC Pay  | The customer closes the page, or the network drops, between the transaction broadcasting and the `txHash` report (US-PAYGATE-V0-003) | Without that report, nothing links the facture ID to the transaction — how does the merchant find this payment in their history (US-PAYGATE-V0-004)?     | —                                                                                                                                                                               |
-| The `txHash` was never registered anywhere | Neither CNC Pay nor the merchant has a trace of the facture ID ↔ transaction link (Recall from US-PAYGATE-V0-005 is impossible)      | Two options to decide between: a contract function that takes the facture ID as a parameter (traceable on-chain), or a database record on CNC Pay's side | Same decision as above: a contract function that takes the facture ID and amount, or registering the `txHash` directly in the database as soon as MetaMask validates            |
+- [x] An empty history is shown as an explicit empty state, not an empty table with no explanation.
+- [x] A failed history read is shown as an explicit error instead of a silently empty or stale table.
 
----
+**Dependencies:** US-PAYGATE-V0-003
+
+## US-PAYGATE-V0-005: Recall a Payment's Status by Facture ID
+
+**As a** merchant\
+**I want to** look up a payment's status directly by facture ID\
+**So that** I can still find a payment if the widget's `onStatus` callback never reached my page
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [ ] A merchant can submit a facture ID and Bank address and receive that payment's real current status.
+
+#### Business Rules
+
+- [ ] The mechanism linking a facture ID to its on-chain transaction — a contract-level record or a database record — is decided and
+      implemented.
+
+**Dependencies:** US-PAYGATE-V0-003
+
+## Known Gaps
+
+- The Setup page's token selector still offers POL even though the widget always refuses it — any token whose ID resolves to the native
+  asset is treated as unsupported. A merchant who configures POL gets a working-looking embed snippet that shows every customer an
+  "Unsupported payment token" message instead of a payment form (`US-PAYGATE-V0-001`).
+- When a company has no deployed Bank contract, the Setup page still renders a complete embed snippet built around the literal placeholder
+  text `0x…` instead of an explicit "no Bank yet" state (`US-PAYGATE-V0-002`).
+- A payment is reported to the customer as successful whenever the transaction receipt's status is `success`, without confirming the Bank's
+  deposit event actually appears in that receipt. A transaction sent to an address with no contract code — a stale or misconfigured Bank
+  address — is treated by the EVM as a no-op value transfer and can report a false success (`US-PAYGATE-V0-003`).
+- Wallet-rejection and on-chain-revert errors are shown to the customer as the raw wallet/SDK error text, not a decoded, readable message
+  (`US-PAYGATE-V0-003`).
+- A failed payment is a dead end inside the widget: there is no way to retry without the merchant's own page re-invoking `CncPay.show()`
+  from scratch (`US-PAYGATE-V0-003`).
+- Payment history offers no filtering or pagination; a company with a long payment history sees every confirmed payment in one unbounded
+  table (`US-PAYGATE-V0-004`).
+- Recall/recheck by facture ID (`US-PAYGATE-V0-005`) has no implementation and no decided mechanism. The Reference page is a static
+  illustration of the intended request/response shape only.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `a8d1bf8fd6b6c597f9002cd9f93f92e45b320157`
 
-- [Integration setup view](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
+- [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
   [accepted-token configuration](../../../app/src/components/sections/PaymentGateView/TokenConfigCard.vue), a
   [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue), and their shared
-  [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-V0-001` and `002`).
-- [Payment history view](../../../app/src/views/team/[id]/PaymentGate/HistoryView.vue),
+  [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-V0-001`, `002`).
+- [Widget entry point](../../../app/src/widget/main.ts), [payment flow](../../../app/src/widget/payment.ts),
+  [widget root component](../../../app/src/widget/WidgetApp.vue), and the
+  [facture-ID calldata encoding](../../../app/src/utils/paymentGate/factureCalldata.ts) (`US-PAYGATE-V0-003`).
+- [History page](../../../app/src/views/team/[id]/PaymentGate/HistoryView.vue),
   [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue),
   [transaction-detail slide-over](../../../app/src/components/ui/TransactionDetailSlideover.vue), and
   [useFactureHistory](../../../app/src/composables/paymentGate/useFactureHistory.ts) (`US-PAYGATE-V0-004`).
-- [Recall/reference view](../../../app/src/views/team/[id]/PaymentGate/ReferenceView.vue) and its
-  [recheck-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-V0-005`).
+- [Reference page](../../../app/src/views/team/[id]/PaymentGate/ReferenceView.vue) and its
+  [recall-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-V0-005`).
+- [Current Bank contract](../../../contract/contracts/Bank.sol) — the on-chain target every payment settles into.
+- [Facture-ID calldata encoding tests](../../../app/src/utils/paymentGate/__tests__/factureCalldata.spec.ts) and the
+  [widget payment-flow tests](../../../app/src/widget/__tests__/payment.spec.ts).
 
 ## Related Documentation
 
+- [Bank contract behaviour](../../contracts/features/bank/README.md)
 - [Transaction History implementation](../../implementation/transaction-history/README.md)
+- [Product feature inventory](../README.md)
+
+_[← Back to feature inventory](../README.md)_
