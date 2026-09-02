@@ -22,6 +22,7 @@ import {
   type AccountClass,
   type AccountName
 } from './chartOfAccounts'
+import { buildPocketInstances } from './pocketInstances'
 import type { Address } from 'viem'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 
@@ -239,6 +240,9 @@ function foldBlankBucket(buckets: Map<string, AccountBucket>): AccountBucket[] {
 export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedger {
   const journal = buildJournal(entries)
   const groups = accumulateBuckets(journal)
+  // Deployment numbering is shared with the general-ledger view (see
+  // {@link ./pocketInstances}), so `Cash — Bank 2` names the same contract in both.
+  const instances = buildPocketInstances(entries)
 
   // Totals + the balanced check run on the **raw** (full-precision) sums: every
   // posting is internally balanced, so the raw debit/credit totals are exactly
@@ -279,7 +283,7 @@ export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedg
 
       trialBalance.push({
         account,
-        accountLabel: split && index > 0 ? `${account} ${index + 1}` : account,
+        accountLabel: instances.labelOf(account, bucket.instance),
         ...(bucket.instance ? { instance: bucket.instance } : {}),
         split,
         isPrimaryInstance: index === 0,

@@ -1,6 +1,7 @@
 import { filterByPeriod, money, dayLabel, periodLabel } from './presenter'
 import { netBalanceByAccount } from './generalLedger'
 import { ledgerRows, type LedgerRow, type LedgerView } from './ledgerPresenter'
+import { buildPocketInstances } from './pocketInstances'
 import { isDebitNormal } from './chartOfAccounts'
 import type { LedgerEntry } from './ledgerEntry'
 import type { AccountName } from './chartOfAccounts'
@@ -169,7 +170,9 @@ export function presentAccountLedger(
 ): LedgerView {
   const scoped = entriesForAccount(entries, account, from, to, scope)
   return {
-    rows: ledgerRows(scoped),
+    // Deployments are numbered off the whole book, not the drilled slice, so a
+    // redeployed pocket reads under the same number the trial balance gave it.
+    rows: ledgerRows(scoped, buildPocketInstances(entries)),
     total: total ?? accountBalance(scoped, typeof account === 'string' ? account : ''),
     entryCount: scoped.length
   }
