@@ -71,9 +71,8 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
-      :balance-account="drilldownBalanceAccount"
-      :opening="drilldownOpening"
-      :closing="drilldownClosing"
+      :balance="drilldownBalance"
+      :instances="drilldownInstances"
       columns-storage-key="cnc-accounting-balance-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
@@ -104,10 +103,9 @@ const balance = computed(() => presentBalance(acc.entries.value, asOf.value))
 const {
   open: drilldownOpen,
   selectedLine: drilldownLine,
-  balanceAccount: drilldownBalanceAccount,
-  opening: drilldownOpening,
-  closing: drilldownClosing,
+  balance: drilldownBalance,
   drilldownEntries,
+  instances: drilldownInstances,
   openFor,
   onExport: onDrilldownExport
 } = useLedgerDrilldown(acc.entries, () => ({ from: null, to: asOf.value }))

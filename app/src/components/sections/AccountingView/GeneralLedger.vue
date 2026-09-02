@@ -92,6 +92,7 @@ import {
   ledgerFeeTotal,
   ledgerAccounts,
   filterLedgerByAccount,
+  buildPocketInstances,
   FEE_FILTER,
   LEDGER_COLUMNS,
   type LedgerColumnKey
@@ -118,6 +119,10 @@ const categoryItems: PillItem[] = ledgerCategories.map((c) => ({ value: c, label
 
 const acc = useAccountingContext()
 
+// Which contract each cash-pocket leg moved, numbered over the whole book so a
+// redeployed pocket reads as "Cash — Bank 2" here exactly as in the trial balance.
+const pocketInstances = computed(() => buildPocketInstances(acc.entries.value))
+
 const route = useRoute()
 const router = useRouter()
 
@@ -125,11 +130,13 @@ const router = useRouter()
  * Jump to the Trial Balance for a clicked account — it reads the `account` query
  * param and auto-opens that account's drill-down (its own transactions).
  */
-function openInTrialBalance(account: string): void {
+function openInTrialBalance(account: string, instance?: string): void {
   router.push({
     name: 'accounting-trial',
     params: { id: route.params.id },
-    query: { account }
+    // A redeployed pocket carries the contract too, so the jump lands on that
+    // deployment's line rather than on the pocket's first one.
+    query: { account, ...(instance ? { instance } : {}) }
   })
 }
 
@@ -237,7 +244,9 @@ watch([filter, period, selectedAccounts, selectedCurrencies], reset, { deep: tru
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
   const slice = filteredByCurrency.value.slice(start, start + pageSize.value)
-  return isFeeFilter.value ? ledgerFeeRows(slice) : ledgerRows(slice)
+  return isFeeFilter.value
+    ? ledgerFeeRows(slice, pocketInstances.value)
+    : ledgerRows(slice, pocketInstances.value)
 })
 
 // A real date window is in play only when the picker isn't on "All time" (whose

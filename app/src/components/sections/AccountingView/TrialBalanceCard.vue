@@ -112,9 +112,8 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
-      :balance-account="drilldownBalanceAccount"
-      :opening="drilldownOpening"
-      :closing="drilldownClosing"
+      :balance="drilldownBalance"
+      :instances="drilldownInstances"
       columns-storage-key="cnc-accounting-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
@@ -212,10 +211,9 @@ const { exportPdf, exportExcel } = useAccountingExport()
 const {
   open: drilldownOpen,
   selectedLine: drilldownLine,
-  balanceAccount: drilldownBalanceAccount,
-  opening: drilldownOpening,
-  closing: drilldownClosing,
+  balance: drilldownBalance,
   drilldownEntries,
+  instances: drilldownInstances,
   openFor,
   onExport: onDrilldownExport
 } = useLedgerDrilldown(acc.entries, () => ({ from: null, to: asOf.value }))
@@ -241,20 +239,28 @@ const router = useRouter()
 
 /**
  * Auto-open the drill-down for an account arrived at from the General Ledger
- * (`?account=…`). We hold off until the books carry entries so the trial rows are
+ * (`?account=…`, plus `?instance=…` when the posting moved a redeployed pocket's
+ * later contract). We hold off until the books carry entries so the trial rows are
  * built and a split pocket opens with the right instance scope, then strip the query
  * so closing the modal is final and a reload doesn't reopen it. An account with no
  * matching row (e.g. one closed to a nil balance) still drills directly.
  */
 watch(
-  [() => route.query.account, () => acc.entries.value.length],
-  ([account, entryCount]) => {
+  [() => route.query.account, () => route.query.instance, () => acc.entries.value.length],
+  ([account, instance, entryCount]) => {
     if (typeof account !== 'string' || !account || entryCount === 0) return
-    const row = tableRows.value.find((r) => !r.isTotal && r.account === account)
+    const wanted = typeof instance === 'string' ? instance.toLowerCase() : null
+    const row = tableRows.value.find(
+      (r) =>
+        !r.isTotal &&
+        r.account === account &&
+        (!wanted || r.instance?.toLowerCase() === wanted || !r.instance)
+    )
     if (row) openDrilldown(row)
     else openFor(account, '')
     const query = { ...route.query }
     delete query.account
+    delete query.instance
     router.replace({ query })
   },
   { immediate: true }
