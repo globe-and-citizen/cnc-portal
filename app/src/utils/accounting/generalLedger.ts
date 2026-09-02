@@ -128,6 +128,15 @@ export function netBalanceByAccountRaw(entries: readonly LedgerEntry[]): Map<Acc
     if (entry.credit) {
       add(entry.credit, isDebitNormal(entry.credit) ? -entry.amountUsd : entry.amountUsd)
     }
+    // A folded Bank fee ({@link ./mergeBankFees}) drops its standalone posting and
+    // rides on the transfer as `mergedBankFee`. Re-book its two legs here so a
+    // merged feed nets exactly like the canonical one it stands in for — a no-op
+    // on the canonical feed, which never carries `mergedBankFee`.
+    const fee = entry.mergedBankFee
+    if (fee) {
+      add('Transaction Fee Expense', fee.amountUsd)
+      add('Cash — Bank', -fee.amountUsd)
+    }
   }
   return net
 }

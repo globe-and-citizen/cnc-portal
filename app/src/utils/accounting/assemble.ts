@@ -43,6 +43,7 @@ import {
   currentSherUsdRate
 } from '@/utils/accounting/sherRate'
 import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
+import { attachCreditBankInstances } from '@/utils/accounting/creditBankInstance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
 
@@ -304,7 +305,13 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     input.safeDepositRouterEvents?.safeDeposits?.items,
     input.currentSherMultiplier
   )
-  return settleWithdrawnSher(stamped, currentRate).sort((a, b) => a.timestamp - b.timestamp)
+  // Once every mapper has run and the Bank legs carry their deployments, place each
+  // Community Credit sweep on the Bank live at its time (it emits no Bank event of
+  // its own to say which — see {@link ./creditBankInstance}).
+  const settled = settleWithdrawnSher(stamped, currentRate).sort(
+    (a, b) => a.timestamp - b.timestamp
+  )
+  return attachCreditBankInstances(settled)
 }
 
 /**
