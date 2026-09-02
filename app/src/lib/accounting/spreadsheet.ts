@@ -26,7 +26,9 @@ import {
   ledgerExportTitle,
   resolveLedgerColumns,
   ledgerTotalRow,
-  type LedgerColumnKey
+  buildPocketInstances,
+  type LedgerColumnKey,
+  type PocketInstanceIndex
 } from '@/utils/accounting/ledgerPresenter'
 import { presentAccountLedger, accountLedgerTitle } from '@/utils/accounting/accountLedger'
 import { activityText } from '@/utils/accounting/describeEntry'
@@ -149,9 +151,16 @@ interface LedgerSheetOptions {
   includeBlank?: boolean
 }
 
-/** Display name for a drill-down: the account, or the aggregate's label. */
-function drillName(opts: LedgerSheetOptions): string {
-  return Array.isArray(opts.account) ? (opts.accountLabel ?? 'Ledger') : (opts.account as string)
+/**
+ * Display name for a drill-down: the aggregate's label, or a single account under
+ * its pocket-deployment label (`Cash — Bank 2`) when a redeployed pocket was
+ * drilled — so the two deployments never export under the same heading.
+ */
+function drillName(opts: LedgerSheetOptions, instances: PocketInstanceIndex): string {
+  if (typeof opts.account === 'string') {
+    return instances.labelOf(opts.account, opts.instance ?? undefined)
+  }
+  return opts.accountLabel ?? 'Ledger'
 }
 
 function ledgerSheet(
@@ -169,7 +178,7 @@ function ledgerSheet(
   return [
     [
       opts.account
-        ? accountLedgerTitle(drillName(opts), opts.from, opts.to)
+        ? accountLedgerTitle(drillName(opts, buildPocketInstances(acc.entries)), opts.from, opts.to)
         : ledgerExportTitle(opts.filter, opts.from, opts.to)
     ],
     [],
