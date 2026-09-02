@@ -37,13 +37,13 @@ names the current, and so far only, delivery boundary of this capability — not
 
 ## Status Overview
 
-| User Story        | Title                                   | Actor           | Status         |
-| ----------------- | --------------------------------------- | --------------- | -------------- |
-| US-PAYGATE-V0-001 | Configure the Widget's Accepted Token   | Merchant        | 🚧 In Progress |
-| US-PAYGATE-V0-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation  |
-| US-PAYGATE-V0-003 | Pay Through the Widget                  | Layer8 customer | 🧪 Validation  |
-| US-PAYGATE-V0-004 | Review Payment History                  | Merchant        | 🧪 Validation  |
-| US-PAYGATE-V0-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft       |
+| User Story        | Title                                   | Actor           | Status        |
+| ----------------- | --------------------------------------- | --------------- | ------------- |
+| US-PAYGATE-V0-001 | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation |
+| US-PAYGATE-V0-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation |
+| US-PAYGATE-V0-003 | Pay Through the Widget                  | Layer8 customer | 🧪 Validation |
+| US-PAYGATE-V0-004 | Review Payment History                  | Merchant        | 🧪 Validation |
+| US-PAYGATE-V0-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft      |
 
 ## US-PAYGATE-V0-001: Configure the Widget's Accepted Token
 
