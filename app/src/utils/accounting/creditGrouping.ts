@@ -73,11 +73,16 @@ export function creditGroupKey(entry: LedgerEntry): string | null {
   const round = entry.creditOfferId
   const phase = PHASE_OF[entry.useCase]
   if (!round || !phase) return null
+  // An offer id repeats across a redeployed FixedReturn contract, so the round is
+  // keyed by the Bank deployment it settled in as well ({@link ./creditBankInstance});
+  // two loans that reused offer #1 on different Banks never merge. Absent (the Bank
+  // never redeployed) it drops out, and the id alone groups the sole deployment.
+  const deployment = entry.creditBankInstance?.toLowerCase() ?? ''
   // A round funds once, however long it took to fill; a repayment or a refund is
   // a payment run of its own, so its timestamp keeps the installments apart.
   return phase === 'funded'
-    ? `credit-funded|${round}`
-    : `credit-${phase}|${round}|${entry.timestamp}`
+    ? `credit-funded|${round}|${deployment}`
+    : `credit-${phase}|${round}|${deployment}|${entry.timestamp}`
 }
 
 /** One rendered journal line: an account and what the phase nets it to. */

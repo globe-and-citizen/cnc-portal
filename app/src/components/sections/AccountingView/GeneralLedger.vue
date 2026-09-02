@@ -153,7 +153,7 @@ const filtered = computed(() =>
 
 // The distinct accounts currently in view. The selector is shown once there is
 // more than one to choose between (a single-account view needs no filter).
-const availableAccounts = computed(() => ledgerAccounts(filtered.value))
+const availableAccounts = computed(() => ledgerAccounts(filtered.value, pocketInstances.value))
 const showAccountFilter = computed(() => availableAccounts.value.length >= 2)
 
 // Selected accounts (defaults to all). Reconciled whenever the available set
@@ -188,7 +188,7 @@ const activeAccounts = computed<string[] | null>(() => {
 const byAccount = computed(() =>
   activeAccounts.value === null
     ? filtered.value
-    : filterLedgerByAccount(filtered.value, activeAccounts.value)
+    : filterLedgerByAccount(filtered.value, activeAccounts.value, pocketInstances.value)
 )
 
 // The distinct currencies currently in view. The selector is shown only when at

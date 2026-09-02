@@ -141,6 +141,15 @@ export interface LedgerEntry {
    */
   creditOfferId?: string
   /**
+   * The Bank deployment a `UC-CREDIT-*` round settled in, back-filled once every
+   * mapper has run (see {@link ./creditBankInstance}). Two rounds can share a
+   * {@link creditOfferId} — a redeployed FixedReturn contract restarts its offer
+   * numbering — so the offer id alone is not unique across deployments; this keeps
+   * their postings from folding together (see {@link ./creditGrouping}). Absent
+   * until the Bank has been redeployed, where there is nothing to disambiguate.
+   */
+  creditBankInstance?: Address
+  /**
    * What the whole round still owes its lenders — principal plus recognised fixed
    * return — **after** this posting. Carried on the repayment and refund legs
    * (`UC-CREDIT-03` / `UC-CREDIT-04`), where it lets the journal say how much an

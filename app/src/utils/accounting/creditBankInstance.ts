@@ -17,6 +17,12 @@
  * begun by then. The sweep leaves no event of its own, so the Bank's observed
  * activity is the best signal available; a credit that funds a Bank with no other
  * activity of its own can't be placed and stays folded into the first Bank.
+ *
+ * The same deployment is recorded on {@link LedgerEntry.creditBankInstance} for
+ * **every** credit posting of the round — including the interest legs, which carry
+ * no Bank leg of their own — so two rounds that share an offer id across a
+ * redeployed FixedReturn contract keep their postings apart (see
+ * {@link ./creditGrouping}) instead of folding into one.
  */
 import type { Address } from 'viem'
 import type { LedgerEntry } from './ledgerEntry'
@@ -63,12 +69,13 @@ export function attachCreditBankInstances(entries: readonly LedgerEntry[]): Ledg
 
   return entries.map((entry) => {
     if (!isCreditPosting(entry)) return entry
-    if (entry.debit === BANK && !entry.debitInstance) {
-      return { ...entry, debitInstance: activeAt(entry.timestamp) }
-    }
-    if (entry.credit === BANK && !entry.creditInstance) {
-      return { ...entry, creditInstance: activeAt(entry.timestamp) }
-    }
-    return entry
+    // The Bank the round settled in, recorded on every leg (Bank leg or not) so the
+    // round groups by deployment, not by an offer id that repeats across redeploys.
+    // An instance the mapper already knew wins over the timestamp inference.
+    const settledIn = entry.debitInstance ?? entry.creditInstance ?? activeAt(entry.timestamp)
+    const stamped = { ...entry, creditBankInstance: settledIn }
+    if (entry.debit === BANK && !entry.debitInstance) stamped.debitInstance = settledIn
+    if (entry.credit === BANK && !entry.creditInstance) stamped.creditInstance = settledIn
+    return stamped
   })
 }
