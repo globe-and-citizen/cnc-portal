@@ -234,20 +234,25 @@ export function presentAccountLedger(
   total?: string,
   scope?: InstanceScope
 ): LedgerView {
-  const scoped = entriesForAccount(entries, account, from, to, scope)
-  // Fold each Bank fee into its transfer for display, as the general ledger does,
-  // so a transfer-plus-fee reads as one compound entry rather than two rows. The
-  // total stays on the un-merged slice, whose net is unchanged by the fold.
-  const display = mergeBankFees(scoped)
+  // Fold each Bank fee into its transfer on the **whole** book first, so the fee
+  // leg rides on the transfer into every account's drill-down — the receiver of a
+  // Bank → Bank transfer then reads the same compound entry the general ledger
+  // shows (Dr dest net · Dr fee · Cr Bank gross), even though the fee was skimmed
+  // on the sender's leg, which is outside the receiver's scope. Scoping *after* the
+  // fold keeps the fee attached; scoping first would strip the standalone fee
+  // posting out of the receiver's slice and drop the leg. The fee still nets only
+  // against the Bank that paid it ({@link scopedMovement}), so the receiver's
+  // balance is unchanged — the extra leg is presentation, muted like the facing leg.
+  const scoped = entriesForAccount(mergeBankFees(entries), account, from, to, scope)
   return {
     // Deployments are numbered off the whole book, not the drilled slice, so a
     // redeployed pocket reads under the same number the trial balance gave it.
-    rows: ledgerRows(display, buildPocketInstances(entries)),
+    rows: ledgerRows(scoped, buildPocketInstances(entries)),
     // Net the scoped slice on its own instance so a redeployed pocket's line
     // reconciles; an aggregate (a list of accounts) keeps the caller's figure.
     total:
       total ?? (typeof account === 'string' ? money(scopedNet(scoped, account, scope)) : money(0)),
-    entryCount: display.length
+    entryCount: scoped.length
   }
 }
 

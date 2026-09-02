@@ -111,7 +111,10 @@ describe('accountLedger — a redeployed Bank with an internal Bank → Bank tra
     expect(bank2.total).toBe(money(110))
   })
 
-  it('shows the fee with the transfer on the sender (which paid it), not the receiver', () => {
+  it('shows the fee leg on both sides of the transfer, as the general ledger does', () => {
+    // The transfer-with-fee reads as the same compound entry everywhere it appears:
+    // the sender's drill-down and the receiver's alike show the Transaction Fee
+    // Expense leg, matching the general-ledger journal (drill-down parity).
     const bank1 = presentAccountLedger(book, 'Cash — Bank', null, null, undefined, {
       instance: BANK1,
       includeBlank: true
@@ -120,7 +123,21 @@ describe('accountLedger — a redeployed Bank with an internal Bank → Bank tra
       instance: BANK2
     })
     expect(bank1.rows.some((r) => r.account === 'Transaction Fee Expense')).toBe(true)
-    expect(bank2.rows.some((r) => r.account === 'Transaction Fee Expense')).toBe(false)
+    expect(bank2.rows.some((r) => r.account === 'Transaction Fee Expense')).toBe(true)
+  })
+
+  it('nets the fee only against the Bank that paid it, so the receiver is unchanged', () => {
+    // Bank 1 (sender) carries the $0.50 fee into its balance ($99.50); Bank 2
+    // (receiver) shows the leg but keeps its $110 — the fee never touches it.
+    const bank1 = presentAccountLedger(book, 'Cash — Bank', null, null, undefined, {
+      instance: BANK1,
+      includeBlank: true
+    })
+    const bank2 = presentAccountLedger(book, 'Cash — Bank', null, null, undefined, {
+      instance: BANK2
+    })
+    expect(bank1.total).toBe(money(99.5))
+    expect(bank2.total).toBe(money(110))
   })
 
   it('brings only the scoped deployment forward in the opening balance', () => {
