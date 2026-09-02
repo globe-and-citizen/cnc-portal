@@ -128,7 +128,7 @@ const LEDGER_SHEET_CELL: Record<
   action: (r) => r.cat,
   transaction: (r) => r.label,
   activity: (r, resolveName) => activityText(r.activity, resolveName),
-  account: (r) => r.account,
+  account: (r) => r.accountLabel ?? r.account,
   dr: (r) => usd(r.dr),
   cr: (r) => usd(r.cr),
   currency: (r) => r.currency,
