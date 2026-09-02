@@ -126,6 +126,15 @@
             <span class="font-mono">{{ shortTxHash }}</span>
           </div>
         </UCard>
+        <UButton
+          v-if="state.confirmedStatus === 'failed'"
+          block
+          color="neutral"
+          variant="soft"
+          label="Try again"
+          data-test="cnc-pay-widget-retry-button"
+          @click="emit('retry')"
+        />
       </div>
     </template>
   </UCard>
@@ -163,7 +172,7 @@ const props = defineProps<{
   state: WidgetPaymentState
 }>()
 
-const emit = defineEmits<{ pay: [] }>()
+const emit = defineEmits<{ pay: []; retry: [] }>()
 
 const paneItems: { label: string; value: WidgetPane }[] = [
   { label: '1 · Review', value: 'review' },
