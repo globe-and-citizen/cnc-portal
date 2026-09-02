@@ -24,7 +24,10 @@
 </template>
 
 <script setup lang="ts">
-const tokenOptions = ['USDC', 'USDCe', 'POL'] as const
+// POL isn't offered: native transfers can't carry a facture ID — Bank.sol's
+// receive() reverts on non-empty calldata and has no fallback() — so v0
+// payments only support depositToken() targets (see src/widget/main.ts).
+const tokenOptions = ['USDC', 'USDCe'] as const
 
 const selectedToken = defineModel<'USDC' | 'USDCe' | 'POL'>('selectedToken', { required: true })
 </script>

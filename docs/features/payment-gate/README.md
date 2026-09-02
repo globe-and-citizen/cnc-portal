@@ -199,7 +199,7 @@ names the current, and so far only, delivery boundary of this capability — not
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `554f2b9b102ac1ee6a3f6fc6ebba8e61686c31d3`
+**Implementation evidence reviewed against:** `2c3d8d5a81b86f4d008f4a1a0f893c073dcd71e6`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
