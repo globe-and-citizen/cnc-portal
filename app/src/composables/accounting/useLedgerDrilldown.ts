@@ -5,8 +5,10 @@ import {
   accountBalance,
   accountNet,
   accountOpening,
+  type AccountOpening,
   type InstanceScope
 } from '@/utils/accounting/accountLedger'
+import { buildPocketInstances } from '@/utils/accounting/pocketInstances'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
 import type { LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
@@ -17,6 +19,18 @@ import type { SectionSpec } from '@/utils/accounting/exportSpec'
 export interface DrilldownBounds {
   from: Date | null
   to: Date | null
+}
+
+/**
+ * The running "Balance" column of a drill-down: the one account it runs on, what
+ * that account carries into the window and where it is left once every posting is
+ * booked. An aggregate line carries an empty `account` — accounts of mixed classes
+ * share no natural side, so there is no balance to run.
+ */
+export interface DrilldownBalance {
+  account: string
+  opening: AccountOpening
+  closing: string
 }
 
 /** The statement line currently shown in the drill-down modal. */
@@ -39,6 +53,10 @@ export function useLedgerDrilldown(
   const targetScope = ref<InstanceScope | undefined>(undefined)
 
   const isAggregate = computed(() => Array.isArray(target.value))
+
+  // Deployment numbering over the whole book — the drilled slice alone can't tell
+  // which contract of a redeployed pocket it holds.
+  const instances = computed(() => buildPocketInstances(entries.value))
 
   // The one account the running-balance column runs on — empty for an aggregate,
   // whose accounts span classes and so share no natural side.
@@ -131,13 +149,19 @@ export function useLedgerDrilldown(
     }
   }
 
+  // The three running-balance figures travel together, as one prop on the modal.
+  const balance = computed<DrilldownBalance>(() => ({
+    account: balanceAccount.value,
+    opening: opening.value,
+    closing: closing.value
+  }))
+
   return {
     open,
     selectedLine,
-    balanceAccount,
-    opening,
-    closing,
+    balance,
     drilldownEntries,
+    instances,
     openFor,
     onExport
   }
