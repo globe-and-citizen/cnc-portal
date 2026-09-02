@@ -6,7 +6,7 @@
 
   Served by Vite's normal dev server: `npm run dev:widget` opens this
   automatically. `entry.ts` imports the widget's real entry (aliased as
-  `widget-entry`, since it lives in `../src/widget/main.ts` — see
+  `widget-entry`, since it lives over in `src/widget/main.ts` — see
   vite.widget.config.ts) as a live ES module with HMR, exactly like the main
   app's `index.html` does for `src/main.ts`. It does not exercise the actual
   built IIFE bundle; run `npm run build:widget` and serve `dist-widget/`
@@ -29,7 +29,7 @@
       CncPay.setFactureId('order_dev')
       CncPay.setAmount('10.00')
       CncPay.setOnStatus((status, extra) =>
-        console.log('[widget-dev] payment status', status, extra)
+        console.log('[widget/dev] payment status', status, extra)
       )
       CncPay.show('#cnc-pay')
     </script>

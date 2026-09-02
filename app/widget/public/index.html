@@ -1,0 +1,75 @@
+<!doctype html>
+<!--
+  Static mount point for the widget's hosting domain — `publicDir` in
+  `vite.widget.config.ts` copies this into `dist-widget/` on `build:widget`
+  only (not during `dev:widget`, which serves `widget/dev/index.html`
+  instead). Exists so visiting the bare domain shows the widget itself
+  instead of the static file server's raw directory listing.
+
+  No wrapper header/badge/copy of any kind: `WidgetApp.vue` already renders
+  its own complete "CNC Pay" card (see `PaymentGateWidgetView.vue`), so
+  anything added here would only duplicate it — and duplicated markup is
+  exactly what drifts from the real design system over time. Nothing
+  written here means nothing to keep in sync, ever.
+
+  Loads the real built `widget.js` sitting right next to this file (not the
+  dev-mode ES module `widget/dev/index.html` uses) via a plain, non-async
+  script tag — non-async so `window.CncPay` is guaranteed to exist by the
+  time the next script tag runs.
+
+  Demo values only (fake bank address). The Pay button is intercepted below
+  before it ever reaches the widget's real payment flow. Without that,
+  clicking it on the production build would prompt a real visitor's real
+  wallet to sign a real on-chain `approve()` against the zero-address bank,
+  spending real gas on a transaction guaranteed to fail — confirmed by
+  actually clicking it and watching that happen. The click is caught in the
+  capture phase on `document`, before it reaches the button inside the
+  widget's shadow root (`composedPath()`, unlike `event.target`, can see
+  inside it), so `payWithWidget` (`payment.ts`) never runs — a constraint
+  local to this one static page, not a change to the widget itself.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>CNC Pay widget</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cnc-pay" style="width: 100%; max-width: 28rem"></div>
+    <script
+      src="/widget.js"
+      data-bank="0x0000000000000000000000000000000000000000"
+      data-token="USDC"
+    ></script>
+    <script>
+      document.addEventListener(
+        'click',
+        (event) => {
+          const isPayButton = event
+            .composedPath()
+            .some(
+              (el) => el instanceof HTMLButtonElement && el.textContent?.trim().startsWith('Pay ')
+            )
+          if (!isPayButton) return
+          event.preventDefault()
+          event.stopPropagation()
+        },
+        true
+      )
+
+      CncPay.setFactureId('demo_preview')
+      CncPay.setAmount('10.00')
+      CncPay.show('#cnc-pay')
+    </script>
+  </body>
+</html>
