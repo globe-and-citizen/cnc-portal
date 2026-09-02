@@ -23,6 +23,7 @@
         txHash: pane === 'confirmed' && confirmedStatus === 'success' ? mockTxHash : undefined
       }"
       @pay="simulate"
+      @retry="simulate"
     />
   </div>
 </template>

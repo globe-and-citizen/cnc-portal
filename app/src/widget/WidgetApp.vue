@@ -6,6 +6,7 @@
     :order="{ amount, factureId }"
     :state="{ pane, paymentStep, confirmedStatus, errorMessage, txHash }"
     @pay="runPayment"
+    @retry="runPayment"
   />
 </template>
 
