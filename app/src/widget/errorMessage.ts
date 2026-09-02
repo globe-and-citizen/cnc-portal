@@ -50,6 +50,8 @@ export function describeWidgetError(error: unknown): string {
   try {
     const decorated = getContractError(error as Parameters<typeof getContractError>[0], {
       abi: DEPOSIT_ERRORS_ABI,
+      // We never have the real decoded args here — only the raw revert bytes.
+      args: [],
       // Deliberately not `'depositToken'`: that name IS in `DEPOSIT_ERRORS_ABI`
       // (via `bankAbi`), and `getContractError` tries to format `args` — which
       // we don't have — against that real function's signature, crashing
