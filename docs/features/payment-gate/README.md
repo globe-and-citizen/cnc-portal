@@ -27,8 +27,8 @@ names the current, and so far only, delivery boundary of this capability — not
 
 ## Lifecycle
 
-1. The merchant selects the token the widget will accept on the Setup page and gets a copyable embed snippet built around their team's Bank
-   address.
+1. The merchant selects the token the widget will accept on the Setup page and gets a copyable embed snippet built around their company's
+   Bank address.
 2. The merchant pastes that snippet onto their own page. Whatever triggers checkout for a specific order calls
    `CncPay.setFactureId`/`setAmount`/`show()` with that order's real ID and amount.
 3. The widget shows a payment recap (amount and facture ID), then the customer pays.
@@ -68,20 +68,20 @@ names the current, and so far only, delivery boundary of this capability — not
 ## US-PAYGATE-V0-002: Embed the Widget on the Merchant's Page
 
 **As a** merchant (Layer8)\
-**I want to** copy a ready-to-use script snippet carrying my team's Bank address and configured token\
+**I want to** copy a ready-to-use script snippet carrying my company's Bank address and configured token\
 **So that** I can accept payments on my own page without creating or managing a separate account or key
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] The merchant can view and copy their team's Bank address.
+- [x] The merchant can view and copy their company's Bank address.
 - [x] The merchant can view and copy a complete embed snippet — script tag, mount point, and example checkout wiring — reflecting the
       current Bank address and selected token.
 
 #### Business Rules
 
-- [x] The Bank address shown is the team's own existing Bank contract; embedding the widget requires no separate account or key.
+- [x] The Bank address shown is the company's own existing Bank contract; embedding the widget requires no separate account or key.
 
 #### Edge & Error Cases
 
@@ -108,7 +108,7 @@ names the current, and so far only, delivery boundary of this capability — not
 #### Happy Path
 
 - [x] The widget shows a payment recap — amount and facture ID — before the customer pays.
-- [x] A successful payment settles the exact configured amount to the team's Bank and shows the customer a confirmation with the amount,
+- [x] A successful payment settles the exact configured amount to the company's Bank and shows the customer a confirmation with the amount,
       facture ID, and transaction hash.
 - [x] The widget reports the payment's outcome — success or failure, with the facture ID — to the merchant's page through the `onStatus`
       callback.
@@ -148,7 +148,7 @@ names the current, and so far only, delivery boundary of this capability — not
 
 #### Business Rules
 
-- [x] History is derived directly from the team's Bank contract's token-deposit events; no separate backend record exists to fall out of
+- [x] History is derived directly from the company's Bank contract's token-deposit events; no separate backend record exists to fall out of
       sync.
 - [x] Only deposits carrying a decodable facture ID are listed; a plain, non-widget Bank deposit is excluded.
 
