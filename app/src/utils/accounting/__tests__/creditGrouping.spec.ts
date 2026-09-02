@@ -129,6 +129,49 @@ describe('credit grouping', () => {
     ])
   })
 
+  it('keeps two loans that reused an offer id on different Banks apart', () => {
+    // A redeployed FixedReturn restarts its offer numbering, so loan #1 on the
+    // first Bank and loan #1 on the second share a creditOfferId; the Bank they
+    // settled in is what tells them apart (see ./creditBankInstance).
+    const rows = ledgerRows([
+      deposit({ creditBankInstance: BANK_1 as `0x${string}` }),
+      deposit({
+        id: 'fl-b2',
+        timestamp: 200,
+        debitInstance: BANK_2 as `0x${string}`,
+        creditBankInstance: BANK_2 as `0x${string}`,
+        amountUsd: 500,
+        rawAmount: '500000000'
+      })
+    ])
+    expect(rows.filter((r) => r.isFirst)).toHaveLength(2)
+    expect(shape(rows)).toEqual([
+      ['Cash — Bank', '$800.00', ''],
+      ['Loan Payable', '', '$800.00'],
+      ['Cash — Bank', '$500.00', ''],
+      ['Loan Payable', '', '$500.00']
+    ])
+  })
+
+  it('still folds an interest leg into its round when the settled Bank is stamped', () => {
+    // The interest leg carries no Bank leg of its own, so it must fold on the
+    // round's stamped deployment, not fall out into a posting of its own.
+    const rows = ledgerRows([
+      deposit({
+        debitInstance: BANK_2 as `0x${string}`,
+        creditBankInstance: BANK_2 as `0x${string}`
+      }),
+      interestOwed({ creditBankInstance: BANK_2 as `0x${string}` })
+    ])
+    expect(rows.filter((r) => r.isFirst)).toHaveLength(1)
+    expect(shape(rows)).toEqual([
+      ['Cash — Bank', '$800.00', ''],
+      ['Interest Expense', '$80.00', ''],
+      ['Loan Payable', '', '$800.00'],
+      ['Interest Payable', '', '$80.00']
+    ])
+  })
+
   it('renders a repayment on three lines, the two debits on one cash credit', () => {
     const rows = ledgerRows([principalBack(), interestPaid()])
     expect(shape(rows)).toEqual([

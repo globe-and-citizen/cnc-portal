@@ -82,9 +82,49 @@ describe('attachCreditBankInstances', () => {
     expect(out.find((e) => e.id === 'r1')?.creditInstance).toBe(BANK2)
   })
 
+  it('records the settled Bank on an interest leg that has no Bank leg of its own', () => {
+    // UC-CREDIT-05 debits Interest Expense and credits Interest Payable, so neither
+    // leg carries a Bank instance — yet the round it belongs to still settled in one.
+    const interest: LedgerEntry = {
+      id: 'i1',
+      timestamp: 300,
+      useCase: 'UC-CREDIT-05',
+      debit: 'Interest Expense',
+      credit: 'Interest Payable',
+      amountUsd: 1,
+      token: 'usdc',
+      rawAmount: '1000000',
+      internal: false,
+      memo: 'Fixed return owed',
+      enrichment: 'not-applicable'
+    }
+    const out = attachCreditBankInstances([
+      bankMove('b1', BANK1, 100),
+      bankMove('b2', BANK2, 200),
+      interest
+    ])
+    const stamped = out.find((e) => e.id === 'i1')
+    expect(stamped?.creditBankInstance).toBe(BANK2)
+    // The accounting legs are untouched — the field is grouping metadata only.
+    expect(stamped?.debitInstance).toBeUndefined()
+    expect(stamped?.creditInstance).toBeUndefined()
+  })
+
+  it('records the settled Bank on the funding leg alongside its Bank instance', () => {
+    const out = attachCreditBankInstances([
+      bankMove('b1', BANK1, 100),
+      bankMove('b2', BANK2, 200),
+      creditFunded('c1', 300)
+    ])
+    const stamped = out.find((e) => e.id === 'c1')
+    expect(stamped?.debitInstance).toBe(BANK2)
+    expect(stamped?.creditBankInstance).toBe(BANK2)
+  })
+
   it('leaves the leg alone when the Bank was never redeployed', () => {
     const out = attachCreditBankInstances([bankMove('b1', BANK1, 100), creditFunded('c1', 300)])
     expect(out.find((e) => e.id === 'c1')?.debitInstance).toBeUndefined()
+    expect(out.find((e) => e.id === 'c1')?.creditBankInstance).toBeUndefined()
   })
 
   it('never overwrites an instance the mapper already knew', () => {

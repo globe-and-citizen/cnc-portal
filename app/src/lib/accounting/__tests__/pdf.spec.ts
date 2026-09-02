@@ -164,6 +164,55 @@ describe('buildTables (section selection)', () => {
     expect(ledger.body.at(-1)!.some((c) => c === '$100.00')).toBe(true)
   })
 
+  it('titles a redeployed pocket drill under its deployment label (Cash — Bank 2)', () => {
+    // Two Bank deployments, so the second reads "Cash — Bank 2"; drilling it must
+    // not export under the plain "Cash — Bank" heading the first deployment uses.
+    const BANK_2 = '0x2222222222222222222222222222222222222222'
+    const twoBanks = assembleCncAccounting({
+      contracts: [
+        { type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] },
+        { type: 'Bank', address: BANK_2 as Address, deployer: BANK_2 as Address, admins: [] }
+      ],
+      bankEvents: {
+        bankDeposits: { items: [] },
+        bankTokenDeposits: {
+          items: [
+            {
+              id: 'bd1',
+              contractAddress: BANK,
+              depositor: CLIENT,
+              token: USDC_ADDRESS,
+              amount: '100000000',
+              timestamp: 100
+            },
+            {
+              id: 'bd2',
+              contractAddress: BANK_2,
+              depositor: CLIENT,
+              token: USDC_ADDRESS,
+              amount: '50000000',
+              timestamp: 200
+            }
+          ]
+        },
+        bankTransfers: { items: [] },
+        bankTokenTransfers: { items: [] },
+        bankDividendDistributionTriggereds: { items: [] },
+        bankFeePaids: { items: [] },
+        bankOwnershipTransferreds: { items: [] },
+        rawContractTokenTransfers: { items: [] }
+      }
+    })
+    const [first] = buildTables(twoBanks, [
+      { key: 'ledger', account: 'Cash — Bank', instance: BANK }
+    ])
+    const [second] = buildTables(twoBanks, [
+      { key: 'ledger', account: 'Cash — Bank', instance: BANK_2 }
+    ])
+    expect(first.title).toBe('General Ledger — Cash — Bank')
+    expect(second.title).toBe('General Ledger — Cash — Bank 2')
+  })
+
   it('drills an aggregate line with its label and supplied total (Retained earnings)', () => {
     const [ledger] = buildTables(sampleBooks(), [
       {
