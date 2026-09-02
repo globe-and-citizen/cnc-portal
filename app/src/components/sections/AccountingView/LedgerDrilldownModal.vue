@@ -74,7 +74,7 @@ import {
   type PocketInstanceIndex
 } from '@/utils/accounting/ledgerPresenter'
 import {
-  accountNet,
+  scopedNet,
   openingRow,
   withRunningBalance,
   NO_OPENING
@@ -136,10 +136,12 @@ const pageRows = computed(() => {
 
   // Entries read oldest-first: the page opens on what the account was left
   // standing at by everything above it — the balance carried into the window
-  // plus the pages already turned.
+  // plus the pages already turned. Scoped to the drilled deployment, so a
+  // redeployed pocket's line reconciles (a Bank → Bank move counts on one side).
+  const scope = props.balance?.scope
   const opening = props.balance?.opening ?? NO_OPENING
-  const carried = opening.balance + accountNet(props.entries.slice(0, start), account)
-  const walked = withRunningBalance(rows, account, carried)
+  const carried = opening.balance + scopedNet(props.entries.slice(0, start), account, scope)
+  const walked = withRunningBalance(rows, account, carried, scope)
   // The "Opening balance" line heads the ledger, so it belongs to page one.
   return start === 0 ? [openingRow(opening), ...walked] : walked
 })

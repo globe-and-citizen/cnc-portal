@@ -2,13 +2,13 @@ import { computed, ref, type Ref } from 'vue'
 import { useAccountingExport } from './useAccountingExport'
 import {
   entriesForAccount,
-  accountBalance,
-  accountNet,
+  scopedNet,
   accountOpening,
   type AccountOpening,
   type InstanceScope
 } from '@/utils/accounting/accountLedger'
 import { buildPocketInstances } from '@/utils/accounting/pocketInstances'
+import { mergeBankFees } from '@/utils/accounting/mergeBankFees'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
 import type { LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
@@ -31,6 +31,9 @@ export interface DrilldownBalance {
   account: string
   opening: AccountOpening
   closing: string
+  /** The pocket-instance scope the balance runs within (a redeployed pocket's own
+   *  deployment); the running-balance walk counts only the legs on this instance. */
+  scope?: InstanceScope
 }
 
 /** The statement line currently shown in the drill-down modal. */
@@ -62,19 +65,23 @@ export function useLedgerDrilldown(
   // whose accounts span classes and so share no natural side.
   const balanceAccount = computed(() => (isAggregate.value ? '' : (target.value as string)))
 
-  // The postings composing the drilled-in line, over the statement's own window.
+  // The postings composing the drilled-in line, over the statement's own window,
+  // with each Bank fee folded into its transfer ({@link mergeBankFees}) — so a
+  // transfer-plus-fee reads as one compound entry here exactly as in the general
+  // ledger, instead of two separate rows. The net roll-up stays correct: a folded
+  // fee is re-booked in {@link netBalanceByAccountRaw}.
   const drilldownEntries = computed(() => {
     const t = target.value
     if (!t || (Array.isArray(t) && t.length === 0)) return []
     const { from, to } = bounds()
-    return entriesForAccount(entries.value, t, from, to, targetScope.value)
+    return mergeBankFees(entriesForAccount(entries.value, t, from, to, targetScope.value))
   })
 
   // A single account nets from its own postings; an aggregate can't (mixed
   // classes), so it keeps the figure the line already shows.
   const total = computed(() =>
     typeof target.value === 'string' && target.value
-      ? accountBalance(drilldownEntries.value, target.value)
+      ? money(scopedNet(drilldownEntries.value, target.value, targetScope.value))
       : lineTotal.value
   )
 
@@ -97,7 +104,10 @@ export function useLedgerDrilldown(
   // figure at the foot of the Balance column.
   const closing = computed(() =>
     balanceAccount.value
-      ? money(opening.value.balance + accountNet(drilldownEntries.value, balanceAccount.value))
+      ? money(
+          opening.value.balance +
+            scopedNet(drilldownEntries.value, balanceAccount.value, targetScope.value)
+        )
       : total.value
   )
 
@@ -153,7 +163,8 @@ export function useLedgerDrilldown(
   const balance = computed<DrilldownBalance>(() => ({
     account: balanceAccount.value,
     opening: opening.value,
-    closing: closing.value
+    closing: closing.value,
+    ...(targetScope.value ? { scope: targetScope.value } : {})
   }))
 
   return {
