@@ -118,8 +118,8 @@ names the current, and so far only, delivery boundary of this capability — not
 - [x] Configuring the widget with an unsupported payment token (including native POL) shows an explicit "unsupported token" message instead
       of a payment form.
 - [x] The widget only requests an ERC-20 approval when the customer's existing allowance is insufficient for the configured amount.
-- [x] The facture ID is validated against a short-identifier format before use; an invalid value throws synchronously to the merchant's own
-      integration code rather than reaching the chain. _(system)_
+- [x] The facture ID must be 1-64 characters of letters, digits, and `- _ . / :` before use; an invalid value throws synchronously to the
+      merchant's own integration code rather than reaching the chain. _(system)_
 
 #### Edge & Error Cases
 
