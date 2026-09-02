@@ -4,7 +4,7 @@ import type { Component } from 'vue'
 import MainContractTable from '../MainContractTable.vue'
 import { useBodIsMember } from '@/composables/bod/reads'
 import { useGetBodActionsQuery } from '@/queries'
-import * as utils from '@/utils'
+import * as contractReads from '@/composables/contracts/readTeamContracts'
 
 const CONTRACTS = [
   { address: '0x0000000000000000000000000000000000000001', type: 'Bank', deployer: '0xDeployer' },
@@ -72,7 +72,7 @@ function mountComponent() {
 describe('MainContractTable.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.spyOn(utils, 'getTeamContracts').mockResolvedValue(ENRICHED_CONTRACTS as never)
+    vi.spyOn(contractReads, 'getTeamContracts').mockResolvedValue(ENRICHED_CONTRACTS as never)
   })
 
   it('uses one Board-action query and one selected-contract controller for both responsive triggers', async () => {

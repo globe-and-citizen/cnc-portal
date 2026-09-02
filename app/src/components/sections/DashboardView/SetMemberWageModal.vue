@@ -61,9 +61,13 @@ import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
 import type { Member, Wage, WageWithForm } from '@/types'
 import type { AxiosError } from 'axios'
-import { normalizeRatePerHour, buildRatePayload, DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
+import {
+  normalizeRatePerHour,
+  buildRatePayload,
+  DEFAULT_MAXIMUM_HOURS_PER_DAY
+} from '@/utils/wages/model'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import type { StepperItem } from '@nuxt/ui'
 
 const currentStep = ref(0)

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import * as utils from '@/utils'
+import { log } from '@/lib/logging'
 import { useTeamStore } from '@/stores'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { mockInvestorReads } from '@/tests/mocks'
@@ -199,7 +199,7 @@ describe('InvestorsTransactions advanced', () => {
   })
 
   it('logs investor and safe router query errors once per unique message', async () => {
-    const logErrorSpy = vi.spyOn(utils.log, 'error')
+    const logErrorSpy = vi.spyOn(log, 'error')
     wrapper = createWrapper()
     const investorQueryError = new Error('investor query failed')
     apolloState.investorError.value = investorQueryError

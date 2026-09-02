@@ -17,7 +17,7 @@
  */
 import { getContractError, parseAbi, type Abi } from 'viem'
 import { bankAbi } from '@/artifacts/abi/generated'
-import { classifyError } from '@/utils/classifyError'
+import { classifyError } from '@/utils/errors/classifyContractError'
 
 // OZ v5's IERC20Errors — not part of Bank's own ABI, but `safeTransferFrom`
 // inside `depositToken` bubbles the token contract's revert unchanged, so a

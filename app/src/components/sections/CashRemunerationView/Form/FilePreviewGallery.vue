@@ -213,7 +213,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { toRef } from 'vue'
-import { getFileIcon, truncateFileName } from '@/utils/fileUtil'
+import { getFileIcon, truncateFileName } from '@/utils/files/presentation'
 import { useFilePreviewGallery } from '@/composables/useFilePreviewGallery'
 import type { FilePreviewItem } from '@/types/file-preview'
 

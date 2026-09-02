@@ -126,7 +126,7 @@ Not decided yet — to review before considering v0 complete.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5c2e661c93b5ec1062dd79b4e7378683eaf34fcb`
+**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
 
 - [Integration setup view](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
@@ -139,7 +139,7 @@ Not decided yet — to review before considering v0 complete.
   [useFactureHistory](../../../app/src/composables/paymentGate/useFactureHistory.ts) (`US-PAYGATE-V0-004`).
 - [Recall/reference view](../../../app/src/views/team/[id]/PaymentGate/ReferenceView.vue) and its
   [recheck-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-V0-005`).
-- [Shared contract-error catalog](../../../app/src/composables/contracts/errorCatalogs.ts) (`US-PAYGATE-V0-003`).
+- [Shared contract-error catalog](../../../app/src/utils/errors/contractCatalog.ts) (`US-PAYGATE-V0-003`).
 
 ## Related Documentation
 

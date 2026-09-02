@@ -149,7 +149,7 @@
 import { ref, computed } from 'vue'
 import { z } from 'zod'
 import { isAddress } from 'viem'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import InvestorContractStep from '@/components/sections/TeamView/forms/InvestorContractStep.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'

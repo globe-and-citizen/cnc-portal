@@ -84,7 +84,7 @@ CANONICAL=(
   "app/src/components/ui/inputs/__tests__/SelectMemberWithTokenInput.spec.ts"
   "app/src/composables/__tests__/useContractFunction.spec.ts"
   "app/src/__tests__/wagmi.spec.ts"
-  "app/src/utils/__tests__/currencyUtil.spec.ts"
+  "app/src/utils/currency/__tests__/display.spec.ts"
   "app/src/composables/useSiwe.ts"
 )
 section_fail=0

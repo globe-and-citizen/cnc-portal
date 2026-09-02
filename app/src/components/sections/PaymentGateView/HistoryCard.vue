@@ -65,8 +65,9 @@
 import { computed, ref } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { useTeamStore } from '@/stores'
-import { formatTxHash, formatCryptoAmount } from '@/utils'
-import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+import { formatTxHash } from '@/utils/transactions/registry'
+import { formatCryptoAmount } from '@/utils/currency/display'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
 import { useFactureHistory, type FacturePayment } from '@/composables/paymentGate/useFactureHistory'
 

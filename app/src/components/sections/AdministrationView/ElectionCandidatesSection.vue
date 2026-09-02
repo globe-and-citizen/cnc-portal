@@ -24,7 +24,8 @@ import { useElectionsCastVote } from '@/composables/elections/writes'
 import { readContract, simulateContract } from '@wagmi/core'
 import type { User } from '@/types'
 import { config } from '@/wagmi.config'
-import { classifyError, log } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 
 const props = defineProps<{ electionId: bigint }>()
 const teamStore = useTeamStore()

@@ -172,7 +172,7 @@ import TeamMetaVisibilityModal from '@/components/sections/DashboardView/TeamMet
 import { useTeamListTreasuryBalances } from '@/composables/useTeamListTreasuryBalances'
 import { useGetTeamsQuery } from '@/queries/team.queries'
 import type { Team } from '@/types/team'
-import type { TeamTreasuryDisplay } from '@/utils/teamTreasury'
+import type { TeamTreasuryDisplay } from '@/utils/teams/treasury'
 import { EMPTY_VALUE } from '@/utils/format'
 import { computed, ref, watch } from 'vue'
 

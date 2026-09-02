@@ -99,8 +99,8 @@ type TransferArgs = WriteFunctionArgs<typeof bankAbi, "transferToken">;
 ## 2. Error handling
 
 The convention is **reactive error + `classifyError` + `UAlert`**. Components keep their own `errorMessage` ref and a `UAlert` slot; the
-mutation's `error` state is consumed via `classifyError` (`@/utils`) which buckets every viem / wagmi error into a semantic category and
-resolves a user-facing message from the per-contract revert catalog.
+mutation's `error` state is consumed via `classifyError` (`@/utils/errors/classifyContractError`) which buckets every viem / wagmi error
+into a semantic category and resolves a user-facing message from the per-contract revert catalog.
 
 ```vue
 <template>
@@ -117,7 +117,7 @@ resolves a user-facing message from the per-contract revert catalog.
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { classifyError } from "@/utils";
+import { classifyError } from "@/utils/errors/classifyContractError";
 import { useOwnerWithdrawAllToBank } from "@/composables/cashRemuneration/writes";
 
 const errorMessage = ref("");
@@ -231,15 +231,15 @@ Practical notes:
 
 ## API surface
 
-| Export                       | Where                         | Purpose                                                                                                              |
-| ---------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `useContractWritesV3`        | `useContractWritesV3.ts`      | TanStack mutation wrapper — what every feature `writes.ts` calls.                                                    |
-| `executeContractWrite`       | `useContractWritesV3.ts`      | Framework-agnostic simulate → write → wait. Use from services that have no Vue scope.                                |
-| `ContractWriteRevertedError` | `useContractWritesV3.ts`      | Thrown when a tx mined but reverted. Carries `hash`, `receipt`, `simulation`, and the ABI-decoded revert as `cause`. |
-| `classifyError`              | `@/utils/classifyError`       | Buckets any viem/wagmi error into a category + resolves a user-facing message.                                       |
-| `parseErrorV2`               | `@/utils/generalUtil`         | Condenses an Error to one line for logging. Never for user-facing text.                                              |
-| `createContractWriteV3Mock`  | `@/tests/mocks/erc20.mock`    | TanStack-mutation-shaped mock factory.                                                                               |
-| `resetContractMocks`         | `@/tests/mocks/contract.mock` | Resets every pre-baked V3 write/read mock between tests.                                                             |
+| Export                       | Where                                  | Purpose                                                                                                              |
+| ---------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `useContractWritesV3`        | `useContractWritesV3.ts`               | TanStack mutation wrapper — what every feature `writes.ts` calls.                                                    |
+| `executeContractWrite`       | `useContractWritesV3.ts`               | Framework-agnostic simulate → write → wait. Use from services that have no Vue scope.                                |
+| `ContractWriteRevertedError` | `useContractWritesV3.ts`               | Thrown when a tx mined but reverted. Carries `hash`, `receipt`, `simulation`, and the ABI-decoded revert as `cause`. |
+| `classifyError`              | `@/utils/errors/classifyContractError` | Buckets any viem/wagmi error into a category + resolves a user-facing message.                                       |
+| `parseErrorV2`               | `@/lib/logging`                        | Condenses an Error to one line for logging. Never for user-facing text.                                              |
+| `createContractWriteV3Mock`  | `@/tests/mocks/erc20.mock`             | TanStack-mutation-shaped mock factory.                                                                               |
+| `resetContractMocks`         | `@/tests/mocks/contract.mock`          | Resets every pre-baked V3 write/read mock between tests.                                                             |
 
 ## Contract versioning (V0 / V0.1 / V1 / V2)
 

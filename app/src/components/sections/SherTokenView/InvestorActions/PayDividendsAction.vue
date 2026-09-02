@@ -47,9 +47,9 @@ import {
   useDistributeNativeDividends,
   useDistributeTokenDividends
 } from '@/composables/bank/writes'
-import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
+import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils/tokens/metadata'
 import type { TokenId } from '@/constant'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 interface Props {

@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { rateSymbol } from '@/utils/wageUtil'
+import { rateSymbol } from '@/utils/wages/model'
 import { formatNumber } from '@/utils/format'
 
 interface RateItem {

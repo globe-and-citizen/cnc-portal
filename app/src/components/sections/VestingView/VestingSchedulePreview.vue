@@ -54,8 +54,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatVestingBoundary, vestingAmountAtCliff } from '@/utils'
-import { formatVestingAmount } from '@/utils/vestingPresentation'
+import { formatVestingBoundary, vestingAmountAtCliff } from '@/utils/vesting/schedule'
+import { formatVestingAmount } from '@/utils/vesting/presentation'
 
 interface Props {
   startAt: Date | null

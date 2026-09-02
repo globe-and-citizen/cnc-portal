@@ -1,51 +1,56 @@
-import { ref } from 'vue'
 import { config } from '@/wagmi.config'
 import { getWalletClient, readContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseUnits, formatUnits } from 'viem/utils'
+import { useMutation } from '@tanstack/vue-query'
 
 import type { Abi, Address } from 'viem'
 
+export interface DeployContractArgs {
+  bankAddress: Address
+  costPerClick: string
+  costPerImpression: string
+}
+
+/**
+ * Deploy a campaign contract: builds the constructor args, sends the deploy
+ * transaction, waits for the receipt, and returns the new contract address.
+ * Throws when the wallet is missing or the receipt has no contract address.
+ */
+export async function deployContract(
+  contractAbi: Abi,
+  contractByteCode: `0x${string}`,
+  { bankAddress, costPerClick, costPerImpression }: DeployContractArgs
+): Promise<Address> {
+  const walletClient = await getWalletClient(config)
+  if (!walletClient) throw new Error('Wallet not connected')
+
+  const click = parseUnits(String(costPerClick), 18)
+  const impression = parseUnits(String(costPerImpression), 18)
+
+  const txHash = await walletClient.deployContract({
+    abi: contractAbi,
+    bytecode: contractByteCode,
+    args: [click, impression, bankAddress],
+    account: walletClient.account.address
+  })
+
+  const receipt = await waitForTransactionReceipt(config, { hash: txHash })
+  if (!receipt.contractAddress) {
+    throw new Error('Deployment confirmed but no contract address was returned')
+  }
+  return receipt.contractAddress
+}
+
+/**
+ * Side effects:
+ *   - onSuccess: none — the caller owns the business-flow toast + invalidation
+ *                ("deploy + register contract" is one logical outcome).
+ *   - onError:   no toast (caller renders mutation.error via UAlert).
+ */
 export function useDeployContract(contractAbi: Abi, contractByteCode: `0x${string}`) {
-  const contractAddress = ref<string | null>(null)
-  const error = ref<Error | null>(null)
-  const isDeploying = ref(false)
-
-  const deploy = async (bankAddress: Address, costPerClick: string, costPerImpression: string) => {
-    isDeploying.value = true
-    error.value = null
-    contractAddress.value = null
-
-    try {
-      const walletClient = await getWalletClient(config)
-      if (!walletClient) throw new Error('Wallet not connected')
-
-      const click = parseUnits(String(costPerClick), 18)
-      const impression = parseUnits(String(costPerImpression), 18)
-
-      const txHash = await walletClient.deployContract({
-        abi: contractAbi,
-        bytecode: contractByteCode,
-        args: [click, impression, bankAddress],
-        account: walletClient.account.address
-      })
-
-      const receipt = await waitForTransactionReceipt(config, { hash: txHash })
-      if (receipt.contractAddress) {
-        contractAddress.value = receipt.contractAddress
-      }
-    } catch (err: unknown) {
-      error.value = err instanceof Error ? err : new Error('An unknown error occurred')
-    } finally {
-      isDeploying.value = false
-    }
-  }
-
-  return {
-    deploy,
-    isDeploying,
-    contractAddress,
-    error
-  }
+  return useMutation({
+    mutationFn: (args: DeployContractArgs) => deployContract(contractAbi, contractByteCode, args)
+  })
 }
 
 export async function getContractData(

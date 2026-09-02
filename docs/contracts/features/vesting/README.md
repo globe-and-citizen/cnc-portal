@@ -79,6 +79,6 @@ For a stopped schedule, `vestedAmount` returns zero because accrual has ended. I
 - [Vesting interface](../../../../contract/contracts/interfaces/IVesting.sol)
 - [Contract behaviour tests](../../../../contract/test/Vesting.spec.ts)
 - [Frontend user stories](../../../features/vesting/README.md)
-- [Frontend schedule model](../../../../app/src/utils/vestingScheduleUtil.ts)
+- [Frontend schedule model](../../../../app/src/utils/vesting/schedule.ts)
 
 _[← Back to contract behaviour index](../README.md)_

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useLocalStorage } from '@vueuse/core'
 import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
+import { z } from 'zod'
 import {
   defaultPresetId,
   formatAnchorLabel,
@@ -41,16 +42,38 @@ const props = withDefaults(
 )
 
 const model = defineModel<DatePickerValue>()
-
-interface DatePickerSnapshot {
-  activeId: DatePickerPresetId
-  anchors: Record<AnchorUnit, number>
-  customDate: number
-  customStart: number | null
-  customEnd: number | null
-}
-
 const presets = presetsForMode(props.mode)
+
+const timestampSchema = z
+  .number()
+  .finite()
+  .refine(value => !Number.isNaN(new Date(value).getTime()), 'Invalid date timestamp')
+
+const datePickerSnapshotSchema = z
+  .object({
+    activeId: z.custom<DatePickerPresetId>(
+      value => typeof value === 'string' && presets.some(preset => preset.id === value),
+      'Invalid date picker preset'
+    ),
+    anchors: z.object({
+      month: timestampSchema,
+      quarter: timestampSchema,
+      year: timestampSchema
+    }),
+    customDate: timestampSchema,
+    customStart: timestampSchema.nullable(),
+    customEnd: timestampSchema.nullable()
+  })
+  .refine(
+    snapshot =>
+      snapshot.customStart === null
+      || snapshot.customEnd === null
+      || snapshot.customStart <= snapshot.customEnd,
+    { message: 'Custom range must be ordered', path: ['customEnd'] }
+  )
+
+type DatePickerSnapshot = z.infer<typeof datePickerSnapshotSchema>
+
 const activeId = ref<DatePickerPresetId>(defaultPresetId(props.mode))
 
 // One independent anchor per steppable unit, all starting at today.
@@ -74,12 +97,13 @@ const committedCustom = ref<Range>({
   end: startOfToday()
 })
 
-function isValidSnapshot(snapshot: unknown): snapshot is DatePickerSnapshot {
-  if (!snapshot || typeof snapshot !== 'object') {
-    return false
+function parseSnapshot(raw: string): DatePickerSnapshot | null {
+  try {
+    const result = datePickerSnapshotSchema.safeParse(JSON.parse(raw))
+    return result.success ? result.data : null
+  } catch {
+    return null
   }
-  const candidate = snapshot as Partial<DatePickerSnapshot>
-  return !!candidate.anchors && typeof candidate.anchors.month === 'number'
 }
 
 function applySnapshot(snapshot: DatePickerSnapshot) {
@@ -116,23 +140,18 @@ function takeSnapshot(): DatePickerSnapshot {
 
 // Persisted selection. An explicit JSON serializer is required: with a `null` default
 // vueuse would otherwise coerce the object via `String()` and write "[object Object]",
-// which then throws on read. `read` tolerates any pre-existing corrupt value.
+// which then throws on read. `parseSnapshot` rejects corrupt, incomplete, stale, and
+// mode-incompatible values before they can enter picker state.
 const stored = props.storageKey
   ? useLocalStorage<DatePickerSnapshot | null>(props.storageKey, null, {
       serializer: {
-        read: (raw): DatePickerSnapshot | null => {
-          try {
-            return JSON.parse(raw) as DatePickerSnapshot
-          } catch {
-            return null
-          }
-        },
+        read: parseSnapshot,
         write: value => JSON.stringify(value)
       }
     })
   : null
 
-if (stored?.value && isValidSnapshot(stored.value)) {
+if (stored?.value) {
   applySnapshot(stored.value)
 } else if (!props.storageKey) {
   // Uncontrolled (e.g. the demo): reflect an externally provided value instead.

@@ -58,7 +58,7 @@ See [`testing-overview.md`](./testing-overview.md#mocking-conventions) for the f
 
 ## Pure utilities
 
-→ `app/src/utils/__tests__/currencyUtil.spec.ts` — short, no mocks, boundary cases (negative, zero, large numbers).
+→ `app/src/utils/currency/__tests__/display.spec.ts` — short, no mocks, boundary cases (negative, zero, large numbers).
 
 If your utility test needs mocks, the function is impure — push the side-effects out into a composable and re-test the pure part directly.
 

@@ -21,9 +21,9 @@ These acceptance criteria follow the
 - **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter, Vesting — the
   contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
-  booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); each company books CNC
-  usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** recognises the
-  shares **at release** (`Dr Deferred SHER Compensation · Cr Investor Equity`, off the income statement — see catalogue §5.6).
+  booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; each company books CNC usage fees as
+  an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** books the **whole award when
+  the schedule is defined** and issues it as shares are released (a restricted-stock grant, off the income statement — see catalogue §5.6).
 - **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a company owner can **manually classify** each
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
@@ -100,13 +100,15 @@ flowchart LR
 #### Happy Path
 
 - [x] The ledger exposes each posting's date, activity, accounts, currency, quantity, rate, debit, and credit amounts.
-- [x] A company member can filter entries by accounting category, reporting period, and available currencies.
+- [x] A company member can filter entries by accounting category, reporting period, available currencies, and one or more specific accounts.
 - [x] A company member can inspect the entries and running balance for one account from a report line.
+- [x] Selecting an account on a ledger entry opens that account's transactions in the trial-balance drill-down.
 - [x] A known activity destination can be followed to its owning product journey.
 
 #### Business Rules
 
 - [x] Pagination does not change the totals for the complete filtered ledger.
+- [x] Filtering the ledger by account keeps whole postings, so each shown entry still carries its debit and credit legs.
 - [x] Compound transactions retain all debit and credit legs under one posting.
 - [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
       community-credit round — is shown as a single ledger entry that still names each beneficiary and their share, with one credit for the
@@ -254,6 +256,8 @@ flowchart LR
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `22a6332fb74fe6b6f44f5bac1c0d518d5614296e`
+
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
@@ -291,6 +295,7 @@ flowchart LR
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Money Flow Catalogue](./money-flow-catalogue.md)
+- [Share Vesting Accounting — Restricted-Stock grant](./vesting-accounting-restricted-stock.md)
 - [Accounting Specification and Scope](./cnc-accounting-spec.md)
 - [Contract Migration History](./contract-migration-history.md)
 - [Full Accounting Test Scenario](./accounting-test-plan.md)

@@ -157,13 +157,12 @@ import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import {
   applyZodFieldErrors,
-  classifyError,
-  findCreditToken,
   formatAmount,
   roundToDisplayPrecision,
-  toLenderOffering,
   UNCAPPED_ALLOCATION
-} from '@/utils'
+} from '@/utils/communityCredit/model'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { findCreditToken, toLenderOffering } from '@/utils/communityCredit/offer'
 import { createLendAmountSchema, type CreditRound, type LendingOfferStruct } from '@/types'
 
 const props = defineProps<{ round: CreditRound | null }>()

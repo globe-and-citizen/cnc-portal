@@ -6,7 +6,8 @@ import { formatUnits, isAddress, zeroAddress, type Address, type ContractFunctio
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { config } from '@/wagmi.config'
 import { fixedReturnAbi } from '@/artifacts/abi/generated'
-import { decimalsForFixedReturnToken, log } from '@/utils'
+import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
+import { log } from '@/lib/logging'
 import type {
   FixedReturnLenderPosition,
   FixedReturnOfferLender,

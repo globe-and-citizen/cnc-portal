@@ -1,6 +1,6 @@
 import type { Networks, Network } from '@/types'
 import networks from '@/networks/networks.json'
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 
 const checkNetwork = (network: Network) => {
   if (!network) return false

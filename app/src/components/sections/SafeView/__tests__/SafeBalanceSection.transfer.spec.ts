@@ -6,7 +6,7 @@ import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
 import { mockUseContractBalance, makeTokenBalance, useQueryClientFn } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
-import * as utils from '@/utils'
+import * as tokenMetadata from '@/utils/tokens/metadata'
 
 const {
   mockGetSafeHomeUrl,
@@ -161,7 +161,7 @@ describe('SafeBalanceSection', () => {
       setQueryData: vi.fn(() => undefined),
       removeQueries: vi.fn(() => undefined)
     })
-    vi.spyOn(utils, 'getTokenAddress').mockImplementation((tokenId: string) => {
+    vi.spyOn(tokenMetadata, 'getTokenAddress').mockImplementation((tokenId: string) => {
       if (tokenId === 'native') return undefined
       if (tokenId === 'usdc') return '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
       if (tokenId === 'usdt') return '0xdAC17F958D2ee523a2206206994597C13D831ec7'

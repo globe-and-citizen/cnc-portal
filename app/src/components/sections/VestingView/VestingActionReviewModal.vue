@@ -63,8 +63,8 @@ import { useToast } from '@nuxt/ui/composables'
 import type { Address } from 'viem'
 import type { VestingSchedule } from '@/types/vesting'
 import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
-import { classifyError } from '@/utils'
-import { formatVestingAmount } from '@/utils/vestingPresentation'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { formatVestingAmount } from '@/utils/vesting/presentation'
 
 const props = defineProps<{
   open: boolean

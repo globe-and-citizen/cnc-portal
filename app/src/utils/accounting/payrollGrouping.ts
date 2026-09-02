@@ -18,7 +18,7 @@
  * untouched — this only changes how rows are flattened for the table. Mirrors the
  * approach of {@link ./mergeBankFees}.
  */
-import { money } from './presenter'
+import { formatUsd } from '@/utils/format'
 import { txHashOf } from './mergeBankFees'
 import { withSherTail } from './describeEntry'
 import type { LedgerEntry } from './ledgerEntry'
@@ -84,7 +84,7 @@ export function compoundLedgerRows(
     const creditRow = rowsOf(legs[0]!)[1]
     if (creditRow) {
       const sum = legs.reduce((total, entry) => total + entry.amountUsd, 0)
-      rows.push({ ...creditRow, cr: money(sum) }) // one aggregated credit
+      rows.push({ ...creditRow, cr: formatUsd(sum) }) // one aggregated credit
     }
   }
 

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useAddMembersMutation } from '@/queries/member.queries'
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 
 const mockMutate = vi.fn()
 

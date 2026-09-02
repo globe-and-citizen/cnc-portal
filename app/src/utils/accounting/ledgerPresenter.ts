@@ -14,9 +14,9 @@ import { filterLedgerByCurrency } from './ledgerCurrency'
 import {
   badgeClassOf,
   categoryOf,
+  categoryLabelOf,
   FEE_ACCOUNT,
-  FEE_FILTER,
-  type LedgerCategory
+  FEE_FILTER
 } from './ledgerCategory'
 import type { LedgerEntry } from './ledgerEntry'
 import type { TokenId } from '@/constant'
@@ -31,6 +31,7 @@ export type { ActivityDestination, LedgerSection } from './activityDestination'
 export {
   badgeClassOf,
   categoryOf,
+  categoryLabelOf,
   CATEGORY_BADGE,
   FEE_ACCOUNT,
   FEE_FILTER,
@@ -55,7 +56,9 @@ export interface LedgerRow {
   /** The section the Activity links to ({@link ./activityDestination}); absent on
    *  a continuation row, and on a posting with no portal surface of its own. */
   destination?: ActivityDestination | null
-  cat: LedgerCategory | ''
+  /** The "Action" badge text — {@link categoryLabelOf} (a plain category, or a
+   *  spelled-out payroll phase); empty on a posting's continuation rows. */
+  cat: string
   catClass: string
   account: string
   accountMuted: boolean
@@ -79,6 +82,35 @@ export interface LedgerView {
   rows: LedgerRow[]
   total: string
   entryCount: number
+}
+
+/** The empty account leg placeholder — a memo posting carries no real account. */
+const NO_ACCOUNT = ''
+
+/**
+ * The distinct real accounts a set of postings touches (either leg), A–Z. Backs
+ * the ledger's account filter. Memo postings carry no leg, so contribute nothing.
+ */
+export function ledgerAccounts(entries: readonly LedgerEntry[]): string[] {
+  const seen = new Set<string>()
+  for (const entry of entries) {
+    if (entry.debit) seen.add(entry.debit)
+    if (entry.credit) seen.add(entry.credit)
+  }
+  seen.delete(NO_ACCOUNT)
+  return [...seen].sort((a, b) => a.localeCompare(b))
+}
+
+/**
+ * Narrow the feed to the postings that touch **any** of `accounts` on either leg —
+ * whole entries, so a kept posting always shows both its debit and its credit row.
+ */
+export function filterLedgerByAccount(
+  entries: readonly LedgerEntry[],
+  accounts: readonly string[]
+): LedgerEntry[] {
+  const wanted = new Set(accounts)
+  return entries.filter((e) => wanted.has(e.debit ?? '') || wanted.has(e.credit ?? ''))
 }
 
 /** The Devise / Quantité / Taux columns of one token move (spec §2). */
@@ -134,7 +166,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     label: entryLabel(entry),
     activity: activityOf(entry),
     destination: activityDestinationOf(entry),
-    cat: categoryOf(entry),
+    cat: categoryLabelOf(entry),
     catClass: badgeClassOf(entry)
   }
   // The same token move backs every leg, so the movement columns show once, on the

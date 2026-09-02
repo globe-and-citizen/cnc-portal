@@ -4,7 +4,7 @@ import { reactive } from 'vue'
 import { Time } from '@internationalized/date'
 import CreditCallTermsStep from '../CreditCallTermsStep.vue'
 import type { CreditCallForm } from '@/types'
-import { MINUTES_PER_DAY } from '@/utils'
+import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
 
 function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
   return reactive({

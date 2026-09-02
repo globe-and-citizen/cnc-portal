@@ -66,6 +66,18 @@ describe('TrialBalanceCard', () => {
     wrapper.unmount()
   })
 
+  it('opens the account drill-down when a whole trial-balance row is selected', async () => {
+    const wrapper = renderWithProviders(TrialBalanceCard)
+    const rows = wrapper.findAll('tbody tr')
+    // Empty books show only the total row; only exercise row-select when account
+    // rows are present. Clicking the row (not the account button) fires @select.
+    if (rows.length <= 1) return wrapper.unmount()
+    await rows[0]!.trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   it('exports and prints the trial balance from the export bar', async () => {
     const wrapper = renderWithProviders(TrialBalanceCard)
     await wrapper.find('[data-test="export-excel"]').trigger('click')
