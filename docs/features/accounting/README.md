@@ -198,6 +198,8 @@ flowchart LR
 - [x] A treasury sweep between old and replacement company contracts remains an internal transfer.
 - [x] The trial balance presents a redeployed cash pocket as one row per contract generation, and drilling a generation's row shows only
       that generation's entries.
+- [x] The general ledger names the contract generation on every posting of a redeployed cash pocket, under the same numbering the trial
+      balance uses, and jumping from such a posting opens that generation's trial-balance line.
 
 #### Business Rules
 
@@ -256,7 +258,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `22a6332fb74fe6b6f44f5bac1c0d518d5614296e`
+**Implementation evidence reviewed against:** `a8d1bf8fd6b6c597f9002cd9f93f92e45b320157`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
