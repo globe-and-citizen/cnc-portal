@@ -122,12 +122,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import type { TableColumn, TableRow } from '@nuxt/ui'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
-import { defaultValueForMode } from '@/utils/datePicker'
+import { defaultValueForMode } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
@@ -234,6 +235,30 @@ function openDrilldown(row: TrialTableRow): void {
     openFor(row.account, value)
   }
 }
+
+const route = useRoute()
+const router = useRouter()
+
+/**
+ * Auto-open the drill-down for an account arrived at from the General Ledger
+ * (`?account=…`). We hold off until the books carry entries so the trial rows are
+ * built and a split pocket opens with the right instance scope, then strip the query
+ * so closing the modal is final and a reload doesn't reopen it. An account with no
+ * matching row (e.g. one closed to a nil balance) still drills directly.
+ */
+watch(
+  [() => route.query.account, () => acc.entries.value.length],
+  ([account, entryCount]) => {
+    if (typeof account !== 'string' || !account || entryCount === 0) return
+    const row = tableRows.value.find((r) => !r.isTotal && r.account === account)
+    if (row) openDrilldown(row)
+    else openFor(account, '')
+    const query = { ...route.query }
+    delete query.account
+    router.replace({ query })
+  },
+  { immediate: true }
+)
 
 // Export the current, as-of-filtered trial balance. The filename carries the
 // "as of" date so a stack of exports stays distinguishable.

@@ -27,7 +27,8 @@
 <script lang="ts" setup>
 import { useSyncWeeklyClaimsMutation, weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
 import { keccak256 } from 'viem'
-import { classifyError, log } from '@/utils'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'

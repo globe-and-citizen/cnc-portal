@@ -92,7 +92,9 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { log, tokenSymbol, resolveUser } from '@/utils'
+import { log } from '@/lib/logging'
+import { tokenSymbol } from '@/utils/tokens/metadata'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { keccak256 } from 'viem'
 import { useReadContract } from '@wagmi/vue'
@@ -104,11 +106,12 @@ import {
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useGetExpensesQuery, expenseKeys } from '@/queries'
-import { getFrequencyType, getCustomFrequency } from '@/utils'
+import { getFrequencyType, getCustomFrequency } from '@/utils/expenses/model'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { formatDateTime, fromUnix } from '@/utils/format'
 
 const teamStore = useTeamStore()
+const { resolveUser } = useTransactionPresentation()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 const userDataStore = useUserDataStore()

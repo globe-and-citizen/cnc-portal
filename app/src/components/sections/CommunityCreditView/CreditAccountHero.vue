@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCommunityCreditStore } from '@/stores'
-import { formatAmount } from '@/utils'
+import { formatAmount } from '@/utils/communityCredit/model'
 
 const store = useCommunityCreditStore()
 

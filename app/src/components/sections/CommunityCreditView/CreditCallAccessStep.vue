@@ -107,13 +107,9 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
-import {
-  applyZodFieldErrors,
-  creditAccessRowClass,
-  creditRadioClass,
-  findCreditToken,
-  formatAmount
-} from '@/utils'
+import { applyZodFieldErrors, formatAmount } from '@/utils/communityCredit/model'
+import { creditAccessRowClass, creditRadioClass } from '@/utils/communityCredit/wizard'
+import { findCreditToken } from '@/utils/communityCredit/offer'
 import { createCreditCallAccessSchema, type CreditCallForm } from '@/types'
 import CreditWhitelistEditor from './CreditWhitelistEditor.vue'
 

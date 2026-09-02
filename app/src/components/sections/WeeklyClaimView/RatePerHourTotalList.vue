@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmountWithPrecision } from '@/utils/currencyUtil'
+import { formatAmountWithPrecision } from '@/utils/currency/display'
 
 defineProps<{
   ratePerHour: Array<{ type: string; amount: number }>

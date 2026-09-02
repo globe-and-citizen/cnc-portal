@@ -155,7 +155,7 @@
 import { computed, watch } from 'vue'
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
-import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils'
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils/wages/model'
 import type { Wage, WageWithForm } from '@/types'
 
 const emit = defineEmits<{ validated: []; cancel: []; reset: [] }>()

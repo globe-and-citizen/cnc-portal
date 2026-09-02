@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useTeamStore } from '@/stores'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'

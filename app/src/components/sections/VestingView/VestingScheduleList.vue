@@ -116,7 +116,7 @@ import {
   formatVestingProgress,
   getVestingNextStep,
   getVestingStateMeta
-} from '@/utils/vestingPresentation'
+} from '@/utils/vesting/presentation'
 
 const props = defineProps<{
   schedules: VestingSchedule[]

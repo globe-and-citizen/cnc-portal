@@ -21,7 +21,7 @@ import { type Address } from 'viem'
 
 import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 import { useUserDataStore } from '@/stores'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 
 interface Props {
   ownerAddress: string

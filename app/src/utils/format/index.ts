@@ -6,8 +6,7 @@
  * ```
  *
  * Import from this barrel, not from the sub-modules — the split is an
- * implementation detail. Deliberately **not** re-exported through
- * `@/utils` (`utils/index.ts`): the explicit path is what makes a stray
+ * implementation detail. The explicit domain path is what makes a stray
  * hand-rolled formatter obvious in review and greppable in the codebase.
  *
  * Rules, rationale and the migration ratchet:

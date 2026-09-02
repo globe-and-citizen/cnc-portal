@@ -170,7 +170,9 @@ function predicate(entry: LedgerEntry): string {
     case 'UC-VEST-02':
       return entry.shares ? `vested ${entry.shares} SHER` : entryLabel(entry)
     case 'UC-VEST-03':
-      return 'had a vesting schedule stopped'
+      return entry.shares
+        ? `had a vesting schedule stopped, cancelling ${entry.shares} unvested SHER`
+        : 'had a vesting schedule stopped'
     default:
       return entryLabel(entry)
   }

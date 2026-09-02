@@ -196,29 +196,31 @@ import type { TokenId } from '@/constant'
 import {
   buildRawInvestorTransactions,
   mapRawInvestorTransaction,
-  formatCryptoAmount,
-  formatCurrencyShort,
-  resolveUser,
+  getMintTotal
+} from '@/utils/transactions/investor'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { getUniqueSummary } from '@/utils/transactions/history'
+import {
   getTransactionTypeLabel,
   getTransactionCounterparty,
-  getUniqueSummary,
-  getMintTotal,
   formatTxHash,
-  DIVIDEND_TYPES,
-  log
-} from '@/utils'
+  DIVIDEND_TYPES
+} from '@/utils/transactions/registry'
+import { log } from '@/lib/logging'
 import { computed, watch } from 'vue'
 import { formatPercent } from '@/utils/format'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
-import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
+const { resolveUser } = useTransactionPresentation()
 const { data: investorSymbolData } = useInvestorSymbol()
 const investorTokenSymbol = computed(() =>
   typeof investorSymbolData.value === 'string' ? investorSymbolData.value : 'SHER'
@@ -256,7 +258,12 @@ const loading = computed(() => investorLoading.value || safeLoading.value)
 
 const enrichedTransactions = computed(() =>
   buildRawInvestorTransactions(result.value, safeResult.value).map((tx) =>
-    mapRawInvestorTransaction(tx, investorTokenSymbol.value, getUsdPrice)
+    mapRawInvestorTransaction(
+      tx,
+      investorTokenSymbol.value,
+      getUsdPrice,
+      currencyStore.supportedTokens
+    )
   )
 )
 

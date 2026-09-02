@@ -15,7 +15,7 @@ import {
   type ContractFunctionName
 } from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
-import { log, parseErrorV2 } from '@/utils'
+import { log, parseErrorV2 } from '@/lib/logging'
 
 type WagmiConfig = typeof wagmiConfigType
 type SimulateParams = SimulateContractParameters<Abi, string, readonly unknown[], WagmiConfig>

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { reactive } from 'vue'
 import type { CreditCallForm } from '@/types'
-import { MINUTES_PER_DAY } from '@/utils'
+import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
 import CreditCallAccessStep from '../CreditCallAccessStep.vue'
 
 function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {

@@ -52,6 +52,9 @@ flowchart LR
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+
+- [Team selection menu](../../../app/src/components/layout/TeamSelectMenu.vue)
 - [Router definition and authentication guard](../../../app/src/router/index.ts)
 - [Application shell and route-view rendering](../../../app/src/App.vue)
 - [Sidebar layout and controlled accordion](../../../app/src/components/ui/SidebarLayout.vue)

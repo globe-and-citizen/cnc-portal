@@ -1,6 +1,6 @@
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types/user'
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 

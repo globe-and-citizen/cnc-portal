@@ -4,7 +4,8 @@ import {
   createCreditCallTermsSchema,
   validateRepaymentAmount
 } from '../communityCredit.schemas'
-import { addCreditTerm, MINUTES_PER_DAY } from '@/utils'
+import { addCreditTerm } from '@/utils/communityCredit/offer'
+import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
 
 function baseTermsData(overrides: Record<string, unknown> = {}) {
   return {

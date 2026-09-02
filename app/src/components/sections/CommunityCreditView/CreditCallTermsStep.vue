@@ -153,15 +153,14 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { CalendarDate, getLocalTimeZone, Time, today } from '@internationalized/date'
+import { addCreditTerm } from '@/utils/communityCredit/offer'
 import {
-  addCreditTerm,
   applyZodFieldErrors,
-  creditChipClass,
-  creditCallDeadlineContext,
   creditTermLabel,
   formatAmount,
   MINUTES_PER_DAY
-} from '@/utils'
+} from '@/utils/communityCredit/model'
+import { creditChipClass, creditCallDeadlineContext } from '@/utils/communityCredit/wizard'
 import { createCreditCallTermsSchema, type CreditCallForm, type CreditTermUnit } from '@/types'
 import { formatDate } from '@/utils/format'
 

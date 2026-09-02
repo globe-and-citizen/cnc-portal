@@ -46,7 +46,7 @@ vi.mock('@/constant', async (importOriginal) => {
 })
 
 // Stub beacon / deployment config helpers so we don't pull env.
-vi.mock('@/utils/contractDeploymentUtil', async (importOriginal) => {
+vi.mock('@/utils/contracts/deployment', async (importOriginal) => {
   const actual = (await importOriginal()) as object
   return {
     ...actual,

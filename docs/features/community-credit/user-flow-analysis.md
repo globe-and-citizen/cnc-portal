@@ -96,7 +96,7 @@ only in the frontend.
 | `Repaying` (3)   | `totalRepaidByIssuer >= obligation` | `repaid`         | settled                                   |
 | `Refundable` (2) | —                                   | `refunded`       | principals already returned               |
 
-Resolved in [`offerStateToRoundStatus`](../../../app/src/utils/communityCreditUtil.ts:267).
+Resolved in [`offerStateToRoundStatus`](../../../app/src/utils/communityCredit/model.ts:274).
 
 Two subtleties that are easy to get wrong:
 
@@ -140,7 +140,7 @@ requested after the sweep.
 
 `hasContract` is simply "does this team have a `FixedReturn` address"
 ([`useFixedReturnAddress`](../../../app/src/composables/fixedReturn/reads.ts:23)). The contract is optional — it is only deployed on
-networks where its beacon exists ([`contractDeploymentUtil.ts:244`](../../../app/src/utils/contractDeploymentUtil.ts:244)).
+networks where its beacon exists ([`contracts/deployment.ts:244`](../../../app/src/utils/contracts/deployment.ts:244)).
 
 Without one the page shows a dashed empty state saying a FixedReturn "has to be deployed", with **no path to deploying one** and no
 indication of who could. Dead end for anyone who lands there.
@@ -162,8 +162,8 @@ Each step validates on "Continue" via a shared `applyZodFieldErrors` helper. Two
   you move past it, and a deadline chosen minutes earlier can have gone stale while the user filled in Access. The contract reverts
   `InvalidDeadline` on a non-future deadline, so this saves a wasted transaction.
 - **Deadlines are formatted in UTC on purpose.** The wizard treats the typed clock time as UTC
-  ([`toUnixSeconds`](../../../app/src/utils/communityCreditOfferUtil.ts)), so rendering it back in local time would silently shift it by the
-  viewer's offset.
+  ([`toUnixSeconds`](../../../app/src/utils/communityCredit/offer.ts:156)), so rendering it back in local time would silently shift it by
+  the viewer's offset.
 
 The term is normalised to whole minutes and added onto the deadline to produce `maturityDate` — a round has a single date where subscription
 closes and the loan starts.
@@ -276,7 +276,7 @@ design comparison control.
 ### F4 — "Open & active rounds" contains only _open_ rounds
 
 **Where:** [`communityCredit.ts:100-101`](../../../app/src/stores/communityCredit.ts:100) ·
-[`communityCreditUtil.ts:338`](../../../app/src/utils/communityCreditUtil.ts:338)
+[`communityCredit/model.ts:347`](../../../app/src/utils/communityCredit/model.ts:347)
 
 ```ts
 activeRounds = rounds.filter((r) => r.fundable);

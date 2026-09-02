@@ -42,8 +42,8 @@
 import { toRef } from 'vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import CreditAvatar from '@/components/sections/CommunityCreditView/CreditAvatar.vue'
-import { formatAddress } from '@/utils/formatAddress'
-import { gradientForAddress } from '@/utils'
+import { formatAddress } from '@/utils/format'
+import { gradientForAddress } from '@/utils/communityCredit/offer'
 import type { Member } from '@/types'
 
 const props = withDefaults(

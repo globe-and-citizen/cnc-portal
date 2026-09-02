@@ -186,25 +186,23 @@ import TransactionChildRow from '@/components/sections/ExpenseAccountView/Transa
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import type { ExpenseTransaction } from '@/types/transactions'
 import {
   buildRawExpenseTransactions,
-  formatExpenseTransactionDate,
+  formatExpenseTransactionDate
+} from '@/utils/transactions/expense'
+import {
   getTransactionTypeColor,
   getTransactionTypeLabel,
   getTransactionCounterparty,
-  formatTxHash,
-  formatCryptoAmount,
-  formatCurrencyShort,
-  formatEtherUtil,
-  resolveUser,
-  getTransactionSummary,
-  log,
-  parseBigIntOrZero,
-  tokenSymbol,
-  enrichTransaction
-} from '@/utils'
-import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+  formatTxHash
+} from '@/utils/transactions/registry'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import { getTransactionSummary, parseBigIntOrZero } from '@/utils/transactions/history'
+import { log } from '@/lib/logging'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
 import { GET_INCOMING_BANK_TOKEN_TRANSFERS } from '@/queries/ponder/bank.queries'
 import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
@@ -214,6 +212,7 @@ const props = defineProps<{
 }>()
 
 const currencyStore = useCurrencyStore()
+const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.expenseAddress.toLowerCase())
 
 // EXPERIMENT: source the Expense account's own events from the RPC (eth_getLogs)

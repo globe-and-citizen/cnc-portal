@@ -10,7 +10,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { mockLog } from '@/tests/mocks/utils.mock'
-import * as utils from '@/utils'
+import * as contractErrors from '@/utils/errors/classifyContractError'
 
 describe('WeeklyClaimActionEnable', () => {
   const weeklyClaim: WeeklyClaim = {
@@ -135,11 +135,11 @@ describe('WeeklyClaimActionEnable', () => {
   })
 
   it('handles enable mutation onError with user_rejected silently', async () => {
-    vi.spyOn(utils, 'classifyError').mockReturnValue({
+    vi.spyOn(contractErrors, 'classifyError').mockReturnValue({
       category: 'user_rejected',
       userMessage: 'User rejected',
       raw: new Error('rejected')
-    } as ReturnType<typeof utils.classifyError>)
+    } as ReturnType<typeof contractErrors.classifyError>)
 
     setupSyncMutation()
     setEnableError(new Error('rejected'))
@@ -152,11 +152,11 @@ describe('WeeklyClaimActionEnable', () => {
   })
 
   it('handles enable mutation onError with regular error', async () => {
-    vi.spyOn(utils, 'classifyError').mockReturnValue({
+    vi.spyOn(contractErrors, 'classifyError').mockReturnValue({
       category: 'unknown',
       userMessage: 'Failure',
       raw: new Error('boom')
-    } as ReturnType<typeof utils.classifyError>)
+    } as ReturnType<typeof contractErrors.classifyError>)
 
     setupSyncMutation()
     setEnableError(new Error('boom'))

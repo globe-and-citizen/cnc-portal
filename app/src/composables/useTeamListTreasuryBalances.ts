@@ -11,7 +11,7 @@ import {
   type RawTokenBalances
 } from '@/lib/balances/tokenBalances'
 import type { ContractBalances, Team } from '@/types'
-import { buildTeamTreasuryDisplay, getTeamTreasuryAddresses } from '@/utils/teamTreasury'
+import { buildTeamTreasuryDisplay, getTeamTreasuryAddresses } from '@/utils/teams/treasury'
 
 const REFETCH_INTERVAL = 300_000
 

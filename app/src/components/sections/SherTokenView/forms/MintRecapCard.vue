@@ -36,8 +36,8 @@ import {
   getMintRecap,
   formatStakePercentageFromSupply,
   TOKEN_DECIMALS
-} from '@/utils/investorMintAllocation'
-import { formatAmountWithPrecision } from '@/utils/currencyUtil'
+} from '@/utils/investors/mintAllocation'
+import { formatAmountWithPrecision } from '@/utils/currency/display'
 
 const props = defineProps<{
   recipientAddress: string

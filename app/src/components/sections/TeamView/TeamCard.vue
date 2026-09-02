@@ -145,7 +145,7 @@ import { useUserDataStore, useCurrencyStore } from '@/stores'
 import { formatCurrency } from '@/utils/format'
 import type { TokenId } from '@/constant'
 import type { Team } from '@/types'
-import type { TeamTreasuryDisplay } from '@/utils/teamTreasury'
+import type { TeamTreasuryDisplay } from '@/utils/teams/treasury'
 
 interface Props {
   team: Team

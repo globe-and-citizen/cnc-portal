@@ -14,7 +14,8 @@
 
 Keep the requested change scoped. A component should describe what it renders:
 
-- Put pure data shaping in an existing or new utility under `app/src/utils/`.
+- Put pure data shaping in an existing domain under `app/src/utils/`; follow the
+  [Client Utilities boundary](../../docs/implementation/client-utilities/README.md) before creating a new domain.
 - Put reactive or stateful behaviour in a focused `useXxx` composable.
 - Search `utils/` and `composables/` before adding a near-duplicate helper.
 - Keep server data in its query cache instead of mirroring it into Pinia.

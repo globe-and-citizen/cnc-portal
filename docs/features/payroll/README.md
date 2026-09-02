@@ -471,6 +471,13 @@ Functional gaps map to unchecked acceptance criteria.
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `787921e5cf9dd1cf46fd0f69f651dba7d8785374`
+
+- [Cash Remuneration components](../../../app/src/components/sections/CashRemunerationView/),
+  [claim-history components](../../../app/src/components/sections/ClaimHistoryView/), and
+  [weekly-claim components](../../../app/src/components/sections/WeeklyClaimView/)
+- [Wage standard step](../../../app/src/components/sections/DashboardView/SetMemberWageStandardStep.vue) and
+  [rate-dot presentation](../../../app/src/components/ui/RateDotList.vue)
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
 - [Member wage overview](../../../app/src/components/sections/DashboardView/MemberSection.vue)
 - [Member claim action alerts](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue)
@@ -482,7 +489,7 @@ Functional gaps map to unchecked acceptance criteria.
 - [Claim history daily breakdown](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue)
 - [Claim history claim actions](../../../app/src/components/sections/ClaimHistoryView/ClaimActions.vue)
 - [Claim history member selector](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue)
-- [Daily claim form rules](../../../app/src/utils/claimFormUtil.ts)
+- [Daily claim form rules](../../../app/src/utils/claims/form.ts)
 - [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)
 - [Weekly claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)

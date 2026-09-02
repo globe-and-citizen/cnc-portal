@@ -168,6 +168,10 @@ multiplier is); the multiplier only changes its USD value, never the number of S
 When a withdrawal settles an accrual, both legs carry the **withdrawal-date** value, so `SHERS To Be Issued` nets to zero with no
 revaluation account. A partly-withdrawn accrual is quantity-weighted: the withdrawn part frozen, the rest still floating.
 
+A **vesting grant** (UC-VEST-01, §5.6) follows the same rule as an accrual: the released quantity freezes at its release date and the
+cancelled quantity at its stop date, while whatever is still promised floats at the current multiplier. A member's wage promises and their
+vesting grants are settled **separately** — a wage withdrawal never consumes a vesting grant, and a release never consumes a wage accrual.
+
 > **Why POL and SHER differ.** Pending SHER is _deferred compensation_ the company has committed to (contra-equity), so marking it to the
 > current rate just restates what is committed; once withdrawn it is _realized_ equity and locks. POL is cash the company _holds_ — its
 > dollar-equivalence is simply recomputed at the current price, and because both sides of every POL entry move together the books never fall
@@ -346,25 +350,33 @@ debited and the category account credited; on a **withdrawal** it is the reverse
 
 ### 5.6 Share vesting — grant, release, stop
 
-A vesting schedule is an **agreement only**: no tokens move when it is created, and its shares (the team's Investor/SHER share token) are
-minted on demand — capped to what has actually vested — when the member calls `release` (or when the owner `stopVesting`s). So the books
-recognise the equity **at the mint**, on a settlement basis, mirroring the SHER-wage treatment (§4, share-based compensation is an equity
-transaction, never an income-statement expense):
+Share vesting is booked as a **restricted-stock grant** on the SHER structure: the whole award is recognised the moment the schedule is
+defined, and every later event settles that grant. No tokens move at creation — the shares (the team's Investor/SHER share token) are minted
+on demand, capped to what has actually vested, when the member calls `release` (or when the owner `stopVesting`s) — so the grant is credited
+to the interim `SHERS To Be Issued` and `Investor Equity` is credited only at a real mint. Nothing reaches the income statement (§4,
+share-based compensation is an equity transaction, never an expense):
 
-| Event (on-chain)                  | Use case       | Entry                                                              |
-| --------------------------------- | -------------- | ------------------------------------------------------------------ |
-| `VestingCreated` (grant)          | **UC-VEST-01** | memo-only — records the promised share count, no monetary legs     |
-| `TokensReleased` (release / stop) | **UC-VEST-02** | Dr Deferred SHER Compensation · Cr Investor Equity (minted amount) |
-| `VestingStopped` (stop)           | **UC-VEST-03** | memo-only — the unvested remainder is dropped, never minted        |
+| Event (on-chain)                  | Use case       | Entry                                                                          |
+| --------------------------------- | -------------- | ------------------------------------------------------------------------------ |
+| `VestingCreated` (grant)          | **UC-VEST-01** | Dr Deferred SHER Compensation · Cr SHERS To Be Issued (**full award**)         |
+| `TokensReleased` (release / stop) | **UC-VEST-02** | Dr SHERS To Be Issued · Cr Investor Equity (minted amount)                     |
+| `VestingStopped` (stop)           | **UC-VEST-03** | Dr SHERS To Be Issued · Cr Deferred SHER Compensation (**unvested remainder**) |
 
-The release posting is the two SHER-wage legs (accrual + issuance) **collapsed**: a release vests-and-mints atomically, so the shares issued
-(`Investor Equity` ↑) are neutralised by the contra-equity (`Deferred SHER Compensation` ↑) — net book equity unchanged, nothing on the
-income statement, nothing in cash.
+The grant is the SHER-wage **accrual** booked upfront for the whole award, and the release is its **issuance**: the contra-equity debit
+(`Deferred SHER Compensation`) offsets the promised shares from day one, so net book equity is unchanged before, during and after the
+release — nothing on the income statement, nothing in cash.
+
+`stopVesting` mints whatever has vested and drops the rest, emitting **both** a `TokensReleased` and a `VestingStopped`. The minted part is
+already booked by its own `UC-VEST-02`, so `UC-VEST-03` reverses only what is forfeited. `VestingStopped` carries no amount, so that
+remainder is reconstructed as the schedule's granted award minus everything released up to the stop; a schedule whose `VestingCreated` is
+outside the read window was never booked and its stop reverses nothing.
 
 > **No double count.** A `release` mints through the same Investor `individualMint`, so it also emits a `Minted` event in the **same
 > transaction**. That mint is recognised as **backed** (§5.4) by the member + amount of the `TokensReleased` and is **not** re-booked as a
-> direct mint (Default D) — which is exactly what would otherwise drive `SHERS To Be Issued` negative (the "known edge" in §5.4), since a
-> vesting grant never accrued into it.
+> direct mint (Default D) — which would credit `Investor Equity` twice and clear `SHERS To Be Issued` twice for one issuance.
+
+The full treatment, with the source model it follows and its worked netting, is in
+[Share Vesting Accounting — Restricted-Stock grant](./vesting-accounting-restricted-stock.md).
 
 ---
 
