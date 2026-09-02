@@ -63,16 +63,24 @@ export const ledgerCategories: Array<LedgerCategory | 'All' | typeof FEE_FILTER>
 
 /**
  * The label shown on the "Action" badge (and carried into the ledger exports).
- * Usually the plain {@link categoryOf} name, but the two payroll phases spell out
- * which one it is — `"Payroll: Claim"` for a wage submitted / accrued
- * (`UC-CASH-02`) and `"Payroll: Withdraw"` for one actually paid out
- * (`UC-CASH-03`) — so the journal reads clearly instead of a bare "Payroll" for
- * both. The filter pills and badge colour still key off {@link categoryOf}, so the
- * "Payroll" filter keeps gathering both phases.
+ * Usually the plain {@link categoryOf} name, but two categories spell out which
+ * phase of their lifecycle an entry is, so the journal reads clearly instead of a
+ * bare category name shared by opposite movements:
+ *   - **Payroll** — `"Payroll: Claim"` for a wage submitted / accrued
+ *     (`UC-CASH-02`) vs `"Payroll: Withdraw"` for one actually paid out
+ *     (`UC-CASH-03`).
+ *   - **Credit** — `"Credit: Loan"` for money borrowed in (`UC-CREDIT-01`, and the
+ *     fixed return owed alongside it `UC-CREDIT-05`) vs `"Credit: Repayment"` for a
+ *     repayment going out (`UC-CREDIT-03`), so a loan received can never be read as
+ *     a repayment on a busy page.
+ * The filter pills and badge colour still key off {@link categoryOf}, so the
+ * "Payroll" / "Credit" filters keep gathering every phase.
  */
 export function categoryLabelOf(entry: LedgerEntry): string {
   if (entry.useCase === 'UC-CASH-02') return 'Payroll: Claim'
   if (entry.useCase === 'UC-CASH-03') return 'Payroll: Withdraw'
+  if (entry.useCase === 'UC-CREDIT-01' || entry.useCase === 'UC-CREDIT-05') return 'Credit: Loan'
+  if (entry.useCase === 'UC-CREDIT-03') return 'Credit: Repayment'
   return categoryOf(entry)
 }
 

@@ -104,27 +104,46 @@ const NO_ACCOUNT = ''
 /**
  * The distinct real accounts a set of postings touches (either leg), A–Z. Backs
  * the ledger's account filter. Memo postings carry no leg, so contribute nothing.
+ *
+ * When a deployment index is given, a redeployed cash pocket is listed once per
+ * deployment under its numbered label (`Cash — Bank` / `Cash — Bank 2`), so the
+ * filter can isolate a single deployment; every other account reads under its
+ * plain name. Without an index every account reads plain, exactly as before.
+ * Numeric-aware sort keeps `Cash — Bank 2` before `Cash — Bank 10`.
  */
-export function ledgerAccounts(entries: readonly LedgerEntry[]): string[] {
+export function ledgerAccounts(
+  entries: readonly LedgerEntry[],
+  instances: PocketInstanceIndex = NO_POCKET_INSTANCES
+): string[] {
   const seen = new Set<string>()
   for (const entry of entries) {
-    if (entry.debit) seen.add(entry.debit)
-    if (entry.credit) seen.add(entry.credit)
+    if (entry.debit) seen.add(instances.labelOf(entry.debit, entry.debitInstance))
+    if (entry.credit) seen.add(instances.labelOf(entry.credit, entry.creditInstance))
   }
   seen.delete(NO_ACCOUNT)
-  return [...seen].sort((a, b) => a.localeCompare(b))
+  return [...seen].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
 }
 
 /**
  * Narrow the feed to the postings that touch **any** of `accounts` on either leg —
  * whole entries, so a kept posting always shows both its debit and its credit row.
+ *
+ * The names are matched against each leg's display label, so passing a numbered
+ * deployment label (`Cash — Bank 2`) keeps only that deployment's postings; a
+ * plain account name behaves exactly as before. The index must be the same one
+ * {@link ledgerAccounts} produced the options from.
  */
 export function filterLedgerByAccount(
   entries: readonly LedgerEntry[],
-  accounts: readonly string[]
+  accounts: readonly string[],
+  instances: PocketInstanceIndex = NO_POCKET_INSTANCES
 ): LedgerEntry[] {
   const wanted = new Set(accounts)
-  return entries.filter((e) => wanted.has(e.debit ?? '') || wanted.has(e.credit ?? ''))
+  return entries.filter(
+    (e) =>
+      wanted.has(instances.labelOf(e.debit, e.debitInstance)) ||
+      wanted.has(instances.labelOf(e.credit, e.creditInstance))
+  )
 }
 
 /** The account fields of one journal line: its name, and which deployment it moved. */

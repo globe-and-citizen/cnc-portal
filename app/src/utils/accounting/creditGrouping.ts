@@ -90,6 +90,13 @@ interface NetLine {
   token: TokenId
   /** Rate of record, dropped when the legs behind the line disagree on it. */
   rate?: number
+  /**
+   * The cash-pocket deployment this line settled in ({@link ./pocketInstances}) —
+   * carried from the underlying legs so a netted `Cash — Bank` line still reads
+   * under its numbered label (`Cash — Bank 2`) and the account filter can isolate
+   * that deployment. Dropped when the legs disagree, exactly like {@link rate}.
+   */
+  instance?: string
 }
 
 /** A stringified base-unit amount, tolerating a malformed value. */
@@ -126,21 +133,43 @@ function legRank(entry: LedgerEntry): number {
  */
 function netLines(group: readonly LedgerEntry[]): NetLine[] {
   const totals = new Map<AccountName, NetLine>()
-  const bump = (account: AccountName, usd: number, raw: bigint, token: TokenId, rate?: number) => {
+  const bump = (
+    account: AccountName,
+    usd: number,
+    raw: bigint,
+    token: TokenId,
+    rate?: number,
+    instance?: string
+  ) => {
     const line = totals.get(account)
     if (!line) {
-      totals.set(account, { account, usd, raw, token, ...(rate != null ? { rate } : {}) })
+      totals.set(account, {
+        account,
+        usd,
+        raw,
+        token,
+        ...(rate != null ? { rate } : {}),
+        ...(instance ? { instance } : {})
+      })
       return
     }
     line.usd += usd
     line.raw += raw
     if (line.rate !== rate) delete line.rate
+    // Keep the deployment while the legs agree on it; an unknown (undefined) leg
+    // never clobbers a known one, a conflict drops it (folds to the plain name).
+    if (instance) {
+      if (line.instance == null) line.instance = instance
+      else if (line.instance !== instance) delete line.instance
+    }
   }
 
   for (const entry of [...group].sort((a, b) => legRank(a) - legRank(b))) {
     const raw = rawOf(entry.rawAmount)
-    if (entry.debit) bump(entry.debit, entry.amountUsd, raw, entry.token, entry.rate)
-    if (entry.credit) bump(entry.credit, -entry.amountUsd, -raw, entry.token, entry.rate)
+    if (entry.debit)
+      bump(entry.debit, entry.amountUsd, raw, entry.token, entry.rate, entry.debitInstance)
+    if (entry.credit)
+      bump(entry.credit, -entry.amountUsd, -raw, entry.token, entry.rate, entry.creditInstance)
   }
 
   // A protocol fee skimmed on the same transaction ({@link mergeBankFees}) is
@@ -151,7 +180,7 @@ function netLines(group: readonly LedgerEntry[]): NetLine[] {
   if (fee && charged?.credit) {
     const raw = rawOf(fee.rawAmount)
     bump(FEE_ACCOUNT, fee.amountUsd, raw, fee.token, fee.rate)
-    bump(charged.credit, -fee.amountUsd, -raw, fee.token, fee.rate)
+    bump(charged.credit, -fee.amountUsd, -raw, fee.token, fee.rate, charged.creditInstance)
   }
 
   const lines = [...totals.values()].filter(
@@ -174,6 +203,14 @@ function lineRow(line: NetLine, source: LedgerEntry, rowsOf: RowsOf): LedgerRow 
       useCase: source.useCase,
       debit: debit ? line.account : null,
       credit: debit ? null : line.account,
+      // The pocket deployment rides on whichever side the netted line lands on, so
+      // the compound row reads under its numbered label (Cash — Bank 2) like a
+      // plain posting does — and the account filter can isolate that deployment.
+      ...(line.instance != null
+        ? debit
+          ? { debitInstance: line.instance }
+          : { creditInstance: line.instance }
+        : {}),
       amountUsd: Math.abs(line.usd),
       token: line.token,
       rawAmount: abs(line.raw).toString(),

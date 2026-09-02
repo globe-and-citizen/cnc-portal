@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { ledgerRows } from '@/utils/accounting/ledgerPresenter'
+import { buildPocketInstances } from '@/utils/accounting/pocketInstances'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 const GEORGES = '0x1111111111111111111111111111111111111111'
 const RAVI = '0x2222222222222222222222222222222222222222'
+
+const BANK_1 = '0xbbbb111111111111111111111111111111111111'
+const BANK_2 = '0xbbbb222222222222222222222222222222222222'
 
 const base = {
   token: 'usdc' as const,
@@ -83,7 +87,7 @@ describe('credit grouping', () => {
     // A single head: one date, one badge and one label for the whole round.
     expect(rows.filter((r) => r.isFirst)).toHaveLength(1)
     expect(rows[0]?.label).toBe('Credit loan received')
-    expect(rows[0]?.cat).toBe('Credit')
+    expect(rows[0]?.cat).toBe('Credit: Loan')
   })
 
   it('narrates a funded round from the team side, naming the interest', () => {
@@ -200,5 +204,45 @@ describe('credit grouping', () => {
     const orphan = interestOwed({ creditOfferId: undefined })
     const rows = ledgerRows([deposit(), orphan])
     expect(rows.filter((r) => r.isFirst)).toHaveLength(2)
+  })
+
+  // A redeployed Bank: the netted Cash — Bank line of a credit round must keep the
+  // deployment it settled in, so the compound posting reads "Cash — Bank 2" — like a
+  // plain posting does — and the account filter can isolate that deployment.
+  describe('carries the Bank deployment through the netted cash line', () => {
+    // A plain deposit into the first Bank contract, so the book has two Bank
+    // deployments and buildPocketInstances numbers them.
+    const bankOne: LedgerEntry = {
+      ...base,
+      id: 'bank-1-deposit',
+      timestamp: 50,
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Bank',
+      debitInstance: BANK_1 as `0x${string}`,
+      credit: 'Service Revenue',
+      amountUsd: 10,
+      rawAmount: '10000000',
+      creditOfferId: undefined
+    }
+
+    it('labels a funded round settling in the redeployed Bank', () => {
+      const feed = [bankOne, deposit({ debitInstance: BANK_2 as `0x${string}` }), interestOwed()]
+      const rows = ledgerRows(feed, buildPocketInstances(feed))
+      const bankRow = rows.find((r) => r.account === 'Cash — Bank' && r.dr === '$800.00')
+      expect(bankRow?.accountLabel).toBe('Cash — Bank 2')
+      expect(bankRow?.accountInstance).toBe(BANK_2)
+    })
+
+    it('labels a repayment leaving the redeployed Bank', () => {
+      const feed = [
+        bankOne,
+        principalBack({ creditInstance: BANK_2 as `0x${string}` }),
+        interestPaid({ creditInstance: BANK_2 as `0x${string}` })
+      ]
+      const rows = ledgerRows(feed, buildPocketInstances(feed))
+      const bankRow = rows.find((r) => r.account === 'Cash — Bank' && r.cr === '$880.00')
+      expect(bankRow?.accountLabel).toBe('Cash — Bank 2')
+      expect(bankRow?.accountInstance).toBe(BANK_2)
+    })
   })
 })

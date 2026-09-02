@@ -66,9 +66,18 @@ describe('categoryLabelOf', () => {
     expect(categoryOf(entry('UC-CASH-03'))).toBe('Payroll')
   })
 
-  it('leaves non-payroll entries on their plain category name', () => {
-    expect(categoryLabelOf(entry('UC-CREDIT-01'))).toBe('Credit')
+  it('spells out the two credit phases while keeping the Credit category', () => {
+    expect(categoryLabelOf(entry('UC-CREDIT-01'))).toBe('Credit: Loan')
+    expect(categoryLabelOf(entry('UC-CREDIT-05'))).toBe('Credit: Loan')
+    expect(categoryLabelOf(entry('UC-CREDIT-03'))).toBe('Credit: Repayment')
+    // All still fall under the single "Credit" filter category.
+    expect(categoryOf(entry('UC-CREDIT-01'))).toBe('Credit')
+    expect(categoryOf(entry('UC-CREDIT-03'))).toBe('Credit')
+  })
+
+  it('leaves other entries on their plain category name', () => {
     expect(categoryLabelOf(entry('UC-EXP-01'))).toBe('Expense')
+    expect(categoryLabelOf(entry('UC-BANK-02'))).toBe('Revenue')
   })
 })
 
@@ -108,8 +117,8 @@ describe('ledger rows', () => {
     const [repaidRow] = ledgerRows([
       entry('UC-CREDIT-03', { debit: 'Loan Payable', credit: 'Cash — Bank' })
     ])
-    expect(lentRow.cat).toBe('Credit')
-    expect(repaidRow.cat).toBe('Credit')
+    expect(lentRow.cat).toBe('Credit: Loan')
+    expect(repaidRow.cat).toBe('Credit: Repayment')
     expect(lentRow.catClass).not.toBe(repaidRow.catClass)
   })
 })
