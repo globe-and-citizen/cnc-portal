@@ -8,6 +8,10 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 - **[Database Seeding](./database-seeding/README.md)** - Current flags, safety boundaries, and execution flow
 
+### Static Analysis
+
+- **[Knip unused-export analysis](./static-analysis.md)** - Read-only TypeScript export audit and triage process
+
 ### Testing
 
 - **[Testing Overview](../testing/)** - Main testing guide
