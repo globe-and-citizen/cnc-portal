@@ -56,15 +56,15 @@ export interface AccountingPdfTable {
 /** A blank spacer row, used to separate sub-sections inside a statement. */
 const GAP: Cell[] = ['', '']
 
-function summaryTable(acc: CncAccounting): AccountingPdfTable {
-  const cards = presentSummaryCards(acc.summary, acc.incomeStatement, acc.balanceSheet)
-  const banner = presentBanner(acc.balanceSheet, acc.generalLedger)
+function summaryTable(books: CncAccounting): AccountingPdfTable {
+  const cards = presentSummaryCards(books.summary, books.incomeStatement, books.balanceSheet)
+  const banner = presentBanner(books.balanceSheet, books.generalLedger)
   return {
     title: 'Summary',
     head: ['Metric', 'Value'],
     align: ['left', 'right'],
     body: [
-      ...cards.map((c) => [c.label, c.value]),
+      ...cards.map((card) => [card.label, card.value]),
       GAP,
       ['Books balanced', banner.balanced ? 'Yes' : 'No'],
       ['Accounting identity', banner.identity],
@@ -73,19 +73,23 @@ function summaryTable(acc: CncAccounting): AccountingPdfTable {
   }
 }
 
-function incomeTable(acc: CncAccounting, from?: Date | null, to?: Date | null): AccountingPdfTable {
-  const income = presentIncome(acc.entries, from, to)
+function incomeTable(
+  books: CncAccounting,
+  from?: Date | null,
+  to?: Date | null
+): AccountingPdfTable {
+  const income = presentIncome(books.entries, from, to)
   return {
     title: incomeExportTitle(from, to),
     head: ['Item', 'Amount'],
     align: ['left', 'right'],
     body: [
       ['Revenue', ''],
-      ...income.revLines.map((r) => [r.label, r.value]),
+      ...income.revenueLines.map((line) => [line.label, line.value]),
       ['Total revenue', income.totalRevenue],
       GAP,
       ['Expenses', ''],
-      ...income.expLines.map((e) => [e.label, e.value]),
+      ...income.expenseLines.map((line) => [line.label, line.value]),
       ['Total expenses', income.totalExpenses],
       GAP,
       ['Net income (profit)', income.netIncome]
@@ -93,22 +97,22 @@ function incomeTable(acc: CncAccounting, from?: Date | null, to?: Date | null): 
   }
 }
 
-function balanceTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable {
-  const balance = presentBalance(acc.entries, asOf)
+function balanceTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTable {
+  const balance = presentBalance(books.entries, asOf)
   return {
     title: balanceExportTitle(asOf),
     head: ['Item', 'Amount'],
     align: ['left', 'right'],
     body: [
       ['Assets', ''],
-      ...balance.assetLines.map((a) => [a.label, a.value]),
+      ...balance.assetLines.map((line) => [line.label, line.value]),
       ['Total assets', balance.totalAssets],
       GAP,
       ['Liabilities', ''],
-      ...balance.liabLines.map((l) => [l.label, l.value]),
+      ...balance.liabilityLines.map((line) => [line.label, line.value]),
       GAP,
       ['Equity', ''],
-      ...balance.equityLines.map((q) => [q.label, q.value]),
+      ...balance.equityLines.map((line) => [line.label, line.value]),
       ['Total equity', balance.totalEquity],
       GAP,
       ['Liabilities + Equity', balance.liabilitiesPlusEquity]
@@ -116,10 +120,10 @@ function balanceTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTabl
   }
 }
 
-function trialTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable {
+function trialTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTable {
   const ledger = asOf
-    ? buildGeneralLedger(filterByPeriod(acc.entries, null, asOf))
-    : acc.generalLedger
+    ? buildGeneralLedger(filterByPeriod(books.entries, null, asOf))
+    : books.generalLedger
   const trial = presentTrial(ledger)
   return {
     title: trialExportTitle(asOf),
@@ -135,18 +139,18 @@ function trialTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable 
 /** How each ledger column renders in the export: alignment + cell value. */
 const LEDGER_PDF_CELL: Record<
   LedgerColumnKey,
-  { align: Align; pick: (r: LedgerRow, resolveName?: ResolveName) => Cell }
+  { align: Align; pick: (row: LedgerRow, resolveName?: ResolveName) => Cell }
 > = {
-  date: { align: 'left', pick: (r) => r.date },
-  action: { align: 'left', pick: (r) => r.cat },
-  transaction: { align: 'left', pick: (r) => r.label },
-  activity: { align: 'left', pick: (r, resolveName) => activityText(r.activity, resolveName) },
-  account: { align: 'left', pick: (r) => r.accountLabel ?? r.account },
-  dr: { align: 'right', pick: (r) => r.dr },
-  cr: { align: 'right', pick: (r) => r.cr },
-  currency: { align: 'left', pick: (r) => r.currency },
-  quantity: { align: 'right', pick: (r) => r.quantity },
-  rate: { align: 'right', pick: (r) => r.rate }
+  date: { align: 'left', pick: (row) => row.date },
+  action: { align: 'left', pick: (row) => row.category },
+  transaction: { align: 'left', pick: (row) => row.label },
+  activity: { align: 'left', pick: (row, resolveName) => activityText(row.activity, resolveName) },
+  account: { align: 'left', pick: (row) => row.accountLabel ?? row.account },
+  dr: { align: 'right', pick: (row) => row.dr },
+  cr: { align: 'right', pick: (row) => row.cr },
+  currency: { align: 'left', pick: (row) => row.currency },
+  quantity: { align: 'right', pick: (row) => row.quantity },
+  rate: { align: 'right', pick: (row) => row.rate }
 }
 
 interface LedgerTableOptions {
@@ -168,46 +172,48 @@ function drillName(opts: LedgerTableOptions): string {
 }
 
 function ledgerTable(
-  acc: CncAccounting,
+  books: CncAccounting,
   resolveName?: ResolveName,
   opts: LedgerTableOptions = {}
 ): AccountingPdfTable {
   const { rows, total } = opts.account
-    ? presentAccountLedger(acc.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
+    ? presentAccountLedger(books.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
         instance: opts.instance,
         includeBlank: opts.includeBlank
       })
-    : presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
-  const cols = resolveLedgerColumns(opts.columns)
-  const body = rows.map((r) => cols.map((c) => LEDGER_PDF_CELL[c.value].pick(r, resolveName)))
-  body.push(ledgerTotalRow(cols, total))
+    : presentLedger(books.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
+  const columns = resolveLedgerColumns(opts.columns)
+  const body = rows.map((row) =>
+    columns.map((column) => LEDGER_PDF_CELL[column.value].pick(row, resolveName))
+  )
+  body.push(ledgerTotalRow(columns, total))
   return {
     title: opts.account
       ? accountLedgerTitle(drillName(opts), opts.from, opts.to)
       : ledgerExportTitle(opts.filter, opts.from, opts.to),
-    head: cols.map((c) => c.label),
-    align: cols.map((c) => LEDGER_PDF_CELL[c.value].align),
+    head: columns.map((column) => column.label),
+    align: columns.map((column) => LEDGER_PDF_CELL[column.value].align),
     body
   }
 }
 
 /** Build a single section's table from its spec. */
 function sectionTable(
-  acc: CncAccounting,
+  books: CncAccounting,
   spec: SectionSpec,
   resolveName?: ResolveName
 ): AccountingPdfTable {
   switch (spec.key) {
     case 'summary':
-      return summaryTable(acc)
+      return summaryTable(books)
     case 'income':
-      return incomeTable(acc, spec.from, spec.to)
+      return incomeTable(books, spec.from, spec.to)
     case 'balance':
-      return balanceTable(acc, spec.asOf)
+      return balanceTable(books, spec.asOf)
     case 'trial':
-      return trialTable(acc, spec.asOf)
+      return trialTable(books, spec.asOf)
     case 'ledger':
-      return ledgerTable(acc, resolveName, {
+      return ledgerTable(books, resolveName, {
         filter: spec.filter,
         from: spec.from,
         to: spec.to,
@@ -224,19 +230,24 @@ function sectionTable(
 
 /** Build tables for an arbitrary section selection, in the order given. */
 export function buildTables(
-  acc: CncAccounting,
+  books: CncAccounting,
   specs: readonly SectionSpec[],
   resolveName?: ResolveName
 ): AccountingPdfTable[] {
-  return specs.map((spec) => sectionTable(acc, spec, resolveName))
+  return specs.map((spec) => sectionTable(books, spec, resolveName))
 }
 
 /** The four printed tabs (everything except the Summary), in display order. */
 export function buildAccountingTables(
-  acc: CncAccounting,
+  books: CncAccounting,
   resolveName?: ResolveName
 ): AccountingPdfTable[] {
-  return [incomeTable(acc), balanceTable(acc), trialTable(acc), ledgerTable(acc, resolveName)]
+  return [
+    incomeTable(books),
+    balanceTable(books),
+    trialTable(books),
+    ledgerTable(books, resolveName)
+  ]
 }
 
 // Sober palette: slate-600 header on white, slate-100 zebra stripe.
@@ -335,8 +346,10 @@ export async function exportTablesPdf(
 }
 
 export async function exportAccountingPdf(
-  acc: CncAccounting,
+  books: CncAccounting,
   resolveName?: ResolveName
 ): Promise<void> {
-  await exportTablesPdf(buildAccountingTables(acc, resolveName), { filename: 'cnc-accounting.pdf' })
+  await exportTablesPdf(buildAccountingTables(books, resolveName), {
+    filename: 'cnc-accounting.pdf'
+  })
 }
