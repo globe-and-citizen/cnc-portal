@@ -83,7 +83,7 @@ describe('credit grouping', () => {
     // A single head: one date, one badge and one label for the whole round.
     expect(rows.filter((r) => r.isFirst)).toHaveLength(1)
     expect(rows[0]?.label).toBe('Credit loan received')
-    expect(rows[0]?.cat).toBe('Credit')
+    expect(rows[0]?.category).toBe('Credit')
   })
 
   it('narrates a funded round from the team side, naming the interest', () => {

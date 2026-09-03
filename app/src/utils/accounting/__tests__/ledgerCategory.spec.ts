@@ -108,8 +108,8 @@ describe('ledger rows', () => {
     const [repaidRow] = ledgerRows([
       entry('UC-CREDIT-03', { debit: 'Loan Payable', credit: 'Cash — Bank' })
     ])
-    expect(lentRow.cat).toBe('Credit')
-    expect(repaidRow.cat).toBe('Credit')
-    expect(lentRow.catClass).not.toBe(repaidRow.catClass)
+    expect(lentRow.category).toBe('Credit')
+    expect(repaidRow.category).toBe('Credit')
+    expect(lentRow.categoryClass).not.toBe(repaidRow.categoryClass)
   })
 })
