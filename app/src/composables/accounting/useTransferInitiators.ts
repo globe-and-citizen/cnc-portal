@@ -43,17 +43,18 @@ export function useTransferInitiators(
         })
       )
       const errors = settled
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .map((r) => r.reason)
+        .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+        .map((result) => result.reason)
       if (errors.length > 0) {
         throw new TransferInitiatorsError(errors)
       }
       return new Map(
         settled
           .filter(
-            (r): r is PromiseFulfilledResult<readonly [string, Address]> => r.status === 'fulfilled'
+            (result): result is PromiseFulfilledResult<readonly [string, Address]> =>
+              result.status === 'fulfilled'
           )
-          .map((r) => r.value)
+          .map((result) => result.value)
       )
     }
   })
