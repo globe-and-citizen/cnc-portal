@@ -88,12 +88,9 @@ import {
   ledgerRows,
   ledgerTotal,
   ledgerCategories,
-  ledgerFeeRows,
-  ledgerFeeTotal,
   ledgerAccounts,
   filterLedgerByAccount,
   buildPocketInstances,
-  FEE_FILTER,
   LEDGER_COLUMNS,
   type LedgerColumnKey
 } from '@/utils/accounting/ledgerPresenter'
@@ -109,7 +106,8 @@ const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
 
 // Active category filter — persisted so a reload keeps the user's chosen tab
 // rather than snapping back to "All". `Fee` is a pseudo-category pill that
-// isolates the Transaction Fee Expense legs (see filterLedgerEntries).
+// selects the whole transactions touching Transaction Fee Expense, showing every
+// balanced leg of each (see filterLedgerEntries).
 const filter = useLocalStorage('ledger_active_category_filter', 'All')
 
 // Reporting period (range mode) — defaults to "All time" (whole book).
@@ -143,8 +141,7 @@ function openInTrialBalance(account: string, instance?: string): void {
 // Filter once, paginate by entry (a posting spans two rows), then flatten the
 // current page into table rows. The "Total movements" figure stays the grand
 // total across the whole filtered book, not just the page.
-const isFeeFilter = computed(() => filter.value === FEE_FILTER)
-
+//
 // After category + date + fee, before account/currency — so those options reflect
 // the data in view and recompute when the upstream filters change (spec §4).
 const filtered = computed(() =>
@@ -193,7 +190,7 @@ const byAccount = computed(() =>
 
 // The distinct currencies currently in view. The selector is shown only when at
 // least two are present (a single-currency ledger needs no filter).
-const availableCurrencies = computed(() => ledgerCurrencies(byAccount.value, isFeeFilter.value))
+const availableCurrencies = computed(() => ledgerCurrencies(byAccount.value))
 const showCurrencyFilter = computed(() => availableCurrencies.value.length >= 2)
 
 // Selected currencies (defaults to all). Reconciled whenever the available set
@@ -228,15 +225,11 @@ const activeCurrencies = computed<string[] | null>(() => {
 const filteredByCurrency = computed(() =>
   activeCurrencies.value === null
     ? byAccount.value
-    : filterLedgerByCurrency(byAccount.value, activeCurrencies.value, isFeeFilter.value)
+    : filterLedgerByCurrency(byAccount.value, activeCurrencies.value)
 )
 
 const total = computed(() => filteredByCurrency.value.length)
-const grandTotal = computed(() =>
-  isFeeFilter.value
-    ? ledgerFeeTotal(filteredByCurrency.value)
-    : ledgerTotal(filteredByCurrency.value)
-)
+const grandTotal = computed(() => ledgerTotal(filteredByCurrency.value))
 
 const { page, pageSize, reset } = usePagination(() => total.value, { key: 'ledger' })
 watch([filter, period, selectedAccounts, selectedCurrencies], reset, { deep: true })
@@ -244,9 +237,7 @@ watch([filter, period, selectedAccounts, selectedCurrencies], reset, { deep: tru
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
   const slice = filteredByCurrency.value.slice(start, start + pageSize.value)
-  return isFeeFilter.value
-    ? ledgerFeeRows(slice, pocketInstances.value)
-    : ledgerRows(slice, pocketInstances.value)
+  return ledgerRows(slice, pocketInstances.value)
 })
 
 // A real date window is in play only when the picker isn't on "All time" (whose
