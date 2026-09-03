@@ -75,12 +75,11 @@ import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnV
 import CurrencyFilterSelect from '@/components/sections/AccountingView/CurrencyFilterSelect.vue'
 import AccountFilterSelect from '@/components/sections/AccountingView/AccountFilterSelect.vue'
 import { usePagination } from '@/composables/usePagination'
+import { useFacetFilter } from '@/composables/useFacetFilter'
 import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { periodLabel } from '@/utils/accounting/presenter'
-import { exportFilename } from '@/utils/accounting/exportNaming'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import {
   filterLedgerEntries,
   filterLedgerByCurrency,
@@ -88,12 +87,9 @@ import {
   ledgerRows,
   ledgerTotal,
   ledgerCategories,
-  ledgerFeeRows,
-  ledgerFeeTotal,
   ledgerAccounts,
   filterLedgerByAccount,
   buildPocketInstances,
-  FEE_FILTER,
   LEDGER_COLUMNS,
   type LedgerColumnKey
 } from '@/utils/accounting/ledgerPresenter'
@@ -104,24 +100,28 @@ const columnItems = [...LEDGER_COLUMNS]
 // pre-v2 selection doesn't hide the newly-mandated columns (spec §2).
 const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
   'cnc-accounting-ledger-columns-v2',
-  columnItems.map((c) => c.value)
+  columnItems.map((column) => column.value)
 )
 
 // Active category filter — persisted so a reload keeps the user's chosen tab
 // rather than snapping back to "All". `Fee` is a pseudo-category pill that
-// isolates the Transaction Fee Expense legs (see filterLedgerEntries).
+// selects the whole transactions touching Transaction Fee Expense, showing every
+// balanced leg of each (see filterLedgerEntries).
 const filter = useLocalStorage('ledger_active_category_filter', 'All')
 
 // Reporting period (range mode) — defaults to "All time" (whole book).
 const period = ref<Range>(defaultValueForMode('range') as Range)
 
-const categoryItems: PillItem[] = ledgerCategories.map((c) => ({ value: c, label: c }))
+const categoryItems: PillItem[] = ledgerCategories.map((category) => ({
+  value: category,
+  label: category
+}))
 
-const acc = useAccountingContext()
+const accounting = useAccountingContext()
 
 // Which contract each cash-pocket leg moved, numbered over the whole book so a
 // redeployed pocket reads as "Cash — Bank 2" here exactly as in the trial balance.
-const pocketInstances = computed(() => buildPocketInstances(acc.entries.value))
+const pocketInstances = computed(() => buildPocketInstances(accounting.entries.value))
 
 const route = useRoute()
 const router = useRouter()
@@ -143,100 +143,33 @@ function openInTrialBalance(account: string, instance?: string): void {
 // Filter once, paginate by entry (a posting spans two rows), then flatten the
 // current page into table rows. The "Total movements" figure stays the grand
 // total across the whole filtered book, not just the page.
-const isFeeFilter = computed(() => filter.value === FEE_FILTER)
-
+//
 // After category + date + fee, before account/currency — so those options reflect
 // the data in view and recompute when the upstream filters change (spec §4).
 const filtered = computed(() =>
-  filterLedgerEntries(acc.entries.value, filter.value, period.value.start, period.value.end)
+  filterLedgerEntries(accounting.entries.value, filter.value, period.value.start, period.value.end)
 )
 
-// The distinct accounts currently in view. The selector is shown once there is
-// more than one to choose between (a single-account view needs no filter).
-const availableAccounts = computed(() => ledgerAccounts(filtered.value))
-const showAccountFilter = computed(() => availableAccounts.value.length >= 2)
+// Account then currency, each narrowing the feed the next one derives its options
+// from ({@link useFacetFilter} owns the "options / selection / narrow" behaviour
+// both share). Filtering keeps whole postings, so both legs always show.
+const {
+  available: availableAccounts,
+  show: showAccountFilter,
+  selected: selectedAccounts,
+  result: byAccount
+} = useFacetFilter(() => filtered.value, ledgerAccounts, filterLedgerByAccount)
 
-// Selected accounts (defaults to all). Reconciled whenever the available set
-// changes — same rule as the currency filter below: keep what's still present,
-// fall back to "all" when nothing valid remains, and stay "all" as new accounts
-// stream in (the ledger loads incrementally).
-const selectedAccounts = ref<string[]>([])
-watch(
-  availableAccounts,
-  (avail, prev) => {
-    const wasAll = !prev || selectedAccounts.value.length >= prev.length
-    if (wasAll) {
-      selectedAccounts.value = [...avail]
-      return
-    }
-    const kept = selectedAccounts.value.filter((a) => avail.includes(a))
-    selectedAccounts.value = kept.length ? kept : [...avail]
-  },
-  { immediate: true }
-)
-
-// The accounts to actually narrow by, or null when there's nothing to narrow
-// (selector hidden, or every account selected). Keeps whole postings — both legs.
-const activeAccounts = computed<string[] | null>(() => {
-  if (!showAccountFilter.value) return null
-  if (selectedAccounts.value.length >= availableAccounts.value.length) return null
-  return selectedAccounts.value
-})
-
-// The feed narrowed to the chosen accounts (or unchanged when all are selected).
-// Currency options and the paginated rows both flow from this.
-const byAccount = computed(() =>
-  activeAccounts.value === null
-    ? filtered.value
-    : filterLedgerByAccount(filtered.value, activeAccounts.value)
-)
-
-// The distinct currencies currently in view. The selector is shown only when at
-// least two are present (a single-currency ledger needs no filter).
-const availableCurrencies = computed(() => ledgerCurrencies(byAccount.value, isFeeFilter.value))
-const showCurrencyFilter = computed(() => availableCurrencies.value.length >= 2)
-
-// Selected currencies (defaults to all). Reconciled whenever the available set
-// changes: keep what's still present, falling back to "all" when nothing valid
-// remains — so switching another filter never leaves a stale, empty selection.
-// When the whole set was selected (the default), stay "all" as new currencies
-// appear — the ledger loads incrementally, so SHER can show up after POL and
-// must not be left unselected.
-const selectedCurrencies = ref<string[]>([])
-watch(
-  availableCurrencies,
-  (avail, prev) => {
-    const wasAll = !prev || selectedCurrencies.value.length >= prev.length
-    if (wasAll) {
-      selectedCurrencies.value = [...avail]
-      return
-    }
-    const kept = selectedCurrencies.value.filter((c) => avail.includes(c))
-    selectedCurrencies.value = kept.length ? kept : [...avail]
-  },
-  { immediate: true }
-)
-
-// The currencies to actually filter by, or null when there's nothing to narrow
-// (selector hidden, or every currency selected). Shared by the view and export.
-const activeCurrencies = computed<string[] | null>(() => {
-  if (!showCurrencyFilter.value) return null
-  if (selectedCurrencies.value.length >= availableCurrencies.value.length) return null
-  return selectedCurrencies.value
-})
-
-const filteredByCurrency = computed(() =>
-  activeCurrencies.value === null
-    ? byAccount.value
-    : filterLedgerByCurrency(byAccount.value, activeCurrencies.value, isFeeFilter.value)
-)
+const {
+  available: availableCurrencies,
+  show: showCurrencyFilter,
+  selected: selectedCurrencies,
+  active: activeCurrencies,
+  result: filteredByCurrency
+} = useFacetFilter(() => byAccount.value, ledgerCurrencies, filterLedgerByCurrency)
 
 const total = computed(() => filteredByCurrency.value.length)
-const grandTotal = computed(() =>
-  isFeeFilter.value
-    ? ledgerFeeTotal(filteredByCurrency.value)
-    : ledgerTotal(filteredByCurrency.value)
-)
+const grandTotal = computed(() => ledgerTotal(filteredByCurrency.value))
 
 const { page, pageSize, reset } = usePagination(() => total.value, { key: 'ledger' })
 watch([filter, period, selectedAccounts, selectedCurrencies], reset, { deep: true })
@@ -244,9 +177,7 @@ watch([filter, period, selectedAccounts, selectedCurrencies], reset, { deep: tru
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
   const slice = filteredByCurrency.value.slice(start, start + pageSize.value)
-  return isFeeFilter.value
-    ? ledgerFeeRows(slice, pocketInstances.value)
-    : ledgerRows(slice, pocketInstances.value)
+  return ledgerRows(slice, pocketInstances.value)
 })
 
 // A real date window is in play only when the picker isn't on "All time" (whose
@@ -263,25 +194,15 @@ const exportContext = computed(() => {
   return parts.join(' · ')
 })
 
-const { exportPdf, exportExcel } = useAccountingExport()
 // Pass null bounds for "All time" so the export heading omits the date; a real
-// window flows through verbatim.
-const spec = (): SectionSpec => ({
+// window flows through verbatim. The filename mirrors the same scope: the active
+// category, plus the period when a real range is set.
+const { onExport, onPrint } = useSectionExport('General ledger', () => ({
   key: 'ledger',
   filter: filter.value,
   from: dateSelected.value ? period.value.start : null,
   to: dateSelected.value ? period.value.end : null,
   columns: visibleColumns.value,
   ...(activeCurrencies.value ? { currencies: activeCurrencies.value } : {})
-})
-// The filename mirrors the export scope: the active category, plus the period
-// when a real range is set (all-time needs no date suffix).
-const onExport = () => {
-  const s = spec()
-  exportExcel([s], exportFilename(s, 'xlsx'), 'General ledger exported to Excel')
-}
-const onPrint = () => {
-  const s = spec()
-  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'General ledger exported to PDF')
-}
+}))
 </script>

@@ -55,12 +55,16 @@ describe('GeneralLedger export', () => {
     wrapper.unmount()
   })
 
-  it('switches the totals to the fee legs under the Fee filter', async () => {
+  it('keeps whole balanced transactions under the Fee filter', async () => {
     const wrapper = renderWithProviders(GeneralLedger)
     await wrapper.find('[data-test="pill-Fee"]').trigger('click')
     await flushPromises()
 
+    // The Fee filter selects the fee-bearing transactions and still shows the
+    // Transaction Fee Expense leg together with its balancing legs (issue #2678),
+    // so the journal and its "Total movements" render normally.
     expect(wrapper.text()).toContain('Total movements')
+    expect(wrapper.text()).toContain('Transaction Fee Expense')
     wrapper.unmount()
   })
 })

@@ -18,7 +18,7 @@
  */
 import { formatUnits } from 'viem'
 import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
-import { netBalanceByAccount, netBalanceByAccountRaw } from './generalLedger'
+import { netBalanceByAccount, netBalanceByAccountUnrounded } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import type { LedgerEntry } from './ledgerEntry'
 import type { StatementLine } from './incomeStatement'
@@ -108,7 +108,7 @@ function rawSideTotals(entries: readonly LedgerEntry[]): {
   let cash = 0
   let liabilities = 0
   let equityAndResult = 0
-  for (const [account, value] of netBalanceByAccountRaw(entries)) {
+  for (const [account, value] of netBalanceByAccountUnrounded(entries)) {
     switch (classOf(account)) {
       case 'ASSET':
         assets += value
@@ -148,20 +148,23 @@ function toBigInt(raw: string): bigint {
  * in POL as well as dollars. Fully-settled (net-zero) holdings are dropped.
  */
 function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrencyLine[] {
-  const acc = new Map<string, { account: AccountName; token: TokenId; usd: number; raw: bigint }>()
-  const bump = (account: AccountName, token: TokenId, usd: number, raw: bigint): void => {
+  const holdings = new Map<
+    string,
+    { account: AccountName; token: TokenId; usd: number; raw: bigint }
+  >()
+  const addHolding = (account: AccountName, token: TokenId, usd: number, raw: bigint): void => {
     const key = `${account}|${token}`
-    const cur = acc.get(key) ?? { account, token, usd: 0, raw: 0n }
-    cur.usd += usd
-    cur.raw += raw
-    acc.set(key, cur)
+    const holding = holdings.get(key) ?? { account, token, usd: 0, raw: 0n }
+    holding.usd += usd
+    holding.raw += raw
+    holdings.set(key, holding)
   }
   for (const entry of entries) {
     const raw = toBigInt(entry.rawAmount)
     if (entry.debit && CASH_ACCOUNTS.has(entry.debit))
-      bump(entry.debit, entry.token, entry.amountUsd, raw)
+      addHolding(entry.debit, entry.token, entry.amountUsd, raw)
     if (entry.credit && CASH_ACCOUNTS.has(entry.credit))
-      bump(entry.credit, entry.token, -entry.amountUsd, -raw)
+      addHolding(entry.credit, entry.token, -entry.amountUsd, -raw)
   }
 
   // Emit pocket-by-pocket (chart order), currency-by-currency (display order),
@@ -170,10 +173,10 @@ function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrenc
   for (const account of ACCOUNT_NAMES) {
     if (!CASH_ACCOUNTS.has(account)) continue
     for (const token of CURRENCY_ORDER) {
-      const cur = acc.get(`${account}|${token}`)
-      if (!cur) continue
-      const tokenAmount = Number(formatUnits(cur.raw, getTokenDecimals(token)))
-      const amountUsd = round2(cur.usd)
+      const holding = holdings.get(`${account}|${token}`)
+      if (!holding) continue
+      const tokenAmount = Number(formatUnits(holding.raw, getTokenDecimals(token)))
+      const amountUsd = round2(holding.usd)
       if (amountUsd === 0 && Math.abs(tokenAmount) < 1e-9) continue
       lines.push({ account, token, amountUsd, tokenAmount })
     }

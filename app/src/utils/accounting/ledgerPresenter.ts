@@ -4,7 +4,7 @@
  * category/date filter. Split from {@link ./presenter} (which handles the
  * statement-level views) to keep each module focused. Pure and unit-testable.
  */
-import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from './presenter'
+import { money, formatUnixDateTime, filterByPeriod, periodLabel, currencySymbol } from './presenter'
 import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { activityDestinationOf, type ActivityDestination } from './activityDestination'
@@ -64,8 +64,8 @@ export interface LedgerRow {
   destination?: ActivityDestination | null
   /** The "Action" badge text — {@link categoryLabelOf} (a plain category, or a
    *  spelled-out payroll phase); empty on a posting's continuation rows. */
-  cat: string
-  catClass: string
+  category: string
+  categoryClass: string
   account: string
   /** Display name for the account — `Cash — Bank 2` on a redeployed pocket's later
    *  deployment ({@link ./pocketInstances}), else exactly {@link account}. Absent
@@ -124,7 +124,7 @@ export function filterLedgerByAccount(
   accounts: readonly string[]
 ): LedgerEntry[] {
   const wanted = new Set(accounts)
-  return entries.filter((e) => wanted.has(e.debit ?? '') || wanted.has(e.credit ?? ''))
+  return entries.filter((entry) => wanted.has(entry.debit ?? '') || wanted.has(entry.credit ?? ''))
 }
 
 /** The account fields of one journal line: its name, and which deployment it moved. */
@@ -185,8 +185,8 @@ function continuationRow(
     date: '',
     label: '',
     activity: NO_ACTIVITY,
-    cat: '',
-    catClass: '',
+    category: '',
+    categoryClass: '',
     ...leg,
     accountMuted: amounts.accountMuted ?? false,
     accountDimmed: false,
@@ -201,12 +201,12 @@ function continuationRow(
 function rowsOf(entry: LedgerEntry, instances: PocketInstanceIndex): LedgerRow[] {
   const head = {
     isFirst: true,
-    date: fmtDateTime(entry.timestamp),
+    date: formatUnixDateTime(entry.timestamp),
     label: entryLabel(entry),
     activity: activityOf(entry),
     destination: activityDestinationOf(entry),
-    cat: categoryLabelOf(entry),
-    catClass: badgeClassOf(entry)
+    category: categoryLabelOf(entry),
+    categoryClass: badgeClassOf(entry)
   }
   // The same token move backs every leg, so the movement columns show once, on the
   // lead row — except the fee leg below, which is its own (smaller) move.
@@ -294,6 +294,13 @@ function rowsOf(entry: LedgerEntry, instances: PocketInstanceIndex): LedgerRow[]
  * transfer ({@link mergeBankFees}). Split out so a paginated view can slice by
  * **entry** (not by row — a posting spans two-plus rows) before flattening into
  * table rows.
+ *
+ * The `Fee` pseudo-category selects the whole transactions that touch
+ * `Transaction Fee Expense` ({@link entryHasFee}) and keeps each of them intact —
+ * it narrows the feed exactly like an account filter, so every selected posting
+ * still renders all of its balanced legs (issue #2678). It never manufactures a
+ * fee-only entry, so the fee view reconciles line-for-line with the General
+ * Ledger, drill-downs and exports.
  */
 export function filterLedgerEntries(
   entries: readonly LedgerEntry[],
@@ -303,12 +310,12 @@ export function filterLedgerEntries(
   currencies?: readonly string[] | null
 ): LedgerEntry[] {
   const shown = filterByPeriod(entries, from, to)
-    .filter((e) => filter === 'All' || filter === FEE_FILTER || categoryOf(e) === filter)
+    .filter((entry) => filter === 'All' || filter === FEE_FILTER || categoryOf(entry) === filter)
     .slice()
     .sort((a, b) => b.timestamp - a.timestamp) // most recent first
   const merged = mergeBankFees(shown)
   const scoped = filter === FEE_FILTER ? merged.filter(entryHasFee) : merged
-  return currencies ? filterLedgerByCurrency(scoped, currencies, filter === FEE_FILTER) : scoped
+  return currencies ? filterLedgerByCurrency(scoped, currencies) : scoped
 }
 
 /** Flatten postings into rows, folding a wage event's per-currency legs and a
@@ -327,34 +334,6 @@ export function entryHasFee(entry: LedgerEntry): boolean {
 }
 
 /**
- * One contextual line per fee-bearing entry — just the single isFee leg rowsOf
- * emits (its own amount + movement), promoted to a lead row so the isolated line
- * keeps its date / activity (a folded fee's leg is a blank continuation).
- */
-export function ledgerFeeRows(
-  entries: readonly LedgerEntry[],
-  instances: PocketInstanceIndex = NO_POCKET_INSTANCES
-): LedgerRow[] {
-  return entries.filter(entryHasFee).map((entry) => ({
-    ...(rowsOf(entry, instances).find((r) => r.isFee) as LedgerRow),
-    isFirst: true,
-    date: fmtDateTime(entry.timestamp),
-    label: entryLabel(entry),
-    activity: activityOf(entry),
-    destination: activityDestinationOf(entry)
-  }))
-}
-
-/**
- * Σ of the fee legs across the fee-bearing entries, formatted as USD — each
- * leg's amount is the folded fee, else the standalone fee posting itself.
- */
-export function ledgerFeeTotal(entries: readonly LedgerEntry[]): string {
-  const legUsd = (e: LedgerEntry) => e.mergedBankFee?.amountUsd ?? e.amountUsd
-  return money(entries.filter(entryHasFee).reduce((sum, e) => sum + legUsd(e), 0))
-}
-
-/**
  * Σ of the debit legs — the "Total movements" figure, formatted as USD. A folded
  * Bank fee ({@link mergeBankFees}) is an extra debit leg on its transfer, so its
  * amount is added in too (the standalone fee posting it replaced is gone).
@@ -368,7 +347,13 @@ export function ledgerTotal(entries: readonly LedgerEntry[]): string {
   )
 }
 
-/** General-ledger rows narrowed by category + inclusive date window (+ currency). */
+/**
+ * General-ledger rows narrowed by category + inclusive date window (+ currency).
+ * Every filter — the `Fee` pseudo-category included — projects the selected
+ * transactions as complete balanced postings ({@link ledgerRows}) with the same
+ * "Total movements" figure ({@link ledgerTotal}), so no report reconstructs an
+ * alternative fee-only leg (issue #2678).
+ */
 export function presentLedger(
   entries: readonly LedgerEntry[],
   filter: string,
@@ -380,10 +365,7 @@ export function presentLedger(
   // Numbered off the **whole** feed, not the filtered slice, so a deployment keeps
   // the same number whatever the active filter.
   const instances = buildPocketInstances(entries)
-  const rows =
-    filter === FEE_FILTER ? ledgerFeeRows(shown, instances) : ledgerRows(shown, instances)
-  const total = filter === FEE_FILTER ? ledgerFeeTotal(shown) : ledgerTotal(shown)
-  return { rows, total, entryCount: shown.length }
+  return { rows: ledgerRows(shown, instances), total: ledgerTotal(shown), entryCount: shown.length }
 }
 
 /**

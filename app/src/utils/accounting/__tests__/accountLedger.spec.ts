@@ -221,7 +221,7 @@ describe('accountLedger — statement-line drill-down', () => {
       expect(row.dr).toBe(money(12))
       expect(row.cr).toBe(money(4))
       expect(row.date).toBe('')
-      expect(row.cat).toBe('')
+      expect(row.category).toBe('')
     })
   })
 

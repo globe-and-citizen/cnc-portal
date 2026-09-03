@@ -29,12 +29,12 @@ export const NATURE_BADGE: Record<TrialNature, string> = {
  * JS negative zero) is collapsed to a clean `$0.00` — never the misleading
  * `$-0.00` that a hand-rolled currency formatter can emit for `−0`.
  */
-export function money(n: number): string {
-  return formatUsd(n)
+export function money(amountUsd: number): string {
+  return formatUsd(amountUsd)
 }
 
 /** Unix-seconds → `Jan 8, 2026` (matches the dashboard ledger date style). */
-export function fmtDate(timestamp: number): string {
+export function formatUnixDate(timestamp: number): string {
   return formatDate(fromUnix(timestamp))
 }
 
@@ -43,7 +43,7 @@ export function fmtDate(timestamp: number): string {
  * ledger keeps Ponder's per-second precision (events in the same day stay
  * distinguishable and read in true chronological order).
  */
-export function fmtDateTime(timestamp: number): string {
+export function formatUnixDateTime(timestamp: number): string {
   return formatDateTime(fromUnix(timestamp))
 }
 
@@ -82,8 +82,8 @@ export interface TrialRow {
 }
 
 export interface IncomeView {
-  revLines: StatementLineView[]
-  expLines: StatementLineView[]
+  revenueLines: StatementLineView[]
+  expenseLines: StatementLineView[]
   totalRevenue: string
   totalExpenses: string
   netIncome: string
@@ -92,7 +92,7 @@ export interface IncomeView {
 
 export interface BalanceView {
   assetLines: StatementLineView[]
-  liabLines: StatementLineView[]
+  liabilityLines: StatementLineView[]
   equityLines: StatementLineView[]
   totalAssets: string
   totalEquity: string
@@ -117,10 +117,9 @@ function natureOf(account: AccountName): TrialNature {
  * 2026"`, `"From Jan 1, 2026"`. Used in the ledger export context line.
  */
 export function periodLabel(from?: Date | null, to?: Date | null): string {
-  const fmt = formatDate
-  if (from && to) return `${fmt(from)} – ${fmt(to)}`
-  if (from) return `From ${fmt(from)}`
-  if (to) return `Until ${fmt(to)}`
+  if (from && to) return `${formatDate(from)} – ${formatDate(to)}`
+  if (from) return `From ${formatDate(from)}`
+  if (to) return `Until ${formatDate(to)}`
   return 'All time'
 }
 
@@ -155,7 +154,7 @@ export function filterByPeriod(
 ): LedgerEntry[] {
   const fromS = from ? Math.floor(from.getTime() / 1000) : -Infinity
   const toS = to ? Math.floor(to.getTime() / 1000) : Infinity
-  return entries.filter((e) => e.timestamp >= fromS && e.timestamp <= toS)
+  return entries.filter((entry) => entry.timestamp >= fromS && entry.timestamp <= toS)
 }
 
 // ── Presenters ──────────────────────────────────────────────────────────────
@@ -176,22 +175,22 @@ export function presentIncome(
   from?: Date | null,
   to?: Date | null
 ): IncomeView {
-  const is = buildIncomeStatement(filterByPeriod(entries, from, to))
+  const income = buildIncomeStatement(filterByPeriod(entries, from, to))
   return {
-    revLines: is.revenue.map((l) => ({
-      label: l.account,
-      value: money(l.amount),
-      account: l.account
+    revenueLines: income.revenue.map((line) => ({
+      label: line.account,
+      value: money(line.amount),
+      account: line.account
     })),
-    expLines: is.expenses.map((l) => ({
-      label: l.account,
-      value: money(l.amount),
-      account: l.account
+    expenseLines: income.expenses.map((line) => ({
+      label: line.account,
+      value: money(line.amount),
+      account: line.account
     })),
-    totalRevenue: money(is.totalRevenue),
-    totalExpenses: money(is.totalExpenses),
-    netIncome: money(is.netIncome),
-    netNegative: is.netIncome < 0
+    totalRevenue: money(income.totalRevenue),
+    totalExpenses: money(income.totalExpenses),
+    netIncome: money(income.netIncome),
+    netNegative: income.netIncome < 0
   }
 }
 
@@ -226,46 +225,54 @@ function cashCurrencyValue(line: CashLineData): string {
 /** Balance-sheet lines as of a point in time. */
 export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | null): BalanceView {
   const scoped = filterByPeriod(entries, null, asOf)
-  const bs = buildBalanceSheet(scoped)
-  const is = buildIncomeStatement(scoped)
-  const retainedAccounts = [...is.revenue, ...is.expenses].map((l) => l.account)
+  const balance = buildBalanceSheet(scoped)
+  const income = buildIncomeStatement(scoped)
+  const retainedAccounts = [...income.revenue, ...income.expenses].map((line) => line.account)
   const assetLines: StatementLineView[] = [
-    { label: 'Cash (all pockets)', value: money(bs.cash) },
-    ...bs.cashByPocketCurrency.map((l) => ({
-      label: `• ${pocketShortName(l.account)} · ${currencySymbol(l.token)}`,
-      value: cashCurrencyValue(l),
-      account: l.account
+    { label: 'Cash (all pockets)', value: money(balance.cash) },
+    ...balance.cashByPocketCurrency.map((line) => ({
+      label: `• ${pocketShortName(line.account)} · ${currencySymbol(line.token)}`,
+      value: cashCurrencyValue(line),
+      account: line.account
     })),
-    ...bs.otherAssets.map((a) => ({ label: a.account, value: money(a.amount), account: a.account }))
+    ...balance.otherAssets.map((asset) => ({
+      label: asset.account,
+      value: money(asset.amount),
+      account: asset.account
+    }))
   ]
-  const liabLines: StatementLineView[] = bs.liabilities.length
-    ? bs.liabilities.map((l) => ({ label: l.account, value: money(l.amount), account: l.account }))
+  const liabilityLines: StatementLineView[] = balance.liabilities.length
+    ? balance.liabilities.map((line) => ({
+        label: line.account,
+        value: money(line.amount),
+        account: line.account
+      }))
     : [{ label: 'None (no debt)', value: money(0) }]
   const equityLines: StatementLineView[] = [
-    { label: 'Owner capital', value: money(bs.ownerCapital), account: 'Owner Capital' },
+    { label: 'Owner capital', value: money(balance.ownerCapital), account: 'Owner Capital' },
     {
       label: 'Investor equity (SHER)',
-      value: money(bs.investorEquity),
+      value: money(balance.investorEquity),
       account: 'Investor Equity'
     },
-    ...bs.contraEquity.map((l) => ({
-      label: l.account,
-      value: money(-l.amount),
-      account: l.account
+    ...balance.contraEquity.map((line) => ({
+      label: line.account,
+      value: money(-line.amount),
+      account: line.account
     })),
     {
       label: 'Retained earnings (net profit)',
-      value: money(bs.retainedEarnings),
+      value: money(balance.retainedEarnings),
       accounts: retainedAccounts
     }
   ]
   return {
     assetLines,
-    liabLines,
+    liabilityLines,
     equityLines,
-    totalAssets: money(bs.totalAssets),
-    totalEquity: money(bs.totalEquity),
-    liabilitiesPlusEquity: money(bs.totalLiabilitiesAndEquity)
+    totalAssets: money(balance.totalAssets),
+    totalEquity: money(balance.totalEquity),
+    liabilitiesPlusEquity: money(balance.totalLiabilitiesAndEquity)
   }
 }
 
@@ -275,22 +282,22 @@ export function presentTrial(ledger: GeneralLedger): {
   total: string
   balanced: boolean
 } {
-  const rows: TrialRow[] = ledger.trialBalance.map((r) => {
+  const rows: TrialRow[] = ledger.trialBalance.map((row) => {
     const debitSide =
-      r.accountClass === 'ASSET' ||
-      r.accountClass === 'EXPENSE' ||
-      r.accountClass === 'CONTRA_EQUITY'
+      row.accountClass === 'ASSET' ||
+      row.accountClass === 'EXPENSE' ||
+      row.accountClass === 'CONTRA_EQUITY'
     return {
-      account: r.account,
-      label: r.accountLabel,
-      ...(r.instance ? { instance: r.instance } : {}),
-      split: r.split,
+      account: row.account,
+      label: row.accountLabel,
+      ...(row.instance ? { instance: row.instance } : {}),
+      split: row.split,
       // The primary (earliest) instance row also carries the pocket's un-instanced legs.
-      isPrimaryInstance: r.isPrimaryInstance,
-      nature: natureOf(r.account),
-      natureClass: NATURE_BADGE[natureOf(r.account)],
-      dr: debitSide ? money(r.balance) : '—',
-      cr: debitSide ? '—' : money(r.balance),
+      isPrimaryInstance: row.isPrimaryInstance,
+      nature: natureOf(row.account),
+      natureClass: NATURE_BADGE[natureOf(row.account)],
+      dr: debitSide ? money(row.balance) : '—',
+      cr: debitSide ? '—' : money(row.balance),
       drMuted: !debitSide,
       crMuted: debitSide
     }

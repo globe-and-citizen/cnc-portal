@@ -22,9 +22,9 @@
       <span
         v-else-if="row.isFirst && !row.isTotal"
         class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
-        :class="row.catClass"
+        :class="row.categoryClass"
       >
-        {{ row.cat }}
+        {{ row.category }}
       </span>
     </template>
 
@@ -193,14 +193,14 @@ function activityHasContent(activity: LedgerRow['activity']): boolean {
 }
 
 const tableRows = computed<LedgerTableRow[]>(() => [
-  ...props.rows.map((r) => ({ ...r, isTotal: false })),
+  ...props.rows.map((row) => ({ ...row, isTotal: false })),
   {
     isFirst: false,
     date: '',
     label: '',
     activity: { kind: 'plain', text: '' } as const,
-    cat: '',
-    catClass: '',
+    category: '',
+    categoryClass: '',
     account: '',
     accountMuted: false,
     accountDimmed: false,
@@ -234,9 +234,9 @@ const COLUMN_DEFS: Record<LedgerColumnKey, TableColumn<LedgerTableRow>> = {
 const BALANCE_COLUMN: TableColumn<LedgerTableRow> = { accessorKey: 'balance', header: 'Balance' }
 
 const columns = computed<TableColumn<LedgerTableRow>[]>(() => {
-  const visible = props.visibleColumns ?? LEDGER_COLUMNS.map((c) => c.value)
-  const shown = LEDGER_COLUMNS.filter((c) => visible.includes(c.value)).map(
-    (c) => COLUMN_DEFS[c.value]
+  const visible = props.visibleColumns ?? LEDGER_COLUMNS.map((column) => column.value)
+  const shown = LEDGER_COLUMNS.filter((column) => visible.includes(column.value)).map(
+    (column) => COLUMN_DEFS[column.value]
   )
   return props.showBalance ? [...shown, BALANCE_COLUMN] : shown
 })

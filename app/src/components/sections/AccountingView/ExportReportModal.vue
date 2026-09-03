@@ -117,7 +117,9 @@ const checked = reactive<Record<SectionKey, boolean>>({
   ledger: true
 })
 
-const selectedKeys = computed(() => SECTIONS.filter((s) => checked[s.key]).map((s) => s.key))
+const selectedKeys = computed(() =>
+  SECTIONS.filter((section) => checked[section.key]).map((section) => section.key)
+)
 
 function setAll(value: boolean): void {
   for (const section of SECTIONS) checked[section.key] = value

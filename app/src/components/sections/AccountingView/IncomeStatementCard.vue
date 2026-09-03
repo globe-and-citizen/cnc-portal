@@ -22,14 +22,14 @@
       <div>
         <p class="text-dimmed pt-2 pb-1 text-[11px] font-bold tracking-wider uppercase">Revenue</p>
         <StatementLine
-          v-for="r in income.revLines"
-          :key="r.label"
-          :line="r"
+          v-for="line in income.revenueLines"
+          :key="line.label"
+          :line="line"
           value-class="text-success"
           data-test-prefix="income"
           @drilldown="openDrilldown"
         />
-        <p v-if="!income.revLines.length" class="text-dimmed py-2 text-sm">
+        <p v-if="!income.revenueLines.length" class="text-dimmed py-2 text-sm">
           No revenue this period
         </p>
         <div class="flex items-center justify-between py-4">
@@ -39,13 +39,13 @@
 
         <p class="text-dimmed pt-3 pb-1 text-[11px] font-bold tracking-wider uppercase">Expenses</p>
         <StatementLine
-          v-for="e in income.expLines"
-          :key="e.label"
-          :line="e"
+          v-for="line in income.expenseLines"
+          :key="line.label"
+          :line="line"
           data-test-prefix="income"
           @drilldown="openDrilldown"
         />
-        <p v-if="!income.expLines.length" class="text-dimmed py-2 text-sm">
+        <p v-if="!income.expenseLines.length" class="text-dimmed py-2 text-sm">
           No expenses this period
         </p>
         <div class="flex items-center justify-between py-4">
@@ -93,18 +93,16 @@ import StatementLine from './StatementLine.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { presentIncome, type StatementLineView } from '@/utils/accounting/presenter'
-import { exportFilename } from '@/utils/accounting/exportNaming'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 // Reporting period (range mode) — defaults to "All time".
 const period = ref<Range>(defaultValueForMode('range') as Range)
 
-const acc = useAccountingContext()
+const accounting = useAccountingContext()
 const income = computed(() =>
-  presentIncome(acc.entries.value, period.value.start, period.value.end)
+  presentIncome(accounting.entries.value, period.value.start, period.value.end)
 )
 
 // A real date window is in play only when the picker isn't on "All time" (whose
@@ -120,7 +118,7 @@ const {
   instances: drilldownInstances,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(acc.entries, () => ({
+} = useLedgerDrilldown(accounting.entries, () => ({
   from: dateSelected.value ? period.value.start : null,
   to: dateSelected.value ? period.value.end : null
 }))
@@ -132,18 +130,9 @@ function openDrilldown(line: StatementLineView): void {
 // Export the current, period-filtered statement. Pass null bounds for "All time"
 // (whose range is epoch → today, not a user choice) so the heading and filename
 // read "All time" rather than a spurious "Jan 1, 1970 – …" window.
-const { exportPdf, exportExcel } = useAccountingExport()
-const spec = (): SectionSpec => ({
+const { onExport, onPrint } = useSectionExport('Income statement', () => ({
   key: 'income',
   from: dateSelected.value ? period.value.start : null,
   to: dateSelected.value ? period.value.end : null
-})
-const onExport = () => {
-  const s = spec()
-  exportExcel([s], exportFilename(s, 'xlsx'), 'Income statement exported to Excel')
-}
-const onPrint = () => {
-  const s = spec()
-  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Income statement exported to PDF')
-}
+}))
 </script>

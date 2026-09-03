@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   money,
-  fmtDate,
-  fmtDateTime,
+  formatUnixDate,
+  formatUnixDateTime,
   presentIncome,
   presentBalance,
   presentTrial,
@@ -32,12 +32,12 @@ describe('formatters', () => {
     expect(money(-0.01)).toBe('-$0.01') // a real cent still reads negative
   })
 
-  it('fmtDate renders a unix-seconds timestamp', () => {
-    expect(fmtDate(Math.floor(Date.parse('2026-03-01T00:00:00Z') / 1000))).toContain('2026')
+  it('formatUnixDate renders a unix-seconds timestamp', () => {
+    expect(formatUnixDate(Math.floor(Date.parse('2026-03-01T00:00:00Z') / 1000))).toContain('2026')
   })
 
-  it('fmtDateTime keeps the time of day (per-second precision)', () => {
-    const out = fmtDateTime(Math.floor(Date.parse('2026-03-01T14:05:32Z') / 1000))
+  it('formatUnixDateTime keeps the time of day (per-second precision)', () => {
+    const out = formatUnixDateTime(Math.floor(Date.parse('2026-03-01T14:05:32Z') / 1000))
     expect(out).toContain('2026')
     expect(out).toMatch(/\d{2}:\d{2}:\d{2}/) // HH:mm:ss present
   })
@@ -46,12 +46,12 @@ describe('formatters', () => {
 describe('presentIncome', () => {
   it('lists revenue and expense lines for the full period', () => {
     const income = presentIncome(books().entries)
-    expect(income.revLines).toContainEqual({
+    expect(income.revenueLines).toContainEqual({
       label: 'Service Revenue',
       value: '$100.00',
       account: 'Service Revenue'
     })
-    expect(income.expLines).toContainEqual({
+    expect(income.expenseLines).toContainEqual({
       label: 'Operating Expense',
       value: '$30.00',
       account: 'Operating Expense'
@@ -76,7 +76,7 @@ describe('presentBalance', () => {
       'Investor equity (SHER)',
       'Retained earnings (net profit)'
     ])
-    expect(balance.liabLines).toContainEqual({ label: 'None (no debt)', value: '$0.00' })
+    expect(balance.liabilityLines).toContainEqual({ label: 'None (no debt)', value: '$0.00' })
   })
 
   it('breaks cash down by pocket and currency under the total', () => {
@@ -161,7 +161,7 @@ describe('presentLedger', () => {
   it('filters by category', () => {
     const ledger = presentLedger(books().entries, 'Revenue')
     expect(ledger.entryCount).toBe(1)
-    expect(ledger.rows[0].cat).toBe('Revenue')
+    expect(ledger.rows[0].category).toBe('Revenue')
   })
 
   it('categorizes the Bank protocol fee as an Expense (not a neutral Transfer)', () => {
@@ -180,7 +180,7 @@ describe('presentLedger', () => {
     expect(categoryOf(fee)).toBe('Expense')
     const ledger = presentLedger([fee], 'Expense')
     expect(ledger.entryCount).toBe(1)
-    expect(ledger.rows[0].cat).toBe('Expense')
+    expect(ledger.rows[0].category).toBe('Expense')
     expect(ledger.rows[0].label).toBe('Transaction fee')
     expect(ledger.rows[0].account).toBe('Transaction Fee Expense')
     expect(ledger.rows[0].dr).toBe('$0.50')

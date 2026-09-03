@@ -54,13 +54,13 @@ function usd(value: string): number | '' {
   return Number.isNaN(n) ? '' : n
 }
 
-function summarySheet(acc: CncAccounting): SheetRows {
-  const cards = presentSummaryCards(acc.summary, acc.incomeStatement, acc.balanceSheet)
-  const banner = presentBanner(acc.balanceSheet, acc.generalLedger)
+function summarySheet(books: CncAccounting): SheetRows {
+  const cards = presentSummaryCards(books.summary, books.incomeStatement, books.balanceSheet)
+  const banner = presentBanner(books.balanceSheet, books.generalLedger)
   return [
     ['Summary'],
     [],
-    ...cards.map((c) => [c.label, usd(c.value)]),
+    ...cards.map((card) => [card.label, usd(card.value)]),
     [],
     ['Books balanced', banner.balanced ? 'Yes' : 'No'],
     ['Accounting identity', banner.identity],
@@ -68,47 +68,47 @@ function summarySheet(acc: CncAccounting): SheetRows {
   ]
 }
 
-function incomeSheet(acc: CncAccounting, from?: Date | null, to?: Date | null): SheetRows {
-  const income = presentIncome(acc.entries, from, to)
+function incomeSheet(books: CncAccounting, from?: Date | null, to?: Date | null): SheetRows {
+  const income = presentIncome(books.entries, from, to)
   return [
     [incomeExportTitle(from, to)],
     [],
     ['Revenue'],
-    ...income.revLines.map((r) => [r.label, usd(r.value)]),
+    ...income.revenueLines.map((line) => [line.label, usd(line.value)]),
     ['Total revenue', usd(income.totalRevenue)],
     [],
     ['Expenses'],
-    ...income.expLines.map((e) => [e.label, usd(e.value)]),
+    ...income.expenseLines.map((line) => [line.label, usd(line.value)]),
     ['Total expenses', usd(income.totalExpenses)],
     [],
     ['Net income (profit)', usd(income.netIncome)]
   ]
 }
 
-function balanceSheetRows(acc: CncAccounting, asOf?: Date | null): SheetRows {
-  const balance = presentBalance(acc.entries, asOf)
+function balanceSheetRows(books: CncAccounting, asOf?: Date | null): SheetRows {
+  const balance = presentBalance(books.entries, asOf)
   return [
     [balanceExportTitle(asOf)],
     [],
     ['Assets'],
-    ...balance.assetLines.map((a) => [a.label, usd(a.value)]),
+    ...balance.assetLines.map((line) => [line.label, usd(line.value)]),
     ['Total assets', usd(balance.totalAssets)],
     [],
     ['Liabilities'],
-    ...balance.liabLines.map((l) => [l.label, usd(l.value)]),
+    ...balance.liabilityLines.map((line) => [line.label, usd(line.value)]),
     [],
     ['Equity'],
-    ...balance.equityLines.map((q) => [q.label, usd(q.value)]),
+    ...balance.equityLines.map((line) => [line.label, usd(line.value)]),
     ['Total equity', usd(balance.totalEquity)],
     [],
     ['Liabilities + Equity', usd(balance.liabilitiesPlusEquity)]
   ]
 }
 
-function trialSheet(acc: CncAccounting, asOf?: Date | null): SheetRows {
+function trialSheet(books: CncAccounting, asOf?: Date | null): SheetRows {
   const ledger = asOf
-    ? buildGeneralLedger(filterByPeriod(acc.entries, null, asOf))
-    : acc.generalLedger
+    ? buildGeneralLedger(filterByPeriod(books.entries, null, asOf))
+    : books.generalLedger
   const trial = presentTrial(ledger)
   return [
     [trialExportTitle(asOf)],
@@ -122,18 +122,18 @@ function trialSheet(acc: CncAccounting, asOf?: Date | null): SheetRows {
 /** How each ledger column renders in the export: header + cell value. */
 const LEDGER_SHEET_CELL: Record<
   LedgerColumnKey,
-  (r: LedgerRow, resolveName?: ResolveName) => Cell
+  (row: LedgerRow, resolveName?: ResolveName) => Cell
 > = {
-  date: (r) => r.date,
-  action: (r) => r.cat,
-  transaction: (r) => r.label,
-  activity: (r, resolveName) => activityText(r.activity, resolveName),
-  account: (r) => r.accountLabel ?? r.account,
-  dr: (r) => usd(r.dr),
-  cr: (r) => usd(r.cr),
-  currency: (r) => r.currency,
-  quantity: (r) => usd(r.quantity),
-  rate: (r) => usd(r.rate)
+  date: (row) => row.date,
+  action: (row) => row.category,
+  transaction: (row) => row.label,
+  activity: (row, resolveName) => activityText(row.activity, resolveName),
+  account: (row) => row.accountLabel ?? row.account,
+  dr: (row) => usd(row.dr),
+  cr: (row) => usd(row.cr),
+  currency: (row) => row.currency,
+  quantity: (row) => usd(row.quantity),
+  rate: (row) => usd(row.rate)
 }
 
 interface LedgerSheetOptions {
@@ -155,17 +155,17 @@ function drillName(opts: LedgerSheetOptions): string {
 }
 
 function ledgerSheet(
-  acc: CncAccounting,
+  books: CncAccounting,
   resolveName?: ResolveName,
   opts: LedgerSheetOptions = {}
 ): SheetRows {
   const { rows, total } = opts.account
-    ? presentAccountLedger(acc.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
+    ? presentAccountLedger(books.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
         instance: opts.instance,
         includeBlank: opts.includeBlank
       })
-    : presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
-  const cols = resolveLedgerColumns(opts.columns)
+    : presentLedger(books.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
+  const columns = resolveLedgerColumns(opts.columns)
   return [
     [
       opts.account
@@ -173,9 +173,11 @@ function ledgerSheet(
         : ledgerExportTitle(opts.filter, opts.from, opts.to)
     ],
     [],
-    cols.map((c) => c.label),
-    ...rows.map((r) => cols.map((c) => LEDGER_SHEET_CELL[c.value](r, resolveName))),
-    ledgerTotalRow(cols, usd(total))
+    columns.map((column) => column.label),
+    ...rows.map((row) =>
+      columns.map((column) => LEDGER_SHEET_CELL[column.value](row, resolveName))
+    ),
+    ledgerTotalRow(columns, usd(total))
   ]
 }
 
@@ -190,22 +192,22 @@ const SHEET_NAME: Record<SectionKey, string> = {
 
 /** Build a single section's sheet from its spec. */
 function sectionSheet(
-  acc: CncAccounting,
+  books: CncAccounting,
   spec: SectionSpec,
   resolveName?: ResolveName
 ): AccountingSheet {
   const rows = (() => {
     switch (spec.key) {
       case 'summary':
-        return summarySheet(acc)
+        return summarySheet(books)
       case 'income':
-        return incomeSheet(acc, spec.from, spec.to)
+        return incomeSheet(books, spec.from, spec.to)
       case 'balance':
-        return balanceSheetRows(acc, spec.asOf)
+        return balanceSheetRows(books, spec.asOf)
       case 'trial':
-        return trialSheet(acc, spec.asOf)
+        return trialSheet(books, spec.asOf)
       case 'ledger':
-        return ledgerSheet(acc, resolveName, {
+        return ledgerSheet(books, resolveName, {
           filter: spec.filter,
           from: spec.from,
           to: spec.to,
@@ -224,23 +226,23 @@ function sectionSheet(
 
 /** Build sheets for an arbitrary section selection, in the order given. */
 export function buildSheets(
-  acc: CncAccounting,
+  books: CncAccounting,
   specs: readonly SectionSpec[],
   resolveName?: ResolveName
 ): AccountingSheet[] {
-  return specs.map((spec) => sectionSheet(acc, spec, resolveName))
+  return specs.map((spec) => sectionSheet(books, spec, resolveName))
 }
 
 /** The four exported tabs (everything except the Summary), in display order. */
 export function buildAccountingSheets(
-  acc: CncAccounting,
+  books: CncAccounting,
   resolveName?: ResolveName
 ): AccountingSheet[] {
   return [
-    { name: 'Income Statement', rows: incomeSheet(acc) },
-    { name: 'Balance Sheet', rows: balanceSheetRows(acc) },
-    { name: 'Trial Balance', rows: trialSheet(acc) },
-    { name: 'General Ledger', rows: ledgerSheet(acc, resolveName) }
+    { name: 'Income Statement', rows: incomeSheet(books) },
+    { name: 'Balance Sheet', rows: balanceSheetRows(books) },
+    { name: 'Trial Balance', rows: trialSheet(books) },
+    { name: 'General Ledger', rows: ledgerSheet(books, resolveName) }
   ]
 }
 
@@ -299,7 +301,7 @@ function styleSheet(ws: any, XLSX: XlsxModule): void {
   }
 
   // Auto-size columns to their widest cell (capped) for readability.
-  const cols: { wch: number }[] = []
+  const columnWidths: { wch: number }[] = []
   for (let c = range.s.c; c <= range.e.c; c++) {
     let width = 10
     for (let r = range.s.r; r <= range.e.r; r++) {
@@ -307,9 +309,9 @@ function styleSheet(ws: any, XLSX: XlsxModule): void {
       const len = cell && cell.v != null ? String(cell.v).length : 0
       if (len + 2 > width) width = len + 2
     }
-    cols.push({ wch: Math.min(width, 60) })
+    columnWidths.push({ wch: Math.min(width, 60) })
   }
-  ws['!cols'] = cols
+  ws['!cols'] = columnWidths
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -336,8 +338,8 @@ export async function exportSheetsExcel(
 }
 
 export async function exportAccountingExcel(
-  acc: CncAccounting,
+  books: CncAccounting,
   resolveName?: ResolveName
 ): Promise<void> {
-  await exportSheetsExcel(buildAccountingSheets(acc, resolveName), 'cnc-accounting.xlsx')
+  await exportSheetsExcel(buildAccountingSheets(books, resolveName), 'cnc-accounting.xlsx')
 }

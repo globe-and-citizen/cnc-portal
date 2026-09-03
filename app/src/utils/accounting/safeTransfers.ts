@@ -31,8 +31,8 @@ function buildRoutedDeposits(
   deposits: readonly SafeDepositRow[] | null | undefined
 ): Map<string, number> {
   const counts = new Map<string, number>()
-  for (const d of deposits ?? []) {
-    const key = routedKey(d.depositor, d.tokenAmount)
+  for (const deposit of deposits ?? []) {
+    const key = routedKey(deposit.depositor, deposit.tokenAmount)
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
   return counts

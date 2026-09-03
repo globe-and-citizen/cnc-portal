@@ -52,7 +52,7 @@ export function entriesForAccount(
 ): LedgerEntry[] {
   const wanted = new Set(typeof account === 'string' ? [account] : account)
   return filterByPeriod(entries, from, to)
-    .filter((e) => touchesAccount(e, wanted, scope))
+    .filter((entry) => touchesAccount(entry, wanted, scope))
     .slice()
     .sort((a, b) => a.timestamp - b.timestamp)
 }
@@ -212,8 +212,8 @@ export function openingRow(opening: AccountOpening): LedgerRow {
     date: '',
     label: 'Opening balance',
     activity: { kind: 'plain', text: '' },
-    cat: '',
-    catClass: '',
+    category: '',
+    categoryClass: '',
     account: '',
     accountMuted: false,
     accountDimmed: false,

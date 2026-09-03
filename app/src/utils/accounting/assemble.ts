@@ -148,36 +148,36 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
   }
 
   if (input.cashRemunerationEvents) {
-    const c = input.cashRemunerationEvents
+    const events = input.cashRemunerationEvents
     sources.cashRemuneration = {
-      deposits: items(c.cashRemunerationDeposits),
-      withdraws: items(c.cashRemunerationWithdraws),
-      withdrawTokens: items(c.cashRemunerationWithdrawTokens),
-      ownerTreasuryWithdrawNatives: items(c.cashRemunerationOwnerTreasuryWithdrawNatives),
-      ownerTreasuryWithdrawTokens: items(c.cashRemunerationOwnerTreasuryWithdrawTokens)
+      deposits: items(events.cashRemunerationDeposits),
+      withdraws: items(events.cashRemunerationWithdraws),
+      withdrawTokens: items(events.cashRemunerationWithdrawTokens),
+      ownerTreasuryWithdrawNatives: items(events.cashRemunerationOwnerTreasuryWithdrawNatives),
+      ownerTreasuryWithdrawTokens: items(events.cashRemunerationOwnerTreasuryWithdrawTokens)
     }
   }
 
   if (input.expenseEvents) {
-    const e = input.expenseEvents
+    const events = input.expenseEvents
     sources.expenseAccount = {
-      deposits: items(e.expenseDeposits),
-      tokenDeposits: items(e.expenseTokenDeposits),
-      transfers: items(e.expenseTransfers),
-      tokenTransfers: items(e.expenseTokenTransfers),
-      ownerTreasuryWithdrawNatives: items(e.expenseOwnerTreasuryWithdrawNatives),
-      ownerTreasuryWithdrawTokens: items(e.expenseOwnerTreasuryWithdrawTokens)
+      deposits: items(events.expenseDeposits),
+      tokenDeposits: items(events.expenseTokenDeposits),
+      transfers: items(events.expenseTransfers),
+      tokenTransfers: items(events.expenseTokenTransfers),
+      ownerTreasuryWithdrawNatives: items(events.expenseOwnerTreasuryWithdrawNatives),
+      ownerTreasuryWithdrawTokens: items(events.expenseOwnerTreasuryWithdrawTokens)
     }
   }
 
   if (input.fixedReturnEvents) {
-    const f = input.fixedReturnEvents
+    const events = input.fixedReturnEvents
     sources.fixedReturn = {
-      lendingOfferCreateds: items(f.fixedReturnLendingOfferCreateds),
-      lendingOfferFundeds: items(f.fixedReturnLendingOfferFundeds),
-      fundsLents: items(f.fixedReturnFundsLents),
-      lenderRepaids: items(f.fixedReturnLenderRepaids),
-      principalRefundeds: items(f.fixedReturnPrincipalRefundeds),
+      lendingOfferCreateds: items(events.fixedReturnLendingOfferCreateds),
+      lendingOfferFundeds: items(events.fixedReturnLendingOfferFundeds),
+      fundsLents: items(events.fixedReturnFundsLents),
+      lenderRepaids: items(events.fixedReturnLenderRepaids),
+      principalRefundeds: items(events.fixedReturnPrincipalRefundeds),
       ...(input.fixedReturnOfferTerms ? { offerTerms: input.fixedReturnOfferTerms } : {})
     }
   }

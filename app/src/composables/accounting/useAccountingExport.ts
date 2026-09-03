@@ -16,7 +16,7 @@ import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import { buildSheets, exportSheetsExcel } from '@/lib/accounting/spreadsheet'
 
 export function useAccountingExport() {
-  const acc = useAccountingContext()
+  const accounting = useAccountingContext()
   const toast = useToast()
   const { resolveUser } = useTransactionPresentation()
 
@@ -26,8 +26,8 @@ export function useAccountingExport() {
 
   /** Freeze the reactive books into a plain value for the pure builders. */
   const snapshot = (): CncAccounting => ({
-    entries: acc.entries.value,
-    ...acc.reports.value
+    entries: accounting.entries.value,
+    ...accounting.reports.value
   })
 
   async function exportPdf(

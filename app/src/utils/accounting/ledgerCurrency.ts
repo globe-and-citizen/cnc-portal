@@ -8,13 +8,13 @@ import { currencySymbol } from './presenter'
 import type { LedgerEntry } from './ledgerEntry'
 
 /**
- * The currency symbol an entry is filtered / grouped by in the ledger — the fee
- * leg's token under the Fee filter (that's the row rendered), otherwise the
- * entry's own token.
+ * The currency symbol an entry is filtered / grouped by in the ledger — the
+ * entry's own token. Every filter (the `Fee` pseudo-category included) keeps whole
+ * transactions in view, so the transaction's currency is always its own token
+ * rather than a fee leg's (issue #2678).
  */
-export function entryCurrency(entry: LedgerEntry, isFeeFilter = false): string {
-  const token = isFeeFilter ? (entry.mergedBankFee?.token ?? entry.token) : entry.token
-  return currencySymbol(token)
+export function entryCurrency(entry: LedgerEntry): string {
+  return currencySymbol(entry.token)
 }
 
 /**
@@ -22,9 +22,9 @@ export function entryCurrency(entry: LedgerEntry, isFeeFilter = false): string {
  * General-ledger currency selector — recomputed as the upstream category / date /
  * fee filters change, so it always reflects the data currently in view.
  */
-export function ledgerCurrencies(entries: readonly LedgerEntry[], isFeeFilter = false): string[] {
+export function ledgerCurrencies(entries: readonly LedgerEntry[]): string[] {
   const seen = new Set<string>()
-  for (const entry of entries) seen.add(entryCurrency(entry, isFeeFilter))
+  for (const entry of entries) seen.add(entryCurrency(entry))
   return [...seen].sort()
 }
 
@@ -35,8 +35,7 @@ export function ledgerCurrencies(entries: readonly LedgerEntry[], isFeeFilter = 
  */
 export function filterLedgerByCurrency(
   entries: readonly LedgerEntry[],
-  currencies: readonly string[],
-  isFeeFilter = false
+  currencies: readonly string[]
 ): LedgerEntry[] {
-  return entries.filter((e) => currencies.includes(entryCurrency(e, isFeeFilter)))
+  return entries.filter((entry) => currencies.includes(entryCurrency(entry)))
 }

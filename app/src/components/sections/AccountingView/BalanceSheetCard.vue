@@ -20,9 +20,9 @@
       <div>
         <p class="text-dimmed pt-2 pb-1 text-[11px] font-bold tracking-wider uppercase">Assets</p>
         <StatementLine
-          v-for="a in balance.assetLines"
-          :key="a.label"
-          :line="a"
+          v-for="line in balance.assetLines"
+          :key="line.label"
+          :line="line"
           data-test-prefix="balance"
           @drilldown="openDrilldown"
         />
@@ -35,9 +35,9 @@
           Liabilities
         </p>
         <StatementLine
-          v-for="l in balance.liabLines"
-          :key="l.label"
-          :line="l"
+          v-for="line in balance.liabilityLines"
+          :key="line.label"
+          :line="line"
           label-class="text-muted"
           value-class="text-muted"
           data-test-prefix="balance"
@@ -46,9 +46,9 @@
 
         <p class="text-dimmed pt-3 pb-1 text-[11px] font-bold tracking-wider uppercase">Equity</p>
         <StatementLine
-          v-for="q in balance.equityLines"
-          :key="q.label"
-          :line="q"
+          v-for="line in balance.equityLines"
+          :key="line.label"
+          :line="line"
           data-test-prefix="balance"
           @drilldown="openDrilldown"
         />
@@ -87,17 +87,15 @@ import StatementLine from './StatementLine.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { presentBalance, type StatementLineView } from '@/utils/accounting/presenter'
-import { exportFilename } from '@/utils/accounting/exportNaming'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 // Point-in-time "as of" date (date mode) — defaults to end of today.
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
-const acc = useAccountingContext()
-const balance = computed(() => presentBalance(acc.entries.value, asOf.value))
+const accounting = useAccountingContext()
+const balance = computed(() => presentBalance(accounting.entries.value, asOf.value))
 
 // Per-line drill-down — over the same as-of slice the balance sheet is built from.
 const {
@@ -108,7 +106,7 @@ const {
   instances: drilldownInstances,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(acc.entries, () => ({ from: null, to: asOf.value }))
+} = useLedgerDrilldown(accounting.entries, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(line: StatementLineView): void {
   // Retained earnings is an aggregate of every income + expense account; other
@@ -119,14 +117,8 @@ function openDrilldown(line: StatementLineView): void {
 
 // Export the current, as-of-filtered balance sheet. The filename carries the
 // "as of" date so a stack of exports stays distinguishable.
-const { exportPdf, exportExcel } = useAccountingExport()
-const spec = (): SectionSpec => ({ key: 'balance', asOf: asOf.value })
-const onExport = () => {
-  const s = spec()
-  exportExcel([s], exportFilename(s, 'xlsx'), 'Balance sheet exported to Excel')
-}
-const onPrint = () => {
-  const s = spec()
-  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Balance sheet exported to PDF')
-}
+const { onExport, onPrint } = useSectionExport('Balance sheet', () => ({
+  key: 'balance',
+  asOf: asOf.value
+}))
 </script>

@@ -117,7 +117,7 @@ function depositsAtFunding(
  * the same figures the contract will actually pay out.
  */
 function interestEvents(input: FixedReturnMapperInput): CreditEvent[] {
-  const termsByOffer = new Map((input.offerTerms ?? []).map((t) => [t.offerId, t]))
+  const termsByOffer = new Map((input.offerTerms ?? []).map((terms) => [terms.offerId, terms]))
   if (termsByOffer.size === 0) return []
 
   return (input.lendingOfferFundeds ?? []).flatMap((funded) => {

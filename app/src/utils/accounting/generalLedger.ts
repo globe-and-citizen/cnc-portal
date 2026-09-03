@@ -52,6 +52,47 @@ export interface JournalEntry {
   lines: JournalLine[]
 }
 
+/**
+ * The canonical double-entry **journal transaction** — the accounting read
+ * model's single source of truth (issue #2678). A source event or an approved
+ * manual classification maps once into one of these: a stable identity, a
+ * timestamp, source metadata (use case, category, txHash), a narration (memo),
+ * and its ordered {@link JournalLine} records. Every report — the general
+ * ledger, the trial balance, the statements, account drill-downs, and the
+ * exports — derives from these same lines and never reconstructs an alternative
+ * debit or credit leg. Structurally identical to {@link JournalEntry}, which
+ * this names in the issue's vocabulary.
+ */
+export type JournalTransaction = JournalEntry
+
+/**
+ * Whether a journal transaction satisfies the **balance invariant**: its debit
+ * and credit line totals are equal in the reporting currency, to the cent (spec
+ * §2 point 2). A memo-only transaction (no monetary lines) is trivially balanced.
+ * This is the per-transaction guarantee that makes the whole-book trial balance
+ * balanced by construction — every report projects only balanced transactions.
+ */
+export function isBalanced(transaction: JournalTransaction): boolean {
+  let debit = 0
+  let credit = 0
+  for (const line of transaction.lines) {
+    debit += line.debit
+    credit += line.credit
+  }
+  return Math.abs(debit - credit) < CENT
+}
+
+/**
+ * The transactions in a journal that violate the {@link isBalanced} invariant —
+ * empty for a well-formed book. What a validation pass asserts is empty before
+ * trusting any report-specific projection over the journal.
+ */
+export function unbalancedTransactions(
+  journal: readonly JournalTransaction[]
+): JournalTransaction[] {
+  return journal.filter((transaction) => !isBalanced(transaction))
+}
+
 export interface TrialBalanceRow {
   account: AccountName
   /**
@@ -106,7 +147,7 @@ function round2(value: number): number {
  * sheet so all three statements roll up the exact same numbers.
  */
 export function netBalanceByAccount(entries: readonly LedgerEntry[]): Map<AccountName, number> {
-  const net = netBalanceByAccountRaw(entries)
+  const net = netBalanceByAccountUnrounded(entries)
   for (const [account, value] of net) net.set(account, round2(value))
   return net
 }
@@ -117,7 +158,9 @@ export function netBalanceByAccount(entries: readonly LedgerEntry[]): Map<Accoun
  * full precision (rounding each account then summing can drift a cent and flag a
  * balanced book "out of balance").
  */
-export function netBalanceByAccountRaw(entries: readonly LedgerEntry[]): Map<AccountName, number> {
+export function netBalanceByAccountUnrounded(
+  entries: readonly LedgerEntry[]
+): Map<AccountName, number> {
   const net = new Map<AccountName, number>()
   const add = (account: AccountName, signed: number): void => {
     net.set(account, (net.get(account) ?? 0) + signed)
@@ -233,7 +276,7 @@ function accumulateBuckets(journal: readonly JournalEntry[]): Map<AccountName, A
  */
 function foldBlankBucket(buckets: Map<string, AccountBucket>): AccountBucket[] {
   const blank = buckets.get('')
-  const concrete = [...buckets.values()].filter((b) => b.instance)
+  const concrete = [...buckets.values()].filter((bucket) => bucket.instance)
   if (!blank || concrete.length === 0) return [...buckets.values()]
   const primary = concrete.reduce((a, b) => (b.firstTs < a.firstTs ? b : a))
   primary.debit += blank.debit

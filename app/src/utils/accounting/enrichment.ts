@@ -76,7 +76,7 @@ function claimTokenTotal(claim: WeeklyClaim, token: TokenId): bigint | null {
       ratePerHour: rates,
       overtimeRatePerHour: claim.wage.overtimeRatePerHour
     })
-    return totals.find((r) => (r.type as TokenId) === token)?.totalAmount ?? null
+    return totals.find((total) => (total.type as TokenId) === token)?.totalAmount ?? null
   } catch {
     return null
   }
@@ -102,13 +102,15 @@ function takePayrollClaim(
   }
   const exact =
     amount != null && amount > 0n
-      ? pool.filter((c) => claimTokenTotal(c, entry.token) === amount)
+      ? pool.filter((claim) => claimTokenTotal(claim, entry.token) === amount)
       : []
   const candidates = exact.length ? exact : pool
-  const chosen = nearest(candidates, entry.timestamp, (c) => new Date(c.weekStart).getTime())
+  const chosen = nearest(candidates, entry.timestamp, (claim) =>
+    new Date(claim.weekStart).getTime()
+  )
   if (chosen) {
-    const idx = pool.indexOf(chosen)
-    if (idx >= 0) pool.splice(idx, 1)
+    const index = pool.indexOf(chosen)
+    if (index >= 0) pool.splice(index, 1)
   }
   return chosen
 }
@@ -124,7 +126,7 @@ function enrichPayroll(entry: LedgerEntry, claim: WeeklyClaim | undefined): Ledg
   const parts = [
     rateLabel(claim.wage),
     `${claim.minutesWorked} min`,
-    ...(claim.claims ?? []).map((c) => c.memo).filter(Boolean)
+    ...(claim.claims ?? []).map((line) => line.memo).filter(Boolean)
   ].filter(Boolean)
   return {
     ...entry,
@@ -157,8 +159,8 @@ export function enrichEntries(
   sources: EnrichmentSources,
   tokenIdOf?: (tokenAddress: string | null | undefined) => TokenId
 ): LedgerEntry[] {
-  const claimsByMember = indexByAddress(sources.weeklyClaims, (c) => c.memberAddress)
-  const expensesByUser = indexByAddress(sources.expenses, (e) => e.userAddress)
+  const claimsByMember = indexByAddress(sources.weeklyClaims, (claim) => claim.memberAddress)
+  const expensesByUser = indexByAddress(sources.expenses, (expense) => expense.userAddress)
 
   return entries.map((entry) => {
     if (entry.enrichment !== 'needs-off-chain-data') return entry
@@ -172,10 +174,12 @@ export function enrichEntries(
     if (entry.useCase === 'UC-EXP-01') {
       const candidates = expensesByUser.get(member)
       const sameToken = tokenIdOf
-        ? candidates?.filter((e) => tokenIdOf(e.data?.tokenAddress) === entry.token)
+        ? candidates?.filter((candidate) => tokenIdOf(candidate.data?.tokenAddress) === entry.token)
         : candidates
-      const expense = nearest(sameToken?.length ? sameToken : candidates, entry.timestamp, (e) =>
-        new Date(e.createdAt).getTime()
+      const expense = nearest(
+        sameToken?.length ? sameToken : candidates,
+        entry.timestamp,
+        (candidate) => new Date(candidate.createdAt).getTime()
       )
       return enrichExpense(entry, expense)
     }

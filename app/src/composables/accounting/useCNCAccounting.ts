@@ -135,19 +135,23 @@ export function useCNCAccounting(
     // Officer-less pockets (Safe / SafeDepositRouter) survive redeploys and are
     // governed by no Officer; add them once as a boundary-less generation.
     const governed = new Set(
-      officerList.flatMap((officer) => officer.contracts.map((c) => c.address.toLowerCase()))
+      officerList.flatMap((officer) =>
+        officer.contracts.map((contract) => contract.address.toLowerCase())
+      )
     )
-    const officerless = contracts.value.filter((c) => !governed.has(c.address.toLowerCase()))
+    const officerless = contracts.value.filter(
+      (contract) => !governed.has(contract.address.toLowerCase())
+    )
     if (officerless.length) gens.push({ deployBlockNumber: null, contracts: officerless })
     return gens
   })
 
   const allContracts = computed<TeamContract[]>(() =>
     generations.value.flatMap((generation) =>
-      generation.contracts.map((c) => ({
-        address: c.address as Address,
-        type: c.type as ContractType,
-        deployer: (c.deployer ?? c.address) as Address,
+      generation.contracts.map((contract) => ({
+        address: contract.address as Address,
+        type: contract.type as ContractType,
+        deployer: (contract.deployer ?? contract.address) as Address,
         admins: []
       }))
     )
@@ -173,14 +177,16 @@ export function useCNCAccounting(
 
   /** Current-generation address for reads that reflect live contract state. */
   const addressOf = (type: ContractType): ComputedRef<string> =>
-    computed(() => contracts.value.find((c) => c.type === type)?.address?.toLowerCase() ?? '')
+    computed(
+      () => contracts.value.find((contract) => contract.type === type)?.address?.toLowerCase() ?? ''
+    )
 
   // Auto-detect Investor: V2 ('Investor') preferred, V1 ('InvestorV1') fallback
   const addressOfInvestor = (): ComputedRef<string> =>
     computed(
       () =>
         contracts.value
-          .find((c) => c.type === 'Investor' || c.type === 'InvestorV1')
+          .find((contract) => contract.type === 'Investor' || contract.type === 'InvestorV1')
           ?.address?.toLowerCase() ?? ''
     )
 
@@ -188,7 +194,9 @@ export function useCNCAccounting(
   const investorAddress = addressOfInvestor()
   const routerAddress = addressOf('SafeDepositRouter')
   const safeAddress = computed(
-    () => team.data.value?.safeAddress ?? contracts.value.find((c) => c.type === 'Safe')?.address
+    () =>
+      team.data.value?.safeAddress ??
+      contracts.value.find((contract) => contract.type === 'Safe')?.address
   )
 
   const bankTargets = targetsOf('Bank')

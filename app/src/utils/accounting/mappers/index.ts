@@ -92,7 +92,7 @@ export function buildCncLedgerEntries(
   offChain: EnrichmentSources = {}
 ): LedgerEntry[] {
   const onChain = mapAllSources(sources, ctx, offChain)
-  const hasIndexedExpensePayout = onChain.some((e) => e.useCase === 'UC-EXP-01')
+  const hasIndexedExpensePayout = onChain.some((entry) => entry.useCase === 'UC-EXP-01')
   const mapped = [
     ...onChain,
     ...mapPayrollAccruals(offChain.weeklyClaims, ctx),

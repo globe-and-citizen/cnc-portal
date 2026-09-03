@@ -129,12 +129,10 @@ import AccountingExportBar from './AccountingExportBar.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
-import { exportFilename } from '@/utils/accounting/exportNaming'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 interface TrialTableRow {
   account: string
@@ -164,13 +162,13 @@ const REDEPLOY_HINT =
 // balance is rebuilt from the slice of entries up to this date.
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
-const acc = useAccountingContext()
+const accounting = useAccountingContext()
 const trial = computed(() =>
-  presentTrial(buildGeneralLedger(filterByPeriod(acc.entries.value, null, asOf.value)))
+  presentTrial(buildGeneralLedger(filterByPeriod(accounting.entries.value, null, asOf.value)))
 )
 
 const tableRows = computed<TrialTableRow[]>(() => [
-  ...trial.value.rows.map((r) => ({ ...r, isTotal: false })),
+  ...trial.value.rows.map((row) => ({ ...row, isTotal: false })),
   {
     account: 'Total',
     label: 'Total',
@@ -205,8 +203,6 @@ function onRowSelect(_event: Event, row: TableRow<TrialTableRow>): void {
   if (!row.original.isTotal) openDrilldown(row.original)
 }
 
-const { exportPdf, exportExcel } = useAccountingExport()
-
 // Per-line drill-down — over the same as-of slice the trial balance is built from.
 const {
   open: drilldownOpen,
@@ -216,7 +212,7 @@ const {
   instances: drilldownInstances,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(acc.entries, () => ({ from: null, to: asOf.value }))
+} = useLedgerDrilldown(accounting.entries, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(row: TrialTableRow): void {
   // The line's balance sits in whichever column isn't the em-dash placeholder.
@@ -246,15 +242,15 @@ const router = useRouter()
  * matching row (e.g. one closed to a nil balance) still drills directly.
  */
 watch(
-  [() => route.query.account, () => route.query.instance, () => acc.entries.value.length],
+  [() => route.query.account, () => route.query.instance, () => accounting.entries.value.length],
   ([account, instance, entryCount]) => {
     if (typeof account !== 'string' || !account || entryCount === 0) return
     const wanted = typeof instance === 'string' ? instance.toLowerCase() : null
     const row = tableRows.value.find(
-      (r) =>
-        !r.isTotal &&
-        r.account === account &&
-        (!wanted || r.instance?.toLowerCase() === wanted || !r.instance)
+      (candidate) =>
+        !candidate.isTotal &&
+        candidate.account === account &&
+        (!wanted || candidate.instance?.toLowerCase() === wanted || !candidate.instance)
     )
     if (row) openDrilldown(row)
     else openFor(account, '')
@@ -268,13 +264,8 @@ watch(
 
 // Export the current, as-of-filtered trial balance. The filename carries the
 // "as of" date so a stack of exports stays distinguishable.
-const spec = (): SectionSpec => ({ key: 'trial', asOf: asOf.value })
-const onExport = () => {
-  const s = spec()
-  exportExcel([s], exportFilename(s, 'xlsx'), 'Trial balance exported to Excel')
-}
-const onPrint = () => {
-  const s = spec()
-  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Trial balance exported to PDF')
-}
+const { onExport, onPrint } = useSectionExport('Trial balance', () => ({
+  key: 'trial',
+  asOf: asOf.value
+}))
 </script>
