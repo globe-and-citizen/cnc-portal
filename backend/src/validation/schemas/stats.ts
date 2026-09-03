@@ -64,6 +64,12 @@ export const actionsStatsQuerySchema = z.object({
   ...paginationSchema.shape,
 });
 
+// TVL stats query schema — TVL is a live on-chain snapshot, so no params are
+// required; `period` is accepted for symmetry with the other stats endpoints.
+export const tvlStatsQuerySchema = z.object({
+  period: periodSchema.optional(),
+});
+
 // Recent activity query schema
 export const recentActivityQuerySchema = z.object({
   limit: z.coerce
