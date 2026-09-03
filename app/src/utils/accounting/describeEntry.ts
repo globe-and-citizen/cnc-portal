@@ -11,7 +11,7 @@
  * Entries with no human actor and no pocket-to-pocket move (memo mints,
  * unclassified cash) fall back to the generic per-use-case {@link entryLabel}.
  */
-import { money, fmtDate } from './presenter'
+import { money, formatUnixDate } from './presenter'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 import type { AccountName } from './chartOfAccounts'
 
@@ -133,7 +133,7 @@ function predicate(entry: LedgerEntry): string {
   switch (entry.useCase) {
     case 'UC-CASH-02': {
       if (!hours) return 'submitted a wage claim'
-      const week = entry.periodEnd ? ` for the week ending ${fmtDate(entry.periodEnd)}` : ''
+      const week = entry.periodEnd ? ` for the week ending ${formatUnixDate(entry.periodEnd)}` : ''
       return `submitted ${hours} of work${week}`
     }
     case 'UC-CASH-03':

@@ -45,8 +45,8 @@ export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
  * both honour the same order regardless of the order columns were toggled.
  */
 export function resolveLedgerColumns(columns?: readonly LedgerColumnKey[]): LedgerColumn[] {
-  const visible = columns && columns.length ? columns : LEDGER_COLUMNS.map((c) => c.value)
-  return LEDGER_COLUMNS.filter((c) => visible.includes(c.value))
+  const visible = columns && columns.length ? columns : LEDGER_COLUMNS.map((column) => column.value)
+  return LEDGER_COLUMNS.filter((column) => visible.includes(column.value))
 }
 
 /**
@@ -57,15 +57,15 @@ export function resolveLedgerColumns(columns?: readonly LedgerColumnKey[]): Ledg
  * column when Transaction is hidden.
  */
 export function ledgerTotalRow(
-  cols: readonly LedgerColumn[],
+  columns: readonly LedgerColumn[],
   amount: string | number
 ): (string | number)[] {
-  const labelKey = cols.some((c) => c.value === 'transaction')
+  const labelKey = columns.some((column) => column.value === 'transaction')
     ? 'transaction'
-    : cols.find((c) => c.value !== 'dr' && c.value !== 'cr')?.value
-  return cols.map((c) => {
-    if (c.value === 'dr' || c.value === 'cr') return amount
-    if (c.value === labelKey) return 'Total movements'
+    : columns.find((column) => column.value !== 'dr' && column.value !== 'cr')?.value
+  return columns.map((column) => {
+    if (column.value === 'dr' || column.value === 'cr') return amount
+    if (column.value === labelKey) return 'Total movements'
     return ''
   })
 }

@@ -225,7 +225,7 @@ function remainingTail(group: readonly LedgerEntry[], settled: string): string {
 function fundingActivity(group: readonly LedgerEntry[]): ActivityCell {
   const principal = sumOf(group, 'UC-CREDIT-01')
   const interest = sumOf(group, 'UC-CREDIT-05')
-  const from = lenders(lenderCount(group.filter((e) => e.useCase === 'UC-CREDIT-01')))
+  const from = lenders(lenderCount(group.filter((entry) => entry.useCase === 'UC-CREDIT-01')))
   // A round whose deposits are out of view (the interest leg alone survived a
   // filter) can only report the fee it owes.
   if (principal <= 0) {
@@ -284,8 +284,8 @@ export function compoundCreditRows(group: readonly LedgerEntry[], rowsOf: RowsOf
           label: '',
           activity: NO_ACTIVITY,
           destination: null,
-          cat: '',
-          catClass: ''
+          category: '',
+          categoryClass: ''
         }
   )
 }

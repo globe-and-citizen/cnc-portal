@@ -4,7 +4,7 @@
  * category/date filter. Split from {@link ./presenter} (which handles the
  * statement-level views) to keep each module focused. Pure and unit-testable.
  */
-import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from './presenter'
+import { money, formatUnixDateTime, filterByPeriod, periodLabel, currencySymbol } from './presenter'
 import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { activityDestinationOf, type ActivityDestination } from './activityDestination'
@@ -64,8 +64,8 @@ export interface LedgerRow {
   destination?: ActivityDestination | null
   /** The "Action" badge text — {@link categoryLabelOf} (a plain category, or a
    *  spelled-out payroll phase); empty on a posting's continuation rows. */
-  cat: string
-  catClass: string
+  category: string
+  categoryClass: string
   account: string
   /** Display name for the account — `Cash — Bank 2` on a redeployed pocket's later
    *  deployment ({@link ./pocketInstances}), else exactly {@link account}. Absent
@@ -124,7 +124,7 @@ export function filterLedgerByAccount(
   accounts: readonly string[]
 ): LedgerEntry[] {
   const wanted = new Set(accounts)
-  return entries.filter((e) => wanted.has(e.debit ?? '') || wanted.has(e.credit ?? ''))
+  return entries.filter((entry) => wanted.has(entry.debit ?? '') || wanted.has(entry.credit ?? ''))
 }
 
 /** The account fields of one journal line: its name, and which deployment it moved. */
@@ -185,8 +185,8 @@ function continuationRow(
     date: '',
     label: '',
     activity: NO_ACTIVITY,
-    cat: '',
-    catClass: '',
+    category: '',
+    categoryClass: '',
     ...leg,
     accountMuted: amounts.accountMuted ?? false,
     accountDimmed: false,
@@ -201,12 +201,12 @@ function continuationRow(
 function rowsOf(entry: LedgerEntry, instances: PocketInstanceIndex): LedgerRow[] {
   const head = {
     isFirst: true,
-    date: fmtDateTime(entry.timestamp),
+    date: formatUnixDateTime(entry.timestamp),
     label: entryLabel(entry),
     activity: activityOf(entry),
     destination: activityDestinationOf(entry),
-    cat: categoryLabelOf(entry),
-    catClass: badgeClassOf(entry)
+    category: categoryLabelOf(entry),
+    categoryClass: badgeClassOf(entry)
   }
   // The same token move backs every leg, so the movement columns show once, on the
   // lead row — except the fee leg below, which is its own (smaller) move.
@@ -310,7 +310,7 @@ export function filterLedgerEntries(
   currencies?: readonly string[] | null
 ): LedgerEntry[] {
   const shown = filterByPeriod(entries, from, to)
-    .filter((e) => filter === 'All' || filter === FEE_FILTER || categoryOf(e) === filter)
+    .filter((entry) => filter === 'All' || filter === FEE_FILTER || categoryOf(entry) === filter)
     .slice()
     .sort((a, b) => b.timestamp - a.timestamp) // most recent first
   const merged = mergeBankFees(shown)

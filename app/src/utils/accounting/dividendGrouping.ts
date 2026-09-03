@@ -47,8 +47,8 @@ export function compoundDividendRows(
           date: '',
           label: '',
           destination: null,
-          cat: '',
-          catClass: ''
+          category: '',
+          categoryClass: ''
         }
   )
 }

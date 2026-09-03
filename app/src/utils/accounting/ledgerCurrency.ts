@@ -37,5 +37,5 @@ export function filterLedgerByCurrency(
   entries: readonly LedgerEntry[],
   currencies: readonly string[]
 ): LedgerEntry[] {
-  return entries.filter((e) => currencies.includes(entryCurrency(e)))
+  return entries.filter((entry) => currencies.includes(entryCurrency(entry)))
 }
