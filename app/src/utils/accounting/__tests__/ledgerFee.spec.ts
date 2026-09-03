@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   ledgerRows,
+  ledgerTotal,
   entryHasFee,
-  ledgerFeeRows,
-  ledgerFeeTotal,
   presentLedger,
   FEE_ACCOUNT,
   FEE_FILTER
@@ -77,26 +76,34 @@ describe('Fee filter', () => {
     expect(entryHasFee(plainTransfer)).toBe(false)
   })
 
-  it('ledgerFeeRows isolates one contextual fee line per fee-bearing entry', () => {
-    const rows = ledgerFeeRows([standaloneFee, transferWithFee, plainTransfer])
-    expect(rows).toHaveLength(2)
-    expect(rows.every((r) => r.isFee && r.account === FEE_ACCOUNT)).toBe(true)
-    // The folded fee shows the fee amount ($0.05), not the transfer's $10.
-    expect(rows[1].dr).toBe('$0.05')
-    // The line keeps its date so it still reads in isolation.
-    expect(rows[1].isFirst).toBe(true)
-    expect(rows[1].date).not.toBe('')
-  })
-
-  it('ledgerFeeTotal sums only the fee legs', () => {
-    expect(ledgerFeeTotal([standaloneFee, transferWithFee, plainTransfer])).toBe('$0.55')
-  })
-
-  it('presentLedger(FEE_FILTER) isolates fees — the on-screen + print/export funnel', () => {
+  it('presentLedger(FEE_FILTER) selects the fee-bearing transactions and keeps every leg', () => {
+    // The Fee filter narrows to the transactions touching Transaction Fee Expense
+    // and renders each of them whole — never a fee-only projection (issue #2678).
     const view = presentLedger([standaloneFee, transferWithFee, plainTransfer], FEE_FILTER)
+    // Two transactions selected; the plain transfer (no fee) is excluded.
     expect(view.entryCount).toBe(2)
-    expect(view.rows).toHaveLength(2)
-    expect(view.rows.every((r) => r.isFee)).toBe(true)
-    expect(view.total).toBe('$0.55')
+    // Standalone fee → 2 lines (Dr fee · Cr Bank); folded transfer → 3 lines
+    // (Dr net · Dr fee · Cr gross). Five rows in total, not two isolated fee lines.
+    expect(view.rows).toHaveLength(5)
+    // Each selected transaction is balanced: its debit rows equal its credit row.
+    const feeRow = view.rows.find((r) => r.isFee && r.account === FEE_ACCOUNT)
+    expect(feeRow).toBeDefined()
+  })
+
+  it('presentLedger(FEE_FILTER) preserves the accounting total of each transaction', () => {
+    // The total is the ordinary "Total movements" figure over the selected
+    // transactions (debit legs + folded fees), not a fee-only sum.
+    const view = presentLedger([standaloneFee, transferWithFee, plainTransfer], FEE_FILTER)
+    expect(view.total).toBe('$10.55')
+  })
+
+  it('a fee transaction shows identical lines in the Fee filter and the General Ledger', () => {
+    // Reconciliation: the rows and total the Fee filter renders for a transaction
+    // match the rows and total the "All" ledger renders for it, line for line.
+    const feeView = presentLedger([transferWithFee], FEE_FILTER)
+    const allView = presentLedger([transferWithFee], 'All')
+    expect(feeView.rows).toEqual(allView.rows)
+    expect(feeView.total).toBe(allView.total)
+    expect(feeView.total).toBe(ledgerTotal([transferWithFee]))
   })
 })

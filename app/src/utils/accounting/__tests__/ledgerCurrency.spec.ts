@@ -34,12 +34,12 @@ const feeInSher: LedgerEntry = {
 }
 
 describe('entryCurrency', () => {
-  it('reads the entry token by default, the fee leg token under the Fee filter', () => {
+  it('reads the transaction token — the fee leg token never overrides it', () => {
     expect(entryCurrency(usdtEntry)).toBe('USDT')
     expect(entryCurrency(usdcEntry)).toBe('USDC')
-    // Fee-filter mode surfaces the fee leg's currency, not the transfer's.
+    // A transfer that skimmed its fee in another token is still the transfer's own
+    // currency — the whole transaction is kept in view, not a fee-only leg.
     expect(entryCurrency(feeInSher)).toBe('USDC')
-    expect(entryCurrency(feeInSher, true)).toBe('SHER')
   })
 })
 
@@ -97,13 +97,21 @@ describe('currency filter under the Fee filter', () => {
     debit: FEE_ACCOUNT,
     credit: 'Cash — Bank',
     amountUsd: 0.5,
-    token: 'usdc'
+    token: 'usdt'
   }
 
-  it('groups fee-bearing entries by their fee leg currency', () => {
-    // feeInSher's fee leg is SHER; the standalone fee is USDC.
-    const view = presentLedger([standaloneFee, feeInSher], FEE_FILTER, null, null, ['SHER'])
+  it('keys fee-bearing entries off their transaction currency, keeping every leg', () => {
+    // The fee view narrows to whole transactions touching Transaction Fee Expense,
+    // so the currency selector reads the transaction token — feeInSher is USDC (its
+    // fee leg's SHER never overrides it), the standalone fee is USDT.
+    const view = presentLedger([standaloneFee, feeInSher], FEE_FILTER, null, null, ['USDC'])
     expect(view.entryCount).toBe(1)
-    expect(view.rows[0].currency).toBe('SHER')
+    // The selected transaction still renders its full balanced context (Dr net · Dr
+    // fee · Cr gross), not a fee-only line.
+    expect(view.rows).toHaveLength(3)
+    expect(view.rows.some((r) => r.isFee)).toBe(true)
+    // The lead row carries the transaction's own currency (the fee leg keeps its
+    // SHER movement below, but that never drives the selector).
+    expect(view.rows[0].currency).toBe('USDC')
   })
 })
