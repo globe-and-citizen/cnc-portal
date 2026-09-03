@@ -28,6 +28,14 @@ These acceptance criteria follow the
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
+- **Transaction-first read model:** every source event and every approved manual classification maps once into a balanced journal
+  transaction — a set of debit/credit lines that are equal in the reporting currency — and **every report derives from those same lines**.
+  The general ledger projects whole transactions with all their lines; the trial balance and the statements aggregate the same lines by
+  account and account type; account drill-downs and exports select whole transactions and keep their complete context. No report
+  reconstructs an alternative debit or credit leg. A protocol or transaction fee is an ordinary debit line to `Transaction Fee Expense`
+  inside its transaction, never a standalone fee-only row; the **Fee** filter selects the transactions that contain that account and still
+  shows every one of their balanced lines, so the fee view reconciles line-for-line with the general ledger, drill-downs, and exports
+  ([#2678](https://github.com/globe-and-citizen/cnc-portal/issues/2678)).
 
 ## Lifecycle
 
@@ -109,6 +117,8 @@ flowchart LR
 
 - [x] Pagination does not change the totals for the complete filtered ledger.
 - [x] Filtering the ledger by account keeps whole postings, so each shown entry still carries its debit and credit legs.
+- [x] Filtering by fee selects the transactions that contain `Transaction Fee Expense` and keeps their complete balanced context — every
+      debit and credit line — rather than isolating a fee-only line or altering the transaction's total.
 - [x] Compound transactions retain all debit and credit legs under one posting.
 - [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
       community-credit round — is shown as a single ledger entry that still names each beneficiary and their share, with one credit for the
@@ -258,7 +268,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `3d6fd2f73541151cd318ab391a65afb5b7bdc99c`
+**Implementation evidence reviewed against:** `987bc6ec32574be600d5d9c889bd985856ae36bc`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -280,7 +290,11 @@ flowchart LR
 - [Ledger Activity destination resolver](../../../app/src/composables/accounting/useActivityDestination.ts)
 - [Share-vesting event feed (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts) and
   [vesting source mapper](../../../app/src/utils/accounting/mappers/vesting.ts)
-- [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts)
+- [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts),
+  [per-section export](../../../app/src/composables/accounting/useSectionExport.ts), and
+  [transfer-initiator resolver](../../../app/src/composables/accounting/useTransferInitiators.ts)
+- [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
+  [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's category, account, and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [general ledger](../../../app/src/utils/accounting/generalLedger.ts),
   [income statement](../../../app/src/utils/accounting/incomeStatement.ts), and
