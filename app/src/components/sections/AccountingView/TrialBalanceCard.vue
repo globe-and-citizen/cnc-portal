@@ -129,12 +129,10 @@ import AccountingExportBar from './AccountingExportBar.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
-import { exportFilename } from '@/utils/accounting/exportNaming'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 interface TrialTableRow {
   account: string
@@ -205,8 +203,6 @@ function onRowSelect(_event: Event, row: TableRow<TrialTableRow>): void {
   if (!row.original.isTotal) openDrilldown(row.original)
 }
 
-const { exportPdf, exportExcel } = useAccountingExport()
-
 // Per-line drill-down — over the same as-of slice the trial balance is built from.
 const {
   open: drilldownOpen,
@@ -268,13 +264,8 @@ watch(
 
 // Export the current, as-of-filtered trial balance. The filename carries the
 // "as of" date so a stack of exports stays distinguishable.
-const spec = (): SectionSpec => ({ key: 'trial', asOf: asOf.value })
-const onExport = () => {
-  const s = spec()
-  exportExcel([s], exportFilename(s, 'xlsx'), 'Trial balance exported to Excel')
-}
-const onPrint = () => {
-  const s = spec()
-  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Trial balance exported to PDF')
-}
+const { onExport, onPrint } = useSectionExport('Trial balance', () => ({
+  key: 'trial',
+  asOf: asOf.value
+}))
 </script>

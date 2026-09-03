@@ -93,11 +93,9 @@ import StatementLine from './StatementLine.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { presentIncome, type StatementLineView } from '@/utils/accounting/presenter'
-import { exportFilename } from '@/utils/accounting/exportNaming'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 // Reporting period (range mode) — defaults to "All time".
 const period = ref<Range>(defaultValueForMode('range') as Range)
@@ -132,18 +130,9 @@ function openDrilldown(line: StatementLineView): void {
 // Export the current, period-filtered statement. Pass null bounds for "All time"
 // (whose range is epoch → today, not a user choice) so the heading and filename
 // read "All time" rather than a spurious "Jan 1, 1970 – …" window.
-const { exportPdf, exportExcel } = useAccountingExport()
-const spec = (): SectionSpec => ({
+const { onExport, onPrint } = useSectionExport('Income statement', () => ({
   key: 'income',
   from: dateSelected.value ? period.value.start : null,
   to: dateSelected.value ? period.value.end : null
-})
-const onExport = () => {
-  const s = spec()
-  exportExcel([s], exportFilename(s, 'xlsx'), 'Income statement exported to Excel')
-}
-const onPrint = () => {
-  const s = spec()
-  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Income statement exported to PDF')
-}
+}))
 </script>
