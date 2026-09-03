@@ -1,0 +1,60 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "project": ["scripts/**/*.{mjs,cjs}"],
+      "eslint": false
+    },
+    "app": {
+      "entry": [
+        "src/router/index.ts",
+        "src/e2e/mockConnector.ts",
+        "test/e2e/**/*.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,vue,css,scss,sass}",
+        "test/**/*.{ts,vue}",
+        "scripts/**/*.mjs"
+      ],
+      "eslint": false,
+      "playwright": false,
+      "vite": { "config": [] },
+      "vitest": false
+    },
+    "backend": {
+      "entry": ["src/**/__tests__/**/*.ts", "scripts/**/*.ts"],
+      "project": ["src/**/*.ts", "scripts/**/*.ts", "prisma/**/*.prisma"],
+      "eslint": false,
+      "vitest": false
+    },
+    "contract": {
+      "entry": ["scripts/**/*.ts", "test/**/*.ts"],
+      "project": ["scripts/**/*.ts", "test/**/*.ts"],
+      "eslint": false
+    },
+    "dashboard": {
+      "entry": [
+        "app/app.vue",
+        "app/{api,pages,layouts,middleware,plugins,composables}/**/*.{ts,vue}",
+        "server/**/*.{ts,vue}"
+      ],
+      "project": [
+        "app/**/*.{ts,vue}",
+        "server/**/*.{ts,vue}",
+        "nuxt.config.ts"
+      ],
+      "eslint": false,
+      "nuxt": false
+    },
+    "ponder": {
+      "entry": [
+        "ponder.config.ts",
+        "ponder.schema.ts",
+        "src/index.ts",
+        "src/api/**/*.ts"
+      ],
+      "project": ["src/**/*.ts", "scripts/**/*.ts"],
+      "eslint": false
+    }
+  }
+}

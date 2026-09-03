@@ -4,6 +4,8 @@
     "changelog:first": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "format:md": "prettier --config .prettier-markdown.json --write \"**/*.md\"",
     "format:md:check": "node scripts/check-markdown-format.mjs",
+    "knip": "knip --config knip.json --include exports",
+    "knip:report": "knip --config knip.json --include exports --no-exit-code --reporter compact",
     "lint:docs-freshness": "node scripts/validate-documentation-freshness.mjs",
     "lint:md": "markdownlint-cli2",
     "test:docs-freshness": "node --test scripts/documentation-freshness.test.mjs",
@@ -16,12 +18,15 @@
     "**/*.md": "prettier --config .prettier-markdown.json --write"
   },
   "devDependencies": {
+    "@types/node": "^24.13.3",
     "conventional-changelog-angular": "^8.1.0",
     "conventional-changelog-cli": "^5.0.0",
     "danger": "^13.0.7",
     "husky": "^9.1.7",
+    "knip": "^6.34.0",
     "lint-staged": "^17.0.5",
     "markdownlint-cli2": "^0.23.2",
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3"
   }
 }
