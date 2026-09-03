@@ -15,7 +15,7 @@
       </p>
     </template>
 
-    <div v-if="acc.isLoading.value" class="text-muted py-10 text-center text-sm">
+    <div v-if="accounting.isLoading.value" class="text-muted py-10 text-center text-sm">
       Loading transactions…
     </div>
     <div
@@ -100,7 +100,7 @@ import { useUserDataStore } from '@/stores/user'
 import { classificationTargetOf } from '@/utils/accounting/classificationTarget'
 import { CATEGORY_LABEL, type ClassificationCategory } from '@/utils/accounting/classification'
 import type { ClassificationDirection } from '@/utils/accounting/classification'
-import { money, fmtDateTime, currencySymbol } from '@/utils/accounting/presenter'
+import { money, formatUnixDateTime, currencySymbol } from '@/utils/accounting/presenter'
 import { entryLabel } from '@/utils/accounting/describeEntry'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 
@@ -124,7 +124,7 @@ interface ClassifyRow {
   memo?: string
 }
 
-const acc = useAccountingContext()
+const accounting = useAccountingContext()
 const { resolveUser } = useTransactionPresentation()
 
 const route = useRoute()
@@ -142,7 +142,7 @@ const categoryLabel = (category?: ClassificationCategory): string =>
 
 /** The classifiable Bank/Safe deposits and withdrawals, newest first, as table rows. */
 const rows = computed<ClassifyRow[]>(() =>
-  acc.entries.value
+  accounting.entries.value
     .filter((entry) => classificationTargetOf(entry) != null)
     .sort((a, b) => b.timestamp - a.timestamp)
     .map((entry) => {
@@ -151,7 +151,7 @@ const rows = computed<ClassifyRow[]>(() =>
       const party: FlowNode = { kind: 'party', address: entry.counterparty }
       return {
         entryId: entry.id,
-        date: fmtDateTime(entry.timestamp),
+        date: formatUnixDateTime(entry.timestamp),
         description: entryLabel(entry),
         cashAccount: target.cashAccount,
         amount: money(entry.amountUsd),

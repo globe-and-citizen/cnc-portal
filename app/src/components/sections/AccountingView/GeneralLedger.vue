@@ -100,7 +100,7 @@ const columnItems = [...LEDGER_COLUMNS]
 // pre-v2 selection doesn't hide the newly-mandated columns (spec §2).
 const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
   'cnc-accounting-ledger-columns-v2',
-  columnItems.map((c) => c.value)
+  columnItems.map((column) => column.value)
 )
 
 // Active category filter — persisted so a reload keeps the user's chosen tab
@@ -112,13 +112,16 @@ const filter = useLocalStorage('ledger_active_category_filter', 'All')
 // Reporting period (range mode) — defaults to "All time" (whole book).
 const period = ref<Range>(defaultValueForMode('range') as Range)
 
-const categoryItems: PillItem[] = ledgerCategories.map((c) => ({ value: c, label: c }))
+const categoryItems: PillItem[] = ledgerCategories.map((category) => ({
+  value: category,
+  label: category
+}))
 
-const acc = useAccountingContext()
+const accounting = useAccountingContext()
 
 // Which contract each cash-pocket leg moved, numbered over the whole book so a
 // redeployed pocket reads as "Cash — Bank 2" here exactly as in the trial balance.
-const pocketInstances = computed(() => buildPocketInstances(acc.entries.value))
+const pocketInstances = computed(() => buildPocketInstances(accounting.entries.value))
 
 const route = useRoute()
 const router = useRouter()
@@ -144,7 +147,7 @@ function openInTrialBalance(account: string, instance?: string): void {
 // After category + date + fee, before account/currency — so those options reflect
 // the data in view and recompute when the upstream filters change (spec §4).
 const filtered = computed(() =>
-  filterLedgerEntries(acc.entries.value, filter.value, period.value.start, period.value.end)
+  filterLedgerEntries(accounting.entries.value, filter.value, period.value.start, period.value.end)
 )
 
 // Account then currency, each narrowing the feed the next one derives its options

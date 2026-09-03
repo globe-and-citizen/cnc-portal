@@ -77,17 +77,17 @@ import { presentSummaryCards, presentBanner } from '@/utils/accounting/presenter
 import { presentLedger } from '@/utils/accounting/ledgerPresenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 
-const acc = useAccountingContext()
+const accounting = useAccountingContext()
 
 const summaryCards = computed(() =>
   presentSummaryCards(
-    acc.reports.value.summary,
-    acc.reports.value.incomeStatement,
-    acc.reports.value.balanceSheet
+    accounting.reports.value.summary,
+    accounting.reports.value.incomeStatement,
+    accounting.reports.value.balanceSheet
   )
 )
 const banner = computed(() =>
-  presentBanner(acc.reports.value.balanceSheet, acc.reports.value.generalLedger)
+  presentBanner(accounting.reports.value.balanceSheet, accounting.reports.value.generalLedger)
 )
 
 const LAST_ROW_SPAN: Record<number, string> = {
@@ -104,7 +104,7 @@ function cardSpan(index: number): string {
 
 // Whole-book ledger size — surfaced in the modal so the user knows a full ledger
 // export may be long.
-const ledgerEntryCount = computed(() => presentLedger(acc.entries.value, 'All').entryCount)
+const ledgerEntryCount = computed(() => presentLedger(accounting.entries.value, 'All').entryCount)
 
 // The Summary report exports the whole book (no per-page filters) for the
 // sections picked in the modal — as a PDF (one section per page) or an Excel
