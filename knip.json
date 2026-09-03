@@ -7,6 +7,7 @@
     },
     "app": {
       "entry": [
+        "src/main.ts",
         "src/router/index.ts",
         "src/e2e/mockConnector.ts",
         "test/e2e/**/*.ts"
@@ -22,7 +23,7 @@
       "vitest": false
     },
     "backend": {
-      "entry": ["src/**/__tests__/**/*.ts", "scripts/**/*.ts"],
+      "entry": ["src/index.ts", "src/**/__tests__/**/*.ts", "scripts/**/*.ts"],
       "project": ["src/**/*.ts", "scripts/**/*.ts", "prisma/**/*.prisma"],
       "eslint": false,
       "vitest": false

@@ -16,10 +16,13 @@ Install root development dependencies, then run one of these commands from the r
 ```bash
 npm install
 npm run knip:report
+npm run knip:production
 ```
 
 `knip:report` always completes successfully and is the appropriate starting point for an existing codebase. `npm run knip` exits non-zero
 when candidates are found, which makes it suitable for a focused local cleanup after the baseline has been reviewed.
+
+`knip:production` ignores test sources. Compare it with `knip:report` to identify exports that are statically referenced only by tests.
 
 Neither command changes source files. Do not use Knip's automatic fix mode in this repository.
 
@@ -28,7 +31,8 @@ Neither command changes source files. Do not use Knip's automatic fix mode in th
 Each result is a candidate, not proof that code is dead. Before deleting an export, verify:
 
 1. references in the same file;
-2. test-only references, which may be intentional test helpers;
+2. test-only references: an export reported by `knip:production` but not `knip:report` is referenced only by excluded sources, usually
+   tests; decide whether the test helper and its test still protect relevant behaviour;
 3. framework, generated-code, configuration, or dynamic-runtime consumption; and
 4. the relevant user journey and automated checks.
 

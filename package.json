@@ -5,6 +5,7 @@
     "format:md": "prettier --config .prettier-markdown.json --write \"**/*.md\"",
     "format:md:check": "node scripts/check-markdown-format.mjs",
     "knip": "knip --config knip.json --include exports",
+    "knip:production": "knip --config knip.json --production --include exports --no-exit-code --reporter compact",
     "knip:report": "knip --config knip.json --include exports --no-exit-code --reporter compact",
     "lint:docs-freshness": "node scripts/validate-documentation-freshness.mjs",
     "lint:md": "markdownlint-cli2",
