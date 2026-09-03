@@ -23,17 +23,19 @@ const WEEK = 7 * DAY
 
 /** Start of the Monday (00:00 UTC) of the week containing `ts` — matches the contract. */
 function startOfWeekUtc(ts: number): number {
-  const d = new Date(ts * 1000)
-  const dayStart = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) / 1000
+  const date = new Date(ts * 1000)
+  const dayStart = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 1000
   // JS getUTCDay: 0 Sun … 6 Sat → Monday-based offset (Mon 0 … Sun 6).
-  return dayStart - ((d.getUTCDay() + 6) % 7) * DAY
+  return dayStart - ((date.getUTCDay() + 6) % 7) * DAY
 }
 
 /** Calendar months between two timestamps (UTC) — matches the contract's month diff. */
 function monthsSince(startDate: number, timestamp: number): number {
-  const s = new Date(startDate * 1000)
-  const t = new Date(timestamp * 1000)
-  return (t.getUTCFullYear() - s.getUTCFullYear()) * 12 + (t.getUTCMonth() - s.getUTCMonth())
+  const start = new Date(startDate * 1000)
+  const at = new Date(timestamp * 1000)
+  return (
+    (at.getUTCFullYear() - start.getUTCFullYear()) * 12 + (at.getUTCMonth() - start.getUTCMonth())
+  )
 }
 
 /** A budget's frequency behaviour, as needed to place a draw in its period. */

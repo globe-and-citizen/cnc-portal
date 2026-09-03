@@ -175,8 +175,9 @@ class RemainingBudgetTracker {
     timestamp: number,
     amountBase: bigint
   ): ExpenseDrawInfo | null {
-    const candidates = this.byMember.get(withdrawer.toLowerCase())
-    const budget = candidates?.find((b) => b.tokenId === tokenId && b.approvedAt <= timestamp)
+    const budget = this.byMember
+      .get(withdrawer.toLowerCase())
+      ?.find((approval) => approval.tokenId === tokenId && approval.approvedAt <= timestamp)
     if (!budget) return null
     const period = periodIndex(budget, timestamp)
     const total = (budget.drawnByPeriod.get(period) ?? 0n) + amountBase
