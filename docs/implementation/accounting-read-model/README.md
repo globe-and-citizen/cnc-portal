@@ -143,6 +143,8 @@ address remains an unresolved concrete account; the registry never assigns it to
 - A monetary `JournalEntryLine` has exactly one debit or credit amount and exactly one concrete `Account`.
 - Each monetary `JournalEntry` has equal debit and credit totals. Invalid normalized postings are rejected before a journal projection can
   consume them.
+- A direct external deposit into Bank or Safe credits `Service Revenue` regardless of the sender address. A dedicated SafeDepositRouter
+  investment that issues SHER remains an `Investor Equity` operation, and a company-pocket transfer remains internal.
 - Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
 - Resolved contract addresses, and only those addresses, determine deployment-specific identity. Missing addresses remain unresolved.
 
@@ -195,11 +197,13 @@ account balances because that legacy fee metadata is not carried by the canonica
   `JournalEntry` lines.
 - The legacy raw posting field names do not make the distinction between an account family, a concrete account, and a source instance
   explicit.
+- A legacy manual category can still reclassify a direct deposit away from Service Revenue; the account-backed JournalEntryLine assignment
+  has not yet replaced that category surface.
 - Optional Safe-service and enrichment failures can leave books incomplete without every omission being surfaced to the reviewer.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7c399520fab89791bec1a36c81162621c0a11421`
+**Implementation evidence reviewed against:** `96781f69e5500fa12add688199792eb11e984b36`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)

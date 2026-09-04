@@ -258,6 +258,8 @@ flowchart LR
 - Safe feeds and off-chain enrichment failures can omit entries without an incomplete-books warning (`US-ACCT-001`).
 - Historical Community Credit terms and SHER valuation inputs are read from current-generation contracts (`US-ACCT-005`).
 - Off-platform activity without a connected data source is absent from the automated books.
+- A legacy manual category can still reclassify a direct deposit away from Service Revenue; account-backed JournalEntryLine assignment has
+  not yet replaced that category surface.
 - Bank classifications currently rely on address-based inference, so an owner cannot record an off-chain client payment or their own client
   payment as Service Revenue (`US-ACCT-006`).
 
