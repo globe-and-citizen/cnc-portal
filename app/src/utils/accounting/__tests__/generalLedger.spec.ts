@@ -183,7 +183,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(bankRows[0].split).toBe(false)
   })
 
-  it('flags an unbalanced book when a posting is missing a leg', () => {
+  it('rejects an unbalanced posting before the trial-balance projection runs', () => {
     const halfPosting: LedgerEntry = {
       id: 'broken',
       timestamp: 1,
@@ -197,8 +197,8 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: 'half posting',
       enrichment: 'not-applicable'
     }
-    const broken = buildGeneralLedger([...catalogueLedger, halfPosting])
-    expect(broken.balanced).toBe(false)
-    expect(broken.totalDebit).not.toBeCloseTo(broken.totalCredit, 2)
+    expect(() => buildGeneralLedger([...catalogueLedger, halfPosting])).toThrow(
+      'monetary entries require at least one debit and one credit line'
+    )
   })
 })

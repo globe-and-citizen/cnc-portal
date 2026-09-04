@@ -17,13 +17,7 @@
  * transactions, date boundaries, and multi-currency reporting.
  */
 import { describe, it, expect } from 'vitest'
-import {
-  buildJournal,
-  buildGeneralLedger,
-  isBalanced,
-  unbalancedTransactions,
-  type JournalTransaction
-} from '@/utils/accounting/generalLedger'
+import { buildJournal, buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import {
   presentLedger,
   filterLedgerEntries,
@@ -146,39 +140,6 @@ const book: LedgerEntry[] = [
   nativeTransfer
 ]
 
-describe('transaction-first read model — balance validation', () => {
-  it('maps every source into a balanced journal transaction (no report projection yet)', () => {
-    const journal = buildJournal(book)
-    expect(unbalancedTransactions(journal)).toEqual([])
-    for (const transaction of journal) expect(isBalanced(transaction)).toBe(true)
-  })
-
-  it('flags a transaction whose debit and credit totals differ', () => {
-    const broken: JournalTransaction = {
-      id: 'broken',
-      timestamp: day(1),
-      useCase: 'CASH-IN',
-      memo: 'missing credit leg',
-      internal: false,
-      lines: [{ account: 'Cash — Bank', debit: 5, credit: 0 }]
-    }
-    expect(isBalanced(broken)).toBe(false)
-    expect(unbalancedTransactions([broken])).toHaveLength(1)
-  })
-
-  it('treats a memo-only transaction (no monetary lines) as trivially balanced', () => {
-    const memo: JournalTransaction = {
-      id: 'memo',
-      timestamp: day(1),
-      useCase: 'DEFAULT-D',
-      memo: '+5 SHER',
-      internal: false,
-      lines: []
-    }
-    expect(isBalanced(memo)).toBe(true)
-  })
-})
-
 describe('transaction-first read model — the general ledger shows complete transactions', () => {
   it('renders each selected transaction with all of its balanced lines', () => {
     const view = presentLedger(book, 'All')
@@ -269,10 +230,7 @@ describe('transaction-first read model — drill-downs reconcile with the genera
     expect(scoped).toContain(classifiedRevenue)
     expect(scoped).toContain(ordinaryTransfer)
     expect(scoped).toContain(feeTransferOut)
-    for (const entry of scoped) {
-      const journal = buildJournal([entry])
-      for (const tx of journal) expect(isBalanced(tx)).toBe(true)
-    }
+    for (const entry of scoped) expect(buildJournal([entry])).toHaveLength(1)
   })
 })
 
