@@ -49,7 +49,7 @@
                 {{ row.label }}
               </button>
               <UTooltip
-                v-if="row.split && !row.isPrimaryInstance"
+                v-if="row.split && row.accountResolution === 'resolved' && !row.isPrimaryInstance"
                 :text="REDEPLOY_HINT"
                 :data-test="`redeploy-hint-${row.label}`"
               >
@@ -135,14 +135,18 @@ import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
 
 interface TrialTableRow {
+  /** Canonical concrete-account identity. */
+  accountId: string
   account: string
-  /** Display name — differs from `account` only for a redeployed pocket's later instances (` #2`). */
+  /** Display name — differs from `account` for later deployments or an unresolved account. */
   label: string
   /** Pocket contract instance this row rolls up, when split across redeploys. */
   instance?: string
+  /** Source evidence state for a deployment-specific account. */
+  accountResolution: 'resolved' | 'unresolved'
   /** True when this account is split across several instances (a redeploy) — shows the hint. */
   split?: boolean
-  /** True on the primary instance row — it also carries the pocket's un-instanced legs. */
+  /** True on the earliest resolved deployment row. */
   isPrimaryInstance?: boolean
   nature: string
   natureClass: string
@@ -170,9 +174,11 @@ const trial = computed(() =>
 const tableRows = computed<TrialTableRow[]>(() => [
   ...trial.value.rows.map((row) => ({ ...row, isTotal: false })),
   {
+    accountId: 'total',
     account: 'Total',
     label: 'Total',
     split: false,
+    accountResolution: 'resolved',
     nature: '',
     natureClass: '',
     dr: trial.value.total,
@@ -217,14 +223,12 @@ const {
 function openDrilldown(row: TrialTableRow): void {
   // The line's balance sits in whichever column isn't the em-dash placeholder.
   const value = row.dr === '—' ? row.cr : row.dr
-  // A split-pocket row scopes its ledger to that one contract instance (and, on the
-  // primary row, the pocket's un-instanced legs) so each deployment shows only its
-  // own events; a plain row drills the whole account as before.
-  if (row.instance) {
-    openFor(row.account, value, row.label, {
-      instance: row.instance,
-      includeBlank: row.isPrimaryInstance
-    })
+  // A resolved row scopes to its exact deployment. A line with no source contract
+  // opens the separate unresolved account rather than the oldest deployment.
+  if (row.accountResolution === 'unresolved') {
+    openFor(row.account, value, row.label, { unresolved: true })
+  } else if (row.instance) {
+    openFor(row.account, value, row.label, { instance: row.instance })
   } else {
     openFor(row.account, value)
   }

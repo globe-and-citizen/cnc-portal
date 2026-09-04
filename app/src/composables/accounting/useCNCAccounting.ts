@@ -50,11 +50,6 @@ import {
 } from '@/utils/accounting/assemble'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import type { AccountingSummary } from '@/utils/accounting/buildLedger'
-import type { GeneralLedger, JournalEntry } from '@/utils/accounting/generalLedger'
-import type { IncomeStatement } from '@/utils/accounting/incomeStatement'
-import type { BalanceSheet } from '@/utils/accounting/balanceSheet'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 /** How many of each event type to pull per contract (newest first). */
 const EVENT_LIMIT = 500
@@ -70,9 +65,11 @@ export interface UseCNCAccountingOptions {
 
 export interface UseCNCAccountingReturn {
   /** Consolidated, deduped legacy postings retained for projections not yet migrated. */
-  entries: ComputedRef<LedgerEntry[]>
+  entries: ComputedRef<CncAccounting['entries']>
+  /** Canonical concrete-account source of truth for the assembled books. */
+  accountRegistry: ComputedRef<CncAccounting['accountRegistry']>
   /** Validated journal assembled from the consolidated postings. */
-  journal: ComputedRef<JournalEntry[]>
+  journal: ComputedRef<CncAccounting['journal']>
   /** The summary and financial reports computed from the assembled accounting books. */
   reports: ComputedRef<AccountingReports>
   /** True while any required feed is still loading. */
@@ -85,15 +82,11 @@ export interface UseCNCAccountingReturn {
   refetch: () => Promise<unknown>
 }
 
-/** The report set derived together from one consolidated accounting ledger. */
-export interface AccountingReports {
-  /** Roll-up totals for the summary cards. */
-  summary: AccountingSummary
-  /** Double-entry journal + trial balance. */
-  generalLedger: GeneralLedger
-  incomeStatement: IncomeStatement
-  balanceSheet: BalanceSheet
-}
+/** The report projections derived together from one consolidated accounting ledger. */
+export type AccountingReports = Pick<
+  CncAccounting,
+  'summary' | 'generalLedger' | 'incomeStatement' | 'balanceSheet'
+>
 
 /** One contract generation that could not be loaded, for the UI gap warning. */
 export interface ReconciliationGap {
@@ -332,7 +325,7 @@ export function useCNCAccounting(
   })
   const transferInitiators = useTransferInitiators(transferHashes)
 
-  const entries = computed<LedgerEntry[]>(() => {
+  const entries = computed<CncAccounting['entries']>(() => {
     const initiators = transferInitiators.value
     if (!initiators.size) return accounting.value.entries
     return accounting.value.entries.map((entry) =>
@@ -403,6 +396,7 @@ export function useCNCAccounting(
 
   return {
     entries,
+    accountRegistry: computed(() => accounting.value.accountRegistry),
     journal: computed(() => accounting.value.journal),
     reports: computed<AccountingReports>(() => ({
       summary: accounting.value.summary,

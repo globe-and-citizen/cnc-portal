@@ -33,6 +33,7 @@ import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
 import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
+import { buildAccountRegistry, type AccountRegistry } from '@/utils/accounting/accountRegistry'
 import {
   buildGeneralLedger,
   buildJournal,
@@ -49,7 +50,6 @@ import {
   currentSherUsdRate
 } from '@/utils/accounting/sherRate'
 import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
-import { attachCreditBankInstances } from '@/utils/accounting/creditBankInstance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
 
@@ -105,6 +105,8 @@ export interface CncAccounting {
    * report projections that have not migrated to journal lines yet.
    */
   entries: LedgerEntry[]
+  /** The canonical concrete-account source of truth for this assembled book. */
+  accountRegistry: AccountRegistry
   /** The validated, ordered double-entry journal built once after consolidation. */
   journal: JournalEntry[]
   /** Roll-up totals for the summary cards. */
@@ -316,13 +318,10 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     input.safeDepositRouterEvents?.safeDeposits?.items,
     input.currentSherMultiplier
   )
-  // Once every mapper has run and the Bank legs carry their deployments, place each
-  // Community Credit sweep on the Bank live at its time (it emits no Bank event of
-  // its own to say which — see {@link ./creditBankInstance}).
-  const settled = settleWithdrawnSher(stamped, currentRate).sort(
-    (a, b) => a.timestamp - b.timestamp
-  )
-  return attachCreditBankInstances(settled)
+  // A Community Credit sweep has no Bank event that identifies its destination
+  // generation. Keep that absence explicit; the canonical account registry turns
+  // the Bank leg into an unresolved account instead of attributing it by timing.
+  return settleWithdrawnSher(stamped, currentRate).sort((a, b) => a.timestamp - b.timestamp)
 }
 
 /**
@@ -333,10 +332,12 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
  */
 export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
   const { entries, summary } = buildLedger(rawEntries)
-  const journal = buildJournal(entries)
+  const accountRegistry = buildAccountRegistry(entries)
+  const journal = buildJournal(entries, accountRegistry)
 
   return {
     entries,
+    accountRegistry,
     journal,
     summary,
     generalLedger: buildGeneralLedger(journal),

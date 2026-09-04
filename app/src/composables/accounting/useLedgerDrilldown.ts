@@ -143,9 +143,8 @@ export function useLedgerDrilldown(
       from,
       to,
       columns,
-      ...(targetScope.value?.instance
-        ? { instance: targetScope.value.instance, includeBlank: targetScope.value.includeBlank }
-        : {}),
+      ...(targetScope.value?.instance ? { instance: targetScope.value.instance } : {}),
+      ...(targetScope.value?.unresolved ? { unresolved: true } : {}),
       ...(isAggregate.value ? { accountLabel: line.label, accountTotal: line.total } : {})
     }
     if (format === 'excel') {

@@ -59,7 +59,7 @@ describe('accountLedger — statement-line drill-down', () => {
         memo: '',
         enrichment: 'not-applicable'
       })
-      // A blank-instance bank leg (a FixedReturn sweep) belongs to the primary row.
+      // A blank-instance Bank leg (a FixedReturn sweep) is a separate unresolved account.
       const blank = {
         ...dep('4', bank1),
         debitInstance: undefined,
@@ -70,12 +70,14 @@ describe('accountLedger — statement-line drill-down', () => {
       const onBank2 = entriesForAccount(feed, 'Cash — Bank', null, null, { instance: bank2 })
       expect(onBank2.map((e) => e.id)).toEqual(['2']) // only the second deployment's event
 
-      // The primary row includes its own instance's legs plus the un-instanced one.
+      // A resolved deployment includes only legs whose source contract matches it.
       const onBank1 = entriesForAccount(feed, 'Cash — Bank', null, null, {
-        instance: bank1,
-        includeBlank: true
+        instance: bank1
       })
-      expect(onBank1.map((e) => e.id).sort()).toEqual(['1', '3', '4'])
+      expect(onBank1.map((e) => e.id).sort()).toEqual(['1', '3'])
+
+      const unresolved = entriesForAccount(feed, 'Cash — Bank', null, null, { unresolved: true })
+      expect(unresolved.map((e) => e.id)).toEqual(['4'])
     })
 
     it('honours the as-of cutoff (to), excluding later postings', () => {

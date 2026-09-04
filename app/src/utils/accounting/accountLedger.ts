@@ -13,16 +13,15 @@ import type { AccountName } from './chartOfAccounts'
  * and the closing balance lands at the foot.
  */
 /**
- * Scope a drill-down to a single pocket **instance** (a redeployed Bank / Payroll /
- * Expense). `instance` is the contract address the trial-balance row rolls up; only
- * postings whose matching leg carries that address are kept. `includeBlank` adds the
- * legs that carry no address at all (a FixedReturn sweep straight to Bank, an owner
- * treasury sweep) — folded into the pocket's primary instance in the trial balance,
- * so the primary row's drill-down must show them too. Unset for a non-split account.
+ * Scope a drill-down to a single concrete deployment account, or to the explicit
+ * unresolved account when source evidence contains no contract address. A blank leg
+ * never belongs to a resolved deployment merely because that deployment was active
+ * around the same time.
  */
 export interface InstanceScope {
   instance?: string | null
-  includeBlank?: boolean
+  /** Select only legs whose deployment contract is absent from source evidence. */
+  unresolved?: boolean
 }
 
 /** Whether an entry touches `account` on a leg that matches the instance scope. */
@@ -34,9 +33,10 @@ function touchesAccount(
   const inst = scope?.instance?.toLowerCase()
   const legMatches = (leg: string | null, legInstance?: string): boolean => {
     if (!wanted.has(leg ?? '')) return false
+    if (scope?.unresolved) return !legInstance
     if (!inst) return true
     if (legInstance && legInstance.toLowerCase() === inst) return true
-    return Boolean(scope?.includeBlank) && !legInstance
+    return false
   }
   return (
     legMatches(entry.debit, entry.debitInstance) || legMatches(entry.credit, entry.creditInstance)
@@ -82,14 +82,14 @@ const BANK_ACCOUNT = 'Cash — Bank'
  * Whether a leg's contract instance falls within a drill-down's instance scope —
  * the same rule {@link touchesAccount} filters entries by. An unset scope (or one
  * with no instance) matches every leg (a non-split account); otherwise the leg's
- * own instance must match, or be blank when the scope folds the un-instanced legs
- * in ({@link InstanceScope.includeBlank}).
+ * own instance must match. An explicit unresolved scope matches only blank legs.
  */
 function legInScope(instance: string | undefined, scope?: InstanceScope): boolean {
   const inst = scope?.instance?.toLowerCase()
+  if (scope?.unresolved) return !instance
   if (!inst) return true
   if (instance && instance.toLowerCase() === inst) return true
-  return Boolean(scope?.includeBlank) && !instance
+  return false
 }
 
 /**

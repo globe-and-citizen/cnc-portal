@@ -17,8 +17,20 @@ function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
     internal: true,
     kind: 'monetary',
     lines: [
-      { id: 'operation-42:principal:debit', account: 'Cash — Payroll', debit: 10 },
-      { id: 'operation-42:principal:credit', account: 'Cash — Bank', credit: 10 }
+      {
+        id: 'operation-42:principal:debit',
+        accountId: 'cash-payroll:unresolved',
+        account: 'Cash — Payroll',
+        accountResolution: 'unresolved',
+        debit: 10
+      },
+      {
+        id: 'operation-42:principal:credit',
+        accountId: 'cash-bank:unresolved',
+        account: 'Cash — Bank',
+        accountResolution: 'unresolved',
+        credit: 10
+      }
     ],
     ...overrides
   }
@@ -33,8 +45,20 @@ describe('JournalEntry', () => {
         useCase: 'FEE',
         memo: 'Transaction fee',
         lines: [
-          { id: 'operation-42:fee:debit', account: 'Transaction Fee Expense', debit: 0.05 },
-          { id: 'operation-42:fee:credit', account: 'Cash — Bank', credit: 0.05 }
+          {
+            id: 'operation-42:fee:debit',
+            accountId: 'transaction-fee-expense',
+            account: 'Transaction Fee Expense',
+            accountResolution: 'resolved',
+            debit: 0.05
+          },
+          {
+            id: 'operation-42:fee:credit',
+            accountId: 'cash-bank:unresolved',
+            account: 'Cash — Bank',
+            accountResolution: 'unresolved',
+            credit: 0.05
+          }
         ]
       })
     )
@@ -53,9 +77,27 @@ describe('JournalEntry', () => {
     const compound = createJournalEntry(
       monetaryEntry({
         lines: [
-          { id: 'operation-42:cash', account: 'Cash — Expense', debit: 10 },
-          { id: 'operation-42:fee', account: 'Transaction Fee Expense', debit: 0.05 },
-          { id: 'operation-42:bank', account: 'Cash — Bank', credit: 10.05 }
+          {
+            id: 'operation-42:cash',
+            accountId: 'cash-expense:unresolved',
+            account: 'Cash — Expense',
+            accountResolution: 'unresolved',
+            debit: 10
+          },
+          {
+            id: 'operation-42:fee',
+            accountId: 'transaction-fee-expense',
+            account: 'Transaction Fee Expense',
+            accountResolution: 'resolved',
+            debit: 0.05
+          },
+          {
+            id: 'operation-42:bank',
+            accountId: 'cash-bank:unresolved',
+            account: 'Cash — Bank',
+            accountResolution: 'unresolved',
+            credit: 10.05
+          }
         ]
       })
     )
@@ -87,7 +129,15 @@ describe('JournalEntry', () => {
       createJournalEntry(
         monetaryEntry({
           kind: 'memo',
-          lines: [{ id: 'operation-42:memo', account: 'Cash — Bank', debit: 10 }]
+          lines: [
+            {
+              id: 'operation-42:memo',
+              accountId: 'cash-bank:unresolved',
+              account: 'Cash — Bank',
+              accountResolution: 'unresolved',
+              debit: 10
+            }
+          ]
         })
       )
     ).toThrow('memo entries cannot contain monetary lines')
@@ -98,8 +148,20 @@ describe('JournalEntry', () => {
       createJournalEntry(
         monetaryEntry({
           lines: [
-            { id: 'operation-42:debit', account: 'Cash — Payroll', debit: 10 },
-            { id: 'operation-42:credit', account: 'Cash — Bank', credit: 9.99 }
+            {
+              id: 'operation-42:debit',
+              accountId: 'cash-payroll:unresolved',
+              account: 'Cash — Payroll',
+              accountResolution: 'unresolved',
+              debit: 10
+            },
+            {
+              id: 'operation-42:credit',
+              accountId: 'cash-bank:unresolved',
+              account: 'Cash — Bank',
+              accountResolution: 'unresolved',
+              credit: 9.99
+            }
           ]
         })
       )
@@ -110,10 +172,43 @@ describe('JournalEntry', () => {
     expect(() =>
       createJournalEntry(
         monetaryEntry({
-          lines: [{ id: 'operation-42:debit', account: 'Cash — Payroll', debit: 10 }]
+          lines: [
+            {
+              id: 'operation-42:debit',
+              accountId: 'cash-payroll:unresolved',
+              account: 'Cash — Payroll',
+              accountResolution: 'unresolved',
+              debit: 10
+            }
+          ]
         })
       )
     ).toThrow('monetary entries require at least one debit and one credit line')
+  })
+
+  it('rejects a monetary line without a canonical account identity', () => {
+    expect(() =>
+      createJournalEntry(
+        monetaryEntry({
+          lines: [
+            {
+              id: 'operation-42:debit',
+              accountId: '',
+              account: 'Cash — Payroll',
+              accountResolution: 'unresolved',
+              debit: 10
+            },
+            {
+              id: 'operation-42:credit',
+              accountId: 'cash-bank:unresolved',
+              account: 'Cash — Bank',
+              accountResolution: 'unresolved',
+              credit: 10
+            }
+          ]
+        })
+      )
+    ).toThrow('account id is required')
   })
 
   it('adapts a consolidated posting with deterministic source and line identities', () => {
@@ -137,8 +232,20 @@ describe('JournalEntry', () => {
         sourceOperationId: 'bank-event-7',
         kind: 'monetary',
         lines: [
-          { id: 'bank-event-7:debit', account: 'Cash — Bank', debit: 100 },
-          { id: 'bank-event-7:credit', account: 'Service Revenue', credit: 100 }
+          {
+            id: 'bank-event-7:debit',
+            accountId: 'cash-bank:unresolved',
+            account: 'Cash — Bank',
+            accountResolution: 'unresolved',
+            debit: 100
+          },
+          {
+            id: 'bank-event-7:credit',
+            accountId: 'service-revenue',
+            account: 'Service Revenue',
+            accountResolution: 'resolved',
+            credit: 100
+          }
         ]
       })
     ])

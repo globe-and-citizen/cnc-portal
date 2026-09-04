@@ -63,15 +63,19 @@ export interface SummaryBanner {
 }
 
 export interface TrialRow {
+  /** Canonical concrete-account identity for drill-down and reconciliation. */
+  accountId: string
   /** Base account name — the drill-down key (a split pocket's instances share it). */
   account: string
   /** Display name — the account, suffixed ` #2` / ` #3` for a redeployed pocket's later instances. */
   label: string
   /** The pocket contract instance this row rolls up, when split across redeploys. */
   instance?: string
+  /** Source evidence state for a deployment-specific account. */
+  accountResolution: 'resolved' | 'unresolved'
   /** True when this account is split across several instances (a redeploy) — drives the redeploy hint. */
   split: boolean
-  /** True on the primary (earliest) instance row — the one that also carries un-instanced legs. */
+  /** True on the earliest resolved deployment row, used only for display. */
   isPrimaryInstance: boolean
   nature: TrialNature
   natureClass: string
@@ -288,11 +292,13 @@ export function presentTrial(ledger: GeneralLedger): {
       row.accountClass === 'EXPENSE' ||
       row.accountClass === 'CONTRA_EQUITY'
     return {
+      accountId: row.accountId,
       account: row.account,
       label: row.accountLabel,
       ...(row.instance ? { instance: row.instance } : {}),
+      accountResolution: row.accountResolution,
       split: row.split,
-      // The primary (earliest) instance row also carries the pocket's un-instanced legs.
+      // The primary row is the earliest resolved deployment, for display only.
       isPrimaryInstance: row.isPrimaryInstance,
       nature: natureOf(row.account),
       natureClass: NATURE_BADGE[natureOf(row.account)],

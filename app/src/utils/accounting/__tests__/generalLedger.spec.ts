@@ -72,7 +72,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(gl2.debitBalanceTotal).toBeCloseTo(gl2.creditBalanceTotal, 2)
   })
 
-  it('splits a redeployed pocket into per-instance trial-balance rows, newest suffixed', () => {
+  it('keeps an unresolved redeployment leg separate from concrete Bank accounts', () => {
     // One team, two Bank contracts (a redeploy). Deposits before the redeploy hit
     // the first Bank; the deposit after it hits Bank #2 — which must carry only its
     // own transaction, while the original keeps everything up to the redeploy.
@@ -97,8 +97,8 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: '',
       enrichment: 'not-applicable'
     })
-    // A leg with NO instance (a FixedReturn sweep straight to Bank) must fold into
-    // the primary deployment, not spawn a phantom third row.
+    // A leg with NO instance (a FixedReturn sweep straight to Bank) has no source
+    // evidence for either Bank deployment. It remains explicit for reconciliation.
     const blankBankLeg: LedgerEntry = {
       id: 'd',
       timestamp: 15,
@@ -119,18 +119,21 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       blankBankLeg
     ])
     const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
-    expect(bankRows).toHaveLength(2) // still two rows — the blank leg folded in
+    expect(bankRows).toHaveLength(3)
+    const bank1Row = bankRows.find((row) => row.instance === bank1)
+    const bank2Row = bankRows.find((row) => row.instance === bank2)
+    const unresolvedRow = bankRows.find((row) => row.accountResolution === 'unresolved')
     // The original deployment keeps the plain name; only later ones are numbered.
-    expect(bankRows[0].accountLabel).toBe('Cash — Bank')
-    expect(bankRows[0].instance).toBe(bank1)
-    expect(bankRows[0].split).toBe(true)
-    expect(bankRows[0].isPrimaryInstance).toBe(true)
-    expect(bankRows[0].balance).toBeCloseTo(170, 2) // 150 + the 20 un-instanced leg
-    expect(bankRows[1].accountLabel).toBe('Cash — Bank 2')
-    expect(bankRows[1].instance).toBe(bank2)
-    expect(bankRows[1].isPrimaryInstance).toBe(false)
-    expect(bankRows[1].balance).toBeCloseTo(30, 2) // only the post-redeploy deposit
-    // The split is presentation only: the book stays balanced and totals are whole.
+    expect(bank1Row?.accountLabel).toBe('Cash — Bank')
+    expect(bank1Row?.split).toBe(true)
+    expect(bank1Row?.isPrimaryInstance).toBe(true)
+    expect(bank1Row?.balance).toBeCloseTo(150, 2)
+    expect(bank2Row?.accountLabel).toBe('Cash — Bank 2')
+    expect(bank2Row?.isPrimaryInstance).toBe(false)
+    expect(bank2Row?.balance).toBeCloseTo(30, 2) // only the post-redeploy deposit
+    expect(unresolvedRow?.accountLabel).toBe('Cash — Bank (unresolved)')
+    expect(unresolvedRow?.balance).toBeCloseTo(20, 2)
+    // The book remains balanced even while one account needs reconciliation.
     expect(gl2.balanced).toBe(true)
   })
 

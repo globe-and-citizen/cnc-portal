@@ -88,19 +88,18 @@ describe('accountLedger — a redeployed Bank with an internal Bank → Bank tra
   it('nets each deployment on its own instance (the two legs do not cancel)', () => {
     // Bank 1: $200 in, $100.50 out (gross) → $99.50. Bank 2: $10 + $100 in → $110.
     const bank1 = mergeBankFees(
-      entriesForAccount(book, 'Cash — Bank', null, null, { instance: BANK1, includeBlank: true })
+      entriesForAccount(book, 'Cash — Bank', null, null, { instance: BANK1 })
     )
     const bank2 = mergeBankFees(
       entriesForAccount(book, 'Cash — Bank', null, null, { instance: BANK2 })
     )
-    expect(scopedNet(bank1, 'Cash — Bank', { instance: BANK1, includeBlank: true })).toBe(99.5)
+    expect(scopedNet(bank1, 'Cash — Bank', { instance: BANK1 })).toBe(99.5)
     expect(scopedNet(bank2, 'Cash — Bank', { instance: BANK2 })).toBe(110)
   })
 
   it('reconciles each drill-down total with its trial-balance line', () => {
     const bank1 = presentAccountLedger(book, 'Cash — Bank', null, null, undefined, {
-      instance: BANK1,
-      includeBlank: true
+      instance: BANK1
     })
     const bank2 = presentAccountLedger(book, 'Cash — Bank', null, null, undefined, {
       instance: BANK2
@@ -113,8 +112,7 @@ describe('accountLedger — a redeployed Bank with an internal Bank → Bank tra
 
   it('shows the fee with the transfer on the sender (which paid it), not the receiver', () => {
     const bank1 = presentAccountLedger(book, 'Cash — Bank', null, null, undefined, {
-      instance: BANK1,
-      includeBlank: true
+      instance: BANK1
     })
     const bank2 = presentAccountLedger(book, 'Cash — Bank', null, null, undefined, {
       instance: BANK2
@@ -128,8 +126,7 @@ describe('accountLedger — a redeployed Bank with an internal Bank → Bank tra
     // $200 seed alone — not Bank 2's, nor the whole account's $210.
     const from = new Date(95 * 1000)
     const opening = accountOpening(book, 'Cash — Bank', from, {
-      instance: BANK1,
-      includeBlank: true
+      instance: BANK1
     })
     expect(opening.balance).toBe(200)
     expect(opening.debits).toBe(200)
