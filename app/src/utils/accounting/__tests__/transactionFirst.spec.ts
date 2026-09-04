@@ -201,12 +201,12 @@ describe('transaction-first read model — the trial balance aggregates the same
     expect(gl.balanced).toBe(true)
     expect(gl.totalDebit).toBeCloseTo(gl.totalCredit, 2)
     // The day-3 fee transfer and day-4 native sweep are excluded from the boundary.
-    expect(gl.trialBalance.some((r) => r.account === 'Cash — Safe')).toBe(false)
+    expect(gl.trialBalance.some((r) => r.account.family.name === 'Cash — Safe')).toBe(false)
   })
 
   it('rolls the folded and standalone fee legs into one Transaction Fee Expense balance', () => {
     const gl = buildGeneralLedger(buildJournal(book))
-    const feeRow = gl.trialBalance.find((r) => r.account === FEE_ACCOUNT)
+    const feeRow = gl.trialBalance.find((r) => r.account.family.name === FEE_ACCOUNT)
     // 0.5 standalone + 0.05 on the transfer.
     expect(feeRow?.balance).toBeCloseTo(0.55, 2)
   })

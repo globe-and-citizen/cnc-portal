@@ -5,9 +5,7 @@
  * concrete AccountId resolved by `accountRegistry.ts` before report projections
  * consume it.
  */
-import type { Address } from 'viem'
-import type { AccountId, AccountResolution } from './accountRegistry'
-import type { AccountName } from './chartOfAccounts'
+import type { Account } from './accountRegistry'
 import type { UseCase } from './ledgerEntry'
 
 /** One ordered debit or credit line belonging to a {@link JournalEntry}. */
@@ -15,28 +13,16 @@ export type JournalEntryLine =
   | {
       /** Stable within-entry line identity. */
       id: string
-      /** Canonical concrete account identity. */
-      accountId: AccountId
-      /** Chart family supplying this account's shared behaviour. */
-      account: AccountName
-      /** The resolved deployment's source contract, retained for display and navigation. */
-      instance?: Address
-      /** Missing source evidence is a reconciliation state, never a historical fallback. */
-      accountResolution: AccountResolution
+      /** Canonical concrete account, including its identity, family and resolution. */
+      account: Account
       debit: number
       credit?: never
     }
   | {
       /** Stable within-entry line identity. */
       id: string
-      /** Canonical concrete account identity. */
-      accountId: AccountId
-      /** Chart family supplying this account's shared behaviour. */
-      account: AccountName
-      /** The resolved deployment's source contract, retained for display and navigation. */
-      instance?: Address
-      /** Missing source evidence is a reconciliation state, never a historical fallback. */
-      accountResolution: AccountResolution
+      /** Canonical concrete account, including its identity, family and resolution. */
+      account: Account
       debit?: never
       credit: number
     }
@@ -119,11 +105,12 @@ function validationErrors(entry: JournalEntry): string[] {
     if (!line.id.trim()) errors.push('line id is required')
     else if (lineIds.has(line.id)) errors.push(`duplicate line id "${line.id}"`)
     else lineIds.add(line.id)
-    if (!line.account.trim()) errors.push(`line "${line.id}" account is required`)
-    if (!line.accountId.trim()) errors.push(`line "${line.id}" account id is required`)
-    if (line.accountResolution !== 'resolved' && line.accountResolution !== 'unresolved')
+    if (!line.account.id.trim()) errors.push(`line "${line.id}" account id is required`)
+    if (!line.account.family.id.trim() || !line.account.family.name.trim())
+      errors.push(`line "${line.id}" account family is required`)
+    if (line.account.resolution !== 'resolved' && line.account.resolution !== 'unresolved')
       errors.push(`line "${line.id}" account resolution is invalid`)
-    if (line.accountResolution === 'unresolved' && line.instance)
+    if (line.account.resolution === 'unresolved' && line.account.contractAddress)
       errors.push(`line "${line.id}" cannot be unresolved and include a contract address`)
 
     const hasDebit = line.debit !== undefined
@@ -150,7 +137,9 @@ function validationErrors(entry: JournalEntry): string[] {
 export function createJournalEntry(entry: JournalEntry): JournalEntry {
   const validated: JournalEntry = {
     ...entry,
-    lines: entry.lines.map((line) => ({ ...line }) as JournalEntryLine)
+    lines: entry.lines.map(
+      (line) => ({ ...line, account: { ...line.account } }) as JournalEntryLine
+    )
   }
   const errors = validationErrors(validated)
   if (errors.length) throw new InvalidJournalEntryError(validated.id, errors)

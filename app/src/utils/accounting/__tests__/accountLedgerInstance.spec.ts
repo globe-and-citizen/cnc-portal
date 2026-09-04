@@ -82,7 +82,9 @@ describe('accountLedger — a redeployed Bank with an internal Bank → Bank tra
   const gl = buildGeneralLedger(buildJournal(book))
   const rowBalance = (instance: Address): number =>
     gl.trialBalance.find(
-      (r) => r.account === 'Cash — Bank' && r.instance?.toLowerCase() === instance
+      (r) =>
+        r.account.family.name === 'Cash — Bank' &&
+        r.account.contractAddress?.toLowerCase() === instance
     )?.balance ?? NaN
 
   it('nets each deployment on its own instance (the two legs do not cancel)', () => {

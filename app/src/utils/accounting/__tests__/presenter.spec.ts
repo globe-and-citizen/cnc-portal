@@ -141,7 +141,7 @@ describe('presentTrial', () => {
   it('puts each account balance on its normal side and stays balanced', () => {
     const trial = presentTrial(books().generalLedger)
     expect(trial.balanced).toBe(true)
-    const revenue = trial.rows.find((r) => r.account === 'Service Revenue')
+    const revenue = trial.rows.find((r) => r.account.family.name === 'Service Revenue')
     expect(revenue?.nature).toBe('Income')
     expect(revenue?.cr).toBe('$100.00') // income is credit-normal
     expect(revenue?.dr).toBe('—')

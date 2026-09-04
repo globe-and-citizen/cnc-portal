@@ -5,7 +5,15 @@ import {
   isBalanced,
   type JournalEntry
 } from '@/utils/accounting/generalLedger'
+import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+
+const accounts = buildAccountRegistry([])
+
+function account(name: AccountName) {
+  return accounts.resolve(name)
+}
 
 function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
   return {
@@ -19,16 +27,12 @@ function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
     lines: [
       {
         id: 'operation-42:principal:debit',
-        accountId: 'cash-payroll:unresolved',
-        account: 'Cash — Payroll',
-        accountResolution: 'unresolved',
+        account: account('Cash — Payroll'),
         debit: 10
       },
       {
         id: 'operation-42:principal:credit',
-        accountId: 'cash-bank:unresolved',
-        account: 'Cash — Bank',
-        accountResolution: 'unresolved',
+        account: account('Cash — Bank'),
         credit: 10
       }
     ],
@@ -47,16 +51,12 @@ describe('JournalEntry', () => {
         lines: [
           {
             id: 'operation-42:fee:debit',
-            accountId: 'transaction-fee-expense',
-            account: 'Transaction Fee Expense',
-            accountResolution: 'resolved',
+            account: account('Transaction Fee Expense'),
             debit: 0.05
           },
           {
             id: 'operation-42:fee:credit',
-            accountId: 'cash-bank:unresolved',
-            account: 'Cash — Bank',
-            accountResolution: 'unresolved',
+            account: account('Cash — Bank'),
             credit: 0.05
           }
         ]
@@ -77,27 +77,13 @@ describe('JournalEntry', () => {
     const compound = createJournalEntry(
       monetaryEntry({
         lines: [
-          {
-            id: 'operation-42:cash',
-            accountId: 'cash-expense:unresolved',
-            account: 'Cash — Expense',
-            accountResolution: 'unresolved',
-            debit: 10
-          },
+          { id: 'operation-42:cash', account: account('Cash — Expense'), debit: 10 },
           {
             id: 'operation-42:fee',
-            accountId: 'transaction-fee-expense',
-            account: 'Transaction Fee Expense',
-            accountResolution: 'resolved',
+            account: account('Transaction Fee Expense'),
             debit: 0.05
           },
-          {
-            id: 'operation-42:bank',
-            accountId: 'cash-bank:unresolved',
-            account: 'Cash — Bank',
-            accountResolution: 'unresolved',
-            credit: 10.05
-          }
+          { id: 'operation-42:bank', account: account('Cash — Bank'), credit: 10.05 }
         ]
       })
     )
@@ -129,15 +115,7 @@ describe('JournalEntry', () => {
       createJournalEntry(
         monetaryEntry({
           kind: 'memo',
-          lines: [
-            {
-              id: 'operation-42:memo',
-              accountId: 'cash-bank:unresolved',
-              account: 'Cash — Bank',
-              accountResolution: 'unresolved',
-              debit: 10
-            }
-          ]
+          lines: [{ id: 'operation-42:memo', account: account('Cash — Bank'), debit: 10 }]
         })
       )
     ).toThrow('memo entries cannot contain monetary lines')
@@ -148,20 +126,8 @@ describe('JournalEntry', () => {
       createJournalEntry(
         monetaryEntry({
           lines: [
-            {
-              id: 'operation-42:debit',
-              accountId: 'cash-payroll:unresolved',
-              account: 'Cash — Payroll',
-              accountResolution: 'unresolved',
-              debit: 10
-            },
-            {
-              id: 'operation-42:credit',
-              accountId: 'cash-bank:unresolved',
-              account: 'Cash — Bank',
-              accountResolution: 'unresolved',
-              credit: 9.99
-            }
+            { id: 'operation-42:debit', account: account('Cash — Payroll'), debit: 10 },
+            { id: 'operation-42:credit', account: account('Cash — Bank'), credit: 9.99 }
           ]
         })
       )
@@ -172,15 +138,7 @@ describe('JournalEntry', () => {
     expect(() =>
       createJournalEntry(
         monetaryEntry({
-          lines: [
-            {
-              id: 'operation-42:debit',
-              accountId: 'cash-payroll:unresolved',
-              account: 'Cash — Payroll',
-              accountResolution: 'unresolved',
-              debit: 10
-            }
-          ]
+          lines: [{ id: 'operation-42:debit', account: account('Cash — Payroll'), debit: 10 }]
         })
       )
     ).toThrow('monetary entries require at least one debit and one credit line')
@@ -193,25 +151,17 @@ describe('JournalEntry', () => {
           lines: [
             {
               id: 'operation-42:debit',
-              accountId: '',
-              account: 'Cash — Payroll',
-              accountResolution: 'unresolved',
+              account: { ...account('Cash — Payroll'), id: '' },
               debit: 10
             },
-            {
-              id: 'operation-42:credit',
-              accountId: 'cash-bank:unresolved',
-              account: 'Cash — Bank',
-              accountResolution: 'unresolved',
-              credit: 10
-            }
+            { id: 'operation-42:credit', account: account('Cash — Bank'), credit: 10 }
           ]
         })
       )
     ).toThrow('account id is required')
   })
 
-  it('adapts a consolidated posting with deterministic source and line identities', () => {
+  it('adapts a consolidated posting with deterministic source, line and account identities', () => {
     const posting: LedgerEntry = {
       id: 'bank-event-7',
       timestamp: 1_700_000_001,
@@ -226,28 +176,32 @@ describe('JournalEntry', () => {
       enrichment: 'not-applicable'
     }
 
-    expect(buildJournal([posting])).toEqual([
-      expect.objectContaining({
+    expect(buildJournal([posting])).toMatchObject([
+      {
         id: 'bank-event-7',
         sourceOperationId: 'bank-event-7',
         kind: 'monetary',
         lines: [
           {
             id: 'bank-event-7:debit',
-            accountId: 'cash-bank:unresolved',
-            account: 'Cash — Bank',
-            accountResolution: 'unresolved',
+            account: {
+              id: 'cash-bank:unresolved',
+              family: { id: 'cash-bank', name: 'Cash — Bank' },
+              resolution: 'unresolved'
+            },
             debit: 100
           },
           {
             id: 'bank-event-7:credit',
-            accountId: 'service-revenue',
-            account: 'Service Revenue',
-            accountResolution: 'resolved',
+            account: {
+              id: 'service-revenue',
+              family: { id: 'service-revenue', name: 'Service Revenue' },
+              resolution: 'resolved'
+            },
             credit: 100
           }
         ]
-      })
+      }
     ])
   })
 })

@@ -9,12 +9,10 @@
  */
 import { getAddress, isAddress, type Address } from 'viem'
 import {
-  ACCOUNT_NAMES,
-  classOf,
-  isDeploymentScopedAccountFamily,
-  normalBalance,
-  type AccountClass,
-  type AccountFamily
+  ACCOUNT_FAMILIES,
+  accountFamilyOf,
+  type AccountFamily,
+  type AccountName
 } from './chartOfAccounts'
 import type { LedgerEntry } from './ledgerEntry'
 
@@ -28,10 +26,8 @@ export type AccountResolution = 'resolved' | 'unresolved'
 export interface Account {
   /** Stable key used by journal lines and report roll-ups. */
   id: AccountId
-  /** The shared chart family that supplies classification and normal side. */
+  /** The shared family that supplies this account's classification and normal side. */
   family: AccountFamily
-  accountClass: AccountClass
-  normalBalance: 'debit' | 'credit'
   /** The authoritative contract identity for a deployment-specific account. */
   contractAddress?: Address
   /** `unresolved` means source evidence did not identify a concrete deployment. */
@@ -43,36 +39,9 @@ export interface AccountRegistry {
   /** All concrete accounts touched by the assembled book, in chart order. */
   accounts: readonly Account[]
   /** Resolve one chart family and optional contract address to its concrete account. */
-  resolve(family: AccountFamily, contractAddress?: string | null): Account
+  resolve(family: AccountName, contractAddress?: string | null): Account
   /** Read a concrete account by its stable identity. */
   get(id: AccountId): Account | undefined
-}
-
-/** Stable machine keys for the chart families. Display names are never account identity. */
-const FAMILY_KEYS: Readonly<Record<AccountFamily, string>> = {
-  'Cash — Bank': 'cash-bank',
-  'Cash — Safe': 'cash-safe',
-  'Cash — Payroll': 'cash-payroll',
-  'Cash — Expense': 'cash-expense',
-  'Cash — Credit': 'cash-credit',
-  'Cash — FeeCollector': 'cash-fee-collector',
-  'Trading account': 'trading-account',
-  'Wage Payable': 'wage-payable',
-  'Loan Payable': 'loan-payable',
-  'Interest Payable': 'interest-payable',
-  'Deferred SHER Compensation': 'deferred-sher-compensation',
-  'SHERS To Be Issued': 'shers-to-be-issued',
-  'Owner Capital': 'owner-capital',
-  'Investor Equity': 'investor-equity',
-  'Retained Earnings': 'retained-earnings',
-  'Service Revenue': 'service-revenue',
-  'Trading Gain': 'trading-gain',
-  'Payroll Expense': 'payroll-expense',
-  'Operating Expense': 'operating-expense',
-  'Interest Expense': 'interest-expense',
-  'Dividend Expense': 'dividend-expense',
-  'Trading Loss': 'trading-loss',
-  'Transaction Fee Expense': 'transaction-fee-expense'
 }
 
 function normalizeContractAddress(value: string | null | undefined): Address | undefined {
@@ -80,12 +49,11 @@ function normalizeContractAddress(value: string | null | undefined): Address | u
 }
 
 /** Build one concrete account. Only a contract address can resolve a deployment-specific family. */
-function makeAccount(family: AccountFamily, contractAddress?: string | null): Account {
-  const address = isDeploymentScopedAccountFamily(family)
-    ? normalizeContractAddress(contractAddress)
-    : undefined
+function makeAccount(familyName: AccountName, contractAddress?: string | null): Account {
+  const family = accountFamilyOf(familyName)
+  const address = family.deploymentScoped ? normalizeContractAddress(contractAddress) : undefined
   const resolution: AccountResolution =
-    isDeploymentScopedAccountFamily(family) && !address ? 'unresolved' : 'resolved'
+    family.deploymentScoped && !address ? 'unresolved' : 'resolved'
   const suffix = address
     ? `:${address.toLowerCase()}`
     : resolution === 'unresolved'
@@ -93,10 +61,8 @@ function makeAccount(family: AccountFamily, contractAddress?: string | null): Ac
       : ''
 
   return {
-    id: `${FAMILY_KEYS[family]}${suffix}`,
+    id: `${family.id}${suffix}`,
     family,
-    accountClass: classOf(family),
-    normalBalance: normalBalance(family),
     ...(address ? { contractAddress: address } : {}),
     resolution
   }
@@ -104,7 +70,7 @@ function makeAccount(family: AccountFamily, contractAddress?: string | null): Ac
 
 function noteAccount(
   accounts: Map<AccountId, Account>,
-  family: AccountFamily | null,
+  family: AccountName | null,
   contractAddress?: string | null
 ): void {
   if (!family) return
@@ -123,18 +89,18 @@ export function buildAccountRegistry(entries: readonly LedgerEntry[]): AccountRe
   // Non-deployment families are always one concrete account. Deployment-specific
   // families enter the registry only when the book actually touches a known or
   // unresolved concrete account.
-  for (const family of ACCOUNT_NAMES) {
-    if (!isDeploymentScopedAccountFamily(family)) noteAccount(accounts, family)
+  for (const family of ACCOUNT_FAMILIES) {
+    if (!family.deploymentScoped) noteAccount(accounts, family.name)
   }
   for (const entry of entries) {
     noteAccount(accounts, entry.debit, entry.debitInstance)
     noteAccount(accounts, entry.credit, entry.creditInstance)
   }
 
-  const byChartOrder = new Map(ACCOUNT_NAMES.map((family, index) => [family, index]))
+  const byChartOrder = new Map(ACCOUNT_FAMILIES.map((family, index) => [family.id, index]))
   const ordered = [...accounts.values()].sort((a, b) => {
     const familyOrder =
-      (byChartOrder.get(a.family) ?? Infinity) - (byChartOrder.get(b.family) ?? Infinity)
+      (byChartOrder.get(a.family.id) ?? Infinity) - (byChartOrder.get(b.family.id) ?? Infinity)
     if (familyOrder !== 0) return familyOrder
     return a.id.localeCompare(b.id)
   })

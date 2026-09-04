@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
   ACCOUNTS,
+  ACCOUNT_FAMILIES,
   ACCOUNT_NAMES,
   CHART_OF_ACCOUNTS,
+  accountFamilyOf,
   classOf,
   isDebitNormal,
   isDebitNormalClass,
@@ -77,6 +79,19 @@ describe('chart of accounts', () => {
     ACCOUNTS.forEach((account) => {
       expect(account.class).toBe(CHART_OF_ACCOUNTS[account.name])
     })
+  })
+
+  it('keeps every shared account attribute in one canonical family object', () => {
+    const bank = accountFamilyOf('Cash — Bank')
+
+    expect(bank).toEqual({
+      id: 'cash-bank',
+      name: 'Cash — Bank',
+      accountClass: 'ASSET',
+      normalBalance: 'debit',
+      deploymentScoped: true
+    })
+    expect(ACCOUNT_FAMILIES.map((family) => family.name)).toEqual(ACCOUNT_NAMES)
   })
 
   describe('normal balance', () => {

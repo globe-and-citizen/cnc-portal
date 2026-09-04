@@ -1,4 +1,5 @@
-import { classOf, type AccountClass, type AccountName } from './chartOfAccounts'
+import type { AccountClass, AccountName } from './chartOfAccounts'
+import type { Account } from './accountRegistry'
 import type { GeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
@@ -63,16 +64,10 @@ export interface SummaryBanner {
 }
 
 export interface TrialRow {
-  /** Canonical concrete-account identity for drill-down and reconciliation. */
-  accountId: string
-  /** Base account name — the drill-down key (a split pocket's instances share it). */
-  account: string
+  /** Canonical concrete account for drill-down and reconciliation. */
+  account: Account
   /** Display name — the account, suffixed ` #2` / ` #3` for a redeployed pocket's later instances. */
   label: string
-  /** The pocket contract instance this row rolls up, when split across redeploys. */
-  instance?: string
-  /** Source evidence state for a deployment-specific account. */
-  accountResolution: 'resolved' | 'unresolved'
   /** True when this account is split across several instances (a redeploy) — drives the redeploy hint. */
   split: boolean
   /** True on the earliest resolved deployment row, used only for display. */
@@ -104,7 +99,7 @@ export interface BalanceView {
 }
 
 /** The trial-balance "nature" label for an account class. */
-function natureOf(account: AccountName): TrialNature {
+function natureOf(account: Account): TrialNature {
   const byClass: Record<AccountClass, TrialNature> = {
     ASSET: 'Asset',
     LIABILITY: 'Liability',
@@ -113,7 +108,7 @@ function natureOf(account: AccountName): TrialNature {
     INCOME: 'Income',
     EXPENSE: 'Expense'
   }
-  return byClass[classOf(account)]
+  return byClass[account.family.accountClass]
 }
 
 /**
@@ -287,16 +282,10 @@ export function presentTrial(ledger: GeneralLedger): {
   balanced: boolean
 } {
   const rows: TrialRow[] = ledger.trialBalance.map((row) => {
-    const debitSide =
-      row.accountClass === 'ASSET' ||
-      row.accountClass === 'EXPENSE' ||
-      row.accountClass === 'CONTRA_EQUITY'
+    const debitSide = row.account.family.normalBalance === 'debit'
     return {
-      accountId: row.accountId,
       account: row.account,
       label: row.accountLabel,
-      ...(row.instance ? { instance: row.instance } : {}),
-      accountResolution: row.accountResolution,
       split: row.split,
       // The primary row is the earliest resolved deployment, for display only.
       isPrimaryInstance: row.isPrimaryInstance,

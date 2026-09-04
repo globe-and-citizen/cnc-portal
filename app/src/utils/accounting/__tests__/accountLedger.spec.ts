@@ -22,7 +22,7 @@ import { catalogueLedger } from './catalogueLedger'
 describe('accountLedger — statement-line drill-down', () => {
   const gl = buildGeneralLedger(buildJournal(catalogueLedger))
   const balanceOf = (account: AccountName): number =>
-    gl.trialBalance.find((r) => r.account === account)?.balance ?? 0
+    gl.trialBalance.find((r) => r.account.family.name === account)?.balance ?? 0
 
   describe('entriesForAccount', () => {
     it('returns only postings whose debit or credit leg touches the account', () => {
