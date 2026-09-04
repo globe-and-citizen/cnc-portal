@@ -41,36 +41,21 @@ function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
 }
 
 describe('JournalEntry', () => {
-  it('keeps entry and source-operation identities distinct for one multi-entry operation', () => {
-    const principal = createJournalEntry(monetaryEntry())
-    const fee = createJournalEntry(
+  it('models a source operation as one multi-line JournalEntry', () => {
+    const entry = createJournalEntry(
       monetaryEntry({
-        id: 'operation-42:fee',
-        useCase: 'FEE',
-        memo: 'Transaction fee',
         lines: [
-          {
-            id: 'operation-42:fee:debit',
-            account: account('Transaction Fee Expense'),
-            debit: 0.05
-          },
-          {
-            id: 'operation-42:fee:credit',
-            account: account('Cash — Bank'),
-            credit: 0.05
-          }
+          { id: 'operation-42:destination', account: account('Cash — Payroll'), debit: 10 },
+          { id: 'operation-42:fee', account: account('Transaction Fee Expense'), debit: 0.05 },
+          { id: 'operation-42:bank', account: account('Cash — Bank'), credit: 10.05 }
         ]
       })
     )
 
-    expect(principal.sourceOperationId).toBe(fee.sourceOperationId)
-    expect(principal.id).not.toBe(fee.id)
-    expect(principal.lines.map((line) => line.id)).toEqual([
-      'operation-42:principal:debit',
-      'operation-42:principal:credit'
-    ])
-    expect(isBalanced(principal)).toBe(true)
-    expect(isBalanced(fee)).toBe(true)
+    expect(entry.id).toBe('operation-42:principal')
+    expect(entry.sourceOperationId).toBe('operation-42')
+    expect(entry.lines).toHaveLength(3)
+    expect(isBalanced(entry)).toBe(true)
   })
 
   it('accepts a compound entry with one credit and several debit lines', () => {

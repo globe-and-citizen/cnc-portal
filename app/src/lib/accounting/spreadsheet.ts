@@ -21,17 +21,8 @@ import {
   trialExportTitle
 } from '@/utils/accounting/presenter'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
-import {
-  presentLedger,
-  ledgerExportTitle,
-  resolveLedgerColumns,
-  ledgerTotalRow,
-  type LedgerColumnKey
-} from '@/utils/accounting/ledgerPresenter'
-import { presentAccountLedger, accountLedgerTitle } from '@/utils/accounting/accountLedger'
-import { activityText } from '@/utils/accounting/describeEntry'
-import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
+import { generalLedgerSheetRows } from './generalLedgerSheet'
 
 type Cell = string | number
 type SheetRows = Cell[][]
@@ -119,68 +110,6 @@ function trialSheet(books: CncAccounting, asOf?: Date | null): SheetRows {
   ]
 }
 
-/** How each ledger column renders in the export: header + cell value. */
-const LEDGER_SHEET_CELL: Record<
-  LedgerColumnKey,
-  (row: LedgerRow, resolveName?: ResolveName) => Cell
-> = {
-  date: (row) => row.date,
-  action: (row) => row.category,
-  transaction: (row) => row.label,
-  activity: (row, resolveName) => activityText(row.activity, resolveName),
-  account: (row) => row.accountLabel ?? row.account,
-  dr: (row) => usd(row.dr),
-  cr: (row) => usd(row.cr),
-  currency: (row) => row.currency,
-  quantity: (row) => usd(row.quantity),
-  rate: (row) => usd(row.rate)
-}
-
-interface LedgerSheetOptions {
-  filter?: string
-  from?: Date | null
-  to?: Date | null
-  columns?: LedgerColumnKey[]
-  currencies?: string[]
-  account?: string | readonly string[]
-  accountLabel?: string
-  accountTotal?: string
-  instance?: string | null
-  unresolved?: boolean
-}
-
-/** Display name for a drill-down: the account, or the aggregate's label. */
-function drillName(opts: LedgerSheetOptions): string {
-  return Array.isArray(opts.account) ? (opts.accountLabel ?? 'Ledger') : (opts.account as string)
-}
-
-function ledgerSheet(
-  books: CncAccounting,
-  resolveName?: ResolveName,
-  opts: LedgerSheetOptions = {}
-): SheetRows {
-  const { rows, total } = opts.account
-    ? presentAccountLedger(books.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
-        instance: opts.instance,
-        unresolved: opts.unresolved
-      })
-    : presentLedger(books.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
-  const columns = resolveLedgerColumns(opts.columns)
-  return [
-    [
-      opts.account
-        ? accountLedgerTitle(drillName(opts), opts.from, opts.to)
-        : ledgerExportTitle(opts.filter, opts.from, opts.to)
-    ],
-    [],
-    columns.map((column) => column.label),
-    ...rows.map((row) =>
-      columns.map((column) => LEDGER_SHEET_CELL[column.value](row, resolveName))
-    ),
-    ledgerTotalRow(columns, usd(total))
-  ]
-}
-
 /** The sheet name shown on a tab, per section. */
 const SHEET_NAME: Record<SectionKey, string> = {
   summary: 'Summary',
@@ -207,12 +136,12 @@ function sectionSheet(
       case 'trial':
         return trialSheet(books, spec.asOf)
       case 'ledger':
-        return ledgerSheet(books, resolveName, {
-          filter: spec.filter,
+        return generalLedgerSheetRows(books, resolveName, {
           from: spec.from,
           to: spec.to,
           columns: spec.columns,
           currencies: spec.currencies,
+          journalAccounts: spec.journalAccounts,
           account: spec.account,
           accountLabel: spec.accountLabel,
           accountTotal: spec.accountTotal,
@@ -242,7 +171,7 @@ export function buildAccountingSheets(
     { name: 'Income Statement', rows: incomeSheet(books) },
     { name: 'Balance Sheet', rows: balanceSheetRows(books) },
     { name: 'Trial Balance', rows: trialSheet(books) },
-    { name: 'General Ledger', rows: ledgerSheet(books, resolveName) }
+    { name: 'General Ledger', rows: generalLedgerSheetRows(books, resolveName) }
   ]
 }
 

@@ -72,6 +72,7 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
   it('books the fee on the same Bank deployment as its transfer (BANK_A)', () => {
     const fee = entries.find((e) => e.useCase === 'FEE')!
     expect(fee.creditInstance?.toLowerCase()).toBe(BANK_A)
+    expect(fee.sourceOperationId).toBe(TX)
   })
 
   it('rolls the fee into BANK_A on the trial balance, not the other deployment', () => {
@@ -83,6 +84,17 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
     expect(rowA?.totalCredit).toBe(100.5)
     // The fee must NOT have leaked onto BANK_B (the other deployment).
     expect(rowB?.totalCredit ?? 0).toBe(0)
+  })
+
+  it('assembles the transfer and its fee as one multi-line journal entry', () => {
+    const journal = buildJournal(entries)
+    const transfer = journal.find((entry) => entry.sourceOperationId === TX)!
+
+    expect(transfer.lines).toMatchObject([
+      { account: { family: { name: 'Cash — Payroll' } }, debit: 100 },
+      { account: { family: { name: 'Transaction Fee Expense' } }, debit: 0.5 },
+      { account: { family: { name: 'Cash — Bank' } }, credit: 100.5 }
+    ])
   })
 
   it('shows the fee inside the BANK_A drill-down', () => {

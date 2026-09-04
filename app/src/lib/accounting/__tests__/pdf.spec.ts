@@ -134,21 +134,21 @@ describe('buildTables (section selection)', () => {
     expect(ledger.body[0]).toHaveLength(3)
   })
 
-  it('honours the active category filter and still totals the filtered rows', () => {
-    const [ledger] = buildTables(sampleBooks(), [{ key: 'ledger', filter: 'Expense' }])
-    // The deposit is Revenue, filtered out — only the (zero) total row remains.
-    expect(ledger.body).toHaveLength(1)
-    const totalRow = ledger.body[0]
-    expect(totalRow[2]).toBe('Total movements')
-    expect(totalRow[8]).toBe('$0.00') // Debit total
+  it('honours a concrete-account filter and retains every journal line', () => {
+    const books = sampleBooks()
+    const accountId = books.journal[0]!.lines[0]!.account.id
+    const [ledger] = buildTables(books, [{ key: 'ledger', journalAccounts: [accountId] }])
+    expect(ledger.body).toHaveLength(3)
+    expect(ledger.body[0]![4]).toBe('Cash — Bank')
+    expect(ledger.body[1]![4]).toBe('Service Revenue')
+    expect(ledger.body.at(-1)![8]).toBe('$100.00')
   })
 
-  it('names the category and period in the ledger heading when narrowed', () => {
+  it('names the reporting period in the ledger heading', () => {
     const [ledger] = buildTables(sampleBooks(), [
-      { key: 'ledger', filter: 'Revenue', from: new Date('2026-01-01'), to: new Date('2026-02-01') }
+      { key: 'ledger', from: new Date('2026-01-01'), to: new Date('2026-02-01') }
     ])
     expect(ledger.title).toContain('General Ledger')
-    expect(ledger.title).toContain('Revenue')
     expect(ledger.title).toContain('Jan 1, 2026')
   })
 
