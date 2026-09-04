@@ -78,7 +78,10 @@ function mapDeposit(
         memo: 'Direct deposit into Bank'
       })
 
-  return applyClassification(inferred, 'in', BANK, ctx)
+  // A deposit is determined by its source evidence: external cash is Service
+  // Revenue and a CNC-owned source is an internal move. A legacy category must
+  // not replace either journal account.
+  return inferred
 }
 
 /** Map a single Bank transfer-out (native or token) to its ledger entry. */
@@ -125,7 +128,7 @@ function mapTransfer(
         enrichment: 'needs-off-chain-data'
       })
 
-  return applyClassification(inferred, 'out', BANK, ctx)
+  return inferred.internal ? inferred : applyClassification(inferred, 'out', BANK, ctx)
 }
 
 /** Map every indexed Bank event in `input` to ledger entries. */

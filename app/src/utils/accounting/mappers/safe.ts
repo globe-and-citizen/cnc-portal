@@ -115,9 +115,13 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Le
   const entries: LedgerEntry[] = []
   for (const row of input.transfers ?? []) {
     if (sameAddress(row.to, input.safeAddress)) {
-      entries.push(applyClassification(inferInflow(row, ctx, input.safeAddress), 'in', SAFE, ctx))
+      // A Safe inflow is either a direct Service Revenue deposit or an internal
+      // transfer, based on its source evidence. Do not override that posting
+      // with a legacy manual category.
+      entries.push(inferInflow(row, ctx, input.safeAddress))
     } else if (sameAddress(row.from, input.safeAddress)) {
-      entries.push(applyClassification(inferOutflow(row, ctx, input.safeAddress), 'out', SAFE, ctx))
+      const inferred = inferOutflow(row, ctx, input.safeAddress)
+      entries.push(inferred.internal ? inferred : applyClassification(inferred, 'out', SAFE, ctx))
     }
     // A transfer touching neither side of the Safe is not a Safe move — skip it.
   }

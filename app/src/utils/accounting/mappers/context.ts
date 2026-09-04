@@ -25,9 +25,10 @@ export interface MapperContext {
   /** The Cash pocket account of a CNC-owned address, or `null` if external. */
   pocketOf: (address: string | null | undefined) => AccountName | null
   /**
-   * The manual classification a team owner attached to a transaction (keyed by the
-   * ledger entry id, i.e. `${txHash}-${logIndex}`), or `undefined` when none exists.
-   * The Bank/Safe mappers apply it on top of their address inference (issue #2457).
+   * The legacy manual classification a team owner attached to a transaction (keyed by
+   * the ledger entry id, i.e. `${txHash}-${logIndex}`), or `undefined` when none
+   * exists. Source mappers apply it only to eligible external outflows; deposits and
+   * company-pocket transfers are determined by their source evidence.
    */
   classificationOf: (id: string) => ClassificationOverride | undefined
 }

@@ -1,7 +1,7 @@
 /**
- * Apply a manual classification on top of an inferred Bank/Safe entry (issue #2457).
+ * Apply a legacy manual classification on top of an eligible Bank/Safe outflow (issue #2457).
  *
- * The Bank and Safe mappers first infer a deposit/withdrawal from its direction and
+ * The Bank and Safe mappers first infer an eligible withdrawal from its direction and
  * counterparty; this shared helper then overlays the owner's manual classification
  * when one exists, re-resolving the balanced accounts via the pure
  * {@link resolveClassifiedAccounts} engine and keeping every monetary field intact —
@@ -32,8 +32,9 @@ const DEFAULT_MEMO: Record<ClassificationCategory, string> = {
 
 /**
  * Return the inferred entry with the owner's classification applied, or unchanged when
- * there is no applicable classification. `direction` is `'in'` for a deposit and
- * `'out'` for a withdrawal; `cashAccount` is the Bank/Safe pocket the money moved
+ * there is no applicable classification. Production mappers invoke this only with
+ * `direction: 'out'`; deposits and company-pocket transfers retain their
+ * evidence-derived accounts. `cashAccount` is the Bank/Safe pocket the money moved
  * through. A manual classification counts as the off-chain review, so it clears any
  * `needs-off-chain-data` flag.
  */
