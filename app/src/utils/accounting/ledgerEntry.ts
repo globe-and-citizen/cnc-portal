@@ -40,17 +40,12 @@ export function sourceOperationIdOf(eventId: string): string {
  * catalogue treats specially (internal pocket-to-pocket moves and fee skims).
  */
 export type UseCase =
-  /** Founder deposit into a treasury pocket → Owner Capital. */
-  | 'UC-BANK-01'
-  /** Client payment into a treasury pocket → Service Revenue. */
+  /** Direct external deposit into a treasury pocket → Service Revenue. */
   | 'UC-BANK-02'
   /** Fund payroll/expense pockets from Bank — internal move. */
   | 'UC-BANK-03'
   /** Invest via SafeDepositRouter → SHER mint (cash lands in Safe). */
   | 'UC-SDR-01'
-  /** A team member funds the Safe to invest & get SHER — booked as a capital
-   *  contribution (Cr Investor Equity) when no SafeDepositRouter event is present. */
-  | 'UC-MEMBER-01'
   /** A lender funds a Community Credit offer → the team borrows (Cr Loan Payable). */
   | 'UC-CREDIT-01'
   /** A fully (or partially) funded offer sweeps its principal to Bank — internal move. */

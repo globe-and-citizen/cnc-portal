@@ -44,7 +44,7 @@ describe('classificationTargetOf', () => {
   it('marks an external Safe inflow against the Safe pocket', () => {
     expect(
       classificationTargetOf(
-        entry({ useCase: 'UC-BANK-01', debit: 'Cash — Safe', credit: 'Owner Capital' })
+        entry({ useCase: 'UC-BANK-02', debit: 'Cash — Safe', credit: 'Service Revenue' })
       )
     ).toEqual({ direction: 'in', cashAccount: 'Cash — Safe' })
   })

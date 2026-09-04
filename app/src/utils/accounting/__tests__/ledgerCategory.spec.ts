@@ -36,8 +36,8 @@ describe('categoryOf', () => {
     expect(categoryOf(entry('UC-CREDIT-02'))).toBe('Transfer')
   })
 
-  it('files an owner/founder deposit under Revenue', () => {
-    expect(categoryOf(entry('UC-BANK-01'))).toBe('Revenue')
+  it('files a direct treasury deposit under Revenue', () => {
+    expect(categoryOf(entry('UC-BANK-02'))).toBe('Revenue')
   })
 
   it('lets a manual classification drive the badge, not the CASH-IN/OUT use case', () => {

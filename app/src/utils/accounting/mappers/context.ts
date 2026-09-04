@@ -18,27 +18,17 @@ import type { ContractType, TeamContract } from '@/types/teamContract'
 export interface MapperContext {
   /** The team's own contract addresses (checksum-normalized). */
   internalAddresses: ReadonlySet<Address>
-  /** Addresses treated as founders/owners — their treasury inflows are capital. */
-  founderAddresses: ReadonlySet<Address>
-  /** Team member addresses — a member funding the Safe is a capital contribution
-   *  (invest & get SHER → Investor Equity), not a client paying for services. */
-  memberAddresses: ReadonlySet<Address>
   /** Convert a raw base-unit amount to USD at the given time. */
   toUsd: (amount: bigint, token: TokenId, at: Date) => number
-  /**
-   * Whole SHER minted for a USD amount invested at the given time, from the
-   * router's compensation multiplier (`sher = usd × multiplier`). Exact for the
-   * USD-pegged deposits the router supports; `0` when no multiplier is known.
-   */
-  sherForUsd: (usd: number, at: Date) => number
   /** Resolve a token contract address (nullish / zero = native) to a {@link TokenId}. */
   tokenIdOf: (tokenAddress: string | null | undefined) => TokenId
   /** The Cash pocket account of a CNC-owned address, or `null` if external. */
   pocketOf: (address: string | null | undefined) => AccountName | null
   /**
-   * The manual classification a team owner attached to a transaction (keyed by the
-   * ledger entry id, i.e. `${txHash}-${logIndex}`), or `undefined` when none exists.
-   * The Bank/Safe mappers apply it on top of their address inference (issue #2457).
+   * The legacy manual classification a team owner attached to a transaction (keyed by
+   * the ledger entry id, i.e. `${txHash}-${logIndex}`), or `undefined` when none
+   * exists. Source mappers apply it only to eligible external outflows; deposits and
+   * company-pocket transfers are determined by their source evidence.
    */
   classificationOf: (id: string) => ClassificationOverride | undefined
 }
@@ -76,10 +66,6 @@ export interface BuildMapperContextInput {
   contracts: readonly TeamContract[] | undefined
   /** The set of internal addresses (from `collectInternalAddresses`). */
   internalAddresses: ReadonlySet<Address>
-  /** Founder / owner addresses whose treasury inflows are Owner Capital. */
-  founderAddresses?: Iterable<Address | string>
-  /** Team member addresses — a member's Safe inflow is a capital contribution. */
-  memberAddresses?: Iterable<Address | string>
   /** The protocol-wide FeeCollector address (its pocket is `Cash — FeeCollector`). */
   feeCollectorAddress?: Address | string | null
   /** The on-chain SHER token address, so it resolves to the `sher` {@link TokenId}. */
@@ -88,15 +74,6 @@ export interface BuildMapperContextInput {
   rateOfRecord?: UsdRateOfRecord
   /** Manual transaction classifications, keyed by ledger entry id (issue #2457). */
   classifications?: ReadonlyMap<string, ClassificationOverride>
-}
-
-/** Normalize a loose address iterable into a checksum-keyed set. */
-function toAddressSet(addresses: Iterable<Address | string> | undefined): Set<Address> {
-  const set = new Set<Address>()
-  for (const address of addresses ?? []) {
-    if (isAddress(address)) set.add(getAddress(address))
-  }
-  return set
 }
 
 /**
@@ -125,24 +102,13 @@ export function buildMapperContext(input: BuildMapperContextInput): MapperContex
     return pocketIndex.get(getAddress(address)) ?? null
   }
 
-  const sherForUsd = (usd: number, at: Date): number => {
-    // The SHER price-of-record is USD-per-SHER (1 / multiplier); inverting it
-    // gives the SHER minted for a USD deposit (usd × multiplier). See sherRate.ts.
-    const usdPerSher = input.rateOfRecord ? input.rateOfRecord('sher', at) : 0
-    if (!(usdPerSher > 0) || !(usd > 0)) return 0
-    return Math.round((usd / usdPerSher) * 1e6) / 1e6
-  }
-
   const classifications = input.classifications
   const classificationOf = (id: string): ClassificationOverride | undefined =>
     classifications?.get(id)
 
   return {
     internalAddresses: input.internalAddresses,
-    founderAddresses: toAddressSet(input.founderAddresses),
-    memberAddresses: toAddressSet(input.memberAddresses),
     toUsd: (amount, token, at) => toUsdUtil(amount, token, at, input.rateOfRecord),
-    sherForUsd,
     tokenIdOf,
     pocketOf,
     classificationOf

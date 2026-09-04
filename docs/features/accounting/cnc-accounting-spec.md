@@ -67,7 +67,7 @@ Concretely, the existing `buildLedger` / `LedgerEntry` / `AccountingSummary` mod
 `AccountingIncomeStatement`, `AccountingBalanceSheet`) are the target rendering layer. Phase 1 work is to:
 
 1. Add **CNC feeds** (contract events + the portal DB rows) alongside the existing transfer proxy.
-2. Replace the Polymarket `LedgerCategory` set with the CNC **use-case categories** from the Journal Entry Catalogue (`UC-BANK-01…`,
+2. Replace the Polymarket `LedgerCategory` set with the CNC **use-case categories** from the Journal Entry Catalogue (`UC-BANK-02`,
    `UC-CASH-02/03`, `UC-EXP-01`, `UC-INV-01`, `UC-SDR-01`, team funding moves, and cross-entity fee payments).
 3. Map each entry to its **debit/credit accounts** per the [Journal Entry Catalogue](./journal-entry-catalogue.md) and let the existing
    trial-balance / IS / BS components roll them up.
@@ -126,8 +126,7 @@ sheet.
 
 | Source (event / record)                                          | Use case   | Journal entry                                                                                          | Statement line(s)                                                      |
 | ---------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| Bank `Deposited` / `TokenDeposited` from a founder (no shares)   | UC-BANK-01 | Dr Cash — Bank · Cr Owner Capital                                                                      | BS: Cash ↑, Owner Capital ↑                                            |
-| Bank `Deposited` / `TokenDeposited` from a client                | UC-BANK-02 | Dr Cash — Bank · Cr Service Revenue                                                                    | IS: Service Revenue; BS: Cash ↑                                        |
+| Bank `Deposited` / `TokenDeposited` from any external address    | UC-BANK-02 | Dr Cash — Bank · Cr Service Revenue                                                                    | IS: Service Revenue; BS: Cash ↑                                        |
 | SafeDepositRouter `Deposited` + InvestorV1 `Minted`              | UC-SDR-01  | Dr Cash — Safe · Cr Investor Equity                                                                    | BS: Cash ↑, Investor Equity ↑                                          |
 | Bank `Transfer` / `TokenTransfer` (fund payroll/expense)         | UC-BANK-03 | Dr Cash — Payroll/Expense · Cr Cash — Bank                                                             | BS: internal team cash move (no IS impact)                             |
 | WeeklyClaim signed (portal)                                      | UC-CASH-02 | Dr Payroll Expense · Cr Wage Payable (cash) · Dr Deferred SHER Compensation · Cr SHERS To Be Issued    | IS: Payroll Expense (cash only); BS: equity ↑↓ (contra-equity offsets) |

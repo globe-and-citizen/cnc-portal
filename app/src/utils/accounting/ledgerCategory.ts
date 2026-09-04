@@ -101,11 +101,7 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
   if (entry.classified) return CLASSIFIED_CATEGORY[entry.classified]
 
   const byUseCase: Partial<Record<UseCase, LedgerCategory>> = {
-    // An owner/founder deposit into a treasury pocket files under Revenue (it still
-    // credits Owner Capital — this is the business-activity label, not the account).
-    'UC-BANK-01': 'Revenue',
     'UC-SDR-01': 'Investment',
-    'UC-MEMBER-01': 'Investment',
     'UC-CREDIT-01': 'Credit',
     'UC-CREDIT-03': 'Credit',
     'UC-CREDIT-04': 'Credit',

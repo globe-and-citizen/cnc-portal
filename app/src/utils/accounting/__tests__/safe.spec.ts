@@ -6,7 +6,7 @@ const ctx = makeCtx()
 const base = { token: null as string | null, amount: '1000000000000000000', timestamp: 100 }
 
 describe('mapSafeTransfers', () => {
-  it('books a founder inflow as UC-BANK-01 (Owner Capital)', () => {
+  it('books a founder inflow as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapSafeTransfers(
       {
         safeAddress: ADDR.safe,
@@ -15,9 +15,9 @@ describe('mapSafeTransfers', () => {
       ctx
     )
     expect(entry).toMatchObject({
-      useCase: 'UC-BANK-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Safe',
-      credit: 'Owner Capital'
+      credit: 'Service Revenue'
     })
   })
 
@@ -32,7 +32,7 @@ describe('mapSafeTransfers', () => {
     expect(entry).toMatchObject({ useCase: 'UC-BANK-02', credit: 'Service Revenue' })
   })
 
-  it('books a member inflow as UC-MEMBER-01 (Investor Equity — invest & get SHER)', () => {
+  it('books a member inflow as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapSafeTransfers(
       {
         safeAddress: ADDR.safe,
@@ -41,11 +41,31 @@ describe('mapSafeTransfers', () => {
       ctx
     )
     expect(entry).toMatchObject({
-      useCase: 'UC-MEMBER-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Safe',
-      credit: 'Investor Equity',
-      shares: 4 // $2 invested ÷ $0.50 per SHER (multiplier 2x)
+      credit: 'Service Revenue'
     })
+  })
+
+  it('does not let a legacy classification reclassify a direct inflow', () => {
+    const classifiedCtx = makeCtx({
+      classificationOf: (id) =>
+        id === 'i2-classified' ? { category: 'SHAREHOLDER_LOAN' } : undefined
+    })
+    const [entry] = mapSafeTransfers(
+      {
+        safeAddress: ADDR.safe,
+        transfers: [{ ...base, id: 'i2-classified', from: ADDR.member, to: ADDR.safe }]
+      },
+      classifiedCtx
+    )
+
+    expect(entry).toMatchObject({
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Safe',
+      credit: 'Service Revenue'
+    })
+    expect(entry).not.toHaveProperty('classified')
   })
 
   it('books an inflow from an internal pocket as an internal move', () => {
@@ -64,13 +84,16 @@ describe('mapSafeTransfers', () => {
     })
   })
 
-  it('books an outflow to an internal pocket as an internal move', () => {
+  it('does not let a legacy classification alter an internal outflow', () => {
+    const classifiedCtx = makeCtx({
+      classificationOf: (id) => (id === 'o1' ? { category: 'INTERNAL_TRANSFER' } : undefined)
+    })
     const [entry] = mapSafeTransfers(
       {
         safeAddress: ADDR.safe,
         transfers: [{ ...base, id: 'o1', from: ADDR.safe, to: ADDR.bank }]
       },
-      ctx
+      classifiedCtx
     )
     expect(entry).toMatchObject({
       useCase: 'INTERNAL',
@@ -78,6 +101,7 @@ describe('mapSafeTransfers', () => {
       credit: 'Cash — Safe',
       internal: true
     })
+    expect(entry).not.toHaveProperty('classified')
   })
 
   it('flags an external outflow for off-chain reclassification', () => {

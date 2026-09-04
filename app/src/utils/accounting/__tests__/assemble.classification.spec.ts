@@ -24,7 +24,6 @@ const RATE: UsdRateOfRecord = (tokenId) => (tokenId === 'native' ? 2 : tokenId =
 const BASE: CncAccountingInput = {
   contracts: CONTRACTS,
   safeAddress: ADDR.safe,
-  founderAddresses: [ADDR.founder],
   feeCollectorAddress: ADDR.feeCollector,
   rateOfRecord: RATE
 }
@@ -68,7 +67,7 @@ function classification(
   }
 }
 
-describe('assembleCncAccounting — manual classification', () => {
+describe('assembleCncAccounting — legacy manual classification', () => {
   it('infers the deposit as Service Revenue with no classification', () => {
     const a = assembleCncAccounting({ ...BASE, bankEvents: clientBankDeposit })
     expect(a.summary.income).toBe(100)
@@ -76,36 +75,34 @@ describe('assembleCncAccounting — manual classification', () => {
     expect(a.balanceSheet.balanced).toBe(true)
   })
 
-  it('reclassifies it as a shareholder loan — off the income statement, onto liabilities', () => {
+  it('keeps a direct deposit as revenue despite a shareholder-loan category', () => {
     const a = assembleCncAccounting({
       ...BASE,
       bankEvents: clientBankDeposit,
       classifications: [classification('bd1', 'SHAREHOLDER_LOAN')]
     })
 
-    expect(a.summary.income).toBe(0)
-    expect(a.incomeStatement.revenue).not.toContainEqual({
+    expect(a.summary.income).toBe(100)
+    expect(a.incomeStatement.revenue).toContainEqual({
       account: 'Service Revenue',
       amount: 100
     })
-    expect(a.balanceSheet.totalLiabilities).toBe(100)
-    expect(a.balanceSheet.liabilities).toContainEqual(
-      expect.objectContaining({ account: 'Loan Payable' })
-    )
+    expect(a.balanceSheet.totalLiabilities).toBe(0)
+    expect(a.entries.find((entry) => entry.id === 'bd1')).not.toHaveProperty('classified')
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
   })
 
-  it('reclassifies it as owner capital — into equity', () => {
+  it('keeps a direct deposit as revenue despite an owner-capital category', () => {
     const a = assembleCncAccounting({
       ...BASE,
       bankEvents: clientBankDeposit,
       classifications: [classification('bd1', 'OWNER_CAPITAL')]
     })
 
-    expect(a.summary.income).toBe(0)
-    const entry = a.entries.find((e) => e.classified === 'OWNER_CAPITAL')
-    expect(entry).toMatchObject({ debit: 'Cash — Bank', credit: 'Owner Capital' })
+    expect(a.summary.income).toBe(100)
+    expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
+    expect(a.entries.find((entry) => entry.id === 'bd1')).not.toHaveProperty('classified')
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
   })

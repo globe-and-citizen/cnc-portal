@@ -67,19 +67,13 @@ describe('activityOf — actor rows', () => {
     })
   })
 
-  it('narrates capital, revenue and an investment with the SHER tail', () => {
-    expect(activityOf(entry({ useCase: 'UC-BANK-01', counterparty: ALI })).text).toBe(
-      'contributed $500.00 in capital'
-    )
+  it('narrates revenue and an investment with the SHER tail', () => {
     expect(activityOf(entry({ useCase: 'UC-BANK-02', counterparty: ALI })).text).toBe(
       'paid $500.00 for services'
     )
     expect(activityOf(entry({ useCase: 'UC-SDR-01', counterparty: ALI })).text).toBe(
       'invested $500.00 in capital'
     )
-    expect(
-      activityOf(entry({ useCase: 'UC-MEMBER-01', counterparty: ALI, shares: 120 })).text
-    ).toBe('invested $500.00 in capital and got 120 SHER')
   })
 
   it('narrates an expense withdrawal, a dividend and a share issuance', () => {
@@ -181,9 +175,9 @@ describe('activityOf — plain rows', () => {
       text: 'Cash receipt'
     })
     // an actor use case without a counterparty has no one to name
-    expect(activityOf(entry({ useCase: 'UC-BANK-01' }))).toEqual({
+    expect(activityOf(entry({ useCase: 'UC-BANK-02' }))).toEqual({
       kind: 'plain',
-      text: 'Owner capital contribution'
+      text: 'Service revenue'
     })
     // a memo-only mint with no shares
     expect(
@@ -219,6 +213,6 @@ describe('entryLabel', () => {
   it('maps each use case to its generic label', () => {
     expect(entryLabel(entry({ useCase: 'CASH-OUT' }))).toBe('Cash payment')
     expect(entryLabel(entry({ useCase: 'UC-BANK-03' }))).toBe('Treasury funding')
-    expect(entryLabel(entry({ useCase: 'UC-MEMBER-01' }))).toBe('Member capital contribution')
+    expect(entryLabel(entry({ useCase: 'UC-BANK-02' }))).toBe('Service revenue')
   })
 })

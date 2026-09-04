@@ -26,9 +26,11 @@ These acceptance criteria follow the
   `Transaction Fee Expense` in the company's books; **share vesting** books the **whole award when the schedule is defined** and issues it
   as shares are released (a restricted-stock grant, off the income statement). The precise use-case templates and verified current gaps are
   in the [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
-- **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a company owner can **manually classify** each
-  one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
-  — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
+- **Direct treasury deposits:** an external deposit into Bank or Safe credits `Service Revenue`, regardless of the sender address. A
+  SafeDepositRouter operation that issues SHER is instead an investment credited to `Investor Equity`; a movement between company pockets
+  remains internal.
+- **Legacy manual classifications** apply only to eligible external Bank/Safe withdrawals. Direct deposits and movements between company
+  pockets retain the accounts determined by their source evidence; see catalogue §5.5.
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
 - **Journal-entry assembly:** Accounting constructs a validated double-entry `JournalEntry` collection and preserves concrete accounts
   across redeployments. The source-operation model, canonical account terminology, report-projection boundary, and verified optimisation
@@ -58,7 +60,7 @@ flowchart LR
 | US-ACCT-003 | Review the financial statements            | Company member | 🧪 Validation  |
 | US-ACCT-004 | Export accounting reports                  | Company member | 🧪 Validation  |
 | US-ACCT-005 | Preserve books across contract migrations  | Company member | 🚧 In Progress |
-| US-ACCT-006 | Classify a Bank transaction                | Company owner  | 📝 Draft       |
+| US-ACCT-006 | Classify an eligible external withdrawal   | Company owner  | 🚧 In Progress |
 
 ## US-ACCT-001: Review the Consolidated Accounting Summary
 
@@ -224,28 +226,25 @@ flowchart LR
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
-## US-ACCT-006: Classify a Bank Transaction
+## US-ACCT-006: Classify an Eligible External Withdrawal
 
 **As a** company owner\
-**I want to** assign the economic classification of a Bank deposit or withdrawal\
-**So that** the books record why funds moved instead of assuming it from the on-chain address
+**I want to** assign the economic account of an eligible external Bank withdrawal\
+**So that** the books record why the company paid money out
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [ ] The company owner can classify a Bank transaction with a supported accounting category and an optional memo.
-- [ ] The company owner can deposit funds received off-chain from a client and classify the Bank deposit as Service Revenue (`UC-BANK-02`).
-- [ ] The company owner who is the economic client can classify their own Bank deposit as Service Revenue (`UC-BANK-02`).
-- [ ] The company owner can classify a contribution that receives no SHER as Owner Capital (`UC-BANK-01`).
+- [ ] The company owner can classify an eligible external Bank withdrawal with a supported accounting category and an optional memo.
+- [x] Every direct external deposit, including one initiated by the company owner or a member, posts to Service Revenue (`UC-BANK-02`).
 - [ ] A saved classification remains visible in the accounting books after a refresh.
 
 #### Business Rules
 
 - [ ] A classification is stored against a stable on-chain transaction identity and deterministically produces balanced ledger entries.
-- [ ] Address-based inference remains visible only when no manual classification exists.
-- [ ] A guaranteed transfer between company-owned pockets remains an internal transfer and cannot be reclassified as income or expense.
-- [ ] The classification action is available for supported native-token and ERC-20 Bank deposits and withdrawals.
+- [x] Direct deposits and company-pocket transfers retain their source-evidence accounts and cannot be reclassified by a legacy category.
+- [ ] The classification action is available only for supported external Bank and Safe withdrawals.
 - [ ] Only the company owner can create or change a classification.
 
 #### Edge & Error Cases
@@ -261,8 +260,8 @@ flowchart LR
 - Safe feeds and off-chain enrichment failures can omit entries without an incomplete-books warning (`US-ACCT-001`).
 - Historical Community Credit terms and SHER valuation inputs are read from current-generation contracts (`US-ACCT-005`).
 - Off-platform activity without a connected data source is absent from the automated books.
-- Bank classifications currently rely on address-based inference, so an owner cannot record an off-chain client payment or their own client
-  payment as Service Revenue (`US-ACCT-006`).
+- Legacy manual categories are still persisted for external withdrawals. They have not yet been replaced with account-backed
+  `JournalEntryLine` assignment.
 - Some compound operations do not yet propagate one shared source-operation identity, so the General Ledger can display their related
   postings as separate journal entries (`US-ACCT-002`).
 - A `FeePaid` log without its transfer can currently produce a standalone fee entry, although a fee must be a line of its fee-bearing
@@ -270,7 +269,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `965526c616447dad64398d3791b47096f73b21e2`
+**Implementation evidence reviewed against:** `b7433b77fdb304ea27800d704590f1329948e871`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and

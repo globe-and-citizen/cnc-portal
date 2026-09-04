@@ -19,7 +19,6 @@ const CONTRACTS: TeamContract[] = (
 const BASE: CncAccountingInput = {
   contracts: CONTRACTS,
   safeAddress: ADDR.safe,
-  founderAddresses: [ADDR.founder],
   sherTokenAddress: ADDR.sherToken,
   safeDepositRouterAddress: ROUTER
 }

@@ -20,9 +20,9 @@ describe('makeEntry', () => {
     const entry = makeEntry({
       id: '1',
       timestamp: 1,
-      useCase: 'UC-BANK-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
-      credit: 'Owner Capital',
+      credit: 'Service Revenue',
       amountUsd: 1,
       token: 'native',
       rawAmount: '1',
@@ -37,9 +37,9 @@ describe('makeEntry', () => {
     const entry = makeEntry({
       id: '1',
       timestamp: 1,
-      useCase: 'UC-BANK-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
-      credit: 'Owner Capital',
+      credit: 'Service Revenue',
       amountUsd: 1,
       token: 'native',
       rawAmount: '1',
