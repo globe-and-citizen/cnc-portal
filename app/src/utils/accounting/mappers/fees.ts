@@ -11,9 +11,10 @@
  * paid to validators are a separate cost with no data feed yet — see
  * `chartOfAccounts` scope notes — so they are not booked here.)
  *
- * The same fee is written twice on-chain — once by Bank (`FeePaid`) and once by
- * FeeCollector (`FeePaid`). We dedup the dual-write on (token, amount, timestamp)
- * so the fee is booked exactly once. The Bank row is canonical when both exist.
+ * `FeePaid` evidence belongs to a successful Bank outflow in the same source
+ * operation. The mapper preserves that source evidence; JournalEntry assembly
+ * validates the complete operation, withholds an orphaned fee, and reports it
+ * for reconciliation.
  */
 import type { BankFeePaidRow } from '@/types/ponder/bank'
 import { makeEntry, sourceOperationIdOf, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -30,18 +31,18 @@ export interface FeeCollectorFeePaidRow {
 }
 
 export interface FeeMapperInput {
-  /** `FeePaid` rows emitted by the Bank contract (`bankFeePaids`). */
+  /** Bank-paid fee rows, indexed from FeeCollector with the Bank as payer. */
   bankFeePaids?: readonly BankFeePaidRow[]
-  /** `FeePaid` rows emitted by the FeeCollector contract (`feeCollectorFeePaids`). */
+  /** Optional duplicate FeeCollector rows for a feed that indexes both perspectives. */
   feeCollectorFeePaids?: readonly FeeCollectorFeePaidRow[]
 }
 
-/** Dedup key for the dual-write: a fee is one economic event across both logs. */
-function feeKey(row: { token: string | null; amount: string; timestamp: number }): string {
-  return `${(row.token ?? 'native').toLowerCase()}|${row.amount}|${row.timestamp}`
+/** Dedup key for duplicate perspectives of the same fee operation. */
+function feeKey(row: { id: string; token: string | null; amount: string }): string {
+  return `${sourceOperationIdOf(row.id)}|${(row.token ?? 'native').toLowerCase()}|${row.amount}`
 }
 
-/** Map deduped fee skims to internal Bank → FeeCollector moves. */
+/** Map fee skims into source postings; JournalEntry assembly reconciles their counterpart. */
 export function mapFees(input: FeeMapperInput, ctx: MapperContext): LedgerEntry[] {
   const seen = new Set<string>()
   const entries: LedgerEntry[] = []
@@ -53,6 +54,7 @@ export function mapFees(input: FeeMapperInput, ctx: MapperContext): LedgerEntry[
     // its own fees under `Cash — Bank 2` rather than folding them into the first.
     instance: string
   ) => {
+    const operationId = sourceOperationIdOf(row.id)
     const key = feeKey(row)
     if (seen.has(key)) return
     seen.add(key)
@@ -60,7 +62,7 @@ export function mapFees(input: FeeMapperInput, ctx: MapperContext): LedgerEntry[
     entries.push(
       makeEntry({
         id: row.id,
-        sourceOperationId: sourceOperationIdOf(row.id),
+        sourceOperationId: operationId,
         timestamp: row.timestamp,
         useCase: 'FEE',
         debit: 'Transaction Fee Expense',
@@ -74,9 +76,9 @@ export function mapFees(input: FeeMapperInput, ctx: MapperContext): LedgerEntry[
     )
   }
 
-  // Bank rows first so they win the dedup as the canonical source. The Bank log
-  // names the emitting Bank in `contractAddress`; the FeeCollector twin names the
-  // Bank as the `payer`, so either way the credit is scoped to the paying Bank.
+  // Bank rows first so they win the dedup as the canonical source. The indexed
+  // row names the paying Bank in `contractAddress`; the optional FeeCollector
+  // twin names it as `payer`, so either way the credit is scoped to that Bank.
   for (const row of input.bankFeePaids ?? []) push(row, row.contractAddress)
   for (const row of input.feeCollectorFeePaids ?? []) push(row, row.payer)
   return entries

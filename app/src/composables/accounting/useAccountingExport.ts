@@ -29,6 +29,7 @@ export function useAccountingExport() {
     entries: accounting.entries.value,
     accountRegistry: accounting.accountRegistry.value,
     journal: accounting.journal.value,
+    unmatchedFeeOperationIds: [],
     ...accounting.reports.value
   })
 

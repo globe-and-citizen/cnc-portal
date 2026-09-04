@@ -31,11 +31,12 @@ describe('mapFees', () => {
   })
 
   it('dedups the Bank/FeeCollector dual-write of the same fee', () => {
+    const operationId = `0x${'c'.repeat(64)}`
     const entries = mapFees(
       {
         bankFeePaids: [
           {
-            id: 'f1',
+            id: `${operationId}-1`,
             contractAddress: ADDR.bank,
             feeCollector: ADDR.feeCollector,
             token: ADDR.usdcToken,
@@ -45,7 +46,7 @@ describe('mapFees', () => {
         ],
         feeCollectorFeePaids: [
           {
-            id: 'f2',
+            id: `${operationId}-2`,
             contractAddress: ADDR.feeCollector,
             payer: ADDR.bank,
             token: ADDR.usdcToken,
@@ -57,7 +58,7 @@ describe('mapFees', () => {
       ctx
     )
     expect(entries).toHaveLength(1)
-    expect(entries[0].id).toBe('f1') // the Bank row is canonical
+    expect(entries[0]?.id).toBe(`${operationId}-1`) // the Bank row is canonical
   })
 
   it('keeps distinct fees (different amount or timestamp) separate', () => {
@@ -142,5 +143,45 @@ describe('mapFees', () => {
       ctx
     )
     expect(entry).toMatchObject({ token: 'native', amountUsd: 2 })
+  })
+
+  it('preserves fee source evidence for JournalEntry reconciliation', () => {
+    const operationId = `0x${'a'.repeat(64)}`
+    const entries = mapFees(
+      {
+        bankFeePaids: [
+          {
+            id: `${operationId}-2`,
+            contractAddress: ADDR.bank,
+            feeCollector: ADDR.feeCollector,
+            token: ADDR.usdcToken,
+            amount: '1000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+
+    expect(entries).toHaveLength(1)
+    expect(entries[0]?.sourceOperationId).toBe(operationId)
+  })
+
+  it('does not require an outflow in the mapper', () => {
+    const operationId = `0x${'b'.repeat(64)}`
+    const input = {
+      bankFeePaids: [
+        {
+          id: `${operationId}-2`,
+          contractAddress: ADDR.bank,
+          feeCollector: ADDR.feeCollector,
+          token: ADDR.usdcToken,
+          amount: '1000000',
+          timestamp: 100
+        }
+      ]
+    }
+
+    expect(mapFees(input, ctx)).toHaveLength(1)
   })
 })

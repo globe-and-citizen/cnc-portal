@@ -26,6 +26,7 @@ const ADDR = {
 
 const POL_USD = 0.08
 const TS = 1_700_000_000 // a fixed block time
+const BANK_OUTFLOW_OPERATION = `0x${'f'.repeat(64)}`
 
 /** Native rate of record: $0.08 / POL, deterministic (USDC would be pegged $1). */
 const rateOfRecord: UsdRateOfRecord = (tokenId) => (tokenId === 'native' ? POL_USD : 0)
@@ -62,7 +63,7 @@ function sampleInput(): CncAccountingInput {
       bankTransfers: {
         items: [
           {
-            id: 't1',
+            id: `${BANK_OUTFLOW_OPERATION}-1`,
             sender: ADDR.bank,
             to: ADDR.external,
             amount: parseEther('20').toString(),
@@ -74,7 +75,7 @@ function sampleInput(): CncAccountingInput {
       bankFeePaids: {
         items: [
           {
-            id: 'f1',
+            id: `${BANK_OUTFLOW_OPERATION}-2`,
             contractAddress: ADDR.bank,
             feeCollector: ADDR.feeCollector,
             token: null,

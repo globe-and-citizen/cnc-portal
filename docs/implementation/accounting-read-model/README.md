@@ -177,10 +177,11 @@ flowchart TB
 
 This is a current implementation boundary, not an accounting-policy distinction. The General Ledger filters reporting period, concrete
 `AccountId`, and currency at the journal-entry level, retaining all lines of every selected entry. A fee is an ordinary
-`Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or separate fee entry in this projection. A later
-migration of every remaining projection to journal lines must preserve report date scopes and mapper semantics. In particular,
-`mergedBankFee` is re-booked only while calculating legacy raw-posting account balances because that presentation metadata is not carried by
-the canonical journal feed.
+`Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or separate fee entry in this projection.
+JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching Bank-outflow evidence, returning it as a
+reconciliation gap. The global FeeCollector is not part of the company's internal-pocket registry. A later migration of every remaining
+projection to journal lines must preserve report date scopes and mapper semantics. In particular, `mergedBankFee` is re-booked only while
+calculating legacy raw-posting account balances because that presentation metadata is not carried by the canonical journal feed.
 
 ## Optimisation Review
 
@@ -213,7 +214,7 @@ the canonical journal feed.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b7433b77fdb304ea27800d704590f1329948e871`
+**Implementation evidence reviewed against:** `6aebce776e9406bb85f5512cf8daf43d8d3b0adc`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)

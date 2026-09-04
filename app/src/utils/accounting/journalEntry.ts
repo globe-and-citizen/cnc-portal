@@ -6,7 +6,7 @@
  * consume it.
  */
 import type { Account } from './accountRegistry'
-import type { LedgerEntry, UseCase } from './ledgerEntry'
+import { sourceOperationIdOf, type LedgerEntry, type UseCase } from './ledgerEntry'
 import type { TokenId } from '@/constant'
 
 /** The token movement evidenced by one monetary journal line. */
@@ -69,6 +69,57 @@ export interface JournalEntry {
   source?: LedgerEntry
   /** Ordered and validated journal lines; empty only when {@link kind} is `memo`. */
   lines: JournalEntryLine[]
+}
+
+/** Result of validating source postings before they become JournalEntry records. */
+export interface JournalSourceReconciliation {
+  /** Postings that can participate in a complete accounting operation. */
+  entries: LedgerEntry[]
+  /** Fee source operations whose Bank outflow evidence is missing. */
+  unmatchedFeeOperationIds: string[]
+}
+
+/** The Bank fee posting is identified by its accounting lines, not a reporting category. */
+export function isBankFeePosting(entry: LedgerEntry): boolean {
+  return entry.debit === 'Transaction Fee Expense' && entry.credit === 'Cash — Bank'
+}
+
+/** A source posting that proves money left the Bank in this accounting operation. */
+function isBankOutflowPosting(entry: LedgerEntry): boolean {
+  return !isBankFeePosting(entry) && entry.debit !== null && entry.credit === 'Cash — Bank'
+}
+
+/** The shared source-operation identity used to form one JournalEntry. */
+function operationIdOf(entry: LedgerEntry): string {
+  return entry.sourceOperationId ?? sourceOperationIdOf(entry.id)
+}
+
+/**
+ * Reconcile Bank fee postings at the JournalEntry boundary.
+ *
+ * A fee is a JournalEntryLine of a Bank outflow, never a standalone accounting
+ * operation. The source mappers preserve all event evidence; this boundary groups
+ * it by source operation, withholds only an orphaned fee, and lets unrelated
+ * postings from the same operation remain available to the journal.
+ */
+export function reconcileJournalEntrySources(
+  entries: readonly LedgerEntry[]
+): JournalSourceReconciliation {
+  const operationsWithBankOutflow = new Set<string>()
+  for (const entry of entries) {
+    if (isBankOutflowPosting(entry)) operationsWithBankOutflow.add(operationIdOf(entry))
+  }
+
+  const unmatchedFeeOperationIds = new Set<string>()
+  const reconciledEntries = entries.filter((entry) => {
+    if (!isBankFeePosting(entry)) return true
+    const operationId = operationIdOf(entry)
+    if (operationsWithBankOutflow.has(operationId)) return true
+    unmatchedFeeOperationIds.add(operationId)
+    return false
+  })
+
+  return { entries: reconciledEntries, unmatchedFeeOperationIds: [...unmatchedFeeOperationIds] }
 }
 
 /** One line's debit amount, or zero when it is a credit line. */

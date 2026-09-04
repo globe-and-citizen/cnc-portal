@@ -71,18 +71,7 @@ describe('assembleCncAccounting', () => {
         bankTransfers: { items: [] },
         bankTokenTransfers: { items: [] },
         bankDividendDistributionTriggereds: { items: [] },
-        bankFeePaids: {
-          items: [
-            {
-              id: 'f1',
-              contractAddress: ADDR.bank,
-              feeCollector: ADDR.feeCollector,
-              token: USDC_ADDRESS,
-              amount: '1000000', // 1 USDC fee
-              timestamp: 120
-            }
-          ]
-        },
+        bankFeePaids: { items: [] },
         bankOwnershipTransferreds: { items: [] },
         rawContractTokenTransfers: { items: [] }
       }
@@ -90,18 +79,6 @@ describe('assembleCncAccounting', () => {
 
     expect(a.summary.income).toBe(100)
     expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
-    // The protocol fee is booked as a Transaction Fee Expense leaving the Bank.
-    const fee = a.entries.find((e) => e.useCase === 'FEE')
-    expect(fee).toMatchObject({
-      debit: 'Transaction Fee Expense',
-      credit: 'Cash — Bank',
-      internal: false
-    })
-    expect(a.summary.expense).toBe(1)
-    expect(a.incomeStatement.expenses).toContainEqual({
-      account: 'Transaction Fee Expense',
-      amount: 1
-    })
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
   })

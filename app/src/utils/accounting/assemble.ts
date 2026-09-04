@@ -40,6 +40,7 @@ import {
   type GeneralLedger,
   type JournalEntry
 } from '@/utils/accounting/generalLedger'
+import { reconcileJournalEntrySources } from '@/utils/accounting/journalEntry'
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -59,7 +60,11 @@ export interface CncAccountingInput {
   contracts?: readonly TeamContract[]
   /** The team's Gnosis Safe address — classifies each Safe transfer. */
   safeAddress?: Address | string | null
-  /** Protocol-wide FeeCollector address (its pocket is `Cash — FeeCollector`). */
+  /**
+   * Legacy FeeCollector address input. It is intentionally ignored: the global
+   * protocol treasury is not a company-owned pocket and never joins the internal
+   * address registry.
+   */
   feeCollectorAddress?: Address | string | null
   /** On-chain SHER token address, so it resolves to the `sher` token id. */
   sherTokenAddress?: Address | string | null
@@ -110,6 +115,8 @@ export interface CncAccounting {
   generalLedger: GeneralLedger
   incomeStatement: IncomeStatement
   balanceSheet: BalanceSheet
+  /** Fee logs withheld because their Bank outflow counterpart is missing. */
+  unmatchedFeeOperationIds: string[]
 }
 
 /**
@@ -152,7 +159,9 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
       transfers: items(input.bankEvents.bankTransfers),
       tokenTransfers: items(input.bankEvents.bankTokenTransfers)
     }
-    sources.fees = { bankFeePaids: items(input.bankEvents.bankFeePaids) }
+    sources.fees = {
+      bankFeePaids: items(input.bankEvents.bankFeePaids)
+    }
   }
 
   if (input.cashRemunerationEvents) {
@@ -274,10 +283,7 @@ function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
  * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
  */
 export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
-  const internalAddresses = collectInternalAddresses(
-    input.contracts,
-    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
-  )
+  const internalAddresses = collectInternalAddresses(input.contracts)
   const rateOfRecord = buildRateOfRecord(input)
 
   const ctx = buildMapperContext({
@@ -324,7 +330,8 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
  * whole mapper pipeline a second time.
  */
 export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
-  const { entries, summary } = buildLedger(rawEntries)
+  const reconciliation = reconcileJournalEntrySources(rawEntries)
+  const { entries, summary } = buildLedger(reconciliation.entries)
   const accountRegistry = buildAccountRegistry(entries)
   const journal = buildJournal(entries, accountRegistry)
 
@@ -335,7 +342,8 @@ export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncA
     summary,
     generalLedger: buildGeneralLedger(journal),
     incomeStatement: buildIncomeStatement(entries),
-    balanceSheet: buildBalanceSheet(entries)
+    balanceSheet: buildBalanceSheet(entries),
+    unmatchedFeeOperationIds: reconciliation.unmatchedFeeOperationIds
   }
 }
 

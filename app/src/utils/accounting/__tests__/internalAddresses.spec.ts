@@ -67,18 +67,10 @@ describe('collectInternalAddresses', () => {
     expect(isInternalAddress(NEW_BANK, set)).toBe(true)
   })
 
-  it('folds in extra protocol-wide addresses (e.g. the global FeeCollector)', () => {
-    const set = collectInternalAddresses([contract('Bank', BANK)], [FEE_COLLECTOR])
-    expect(set.has(getAddress(FEE_COLLECTOR))).toBe(true)
+  it('excludes the global FeeCollector even when its address is known', () => {
+    const set = collectInternalAddresses([contract('Bank', BANK)])
+    expect(set.has(getAddress(FEE_COLLECTOR))).toBe(false)
     expect(set.has(getAddress(BANK))).toBe(true)
-  })
-
-  it('ignores nullish / invalid extra entries', () => {
-    const set = collectInternalAddresses(
-      [contract('Bank', BANK)],
-      [null, undefined, '0xnotanaddress']
-    )
-    expect(set).toEqual(new Set([getAddress(BANK)]))
   })
 
   it('checksum-normalizes addresses', () => {
@@ -93,12 +85,12 @@ describe('collectInternalAddresses', () => {
 })
 
 describe('isInternalAddress', () => {
-  const set = collectInternalAddresses([contract('Bank', BANK)], [FEE_COLLECTOR])
+  const set = collectInternalAddresses([contract('Bank', BANK)])
 
   it('matches member addresses in checksummed or lowercase form', () => {
     expect(isInternalAddress(BANK, set)).toBe(true)
-    expect(isInternalAddress(FEE_COLLECTOR, set)).toBe(true)
-    expect(isInternalAddress(FEE_COLLECTOR.toLowerCase(), set)).toBe(true)
+    expect(isInternalAddress(FEE_COLLECTOR, set)).toBe(false)
+    expect(isInternalAddress(FEE_COLLECTOR.toLowerCase(), set)).toBe(false)
   })
 
   it('treats external addresses as not internal', () => {

@@ -23,9 +23,10 @@ These acceptance criteria follow the
   contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
   booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; a Bank protocol fee is a
-  `Transaction Fee Expense` in the company's books; **share vesting** books the **whole award when the schedule is defined** and issues it
-  as shares are released (a restricted-stock grant, off the income statement). The precise use-case templates and verified current gaps are
-  in the [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
+  `Transaction Fee Expense` line in the Bank outflow that caused it; the global FeeCollector is not a company-owned cash pocket; **share
+  vesting** books the **whole award when the schedule is defined** and issues it as shares are released (a restricted-stock grant, off the
+  income statement). The precise use-case templates and verified current gaps are in the
+  [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
 - **Direct treasury deposits:** an external deposit into Bank or Safe credits `Service Revenue`, regardless of the sender address. A
   SafeDepositRouter operation that issues SHER is instead an investment credited to `Investor Equity`; a movement between company pockets
   remains internal.
@@ -116,7 +117,8 @@ flowchart LR
       credit line.
 - [x] The General Ledger has no `Fee` pseudo-category. A Bank transfer and its protocol fee in the same transaction form one complete
       `JournalEntry`, with an ordinary `Transaction Fee Expense` line.
-- [ ] A protocol fee is never displayed or exported as a `JournalEntry` without the transfer that caused it.
+- [x] A protocol fee is never displayed or exported as a `JournalEntry` without the Bank outflow that caused it; unmatched fee evidence is
+      withheld and surfaced as a reconciliation warning.
 - [ ] Every economic operation that produces several source events is represented by one complete `JournalEntry`.
 - [ ] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
       community-credit round — is shown as one ledger entry with every recipient's debit or credit line and one credit for the total.
@@ -264,12 +266,12 @@ flowchart LR
   `JournalEntryLine` assignment.
 - Some compound operations do not yet propagate one shared source-operation identity, so the General Ledger can display their related
   postings as separate journal entries (`US-ACCT-002`).
-- A `FeePaid` log without its transfer can currently produce a standalone fee entry, although a fee must be a line of its fee-bearing
-  operation (`US-ACCT-002`).
+- JournalEntry assembly withholds a Bank fee log without matching Bank-outflow evidence and shows it as incomplete evidence until the source
+  feed can be reconciled (`US-ACCT-002`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b7433b77fdb304ea27800d704590f1329948e871`
+**Implementation evidence reviewed against:** `6aebce776e9406bb85f5512cf8daf43d8d3b0adc`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -277,6 +279,7 @@ flowchart LR
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+- [Team internal-address registry](../../../app/src/composables/accounting/useTeamInternalAddresses.ts)
 - [Accounting backend feeds](../../../app/src/composables/accounting/useAccountingBackendFeeds.ts)
 - [Classification query](../../../app/src/queries/classification.queries.ts),
   [classification types](../../../app/src/types/accounting-classification.ts), and

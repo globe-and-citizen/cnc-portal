@@ -204,11 +204,10 @@ describe('transaction-first read model — the trial balance aggregates the same
     expect(gl.trialBalance.some((r) => r.account.family.name === 'Cash — Safe')).toBe(false)
   })
 
-  it('rolls the folded and standalone fee legs into one Transaction Fee Expense balance', () => {
+  it('excludes an orphan fee from the canonical JournalEntry balance', () => {
     const gl = buildGeneralLedger(buildJournal(book))
     const feeRow = gl.trialBalance.find((r) => r.account.family.name === FEE_ACCOUNT)
-    // 0.5 standalone + 0.05 on the transfer.
-    expect(feeRow?.balance).toBeCloseTo(0.55, 2)
+    expect(feeRow?.balance).toBeCloseTo(0.05, 2)
   })
 })
 
@@ -230,7 +229,7 @@ describe('transaction-first read model — drill-downs reconcile with the genera
     expect(scoped).toContain(classifiedRevenue)
     expect(scoped).toContain(ordinaryTransfer)
     expect(scoped).toContain(feeTransferOut)
-    for (const entry of scoped) expect(buildJournal([entry])).toHaveLength(1)
+    expect(buildJournal(scoped).some((entry) => entry.sourceOperationId === TX(1))).toBe(false)
   })
 })
 
