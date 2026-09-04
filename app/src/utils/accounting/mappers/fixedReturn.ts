@@ -187,6 +187,7 @@ export function mapFixedReturnEvents(
           entries.push(
             makeEntry({
               id: `credit-principal-${event.offerId}-${lender.toLowerCase()}`,
+              sourceOperationId: event.id,
               timestamp: event.timestamp,
               useCase: 'UC-CREDIT-01',
               debit: BANK,

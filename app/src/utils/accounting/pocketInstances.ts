@@ -13,6 +13,7 @@
  * presentation-only: the canonical entries are untouched.
  */
 import { isInstancedPocket, type AccountName } from './chartOfAccounts'
+import type { JournalEntry } from './generalLedger'
 import type { LedgerEntry } from './ledgerEntry'
 
 /** One deployment of a cash pocket, as the books number it. */
@@ -76,10 +77,29 @@ function noteLeg(
  * (ties broken on the address, so the order never depends on feed order).
  */
 export function buildPocketInstances(entries: readonly LedgerEntry[]): PocketInstanceIndex {
+  return buildPocketInstanceIndex(entries, (entry) => [
+    { account: entry.debit, instance: entry.debitInstance },
+    { account: entry.credit, instance: entry.creditInstance }
+  ])
+}
+
+/** Number the cash-pocket deployments carried by the validated journal lines. */
+export function buildJournalPocketInstances(entries: readonly JournalEntry[]): PocketInstanceIndex {
+  return buildPocketInstanceIndex(entries, (entry) => entry.lines)
+}
+
+function buildPocketInstanceIndex<T extends { timestamp: number }>(
+  entries: readonly T[],
+  linesOf: (entry: T) => readonly {
+    account: string | null | undefined
+    instance?: string
+  }[]
+): PocketInstanceIndex {
   const seen = new Map<string, Map<string, { instance: string; firstTs: number }>>()
   for (const entry of entries) {
-    noteLeg(seen, entry.debit, entry.debitInstance, entry.timestamp)
-    noteLeg(seen, entry.credit, entry.creditInstance, entry.timestamp)
+    for (const line of linesOf(entry)) {
+      noteLeg(seen, line.account, line.instance, entry.timestamp)
+    }
   }
 
   const byAccount = new Map<string, PocketInstance[]>()

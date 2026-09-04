@@ -187,7 +187,7 @@ describe('transaction-first read model — the fee filter preserves whole transa
 
 describe('transaction-first read model — the trial balance aggregates the same lines', () => {
   it('stays balanced gross and net over the whole book', () => {
-    const gl = buildGeneralLedger(book)
+    const gl = buildGeneralLedger(buildJournal(book))
     expect(gl.balanced).toBe(true)
     expect(gl.totalDebit).toBeCloseTo(gl.totalCredit, 2)
     expect(gl.debitBalanceTotal).toBeCloseTo(gl.creditBalanceTotal, 2)
@@ -196,7 +196,7 @@ describe('transaction-first read model — the trial balance aggregates the same
   it('remains balanced for a narrowed reporting boundary', () => {
     // Only the postings up to and including day 2 — a point-in-time boundary.
     const asOfDay2 = book.filter((e) => e.timestamp <= day(2))
-    const gl = buildGeneralLedger(asOfDay2)
+    const gl = buildGeneralLedger(buildJournal(asOfDay2))
     expect(asOfDay2.length).toBeGreaterThan(0)
     expect(gl.balanced).toBe(true)
     expect(gl.totalDebit).toBeCloseTo(gl.totalCredit, 2)
@@ -205,7 +205,7 @@ describe('transaction-first read model — the trial balance aggregates the same
   })
 
   it('rolls the folded and standalone fee legs into one Transaction Fee Expense balance', () => {
-    const gl = buildGeneralLedger(book)
+    const gl = buildGeneralLedger(buildJournal(book))
     const feeRow = gl.trialBalance.find((r) => r.account === FEE_ACCOUNT)
     // 0.5 standalone + 0.05 on the transfer.
     expect(feeRow?.balance).toBeCloseTo(0.55, 2)
@@ -260,7 +260,7 @@ describe('transaction-first read model — multi-currency reporting', () => {
   })
 
   it('keeps the trial balance balanced across currencies', () => {
-    const gl = buildGeneralLedger(book)
+    const gl = buildGeneralLedger(buildJournal(book))
     expect(gl.balanced).toBe(true)
   })
 })

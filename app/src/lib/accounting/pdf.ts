@@ -122,7 +122,7 @@ function balanceTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTa
 
 function trialTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTable {
   const ledger = asOf
-    ? buildGeneralLedger(filterByPeriod(books.entries, null, asOf))
+    ? buildGeneralLedger(filterByPeriod(books.journal, null, asOf))
     : books.generalLedger
   const trial = presentTrial(ledger)
   return {

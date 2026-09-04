@@ -10,7 +10,7 @@ import {
   presentAccountLedger,
   accountLedgerTitle
 } from '@/utils/accounting/accountLedger'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import { ledgerRows } from '@/utils/accounting/ledgerPresenter'
 import { money } from '@/utils/accounting/presenter'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
@@ -20,7 +20,7 @@ import { catalogueLedger } from './catalogueLedger'
 // exactly the postings touching the account, and their balance must reconcile
 // the line — verified against the catalogue's known per-account balances.
 describe('accountLedger — statement-line drill-down', () => {
-  const gl = buildGeneralLedger(catalogueLedger)
+  const gl = buildGeneralLedger(buildJournal(catalogueLedger))
   const balanceOf = (account: AccountName): number =>
     gl.trialBalance.find((r) => r.account === account)?.balance ?? 0
 

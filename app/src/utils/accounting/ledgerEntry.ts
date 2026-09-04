@@ -83,6 +83,12 @@ export type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-
 export interface LedgerEntry {
   /** Stable id — the source row id, suffixed when one event yields several entries. */
   id: string
+  /**
+   * Stable identity of the operation that produced this posting. Several normalized
+   * postings from the same source operation share this value while retaining their
+   * own {@link id}. The journal assembly carries it into JournalEntry unchanged.
+   */
+  sourceOperationId?: string
   /** Event time, Unix seconds (from the indexed event). */
   timestamp: number
   /** The journal template this entry realises. */
@@ -232,6 +238,7 @@ export function makeEntry(
     counterparty,
     debitInstance,
     creditInstance,
+    sourceOperationId,
     internal = false,
     enrichment = 'not-applicable',
     ...rest
@@ -241,6 +248,7 @@ export function makeEntry(
   const creditAt = normalizeCounterparty(creditInstance)
   return {
     ...rest,
+    sourceOperationId: sourceOperationId ?? rest.id,
     internal,
     enrichment,
     ...(normalized ? { counterparty: normalized } : {}),

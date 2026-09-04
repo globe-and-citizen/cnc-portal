@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { mapBankEvents } from '@/utils/accounting/mappers/bank'
 import { mapFees } from '@/utils/accounting/mappers/fees'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { makeCtx } from './fixtures'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
@@ -75,7 +75,7 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
   })
 
   it('rolls the fee into BANK_A on the trial balance, not the other deployment', () => {
-    const gl = buildGeneralLedger(entries)
+    const gl = buildGeneralLedger(buildJournal(entries))
     const bankRows = gl.trialBalance.filter((r) => r.account === 'Cash — Bank')
     const rowA = bankRows.find((r) => r.instance?.toLowerCase() === BANK_A)
     const rowB = bankRows.find((r) => r.instance?.toLowerCase() === BANK_B)

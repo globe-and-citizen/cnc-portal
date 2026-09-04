@@ -107,7 +107,7 @@ function balanceSheetRows(books: CncAccounting, asOf?: Date | null): SheetRows {
 
 function trialSheet(books: CncAccounting, asOf?: Date | null): SheetRows {
   const ledger = asOf
-    ? buildGeneralLedger(filterByPeriod(books.entries, null, asOf))
+    ? buildGeneralLedger(filterByPeriod(books.journal, null, asOf))
     : books.generalLedger
   const trial = presentTrial(ledger)
   return [
