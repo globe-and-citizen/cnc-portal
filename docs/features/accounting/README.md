@@ -24,6 +24,9 @@ These acceptance criteria follow the
   booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; each company books CNC usage fees as
   an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** books the **whole award when
   the schedule is defined** and issues it as shares are released (a restricted-stock grant, off the income statement — see catalogue §5.6).
+- **Direct treasury deposits:** an external deposit into Bank or Safe credits `Service Revenue`, regardless of the sender address. A
+  SafeDepositRouter operation that issues SHER is instead an investment credited to `Investor Equity`; a movement between company pockets
+  remains internal.
 - **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a company owner can **manually classify** each
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
@@ -231,7 +234,7 @@ flowchart LR
 - [ ] The company owner can classify a Bank transaction with a supported accounting category and an optional memo.
 - [ ] The company owner can deposit funds received off-chain from a client and classify the Bank deposit as Service Revenue (`UC-BANK-02`).
 - [ ] The company owner who is the economic client can classify their own Bank deposit as Service Revenue (`UC-BANK-02`).
-- [ ] The company owner can classify a contribution that receives no SHER as Owner Capital (`UC-BANK-01`).
+- [ ] Every direct external deposit, including one initiated by the company owner or a member, posts to Service Revenue (`UC-BANK-02`).
 - [ ] A saved classification remains visible in the accounting books after a refresh.
 
 #### Business Rules
@@ -260,7 +263,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7c399520fab89791bec1a36c81162621c0a11421`
+**Implementation evidence reviewed against:** `96781f69e5500fa12add688199792eb11e984b36`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and

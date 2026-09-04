@@ -6,9 +6,9 @@ cases.
 
 - [ ] **1.** Create a team with the six contracts deployed (Bank, FeeCollector, CashRemuneration, ExpenseAccount, InvestorV1,
       SafeDepositRouter + Safe).
-- [ ] **2.** A founder deposits **$4** into the **Bank**.
+- [ ] **2.** An external party deposits **$4** into the **Bank** as service revenue.
 - [ ] **3.** Hermann, Georges and Achille each **invest $2** and get SHER (2 SHER for $2) via the **SafeDepositRouter**.
-- [ ] **4.** A member sends **$2 straight to the Safe** (no router) to invest.
+- [ ] **4.** A member sends **$2 straight to the Safe** (no router) as service revenue.
 - [ ] **5.** **Mint 10% of SHER to Ravi** directly, no charge.
 - [ ] **6.** Georginio works **2h @ $1/h + 1 SHER/h** — submit the claim.
 - [ ] **7.** Georginio **withdraws** his pay.
