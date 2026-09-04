@@ -19,7 +19,7 @@ import type {
   BankTransferRow,
   BankTokenTransferRow
 } from '@/types/ponder/bank'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeEntry, sourceOperationIdOf, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import { atDate, type MapperContext } from './context'
 import { applyClassification } from './applyClassification'
@@ -51,6 +51,7 @@ function mapDeposit(
   const inferred = sourcePocket
     ? makeEntry({
         id: row.id,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'INTERNAL',
         debit: BANK,
@@ -66,6 +67,7 @@ function mapDeposit(
       })
     : makeEntry({
         id: row.id,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'UC-BANK-02',
         debit: BANK,
@@ -97,6 +99,7 @@ function mapTransfer(
   const inferred = destPocket
     ? makeEntry({
         id: row.id,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'UC-BANK-03',
         debit: destPocket,
@@ -114,6 +117,7 @@ function mapTransfer(
       // flagged so an off-chain / manual review can reclassify it (spec §6).
       makeEntry({
         id: row.id,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'CASH-OUT',
         debit: 'Operating Expense',

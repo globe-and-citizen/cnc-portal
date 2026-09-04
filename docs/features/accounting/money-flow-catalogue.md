@@ -1,5 +1,9 @@
 # CNC — Money-Flow Catalogue & Accounting Exercise
 
+> **Reference model, not current mapper contract.** This worked exercise uses a broader accounting model, including trading and a
+> protocol-wide fee ledger. The current use-case coverage, account nomenclature, and generated `JournalEntry` templates are owned by the
+> [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
+
 This document stands on its own. It lists **every way money can move** across the CNC contracts, maps each one to a journal entry, and then
 runs a **full worked example** end to end: general ledger → T-accounts → trial balance → income statement → balance sheet.
 

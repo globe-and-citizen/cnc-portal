@@ -11,7 +11,8 @@ These acceptance criteria follow the
 
 - Accounting presents one consolidated set of double-entry books for the company across its money-moving contracts and relevant portal
   records.
-- The general ledger is the source for the summary, income statement, balance sheet, and trial balance.
+- The General Ledger and Trial Balance project the validated `JournalEntry` collection. The summary, income statement, balance sheet, and
+  account drill-downs remain transitional `LedgerEntry` projections.
 - Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
@@ -21,9 +22,10 @@ These acceptance criteria follow the
 - **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter, Vesting — the
   contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
-  booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; each company books CNC usage fees as
-  an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** books the **whole award when
-  the schedule is defined** and issues it as shares are released (a restricted-stock grant, off the income statement — see catalogue §5.6).
+  booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; a Bank protocol fee is a
+  `Transaction Fee Expense` in the company's books; **share vesting** books the **whole award when the schedule is defined** and issues it
+  as shares are released (a restricted-stock grant, off the income statement). The precise use-case templates and verified current gaps are
+  in the [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
 - **Direct treasury deposits:** an external deposit into Bank or Safe credits `Service Revenue`, regardless of the sender address. A
   SafeDepositRouter operation that issues SHER is instead an investment credited to `Investor Equity`; a movement between company pockets
   remains internal.
@@ -41,8 +43,10 @@ flowchart LR
     Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
     Consolidate --> Postings[Consolidated postings: transitional feed]
     Consolidate --> Journal[Validated JournalEntry collection]
+    Journal --> GeneralLedger[General Ledger UI and exports]
     Journal --> Trial[Trial Balance projection]
-    Postings --> Legacy[Current General Ledger UI, summary, statements, and account drill-downs]
+    Postings --> Legacy[Current summary, statements, and account drill-downs]
+    GeneralLedger --> Export
     Trial --> Export[PDF or Excel report]
     Legacy --> Export
 ```
@@ -52,7 +56,7 @@ flowchart LR
 | User Story  | Title                                      | Actor          | Status         |
 | ----------- | ------------------------------------------ | -------------- | -------------- |
 | US-ACCT-001 | Review the consolidated accounting summary | Company member | 🚧 In Progress |
-| US-ACCT-002 | Explore the general ledger                 | Company member | 🧪 Validation  |
+| US-ACCT-002 | Explore the general ledger                 | Company member | 🚧 In Progress |
 | US-ACCT-003 | Review the financial statements            | Company member | 🧪 Validation  |
 | US-ACCT-004 | Export accounting reports                  | Company member | 🧪 Validation  |
 | US-ACCT-005 | Preserve books across contract migrations  | Company member | 🚧 In Progress |
@@ -100,7 +104,7 @@ flowchart LR
 #### Happy Path
 
 - [x] The ledger exposes each posting's date, activity, accounts, currency, quantity, rate, debit, and credit amounts.
-- [x] A company member can filter entries by accounting category, reporting period, available currencies, and one or more specific accounts.
+- [x] A company member can filter entries by reporting period, available currencies, and one or more concrete accounts.
 - [x] A company member can inspect the entries and running balance for one account from a report line.
 - [x] Selecting an account on a ledger entry opens that account's transactions in the trial-balance drill-down.
 - [x] A known activity destination can be followed to its owning product journey.
@@ -108,13 +112,14 @@ flowchart LR
 #### Business Rules
 
 - [x] Pagination does not change the totals for the complete filtered ledger.
-- [x] Filtering the ledger by account keeps whole postings, so each shown entry still carries its debit and credit legs.
-- [x] Filtering by fee selects the transactions that contain `Transaction Fee Expense` and keeps their complete balanced context — every
-      debit and credit line — rather than isolating a fee-only line or altering the transaction's total.
-- [x] Compound transactions retain all debit and credit legs under one posting.
-- [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
-      community-credit round — is shown as a single ledger entry that still names each beneficiary and their share, with one credit for the
-      total.
+- [x] Filtering the ledger by account or currency keeps whole `JournalEntry` records, so each shown entry still carries every debit and
+      credit line.
+- [x] The General Ledger has no `Fee` pseudo-category. A Bank transfer and its protocol fee in the same transaction form one complete
+      `JournalEntry`, with an ordinary `Transaction Fee Expense` line.
+- [ ] A protocol fee is never displayed or exported as a `JournalEntry` without the transfer that caused it.
+- [ ] Every economic operation that produces several source events is represented by one complete `JournalEntry`.
+- [ ] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
+      community-credit round — is shown as one ledger entry with every recipient's debit or credit line and one credit for the total.
 - [x] Protocol fees remain identifiable as expenses rather than neutral transfers.
 - [x] One on-chain event is not counted more than once in the consolidated ledger.
 
@@ -173,7 +178,8 @@ flowchart LR
 
 #### Business Rules
 
-- [x] A ledger export applies the selected category, period, currencies, and columns.
+- [x] A General Ledger export applies the selected concrete accounts, period, currencies, and columns while retaining complete journal
+      entries.
 - [x] A statement export applies the same period or as-of date as the reviewed statement.
 - [x] An export is generated from one snapshot of the current accounting books.
 
@@ -256,6 +262,10 @@ flowchart LR
 - Off-platform activity without a connected data source is absent from the automated books.
 - Legacy manual categories are still persisted for external withdrawals. They have not yet been replaced with account-backed
   `JournalEntryLine` assignment.
+- Some compound operations do not yet propagate one shared source-operation identity, so the General Ledger can display their related
+  postings as separate journal entries (`US-ACCT-002`).
+- A `FeePaid` log without its transfer can currently produce a standalone fee entry, although a fee must be a line of its fee-bearing
+  operation (`US-ACCT-002`).
 
 ## Implementation Evidence
 
@@ -285,19 +295,20 @@ flowchart LR
   [per-section export](../../../app/src/composables/accounting/useSectionExport.ts), and
   [transfer-initiator resolver](../../../app/src/composables/accounting/useTransferInitiators.ts)
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
-  [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's category, account, and currency filters
+  [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts),
   [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts),
-  [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts), and
-  [Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts) and
-  [presentation](../../../app/src/utils/accounting/presenter.ts)
+  [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
+  [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
+  [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [Family-level income statement](../../../app/src/utils/accounting/incomeStatement.ts) and
   [balance sheet](../../../app/src/utils/accounting/balanceSheet.ts)
 - [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
 - [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
   [accounting data tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts), and
+  [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts) and
   [accounting rule tests](../../../app/src/utils/accounting/__tests__)
 - [Contract-migration accounting tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 
@@ -306,6 +317,7 @@ flowchart LR
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Accounting Read Model](../../implementation/accounting-read-model/README.md)
+- [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md)
 - [Money Flow Catalogue](./money-flow-catalogue.md)
 - [Share Vesting Accounting — Restricted-Stock grant](./vesting-accounting-restricted-stock.md)
 - [Accounting Specification and Scope](./cnc-accounting-spec.md)

@@ -172,16 +172,19 @@ describe('buildSheets (section selection)', () => {
     expect(ledger.rows[3]).toHaveLength(2)
   })
 
-  it('honours the active category filter and still appends a total row', () => {
-    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', filter: 'Expense' }])
-    // title + blank + header + total — the deposit is Revenue, filtered out.
-    expect(ledger.rows).toHaveLength(4)
-    expect(ledger.rows.at(-1)![2]).toBe('Total movements')
+  it('honours a concrete-account filter and retains every journal line', () => {
+    const books = sampleBooks()
+    const accountId = books.journal[0]!.lines[0]!.account.id
+    const [ledger] = buildSheets(books, [{ key: 'ledger', journalAccounts: [accountId] }])
+    expect(ledger.rows).toHaveLength(6)
+    expect(ledger.rows[3]![4]).toBe('Cash — Bank')
+    expect(ledger.rows[4]![4]).toBe('Service Revenue')
+    expect(ledger.rows.at(-1)![8]).toBe(100)
   })
 
-  it('names the category in the ledger title row but keeps a short tab name', () => {
-    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', filter: 'Revenue' }])
-    expect(String(ledger.rows[0][0])).toBe('General Ledger — Revenue')
+  it('keeps a short General Ledger title and tab name', () => {
+    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger' }])
+    expect(String(ledger.rows[0][0])).toBe('General Ledger')
     expect(ledger.name).toBe('General Ledger')
   })
 

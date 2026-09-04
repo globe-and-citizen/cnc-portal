@@ -19,7 +19,7 @@ function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): Led
 }
 
 describe('accounting journal assembly', () => {
-  it('builds one ordered journal for multiple postings from one source operation', () => {
+  it('builds one balanced multi-line JournalEntry for one source operation', () => {
     const sourceOperationId = 'bank-transfer-42'
     const transfer = posting({ id: `${sourceOperationId}:transfer`, sourceOperationId })
     const fee = posting({
@@ -36,11 +36,16 @@ describe('accounting journal assembly', () => {
 
     const accounting = assembleFromRawEntries([fee, transfer])
 
-    expect(accounting.journal.map((entry) => entry.id)).toEqual([transfer.id, fee.id])
-    expect(accounting.journal.map((entry) => entry.sourceOperationId)).toEqual([
+    expect(accounting.journal).toHaveLength(1)
+    expect(accounting.journal[0]).toMatchObject({
+      id: sourceOperationId,
       sourceOperationId,
-      sourceOperationId
-    ])
+      lines: [
+        { account: { family: { name: 'Cash — Payroll' } }, debit: 10 },
+        { account: { family: { name: 'Transaction Fee Expense' } }, debit: 0.05 },
+        { account: { family: { name: 'Cash — Bank' } }, credit: 10.05 }
+      ]
+    })
     expect(accounting.generalLedger.entries).toEqual(accounting.journal)
   })
 

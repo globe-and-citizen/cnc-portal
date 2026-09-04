@@ -46,8 +46,9 @@ flowchart LR
    for display numbering; activity order never decides account identity.
 10. A source leg with no contract address remains an unresolved account. Its Trial Balance drill-down and export scope the selected account
     to unaddressed legs while retaining each posting's balanced context; no historical-instance fallback is permitted.
-11. The current General Ledger UI, summary, Income Statement, and Balance Sheet are still family-level projections of the transitional
-    posting feed. Their JournalEntry migration is separate work.
+11. The General Ledger UI and its PDF and Excel exports project the canonical `JournalEntry` collection, retaining complete entries when
+    filtering by a concrete account or currency. The summary, Income Statement, Balance Sheet, and account drill-downs remain family-level
+    projections of the transitional posting feed; their JournalEntry migration is separate work.
 
 The [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the current account terminology, runtime flow,
 report-projection boundary, and implementation evidence.
@@ -75,7 +76,7 @@ report-projection boundary, and implementation evidence.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7c399520fab89791bec1a36c81162621c0a11421`
+**Implementation evidence reviewed against:** `965526c616447dad64398d3791b47096f73b21e2`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
 - [Migration wiring tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
@@ -84,8 +85,8 @@ report-projection boundary, and implementation evidence.
 - [Canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts) and
   [Account registry](../../../app/src/utils/accounting/accountRegistry.ts)
 - [Validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts)
-- [Concrete-account Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts) and
-  [presentation](../../../app/src/utils/accounting/presenter.ts)
+- [Concrete-account journal and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts) and
+  [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [Trial-balance card and redeploy hint](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
 - [Instance-scoped drill-down](../../../app/src/utils/accounting/accountLedger.ts)
 - [Split and drill-down tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts)

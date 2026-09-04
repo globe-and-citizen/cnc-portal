@@ -15,14 +15,23 @@
 import { computed } from 'vue'
 import MultiSelectFilter from '@/components/ui/MultiSelectFilter.vue'
 
+export interface AccountFilterOption {
+  value: string
+  label: string
+}
+
 // Multi-select account filter for the General ledger, over the accounts present
 // in the data currently in view. Selecting one or more accounts narrows the
 // journal to the postings that touch them (both legs shown).
 const props = defineProps<{
   modelValue: string[]
-  accounts: string[]
+  accounts: Array<string | AccountFilterOption>
 }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
 
-const items = computed(() => props.accounts.map((value) => ({ label: value, value })))
+const items = computed(() =>
+  props.accounts.map((account) =>
+    typeof account === 'string' ? { label: account, value: account } : account
+  )
+)
 </script>

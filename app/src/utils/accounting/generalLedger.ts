@@ -42,6 +42,11 @@ function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLin
     lines.push({
       id: `${entry.id}:debit`,
       account,
+      movement: {
+        token: entry.token,
+        rawAmount: entry.rawAmount,
+        ...(entry.rate != null ? { rate: entry.rate } : {})
+      },
       debit: entry.amountUsd
     })
   }
@@ -50,25 +55,85 @@ function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLin
     lines.push({
       id: `${entry.id}:credit`,
       account,
+      movement: {
+        token: entry.token,
+        rawAmount: entry.rawAmount,
+        ...(entry.rate != null ? { rate: entry.rate } : {})
+      },
       credit: entry.amountUsd
     })
   }
   return lines
 }
 
-/** Adapt the current consolidated posting model at the validated journal boundary. */
-function journalEntryFromLedgerEntry(entry: LedgerEntry, accounts: AccountRegistry): JournalEntry {
+/** One source operation's monetary lines, coalesced by their concrete account and token movement. */
+function mergedLines(
+  entries: readonly LedgerEntry[],
+  accounts: AccountRegistry
+): JournalEntryLine[] {
+  const debit = entries.flatMap((entry) => linesOf(entry, accounts).filter((line) => line.debit))
+  const credit = entries.flatMap((entry) => linesOf(entry, accounts).filter((line) => line.credit))
+  const merge = (lines: readonly JournalEntryLine[]): JournalEntryLine[] => {
+    const byMovement = new Map<string, JournalEntryLine>()
+    for (const line of lines) {
+      const side = line.debit !== undefined ? 'debit' : 'credit'
+      const movement = line.movement
+      const key = [
+        side,
+        line.account.id,
+        movement?.token ?? '',
+        movement?.rate ?? '',
+        movement ? 'movement' : 'none'
+      ].join('|')
+      const existing = byMovement.get(key)
+      if (!existing) {
+        byMovement.set(key, { ...line, ...(movement ? { movement: { ...movement } } : {}) })
+        continue
+      }
+
+      if (existing.debit !== undefined && line.debit !== undefined) existing.debit += line.debit
+      if (existing.credit !== undefined && line.credit !== undefined) existing.credit += line.credit
+      if (existing.movement && movement) {
+        try {
+          existing.movement.rawAmount = (
+            BigInt(existing.movement.rawAmount) + BigInt(movement.rawAmount)
+          ).toString()
+        } catch {
+          // A malformed token amount remains visible on its first source line;
+          // reporting amounts still come from the validated USD debit/credit.
+        }
+      }
+    }
+    return [...byMovement.values()]
+  }
+  // Conventional journal order puts every debit before every credit. This makes a
+  // transfer plus fee read Dr destination · Dr fee · Cr Bank gross.
+  return [...merge(debit), ...merge(credit)]
+}
+
+/** Adapt one source operation's consolidated postings at the validated journal boundary. */
+function journalEntryFromLedgerEntries(
+  entries: readonly LedgerEntry[],
+  accounts: AccountRegistry
+): JournalEntry {
+  const ordered = entries
+    .slice()
+    .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
+  const primary = ordered.find((entry) => entry.useCase !== 'FEE') ?? ordered[0]!
+  const lineEntries = [primary, ...ordered.filter((entry) => entry !== primary)]
+  const monetary = ordered.some((entry) => entry.debit !== null || entry.credit !== null)
   return createJournalEntry({
-    id: entry.id,
-    sourceOperationId: entry.sourceOperationId ?? entry.id,
-    timestamp: entry.timestamp,
-    useCase: entry.useCase,
-    memo: entry.memo,
-    internal: entry.internal,
-    kind: entry.debit === null && entry.credit === null ? 'memo' : 'monetary',
-    ...(entry.category ? { category: entry.category } : {}),
-    ...(entry.txHash ? { txHash: entry.txHash } : {}),
-    lines: linesOf(entry, accounts)
+    id: primary.sourceOperationId ?? primary.id,
+    sourceOperationId: primary.sourceOperationId ?? primary.id,
+    timestamp: ordered[0]!.timestamp,
+    useCase: primary.useCase,
+    memo: primary.memo,
+    internal: ordered.every((entry) => entry.internal),
+    kind: monetary ? 'monetary' : 'memo',
+    ...(primary.category ? { category: primary.category } : {}),
+    ...(primary.txHash ? { txHash: primary.txHash } : {}),
+    source: primary,
+    lines: monetary ? mergedLines(lineEntries, accounts) : []
   })
 }
 
@@ -77,8 +142,15 @@ export function buildJournal(
   entries: readonly LedgerEntry[],
   accounts: AccountRegistry = buildAccountRegistry(entries)
 ): JournalEntry[] {
-  return entries
-    .map((entry) => journalEntryFromLedgerEntry(entry, accounts))
+  const byOperation = new Map<string, LedgerEntry[]>()
+  for (const entry of entries) {
+    const operationId = entry.sourceOperationId ?? entry.id
+    const group = byOperation.get(operationId)
+    if (group) group.push(entry)
+    else byOperation.set(operationId, [entry])
+  }
+  return [...byOperation.values()]
+    .map((group) => journalEntryFromLedgerEntries(group, accounts))
     .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
 }
 

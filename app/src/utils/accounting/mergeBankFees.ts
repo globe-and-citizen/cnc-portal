@@ -10,10 +10,7 @@
  * Presentation-only: the canonical feed keeps both postings, so the trial balance
  * and the statements never double count.
  */
-import type { LedgerEntry } from './ledgerEntry'
-
-/** The `${txHash}` head of an indexed-event id, whatever follows it. */
-const EVENT_ID_TX_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
+import { sourceOperationIdOf, type LedgerEntry } from './ledgerEntry'
 
 /**
  * The on-chain transaction hash behind a posting, parsed from its indexed-event
@@ -27,10 +24,7 @@ const EVENT_ID_TX_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
  * up to its last dash, which keeps such entries grouping among themselves.
  */
 export function txHashOf(entry: LedgerEntry): string {
-  const matched = EVENT_ID_TX_HASH.exec(entry.id)
-  if (matched) return matched[1]!
-  const dash = entry.id.lastIndexOf('-')
-  return dash > 0 ? entry.id.slice(0, dash) : entry.id
+  return sourceOperationIdOf(entry.id)
 }
 
 /** The Bank protocol-fee posting (the 0.5% skim leaving the Bank). */
