@@ -267,12 +267,12 @@ flowchart LR
   payment as Service Revenue (`US-ACCT-006`).
 - Some compound operations do not yet propagate one shared source-operation identity, so the General Ledger can display their related
   postings as separate journal entries (`US-ACCT-002`).
-- A Bank fee log without matching Bank-outflow evidence is withheld from the books and shown as incomplete evidence until the source feed
-  can be reconciled (`US-ACCT-002`).
+- JournalEntry assembly withholds a Bank fee log without matching Bank-outflow evidence and shows it as incomplete evidence until the source
+  feed can be reconciled (`US-ACCT-002`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `434e665b886a9225a3d67a4189af3cf1fe41e6e5`
+**Implementation evidence reviewed against:** `59388365a5ac72e4ca9eece9d9ed595821e6907d`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
