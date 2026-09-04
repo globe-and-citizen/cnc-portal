@@ -1,0 +1,223 @@
+# Accounting Read Model
+
+**Scope:** The client-side read model that turns company contract and portal feeds into consolidated accounting postings, a validated
+double-entry journal, and the report projections consumed by Accounting. It does not create or persist manual journal entries.
+
+**Last verified:** 2026-09-04
+
+## Consumers
+
+- The [Accounting feature](../../features/accounting/README.md) uses this read model for its consolidated books, report cards, drill-downs,
+  and exports.
+- [AccountingPage](../../../app/src/components/sections/AccountingView/AccountingPage.vue) resolves one shared result for the report-card
+  tree; standalone cards can resolve the same model through the accounting context.
+
+## Runtime Model
+
+```mermaid
+flowchart LR
+    page[AccountingPage] --> context[Shared accounting context]
+    context --> dataLayer[useCNCAccounting]
+    dataLayer --> history[Officer and contract history]
+    dataLayer --> feeds[On-chain, Safe, and portal feeds]
+    history --> input[CncAccountingInput]
+    feeds --> input
+    input --> assembly[Pure accounting assembly]
+    assembly --> books[CncAccounting books]
+    books --> cards[Accounting cards and drill-downs]
+    books --> exports[Accounting exports]
+```
+
+`useCNCAccounting` owns I/O and reactive loading state. The shared context prevents the page's cards from independently fetching and
+assembling the same books. The assembly is pure: it receives `CncAccountingInput` and returns `CncAccounting` without Vue or network I/O.
+
+## Main Assembly Flow
+
+```mermaid
+flowchart LR
+    input[CncAccountingInput] --> context[LedgerSources and MapperContext]
+    context --> mapped[Mapped LedgerEntry feed]
+    mapped --> raw[Rate-stamped and settled raw postings]
+    raw --> ledger[buildLedger: sort, deduplicate, and summarize]
+    ledger --> entries[Consolidated LedgerEntry feed]
+    entries --> registry[buildAccountRegistry]
+    registry --> journal[buildJournal: validated JournalEntry collection]
+    journal --> trial[buildGeneralLedger: journal and Trial Balance]
+    entries --> legacy[Current family-level report projections]
+    legacy --> summary[Summary, General Ledger UI, statements, and drill-downs]
+    trial --> trialCard[Trial Balance and its scoped exports]
+```
+
+The two outgoing branches are intentional current behaviour. `JournalEntry` is the canonical double-entry representation for the Trial
+Balance. `LedgerEntry` remains a transitional input for projections that have not yet migrated to journal lines.
+
+## Account Domain Model
+
+```mermaid
+classDiagram
+    class AccountFamily {
+        +id
+        +name
+        +accountClass
+        +normalBalance
+        +deploymentScoped
+    }
+    class Account {
+        +id: AccountId
+        +family: AccountFamily
+        +contractAddress?
+        +resolution: resolved | unresolved
+    }
+    class JournalEntry {
+        +id
+        +sourceOperationId
+        +timestamp
+        +description
+        +lines
+    }
+    class JournalEntryLine {
+        +account: Account
+        +debit or credit
+    }
+    class TrialBalanceRow {
+        +account: Account
+        +accountLabel
+        +debitTotal
+        +creditTotal
+        +balance
+    }
+
+    AccountFamily "1" <-- "1" Account : family
+    Account "1" <-- "many" JournalEntryLine : account
+    JournalEntry "1" *-- "many" JournalEntryLine : lines
+    Account "1" <-- "1" TrialBalanceRow : account
+```
+
+An `AccountFamily` is reusable chart metadata. An `Account` is the concrete accounting identity used by journal and Trial Balance lines. For
+deployment-scoped families, a source contract address distinguishes each deployment. `accountLabel` is presentation text derived after
+identity has been resolved; it is never an account key.
+
+## Canonical Nomenclature
+
+| Term               | Meaning and boundary                                                                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Source operation   | The on-chain operation or off-chain record from which a posting originates. `JournalEntry.sourceOperationId` preserves that origin separately from the journal-entry ID. |
+| `LedgerEntry`      | A mapped, consolidated posting in the transitional feed. It carries legacy family names and optional source-instance values; it is not the concrete account model.       |
+| `AccountName`      | A legacy raw family name in a `LedgerEntry`, not an `Account` identity.                                                                                                  |
+| `AccountFamily`    | Canonical reusable chart metadata: stable family key, display name, class, normal balance, and deployment scope.                                                         |
+| `Account`          | Canonical concrete account object: `AccountId`, `AccountFamily`, optional `contractAddress`, and `resolution`.                                                           |
+| `AccountId`        | Stable identity used to group journal lines and Trial Balance rows.                                                                                                      |
+| `JournalEntry`     | Validated double-entry record for one source operation, with ordered monetary lines or an explicit memo-only entry.                                                      |
+| `JournalEntryLine` | One debit or credit line carrying exactly one concrete `Account`.                                                                                                        |
+| `TrialBalanceRow`  | Projection grouped by `AccountId`; the balance follows the family normal side.                                                                                           |
+| `accountLabel`     | Human-readable display text. It may include a deployment number or unresolved marker but must not be used for identity or filtering.                                     |
+
+The raw `LedgerEntry.debit` and `LedgerEntry.credit` fields currently contain `AccountName` values, while `debitInstance` and
+`creditInstance` carry source-instance values such as a contract address. These names are ambiguous at the transitional boundary. New code
+must use `AccountFamily`, `Account`, `contractAddress`, and `AccountId` according to the model above rather than calling an unscoped string
+an account.
+
+## Account Resolution Across Redeployments
+
+```mermaid
+flowchart LR
+    raw[LedgerEntry family and source instance] --> family[Resolve AccountFamily]
+    family --> scoped{Deployment scoped?}
+    scoped -->|No| shared[One resolved family account]
+    scoped -->|Yes, address present| concrete[Resolved AccountId per contract address]
+    scoped -->|Yes, address absent| unresolved[Unresolved AccountId for that family]
+    shared --> journal[JournalEntryLine account]
+    concrete --> journal
+    unresolved --> journal
+    journal --> trial[Trial Balance grouped by AccountId]
+```
+
+Bank, Payroll, Expense, and Credit families are deployment-scoped. Their resolved addresses receive distinct account identities. A missing
+address remains an unresolved concrete account; the registry never assigns it to an earlier or later deployment based on activity order.
+
+## Invariants and Failure Behaviour
+
+### Invariants
+
+- The consolidated posting feed is chronologically sorted and de-duplicated before account resolution.
+- A monetary `JournalEntryLine` has exactly one debit or credit amount and exactly one concrete `Account`.
+- Each monetary `JournalEntry` has equal debit and credit totals. Invalid normalized postings are rejected before a journal projection can
+  consume them.
+- Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
+- Resolved contract addresses, and only those addresses, determine deployment-specific identity. Missing addresses remain unresolved.
+
+### Failure Behaviour
+
+- A company-query failure is fatal because Accounting cannot establish the contract set that owns the books.
+- A failed on-chain scan for one contract generation leaves other generations in the assembled books and records a reconciliation gap.
+- Safe-service feeds are optional and do not block the page's loading state. Their absence can omit Safe activity without generating a
+  reconciliation gap, which remains a known limitation.
+- A standalone report card falls back to its route's company identifier when it is rendered outside the shared Accounting page context.
+
+## Current Report Boundaries
+
+```mermaid
+flowchart TB
+    entries[Consolidated LedgerEntry feed] --> summary[Accounting summary]
+    entries --> ledgerUI[General Ledger UI and filters]
+    entries --> income[Income Statement]
+    entries --> balance[Balance Sheet]
+    entries --> drilldowns[Account and statement drill-downs]
+    entries --> remainingExports[Remaining report exports]
+    journal[Validated JournalEntry collection] --> trial[Trial Balance]
+    trial --> trialExports[Trial Balance PDF and Excel exports]
+```
+
+This is a current implementation boundary, not an accounting-policy distinction. A later migration of every projection to journal lines must
+preserve the existing report date scopes and mapper semantics. In particular, `mergedBankFee` is re-booked while calculating journal-based
+account balances because that legacy fee metadata is not carried by the canonical journal feed.
+
+## Optimisation Review
+
+### Existing Protections
+
+- The page-level context shares one `useCNCAccounting` result instead of fetching and assembling once per card.
+- Mapping and assembly are pure functions, which makes their cost and semantics independently testable.
+- The account registry and validated journal are built once from the consolidated feed and reused by the Trial Balance projection.
+
+### Measure Before Changing
+
+- Event queries fan out across every known contract generation and have an `EVENT_LIMIT` of 500. Measure result volume, pagination needs,
+  and user-visible load time before altering source selection or limits.
+- Date-specific views perform their own projection work: Trial Balance rebuilds from a date-filtered journal, while statement presenters
+  filter and project the transitional feed. Profile realistic multi-generation books before introducing caching or alternate snapshots.
+- Moving the remaining projections from `LedgerEntry` to `JournalEntry` is a semantic migration, not a mechanical performance change. It
+  must retain date handling, fee re-booking, drill-down scope, and the accounting meaning established by the source mappers.
+
+## Known Gaps
+
+- The General Ledger UI, summary, Income Statement, Balance Sheet, account drill-downs, and their remaining exports have not migrated to
+  `JournalEntry` lines.
+- The legacy raw posting field names do not make the distinction between an account family, a concrete account, and a source instance
+  explicit.
+- Optional Safe-service and enrichment failures can leave books incomplete without every omission being surfaced to the reviewer.
+
+## Implementation Evidence
+
+**Implementation evidence reviewed against:** `7c399520fab89791bec1a36c81162621c0a11421`
+
+- [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
+  [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
+- [Pure assembly](../../../app/src/utils/accounting/assemble.ts) and [consolidation](../../../app/src/utils/accounting/buildLedger.ts)
+- [Chart of accounts](../../../app/src/utils/accounting/chartOfAccounts.ts) and
+  [concrete account registry](../../../app/src/utils/accounting/accountRegistry.ts)
+- [Validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts) and
+  [journal and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts)
+- [Report presenters](../../../app/src/utils/accounting/presenter.ts),
+  [General Ledger card](../../../app/src/components/sections/AccountingView/GeneralLedger.vue), and
+  [Trial Balance card](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
+- [Assembly tests](../../../app/src/utils/accounting/__tests__/assemble.spec.ts),
+  [account-registry tests](../../../app/src/utils/accounting/__tests__/accountRegistry.spec.ts), and
+  [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts)
+
+## Related Documentation
+
+- [Accounting user journey](../../features/accounting/README.md)
+- [Accounting history across contract migrations](../../features/accounting/contract-migration-history.md)
+- [Money Flow Catalogue](../../features/accounting/money-flow-catalogue.md)
+- [Implementation Documentation Guide](../../platform/implementation-documentation-guide.md)

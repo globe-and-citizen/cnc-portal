@@ -28,18 +28,9 @@ These acceptance criteria follow the
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
-- **Journal-entry assembly:** after consolidation, Accounting constructs one ordered, validated `JournalEntry` collection with distinct
-  entry and source-operation identities, ordered `JournalEntryLine` records, and an executable debit/credit balance invariant. Every
-  monetary line carries one canonical concrete `Account`: its stable `AccountId`, reusable `AccountFamily`, and any source contract address
-  and resolution. An `AccountFamily` owns the stable family key, display name, classification, normal side, and deployment scope; each Bank,
-  Payroll, Expense, or Credit contract address is a separate concrete account. A source leg with no contract address remains an explicit
-  unresolved account; it is never assigned to the oldest or most recently active deployment. Memo-only entries are explicit and contain no
-  monetary lines; an invalid normalized posting is rejected before a journal projection can consume it. The Trial Balance and its
-  date-bounded PDF and Excel exports consume this assembled journal; a Trial Balance drill-down and its export keep the selected resolved or
-  unresolved account scope. The current General Ledger UI and filters, summary, Income Statement, Balance Sheet, account drill-downs, and
-  their remaining exports still consume the consolidated posting feed as family-level projections while their migration to journal lines is
-  in progress. The **Fee** filter keeps the complete context of each selected posting; its migration to select `JournalEntry` records
-  containing `Transaction Fee Expense` remains part of the same accounting read-model work.
+- **Journal-entry assembly:** Accounting constructs a validated double-entry `JournalEntry` collection and preserves concrete accounts
+  across redeployments. The source-operation model, canonical account terminology, report-projection boundary, and verified optimisation
+  considerations are owned by the [Accounting Read Model](../../implementation/accounting-read-model/README.md).
 
 ## Lifecycle
 
@@ -315,6 +306,7 @@ flowchart LR
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
+- [Accounting Read Model](../../implementation/accounting-read-model/README.md)
 - [Money Flow Catalogue](./money-flow-catalogue.md)
 - [Share Vesting Accounting — Restricted-Stock grant](./vesting-accounting-restricted-stock.md)
 - [Accounting Specification and Scope](./cnc-accounting-spec.md)

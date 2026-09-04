@@ -49,6 +49,9 @@ flowchart LR
 11. The current General Ledger UI, summary, Income Statement, and Balance Sheet are still family-level projections of the transitional
     posting feed. Their JournalEntry migration is separate work.
 
+The [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the current account terminology, runtime flow,
+report-projection boundary, and implementation evidence.
+
 ## Verification Journey
 
 1. Create accounting activity across more than one money-moving contract.
