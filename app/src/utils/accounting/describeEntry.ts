@@ -13,7 +13,6 @@
  */
 import { money, formatUnixDate } from './presenter'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
-import type { AccountName } from './chartOfAccounts'
 
 /**
  * Normalized accounting-entry label per use case — the generic fallback shown in
@@ -55,7 +54,13 @@ export function entryLabel(entry: LedgerEntry): string {
  */
 export type ActivityCell =
   | { kind: 'actor'; actor: string; text: string }
-  | { kind: 'transfer'; from: AccountName; to: AccountName; actor?: string }
+  | {
+      kind: 'transfer'
+      /** Account display labels, which may distinguish concrete deployments. */
+      from: string
+      to: string
+      actor?: string
+    }
   | { kind: 'plain'; text: string }
 
 /** Internal pocket-to-pocket moves — rendered as two contract avatars (from → to). */
