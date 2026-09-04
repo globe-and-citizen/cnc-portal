@@ -40,7 +40,8 @@ flowchart LR
 6. Every current and historical money-pocket address participates in internal-transfer classification.
 7. A failed generation scan does not discard successful generations; Accounting reports the affected source as a reconciliation gap.
 8. The canonical account registry resolves Bank, Payroll, Expense, and Credit lines from each source operation's contract address. Each
-   address has a distinct `AccountId` while sharing its family's classification and normal balance.
+   address has a distinct `AccountId` in one concrete `Account` object, while the reusable `AccountFamily` supplies the stable family key,
+   display name, classification, normal side, and deployment scope.
 9. The assembled JournalEntry collection and Trial Balance preserve that concrete identity. Resolved rows are ordered by first activity only
    for display numbering; activity order never decides account identity.
 10. A source leg with no contract address remains an unresolved account. Its Trial Balance drill-down and export scope the selected account
@@ -71,15 +72,17 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fb4e311b8ff884402f8936ec3b30c08c139d05ab`
+**Implementation evidence reviewed against:** `7c399520fab89791bec1a36c81162621c0a11421`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
 - [Migration wiring tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 - [Internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
 - [Internal-address tests](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts)
-- [Canonical account registry](../../../app/src/utils/accounting/accountRegistry.ts)
+- [Canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts) and
+  [Account registry](../../../app/src/utils/accounting/accountRegistry.ts)
 - [Validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts)
-- [Concrete-account Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts)
+- [Concrete-account Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts) and
+  [presentation](../../../app/src/utils/accounting/presenter.ts)
 - [Trial-balance card and redeploy hint](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
 - [Instance-scoped drill-down](../../../app/src/utils/accounting/accountLedger.ts)
 - [Split and drill-down tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts)
