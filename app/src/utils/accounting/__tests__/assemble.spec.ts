@@ -72,15 +72,49 @@ describe('assembleCncAccounting', () => {
         bankTransfers: { items: [] },
         bankTokenTransfers: { items: [] },
         bankDividendDistributionTriggereds: { items: [] },
+        bankFeePaids: { items: [] },
+        bankOwnershipTransferreds: { items: [] },
+        rawContractTokenTransfers: { items: [] }
+      }
+    })
+
+    expect(a.summary.income).toBe(100)
+    expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
+    expect(a.generalLedger.balanced).toBe(true)
+    expect(a.balanceSheet.balanced).toBe(true)
+  })
+
+  it('assembles a Bank-to-Safe transfer and its fee as one JournalEntry', () => {
+    const operationId = `0x${'d'.repeat(64)}`
+    const a = assembleCncAccounting({
+      ...BASE,
+      bankEvents: {
+        bankDeposits: { items: [] },
+        bankTokenDeposits: { items: [] },
+        bankTransfers: { items: [] },
+        bankTokenTransfers: {
+          items: [
+            {
+              id: `${operationId}-1`,
+              contractAddress: ADDR.bank,
+              sender: ADDR.founder,
+              to: ADDR.safe,
+              token: USDC_ADDRESS,
+              amount: '100000000',
+              timestamp: 100
+            }
+          ]
+        },
+        bankDividendDistributionTriggereds: { items: [] },
         bankFeePaids: {
           items: [
             {
-              id: 'f1',
+              id: `${operationId}-2`,
               contractAddress: ADDR.bank,
               feeCollector: ADDR.feeCollector,
               token: USDC_ADDRESS,
-              amount: '1000000', // 1 USDC fee
-              timestamp: 120
+              amount: '1000000',
+              timestamp: 100
             }
           ]
         },
@@ -89,22 +123,50 @@ describe('assembleCncAccounting', () => {
       }
     })
 
-    expect(a.summary.income).toBe(100)
-    expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
-    // The protocol fee is booked as a Transaction Fee Expense leaving the Bank.
-    const fee = a.entries.find((e) => e.useCase === 'FEE')
-    expect(fee).toMatchObject({
-      debit: 'Transaction Fee Expense',
-      credit: 'Cash — Bank',
-      internal: false
+    expect(a.journal).toHaveLength(1)
+    expect(a.journal[0]).toMatchObject({
+      id: operationId,
+      internal: false,
+      lines: [
+        { account: { family: { name: 'Cash — Safe' } }, debit: 100 },
+        { account: { family: { name: 'Transaction Fee Expense' } }, debit: 1 },
+        { account: { family: { name: 'Cash — Bank' } }, credit: 101 }
+      ]
     })
-    expect(a.summary.expense).toBe(1)
-    expect(a.incomeStatement.expenses).toContainEqual({
-      account: 'Transaction Fee Expense',
-      amount: 1
+    expect(a.entries.filter((entry) => entry.useCase === 'FEE')).toHaveLength(1)
+    expect(a.unmatchedFeeOperationIds).toEqual([])
+  })
+
+  it('withholds an unmatched FeePaid instead of producing a fee-only JournalEntry', () => {
+    const operationId = `0x${'e'.repeat(64)}`
+    const a = assembleCncAccounting({
+      ...BASE,
+      bankEvents: {
+        bankDeposits: { items: [] },
+        bankTokenDeposits: { items: [] },
+        bankTransfers: { items: [] },
+        bankTokenTransfers: { items: [] },
+        bankDividendDistributionTriggereds: { items: [] },
+        bankFeePaids: {
+          items: [
+            {
+              id: `${operationId}-2`,
+              contractAddress: ADDR.bank,
+              feeCollector: ADDR.feeCollector,
+              token: USDC_ADDRESS,
+              amount: '1000000',
+              timestamp: 100
+            }
+          ]
+        },
+        bankOwnershipTransferreds: { items: [] },
+        rawContractTokenTransfers: { items: [] }
+      }
     })
-    expect(a.generalLedger.balanced).toBe(true)
-    expect(a.balanceSheet.balanced).toBe(true)
+
+    expect(a.entries).toEqual([])
+    expect(a.journal).toEqual([])
+    expect(a.unmatchedFeeOperationIds).toEqual([operationId])
   })
 
   it('collapses the cross-contract internal-transfer twin (Bank → Payroll)', () => {

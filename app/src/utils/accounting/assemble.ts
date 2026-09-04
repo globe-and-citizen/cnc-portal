@@ -30,6 +30,7 @@ import type { VestingEventsQuery } from '@/types/ponder/vesting'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
 import type { ClassificationOverride } from '@/utils/accounting/classification'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
+import { unmatchedFeeOperationIds } from '@/utils/accounting/mappers/fees'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
 import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
@@ -42,7 +43,7 @@ import {
 } from '@/utils/accounting/generalLedger'
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { sourceOperationIdOf, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import {
   buildSherMultiplierTimeline,
@@ -59,13 +60,17 @@ export interface CncAccountingInput {
   contracts?: readonly TeamContract[]
   /** The team's Gnosis Safe address — classifies each Safe transfer. */
   safeAddress?: Address | string | null
+  /**
+   * Legacy FeeCollector address input. It is intentionally ignored: the global
+   * protocol treasury is not a company-owned pocket and never joins the internal
+   * address registry.
+   */
+  feeCollectorAddress?: Address | string | null
   /** Founder / owner addresses whose treasury inflows are Owner Capital. */
   founderAddresses?: Iterable<Address | string>
   /** Team member addresses — a member's Safe inflow is a capital contribution
    *  (invest & get SHER → Investor Equity), not client revenue. */
   memberAddresses?: Iterable<Address | string>
-  /** Protocol-wide FeeCollector address (its pocket is `Cash — FeeCollector`). */
-  feeCollectorAddress?: Address | string | null
   /** On-chain SHER token address, so it resolves to the `sher` token id. */
   sherTokenAddress?: Address | string | null
   /** SafeDepositRouter address — its inflows to the Safe are booked from its own
@@ -115,6 +120,8 @@ export interface CncAccounting {
   generalLedger: GeneralLedger
   incomeStatement: IncomeStatement
   balanceSheet: BalanceSheet
+  /** Fee logs withheld because their Bank outflow counterpart is missing. */
+  unmatchedFeeOperationIds: string[]
 }
 
 /**
@@ -157,7 +164,17 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
       transfers: items(input.bankEvents.bankTransfers),
       tokenTransfers: items(input.bankEvents.bankTokenTransfers)
     }
-    sources.fees = { bankFeePaids: items(input.bankEvents.bankFeePaids) }
+    sources.fees = {
+      bankFeePaids: items(input.bankEvents.bankFeePaids),
+      // A fee is recognised only alongside a successful Bank outflow in its
+      // source operation. Dividend and FixedReturn funding have distinct Bank
+      // events because their actual cash distribution is mapped elsewhere.
+      outflowOperationIds: [
+        ...items(input.bankEvents.bankTransfers),
+        ...items(input.bankEvents.bankTokenTransfers),
+        ...items(input.bankEvents.bankDividendDistributionTriggereds)
+      ].map((row) => sourceOperationIdOf(row.id))
+    }
   }
 
   if (input.cashRemunerationEvents) {
@@ -279,10 +296,7 @@ function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
  * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
  */
 export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
-  const internalAddresses = collectInternalAddresses(
-    input.contracts,
-    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
-  )
+  const internalAddresses = collectInternalAddresses(input.contracts)
   const rateOfRecord = buildRateOfRecord(input)
 
   const ctx = buildMapperContext({
@@ -290,7 +304,6 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     internalAddresses,
     founderAddresses: input.founderAddresses,
     memberAddresses: input.memberAddresses,
-    feeCollectorAddress: input.feeCollectorAddress,
     sherTokenAddress: input.sherTokenAddress,
     rateOfRecord,
     classifications: toClassificationMap(input.classifications)
@@ -342,7 +355,8 @@ export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncA
     summary,
     generalLedger: buildGeneralLedger(journal),
     incomeStatement: buildIncomeStatement(entries),
-    balanceSheet: buildBalanceSheet(entries)
+    balanceSheet: buildBalanceSheet(entries),
+    unmatchedFeeOperationIds: []
   }
 }
 
@@ -351,7 +365,11 @@ export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncA
  * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
  */
 export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
-  return assembleFromRawEntries(buildRawCncEntries(input))
+  const sources = toLedgerSources(input)
+  return {
+    ...assembleFromRawEntries(buildRawCncEntries(input)),
+    unmatchedFeeOperationIds: sources.fees ? unmatchedFeeOperationIds(sources.fees) : []
+  }
 }
 
 /** An empty accounting result — used before any data has loaded. */

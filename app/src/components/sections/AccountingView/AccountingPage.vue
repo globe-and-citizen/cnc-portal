@@ -41,7 +41,21 @@ const error = computed(() => accounting.error.value)
 
 const reconciliationGaps = computed(() => accounting.reconciliationGaps.value)
 const gapsDescription = computed(() => {
-  const sources = [...new Set(reconciliationGaps.value.map((gap) => gap.source))]
-  return `Some contract generations couldn't be loaded (${sources.join(', ')}). Pre-migration history for these may be missing.`
+  const failedSources = [
+    ...new Set(reconciliationGaps.value.filter((gap) => gap.address).map((gap) => gap.source))
+  ]
+  const unmatchedFees = reconciliationGaps.value.filter((gap) => gap.operationId).length
+  const messages = []
+  if (failedSources.length) {
+    messages.push(
+      `Some contract generations couldn't be loaded (${failedSources.join(', ')}). Pre-migration history for these may be missing.`
+    )
+  }
+  if (unmatchedFees) {
+    messages.push(
+      `${unmatchedFees} Bank fee log${unmatchedFees === 1 ? '' : 's'} lacked a matching outflow and ${unmatchedFees === 1 ? 'was' : 'were'} withheld from the journal.`
+    )
+  }
+  return messages.join(' ')
 })
 </script>

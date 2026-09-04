@@ -57,16 +57,12 @@ const POCKET_ACCOUNT_BY_TYPE: Partial<Record<ContractType, AccountName>> = {
 }
 
 function buildPocketIndex(
-  contracts: readonly TeamContract[] | undefined,
-  feeCollector: Address | string | null | undefined
+  contracts: readonly TeamContract[] | undefined
 ): Map<Address, AccountName> {
   const index = new Map<Address, AccountName>()
   for (const contract of contracts ?? []) {
     const account = POCKET_ACCOUNT_BY_TYPE[contract.type]
     if (account && isAddress(contract.address)) index.set(getAddress(contract.address), account)
-  }
-  if (feeCollector && isAddress(feeCollector)) {
-    index.set(getAddress(feeCollector), 'Cash — FeeCollector')
   }
   return index
 }
@@ -80,7 +76,10 @@ export interface BuildMapperContextInput {
   founderAddresses?: Iterable<Address | string>
   /** Team member addresses — a member's Safe inflow is a capital contribution. */
   memberAddresses?: Iterable<Address | string>
-  /** The protocol-wide FeeCollector address (its pocket is `Cash — FeeCollector`). */
+  /**
+   * Legacy FeeCollector address input, retained for call-site compatibility. The
+   * global protocol treasury is deliberately not added to the team pocket index.
+   */
   feeCollectorAddress?: Address | string | null
   /** The on-chain SHER token address, so it resolves to the `sher` {@link TokenId}. */
   sherTokenAddress?: Address | string | null
@@ -106,7 +105,7 @@ function toAddressSet(addresses: Iterable<Address | string> | undefined): Set<Ad
  * with native in the token table).
  */
 export function buildMapperContext(input: BuildMapperContextInput): MapperContext {
-  const pocketIndex = buildPocketIndex(input.contracts, input.feeCollectorAddress)
+  const pocketIndex = buildPocketIndex(input.contracts)
   const sher =
     input.sherTokenAddress && isAddress(input.sherTokenAddress)
       ? getAddress(input.sherTokenAddress)

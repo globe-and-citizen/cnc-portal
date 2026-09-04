@@ -25,7 +25,7 @@ describe('buildMapperContext', () => {
     expect(ctx.pocketOf(ADDR.safe)).toBe('Cash — Safe')
     expect(ctx.pocketOf(ADDR.payroll)).toBe('Cash — Payroll')
     expect(ctx.pocketOf(ADDR.expense)).toBe('Cash — Expense')
-    expect(ctx.pocketOf(ADDR.feeCollector)).toBe('Cash — FeeCollector')
+    expect(ctx.pocketOf(ADDR.feeCollector)).toBeNull()
     expect(ctx.pocketOf(ADDR.client)).toBeNull()
   })
 

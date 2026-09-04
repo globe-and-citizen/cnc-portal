@@ -23,7 +23,6 @@ import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouter/model'
-import { FEE_COLLECTOR_ADDRESS } from '@/constant'
 import type { ContractType, TeamContract } from '@/types/teamContract'
 import type { ScanTarget } from '@/composables/eventsViaLogs'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
@@ -90,10 +89,12 @@ export type AccountingReports = Pick<
 
 /** One contract generation that could not be loaded, for the UI gap warning. */
 export interface ReconciliationGap {
-  /** The money-pocket type whose generation failed (e.g. 'Bank'). */
+  /** The source whose evidence is incomplete (e.g. 'Bank'). */
   source: string
-  /** The failed generation's contract address. */
-  address: string
+  /** The failed generation's contract address, when a source scan failed. */
+  address?: string
+  /** The source operation whose counterpart evidence is absent. */
+  operationId?: string
 }
 
 export function useCNCAccounting(
@@ -284,7 +285,6 @@ export function useCNCAccounting(
     safeAddress: safeAddress.value,
     founderAddresses: founderAddresses.value,
     memberAddresses: memberAddresses.value,
-    feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
     sherTokenAddress: options.sherTokenAddress ?? (investorAddress.value || null),
     safeDepositRouterAddress: routerAddress.value || null,
     currentSherMultiplier: currentSherMultiplier.value,
@@ -338,8 +338,8 @@ export function useCNCAccounting(
   // A generation whose on-chain scan failed is surfaced as a reconciliation gap
   // (rather than silently dropping the whole contract type), so the view can warn
   // that history may be partial (issue #2456).
-  const reconciliationGaps = computed<ReconciliationGap[]>(() =>
-    (
+  const reconciliationGaps = computed<ReconciliationGap[]>(() => [
+    ...(
       [
         ['Bank', bank],
         ['CashRemuneration', cashRem],
@@ -349,8 +349,12 @@ export function useCNCAccounting(
         ['Vesting', vesting],
         ['SafeDepositRouter', router]
       ] as const
-    ).flatMap(([source, feed]) => feed.gaps.value.map((gap) => ({ source, address: gap.address })))
-  )
+    ).flatMap(([source, feed]) => feed.gaps.value.map((gap) => ({ source, address: gap.address }))),
+    ...accounting.value.unmatchedFeeOperationIds.map((operationId) => ({
+      source: 'Bank fee evidence',
+      operationId
+    }))
+  ])
 
   // The team query is the only fatal one — without contracts there are no books.
   // Loading reflects the team + on-chain + enrichment feeds; the Safe service is
