@@ -39,14 +39,14 @@ function bankEvents(partial: Partial<BankEventsQuery>): BankEventsQuery {
   return partial as BankEventsQuery
 }
 
-/** One team's history: a founder deposit, an external payout and a protocol fee — all in POL. */
+/** One team's history: a direct deposit, an external payout and a protocol fee — all in POL. */
 function sampleInput(): CncAccountingInput {
   return {
     contracts: [contract('Bank', ADDR.bank)],
     feeCollectorAddress: ADDR.feeCollector,
     rateOfRecord,
     bankEvents: bankEvents({
-      // 100 POL founder deposit → Owner Capital
+      // 100 POL direct deposit → Service Revenue
       bankDeposits: {
         items: [
           {
@@ -118,9 +118,9 @@ describe('accounting non-regression', () => {
     // The 5 POL fee is now a real, non-zero Transaction Fee Expense.
     expect(summary.transactionFees).toBeCloseTo(0.4, 6)
     expect(summary.transactionFees).toBeGreaterThan(0)
-    // income 0 − expense (1.6 operating + 0.4 fee) = −2.0
+    // revenue 8.0 − expense (1.6 operating + 0.4 fee) = 6.0
     expect(summary.expense).toBeCloseTo(2, 6)
-    expect(balanceSheet.retainedEarnings).toBeCloseTo(-2, 6)
+    expect(balanceSheet.retainedEarnings).toBeCloseTo(6, 6)
   })
 
   it('stamps every posting with its currency, quantity and rate of record (Taux)', () => {

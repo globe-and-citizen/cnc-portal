@@ -5,7 +5,7 @@ import { makeCtx, ADDR } from './fixtures'
 const ctx = makeCtx()
 
 describe('mapBankEvents', () => {
-  it('books a founder native deposit as UC-BANK-02 (Service Revenue)', () => {
+  it('books a direct native deposit as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapBankEvents(
       {
         deposits: [
