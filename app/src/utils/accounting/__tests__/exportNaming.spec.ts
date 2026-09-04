@@ -27,16 +27,10 @@ describe('exportBaseName', () => {
     )
   })
 
-  it('names the ledger category, and the period only when a real range is set', () => {
-    // All-category, all-time: category only, no date suffix.
-    expect(exportBaseName({ key: 'ledger', filter: 'All' })).toBe('General Ledger - All')
-    // A narrowed category with no date stays date-free.
-    expect(exportBaseName({ key: 'ledger', filter: 'Investment' })).toBe(
-      'General Ledger - Investment'
-    )
-    // A real range appends the period after the category.
-    const scoped = exportBaseName({ key: 'ledger', filter: 'Investment', from: FROM, to: TO })
-    expect(scoped).toContain('General Ledger - Investment -')
+  it('names the ledger by its reporting period only', () => {
+    expect(exportBaseName({ key: 'ledger' })).toBe('General Ledger')
+    const scoped = exportBaseName({ key: 'ledger', from: FROM, to: TO })
+    expect(scoped).toContain('General Ledger -')
     expect(scoped).toContain('Jan 1, 2026')
   })
 
@@ -78,14 +72,13 @@ describe('exportBaseName', () => {
 
 describe('exportFilename', () => {
   it('adds the requested extension', () => {
-    const spec: SectionSpec = { key: 'ledger', filter: 'Investment' }
-    expect(exportFilename(spec, 'pdf')).toBe('General Ledger - Investment.pdf')
-    expect(exportFilename(spec, 'xlsx')).toBe('General Ledger - Investment.xlsx')
+    const spec: SectionSpec = { key: 'ledger' }
+    expect(exportFilename(spec, 'pdf')).toBe('General Ledger.pdf')
+    expect(exportFilename(spec, 'xlsx')).toBe('General Ledger.xlsx')
   })
 
   it('strips characters no filesystem allows', () => {
-    // A category carrying an illegal char is sanitised, not left to break the download.
-    const spec = { key: 'ledger', filter: 'A/B:C' } as unknown as SectionSpec
+    const spec = { key: 'ledger', account: 'A/B:C' } as const
     expect(exportFilename(spec, 'pdf')).toBe('General Ledger - ABC.pdf')
   })
 })

@@ -2,7 +2,7 @@
  * Download filenames for the accounting exports.
  *
  * Each per-page export names its file after the active scope — the selected
- * reporting period / "as of" date, and (for the ledger) the active category — so
+ * reporting period / "as of" date — so
  * a folder of downloads is self-describing rather than a pile of
  * `general-ledger.pdf` collisions. Pure and unit-tested; the PDF/Excel builders
  * own the in-file heading ({@link incomeExportTitle} et al.), this owns the name
@@ -42,7 +42,7 @@ export function exportBaseName(spec: SectionSpec): string {
         else if (spec.to) parts.push(`As of ${dayLabel(spec.to)}`)
         return parts.join(' - ')
       }
-      const parts = ['General Ledger', spec.filter && spec.filter !== 'All' ? spec.filter : 'All']
+      const parts = ['General Ledger']
       if (spec.from || spec.to) parts.push(periodLabel(spec.from, spec.to))
       return parts.join(' - ')
     }

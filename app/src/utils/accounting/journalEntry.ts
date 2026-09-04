@@ -6,7 +6,18 @@
  * consume it.
  */
 import type { Account } from './accountRegistry'
-import type { UseCase } from './ledgerEntry'
+import type { LedgerEntry, UseCase } from './ledgerEntry'
+import type { TokenId } from '@/constant'
+
+/** The token movement evidenced by one monetary journal line. */
+export interface JournalEntryLineMovement {
+  /** Token transferred on the source operation. */
+  token: TokenId
+  /** Token base units transferred on the source operation. */
+  rawAmount: string
+  /** USD-per-whole-token rate of record, when it is available. */
+  rate?: number
+}
 
 /** One ordered debit or credit line belonging to a {@link JournalEntry}. */
 export type JournalEntryLine =
@@ -15,6 +26,8 @@ export type JournalEntryLine =
       id: string
       /** Canonical concrete account, including its identity, family and resolution. */
       account: Account
+      /** Token-level movement evidence for the line's display projection. */
+      movement?: JournalEntryLineMovement
       debit: number
       credit?: never
     }
@@ -23,12 +36,14 @@ export type JournalEntryLine =
       id: string
       /** Canonical concrete account, including its identity, family and resolution. */
       account: Account
+      /** Token-level movement evidence for the line's display projection. */
+      movement?: JournalEntryLineMovement
       debit?: never
       credit: number
     }
 
 export interface JournalEntry {
-  /** Stable journal-entry identity. One source operation can produce several entries. */
+  /** Stable journal-entry identity. One source operation produces one journal entry. */
   id: string
   /** Stable identity of the source accounting operation behind this entry. */
   sourceOperationId: string
@@ -46,6 +61,12 @@ export interface JournalEntry {
   category?: string
   /** Transaction hash, when known. */
   txHash?: string
+  /**
+   * The primary source posting's contextual metadata. It is a snapshot used for
+   * narration and drill-down links; report amounts and account identity always
+   * come from `lines`.
+   */
+  source?: LedgerEntry
   /** Ordered and validated journal lines; empty only when {@link kind} is `memo`. */
   lines: JournalEntryLine[]
 }
@@ -137,6 +158,7 @@ function validationErrors(entry: JournalEntry): string[] {
 export function createJournalEntry(entry: JournalEntry): JournalEntry {
   const validated: JournalEntry = {
     ...entry,
+    ...(entry.source ? { source: { ...entry.source } } : {}),
     lines: entry.lines.map(
       (line) => ({ ...line, account: { ...line.account } }) as JournalEntryLine
     )

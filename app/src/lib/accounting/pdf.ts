@@ -24,18 +24,9 @@ import {
   trialExportTitle
 } from '@/utils/accounting/presenter'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
-import {
-  presentLedger,
-  ledgerExportTitle,
-  resolveLedgerColumns,
-  ledgerTotalRow,
-  type LedgerColumnKey
-} from '@/utils/accounting/ledgerPresenter'
-import { presentAccountLedger, accountLedgerTitle } from '@/utils/accounting/accountLedger'
-import { activityText } from '@/utils/accounting/describeEntry'
-import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import { formatDateTime } from '@/utils/format'
+import { generalLedgerPdfTable } from './generalLedgerPdfTable'
 
 type Cell = string | number
 type Align = 'left' | 'right'
@@ -136,67 +127,6 @@ function trialTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTabl
   }
 }
 
-/** How each ledger column renders in the export: alignment + cell value. */
-const LEDGER_PDF_CELL: Record<
-  LedgerColumnKey,
-  { align: Align; pick: (row: LedgerRow, resolveName?: ResolveName) => Cell }
-> = {
-  date: { align: 'left', pick: (row) => row.date },
-  action: { align: 'left', pick: (row) => row.category },
-  transaction: { align: 'left', pick: (row) => row.label },
-  activity: { align: 'left', pick: (row, resolveName) => activityText(row.activity, resolveName) },
-  account: { align: 'left', pick: (row) => row.accountLabel ?? row.account },
-  dr: { align: 'right', pick: (row) => row.dr },
-  cr: { align: 'right', pick: (row) => row.cr },
-  currency: { align: 'left', pick: (row) => row.currency },
-  quantity: { align: 'right', pick: (row) => row.quantity },
-  rate: { align: 'right', pick: (row) => row.rate }
-}
-
-interface LedgerTableOptions {
-  filter?: string
-  from?: Date | null
-  to?: Date | null
-  columns?: LedgerColumnKey[]
-  currencies?: string[]
-  account?: string | readonly string[]
-  accountLabel?: string
-  accountTotal?: string
-  instance?: string | null
-  unresolved?: boolean
-}
-
-/** Display name for a drill-down: the account, or the aggregate's label. */
-function drillName(opts: LedgerTableOptions): string {
-  return Array.isArray(opts.account) ? (opts.accountLabel ?? 'Ledger') : (opts.account as string)
-}
-
-function ledgerTable(
-  books: CncAccounting,
-  resolveName?: ResolveName,
-  opts: LedgerTableOptions = {}
-): AccountingPdfTable {
-  const { rows, total } = opts.account
-    ? presentAccountLedger(books.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
-        instance: opts.instance,
-        unresolved: opts.unresolved
-      })
-    : presentLedger(books.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
-  const columns = resolveLedgerColumns(opts.columns)
-  const body = rows.map((row) =>
-    columns.map((column) => LEDGER_PDF_CELL[column.value].pick(row, resolveName))
-  )
-  body.push(ledgerTotalRow(columns, total))
-  return {
-    title: opts.account
-      ? accountLedgerTitle(drillName(opts), opts.from, opts.to)
-      : ledgerExportTitle(opts.filter, opts.from, opts.to),
-    head: columns.map((column) => column.label),
-    align: columns.map((column) => LEDGER_PDF_CELL[column.value].align),
-    body
-  }
-}
-
 /** Build a single section's table from its spec. */
 function sectionTable(
   books: CncAccounting,
@@ -213,12 +143,12 @@ function sectionTable(
     case 'trial':
       return trialTable(books, spec.asOf)
     case 'ledger':
-      return ledgerTable(books, resolveName, {
-        filter: spec.filter,
+      return generalLedgerPdfTable(books, resolveName, {
         from: spec.from,
         to: spec.to,
         columns: spec.columns,
         currencies: spec.currencies,
+        journalAccounts: spec.journalAccounts,
         account: spec.account,
         accountLabel: spec.accountLabel,
         accountTotal: spec.accountTotal,
@@ -246,7 +176,7 @@ export function buildAccountingTables(
     incomeTable(books),
     balanceTable(books),
     trialTable(books),
-    ledgerTable(books, resolveName)
+    generalLedgerPdfTable(books, resolveName)
   ]
 }
 

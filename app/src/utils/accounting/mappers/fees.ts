@@ -16,7 +16,7 @@
  * so the fee is booked exactly once. The Bank row is canonical when both exist.
  */
 import type { BankFeePaidRow } from '@/types/ponder/bank'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeEntry, sourceOperationIdOf, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { atDate, type MapperContext } from './context'
 
 /** A `FeePaid` row emitted by the FeeCollector contract (the dual-write twin). */
@@ -60,6 +60,7 @@ export function mapFees(input: FeeMapperInput, ctx: MapperContext): LedgerEntry[
     entries.push(
       makeEntry({
         id: row.id,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'FEE',
         debit: 'Transaction Fee Expense',

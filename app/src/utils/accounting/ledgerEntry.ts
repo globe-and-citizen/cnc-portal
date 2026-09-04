@@ -16,6 +16,24 @@ import type { TokenId } from '@/constant'
 import type { AccountName } from './chartOfAccounts'
 import type { ClassificationCategory } from './classification'
 
+/** The transaction-hash head of an indexed event id (`<txHash>-<logIndex>`). */
+const EVENT_ID_TRANSACTION_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
+
+/**
+ * Return the accounting-operation identity behind one indexed event id.
+ *
+ * Contract events from one transaction share their transaction-hash prefix, even
+ * when a mapper adds a suffix for an individual posting.  That is the identity
+ * the journal assembly uses to make one multi-line JournalEntry. Synthetic ids
+ * retain their own id unless they explicitly provide `sourceOperationId`.
+ */
+export function sourceOperationIdOf(eventId: string): string {
+  const transaction = EVENT_ID_TRANSACTION_HASH.exec(eventId)
+  if (transaction) return transaction[1]!
+  const dash = eventId.lastIndexOf('-')
+  return dash > 0 ? eventId.slice(0, dash) : eventId
+}
+
 /**
  * The use case (catalogue §5 / spec §4) a ledger entry realises. The `UC-*`
  * codes match the money-flow catalogue; the lowercase codes cover moves the

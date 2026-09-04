@@ -2,17 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
+import { buildJournal, type JournalEntry } from '@/utils/accounting/generalLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 // A controlled, reactive book so the account / currency filters, their
 // reconciliation, and the export scope all run deterministically. `catalogueLedger`
 // spans several accounts and three currencies (usdc, native, sher) and carries fee
 // legs, so every selector shows and can be exercised.
-const ctx = vi.hoisted(() => ({ entries: null as null | { value: LedgerEntry[] } }))
+const ctx = vi.hoisted(() => ({
+  entries: null as null | { value: LedgerEntry[] },
+  journal: null as null | { value: JournalEntry[] }
+}))
 vi.mock('@/composables/accounting/useAccountingContext', async () => {
   const { ref } = await vi.importActual<typeof import('vue')>('vue')
   ctx.entries = ref<LedgerEntry[]>([])
-  return { useAccountingContext: () => ({ entries: ctx.entries }) }
+  ctx.journal = ref<JournalEntry[]>([])
+  return { useAccountingContext: () => ({ entries: ctx.entries, journal: ctx.journal }) }
 })
 
 // Stop exports at the composable boundary: the real writers end on a browser
@@ -29,6 +34,7 @@ import CurrencyFilterSelect from '../CurrencyFilterSelect.vue'
 
 const setBook = (entries: LedgerEntry[]) => {
   ctx.entries!.value = entries
+  ctx.journal!.value = buildJournal(entries)
 }
 
 /** The menu entries of a filter popover carry `type="button"`; the trigger doesn't. */
@@ -55,16 +61,12 @@ describe('GeneralLedger export', () => {
     wrapper.unmount()
   })
 
-  it('keeps whole balanced transactions under the Fee filter', async () => {
+  it('does not expose a Fee pseudo-category', async () => {
     const wrapper = renderWithProviders(GeneralLedger)
-    await wrapper.find('[data-test="pill-Fee"]').trigger('click')
     await flushPromises()
 
-    // The Fee filter selects the fee-bearing transactions and still shows the
-    // Transaction Fee Expense leg together with its balancing legs (issue #2678),
-    // so the journal and its "Total movements" render normally.
+    expect(wrapper.find('[data-test="pill-Fee"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('Total movements')
-    expect(wrapper.text()).toContain('Transaction Fee Expense')
     wrapper.unmount()
   })
 })

@@ -323,13 +323,11 @@ describe('StatementLine', () => {
 })
 
 describe('GeneralLedger', () => {
-  it('shows the movement total and filters by category without error', async () => {
+  it('shows the movement total without category filter controls', async () => {
     const wrapper = renderWithProviders(GeneralLedger)
     const text = wrapper.text()
     expect(text).toContain('Total movements')
     expect(text).toContain('entries')
-
-    await wrapper.find('[data-test="pill-Investment"]').trigger('click')
-    expect(wrapper.text()).toContain('entries')
+    expect(wrapper.find('[data-test^="pill-"]').exists()).toBe(false)
   })
 })
