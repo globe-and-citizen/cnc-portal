@@ -45,6 +45,8 @@ type CreditEventKind = 'lent' | 'funded' | 'interest' | 'refunded' | 'repaid'
 export interface CreditEvent {
   kind: CreditEventKind
   id: string
+  /** Transaction-backed source operation when a derived event belongs to one. */
+  sourceOperationId?: string
   offerId: string
   timestamp: number
   /** Absent only on `funded`, which carries the whole round. */
@@ -143,6 +145,7 @@ function interestEvents(input: FixedReturnMapperInput): CreditEvent[] {
           // Keyed by the round and the lender alone — the id never moves, so the
           // row keeps its identity across refetches, exports and drill-downs.
           id: `credit-interest-${funded.offerId}-${lender.toLowerCase()}`,
+          sourceOperationId: funded.id,
           offerId: funded.offerId,
           timestamp: funded.timestamp,
           lender,

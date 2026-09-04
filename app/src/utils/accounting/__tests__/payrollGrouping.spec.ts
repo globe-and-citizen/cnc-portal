@@ -6,6 +6,8 @@ import type { TokenId } from '@/constant'
 
 const MEMBER = '0x1111111111111111111111111111111111111111'
 const WEEK_END = 1_000
+const WITHDRAWAL_TX_HASH = `0x${'b'.repeat(64)}`
+const DIRECT_MINT_TX_HASH = `0x${'c'.repeat(64)}`
 
 // Per-token USD amounts / whole quantities used across the cases.
 const AMT = { usdc: 40, pol: 0.8, sher: 10 } as const
@@ -42,7 +44,7 @@ function settle(
   log: number
 ): LedgerEntry {
   return {
-    id: `0xwd-${log}`,
+    id: `${WITHDRAWAL_TX_HASH}-${log}`,
     timestamp: WEEK_END,
     useCase,
     debit: debit as LedgerEntry['debit'],
@@ -130,7 +132,7 @@ describe('payroll grouping — compound postings', () => {
 
   it('a standalone direct mint (DEFAULT-D, own tx) is not grouped', () => {
     const mint: LedgerEntry = {
-      id: '0xmint-0',
+      id: `${DIRECT_MINT_TX_HASH}-0`,
       timestamp: 2_000,
       useCase: 'DEFAULT-D',
       debit: 'SHERS To Be Issued',

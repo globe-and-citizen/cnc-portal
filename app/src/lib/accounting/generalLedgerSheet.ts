@@ -43,6 +43,7 @@ const SHEET_CELL: Record<LedgerColumnKey, (row: LedgerRow, resolveName?: Resolve
   date: (row) => row.date,
   action: (row) => row.category,
   transaction: (row) => row.label,
+  txHash: (row) => row.txHash ?? '',
   activity: (row, resolveName) => activityText(row.activity, resolveName),
   account: (row) => row.accountLabel ?? row.account,
   dr: (row) => usd(row.dr),

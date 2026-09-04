@@ -104,7 +104,8 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The ledger exposes each posting's date, activity, accounts, currency, quantity, rate, debit, and credit amounts.
+- [x] The ledger exposes each transaction-backed entry's hash, date, activity, accounts, currency, quantity, rate, debit, and credit
+      amounts; a synthetic entry has no transaction hash.
 - [x] A company member can filter entries by reporting period, available currencies, and one or more concrete accounts.
 - [x] A company member can inspect the entries and running balance for one account from a report line.
 - [x] Selecting an account on a ledger entry opens that account's transactions in the trial-balance drill-down.
@@ -115,13 +116,16 @@ flowchart LR
 - [x] Pagination does not change the totals for the complete filtered ledger.
 - [x] Filtering the ledger by account or currency keeps whole `JournalEntry` records, so each shown entry still carries every debit and
       credit line.
+- [x] The selected General Ledger export retains each transaction-backed entry's full transaction hash.
 - [x] The General Ledger has no `Fee` pseudo-category. A Bank transfer and its protocol fee in the same transaction form one complete
       `JournalEntry`, with an ordinary `Transaction Fee Expense` line.
 - [x] A protocol fee is never displayed or exported as a `JournalEntry` without the Bank outflow that caused it; unmatched fee evidence is
       withheld and surfaced as a reconciliation warning.
-- [ ] Every economic operation that produces several source events is represented by one complete `JournalEntry`.
-- [ ] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
-      community-credit round — is shown as one ledger entry with every recipient's debit or credit line and one credit for the total.
+- [x] Every on-chain transaction with a transaction hash is represented by one complete `JournalEntry`, even when it produces several source
+      events.
+- [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
+      community-credit round — is shown as one ledger entry with aggregated compatible account lines; recipient-level evidence remains
+      traceable through the transaction.
 - [x] Protocol fees remain identifiable as expenses rather than neutral transfers.
 - [x] One on-chain event is not counted more than once in the consolidated ledger.
 
@@ -264,14 +268,12 @@ flowchart LR
 - Off-platform activity without a connected data source is absent from the automated books.
 - Legacy manual categories are still persisted for external withdrawals. They have not yet been replaced with account-backed
   `JournalEntryLine` assignment.
-- Some compound operations do not yet propagate one shared source-operation identity, so the General Ledger can display their related
-  postings as separate journal entries (`US-ACCT-002`).
 - JournalEntry assembly withholds a Bank fee log without matching Bank-outflow evidence and shows it as incomplete evidence until the source
   feed can be reconciled (`US-ACCT-002`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6aebce776e9406bb85f5512cf8daf43d8d3b0adc`
+**Implementation evidence reviewed against:** `1ed9ee571e404181c02f7cd7c91471055df06e72`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -302,6 +304,7 @@ flowchart LR
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts),
   [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts),
+  [transaction identity helper](../../../app/src/utils/accounting/ledgerEntry.ts),
   [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
   [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)

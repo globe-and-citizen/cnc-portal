@@ -15,6 +15,13 @@ concrete contract instance in the actual entry, for example `Cash — Bank 2` af
 Each example below is one complete `JournalEntry`; its debit and credit totals are equal. The amounts are illustrative USD reporting
 amounts. A SHER amount is valued at the rate of record for the operation date.
 
+### Transaction Identity
+
+For a source event with an on-chain transaction hash, the transaction hash is the `JournalEntry` identity: `id`, `sourceOperationId`, and
+`txHash` use that value. The indexed raw-event identifier (`<txHash>-<logIndex>`) remains source evidence, not an accounting-entry identity.
+All source events with the same transaction hash are assembled into one `JournalEntry` before its compatible account lines are aggregated. A
+synthetic operation without an on-chain transaction keeps its explicit stable identity.
+
 ### Fee Invariant
 
 A Bank fee never creates a `JournalEntry` by itself. It is an additional debit line in the same entry as the Bank transfer that caused it:
@@ -291,6 +298,9 @@ The company repays 80 USD of principal and 10 USD of an already accrued fixed re
 | Interest Payable |    10 |        |
 | Cash — Bank      |       |     90 |
 
+When one repayment transaction pays several lenders, Accounting keeps one `JournalEntry` for that transaction and aggregates compatible
+`Loan Payable`, `Interest Payable`, and `Cash — Bank` lines. The raw transaction remains the trace for lender-level event detail.
+
 ### Community Credit Interest Paid without a Prior Accrual — `UC-CREDIT-03`
 
 If the source feed could not recognize the fixed return at funding time, paying 10 USD of interest records the expense at payment time.
@@ -346,12 +356,10 @@ and is not booked again as `DEFAULT-D`.
 
 ## Operation Boundaries and Known Gaps
 
-The intended invariant is one economic operation to one complete `JournalEntry`. Current mappers meet this boundary for a Bank transfer and
-its fee, a weekly payroll accrual with several wage rates, and funded Community Credit principal from several lenders.
-
-Cash and SHER wage settlement, dividend distribution, credit repayment with principal and interest, and vesting stop still need every mapper
-to propagate the shared source-operation identity. Their complete examples above describe the required journal entries, but related postings
-can currently remain separate entries.
+Every transaction-backed operation has one complete `JournalEntry` identified by its transaction hash. The assembly groups all source events
+with that hash before projecting the entry and aggregates compatible account lines. Synthetic operations without an on-chain transaction
+retain their explicit stable source-operation identity. A multi-counterparty transaction uses transaction-level narration; the raw indexed
+events retain the recipient-level detail.
 
 JournalEntry assembly validates the fee invariant after grouping source postings: a `FeePaid` log without matching Bank-outflow evidence is
 withheld, never turned into a fee-only `JournalEntry`, and is exposed as incomplete evidence for reconciliation.
@@ -361,7 +369,7 @@ have no current mapper. They are intentionally excluded from this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `e65e182f45cda9ef8a264d465580e054e105ec69`
+**Implementation evidence reviewed against:** `0c9c9fa6b657fa6abe741d44fd62f9f1cda5805a`
 
 - [Use-case identifiers and source-operation identity](../../../app/src/utils/accounting/ledgerEntry.ts)
 - [Journal assembly](../../../app/src/utils/accounting/generalLedger.ts) and
@@ -370,7 +378,8 @@ have no current mapper. They are intentionally excluded from this catalogue.
   [fees](../../../app/src/utils/accounting/mappers/fees.ts), [Community Credit](../../../app/src/utils/accounting/mappers/fixedReturn.ts),
   and [manual classification](../../../app/src/utils/accounting/classification.ts)
 - [Journal assembly regression tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts) and
-  [General Ledger projection tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts)
+  [General Ledger projection tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), including
+  [Community Credit mapper coverage](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts)
 
 ## Related Documentation
 

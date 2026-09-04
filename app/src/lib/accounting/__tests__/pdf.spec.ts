@@ -7,6 +7,7 @@ import { USDC_ADDRESS } from '@/constant'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const CLIENT = '0x7777777777777777777777777777777777777777'
+const TX_HASH = `0x${'a'.repeat(64)}`
 
 /** A tiny live book: one $100 client deposit into the Bank → Service Revenue 100. */
 function sampleBooks(): CncAccounting {
@@ -17,7 +18,7 @@ function sampleBooks(): CncAccounting {
       bankTokenDeposits: {
         items: [
           {
-            id: 'bd1',
+            id: `${TX_HASH}-0`,
             contractAddress: BANK,
             depositor: CLIENT,
             token: USDC_ADDRESS,
@@ -57,9 +58,10 @@ describe('buildAccountingTables', () => {
 
   it('right-aligns the amount columns', () => {
     expect(byTitle('Income Statement').align).toEqual(['left', 'right'])
-    // date · action · transaction · activity · account · currency, then the
+    // date · action · transaction · hash · activity · account · currency, then the
     // right-aligned figures: quantity · rate · debit · credit.
     expect(byTitle('General Ledger').align).toEqual([
+      'left',
       'left',
       'left',
       'left',
@@ -84,6 +86,7 @@ describe('buildAccountingTables', () => {
       'Date',
       'Action',
       'Transaction',
+      'Tx hash',
       'Activity',
       'Account',
       'Currency',
@@ -96,15 +99,16 @@ describe('buildAccountingTables', () => {
     expect(ledger.body.length).toBe(3)
     const totalRow = ledger.body.at(-1)!
     expect(totalRow[2]).toBe('Total movements')
-    expect(totalRow[8]).toBe('$100.00') // Debit total
-    expect(totalRow[9]).toBe('$100.00') // Credit total
+    expect(totalRow[9]).toBe('$100.00') // Debit total
+    expect(totalRow[10]).toBe('$100.00') // Credit total
+    expect(ledger.body[0]![3]).toBe(TX_HASH)
   })
 
   it('renders the Activity column via the supplied name resolver', () => {
     const named = buildAccountingTables(sampleBooks(), () => 'Acme Client')
     const ledger = named.find((t) => t.title === 'General Ledger')!
     // the deposit is an `actor` activity: "<name> paid $100.00 for services"
-    const activity = String(ledger.body[0][3])
+    const activity = String(ledger.body[0][4])
     expect(activity).toContain('Acme Client')
     expect(activity).toContain('for services')
   })
@@ -139,9 +143,9 @@ describe('buildTables (section selection)', () => {
     const accountId = books.journal[0]!.lines[0]!.account.id
     const [ledger] = buildTables(books, [{ key: 'ledger', journalAccounts: [accountId] }])
     expect(ledger.body).toHaveLength(3)
-    expect(ledger.body[0]![4]).toBe('Cash — Bank')
-    expect(ledger.body[1]![4]).toBe('Service Revenue')
-    expect(ledger.body.at(-1)![8]).toBe('$100.00')
+    expect(ledger.body[0]![5]).toBe('Cash — Bank')
+    expect(ledger.body[1]![5]).toBe('Service Revenue')
+    expect(ledger.body.at(-1)![9]).toBe('$100.00')
   })
 
   it('names the reporting period in the ledger heading', () => {

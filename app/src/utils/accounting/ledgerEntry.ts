@@ -19,6 +19,11 @@ import type { ClassificationCategory } from './classification'
 /** The transaction-hash head of an indexed event id (`<txHash>-<logIndex>`). */
 const EVENT_ID_TRANSACTION_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
 
+/** Return the transaction hash carried by an indexed event identifier, if any. */
+export function transactionHashOf(eventId: string | null | undefined): string | undefined {
+  return eventId ? EVENT_ID_TRANSACTION_HASH.exec(eventId)?.[1] : undefined
+}
+
 /**
  * Return the accounting-operation identity behind one indexed event id.
  *
@@ -28,10 +33,7 @@ const EVENT_ID_TRANSACTION_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
  * retain their own id unless they explicitly provide `sourceOperationId`.
  */
 export function sourceOperationIdOf(eventId: string): string {
-  const transaction = EVENT_ID_TRANSACTION_HASH.exec(eventId)
-  if (transaction) return transaction[1]!
-  const dash = eventId.lastIndexOf('-')
-  return dash > 0 ? eventId.slice(0, dash) : eventId
+  return transactionHashOf(eventId) ?? eventId
 }
 
 /**
@@ -251,6 +253,7 @@ export function makeEntry(
     debitInstance,
     creditInstance,
     sourceOperationId,
+    txHash,
     internal = false,
     enrichment = 'not-applicable',
     ...rest
@@ -258,11 +261,15 @@ export function makeEntry(
   const normalized = normalizeCounterparty(counterparty)
   const debitAt = normalizeCounterparty(debitInstance)
   const creditAt = normalizeCounterparty(creditInstance)
+  const resolvedTxHash =
+    txHash ?? transactionHashOf(sourceOperationId) ?? transactionHashOf(rest.id)
+  const resolvedOperationId = resolvedTxHash ?? sourceOperationId ?? rest.id
   return {
     ...rest,
-    sourceOperationId: sourceOperationId ?? rest.id,
+    sourceOperationId: resolvedOperationId,
     internal,
     enrichment,
+    ...(resolvedTxHash ? { txHash: resolvedTxHash } : {}),
     ...(normalized ? { counterparty: normalized } : {}),
     ...(debitAt ? { debitInstance: debitAt } : {}),
     ...(creditAt ? { creditInstance: creditAt } : {})

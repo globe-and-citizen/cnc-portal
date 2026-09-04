@@ -74,4 +74,37 @@ describe('journalLedgerPresenter', () => {
     expect(byCurrency.map((entry) => entry.id)).toEqual(['operation-b'])
     expect(journalLedgerRows(byCurrency)).toHaveLength(2)
   })
+
+  it('does not name individual lenders on one multi-lender credit repayment transaction', () => {
+    const txHash = `0x${'b'.repeat(64)}`
+    const journal = buildJournal([
+      posting({
+        id: `${txHash}-8`,
+        useCase: 'UC-CREDIT-03',
+        debit: 'Loan Payable',
+        credit: 'Cash — Bank',
+        amountUsd: 2,
+        rawAmount: '2000000',
+        counterparty: '0x4444444444444444444444444444444444444444',
+        internal: false
+      }),
+      posting({
+        id: `${txHash}-9`,
+        useCase: 'UC-CREDIT-03',
+        debit: 'Loan Payable',
+        credit: 'Cash — Bank',
+        amountUsd: 2,
+        rawAmount: '2000000',
+        counterparty: '0x5555555555555555555555555555555555555555',
+        internal: false
+      })
+    ])
+
+    const rows = journalLedgerRows(journal)
+    const [first] = rows
+
+    expect(journal).toHaveLength(1)
+    expect(first?.activity).toEqual({ kind: 'plain', text: 'Credit repayment' })
+    expect(rows.map((row) => row.txHash)).toEqual([txHash, undefined])
+  })
 })

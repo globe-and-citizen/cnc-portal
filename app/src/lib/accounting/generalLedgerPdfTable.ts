@@ -39,6 +39,7 @@ const PDF_CELL: Record<
   date: { align: 'left', pick: (row) => row.date },
   action: { align: 'left', pick: (row) => row.category },
   transaction: { align: 'left', pick: (row) => row.label },
+  txHash: { align: 'left', pick: (row) => row.txHash ?? '' },
   activity: { align: 'left', pick: (row, resolveName) => activityText(row.activity, resolveName) },
   account: { align: 'left', pick: (row) => row.accountLabel ?? row.account },
   dr: { align: 'right', pick: (row) => row.dr },

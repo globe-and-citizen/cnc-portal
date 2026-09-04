@@ -175,6 +175,7 @@ export function journalLedgerRows(entries: readonly JournalEntry[]): LedgerRow[]
         isFirst,
         date: isFirst ? formatUnixDateTime(entry.timestamp) : '',
         label: isFirst ? entryLabel(source) : '',
+        ...(isFirst && entry.txHash ? { txHash: entry.txHash } : {}),
         activity: isFirst ? activityOf(source) : NO_ACTIVITY,
         ...(isFirst ? { destination: activityDestinationOf(source) } : {}),
         category: isFirst ? categoryLabelOf(source) : '',

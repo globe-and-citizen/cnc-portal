@@ -33,6 +33,17 @@
       <span v-else-if="row.isFirst" class="text-sm font-semibold">{{ row.label }}</span>
     </template>
 
+    <template #txHash-cell="{ row: { original: row } }">
+      <span
+        v-if="row.isFirst && !row.isTotal"
+        class="text-muted font-mono text-xs whitespace-nowrap"
+        :title="row.txHash || undefined"
+        data-test="ledger-tx-hash"
+      >
+        {{ row.txHash ? formatTxHash(row.txHash) : '—' }}
+      </span>
+    </template>
+
     <template #activity-cell="{ row: { original: row } }">
       <LedgerActivityCell
         v-if="!row.isTotal && (row.isFirst || activityHasContent(row.activity))"
@@ -143,6 +154,7 @@ import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import LedgerActivityCell from './LedgerActivityCell.vue'
 import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
+import { formatTxHash } from '@/utils/format'
 import {
   LEDGER_COLUMNS,
   type LedgerRow,
@@ -219,6 +231,7 @@ const COLUMN_DEFS: Record<LedgerColumnKey, TableColumn<LedgerTableRow>> = {
   date: { accessorKey: 'date', header: 'Date' },
   action: { id: 'action', header: 'Action' },
   transaction: { id: 'transaction', header: 'Transaction' },
+  txHash: { accessorKey: 'txHash', header: 'Tx hash' },
   activity: { id: 'activity', header: 'Activity' },
   account: { accessorKey: 'account', header: 'Account' },
   dr: { accessorKey: 'dr', header: 'Debit' },

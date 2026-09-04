@@ -22,7 +22,7 @@ import {
   type AccountRegistry,
   type Account
 } from './accountRegistry'
-import type { LedgerEntry } from './ledgerEntry'
+import { sourceOperationIdOf, transactionHashOf, type LedgerEntry } from './ledgerEntry'
 import {
   createJournalEntry,
   creditOf,
@@ -116,7 +116,8 @@ function mergedLines(
 /** Adapt one source operation's consolidated postings at the validated journal boundary. */
 function journalEntryFromLedgerEntries(
   entries: readonly LedgerEntry[],
-  accounts: AccountRegistry
+  accounts: AccountRegistry,
+  operationId: string
 ): JournalEntry {
   const ordered = entries
     .slice()
@@ -124,17 +125,22 @@ function journalEntryFromLedgerEntries(
   const primary = ordered.find((entry) => !isBankFeePosting(entry)) ?? ordered[0]!
   const lineEntries = [primary, ...ordered.filter((entry) => entry !== primary)]
   const monetary = ordered.some((entry) => entry.debit !== null || entry.credit !== null)
+  const counterparties = new Set(
+    ordered.flatMap((entry) => (entry.counterparty ? [entry.counterparty.toLowerCase()] : []))
+  )
+  const source = counterparties.size > 1 ? { ...primary, counterparty: undefined } : primary
+  const txHash = ordered.find((entry) => entry.txHash)?.txHash ?? transactionHashOf(operationId)
   return createJournalEntry({
-    id: primary.sourceOperationId ?? primary.id,
-    sourceOperationId: primary.sourceOperationId ?? primary.id,
+    id: operationId,
+    sourceOperationId: operationId,
     timestamp: ordered[0]!.timestamp,
     useCase: primary.useCase,
     memo: primary.memo,
     internal: ordered.every((entry) => entry.internal),
     kind: monetary ? 'monetary' : 'memo',
     ...(primary.category ? { category: primary.category } : {}),
-    ...(primary.txHash ? { txHash: primary.txHash } : {}),
-    source: primary,
+    ...(txHash ? { txHash } : {}),
+    source,
     lines: monetary ? mergedLines(lineEntries, accounts) : []
   })
 }
@@ -148,13 +154,15 @@ export function buildJournal(
   const accountRegistry = accounts ?? buildAccountRegistry(reconciled.entries)
   const byOperation = new Map<string, LedgerEntry[]>()
   for (const entry of reconciled.entries) {
-    const operationId = entry.sourceOperationId ?? entry.id
+    const operationId = sourceOperationIdOf(entry.txHash ?? entry.sourceOperationId ?? entry.id)
     const group = byOperation.get(operationId)
     if (group) group.push(entry)
     else byOperation.set(operationId, [entry])
   }
-  return [...byOperation.values()]
-    .map((group) => journalEntryFromLedgerEntries(group, accountRegistry))
+  return [...byOperation.entries()]
+    .map(([operationId, group]) =>
+      journalEntryFromLedgerEntries(group, accountRegistry, operationId)
+    )
     .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
 }
 

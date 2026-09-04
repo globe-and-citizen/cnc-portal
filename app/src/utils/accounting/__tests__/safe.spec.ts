@@ -32,6 +32,19 @@ describe('mapSafeTransfers', () => {
     expect(entry).toMatchObject({ useCase: 'UC-BANK-02', credit: 'Service Revenue' })
   })
 
+  it('propagates the transaction hash from an indexed Safe event', () => {
+    const txHash = `0x${'d'.repeat(64)}`
+    const [entry] = mapSafeTransfers(
+      {
+        safeAddress: ADDR.safe,
+        transfers: [{ ...base, id: `${txHash}-3`, from: ADDR.client, to: ADDR.safe }]
+      },
+      ctx
+    )
+
+    expect(entry).toMatchObject({ sourceOperationId: txHash, txHash })
+  })
+
   it('books a member inflow as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapSafeTransfers(
       {

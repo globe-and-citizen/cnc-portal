@@ -215,6 +215,7 @@ export function mapFixedReturnEvents(
         entries.push(
           makeEntry({
             id: event.id,
+            ...(event.sourceOperationId ? { sourceOperationId: event.sourceOperationId } : {}),
             timestamp: event.timestamp,
             useCase: 'UC-CREDIT-05',
             debit: INTEREST_EXPENSE,
