@@ -53,7 +53,7 @@ describe('useAccountingExport', () => {
   it('exports a PDF from a snapshot of the live books', async () => {
     await useAccountingExport().exportPdf(specs, { filename: 'ledger.pdf' })
     expect(buildTables).toHaveBeenCalledWith(
-      { entries, accountRegistry, journal, ...reports },
+      { entries, accountRegistry, journal, unmatchedFeeOperationIds: [], ...reports },
       specs,
       expect.any(Function)
     )
@@ -71,7 +71,7 @@ describe('useAccountingExport', () => {
   it('exports an Excel workbook and confirms with a custom message', async () => {
     await useAccountingExport().exportExcel(specs, 'ledger.xlsx', 'Ledger saved')
     expect(buildSheets).toHaveBeenCalledWith(
-      { entries, accountRegistry, journal, ...reports },
+      { entries, accountRegistry, journal, unmatchedFeeOperationIds: [], ...reports },
       specs,
       expect.any(Function)
     )
