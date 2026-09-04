@@ -1,5 +1,9 @@
 <template>
-  <UTable :data="tableRows" :columns="columns">
+  <UTable
+    :data="tableRows"
+    :columns="columns"
+    :column-sizing-options="{ enableColumnResizing: true, columnResizeMode: 'onChange' }"
+  >
     <template #date-cell="{ row: { original: row } }">
       <span
         v-if="row.isFirst && !row.isTotal"
@@ -33,9 +37,52 @@
       <span v-else-if="row.isFirst" class="text-sm font-semibold">{{ row.label }}</span>
     </template>
 
+    <template #txHash-header="{ header, table }">
+      <div class="relative flex items-center pr-2">
+        <span>Tx hash</span>
+        <span
+          v-if="header.column.getCanResize()"
+          role="separator"
+          aria-label="Resize transaction hash column"
+          aria-orientation="vertical"
+          :aria-valuenow="header.column.getSize()"
+          :aria-valuemin="TX_HASH_COLUMN_MIN_SIZE"
+          :aria-valuemax="TX_HASH_COLUMN_MAX_SIZE"
+          tabindex="0"
+          class="group focus-visible:ring-primary absolute inset-y-0 right-0 w-2 translate-x-1/2 cursor-col-resize touch-none outline-none focus-visible:ring-2"
+          data-test="ledger-tx-hash-resizer"
+          @dblclick="header.column.resetSize()"
+          @keydown.left.prevent="resizeColumn(table, header.column, -TX_HASH_COLUMN_KEYBOARD_STEP)"
+          @keydown.right.prevent="resizeColumn(table, header.column, TX_HASH_COLUMN_KEYBOARD_STEP)"
+          @mousedown.stop.prevent="header.getResizeHandler()($event)"
+          @touchstart.stop.prevent="header.getResizeHandler()($event)"
+        >
+          <span
+            class="bg-default/50 group-hover:bg-primary group-focus-visible:bg-primary absolute inset-y-1 left-1/2 w-px -translate-x-1/2"
+          />
+        </span>
+      </div>
+    </template>
+
     <template #txHash-cell="{ row: { original: row } }">
+      <UTooltip
+        v-if="row.isFirst && !row.isTotal && row.txHash && transactionExplorerUrl(row.txHash)"
+        text="Open transaction in block explorer"
+      >
+        <a
+          class="text-muted hover:text-primary focus-visible:ring-primary rounded font-mono text-xs whitespace-nowrap underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:outline-none"
+          :href="transactionExplorerUrl(row.txHash)"
+          :title="row.txHash"
+          target="_blank"
+          rel="noopener noreferrer"
+          :aria-label="`Open transaction ${row.txHash} in block explorer`"
+          data-test="ledger-tx-hash"
+        >
+          {{ formatTxHash(row.txHash) }}
+        </a>
+      </UTooltip>
       <span
-        v-if="row.isFirst && !row.isTotal"
+        v-else-if="row.isFirst && !row.isTotal"
         class="text-muted font-mono text-xs whitespace-nowrap"
         :title="row.txHash || undefined"
         data-test="ledger-tx-hash"
@@ -151,9 +198,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { Column, Table } from '@tanstack/vue-table'
 import type { TableColumn } from '@nuxt/ui'
 import LedgerActivityCell from './LedgerActivityCell.vue'
 import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
+import { NETWORK } from '@/constant'
 import { formatTxHash } from '@/utils/format'
 import {
   LEDGER_COLUMNS,
@@ -190,6 +239,11 @@ type LedgerTableRow = LedgerRow & { isTotal: boolean }
 // (CATEGORY_BADGE in ledgerPresenter). A static string so Tailwind keeps it.
 const FEE_BADGE = 'bg-warning/10 text-warning'
 
+const TX_HASH_COLUMN_SIZE = 180
+const TX_HASH_COLUMN_MIN_SIZE = 140
+const TX_HASH_COLUMN_MAX_SIZE = 480
+const TX_HASH_COLUMN_KEYBOARD_STEP = 24
+
 // "Where did this happen?" — resolved once for the table, so each Activity cell
 // only has to say whether it is clickable.
 const { routeFor, open } = useActivityDestination()
@@ -202,6 +256,32 @@ const { routeFor, open } = useActivityDestination()
  */
 function activityHasContent(activity: LedgerRow['activity']): boolean {
   return activity.kind !== 'plain' || activity.text.trim() !== ''
+}
+
+function transactionExplorerUrl(txHash: string): string | undefined {
+  if (!NETWORK.blockExplorerUrl) return undefined
+  return `${NETWORK.blockExplorerUrl.replace(/\/$/, '')}/tx/${txHash}`
+}
+
+function resizeColumn(
+  table: Table<LedgerTableRow>,
+  column: Column<LedgerTableRow, unknown>,
+  delta: number
+): void {
+  const minimum = column.columnDef.minSize ?? TX_HASH_COLUMN_MIN_SIZE
+  const maximum = column.columnDef.maxSize ?? TX_HASH_COLUMN_MAX_SIZE
+  const nextSize = Math.min(maximum, Math.max(minimum, column.getSize() + delta))
+
+  table.setColumnSizing((sizes) => ({ ...sizes, [column.id]: nextSize }))
+}
+
+function txHashColumnStyle(column: { getSize: () => number }): Record<string, string> {
+  const width = `${column.getSize()}px`
+  return {
+    width,
+    minWidth: `${TX_HASH_COLUMN_MIN_SIZE}px`,
+    maxWidth: `${TX_HASH_COLUMN_MAX_SIZE}px`
+  }
 }
 
 const tableRows = computed<LedgerTableRow[]>(() => [
@@ -231,7 +311,20 @@ const COLUMN_DEFS: Record<LedgerColumnKey, TableColumn<LedgerTableRow>> = {
   date: { accessorKey: 'date', header: 'Date' },
   action: { id: 'action', header: 'Action' },
   transaction: { id: 'transaction', header: 'Transaction' },
-  txHash: { accessorKey: 'txHash', header: 'Tx hash' },
+  txHash: {
+    accessorKey: 'txHash',
+    header: 'Tx hash',
+    size: TX_HASH_COLUMN_SIZE,
+    minSize: TX_HASH_COLUMN_MIN_SIZE,
+    maxSize: TX_HASH_COLUMN_MAX_SIZE,
+    enableResizing: true,
+    meta: {
+      style: {
+        th: (header) => txHashColumnStyle(header.column),
+        td: (cell) => txHashColumnStyle(cell.column)
+      }
+    }
+  },
   activity: { id: 'activity', header: 'Activity' },
   account: { accessorKey: 'account', header: 'Account' },
   dr: { accessorKey: 'dr', header: 'Debit' },

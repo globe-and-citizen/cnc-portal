@@ -6,8 +6,9 @@
  * the numbered name, flags the later deployment, and carries the contract with the
  * account when the row is clicked through to the trial balance.
  */
-import { describe, it, expect } from 'vitest'
+import { afterEach, beforeEach, describe, it, expect } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
+import { NETWORK } from '@/constant'
 import { renderWithProviders } from '@/tests/mocks'
 import LedgerTable from '../LedgerTable.vue'
 import { ledgerRows, buildPocketInstances } from '@/utils/accounting/ledgerPresenter'
@@ -16,6 +17,17 @@ import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 const BANK_1 = '0x1111111111111111111111111111111111111111'
 const BANK_2 = '0x2222222222222222222222222222222222222222'
 const TX_HASH = `0x${'a'.repeat(64)}`
+const EXPLORER_URL = 'https://explorer.example'
+let originalExplorerUrl: string | null | undefined
+
+beforeEach(() => {
+  originalExplorerUrl = NETWORK.blockExplorerUrl
+  NETWORK.blockExplorerUrl = EXPLORER_URL
+})
+
+afterEach(() => {
+  NETWORK.blockExplorerUrl = originalExplorerUrl
+})
 
 /** A deposit into one Bank contract — two of them make a redeployed pocket. */
 function deposit(id: string, instance: string, timestamp: number, txHash?: string): LedgerEntry {
@@ -80,7 +92,7 @@ describe('General ledger — redeployed pocket', () => {
     expect(wrapper.find('[data-test^="ledger-redeploy-hint-"]').exists()).toBe(false)
   })
 
-  it('shows each transaction hash once with its full value available on hover', async () => {
+  it('links each transaction hash once to the configured explorer, while leaving synthetic entries plain', async () => {
     const wrapper = renderLedger([
       deposit('a', BANK_1, 1_700_000_000, TX_HASH),
       deposit('synthetic', BANK_1, 1_700_086_400)
@@ -91,6 +103,32 @@ describe('General ledger — redeployed pocket', () => {
     expect(hashes).toHaveLength(2)
     expect(hashes[0]!.text()).toBe('0xaaaa...aaaa')
     expect(hashes[0]!.attributes('title')).toBe(TX_HASH)
+    expect(hashes[0]!.attributes('href')).toBe(`${EXPLORER_URL}/tx/${TX_HASH}`)
+    expect(hashes[0]!.attributes('target')).toBe('_blank')
+    expect(hashes[0]!.attributes('rel')).toBe('noopener noreferrer')
     expect(hashes[1]!.text()).toBe('—')
+    expect(hashes[1]!.attributes('href')).toBeUndefined()
+  })
+
+  it('resizes the transaction-hash column with pointer and keyboard controls', async () => {
+    const wrapper = renderLedger([deposit('a', BANK_1, 1_700_000_000, TX_HASH)])
+    await flushPromises()
+
+    const resizer = wrapper.find('[data-test="ledger-tx-hash-resizer"]')
+    expect(resizer.attributes('role')).toBe('separator')
+    expect(resizer.attributes('aria-valuemin')).toBe('140')
+    expect(resizer.attributes('aria-valuemax')).toBe('480')
+
+    await resizer.trigger('mousedown', { clientX: 100 })
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 160 }))
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 160 }))
+    await flushPromises()
+
+    const txHashHeader = wrapper.findAll('th').find((header) => header.text().includes('Tx hash'))
+    expect(txHashHeader?.attributes('style')).toContain('width: 240px')
+
+    await resizer.trigger('keydown', { key: 'ArrowLeft' })
+    await flushPromises()
+    expect(txHashHeader?.attributes('style')).toContain('width: 216px')
   })
 })
