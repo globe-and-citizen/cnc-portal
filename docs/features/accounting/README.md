@@ -11,7 +11,8 @@ These acceptance criteria follow the
 
 - Accounting presents one consolidated set of double-entry books for the company across its money-moving contracts and relevant portal
   records.
-- The general ledger is the source for the summary, income statement, balance sheet, and trial balance.
+- The General Ledger and Trial Balance project the validated `JournalEntry` collection. The summary, income statement, balance sheet, and
+  account drill-downs remain transitional `LedgerEntry` projections.
 - Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
@@ -21,9 +22,10 @@ These acceptance criteria follow the
 - **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter, Vesting — the
   contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
-  booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; each company books CNC usage fees as
-  an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** books the **whole award when
-  the schedule is defined** and issues it as shares are released (a restricted-stock grant, off the income statement — see catalogue §5.6).
+  booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; a Bank protocol fee is a
+  `Transaction Fee Expense` in the company's books; **share vesting** books the **whole award when the schedule is defined** and issues it
+  as shares are released (a restricted-stock grant, off the income statement). The precise use-case templates and verified current gaps are
+  in the [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
 - **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a company owner can **manually classify** each
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
@@ -52,7 +54,7 @@ flowchart LR
 | User Story  | Title                                      | Actor          | Status         |
 | ----------- | ------------------------------------------ | -------------- | -------------- |
 | US-ACCT-001 | Review the consolidated accounting summary | Company member | 🚧 In Progress |
-| US-ACCT-002 | Explore the general ledger                 | Company member | 🧪 Validation  |
+| US-ACCT-002 | Explore the general ledger                 | Company member | 🚧 In Progress |
 | US-ACCT-003 | Review the financial statements            | Company member | 🧪 Validation  |
 | US-ACCT-004 | Export accounting reports                  | Company member | 🧪 Validation  |
 | US-ACCT-005 | Preserve books across contract migrations  | Company member | 🚧 In Progress |
@@ -110,11 +112,11 @@ flowchart LR
 - [x] Pagination does not change the totals for the complete filtered ledger.
 - [x] Filtering the ledger by account or currency keeps whole `JournalEntry` records, so each shown entry still carries every debit and
       credit line.
-- [x] The General Ledger has no `Fee` pseudo-category. A protocol fee is an ordinary `Transaction Fee Expense` line in the same
-      `JournalEntry` as the source operation's other movements.
-- [x] One source operation produces one `JournalEntry`; compound transactions retain all debit and credit legs under that entry.
-- [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
-      community-credit round — is shown as a single ledger entry with every recipient's debit or credit line and one credit for the total.
+- [x] The General Ledger has no `Fee` pseudo-category. A Bank transfer and its protocol fee in the same transaction form one complete
+      `JournalEntry`, with an ordinary `Transaction Fee Expense` line.
+- [ ] Every economic operation that produces several source events is represented by one complete `JournalEntry`.
+- [ ] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
+      community-credit round — is shown as one ledger entry with every recipient's debit or credit line and one credit for the total.
 - [x] Protocol fees remain identifiable as expenses rather than neutral transfers.
 - [x] One on-chain event is not counted more than once in the consolidated ledger.
 
@@ -173,7 +175,8 @@ flowchart LR
 
 #### Business Rules
 
-- [x] A ledger export applies the selected category, period, currencies, and columns.
+- [x] A General Ledger export applies the selected concrete accounts, period, currencies, and columns while retaining complete journal
+      entries.
 - [x] A statement export applies the same period or as-of date as the reviewed statement.
 - [x] An export is generated from one snapshot of the current accounting books.
 
@@ -259,6 +262,8 @@ flowchart LR
 - Off-platform activity without a connected data source is absent from the automated books.
 - Bank classifications currently rely on address-based inference, so an owner cannot record an off-chain client payment or their own client
   payment as Service Revenue (`US-ACCT-006`).
+- Some compound operations do not yet propagate one shared source-operation identity, so the General Ledger can display their related
+  postings as separate journal entries (`US-ACCT-002`).
 
 ## Implementation Evidence
 
@@ -310,6 +315,7 @@ flowchart LR
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Accounting Read Model](../../implementation/accounting-read-model/README.md)
+- [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md)
 - [Money Flow Catalogue](./money-flow-catalogue.md)
 - [Share Vesting Accounting — Restricted-Stock grant](./vesting-accounting-restricted-stock.md)
 - [Accounting Specification and Scope](./cnc-accounting-spec.md)

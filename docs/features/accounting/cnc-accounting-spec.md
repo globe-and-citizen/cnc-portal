@@ -4,7 +4,7 @@ This document defines the **scope** and **spec** for CNC accounting: treating th
 (general ledger → income statement → balance sheet) from data **already available** on-chain and in the portal, reusing the Sprint 15
 pipeline. The shared `FeeCollector` is the CNC protocol's global treasury: each team pays a usage fee into it when using CNC services.
 
-It builds on the [money-flow catalogue](./money-flow-catalogue.md), which establishes the chart of accounts and the use-case → journal-entry
+It builds on the [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md), which establishes the current use-case → journal-entry
 mapping. This spec answers the next question: **which concrete data sources we already have feed those entries, and what is still missing.**
 
 ---
@@ -67,10 +67,10 @@ Concretely, the existing `buildLedger` / `LedgerEntry` / `AccountingSummary` mod
 `AccountingIncomeStatement`, `AccountingBalanceSheet`) are the target rendering layer. Phase 1 work is to:
 
 1. Add **CNC feeds** (contract events + the portal DB rows) alongside the existing transfer proxy.
-2. Replace the Polymarket `LedgerCategory` set with the CNC **use-case categories** from the money-flow catalogue (`UC-BANK-01…`,
+2. Replace the Polymarket `LedgerCategory` set with the CNC **use-case categories** from the Journal Entry Catalogue (`UC-BANK-01…`,
    `UC-CASH-02/03`, `UC-EXP-01`, `UC-INV-01`, `UC-SDR-01`, team funding moves, and cross-entity fee payments).
-3. Map each entry to its **debit/credit accounts** per [catalogue §5](./money-flow-catalogue.md) and let the existing trial-balance / IS /
-   BS components roll them up.
+3. Map each entry to its **debit/credit accounts** per the [Journal Entry Catalogue](./journal-entry-catalogue.md) and let the existing
+   trial-balance / IS / BS components roll them up.
 
 ---
 
@@ -97,8 +97,8 @@ Contract addresses come from `app/src/artifacts/deployed_addresses/` and the `Te
 
 > The `**Minted` event** alone is ambiguous (capital raise vs. wage-in-shares vs. direct mint) — it must be correlated with `Deposited`
 > (SafeDepositRouter) or `WithdrawToken` (CashRemuneration) to pick the right journal entry, per
-> [catalogue §5.4](./money-flow-catalogue.md). A `Minted` with neither is **Default D** — a direct mint booked **Dr SHERS To Be Issued · Cr
-> Investor Equity\*\* at the SHER rate.
+> [Journal Entry Catalogue](./journal-entry-catalogue.md#sher-issuance-and-vesting). A `Minted` with neither is **Default D** — a direct
+> mint booked **Dr SHERS To Be Issued · Cr Investor Equity\*\* at the SHER rate.
 
 ### 3.2 Portal database (accrual + classification context)
 
