@@ -369,7 +369,7 @@ have no current mapper. They are intentionally excluded from this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `04bc90ca5cb88353c82ac20116ea084d1857a15d`
+**Implementation evidence reviewed against:** `0c9c9fa6b657fa6abe741d44fd62f9f1cda5805a`
 
 - [Use-case identifiers and source-operation identity](../../../app/src/utils/accounting/ledgerEntry.ts)
 - [Journal assembly](../../../app/src/utils/accounting/generalLedger.ts) and
