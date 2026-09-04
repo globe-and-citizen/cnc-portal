@@ -213,7 +213,7 @@ the canonical journal feed.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `946be19c0e452104d58f598a9679dde59007d299`
+**Implementation evidence reviewed against:** `b7433b77fdb304ea27800d704590f1329948e871`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)

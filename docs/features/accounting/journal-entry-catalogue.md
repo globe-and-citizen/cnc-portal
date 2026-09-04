@@ -360,7 +360,7 @@ have no current mapper. They are intentionally excluded from this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `965526c616447dad64398d3791b47096f73b21e2`
+**Implementation evidence reviewed against:** `b7433b77fdb304ea27800d704590f1329948e871`
 
 - [Use-case identifiers and source-operation identity](../../../app/src/utils/accounting/ledgerEntry.ts)
 - [Journal assembly](../../../app/src/utils/accounting/generalLedger.ts) and
