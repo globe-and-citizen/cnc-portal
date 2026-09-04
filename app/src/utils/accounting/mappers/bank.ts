@@ -4,8 +4,7 @@
  * Coverage (spec §4):
  * - `Deposited` / `TokenDeposited` (cash in):
  *   - from an internal pocket → **internal funding move** (Dr Cash — Bank · Cr that pocket)
- *   - from a founder           → **UC-BANK-01** (Dr Cash — Bank · Cr Owner Capital)
- *   - from anyone else (client)→ **UC-BANK-02** (Dr Cash — Bank · Cr Service Revenue)
+ *   - from anyone external     → **UC-BANK-02** (Dr Cash — Bank · Cr Service Revenue)
  * - `Transfer` / `TokenTransfer` (cash out):
  *   - to an internal pocket → **UC-BANK-03** funding move (Dr that pocket · Cr Cash — Bank)
  *   - to anyone else        → unclassified outflow, flagged `needs-off-chain-data`
@@ -48,7 +47,6 @@ function mapDeposit(
 ): LedgerEntry {
   const amountUsd = ctx.toUsd(BigInt(row.amount), ctx.tokenIdOf(token), atDate(row.timestamp))
   const sourcePocket = ctx.pocketOf(row.depositor)
-  const isFounder = ctx.founderAddresses.has(row.depositor as `0x${string}`)
 
   const inferred = sourcePocket
     ? makeEntry({
@@ -69,15 +67,15 @@ function mapDeposit(
     : makeEntry({
         id: row.id,
         timestamp: row.timestamp,
-        useCase: isFounder ? 'UC-BANK-01' : 'UC-BANK-02',
+        useCase: 'UC-BANK-02',
         debit: BANK,
         debitInstance: row.contractAddress,
-        credit: isFounder ? 'Owner Capital' : 'Service Revenue',
+        credit: 'Service Revenue',
         amountUsd,
         token: ctx.tokenIdOf(token),
         rawAmount: row.amount,
         counterparty: row.depositor,
-        memo: isFounder ? 'Founder deposit into Bank' : 'Client payment into Bank'
+        memo: 'Direct deposit into Bank'
       })
 
   return applyClassification(inferred, 'in', BANK, ctx)

@@ -5,7 +5,7 @@ import { makeCtx, ADDR } from './fixtures'
 const ctx = makeCtx()
 
 describe('mapBankEvents', () => {
-  it('books a founder native deposit as UC-BANK-01 (Owner Capital)', () => {
+  it('books a founder native deposit as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapBankEvents(
       {
         deposits: [
@@ -21,16 +21,16 @@ describe('mapBankEvents', () => {
       ctx
     )
     expect(entry).toMatchObject({
-      useCase: 'UC-BANK-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
-      credit: 'Owner Capital',
+      credit: 'Service Revenue',
       amountUsd: 2, // 1 native * $2
       token: 'native',
       internal: false
     })
   })
 
-  it('books a non-founder (client) deposit as UC-BANK-02 (Service Revenue)', () => {
+  it('books a client token deposit as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapBankEvents(
       {
         tokenDeposits: [

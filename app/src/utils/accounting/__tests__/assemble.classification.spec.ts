@@ -24,7 +24,6 @@ const RATE: UsdRateOfRecord = (tokenId) => (tokenId === 'native' ? 2 : tokenId =
 const BASE: CncAccountingInput = {
   contracts: CONTRACTS,
   safeAddress: ADDR.safe,
-  founderAddresses: [ADDR.founder],
   feeCollectorAddress: ADDR.feeCollector,
   rateOfRecord: RATE
 }

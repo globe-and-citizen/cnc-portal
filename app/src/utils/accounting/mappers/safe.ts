@@ -6,8 +6,7 @@
  *
  * - **Inflow** (to the Safe):
  *   - from an internal pocket → internal move (Dr Cash — Safe · Cr that pocket)
- *   - from a founder          → UC-BANK-01 (Dr Cash — Safe · Cr Owner Capital)
- *   - from anyone else        → UC-BANK-02 (Dr Cash — Safe · Cr Service Revenue)
+ *   - from anyone external    → UC-BANK-02 (Dr Cash — Safe · Cr Service Revenue)
  * - **Outflow** (from the Safe):
  *   - to an internal pocket → internal move (Dr that pocket · Cr Cash — Safe)
  *   - to anyone else        → unclassified outflow, flagged `needs-off-chain-data`
@@ -69,33 +68,11 @@ function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: stri
       memo: `Internal funding into Safe from ${sourcePocket}`
     })
   }
-  if (ctx.founderAddresses.has(row.from as `0x${string}`)) {
-    return makeEntry({
-      ...base,
-      useCase: 'UC-BANK-01',
-      credit: 'Owner Capital',
-      memo: 'Founder deposit into Safe'
-    })
-  }
-  // A team member funding the Safe is investing in the company (invest & get
-  // SHER) → a capital contribution to Investor Equity, not client revenue. The
-  // SHER count lives on the SafeDepositRouter event (UC-SDR-01); when that feed is
-  // present the matching Safe inflow is excluded upstream and this branch is moot.
-  if (ctx.memberAddresses.has(row.from as `0x${string}`)) {
-    return makeEntry({
-      ...base,
-      useCase: 'UC-MEMBER-01',
-      credit: 'Investor Equity',
-      // SHER received = USD invested × router multiplier (no router event here).
-      shares: ctx.sherForUsd(base.amountUsd, atDate(row.timestamp)),
-      memo: 'Member capital contribution into Safe'
-    })
-  }
   return makeEntry({
     ...base,
     useCase: 'UC-BANK-02',
     credit: 'Service Revenue',
-    memo: 'Client payment into Safe'
+    memo: 'Direct deposit into Safe'
   })
 }
 

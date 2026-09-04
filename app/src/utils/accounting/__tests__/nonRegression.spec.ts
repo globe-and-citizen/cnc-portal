@@ -44,7 +44,6 @@ function sampleInput(): CncAccountingInput {
   return {
     contracts: [contract('Bank', ADDR.bank)],
     feeCollectorAddress: ADDR.feeCollector,
-    founderAddresses: [ADDR.founder],
     rateOfRecord,
     bankEvents: bankEvents({
       // 100 POL founder deposit → Owner Capital

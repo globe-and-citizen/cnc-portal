@@ -16,7 +16,6 @@ const TX = '0xdeadbeef00000000000000000000000000000000000000000000000000000001'
 // Two Bank deployments + a payroll pocket, so a transfer out of BANK_A carries a
 // fee skimmed from BANK_A — the PDF's "Bank transferred money to Payroll" case.
 const ctx = makeCtx({
-  founderAddresses: new Set([FOUNDER as `0x${string}`]),
   pocketOf: (address) => {
     const a = address?.toLowerCase()
     if (a === BANK_A || a === BANK_B) return 'Cash — Bank' as AccountName

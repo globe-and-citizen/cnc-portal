@@ -55,8 +55,6 @@ import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 const EVENT_LIMIT = 500
 
 export interface UseCNCAccountingOptions {
-  /** Override the founder set (defaults to the team's `ownerAddress`). */
-  founderAddresses?: MaybeRefOrGetter<Iterable<Address | string> | undefined>
   /** FX resolver for native / SHER (defaults to the Phase-1 zero-rate gap). */
   rateOfRecord?: UsdRateOfRecord
   /** On-chain SHER token address, so SHER amounts resolve to the `sher` token. */
@@ -257,19 +255,6 @@ export function useCNCAccounting(
     queryParams: { limit: EVENT_LIMIT }
   })
 
-  const founderAddresses = computed<Iterable<Address | string>>(() => {
-    const override = toValue(options.founderAddresses)
-    if (override) return override
-    const owner = team.data.value?.ownerAddress
-    return owner ? [owner] : []
-  })
-
-  // Team members — a member funding the Safe is investing in the company (invest
-  // & get SHER → Investor Equity), not a client paying for services.
-  const memberAddresses = computed<Iterable<Address | string>>(
-    () => team.data.value?.members?.map((m) => m.address) ?? []
-  )
-
   // Live-price fallback: the caller's resolver, else the app's live prices from
   // the currency store (CoinGecko). Used only while a day's historical price is
   // in flight — the timestamped rate below is the actual rate of record.
@@ -282,8 +267,6 @@ export function useCNCAccounting(
   const baseInput = computed<CncAccountingInput>(() => ({
     contracts: allContracts.value,
     safeAddress: safeAddress.value,
-    founderAddresses: founderAddresses.value,
-    memberAddresses: memberAddresses.value,
     feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
     sherTokenAddress: options.sherTokenAddress ?? (investorAddress.value || null),
     safeDepositRouterAddress: routerAddress.value || null,

@@ -6,7 +6,7 @@ const ctx = makeCtx()
 const base = { token: null as string | null, amount: '1000000000000000000', timestamp: 100 }
 
 describe('mapSafeTransfers', () => {
-  it('books a founder inflow as UC-BANK-01 (Owner Capital)', () => {
+  it('books a founder inflow as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapSafeTransfers(
       {
         safeAddress: ADDR.safe,
@@ -15,9 +15,9 @@ describe('mapSafeTransfers', () => {
       ctx
     )
     expect(entry).toMatchObject({
-      useCase: 'UC-BANK-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Safe',
-      credit: 'Owner Capital'
+      credit: 'Service Revenue'
     })
   })
 
@@ -32,7 +32,7 @@ describe('mapSafeTransfers', () => {
     expect(entry).toMatchObject({ useCase: 'UC-BANK-02', credit: 'Service Revenue' })
   })
 
-  it('books a member inflow as UC-MEMBER-01 (Investor Equity — invest & get SHER)', () => {
+  it('books a member inflow as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapSafeTransfers(
       {
         safeAddress: ADDR.safe,
@@ -41,10 +41,9 @@ describe('mapSafeTransfers', () => {
       ctx
     )
     expect(entry).toMatchObject({
-      useCase: 'UC-MEMBER-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Safe',
-      credit: 'Investor Equity',
-      shares: 4 // $2 invested ÷ $0.50 per SHER (multiplier 2x)
+      credit: 'Service Revenue'
     })
   })
 
