@@ -10,9 +10,10 @@
  * - **Net**: Σ of the debit-normal account balances = Σ of the credit-normal
  *   balances (`debitBalanceTotal === creditBalanceTotal`) — 253 in the worked example.
  *
- * Each {@link LedgerEntry} is already a balanced posting, so a single entry maps
- * to two journal lines (one debit, one credit). Memo-only Default-D entries
- * (debit === credit === null) carry no lines — they record a share count only.
+ * The current consolidated {@link LedgerEntry} feed adapts into validated
+ * {@link JournalEntry} records here. A later migration will make those records
+ * the input to every report; this boundary already prevents the journal and
+ * trial-balance projection from consuming an invalid posting.
  */
 import {
   ACCOUNT_NAMES,
@@ -26,71 +27,181 @@ import { buildPocketInstances } from './pocketInstances'
 import type { Address } from 'viem'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 
-export interface JournalLine {
-  account: AccountName
-  /** The pocket contract instance holding this leg's cash, when known — what lets
-   *  the trial balance split a redeployed pocket (see {@link TrialBalanceRow}). */
-  instance?: Address
-  debit: number
-  credit: number
-}
+/** One ordered debit or credit line belonging to a {@link JournalEntry}. */
+export type JournalEntryLine =
+  | {
+      /** Stable within-entry line identity. */
+      id: string
+      account: AccountName
+      /** The pocket contract instance holding this leg's cash, when known. */
+      instance?: Address
+      debit: number
+      credit?: never
+    }
+  | {
+      /** Stable within-entry line identity. */
+      id: string
+      account: AccountName
+      /** The pocket contract instance holding this leg's cash, when known. */
+      instance?: Address
+      debit?: never
+      credit: number
+    }
 
 export interface JournalEntry {
-  /** Source ledger-entry id. */
+  /** Stable journal-entry identity. One source operation can produce several entries. */
   id: string
+  /** Stable identity of the source accounting operation behind this entry. */
+  sourceOperationId: string
   /** Event time, Unix seconds. */
   timestamp: number
+  /** The journal template the source operation realised. */
   useCase: UseCase
+  /** Human-readable narration. */
   memo: string
   /** True when both legs are CNC-owned pockets (internal move, no IS impact). */
   internal: boolean
+  /** Whether this entry carries monetary lines or only memo metadata. */
+  kind: 'monetary' | 'memo'
   /** Off-chain category, when enriched (e.g. "Payroll", "Operating"). */
   category?: string
   /** Transaction hash, when known. */
   txHash?: string
-  /** The balanced journal lines (empty for memo-only entries). */
-  lines: JournalLine[]
+  /** Ordered and validated journal lines; empty only when {@link kind} is `memo`. */
+  lines: JournalEntryLine[]
 }
 
-/**
- * The canonical double-entry **journal transaction** — the accounting read
- * model's single source of truth (issue #2678). A source event or an approved
- * manual classification maps once into one of these: a stable identity, a
- * timestamp, source metadata (use case, category, txHash), a narration (memo),
- * and its ordered {@link JournalLine} records. Every report — the general
- * ledger, the trial balance, the statements, account drill-downs, and the
- * exports — derives from these same lines and never reconstructs an alternative
- * debit or credit leg. Structurally identical to {@link JournalEntry}, which
- * this names in the issue's vocabulary.
- */
-export type JournalTransaction = JournalEntry
+/** One line's debit amount, or zero when it is a credit line. */
+function debitOf(line: JournalEntryLine): number {
+  return line.debit ?? 0
+}
 
-/**
- * Whether a journal transaction satisfies the **balance invariant**: its debit
- * and credit line totals are equal in the reporting currency, to the cent (spec
- * §2 point 2). A memo-only transaction (no monetary lines) is trivially balanced.
- * This is the per-transaction guarantee that makes the whole-book trial balance
- * balanced by construction — every report projects only balanced transactions.
- */
-export function isBalanced(transaction: JournalTransaction): boolean {
+/** One line's credit amount, or zero when it is a debit line. */
+function creditOf(line: JournalEntryLine): number {
+  return line.credit ?? 0
+}
+
+const BALANCE_TOLERANCE = 1e-9
+
+/** The domain error raised before a projection can consume an invalid entry. */
+class InvalidJournalEntryError extends Error {
+  constructor(entryId: string, reasons: readonly string[]) {
+    super(`Invalid journal entry "${entryId}": ${reasons.join('; ')}`)
+    this.name = 'InvalidJournalEntryError'
+  }
+}
+
+/** Whether a journal entry's debit and credit line totals match in reporting currency. */
+export function isBalanced(entry: JournalEntry): boolean {
+  if (entry.kind === 'memo') return entry.lines.length === 0
+
   let debit = 0
   let credit = 0
-  for (const line of transaction.lines) {
-    debit += line.debit
-    credit += line.credit
+  for (const line of entry.lines) {
+    debit += debitOf(line)
+    credit += creditOf(line)
   }
-  return Math.abs(debit - credit) < CENT
+  return Math.abs(debit - credit) < BALANCE_TOLERANCE
+}
+
+/** Validate the shape and balance invariant of one journal entry. */
+function journalEntryValidationErrors(entry: JournalEntry): string[] {
+  const errors: string[] = []
+  if (!entry.id.trim()) errors.push('entry id is required')
+  if (!entry.sourceOperationId.trim()) errors.push('source operation id is required')
+  if (!Number.isFinite(entry.timestamp)) errors.push('timestamp must be finite')
+  if (entry.kind !== 'monetary' && entry.kind !== 'memo') errors.push('entry kind is invalid')
+
+  if (entry.kind === 'memo') {
+    if (entry.lines.length !== 0) errors.push('memo entries cannot contain monetary lines')
+    return errors
+  }
+
+  if (entry.lines.length === 0) errors.push('monetary entries require journal lines')
+  const lineIds = new Set<string>()
+  let debitLines = 0
+  let creditLines = 0
+
+  for (const line of entry.lines) {
+    if (!line.id.trim()) errors.push('line id is required')
+    else if (lineIds.has(line.id)) errors.push(`duplicate line id "${line.id}"`)
+    else lineIds.add(line.id)
+    if (!line.account.trim()) errors.push(`line "${line.id}" account is required`)
+
+    const hasDebit = line.debit !== undefined
+    const hasCredit = line.credit !== undefined
+    if (hasDebit === hasCredit) {
+      errors.push(`line "${line.id}" must carry exactly one debit or credit amount`)
+      continue
+    }
+
+    const amount = line.debit ?? line.credit
+    if (amount === undefined || !Number.isFinite(amount) || amount < 0)
+      errors.push(`line "${line.id}" amount must be finite and non-negative`)
+    if (hasDebit) debitLines += 1
+    else creditLines += 1
+  }
+
+  if (debitLines === 0 || creditLines === 0)
+    errors.push('monetary entries require at least one debit and one credit line')
+  if (!isBalanced(entry)) errors.push('debit and credit totals must balance')
+  return errors
 }
 
 /**
- * The transactions in a journal that violate the {@link isBalanced} invariant —
- * empty for a well-formed book. What a validation pass asserts is empty before
- * trusting any report-specific projection over the journal.
+ * Construct a journal entry only when its structural and balance invariants hold.
+ * The returned copy owns its ordered lines, so callers cannot mutate a validated
+ * entry through the input array after construction.
  */
-export function unbalancedTransactions(
-  journal: readonly JournalTransaction[]
-): JournalTransaction[] {
-  return journal.filter((transaction) => !isBalanced(transaction))
+export function createJournalEntry(entry: JournalEntry): JournalEntry {
+  const validated: JournalEntry = {
+    ...entry,
+    lines: entry.lines.map((line) => ({ ...line }) as JournalEntryLine)
+  }
+  const errors = journalEntryValidationErrors(validated)
+  if (errors.length) throw new InvalidJournalEntryError(validated.id, errors)
+  return validated
+}
+
+/** Convert a current two-leg consolidated posting into its journal lines. */
+function linesOf(entry: LedgerEntry): JournalEntryLine[] {
+  const lines: JournalEntryLine[] = []
+  if (entry.debit)
+    lines.push({
+      id: `${entry.id}:debit`,
+      account: entry.debit,
+      ...(entry.debitInstance ? { instance: entry.debitInstance } : {}),
+      debit: entry.amountUsd
+    })
+  if (entry.credit)
+    lines.push({
+      id: `${entry.id}:credit`,
+      account: entry.credit,
+      ...(entry.creditInstance ? { instance: entry.creditInstance } : {}),
+      credit: entry.amountUsd
+    })
+  return lines
+}
+
+/** Adapt the current consolidated posting model at the validated journal boundary. */
+function journalEntryFromLedgerEntry(entry: LedgerEntry): JournalEntry {
+  return createJournalEntry({
+    id: entry.id,
+    sourceOperationId: entry.id,
+    timestamp: entry.timestamp,
+    useCase: entry.useCase,
+    memo: entry.memo,
+    internal: entry.internal,
+    kind: entry.debit === null && entry.credit === null ? 'memo' : 'monetary',
+    ...(entry.category ? { category: entry.category } : {}),
+    ...(entry.txHash ? { txHash: entry.txHash } : {}),
+    lines: linesOf(entry)
+  })
+}
+
+/** Build the validated journal entries (the ordered double-entry log). */
+export function buildJournal(entries: readonly LedgerEntry[]): JournalEntry[] {
+  return entries.map(journalEntryFromLedgerEntry).sort((a, b) => a.timestamp - b.timestamp)
 }
 
 export interface TrialBalanceRow {
@@ -184,42 +295,6 @@ export function netBalanceByAccountUnrounded(
   return net
 }
 
-/** Convert one balanced posting into its (up to two) journal lines. */
-function linesOf(entry: LedgerEntry): JournalLine[] {
-  const lines: JournalLine[] = []
-  if (entry.debit)
-    lines.push({
-      account: entry.debit,
-      ...(entry.debitInstance ? { instance: entry.debitInstance } : {}),
-      debit: entry.amountUsd,
-      credit: 0
-    })
-  if (entry.credit)
-    lines.push({
-      account: entry.credit,
-      ...(entry.creditInstance ? { instance: entry.creditInstance } : {}),
-      debit: 0,
-      credit: entry.amountUsd
-    })
-  return lines
-}
-
-/** Build the journal entries (the ordered double-entry log). */
-export function buildJournal(entries: readonly LedgerEntry[]): JournalEntry[] {
-  return entries
-    .map((entry) => ({
-      id: entry.id,
-      timestamp: entry.timestamp,
-      useCase: entry.useCase,
-      memo: entry.memo,
-      internal: entry.internal,
-      ...(entry.category ? { category: entry.category } : {}),
-      ...(entry.txHash ? { txHash: entry.txHash } : {}),
-      lines: linesOf(entry)
-    }))
-    .sort((a, b) => a.timestamp - b.timestamp)
-}
-
 /** One trial-balance roll-up bucket: an account, optionally scoped to a pocket instance. */
 interface AccountBucket {
   instance?: Address
@@ -257,8 +332,8 @@ function accumulateBuckets(journal: readonly JournalEntry[]): Map<AccountName, A
         }
         buckets.set(key, bucket)
       }
-      bucket.debit += line.debit
-      bucket.credit += line.credit
+      bucket.debit += debitOf(line)
+      bucket.credit += creditOf(line)
       if (entry.timestamp < bucket.firstTs) bucket.firstTs = entry.timestamp
     }
   }
