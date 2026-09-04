@@ -23,8 +23,9 @@ A Bank fee never creates a `JournalEntry` by itself. It is an additional debit l
 - `Transaction Fee Expense` receives the fee amount; and
 - `Cash — Bank` is credited with the gross amount.
 
-A `FeePaid` log without its fee-bearing Bank transfer is an incomplete source feed, not a fee-only accounting operation. It must be held for
-reconciliation or reported as incomplete; it must not appear in the General Ledger or an export as a standalone `JournalEntry`.
+A `FeePaid` log without its fee-bearing Bank outflow in the same source operation is incomplete source evidence, not a fee-only accounting
+operation. Accounting withholds it from the General Ledger and exports, and displays a reconciliation warning until the counterpart evidence
+is available.
 
 ## Cash, Capital, and Treasury Entries
 
@@ -352,15 +353,15 @@ Cash and SHER wage settlement, dividend distribution, credit repayment with prin
 to propagate the shared source-operation identity. Their complete examples above describe the required journal entries, but related postings
 can currently remain separate entries.
 
-The fee invariant is not yet enforced by the source mapper: a `FeePaid` log without a matching transfer can currently produce a standalone
-fee entry. This contradicts the rule in this catalogue and must be corrected before the Accounting source-operation migration can close.
+The source mapper validates the fee invariant before journal assembly: a `FeePaid` log without matching Bank-outflow evidence is withheld,
+never turned into a fee-only `JournalEntry`, and is exposed as incomplete evidence for reconciliation.
 
 Trading use cases (`UC-TRD-01` through `UC-TRD-03`) appear in the historical Money-Flow Catalogue but are not current `UseCase` values and
 have no current mapper. They are intentionally excluded from this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `965526c616447dad64398d3791b47096f73b21e2`
+**Implementation evidence reviewed against:** `434e665b886a9225a3d67a4189af3cf1fe41e6e5`
 
 - [Use-case identifiers and source-operation identity](../../../app/src/utils/accounting/ledgerEntry.ts)
 - [Journal assembly](../../../app/src/utils/accounting/generalLedger.ts) and
