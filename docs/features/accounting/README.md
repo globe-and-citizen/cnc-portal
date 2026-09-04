@@ -104,7 +104,8 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The ledger exposes each posting's date, activity, accounts, currency, quantity, rate, debit, and credit amounts.
+- [x] The ledger exposes each transaction-backed entry's hash, date, activity, accounts, currency, quantity, rate, debit, and credit
+      amounts; a synthetic entry has no transaction hash.
 - [x] A company member can filter entries by reporting period, available currencies, and one or more concrete accounts.
 - [x] A company member can inspect the entries and running balance for one account from a report line.
 - [x] Selecting an account on a ledger entry opens that account's transactions in the trial-balance drill-down.
@@ -115,6 +116,7 @@ flowchart LR
 - [x] Pagination does not change the totals for the complete filtered ledger.
 - [x] Filtering the ledger by account or currency keeps whole `JournalEntry` records, so each shown entry still carries every debit and
       credit line.
+- [x] The selected General Ledger export retains each transaction-backed entry's full transaction hash.
 - [x] The General Ledger has no `Fee` pseudo-category. A Bank transfer and its protocol fee in the same transaction form one complete
       `JournalEntry`, with an ordinary `Transaction Fee Expense` line.
 - [x] A protocol fee is never displayed or exported as a `JournalEntry` without the Bank outflow that caused it; unmatched fee evidence is
@@ -271,7 +273,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0c9c9fa6b657fa6abe741d44fd62f9f1cda5805a`
+**Implementation evidence reviewed against:** `1ed9ee571e404181c02f7cd7c91471055df06e72`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
