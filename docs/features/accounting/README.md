@@ -114,6 +114,7 @@ flowchart LR
       credit line.
 - [x] The General Ledger has no `Fee` pseudo-category. A Bank transfer and its protocol fee in the same transaction form one complete
       `JournalEntry`, with an ordinary `Transaction Fee Expense` line.
+- [ ] A protocol fee is never displayed or exported as a `JournalEntry` without the transfer that caused it.
 - [ ] Every economic operation that produces several source events is represented by one complete `JournalEntry`.
 - [ ] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
       community-credit round — is shown as one ledger entry with every recipient's debit or credit line and one credit for the total.
@@ -264,6 +265,8 @@ flowchart LR
   payment as Service Revenue (`US-ACCT-006`).
 - Some compound operations do not yet propagate one shared source-operation identity, so the General Ledger can display their related
   postings as separate journal entries (`US-ACCT-002`).
+- A `FeePaid` log without its transfer can currently produce a standalone fee entry, although a fee must be a line of its fee-bearing
+  operation (`US-ACCT-002`).
 
 ## Implementation Evidence
 
