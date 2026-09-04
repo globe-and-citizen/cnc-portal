@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
 import { makeCtx, ADDR, creditOffer, creditEvent } from './fixtures'
 
@@ -72,6 +73,35 @@ describe('mapFixedReturnEvents', () => {
       ['rp2-interest-unrecognised', 'Interest Expense', 1]
     ])
     repayments.forEach((e) => expect(e.credit).toBe('Cash — Bank'))
+  })
+
+  it('assembles one multi-lender repayment transaction into one JournalEntry', () => {
+    const txHash = `0x${'c'.repeat(64)}`
+    const entries = mapFixedReturnEvents(
+      {
+        lendingOfferCreateds: [offer()],
+        fundsLents: [lent('fl1', '2000000', 200), lent('fl2', '2000000', 200, ADDR.client)],
+        lendingOfferFundeds: [
+          { id: 'fd1', contractAddress: ADDR.credit, offerId: '1', timestamp: 200 }
+        ],
+        lenderRepaids: [
+          repaid(`${txHash}-8`, '2000000', 400),
+          repaid(`${txHash}-9`, '2000000', 400, ADDR.client)
+        ]
+      },
+      ctx
+    )
+
+    const repayment = buildJournal(entries).find((entry) => entry.id === txHash)
+
+    expect(repayment).toMatchObject({
+      sourceOperationId: txHash,
+      txHash,
+      lines: [
+        { account: { family: { name: 'Loan Payable' } }, debit: 4 },
+        { account: { family: { name: 'Cash — Bank' } }, credit: 4 }
+      ]
+    })
   })
 
   it('clears Loan Payable once the lender has been made whole', () => {

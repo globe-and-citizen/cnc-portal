@@ -91,7 +91,7 @@ function isBankOutflowPosting(entry: LedgerEntry): boolean {
 
 /** The shared source-operation identity used to form one JournalEntry. */
 function operationIdOf(entry: LedgerEntry): string {
-  return entry.sourceOperationId ?? sourceOperationIdOf(entry.id)
+  return sourceOperationIdOf(entry.txHash ?? entry.sourceOperationId ?? entry.id)
 }
 
 /**

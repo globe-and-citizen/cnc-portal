@@ -49,6 +49,43 @@ describe('accounting journal assembly', () => {
     expect(accounting.generalLedger.entries).toEqual(accounting.journal)
   })
 
+  it('groups every indexed event from one transaction into one JournalEntry', () => {
+    const txHash = `0x${'a'.repeat(64)}`
+    const counterparties = [
+      '0x1111111111111111111111111111111111111111',
+      '0x2222222222222222222222222222222222222222',
+      '0x3333333333333333333333333333333333333333',
+      '0x4444444444444444444444444444444444444444'
+    ]
+    const repayments = counterparties.map((counterparty, logIndex) =>
+      posting({
+        id: `${txHash}-${logIndex}`,
+        useCase: 'UC-CREDIT-03',
+        debit: 'Loan Payable',
+        credit: 'Cash — Bank',
+        amountUsd: 2,
+        rawAmount: '2000000',
+        counterparty,
+        internal: false,
+        memo: 'Principal repaid on Community Credit offer #1'
+      })
+    )
+
+    const accounting = assembleFromRawEntries(repayments)
+
+    expect(accounting.journal).toMatchObject([
+      {
+        id: txHash,
+        sourceOperationId: txHash,
+        txHash,
+        lines: [
+          { account: { family: { name: 'Loan Payable' } }, debit: 8 },
+          { account: { family: { name: 'Cash — Bank' } }, credit: 8 }
+        ]
+      }
+    ])
+  })
+
   it('withholds an orphan Bank fee at the JournalEntry boundary', () => {
     const sourceOperationId = 'bank-fee-without-outflow'
     const fee = posting({
