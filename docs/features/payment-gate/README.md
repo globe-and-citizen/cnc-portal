@@ -8,9 +8,6 @@
 These acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
 
-`US-PAYGATE-V0-*` identifiers are retained because the Sprint 18 validation script and related documentation already reference them. `v0`
-names the current, and so far only, delivery boundary of this capability — not a historical planning label superseded by a later version.
-
 ## Product Model
 
 - **CNC Pay** is an embeddable widget: a merchant — called **Layer8** in this document — drops one script tag on their own page so their
@@ -21,9 +18,9 @@ names the current, and so far only, delivery boundary of this capability — not
   [`factureCalldata.ts`](../../../app/src/utils/paymentGate/factureCalldata.ts)) and read back later to reconstruct history.
 - This version only supports **`depositToken()` targets** (USDC, USDCe). Native POL cannot carry a facture ID: `Bank.sol`'s `receive()`
   reverts on any non-empty calldata and has no `fallback()`, so the widget itself always refuses a native-token configuration (see
-  `US-PAYGATE-V0-003`).
+  `US-PAYGATE-003`).
 - **No backend exists for this capability.** Payment history is read directly from the Bank contract's deposit events (see
-  `US-PAYGATE-V0-004`); recalling a payment by facture ID (`US-PAYGATE-V0-005`) has no implemented mechanism yet, on-chain or off-chain.
+  `US-PAYGATE-004`); recalling a payment by facture ID (`US-PAYGATE-005`) has no implemented mechanism yet, on-chain or off-chain.
 
 ## Lifecycle
 
@@ -37,15 +34,15 @@ names the current, and so far only, delivery boundary of this capability — not
 
 ## Status Overview
 
-| User Story        | Title                                   | Actor           | Status        |
-| ----------------- | --------------------------------------- | --------------- | ------------- |
-| US-PAYGATE-V0-001 | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation |
-| US-PAYGATE-V0-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation |
-| US-PAYGATE-V0-003 | Pay Through the Widget                  | Layer8 customer | 🧪 Validation |
-| US-PAYGATE-V0-004 | Review Payment History                  | Merchant        | 🧪 Validation |
-| US-PAYGATE-V0-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft      |
+| User Story     | Title                                   | Actor           | Status        |
+| -------------- | --------------------------------------- | --------------- | ------------- |
+| US-PAYGATE-001 | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation |
+| US-PAYGATE-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation |
+| US-PAYGATE-003 | Pay Through the Widget                  | Layer8 customer | 🧪 Validation |
+| US-PAYGATE-004 | Review Payment History                  | Merchant        | 🧪 Validation |
+| US-PAYGATE-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft      |
 
-## US-PAYGATE-V0-001: Configure the Widget's Accepted Token
+## US-PAYGATE-001: Configure the Widget's Accepted Token
 
 **As a** merchant\
 **I want to** choose which token the widget accepts\
@@ -65,7 +62,7 @@ names the current, and so far only, delivery boundary of this capability — not
 
 **Dependencies:** none — this is the capability's entry point
 
-## US-PAYGATE-V0-002: Embed the Widget on the Merchant's Page
+## US-PAYGATE-002: Embed the Widget on the Merchant's Page
 
 **As a** merchant (Layer8)\
 **I want to** copy a ready-to-use script snippet carrying my company's Bank address and configured token\
@@ -90,9 +87,9 @@ names the current, and so far only, delivery boundary of this capability — not
 - [x] When the widget's script URL isn't configured for this deployment, the Setup page shows an explicit "unavailable" state instead of a
       snippet whose script tag would never actually load a widget.
 
-**Dependencies:** US-PAYGATE-V0-001 and a company with a deployed Bank contract
+**Dependencies:** US-PAYGATE-001 and a company with a deployed Bank contract
 
-## US-PAYGATE-V0-003: Pay Through the Widget
+## US-PAYGATE-003: Pay Through the Widget
 
 **As a** Layer8 customer\
 **I want to** pay directly from the embedded widget\
@@ -137,9 +134,9 @@ names the current, and so far only, delivery boundary of this capability — not
       an explicit "payment unavailable" message instead of a payment form built around bad data, and the merchant gets a console diagnostic
       naming exactly what's wrong.
 
-**Dependencies:** US-PAYGATE-V0-002, a connected wallet, and a sufficient token balance
+**Dependencies:** US-PAYGATE-002, a connected wallet, and a sufficient token balance
 
-## US-PAYGATE-V0-004: Review Payment History
+## US-PAYGATE-004: Review Payment History
 
 **As a** merchant\
 **I want to** see the payments made through the widget\
@@ -164,9 +161,9 @@ names the current, and so far only, delivery boundary of this capability — not
 - [x] An empty history is shown as an explicit empty state, not an empty table with no explanation.
 - [x] A failed history read is shown as an explicit error instead of a silently empty or stale table.
 
-**Dependencies:** US-PAYGATE-V0-003
+**Dependencies:** US-PAYGATE-003
 
-## US-PAYGATE-V0-005: Recall a Payment's Status by Facture ID
+## US-PAYGATE-005: Recall a Payment's Status by Facture ID
 
 **As a** merchant\
 **I want to** look up a payment's status directly by facture ID\
@@ -183,23 +180,23 @@ names the current, and so far only, delivery boundary of this capability — not
 - [ ] The mechanism linking a facture ID to its on-chain transaction — a contract-level record or a database record — is decided and
       implemented.
 
-**Dependencies:** US-PAYGATE-V0-003
+**Dependencies:** US-PAYGATE-003
 
 ## Known Gaps
 
 - The Setup page's token selector still offers POL even though the widget always refuses it — any token whose ID resolves to the native
   asset is treated as unsupported. A merchant who configures POL gets a working-looking embed snippet that shows every customer an
-  "Unsupported payment token" message instead of a payment form (`US-PAYGATE-V0-001`).
+  "Unsupported payment token" message instead of a payment form (`US-PAYGATE-001`).
 - A payment is reported to the customer as successful whenever the transaction receipt's status is `success`, without confirming the Bank's
   deposit event actually appears in that receipt. A transaction sent to an address with no contract code — a stale or misconfigured Bank
-  address — is treated by the EVM as a no-op value transfer and can report a false success (`US-PAYGATE-V0-003`).
+  address — is treated by the EVM as a no-op value transfer and can report a false success (`US-PAYGATE-003`).
 - Wallet-rejection and on-chain-revert errors are shown to the customer as the raw wallet/SDK error text, not a decoded, readable message
-  (`US-PAYGATE-V0-003`).
+  (`US-PAYGATE-003`).
 - A failed payment is a dead end inside the widget: there is no way to retry without the merchant's own page re-invoking `CncPay.show()`
-  from scratch (`US-PAYGATE-V0-003`).
+  from scratch (`US-PAYGATE-003`).
 - Payment history offers no filtering or pagination; a company with a long payment history sees every confirmed payment in one unbounded
-  table (`US-PAYGATE-V0-004`).
-- Recall/recheck by facture ID (`US-PAYGATE-V0-005`) has no implementation and no decided mechanism. The Reference page is a static
+  table (`US-PAYGATE-004`).
+- Recall/recheck by facture ID (`US-PAYGATE-005`) has no implementation and no decided mechanism. The Reference page is a static
   illustration of the intended request/response shape only.
 
 ## Implementation Evidence
@@ -210,19 +207,19 @@ names the current, and so far only, delivery boundary of this capability — not
   [Bank address + embed snippet, with explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
   [accepted-token configuration](../../../app/src/components/sections/PaymentGateView/TokenConfigCard.vue), a
   [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue), and their shared
-  [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-V0-001`, `002`).
+  [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-001`, `002`).
 - [Widget entry point](../../../app/src/widget/main.ts) — including its
   [misconfigured-embed fallback](../../../app/src/widget/WidgetMisconfigured.vue) for a `<script>` tag missing `data-bank`/`data-token` —
   [payment flow](../../../app/src/widget/payment.ts), [widget root component](../../../app/src/widget/WidgetApp.vue), and the
-  [facture-ID calldata encoding](../../../app/src/utils/paymentGate/factureCalldata.ts) (`US-PAYGATE-V0-002`, `003`).
+  [facture-ID calldata encoding](../../../app/src/utils/paymentGate/factureCalldata.ts) (`US-PAYGATE-002`, `003`).
 - [History page](../../../app/src/views/team/[id]/PaymentGate/HistoryView.vue),
   [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue),
   [transaction-detail slide-over](../../../app/src/components/ui/TransactionDetailSlideover.vue), and
-  [useFactureHistory](../../../app/src/composables/paymentGate/useFactureHistory.ts) (`US-PAYGATE-V0-004`).
+  [useFactureHistory](../../../app/src/composables/paymentGate/useFactureHistory.ts) (`US-PAYGATE-004`).
 - [Reference page](../../../app/src/views/team/[id]/PaymentGate/ReferenceView.vue) and its
-  [recall-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-V0-005`).
+  [recall-by-facture-ID card](../../../app/src/components/sections/PaymentGateView/ReferenceCard.vue) (`US-PAYGATE-005`).
 - [Shared contract-error catalog](../../../app/src/utils/errors/contractCatalog.ts), decoded via
-  [describeWidgetError](../../../app/src/widget/errorMessage.ts) (`US-PAYGATE-V0-003`).
+  [describeWidgetError](../../../app/src/widget/errorMessage.ts) (`US-PAYGATE-003`).
 - [Current Bank contract](../../../contract/contracts/Bank.sol) — the on-chain target every payment settles into.
 - [Facture-ID calldata encoding tests](../../../app/src/utils/paymentGate/__tests__/factureCalldata.spec.ts),
   [widget payment-flow tests](../../../app/src/widget/__tests__/payment.spec.ts),
