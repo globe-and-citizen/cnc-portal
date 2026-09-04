@@ -30,7 +30,6 @@ import type { VestingEventsQuery } from '@/types/ponder/vesting'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
 import type { ClassificationOverride } from '@/utils/accounting/classification'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
-import { unmatchedFeeOperationIds } from '@/utils/accounting/mappers/fees'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
 import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
@@ -41,9 +40,10 @@ import {
   type GeneralLedger,
   type JournalEntry
 } from '@/utils/accounting/generalLedger'
+import { reconcileJournalEntrySources } from '@/utils/accounting/journalEntry'
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
-import { sourceOperationIdOf, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import {
   buildSherMultiplierTimeline,
@@ -165,15 +165,7 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
       tokenTransfers: items(input.bankEvents.bankTokenTransfers)
     }
     sources.fees = {
-      bankFeePaids: items(input.bankEvents.bankFeePaids),
-      // A fee is recognised only alongside a successful Bank outflow in its
-      // source operation. Dividend and FixedReturn funding have distinct Bank
-      // events because their actual cash distribution is mapped elsewhere.
-      outflowOperationIds: [
-        ...items(input.bankEvents.bankTransfers),
-        ...items(input.bankEvents.bankTokenTransfers),
-        ...items(input.bankEvents.bankDividendDistributionTriggereds)
-      ].map((row) => sourceOperationIdOf(row.id))
+      bankFeePaids: items(input.bankEvents.bankFeePaids)
     }
   }
 
@@ -344,7 +336,8 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
  * whole mapper pipeline a second time.
  */
 export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
-  const { entries, summary } = buildLedger(rawEntries)
+  const reconciliation = reconcileJournalEntrySources(rawEntries)
+  const { entries, summary } = buildLedger(reconciliation.entries)
   const accountRegistry = buildAccountRegistry(entries)
   const journal = buildJournal(entries, accountRegistry)
 
@@ -356,7 +349,7 @@ export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncA
     generalLedger: buildGeneralLedger(journal),
     incomeStatement: buildIncomeStatement(entries),
     balanceSheet: buildBalanceSheet(entries),
-    unmatchedFeeOperationIds: []
+    unmatchedFeeOperationIds: reconciliation.unmatchedFeeOperationIds
   }
 }
 
@@ -365,11 +358,7 @@ export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncA
  * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
  */
 export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
-  const sources = toLedgerSources(input)
-  return {
-    ...assembleFromRawEntries(buildRawCncEntries(input)),
-    unmatchedFeeOperationIds: sources.fees ? unmatchedFeeOperationIds(sources.fees) : []
-  }
+  return assembleFromRawEntries(buildRawCncEntries(input))
 }
 
 /** An empty accounting result — used before any data has loaded. */

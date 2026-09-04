@@ -27,6 +27,8 @@ import {
   createJournalEntry,
   creditOf,
   debitOf,
+  isBankFeePosting,
+  reconcileJournalEntrySources,
   type JournalEntry,
   type JournalEntryLine
 } from './journalEntry'
@@ -119,7 +121,7 @@ function journalEntryFromLedgerEntries(
   const ordered = entries
     .slice()
     .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
-  const primary = ordered.find((entry) => entry.useCase !== 'FEE') ?? ordered[0]!
+  const primary = ordered.find((entry) => !isBankFeePosting(entry)) ?? ordered[0]!
   const lineEntries = [primary, ...ordered.filter((entry) => entry !== primary)]
   const monetary = ordered.some((entry) => entry.debit !== null || entry.credit !== null)
   return createJournalEntry({
@@ -140,17 +142,19 @@ function journalEntryFromLedgerEntries(
 /** Adapt consolidated postings into the validated, ordered double-entry journal. */
 export function buildJournal(
   entries: readonly LedgerEntry[],
-  accounts: AccountRegistry = buildAccountRegistry(entries)
+  accounts?: AccountRegistry
 ): JournalEntry[] {
+  const reconciled = reconcileJournalEntrySources(entries)
+  const accountRegistry = accounts ?? buildAccountRegistry(reconciled.entries)
   const byOperation = new Map<string, LedgerEntry[]>()
-  for (const entry of entries) {
+  for (const entry of reconciled.entries) {
     const operationId = entry.sourceOperationId ?? entry.id
     const group = byOperation.get(operationId)
     if (group) group.push(entry)
     else byOperation.set(operationId, [entry])
   }
   return [...byOperation.values()]
-    .map((group) => journalEntryFromLedgerEntries(group, accounts))
+    .map((group) => journalEntryFromLedgerEntries(group, accountRegistry))
     .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
 }
 
