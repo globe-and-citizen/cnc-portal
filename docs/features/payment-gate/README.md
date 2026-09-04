@@ -85,8 +85,10 @@ names the current, and so far only, delivery boundary of this capability — not
 
 #### Edge & Error Cases
 
-- [ ] When the company has no deployed Bank contract yet, the Setup page shows an explicit "no Bank" state instead of a snippet built around
+- [x] When the company has no deployed Bank contract yet, the Setup page shows an explicit "no Bank" state instead of a snippet built around
       a placeholder address.
+- [x] When the widget's script URL isn't configured for this deployment, the Setup page shows an explicit "unavailable" state instead of a
+      snippet whose script tag would never actually load a widget.
 
 **Dependencies:** US-PAYGATE-V0-001 and a company with a deployed Bank contract
 
@@ -129,6 +131,9 @@ names the current, and so far only, delivery boundary of this capability — not
 - [ ] A wallet-rejected payment shows a clear cancellation message, not the raw wallet/SDK error.
 - [ ] An on-chain revert (e.g. insufficient balance) shows a decoded, readable reason, not the raw contract/SDK error.
 - [ ] After a failed payment, the customer can retry without leaving the widget or the merchant reloading their page.
+- [x] If the merchant's page embeds the widget with a missing `data-bank`/`data-token` script attribute, the customer sees an explicit
+      "payment unavailable" message instead of an empty mount point, and the merchant gets a console diagnostic naming exactly which
+      attribute is missing.
 
 **Dependencies:** US-PAYGATE-V0-002, a connected wallet, and a sufficient token balance
 
@@ -183,8 +188,6 @@ names the current, and so far only, delivery boundary of this capability — not
 - The Setup page's token selector still offers POL even though the widget always refuses it — any token whose ID resolves to the native
   asset is treated as unsupported. A merchant who configures POL gets a working-looking embed snippet that shows every customer an
   "Unsupported payment token" message instead of a payment form (`US-PAYGATE-V0-001`).
-- When a company has no deployed Bank contract, the Setup page still renders a complete embed snippet built around the literal placeholder
-  text `0x…` instead of an explicit "no Bank yet" state (`US-PAYGATE-V0-002`).
 - A payment is reported to the customer as successful whenever the transaction receipt's status is `success`, without confirming the Bank's
   deposit event actually appears in that receipt. A transaction sent to an address with no contract code — a stale or misconfigured Bank
   address — is treated by the EVM as a no-op value transfer and can report a false success (`US-PAYGATE-V0-003`).
@@ -199,16 +202,17 @@ names the current, and so far only, delivery boundary of this capability — not
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `35745b6c1bef417442051cc970558dfec993e9d9`
+**Implementation evidence reviewed against:** `8ce808343e9f742db58266d3a1bc5c34ef75b051`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
-  [Bank address + embed snippet](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
+  [Bank address + embed snippet, with explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
   [accepted-token configuration](../../../app/src/components/sections/PaymentGateView/TokenConfigCard.vue), a
   [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue), and their shared
   [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-V0-001`, `002`).
-- [Widget entry point](../../../app/src/widget/main.ts), [payment flow](../../../app/src/widget/payment.ts),
-  [widget root component](../../../app/src/widget/WidgetApp.vue), and the
-  [facture-ID calldata encoding](../../../app/src/utils/paymentGate/factureCalldata.ts) (`US-PAYGATE-V0-003`).
+- [Widget entry point](../../../app/src/widget/main.ts) — including its
+  [misconfigured-embed fallback](../../../app/src/widget/WidgetMisconfigured.vue) for a `<script>` tag missing `data-bank`/`data-token` —
+  [payment flow](../../../app/src/widget/payment.ts), [widget root component](../../../app/src/widget/WidgetApp.vue), and the
+  [facture-ID calldata encoding](../../../app/src/utils/paymentGate/factureCalldata.ts) (`US-PAYGATE-V0-002`, `003`).
 - [History page](../../../app/src/views/team/[id]/PaymentGate/HistoryView.vue),
   [history table card](../../../app/src/components/sections/PaymentGateView/HistoryCard.vue),
   [transaction-detail slide-over](../../../app/src/components/ui/TransactionDetailSlideover.vue), and
@@ -219,8 +223,10 @@ names the current, and so far only, delivery boundary of this capability — not
   [describeWidgetError](../../../app/src/widget/errorMessage.ts) (`US-PAYGATE-V0-003`).
 - [Current Bank contract](../../../contract/contracts/Bank.sol) — the on-chain target every payment settles into.
 - [Facture-ID calldata encoding tests](../../../app/src/utils/paymentGate/__tests__/factureCalldata.spec.ts),
-  [widget payment-flow tests](../../../app/src/widget/__tests__/payment.spec.ts), and
-  [error-message decoding tests](../../../app/src/widget/__tests__/errorMessage.spec.ts).
+  [widget payment-flow tests](../../../app/src/widget/__tests__/payment.spec.ts),
+  [widget entry-point tests](../../../app/src/widget/__tests__/main.spec.ts),
+  [error-message decoding tests](../../../app/src/widget/__tests__/errorMessage.spec.ts), and
+  [Setup page integration-card tests](../../../app/src/components/sections/PaymentGateView/__tests__/IntegrationCard.spec.ts).
 
 ## Related Documentation
 
