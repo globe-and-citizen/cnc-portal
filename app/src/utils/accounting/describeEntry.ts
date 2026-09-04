@@ -20,11 +20,9 @@ import type { AccountName } from './chartOfAccounts'
  * the "Transaction" column and for entries with no actor (catalogue §5 / spec §4).
  */
 const ENTRY_LABEL: Record<UseCase, string> = {
-  'UC-BANK-01': 'Owner capital contribution',
   'UC-BANK-02': 'Service revenue',
   'UC-BANK-03': 'Treasury funding',
   'UC-SDR-01': 'Investor contribution',
-  'UC-MEMBER-01': 'Member capital contribution',
   'UC-CREDIT-01': 'Credit funds lent',
   'UC-CREDIT-02': 'Credit principal to Bank',
   'UC-CREDIT-03': 'Credit repayment',
@@ -71,10 +69,8 @@ const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
 const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'UC-CASH-02',
   'UC-CASH-03',
-  'UC-BANK-01',
   'UC-BANK-02',
   'UC-SDR-01',
-  'UC-MEMBER-01',
   'UC-CREDIT-01',
   'UC-CREDIT-03',
   'UC-CREDIT-04',
@@ -138,13 +134,9 @@ function predicate(entry: LedgerEntry): string {
     }
     case 'UC-CASH-03':
       return hours ? `was paid for ${hours} of work` : 'was paid their wages'
-    case 'UC-BANK-01':
-      return `contributed ${amount} in capital`
     case 'UC-BANK-02':
       return `paid ${amount} for services`
     case 'UC-SDR-01':
-      return `invested ${amount} in capital${sher}`
-    case 'UC-MEMBER-01':
       return `invested ${amount} in capital${sher}`
     case 'UC-CREDIT-01':
       return `lent ${amount} to the community credit`

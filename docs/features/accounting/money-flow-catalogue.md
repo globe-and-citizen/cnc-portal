@@ -17,7 +17,7 @@ Plain-English meaning of the terms used throughout, so anyone on the team can fo
 
 | Term                         | Meaning                                                                                                                                                                                                               |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Use case (UC)**            | One specific way money moves, with an ID like `UC-BANK-01`, reusable in tickets and tests.                                                                                                                            |
+| **Use case (UC)**            | One specific way money moves, with an ID like `UC-BANK-02`, reusable in tickets and tests.                                                                                                                            |
 | **Debit (Dr) / Credit (Cr)** | The two sides of every entry. Every entry has equal debits and credits — that is what keeps the books balanced.                                                                                                       |
 | **Account types**            | **Asset** (what the CNC owns), **Liability** (what it owes), **Equity** (the owners' stake), **Contra-equity** (reduces equity — e.g. deferred compensation), **Income** (revenue/gains), **Expense** (costs/losses). |
 | **Normal balance**           | Assets, Expenses & Contra-equity sit on the **debit** side; Liabilities, Equity & Income sit on the **credit** side.                                                                                                  |
@@ -193,7 +193,6 @@ lands) — the direction of the money. Colour = account type: 🟦 Asset · 🟪
 
 ```mermaid
 flowchart LR
-  ownerCap[Owner Capital]:::equity
   invEq[Investor Equity]:::equity
   svcRev[Service Revenue]:::income
   tradeGain[Trading Gain]:::income
@@ -202,8 +201,7 @@ flowchart LR
   safe[("Cash — Safe")]:::asset
   trading[Trading account]:::asset
 
-  ownerCap -->|"UC-BANK-01 · founder deposit"| bank
-  svcRev -->|"UC-BANK-02 · client pays (service)"| bank
+  svcRev -->|"UC-BANK-02 · direct external deposit"| bank
   invEq -->|"UC-SDR-01 · invest & get SHER"| safe
   tradeGain -->|"UC-TRD-02 · trader returns profit"| safe
   trading -->|"UC-TRD-02 · trader returns capital"| safe
@@ -215,13 +213,12 @@ flowchart LR
 
 | UC             | Interaction                             | Journal entry                                                            |
 | -------------- | --------------------------------------- | ------------------------------------------------------------------------ |
-| **UC-BANK-01** | founder deposits capital (no shares)    | Dr Cash — Bank · Cr Owner Capital                                        |
-| **UC-BANK-02** | client pays for a service               | Dr Cash — Bank · Cr Service Revenue                                      |
+| **UC-BANK-02** | direct external treasury deposit        | Dr Cash — Bank / Safe · Cr Service Revenue                               |
 | **UC-SDR-01**  | invest & get SHER (owner **or** member) | Dr Cash — Safe · Cr Investor Equity                                      |
 | **UC-TRD-02**  | trader returns capital + profit         | Dr Cash — Safe · Cr Trading account (capital) · Cr Trading Gain (profit) |
 
-> **Owner Capital vs Investor Equity.** A founder _depositing_ money (no shares) → Owner Capital. Anyone (owner **or** member) who _invests
-> and receives SHER_ → Investor Equity, because they get shares. The same person can do both.
+> **Direct deposit vs investment.** A direct external deposit always credits Service Revenue, regardless of the sender. An operation routed
+> through SafeDepositRouter that issues SHER credits Investor Equity, because it has dedicated investment evidence.
 
 ### 5.2 Money going out
 
@@ -315,42 +312,35 @@ flowchart TD
 > `SHERS To Be Issued`; a mint with **no accrual behind it** debits `SHERS To Be Issued` into a **contra (negative) balance** — a known edge
 > to reconcile (`Σ Minted` = on-chain supply, checked against the value in `Investor Equity`).
 
-### 5.5 Manual classification of Bank & Safe deposits and withdrawals
+### 5.5 Legacy manual classification of eligible Bank & Safe withdrawals
 
-Every Bank and Safe deposit/withdrawal is first booked from **address inference** (§5.1–§5.2): the direction and counterparty decide the
-entry. That inference is the **visible fallback**. A team owner can override it by classifying the transaction into one accounting category;
-the classification is keyed to the transaction's stable on-chain identity (`${txHash}-${logIndex}`), persisted, and shared across the team.
-Native and ERC‑20 transfers are covered identically. (Feature: issue #2457. The dedicated **Classification** page lists every classifiable
-transaction.)
+Direct deposits and company-pocket transfers are determined by source evidence (§5.1–§5.2), not a manual category. A direct external deposit
+is always `Dr Cash · Cr Service Revenue`; a transfer between CNC-owned pockets is always internal. A legacy category stored with either
+operation is ignored by journal assembly.
 
-A classification re-resolves the two balanced legs deterministically. On a **deposit** the cash pocket (`Cash — Bank` / `Cash — Safe`) is
-debited and the category account credited; on a **withdrawal** it is the reverse — so the entry always balances by construction.
+A company owner can still classify an eligible external Bank or Safe withdrawal. The classification is keyed to the transaction's stable
+on-chain identity (`${txHash}-${logIndex}`), persisted, and shared across the company. Native and ERC-20 withdrawals are covered
+identically.
 
-| Classification        | Deposit (cash in)            | Withdrawal (cash out)          |
-| --------------------- | ---------------------------- | ------------------------------ |
-| **Revenue**           | Dr Cash · Cr Service Revenue | —                              |
-| **Expense**           | —                            | Dr Operating Expense · Cr Cash |
-| **Payroll**           | —                            | Dr Payroll Expense · Cr Cash   |
-| **Interest**          | —                            | Dr Interest Expense · Cr Cash  |
-| **Dividend**          | —                            | Dr Dividend Expense · Cr Cash  |
-| **Owner Capital**     | Dr Cash · Cr Owner Capital   | Dr Owner Capital · Cr Cash     |
-| **Shareholder Loan**  | Dr Cash · Cr Loan Payable    | Dr Loan Payable · Cr Cash      |
-| **Internal Transfer** | Dr Cash · Cr _source pocket_ | Dr _dest pocket_ · Cr Cash     |
+A classification re-resolves the two balanced legs deterministically: the chosen counter-account is debited and the cash pocket is credited.
 
-- **Direction-aware.** `Revenue` is offered only on an inflow; the expense categories (`Expense`, `Payroll`, `Interest`, `Dividend`) only on
-  an outflow; `Owner Capital` and `Shareholder Loan` are meaningful both ways (contribution/draw, borrow/repay).
-- **Not exposed for manual pick.** `Investor Equity` (it must track SHER shares, so it is only booked by a mint) and the `Trading` lines
-  (their live feed is the deferred Polymarket/GC:Trader integration, spec §1) are intentionally left out of the constrained set.
-- **`Internal Transfer` is auto-detected, not hand-picked.** The engine books it only against a known CNC pocket (its inference already does
-  this for pocket-to-pocket moves), so it never appears as a manual choice for an external counterparty.
-- **Guaranteed-internal invariant.** A movement between two CNC-owned pockets is provably an internal transfer and can **never** be
-  reclassified into income or expense — that override is refused and the inferred internal entry stands. This keeps a treasury sweep from
-  being misread as revenue or a cost.
-- **Reversible.** Removing a classification restores the address-inferred fallback. Reclassifying updates the general ledger, income
-  statement and balance sheet consistently (a deposit moved from `Service Revenue` to `Loan Payable` leaves the income statement and lands
-  on liabilities, still balanced).
-- **Authorization.** Only the team owner may create, edit or remove a classification; everyone else sees it read-only. Enforced on the
-  backend, independent of the UI.
+| Classification       | Withdrawal (cash out)          |
+| -------------------- | ------------------------------ |
+| **Expense**          | Dr Operating Expense · Cr Cash |
+| **Payroll**          | Dr Payroll Expense · Cr Cash   |
+| **Interest**         | Dr Interest Expense · Cr Cash  |
+| **Dividend**         | Dr Dividend Expense · Cr Cash  |
+| **Owner Capital**    | Dr Owner Capital · Cr Cash     |
+| **Shareholder Loan** | Dr Loan Payable · Cr Cash      |
+
+- **Evidence wins.** Direct deposits and company-pocket transfers cannot be reclassified. This keeps a treasury sweep from being misread as
+  revenue or a cost and prevents a persisted deposit category from replacing Service Revenue.
+- **Not exposed for manual pick.** `Investor Equity` must track SHER shares, so only a mint can book it. The `Trading` lines remain owned by
+  the deferred trading integration.
+- **Reversible.** Removing an eligible external-withdrawal classification restores its address-inferred fallback. Reclassifying updates the
+  General Ledger, Income Statement, and Balance Sheet consistently.
+- **Authorization.** Only the company owner may create, edit, or remove a classification; everyone else sees it read-only. The backend
+  enforces this independently of the UI.
 
 ### 5.6 Share vesting — grant, release, stop
 
@@ -659,8 +649,8 @@ belong to different reporting layers; the fee is not an internal transfer within
   fire and the value move into `Investor Equity`, **frozen at the withdraw-date multiplier**. The withdraw nets `SHERS To Be Issued` to $0,
   but `Deferred SHER Compensation` remains as the cost of committed SHER; in a period where a claim is open without a matching withdrawal,
   both accounts carry the promised SHER, re-valued at the current multiplier.
-- **Owner Capital is $0** in this period: everyone who put money in either received shares (Investor Equity) or it was a client payment
-  (Service Revenue) — nobody made a pure founder deposit.
+- **Owner Capital is $0** in this period: every direct treasury deposit is Service Revenue, while capital raised through the investment
+  route is Investor Equity.
 
 ### Coverage scorecard
 

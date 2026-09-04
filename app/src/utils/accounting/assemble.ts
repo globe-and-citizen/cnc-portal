@@ -66,11 +66,6 @@ export interface CncAccountingInput {
    * address registry.
    */
   feeCollectorAddress?: Address | string | null
-  /** Founder / owner addresses whose treasury inflows are Owner Capital. */
-  founderAddresses?: Iterable<Address | string>
-  /** Team member addresses — a member's Safe inflow is a capital contribution
-   *  (invest & get SHER → Investor Equity), not client revenue. */
-  memberAddresses?: Iterable<Address | string>
   /** On-chain SHER token address, so it resolves to the `sher` token id. */
   sherTokenAddress?: Address | string | null
   /** SafeDepositRouter address — its inflows to the Safe are booked from its own
@@ -294,8 +289,7 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
   const ctx = buildMapperContext({
     contracts: input.contracts,
     internalAddresses,
-    founderAddresses: input.founderAddresses,
-    memberAddresses: input.memberAddresses,
+    feeCollectorAddress: input.feeCollectorAddress,
     sherTokenAddress: input.sherTokenAddress,
     rateOfRecord,
     classifications: toClassificationMap(input.classifications)

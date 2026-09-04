@@ -30,11 +30,10 @@ const CONTRACTS: TeamContract[] = (
 /** Stub rate of record: native $2, SHER $0.50 (USDC is pegged $1 by toUsd). */
 const RATE: UsdRateOfRecord = (tokenId) => (tokenId === 'native' ? 2 : tokenId === 'sher' ? 0.5 : 1)
 
-/** Common context for the assembled team (USDC token + fee collector + founder). */
+/** Common context for the assembled team (USDC token + fee collector). */
 const BASE: CncAccountingInput = {
   contracts: CONTRACTS,
   safeAddress: ADDR.safe,
-  founderAddresses: [ADDR.founder],
   feeCollectorAddress: ADDR.feeCollector,
   sherTokenAddress: ADDR.sherToken,
   safeDepositRouterAddress: ROUTER,

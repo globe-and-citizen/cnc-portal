@@ -16,12 +16,11 @@ import type { ClassificationDirection } from './classification'
 const CASH_POCKETS: ReadonlySet<AccountName> = new Set<AccountName>(['Cash — Bank', 'Cash — Safe'])
 
 /**
- * Use cases the Bank/Safe mappers emit for an external deposit/withdrawal — founder and
- * client inflows, an unclassified outflow, and the two codes a manual classification
+ * Use cases the Bank/Safe mappers emit for an external deposit/withdrawal — direct
+ * revenue inflows, an unclassified outflow, and the two codes a manual classification
  * stamps. Fees, dividends and internal moves are absent.
  */
 const CLASSIFIABLE_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
-  'UC-BANK-01',
   'UC-BANK-02',
   'CASH-IN',
   'CASH-OUT'
