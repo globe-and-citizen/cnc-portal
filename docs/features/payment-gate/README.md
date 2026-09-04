@@ -122,6 +122,8 @@ names the current, and so far only, delivery boundary of this capability — not
 - [x] The widget only requests an ERC-20 approval when the customer's existing allowance is insufficient for the configured amount.
 - [x] The facture ID must be 1-64 characters of letters, digits, and `- _ . / :` before use; an invalid value throws synchronously to the
       merchant's own integration code rather than reaching the chain. _(system)_
+- [x] The amount must be a non-negative decimal number before use; an invalid value throws synchronously to the merchant's own integration
+      code rather than reaching the review pane or the chain. _(system)_
 
 #### Edge & Error Cases
 
@@ -202,7 +204,7 @@ names the current, and so far only, delivery boundary of this capability — not
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5fcbe6f117c664d70d08bff96a681d36a9ba814a`
+**Implementation evidence reviewed against:** `58ed0fea0d977a1f945633cc31e152138b1767f2`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet, with explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
