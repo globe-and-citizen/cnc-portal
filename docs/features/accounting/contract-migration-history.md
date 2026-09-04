@@ -76,7 +76,7 @@ report-projection boundary, and implementation evidence.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `965526c616447dad64398d3791b47096f73b21e2`
+**Implementation evidence reviewed against:** `e65e182f45cda9ef8a264d465580e054e105ec69`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
 - [Migration wiring tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)

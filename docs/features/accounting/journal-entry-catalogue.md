@@ -361,7 +361,7 @@ have no current mapper. They are intentionally excluded from this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `59388365a5ac72e4ca9eece9d9ed595821e6907d`
+**Implementation evidence reviewed against:** `e65e182f45cda9ef8a264d465580e054e105ec69`
 
 - [Use-case identifiers and source-operation identity](../../../app/src/utils/accounting/ledgerEntry.ts)
 - [Journal assembly](../../../app/src/utils/accounting/generalLedger.ts) and

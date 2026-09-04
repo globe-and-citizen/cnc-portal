@@ -214,7 +214,7 @@ calculating legacy raw-posting account balances because that presentation metada
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `59388365a5ac72e4ca9eece9d9ed595821e6907d`
+**Implementation evidence reviewed against:** `e65e182f45cda9ef8a264d465580e054e105ec69`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
