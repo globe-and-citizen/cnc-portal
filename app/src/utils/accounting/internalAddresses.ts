@@ -16,9 +16,8 @@ import type { ContractType, TeamContract } from '@/types/teamContract'
 
 /**
  * The CNC money-pocket contract types held in `TeamContract` (catalogue §1).
- * `FeeCollector` is intentionally **not** here: it is a single protocol-wide
- * contract, not a per-team `TeamContract`, so its address is folded in
- * separately by the composable from the deployed-addresses constant.
+ * `FeeCollector` is intentionally **not** here: it is a protocol-wide
+ * counterparty, not a CNC-owned pocket.
  */
 export const INTERNAL_POCKET_CONTRACT_TYPES = [
   'Safe',
