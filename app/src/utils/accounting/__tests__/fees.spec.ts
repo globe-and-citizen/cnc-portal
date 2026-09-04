@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mapFees, unmatchedFeeOperationIds } from '@/utils/accounting/mappers/fees'
+import { mapFees } from '@/utils/accounting/mappers/fees'
 import { makeCtx, ADDR } from './fixtures'
 
 const ctx = makeCtx()
@@ -145,7 +145,7 @@ describe('mapFees', () => {
     expect(entry).toMatchObject({ token: 'native', amountUsd: 2 })
   })
 
-  it('books a fee only when its Bank outflow shares the source operation', () => {
+  it('preserves fee source evidence for JournalEntry reconciliation', () => {
     const operationId = `0x${'a'.repeat(64)}`
     const entries = mapFees(
       {
@@ -158,8 +158,7 @@ describe('mapFees', () => {
             amount: '1000000',
             timestamp: 100
           }
-        ],
-        outflowOperationIds: [operationId]
+        ]
       },
       ctx
     )
@@ -168,7 +167,7 @@ describe('mapFees', () => {
     expect(entries[0]?.sourceOperationId).toBe(operationId)
   })
 
-  it('withholds an unmatched fee and exposes its source operation for reconciliation', () => {
+  it('does not require an outflow in the mapper', () => {
     const operationId = `0x${'b'.repeat(64)}`
     const input = {
       bankFeePaids: [
@@ -180,11 +179,9 @@ describe('mapFees', () => {
           amount: '1000000',
           timestamp: 100
         }
-      ],
-      outflowOperationIds: []
+      ]
     }
 
-    expect(mapFees(input, ctx)).toEqual([])
-    expect(unmatchedFeeOperationIds(input)).toEqual([operationId])
+    expect(mapFees(input, ctx)).toHaveLength(1)
   })
 })

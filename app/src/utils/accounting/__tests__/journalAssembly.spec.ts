@@ -49,6 +49,27 @@ describe('accounting journal assembly', () => {
     expect(accounting.generalLedger.entries).toEqual(accounting.journal)
   })
 
+  it('withholds an orphan Bank fee at the JournalEntry boundary', () => {
+    const sourceOperationId = 'bank-fee-without-outflow'
+    const fee = posting({
+      id: `${sourceOperationId}:fee`,
+      sourceOperationId,
+      useCase: 'FEE',
+      debit: 'Transaction Fee Expense',
+      credit: 'Cash — Bank',
+      amountUsd: 0.05,
+      rawAmount: '50000',
+      internal: false,
+      memo: 'Transaction fee'
+    })
+
+    const accounting = assembleFromRawEntries([fee])
+
+    expect(accounting.entries).toEqual([])
+    expect(accounting.journal).toEqual([])
+    expect(accounting.unmatchedFeeOperationIds).toEqual([sourceOperationId])
+  })
+
   it('rejects an invalid normalized posting at the assembly boundary', () => {
     const invalid = posting({ id: 'broken-posting', useCase: 'CASH-IN', credit: null })
 
