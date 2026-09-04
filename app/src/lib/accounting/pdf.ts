@@ -163,7 +163,7 @@ interface LedgerTableOptions {
   accountLabel?: string
   accountTotal?: string
   instance?: string | null
-  includeBlank?: boolean
+  unresolved?: boolean
 }
 
 /** Display name for a drill-down: the account, or the aggregate's label. */
@@ -179,7 +179,7 @@ function ledgerTable(
   const { rows, total } = opts.account
     ? presentAccountLedger(books.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
         instance: opts.instance,
-        includeBlank: opts.includeBlank
+        unresolved: opts.unresolved
       })
     : presentLedger(books.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
   const columns = resolveLedgerColumns(opts.columns)
@@ -223,7 +223,7 @@ function sectionTable(
         accountLabel: spec.accountLabel,
         accountTotal: spec.accountTotal,
         instance: spec.instance,
-        includeBlank: spec.includeBlank
+        unresolved: spec.unresolved
       })
   }
 }

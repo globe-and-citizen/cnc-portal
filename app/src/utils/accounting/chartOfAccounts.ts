@@ -4,7 +4,7 @@
  * Names and classes are aligned 1:1 with the money-flow catalogue §4
  * (`docs/features/accounting/money-flow-catalogue.md`). Every ledger entry,
  * trial balance, income statement and balance sheet in the accounting pipeline
- * keys off the {@link AccountName} union and {@link AccountClass} declared here.
+ * keys off the {@link AccountFamily} union and {@link AccountClass} declared here.
  *
  * Scope notes (spec §5–§6):
  * - `Infrastructure Expense` is intentionally **absent** — a Phase 2 gap with no
@@ -37,9 +37,10 @@
 export type AccountClass = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'CONTRA_EQUITY' | 'INCOME' | 'EXPENSE'
 
 /**
- * Every account the CNC books touch. Cash is split per on-chain pocket
- * (Bank / Safe / Payroll / Expense / Credit / FeeCollector) — each is its own
- * account that rolls up into total Cash.
+ * Every account family the CNC books touch. Concrete account identities are
+ * resolved from this chart by `accountRegistry.ts`; a redeployed Bank, Payroll,
+ * Expense, or Credit contract therefore becomes its own account within the
+ * shared family.
  */
 export const ACCOUNT_NAMES = [
   'Cash — Bank',
@@ -67,10 +68,14 @@ export const ACCOUNT_NAMES = [
   'Transaction Fee Expense'
 ] as const
 
-export type AccountName = (typeof ACCOUNT_NAMES)[number]
+/** A chart family supplies shared accounting behaviour to one or more concrete accounts. */
+export type AccountFamily = (typeof ACCOUNT_NAMES)[number]
 
-export interface Account {
-  readonly name: AccountName
+/** @deprecated Use {@link AccountFamily}; display names are family identifiers, not concrete accounts. */
+export type AccountName = AccountFamily
+
+export interface AccountFamilyDefinition {
+  readonly name: AccountFamily
   readonly class: AccountClass
 }
 
@@ -102,7 +107,7 @@ export const CHART_OF_ACCOUNTS: Readonly<Record<AccountName, AccountClass>> = {
 }
 
 /** The chart as an ordered list of `{ name, class }` records. */
-export const ACCOUNTS: readonly Account[] = ACCOUNT_NAMES.map((name) => ({
+export const ACCOUNTS: readonly AccountFamilyDefinition[] = ACCOUNT_NAMES.map((name) => ({
   name,
   class: CHART_OF_ACCOUNTS[name]
 }))
@@ -130,8 +135,13 @@ const INSTANCED_POCKETS: ReadonlySet<AccountName> = new Set<AccountName>([
 ])
 
 /** Whether an account is a cash pocket whose trial-balance line splits per contract instance (redeploy). */
-export function isInstancedPocket(account: AccountName): boolean {
+export function isDeploymentScopedAccountFamily(account: AccountFamily): boolean {
   return INSTANCED_POCKETS.has(account)
+}
+
+/** @deprecated Use {@link isDeploymentScopedAccountFamily}. */
+export function isInstancedPocket(account: AccountName): boolean {
+  return isDeploymentScopedAccountFamily(account)
 }
 
 /**

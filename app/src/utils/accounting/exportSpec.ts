@@ -37,6 +37,6 @@ export interface SectionSpec {
   accountTotal?: string
   /** Pocket-instance scope for a split-pocket ledger export (a redeployed Bank / Payroll / Expense). */
   instance?: string | null
-  /** Include un-instanced legs (folded into the pocket's primary instance) — set on the primary row's export. */
-  includeBlank?: boolean
+  /** Export only legs with no resolved deployment account, for reconciliation. */
+  unresolved?: boolean
 }

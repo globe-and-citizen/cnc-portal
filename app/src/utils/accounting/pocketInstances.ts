@@ -8,12 +8,11 @@
  * the trial balance can show one line per deployment and the general ledger can
  * say, posting by posting, which deployment moved.
  *
- * The numbering is derived once from a feed and shared by both views, so a line
- * called `Cash — Bank 2` means the same contract everywhere. Pure and
- * presentation-only: the canonical entries are untouched.
+ * This is legacy presentation support for the transitional LedgerEntry feed.
+ * Canonical JournalEntry lines use AccountId from `accountRegistry.ts` and never
+ * use this display index to decide accounting identity.
  */
 import { isInstancedPocket, type AccountName } from './chartOfAccounts'
-import type { JournalEntry } from './generalLedger'
 import type { LedgerEntry } from './ledgerEntry'
 
 /** One deployment of a cash pocket, as the books number it. */
@@ -37,8 +36,8 @@ export interface PocketInstanceIndex {
   instancesOf(account: string): PocketInstance[]
   /**
    * The deployment a leg belongs to — `undefined` when the account never split,
-   * or the leg carries no contract address (those fold into the first deployment,
-   * exactly as the trial balance folds them).
+   * or the leg carries no contract address. This legacy display index does not
+   * resolve an unaddressed leg to a concrete account.
    */
   instanceOf(account: string | null | undefined, instance?: string): PocketInstance | undefined
   /** Display name for a leg: the plain account name unless it is a later deployment. */
@@ -81,11 +80,6 @@ export function buildPocketInstances(entries: readonly LedgerEntry[]): PocketIns
     { account: entry.debit, instance: entry.debitInstance },
     { account: entry.credit, instance: entry.creditInstance }
   ])
-}
-
-/** Number the cash-pocket deployments carried by the validated journal lines. */
-export function buildJournalPocketInstances(entries: readonly JournalEntry[]): PocketInstanceIndex {
-  return buildPocketInstanceIndex(entries, (entry) => entry.lines)
 }
 
 function buildPocketInstanceIndex<T extends { timestamp: number }>(
@@ -131,6 +125,8 @@ function buildPocketInstanceIndex<T extends { timestamp: number }>(
     isSplit: (account) => (byAccount.get(account)?.length ?? 0) > 1,
     instancesOf: (account) => byAccount.get(account) ?? [],
     instanceOf: lookup,
+    // Legacy LedgerEntry labels fall back to the family name for a missing
+    // address. Canonical JournalEntry projections show this as `unresolved`.
     labelOf: (account, instance) => lookup(account, instance)?.label ?? account ?? ''
   }
 }

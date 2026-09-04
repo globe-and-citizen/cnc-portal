@@ -99,11 +99,10 @@ export interface LedgerEntry {
   credit: AccountName | null
   /**
    * The pocket **contract instance** holding the debited cash (checksum address).
-   * Set only on a cash-pocket debit leg: it lets the trial balance split one pocket
-   * across redeploys — a team that redeploys its Bank shows `Cash — Bank` (up to the
-   * redeploy) and `Cash — Bank #2` (the new deposits) as separate lines. Presentation
-   * metadata only: every roll-up (summary, income statement, balance sheet) keys off
-   * the base {@link debit} account, so totals are unchanged.
+   * Set only on a cash-pocket debit leg. Accounting assembly resolves this source
+   * evidence into the canonical concrete AccountId carried by JournalEntry lines.
+   * An absent address remains unresolved; it must not be inferred from activity on
+   * a different deployment.
    */
   debitInstance?: Address
   /** The pocket contract instance holding the credited cash — see {@link debitInstance}. */

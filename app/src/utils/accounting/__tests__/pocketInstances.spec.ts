@@ -58,8 +58,8 @@ describe('pocket instances (redeploy numbering)', () => {
   })
 
   it('leaves an un-instanced leg on the plain account name', () => {
-    // A leg carrying no contract address (a sweep straight to Bank) folds into the
-    // first deployment in the trial balance, so it reads under the plain name here.
+    // The legacy LedgerEntry display index has no concrete account identity for a
+    // leg with no contract address, so it leaves the family name plain here.
     const index = buildPocketInstances([
       deposit('a', BANK_1, 10),
       deposit('b', BANK_2, 20),
