@@ -23,10 +23,9 @@ These acceptance criteria follow the
   contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
   booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; a Bank protocol fee is a
-  `Transaction Fee Expense` line in the Bank outflow that caused it; the global FeeCollector is not a company-owned cash pocket; **share
-  vesting** books the **whole award when the schedule is defined** and issues it as shares are released (a restricted-stock grant, off the
-  income statement). The precise use-case templates and verified current gaps are in the
-  [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
+  `Transaction Fee Expense` in the company's books; **share vesting** books the **whole award when the schedule is defined** and issues it
+  as shares are released (a restricted-stock grant, off the income statement). The precise use-case templates and verified current gaps are
+  in the [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
 - **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a company owner can **manually classify** each
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
@@ -115,8 +114,7 @@ flowchart LR
       credit line.
 - [x] The General Ledger has no `Fee` pseudo-category. A Bank transfer and its protocol fee in the same transaction form one complete
       `JournalEntry`, with an ordinary `Transaction Fee Expense` line.
-- [x] A protocol fee is never displayed or exported as a `JournalEntry` without the Bank outflow that caused it; unmatched fee evidence is
-      withheld and surfaced as a reconciliation warning.
+- [ ] A protocol fee is never displayed or exported as a `JournalEntry` without the transfer that caused it.
 - [ ] Every economic operation that produces several source events is represented by one complete `JournalEntry`.
 - [ ] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
       community-credit round — is shown as one ledger entry with every recipient's debit or credit line and one credit for the total.
@@ -267,12 +265,12 @@ flowchart LR
   payment as Service Revenue (`US-ACCT-006`).
 - Some compound operations do not yet propagate one shared source-operation identity, so the General Ledger can display their related
   postings as separate journal entries (`US-ACCT-002`).
-- A Bank fee log without matching Bank-outflow evidence is withheld from the books and shown as incomplete evidence until the source feed
-  can be reconciled (`US-ACCT-002`).
+- A `FeePaid` log without its transfer can currently produce a standalone fee entry, although a fee must be a line of its fee-bearing
+  operation (`US-ACCT-002`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5112b4e1126d5de95d3ceb8dffebeba182c9ae87`
+**Implementation evidence reviewed against:** `965526c616447dad64398d3791b47096f73b21e2`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
