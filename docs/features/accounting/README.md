@@ -29,12 +29,15 @@ These acceptance criteria follow the
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
 - **Journal-entry assembly:** after consolidation, Accounting constructs one ordered, validated `JournalEntry` collection with distinct
-  entry and source-operation identities, ordered `JournalEntryLine` records, and an executable debit/credit balance invariant. Memo-only
-  entries are explicit and contain no monetary lines; an invalid normalized posting is rejected before the General Ledger or Trial Balance
-  projection can consume it. The General Ledger / Trial Balance projections, including their date-bounded PDF and Excel Trial Balance
-  exports, consume this assembled journal. The current General Ledger UI and filters, summary, Income Statement, Balance Sheet, account
-  drill-downs, and their remaining exports still consume the consolidated posting feed while their migration to journal lines is in
-  progress. The **Fee** filter keeps the complete context of each selected posting; its migration to select `JournalEntry` records
+  entry and source-operation identities, ordered `JournalEntryLine` records, and an executable debit/credit balance invariant. Every
+  monetary line names a canonical concrete `AccountId`: an `AccountFamily` supplies its classification and normal side, while each Bank,
+  Payroll, Expense, or Credit contract address is a separate concrete account. A source leg with no contract address remains an explicit
+  unresolved account; it is never assigned to the oldest or most recently active deployment. Memo-only entries are explicit and contain no
+  monetary lines; an invalid normalized posting is rejected before a journal projection can consume it. The Trial Balance and its
+  date-bounded PDF and Excel exports consume this assembled journal; a Trial Balance drill-down and its export keep the selected resolved or
+  unresolved account scope. The current General Ledger UI and filters, summary, Income Statement, Balance Sheet, account drill-downs, and
+  their remaining exports still consume the consolidated posting feed as family-level projections while their migration to journal lines is
+  in progress. The **Fee** filter keeps the complete context of each selected posting; its migration to select `JournalEntry` records
   containing `Transaction Fee Expense` remains part of the same accounting read-model work.
 
 ## Lifecycle
@@ -44,9 +47,9 @@ flowchart LR
     Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
     Consolidate --> Postings[Consolidated postings: transitional feed]
     Consolidate --> Journal[Validated JournalEntry collection]
-    Journal --> Ledger[General Ledger and Trial Balance projections]
-    Postings --> Legacy[Summary, statements, ledger filters, and drill-downs]
-    Ledger --> Export[PDF or Excel report]
+    Journal --> Trial[Trial Balance projection]
+    Postings --> Legacy[Current General Ledger UI, summary, statements, and account drill-downs]
+    Trial --> Export[PDF or Excel report]
     Legacy --> Export
 ```
 
@@ -201,8 +204,8 @@ flowchart LR
 - [x] Each contract generation is scanned from its own deployment boundary.
 - [x] Transactions made before and after a migration contribute to the same reports.
 - [x] A treasury sweep between old and replacement company contracts remains an internal transfer.
-- [x] The trial balance presents a redeployed cash pocket as one row per contract generation, and drilling a generation's row shows only
-      that generation's entries.
+- [x] The trial balance presents each resolved Bank, Payroll, Expense, or Credit deployment as its own account row, and drilling a
+      deployment's row shows only that deployment's entries.
 - [x] The general ledger names the contract generation on every posting of a redeployed cash pocket, under the same numbering the trial
       balance uses, and jumping from such a posting opens that generation's trial-balance line.
 
@@ -218,6 +221,8 @@ flowchart LR
 - [x] When Officer history is unavailable, Accounting falls back to the current contract set.
 - [x] A generation with no events does not remove events from other generations.
 - [x] A failed generation scan preserves the other generations and reports a reconciliation gap.
+- [x] A deployment-specific source leg without a contract address remains a separate unresolved Trial Balance account; its drill-down and
+      export scope the selected account to unaddressed legs and never fall back to an older deployment.
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
@@ -263,7 +268,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `3aad3487d577d722a0d76928e2bc2747aa091921`
+**Implementation evidence reviewed against:** `fb4e311b8ff884402f8936ec3b30c08c139d05ab`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -291,8 +296,10 @@ flowchart LR
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
   [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's category, account, and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
-  [general ledger](../../../app/src/utils/accounting/generalLedger.ts),
-  [income statement](../../../app/src/utils/accounting/incomeStatement.ts), and
+  [canonical account registry](../../../app/src/utils/accounting/accountRegistry.ts),
+  [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts), and
+  [Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts)
+- [Family-level income statement](../../../app/src/utils/accounting/incomeStatement.ts) and
   [balance sheet](../../../app/src/utils/accounting/balanceSheet.ts)
 - [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
