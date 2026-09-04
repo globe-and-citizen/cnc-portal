@@ -49,7 +49,7 @@
                 {{ row.label }}
               </button>
               <UTooltip
-                v-if="row.split && row.accountResolution === 'resolved' && !row.isPrimaryInstance"
+                v-if="row.split && row.account?.resolution === 'resolved' && !row.isPrimaryInstance"
                 :text="REDEPLOY_HINT"
                 :data-test="`redeploy-hint-${row.label}`"
               >
@@ -131,19 +131,15 @@ import { defaultValueForMode } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
+import type { Account } from '@/utils/accounting/accountRegistry'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
 
 interface TrialTableRow {
-  /** Canonical concrete-account identity. */
-  accountId: string
-  account: string
-  /** Display name — differs from `account` for later deployments or an unresolved account. */
+  /** Canonical concrete account. Absent only on the total row. */
+  account?: Account
+  /** Display name — differentiates later deployments and unresolved accounts. */
   label: string
-  /** Pocket contract instance this row rolls up, when split across redeploys. */
-  instance?: string
-  /** Source evidence state for a deployment-specific account. */
-  accountResolution: 'resolved' | 'unresolved'
   /** True when this account is split across several instances (a redeploy) — shows the hint. */
   split?: boolean
   /** True on the earliest resolved deployment row. */
@@ -174,11 +170,8 @@ const trial = computed(() =>
 const tableRows = computed<TrialTableRow[]>(() => [
   ...trial.value.rows.map((row) => ({ ...row, isTotal: false })),
   {
-    accountId: 'total',
-    account: 'Total',
     label: 'Total',
     split: false,
-    accountResolution: 'resolved',
     nature: '',
     natureClass: '',
     dr: trial.value.total,
@@ -190,7 +183,7 @@ const tableRows = computed<TrialTableRow[]>(() => [
 ])
 
 const columns: TableColumn<TrialTableRow>[] = [
-  { accessorKey: 'account', header: 'Account' },
+  { id: 'account', accessorFn: (row) => row.label, header: 'Account' },
   { accessorKey: 'nature', header: 'Nature', meta: { class: { th: 'w-[24%]' } } },
   { accessorKey: 'dr', header: 'Debit', meta: { class: { th: 'w-[13%]' } } },
   { accessorKey: 'cr', header: 'Credit', meta: { class: { th: 'w-[13%]' } } }
@@ -221,16 +214,17 @@ const {
 } = useLedgerDrilldown(accounting.entries, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(row: TrialTableRow): void {
+  if (!row.account) return
   // The line's balance sits in whichever column isn't the em-dash placeholder.
   const value = row.dr === '—' ? row.cr : row.dr
   // A resolved row scopes to its exact deployment. A line with no source contract
   // opens the separate unresolved account rather than the oldest deployment.
-  if (row.accountResolution === 'unresolved') {
-    openFor(row.account, value, row.label, { unresolved: true })
-  } else if (row.instance) {
-    openFor(row.account, value, row.label, { instance: row.instance })
+  if (row.account.resolution === 'unresolved') {
+    openFor(row.account.family.name, value, row.label, { unresolved: true })
+  } else if (row.account.contractAddress) {
+    openFor(row.account.family.name, value, row.label, { instance: row.account.contractAddress })
   } else {
-    openFor(row.account, value)
+    openFor(row.account.family.name, value)
   }
 }
 
@@ -253,8 +247,10 @@ watch(
     const row = tableRows.value.find(
       (candidate) =>
         !candidate.isTotal &&
-        candidate.account === account &&
-        (!wanted || candidate.instance?.toLowerCase() === wanted || !candidate.instance)
+        candidate.account?.family.name === account &&
+        (!wanted ||
+          candidate.account.contractAddress?.toLowerCase() === wanted ||
+          !candidate.account.contractAddress)
     )
     if (row) openDrilldown(row)
     else openFor(account, '')

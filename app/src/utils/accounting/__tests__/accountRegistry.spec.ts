@@ -54,10 +54,14 @@ describe('canonical account registry', () => {
       registry.resolve('Cash — Credit', CREDIT_2).id
     )
     expect(registry.resolve('Cash — Bank', BANK_2)).toMatchObject({
-      family: 'Cash — Bank',
+      family: {
+        id: 'cash-bank',
+        name: 'Cash — Bank',
+        accountClass: 'ASSET',
+        normalBalance: 'debit',
+        deploymentScoped: true
+      },
       contractAddress: BANK_2,
-      accountClass: 'ASSET',
-      normalBalance: 'debit',
       resolution: 'resolved'
     })
   })
@@ -74,7 +78,7 @@ describe('canonical account registry', () => {
 
     expect(unresolved).toMatchObject({
       id: 'cash-bank:unresolved',
-      family: 'Cash — Bank',
+      family: { id: 'cash-bank', name: 'Cash — Bank' },
       resolution: 'unresolved'
     })
     expect(unresolved.id).not.toBe(registry.resolve('Cash — Bank', BANK_1).id)
@@ -82,9 +86,11 @@ describe('canonical account registry', () => {
 
     const sweep = books.journal.find((entry) => entry.id === 'credit-sweep')
     expect(sweep?.lines[0]).toMatchObject({
-      account: 'Cash — Bank',
-      accountId: 'cash-bank:unresolved',
-      accountResolution: 'unresolved'
+      account: {
+        id: 'cash-bank:unresolved',
+        family: { id: 'cash-bank', name: 'Cash — Bank' },
+        resolution: 'unresolved'
+      }
     })
   })
 
@@ -93,7 +99,7 @@ describe('canonical account registry', () => {
 
     expect(registry.resolve('Service Revenue')).toMatchObject({
       id: 'service-revenue',
-      family: 'Service Revenue',
+      family: { id: 'service-revenue', name: 'Service Revenue' },
       resolution: 'resolved'
     })
   })

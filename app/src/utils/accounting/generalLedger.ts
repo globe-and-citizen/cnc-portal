@@ -15,19 +15,12 @@
  * records the input to every report; the General Ledger and Trial Balance already
  * consume only that assembled journal.
  */
-import {
-  ACCOUNT_NAMES,
-  classOf,
-  isDebitNormal,
-  type AccountClass,
-  type AccountName
-} from './chartOfAccounts'
-import type { Address } from 'viem'
+import { ACCOUNT_NAMES, isDebitNormal, type AccountName } from './chartOfAccounts'
 import {
   buildAccountRegistry,
   type AccountId,
   type AccountRegistry,
-  type AccountResolution
+  type Account
 } from './accountRegistry'
 import type { LedgerEntry } from './ledgerEntry'
 import {
@@ -48,10 +41,7 @@ function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLin
     const account = accounts.resolve(entry.debit, entry.debitInstance)
     lines.push({
       id: `${entry.id}:debit`,
-      account: entry.debit,
-      accountId: account.id,
-      accountResolution: account.resolution,
-      ...(account.contractAddress ? { instance: account.contractAddress } : {}),
+      account,
       debit: entry.amountUsd
     })
   }
@@ -59,10 +49,7 @@ function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLin
     const account = accounts.resolve(entry.credit, entry.creditInstance)
     lines.push({
       id: `${entry.id}:credit`,
-      account: entry.credit,
-      accountId: account.id,
-      accountResolution: account.resolution,
-      ...(account.contractAddress ? { instance: account.contractAddress } : {}),
+      account,
       credit: entry.amountUsd
     })
   }
@@ -96,25 +83,19 @@ export function buildJournal(
 }
 
 export interface TrialBalanceRow {
-  /** Canonical concrete account identity; use this for report selection and reconciliation. */
-  accountId: AccountId
-  account: AccountName
+  /** Canonical concrete account; use it for report selection and reconciliation. */
+  account: Account
   /**
    * Display name for the row — the account itself for the original deployment, then
    * numbered ` 2` / ` 3` for each later deployment (a redeploy), so each shows as its
-   * own line. Equals {@link account} for a single instance, so an un-redeployed book
-   * reads exactly as before.
+   * own line. It is derived separately from the concrete account, so an un-redeployed
+   * book reads exactly as before.
    */
   accountLabel: string
-  /** The pocket contract instance this row rolls up, when the account is split across redeploys. */
-  instance?: Address
-  /** A missing deployment identity is visible for reconciliation rather than folded elsewhere. */
-  accountResolution: AccountResolution
   /** True when this account is split across several instances (a redeploy) — drives the redeploy hint. */
   split: boolean
   /** True on the earliest resolved deployment row, used only for display. */
   isPrimaryInstance: boolean
-  accountClass: AccountClass
   /** Σ of every debit line posted to this account (gross). */
   totalDebit: number
   /** Σ of every credit line posted to this account (gross). */
@@ -192,9 +173,7 @@ export function netBalanceByAccountUnrounded(
 
 /** One trial-balance roll-up bucket: one concrete account, never an inferred instance. */
 interface AccountBucket {
-  accountId: AccountId
-  instance?: Address
-  accountResolution: AccountResolution
+  account: Account
   debit: number
   credit: number
   /** Earliest posting time orders display labels but never determines account identity. */
@@ -210,22 +189,21 @@ function accumulateBuckets(journal: readonly JournalEntry[]): Map<AccountName, A
   const byAccount = new Map<AccountName, Map<AccountId, AccountBucket>>()
   for (const entry of journal) {
     for (const line of entry.lines) {
-      let buckets = byAccount.get(line.account)
+      const familyName = line.account.family.name
+      let buckets = byAccount.get(familyName)
       if (!buckets) {
         buckets = new Map()
-        byAccount.set(line.account, buckets)
+        byAccount.set(familyName, buckets)
       }
-      let bucket = buckets.get(line.accountId)
+      let bucket = buckets.get(line.account.id)
       if (!bucket) {
         bucket = {
-          accountId: line.accountId,
-          ...(line.instance ? { instance: line.instance } : {}),
-          accountResolution: line.accountResolution,
+          account: line.account,
           debit: 0,
           credit: 0,
           firstTs: entry.timestamp
         }
-        buckets.set(line.accountId, bucket)
+        buckets.set(line.account.id, bucket)
       }
       bucket.debit += debitOf(line)
       bucket.credit += creditOf(line)
@@ -238,9 +216,9 @@ function accumulateBuckets(journal: readonly JournalEntry[]): Map<AccountName, A
 }
 
 /** Label a concrete account for display without using that label as its identity. */
-function accountLabel(account: AccountName, bucket: AccountBucket, number: number): string {
-  if (bucket.accountResolution === 'unresolved') return `${account} (unresolved)`
-  return number > 1 ? `${account} ${number}` : account
+function accountLabel(account: Account, number: number): string {
+  if (account.resolution === 'unresolved') return `${account.family.name} (unresolved)`
+  return number > 1 ? `${account.family.name} ${number}` : account.family.name
 }
 
 /**
@@ -268,9 +246,9 @@ export function buildGeneralLedger(journal: readonly JournalEntry[]): GeneralLed
   // line belongs.
   for (const account of ACCOUNT_NAMES) {
     const buckets = (groups.get(account) ?? []).sort(
-      (a, b) => a.firstTs - b.firstTs || a.accountId.localeCompare(b.accountId)
+      (a, b) => a.firstTs - b.firstTs || a.account.id.localeCompare(b.account.id)
     )
-    const resolved = buckets.filter((bucket) => bucket.accountResolution === 'resolved')
+    const resolved = buckets.filter((bucket) => bucket.account.resolution === 'resolved')
     const split = resolved.length > 1
     let resolvedNumber = 0
     buckets.forEach((bucket) => {
@@ -279,12 +257,13 @@ export function buildGeneralLedger(journal: readonly JournalEntry[]): GeneralLed
       if (rawDebit === 0 && rawCredit === 0) return
 
       const number =
-        bucket.accountResolution === 'resolved' ? (resolvedNumber += 1) : Number.POSITIVE_INFINITY
+        bucket.account.resolution === 'resolved' ? (resolvedNumber += 1) : Number.POSITIVE_INFINITY
 
       rawTotalDebit += rawDebit
       rawTotalCredit += rawCredit
-      const rawBalance = isDebitNormal(account) ? rawDebit - rawCredit : rawCredit - rawDebit
-      if (isDebitNormal(account)) rawDebitBalance += rawBalance
+      const debitNormal = bucket.account.family.normalBalance === 'debit'
+      const rawBalance = debitNormal ? rawDebit - rawCredit : rawCredit - rawDebit
+      if (debitNormal) rawDebitBalance += rawBalance
       else rawCreditBalance += rawBalance
 
       const grossDebit = round2(rawDebit)
@@ -292,14 +271,10 @@ export function buildGeneralLedger(journal: readonly JournalEntry[]): GeneralLed
       if (grossDebit === 0 && grossCredit === 0) return // sub-cent residual: not shown
 
       trialBalance.push({
-        accountId: bucket.accountId,
-        account,
-        accountLabel: accountLabel(account, bucket, number),
-        ...(bucket.instance ? { instance: bucket.instance } : {}),
-        accountResolution: bucket.accountResolution,
+        account: bucket.account,
+        accountLabel: accountLabel(bucket.account, number),
         split,
-        isPrimaryInstance: bucket.accountResolution === 'resolved' && number === 1,
-        accountClass: classOf(account),
+        isPrimaryInstance: bucket.account.resolution === 'resolved' && number === 1,
         totalDebit: grossDebit,
         totalCredit: grossCredit,
         balance: round2(rawBalance)

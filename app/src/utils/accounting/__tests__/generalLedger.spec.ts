@@ -9,7 +9,7 @@ const generalLedger = (entries: readonly LedgerEntry[]) => buildGeneralLedger(bu
 describe('buildGeneralLedger — catalogue worked example', () => {
   const gl = generalLedger(catalogueLedger)
   const balanceOf = (account: AccountName): number =>
-    gl.trialBalance.find((r) => r.account === account)?.balance ?? 0
+    gl.trialBalance.find((r) => r.account.family.name === account)?.balance ?? 0
 
   it('is balanced gross (Σ debit lines = Σ credit lines = journal total)', () => {
     expect(gl.totalDebit).toBeCloseTo(678.1, 2)
@@ -43,7 +43,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
   })
 
   it('drops accounts with no activity (e.g. Owner Capital this period)', () => {
-    expect(gl.trialBalance.some((r) => r.account === 'Owner Capital')).toBe(false)
+    expect(gl.trialBalance.some((r) => r.account.family.name === 'Owner Capital')).toBe(false)
   })
 
   it('stays balanced when per-account rounding would drift a cent', () => {
@@ -118,11 +118,11 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       deposit('c', bank2, 30, 30), // after the redeploy → the new Bank
       blankBankLeg
     ])
-    const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
+    const bankRows = gl2.trialBalance.filter((r) => r.account.family.name === 'Cash — Bank')
     expect(bankRows).toHaveLength(3)
-    const bank1Row = bankRows.find((row) => row.instance === bank1)
-    const bank2Row = bankRows.find((row) => row.instance === bank2)
-    const unresolvedRow = bankRows.find((row) => row.accountResolution === 'unresolved')
+    const bank1Row = bankRows.find((row) => row.account.contractAddress === bank1)
+    const bank2Row = bankRows.find((row) => row.account.contractAddress === bank2)
+    const unresolvedRow = bankRows.find((row) => row.account.resolution === 'unresolved')
     // The original deployment keeps the plain name; only later ones are numbered.
     expect(bank1Row?.accountLabel).toBe('Cash — Bank')
     expect(bank1Row?.split).toBe(true)
@@ -158,7 +158,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       safeLeg('1', '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 10),
       safeLeg('2', '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 5)
     ])
-    const safeRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Safe')
+    const safeRows = gl2.trialBalance.filter((r) => r.account.family.name === 'Cash — Safe')
     expect(safeRows).toHaveLength(1)
     expect(safeRows[0].accountLabel).toBe('Cash — Safe')
     expect(safeRows[0].balance).toBeCloseTo(15, 2)
@@ -182,7 +182,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
         enrichment: 'not-applicable'
       }
     ])
-    const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
+    const bankRows = gl2.trialBalance.filter((r) => r.account.family.name === 'Cash — Bank')
     expect(bankRows).toHaveLength(1)
     expect(bankRows[0].accountLabel).toBe('Cash — Bank') // single instance → no number
     expect(bankRows[0].split).toBe(false)

@@ -76,9 +76,9 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
 
   it('rolls the fee into BANK_A on the trial balance, not the other deployment', () => {
     const gl = buildGeneralLedger(buildJournal(entries))
-    const bankRows = gl.trialBalance.filter((r) => r.account === 'Cash — Bank')
-    const rowA = bankRows.find((r) => r.instance?.toLowerCase() === BANK_A)
-    const rowB = bankRows.find((r) => r.instance?.toLowerCase() === BANK_B)
+    const bankRows = gl.trialBalance.filter((r) => r.account.family.name === 'Cash — Bank')
+    const rowA = bankRows.find((r) => r.account.contractAddress?.toLowerCase() === BANK_A)
+    const rowB = bankRows.find((r) => r.account.contractAddress?.toLowerCase() === BANK_B)
     // BANK_A sent 100 net + 0.5 fee = 100.5 gross out.
     expect(rowA?.totalCredit).toBe(100.5)
     // The fee must NOT have leaked onto BANK_B (the other deployment).
