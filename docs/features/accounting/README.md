@@ -106,6 +106,7 @@ flowchart LR
 
 - [x] The ledger exposes each transaction-backed entry's hash, date, activity, accounts, currency, quantity, rate, debit, and credit
       amounts; a synthetic entry has no transaction hash.
+- [x] A transaction-backed hash opens the configured network block explorer in a separate tab, while a synthetic entry has no explorer link.
 - [x] A company member can filter entries by reporting period, available currencies, and one or more concrete accounts.
 - [x] A company member can inspect the entries and running balance for one account from a report line.
 - [x] Selecting an account on a ledger entry opens that account's transactions in the trial-balance drill-down.
@@ -273,7 +274,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1ed9ee571e404181c02f7cd7c91471055df06e72`
+**Implementation evidence reviewed against:** `44e63ba7fd37a00456c35706370367b9bda0232a`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -313,6 +314,8 @@ flowchart LR
 - [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
 - [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
+  [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
+  [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
   [accounting data tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts), and
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts) and
   [accounting rule tests](../../../app/src/utils/accounting/__tests__)

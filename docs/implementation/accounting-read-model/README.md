@@ -181,11 +181,12 @@ This is a current implementation boundary, not an accounting-policy distinction.
 uses its transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains traceability evidence. A fee is an ordinary
 `Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or separate fee entry in this projection. The
 General Ledger renders the transaction hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports;
-synthetic operations have no transaction-hash value. JournalEntry assembly groups source postings and withholds a `FeePaid` source without
-matching Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not part of the company's internal-pocket
-registry. A later migration of every remaining projection to journal lines must preserve report date scopes and mapper semantics. In
-particular, `mergedBankFee` is re-booked only while calculating legacy raw-posting account balances because that presentation metadata is
-not carried by the canonical journal feed.
+synthetic operations have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate
+tab. Its bounded-width table column can be resized with a pointer or keyboard controls. JournalEntry assembly groups source postings and
+withholds a `FeePaid` source without matching Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not
+part of the company's internal-pocket registry. A later migration of every remaining projection to journal lines must preserve report date
+scopes and mapper semantics. In particular, `mergedBankFee` is re-booked only while calculating legacy raw-posting account balances because
+that presentation metadata is not carried by the canonical journal feed.
 
 ## Optimisation Review
 
@@ -215,7 +216,7 @@ not carried by the canonical journal feed.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1ed9ee571e404181c02f7cd7c91471055df06e72`
+**Implementation evidence reviewed against:** `44e63ba7fd37a00456c35706370367b9bda0232a`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -227,11 +228,13 @@ not carried by the canonical journal feed.
   [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [General Ledger card](../../../app/src/components/sections/AccountingView/GeneralLedger.vue),
+  [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
   [PDF projection](../../../app/src/lib/accounting/generalLedgerPdfTable.ts),
   [spreadsheet projection](../../../app/src/lib/accounting/generalLedgerSheet.ts), and
   [Trial Balance card](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
 - [Assembly tests](../../../app/src/utils/accounting/__tests__/assemble.spec.ts),
   [account-registry tests](../../../app/src/utils/accounting/__tests__/accountRegistry.spec.ts),
+  [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), and
   [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts)
 
