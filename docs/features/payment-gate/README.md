@@ -131,9 +131,9 @@ names the current, and so far only, delivery boundary of this capability — not
 - [ ] A wallet-rejected payment shows a clear cancellation message, not the raw wallet/SDK error.
 - [ ] An on-chain revert (e.g. insufficient balance) shows a decoded, readable reason, not the raw contract/SDK error.
 - [ ] After a failed payment, the customer can retry without leaving the widget or the merchant reloading their page.
-- [x] If the merchant's page embeds the widget with a missing `data-bank`/`data-token` script attribute, the customer sees an explicit
-      "payment unavailable" message instead of an empty mount point, and the merchant gets a console diagnostic naming exactly which
-      attribute is missing.
+- [x] If the merchant's page embeds the widget with a missing or invalid-format `data-bank`/`data-token` script attribute, the customer sees
+      an explicit "payment unavailable" message instead of a payment form built around bad data, and the merchant gets a console diagnostic
+      naming exactly what's wrong.
 
 **Dependencies:** US-PAYGATE-V0-002, a connected wallet, and a sufficient token balance
 
@@ -202,7 +202,7 @@ names the current, and so far only, delivery boundary of this capability — not
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8ce808343e9f742db58266d3a1bc5c34ef75b051`
+**Implementation evidence reviewed against:** `5fcbe6f117c664d70d08bff96a681d36a9ba814a`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet, with explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
