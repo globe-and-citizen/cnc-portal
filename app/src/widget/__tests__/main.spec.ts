@@ -58,6 +58,20 @@ describe('widget main', () => {
     )
   })
 
+  it('logs a console error and renders a fallback card when data-bank is not a valid address', async () => {
+    const { mount } = await loadWidget({ bank: '0x…', token: 'USDC' })
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[CNC Pay] data-bank "0x…" isn\'t a valid 0x-prefixed 40-hex-character address'
+    )
+
+    window.CncPay.setFactureId('order_1')
+    window.CncPay.setAmount('10.00')
+    window.CncPay.show(mount)
+
+    expect(mount.shadowRoot?.textContent).toContain('Payment unavailable')
+  })
+
   it('renders the real payment card when the script tag is configured', async () => {
     const { mount } = await loadWidget({
       bank: '0x1111111111111111111111111111111111111111',

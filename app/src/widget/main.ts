@@ -80,6 +80,12 @@ function widgetScriptTag(): HTMLScriptElement | undefined {
   )
 }
 
+// Same shape the Setup page's own embed-snippet parser accepts (see the
+// reference merchant integration's `parseEmbedSnippet`) — a plain format
+// check, not a checksum one, so a manually-typed or all-lowercase address a
+// merchant pasted still works.
+const BANK_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/
+
 /** Reads `data-bank` / `data-token` off the widget's own <script> tag. */
 function readScriptConfig(): { bankAddress: Address; tokenSymbol: string } | undefined {
   const script = widgetScriptTag()
@@ -95,6 +101,17 @@ function readScriptConfig(): { bankAddress: Address; tokenSymbol: string } | und
     // own production page, and it's the only diagnostic they get for a
     // broken embed snippet.
     console.error(`[CNC Pay] missing ${missing} on the widget <script> tag`)
+    return undefined
+  }
+  // Caught here rather than left to fail once the customer clicks Pay: an
+  // invalid address (a stray placeholder like "0x…", a typo) otherwise
+  // still renders a completely normal-looking payment card, connects the
+  // customer's wallet, and only fails afterward, deep inside the allowance
+  // check — the same broken config, just discovered several steps too late.
+  if (!BANK_ADDRESS_PATTERN.test(bankAddress)) {
+    console.error(
+      `[CNC Pay] data-bank "${bankAddress}" isn't a valid 0x-prefixed 40-hex-character address`
+    )
     return undefined
   }
   return { bankAddress: bankAddress as Address, tokenSymbol }
