@@ -13,17 +13,13 @@
  * compiled Tailwind/Nuxt UI CSS injected as an inline `<style>` so it stays
  * scoped to the widget and never leaks onto (or clashes with) the host page.
  */
-import { createApp, type App } from 'vue'
+import { createApp, type App, type Component } from 'vue'
 import ui from '@nuxt/ui/vue-plugin'
 import type { Address } from 'viem'
-// Import directly from `generalUtil`, not the `@/utils` barrel: the barrel's
-// `export *` re-exports pull in every util module transitively, several of
-// which import Vue/Pinia — dead weight this standalone widget bundle
-// shouldn't pay for.
-import { log } from '@/lib/logging'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { WidgetPaymentStatus } from './payment'
 import WidgetApp, { type WidgetToken } from './WidgetApp.vue'
+import WidgetMisconfigured from './WidgetMisconfigured.vue'
 // `?inline` tells Vite to return the fully compiled CSS as a plain string
 // instead of injecting it into the page's <head> — we inject it ourselves,
 // into the shadow root, a few lines down.
@@ -75,7 +71,12 @@ function readScriptConfig(): { bankAddress: Address; tokenSymbol: string } | und
   const bankAddress = script?.dataset.bank
   const tokenSymbol = script?.dataset.token
   if (!script || !bankAddress || !tokenSymbol) {
-    log.error('[CNC Pay] missing data-bank/data-token on the widget <script> tag')
+    // Unconditional `console.error`, not the app's `log` util: `log`'s
+    // methods are dev-mode-only (see `@/lib/logging`), which is right for
+    // internal app telemetry but wrong here — this fires inside a merchant's
+    // own production page, and it's the only diagnostic they get for a
+    // broken embed snippet.
+    console.error('[CNC Pay] missing data-bank/data-token on the widget <script> tag')
     return undefined
   }
   return { bankAddress: bankAddress as Address, tokenSymbol }
@@ -122,19 +123,20 @@ const instances = new WeakMap<HTMLElement, { shadow: ShadowRoot; app: App }>()
 function resolveTarget(target: HTMLElement | string): HTMLElement | undefined {
   const element =
     typeof target === 'string' ? (document.querySelector<HTMLElement>(target) ?? undefined) : target
-  if (!element) log.error('[CNC Pay] show() target not found:', target)
+  if (!element) console.error('[CNC Pay] show() target not found:', target)
   return element
 }
 
-function show(target: HTMLElement | string): void {
-  if (!scriptConfig) return
-  if (!state.factureId || !state.amount) {
-    log.error('[CNC Pay] call setFactureId/setAmount before show()')
-    return
-  }
-  const mount = resolveTarget(target)
-  if (!mount) return
-
+/**
+ * Mounts `component` into `mount`'s shadow root, tearing down whatever was
+ * there before. Shared by the real payment card and the misconfigured-embed
+ * fallback below — both need the same host-page CSS isolation.
+ */
+function mountInShadowRoot(
+  mount: HTMLElement,
+  component: Component,
+  props: Record<string, unknown>
+): void {
   const existing = instances.get(mount)
   if (existing) {
     existing.app.unmount()
@@ -149,7 +151,34 @@ function show(target: HTMLElement | string): void {
   const container = document.createElement('div')
   shadow.appendChild(container)
 
-  const app = createApp(WidgetApp, {
+  const app = createApp(component, props)
+  // Registers Nuxt UI's components (UCard, UButton, UIcon, UAlert, …) on
+  // this app instance so the mounted component's template can use them.
+  app.use(ui)
+  app.mount(container)
+  instances.set(mount, { shadow, app })
+}
+
+function show(target: HTMLElement | string): void {
+  const mount = resolveTarget(target)
+  if (!mount) return
+
+  // A broken embed snippet (missing data-bank/data-token) is a merchant
+  // mistake, not a shopper one — but the shopper is the one looking at this
+  // page, so they still need to see *something* rather than an empty box
+  // with no explanation. `readScriptConfig` already logged the diagnostic
+  // the merchant needs, above.
+  if (!scriptConfig) {
+    mountInShadowRoot(mount, WidgetMisconfigured, {})
+    return
+  }
+
+  if (!state.factureId || !state.amount) {
+    console.error('[CNC Pay] call setFactureId/setAmount before show()')
+    return
+  }
+
+  mountInShadowRoot(mount, WidgetApp, {
     bankAddress: scriptConfig.bankAddress,
     token: resolveToken(scriptConfig.tokenSymbol),
     tokenSymbolRaw: scriptConfig.tokenSymbol,
@@ -157,11 +186,6 @@ function show(target: HTMLElement | string): void {
     factureId: state.factureId,
     onStatus: state.onStatus
   })
-  // Registers Nuxt UI's components (UCard, UButton, UIcon, UAlert, …) on
-  // this app instance so WidgetApp.vue's template can use them.
-  app.use(ui)
-  app.mount(container)
-  instances.set(mount, { shadow, app })
 }
 
 window.CncPay = {
@@ -183,7 +207,7 @@ window.CncPay = {
           try {
             callback(status, extra)
           } catch (error) {
-            log.error('[CNC Pay] onStatus callback threw', error)
+            console.error('[CNC Pay] onStatus callback threw', error)
           }
         }
       : undefined
