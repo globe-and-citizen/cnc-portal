@@ -39,8 +39,10 @@ flowchart LR
     Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
     Consolidate --> Postings[Consolidated postings: transitional feed]
     Consolidate --> Journal[Validated JournalEntry collection]
+    Journal --> GeneralLedger[General Ledger UI and exports]
     Journal --> Trial[Trial Balance projection]
-    Postings --> Legacy[Current General Ledger UI, summary, statements, and account drill-downs]
+    Postings --> Legacy[Current summary, statements, and account drill-downs]
+    GeneralLedger --> Export
     Trial --> Export[PDF or Excel report]
     Legacy --> Export
 ```
@@ -98,7 +100,7 @@ flowchart LR
 #### Happy Path
 
 - [x] The ledger exposes each posting's date, activity, accounts, currency, quantity, rate, debit, and credit amounts.
-- [x] A company member can filter entries by accounting category, reporting period, available currencies, and one or more specific accounts.
+- [x] A company member can filter entries by reporting period, available currencies, and one or more concrete accounts.
 - [x] A company member can inspect the entries and running balance for one account from a report line.
 - [x] Selecting an account on a ledger entry opens that account's transactions in the trial-balance drill-down.
 - [x] A known activity destination can be followed to its owning product journey.
@@ -106,13 +108,13 @@ flowchart LR
 #### Business Rules
 
 - [x] Pagination does not change the totals for the complete filtered ledger.
-- [x] Filtering the ledger by account keeps whole postings, so each shown entry still carries its debit and credit legs.
-- [x] Filtering by fee selects the transactions that contain `Transaction Fee Expense` and keeps their complete balanced context — every
-      debit and credit line — rather than isolating a fee-only line or altering the transaction's total.
-- [x] Compound transactions retain all debit and credit legs under one posting.
+- [x] Filtering the ledger by account or currency keeps whole `JournalEntry` records, so each shown entry still carries every debit and
+      credit line.
+- [x] The General Ledger has no `Fee` pseudo-category. A protocol fee is an ordinary `Transaction Fee Expense` line in the same
+      `JournalEntry` as the source operation's other movements.
+- [x] One source operation produces one `JournalEntry`; compound transactions retain all debit and credit legs under that entry.
 - [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
-      community-credit round — is shown as a single ledger entry that still names each beneficiary and their share, with one credit for the
-      total.
+      community-credit round — is shown as a single ledger entry with every recipient's debit or credit line and one credit for the total.
 - [x] Protocol fees remain identifiable as expenses rather than neutral transfers.
 - [x] One on-chain event is not counted more than once in the consolidated ledger.
 
@@ -260,7 +262,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7c399520fab89791bec1a36c81162621c0a11421`
+**Implementation evidence reviewed against:** `965526c616447dad64398d3791b47096f73b21e2`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -286,19 +288,20 @@ flowchart LR
   [per-section export](../../../app/src/composables/accounting/useSectionExport.ts), and
   [transfer-initiator resolver](../../../app/src/composables/accounting/useTransferInitiators.ts)
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
-  [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's category, account, and currency filters
+  [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts),
   [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts),
-  [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts), and
-  [Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts) and
-  [presentation](../../../app/src/utils/accounting/presenter.ts)
+  [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
+  [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
+  [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [Family-level income statement](../../../app/src/utils/accounting/incomeStatement.ts) and
   [balance sheet](../../../app/src/utils/accounting/balanceSheet.ts)
 - [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
 - [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
   [accounting data tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts), and
+  [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts) and
   [accounting rule tests](../../../app/src/utils/accounting/__tests__)
 - [Contract-migration accounting tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 
