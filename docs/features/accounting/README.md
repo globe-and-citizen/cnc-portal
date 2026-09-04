@@ -28,14 +28,13 @@ These acceptance criteria follow the
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
-- **Transaction-first read model:** every source event and every approved manual classification maps once into a balanced journal
-  transaction — a set of debit/credit lines that are equal in the reporting currency — and **every report derives from those same lines**.
-  The general ledger projects whole transactions with all their lines; the trial balance and the statements aggregate the same lines by
-  account and account type; account drill-downs and exports select whole transactions and keep their complete context. No report
-  reconstructs an alternative debit or credit leg. A protocol or transaction fee is an ordinary debit line to `Transaction Fee Expense`
-  inside its transaction, never a standalone fee-only row; the **Fee** filter selects the transactions that contain that account and still
-  shows every one of their balanced lines, so the fee view reconciles line-for-line with the general ledger, drill-downs, and exports
-  ([#2678](https://github.com/globe-and-citizen/cnc-portal/issues/2678)).
+- **Journal-entry foundation:** the General Ledger adapts each consolidated posting into a validated `JournalEntry` with distinct entry and
+  source-operation identities, ordered `JournalEntryLine` records, and an executable debit/credit balance invariant. Memo-only entries are
+  explicit and contain no monetary lines; an invalid entry is rejected before the General Ledger or Trial Balance can consume it. The Trial
+  Balance aggregates these validated journal lines. The Income Statement, Balance Sheet, account drill-downs, PDF, and Excel exports still
+  consume the consolidated posting feed while their migration to journal lines is in progress. The **Fee** filter keeps the complete context
+  of each selected posting; its migration to select `JournalEntry` records containing `Transaction Fee Expense` remains part of the same
+  accounting read-model work.
 
 ## Lifecycle
 
@@ -268,7 +267,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `987bc6ec32574be600d5d9c889bd985856ae36bc`
+**Implementation evidence reviewed against:** `3103c8ebc7b4bad777129850fa6e7612d1c48cbf`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
