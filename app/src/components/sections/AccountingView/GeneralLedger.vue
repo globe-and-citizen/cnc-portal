@@ -87,10 +87,10 @@ import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerP
 
 // Show/hide table columns — persisted across sessions so the choice sticks.
 const columnItems = [...LEDGER_COLUMNS]
-// Key bumped to -v2 when Currency / Quantity / Rate were added, so a saved
-// pre-v2 selection doesn't hide the newly-mandated columns (spec §2).
+// Key bumped to -v3 when Tx hash was added, so a saved preference does not hide
+// this transaction-level traceability field.
 const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
-  'cnc-accounting-ledger-columns-v2',
+  'cnc-accounting-ledger-columns-v3',
   columnItems.map((column) => column.value)
 )
 

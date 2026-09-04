@@ -6,6 +6,7 @@ import { USDC_ADDRESS } from '@/constant'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const CLIENT = '0x7777777777777777777777777777777777777777'
+const TX_HASH = `0x${'a'.repeat(64)}`
 const EXPENSE = '0x2222222222222222222222222222222222222222'
 const MEMBER = '0x3333333333333333333333333333333333333333'
 
@@ -28,7 +29,7 @@ function sampleBooks(): CncAccounting {
       bankTokenDeposits: {
         items: [
           {
-            id: 'bd1',
+            id: `${TX_HASH}-0`,
             contractAddress: BANK,
             depositor: CLIENT,
             token: USDC_ADDRESS,
@@ -129,6 +130,7 @@ describe('buildAccountingSheets', () => {
       'Date',
       'Action',
       'Transaction',
+      'Tx hash',
       'Activity',
       'Account',
       'Currency',
@@ -141,15 +143,16 @@ describe('buildAccountingSheets', () => {
     expect(rows.length).toBe(6)
     const totalRow = rows.at(-1)!
     expect(totalRow[2]).toBe('Total movements')
-    expect(totalRow[8]).toBe(100) // numeric Debit total
+    expect(totalRow[9]).toBe(100) // numeric Debit total
+    expect(rows[3]![3]).toBe(TX_HASH)
   })
 
   it('fills the Activity column via the supplied name resolver', () => {
     const rows = buildAccountingSheets(sampleBooks(), () => 'Acme Client').find(
       (s) => s.name === 'General Ledger'
     )!.rows
-    // header + first journal line; Activity is the 4th column (index 3)
-    expect(String(rows[3][3])).toContain('Acme Client')
+    // header + first journal line; Activity is the 5th column (index 4).
+    expect(String(rows[3][4])).toContain('Acme Client')
   })
 })
 
@@ -177,9 +180,9 @@ describe('buildSheets (section selection)', () => {
     const accountId = books.journal[0]!.lines[0]!.account.id
     const [ledger] = buildSheets(books, [{ key: 'ledger', journalAccounts: [accountId] }])
     expect(ledger.rows).toHaveLength(6)
-    expect(ledger.rows[3]![4]).toBe('Cash — Bank')
-    expect(ledger.rows[4]![4]).toBe('Service Revenue')
-    expect(ledger.rows.at(-1)![8]).toBe(100)
+    expect(ledger.rows[3]![5]).toBe('Cash — Bank')
+    expect(ledger.rows[4]![5]).toBe('Service Revenue')
+    expect(ledger.rows.at(-1)![9]).toBe(100)
   })
 
   it('keeps a short General Ledger title and tab name', () => {

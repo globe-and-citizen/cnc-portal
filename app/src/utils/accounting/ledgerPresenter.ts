@@ -57,6 +57,8 @@ export interface LedgerRow {
   date: string
   /** The generic accounting-entry label (the "Transaction" column), e.g. "Wage accrual". */
   label: string
+  /** Transaction hash for an on-chain entry; absent for a synthetic operation or continuation row. */
+  txHash?: string
   /** The structured narration (the "Activity" column) — avatar(s) + predicate. */
   activity: ActivityCell
   /** The section the Activity links to ({@link ./activityDestination}); absent on
@@ -203,6 +205,7 @@ function rowsOf(entry: LedgerEntry, instances: PocketInstanceIndex): LedgerRow[]
     isFirst: true,
     date: formatUnixDateTime(entry.timestamp),
     label: entryLabel(entry),
+    ...(entry.txHash ? { txHash: entry.txHash } : {}),
     activity: activityOf(entry),
     destination: activityDestinationOf(entry),
     category: categoryLabelOf(entry),

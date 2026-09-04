@@ -15,9 +15,10 @@ import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 const BANK_1 = '0x1111111111111111111111111111111111111111'
 const BANK_2 = '0x2222222222222222222222222222222222222222'
+const TX_HASH = `0x${'a'.repeat(64)}`
 
 /** A deposit into one Bank contract — two of them make a redeployed pocket. */
-function deposit(id: string, instance: string, timestamp: number): LedgerEntry {
+function deposit(id: string, instance: string, timestamp: number, txHash?: string): LedgerEntry {
   return {
     id,
     timestamp,
@@ -30,7 +31,8 @@ function deposit(id: string, instance: string, timestamp: number): LedgerEntry {
     rawAmount: '100000000',
     internal: false,
     memo: '',
-    enrichment: 'not-applicable'
+    enrichment: 'not-applicable',
+    ...(txHash ? { txHash } : {})
   }
 }
 
@@ -76,5 +78,19 @@ describe('General ledger — redeployed pocket', () => {
     expect(wrapper.text()).toContain('Cash — Bank')
     expect(wrapper.text()).not.toContain('Cash — Bank 2')
     expect(wrapper.find('[data-test^="ledger-redeploy-hint-"]').exists()).toBe(false)
+  })
+
+  it('shows each transaction hash once with its full value available on hover', async () => {
+    const wrapper = renderLedger([
+      deposit('a', BANK_1, 1_700_000_000, TX_HASH),
+      deposit('synthetic', BANK_1, 1_700_086_400)
+    ])
+    await flushPromises()
+
+    const hashes = wrapper.findAll('[data-test="ledger-tx-hash"]')
+    expect(hashes).toHaveLength(2)
+    expect(hashes[0]!.text()).toBe('0xaaaa...aaaa')
+    expect(hashes[0]!.attributes('title')).toBe(TX_HASH)
+    expect(hashes[1]!.text()).toBe('—')
   })
 })

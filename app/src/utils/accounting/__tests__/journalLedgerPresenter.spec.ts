@@ -100,9 +100,11 @@ describe('journalLedgerPresenter', () => {
       })
     ])
 
-    const [first] = journalLedgerRows(journal)
+    const rows = journalLedgerRows(journal)
+    const [first] = rows
 
     expect(journal).toHaveLength(1)
     expect(first?.activity).toEqual({ kind: 'plain', text: 'Credit repayment' })
+    expect(rows.map((row) => row.txHash)).toEqual([txHash, undefined])
   })
 })

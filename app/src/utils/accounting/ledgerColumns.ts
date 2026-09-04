@@ -10,6 +10,7 @@ export type LedgerColumnKey =
   | 'date'
   | 'action'
   | 'transaction'
+  | 'txHash'
   | 'activity'
   | 'account'
   | 'dr'
@@ -30,6 +31,7 @@ export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
   { value: 'date', label: 'Date' },
   { value: 'action', label: 'Action' },
   { value: 'transaction', label: 'Transaction' },
+  { value: 'txHash', label: 'Tx hash' },
   { value: 'activity', label: 'Activity' },
   { value: 'account', label: 'Account' },
   { value: 'currency', label: 'Currency' },
