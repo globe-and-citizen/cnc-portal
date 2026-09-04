@@ -15,7 +15,8 @@
  */
 import { createApp, type App, type Component } from 'vue'
 import ui from '@nuxt/ui/vue-plugin'
-import type { Address } from 'viem'
+import { isAddress, type Address } from 'viem'
+import { z } from 'zod'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { WidgetPaymentStatus } from './payment'
 import WidgetApp, { type WidgetToken } from './WidgetApp.vue'
@@ -80,11 +81,16 @@ function widgetScriptTag(): HTMLScriptElement | undefined {
   )
 }
 
-// Same shape the Setup page's own embed-snippet parser accepts (see the
-// reference merchant integration's `parseEmbedSnippet`) — a plain format
-// check, not a checksum one, so a manually-typed or all-lowercase address a
-// merchant pasted still works.
-const BANK_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/
+// `isAddress` (not a hand-rolled regex) is the same address-format check
+// used everywhere else in the app (see e.g. `types/safe.schemas.ts`) — wrapped
+// in a zod `.refine`, the repo's established pattern for turning a validity
+// check into a specific, safe-to-display error message via `.safeParse()`.
+// `{ strict: false }` mirrors the Setup page's own embed-snippet parser: a
+// plain format check, not a checksum one, so a manually-typed or
+// all-lowercase address a merchant pasted still works.
+const bankAddressSchema = z.string().refine((value) => isAddress(value, { strict: false }), {
+  message: "isn't a valid 0x-prefixed 40-hex-character address"
+})
 
 /** Reads `data-bank` / `data-token` off the widget's own <script> tag. */
 function readScriptConfig(): { bankAddress: Address; tokenSymbol: string } | undefined {
@@ -108,13 +114,13 @@ function readScriptConfig(): { bankAddress: Address; tokenSymbol: string } | und
   // still renders a completely normal-looking payment card, connects the
   // customer's wallet, and only fails afterward, deep inside the allowance
   // check — the same broken config, just discovered several steps too late.
-  if (!BANK_ADDRESS_PATTERN.test(bankAddress)) {
-    console.error(
-      `[CNC Pay] data-bank "${bankAddress}" isn't a valid 0x-prefixed 40-hex-character address`
-    )
+  const addressResult = bankAddressSchema.safeParse(bankAddress)
+  if (!addressResult.success) {
+    const reason = addressResult.error.issues[0]?.message ?? 'is invalid'
+    console.error(`[CNC Pay] data-bank "${bankAddress}" ${reason}`)
     return undefined
   }
-  return { bankAddress: bankAddress as Address, tokenSymbol }
+  return { bankAddress: addressResult.data as Address, tokenSymbol }
 }
 
 /**
@@ -147,6 +153,20 @@ function isValidFactureId(factureId: string): boolean {
     FACTURE_ID_PATTERN.test(factureId)
   )
 }
+
+// A non-negative plain decimal (no sign, no exponent, no thousands
+// separator) — the same shape `formatToken`/`parseUnits` downstream actually
+// expect. Format-only, not decimals-aware: without this, "abc" rendered a
+// nonsensical-but-clickable "Pay — " button, and "-5" rendered a completely
+// normal-looking "Pay -5 USDC" button — both failed only after the customer
+// clicked Pay, "-5" with a raw viem uint256-range error dump rather than a
+// readable message (`parseUnits` rejects a negative value that way, not with
+// a friendly one). Caught here instead, at the same point `setFactureId`
+// already validates its own input.
+const AMOUNT_PATTERN = /^\d+(\.\d+)?$/
+const amountSchema = z.string().regex(AMOUNT_PATTERN, {
+  message: 'must be a non-negative decimal number, e.g. "10.50"'
+})
 
 const scriptConfig = readScriptConfig()
 
@@ -233,6 +253,11 @@ window.CncPay = {
     state.factureId = factureId
   },
   setAmount(amount) {
+    const result = amountSchema.safeParse(amount)
+    if (!result.success) {
+      const reason = result.error.issues[0]?.message ?? 'is invalid'
+      throw new Error(`[CNC Pay] Invalid amount ${JSON.stringify(amount)} — ${reason}.`)
+    }
     state.amount = amount
   },
   setOnStatus(callback) {

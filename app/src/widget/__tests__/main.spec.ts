@@ -90,6 +90,30 @@ describe('widget main', () => {
     expect(mount.shadowRoot?.textContent).toContain('CNC Pay')
   })
 
+  it.each(['abc', '-5', '', '1.2.3', 'NaN'])(
+    'throws synchronously from setAmount for an invalid amount %s',
+    async (amount) => {
+      await loadWidget({
+        bank: '0x1111111111111111111111111111111111111111',
+        token: 'USDC'
+      })
+
+      expect(() => window.CncPay.setAmount(amount)).toThrow(
+        `[CNC Pay] Invalid amount ${JSON.stringify(amount)} — must be a non-negative decimal number, e.g. "10.50".`
+      )
+    }
+  )
+
+  it('accepts a valid decimal amount from setAmount', async () => {
+    await loadWidget({
+      bank: '0x1111111111111111111111111111111111111111',
+      token: 'USDC'
+    })
+
+    expect(() => window.CncPay.setAmount('10.50')).not.toThrow()
+    expect(() => window.CncPay.setAmount('0')).not.toThrow()
+  })
+
   it('logs a console error instead of throwing when the show() target is not found', async () => {
     await loadWidget({
       bank: '0x1111111111111111111111111111111111111111',
