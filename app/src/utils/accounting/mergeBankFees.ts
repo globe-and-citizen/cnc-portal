@@ -4,8 +4,8 @@
  * transfer** (Dr destination · Dr fee · Cr Bank gross) instead of two postings.
  *
  * `Bank.transfer` pays the fee and sends the net in the **same transaction**, so a
- * fee and its transfer share a transaction hash — the pairing key, recovered from
- * the indexed-event id (`${txHash}-${logIndex}`).
+ * fee and its transfer share a transaction hash — the pairing key carried by each
+ * normalized posting.
  *
  * Presentation-only: the canonical feed keeps both postings, so the trial balance
  * and the statements never double count.
@@ -13,18 +13,14 @@
 import { sourceOperationIdOf, type LedgerEntry } from './ledgerEntry'
 
 /**
- * The on-chain transaction hash behind a posting, parsed from its indexed-event
- * id (`${txHash}-${logIndex}`).
+ * The transaction-backed operation identity behind a posting.
  *
- * A mapper that emits several entries for one event suffixes the id further
- * (`${txHash}-${logIndex}-principal`), so the hash is matched from the **front**
- * rather than by cutting at the last dash — otherwise every extra leg reads as a
- * transaction of its own and stops pairing with its siblings. An id that carries
- * no hash at all (an off-chain accrual, a synthetic memo) falls back to the id
- * up to its last dash, which keeps such entries grouping among themselves.
+ * Indexed-event identifiers carry the transaction hash as their leading segment
+ * (`${txHash}-${logIndex}`). Synthetic operations retain their full explicit
+ * identity rather than losing a trailing segment that is not a log index.
  */
 export function txHashOf(entry: LedgerEntry): string {
-  return sourceOperationIdOf(entry.id)
+  return entry.txHash ?? sourceOperationIdOf(entry.sourceOperationId ?? entry.id)
 }
 
 /** The Bank protocol-fee posting (the 0.5% skim leaving the Bank). */

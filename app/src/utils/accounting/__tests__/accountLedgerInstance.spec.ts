@@ -13,6 +13,7 @@ import type { Address } from 'viem'
 
 const BANK1 = '0x1111111111111111111111111111111111111111' as Address
 const BANK2 = '0x2222222222222222222222222222222222222222' as Address
+const TRANSFER_TX_HASH = `0x${'a'.repeat(64)}`
 
 function entry(over: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
   return {
@@ -55,7 +56,7 @@ function migrationBook(): LedgerEntry[] {
       amountUsd: 10
     }),
     entry({
-      id: '0xabc-5',
+      id: `${TRANSFER_TX_HASH}-5`,
       timestamp: 100,
       useCase: 'UC-BANK-03',
       debit: 'Cash — Bank',
@@ -66,7 +67,7 @@ function migrationBook(): LedgerEntry[] {
       internal: true
     }),
     entry({
-      id: '0xabc-3',
+      id: `${TRANSFER_TX_HASH}-3`,
       timestamp: 100,
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',

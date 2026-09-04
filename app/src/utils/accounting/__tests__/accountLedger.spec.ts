@@ -260,8 +260,9 @@ describe('accountLedger — statement-line drill-down', () => {
 
     it('folds a Bank fee into its transfer, like the general ledger (issue: drill-down parity)', () => {
       type Entry = import('@/utils/accounting/ledgerEntry').LedgerEntry
+      const txHash = `0x${'a'.repeat(64)}`
       const transfer: Entry = {
-        id: '0xabc-5',
+        id: `${txHash}-5`,
         timestamp: 100,
         useCase: 'UC-BANK-03',
         debit: 'Cash — Payroll',
@@ -275,7 +276,7 @@ describe('accountLedger — statement-line drill-down', () => {
         enrichment: 'not-applicable'
       }
       const fee: Entry = {
-        id: '0xabc-3',
+        id: `${txHash}-3`,
         timestamp: 100,
         useCase: 'FEE',
         debit: 'Transaction Fee Expense',

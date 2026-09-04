@@ -4,6 +4,14 @@ import { presentLedger } from '@/utils/accounting/ledgerPresenter'
 import { netBalanceByAccount } from '@/utils/accounting/generalLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
+const TX_A = `0x${'a'.repeat(64)}`
+const TX_B = `0x${'b'.repeat(64)}`
+const TX_C = `0x${'c'.repeat(64)}`
+
+function eventId(txHash: string, logIndex: number): string {
+  return `${txHash}-${logIndex}`
+}
+
 /** A Bank transfer to the payroll pocket (emits the NET amount, spec §4). */
 function transfer(id: string, over: Partial<LedgerEntry> = {}): LedgerEntry {
   return {
@@ -44,38 +52,39 @@ function fee(id: string, over: Partial<LedgerEntry> = {}): LedgerEntry {
 
 describe('txHashOf', () => {
   it('strips the -logIndex suffix off an indexed-event id', () => {
-    expect(txHashOf(transfer('0xabc-5'))).toBe('0xabc')
+    expect(txHashOf(transfer(eventId(TX_A, 5)))).toBe(TX_A)
   })
 
-  it('returns the whole id when there is no suffix', () => {
-    expect(txHashOf(transfer('accrual-1-cash'))).toBe('accrual-1')
+  it('keeps a synthetic operation identity intact', () => {
+    expect(txHashOf(transfer('accrual-1-cash'))).toBe('accrual-1-cash')
     expect(txHashOf(transfer('plain'))).toBe('plain')
   })
 })
 
 describe('mergeBankFees', () => {
   it('folds a fee into the transfer skimmed in the same transaction', () => {
-    const merged = mergeBankFees([transfer('0xabc-5'), fee('0xabc-3')])
+    const transferId = eventId(TX_A, 5)
+    const merged = mergeBankFees([transfer(transferId), fee(eventId(TX_A, 3))])
     expect(merged).toHaveLength(1) // the standalone fee posting is gone
     expect(merged[0]).toMatchObject({
-      id: '0xabc-5',
+      id: transferId,
       mergedBankFee: { amountUsd: 0.5, rawAmount: '500000', token: 'usdc', rate: 1 }
     })
   })
 
   it('keeps a fee standalone when its transfer is in another transaction', () => {
-    const merged = mergeBankFees([transfer('0xaaa-1'), fee('0xbbb-1')])
+    const merged = mergeBankFees([transfer(eventId(TX_B, 1)), fee(eventId(TX_C, 1))])
     expect(merged).toHaveLength(2)
     expect(merged.some((e) => e.mergedBankFee)).toBe(false)
   })
 
   it('leaves a feed without any Bank fee untouched', () => {
-    const entries = [transfer('0xabc-5')]
+    const entries = [transfer(eventId(TX_A, 5))]
     expect(mergeBankFees(entries)).toEqual(entries)
   })
 
   it('nets the same after folding — the merged fee is re-booked into the roll-up', () => {
-    const canonical = [transfer('0xabc-5'), fee('0xabc-3')]
+    const canonical = [transfer(eventId(TX_A, 5)), fee(eventId(TX_A, 3))]
     const merged = mergeBankFees(canonical)
     // Folding drops the standalone fee posting, yet the net roll-up is unchanged:
     // Cash — Bank still lost the gross (net + fee), the fee is still an expense.
@@ -88,7 +97,7 @@ describe('mergeBankFees', () => {
 
 describe('presentLedger — compound transfer + fee entry', () => {
   it('renders one entry of three lines: net debit · fee debit · gross credit', () => {
-    const ledger = presentLedger([transfer('0xabc-5'), fee('0xabc-3')], 'All')
+    const ledger = presentLedger([transfer(eventId(TX_A, 5)), fee(eventId(TX_A, 3))], 'All')
     // One compound entry, not two separate postings.
     expect(ledger.entryCount).toBe(1)
     expect(ledger.rows.map((r) => r.account)).toEqual([
@@ -110,7 +119,7 @@ describe('presentLedger — compound transfer + fee entry', () => {
   })
 
   it('still shows two separate entries when the fee is not merged', () => {
-    const ledger = presentLedger([transfer('0xaaa-1'), fee('0xbbb-1')], 'All')
+    const ledger = presentLedger([transfer(eventId(TX_B, 1)), fee(eventId(TX_C, 1))], 'All')
     expect(ledger.entryCount).toBe(2)
     expect(ledger.rows).toHaveLength(4)
   })
