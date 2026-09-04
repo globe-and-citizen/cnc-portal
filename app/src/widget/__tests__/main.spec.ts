@@ -42,6 +42,22 @@ describe('widget main', () => {
     expect(mount.shadowRoot?.textContent).toContain('Payment unavailable')
   })
 
+  it('names only data-token when data-bank is present but data-token is missing', async () => {
+    await loadWidget({ bank: '0x1111111111111111111111111111111111111111' })
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[CNC Pay] missing data-token on the widget <script> tag'
+    )
+  })
+
+  it('names only data-bank when data-token is present but data-bank is missing', async () => {
+    await loadWidget({ token: 'USDC' })
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[CNC Pay] missing data-bank on the widget <script> tag'
+    )
+  })
+
   it('renders the real payment card when the script tag is configured', async () => {
     const { mount } = await loadWidget({
       bank: '0x1111111111111111111111111111111111111111',

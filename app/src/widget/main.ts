@@ -61,22 +61,40 @@ declare global {
 }
 
 /**
- * Reads `data-bank` / `data-token` off the widget's <script> tag. Found by
- * attribute rather than `document.currentScript` — the latter is always
- * `null` for a `type="module"` script (Vite's dev server), so this also
- * works there, not just for the classic script tag production loads.
+ * Finds the widget's own <script> tag. `document.currentScript` is set to
+ * whichever <script> is currently executing its top-level code — exactly
+ * this one, at this point — and unlike matching on `data-bank`/`data-token`,
+ * that identification doesn't depend on either attribute actually being
+ * present, and can't accidentally match some *other* script tag on the
+ * host page. This only works for a classic script (`build.lib.formats` is
+ * `'iife'` in `vite.widget.config.ts` — never `'es'`, so every real embed
+ * loads this way, `async` included); `document.currentScript` is always
+ * `null` for a `type="module"` script, which is how Vite's dev server
+ * serves this entry — `widget/dev/index.html` is our own harness page, so
+ * falling back to an attribute match there is safe.
  */
+function widgetScriptTag(): HTMLScriptElement | undefined {
+  if (document.currentScript instanceof HTMLScriptElement) return document.currentScript
+  return (
+    document.querySelector<HTMLScriptElement>('script[data-bank], script[data-token]') ?? undefined
+  )
+}
+
+/** Reads `data-bank` / `data-token` off the widget's own <script> tag. */
 function readScriptConfig(): { bankAddress: Address; tokenSymbol: string } | undefined {
-  const script = document.querySelector<HTMLScriptElement>('script[data-bank]')
+  const script = widgetScriptTag()
   const bankAddress = script?.dataset.bank
   const tokenSymbol = script?.dataset.token
-  if (!script || !bankAddress || !tokenSymbol) {
+  if (!bankAddress || !tokenSymbol) {
+    const missing = [!bankAddress && 'data-bank', !tokenSymbol && 'data-token']
+      .filter((attr): attr is string => Boolean(attr))
+      .join('/')
     // Unconditional `console.error`, not the app's `log` util: `log`'s
     // methods are dev-mode-only (see `@/lib/logging`), which is right for
     // internal app telemetry but wrong here — this fires inside a merchant's
     // own production page, and it's the only diagnostic they get for a
     // broken embed snippet.
-    console.error('[CNC Pay] missing data-bank/data-token on the widget <script> tag')
+    console.error(`[CNC Pay] missing ${missing} on the widget <script> tag`)
     return undefined
   }
   return { bankAddress: bankAddress as Address, tokenSymbol }
