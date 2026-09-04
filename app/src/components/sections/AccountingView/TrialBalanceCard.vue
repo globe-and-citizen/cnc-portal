@@ -164,7 +164,7 @@ const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
 const accounting = useAccountingContext()
 const trial = computed(() =>
-  presentTrial(buildGeneralLedger(filterByPeriod(accounting.entries.value, null, asOf.value)))
+  presentTrial(buildGeneralLedger(filterByPeriod(accounting.journal.value, null, asOf.value)))
 )
 
 const tableRows = computed<TrialTableRow[]>(() => [

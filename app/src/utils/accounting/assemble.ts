@@ -12,7 +12,8 @@
  *   raw feeds → {@link LedgerSources} + {@link MapperContext} + enrichment
  *             → buildCncLedgerEntries (#2113 mappers + off-chain join)
  *             → buildLedger (#2117 consolidation: dedupe twins + summary)
- *             → general ledger / income statement / balance sheet (#2117)
+ *             → buildJournal (validated canonical journal)
+ *             → General Ledger / Trial Balance; legacy statement projections
  */
 import { type Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
@@ -32,7 +33,12 @@ import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
 import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
-import { buildGeneralLedger, type GeneralLedger } from '@/utils/accounting/generalLedger'
+import {
+  buildGeneralLedger,
+  buildJournal,
+  type GeneralLedger,
+  type JournalEntry
+} from '@/utils/accounting/generalLedger'
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -92,10 +98,15 @@ export interface CncAccountingInput {
   classifications?: readonly TransactionClassificationRecord[] | null
 }
 
-/** The consolidated ledger + the three statements a team's books resolve to. */
+/** The transitional posting feed, canonical journal, and report projections a team's books resolve to. */
 export interface CncAccounting {
-  /** Deduped, chronologically sorted postings — the canonical feed. */
+  /**
+   * Deduped, chronologically sorted mapper postings. Transitional input for
+   * report projections that have not migrated to journal lines yet.
+   */
   entries: LedgerEntry[]
+  /** The validated, ordered double-entry journal built once after consolidation. */
+  journal: JournalEntry[]
   /** Roll-up totals for the summary cards. */
   summary: AccountingSummary
   /** Double-entry journal + trial balance. */
@@ -322,11 +333,13 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
  */
 export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
   const { entries, summary } = buildLedger(rawEntries)
+  const journal = buildJournal(entries)
 
   return {
     entries,
+    journal,
     summary,
-    generalLedger: buildGeneralLedger(entries),
+    generalLedger: buildGeneralLedger(journal),
     incomeStatement: buildIncomeStatement(entries),
     balanceSheet: buildBalanceSheet(entries)
   }

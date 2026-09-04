@@ -49,6 +49,7 @@ describe('useCNCAccounting', () => {
     // Every posting is balanced by construction, so the books balance regardless
     // of whether the mocked feeds produce any entries (e.g. payroll accruals).
     expect(Array.isArray(acc.entries.value)).toBe(true)
+    expect(Array.isArray(acc.journal.value)).toBe(true)
     expect(acc.reports.value.summary).toHaveProperty('cash')
     expect(acc.reports.value.generalLedger.balanced).toBe(true)
     expect(typeof acc.reports.value.incomeStatement.netIncome).toBe('number')

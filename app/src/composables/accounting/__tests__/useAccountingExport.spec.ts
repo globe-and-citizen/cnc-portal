@@ -10,6 +10,7 @@ const {
   buildSheets,
   exportSheetsExcel,
   entries,
+  journal,
   reports,
   resolveUser
 } = vi.hoisted(() => ({
@@ -18,6 +19,7 @@ const {
   buildSheets: vi.fn(() => ['excel-sheet']),
   exportSheetsExcel: vi.fn(),
   entries: [{ id: 'e1' }],
+  journal: [],
   reports: { trialBalance: [] },
   resolveUser: vi.fn(() => ({ name: 'Ali' }))
 }))
@@ -33,7 +35,11 @@ vi.mock('@/composables/transactions/useTransactionPresentation', () => ({
   useTransactionPresentation: () => ({ resolveUser })
 }))
 vi.mock('@/composables/accounting/useAccountingContext', () => ({
-  useAccountingContext: () => ({ entries: ref(entries), reports: computed(() => reports) })
+  useAccountingContext: () => ({
+    entries: ref(entries),
+    journal: ref(journal),
+    reports: computed(() => reports)
+  })
 }))
 
 const specs = [{ key: 'ledger' }] as SectionSpec[]
@@ -43,7 +49,11 @@ describe('useAccountingExport', () => {
 
   it('exports a PDF from a snapshot of the live books', async () => {
     await useAccountingExport().exportPdf(specs, { filename: 'ledger.pdf' })
-    expect(buildTables).toHaveBeenCalledWith({ entries, ...reports }, specs, expect.any(Function))
+    expect(buildTables).toHaveBeenCalledWith(
+      { entries, journal, ...reports },
+      specs,
+      expect.any(Function)
+    )
     expect(exportTablesPdf).toHaveBeenCalledWith(['pdf-table'], { filename: 'ledger.pdf' })
     expect(mockToast.add).toHaveBeenCalledWith({ title: 'Exported to PDF', color: 'success' })
   })
@@ -57,7 +67,11 @@ describe('useAccountingExport', () => {
 
   it('exports an Excel workbook and confirms with a custom message', async () => {
     await useAccountingExport().exportExcel(specs, 'ledger.xlsx', 'Ledger saved')
-    expect(buildSheets).toHaveBeenCalledWith({ entries, ...reports }, specs, expect.any(Function))
+    expect(buildSheets).toHaveBeenCalledWith(
+      { entries, journal, ...reports },
+      specs,
+      expect.any(Function)
+    )
     expect(exportSheetsExcel).toHaveBeenCalledWith(['excel-sheet'], 'ledger.xlsx')
     expect(mockToast.add).toHaveBeenCalledWith({ title: 'Ledger saved', color: 'success' })
   })

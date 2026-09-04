@@ -28,30 +28,26 @@ These acceptance criteria follow the
   one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
   — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
-- **Journal-entry foundation:** the General Ledger adapts each consolidated posting into a validated `JournalEntry` with distinct entry and
-  source-operation identities, ordered `JournalEntryLine` records, and an executable debit/credit balance invariant. Memo-only entries are
-  explicit and contain no monetary lines; an invalid entry is rejected before the General Ledger or Trial Balance can consume it. The Trial
-  Balance aggregates these validated journal lines. The Income Statement, Balance Sheet, account drill-downs, PDF, and Excel exports still
-  consume the consolidated posting feed while their migration to journal lines is in progress. The **Fee** filter keeps the complete context
-  of each selected posting; its migration to select `JournalEntry` records containing `Transaction Fee Expense` remains part of the same
-  accounting read-model work.
+- **Journal-entry assembly:** after consolidation, Accounting constructs one ordered, validated `JournalEntry` collection with distinct
+  entry and source-operation identities, ordered `JournalEntryLine` records, and an executable debit/credit balance invariant. Memo-only
+  entries are explicit and contain no monetary lines; an invalid normalized posting is rejected before the General Ledger or Trial Balance
+  projection can consume it. The General Ledger / Trial Balance projections, including their date-bounded PDF and Excel Trial Balance
+  exports, consume this assembled journal. The current General Ledger UI and filters, summary, Income Statement, Balance Sheet, account
+  drill-downs, and their remaining exports still consume the consolidated posting feed while their migration to journal lines is in
+  progress. The **Fee** filter keeps the complete context of each selected posting; its migration to select `JournalEntry` records
+  containing `Transaction Fee Expense` remains part of the same accounting read-model work.
 
 ## Lifecycle
 
 ```mermaid
 flowchart LR
     Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
-    Consolidate --> Journal[Balanced journal entries]
-    Journal --> Summary[Summary]
-    Journal --> Ledger[General ledger]
-    Journal --> Income[Income statement]
-    Journal --> Balance[Balance sheet]
-    Journal --> Trial[Trial balance]
-    Summary --> Export[PDF or Excel report]
-    Ledger --> Export
-    Income --> Export
-    Balance --> Export
-    Trial --> Export
+    Consolidate --> Postings[Consolidated postings: transitional feed]
+    Consolidate --> Journal[Validated JournalEntry collection]
+    Journal --> Ledger[General Ledger and Trial Balance projections]
+    Postings --> Legacy[Summary, statements, ledger filters, and drill-downs]
+    Ledger --> Export[PDF or Excel report]
+    Legacy --> Export
 ```
 
 ## Status Overview
@@ -267,7 +263,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `3103c8ebc7b4bad777129850fa6e7612d1c48cbf`
+**Implementation evidence reviewed against:** `3aad3487d577d722a0d76928e2bc2747aa091921`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and

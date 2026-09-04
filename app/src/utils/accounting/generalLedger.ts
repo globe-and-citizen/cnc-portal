@@ -10,10 +10,10 @@
  * - **Net**: Σ of the debit-normal account balances = Σ of the credit-normal
  *   balances (`debitBalanceTotal === creditBalanceTotal`) — 253 in the worked example.
  *
- * The current consolidated {@link LedgerEntry} feed adapts into validated
- * {@link JournalEntry} records here. A later migration will make those records
- * the input to every report; this boundary already prevents the journal and
- * trial-balance projection from consuming an invalid posting.
+ * Accounting assembly adapts the consolidated {@link LedgerEntry} feed into
+ * validated {@link JournalEntry} records once. A later migration will make those
+ * records the input to every report; the General Ledger and Trial Balance already
+ * consume only that assembled journal.
  */
 import {
   ACCOUNT_NAMES,
@@ -23,7 +23,7 @@ import {
   type AccountClass,
   type AccountName
 } from './chartOfAccounts'
-import { buildPocketInstances } from './pocketInstances'
+import { buildJournalPocketInstances } from './pocketInstances'
 import type { Address } from 'viem'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 
@@ -187,7 +187,7 @@ function linesOf(entry: LedgerEntry): JournalEntryLine[] {
 function journalEntryFromLedgerEntry(entry: LedgerEntry): JournalEntry {
   return createJournalEntry({
     id: entry.id,
-    sourceOperationId: entry.id,
+    sourceOperationId: entry.sourceOperationId ?? entry.id,
     timestamp: entry.timestamp,
     useCase: entry.useCase,
     memo: entry.memo,
@@ -199,9 +199,11 @@ function journalEntryFromLedgerEntry(entry: LedgerEntry): JournalEntry {
   })
 }
 
-/** Build the validated journal entries (the ordered double-entry log). */
+/** Adapt consolidated postings into the validated, ordered double-entry journal. */
 export function buildJournal(entries: readonly LedgerEntry[]): JournalEntry[] {
-  return entries.map(journalEntryFromLedgerEntry).sort((a, b) => a.timestamp - b.timestamp)
+  return entries
+    .map(journalEntryFromLedgerEntry)
+    .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
 }
 
 export interface TrialBalanceRow {
@@ -361,15 +363,14 @@ function foldBlankBucket(buckets: Map<string, AccountBucket>): AccountBucket[] {
 }
 
 /**
- * Build the double-entry general ledger and its trial balance from the
- * consolidated feed.
+ * Build the double-entry general ledger and its trial balance from the validated,
+ * assembled journal.
  */
-export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedger {
-  const journal = buildJournal(entries)
+export function buildGeneralLedger(journal: readonly JournalEntry[]): GeneralLedger {
   const groups = accumulateBuckets(journal)
   // Deployment numbering is shared with the general-ledger view (see
   // {@link ./pocketInstances}), so `Cash — Bank 2` names the same contract in both.
-  const instances = buildPocketInstances(entries)
+  const instances = buildJournalPocketInstances(journal)
 
   // Totals + the balanced check run on the **raw** (full-precision) sums: every
   // posting is internally balanced, so the raw debit/credit totals are exactly
@@ -423,7 +424,7 @@ export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedg
   }
 
   return {
-    entries: journal,
+    entries: journal.slice(),
     trialBalance,
     totalDebit: round2(rawTotalDebit),
     totalCredit: round2(rawTotalCredit),

@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { catalogueLedger } from './catalogueLedger'
 
+const generalLedger = (entries: readonly LedgerEntry[]) => buildGeneralLedger(buildJournal(entries))
+
 describe('buildGeneralLedger — catalogue worked example', () => {
-  const gl = buildGeneralLedger(catalogueLedger)
+  const gl = generalLedger(catalogueLedger)
   const balanceOf = (account: AccountName): number =>
     gl.trialBalance.find((r) => r.account === account)?.balance ?? 0
 
@@ -62,7 +64,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: '',
       enrichment: 'not-applicable'
     })
-    const gl2 = buildGeneralLedger([
+    const gl2 = generalLedger([
       cent('a', 'Cash — Bank', 'Service Revenue'),
       cent('b', 'Cash — Safe', 'Service Revenue')
     ])
@@ -110,7 +112,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: '',
       enrichment: 'not-applicable'
     }
-    const gl2 = buildGeneralLedger([
+    const gl2 = generalLedger([
       deposit('a', bank1, 100, 10),
       deposit('b', bank1, 50, 20),
       deposit('c', bank2, 30, 30), // after the redeploy → the new Bank
@@ -149,7 +151,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     })
     // Even with two different addresses stamped, Safe is not an instanced pocket,
     // so it stays a single consolidated row.
-    const gl2 = buildGeneralLedger([
+    const gl2 = generalLedger([
       safeLeg('1', '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 10),
       safeLeg('2', '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 5)
     ])
@@ -161,7 +163,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
 
   it('keeps a single un-redeployed pocket as one un-suffixed row', () => {
     const bank = '0x1111111111111111111111111111111111111111'
-    const gl2 = buildGeneralLedger([
+    const gl2 = generalLedger([
       {
         id: 'a',
         timestamp: 1,
@@ -197,7 +199,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: 'half posting',
       enrichment: 'not-applicable'
     }
-    expect(() => buildGeneralLedger([...catalogueLedger, halfPosting])).toThrow(
+    expect(() => generalLedger([...catalogueLedger, halfPosting])).toThrow(
       'monetary entries require at least one debit and one credit line'
     )
   })

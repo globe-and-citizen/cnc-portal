@@ -6,7 +6,7 @@ import {
   accountOpening
 } from '@/utils/accounting/accountLedger'
 import { mergeBankFees } from '@/utils/accounting/mergeBankFees'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import { money } from '@/utils/accounting/presenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { Address } from 'viem'
@@ -79,7 +79,7 @@ function migrationBook(): LedgerEntry[] {
 
 describe('accountLedger — a redeployed Bank with an internal Bank → Bank transfer', () => {
   const book = migrationBook()
-  const gl = buildGeneralLedger(book)
+  const gl = buildGeneralLedger(buildJournal(book))
   const rowBalance = (instance: Address): number =>
     gl.trialBalance.find(
       (r) => r.account === 'Cash — Bank' && r.instance?.toLowerCase() === instance
