@@ -104,6 +104,7 @@ export function mapPayrollAccruals(
       entries.push(
         makeEntry({
           id: `accrual-${claim.id}-${tokenId}`,
+          sourceOperationId: `accrual-${claim.id}`,
           timestamp: at,
           useCase: 'UC-CASH-02',
           debit: isShare ? 'Deferred SHER Compensation' : 'Payroll Expense',

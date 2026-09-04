@@ -51,7 +51,7 @@ import {
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import type { AccountingSummary } from '@/utils/accounting/buildLedger'
-import type { GeneralLedger } from '@/utils/accounting/generalLedger'
+import type { GeneralLedger, JournalEntry } from '@/utils/accounting/generalLedger'
 import type { IncomeStatement } from '@/utils/accounting/incomeStatement'
 import type { BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -69,9 +69,11 @@ export interface UseCNCAccountingOptions {
 }
 
 export interface UseCNCAccountingReturn {
-  /** Consolidated, deduped ledger postings. */
+  /** Consolidated, deduped legacy postings retained for projections not yet migrated. */
   entries: ComputedRef<LedgerEntry[]>
-  /** The summary and financial reports computed from the consolidated ledger. */
+  /** Validated journal assembled from the consolidated postings. */
+  journal: ComputedRef<JournalEntry[]>
+  /** The summary and financial reports computed from the assembled accounting books. */
   reports: ComputedRef<AccountingReports>
   /** True while any required feed is still loading. */
   isLoading: ComputedRef<boolean>
@@ -377,9 +379,8 @@ export function useCNCAccounting(
 
   const error = computed(() => team.error.value)
 
-  const refetch = (): Promise<unknown> => {
-    const run = (q: { refetch?: () => unknown }): unknown => q.refetch?.()
-    return Promise.allSettled(
+  const refetch = (): Promise<unknown> =>
+    Promise.allSettled(
       [
         team,
         officers,
@@ -397,12 +398,12 @@ export function useCNCAccounting(
         classifications,
         safeTransfers,
         safeOutgoing
-      ].map(run)
+      ].map((query) => query.refetch?.())
     )
-  }
 
   return {
     entries,
+    journal: computed(() => accounting.value.journal),
     reports: computed<AccountingReports>(() => ({
       summary: accounting.value.summary,
       generalLedger: accounting.value.generalLedger,

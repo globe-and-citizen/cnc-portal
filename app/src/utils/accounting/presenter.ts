@@ -147,11 +147,11 @@ export function trialExportTitle(asOf?: Date | null): string {
 }
 
 /** Keep entries inside an inclusive `[from, to]` window (nullish bound = open). */
-export function filterByPeriod(
-  entries: readonly LedgerEntry[],
+export function filterByPeriod<T extends { timestamp: number }>(
+  entries: readonly T[],
   from?: Date | null,
   to?: Date | null
-): LedgerEntry[] {
+): T[] {
   const fromS = from ? Math.floor(from.getTime() / 1000) : -Infinity
   const toS = to ? Math.floor(to.getTime() / 1000) : Infinity
   return entries.filter((entry) => entry.timestamp >= fromS && entry.timestamp <= toS)
