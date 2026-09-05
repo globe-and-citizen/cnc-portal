@@ -49,7 +49,7 @@ const DEBT_ACCOUNTS: ReadonlySet<string> = new Set(['Loan Payable', 'Interest Pa
 function outstandingDebt(balance: BalanceSheet): number {
   return balance.liabilities
     .filter((line) => DEBT_ACCOUNTS.has(line.account.family.name))
-    .reduce((sum, line) => sum + line.amount, 0)
+    .reduce((sum, line) => sum + line.balance, 0)
 }
 
 /** The summary metric cards from the live roll-up + statements. */
@@ -95,14 +95,14 @@ export function presentSummaryCards(
     metric(
       'Total assets',
       formatUsd(balance.totalAssets),
-      'Cash + trading account',
+      'Asset account balances',
       'i-heroicons-wallet',
       'bg-info/10 text-info'
     ),
     metric(
       'Total equity',
       formatUsd(balance.totalEquity),
-      'Investors + retained earnings',
+      'Equity accounts + earnings to date',
       'i-heroicons-user-group',
       'bg-primary/10 text-primary'
     ),
