@@ -37,11 +37,11 @@
 import { computed, ref } from 'vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
-import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import type { Member } from '@/types'
 import { useAddMembersMutation, type MemberInput } from '@/queries/member.queries'
-import { log } from '@/utils/generalUtil'
+import { log } from '@/lib/logging'
 
 const emits = defineEmits(['memberAdded'])
 const toast = useToast()

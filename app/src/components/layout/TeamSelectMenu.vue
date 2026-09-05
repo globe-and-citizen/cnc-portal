@@ -155,7 +155,7 @@
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useGetTeamsQuery } from '@/queries/team.queries'
 import type { Team } from '@/types/team'
-import { routeForSelectedTeam } from '@/utils/teamNavigation'
+import { routeForSelectedTeam } from '@/utils/teams/navigation'
 import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 

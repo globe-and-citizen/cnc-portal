@@ -44,8 +44,8 @@
           :rows="pageRows"
           :total="total"
           :visible-columns="visibleColumns"
-          :show-balance="!!balanceAccount"
-          :closing-balance="closing"
+          :show-balance="!!balance?.account"
+          :closing-balance="balance?.closing"
         />
 
         <TablePagination
@@ -66,32 +66,27 @@ import { useLocalStorage } from '@vueuse/core'
 import LedgerTable from './LedgerTable.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
-import {
-  ledgerRows,
-  LEDGER_COLUMNS,
-  type LedgerColumnKey
-} from '@/utils/accounting/ledgerPresenter'
+import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
 import {
   accountNet,
   openingRow,
   withRunningBalance,
-  NO_OPENING,
-  type AccountOpening
+  NO_OPENING
 } from '@/utils/accounting/accountLedger'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { DrilldownBalance } from '@/composables/accounting/useLedgerDrilldown'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import type { JournalEntry } from '@/utils/accounting/journalEntry'
 
 const props = defineProps<{
   account: string
   total: string
-  entries: LedgerEntry[]
-  /** The one account being drilled — adds the running "Balance" column. Left
-   *  empty for an aggregate line, whose accounts have no single natural side. */
-  balanceAccount?: string
-  /** What the account carries into the window — heads the ledger as its
-   *  "Opening balance" line. */
-  opening?: AccountOpening
-  /** What the account is left standing at, once every posting is booked. */
-  closing?: string
+  entries: JournalEntry[]
+  /** The full journal supplies stable concrete-account labels for a narrowed slice. */
+  allEntries?: JournalEntry[]
+  /** The running "Balance" column: the one account being drilled, what it carries
+   *  into the window (the ledger's "Opening balance" line) and where it closes.
+   *  Absent for an aggregate line, whose accounts share no single natural side. */
+  balance?: DrilldownBalance
   /** Storage key for this statement's persisted column preference. */
   columnsStorageKey: string
 }>()
@@ -126,14 +121,18 @@ watch(
 
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
-  const rows = ledgerRows(props.entries.slice(start, start + pageSize.value))
-  const account = props.balanceAccount
+  const rows = journalLedgerRows(
+    props.entries.slice(start, start + pageSize.value),
+    props.allEntries ?? props.entries
+  )
+  const account = props.balance?.account
   if (!account) return rows
 
   // Entries read oldest-first: the page opens on what the account was left
   // standing at by everything above it — the balance carried into the window
-  // plus the pages already turned.
-  const opening = props.opening ?? NO_OPENING
+  // plus the pages already turned. A concrete Account identity keeps redeployed
+  // pockets separate even when a Bank → Bank entry touches the same family twice.
+  const opening = props.balance?.opening ?? NO_OPENING
   const carried = opening.balance + accountNet(props.entries.slice(0, start), account)
   const walked = withRunningBalance(rows, account, carried)
   // The "Opening balance" line heads the ledger, so it belongs to page one.

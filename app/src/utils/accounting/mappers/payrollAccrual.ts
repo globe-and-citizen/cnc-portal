@@ -27,7 +27,7 @@
  */
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { TokenId } from '@/constant'
-import { buildClaimRatesWithOvertime } from '@/utils/wageUtil'
+import { buildClaimRatesWithOvertime } from '@/utils/wages/model'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { isNegligibleAmount } from '@/utils/accounting/toUsd'
 import { atDate, type MapperContext } from './context'
@@ -104,6 +104,7 @@ export function mapPayrollAccruals(
       entries.push(
         makeEntry({
           id: `accrual-${claim.id}-${tokenId}`,
+          sourceOperationId: `accrual-${claim.id}`,
           timestamp: at,
           useCase: 'UC-CASH-02',
           debit: isShare ? 'Deferred SHER Compensation' : 'Payroll Expense',

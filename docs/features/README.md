@@ -17,6 +17,7 @@ flowchart LR
   admin[Platform administrator] --> backoffice[Backoffice dashboard]
 
   app --> companies[Companies and workspace]
+  app --> profile[Profile]
   app --> accounts[Accounts]
   app --> payroll[Payroll]
   app --> credit[Community Credit]
@@ -43,6 +44,7 @@ entry journey.
 | User capability         | Current entry points                                                | Documentation coverage                                  |
 | ----------------------- | ------------------------------------------------------------------- | ------------------------------------------------------- |
 | Authentication          | `/login` and wallet session actions                                 | [Canonical stories](./authentication/README.md)         |
+| Profile                 | Profile action in the client navigation                             | [Canonical stories](./user-profile/README.md)           |
 | Companies and workspace | `/teams`, `/teams/:id`                                              | [Canonical stories](./companies/README.md)              |
 | Accounts                | Bank, Safe, and Expense Account routes                              | [Canonical stories](./accounts/README.md)               |
 | Payroll                 | Payroll account, history, company payroll, compensation             | [Canonical stories](./payroll/README.md)                |

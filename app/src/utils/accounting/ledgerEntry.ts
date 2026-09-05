@@ -16,23 +16,38 @@ import type { TokenId } from '@/constant'
 import type { AccountName } from './chartOfAccounts'
 import type { ClassificationCategory } from './classification'
 
+/** The transaction-hash head of an indexed event id (`<txHash>-<logIndex>`). */
+const EVENT_ID_TRANSACTION_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
+
+/** Return the transaction hash carried by an indexed event identifier, if any. */
+export function transactionHashOf(eventId: string | null | undefined): string | undefined {
+  return eventId ? EVENT_ID_TRANSACTION_HASH.exec(eventId)?.[1] : undefined
+}
+
+/**
+ * Return the accounting-operation identity behind one indexed event id.
+ *
+ * Contract events from one transaction share their transaction-hash prefix, even
+ * when a mapper adds a suffix for an individual posting.  That is the identity
+ * the journal assembly uses to make one multi-line JournalEntry. Synthetic ids
+ * retain their own id unless they explicitly provide `sourceOperationId`.
+ */
+export function sourceOperationIdOf(eventId: string): string {
+  return transactionHashOf(eventId) ?? eventId
+}
+
 /**
  * The use case (catalogue §5 / spec §4) a ledger entry realises. The `UC-*`
  * codes match the money-flow catalogue; the lowercase codes cover moves the
  * catalogue treats specially (internal pocket-to-pocket moves and fee skims).
  */
 export type UseCase =
-  /** Founder deposit into a treasury pocket → Owner Capital. */
-  | 'UC-BANK-01'
-  /** Client payment into a treasury pocket → Service Revenue. */
+  /** Direct external deposit into a treasury pocket → Service Revenue. */
   | 'UC-BANK-02'
   /** Fund payroll/expense pockets from Bank — internal move. */
   | 'UC-BANK-03'
   /** Invest via SafeDepositRouter → SHER mint (cash lands in Safe). */
   | 'UC-SDR-01'
-  /** A team member funds the Safe to invest & get SHER — booked as a capital
-   *  contribution (Cr Investor Equity) when no SafeDepositRouter event is present. */
-  | 'UC-MEMBER-01'
   /** A lender funds a Community Credit offer → the team borrows (Cr Loan Payable). */
   | 'UC-CREDIT-01'
   /** A fully (or partially) funded offer sweeps its principal to Bank — internal move. */
@@ -52,12 +67,14 @@ export type UseCase =
   | 'UC-EXP-01'
   /** Dividend paid to a shareholder. */
   | 'UC-INV-01'
-  /** Vesting grant created — agreement only, no tokens move (memo-only entry). */
+  /** Vesting grant defined — the full award booked upfront (restricted stock):
+   *  Dr Deferred SHER Compensation · Cr SHERS To Be Issued, no mint yet. */
   | 'UC-VEST-01'
-  /** Vested shares released/minted to a member — Dr Deferred SHER Compensation ·
-   *  Cr Investor Equity (the equity dilution, off the income statement). */
+  /** Vested shares released/minted to a member — Dr SHERS To Be Issued ·
+   *  Cr Investor Equity (promised shares become issued, off the income statement). */
   | 'UC-VEST-02'
-  /** Vesting schedule stopped — its unvested remainder is dropped (memo-only entry). */
+  /** Vesting schedule stopped — the unvested remainder of the grant is reversed:
+   *  Dr SHERS To Be Issued · Cr Deferred SHER Compensation. */
   | 'UC-VEST-03'
   /** Direct SHER mint: issue shares into equity — Dr SHERS To Be Issued · Cr Investor Equity. */
   | 'DEFAULT-D'
@@ -81,6 +98,12 @@ export type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-
 export interface LedgerEntry {
   /** Stable id — the source row id, suffixed when one event yields several entries. */
   id: string
+  /**
+   * Stable identity of the operation that produced this posting. Several normalized
+   * postings from the same source operation share this value while retaining their
+   * own {@link id}. The journal assembly carries it into JournalEntry unchanged.
+   */
+  sourceOperationId?: string
   /** Event time, Unix seconds (from the indexed event). */
   timestamp: number
   /** The journal template this entry realises. */
@@ -91,11 +114,10 @@ export interface LedgerEntry {
   credit: AccountName | null
   /**
    * The pocket **contract instance** holding the debited cash (checksum address).
-   * Set only on a cash-pocket debit leg: it lets the trial balance split one pocket
-   * across redeploys — a team that redeploys its Bank shows `Cash — Bank` (up to the
-   * redeploy) and `Cash — Bank #2` (the new deposits) as separate lines. Presentation
-   * metadata only: every roll-up (summary, income statement, balance sheet) keys off
-   * the base {@link debit} account, so totals are unchanged.
+   * Set only on a cash-pocket debit leg. Accounting assembly resolves this source
+   * evidence into the canonical concrete AccountId carried by JournalEntry lines.
+   * An absent address remains unresolved; it must not be inferred from activity on
+   * a different deployment.
    */
   debitInstance?: Address
   /** The pocket contract instance holding the credited cash — see {@link debitInstance}. */
@@ -134,7 +156,7 @@ export interface LedgerEntry {
   /**
    * The Community Credit round (`FixedReturn` offer id) a `UC-CREDIT-*` posting
    * belongs to. What lets a lender's principal and their fixed return be rendered
-   * as one compound posting (see {@link ./creditGrouping}) without confusing two
+   * as one journal operation without confusing two
    * rounds the same member lent into.
    */
   creditOfferId?: string
@@ -175,21 +197,6 @@ export interface LedgerEntry {
    */
   expenseRemainingUsd?: number
   /**
-   * The Bank protocol fee charged in the **same on-chain transaction** as this
-   * transfer, folded in for the general-ledger view only — Dr destination (net) ·
-   * Dr Transaction Fee Expense · Cr Cash — Bank (gross). Set by the presenter
-   * ({@link mergeBankFees}), never by a mapper: the canonical feed the statements
-   * roll up keeps the fee as its own posting, so nothing is double counted.
-   */
-  mergedBankFee?: {
-    amountUsd: number
-    /** Raw on-chain amount, in the token's base units. */
-    rawAmount: string
-    token: TokenId
-    /** USD rate of record, when resolved. */
-    rate?: number
-  }
-  /**
    * The manual category a team owner classified the source transaction as
    * (issue #2457), overriding the address inference. Absent means the entry is
    * address-inferred — the visible fallback the UI flags as such. Set only on
@@ -201,9 +208,7 @@ export interface LedgerEntry {
 }
 
 /** Checksum-normalize an address, returning `undefined` for invalid input. */
-export function normalizeCounterparty(
-  address: Address | string | null | undefined
-): Address | undefined {
+function normalizeCounterparty(address: Address | string | null | undefined): Address | undefined {
   if (!address || !isAddress(address)) return undefined
   return getAddress(address)
 }
@@ -230,6 +235,8 @@ export function makeEntry(
     counterparty,
     debitInstance,
     creditInstance,
+    sourceOperationId,
+    txHash,
     internal = false,
     enrichment = 'not-applicable',
     ...rest
@@ -237,10 +244,15 @@ export function makeEntry(
   const normalized = normalizeCounterparty(counterparty)
   const debitAt = normalizeCounterparty(debitInstance)
   const creditAt = normalizeCounterparty(creditInstance)
+  const resolvedTxHash =
+    txHash ?? transactionHashOf(sourceOperationId) ?? transactionHashOf(rest.id)
+  const resolvedOperationId = resolvedTxHash ?? sourceOperationId ?? rest.id
   return {
     ...rest,
+    sourceOperationId: resolvedOperationId,
     internal,
     enrichment,
+    ...(resolvedTxHash ? { txHash: resolvedTxHash } : {}),
     ...(normalized ? { counterparty: normalized } : {}),
     ...(debitAt ? { debitInstance: debitAt } : {}),
     ...(creditAt ? { creditInstance: creditAt } : {})

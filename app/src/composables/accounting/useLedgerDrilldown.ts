@@ -1,17 +1,19 @@
 import { computed, ref, type Ref } from 'vue'
 import { useAccountingExport } from './useAccountingExport'
 import {
-  entriesForAccount,
-  accountBalance,
   accountNet,
   accountOpening,
-  type InstanceScope
+  entriesForAccount,
+  type AccountOpening,
+  type AccountSelection
 } from '@/utils/accounting/accountLedger'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
-import type { LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
+import type { Account } from '@/utils/accounting/accountRegistry'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
+import type { JournalEntry } from '@/utils/accounting/journalEntry'
 
 /** The reporting window a drill-down inherits from its statement. */
 export interface DrilldownBounds {
@@ -19,106 +21,119 @@ export interface DrilldownBounds {
   to: Date | null
 }
 
+type SingleAccountSelection = Account | AccountName
+
+function isAggregateSelection(selection: AccountSelection): selection is readonly AccountName[] {
+  return Array.isArray(selection)
+}
+
+function isConcreteAccount(selection: AccountSelection): selection is Account {
+  return !isAggregateSelection(selection) && typeof selection !== 'string'
+}
+
+/**
+ * The running-balance context for a drill-down. Aggregates intentionally carry
+ * no `account`: a mixed-class line has no single normal side to run.
+ */
+export interface DrilldownBalance {
+  account: SingleAccountSelection | null
+  opening: AccountOpening
+  closing: string
+}
+
 /** The statement line currently shown in the drill-down modal. */
 export interface LedgerDrilldownLine {
-  accounts: string | string[]
+  accounts: AccountSelection
   label: string
   total: string
 }
 
+function accountIdsForSelection(
+  entries: readonly JournalEntry[],
+  selection: AccountSelection
+): string[] {
+  if (isConcreteAccount(selection)) return [selection.id]
+  const families = new Set(isAggregateSelection(selection) ? selection : [selection])
+  return [
+    ...new Set(
+      entries.flatMap((entry) =>
+        entry.lines
+          .filter((line) => families.has(line.account.family.name))
+          .map((line) => line.account.id)
+      )
+    )
+  ].sort()
+}
+
 export function useLedgerDrilldown(
-  entries: Ref<readonly LedgerEntry[]>,
+  entries: Ref<readonly JournalEntry[]>,
   bounds: () => DrilldownBounds
 ) {
   const open = ref(false)
-  // The account(s) the popup scopes to, and the name/figure shown for the line.
-  const target = ref<string | string[]>('')
+  const target = ref<AccountSelection | null>(null)
   const displayName = ref('')
   const lineTotal = ref('')
-  // The pocket-instance scope, when the line is one split row of a redeployed pocket.
-  const targetScope = ref<InstanceScope | undefined>(undefined)
 
-  const isAggregate = computed(() => Array.isArray(target.value))
-
-  // The one account the running-balance column runs on — empty for an aggregate,
-  // whose accounts span classes and so share no natural side.
-  const balanceAccount = computed(() => (isAggregate.value ? '' : (target.value as string)))
-
-  // The postings composing the drilled-in line, over the statement's own window.
-  const drilldownEntries = computed(() => {
-    const t = target.value
-    if (!t || (Array.isArray(t) && t.length === 0)) return []
-    const { from, to } = bounds()
-    return entriesForAccount(entries.value, t, from, to, targetScope.value)
+  const balanceAccount = computed<SingleAccountSelection | null>(() => {
+    const selected = target.value
+    return selected && !isAggregateSelection(selected) ? selected : null
   })
 
-  // A single account nets from its own postings; an aggregate can't (mixed
-  // classes), so it keeps the figure the line already shows.
+  // The selected account controls which whole JournalEntry records appear; every
+  // line of each selected entry remains visible, including an ordinary fee line.
+  const drilldownEntries = computed(() => {
+    const selected = target.value
+    if (!selected || (isAggregateSelection(selected) && selected.length === 0)) return []
+    const { from, to } = bounds()
+    return entriesForAccount(entries.value, selected, from, to)
+  })
+
+  // A single account or family has one normal side. Aggregates can mix classes,
+  // so their displayed statement figure remains authoritative.
   const total = computed(() =>
-    typeof target.value === 'string' && target.value
-      ? accountBalance(drilldownEntries.value, target.value)
+    balanceAccount.value
+      ? money(accountNet(drilldownEntries.value, balanceAccount.value))
       : lineTotal.value
   )
 
   const selectedLine = computed<LedgerDrilldownLine | null>(() => {
-    if (!target.value || (Array.isArray(target.value) && target.value.length === 0)) return null
-    return {
-      accounts: target.value,
-      label: displayName.value,
-      total: total.value
-    }
+    if (!target.value || (isAggregateSelection(target.value) && target.value.length === 0))
+      return null
+    return { accounts: target.value, label: displayName.value, total: total.value }
   })
 
-  // What the account brought into the window — the ledger's "Opening balance"
-  // line. Nothing precedes an open-ended window, nor an aggregate line.
-  const opening = computed(() =>
-    accountOpening(entries.value, balanceAccount.value, bounds().from, targetScope.value)
-  )
+  const opening = computed(() => accountOpening(entries.value, balanceAccount.value, bounds().from))
 
-  // Where the account is left once every posting in the window is booked — the
-  // figure at the foot of the Balance column.
   const closing = computed(() =>
     balanceAccount.value
       ? money(opening.value.balance + accountNet(drilldownEntries.value, balanceAccount.value))
       : total.value
   )
 
-  /**
-   * Open the popup for a line. Pass one account name, or a list of accounts plus
-   * a `label` for an aggregate. `lineValue` is the figure shown on the line.
-   */
-  function openFor(
-    account: string | string[],
-    lineValue: string,
-    label?: string,
-    scope?: InstanceScope
-  ): void {
+  /** Open the popup for one concrete account, one chart family, or an aggregate. */
+  function openFor(account: AccountSelection, lineValue: string, label?: string): void {
     target.value = account
     displayName.value = label ?? (typeof account === 'string' ? account : 'Aggregate')
+    if (isConcreteAccount(account)) displayName.value = label ?? account.family.name
     lineTotal.value = lineValue
-    targetScope.value = scope
     open.value = true
   }
 
   const { exportPdf, exportExcel } = useAccountingExport()
 
-  // Export exactly the drilled-in ledger, over the same window and columns,
-  // through the shared PDF / Excel pipeline. An aggregate carries its label and
-  // total, which the pipeline can't recompute.
+  /** Export the same complete JournalEntry scope and visible columns as the modal. */
   function onExport(format: 'pdf' | 'excel', columns: LedgerColumnKey[]): void {
     const line = selectedLine.value
     if (!line) return
     const { from, to } = bounds()
     const spec: SectionSpec = {
       key: 'ledger',
-      account: line.accounts,
       from,
       to,
       columns,
-      ...(targetScope.value?.instance
-        ? { instance: targetScope.value.instance, includeBlank: targetScope.value.includeBlank }
-        : {}),
-      ...(isAggregate.value ? { accountLabel: line.label, accountTotal: line.total } : {})
+      journalAccounts: accountIdsForSelection(entries.value, line.accounts),
+      journalAccountLabel: line.label,
+      journalAccountTotal: line.total
     }
     if (format === 'excel') {
       exportExcel([spec], exportFilename(spec, 'xlsx'), `${line.label} ledger exported to Excel`)
@@ -131,14 +146,11 @@ export function useLedgerDrilldown(
     }
   }
 
-  return {
-    open,
-    selectedLine,
-    balanceAccount,
-    opening,
-    closing,
-    drilldownEntries,
-    openFor,
-    onExport
-  }
+  const balance = computed<DrilldownBalance>(() => ({
+    account: balanceAccount.value,
+    opening: opening.value,
+    closing: closing.value
+  }))
+
+  return { open, selectedLine, balance, drilldownEntries, openFor, onExport }
 }

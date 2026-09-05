@@ -124,6 +124,8 @@ flowchart TB
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+
 - [Client login page](../../../app/src/views/LoginView.vue)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
 - [Client SIWE tests](../../../app/src/composables/__tests__/useSiwe.spec.ts)

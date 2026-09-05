@@ -1,21 +1,19 @@
-import { classOf, type AccountClass, type AccountName } from './chartOfAccounts'
+import type { AccountClass, AccountName } from './chartOfAccounts'
+import type { Account } from './accountRegistry'
 import type { GeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
-import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
-import type { LedgerEntry } from './ledgerEntry'
+import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
+import type { JournalEntry } from './journalEntry'
 import { NETWORK, type TokenId } from '@/constant'
-import { formatDate, formatDateTime, formatToken, formatUsd, fromUnix } from '@/utils/format'
+import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
 
 // The summary metric cards live in their own module — see ./summaryCards.
 export { presentSummaryCards, type SummaryCard } from './summaryCards'
 
-/** The breakdown-line fields the display helpers read (subset of {@link CashCurrencyLine}). */
-type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount'>
-
 export type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
 /** Soft badge classes per trial-balance account nature. */
-export const NATURE_BADGE: Record<TrialNature, string> = {
+const NATURE_BADGE: Record<TrialNature, string> = {
   Asset: 'bg-info/10 text-info',
   Equity: 'bg-primary/10 text-primary',
   'Contra-equity': 'bg-primary/10 text-primary',
@@ -29,21 +27,21 @@ export const NATURE_BADGE: Record<TrialNature, string> = {
  * JS negative zero) is collapsed to a clean `$0.00` — never the misleading
  * `$-0.00` that a hand-rolled currency formatter can emit for `−0`.
  */
-export function money(n: number): string {
-  return formatUsd(n)
+export function money(amountUsd: number): string {
+  return formatUsd(amountUsd)
 }
 
 /** Unix-seconds → `Jan 8, 2026` (matches the dashboard ledger date style). */
-export function fmtDate(timestamp: number): string {
+export function formatUnixDate(timestamp: number): string {
   return formatDate(fromUnix(timestamp))
 }
 
 /**
  * Unix-seconds → `Jan 8, 2026, 14:05:32` — date **with time of day**, so the
- * ledger keeps Ponder's per-second precision (events in the same day stay
+ * ledger retains per-second event precision (events in the same day stay
  * distinguishable and read in true chronological order).
  */
-export function fmtDateTime(timestamp: number): string {
+export function formatUnixDateTime(timestamp: number): string {
   return formatDateTime(fromUnix(timestamp))
 }
 
@@ -52,7 +50,7 @@ export function fmtDateTime(timestamp: number): string {
 export interface StatementLineView {
   label: string
   value: string
-  account?: AccountName
+  account?: Account | AccountName
   accounts?: AccountName[]
 }
 
@@ -63,15 +61,13 @@ export interface SummaryBanner {
 }
 
 export interface TrialRow {
-  /** Base account name — the drill-down key (a split pocket's instances share it). */
-  account: string
+  /** Canonical concrete account for drill-down and reconciliation. */
+  account: Account
   /** Display name — the account, suffixed ` #2` / ` #3` for a redeployed pocket's later instances. */
   label: string
-  /** The pocket contract instance this row rolls up, when split across redeploys. */
-  instance?: string
   /** True when this account is split across several instances (a redeploy) — drives the redeploy hint. */
   split: boolean
-  /** True on the primary (earliest) instance row — the one that also carries un-instanced legs. */
+  /** True on the earliest resolved deployment row, used only for display. */
   isPrimaryInstance: boolean
   nature: TrialNature
   natureClass: string
@@ -82,8 +78,8 @@ export interface TrialRow {
 }
 
 export interface IncomeView {
-  revLines: StatementLineView[]
-  expLines: StatementLineView[]
+  revenueLines: StatementLineView[]
+  expenseLines: StatementLineView[]
   totalRevenue: string
   totalExpenses: string
   netIncome: string
@@ -91,16 +87,24 @@ export interface IncomeView {
 }
 
 export interface BalanceView {
-  assetLines: StatementLineView[]
-  liabLines: StatementLineView[]
-  equityLines: StatementLineView[]
+  assetLines: BalanceLineView[]
+  liabilityLines: BalanceLineView[]
+  equityLines: BalanceLineView[]
+  earningsLines: BalanceLineView[]
   totalAssets: string
+  totalLiabilities: string
+  earningsToDate: string
   totalEquity: string
   liabilitiesPlusEquity: string
 }
 
+export interface BalanceLineView extends StatementLineView {
+  nature: TrialNature
+  natureClass: string
+}
+
 /** The trial-balance "nature" label for an account class. */
-function natureOf(account: AccountName): TrialNature {
+function natureOf(account: Account): TrialNature {
   const byClass: Record<AccountClass, TrialNature> = {
     ASSET: 'Asset',
     LIABILITY: 'Liability',
@@ -109,7 +113,7 @@ function natureOf(account: AccountName): TrialNature {
     INCOME: 'Income',
     EXPENSE: 'Expense'
   }
-  return byClass[classOf(account)]
+  return byClass[account.family.accountClass]
 }
 
 /**
@@ -117,10 +121,9 @@ function natureOf(account: AccountName): TrialNature {
  * 2026"`, `"From Jan 1, 2026"`. Used in the ledger export context line.
  */
 export function periodLabel(from?: Date | null, to?: Date | null): string {
-  const fmt = formatDate
-  if (from && to) return `${fmt(from)} – ${fmt(to)}`
-  if (from) return `From ${fmt(from)}`
-  if (to) return `Until ${fmt(to)}`
+  if (from && to) return `${formatDate(from)} – ${formatDate(to)}`
+  if (from) return `From ${formatDate(from)}`
+  if (to) return `Until ${formatDate(to)}`
   return 'All time'
 }
 
@@ -132,7 +135,7 @@ export function dayLabel(date: Date): string {
 /**
  * The headings the statement exports (PDF page / Excel title row) print, spelling
  * out the active reporting scope so a printed page is self-describing — mirroring
- * {@link ledgerExportTitle}. The plain base name alone for the whole book, with
+ * the General Ledger export title. The plain base name alone for the whole book, with
  * the selected period / "as of" date appended when the page has one set.
  */
 export function incomeExportTitle(from?: Date | null, to?: Date | null): string {
@@ -148,14 +151,14 @@ export function trialExportTitle(asOf?: Date | null): string {
 }
 
 /** Keep entries inside an inclusive `[from, to]` window (nullish bound = open). */
-export function filterByPeriod(
-  entries: readonly LedgerEntry[],
+export function filterByPeriod<T extends { timestamp: number }>(
+  entries: readonly T[],
   from?: Date | null,
   to?: Date | null
-): LedgerEntry[] {
+): T[] {
   const fromS = from ? Math.floor(from.getTime() / 1000) : -Infinity
   const toS = to ? Math.floor(to.getTime() / 1000) : Infinity
-  return entries.filter((e) => e.timestamp >= fromS && e.timestamp <= toS)
+  return entries.filter((entry) => entry.timestamp >= fromS && entry.timestamp <= toS)
 }
 
 // ── Presenters ──────────────────────────────────────────────────────────────
@@ -172,26 +175,26 @@ export function presentBanner(balance: BalanceSheet, ledger: GeneralLedger): Sum
 
 /** Income-statement lines for a reporting period. */
 export function presentIncome(
-  entries: readonly LedgerEntry[],
+  entries: readonly JournalEntry[],
   from?: Date | null,
   to?: Date | null
 ): IncomeView {
-  const is = buildIncomeStatement(filterByPeriod(entries, from, to))
+  const income = buildIncomeStatement(filterByPeriod(entries, from, to))
   return {
-    revLines: is.revenue.map((l) => ({
-      label: l.account,
-      value: money(l.amount),
-      account: l.account
+    revenueLines: income.revenue.map((line) => ({
+      label: line.account,
+      value: money(line.amount),
+      account: line.account
     })),
-    expLines: is.expenses.map((l) => ({
-      label: l.account,
-      value: money(l.amount),
-      account: l.account
+    expenseLines: income.expenses.map((line) => ({
+      label: line.account,
+      value: money(line.amount),
+      account: line.account
     })),
-    totalRevenue: money(is.totalRevenue),
-    totalExpenses: money(is.totalExpenses),
-    netIncome: money(is.netIncome),
-    netNegative: is.netIncome < 0
+    totalRevenue: money(income.totalRevenue),
+    totalExpenses: money(income.totalExpenses),
+    netIncome: money(income.netIncome),
+    netNegative: income.netIncome < 0
   }
 }
 
@@ -202,70 +205,41 @@ export function currencySymbol(token: TokenId): string {
   return token.toUpperCase() // usdc → USDC, usdt → USDT, sher → SHER
 }
 
-/** Drop the `Cash — ` chart prefix for the compact breakdown label. */
-function pocketShortName(account: AccountName): string {
-  return account.replace(/^Cash — /, '')
-}
-
-/** `12.5` → `12.5 POL`; trims to at most 6 decimals so dust reads cleanly. */
-function tokenQuantity(amount: number, token: TokenId): string {
-  return formatToken(amount, currencySymbol(token), { maxDecimals: 6 })
-}
-
-/**
- * One breakdown line's display value. A stablecoin shows its USD value directly;
- * native (POL/ETH) shows its quantity *and* USD equivalent at the closing rate of
- * record — `0.023953 POL ≈ $0.00` (spec §5) — so a holding worth a few cents is
- * still legible as a POL balance.
- */
-function cashCurrencyValue(line: CashLineData): string {
-  if (line.token !== 'native') return money(line.amountUsd)
-  return `${tokenQuantity(line.tokenAmount, line.token)} ≈ ${money(line.amountUsd)}`
-}
-
 /** Balance-sheet lines as of a point in time. */
-export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | null): BalanceView {
+export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | null): BalanceView {
   const scoped = filterByPeriod(entries, null, asOf)
-  const bs = buildBalanceSheet(scoped)
-  const is = buildIncomeStatement(scoped)
-  const retainedAccounts = [...is.revenue, ...is.expenses].map((l) => l.account)
-  const assetLines: StatementLineView[] = [
-    { label: 'Cash (all pockets)', value: money(bs.cash) },
-    ...bs.cashByPocketCurrency.map((l) => ({
-      label: `• ${pocketShortName(l.account)} · ${currencySymbol(l.token)}`,
-      value: cashCurrencyValue(l),
-      account: l.account
-    })),
-    ...bs.otherAssets.map((a) => ({ label: a.account, value: money(a.amount), account: a.account }))
-  ]
-  const liabLines: StatementLineView[] = bs.liabilities.length
-    ? bs.liabilities.map((l) => ({ label: l.account, value: money(l.amount), account: l.account }))
-    : [{ label: 'None (no debt)', value: money(0) }]
-  const equityLines: StatementLineView[] = [
-    { label: 'Owner capital', value: money(bs.ownerCapital), account: 'Owner Capital' },
+  const balance = buildBalanceSheet(scoped)
+  const presentLine = (line: BalanceSheet['assets'][number]): BalanceLineView => {
+    const nature = natureOf(line.account)
+    return {
+      label: line.accountLabel,
+      value: money(line.contribution),
+      account: line.account,
+      nature,
+      natureClass: NATURE_BADGE[nature]
+    }
+  }
+  const earningsAccounts = [...new Set(balance.earnings.map((line) => line.account.family.name))]
+  const equityLines: BalanceLineView[] = [
+    ...balance.equity.map(presentLine),
     {
-      label: 'Investor equity (SHER)',
-      value: money(bs.investorEquity),
-      account: 'Investor Equity'
-    },
-    ...bs.contraEquity.map((l) => ({
-      label: l.account,
-      value: money(-l.amount),
-      account: l.account
-    })),
-    {
-      label: 'Retained earnings (net profit)',
-      value: money(bs.retainedEarnings),
-      accounts: retainedAccounts
+      label: 'Earnings to date',
+      value: money(balance.earningsToDate),
+      accounts: earningsAccounts,
+      nature: 'Equity',
+      natureClass: NATURE_BADGE.Equity
     }
   ]
   return {
-    assetLines,
-    liabLines,
+    assetLines: balance.assets.map(presentLine),
+    liabilityLines: balance.liabilities.map(presentLine),
     equityLines,
-    totalAssets: money(bs.totalAssets),
-    totalEquity: money(bs.totalEquity),
-    liabilitiesPlusEquity: money(bs.totalLiabilitiesAndEquity)
+    earningsLines: balance.earnings.map(presentLine),
+    totalAssets: money(balance.totalAssets),
+    totalLiabilities: money(balance.totalLiabilities),
+    earningsToDate: money(balance.earningsToDate),
+    totalEquity: money(balance.totalEquity),
+    liabilitiesPlusEquity: money(balance.totalLiabilitiesAndEquity)
   }
 }
 
@@ -275,22 +249,18 @@ export function presentTrial(ledger: GeneralLedger): {
   total: string
   balanced: boolean
 } {
-  const rows: TrialRow[] = ledger.trialBalance.map((r) => {
-    const debitSide =
-      r.accountClass === 'ASSET' ||
-      r.accountClass === 'EXPENSE' ||
-      r.accountClass === 'CONTRA_EQUITY'
+  const rows: TrialRow[] = ledger.trialBalance.map((row) => {
+    const debitSide = row.account.family.normalBalance === 'debit'
     return {
-      account: r.account,
-      label: r.accountLabel,
-      ...(r.instance ? { instance: r.instance } : {}),
-      split: r.split,
-      // The primary (earliest) instance row also carries the pocket's un-instanced legs.
-      isPrimaryInstance: r.isPrimaryInstance,
-      nature: natureOf(r.account),
-      natureClass: NATURE_BADGE[natureOf(r.account)],
-      dr: debitSide ? money(r.balance) : '—',
-      cr: debitSide ? '—' : money(r.balance),
+      account: row.account,
+      label: row.accountLabel,
+      split: row.split,
+      // The primary row is the earliest resolved deployment, for display only.
+      isPrimaryInstance: row.isPrimaryInstance,
+      nature: natureOf(row.account),
+      natureClass: NATURE_BADGE[natureOf(row.account)],
+      dr: debitSide ? money(row.balance) : '—',
+      cr: debitSide ? '—' : money(row.balance),
       drMuted: !debitSide,
       crMuted: debitSide
     }

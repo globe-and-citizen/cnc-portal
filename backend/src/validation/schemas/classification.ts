@@ -18,7 +18,6 @@ import { teamIdSchema } from './common';
 export const CLASSIFICATION_CATEGORIES = [
   'REVENUE',
   'EXPENSE',
-  'SHAREHOLDER_LOAN',
   'OWNER_CAPITAL',
   'INTERNAL_TRANSFER',
   'PAYROLL_EXPENSE',

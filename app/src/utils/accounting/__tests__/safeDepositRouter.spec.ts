@@ -11,6 +11,7 @@ describe('mapSafeDepositRouterEvents', () => {
         deposits: [
           {
             id: 'sd1',
+            txHash: '0xrouterdeposit',
             contractAddress: ADDR.safe,
             depositor: ADDR.client,
             token: ADDR.usdcToken,
@@ -29,6 +30,7 @@ describe('mapSafeDepositRouterEvents', () => {
       amountUsd: 5, // 5 usdc deposited * $1
       shares: 10, // 10 SHER minted
       token: 'usdc',
+      txHash: '0xrouterdeposit',
       internal: false
     })
   })

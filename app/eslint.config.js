@@ -66,7 +66,6 @@ const bannedGlobalMockPaths = [
   '@nuxt/ui/composables',
   // composables.setup.ts
   '@tanstack/vue-query',
-  '@vue/apollo-composable',
   '@/api',
   'vue-router',
   '@vueuse/core',
@@ -113,7 +112,7 @@ const bannedGlobalMockPaths = [
   // axios.setup.ts
   '@/lib/axios',
   // utils.setup.ts
-  '@/utils'
+  '@/lib/logging'
 ]
 
 const globalMockMessage = (path) =>

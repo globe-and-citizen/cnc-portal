@@ -4,29 +4,29 @@
  * Wraps the pure PDF / Excel builders ({@link buildTables} / {@link buildSheets})
  * with the live books, the party-name resolver and toast + error handling, so a
  * page only has to declare *which* sections (and their current filter state) to
- * export. Snapshots the reactive context into a plain {@link CncAccounting} at
+ * export. Snapshots the reactive journal and reports at
  * call time, so the file reflects exactly what's on screen when the button is hit.
  */
 import { useAccountingContext } from './useAccountingContext'
-import type { CncAccounting } from '@/utils/accounting/assemble'
-import { resolveUser } from '@/utils/transactionHistoryUtil'
-import { log } from '@/utils'
-import { buildTables, exportTablesPdf, type ExportPdfOptions } from '@/utils/accountingPdf'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
-import { buildSheets, exportSheetsExcel } from '@/utils/accountingExport'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
+import { log } from '@/lib/logging'
+import { buildTables, exportTablesPdf, type ExportPdfOptions } from '@/lib/accounting/pdf'
+import type { AccountingExportSnapshot, SectionSpec } from '@/utils/accounting/exportSpec'
+import { buildSheets, exportSheetsExcel } from '@/lib/accounting/spreadsheet'
 
 export function useAccountingExport() {
-  const acc = useAccountingContext()
+  const accounting = useAccountingContext()
   const toast = useToast()
+  const { resolveUser } = useTransactionPresentation()
 
   // Resolve a ledger party's address to its member/contract display name for the
   // "Activity" column, mirroring what the on-screen ledger shows via avatars.
   const resolveName = (address: string) => resolveUser(address).name
 
   /** Freeze the reactive books into a plain value for the pure builders. */
-  const snapshot = (): CncAccounting => ({
-    entries: acc.entries.value,
-    ...acc.reports.value
+  const snapshot = (): AccountingExportSnapshot => ({
+    journal: accounting.journal.value,
+    ...accounting.reports.value
   })
 
   async function exportPdf(

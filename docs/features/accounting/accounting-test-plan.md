@@ -6,9 +6,9 @@ cases.
 
 - [ ] **1.** Create a team with the six contracts deployed (Bank, FeeCollector, CashRemuneration, ExpenseAccount, InvestorV1,
       SafeDepositRouter + Safe).
-- [ ] **2.** A founder deposits **$4** into the **Bank**.
+- [ ] **2.** An external party deposits **$4** into the **Bank** as service revenue.
 - [ ] **3.** Hermann, Georges and Achille each **invest $2** and get SHER (2 SHER for $2) via the **SafeDepositRouter**.
-- [ ] **4.** A member sends **$2 straight to the Safe** (no router) to invest.
+- [ ] **4.** A member sends **$2 straight to the Safe** (no router) as service revenue.
 - [ ] **5.** **Mint 10% of SHER to Ravi** directly, no charge.
 - [ ] **6.** Georginio works **2h @ $1/h + 1 SHER/h** — submit the claim.
 - [ ] **7.** Georginio **withdraws** his pay.
@@ -32,12 +32,19 @@ cases.
 - [ ] **25.** (Optional) Open another offer that **misses its target** and **refund** the principal.
 - [ ] **26.** Ravi **sweeps Payroll → Bank and Expense → Bank** to reconcile.
 - [ ] **27.** Ravi **pays a dividend** to the shareholders of whatever is left.
-- [ ] **28.** Add a **memo** on one deposit and one withdrawal.
-- [ ] **29.** On the **Classification** page (owner): reclassify Ravi's Bank withdrawal (step 15) as an **Expense** and a client deposit
-      (step 11) as a **Shareholder Loan** — confirm the income statement and balance sheet update, and that the changes survive a
-      **refresh**. **Revert** one to the inferred fallback. Confirm a **guaranteed-internal** move (e.g. Bank → Payroll, step 16) offers no
-      income/expense option, and that a **non-owner** sees the classifications read-only.
+- [ ] **28.** Add a **memo** on one eligible external withdrawal.
+- [ ] **29.** On the **Classification** page (owner): classify Ravi's Bank withdrawal (step 15) as an **Expense** and confirm the income
+      statement and balance sheet update after a **refresh**. A direct deposit remains `Service Revenue` even when legacy classification
+      data exists. Confirm a company-pocket move (for example, Bank → Payroll, step 16) remains internal, and that a **non-owner** sees the
+      classifications read-only.
 - [ ] **30.** Open the **ledger**: search rows, filter by each category, toggle column visibility, paginate.
 - [ ] **31.** Open a **line drill-down** (loupe / Details) on an account.
 - [ ] **32.** **Export** the ledger / a statement.
 - [ ] **33.** Refresh and re-open the page on an **empty team**, and with a **failed / NFT** transfer present.
+- [ ] **34.** **Create a vesting schedule** of **10 SHER** for Hermann (short duration, no cliff) — confirm the books show the **whole 10
+      SHER promised** the same day, with **no profit impact** and **no change in total equity**.
+- [ ] **35.** Hermann **releases** part of the schedule once some of it has vested — confirm the released shares move from **promised** to
+      **issued**, that the issued amount matches the SHER he actually received, and that the release is booked **once**.
+- [ ] **36.** **Stop** the schedule before it fully vests — confirm the vested part stays issued and the **unvested remainder is
+      cancelled**, leaving no promised shares for that schedule.
+- [ ] **37.** Create a second schedule and **stop it before anything vests** — confirm the whole award is cancelled and nothing was issued.

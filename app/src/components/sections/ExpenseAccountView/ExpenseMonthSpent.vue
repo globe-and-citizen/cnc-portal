@@ -27,7 +27,8 @@ import cartIcon from '@/assets/cart.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/ui/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore } from '@/stores'
-import { formatCurrencyShort, log } from '@/utils'
+import { formatCurrencyShort } from '@/utils/currency/display'
+import { log } from '@/lib/logging'
 import { formatNumber } from '@/utils/format'
 import { formatUnits, zeroAddress } from 'viem'
 import { computed, watch } from 'vue'
@@ -45,8 +46,8 @@ const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime() 
 const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime() / 1000
 const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0).getTime() / 1000
 
-// EXPERIMENT: derive monthly spend from the RPC-sourced Expense events instead
-// of Ponder. Transfers out = native (tokenAddress = zeroAddress) + token.
+// Derive monthly spend from RPC-sourced Expense events. Transfers out = native
+// (tokenAddress = zeroAddress) + token.
 const { result: expenseEvents, loading, error } = useExpenseEventsViaLogs(contractAddress)
 
 const transfersInRange = (

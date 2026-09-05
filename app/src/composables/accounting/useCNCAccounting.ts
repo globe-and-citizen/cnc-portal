@@ -12,8 +12,9 @@
  *   - **Backend DB** — the team's contracts, signed weekly claims and approved
  *     expenses, the off-chain accrual + category context (spec §3.2).
  *
- * The raw feeds are handed to the pure {@link assembleCncAccounting}, which runs
- * the #2113 source mappers, the #2117 consolidation and the statement builders.
+ * The raw feeds are mapped into a pure posting feed, completed with transaction
+ * receipt account evidence, then consolidated into the canonical journal and
+ * statements.
  * Optional / flaky sources (the external Safe service, a contract a team has not
  * deployed) degrade gracefully: a missing or failed feed is simply absent from
  * the ledger and never blocks the page or surfaces as a hard error.
@@ -22,8 +23,7 @@ import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
-import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
-import { FEE_COLLECTOR_ADDRESS } from '@/constant'
+import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouter/model'
 import type { ContractType, TeamContract } from '@/types/teamContract'
 import type { ScanTarget } from '@/composables/eventsViaLogs'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
@@ -41,27 +41,22 @@ import {
   useGetSafeOutgoingTransactionsQuery
 } from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useTransferInitiators } from './useTransferInitiators'
+import { useTransactionEvidence } from './useTransactionEvidence'
 import { useAccountingBackendFeeds } from './useAccountingBackendFeeds'
 import {
-  assembleCncAccounting,
+  assembleWithAccountEvidence,
+  buildRawCncEntries,
   type CncAccounting,
   type CncAccountingInput
 } from '@/utils/accounting/assemble'
+import { knownDeploymentAccounts } from '@/utils/accounting/accountInstances'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import type { AccountingSummary } from '@/utils/accounting/buildLedger'
-import type { GeneralLedger } from '@/utils/accounting/generalLedger'
-import type { IncomeStatement } from '@/utils/accounting/incomeStatement'
-import type { BalanceSheet } from '@/utils/accounting/balanceSheet'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 /** How many of each event type to pull per contract (newest first). */
 const EVENT_LIMIT = 500
 
 export interface UseCNCAccountingOptions {
-  /** Override the founder set (defaults to the team's `ownerAddress`). */
-  founderAddresses?: MaybeRefOrGetter<Iterable<Address | string> | undefined>
   /** FX resolver for native / SHER (defaults to the Phase-1 zero-rate gap). */
   rateOfRecord?: UsdRateOfRecord
   /** On-chain SHER token address, so SHER amounts resolve to the `sher` token. */
@@ -69,10 +64,14 @@ export interface UseCNCAccountingOptions {
 }
 
 export interface UseCNCAccountingReturn {
-  /** Consolidated, deduped ledger postings. */
-  entries: ComputedRef<LedgerEntry[]>
-  /** The summary and financial reports computed from the consolidated ledger. */
-  reports: ComputedRef<AccountingReports>
+  /** Canonical concrete-account source of truth for the assembled books. */
+  accountRegistry: ComputedRef<CncAccounting['accountRegistry']>
+  /** Validated journal assembled from the consolidated postings. */
+  journal: ComputedRef<CncAccounting['journal']>
+  /** The summary and financial reports computed from the assembled accounting books. */
+  reports: ComputedRef<
+    Pick<CncAccounting, 'summary' | 'generalLedger' | 'incomeStatement' | 'balanceSheet'>
+  >
   /** True while any required feed is still loading. */
   isLoading: ComputedRef<boolean>
   /** The team query error (the only fatal one); optional feeds degrade silently. */
@@ -83,22 +82,14 @@ export interface UseCNCAccountingReturn {
   refetch: () => Promise<unknown>
 }
 
-/** The report set derived together from one consolidated accounting ledger. */
-export interface AccountingReports {
-  /** Roll-up totals for the summary cards. */
-  summary: AccountingSummary
-  /** Double-entry journal + trial balance. */
-  generalLedger: GeneralLedger
-  incomeStatement: IncomeStatement
-  balanceSheet: BalanceSheet
-}
-
 /** One contract generation that could not be loaded, for the UI gap warning. */
 export interface ReconciliationGap {
-  /** The money-pocket type whose generation failed (e.g. 'Bank'). */
+  /** The source whose evidence is incomplete (e.g. 'Bank'). */
   source: string
-  /** The failed generation's contract address. */
-  address: string
+  /** The failed generation's contract address, when a source scan failed. */
+  address?: string
+  /** The source operation whose counterpart evidence is absent. */
+  operationId?: string
 }
 
 export function useCNCAccounting(
@@ -135,19 +126,23 @@ export function useCNCAccounting(
     // Officer-less pockets (Safe / SafeDepositRouter) survive redeploys and are
     // governed by no Officer; add them once as a boundary-less generation.
     const governed = new Set(
-      officerList.flatMap((officer) => officer.contracts.map((c) => c.address.toLowerCase()))
+      officerList.flatMap((officer) =>
+        officer.contracts.map((contract) => contract.address.toLowerCase())
+      )
     )
-    const officerless = contracts.value.filter((c) => !governed.has(c.address.toLowerCase()))
+    const officerless = contracts.value.filter(
+      (contract) => !governed.has(contract.address.toLowerCase())
+    )
     if (officerless.length) gens.push({ deployBlockNumber: null, contracts: officerless })
     return gens
   })
 
   const allContracts = computed<TeamContract[]>(() =>
     generations.value.flatMap((generation) =>
-      generation.contracts.map((c) => ({
-        address: c.address as Address,
-        type: c.type as ContractType,
-        deployer: (c.deployer ?? c.address) as Address,
+      generation.contracts.map((contract) => ({
+        address: contract.address as Address,
+        type: contract.type as ContractType,
+        deployer: (contract.deployer ?? contract.address) as Address,
         admins: []
       }))
     )
@@ -173,14 +168,16 @@ export function useCNCAccounting(
 
   /** Current-generation address for reads that reflect live contract state. */
   const addressOf = (type: ContractType): ComputedRef<string> =>
-    computed(() => contracts.value.find((c) => c.type === type)?.address?.toLowerCase() ?? '')
+    computed(
+      () => contracts.value.find((contract) => contract.type === type)?.address?.toLowerCase() ?? ''
+    )
 
   // Auto-detect Investor: V2 ('Investor') preferred, V1 ('InvestorV1') fallback
   const addressOfInvestor = (): ComputedRef<string> =>
     computed(
       () =>
         contracts.value
-          .find((c) => c.type === 'Investor' || c.type === 'InvestorV1')
+          .find((contract) => contract.type === 'Investor' || contract.type === 'InvestorV1')
           ?.address?.toLowerCase() ?? ''
     )
 
@@ -188,7 +185,9 @@ export function useCNCAccounting(
   const investorAddress = addressOfInvestor()
   const routerAddress = addressOf('SafeDepositRouter')
   const safeAddress = computed(
-    () => team.data.value?.safeAddress ?? contracts.value.find((c) => c.type === 'Safe')?.address
+    () =>
+      team.data.value?.safeAddress ??
+      contracts.value.find((contract) => contract.type === 'Safe')?.address
   )
 
   const bankTargets = targetsOf('Bank')
@@ -254,19 +253,6 @@ export function useCNCAccounting(
     queryParams: { limit: EVENT_LIMIT }
   })
 
-  const founderAddresses = computed<Iterable<Address | string>>(() => {
-    const override = toValue(options.founderAddresses)
-    if (override) return override
-    const owner = team.data.value?.ownerAddress
-    return owner ? [owner] : []
-  })
-
-  // Team members — a member funding the Safe is investing in the company (invest
-  // & get SHER → Investor Equity), not a client paying for services.
-  const memberAddresses = computed<Iterable<Address | string>>(
-    () => team.data.value?.members?.map((m) => m.address) ?? []
-  )
-
   // Live-price fallback: the caller's resolver, else the app's live prices from
   // the currency store (CoinGecko). Used only while a day's historical price is
   // in flight — the timestamped rate below is the actual rate of record.
@@ -279,11 +265,7 @@ export function useCNCAccounting(
   const baseInput = computed<CncAccountingInput>(() => ({
     contracts: allContracts.value,
     safeAddress: safeAddress.value,
-    founderAddresses: founderAddresses.value,
-    memberAddresses: memberAddresses.value,
-    feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
     sherTokenAddress: options.sherTokenAddress ?? (investorAddress.value || null),
-    safeDepositRouterAddress: routerAddress.value || null,
     currentSherMultiplier: currentSherMultiplier.value,
     rateOfRecord: liveRate,
     bankEvents: bank.result.value,
@@ -308,35 +290,25 @@ export function useCNCAccounting(
   // price moves (no per-date historical fetch). USDC is pegged $1 by `toUsd`; SHER
   // is valued from the router multiplier (see buildRateOfRecord). The live price is
   // already wired into `baseInput.rateOfRecord` (`liveRate`).
-  const accounting = computed<CncAccounting>(() => assembleCncAccounting(baseInput.value))
-
-  // Resolve the human who signed each internal transfer (the tx feed carries only
-  // a hash), then attach it so the ledger reads "Stravid87 transferred money from
-  // Bank to Safe". Optional: an unresolved hash keeps the source-pocket fallback.
-  const transferHashes = computed<string[]>(() => {
-    const hashes = new Set<string>()
-    for (const entry of accounting.value.entries) {
-      if (entry.internal && entry.txHash) hashes.add(entry.txHash)
-    }
-    return [...hashes]
-  })
-  const transferInitiators = useTransferInitiators(transferHashes)
-
-  const entries = computed<LedgerEntry[]>(() => {
-    const initiators = transferInitiators.value
-    if (!initiators.size) return accounting.value.entries
-    return accounting.value.entries.map((entry) =>
-      entry.internal && entry.txHash && initiators.has(entry.txHash)
-        ? { ...entry, initiator: initiators.get(entry.txHash) }
-        : entry
+  // Mapper-provided instances are accepted only when they name a known company
+  // deployment. Receipt Transfer logs may complete a missing instance; activity
+  // order and unrelated historical deployments are never used as a fallback.
+  const rawEntries = computed(() => buildRawCncEntries(baseInput.value))
+  const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
+  const transactionEvidence = useTransactionEvidence(rawEntries, deploymentAccounts)
+  const accounting = computed<CncAccounting>(() =>
+    assembleWithAccountEvidence(
+      rawEntries.value,
+      deploymentAccounts.value,
+      transactionEvidence.accountEvidence.value
     )
-  })
+  )
 
   // A generation whose on-chain scan failed is surfaced as a reconciliation gap
   // (rather than silently dropping the whole contract type), so the view can warn
   // that history may be partial (issue #2456).
-  const reconciliationGaps = computed<ReconciliationGap[]>(() =>
-    (
+  const reconciliationGaps = computed<ReconciliationGap[]>(() => [
+    ...(
       [
         ['Bank', bank],
         ['CashRemuneration', cashRem],
@@ -346,8 +318,16 @@ export function useCNCAccounting(
         ['Vesting', vesting],
         ['SafeDepositRouter', router]
       ] as const
-    ).flatMap(([source, feed]) => feed.gaps.value.map((gap) => ({ source, address: gap.address })))
-  )
+    ).flatMap(([source, feed]) => feed.gaps.value.map((gap) => ({ source, address: gap.address }))),
+    ...accounting.value.unmatchedFeeOperationIds.map((operationId) => ({
+      source: 'Bank fee evidence',
+      operationId
+    })),
+    ...transactionEvidence.unavailableOperationIds.value.map((operationId) => ({
+      source: 'Transaction receipt evidence',
+      operationId
+    }))
+  ])
 
   // The team query is the only fatal one — without contracts there are no books.
   // Loading reflects the team + on-chain + enrichment feeds; the Safe service is
@@ -363,15 +343,15 @@ export function useCNCAccounting(
       investor.loading.value ||
       vesting.loading.value ||
       router.loading.value ||
+      transactionEvidence.isLoading.value ||
       weeklyClaims.isLoading.value ||
       expenses.isLoading.value
   )
 
   const error = computed(() => team.error.value)
 
-  const refetch = (): Promise<unknown> => {
-    const run = (q: { refetch?: () => unknown }): unknown => q.refetch?.()
-    return Promise.allSettled(
+  const refetch = (): Promise<unknown> =>
+    Promise.allSettled(
       [
         team,
         officers,
@@ -388,14 +368,15 @@ export function useCNCAccounting(
         expenses,
         classifications,
         safeTransfers,
-        safeOutgoing
-      ].map(run)
+        safeOutgoing,
+        transactionEvidence
+      ].map((query) => query.refetch?.())
     )
-  }
 
   return {
-    entries,
-    reports: computed<AccountingReports>(() => ({
+    accountRegistry: computed(() => accounting.value.accountRegistry),
+    journal: computed(() => accounting.value.journal),
+    reports: computed(() => ({
       summary: accounting.value.summary,
       generalLedger: accounting.value.generalLedger,
       incomeStatement: accounting.value.incomeStatement,

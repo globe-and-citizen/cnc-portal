@@ -65,10 +65,10 @@ import SelectMemberContractsInput from '@/components/ui/inputs/SelectMemberContr
 import MintStakeSection from './MintStakeSection.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useIndividualMint } from '@/composables/investor/writes'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import { useQueryClient } from '@tanstack/vue-query'
-import { TOKEN_DECIMALS } from '@/utils/investorMintAllocation'
-import { formatAmountWithPrecision } from '@/utils/currencyUtil'
+import { TOKEN_DECIMALS } from '@/utils/investors/mintAllocation'
+import { formatAmountWithPrecision } from '@/utils/currency/display'
 import { type StakeMode, type StakePayload } from '@/types/investor'
 
 const state = reactive({

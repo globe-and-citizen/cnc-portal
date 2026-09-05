@@ -187,6 +187,7 @@ export function mapFixedReturnEvents(
           entries.push(
             makeEntry({
               id: `credit-principal-${event.offerId}-${lender.toLowerCase()}`,
+              sourceOperationId: event.id,
               timestamp: event.timestamp,
               useCase: 'UC-CREDIT-01',
               debit: BANK,
@@ -214,6 +215,7 @@ export function mapFixedReturnEvents(
         entries.push(
           makeEntry({
             id: event.id,
+            ...(event.sourceOperationId ? { sourceOperationId: event.sourceOperationId } : {}),
             timestamp: event.timestamp,
             useCase: 'UC-CREDIT-05',
             debit: INTEREST_EXPENSE,
@@ -288,7 +290,7 @@ export function mapFixedReturnEvents(
 
 /**
  * A repayment leg's id. The suffix goes **after** the `${txHash}-${logIndex}`
- * event id, which `txHashOf` reads past by matching the leading hash, so both
+ * event id, whose leading transaction hash is preserved by makeEntry, so both
  * legs still resolve to the transaction they were paid in.
  */
 function legId(eventId: string, leg: string): string {

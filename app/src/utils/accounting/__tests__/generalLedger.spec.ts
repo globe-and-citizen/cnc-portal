@@ -1,13 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { catalogueLedger } from './catalogueLedger'
 
+const generalLedger = (entries: readonly LedgerEntry[]) => buildGeneralLedger(buildJournal(entries))
+
 describe('buildGeneralLedger — catalogue worked example', () => {
-  const gl = buildGeneralLedger(catalogueLedger)
+  const gl = generalLedger(catalogueLedger)
   const balanceOf = (account: AccountName): number =>
-    gl.trialBalance.find((r) => r.account === account)?.balance ?? 0
+    gl.trialBalance.find((r) => r.account.family.name === account)?.balance ?? 0
 
   it('is balanced gross (Σ debit lines = Σ credit lines = journal total)', () => {
     expect(gl.totalDebit).toBeCloseTo(678.1, 2)
@@ -41,7 +43,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
   })
 
   it('drops accounts with no activity (e.g. Owner Capital this period)', () => {
-    expect(gl.trialBalance.some((r) => r.account === 'Owner Capital')).toBe(false)
+    expect(gl.trialBalance.some((r) => r.account.family.name === 'Owner Capital')).toBe(false)
   })
 
   it('stays balanced when per-account rounding would drift a cent', () => {
@@ -62,7 +64,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: '',
       enrichment: 'not-applicable'
     })
-    const gl2 = buildGeneralLedger([
+    const gl2 = generalLedger([
       cent('a', 'Cash — Bank', 'Service Revenue'),
       cent('b', 'Cash — Safe', 'Service Revenue')
     ])
@@ -70,7 +72,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(gl2.debitBalanceTotal).toBeCloseTo(gl2.creditBalanceTotal, 2)
   })
 
-  it('splits a redeployed pocket into per-instance trial-balance rows, newest suffixed', () => {
+  it('keeps an unresolved redeployment leg separate from concrete Bank accounts', () => {
     // One team, two Bank contracts (a redeploy). Deposits before the redeploy hit
     // the first Bank; the deposit after it hits Bank #2 — which must carry only its
     // own transaction, while the original keeps everything up to the redeploy.
@@ -95,8 +97,8 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: '',
       enrichment: 'not-applicable'
     })
-    // A leg with NO instance (a FixedReturn sweep straight to Bank) must fold into
-    // the primary deployment, not spawn a phantom third row.
+    // A leg with NO instance (a FixedReturn sweep straight to Bank) has no source
+    // evidence for either Bank deployment. It remains explicit for reconciliation.
     const blankBankLeg: LedgerEntry = {
       id: 'd',
       timestamp: 15,
@@ -110,25 +112,28 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: '',
       enrichment: 'not-applicable'
     }
-    const gl2 = buildGeneralLedger([
+    const gl2 = generalLedger([
       deposit('a', bank1, 100, 10),
       deposit('b', bank1, 50, 20),
       deposit('c', bank2, 30, 30), // after the redeploy → the new Bank
       blankBankLeg
     ])
-    const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
-    expect(bankRows).toHaveLength(2) // still two rows — the blank leg folded in
+    const bankRows = gl2.trialBalance.filter((r) => r.account.family.name === 'Cash — Bank')
+    expect(bankRows).toHaveLength(3)
+    const bank1Row = bankRows.find((row) => row.account.contractAddress === bank1)
+    const bank2Row = bankRows.find((row) => row.account.contractAddress === bank2)
+    const unresolvedRow = bankRows.find((row) => row.account.resolution === 'unresolved')
     // The original deployment keeps the plain name; only later ones are numbered.
-    expect(bankRows[0].accountLabel).toBe('Cash — Bank')
-    expect(bankRows[0].instance).toBe(bank1)
-    expect(bankRows[0].split).toBe(true)
-    expect(bankRows[0].isPrimaryInstance).toBe(true)
-    expect(bankRows[0].balance).toBeCloseTo(170, 2) // 150 + the 20 un-instanced leg
-    expect(bankRows[1].accountLabel).toBe('Cash — Bank 2')
-    expect(bankRows[1].instance).toBe(bank2)
-    expect(bankRows[1].isPrimaryInstance).toBe(false)
-    expect(bankRows[1].balance).toBeCloseTo(30, 2) // only the post-redeploy deposit
-    // The split is presentation only: the book stays balanced and totals are whole.
+    expect(bank1Row?.accountLabel).toBe('Cash — Bank')
+    expect(bank1Row?.split).toBe(true)
+    expect(bank1Row?.isPrimaryInstance).toBe(true)
+    expect(bank1Row?.balance).toBeCloseTo(150, 2)
+    expect(bank2Row?.accountLabel).toBe('Cash — Bank 2')
+    expect(bank2Row?.isPrimaryInstance).toBe(false)
+    expect(bank2Row?.balance).toBeCloseTo(30, 2) // only the post-redeploy deposit
+    expect(unresolvedRow?.accountLabel).toBe('Cash — Bank (unresolved)')
+    expect(unresolvedRow?.balance).toBeCloseTo(20, 2)
+    // The book remains balanced even while one account needs reconciliation.
     expect(gl2.balanced).toBe(true)
   })
 
@@ -149,11 +154,11 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     })
     // Even with two different addresses stamped, Safe is not an instanced pocket,
     // so it stays a single consolidated row.
-    const gl2 = buildGeneralLedger([
+    const gl2 = generalLedger([
       safeLeg('1', '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 10),
       safeLeg('2', '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 5)
     ])
-    const safeRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Safe')
+    const safeRows = gl2.trialBalance.filter((r) => r.account.family.name === 'Cash — Safe')
     expect(safeRows).toHaveLength(1)
     expect(safeRows[0].accountLabel).toBe('Cash — Safe')
     expect(safeRows[0].balance).toBeCloseTo(15, 2)
@@ -161,7 +166,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
 
   it('keeps a single un-redeployed pocket as one un-suffixed row', () => {
     const bank = '0x1111111111111111111111111111111111111111'
-    const gl2 = buildGeneralLedger([
+    const gl2 = generalLedger([
       {
         id: 'a',
         timestamp: 1,
@@ -177,13 +182,13 @@ describe('buildGeneralLedger — catalogue worked example', () => {
         enrichment: 'not-applicable'
       }
     ])
-    const bankRows = gl2.trialBalance.filter((r) => r.account === 'Cash — Bank')
+    const bankRows = gl2.trialBalance.filter((r) => r.account.family.name === 'Cash — Bank')
     expect(bankRows).toHaveLength(1)
     expect(bankRows[0].accountLabel).toBe('Cash — Bank') // single instance → no number
     expect(bankRows[0].split).toBe(false)
   })
 
-  it('flags an unbalanced book when a posting is missing a leg', () => {
+  it('rejects an unbalanced posting before the trial-balance projection runs', () => {
     const halfPosting: LedgerEntry = {
       id: 'broken',
       timestamp: 1,
@@ -197,8 +202,8 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: 'half posting',
       enrichment: 'not-applicable'
     }
-    const broken = buildGeneralLedger([...catalogueLedger, halfPosting])
-    expect(broken.balanced).toBe(false)
-    expect(broken.totalDebit).not.toBeCloseTo(broken.totalCredit, 2)
+    expect(() => generalLedger([...catalogueLedger, halfPosting])).toThrow(
+      'monetary entries require at least one debit and one credit line'
+    )
   })
 })

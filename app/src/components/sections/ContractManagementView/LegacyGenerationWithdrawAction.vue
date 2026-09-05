@@ -168,7 +168,7 @@ import {
 import { useOfficerBeaconFolderQuery } from '@/composables/contracts/useOfficerBeaconFolder'
 import { TEAM_ARCHIVED_TOOLTIP, useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
-import { formatCurrencyShort } from '@/utils/currencyUtil'
+import { formatCurrencyShort } from '@/utils/currency/display'
 
 /**
  * Drains the contracts of ONE archived Officer generation back into the team's

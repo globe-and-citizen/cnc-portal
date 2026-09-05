@@ -2,14 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, type DOMWrapper, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
-import * as utils from '@/utils'
-import { useQuery } from '@vue/apollo-composable'
+import { log } from '@/lib/logging'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import {
-  createMockApolloQueryState,
+  createMockEventFeedState,
   makeCurrencyStoreMock,
-  mockApolloUseQueryByVariableKey,
-  resetMockApolloQueryState
+  resetMockEventFeedState
 } from '@/tests/mocks'
 import ExpenseTransactions from '../ExpenseTransactions.vue'
 import {
@@ -32,7 +30,7 @@ import {
   buildPaginatedExpenseQueryResult
 } from './ExpenseTransactions.test-utils'
 
-const mockExpenseQuery = createMockApolloQueryState()
+const mockExpenseQuery = createMockEventFeedState()
 const mockExpenseAddr = { value: null as null | { value: string } }
 
 vi.mock('@/composables/expense/useExpenseEventsViaLogs', () => ({
@@ -41,7 +39,12 @@ vi.mock('@/composables/expense/useExpenseEventsViaLogs', () => ({
     return mockExpenseQuery
   }
 }))
-const incomingTransfersQuery = createMockApolloQueryState()
+const incomingTransfersQuery = createMockEventFeedState()
+
+vi.mock('@/composables/bank/useIncomingBankTokenTransfersViaLogs', () => ({
+  useIncomingBankTokenTransfersViaLogs: () => incomingTransfersQuery
+}))
+
 const mockCurrencyStore = makeCurrencyStoreMock()
 const mockGetTokenPrice = mockCurrencyStore.getTokenPrice
 
@@ -84,14 +87,11 @@ describe('ExpenseTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockApolloUseQueryByVariableKey(vi.mocked(useQuery), mockExpenseQuery, {
-      toAddress: incomingTransfersQuery
-    })
     vi.mocked(useCurrencyStore).mockReturnValue(
       mockCurrencyStore as unknown as ReturnType<typeof useCurrencyStore>
     )
-    resetMockApolloQueryState(mockExpenseQuery, buildExpenseQueryResult())
-    resetMockApolloQueryState(incomingTransfersQuery, buildIncomingTransfersQueryResult())
+    resetMockEventFeedState(mockExpenseQuery, buildExpenseQueryResult())
+    resetMockEventFeedState(incomingTransfersQuery, buildIncomingTransfersQueryResult())
     mockCurrencyStore.supportedTokens = [
       { id: 'native', symbol: 'ETH', address: ZERO_ADDRESS },
       { id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }
@@ -206,20 +206,9 @@ describe('ExpenseTransactions', () => {
     expect(getTableRows(wrapper)).toHaveLength(25)
   })
 
-  it('uses disabled query option when expense address is empty', () => {
+  it('passes an empty address to the event feed when the expense address is empty', () => {
     wrapper = createWrapper('' as Address)
-    // Expense events now come from the getLogs composable — assert it received the
-    // empty address. The incoming-transfers feed is still an Apollo query (call 0).
     expect(mockExpenseAddr.value?.value).toBe('')
-    const incomingTransfersVariables = vi.mocked(useQuery).mock.calls[0]?.[1] as {
-      toAddress: { value: string }
-    }
-    const incomingTransfersOptions = vi.mocked(useQuery).mock.calls[0]?.[2] as {
-      enabled: { value: boolean }
-    }
-
-    expect(incomingTransfersVariables.toAddress.value).toBe('')
-    expect(incomingTransfersOptions.enabled.value).toBe(false)
   })
 
   it('maps ownership transfer events with a — value', () => {
@@ -269,13 +258,13 @@ describe('ExpenseTransactions', () => {
   })
 
   it('logs query errors', async () => {
-    const logErrorSpy = vi.spyOn(utils.log, 'error')
+    const logErrorSpy = vi.spyOn(log, 'error')
     wrapper = createWrapper()
 
     const error = new Error('expense query failed')
     mockExpenseQuery.error.value = error
     await nextTick()
-    expect(logErrorSpy).toHaveBeenCalledWith('Ponder expense transaction query error:', error)
+    expect(logErrorSpy).toHaveBeenCalledWith('RPC log expense transaction query error:', error)
 
     mockExpenseQuery.error.value = null
     incomingTransfersQuery.error.value = error

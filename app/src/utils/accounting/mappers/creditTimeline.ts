@@ -13,7 +13,7 @@ import type {
   FixedReturnLendingOfferFundedRow,
   FixedReturnLenderRepaidRow,
   FixedReturnPrincipalRefundedRow
-} from '@/types/ponder/fixedReturn'
+} from '@/types/contract-events/fixedReturn'
 
 /**
  * A funded round's economics, read from `getLendingOffer`. Only the rate is
@@ -45,6 +45,8 @@ type CreditEventKind = 'lent' | 'funded' | 'interest' | 'refunded' | 'repaid'
 export interface CreditEvent {
   kind: CreditEventKind
   id: string
+  /** Transaction-backed source operation when a derived event belongs to one. */
+  sourceOperationId?: string
   offerId: string
   timestamp: number
   /** Absent only on `funded`, which carries the whole round. */
@@ -117,7 +119,7 @@ function depositsAtFunding(
  * the same figures the contract will actually pay out.
  */
 function interestEvents(input: FixedReturnMapperInput): CreditEvent[] {
-  const termsByOffer = new Map((input.offerTerms ?? []).map((t) => [t.offerId, t]))
+  const termsByOffer = new Map((input.offerTerms ?? []).map((terms) => [terms.offerId, terms]))
   if (termsByOffer.size === 0) return []
 
   return (input.lendingOfferFundeds ?? []).flatMap((funded) => {
@@ -143,6 +145,7 @@ function interestEvents(input: FixedReturnMapperInput): CreditEvent[] {
           // Keyed by the round and the lender alone — the id never moves, so the
           // row keeps its identity across refetches, exports and drill-downs.
           id: `credit-interest-${funded.offerId}-${lender.toLowerCase()}`,
+          sourceOperationId: funded.id,
           offerId: funded.offerId,
           timestamp: funded.timestamp,
           lender,

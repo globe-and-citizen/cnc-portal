@@ -1,15 +1,6 @@
-/**
- * The ledger's category vocabulary — the "Action" badge and the filter pills.
- *
- * Split from {@link ./ledgerPresenter} (which turns entries into table rows) the
- * same way {@link ./ledgerCurrency} was, so each module stays focused; the
- * presenter re-exports everything here, and callers can keep importing from it.
- * Pure and unit-testable.
- */
+/** Action badge labels and colors derived from source narration metadata. */
 import type { LedgerEntry, UseCase } from './ledgerEntry'
-
-/** Exact chart-of-accounts label for a protocol-fee leg; drives badge + filter. */
-export const FEE_ACCOUNT = 'Transaction Fee Expense'
+import type { ClassificationCategory } from './classification'
 
 export type LedgerCategory =
   | 'Investment'
@@ -27,7 +18,7 @@ export type LedgerCategory =
  * the "Action" column reads at a glance (static strings so Tailwind keeps them).
  * Colours come from the project palette (see `assets/main.css`).
  */
-export const CATEGORY_BADGE: Record<LedgerCategory, string> = {
+const CATEGORY_BADGE: Record<LedgerCategory, string> = {
   Investment: 'bg-secondary/10 text-secondary', // capital in — blue
   Credit: 'bg-accent/10 text-accent', // borrowed money — teal
   Revenue: 'bg-success/10 text-success', // income earned — green
@@ -40,32 +31,45 @@ export const CATEGORY_BADGE: Record<LedgerCategory, string> = {
 }
 
 /**
- * The pseudo-category the Fee pill filters on — not a {@link LedgerCategory} (a
- * fee is a leg of a Transfer/Expense entry), so it's handled specially by
- * `filterLedgerEntries` / `presentLedger` rather than via {@link categoryOf}.
+ * The label shown on the "Action" badge (and carried into the ledger exports).
+ * Usually the plain {@link categoryOf} name, but the two payroll phases spell out
+ * which one it is — `"Payroll: Claim"` for a wage submitted / accrued
+ * (`UC-CASH-02`) and `"Payroll: Withdraw"` for one actually paid out
+ * (`UC-CASH-03`) — so the journal reads clearly instead of a bare "Payroll" for
+ * both. The filter pills and badge colour still key off {@link categoryOf}, so the
+ * "Payroll" filter keeps gathering both phases.
  */
-export const FEE_FILTER = 'Fee'
+export function categoryLabelOf(entry: LedgerEntry): string {
+  if (entry.useCase === 'UC-CASH-02') return 'Payroll: Claim'
+  if (entry.useCase === 'UC-CASH-03') return 'Payroll: Withdraw'
+  return categoryOf(entry)
+}
 
-/** Ledger filter categories shown as pills (in design order). */
-export const ledgerCategories: Array<LedgerCategory | 'All' | typeof FEE_FILTER> = [
-  'All',
-  'Investment',
-  'Credit',
-  'Revenue',
-  'Trading',
-  'Transfer',
-  'Payroll',
-  'Expense',
-  'Dividend',
-  FEE_FILTER
-]
+/**
+ * The badge a manual classification maps to. A classified Bank/Safe movement collapses
+ * to the generic `CASH-IN` / `CASH-OUT` use case, which alone would read as a bare
+ * "Revenue" / "Expense" — so loan interest, a payroll run or a dividend would all be
+ * mislabelled. This restores each classification to the pill that matches its nature
+ * (interest under Credit, a capital contribution under Investment, and so on).
+ */
+const CLASSIFIED_CATEGORY: Record<ClassificationCategory, LedgerCategory> = {
+  REVENUE: 'Revenue',
+  EXPENSE: 'Expense',
+  OWNER_CAPITAL: 'Investment',
+  INTERNAL_TRANSFER: 'Transfer',
+  PAYROLL_EXPENSE: 'Payroll',
+  INTEREST_EXPENSE: 'Credit',
+  DIVIDEND_EXPENSE: 'Dividend'
+}
 
 /** The display category a ledger entry falls under, from its use case. */
 export function categoryOf(entry: LedgerEntry): LedgerCategory {
+  // A manual classification wins: the badge follows the owner's deliberate call rather
+  // than the CASH-IN / CASH-OUT use case that classified entries all collapse to.
+  if (entry.classified) return CLASSIFIED_CATEGORY[entry.classified]
+
   const byUseCase: Partial<Record<UseCase, LedgerCategory>> = {
-    'UC-BANK-01': 'Investment',
     'UC-SDR-01': 'Investment',
-    'UC-MEMBER-01': 'Investment',
     'UC-CREDIT-01': 'Credit',
     'UC-CREDIT-03': 'Credit',
     'UC-CREDIT-04': 'Credit',

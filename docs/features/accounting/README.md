@@ -11,7 +11,11 @@ These acceptance criteria follow the
 
 - Accounting presents one consolidated set of double-entry books for the company across its money-moving contracts and relevant portal
   records.
-- The general ledger is the source for the summary, income statement, balance sheet, and trial balance.
+- The General Ledger, Trial Balance, summary, income statement, balance sheet, drill-downs, and their exports project the validated
+  `JournalEntry` collection. A drill-down keeps every line of an entry that touches its selected concrete account or account family.
+- The Balance Sheet reuses the Trial Balance's concrete account rows and separates them into assets, liabilities, and equity. A redeployed
+  or unresolved account remains a separate report line and drill-down; only report totals deliberately aggregate those accounts. The current
+  result appears as `Earnings to date`, with each contributing income and expense account shown separately.
 - Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
@@ -21,30 +25,42 @@ These acceptance criteria follow the
 - **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter, Vesting — the
   contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
-  booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); each company books CNC
-  usage fees as an expense, while the global FeeCollector books the same payments as protocol-fee revenue; **share vesting** recognises the
-  shares **at release** (`Dr Deferred SHER Compensation · Cr Investor Equity`, off the income statement — see catalogue §5.6).
-- **Bank/Safe deposits and withdrawals** are booked from address inference by default, but a company owner can **manually classify** each
-  one into a supported accounting category (revenue, an expense — operating/payroll/interest/dividend, owner capital, or a shareholder loan)
-  — persisted, shared, and reversible; see catalogue §5.5 ([#2457](https://github.com/globe-and-citizen/cnc-portal/issues/2457)).
+  booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; a Bank protocol fee is a
+  `Transaction Fee Expense` line in the Bank outflow that caused it; the global FeeCollector is not a company-owned cash pocket; **share
+  vesting** books the **whole award when the schedule is defined** and issues it as shares are released (a restricted-stock grant, off the
+  income statement). The precise use-case templates and verified current gaps are in the
+  [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
+- **Direct treasury deposits:** an external deposit into Bank or Safe with no matching SafeDepositRouter operation credits
+  `Service Revenue`, regardless of the sender address. A SafeDepositRouter operation that issues SHER owns the Cash — Safe and
+  `Investor Equity` lines for its transaction hash; the matching Safe transfer is duplicate source evidence, not revenue. A movement between
+  company pockets remains internal.
+- **Legacy manual classifications** apply only to eligible external Bank/Safe withdrawals. Direct deposits and movements between company
+  pockets retain the accounts determined by their source evidence; see catalogue §5.5. Classification shows complete journal entries with
+  the same concrete accounts, currencies, debits, credits, and fees as the General Ledger. An entry with several source movements remains
+  read-only, with its saved decisions visible, because the current editor can update only one source withdrawal.
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
+- **Journal-entry assembly:** Accounting constructs a validated double-entry `JournalEntry` collection and preserves concrete accounts
+  across redeployments. The source-operation model, canonical account terminology, report-projection boundary, and verified optimisation
+  considerations are owned by the [Accounting Read Model](../../implementation/accounting-read-model/README.md).
+- **Runtime assembly boundary:** The application calls the explicit raw-mapping and evidence-aware assembly stages. Fixture conveniences and
+  implementation helpers are private, so production accounting APIs represent real read-model boundaries rather than test setup.
 
 ## Lifecycle
 
 ```mermaid
 flowchart LR
     Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
-    Consolidate --> Journal[Balanced journal entries]
-    Journal --> Summary[Summary]
-    Journal --> Ledger[General ledger]
-    Journal --> Income[Income statement]
-    Journal --> Balance[Balance sheet]
-    Journal --> Trial[Trial balance]
-    Summary --> Export[PDF or Excel report]
-    Ledger --> Export
-    Income --> Export
-    Balance --> Export
-    Trial --> Export
+    Consolidate --> Postings[Consolidated postings: transitional feed]
+    Consolidate --> Journal[Validated JournalEntry collection]
+    Journal --> GeneralLedger[General Ledger UI]
+    Journal --> Trial[Trial Balance projection]
+    Journal --> Statements[Summary and financial statements]
+    Journal --> Drilldowns[Account and statement drill-downs]
+    Journal --> Classification[External withdrawal classification]
+    GeneralLedger --> GeneralLedgerExports[General Ledger exports]
+    Trial --> TrialExports[Trial Balance exports]
+    Statements --> StatementExports[Statement exports]
+    Drilldowns --> DrilldownExports[Drill-down exports]
 ```
 
 ## Status Overview
@@ -52,11 +68,11 @@ flowchart LR
 | User Story  | Title                                      | Actor          | Status         |
 | ----------- | ------------------------------------------ | -------------- | -------------- |
 | US-ACCT-001 | Review the consolidated accounting summary | Company member | 🚧 In Progress |
-| US-ACCT-002 | Explore the general ledger                 | Company member | 🧪 Validation  |
+| US-ACCT-002 | Explore the general ledger                 | Company member | 🚧 In Progress |
 | US-ACCT-003 | Review the financial statements            | Company member | 🧪 Validation  |
 | US-ACCT-004 | Export accounting reports                  | Company member | 🧪 Validation  |
 | US-ACCT-005 | Preserve books across contract migrations  | Company member | 🚧 In Progress |
-| US-ACCT-006 | Classify a Bank transaction                | Company owner  | 📝 Draft       |
+| US-ACCT-006 | Classify an eligible external withdrawal   | Company owner  | 🚧 In Progress |
 
 ## US-ACCT-001: Review the Consolidated Accounting Summary
 
@@ -68,7 +84,8 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The summary reports revenue, expenses, net income, assets, liabilities, equity, and debt from one consolidated ledger.
+- [x] The summary reports revenue, expenses, net income, assets, liabilities, equity, and debt from one consolidated `JournalEntry`
+      collection.
 - [x] The summary reports whether assets equal liabilities plus equity and whether total debits equal total credits.
 - [x] Refreshing Accounting reloads the underlying books and recalculates every report from the same entries.
 
@@ -99,18 +116,35 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The ledger exposes each posting's date, activity, accounts, currency, quantity, rate, debit, and credit amounts.
-- [x] A company member can filter entries by accounting category, reporting period, and available currencies.
+- [x] The ledger exposes each transaction-backed entry's hash, date, activity, accounts, currency, quantity, rate, debit, and credit
+      amounts; a synthetic entry has no transaction hash.
+- [x] A transaction-backed hash opens the configured network block explorer in a separate tab, while a synthetic entry has no explorer link.
+- [x] A company member can filter entries by reporting period, available currencies, and one or more concrete accounts.
 - [x] A company member can inspect the entries and running balance for one account from a report line.
+- [x] Selecting an account on a ledger entry opens that account's transactions in the trial-balance drill-down.
 - [x] A known activity destination can be followed to its owning product journey.
 
 #### Business Rules
 
 - [x] Pagination does not change the totals for the complete filtered ledger.
-- [x] Compound transactions retain all debit and credit legs under one posting.
+- [x] Filtering the ledger by account or currency keeps whole `JournalEntry` records, so each shown entry still carries every debit and
+      credit line.
+- [x] An account or statement drill-down selects complete `JournalEntry` records and updates a running balance only from the selected
+      concrete account or account family lines.
+- [x] An internal-transfer activity identifies its concrete source and destination accounts, including a later deployment or an unresolved
+      account.
+- [x] The selected General Ledger export retains each transaction-backed entry's full transaction hash.
+- [x] The General Ledger has no `Fee` pseudo-category. A Bank transfer and its protocol fee in the same transaction form one complete
+      `JournalEntry`, with an ordinary `Transaction Fee Expense` line.
+- [x] A protocol fee is never displayed or exported as a `JournalEntry` without the Bank outflow that caused it; unmatched fee evidence is
+      withheld and surfaced as a reconciliation warning.
+- [x] Every on-chain transaction with a transaction hash is represented by one complete `JournalEntry`, even when it produces several source
+      events.
+- [x] A SafeDepositRouter investment and its matching Safe token transfer share one transaction hash and produce only Cash — Safe and
+      Investor Equity lines; a non-matching direct Safe deposit credits Service Revenue.
 - [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
-      community-credit round — is shown as a single ledger entry that still names each beneficiary and their share, with one credit for the
-      total.
+      community-credit round — is shown as one ledger entry with aggregated compatible account lines; recipient-level evidence remains
+      traceable through the transaction.
 - [x] Protocol fees remain identifiable as expenses rather than neutral transfers.
 - [x] One on-chain event is not counted more than once in the consolidated ledger.
 
@@ -141,7 +175,14 @@ flowchart LR
 
 - [x] The balance sheet preserves the identity `Assets = Liabilities + Equity` for balanced books.
 - [x] Trial-balance debit and credit totals remain equal for balanced books.
-- [x] Retained earnings aggregates the income and expense accounts included through the selected date.
+- [x] The summary, income statement, balance sheet, and their exports project the same validated `JournalEntry` collection as the General
+      Ledger.
+- [x] Earnings to date equals income-account contributions minus expense-account contributions through the selected date; it is distinct
+      from any posted `Retained Earnings` equity account.
+- [x] The Balance Sheet reuses the Trial Balance's concrete account rows for assets, liabilities, equity, and contra-equity. The account
+      family provides the chart class and normal balance without merging a later deployment or unresolved account.
+- [x] Each Balance Sheet account line opens the drill-down for that concrete `Account`, while `Earnings to date` opens the union of its
+      contributing income and expense accounts.
 - [x] Statement drill-downs use the same reporting boundary as their parent statement.
 
 #### Edge & Error Cases
@@ -169,14 +210,22 @@ flowchart LR
 
 #### Business Rules
 
-- [x] A ledger export applies the selected category, period, currencies, and columns.
+- [x] A General Ledger export applies the selected concrete accounts, period, currencies, and columns while retaining complete journal
+      entries.
+- [x] A drill-down export preserves the complete `JournalEntry` records and the same concrete-account or account-family scope as the
+      reviewed drill-down.
 - [x] A statement export applies the same period or as-of date as the reviewed statement.
+- [x] A Balance Sheet export preserves the displayed concrete account rows and includes the income and expense account contributions that
+      explain `Earnings to date`.
 - [x] An export is generated from one snapshot of the current accounting books.
+- [x] The full-ledger export count follows the journal's operations, including memo-only operations, rather than the number of source events
+      or debit and credit lines.
 
 #### Edge & Error Cases
 
 - [x] An export failure is reported without changing the accounting books.
 - [x] Exporting an empty report produces the selected report structure without inventing entries.
+- [x] Refreshing or clearing the books updates the full-ledger export count.
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
@@ -194,8 +243,10 @@ flowchart LR
 - [x] Each contract generation is scanned from its own deployment boundary.
 - [x] Transactions made before and after a migration contribute to the same reports.
 - [x] A treasury sweep between old and replacement company contracts remains an internal transfer.
-- [x] The trial balance presents a redeployed cash pocket as one row per contract generation, and drilling a generation's row shows only
-      that generation's entries.
+- [x] The trial balance presents each resolved Bank, Payroll, Expense, or Credit deployment as its own account row, and drilling a
+      deployment's row shows only that deployment's entries.
+- [x] The general ledger names the contract generation on every posting of a redeployed cash pocket, under the same numbering the trial
+      balance uses, and jumping from such a posting opens that generation's trial-balance line.
 
 #### Business Rules
 
@@ -209,39 +260,47 @@ flowchart LR
 - [x] When Officer history is unavailable, Accounting falls back to the current contract set.
 - [x] A generation with no events does not remove events from other generations.
 - [x] A failed generation scan preserves the other generations and reports a reconciliation gap.
+- [x] A deployment-specific leg without proof of a matching known company contract remains a separate unresolved Trial Balance account; its
+      drill-down and export select JournalEntry records that touch that unresolved account, retain every line of those entries, and never
+      fall back to an older deployment.
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
-## US-ACCT-006: Classify a Bank Transaction
+## US-ACCT-006: Classify an Eligible External Withdrawal
 
 **As a** company owner\
-**I want to** assign the economic classification of a Bank deposit or withdrawal\
-**So that** the books record why funds moved instead of assuming it from the on-chain address
+**I want to** assign the economic account of an eligible external Bank or Safe withdrawal\
+**So that** the books record why the company paid money out
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [ ] The company owner can classify a Bank transaction with a supported accounting category and an optional memo.
-- [ ] The company owner can deposit funds received off-chain from a client and classify the Bank deposit as Service Revenue (`UC-BANK-02`).
-- [ ] The company owner who is the economic client can classify their own Bank deposit as Service Revenue (`UC-BANK-02`).
-- [ ] The company owner can classify a contribution that receives no SHER as Owner Capital (`UC-BANK-01`).
-- [ ] A saved classification remains visible in the accounting books after a refresh.
+- [x] The company owner can classify a supported single-source external Bank or Safe withdrawal with a supported accounting category and an
+      optional memo.
+- [x] Classification shows every debit and credit line of each eligible journal entry, including protocol fees, with the same amounts and
+      concrete accounts as the General Ledger.
+- [x] Every direct external deposit, including one initiated by the company owner or a member, posts to Service Revenue (`UC-BANK-02`).
+- [x] A saved classification and its note remain visible in the accounting books after the underlying records are refreshed.
 
 #### Business Rules
 
-- [ ] A classification is stored against a stable on-chain transaction identity and deterministically produces balanced ledger entries.
-- [ ] Address-based inference remains visible only when no manual classification exists.
-- [ ] A guaranteed transfer between company-owned pockets remains an internal transfer and cannot be reclassified as income or expense.
-- [ ] The classification action is available for supported native-token and ERC-20 Bank deposits and withdrawals.
+- [x] Saving or reverting a classification retains the source record's exact identifier even when its journal entry is grouped by
+      transaction hash.
+- [x] Direct deposits and company-pocket transfers retain their source-evidence accounts and cannot be reclassified by a legacy category.
+- [x] The classification action is available only for supported external Bank and Safe withdrawals; direct deposits, internal transfers,
+      standalone fees and system-owned payouts are excluded.
+- [x] An entry containing several source movements is shown once with all of its lines and saved decisions, without offering an edit that
+      would affect only part of the operation.
 - [ ] Only the company owner can create or change a classification.
+- [x] Company members can inspect eligible journal entries and saved decisions without classification editing controls.
 
 #### Edge & Error Cases
 
 - [ ] An unknown transaction, invalid category, duplicate submission, or concurrent edit is rejected without changing the existing books.
-- [ ] A failed save leaves the previous classification visible and explains that the change was not applied.
+- [x] A failed save leaves the previous classification visible and explains that the change was not applied.
 
-**Dependencies:** US-ACCT-002, a company-owned Bank transaction, and the planned Bank-classification delivery
+**Dependencies:** US-ACCT-002, a company-owned Bank or Safe withdrawal, and the classification API
 
 ## Known Gaps
 
@@ -249,21 +308,34 @@ flowchart LR
 - Safe feeds and off-chain enrichment failures can omit entries without an incomplete-books warning (`US-ACCT-001`).
 - Historical Community Credit terms and SHER valuation inputs are read from current-generation contracts (`US-ACCT-005`).
 - Off-platform activity without a connected data source is absent from the automated books.
-- Bank classifications currently rely on address-based inference, so an owner cannot record an off-chain client payment or their own client
-  payment as Service Revenue (`US-ACCT-006`).
+- Legacy manual categories are still persisted for external withdrawals. They have not yet been replaced with account-backed
+  `JournalEntryLine` assignment.
+- Compound journal entries cannot be edited as a whole through the existing classification API. Their saved decisions remain visible while
+  account-backed assignment and persistence are pending.
+- JournalEntry assembly withholds a Bank fee log without matching Bank-outflow evidence and shows it as incomplete evidence until the source
+  feed can be reconciled (`US-ACCT-002`).
 
 ## Implementation Evidence
+
+**Implementation evidence reviewed against:** `47b4491f581ff46f0e1982d7f7576ded7594cefb`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
-  [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+  [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
+  [SafeDepositRouter event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts), and
+  [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts)
+- [Team internal-address registry](../../../app/src/composables/accounting/useTeamInternalAddresses.ts)
 - [Accounting backend feeds](../../../app/src/composables/accounting/useAccountingBackendFeeds.ts)
 - [Classification query](../../../app/src/queries/classification.queries.ts),
   [classification types](../../../app/src/types/accounting-classification.ts), and
   [classification assembly](../../../app/src/utils/accounting/classification.ts)
+- [Journal Classification projection](../../../app/src/utils/accounting/journalClassification.ts),
+  [legacy edit-target boundary](../../../app/src/utils/accounting/classificationTarget.ts),
+  [Classification journal tests](../../../app/src/utils/accounting/__tests__/journalClassification.spec.ts), and
+  [Classification owner interactions](../../../app/src/components/sections/AccountingView/__tests__/ClassificationTable.spec.ts)
 - [Classification controller](../../../backend/src/controllers/classificationController.ts),
   [classification route](../../../backend/src/routes/classificationRoute.ts),
   [classification validation](../../../backend/src/validation/schemas/classification.ts), and
@@ -274,23 +346,50 @@ flowchart LR
 - [Ledger Activity destination resolver](../../../app/src/composables/accounting/useActivityDestination.ts)
 - [Share-vesting event feed (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts) and
   [vesting source mapper](../../../app/src/utils/accounting/mappers/vesting.ts)
-- [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts)
+- [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts),
+  [per-section export](../../../app/src/composables/accounting/useSectionExport.ts), and
+  [transaction-evidence resolver](../../../app/src/composables/accounting/useTransactionEvidence.ts)
+- [Summary export count](../../../app/src/components/sections/AccountingView/AccountingSummary.vue) and
+  [journal-count interaction tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingSummary.spec.ts)
+- [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
+  [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
-  [general ledger](../../../app/src/utils/accounting/generalLedger.ts),
-  [income statement](../../../app/src/utils/accounting/incomeStatement.ts), and
-  [balance sheet](../../../app/src/utils/accounting/balanceSheet.ts)
+  [canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts),
+  [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts),
+  [concrete-account journal balances](../../../app/src/utils/accounting/journalBalances.ts),
+  [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts),
+  [transaction identity helper](../../../app/src/utils/accounting/ledgerEntry.ts),
+  [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
+  [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
+  [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
+- [Family-level income statement](../../../app/src/utils/accounting/incomeStatement.ts),
+  [concrete-account Balance Sheet](../../../app/src/utils/accounting/balanceSheet.ts), and
+  [statement presenter](../../../app/src/utils/accounting/presenter.ts)
+- [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue) and
+  [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue)
 - [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
 - [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
+  [Balance Sheet table tests](../../../app/src/components/sections/AccountingView/__tests__/BalanceSheetTable.spec.ts),
+  [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
+  [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),
+  [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
   [accounting data tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts), and
+  [account-instance evidence tests](../../../app/src/utils/accounting/__tests__/accountInstances.spec.ts),
+  [transaction evidence tests](../../../app/src/composables/accounting/__tests__/useTransactionEvidence.spec.ts),
+  [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts) and
   [accounting rule tests](../../../app/src/utils/accounting/__tests__)
 - [Contract-migration accounting tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
+- [Contract Event Feeds implementation](../../implementation/contract-event-feeds/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
+- [Accounting Read Model](../../implementation/accounting-read-model/README.md)
+- [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md)
 - [Money Flow Catalogue](./money-flow-catalogue.md)
+- [Share Vesting Accounting — Restricted-Stock grant](./vesting-accounting-restricted-stock.md)
 - [Accounting Specification and Scope](./cnc-accounting-spec.md)
 - [Contract Migration History](./contract-migration-history.md)
 - [Full Accounting Test Scenario](./accounting-test-plan.md)

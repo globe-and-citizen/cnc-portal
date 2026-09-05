@@ -62,7 +62,7 @@ import { watchDebounced } from '@vueuse/core'
 import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
 import SelectContractResults from '@/components/ui/inputs/SelectContractResults.vue'
 import type { Member, TeamContract } from '@/types'
-import { filter } from '@/utils'
+import { filterDirectoryItems } from '@/utils/teams/search'
 
 const props = defineProps<{ disabled?: boolean }>()
 
@@ -97,12 +97,12 @@ const contracts = computed(
 
 const filteredMembers = computed(() => {
   if (!members.value.length) return []
-  return filter(members.value, input.value) as Member[]
+  return filterDirectoryItems(members.value, input.value) as Member[]
 })
 
 const filteredContracts = computed(() => {
   if (!contracts.value.length) return []
-  return filter(contracts.value, input.value) as TeamContract[]
+  return filterDirectoryItems(contracts.value, input.value) as TeamContract[]
 })
 
 const selecting = ref(false)

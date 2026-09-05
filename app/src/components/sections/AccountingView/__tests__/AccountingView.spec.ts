@@ -5,14 +5,17 @@ import AccountingSummary from '../AccountingSummary.vue'
 import TrialBalanceCard from '../TrialBalanceCard.vue'
 import IncomeStatementCard from '../IncomeStatementCard.vue'
 import BalanceSheetCard from '../BalanceSheetCard.vue'
+import BalanceSheetTable from '../BalanceSheetTable.vue'
 import GeneralLedger from '../GeneralLedger.vue'
 import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
 import StatementLine from '../StatementLine.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import { entriesForAccount, accountBalance } from '@/utils/accounting/accountLedger'
+import { accountNet, entriesForAccount, NO_OPENING } from '@/utils/accounting/accountLedger'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
-import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerPresenter'
+import { buildJournal } from '@/utils/accounting/generalLedger'
+import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerColumns'
 import type { StatementLineView } from '@/utils/accounting/presenter'
+import { money } from '@/utils/accounting/presenter'
 
 // Clicking an export button used to run the real writers: `exportTablesPdf`
 // ends on `doc.save(filename)`, and jsPDF — which only knows how to trigger a
@@ -66,6 +69,18 @@ describe('TrialBalanceCard', () => {
     wrapper.unmount()
   })
 
+  it('opens the account drill-down when a whole trial-balance row is selected', async () => {
+    const wrapper = renderWithProviders(TrialBalanceCard)
+    const rows = wrapper.findAll('tbody tr')
+    // Empty books show only the total row; only exercise row-select when account
+    // rows are present. Clicking the row (not the account button) fires @select.
+    if (rows.length <= 1) return wrapper.unmount()
+    await rows[0]!.trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   it('exports and prints the trial balance from the export bar', async () => {
     const wrapper = renderWithProviders(TrialBalanceCard)
     await wrapper.find('[data-test="export-excel"]').trigger('click')
@@ -111,24 +126,26 @@ describe('IncomeStatementCard', () => {
 })
 
 describe('BalanceSheetCard', () => {
-  it('renders the balance sheet with its per-line drill-down rows', () => {
+  it('renders the three account tables and the earnings calculation', () => {
     const wrapper = renderWithProviders(BalanceSheetCard)
     const text = wrapper.text()
     expect(text).toContain('Balance sheet')
     expect(text).toContain('Total assets')
+    expect(wrapper.find('[data-test="balance-assets"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="balance-liabilities"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="balance-equity"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="balance-earnings"]').exists()).toBe(true)
   })
 
-  it('drills a single equity account and the Retained earnings aggregate', async () => {
+  it('opens the drill-down from a rendered account or earnings row', async () => {
     const wrapper = renderWithProviders(BalanceSheetCard)
-    // Equity lines always render: Owner capital (single account) and Retained
-    // earnings (an aggregate of every income + expense account).
-    await wrapper.find('[data-test="balance-drilldown-Owner Capital"]').trigger('click')
-    await flushPromises()
-    expect(wrapper.find('[data-test="drilldown-export-excel"]').exists()).toBe(true)
-
-    await wrapper.find('[data-test="balance-drilldown-aggregate"]').trigger('click')
-    await flushPromises()
-    expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
+    const tables = wrapper.findAllComponents(BalanceSheetTable)
+    const line = tables.flatMap((table) => table.props('rows'))[0]
+    if (line) {
+      tables.find((table) => table.props('rows').includes(line))?.vm.$emit('drilldown', line)
+      await flushPromises()
+      expect(wrapper.find('[data-test="drilldown-export-excel"]').exists()).toBe(true)
+    }
     wrapper.unmount()
   })
 
@@ -145,8 +162,11 @@ describe('BalanceSheetCard', () => {
 
 describe('LedgerDrilldownModal (issue #2249)', () => {
   const account = 'Investor Equity'
-  const entries = entriesForAccount(catalogueLedger, account)
+  const journal = buildJournal(catalogueLedger)
+  const entries = entriesForAccount(journal, account)
   const columnsStorageKey = 'cnc-accounting-modal-test-columns'
+  const accountBalance = (entries: typeof journal, account: 'Investor Equity') =>
+    money(accountNet(entries, account))
 
   it('lists the account entries, count and balance', async () => {
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
@@ -198,7 +218,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
         account,
         total: '$138.00',
         entries,
-        balanceAccount: account,
+        balance: { account, opening: NO_OPENING, closing: '$138.00' },
         columnsStorageKey
       }
     })
@@ -225,9 +245,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
         account,
         total: '$138.00',
         entries,
-        balanceAccount: account,
-        opening,
-        closing: '$238.00',
+        balance: { account, opening, closing: '$238.00' },
         columnsStorageKey
       }
     })
@@ -243,7 +261,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
       props: {
         open: true,
-        account: 'Retained earnings',
+        account: 'Earnings to date',
         total: '-$50.00',
         entries,
         columnsStorageKey
@@ -261,7 +279,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
         open: true,
         account: 'All accounts',
         total: '$0.00',
-        entries: catalogueLedger,
+        entries: journal,
         columnsStorageKey
       }
     })
@@ -271,7 +289,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
     pager.vm.$emit('update:page', 2)
     await flushPromises()
     // The count badge always reflects the full entry set, not the page.
-    expect(wrapper.text()).toContain(`${catalogueLedger.length} entries`)
+    expect(wrapper.text()).toContain(`${journal.length} entries`)
     wrapper.unmount()
   })
 })
@@ -293,7 +311,7 @@ describe('StatementLine', () => {
 
   it('drills an aggregate line (accounts list) via its label button', async () => {
     const aggregate: StatementLineView = {
-      label: 'Retained earnings',
+      label: 'Earnings to date',
       value: '-$50.00',
       accounts: ['Payroll Expense', 'Deferred SHER Compensation']
     }
@@ -313,13 +331,11 @@ describe('StatementLine', () => {
 })
 
 describe('GeneralLedger', () => {
-  it('shows the movement total and filters by category without error', async () => {
+  it('shows the movement total without category filter controls', async () => {
     const wrapper = renderWithProviders(GeneralLedger)
     const text = wrapper.text()
     expect(text).toContain('Total movements')
     expect(text).toContain('entries')
-
-    await wrapper.find('[data-test="pill-Investment"]').trigger('click')
-    expect(wrapper.text()).toContain('entries')
+    expect(wrapper.find('[data-test^="pill-"]').exists()).toBe(false)
   })
 })

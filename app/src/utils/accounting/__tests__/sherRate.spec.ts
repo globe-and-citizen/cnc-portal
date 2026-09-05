@@ -2,12 +2,11 @@ import { describe, it, expect } from 'vitest'
 import {
   buildSherMultiplierTimeline,
   makeSherUsdRate,
-  resolveCurrentSherMultiplier,
   currentSherUsdRate,
   type SherMultiplierPoint
 } from '@/utils/accounting/sherRate'
 import { USDC_ADDRESS } from '@/constant'
-import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/ponder/investor'
+import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/contract-events/investor'
 
 /** A `MultiplierUpdated` row (multipliers in 6-decimal base units). */
 function update(timestamp: number, oldX: number, newX: number): SafeMultiplierUpdatedRow {
@@ -71,24 +70,22 @@ describe('makeSherUsdRate (per-date timeline — freezes a leg at its own date)'
   })
 })
 
-describe('resolveCurrentSherMultiplier (the rate pending accruals float at)', () => {
+describe('currentSherUsdRate (the rate pending accruals float at)', () => {
   it('prefers the router live read over every fallback', () => {
-    expect(
-      resolveCurrentSherMultiplier([update(100, 1, 4)], [deposit(10, 100, 200)], 5)
-    ).toBeCloseTo(5)
+    expect(currentSherUsdRate([update(100, 1, 4)], [deposit(10, 100, 200)], 5)).toBeCloseTo(0.2)
   })
 
   it('falls back to the most recent change event when there is no live read', () => {
     const events = [update(100, 1, 4), update(200, 4, 6)]
-    expect(resolveCurrentSherMultiplier(events, undefined, null)).toBeCloseTo(6)
+    expect(currentSherUsdRate(events, undefined, null)).toBeCloseTo(1 / 6)
   })
 
   it('falls back to a USD-pegged deposit when there are no events or live read', () => {
-    expect(resolveCurrentSherMultiplier([], [deposit(10, 100, 200)], null)).toBeCloseTo(2)
+    expect(currentSherUsdRate([], [deposit(10, 100, 200)], null)).toBeCloseTo(0.5)
   })
 
   it('defaults to the 1x multiplier when nothing is known', () => {
-    expect(resolveCurrentSherMultiplier(undefined, undefined)).toBeCloseTo(1)
+    expect(currentSherUsdRate(undefined, undefined)).toBeCloseTo(1)
   })
 })
 

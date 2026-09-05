@@ -47,7 +47,12 @@
         </template>
       </UAlert>
 
-      <UForm :state="form" class="mb-6 flex flex-col gap-4">
+      <UForm
+        :schema="redeploySchema"
+        :state="form"
+        class="mb-6 flex flex-col gap-4"
+        @submit="onRedeploy"
+      >
         <UFormField
           label="New share token name"
           name="name"
@@ -74,93 +79,95 @@
             data-test="redeploy-share-symbol-input"
           />
         </UFormField>
-      </UForm>
 
-      <UAlert
-        v-if="deployError"
-        color="error"
-        variant="soft"
-        icon="i-heroicons-x-circle"
-        title="Officer deploy failed"
-        :description="formatDeployError(deployError)"
-        class="mb-4"
-        data-test="deploy-error-alert"
-      />
+        <UAlert
+          v-if="deployError"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          title="Officer deploy failed"
+          :description="formatDeployError(deployError)"
+          class="mb-4"
+          data-test="deploy-error-alert"
+        />
 
-      <UAlert
-        v-if="registerError"
-        color="error"
-        variant="soft"
-        icon="i-heroicons-x-circle"
-        title="Failed to register the new Officer with the backend"
-        :description="registerError.message"
-        class="mb-4"
-        data-test="register-error-alert"
-      />
+        <UAlert
+          v-if="registerError"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          title="Failed to register the new Officer with the backend"
+          :description="registerError.message"
+          class="mb-4"
+          data-test="register-error-alert"
+        />
 
-      <UAlert
-        v-if="workflowError"
-        color="error"
-        variant="soft"
-        icon="i-heroicons-x-circle"
-        title="Officer redeployed, but a follow-up step failed"
-        :description="workflowError.message"
-        class="mb-4"
-        data-test="workflow-error-alert"
-      />
+        <UAlert
+          v-if="workflowError"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          title="Officer redeployed, but a follow-up step failed"
+          :description="workflowError.message"
+          class="mb-4"
+          data-test="workflow-error-alert"
+        />
 
-      <UAlert
-        v-if="migrationFailed"
-        color="error"
-        variant="soft"
-        icon="i-heroicons-x-circle"
-        title="Shareholder migration failed"
-        class="mb-4"
-        data-test="migration-error-alert"
-      >
-        <template #description>
-          <p>
-            The new Officer is deployed and registered, but the shareholder mint did not complete.
-            You can retry below, or skip and finish the migration later from the Share Token page.
-          </p>
-          <p v-if="migrationError" class="mt-2 font-mono text-xs opacity-70">
-            {{ migrationError.message }}
-          </p>
-        </template>
-      </UAlert>
-
-      <div class="flex justify-between gap-3">
-        <UButton
-          color="secondary"
-          :disabled="isRunning"
-          @click="onCancelOrSkip"
-          data-test="cancel-redeploy-contracts"
+        <UAlert
+          v-if="migrationFailed"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          title="Shareholder migration failed"
+          class="mb-4"
+          data-test="migration-error-alert"
         >
-          {{ migrationFailed ? 'Skip & close' : 'Cancel' }}
-        </UButton>
-        <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+          <template #description>
+            <p>
+              The new Officer is deployed and registered, but the shareholder mint did not complete.
+              You can retry below, or skip and finish the migration later from the Share Token page.
+            </p>
+            <p v-if="migrationError" class="mt-2 font-mono text-xs opacity-70">
+              {{ migrationError.message }}
+            </p>
+          </template>
+        </UAlert>
+
+        <div class="flex justify-between gap-3">
           <UButton
-            v-if="migrationFailed"
-            color="primary"
-            :loading="isRunning"
-            :disabled="isRunning || archivedDisabled"
-            @click="retryMigration()"
-            data-test="retry-migration"
+            color="secondary"
+            type="button"
+            :disabled="isRunning"
+            @click="onCancelOrSkip"
+            data-test="cancel-redeploy-contracts"
           >
-            Retry shareholder migration
+            {{ migrationFailed ? 'Skip & close' : 'Cancel' }}
           </UButton>
-          <UButton
-            v-else
-            color="primary"
-            :loading="isRunning"
-            :disabled="!canRedeploy || isRunning || archivedDisabled"
-            @click="onRedeploy"
-            data-test="confirm-redeploy-contracts"
-          >
-            Redeploy Officer
-          </UButton>
-        </TeamArchivedTooltip>
-      </div>
+          <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+            <UButton
+              v-if="migrationFailed"
+              color="primary"
+              type="button"
+              :loading="isRunning"
+              :disabled="isRunning || archivedDisabled"
+              @click="retryMigration()"
+              data-test="retry-migration"
+            >
+              Retry shareholder migration
+            </UButton>
+            <UButton
+              v-else
+              color="primary"
+              type="submit"
+              :loading="isRunning"
+              :disabled="!canRedeploy || isRunning || archivedDisabled"
+              data-test="confirm-redeploy-contracts"
+            >
+              Redeploy Officer
+            </UButton>
+          </TeamArchivedTooltip>
+        </div>
+      </UForm>
     </template>
   </UModal>
 </template>
@@ -168,6 +175,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { Address } from 'viem'
+import { z } from 'zod'
 import {
   useInvestorName,
   useInvestorShareholders,
@@ -198,6 +206,15 @@ const whatYouLoseItems = [
 
 const form = ref({ name: '', symbol: '' })
 
+const redeploySchema = z.object({
+  name: z.string().refine((value) => value.trim().length > 0, {
+    message: 'Share token name is required'
+  }),
+  symbol: z.string().refine((value) => value.trim().length > 0, {
+    message: 'Share token symbol is required'
+  })
+})
+
 const { data: currentInvestorName } = useInvestorName()
 const { data: currentInvestorSymbol } = useInvestorSymbol()
 const { data: currentShareholders } = useInvestorShareholders()
@@ -215,7 +232,7 @@ const workflowError = computed(() =>
 const migrationFailed = computed(() => migrationRecovery.value !== null)
 const migrationError = computed(() => migrationRecovery.value?.error ?? null)
 
-const canRedeploy = computed(() => !!form.value.name.trim() && !!form.value.symbol.trim())
+const canRedeploy = computed(() => redeploySchema.safeParse(form.value).success)
 
 const shareholderCount = computed(() => {
   const list = currentShareholders.value as readonly Shareholder[] | undefined

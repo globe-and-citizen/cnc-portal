@@ -2,7 +2,7 @@ import { CalendarDate } from '@internationalized/date'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import DatePicker from '../DatePicker.vue'
-import type { Range } from '@/utils/datePicker'
+import type { Range } from '@/utils/dates/picker'
 
 const now = new Date('2026-06-18T12:00:00.000Z')
 
@@ -99,5 +99,40 @@ describe('DatePicker.vue', () => {
 
     expect(wrapper.get('[data-test="date-picker-trigger"]').text()).toContain('As of Dec 31, 2024')
     expect(latestModelValue(wrapper)).toEqual(new Date('2024-12-31T23:59:59.999Z'))
+  })
+
+  it.each([
+    ['malformed JSON', '{not-json'],
+    [
+      'an incomplete snapshot',
+      JSON.stringify({
+        activeId: 'endOfYear',
+        anchors: { month: Date.UTC(2026, 5, 18), quarter: Date.UTC(2026, 5, 18) },
+        customDate: Date.UTC(2026, 5, 18),
+        customStart: null,
+        customEnd: null
+      })
+    ],
+    [
+      'a snapshot from another picker mode',
+      JSON.stringify({
+        activeId: 'custom',
+        anchors: {
+          month: Date.UTC(2026, 5, 18),
+          quarter: Date.UTC(2026, 5, 18),
+          year: Date.UTC(2026, 5, 18)
+        },
+        customDate: Date.UTC(2026, 5, 18),
+        customStart: null,
+        customEnd: null
+      })
+    ]
+  ])('ignores %s persisted state and uses the default picker value', (_scenario, snapshot) => {
+    localStorage.setItem('accounting-period', snapshot)
+
+    const wrapper = mount(DatePicker, { props: { storageKey: 'accounting-period' } })
+
+    expect(wrapper.get('[data-test="date-picker-trigger"]').text()).toContain('As of Jun 18, 2026')
+    expect(latestModelValue(wrapper)).toEqual(new Date('2026-06-18T23:59:59.999Z'))
   })
 })

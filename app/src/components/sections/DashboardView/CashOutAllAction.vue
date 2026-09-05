@@ -122,7 +122,7 @@ import { useContractBalance } from '@/composables'
 import { useBankOwner } from '@/composables/bank/reads'
 import { buildCashOutPlan, useCashOutAll } from '@/composables/cashOut'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
-import { formatCurrencyShort } from '@/utils/currencyUtil'
+import { formatCurrencyShort } from '@/utils/currency/display'
 import CashOutStepList from '@/components/ui/CashOutStepList.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 

@@ -7,10 +7,11 @@
 import { describe, it, expect } from 'vitest'
 import type { Address } from 'viem'
 import type { TeamContract, ContractType } from '@/types/teamContract'
-import { assembleCncAccounting, type CncAccountingInput } from '@/utils/accounting/assemble'
+import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
 import { ADDR } from './fixtures'
+import { assembleAccounting } from './assembleAccounting'
 
 const FIXED_RETURN = ADDR.credit as Address
 const DEPLOYER = ADDR.founder as Address
@@ -29,12 +30,10 @@ const RATE: UsdRateOfRecord = (tokenId) => (tokenId === 'native' ? 2 : 1)
 const BASE: CncAccountingInput = {
   contracts: CONTRACTS,
   safeAddress: ADDR.safe,
-  founderAddresses: [ADDR.founder],
-  feeCollectorAddress: ADDR.feeCollector,
   rateOfRecord: RATE
 }
 
-describe('assembleCncAccounting — Community Credit', () => {
+describe('accounting assembly — Community Credit', () => {
   it('runs a Community Credit round through to the statements', () => {
     const emptyFixedReturn = {
       fixedReturnLendingOfferRefundables: { items: [] },
@@ -46,7 +45,7 @@ describe('assembleCncAccounting — Community Credit', () => {
       fixedReturnTokenSupportAddeds: { items: [] },
       fixedReturnTokenSupportRemoveds: { items: [] }
     }
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       fixedReturnEvents: {
         ...emptyFixedReturn,
@@ -95,8 +94,14 @@ describe('assembleCncAccounting — Community Credit', () => {
 
     // The borrowed cash reached Bank, then left again with the interest on top.
     expect(a.summary.cash).toBe(-5)
-    // Principal in and out nets the liability to zero; only the return is a cost.
-    expect(a.balanceSheet.liabilities).toEqual([])
+    // Principal in and out nets the liability to zero. The account stays visible
+    // because the Balance Sheet reuses the Trial Balance's activity-backed rows.
+    expect(a.balanceSheet.liabilities).toHaveLength(1)
+    expect(a.balanceSheet.liabilities[0]).toMatchObject({
+      account: { family: { name: 'Loan Payable' } },
+      balance: 0,
+      contribution: 0
+    })
     expect(a.incomeStatement.expenses).toContainEqual({ account: 'Interest Expense', amount: 5 })
     expect(a.incomeStatement.netIncome).toBe(-5)
     expect(a.generalLedger.balanced).toBe(true)

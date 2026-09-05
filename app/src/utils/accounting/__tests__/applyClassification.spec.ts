@@ -18,35 +18,33 @@ const clientDeposit = {
   timestamp: 100
 }
 
-describe('applyClassification — Bank deposits', () => {
-  it('overrides an inferred client revenue with owner capital', () => {
+describe('applyClassification — source-evidence Bank deposits', () => {
+  it('ignores an owner-capital category and keeps direct revenue', () => {
     const [entry] = mapBankEvents(
       { tokenDeposits: [clientDeposit] },
       ctxWith({ bd1: { category: 'OWNER_CAPITAL' } })
     )
     expect(entry).toMatchObject({
       debit: 'Cash — Bank',
-      credit: 'Owner Capital',
+      credit: 'Service Revenue',
       internal: false,
-      classified: 'OWNER_CAPITAL',
-      useCase: 'CASH-IN',
-      memo: 'Classified as owner capital'
+      useCase: 'UC-BANK-02'
     })
+    expect(entry).not.toHaveProperty('classified')
   })
 
-  it('books a shareholder loan and keeps the amount/token intact', () => {
+  it('ignores a classification memo and keeps the amount/token intact', () => {
     const [entry] = mapBankEvents(
       { tokenDeposits: [clientDeposit] },
-      ctxWith({ bd1: { category: 'SHAREHOLDER_LOAN', memo: 'Bridge from a shareholder' } })
+      ctxWith({ bd1: { category: 'OWNER_CAPITAL', memo: 'Bridge from the founder' } })
     )
     expect(entry).toMatchObject({
       debit: 'Cash — Bank',
-      credit: 'Loan Payable',
-      classified: 'SHAREHOLDER_LOAN',
+      credit: 'Service Revenue',
       amountUsd: 5,
-      token: 'usdc',
-      memo: 'Bridge from a shareholder'
+      token: 'usdc'
     })
+    expect(entry).not.toHaveProperty('classified')
   })
 
   it('leaves an unclassified deposit on the inferred fallback', () => {
@@ -88,12 +86,12 @@ describe('applyClassification — Bank withdrawals', () => {
     })
   })
 
-  it('books a loan repayment as Dr Loan Payable', () => {
+  it('books loan interest as Dr Interest Expense', () => {
     const [entry] = mapBankEvents(
       { tokenTransfers: [{ ...externalOut, token: ADDR.usdcToken }] },
-      ctxWith({ bt1: { category: 'SHAREHOLDER_LOAN' } })
+      ctxWith({ bt1: { category: 'INTEREST_EXPENSE' } })
     )
-    expect(entry).toMatchObject({ debit: 'Loan Payable', credit: 'Cash — Bank' })
+    expect(entry).toMatchObject({ debit: 'Interest Expense', credit: 'Cash — Bank' })
   })
 })
 
@@ -124,7 +122,7 @@ describe('applyClassification — guaranteed-internal invariant', () => {
 })
 
 describe('applyClassification — Safe transfers', () => {
-  it('overrides an inferred Safe client revenue with a shareholder loan', () => {
+  it('ignores a legacy category on a direct Safe deposit', () => {
     const [entry] = mapSafeTransfers(
       {
         safeAddress: ADDR.safe,
@@ -139,12 +137,12 @@ describe('applyClassification — Safe transfers', () => {
           }
         ]
       },
-      ctxWith({ sf1: { category: 'SHAREHOLDER_LOAN' } })
+      ctxWith({ sf1: { category: 'OWNER_CAPITAL' } })
     )
     expect(entry).toMatchObject({
       debit: 'Cash — Safe',
-      credit: 'Loan Payable',
-      classified: 'SHAREHOLDER_LOAN'
+      credit: 'Service Revenue'
     })
+    expect(entry).not.toHaveProperty('classified')
   })
 })

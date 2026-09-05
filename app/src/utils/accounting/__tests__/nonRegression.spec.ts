@@ -10,10 +10,11 @@
  */
 import { describe, it, expect } from 'vitest'
 import { parseEther, type Address } from 'viem'
-import { assembleCncAccounting, type CncAccountingInput } from '../assemble'
-import type { BankEventsQuery } from '@/types/ponder/bank'
+import type { CncAccountingInput } from '../assemble'
+import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { TeamContract } from '@/types/teamContract'
 import type { UsdRateOfRecord } from '../toUsd'
+import { assembleAccounting } from './assembleAccounting'
 
 // All-numeric hex so `getAddress` is a no-op — the addresses survive the
 // checksum normalization the mapper context applies (matches the shared fixtures).
@@ -26,6 +27,7 @@ const ADDR = {
 
 const POL_USD = 0.08
 const TS = 1_700_000_000 // a fixed block time
+const BANK_OUTFLOW_OPERATION = `0x${'f'.repeat(64)}`
 
 /** Native rate of record: $0.08 / POL, deterministic (USDC would be pegged $1). */
 const rateOfRecord: UsdRateOfRecord = (tokenId) => (tokenId === 'native' ? POL_USD : 0)
@@ -34,20 +36,18 @@ function contract(type: TeamContract['type'], address: string): TeamContract {
   return { type, address: address as Address, deployer: address as Address, admins: [] }
 }
 
-/** A minimal `BankEventsQuery` carrying only the events the mappers read. */
-function bankEvents(partial: Partial<BankEventsQuery>): BankEventsQuery {
-  return partial as BankEventsQuery
+/** A minimal `BankEventFeed` carrying only the events the mappers read. */
+function bankEvents(partial: Partial<BankEventFeed>): BankEventFeed {
+  return partial as BankEventFeed
 }
 
-/** One team's history: a founder deposit, an external payout and a protocol fee — all in POL. */
+/** One team's history: a direct deposit, an external payout and a protocol fee — all in POL. */
 function sampleInput(): CncAccountingInput {
   return {
     contracts: [contract('Bank', ADDR.bank)],
-    feeCollectorAddress: ADDR.feeCollector,
-    founderAddresses: [ADDR.founder],
     rateOfRecord,
     bankEvents: bankEvents({
-      // 100 POL founder deposit → Owner Capital
+      // 100 POL direct deposit → Service Revenue
       bankDeposits: {
         items: [
           {
@@ -63,7 +63,7 @@ function sampleInput(): CncAccountingInput {
       bankTransfers: {
         items: [
           {
-            id: 't1',
+            id: `${BANK_OUTFLOW_OPERATION}-1`,
             sender: ADDR.bank,
             to: ADDR.external,
             amount: parseEther('20').toString(),
@@ -75,7 +75,7 @@ function sampleInput(): CncAccountingInput {
       bankFeePaids: {
         items: [
           {
-            id: 'f1',
+            id: `${BANK_OUTFLOW_OPERATION}-2`,
             contractAddress: ADDR.bank,
             feeCollector: ADDR.feeCollector,
             token: null,
@@ -90,8 +90,8 @@ function sampleInput(): CncAccountingInput {
 
 describe('accounting non-regression', () => {
   it('produces identical statements when the same history is exported twice', () => {
-    const first = assembleCncAccounting(sampleInput())
-    const second = assembleCncAccounting(sampleInput())
+    const first = assembleAccounting(sampleInput())
+    const second = assembleAccounting(sampleInput())
 
     expect(second.summary).toEqual(first.summary)
     expect(second.generalLedger).toEqual(first.generalLedger)
@@ -100,18 +100,18 @@ describe('accounting non-regression', () => {
   })
 
   it('keeps the balance-sheet identity and a single Net income across the reports', () => {
-    const { incomeStatement, balanceSheet } = assembleCncAccounting(sampleInput())
+    const { incomeStatement, balanceSheet } = assembleAccounting(sampleInput())
 
     // Assets = Liabilities + Equity, exactly (spec §5).
     expect(balanceSheet.balanced).toBe(true)
     expect(balanceSheet.totalAssets).toBe(balanceSheet.totalLiabilitiesAndEquity)
-    // Net income is one number — the income statement's figure is what closes
-    // into Retained Earnings, so the Summary card and the balance sheet agree.
-    expect(balanceSheet.retainedEarnings).toBe(incomeStatement.netIncome)
+    // Net income is one number — the income statement's figure is the explicit
+    // Earnings to date contribution in Equity until closing entries exist.
+    expect(balanceSheet.earningsToDate).toBe(incomeStatement.netIncome)
   })
 
   it('values POL at its rate of record: the fee metric and assets are no longer $0.00', () => {
-    const { summary, balanceSheet } = assembleCncAccounting(sampleInput())
+    const { summary, balanceSheet } = assembleAccounting(sampleInput())
 
     // 100 − 20 − 5 = 75 POL in Bank, at $0.08 → $6.00 total assets.
     expect(balanceSheet.totalAssets).toBe(6)
@@ -119,13 +119,13 @@ describe('accounting non-regression', () => {
     // The 5 POL fee is now a real, non-zero Transaction Fee Expense.
     expect(summary.transactionFees).toBeCloseTo(0.4, 6)
     expect(summary.transactionFees).toBeGreaterThan(0)
-    // income 0 − expense (1.6 operating + 0.4 fee) = −2.0
+    // revenue 8.0 − expense (1.6 operating + 0.4 fee) = 6.0
     expect(summary.expense).toBeCloseTo(2, 6)
-    expect(balanceSheet.retainedEarnings).toBeCloseTo(-2, 6)
+    expect(balanceSheet.earningsToDate).toBeCloseTo(6, 6)
   })
 
   it('stamps every posting with its currency, quantity and rate of record (Taux)', () => {
-    const { entries } = assembleCncAccounting(sampleInput())
+    const { entries } = assembleAccounting(sampleInput())
 
     expect(entries.length).toBeGreaterThan(0)
     for (const entry of entries) {

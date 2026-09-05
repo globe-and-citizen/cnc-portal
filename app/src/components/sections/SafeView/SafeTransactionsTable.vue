@@ -83,8 +83,8 @@
 import type { TableColumn } from '@nuxt/ui'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import type { SafeTransaction } from '@/types/safe'
-import { type SafeTransactionQueueRow } from '@/utils/safeTransactionState'
-import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
+import { type SafeTransactionQueueRow } from '@/utils/safe/transactionState'
+import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils/safe/model'
 import { formatDateRelative } from '@/utils/format'
 import SafeTransactionActions from './SafeTransactionActions.vue'
 

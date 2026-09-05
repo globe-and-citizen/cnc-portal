@@ -40,7 +40,14 @@ const stubs = {
   UForm: {
     name: 'UForm',
     props: ['state', 'schema'],
-    template: '<form @submit.prevent="$emit(\'submit\')"><slot /></form>'
+    emits: ['submit'],
+    methods: {
+      submit() {
+        const result = this.schema?.safeParse(this.state)
+        if (!this.schema || result.success) this.$emit('submit')
+      }
+    },
+    template: '<form @submit.prevent="submit"><slot /></form>'
   },
   UFormField: {
     name: 'UFormField',
@@ -109,13 +116,29 @@ describe('RedeployOfficerModal', () => {
     expect(confirm.props('disabled')).toBe(false)
   })
 
+  it('rejects whitespace-only names and symbols at the form boundary', async () => {
+    const wrapper = mountModal({ open: true })
+    await flushPromises()
+
+    await wrapper.find('[data-test="redeploy-share-name-input"]').setValue('   ')
+    await wrapper.find('[data-test="redeploy-share-symbol-input"]').setValue('SHR')
+
+    expect(
+      wrapper.findComponent('[data-test="confirm-redeploy-contracts"]').props('disabled')
+    ).toBe(true)
+
+    await wrapper.find('form').trigger('submit')
+
+    expect(mockRedeployState.redeploy).not.toHaveBeenCalled()
+  })
+
   it('calls redeploy with the current form values on confirm', async () => {
     const wrapper = mountModal({ open: true })
     await flushPromises()
 
     await wrapper.find('[data-test="redeploy-share-name-input"]').setValue('New Co SHER')
     await wrapper.find('[data-test="redeploy-share-symbol-input"]').setValue('NCS')
-    await wrapper.find('[data-test="confirm-redeploy-contracts"]').trigger('click')
+    await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(mockRedeployState.redeploy).toHaveBeenCalledTimes(1)
@@ -131,7 +154,7 @@ describe('RedeployOfficerModal', () => {
 
     await wrapper.find('[data-test="redeploy-share-name-input"]').setValue('Co')
     await wrapper.find('[data-test="redeploy-share-symbol-input"]').setValue('C')
-    await wrapper.find('[data-test="confirm-redeploy-contracts"]').trigger('click')
+    await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(wrapper.emitted('update:open')?.some((e) => e[0] === false)).toBe(true)

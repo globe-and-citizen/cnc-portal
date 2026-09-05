@@ -9,8 +9,8 @@
  * - **backed** mint (matches a SafeDepositRouter deposit, a SHER wage withdraw, or
  *   a Vesting `TokensReleased`) → emit nothing: the Investor Equity was booked by
  *   UC-SDR-01 / UC-CASH-03 / UC-VEST-02. Re-booking it here would double-count the
- *   equity (and, for vesting, drive `SHERS To Be Issued` negative — see money-flow
- *   catalogue §5.4 "Default D").
+ *   equity and clear `SHERS To Be Issued` twice for one issuance — see money-flow
+ *   catalogue §5.4 "Default D".
  * - **unbacked** mint → **Default D**: a direct share issuance. The SHER were
  *   accrued into `SHERS To Be Issued` (the wage accrual, UC-CASH-02) and are now
  *   formally issued, so we clear that equity-pending into contributed equity —
@@ -28,9 +28,9 @@ import type {
   InvestorMintRow,
   InvestorDividendPaidRow,
   SafeDepositRow
-} from '@/types/ponder/investor'
-import type { CashRemunerationWithdrawTokenRow } from '@/types/ponder/cash-remuneration'
-import type { VestingTokensReleasedRow } from '@/types/ponder/vesting'
+} from '@/types/contract-events/investor'
+import type { CashRemunerationWithdrawTokenRow } from '@/types/contract-events/cash-remuneration'
+import type { VestingTokensReleasedRow } from '@/types/contract-events/vesting'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { atDate, type MapperContext } from './context'
 

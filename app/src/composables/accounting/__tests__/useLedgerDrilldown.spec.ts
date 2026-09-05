@@ -1,19 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
-import { entriesForAccount, accountBalance } from '@/utils/accounting/accountLedger'
+import { accountNet, entriesForAccount } from '@/utils/accounting/accountLedger'
+import { buildJournal } from '@/utils/accounting/generalLedger'
+import { money } from '@/utils/accounting/presenter'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
-// The export pipeline needs the live books + toasts (app context), so stub it and
-// assert the composable hands it the right SectionSpec.
 const { exportPdf, exportExcel } = vi.hoisted(() => ({ exportPdf: vi.fn(), exportExcel: vi.fn() }))
 vi.mock('@/composables/accounting/useAccountingExport', () => ({
   useAccountingExport: () => ({ exportPdf, exportExcel })
 }))
 
+const journal = buildJournal(catalogueLedger)
+
 describe('useLedgerDrilldown', () => {
-  const entries = ref<readonly LedgerEntry[]>(catalogueLedger)
+  const entries = ref(journal)
   const bounds = () => ({ from: null, to: null })
 
   beforeEach(() => {
@@ -22,96 +23,73 @@ describe('useLedgerDrilldown', () => {
     localStorage.clear()
   })
 
-  it('opens a single-account drill-down and nets that account balance', () => {
-    const d = useLedgerDrilldown(entries, bounds)
-    d.openFor('Investor Equity', '$999.00')
+  it('opens a family drill-down from its complete JournalEntry records', () => {
+    const drilldown = useLedgerDrilldown(entries, bounds)
+    drilldown.openFor('Investor Equity', '$999.00')
 
-    expect(d.open.value).toBe(true)
-    expect(d.selectedLine.value?.label).toBe('Investor Equity')
-    const scoped = entriesForAccount(catalogueLedger, 'Investor Equity')
-    expect(d.drilldownEntries.value).toEqual(scoped)
-    // The reconciling total is netted from the postings, not the clicked figure.
-    expect(d.selectedLine.value?.total).toBe(accountBalance(scoped, 'Investor Equity'))
+    const scoped = entriesForAccount(journal, 'Investor Equity')
+    expect(drilldown.open.value).toBe(true)
+    expect(drilldown.drilldownEntries.value).toEqual(scoped)
+    expect(drilldown.selectedLine.value).toMatchObject({
+      label: 'Investor Equity',
+      total: money(accountNet(scoped, 'Investor Equity'))
+    })
   })
 
-  it('exports the single account through the shared pipeline', () => {
-    const d = useLedgerDrilldown(entries, bounds)
-    d.openFor('Investor Equity', '$1.00')
-    d.onExport('excel', ['activity', 'debit'])
+  it('exports the same journal account selection and statement total', () => {
+    const drilldown = useLedgerDrilldown(entries, bounds)
+    drilldown.openFor('Investor Equity', '$1.00')
+    drilldown.onExport('excel', ['activity', 'dr'])
 
-    expect(exportExcel).toHaveBeenCalledTimes(1)
     const [specs, filename] = exportExcel.mock.calls[0]
-    expect(specs[0]).toMatchObject({ key: 'ledger', account: 'Investor Equity' })
-    expect(specs[0].columns).toEqual(['activity', 'debit'])
-    expect(specs[0].accountLabel).toBeUndefined()
+    expect(specs[0]).toMatchObject({
+      key: 'ledger',
+      journalAccountLabel: 'Investor Equity',
+      journalAccountTotal: drilldown.selectedLine.value?.total
+    })
+    expect(specs[0].journalAccounts.length).toBeGreaterThan(0)
+    expect(specs[0].columns).toEqual(['activity', 'dr'])
     expect(filename).toContain('Investor Equity')
   })
 
-  it('opens an aggregate drill-down, keeping the line figure as the total', () => {
-    const d = useLedgerDrilldown(entries, bounds)
-    const group = ['Payroll Expense', 'Deferred SHER Compensation']
-    d.openFor(group, '-$50.00', 'Retained earnings')
+  it('keeps an aggregate statement figure and selects the union of its journal entries', () => {
+    const drilldown = useLedgerDrilldown(entries, bounds)
+    const accounts = ['Payroll Expense', 'Deferred SHER Compensation'] as const
+    drilldown.openFor(accounts, '-$50.00', 'Earnings to date')
 
-    expect(d.selectedLine.value?.label).toBe('Retained earnings')
-    // Mixed classes can't be netted, so the line's own figure is kept.
-    expect(d.selectedLine.value?.total).toBe('-$50.00')
-    expect(d.drilldownEntries.value).toEqual(entriesForAccount(catalogueLedger, group))
+    expect(drilldown.selectedLine.value).toMatchObject({
+      label: 'Earnings to date',
+      total: '-$50.00'
+    })
+    expect(drilldown.drilldownEntries.value).toEqual(entriesForAccount(journal, accounts))
+    expect(drilldown.balance.value.account).toBeNull()
   })
 
-  it('exports an aggregate with its label and total', () => {
-    const d = useLedgerDrilldown(entries, bounds)
-    d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00', 'Retained earnings')
-    d.onExport('pdf', ['activity'])
+  it('uses the concrete Account of a Trial Balance row for a running balance', () => {
+    const account = journal[0]!.lines[0]!.account
+    const drilldown = useLedgerDrilldown(entries, bounds)
+    drilldown.openFor(account, '$0.00', account.family.name)
 
-    expect(exportPdf).toHaveBeenCalledTimes(1)
-    const [specs] = exportPdf.mock.calls[0]
-    expect(Array.isArray(specs[0].account)).toBe(true)
-    expect(specs[0]).toMatchObject({ accountLabel: 'Retained earnings', accountTotal: '-$50.00' })
+    expect(drilldown.balance.value.account).toEqual(account)
+    expect(drilldown.balance.value.closing).toBe(drilldown.selectedLine.value?.total)
   })
 
-  it('labels an unlabelled aggregate "Aggregate"', () => {
-    const d = useLedgerDrilldown(entries, bounds)
-    // A list of accounts with no explicit label falls back to the generic name.
-    d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00')
-    expect(d.selectedLine.value?.label).toBe('Aggregate')
-    expect(d.selectedLine.value?.total).toBe('-$50.00')
-  })
-
-  it('runs the balance column on a single account, never on an aggregate', () => {
-    const d = useLedgerDrilldown(entries, bounds)
-    d.openFor('Investor Equity', '$999.00')
-    expect(d.balanceAccount.value).toBe('Investor Equity')
-
-    d.openFor(['Payroll Expense', 'Deferred SHER Compensation'], '-$50.00', 'Retained earnings')
-    // Mixed classes share no natural side, so there is no balance to run.
-    expect(d.balanceAccount.value).toBe('')
-  })
-
-  it('carries nothing in and closes on the account balance over an open window', () => {
-    const d = useLedgerDrilldown(entries, bounds)
-    d.openFor('Investor Equity', '$999.00')
-
-    expect(d.opening.value).toEqual({ debits: 0, credits: 0, balance: 0 })
-    expect(d.closing.value).toBe(d.selectedLine.value?.total)
-  })
-
-  it('opens on what a dated window carries in, and closes on the remainder', () => {
-    const account = 'Cash — Safe'
-    const all = entriesForAccount(catalogueLedger, account)
-    // A window starting after the first posting leaves that posting behind it.
+  it('carries a dated opening balance from prior journal entries', () => {
+    const account = journal
+      .find((entry) => entry.lines.some((line) => line.account.family.name === 'Cash — Safe'))!
+      .lines.find((line) => line.account.family.name === 'Cash — Safe')!.account
+    const all = entriesForAccount(journal, account)
     const from = new Date((all[1]!.timestamp + 1) * 1000)
-    const d = useLedgerDrilldown(entries, () => ({ from, to: null }))
-    d.openFor(account, '$1.00')
+    const drilldown = useLedgerDrilldown(entries, () => ({ from, to: null }))
+    drilldown.openFor(account, '$0.00', 'Cash — Safe')
 
-    expect(d.opening.value.balance).not.toBe(0)
-    // Carried in + everything the window moves is the account's whole balance.
-    expect(d.closing.value).toBe(accountBalance(all, account))
+    expect(drilldown.balance.value.opening.balance).not.toBe(0)
+    expect(drilldown.balance.value.closing).toBe(money(accountNet(all, account)))
   })
 
-  it('does not export until a statement line is selected', () => {
-    const d = useLedgerDrilldown(entries, bounds)
-    d.onExport('excel', ['activity'])
-
+  it('does not export before a statement line is selected', () => {
+    const drilldown = useLedgerDrilldown(entries, bounds)
+    drilldown.onExport('excel', ['activity'])
     expect(exportExcel).not.toHaveBeenCalled()
   })
 })

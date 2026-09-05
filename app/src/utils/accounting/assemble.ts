@@ -1,7 +1,7 @@
 /**
  * Pure assembly of a team's CNC accounting (issue #2118, the data layer's core).
  *
- * The composable {@link useCNCAccounting} fetches the raw feeds — Ponder contract
+ * The composable {@link useCNCAccounting} fetches the raw feeds — RPC contract
  * events, the team's Safe incoming transfers and the portal DB rows — and hands
  * them to this **pure** function. Keeping the adaptation + statement build here
  * (rather than inside the composable) means the whole pipeline is unit-testable
@@ -11,8 +11,9 @@
  * Pipeline (spec §2):
  *   raw feeds → {@link LedgerSources} + {@link MapperContext} + enrichment
  *             → buildCncLedgerEntries (#2113 mappers + off-chain join)
- *             → buildLedger (#2117 consolidation: dedupe twins + summary)
- *             → general ledger / income statement / balance sheet (#2117)
+ *             → buildLedger (#2117 consolidation: dedupe twins)
+ *             → buildJournal (validated canonical journal)
+ *             → General Ledger / Trial Balance / financial-statement projections
  */
 import { type Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
@@ -20,19 +21,38 @@ import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import type { TransactionClassificationRecord } from '@/types/accounting-classification'
-import type { BankEventsQuery } from '@/types/ponder/bank'
-import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
-import type { ExpenseEventsQuery } from '@/types/ponder/expense'
-import type { FixedReturnEventsQuery } from '@/types/ponder/fixedReturn'
-import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
-import type { VestingEventsQuery } from '@/types/ponder/vesting'
+import type { BankEventFeed } from '@/types/contract-events/bank'
+import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
+import type { ExpenseEventFeed } from '@/types/contract-events/expense'
+import type { FixedReturnEventFeed } from '@/types/contract-events/fixedReturn'
+import type {
+  InvestorEventFeed,
+  SafeDepositRouterEventFeed
+} from '@/types/contract-events/investor'
+import type { VestingEventFeed } from '@/types/contract-events/vesting'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
 import type { ClassificationOverride } from '@/utils/accounting/classification'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
-import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
-import { buildGeneralLedger, type GeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildLedger } from '@/utils/accounting/buildLedger'
+import {
+  buildAccountingSummary,
+  type AccountingSummary
+} from '@/utils/accounting/accountingSummary'
+import { buildAccountRegistry, type AccountRegistry } from '@/utils/accounting/accountRegistry'
+import {
+  resolveAccountInstances,
+  type TransactionAccountEvidence
+} from '@/utils/accounting/accountInstances'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import {
+  buildGeneralLedger,
+  buildJournal,
+  type GeneralLedger,
+  type JournalEntry
+} from '@/utils/accounting/generalLedger'
+import { reconcileJournalEntrySources } from '@/utils/accounting/journalEntry'
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -52,18 +72,8 @@ export interface CncAccountingInput {
   contracts?: readonly TeamContract[]
   /** The team's Gnosis Safe address — classifies each Safe transfer. */
   safeAddress?: Address | string | null
-  /** Founder / owner addresses whose treasury inflows are Owner Capital. */
-  founderAddresses?: Iterable<Address | string>
-  /** Team member addresses — a member's Safe inflow is a capital contribution
-   *  (invest & get SHER → Investor Equity), not client revenue. */
-  memberAddresses?: Iterable<Address | string>
-  /** Protocol-wide FeeCollector address (its pocket is `Cash — FeeCollector`). */
-  feeCollectorAddress?: Address | string | null
   /** On-chain SHER token address, so it resolves to the `sher` token id. */
   sherTokenAddress?: Address | string | null
-  /** SafeDepositRouter address — its inflows to the Safe are booked from its own
-   *  event (UC-SDR-01), so the matching Safe transfer is excluded here. */
-  safeDepositRouterAddress?: Address | string | null
   /** Live SHER-per-token multiplier (whole units) read straight from the router,
    *  used to value SHER when there are no `MultiplierUpdated` events (the
    *  constructor's initial multiplier emits none). Defaults to 1x (1 SHER = $1). */
@@ -71,16 +81,16 @@ export interface CncAccountingInput {
   /** FX resolver for non-pegged tokens (native, SHER) — see toUsd. */
   rateOfRecord?: UsdRateOfRecord
   // ── raw query results (any may be null: source absent, disabled or failed) ──
-  bankEvents?: BankEventsQuery | null
-  cashRemunerationEvents?: CashRemunerationEventsQuery | null
-  expenseEvents?: ExpenseEventsQuery | null
-  fixedReturnEvents?: FixedReturnEventsQuery | null
+  bankEvents?: BankEventFeed | null
+  cashRemunerationEvents?: CashRemunerationEventFeed | null
+  expenseEvents?: ExpenseEventFeed | null
+  fixedReturnEvents?: FixedReturnEventFeed | null
   /** Rate + maturity per Community Credit offer, read from the contract — what
    *  lets the interest be accrued over the term instead of expensed at payment. */
   fixedReturnOfferTerms?: readonly CreditOfferTerms[] | null
-  investorEvents?: InvestorEventsQuery | null
-  vestingEvents?: VestingEventsQuery | null
-  safeDepositRouterEvents?: SafeDepositRouterEventsQuery | null
+  investorEvents?: InvestorEventFeed | null
+  vestingEvents?: VestingEventFeed | null
+  safeDepositRouterEvents?: SafeDepositRouterEventFeed | null
   safeTransfers?: readonly SafeIncomingTransfer[] | null
   /** Executed multisig transactions — outflows from the Safe. */
   safeOutgoingTransactions?: readonly SafeTransaction[] | null
@@ -91,16 +101,25 @@ export interface CncAccountingInput {
   classifications?: readonly TransactionClassificationRecord[] | null
 }
 
-/** The consolidated ledger + the three statements a team's books resolve to. */
+/** The transitional posting feed, canonical journal, and report projections a team's books resolve to. */
 export interface CncAccounting {
-  /** Deduped, chronologically sorted postings — the canonical feed. */
+  /**
+   * Deduped, chronologically sorted mapper postings retained at the assembly
+   * boundary. Views and exports consume the journal, never these source pairs.
+   */
   entries: LedgerEntry[]
+  /** The canonical concrete-account source of truth for this assembled book. */
+  accountRegistry: AccountRegistry
+  /** The validated, ordered double-entry journal built once after consolidation. */
+  journal: JournalEntry[]
   /** Roll-up totals for the summary cards. */
   summary: AccountingSummary
   /** Double-entry journal + trial balance. */
   generalLedger: GeneralLedger
   incomeStatement: IncomeStatement
   balanceSheet: BalanceSheet
+  /** Fee logs withheld because their Bank outflow counterpart is missing. */
+  unmatchedFeeOperationIds: string[]
 }
 
 /**
@@ -110,9 +129,9 @@ export interface CncAccounting {
  * oracle is wired, so stablecoin (USDC) figures still render. Callers can inject
  * a real resolver (e.g. the agreed SHER mint price) via `rateOfRecord`.
  */
-export const phase1RateOfRecord: UsdRateOfRecord = () => 0
+const phase1RateOfRecord: UsdRateOfRecord = () => 0
 
-/** Pull a Ponder query field's `.items`, tolerating a missing/null result. */
+/** Pull an event-feed field's `.items`, tolerating a missing/null result. */
 function items<T>(field: { items: T[] } | null | undefined): T[] {
   return field?.items ?? []
 }
@@ -143,40 +162,42 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
       transfers: items(input.bankEvents.bankTransfers),
       tokenTransfers: items(input.bankEvents.bankTokenTransfers)
     }
-    sources.fees = { bankFeePaids: items(input.bankEvents.bankFeePaids) }
+    sources.fees = {
+      bankFeePaids: items(input.bankEvents.bankFeePaids)
+    }
   }
 
   if (input.cashRemunerationEvents) {
-    const c = input.cashRemunerationEvents
+    const events = input.cashRemunerationEvents
     sources.cashRemuneration = {
-      deposits: items(c.cashRemunerationDeposits),
-      withdraws: items(c.cashRemunerationWithdraws),
-      withdrawTokens: items(c.cashRemunerationWithdrawTokens),
-      ownerTreasuryWithdrawNatives: items(c.cashRemunerationOwnerTreasuryWithdrawNatives),
-      ownerTreasuryWithdrawTokens: items(c.cashRemunerationOwnerTreasuryWithdrawTokens)
+      deposits: items(events.cashRemunerationDeposits),
+      withdraws: items(events.cashRemunerationWithdraws),
+      withdrawTokens: items(events.cashRemunerationWithdrawTokens),
+      ownerTreasuryWithdrawNatives: items(events.cashRemunerationOwnerTreasuryWithdrawNatives),
+      ownerTreasuryWithdrawTokens: items(events.cashRemunerationOwnerTreasuryWithdrawTokens)
     }
   }
 
   if (input.expenseEvents) {
-    const e = input.expenseEvents
+    const events = input.expenseEvents
     sources.expenseAccount = {
-      deposits: items(e.expenseDeposits),
-      tokenDeposits: items(e.expenseTokenDeposits),
-      transfers: items(e.expenseTransfers),
-      tokenTransfers: items(e.expenseTokenTransfers),
-      ownerTreasuryWithdrawNatives: items(e.expenseOwnerTreasuryWithdrawNatives),
-      ownerTreasuryWithdrawTokens: items(e.expenseOwnerTreasuryWithdrawTokens)
+      deposits: items(events.expenseDeposits),
+      tokenDeposits: items(events.expenseTokenDeposits),
+      transfers: items(events.expenseTransfers),
+      tokenTransfers: items(events.expenseTokenTransfers),
+      ownerTreasuryWithdrawNatives: items(events.expenseOwnerTreasuryWithdrawNatives),
+      ownerTreasuryWithdrawTokens: items(events.expenseOwnerTreasuryWithdrawTokens)
     }
   }
 
   if (input.fixedReturnEvents) {
-    const f = input.fixedReturnEvents
+    const events = input.fixedReturnEvents
     sources.fixedReturn = {
-      lendingOfferCreateds: items(f.fixedReturnLendingOfferCreateds),
-      lendingOfferFundeds: items(f.fixedReturnLendingOfferFundeds),
-      fundsLents: items(f.fixedReturnFundsLents),
-      lenderRepaids: items(f.fixedReturnLenderRepaids),
-      principalRefundeds: items(f.fixedReturnPrincipalRefundeds),
+      lendingOfferCreateds: items(events.fixedReturnLendingOfferCreateds),
+      lendingOfferFundeds: items(events.fixedReturnLendingOfferFundeds),
+      fundsLents: items(events.fixedReturnFundsLents),
+      lenderRepaids: items(events.fixedReturnLenderRepaids),
+      principalRefundeds: items(events.fixedReturnPrincipalRefundeds),
       ...(input.fixedReturnOfferTerms ? { offerTerms: input.fixedReturnOfferTerms } : {})
     }
   }
@@ -218,7 +239,6 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
   if (input.safeAddress) {
     const incomingRows = toSafeTransferRows(
       input.safeTransfers,
-      input.safeDepositRouterAddress,
       input.safeDepositRouterEvents?.safeDeposits?.items
     )
     const outgoingRows = toSafeOutgoingTransferRows(
@@ -265,18 +285,12 @@ function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
  * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
  */
 export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
-  const internalAddresses = collectInternalAddresses(
-    input.contracts,
-    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
-  )
+  const internalAddresses = collectInternalAddresses(input.contracts)
   const rateOfRecord = buildRateOfRecord(input)
 
   const ctx = buildMapperContext({
     contracts: input.contracts,
     internalAddresses,
-    founderAddresses: input.founderAddresses,
-    memberAddresses: input.memberAddresses,
-    feeCollectorAddress: input.feeCollectorAddress,
     sherTokenAddress: input.sherTokenAddress,
     rateOfRecord,
     classifications: toClassificationMap(input.classifications)
@@ -304,36 +318,43 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     input.safeDepositRouterEvents?.safeDeposits?.items,
     input.currentSherMultiplier
   )
+  // A Community Credit sweep has no Bank event that identifies its destination
+  // generation. Keep that absence explicit; the canonical account registry turns
+  // the Bank leg into an unresolved account instead of attributing it by timing.
   return settleWithdrawnSher(stamped, currentRate).sort((a, b) => a.timestamp - b.timestamp)
 }
 
 /**
  * Consolidate a raw feed into the ledger and the three statements. Split from
- * {@link assembleCncAccounting} so a caller that already holds the raw entries
- * (the composable, which derives the price-fetch days from them) doesn't run the
- * whole mapper pipeline a second time.
+ * {@link assembleWithAccountEvidence} so the accounting composable can derive
+ * price-fetch days from the raw entries without running the mapper pipeline twice.
  */
-export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
-  const { entries, summary } = buildLedger(rawEntries)
+function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
+  const reconciliation = reconcileJournalEntrySources(rawEntries)
+  const { entries } = buildLedger(reconciliation.entries)
+  const accountRegistry = buildAccountRegistry(entries)
+  const journal = buildJournal(entries, accountRegistry)
 
   return {
     entries,
-    summary,
-    generalLedger: buildGeneralLedger(entries),
-    incomeStatement: buildIncomeStatement(entries),
-    balanceSheet: buildBalanceSheet(entries)
+    accountRegistry,
+    journal,
+    summary: buildAccountingSummary(journal),
+    generalLedger: buildGeneralLedger(journal),
+    incomeStatement: buildIncomeStatement(journal),
+    balanceSheet: buildBalanceSheet(journal),
+    unmatchedFeeOperationIds: reconciliation.unmatchedFeeOperationIds
   }
 }
 
 /**
- * Assemble a team's consolidated ledger and the three statements from its raw
- * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ * Complete deployment-specific cash legs from verified transaction evidence
+ * before building every canonical report projection.
  */
-export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
-  return assembleFromRawEntries(buildRawCncEntries(input))
-}
-
-/** An empty accounting result — used before any data has loaded. */
-export function emptyCncAccounting(): CncAccounting {
-  return assembleCncAccounting({})
+export function assembleWithAccountEvidence(
+  rawEntries: readonly LedgerEntry[],
+  deploymentAccounts: ReadonlyMap<string, AccountName>,
+  evidence: TransactionAccountEvidence
+): CncAccounting {
+  return assembleFromRawEntries(resolveAccountInstances(rawEntries, deploymentAccounts, evidence))
 }

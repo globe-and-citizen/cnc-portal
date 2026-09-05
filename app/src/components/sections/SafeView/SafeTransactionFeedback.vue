@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SafeTransactionStatusFilter } from '@/utils/safeTransactionState'
+import type { SafeTransactionStatusFilter } from '@/utils/safe/transactionState'
 
 interface Props {
   hasError: boolean

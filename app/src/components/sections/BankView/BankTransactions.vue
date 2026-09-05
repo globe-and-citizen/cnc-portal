@@ -188,36 +188,33 @@ import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideov
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import type { BankTransaction } from '@/types/transactions'
+import { buildRawBankTransactions, formatBankTransactionDate } from '@/utils/transactions/bank'
 import {
-  buildRawBankTransactions,
-  formatBankTransactionDate,
   getTransactionTypeColor,
-  formatCryptoAmount,
-  formatCurrencyShort,
-  formatEtherUtil,
-  log,
-  parseBigIntOrZero,
-  resolveUser,
-  getTransactionSummary,
-  getInitialTokenSupportSummary,
   getTransactionTypeLabel,
   getTransactionCounterparty,
-  formatTxHash,
-  tokenSymbol,
-  enrichTransaction
-} from '@/utils'
-import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+  formatTxHash
+} from '@/utils/transactions/registry'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import { log } from '@/lib/logging'
+import {
+  parseBigIntOrZero,
+  getTransactionSummary,
+  getInitialTokenSupportSummary
+} from '@/utils/transactions/history'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 
 const props = defineProps<{
   bankAddress: Address
 }>()
 
 const currencyStore = useCurrencyStore()
+const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.bankAddress.toLowerCase())
 
-// EXPERIMENT: source the Bank transaction history from the RPC (eth_getLogs)
-// instead of Ponder. Returns the same { result, loading, error } shape.
 const { result, error, loading } = useBankEventsViaLogs(contractAddress)
 
 const rawTransactions = computed(() => buildRawBankTransactions(result.value))
@@ -271,7 +268,7 @@ const columns = computed(() => [
 
 watch(error, (newError) => {
   if (newError) {
-    log.error('Ponder bank transaction query error:', newError)
+    log.error('RPC log bank transaction query error:', newError)
   }
 })
 </script>

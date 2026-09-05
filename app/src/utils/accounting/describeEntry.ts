@@ -11,20 +11,17 @@
  * Entries with no human actor and no pocket-to-pocket move (memo mints,
  * unclassified cash) fall back to the generic per-use-case {@link entryLabel}.
  */
-import { money, fmtDate } from './presenter'
+import { money, formatUnixDate } from './presenter'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
-import type { AccountName } from './chartOfAccounts'
 
 /**
  * Normalized accounting-entry label per use case — the generic fallback shown in
  * the "Transaction" column and for entries with no actor (catalogue §5 / spec §4).
  */
 const ENTRY_LABEL: Record<UseCase, string> = {
-  'UC-BANK-01': 'Owner capital contribution',
   'UC-BANK-02': 'Service revenue',
   'UC-BANK-03': 'Treasury funding',
   'UC-SDR-01': 'Investor contribution',
-  'UC-MEMBER-01': 'Member capital contribution',
   'UC-CREDIT-01': 'Credit funds lent',
   'UC-CREDIT-02': 'Credit principal to Bank',
   'UC-CREDIT-03': 'Credit repayment',
@@ -57,7 +54,13 @@ export function entryLabel(entry: LedgerEntry): string {
  */
 export type ActivityCell =
   | { kind: 'actor'; actor: string; text: string }
-  | { kind: 'transfer'; from: AccountName; to: AccountName; actor?: string }
+  | {
+      kind: 'transfer'
+      /** Account display labels, which may distinguish concrete deployments. */
+      from: string
+      to: string
+      actor?: string
+    }
   | { kind: 'plain'; text: string }
 
 /** Internal pocket-to-pocket moves — rendered as two contract avatars (from → to). */
@@ -71,10 +74,8 @@ const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
 const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'UC-CASH-02',
   'UC-CASH-03',
-  'UC-BANK-01',
   'UC-BANK-02',
   'UC-SDR-01',
-  'UC-MEMBER-01',
   'UC-CREDIT-01',
   'UC-CREDIT-03',
   'UC-CREDIT-04',
@@ -133,18 +134,14 @@ function predicate(entry: LedgerEntry): string {
   switch (entry.useCase) {
     case 'UC-CASH-02': {
       if (!hours) return 'submitted a wage claim'
-      const week = entry.periodEnd ? ` for the week ending ${fmtDate(entry.periodEnd)}` : ''
+      const week = entry.periodEnd ? ` for the week ending ${formatUnixDate(entry.periodEnd)}` : ''
       return `submitted ${hours} of work${week}`
     }
     case 'UC-CASH-03':
       return hours ? `was paid for ${hours} of work` : 'was paid their wages'
-    case 'UC-BANK-01':
-      return `contributed ${amount} in capital`
     case 'UC-BANK-02':
       return `paid ${amount} for services`
     case 'UC-SDR-01':
-      return `invested ${amount} in capital${sher}`
-    case 'UC-MEMBER-01':
       return `invested ${amount} in capital${sher}`
     case 'UC-CREDIT-01':
       return `lent ${amount} to the community credit`
@@ -170,7 +167,9 @@ function predicate(entry: LedgerEntry): string {
     case 'UC-VEST-02':
       return entry.shares ? `vested ${entry.shares} SHER` : entryLabel(entry)
     case 'UC-VEST-03':
-      return 'had a vesting schedule stopped'
+      return entry.shares
+        ? `had a vesting schedule stopped, cancelling ${entry.shares} unvested SHER`
+        : 'had a vesting schedule stopped'
     default:
       return entryLabel(entry)
   }
@@ -197,17 +196,6 @@ export function activityOf(entry: LedgerEntry): ActivityCell {
     return { kind: 'actor', actor: entry.counterparty, text: predicate(entry) }
   }
   return { kind: 'plain', text: entryLabel(entry) }
-}
-
-/**
- * Append "· + N SHER" to an actor narration when a compound payroll posting also
- * issued shares, so the grouped entry's single Activity still names the equity
- * part (e.g. "was paid for 5h of work + 10 SHER"). No-op when there are no shares,
- * when the text already mentions SHER, or when the cell names no actor.
- */
-export function withSherTail(cell: ActivityCell, sherShares: number): ActivityCell {
-  if (sherShares <= 0 || cell.kind !== 'actor' || /SHER/.test(cell.text)) return cell
-  return { ...cell, text: `${cell.text} + ${sherShares} SHER` }
 }
 
 /** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { money, presentSummaryCards, presentBanner } from '@/utils/accounting/presenter'
+import { accountFor } from '@/utils/accounting/accountRegistry'
 import { sampleBooks } from './fixtures'
 
 describe('presentSummaryCards / presentBanner', () => {
@@ -30,10 +31,25 @@ describe('presentSummaryCards / presentBanner', () => {
     const cards = presentSummaryCards(acc.summary, acc.incomeStatement, {
       ...acc.balanceSheet,
       liabilities: [
-        { account: 'Loan Payable', amount: 1000 },
-        { account: 'Interest Payable', amount: 100 },
+        {
+          account: accountFor('Loan Payable'),
+          accountLabel: 'Loan Payable',
+          balance: 1000,
+          contribution: 1000
+        },
+        {
+          account: accountFor('Interest Payable'),
+          accountLabel: 'Interest Payable',
+          balance: 100,
+          contribution: 100
+        },
         // A liability outside the borrowing accounts stays out of the figure.
-        { account: 'Wage Payable', amount: 40 }
+        {
+          account: accountFor('Wage Payable'),
+          accountLabel: 'Wage Payable',
+          balance: 40,
+          contribution: 40
+        }
       ]
     })
     expect(cards.find((c) => c.label === 'Outstanding debt')?.value).toBe('$1,100.00')

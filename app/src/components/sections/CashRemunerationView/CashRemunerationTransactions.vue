@@ -160,9 +160,8 @@
 import { computed, watch } from 'vue'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import { type Address } from 'viem'
-import { GRAPHQL_POLL_INTERVAL } from '@/constant'
-import { useQuery } from '@vue/apollo-composable'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
@@ -172,35 +171,33 @@ import type { CashRemunerationTransaction } from '@/types/transactions'
 import type { TransactionEventValue } from '@/types/transaction-history'
 import {
   buildRawCashRemunerationTransactions,
-  formatCashRemunerationTransactionDate,
+  formatCashRemunerationTransactionDate
+} from '@/utils/transactions/cashRemuneration'
+import {
   getTransactionTypeColor,
   getTransactionTypeLabel,
   getTransactionCounterparty,
-  formatTxHash,
-  formatCryptoAmount,
-  formatCurrencyShort,
-  formatEtherUtil,
-  parseBigIntOrZero,
-  resolveUser,
-  getTransactionSummary,
-  log,
-  tokenSymbol,
-  enrichTransaction
-} from '@/utils'
-import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+  formatTxHash
+} from '@/utils/transactions/registry'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import { parseBigIntOrZero, getTransactionSummary } from '@/utils/transactions/history'
+import { log } from '@/lib/logging'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
-import { GET_INCOMING_BANK_TOKEN_TRANSFERS } from '@/queries/ponder/bank.queries'
-import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
+import { useIncomingBankTokenTransfersViaLogs } from '@/composables/bank/useIncomingBankTokenTransfersViaLogs'
+import { useTeamStore } from '@/stores'
 
 const props = defineProps<{
   cashRemunerationAddress: Address
 }>()
 
 const currencyStore = useCurrencyStore()
+const teamStore = useTeamStore()
+const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.cashRemunerationAddress.toLowerCase())
+const currentBankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
-// EXPERIMENT: source the payroll contract's own events from the RPC (eth_getLogs)
-// instead of Ponder. The incoming Bank→payroll transfers below stay on Ponder.
 const {
   result,
   error,
@@ -211,17 +208,10 @@ const {
   result: incomingTokenTransfersResult,
   error: incomingTokenTransfersError,
   loading: incomingTokenTransfersLoading
-} = useQuery<IncomingBankTokenTransfersQuery>(
-  GET_INCOMING_BANK_TOKEN_TRANSFERS,
-  {
-    toAddress: contractAddress,
-    limit: 500
-  },
-  {
-    enabled: computed(() => Boolean(contractAddress.value)),
-    pollInterval: GRAPHQL_POLL_INTERVAL,
-    fetchPolicy: 'cache-and-network'
-  }
+} = useIncomingBankTokenTransfersViaLogs(
+  () => teamStore.currentTeamId,
+  contractAddress,
+  currentBankAddress
 )
 
 const loading = computed(() => cashRemunerationLoading.value || incomingTokenTransfersLoading.value)
@@ -293,7 +283,7 @@ const columns = computed(() => [
 watch([error, incomingTokenTransfersError], ([newError, newIncomingTransfersError]) => {
   if (newError || newIncomingTransfersError) {
     log.error(
-      'Ponder cash remuneration transaction query error:',
+      'RPC log cash remuneration transaction query error:',
       newError ?? newIncomingTransfersError
     )
   }

@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { buildLedger, dedupeInternalTransfers } from '@/utils/accounting/buildLedger'
+import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
+import { buildLedger } from '@/utils/accounting/buildLedger'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { catalogueLedger } from './catalogueLedger'
 
-describe('buildLedger — summary on the catalogue worked example', () => {
-  const { summary, entries } = buildLedger(catalogueLedger)
+describe('buildAccountingSummary — catalogue worked example', () => {
+  const entries = buildLedger(catalogueLedger).entries
+  const summary = buildAccountingSummary(buildJournal(entries))
 
   it('rolls up the period totals (cash / income / expense / equity)', () => {
     expect(summary.cash).toBeCloseTo(142.2, 2)
@@ -13,10 +16,9 @@ describe('buildLedger — summary on the catalogue worked example', () => {
     expect(summary.equity).toBeCloseTo(138, 2)
   })
 
-  it('counts only monetary postings (memo-only Default-D excluded)', () => {
+  it('keeps memo-only postings in the transitional feed', () => {
     // 25 entries in the fixture, one of which is the memo-only direct mint.
     expect(entries).toHaveLength(25)
-    expect(summary.entryCount).toBe(24)
   })
 
   it('returns entries sorted chronologically', () => {
@@ -40,14 +42,31 @@ describe('buildLedger — rolls up transaction fees as a dedicated metric', () =
   }
 
   it('sums Transaction Fee Expense into `summary.transactionFees` (a subset of expense)', () => {
-    const { summary } = buildLedger([fee, { ...fee, id: 'fee-2', amountUsd: 0.25 }])
+    const transfer: LedgerEntry = {
+      ...fee,
+      id: 'transfer',
+      sourceOperationId: 'bank-outflow',
+      useCase: 'UC-BANK-03',
+      debit: 'Cash — Payroll',
+      amountUsd: 2,
+      rawAmount: '2000000',
+      internal: true,
+      memo: 'Fund Cash — Payroll from Bank'
+    }
+    const summary = buildAccountingSummary(
+      buildJournal([
+        transfer,
+        { ...fee, id: 'fee-1', sourceOperationId: 'bank-outflow' },
+        { ...fee, id: 'fee-2', sourceOperationId: 'bank-outflow', amountUsd: 0.25 }
+      ])
+    )
     expect(summary.transactionFees).toBeCloseTo(0.75, 4)
     // The fee is also part of total expense, so the two agree here.
     expect(summary.expense).toBeCloseTo(0.75, 4)
   })
 })
 
-describe('dedupeInternalTransfers', () => {
+describe('buildLedger — internal transfer reconciliation', () => {
   const base: Omit<LedgerEntry, 'id'> = {
     timestamp: 100,
     useCase: 'INTERNAL',
@@ -64,7 +83,7 @@ describe('dedupeInternalTransfers', () => {
   it('collapses the two contract-side recordings of one internal transfer', () => {
     const bankSide: LedgerEntry = { ...base, id: 'bank-1' }
     const safeSide: LedgerEntry = { ...base, id: 'safe-1' }
-    const result = dedupeInternalTransfers([bankSide, safeSide])
+    const result = buildLedger([bankSide, safeSide]).entries
     expect(result).toHaveLength(1)
     expect(result[0]!.id).toBe('bank-1') // first occurrence wins
   })
@@ -72,13 +91,13 @@ describe('dedupeInternalTransfers', () => {
   it('keeps internal moves that differ in amount or token', () => {
     const usd: LedgerEntry = { ...base, id: 'a', amountUsd: 50, rawAmount: '50000000' }
     const pol: LedgerEntry = { ...base, id: 'b', amountUsd: 1.72, rawAmount: '22', token: 'native' }
-    expect(dedupeInternalTransfers([usd, pol])).toHaveLength(2)
+    expect(buildLedger([usd, pol]).entries).toHaveLength(2)
   })
 
   it('never dedupes external postings (unique source events)', () => {
     const ext: LedgerEntry = { ...base, id: 'x', internal: false, useCase: 'UC-BANK-02' }
     const twin: LedgerEntry = { ...ext, id: 'y' }
-    expect(dedupeInternalTransfers([ext, twin])).toHaveLength(2)
+    expect(buildLedger([ext, twin]).entries).toHaveLength(2)
   })
 })
 

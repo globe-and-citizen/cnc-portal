@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { resolveUser } from '@/utils/transactionHistoryUtil'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import type { ActivityCell } from '@/utils/accounting/describeEntry'
 import type { ActivityDestination } from '@/utils/accounting/activityDestination'
 
@@ -55,6 +55,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{ open: [] }>()
+const { resolveUser } = useTransactionPresentation()
 
 /** A cash pocket account rendered as a contract avatar (document icon + short name). */
 function pocketUser(account: string) {

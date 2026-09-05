@@ -5,10 +5,11 @@
  */
 import { formatUnits, type Address } from 'viem'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
-import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
+import type { CncAccounting } from '@/utils/accounting/assemble'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { MapperContext } from '@/utils/accounting/mappers/context'
+import { assembleAccounting } from './assembleAccounting'
 
 /** Lowercase addresses are always valid (no checksum to fail) — safe for tests. */
 export const ADDR = {
@@ -51,11 +52,7 @@ export function makeCtx(overrides: Partial<MapperContext> = {}): MapperContext {
   }
   return {
     internalAddresses: new Set(Object.keys(POCKETS) as Address[]),
-    founderAddresses: new Set([ADDR.founder as Address]),
-    memberAddresses: new Set([ADDR.member as Address]),
     toUsd: (amount, token) => Number(formatUnits(amount, DECIMALS[token])) * RATE[token],
-    // SHER minted for a USD amount: usd / (USD-per-SHER). RATE.sher = $0.50 → ×2.
-    sherForUsd: (usd) => (RATE.sher > 0 ? usd / RATE.sher : 0),
     tokenIdOf,
     pocketOf: (address) => (address ? (POCKETS[address.toLowerCase()] ?? null) : null),
     classificationOf: () => undefined,
@@ -110,7 +107,7 @@ export function balanceOf(entries: readonly LedgerEntry[], account: string): num
  * rather than hand-built entries.
  */
 export function sampleBooks(): CncAccounting {
-  return assembleCncAccounting({
+  return assembleAccounting({
     contracts: [
       { type: 'Bank', address: ADDR.bank as Address, deployer: ADDR.bank as Address, admins: [] },
       {

@@ -9,7 +9,7 @@
         v-if="drillable"
         type="button"
         class="focus-visible:ring-neutral truncate rounded text-left text-sm focus-visible:ring-2 focus-visible:outline-none"
-        :data-test="`${dataTestPrefix}-drilldown-${line.account ?? 'aggregate'}`"
+        :data-test="`${dataTestPrefix}-drilldown-${drilldownKey}`"
         @click.stop="emit('drilldown', line)"
       >
         {{ line.label }}
@@ -47,4 +47,8 @@ const props = withDefaults(
 const emit = defineEmits<{ drilldown: [line: StatementLineView] }>()
 
 const drillable = computed(() => Boolean(props.line.account || props.line.accounts?.length))
+const drilldownKey = computed(() => {
+  const account = props.line.account
+  return typeof account === 'object' ? account.id : (account ?? 'aggregate')
+})
 </script>

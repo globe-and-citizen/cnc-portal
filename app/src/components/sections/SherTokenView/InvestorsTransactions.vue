@@ -196,29 +196,31 @@ import type { TokenId } from '@/constant'
 import {
   buildRawInvestorTransactions,
   mapRawInvestorTransaction,
-  formatCryptoAmount,
-  formatCurrencyShort,
-  resolveUser,
+  getMintTotal
+} from '@/utils/transactions/investor'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { getUniqueSummary } from '@/utils/transactions/history'
+import {
   getTransactionTypeLabel,
   getTransactionCounterparty,
-  getUniqueSummary,
-  getMintTotal,
   formatTxHash,
-  DIVIDEND_TYPES,
-  log
-} from '@/utils'
+  DIVIDEND_TYPES
+} from '@/utils/transactions/registry'
+import { log } from '@/lib/logging'
 import { computed, watch } from 'vue'
 import { formatPercent } from '@/utils/format'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
-import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
+const { resolveUser } = useTransactionPresentation()
 const { data: investorSymbolData } = useInvestorSymbol()
 const investorTokenSymbol = computed(() =>
   typeof investorSymbolData.value === 'string' ? investorSymbolData.value : 'SHER'
@@ -242,8 +244,6 @@ const getUsdPrice = (tokenId: TokenId | null): number => {
   return 0
 }
 
-// EXPERIMENT: source Investor + SafeDepositRouter events from the RPC (eth_getLogs)
-// instead of Ponder.
 const { result, error, loading: investorLoading } = useInvestorEventsViaLogs(investorAddress)
 
 const {
@@ -256,7 +256,12 @@ const loading = computed(() => investorLoading.value || safeLoading.value)
 
 const enrichedTransactions = computed(() =>
   buildRawInvestorTransactions(result.value, safeResult.value).map((tx) =>
-    mapRawInvestorTransaction(tx, investorTokenSymbol.value, getUsdPrice)
+    mapRawInvestorTransaction(
+      tx,
+      investorTokenSymbol.value,
+      getUsdPrice,
+      currencyStore.supportedTokens
+    )
   )
 )
 
@@ -301,7 +306,7 @@ const columns = computed(() => [
 ])
 
 watch([error, safeError], ([newError, newSafeError]) => {
-  if (newError) log.error('Ponder investor transaction query error:', newError)
-  if (newSafeError) log.error('Ponder safe deposit router transaction query error:', newSafeError)
+  if (newError) log.error('RPC log investor transaction query error:', newError)
+  if (newSafeError) log.error('RPC log safe deposit router transaction query error:', newSafeError)
 })
 </script>

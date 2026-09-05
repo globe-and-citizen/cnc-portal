@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import type { CreditRound } from '@/types'
 import { mockFixedReturnReads } from '@/tests/mocks'
-import { MINUTES_PER_DAY } from '@/utils'
+import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
 
 const { store } = vi.hoisted(() => ({ store: { isOwner: false } }))
 

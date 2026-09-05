@@ -93,7 +93,7 @@ import {
   useApproveTransactionMutation,
   useExecuteTransactionMutation
 } from '@/queries/safe.mutations'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 import {
   getSafeTransactionFilterCounts,
   getSafeTransactionState,
@@ -104,7 +104,7 @@ import {
   type SafeTransactionQueueRow,
   type SafeTransactionStateMeta,
   type SafeTransactionStatusFilter as SafeTransactionFilterValue
-} from '@/utils/safeTransactionState'
+} from '@/utils/safe/transactionState'
 import type { SafeTransaction } from '@/types/safe'
 import { useUserDataStore } from '@/stores'
 

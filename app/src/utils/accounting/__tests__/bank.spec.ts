@@ -5,7 +5,7 @@ import { makeCtx, ADDR } from './fixtures'
 const ctx = makeCtx()
 
 describe('mapBankEvents', () => {
-  it('books a founder native deposit as UC-BANK-01 (Owner Capital)', () => {
+  it('books a direct native deposit as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapBankEvents(
       {
         deposits: [
@@ -21,16 +21,16 @@ describe('mapBankEvents', () => {
       ctx
     )
     expect(entry).toMatchObject({
-      useCase: 'UC-BANK-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
-      credit: 'Owner Capital',
+      credit: 'Service Revenue',
       amountUsd: 2, // 1 native * $2
       token: 'native',
       internal: false
     })
   })
 
-  it('books a non-founder (client) deposit as UC-BANK-02 (Service Revenue)', () => {
+  it('books a client token deposit as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapBankEvents(
       {
         tokenDeposits: [
@@ -55,7 +55,37 @@ describe('mapBankEvents', () => {
     })
   })
 
-  it('treats a deposit from an internal pocket as an internal funding move', () => {
+  it('does not let a legacy classification reclassify a direct deposit', () => {
+    const classifiedCtx = makeCtx({
+      classificationOf: (id) => (id === 'd2-classified' ? { category: 'OWNER_CAPITAL' } : undefined)
+    })
+    const [entry] = mapBankEvents(
+      {
+        deposits: [
+          {
+            id: 'd2-classified',
+            contractAddress: ADDR.bank,
+            depositor: ADDR.founder,
+            amount: '1000000000000000000',
+            timestamp: 100
+          }
+        ]
+      },
+      classifiedCtx
+    )
+
+    expect(entry).toMatchObject({
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Bank',
+      credit: 'Service Revenue'
+    })
+    expect(entry).not.toHaveProperty('classified')
+  })
+
+  it('does not let a legacy classification alter an internal funding move', () => {
+    const classifiedCtx = makeCtx({
+      classificationOf: (id) => (id === 'd3' ? { category: 'INTERNAL_TRANSFER' } : undefined)
+    })
     const [entry] = mapBankEvents(
       {
         deposits: [
@@ -68,7 +98,7 @@ describe('mapBankEvents', () => {
           }
         ]
       },
-      ctx
+      classifiedCtx
     )
     expect(entry).toMatchObject({
       useCase: 'INTERNAL',
@@ -76,6 +106,7 @@ describe('mapBankEvents', () => {
       credit: 'Cash — Safe',
       internal: true
     })
+    expect(entry).not.toHaveProperty('classified')
   })
 
   it('books a transfer to an internal pocket as UC-BANK-03 funding', () => {

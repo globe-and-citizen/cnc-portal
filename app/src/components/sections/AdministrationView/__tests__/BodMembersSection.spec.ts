@@ -5,7 +5,7 @@ import { ref, nextTick } from 'vue'
 import BodMembersSection from '../BodMembersSection.vue'
 import { useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
-import { log } from '@/utils'
+import { log } from '@/lib/logging'
 
 const NotFoundStub = { template: '<div data-test="not-found">no-members</div>' }
 

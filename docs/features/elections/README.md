@@ -320,6 +320,8 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
 - [Election creation workflow](../../../app/src/components/sections/AdministrationView/ElectionSummarySection.vue)

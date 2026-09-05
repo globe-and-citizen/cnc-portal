@@ -8,9 +8,9 @@ is shown with examples of what NOT to do and the correct approach.
 ## ⚠️ Re-mocking globally-mocked modules
 
 `app/vitest.config.ts` loads setup files from `app/src/tests/setup/` that call `vi.mock(...)` once for every commonly used dependency
-(wagmi, viem, TanStack Query, Apollo, Pinia stores, the `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives,
-`@/lib/axios`, `@/utils`, `@/queries/*.queries`, …). Override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) are
-re-exported from `@/tests/mocks`.
+(wagmi, viem, TanStack Query, Pinia stores, the `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives,
+`@/lib/axios`, `@/lib/logging`, `@/utils/expenses/model`, `@/queries/*.queries`, …). Override hooks (`mockTeamStore`, `mockERC20Reads`,
+`resetERC20Mocks`, …) are re-exported from `@/tests/mocks`.
 
 **Do not declare a `vi.mock('<same-path>', …)` block in a spec for any of those paths.** Re-mocking shadows the global setup, duplicates
 `vi.hoisted` boilerplate, and drifts from the canonical mock shape. It is enforced by ESLint (`no-restricted-syntax` in

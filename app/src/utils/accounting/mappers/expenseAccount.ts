@@ -29,9 +29,9 @@ import type {
   ExpenseTokenTransferRow,
   ExpenseOwnerTreasuryWithdrawNativeRow,
   ExpenseOwnerTreasuryWithdrawTokenRow
-} from '@/types/ponder/expense'
+} from '@/types/contract-events/expense'
 import type { ExpenseResponse } from '@/types/expense-account'
-import { getTokenAddress, getTokenDecimals, tokenSymbol } from '@/utils/constantUtil'
+import { getTokenAddress, getTokenDecimals, tokenSymbol } from '@/utils/tokens/metadata'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { atDate, type MapperContext } from './context'
@@ -175,8 +175,9 @@ class RemainingBudgetTracker {
     timestamp: number,
     amountBase: bigint
   ): ExpenseDrawInfo | null {
-    const candidates = this.byMember.get(withdrawer.toLowerCase())
-    const budget = candidates?.find((b) => b.tokenId === tokenId && b.approvedAt <= timestamp)
+    const budget = this.byMember
+      .get(withdrawer.toLowerCase())
+      ?.find((approval) => approval.tokenId === tokenId && approval.approvedAt <= timestamp)
     if (!budget) return null
     const period = periodIndex(budget, timestamp)
     const total = (budget.drawnByPeriod.get(period) ?? 0n) + amountBase

@@ -46,8 +46,8 @@ import {
   formatVestingAmount,
   formatVestingProgress,
   getVestingStateMeta
-} from '@/utils/vestingPresentation'
-import { formatVestingBoundary } from '@/utils'
+} from '@/utils/vesting/presentation'
+import { formatVestingBoundary } from '@/utils/vesting/schedule'
 
 const props = defineProps<{
   open: boolean

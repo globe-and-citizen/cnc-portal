@@ -239,9 +239,6 @@ export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 // environment (local dev server, staging, the real pay.cncportal.io CDN).
 export const WIDGET_SCRIPT_URL = import.meta.env.VITE_APP_WIDGET_URL
 
-// GraphQL poll interval for transaction queries (in milliseconds)
-export const GRAPHQL_POLL_INTERVAL = 12000
-
 const NETWORK_TO_COIN_ID: Record<string, string> = {
   POL: 'polygon-ecosystem-token',
   ETH: 'ethereum',

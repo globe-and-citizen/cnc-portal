@@ -17,45 +17,40 @@
         </div>
       </template>
 
-      <div>
-        <p class="text-dimmed pt-2 pb-1 text-[11px] font-bold tracking-wider uppercase">Assets</p>
-        <StatementLine
-          v-for="a in balance.assetLines"
-          :key="a.label"
-          :line="a"
-          data-test-prefix="balance"
+      <div class="flex flex-col gap-5">
+        <BalanceSheetTable
+          title="Assets"
+          :rows="balance.assetLines"
+          total-label="Total assets"
+          :total="balance.totalAssets"
+          data-test="balance-assets"
           @drilldown="openDrilldown"
         />
-        <div class="flex items-center justify-between py-4">
-          <span class="text-sm font-bold">Total assets</span>
-          <span class="text-sm font-bold tabular-nums">{{ balance.totalAssets }}</span>
-        </div>
-
-        <p class="text-dimmed pt-3 pb-1 text-[11px] font-bold tracking-wider uppercase">
-          Liabilities
-        </p>
-        <StatementLine
-          v-for="l in balance.liabLines"
-          :key="l.label"
-          :line="l"
-          label-class="text-muted"
-          value-class="text-muted"
-          data-test-prefix="balance"
+        <BalanceSheetTable
+          title="Liabilities"
+          :rows="balance.liabilityLines"
+          total-label="Total liabilities"
+          :total="balance.totalLiabilities"
+          data-test="balance-liabilities"
           @drilldown="openDrilldown"
         />
-
-        <p class="text-dimmed pt-3 pb-1 text-[11px] font-bold tracking-wider uppercase">Equity</p>
-        <StatementLine
-          v-for="q in balance.equityLines"
-          :key="q.label"
-          :line="q"
-          data-test-prefix="balance"
+        <BalanceSheetTable
+          title="Equity"
+          :rows="balance.equityLines"
+          total-label="Total equity"
+          :total="balance.totalEquity"
+          data-test="balance-equity"
           @drilldown="openDrilldown"
         />
-        <div class="flex items-center justify-between py-4">
-          <span class="text-sm font-bold">Total equity</span>
-          <span class="text-sm font-bold tabular-nums">{{ balance.totalEquity }}</span>
-        </div>
+        <BalanceSheetTable
+          title="Earnings to date calculation"
+          :rows="balance.earningsLines"
+          total-label="Earnings to date"
+          :total="balance.earningsToDate"
+          data-test="balance-earnings"
+          value-label="Contribution"
+          @drilldown="openDrilldown"
+        />
 
         <div class="bg-info/10 mt-3 flex items-center justify-between rounded-xl px-4 py-3.5">
           <span class="text-info text-sm font-bold">Liabilities + Equity</span>
@@ -71,9 +66,8 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
-      :balance-account="drilldownBalanceAccount"
-      :opening="drilldownOpening"
-      :closing="drilldownClosing"
+      :all-entries="accounting.journal.value"
+      :balance="drilldownBalance"
       columns-storage-key="cnc-accounting-balance-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
@@ -84,51 +78,41 @@
 import { computed, ref } from 'vue'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
-import StatementLine from './StatementLine.vue'
+import BalanceSheetTable from './BalanceSheetTable.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
-import { defaultValueForMode } from '@/utils/datePicker'
+import { defaultValueForMode } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { presentBalance, type StatementLineView } from '@/utils/accounting/presenter'
-import { exportFilename } from '@/utils/accounting/exportNaming'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 // Point-in-time "as of" date (date mode) — defaults to end of today.
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
-const acc = useAccountingContext()
-const balance = computed(() => presentBalance(acc.entries.value, asOf.value))
+const accounting = useAccountingContext()
+const balance = computed(() => presentBalance(accounting.journal.value, asOf.value))
 
 // Per-line drill-down — over the same as-of slice the balance sheet is built from.
 const {
   open: drilldownOpen,
   selectedLine: drilldownLine,
-  balanceAccount: drilldownBalanceAccount,
-  opening: drilldownOpening,
-  closing: drilldownClosing,
+  balance: drilldownBalance,
   drilldownEntries,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(acc.entries, () => ({ from: null, to: asOf.value }))
+} = useLedgerDrilldown(accounting.journal, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(line: StatementLineView): void {
-  // Retained earnings is an aggregate of every income + expense account; other
-  // lines drill into their single account.
-  if (line.accounts?.length) openFor(line.accounts, line.value, 'Retained earnings')
-  else if (line.account) openFor(line.account, line.value)
+  // Earnings to date is the only aggregate: it opens every contributing income
+  // and expense account. Every table account otherwise keeps its concrete id.
+  if (line.accounts?.length) openFor(line.accounts, line.value, 'Earnings to date')
+  else if (line.account) openFor(line.account, line.value, line.label)
 }
 
 // Export the current, as-of-filtered balance sheet. The filename carries the
 // "as of" date so a stack of exports stays distinguishable.
-const { exportPdf, exportExcel } = useAccountingExport()
-const spec = (): SectionSpec => ({ key: 'balance', asOf: asOf.value })
-const onExport = () => {
-  const s = spec()
-  exportExcel([s], exportFilename(s, 'xlsx'), 'Balance sheet exported to Excel')
-}
-const onPrint = () => {
-  const s = spec()
-  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Balance sheet exported to PDF')
-}
+const { onExport, onPrint } = useSectionExport('Balance sheet', () => ({
+  key: 'balance',
+  asOf: asOf.value
+}))
 </script>

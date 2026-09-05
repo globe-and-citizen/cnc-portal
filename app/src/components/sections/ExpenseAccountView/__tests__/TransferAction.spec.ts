@@ -6,13 +6,19 @@ import { readContract, estimateGas } from '@wagmi/core'
 import { recoverTypedDataAddress } from 'viem'
 import TransferAction from '../TransferAction.vue'
 import {
+  makeTokenBalance,
   mockERC20Writes,
   mockExpenseAccountWrites,
-  mockGetTokens,
   mockTeamStore
 } from '@/tests/mocks'
+import { SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
+import type { TokenBalance } from '@/types'
 
-const DEFAULT_TOKENS = [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }]
+const usdcConfig = SUPPORTED_TOKENS.find((token) => token.id === 'usdc')!
+const defaultBalances = (): TokenBalance[] => [
+  makeTokenBalance({ amount: 100 }),
+  makeTokenBalance({ token: usdcConfig, amount: 100, usdPrice: 1 })
+]
 
 // `classifyError` is left un-mocked so these tests assert the message the user
 // actually sees, rather than a stand-in string.
@@ -20,8 +26,8 @@ const DEFAULT_TOKENS = [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }]
 // the address arrives with the team query, so the argument has to stay a live
 // source rather than a value read once during setup.
 const contractBalanceState = {
-  data: ref<{ balances: unknown[]; total: undefined } | undefined>({
-    balances: [],
+  data: ref<{ balances: TokenBalance[]; total: undefined } | undefined>({
+    balances: defaultBalances(),
     total: undefined
   }),
   isLoading: ref(false),
@@ -58,7 +64,8 @@ const NATIVE_BUDGET = {
 }
 const ERC20_BUDGET = {
   ...NATIVE_BUDGET,
-  tokenAddress: '0x0000000000000000000000000000000000000001'
+  tokenAddress: USDC_ADDRESS,
+  amount: 100
 }
 
 describe('TransferAction.vue', () => {
@@ -97,7 +104,7 @@ describe('TransferAction.vue', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    mockGetTokens.mockReturnValue(DEFAULT_TOKENS)
+    contractBalanceState.data.value = { balances: defaultBalances(), total: undefined }
     contractBalanceState.isLoading.value = false
     contractBalanceState.error.value = null
     vi.mocked(estimateGas).mockResolvedValue(21000n)
@@ -130,7 +137,7 @@ describe('TransferAction.vue', () => {
     })
 
     it('explains itself while the balance is still loading', async () => {
-      mockGetTokens.mockReturnValue([])
+      contractBalanceState.data.value = { balances: [], total: undefined }
       contractBalanceState.isLoading.value = true
 
       const wrapper = createComponent()
@@ -141,7 +148,7 @@ describe('TransferAction.vue', () => {
     })
 
     it('reports a failed balance read instead of an empty dialog', async () => {
-      mockGetTokens.mockReturnValue([])
+      contractBalanceState.data.value = { balances: [], total: undefined }
       contractBalanceState.error.value = new Error('rpc down')
 
       const wrapper = createComponent()
@@ -163,7 +170,7 @@ describe('TransferAction.vue', () => {
     })
 
     it('omits the balance label entirely when there is no token to describe', async () => {
-      mockGetTokens.mockReturnValue([])
+      contractBalanceState.data.value = { balances: [], total: undefined }
       contractBalanceState.isLoading.value = true
 
       const wrapper = createComponent()

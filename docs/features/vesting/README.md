@@ -1,8 +1,11 @@
 # Vesting — User Stories
 
-**Scope:** The Vesting V2 journey exposed by the portal
+**Scope:** The Vesting V2 journey exposed by the portal, from creating a schedule to seeing it in the company books
 
 **Last reviewed:** 2026-08-21
+
+**As a** team owner **I want to** create and manage a vesting schedule for SHERs to a team member **so that** I can incentivize and retain
+my team members.
 
 These stories describe the Vesting V2 journey exposed by the portal. Legacy Vesting versions are outside this feature scope. Its acceptance
 criteria follow the [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
@@ -17,6 +20,8 @@ criteria follow the [feature documentation review contract](../../platform/featu
 - The portal reads and writes only the current Vesting V2 contract selected for the team.
 - Portal boundaries are selected in local time with minute precision, shown in UTC for verification, and submitted on-chain with zero
   seconds.
+- A schedule is recorded in the company books as a **restricted-stock grant**: the whole award is committed to equity when the schedule is
+  defined, released shares become issued equity, and a stop cancels the unvested remainder. Vesting never affects the company profit.
 
 ## Lifecycle
 
@@ -38,17 +43,23 @@ stateDiagram-v2
       UI status only: the on-chain schedule
       remains active after full release.
     end note
+
+    note left of Cancelled
+      The books keep the released shares
+      and cancel the unvested remainder.
+    end note
 ```
 
 ## Status Overview
 
-| User Story     | Title                                    | Actor          | Status  |
-| -------------- | ---------------------------------------- | -------------- | ------- |
-| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done |
-| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | ✅ Done |
-| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done |
-| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done |
-| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done |
+| User Story     | Title                                    | Actor          | Status        |
+| -------------- | ---------------------------------------- | -------------- | ------------- |
+| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done       |
+| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | ✅ Done       |
+| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done       |
+| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done       |
+| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done       |
+| US-VESTING-006 | See vesting in the company books         | Member / Owner | 🧪 Validation |
 
 ## US-VESTING-001: Create a Minute-Precise Vesting Schedule
 
@@ -195,6 +206,37 @@ stateDiagram-v2
 
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 
+## US-VESTING-006: See Vesting in the Company Books
+
+**As a** team member or owner\
+**I want to** see a vesting schedule recorded in the company accounting from the day it is defined\
+**So that** the share compensation the company has committed to is visible without waiting for shares to be claimed
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] Creating a schedule records its full promised award in the company books on the day it is defined.
+- [x] Releasing shares moves the released amount from promised shares to issued shares in the books.
+- [x] Stopping a schedule records the cancellation of its unvested remainder.
+- [x] Creating, releasing, and stopping a schedule each remain visible as their own accounting entry.
+
+#### Business Rules
+
+- [x] Share vesting never affects the company profit: no vesting entry reaches the income statement.
+- [x] A promised award leaves total equity unchanged until, and after, its shares are issued.
+- [x] Issued shares are recorded only when shares are actually minted, so the books reconcile to the on-chain share supply.
+- [x] One release is recorded once, even though the release also mints through the share contract.
+- [x] A stop cancels only its own schedule remainder, never another schedule held by the same member.
+
+#### Edge & Error Cases
+
+- [x] Stopping a schedule before anything vests cancels the whole award and leaves no promised shares behind.
+- [x] Stopping a fully released schedule cancels nothing and leaves the released shares issued.
+- [x] A schedule never released keeps its whole award recorded as promised, never as issued shares.
+
+**Dependencies:** US-VESTING-001, US-VESTING-003, US-VESTING-004
+
 ## UI/UX Notes
 
 - Schedule creation review includes the beneficiary, grant, boundaries, cliff effect, and first claimable amount.
@@ -204,26 +246,34 @@ stateDiagram-v2
 
 ## Human Validation
 
-Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product review. Checked criteria record the verified
-implementation; this validation records the product review.
+Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product review, for `US-VESTING-001` through
+`US-VESTING-005`. Checked criteria record the verified implementation; this validation records the product review. `US-VESTING-006`
+(accounting) is implemented and covered by automated evidence, and awaits its product review.
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
+
+- [Vesting components](../../../app/src/components/sections/VestingView/)
 - [Vesting page](../../../app/src/views/team/%5Bid%5D/VestingView.vue)
 - [Schedule overview and actions](../../../app/src/components/sections/VestingView/VestingFlow.vue)
 - [V2 schedule read model](../../../app/src/composables/vesting/useVestingSchedules.ts)
-- [V2 schedule calculations](../../../app/src/utils/vestingScheduleUtil.ts)
+- [V2 schedule calculations](../../../app/src/utils/vesting/schedule.ts)
 - [Release and Stop review](../../../app/src/components/sections/VestingView/VestingActionReviewModal.vue)
 - [Schedule creation, validation, and submission](../../../app/src/components/sections/VestingView/forms/)
 - [Vesting beneficiary selection](../../../app/src/components/sections/VestingView/forms/VestingGrantDetails.vue)
 - [Frontend vesting reads](../../../app/src/composables/vesting/reads.ts)
 - [Frontend vesting writes](../../../app/src/composables/vesting/writes.ts)
 - [Vesting event feed for accounting (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts)
+- [Vesting accounting entries](../../../app/src/utils/accounting/mappers/vesting.ts) and
+  [vesting accounting tests](../../../app/src/utils/accounting/__tests__/vesting.spec.ts)
 - [Current Vesting contract](../../../contract/contracts/Vesting.sol)
 - [Contract behaviour tests](../../../contract/test/Vesting.spec.ts)
 
 ## Related Documentation
 
 - [Vesting V2 contract behaviour](../../contracts/features/vesting/README.md)
+- [Share Vesting Accounting — Restricted-Stock grant](../accounting/vesting-accounting-restricted-stock.md)
+- [Accounting — User Stories](../accounting/README.md)
 - [Shared member-selection implementation](../../implementation/member-selection/README.md)
 - [Contract features index](../../contracts/features/README.md)

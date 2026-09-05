@@ -54,9 +54,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { uploadFileApi } from '@/api'
+import { useUploadFileMutation } from '@/queries/file.queries'
+import { createFileSchema } from '@/types/upload'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg']
 const ACCEPTED_FILE_TYPES = ALLOWED_IMAGE_EXTENSIONS.join(',')
 
@@ -73,22 +73,28 @@ const ALLOWED_IMAGE_MIMETYPES = [
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const imageUrl = defineModel<string>({ default: '' })
-const isUploading = ref(false)
-const errorMessage = ref('')
+const validationError = ref('')
 const toast = useToast()
 
-// Helper: Detect if file is image (MIME type + extension fallback)
-const isImageFile = (file: File): boolean => {
-  // First check MIME type
-  if (ALLOWED_IMAGE_MIMETYPES.includes(file.type)) {
-    return true
-  }
+const { mutate: uploadFile, isPending: isUploading, error: uploadError } = useUploadFileMutation()
 
-  // Fallback: check file extension (handles cases where MIME type is missing or wrong)
-  const fileName = file.name.toLowerCase()
-  const extension = '.' + fileName.split('.').pop()
-  return ALLOWED_IMAGE_EXTENSIONS.includes(extension)
-}
+// validationError covers synchronous guard rails (type / size); uploadError is
+// the reactive mutation failure. Either drives the same UAlert.
+const errorMessage = computed(() => {
+  if (validationError.value) return validationError.value
+  const err = uploadError.value
+  if (!err) return ''
+  return err instanceof Error ? err.message : 'Failed to upload image'
+})
+
+// Image-only schema from the shared factory (single source of the
+// instanceof + type/size refinement shape).
+const imageFileSchema = createFileSchema({
+  allowedExtensions: ALLOWED_IMAGE_EXTENSIONS,
+  allowedMimeTypes: ALLOWED_IMAGE_MIMETYPES,
+  typeErrorMessage: 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed',
+  sizeErrorMessage: 'Image must be 10 MB or smaller'
+})
 
 // Computed style for upload box - reactive, no DOM manipulation needed
 const uploadBoxStyle = computed(() => ({
@@ -97,54 +103,27 @@ const uploadBoxStyle = computed(() => ({
   backgroundPosition: 'center'
 }))
 
-const onFileChange = async (event: Event) => {
+const onFileChange = (event: Event) => {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
 
-  errorMessage.value = ''
+  validationError.value = ''
 
-  if (!isImageFile(file)) {
-    errorMessage.value = 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed'
-    toast.add({
-      title: 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed',
-      color: 'error'
-    })
+  const result = imageFileSchema.safeParse(file)
+  if (!result.success) {
+    validationError.value = result.error.issues[0]?.message ?? 'Invalid image'
+    toast.add({ title: validationError.value, color: 'error' })
     input.value = ''
     return
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    errorMessage.value = 'Image must be 10 MB or smaller'
-    toast.add({ title: 'Image must be 10 MB or smaller', color: 'error' })
-    input.value = ''
-    return
-  }
-
-  await uploadSelectedFile(file)
-  input.value = ''
-}
-
-const uploadSelectedFile = async (file: File) => {
-  isUploading.value = true
-  errorMessage.value = ''
-
-  try {
-    const responseBody = await uploadFileApi([file])
-
-    const uploadedFileUrl = responseBody?.files?.[0]?.fileUrl
-    if (!uploadedFileUrl) {
-      throw new Error('Upload response missing fileUrl')
+  uploadFile(result.data, {
+    onSuccess: (uploadedFileUrl) => {
+      imageUrl.value = uploadedFileUrl
+      toast.add({ title: 'Image uploaded', color: 'success' })
     }
-
-    imageUrl.value = uploadedFileUrl
-    toast.add({ title: 'Image uploaded', color: 'success' })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to upload image'
-    errorMessage.value = message
-    toast.add({ title: message, color: 'error' })
-  } finally {
-    isUploading.value = false
-  }
+  })
+  input.value = ''
 }
 </script>

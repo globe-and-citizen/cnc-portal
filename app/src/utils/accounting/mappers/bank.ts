@@ -4,8 +4,7 @@
  * Coverage (spec §4):
  * - `Deposited` / `TokenDeposited` (cash in):
  *   - from an internal pocket → **internal funding move** (Dr Cash — Bank · Cr that pocket)
- *   - from a founder           → **UC-BANK-01** (Dr Cash — Bank · Cr Owner Capital)
- *   - from anyone else (client)→ **UC-BANK-02** (Dr Cash — Bank · Cr Service Revenue)
+ *   - from anyone external     → **UC-BANK-02** (Dr Cash — Bank · Cr Service Revenue)
  * - `Transfer` / `TokenTransfer` (cash out):
  *   - to an internal pocket → **UC-BANK-03** funding move (Dr that pocket · Cr Cash — Bank)
  *   - to anyone else        → unclassified outflow, flagged `needs-off-chain-data`
@@ -19,8 +18,8 @@ import type {
   BankTokenDepositRow,
   BankTransferRow,
   BankTokenTransferRow
-} from '@/types/ponder/bank'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+} from '@/types/contract-events/bank'
+import { makeEntry, sourceOperationIdOf, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import { atDate, type MapperContext } from './context'
 import { applyClassification } from './applyClassification'
@@ -48,11 +47,11 @@ function mapDeposit(
 ): LedgerEntry {
   const amountUsd = ctx.toUsd(BigInt(row.amount), ctx.tokenIdOf(token), atDate(row.timestamp))
   const sourcePocket = ctx.pocketOf(row.depositor)
-  const isFounder = ctx.founderAddresses.has(row.depositor as `0x${string}`)
 
   const inferred = sourcePocket
     ? makeEntry({
         id: row.id,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'INTERNAL',
         debit: BANK,
@@ -68,19 +67,23 @@ function mapDeposit(
       })
     : makeEntry({
         id: row.id,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
-        useCase: isFounder ? 'UC-BANK-01' : 'UC-BANK-02',
+        useCase: 'UC-BANK-02',
         debit: BANK,
         debitInstance: row.contractAddress,
-        credit: isFounder ? 'Owner Capital' : 'Service Revenue',
+        credit: 'Service Revenue',
         amountUsd,
         token: ctx.tokenIdOf(token),
         rawAmount: row.amount,
         counterparty: row.depositor,
-        memo: isFounder ? 'Founder deposit into Bank' : 'Client payment into Bank'
+        memo: 'Direct deposit into Bank'
       })
 
-  return applyClassification(inferred, 'in', BANK, ctx)
+  // A deposit is determined by its source evidence: external cash is Service
+  // Revenue and a CNC-owned source is an internal move. A legacy category must
+  // not replace either journal account.
+  return inferred
 }
 
 /** Map a single Bank transfer-out (native or token) to its ledger entry. */
@@ -96,6 +99,7 @@ function mapTransfer(
   const inferred = destPocket
     ? makeEntry({
         id: row.id,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'UC-BANK-03',
         debit: destPocket,
@@ -113,6 +117,7 @@ function mapTransfer(
       // flagged so an off-chain / manual review can reclassify it (spec §6).
       makeEntry({
         id: row.id,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'CASH-OUT',
         debit: 'Operating Expense',
@@ -127,7 +132,7 @@ function mapTransfer(
         enrichment: 'needs-off-chain-data'
       })
 
-  return applyClassification(inferred, 'out', BANK, ctx)
+  return inferred.internal ? inferred : applyClassification(inferred, 'out', BANK, ctx)
 }
 
 /** Map every indexed Bank event in `input` to ledger entries. */

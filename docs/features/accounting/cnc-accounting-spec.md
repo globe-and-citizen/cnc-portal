@@ -4,7 +4,7 @@ This document defines the **scope** and **spec** for CNC accounting: treating th
 (general ledger → income statement → balance sheet) from data **already available** on-chain and in the portal, reusing the Sprint 15
 pipeline. The shared `FeeCollector` is the CNC protocol's global treasury: each team pays a usage fee into it when using CNC services.
 
-It builds on the [money-flow catalogue](./money-flow-catalogue.md), which establishes the chart of accounts and the use-case → journal-entry
+It builds on the [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md), which establishes the current use-case → journal-entry
 mapping. This spec answers the next question: **which concrete data sources we already have feed those entries, and what is still missing.**
 
 ---
@@ -36,7 +36,7 @@ on-chain contract activity and portal records — with no new data collection re
 | Per-team vs. global | **Both layers** — team activity is attributed per team, while the shared `FeeCollector` is global. A team-to-CNC usage fee is a cross-entity charge, not an internal move within the team.                                                                                                                                     |
 | Currency            | USD reporting currency. **POL** at its current live price (CoinGecko); **SHER** at the router multiplier — a withdrawal frozen at its own date, a pending accrual floating at the current rate; **USDC/USDT** pegged $1. See [catalogue → Currency & valuation](./money-flow-catalogue.md#currency--valuation-rate-of-record). |
 | Period              | A reporting period (the worked example uses 1–28 March 2026).                                                                                                                                                                                                                                                                  |
-| Basis               | Payroll = **accrual** (`Wage Payable` / `SHERS To Be Issued` + `Deferred SHER Compensation`); share vesting = **settlement** (booked at the release/mint, off the income statement — see §4); everything else = **cash basis**.                                                                                                |
+| Basis               | Payroll = **accrual** (`Wage Payable` / `SHERS To Be Issued` + `Deferred SHER Compensation`); share vesting = **restricted-stock grant** (the whole award booked when the schedule is defined, off the income statement — see §4); everything else = **cash basis**.                                                           |
 
 ---
 
@@ -67,10 +67,10 @@ Concretely, the existing `buildLedger` / `LedgerEntry` / `AccountingSummary` mod
 `AccountingIncomeStatement`, `AccountingBalanceSheet`) are the target rendering layer. Phase 1 work is to:
 
 1. Add **CNC feeds** (contract events + the portal DB rows) alongside the existing transfer proxy.
-2. Replace the Polymarket `LedgerCategory` set with the CNC **use-case categories** from the money-flow catalogue (`UC-BANK-01…`,
+2. Replace the Polymarket `LedgerCategory` set with the CNC **use-case categories** from the Journal Entry Catalogue (`UC-BANK-02`,
    `UC-CASH-02/03`, `UC-EXP-01`, `UC-INV-01`, `UC-SDR-01`, team funding moves, and cross-entity fee payments).
-3. Map each entry to its **debit/credit accounts** per [catalogue §5](./money-flow-catalogue.md) and let the existing trial-balance / IS /
-   BS components roll them up.
+3. Map each entry to its **debit/credit accounts** per the [Journal Entry Catalogue](./journal-entry-catalogue.md) and let the existing
+   trial-balance / IS / BS components roll them up.
 
 ---
 
@@ -85,20 +85,20 @@ Source of truth = the chain; the dashboard already proxies transfer history via
 `[server/api/polygonscan/transfers.get.ts](../../../dashboard/server/api/polygonscan/transfers.get.ts)` (Etherscan API V2, native + ERC-20).
 Contract addresses come from `app/src/artifacts/deployed_addresses/` and the `TeamContract` table.
 
-| Contract                   | Key events available                                                                        | What it tells the ledger                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| **Bank**                   | `Deposited`, `TokenDeposited`, `Transfer`, `TokenTransfer`, `DividendDistributionTriggered` | Deposits in, transfers out (+ fee), dividend funding, internal funding of payroll/expense |
-| **FeeCollector**           | `FeePaid`, `Withdrawn`, `TokenWithdrawn`                                                    | Fees paid by team contracts into the global CNC treasury, and fee-treasury withdrawals    |
-| **CashRemunerationEIP712** | `Deposited`, `Withdraw`, `WithdrawToken`, `OwnerTreasuryWithdraw`\*                         | Payroll funding, wage withdrawals (cash / token / SHER mint)                              |
-| **ExpenseAccountEIP712**   | `Deposited`, `TokenDeposited`, `Transfer`, `TokenTransfer`, `OwnerTreasuryWithdraw`\*       | Expense-budget funding and approved payouts                                               |
-| **InvestorV1**             | `Minted`, `DividendDistributed`, `DividendPaid`                                             | SHER mints (3 paths), pro-rata dividend distribution                                      |
-| **SafeDepositRouter**      | `Deposited`                                                                                 | Invest → SHER mint (cash lands in Safe)                                                   |
-| **Vesting**                | `VestingCreated`, `TokensReleased`, `VestingStopped`                                        | Share vesting: grant (promise), release (mint of vested shares), stop (drop the rest)     |
+| Contract                   | Key events available                                                                        | What it tells the ledger                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Bank**                   | `Deposited`, `TokenDeposited`, `Transfer`, `TokenTransfer`, `DividendDistributionTriggered` | Deposits in, transfers out (+ fee), dividend funding, internal funding of payroll/expense                      |
+| **FeeCollector**           | `FeePaid`, `Withdrawn`, `TokenWithdrawn`                                                    | Fees paid by team contracts into the global CNC treasury, and fee-treasury withdrawals                         |
+| **CashRemunerationEIP712** | `Deposited`, `Withdraw`, `WithdrawToken`, `OwnerTreasuryWithdraw`\*                         | Payroll funding, wage withdrawals (cash / token / SHER mint)                                                   |
+| **ExpenseAccountEIP712**   | `Deposited`, `TokenDeposited`, `Transfer`, `TokenTransfer`, `OwnerTreasuryWithdraw`\*       | Expense-budget funding and approved payouts                                                                    |
+| **InvestorV1**             | `Minted`, `DividendDistributed`, `DividendPaid`                                             | SHER mints (3 paths), pro-rata dividend distribution                                                           |
+| **SafeDepositRouter**      | `Deposited`                                                                                 | Invest → SHER mint (cash lands in Safe)                                                                        |
+| **Vesting**                | `VestingCreated`, `TokensReleased`, `VestingStopped`                                        | Share vesting: grant (whole award booked), release (mint of vested shares), stop (unvested remainder reversed) |
 
 > The `**Minted` event** alone is ambiguous (capital raise vs. wage-in-shares vs. direct mint) — it must be correlated with `Deposited`
 > (SafeDepositRouter) or `WithdrawToken` (CashRemuneration) to pick the right journal entry, per
-> [catalogue §5.4](./money-flow-catalogue.md). A `Minted` with neither is **Default D** — a direct mint booked **Dr SHERS To Be Issued · Cr
-> Investor Equity\*\* at the SHER rate.
+> [Journal Entry Catalogue](./journal-entry-catalogue.md#sher-issuance-and-vesting). A `Minted` with neither is **Default D** — a direct
+> mint booked **Dr SHERS To Be Issued · Cr Investor Equity\*\* at the SHER rate.
 
 ### 3.2 Portal database (accrual + classification context)
 
@@ -124,40 +124,40 @@ The chain records _when money moved_; the portal records _what it was for_ and t
 Each available source maps to a journal entry (catalogue §5) and thus to a statement line. **IS** = income statement, **BS** = balance
 sheet.
 
-| Source (event / record)                                          | Use case   | Journal entry                                                                                            | Statement line(s)                                                      |
-| ---------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Bank `Deposited` / `TokenDeposited` from a founder (no shares)   | UC-BANK-01 | Dr Cash — Bank · Cr Owner Capital                                                                        | BS: Cash ↑, Owner Capital ↑                                            |
-| Bank `Deposited` / `TokenDeposited` from a client                | UC-BANK-02 | Dr Cash — Bank · Cr Service Revenue                                                                      | IS: Service Revenue; BS: Cash ↑                                        |
-| SafeDepositRouter `Deposited` + InvestorV1 `Minted`              | UC-SDR-01  | Dr Cash — Safe · Cr Investor Equity                                                                      | BS: Cash ↑, Investor Equity ↑                                          |
-| Bank `Transfer` / `TokenTransfer` (fund payroll/expense)         | UC-BANK-03 | Dr Cash — Payroll/Expense · Cr Cash — Bank                                                               | BS: internal team cash move (no IS impact)                             |
-| WeeklyClaim signed (portal)                                      | UC-CASH-02 | Dr Payroll Expense · Cr Wage Payable (cash) · Dr Deferred SHER Compensation · Cr SHERS To Be Issued      | IS: Payroll Expense (cash only); BS: equity ↑↓ (contra-equity offsets) |
-| CashRemuneration `Withdraw` / `WithdrawToken` (+ `Minted`)       | UC-CASH-03 | Dr Wage Payable · Cr Cash — Payroll · Dr SHERS To Be Issued · Cr Investor Equity                         | BS: liability settled, Cash ↓, Investor Equity ↑                       |
-| ExpenseAccount `Transfer` / `TokenTransfer` (+ Expense record)   | UC-EXP-01  | Dr Operating Expense · Cr Cash — Expense                                                                 | IS: Operating Expense; BS: Cash ↓                                      |
-| Bank `DividendDistributionTriggered` / InvestorV1 `DividendPaid` | UC-INV-01  | Dr Dividend Expense · Cr Cash — Bank                                                                     | IS: Dividend Expense; BS: Cash ↓                                       |
-| InvestorV1 `Minted` alone (direct mint)                          | Default D  | Dr SHERS To Be Issued · Cr Investor Equity (at the SHER rate, frozen at mint date)                       | BS: Investor Equity ↑ (unbacked mint drives SHERS To Be Issued contra) |
-| Vesting `VestingCreated` (grant)                                 | UC-VEST-01 | Memo only — records the promised share count, no monetary legs                                           | None (share-count note; no IS/BS impact)                               |
-| Vesting `TokensReleased` (release / stop) + InvestorV1 `Minted`  | UC-VEST-02 | Dr Deferred SHER Compensation · Cr Investor Equity (minted amount, at the SHER rate on the release date) | BS: equity ↑↓ (contra-equity offsets, net unchanged); no IS impact     |
-| Vesting `VestingStopped` (stop)                                  | UC-VEST-03 | Memo only — the unvested remainder is dropped, never minted, so nothing was booked to reverse            | None (share-count note; no IS/BS impact)                               |
-| Bank transfer + FeeCollector `FeePaid` (team usage fee)          | UC-FEE-01  | Team: Dr CNC Usage Fee Expense · Cr Cash — Bank; CNC: Dr Cash — FeeCollector · Cr Protocol Fee Revenue   | Team IS: expense; CNC IS: protocol-fee revenue; both BS: cash movement |
+| Source (event / record)                                          | Use case   | Journal entry                                                                                          | Statement line(s)                                                      |
+| ---------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| Bank `Deposited` / `TokenDeposited` from any external address    | UC-BANK-02 | Dr Cash — Bank · Cr Service Revenue                                                                    | IS: Service Revenue; BS: Cash ↑                                        |
+| SafeDepositRouter `Deposited` + InvestorV1 `Minted`              | UC-SDR-01  | Dr Cash — Safe · Cr Investor Equity                                                                    | BS: Cash ↑, Investor Equity ↑                                          |
+| Bank `Transfer` / `TokenTransfer` (fund payroll/expense)         | UC-BANK-03 | Dr Cash — Payroll/Expense · Cr Cash — Bank                                                             | BS: internal team cash move (no IS impact)                             |
+| WeeklyClaim signed (portal)                                      | UC-CASH-02 | Dr Payroll Expense · Cr Wage Payable (cash) · Dr Deferred SHER Compensation · Cr SHERS To Be Issued    | IS: Payroll Expense (cash only); BS: equity ↑↓ (contra-equity offsets) |
+| CashRemuneration `Withdraw` / `WithdrawToken` (+ `Minted`)       | UC-CASH-03 | Dr Wage Payable · Cr Cash — Payroll · Dr SHERS To Be Issued · Cr Investor Equity                       | BS: liability settled, Cash ↓, Investor Equity ↑                       |
+| ExpenseAccount `Transfer` / `TokenTransfer` (+ Expense record)   | UC-EXP-01  | Dr Operating Expense · Cr Cash — Expense                                                               | IS: Operating Expense; BS: Cash ↓                                      |
+| Bank `DividendDistributionTriggered` / InvestorV1 `DividendPaid` | UC-INV-01  | Dr Dividend Expense · Cr Cash — Bank                                                                   | IS: Dividend Expense; BS: Cash ↓                                       |
+| InvestorV1 `Minted` alone (direct mint)                          | Default D  | Dr SHERS To Be Issued · Cr Investor Equity (at the SHER rate, frozen at mint date)                     | BS: Investor Equity ↑ (unbacked mint drives SHERS To Be Issued contra) |
+| Vesting `VestingCreated` (grant)                                 | UC-VEST-01 | Dr Deferred SHER Compensation · Cr SHERS To Be Issued (full promised award, at the SHER rate)          | BS: equity ↑↓ (contra-equity offsets, net unchanged); no IS impact     |
+| Vesting `TokensReleased` (release / stop) + InvestorV1 `Minted`  | UC-VEST-02 | Dr SHERS To Be Issued · Cr Investor Equity (minted amount, at the SHER rate on the release date)       | BS: promised shares become issued; no IS impact                        |
+| Vesting `VestingStopped` (stop)                                  | UC-VEST-03 | Dr SHERS To Be Issued · Cr Deferred SHER Compensation (unvested remainder of the grant, reversed)      | BS: the forfeited part of the grant is unwound; no IS impact           |
+| Bank transfer + FeeCollector `FeePaid` (team usage fee)          | UC-FEE-01  | Team: Dr CNC Usage Fee Expense · Cr Cash — Bank; CNC: Dr Cash — FeeCollector · Cr Protocol Fee Revenue | Team IS: expense; CNC IS: protocol-fee revenue; both BS: cash movement |
 
 > **Trading lines** (`Trading account`, `Trading Gain`, `Trading Loss`, UC-TRD-) are in the chart of accounts and the worked example, but
 > their live feed is the deferred Polymarket/GC:Trader integration — see §1. In Phase 1 they are only exercised by manual / dogfood entries,
 > not an automated source.
 
-> **Share vesting is settlement-basis and off the income statement.** Unlike the SHER wage path (accrued when a claim is signed), a vesting
-> grant is booked **only at the release/mint** — `UC-VEST-02`, `Dr Deferred SHER Compensation · Cr Investor Equity` — capped to what has
-> actually vested. This collapses the two SHER-wage legs (accrual + issuance) into one because a release vests-and-mints atomically, so the
-> shares issued (`Investor Equity` ↑) are neutralised by the contra-equity (`Deferred SHER Compensation` ↑): **net book equity is unchanged
-> and nothing hits the income statement**. The grant (`UC-VEST-01`) and stop (`UC-VEST-03`) are memo-only. The `Minted` event in the **same
-> transaction** as a `TokensReleased` is recognised as **backed** and _not_ re-booked as a Default-D direct mint (which would double-count
-> the equity). See catalogue **§5.6** and the SBC background in [remuneration-en-actions-sbc.md](./remuneration-en-actions-sbc.md).
+> **Share vesting is a restricted-stock grant, off the income statement.** The **whole award** is booked the moment the schedule is defined
+> (`UC-VEST-01`, `Dr Deferred SHER Compensation · Cr SHERS To Be Issued`), exactly like the SHER wage accrual but for the full promise. The
+> contract mints nothing at grant, so `Investor Equity` — which must equal the on-chain SHER supply — is credited only at a real mint
+> (`UC-VEST-02`), and a stop reverses the unvested remainder of the grant (`UC-VEST-03`). The contra-equity offsets the promise from day
+> one, so **net book equity is unchanged and nothing hits the income statement**. The `Minted` event in the **same transaction** as a
+> `TokensReleased` is recognised as **backed** and _not_ re-booked as a Default-D direct mint (which would double-count the equity). See
+> catalogue **§5.6** and the full treatment in
+> [Share Vesting Accounting — Restricted-Stock grant](./vesting-accounting-restricted-stock.md).
 
 > **Manual classification overrides the inference (issue #2457).** Every Bank/Safe deposit and withdrawal above is booked from address
 > inference — the **visible fallback**. A team owner can reclassify a transaction into a supported accounting category (revenue; an expense
-> — operating, payroll, interest or dividend; owner capital; a shareholder loan; or an internal transfer), persisted against its
-> `${txHash}-${logIndex}` identity and shared across the team; the engine re-resolves the two balanced legs deterministically. A
-> guaranteed-internal pocket-to-pocket move can never be reclassified into income or expense. Journal entries per category, and the
-> invariant, are in catalogue **§5.5**.
+> — operating, payroll, interest or dividend; owner capital; or an internal transfer), persisted against its `${txHash}-${logIndex}`
+> identity and shared across the team; the engine re-resolves the two balanced legs deterministically. A guaranteed-internal
+> pocket-to-pocket move can never be reclassified into income or expense. Journal entries per category, and the invariant, are in catalogue
+> **§5.5**.
 
 ---
 

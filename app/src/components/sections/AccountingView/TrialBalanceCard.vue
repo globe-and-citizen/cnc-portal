@@ -49,7 +49,7 @@
                 {{ row.label }}
               </button>
               <UTooltip
-                v-if="row.split && !row.isPrimaryInstance"
+                v-if="row.split && row.account?.resolution === 'resolved' && !row.isPrimaryInstance"
                 :text="REDEPLOY_HINT"
                 :data-test="`redeploy-hint-${row.label}`"
               >
@@ -112,9 +112,8 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
-      :balance-account="drilldownBalanceAccount"
-      :opening="drilldownOpening"
-      :closing="drilldownClosing"
+      :all-entries="accounting.journal.value"
+      :balance="drilldownBalance"
       columns-storage-key="cnc-accounting-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
@@ -122,29 +121,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import type { TableColumn, TableRow } from '@nuxt/ui'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
 import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
-import { defaultValueForMode } from '@/utils/datePicker'
+import { defaultValueForMode } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
+import type { Account } from '@/utils/accounting/accountRegistry'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
-import { exportFilename } from '@/utils/accounting/exportNaming'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 interface TrialTableRow {
-  account: string
-  /** Display name — differs from `account` only for a redeployed pocket's later instances (` #2`). */
+  /** Canonical concrete account. Absent only on the total row. */
+  account?: Account
+  /** Display name — differentiates later deployments and unresolved accounts. */
   label: string
-  /** Pocket contract instance this row rolls up, when split across redeploys. */
-  instance?: string
   /** True when this account is split across several instances (a redeploy) — shows the hint. */
   split?: boolean
-  /** True on the primary instance row — it also carries the pocket's un-instanced legs. */
+  /** True on the earliest resolved deployment row. */
   isPrimaryInstance?: boolean
   nature: string
   natureClass: string
@@ -164,15 +162,14 @@ const REDEPLOY_HINT =
 // balance is rebuilt from the slice of entries up to this date.
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
-const acc = useAccountingContext()
+const accounting = useAccountingContext()
 const trial = computed(() =>
-  presentTrial(buildGeneralLedger(filterByPeriod(acc.entries.value, null, asOf.value)))
+  presentTrial(buildGeneralLedger(filterByPeriod(accounting.journal.value, null, asOf.value)))
 )
 
 const tableRows = computed<TrialTableRow[]>(() => [
-  ...trial.value.rows.map((r) => ({ ...r, isTotal: false })),
+  ...trial.value.rows.map((row) => ({ ...row, isTotal: false })),
   {
-    account: 'Total',
     label: 'Total',
     split: false,
     nature: '',
@@ -186,7 +183,7 @@ const tableRows = computed<TrialTableRow[]>(() => [
 ])
 
 const columns: TableColumn<TrialTableRow>[] = [
-  { accessorKey: 'account', header: 'Account' },
+  { id: 'account', accessorFn: (row) => row.label, header: 'Account' },
   { accessorKey: 'nature', header: 'Nature', meta: { class: { th: 'w-[24%]' } } },
   { accessorKey: 'dr', header: 'Debit', meta: { class: { th: 'w-[13%]' } } },
   { accessorKey: 'cr', header: 'Credit', meta: { class: { th: 'w-[13%]' } } }
@@ -205,45 +202,72 @@ function onRowSelect(_event: Event, row: TableRow<TrialTableRow>): void {
   if (!row.original.isTotal) openDrilldown(row.original)
 }
 
-const { exportPdf, exportExcel } = useAccountingExport()
-
 // Per-line drill-down — over the same as-of slice the trial balance is built from.
 const {
   open: drilldownOpen,
   selectedLine: drilldownLine,
-  balanceAccount: drilldownBalanceAccount,
-  opening: drilldownOpening,
-  closing: drilldownClosing,
+  balance: drilldownBalance,
   drilldownEntries,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(acc.entries, () => ({ from: null, to: asOf.value }))
+} = useLedgerDrilldown(accounting.journal, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(row: TrialTableRow): void {
+  if (!row.account) return
   // The line's balance sits in whichever column isn't the em-dash placeholder.
   const value = row.dr === '—' ? row.cr : row.dr
-  // A split-pocket row scopes its ledger to that one contract instance (and, on the
-  // primary row, the pocket's un-instanced legs) so each deployment shows only its
-  // own events; a plain row drills the whole account as before.
-  if (row.instance) {
-    openFor(row.account, value, row.label, {
-      instance: row.instance,
-      includeBlank: row.isPrimaryInstance
-    })
-  } else {
-    openFor(row.account, value)
-  }
+  // The concrete Account preserves a resolved deployment or the explicit
+  // unresolved account without reconstructing scope from a contract address.
+  openFor(row.account, value, row.label)
 }
+
+const route = useRoute()
+const router = useRouter()
+
+/**
+ * Auto-open the drill-down for an account arrived at from the General Ledger
+ * (`?accountId=…` with a family/contract fallback for older links). We hold off
+ * until the journal is ready, then strip the query so closing the modal is final
+ * and a reload does not reopen it. An account with no matching row still drills
+ * directly by its chart family.
+ */
+watch(
+  [
+    () => route.query.account,
+    () => route.query.instance,
+    () => route.query.accountId,
+    () => accounting.journal.value.length
+  ],
+  ([account, instance, accountId, entryCount]) => {
+    if ((typeof account !== 'string' || !account) && typeof accountId !== 'string') return
+    if (entryCount === 0) return
+    const wanted = typeof instance === 'string' ? instance.toLowerCase() : null
+    const row = tableRows.value.find(
+      (candidate) =>
+        !candidate.isTotal &&
+        (typeof accountId === 'string'
+          ? candidate.account?.id === accountId
+          : candidate.account?.family.name === account &&
+            (!wanted ||
+              candidate.account?.contractAddress?.toLowerCase() === wanted ||
+              !candidate.account?.contractAddress))
+    )
+    if (row) openDrilldown(row)
+    else if (typeof account === 'string')
+      openFor(account as import('@/utils/accounting/chartOfAccounts').AccountName, '')
+    const query = { ...route.query }
+    delete query.account
+    delete query.instance
+    delete query.accountId
+    router.replace({ query })
+  },
+  { immediate: true }
+)
 
 // Export the current, as-of-filtered trial balance. The filename carries the
 // "as of" date so a stack of exports stays distinguishable.
-const spec = (): SectionSpec => ({ key: 'trial', asOf: asOf.value })
-const onExport = () => {
-  const s = spec()
-  exportExcel([s], exportFilename(s, 'xlsx'), 'Trial balance exported to Excel')
-}
-const onPrint = () => {
-  const s = spec()
-  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Trial balance exported to PDF')
-}
+const { onExport, onPrint } = useSectionExport('Trial balance', () => ({
+  key: 'trial',
+  asOf: asOf.value
+}))
 </script>

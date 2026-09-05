@@ -148,6 +148,9 @@ flowchart LR
 
 - [x] Every company member can inspect Bank balances and history regardless of transfer permission.
 - [x] Grouped events from one transaction remain attributable to the same transaction hash.
+- [x] Bank history surfaces money that arrives at or leaves the Bank by a direct token transfer, even when the Bank emitted no event of its
+      own — for example, the funds swept in when a Community Credit round is funded. A movement a Bank event already records is not shown a
+      second time.
 
 #### Edge & Error Cases
 
@@ -490,11 +493,20 @@ flowchart LR
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
+
+- [Bank components](../../../app/src/components/sections/BankView/),
+  [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
+  [Safe components](../../../app/src/components/sections/SafeView/), and
+  [owner treasury withdrawal](../../../app/src/components/sections/OwnerTreasuryWithdrawAction.vue)
+- [Token amount input](../../../app/src/components/ui/inputs/TokenAmountInput.vue) and
+  [Safe transaction send orchestration](../../../app/src/composables/transactions/useSafeSendTransaction.ts)
 - [Accounts routes](../../../app/src/router/index.ts) and [Accounts navigation](../../../app/src/composables/useSidebarNavItems.ts). The
   Community Credit round-detail view parameter does not alter Accounts entry points.
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts),
   [Bank transaction feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
-  [Bank event queries](../../../app/src/queries/ponder/bank.queries.ts), and [Bank contract](../../../contract/contracts/Bank.sol)
+  [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts), and
+  [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
 - [Bank transfer form](../../../app/src/components/forms/TransferForm.vue)
@@ -506,17 +518,17 @@ flowchart LR
   [historic-generation action tests](../../../app/src/components/sections/ContractManagementView/__tests__/LegacyGenerationWithdrawAction.spec.ts)
 - [Safe page](../../../app/src/views/team/%5Bid%5D/Accounts/SafeView.vue),
   [Safe deposit form](../../../app/src/components/sections/SafeView/forms/DepositSafeForm.vue),
-  [Safe composables](../../../app/src/composables/safe/), and [Safe transaction state](../../../app/src/utils/safeTransactionState.ts)
+  [Safe composables](../../../app/src/composables/safe/), and [Safe transaction state](../../../app/src/utils/safe/transactionState.ts)
 - [Safe transaction queue](../../../app/src/components/sections/SafeView/SafeTransactions.vue),
   [Safe transaction table](../../../app/src/components/sections/SafeView/SafeTransactionsTable.vue), and
   [Safe mobile transaction list](../../../app/src/components/sections/SafeView/SafeTransactionMobileList.vue),
   [Safe transaction mutations](../../../app/src/queries/safe.mutations.ts),
-  [Safe transaction state and conflict rules](../../../app/src/utils/safeTransactionState.ts), and
+  [Safe transaction state and conflict rules](../../../app/src/utils/safe/transactionState.ts), and
   [Safe conflict warning](../../../app/src/components/sections/SafeView/SafeTransactionsWarning.vue)
 - [Safe component tests](../../../app/src/components/sections/SafeView/__tests__) and
   [Safe composable tests](../../../app/src/composables/safe/__tests__)
 - [Safe transaction queue tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactions.spec.ts),
-  [Safe transaction state tests](../../../app/src/utils/__tests__/safeTransactionState.spec.ts), and
+  [Safe transaction state tests](../../../app/src/utils/safe/__tests__/transactionState.spec.ts), and
   [Safe conflict warning tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactionsWarning.spec.ts)
 - [Expense Account page](../../../app/src/views/team/%5Bid%5D/Accounts/ExpenseAccountView.vue),
   [expense approval form](../../../app/src/components/sections/ExpenseAccountView/forms/ApproveUsersEIP712Form.vue),

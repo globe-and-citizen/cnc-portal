@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { ledgerRows } from '@/utils/accounting/ledgerPresenter'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 /** A minimal priced posting whose lead row carries the given rate of record. */
@@ -18,7 +19,8 @@ const entryWithRate = (rate: number): LedgerEntry => ({
 })
 
 /** The rate string shown on a posting's lead row (the only row with a movement). */
-const rateOf = (rate: number): string => ledgerRows([entryWithRate(rate)])[0].rate
+const rateOf = (rate: number): string =>
+  journalLedgerRows(buildJournal([entryWithRate(rate)]))[0].rate
 
 describe('Rate column formatting (trailing zeros trimmed)', () => {
   it('drops padding zeros so whole and short rates read cleanly', () => {

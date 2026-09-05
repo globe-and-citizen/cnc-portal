@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import type { CreditRound } from '@/types'
-import { MINUTES_PER_DAY } from '@/utils'
+import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
 import CreditRepayPanel from '../CreditRepayPanel.vue'
 import type { RepaymentPanelState } from '../CreditRepayPanel.vue'
 import type { RepayBreakdownRow } from '../CreditRepayBreakdownTable.vue'

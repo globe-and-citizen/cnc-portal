@@ -6,8 +6,6 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import apolloClient from './apollo-client'
-import { DefaultApolloClient } from '@vue/apollo-composable'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import * as Sentry from '@sentry/vue'
 import ui from '@nuxt/ui/vue-plugin'
@@ -36,7 +34,6 @@ export function setupApp() {
   app.use(ui)
   app.use(WagmiPlugin, { config })
   app.use(VueQueryPlugin, { queryClient, enableDevtoolsV6Plugin: true })
-  app.provide(DefaultApolloClient, apolloClient)
 
   // Setup axios interceptors after app initialization
   // This ensures router and Pinia are fully available for the interceptor
@@ -80,7 +77,6 @@ export function setupApp() {
     tracePropagationTargets: [
       'localhost',
       import.meta.env.VITE_APP_BACKEND_URL, // Node.js API
-      import.meta.env.VITE_APP_SUBGRAPH_ENDPOINT, // GraphQL subgraph
       /^https:\/\/[\w-]+\.cncportal\.io/ // all prod subdomains
     ],
     // Session Replay

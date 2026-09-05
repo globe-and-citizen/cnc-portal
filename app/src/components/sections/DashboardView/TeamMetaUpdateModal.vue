@@ -81,7 +81,7 @@ import { useTeamStore } from '@/stores'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
-import { getAxiosErrorMessage } from '@/utils/httpErrorUtil'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 
 const props = withDefaults(
   defineProps<{

@@ -10,63 +10,188 @@
  * - **Net**: Σ of the debit-normal account balances = Σ of the credit-normal
  *   balances (`debitBalanceTotal === creditBalanceTotal`) — 253 in the worked example.
  *
- * Each {@link LedgerEntry} is already a balanced posting, so a single entry maps
- * to two journal lines (one debit, one credit). Memo-only Default-D entries
- * (debit === credit === null) carry no lines — they record a share count only.
+ * Accounting assembly adapts the consolidated {@link LedgerEntry} feed into
+ * validated {@link JournalEntry} records once. The General Ledger, Trial Balance,
+ * Summary, Income Statement, and Balance Sheet consume that assembled journal.
  */
+import { ACCOUNT_NAMES, type AccountName } from './chartOfAccounts'
 import {
-  ACCOUNT_NAMES,
-  classOf,
-  isDebitNormal,
-  isInstancedPocket,
-  type AccountClass,
-  type AccountName
-} from './chartOfAccounts'
-import type { Address } from 'viem'
-import type { LedgerEntry, UseCase } from './ledgerEntry'
+  buildAccountRegistry,
+  type AccountId,
+  type AccountRegistry,
+  type Account
+} from './accountRegistry'
+import { sourceOperationIdOf, transactionHashOf, type LedgerEntry } from './ledgerEntry'
+import { legacyClassificationTargetOf } from './classificationTarget'
+import {
+  createJournalEntry,
+  creditOf,
+  debitOf,
+  isBankFeePosting,
+  reconcileJournalEntrySources,
+  type JournalEntry,
+  type JournalEntryLine
+} from './journalEntry'
 
-export interface JournalLine {
-  account: AccountName
-  /** The pocket contract instance holding this leg's cash, when known — what lets
-   *  the trial balance split a redeployed pocket (see {@link TrialBalanceRow}). */
-  instance?: Address
-  debit: number
-  credit: number
+export type { JournalEntry, JournalEntryLine } from './journalEntry'
+
+/** Convert a current two-leg consolidated posting into journal lines with concrete account identity. */
+function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLine[] {
+  const lines: JournalEntryLine[] = []
+  if (entry.debit) {
+    const account = accounts.resolve(entry.debit, entry.debitInstance)
+    lines.push({
+      id: `${entry.id}:debit`,
+      account,
+      movement: {
+        token: entry.token,
+        rawAmount: entry.rawAmount,
+        ...(entry.rate != null ? { rate: entry.rate } : {})
+      },
+      debit: entry.amountUsd
+    })
+  }
+  if (entry.credit) {
+    const account = accounts.resolve(entry.credit, entry.creditInstance)
+    lines.push({
+      id: `${entry.id}:credit`,
+      account,
+      movement: {
+        token: entry.token,
+        rawAmount: entry.rawAmount,
+        ...(entry.rate != null ? { rate: entry.rate } : {})
+      },
+      credit: entry.amountUsd
+    })
+  }
+  return lines
 }
 
-export interface JournalEntry {
-  /** Source ledger-entry id. */
-  id: string
-  /** Event time, Unix seconds. */
-  timestamp: number
-  useCase: UseCase
-  memo: string
-  /** True when both legs are CNC-owned pockets (internal move, no IS impact). */
-  internal: boolean
-  /** Off-chain category, when enriched (e.g. "Payroll", "Operating"). */
-  category?: string
-  /** Transaction hash, when known. */
-  txHash?: string
-  /** The balanced journal lines (empty for memo-only entries). */
-  lines: JournalLine[]
+/** One source operation's monetary lines, coalesced by their concrete account and token movement. */
+function mergedLines(
+  entries: readonly LedgerEntry[],
+  accounts: AccountRegistry
+): JournalEntryLine[] {
+  const debit = entries.flatMap((entry) => linesOf(entry, accounts).filter((line) => line.debit))
+  const credit = entries.flatMap((entry) => linesOf(entry, accounts).filter((line) => line.credit))
+  const merge = (lines: readonly JournalEntryLine[]): JournalEntryLine[] => {
+    const byMovement = new Map<string, JournalEntryLine>()
+    for (const line of lines) {
+      const side = line.debit !== undefined ? 'debit' : 'credit'
+      const movement = line.movement
+      const key = [
+        side,
+        line.account.id,
+        movement?.token ?? '',
+        movement?.rate ?? '',
+        movement ? 'movement' : 'none'
+      ].join('|')
+      const existing = byMovement.get(key)
+      if (!existing) {
+        byMovement.set(key, { ...line, ...(movement ? { movement: { ...movement } } : {}) })
+        continue
+      }
+
+      if (existing.debit !== undefined && line.debit !== undefined) existing.debit += line.debit
+      if (existing.credit !== undefined && line.credit !== undefined) existing.credit += line.credit
+      if (existing.movement && movement) {
+        try {
+          existing.movement.rawAmount = (
+            BigInt(existing.movement.rawAmount) + BigInt(movement.rawAmount)
+          ).toString()
+        } catch {
+          // A malformed token amount remains visible on its first source line;
+          // reporting amounts still come from the validated USD debit/credit.
+        }
+      }
+    }
+    return [...byMovement.values()]
+  }
+  // Conventional journal order puts every debit before every credit. This makes a
+  // transfer plus fee read Dr destination · Dr fee · Cr Bank gross.
+  return [...merge(debit), ...merge(credit)]
+}
+
+/** Adapt one source operation's consolidated postings at the validated journal boundary. */
+function journalEntryFromLedgerEntries(
+  entries: readonly LedgerEntry[],
+  accounts: AccountRegistry,
+  operationId: string
+): JournalEntry {
+  const ordered = entries
+    .slice()
+    .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
+  const primary = ordered.find((entry) => !isBankFeePosting(entry)) ?? ordered[0]!
+  const lineEntries = [primary, ...ordered.filter((entry) => entry !== primary)]
+  const monetary = ordered.some((entry) => entry.debit !== null || entry.credit !== null)
+  const counterparties = new Set(
+    ordered.flatMap((entry) => (entry.counterparty ? [entry.counterparty.toLowerCase()] : []))
+  )
+  const source = counterparties.size > 1 ? { ...primary, counterparty: undefined } : primary
+  const txHash = ordered.find((entry) => entry.txHash)?.txHash ?? transactionHashOf(operationId)
+  const withdrawals = ordered.flatMap((entry) => {
+    const target = legacyClassificationTargetOf(entry)
+    return target ? [target] : []
+  })
+  const nonFeeSources = ordered.filter((entry) => !isBankFeePosting(entry))
+  return createJournalEntry({
+    id: operationId,
+    sourceOperationId: operationId,
+    timestamp: ordered[0]!.timestamp,
+    useCase: primary.useCase,
+    memo: primary.memo,
+    internal: ordered.every((entry) => entry.internal),
+    kind: monetary ? 'monetary' : 'memo',
+    ...(primary.category ? { category: primary.category } : {}),
+    ...(txHash ? { txHash } : {}),
+    source,
+    ...(withdrawals.length
+      ? {
+          legacyClassification: {
+            targets: withdrawals,
+            editable: withdrawals.length === 1 && nonFeeSources.length === 1
+          }
+        }
+      : {}),
+    lines: monetary ? mergedLines(lineEntries, accounts) : []
+  })
+}
+
+/** Adapt consolidated postings into the validated, ordered double-entry journal. */
+export function buildJournal(
+  entries: readonly LedgerEntry[],
+  accounts?: AccountRegistry
+): JournalEntry[] {
+  const reconciled = reconcileJournalEntrySources(entries)
+  const accountRegistry = accounts ?? buildAccountRegistry(reconciled.entries)
+  const byOperation = new Map<string, LedgerEntry[]>()
+  for (const entry of reconciled.entries) {
+    const operationId = sourceOperationIdOf(entry.txHash ?? entry.sourceOperationId ?? entry.id)
+    const group = byOperation.get(operationId)
+    if (group) group.push(entry)
+    else byOperation.set(operationId, [entry])
+  }
+  return [...byOperation.entries()]
+    .map(([operationId, group]) =>
+      journalEntryFromLedgerEntries(group, accountRegistry, operationId)
+    )
+    .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
 }
 
 export interface TrialBalanceRow {
-  account: AccountName
+  /** Canonical concrete account; use it for report selection and reconciliation. */
+  account: Account
   /**
    * Display name for the row — the account itself for the original deployment, then
    * numbered ` 2` / ` 3` for each later deployment (a redeploy), so each shows as its
-   * own line. Equals {@link account} for a single instance, so an un-redeployed book
-   * reads exactly as before.
+   * own line. It is derived separately from the concrete account, so an un-redeployed
+   * book reads exactly as before.
    */
   accountLabel: string
-  /** The pocket contract instance this row rolls up, when the account is split across redeploys. */
-  instance?: Address
   /** True when this account is split across several instances (a redeploy) — drives the redeploy hint. */
   split: boolean
-  /** True on the primary (earliest) instance row — the one that also carries the pocket's un-instanced legs. */
+  /** True on the earliest resolved deployment row, used only for display. */
   isPrimaryInstance: boolean
-  accountClass: AccountClass
   /** Σ of every debit line posted to this account (gross). */
   totalDebit: number
   /** Σ of every credit line posted to this account (gross). */
@@ -98,146 +223,61 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
 
-/**
- * Net balance of every touched account, signed on its **normal** side
- * (debit-normal → debit − credit; credit-normal → credit − debit), so a clean
- * book yields non-negative balances. Shared by the income statement and balance
- * sheet so all three statements roll up the exact same numbers.
- */
-export function netBalanceByAccount(entries: readonly LedgerEntry[]): Map<AccountName, number> {
-  const net = netBalanceByAccountRaw(entries)
-  for (const [account, value] of net) net.set(account, round2(value))
-  return net
-}
-
-/**
- * Same roll-up as {@link netBalanceByAccount} but **without** the per-account
- * cent rounding — used for the balance-sheet identity check, which must run on
- * full precision (rounding each account then summing can drift a cent and flag a
- * balanced book "out of balance").
- */
-export function netBalanceByAccountRaw(entries: readonly LedgerEntry[]): Map<AccountName, number> {
-  const net = new Map<AccountName, number>()
-  const add = (account: AccountName, signed: number): void => {
-    net.set(account, (net.get(account) ?? 0) + signed)
-  }
-  for (const entry of entries) {
-    if (entry.debit)
-      add(entry.debit, isDebitNormal(entry.debit) ? entry.amountUsd : -entry.amountUsd)
-    if (entry.credit) {
-      add(entry.credit, isDebitNormal(entry.credit) ? -entry.amountUsd : entry.amountUsd)
-    }
-  }
-  return net
-}
-
-/** Convert one balanced posting into its (up to two) journal lines. */
-function linesOf(entry: LedgerEntry): JournalLine[] {
-  const lines: JournalLine[] = []
-  if (entry.debit)
-    lines.push({
-      account: entry.debit,
-      ...(entry.debitInstance ? { instance: entry.debitInstance } : {}),
-      debit: entry.amountUsd,
-      credit: 0
-    })
-  if (entry.credit)
-    lines.push({
-      account: entry.credit,
-      ...(entry.creditInstance ? { instance: entry.creditInstance } : {}),
-      debit: 0,
-      credit: entry.amountUsd
-    })
-  return lines
-}
-
-/** Build the journal entries (the ordered double-entry log). */
-export function buildJournal(entries: readonly LedgerEntry[]): JournalEntry[] {
-  return entries
-    .map((entry) => ({
-      id: entry.id,
-      timestamp: entry.timestamp,
-      useCase: entry.useCase,
-      memo: entry.memo,
-      internal: entry.internal,
-      ...(entry.category ? { category: entry.category } : {}),
-      ...(entry.txHash ? { txHash: entry.txHash } : {}),
-      lines: linesOf(entry)
-    }))
-    .sort((a, b) => a.timestamp - b.timestamp)
-}
-
-/** One trial-balance roll-up bucket: an account, optionally scoped to a pocket instance. */
+/** One trial-balance roll-up bucket: one concrete account, never an inferred instance. */
 interface AccountBucket {
-  instance?: Address
+  account: Account
   debit: number
   credit: number
-  /** Earliest posting time in the bucket — orders the instances of a split pocket. */
+  /** Earliest posting time orders display labels but never determines account identity. */
   firstTs: number
 }
 
 /**
- * Roll the journal lines up into per-account buckets, splitting an instanced cash
- * pocket ({@link isInstancedPocket}) into one bucket per contract instance and
- * folding every other account (and any un-instanced pocket leg) into a single
- * bucket. Returns the buckets grouped by base account, so the trial balance can
- * emit them in chart order.
+ * Roll journal lines up by their concrete account identity. The outer family map
+ * only controls chart ordering and optional report aggregation; the inner key is
+ * always the AccountId that came from the canonical registry.
  */
 function accumulateBuckets(journal: readonly JournalEntry[]): Map<AccountName, AccountBucket[]> {
-  const byAccount = new Map<AccountName, Map<string, AccountBucket>>()
+  const byAccount = new Map<AccountName, Map<AccountId, AccountBucket>>()
   for (const entry of journal) {
     for (const line of entry.lines) {
-      const instance = isInstancedPocket(line.account) ? line.instance : undefined
-      const key = instance ? instance.toLowerCase() : ''
-      let buckets = byAccount.get(line.account)
+      const familyName = line.account.family.name
+      let buckets = byAccount.get(familyName)
       if (!buckets) {
         buckets = new Map()
-        byAccount.set(line.account, buckets)
+        byAccount.set(familyName, buckets)
       }
-      let bucket = buckets.get(key)
+      let bucket = buckets.get(line.account.id)
       if (!bucket) {
         bucket = {
-          ...(instance ? { instance } : {}),
+          account: line.account,
           debit: 0,
           credit: 0,
           firstTs: entry.timestamp
         }
-        buckets.set(key, bucket)
+        buckets.set(line.account.id, bucket)
       }
-      bucket.debit += line.debit
-      bucket.credit += line.credit
+      bucket.debit += debitOf(line)
+      bucket.credit += creditOf(line)
       if (entry.timestamp < bucket.firstTs) bucket.firstTs = entry.timestamp
     }
   }
   const grouped = new Map<AccountName, AccountBucket[]>()
-  for (const [account, buckets] of byAccount) grouped.set(account, foldBlankBucket(buckets))
+  for (const [account, buckets] of byAccount) grouped.set(account, [...buckets.values()])
   return grouped
 }
 
-/**
- * Fold the un-instanced (`''`) bucket into the pocket's earliest concrete instance,
- * so a leg that carries no contract address (a FixedReturn sweep straight to Bank, an
- * owner treasury sweep) lands on the deployment already on the books rather than
- * spawning a phantom extra row. With no concrete instance at all (a normal, single
- * account) the lone bucket is kept as-is — the un-redeployed book reads as before.
- */
-function foldBlankBucket(buckets: Map<string, AccountBucket>): AccountBucket[] {
-  const blank = buckets.get('')
-  const concrete = [...buckets.values()].filter((b) => b.instance)
-  if (!blank || concrete.length === 0) return [...buckets.values()]
-  const primary = concrete.reduce((a, b) => (b.firstTs < a.firstTs ? b : a))
-  primary.debit += blank.debit
-  primary.credit += blank.credit
-  primary.firstTs = Math.min(primary.firstTs, blank.firstTs)
-  return concrete
+/** Label a concrete account for display without using that label as its identity. */
+function accountLabel(account: Account, number: number): string {
+  if (account.resolution === 'unresolved') return `${account.family.name} (unresolved)`
+  return number > 1 ? `${account.family.name} ${number}` : account.family.name
 }
 
 /**
- * Build the double-entry general ledger and its trial balance from the
- * consolidated feed.
+ * Build the double-entry general ledger and its trial balance from the validated,
+ * assembled journal.
  */
-export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedger {
-  const journal = buildJournal(entries)
+export function buildGeneralLedger(journal: readonly JournalEntry[]): GeneralLedger {
   const groups = accumulateBuckets(journal)
 
   // Totals + the balanced check run on the **raw** (full-precision) sums: every
@@ -252,25 +292,30 @@ export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedg
   let rawCreditBalance = 0
   const trialBalance: TrialBalanceRow[] = []
 
-  // Iterate the chart in declared order so the trial balance reads top-down. A cash
-  // pocket that spans several contract instances (a redeploy) emits one row per
-  // instance, ordered by first activity: the original deployment keeps the plain
-  // account name, each later one is numbered ` 2` / ` 3`. A single-instance account
-  // emits one row named exactly as before.
+  // Iterate the chart in declared order so the trial balance reads top-down. A
+  // deployment-specific family emits one row per concrete AccountId. First activity
+  // only numbers resolved rows for display; it never decides where an unresolved
+  // line belongs.
   for (const account of ACCOUNT_NAMES) {
     const buckets = (groups.get(account) ?? []).sort(
-      (a, b) => a.firstTs - b.firstTs || (a.instance ?? '').localeCompare(b.instance ?? '')
+      (a, b) => a.firstTs - b.firstTs || a.account.id.localeCompare(b.account.id)
     )
-    const split = buckets.length > 1
-    buckets.forEach((bucket, index) => {
+    const resolved = buckets.filter((bucket) => bucket.account.resolution === 'resolved')
+    const split = resolved.length > 1
+    let resolvedNumber = 0
+    buckets.forEach((bucket) => {
       const rawDebit = bucket.debit
       const rawCredit = bucket.credit
       if (rawDebit === 0 && rawCredit === 0) return
 
+      const number =
+        bucket.account.resolution === 'resolved' ? (resolvedNumber += 1) : Number.POSITIVE_INFINITY
+
       rawTotalDebit += rawDebit
       rawTotalCredit += rawCredit
-      const rawBalance = isDebitNormal(account) ? rawDebit - rawCredit : rawCredit - rawDebit
-      if (isDebitNormal(account)) rawDebitBalance += rawBalance
+      const debitNormal = bucket.account.family.normalBalance === 'debit'
+      const rawBalance = debitNormal ? rawDebit - rawCredit : rawCredit - rawDebit
+      if (debitNormal) rawDebitBalance += rawBalance
       else rawCreditBalance += rawBalance
 
       const grossDebit = round2(rawDebit)
@@ -278,12 +323,10 @@ export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedg
       if (grossDebit === 0 && grossCredit === 0) return // sub-cent residual: not shown
 
       trialBalance.push({
-        account,
-        accountLabel: split && index > 0 ? `${account} ${index + 1}` : account,
-        ...(bucket.instance ? { instance: bucket.instance } : {}),
+        account: bucket.account,
+        accountLabel: accountLabel(bucket.account, number),
         split,
-        isPrimaryInstance: index === 0,
-        accountClass: classOf(account),
+        isPrimaryInstance: bucket.account.resolution === 'resolved' && number === 1,
         totalDebit: grossDebit,
         totalCredit: grossCredit,
         balance: round2(rawBalance)
@@ -292,7 +335,7 @@ export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedg
   }
 
   return {
-    entries: journal,
+    entries: journal.slice(),
     trialBalance,
     totalDebit: round2(rawTotalDebit),
     totalCredit: round2(rawTotalCredit),

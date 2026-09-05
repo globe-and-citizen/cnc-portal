@@ -3,9 +3,9 @@
 ## Global mocks are mandatory
 
 The Vitest setup files under [`setup/`](./setup) call `vi.mock(...)` once for every commonly used dependency: wagmi (`@wagmi/vue`,
-`@wagmi/core`, `@/wagmi.config`), `viem`, TanStack Query, Apollo, Pinia stores (`@/stores/*`), the canned `@/queries/*.queries` hooks, the
+`@wagmi/core`, `@/wagmi.config`), `viem`, TanStack Query, Pinia stores (`@/stores/*`), the canned `@/queries/*.queries` hooks, the
 ERC20-style `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives (`Modal`, `Tooltip`, `SelectMenu`, `Icon`,
-`Button`, `Calendar`, `Popover`, `DropdownMenu`), `@/lib/axios`, `@/utils`, and more. Per-test override hooks (`mockTeamStore`,
+`Button`, `Calendar`, `Popover`, `DropdownMenu`), `@/lib/axios`, `@/lib/logging`, and more. Per-test override hooks (`mockTeamStore`,
 `mockERC20Reads`, `resetERC20Mocks`, …) are re-exported from [`@/tests/mocks`](./mocks).
 
 **Specs must reuse the global mocks**, not re-declare them locally:

@@ -122,15 +122,6 @@ export const mockUseContractBalance = {
 }
 
 /**
- * Mock Apollo useQuery result
- */
-export const mockUseApolloQuery = {
-  result: ref(null),
-  error: ref<Error | null>(null),
-  loading: ref(false)
-}
-
-/**
  * Mock native transaction functions
  */
 export const mockTransactionFunctions = {
@@ -322,35 +313,46 @@ export const resetComposableMocks = () => {
   if (vi.isMockFunction(mockUseSubmitRestriction.checkRestriction)) {
     mockUseSubmitRestriction.checkRestriction.mockClear()
   }
-
-  // Reset Apollo query mock
-  mockUseApolloQuery.result.value = null
-  mockUseApolloQuery.error.value = null
-  mockUseApolloQuery.loading.value = false
 }
 
 // Keep for backwards compatibility
 export const resetTransactionMocks = resetComposableMocks
 
 /**
- * Mock useDeployContract composable (useContractFunctions.ts)
- * Shared refs allow tests to trigger watchers and inspect state.
+ * Stable TanStack-mutation mock. Specs drive the success path by replaying the
+ * `onSuccess` callback captured on `mutate.mock.calls`, and the error path by
+ * setting `error.value`.
  */
-export const mockDeployState = {
-  isDeploying: ref(false),
-  contractAddress: ref<string | null>(null),
+const createMutationStateMock = () => ({
+  mutate: vi.fn(),
+  mutateAsync: vi.fn(() => Promise.resolve(null)),
+  isPending: ref(false),
+  isError: ref(false),
   error: ref<Error | null>(null),
-  deploy: vi.fn()
+  data: ref<string | null>(null),
+  reset: vi.fn()
+})
+
+const resetMutationStateMock = (state: ReturnType<typeof createMutationStateMock>) => {
+  state.isPending.value = false
+  state.isError.value = false
+  state.error.value = null
+  state.data.value = null
+  state.mutate.mockReset()
+  state.mutateAsync.mockReset()
+  state.mutateAsync.mockResolvedValue(null)
+  state.reset.mockClear()
 }
 
+/** useDeployContract (useContractFunctions.ts) — drives the deploy + register flow. */
+export const mockDeployState = createMutationStateMock()
 export const mockUseDeployContract = vi.fn(() => mockDeployState)
+export const resetDeployState = () => resetMutationStateMock(mockDeployState)
 
-export function resetDeployState() {
-  mockDeployState.isDeploying.value = false
-  mockDeployState.contractAddress.value = null
-  mockDeployState.error.value = null
-  mockDeployState.deploy.mockClear()
-}
+/** useUploadFileMutation (file.queries.ts) — drives the image upload. */
+export const mockUploadFileState = createMutationStateMock()
+export const mockUseUploadFileMutation = vi.fn(() => mockUploadFileState)
+export const resetUploadFileState = () => resetMutationStateMock(mockUploadFileState)
 
 /**
  * Exported vi.fn() factory functions for TanStack Vue Query.
@@ -448,6 +450,5 @@ export const smartUseMutation = <TData, TVariables>(
   error: ref(null),
   data: ref(null),
   reset: vi.fn(),
-  status: ref<'idle' | 'pending' | 'error' | 'success'>('idle'),
-  variables: ref(undefined)
+  status: ref<'idle' | 'pending' | 'error' | 'success'>('idle')
 })

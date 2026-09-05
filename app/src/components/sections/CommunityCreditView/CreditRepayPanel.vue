@@ -141,7 +141,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { formatAmount, repayableCeiling, roundToDisplayPrecision, statusMeta } from '@/utils'
+import {
+  formatAmount,
+  repayableCeiling,
+  roundToDisplayPrecision,
+  statusMeta
+} from '@/utils/communityCredit/model'
 import type { CreditRound } from '@/types'
 import CreditRepayBreakdownTable from './CreditRepayBreakdownTable.vue'
 import type { RepayBreakdownRow } from './CreditRepayBreakdownTable.vue'

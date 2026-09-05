@@ -188,27 +188,28 @@ import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideov
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import type { CreditTransaction } from '@/types/transactions'
 import {
   buildRawFixedReturnTransactions,
-  formatFixedReturnTransactionDate,
+  formatFixedReturnTransactionDate
+} from '@/utils/transactions/fixedReturn'
+import {
   getTransactionTypeColor,
-  formatCryptoAmount,
-  formatCurrencyShort,
-  formatEtherUtil,
-  log,
-  parseBigIntOrZero,
-  resolveUser,
-  getTransactionSummary,
-  getInitialTokenSupportSummary,
   getTransactionTypeLabel,
   getTransactionCounterparty,
-  formatTxHash,
-  tokenSymbol,
-  enrichTransaction
-} from '@/utils'
+  formatTxHash
+} from '@/utils/transactions/registry'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import { log } from '@/lib/logging'
+import {
+  parseBigIntOrZero,
+  getTransactionSummary,
+  getInitialTokenSupportSummary
+} from '@/utils/transactions/history'
 
-import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 
 const props = defineProps<{
   fixedReturnAddress: Address
@@ -219,10 +220,9 @@ const props = defineProps<{
 }>()
 
 const currencyStore = useCurrencyStore()
+const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.fixedReturnAddress.toLowerCase())
 
-// EXPERIMENT: source the Credit Account transaction history from the RPC
-// (eth_getLogs) instead of Ponder — mirrors Bank's useBankEventsViaLogs.
 const { result, error, loading } = useFixedReturnEventsViaLogs(contractAddress)
 
 const rawTransactions = computed(() => {
@@ -280,7 +280,7 @@ const columns = computed(() => [
 
 watch(error, (newError) => {
   if (newError) {
-    log.error('Ponder credit account transaction query error:', newError)
+    log.error('RPC log credit account transaction query error:', newError)
   }
 })
 </script>

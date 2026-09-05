@@ -74,7 +74,7 @@ classificationRoutes.get(
  *               description: Stable transaction identity `${txHash}-${logIndex}`
  *             category:
  *               type: string
- *               enum: [REVENUE, EXPENSE, SHAREHOLDER_LOAN, OWNER_CAPITAL, INTERNAL_TRANSFER, PAYROLL_EXPENSE, INTEREST_EXPENSE, DIVIDEND_EXPENSE]
+ *               enum: [REVENUE, EXPENSE, OWNER_CAPITAL, INTERNAL_TRANSFER, PAYROLL_EXPENSE, INTEREST_EXPENSE, DIVIDEND_EXPENSE]
  *               description: The accounting category to book the transaction as
  *             memo:
  *               type: string
