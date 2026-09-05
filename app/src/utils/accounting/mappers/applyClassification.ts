@@ -23,7 +23,6 @@ const DEFAULT_MEMO: Record<ClassificationCategory, string> = {
   REVENUE: 'Classified as revenue',
   EXPENSE: 'Classified as an expense',
   OWNER_CAPITAL: 'Classified as owner capital',
-  SHAREHOLDER_LOAN: 'Classified as a shareholder loan',
   INTERNAL_TRANSFER: 'Classified as an internal transfer',
   PAYROLL_EXPENSE: 'Classified as a payroll payment',
   INTEREST_EXPENSE: 'Classified as loan interest',
