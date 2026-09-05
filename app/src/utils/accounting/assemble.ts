@@ -35,6 +35,11 @@ import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/ma
 import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
 import { buildAccountRegistry, type AccountRegistry } from '@/utils/accounting/accountRegistry'
 import {
+  resolveAccountInstances,
+  type TransactionAccountEvidence
+} from '@/utils/accounting/accountInstances'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import {
   buildGeneralLedger,
   buildJournal,
   type GeneralLedger,
@@ -345,6 +350,18 @@ export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncA
     balanceSheet: buildBalanceSheet(entries),
     unmatchedFeeOperationIds: reconciliation.unmatchedFeeOperationIds
   }
+}
+
+/**
+ * Complete deployment-specific cash legs from verified transaction evidence
+ * before building every canonical report projection.
+ */
+export function assembleWithAccountEvidence(
+  rawEntries: readonly LedgerEntry[],
+  deploymentAccounts: ReadonlyMap<string, AccountName>,
+  evidence: TransactionAccountEvidence
+): CncAccounting {
+  return assembleFromRawEntries(resolveAccountInstances(rawEntries, deploymentAccounts, evidence))
 }
 
 /**
