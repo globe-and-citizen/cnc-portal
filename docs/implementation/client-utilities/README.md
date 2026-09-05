@@ -3,7 +3,7 @@
 **Scope:** Pure, shared data-shaping boundaries for the `app/` frontend and the separation of their stateful, network, browser, SDK, and
 file-export effects.
 
-**Last verified:** 2026-09-01
+**Last verified:** 2026-09-05
 
 ## Consumers
 
@@ -59,7 +59,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
+**Implementation evidence reviewed against:** `c7f058d0227a463709ac7a54ea95f3164cf385b2`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Pure accounting account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)

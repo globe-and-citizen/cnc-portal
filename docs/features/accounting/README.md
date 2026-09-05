@@ -212,11 +212,14 @@ flowchart LR
       reviewed drill-down.
 - [x] A statement export applies the same period or as-of date as the reviewed statement.
 - [x] An export is generated from one snapshot of the current accounting books.
+- [x] The full-ledger export count follows the journal's operations, including memo-only operations, rather than the number of source events
+      or debit and credit lines.
 
 #### Edge & Error Cases
 
 - [x] An export failure is reported without changing the accounting books.
 - [x] Exporting an empty report produces the selected report structure without inventing entries.
+- [x] Refreshing or clearing the books updates the full-ledger export count.
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
@@ -308,7 +311,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `281689d088ac5b9df62dbcb39390fc4373fe3e38`
+**Implementation evidence reviewed against:** `c7f058d0227a463709ac7a54ea95f3164cf385b2`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -340,6 +343,8 @@ flowchart LR
 - [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts),
   [per-section export](../../../app/src/composables/accounting/useSectionExport.ts), and
   [transaction-evidence resolver](../../../app/src/composables/accounting/useTransactionEvidence.ts)
+- [Summary export count](../../../app/src/components/sections/AccountingView/AccountingSummary.vue) and
+  [journal-count interaction tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingSummary.spec.ts)
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
   [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),

@@ -43,6 +43,11 @@ solely for test construction. The General Ledger, Trial Balance, Summary, Income
 validated `JournalEntry` collection. Account and statement drill-downs project the same collection: they select complete entries by a
 concrete `Account` or an account family and compute a running balance only from the selected account's own lines.
 
+The reactive view context exposes the journal and its report projections, not the transitional source-posting feed. The Summary export
+dialog reads the journal length directly, counting monetary and memo-only operations once. Export snapshots contain only journal records and
+report projections; they do not carry raw postings or presentation-specific fee aggregates. The table and exporters share `LedgerRow` from
+the journal presenter and import their column definitions directly from `ledgerColumns`.
+
 ## Main Assembly Flow
 
 ```mermaid
@@ -192,6 +197,8 @@ it to an earlier or later deployment based on activity order.
 - Safe-service feeds are optional and do not block the page's loading state. Their absence can omit Safe activity without generating a
   reconciliation gap, which remains a known limitation.
 - A standalone report card falls back to its route's company identifier when it is rendered outside the shared Accounting page context.
+- Transaction evidence reads only receipts needed to resolve deployment accounts. There is no additional signer lookup for a discarded
+  source-posting presentation; receipt failures remain explicit reconciliation gaps.
 
 ## Current Report Boundaries
 
@@ -251,6 +258,8 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 - The page-level context shares one `useCNCAccounting` result instead of fetching and assembling once per card.
 - Mapping and assembly are pure functions, which makes their cost and semantics independently testable.
 - The account registry and validated journal are built once from the consolidated feed and reused by the Trial Balance projection.
+- The export count does not build table rows. No view-level source regrouping, fee folding or separate pocket-numbering index runs beside
+  the journal presenter. Mapper inputs do not accept an ignored global FeeCollector address.
 
 ### Measure Before Changing
 
@@ -270,7 +279,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `acaa8ddc2436ce7faaaea4dab6055be1e9db221a`
+**Implementation evidence reviewed against:** `c7f058d0227a463709ac7a54ea95f3164cf385b2`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -283,6 +292,9 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [concrete-account journal balances](../../../app/src/utils/accounting/journalBalances.ts)
 - [Journal Classification projection](../../../app/src/utils/accounting/journalClassification.ts) and
   [legacy source-target capture](../../../app/src/utils/accounting/classificationTarget.ts)
+- [Journal-only export snapshot](../../../app/src/utils/accounting/exportSpec.ts),
+  [export orchestration](../../../app/src/composables/accounting/useAccountingExport.ts), and
+  [shared ledger columns](../../../app/src/utils/accounting/ledgerColumns.ts)
 - [Balance Sheet projection](../../../app/src/utils/accounting/balanceSheet.ts),
   [statement presenter](../../../app/src/utils/accounting/presenter.ts), and
   [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue)
@@ -312,6 +324,8 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), and
   [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts), and
   [journal statement-projection tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts)
+- [Summary journal-count tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingSummary.spec.ts) and
+  [cross-report journal projections](../../../app/src/utils/accounting/__tests__/transactionFirst.spec.ts)
 
 ## Related Documentation
 
