@@ -17,11 +17,11 @@
  * 142.20 (Investor Equity 138 + Retained Earnings 14.20), liabilities 0.
  */
 import { formatUnits } from 'viem'
-import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
+import { ACCOUNT_FAMILIES, type AccountName } from './chartOfAccounts'
+import { accountFor, type Account } from './accountRegistry'
 import { buildIncomeStatement } from './incomeStatement'
-import { journalFamilyBalances, journalFamilyBalancesUnrounded } from './journalBalances'
+import { journalAccountBalances, journalAccountBalancesUnrounded } from './journalBalances'
 import type { JournalEntry } from './journalEntry'
-import type { StatementLine } from './incomeStatement'
 import type { TokenId } from '@/constant'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
 
@@ -40,8 +40,8 @@ const CURRENCY_ORDER: readonly TokenId[] = ['native', 'usdc', 'usdc.e', 'usdt', 
 
 /** One (pocket × currency) cash holding — the breakdown of `Cash (all pockets)`. */
 export interface CashCurrencyLine {
-  /** The cash pocket (`Cash — Bank`, `Cash — Safe`, …). */
-  account: AccountName
+  /** The concrete cash pocket (`Cash — Bank`, a later Bank deployment, …). */
+  account: Account
   /** The token held in that pocket. */
   token: TokenId
   /** Net USD value of the holding. */
@@ -50,25 +50,31 @@ export interface CashCurrencyLine {
   tokenAmount: number
 }
 
+/** One displayed Balance Sheet account and its normal-side balance. */
+export interface BalanceSheetAccountLine {
+  account: Account
+  amount: number
+}
+
 export interface BalanceSheet {
   /** Total cash across every pocket (the single "Cash" asset line). */
   cash: number
   /** Per-pocket cash breakdown, for drill-down. */
-  cashByPocket: StatementLine[]
+  cashByPocket: BalanceSheetAccountLine[]
   /** Per-pocket **and per-currency** cash breakdown (Bank×POL, Bank×USDC, …). */
   cashByPocketCurrency: CashCurrencyLine[]
   /** Non-cash assets (Trading account, …) with non-zero balance. */
-  otherAssets: StatementLine[]
+  otherAssets: BalanceSheetAccountLine[]
   totalAssets: number
   /** Liability accounts with non-zero balance (Wage Payable, …). */
-  liabilities: StatementLine[]
+  liabilities: BalanceSheetAccountLine[]
   totalLiabilities: number
-  ownerCapital: number
-  investorEquity: number
+  ownerCapital: BalanceSheetAccountLine
+  investorEquity: BalanceSheetAccountLine
   /** Period net income closed into equity. */
   retainedEarnings: number
   /** Contra-equity and pending-equity lines with non-zero balance. */
-  contraEquity: StatementLine[]
+  contraEquity: BalanceSheetAccountLine[]
   totalEquity: number
   /**
    * Liabilities + Equity as a single figure, summed at full precision and
@@ -108,24 +114,24 @@ function rawSideTotals(entries: readonly JournalEntry[]): {
   let cash = 0
   let liabilities = 0
   let equityAndResult = 0
-  for (const [account, value] of journalFamilyBalancesUnrounded(entries)) {
-    switch (classOf(account)) {
+  for (const line of journalAccountBalancesUnrounded(entries).values()) {
+    switch (line.account.family.accountClass) {
       case 'ASSET':
-        assets += value
-        if (CASH_ACCOUNTS.has(account)) cash += value
+        assets += line.amount
+        if (CASH_ACCOUNTS.has(line.account.family.name)) cash += line.amount
         break
       case 'LIABILITY':
-        liabilities += value
+        liabilities += line.amount
         break
       case 'EQUITY':
       case 'INCOME':
-        equityAndResult += value
+        equityAndResult += line.amount
         break
       case 'CONTRA_EQUITY':
-        equityAndResult -= value
+        equityAndResult -= line.amount
         break
       case 'EXPENSE':
-        equityAndResult -= value
+        equityAndResult -= line.amount
         break
     }
   }
@@ -150,71 +156,94 @@ function toBigInt(raw: string): bigint {
 function buildCashByPocketCurrency(entries: readonly JournalEntry[]): CashCurrencyLine[] {
   const holdings = new Map<
     string,
-    { account: AccountName; token: TokenId; usd: number; raw: bigint }
+    { account: Account; token: TokenId; usd: number; raw: bigint; firstSeen: number }
   >()
-  const addHolding = (account: AccountName, token: TokenId, usd: number, raw: bigint): void => {
-    const key = `${account}|${token}`
-    const holding = holdings.get(key) ?? { account, token, usd: 0, raw: 0n }
+  const addHolding = (
+    account: Account,
+    token: TokenId,
+    usd: number,
+    raw: bigint,
+    firstSeen: number
+  ): void => {
+    const key = `${account.id}|${token}`
+    const holding = holdings.get(key) ?? { account, token, usd: 0, raw: 0n, firstSeen }
     holding.usd += usd
     holding.raw += raw
     holdings.set(key, holding)
   }
-  for (const entry of entries) {
+  entries.forEach((entry, entryIndex) => {
     for (const line of entry.lines) {
       const movement = line.movement
-      const account = line.account.family.name
-      if (!movement || !CASH_ACCOUNTS.has(account)) continue
+      if (!movement || !CASH_ACCOUNTS.has(line.account.family.name)) continue
       const raw = toBigInt(movement.rawAmount)
       const amount = line.debit ?? line.credit ?? 0
       const signed = line.debit !== undefined ? amount : -amount
       const signedRaw = line.debit !== undefined ? raw : -raw
-      addHolding(account, movement.token, signed, signedRaw)
+      addHolding(line.account, movement.token, signed, signedRaw, entryIndex)
     }
-  }
+  })
 
-  // Emit pocket-by-pocket (chart order), currency-by-currency (display order),
-  // dropping holdings that net to nothing in both USD and token terms.
-  const lines: CashCurrencyLine[] = []
-  for (const account of ACCOUNT_NAMES) {
-    if (!CASH_ACCOUNTS.has(account)) continue
-    for (const token of CURRENCY_ORDER) {
-      const holding = holdings.get(`${account}|${token}`)
-      if (!holding) continue
-      const tokenAmount = Number(formatUnits(holding.raw, getTokenDecimals(token)))
-      const amountUsd = round2(holding.usd)
-      if (amountUsd === 0 && Math.abs(tokenAmount) < 1e-9) continue
-      lines.push({ account, token, amountUsd, tokenAmount })
-    }
-  }
-  return lines
+  const chartOrder = new Map(ACCOUNT_FAMILIES.map((family, index) => [family.id, index]))
+  return [...holdings.values()]
+    .map((holding) => ({
+      ...holding,
+      tokenAmount: Number(formatUnits(holding.raw, getTokenDecimals(holding.token))),
+      amountUsd: round2(holding.usd)
+    }))
+    .filter((holding) => holding.amountUsd !== 0 || Math.abs(holding.tokenAmount) >= 1e-9)
+    .sort((a, b) => {
+      const familyOrder =
+        (chartOrder.get(a.account.family.id) ?? Infinity) -
+        (chartOrder.get(b.account.family.id) ?? Infinity)
+      if (familyOrder) return familyOrder
+      if (a.account.id !== b.account.id)
+        return a.firstSeen - b.firstSeen || a.account.id.localeCompare(b.account.id)
+      return CURRENCY_ORDER.indexOf(a.token) - CURRENCY_ORDER.indexOf(b.token)
+    })
+    .map(({ account, token, amountUsd, tokenAmount }) => ({
+      account,
+      token,
+      amountUsd,
+      tokenAmount
+    }))
 }
 
 /** Build the balance sheet as of the end of the supplied journal. */
 export function buildBalanceSheet(entries: readonly JournalEntry[]): BalanceSheet {
-  const net = journalFamilyBalances(entries)
-  const balanceOf = (account: AccountName): number => net.get(account) ?? 0
+  const balances = journalAccountBalances(entries)
+  const balanceOf = (account: Account): number => balances.get(account.id)?.amount ?? 0
 
-  const cashByPocket: StatementLine[] = []
-  const otherAssets: StatementLine[] = []
-  const liabilities: StatementLine[] = []
-  const contraEquity: StatementLine[] = []
+  const cashByPocket: BalanceSheetAccountLine[] = []
+  const otherAssets: BalanceSheetAccountLine[] = []
+  const liabilities: BalanceSheetAccountLine[] = []
+  const contraEquity: BalanceSheetAccountLine[] = []
+  const chartOrder = new Map(ACCOUNT_FAMILIES.map((family, index) => [family.id, index]))
 
-  // Line items display the per-account cent-rounded balances (each clean on its
-  // own); the grand totals below come from the raw sums, never from these.
-  for (const account of ACCOUNT_NAMES) {
-    const amount = balanceOf(account)
-    if (CASH_ACCOUNTS.has(account)) {
-      if (amount !== 0) cashByPocket.push({ account, amount })
+  // Line items preserve their concrete Account identity. The grand totals below
+  // still come from raw sums, never from these rounded account balances.
+  for (const line of [...balances.values()].sort(
+    (a, b) =>
+      (chartOrder.get(a.account.family.id) ?? Infinity) -
+      (chartOrder.get(b.account.family.id) ?? Infinity)
+  )) {
+    if (line.amount === 0) continue
+    const account = line.account
+    if (CASH_ACCOUNTS.has(account.family.name)) {
+      cashByPocket.push(line)
       continue
     }
-    const cls = classOf(account)
-    if (cls === 'ASSET' && amount !== 0) otherAssets.push({ account, amount })
-    else if (cls === 'LIABILITY' && amount !== 0) liabilities.push({ account, amount })
-    else if (cls === 'CONTRA_EQUITY' && amount !== 0) contraEquity.push({ account, amount })
+    if (account.family.accountClass === 'ASSET') otherAssets.push(line)
+    else if (account.family.accountClass === 'LIABILITY') liabilities.push(line)
+    else if (account.family.accountClass === 'CONTRA_EQUITY') contraEquity.push(line)
   }
 
-  const ownerCapital = balanceOf('Owner Capital')
-  const investorEquity = balanceOf('Investor Equity')
+  const ownerCapitalAccount = accountFor('Owner Capital')
+  const investorEquityAccount = accountFor('Investor Equity')
+  const ownerCapital = { account: ownerCapitalAccount, amount: balanceOf(ownerCapitalAccount) }
+  const investorEquity = {
+    account: investorEquityAccount,
+    amount: balanceOf(investorEquityAccount)
+  }
   const retainedEarnings = buildIncomeStatement(entries).netIncome
 
   // Grand totals: sum at full precision, round exactly once. The identity is

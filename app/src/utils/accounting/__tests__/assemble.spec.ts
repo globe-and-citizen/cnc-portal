@@ -216,7 +216,7 @@ describe('accounting assembly boundary', () => {
       }
     })
 
-    expect(a.balanceSheet.investorEquity).toBe(200)
+    expect(a.balanceSheet.investorEquity.amount).toBe(200)
     // The backed mint dropped out — no Default-D memo entry survives.
     expect(a.entries.some((e) => e.useCase === 'DEFAULT-D')).toBe(false)
     expect(a.balanceSheet.balanced).toBe(true)
@@ -257,7 +257,7 @@ describe('accounting assembly boundary', () => {
     // Equity increased and the trial balance still balances (Dr = Cr). No prior
     // accrual in this fixture, so the liability reads −$60 alone; in production the
     // wage accrual credits it first and the issuance nets it down.
-    expect(a.balanceSheet.investorEquity).toBe(60)
+    expect(a.balanceSheet.investorEquity.amount).toBe(60)
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
   })
