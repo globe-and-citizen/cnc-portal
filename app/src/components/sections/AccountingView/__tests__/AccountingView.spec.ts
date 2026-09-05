@@ -136,7 +136,7 @@ describe('BalanceSheetCard', () => {
     const wrapper = renderWithProviders(BalanceSheetCard)
     // Equity lines always render: Owner capital (single account) and Retained
     // earnings (an aggregate of every income + expense account).
-    await wrapper.find('[data-test="balance-drilldown-Owner Capital"]').trigger('click')
+    await wrapper.find('[data-test="balance-drilldown-owner-capital"]').trigger('click')
     await flushPromises()
     expect(wrapper.find('[data-test="drilldown-export-excel"]').exists()).toBe(true)
 
