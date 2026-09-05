@@ -55,6 +55,12 @@ describe('buildAccountingTables', () => {
     const income = byTitle('Income Statement').body
     const revenueRow = income.find((r) => r[0] === 'Total revenue')!
     expect(revenueRow[1]).toBe('$100.00')
+
+    const balance = byTitle('Balance Sheet').body
+    expect(balance.find((r) => r[0] === 'Cash — Bank')![1]).toBe('$100.00')
+    expect(balance.find((r) => r[0] === 'Earnings to date calculation')).toBeTruthy()
+    expect(balance.find((r) => r[0] === 'Service Revenue')![1]).toBe('$100.00')
+    expect(balance.find((r) => r[0] === 'Earnings to date')![1]).toBe('$100.00')
   })
 
   it('right-aligns the amount columns', () => {
@@ -178,16 +184,16 @@ describe('buildTables (section selection)', () => {
     expect(ledger.body.at(-1)!.some((c) => c === '$100.00')).toBe(true)
   })
 
-  it('drills an aggregate line with its label and supplied total (Retained earnings)', () => {
+  it('drills an aggregate line with its label and supplied total (Earnings to date)', () => {
     const [ledger] = buildTables(sampleBooks(), [
       {
         key: 'ledger',
         journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
-        journalAccountLabel: 'Retained earnings',
+        journalAccountLabel: 'Earnings to date',
         journalAccountTotal: '$100.00'
       }
     ])
-    expect(ledger.title).toBe('General Ledger — Retained earnings')
+    expect(ledger.title).toBe('General Ledger — Earnings to date')
     expect(ledger.body.at(-1)!.some((c) => c === '$100.00')).toBe(true)
   })
 

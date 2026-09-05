@@ -597,23 +597,39 @@ Owner Capital          0     (empty — everyone got shares or it was revenue)
 
 ### 6.6 Balance sheet
 
-|                                                   |                          $ |
-| ------------------------------------------------- | -------------------------: |
-| **ASSETS**                                        |                            |
-| Cash (USDC + POL)                                 |                     141.97 |
-| Trading account (at cost)                         |                       0.00 |
-| **Total assets**                                  |                 **141.97** |
-| **LIABILITIES**                                   |                            |
-| Wage Payable (settled)                            |                       0.00 |
-| **Total liabilities**                             |                   **0.00** |
-| **EQUITY**                                        |                            |
-| Owner capital                                     |                       0.00 |
-| Investor equity (SHER)                            |                     168.00 |
-| SHERS To Be Issued (unbacked direct mint, contra) |                     −30.00 |
-| Deferred SHER Compensation (contra-equity)        |                     −10.00 |
-| Retained earnings (net profit)                    |                      13.97 |
-| **Total equity**                                  |                 **141.97** |
-| **Assets = Liabilities + Equity**                 | **141.97 = 0 + 141.97** ✅ |
+|                                   |                          $ |
+| --------------------------------- | -------------------------: |
+| **ASSETS**                        |                            |
+| Cash — Safe                       |                     101.25 |
+| Cash — Bank                       |                       0.00 |
+| Cash — Payroll                    |                      10.92 |
+| Cash — Expense                    |                      29.80 |
+| Trading account                   |                       0.00 |
+| **Total assets**                  |                 **141.97** |
+| **LIABILITIES**                   |                            |
+| Wage Payable                      |                       0.00 |
+| **Total liabilities**             |                   **0.00** |
+| **EQUITY**                        |                            |
+| Owner Capital                     |                       0.00 |
+| Investor Equity                   |                     168.00 |
+| SHERS To Be Issued                |                     −30.00 |
+| Deferred SHER Compensation        |                     −10.00 |
+| Earnings to date                  |                      13.97 |
+| **Total equity**                  |                 **141.97** |
+| **Assets = Liabilities + Equity** | **141.97 = 0 + 141.97** ✅ |
+
+`Earnings to date` is explained by a separate calculation that keeps the Trial Balance's temporary accounts visible and drillable:
+
+| Earnings to date calculation |          $ |
+| ---------------------------- | ---------: |
+| Service Revenue              |    +100.00 |
+| Trading Gain                 |     +15.00 |
+| Payroll Expense              |     −40.80 |
+| Operating Expense            |     −20.00 |
+| CNC Usage Fee Expense        |      −0.23 |
+| Trading Loss                 |     −20.00 |
+| Dividend Expense             |     −20.00 |
+| **Earnings to date**         | **+13.97** |
 
 ### 6.7 Global CNC fee ledger
 

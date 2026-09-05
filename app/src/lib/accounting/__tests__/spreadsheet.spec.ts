@@ -118,6 +118,10 @@ describe('buildAccountingSheets', () => {
     const balance = byName('Balance Sheet').rows
     const totalAssetsRow = balance.find((r) => r[0] === 'Total assets')!
     expect(totalAssetsRow[1]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Cash — Bank')![1]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Earnings to date calculation')).toBeTruthy()
+    expect(balance.find((r) => r[0] === 'Service Revenue')![1]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Earnings to date')![1]).toBe(100)
   })
 
   it('trial balance totals debit = credit', () => {
@@ -213,11 +217,11 @@ describe('buildSheets (section selection)', () => {
       {
         key: 'ledger',
         journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
-        journalAccountLabel: 'Retained earnings',
+        journalAccountLabel: 'Earnings to date',
         journalAccountTotal: '$100.00'
       }
     ])
-    expect(String(ledger.rows[0][0])).toBe('General Ledger — Retained earnings')
+    expect(String(ledger.rows[0][0])).toBe('General Ledger — Earnings to date')
     expect(ledger.rows.at(-1)!.some((c) => c === 100)).toBe(true)
   })
 

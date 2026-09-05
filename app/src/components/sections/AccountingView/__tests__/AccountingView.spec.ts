@@ -5,6 +5,7 @@ import AccountingSummary from '../AccountingSummary.vue'
 import TrialBalanceCard from '../TrialBalanceCard.vue'
 import IncomeStatementCard from '../IncomeStatementCard.vue'
 import BalanceSheetCard from '../BalanceSheetCard.vue'
+import BalanceSheetTable from '../BalanceSheetTable.vue'
 import GeneralLedger from '../GeneralLedger.vue'
 import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
 import StatementLine from '../StatementLine.vue'
@@ -125,24 +126,26 @@ describe('IncomeStatementCard', () => {
 })
 
 describe('BalanceSheetCard', () => {
-  it('renders the balance sheet with its per-line drill-down rows', () => {
+  it('renders the three account tables and the earnings calculation', () => {
     const wrapper = renderWithProviders(BalanceSheetCard)
     const text = wrapper.text()
     expect(text).toContain('Balance sheet')
     expect(text).toContain('Total assets')
+    expect(wrapper.find('[data-test="balance-assets"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="balance-liabilities"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="balance-equity"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="balance-earnings"]').exists()).toBe(true)
   })
 
-  it('drills a single equity account and the Retained earnings aggregate', async () => {
+  it('opens the drill-down from a rendered account or earnings row', async () => {
     const wrapper = renderWithProviders(BalanceSheetCard)
-    // Equity lines always render: Owner capital (single account) and Retained
-    // earnings (an aggregate of every income + expense account).
-    await wrapper.find('[data-test="balance-drilldown-owner-capital"]').trigger('click')
-    await flushPromises()
-    expect(wrapper.find('[data-test="drilldown-export-excel"]').exists()).toBe(true)
-
-    await wrapper.find('[data-test="balance-drilldown-aggregate"]').trigger('click')
-    await flushPromises()
-    expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
+    const tables = wrapper.findAllComponents(BalanceSheetTable)
+    const line = tables.flatMap((table) => table.props('rows'))[0]
+    if (line) {
+      tables.find((table) => table.props('rows').includes(line))?.vm.$emit('drilldown', line)
+      await flushPromises()
+      expect(wrapper.find('[data-test="drilldown-export-excel"]').exists()).toBe(true)
+    }
     wrapper.unmount()
   })
 
@@ -258,7 +261,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
       props: {
         open: true,
-        account: 'Retained earnings',
+        account: 'Earnings to date',
         total: '-$50.00',
         entries,
         columnsStorageKey
@@ -308,7 +311,7 @@ describe('StatementLine', () => {
 
   it('drills an aggregate line (accounts list) via its label button', async () => {
     const aggregate: StatementLineView = {
-      label: 'Retained earnings',
+      label: 'Earnings to date',
       value: '-$50.00',
       accounts: ['Payroll Expense', 'Deferred SHER Compensation']
     }

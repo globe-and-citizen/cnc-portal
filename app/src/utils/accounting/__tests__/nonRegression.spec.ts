@@ -105,9 +105,9 @@ describe('accounting non-regression', () => {
     // Assets = Liabilities + Equity, exactly (spec §5).
     expect(balanceSheet.balanced).toBe(true)
     expect(balanceSheet.totalAssets).toBe(balanceSheet.totalLiabilitiesAndEquity)
-    // Net income is one number — the income statement's figure is what closes
-    // into Retained Earnings, so the Summary card and the balance sheet agree.
-    expect(balanceSheet.retainedEarnings).toBe(incomeStatement.netIncome)
+    // Net income is one number — the income statement's figure is the explicit
+    // Earnings to date contribution in Equity until closing entries exist.
+    expect(balanceSheet.earningsToDate).toBe(incomeStatement.netIncome)
   })
 
   it('values POL at its rate of record: the fee metric and assets are no longer $0.00', () => {
@@ -121,7 +121,7 @@ describe('accounting non-regression', () => {
     expect(summary.transactionFees).toBeGreaterThan(0)
     // revenue 8.0 − expense (1.6 operating + 0.4 fee) = 6.0
     expect(summary.expense).toBeCloseTo(2, 6)
-    expect(balanceSheet.retainedEarnings).toBeCloseTo(6, 6)
+    expect(balanceSheet.earningsToDate).toBeCloseTo(6, 6)
   })
 
   it('stamps every posting with its currency, quantity and rate of record (Taux)', () => {

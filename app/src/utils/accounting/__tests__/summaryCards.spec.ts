@@ -31,10 +31,25 @@ describe('presentSummaryCards / presentBanner', () => {
     const cards = presentSummaryCards(acc.summary, acc.incomeStatement, {
       ...acc.balanceSheet,
       liabilities: [
-        { account: accountFor('Loan Payable'), amount: 1000 },
-        { account: accountFor('Interest Payable'), amount: 100 },
+        {
+          account: accountFor('Loan Payable'),
+          accountLabel: 'Loan Payable',
+          balance: 1000,
+          contribution: 1000
+        },
+        {
+          account: accountFor('Interest Payable'),
+          accountLabel: 'Interest Payable',
+          balance: 100,
+          contribution: 100
+        },
         // A liability outside the borrowing accounts stays out of the figure.
-        { account: accountFor('Wage Payable'), amount: 40 }
+        {
+          account: accountFor('Wage Payable'),
+          accountLabel: 'Wage Payable',
+          balance: 40,
+          contribution: 40
+        }
       ]
     })
     expect(cards.find((c) => c.label === 'Outstanding debt')?.value).toBe('$1,100.00')

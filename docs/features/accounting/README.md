@@ -13,8 +13,9 @@ These acceptance criteria follow the
   records.
 - The General Ledger, Trial Balance, summary, income statement, balance sheet, drill-downs, and their exports project the validated
   `JournalEntry` collection. A drill-down keeps every line of an entry that touches its selected concrete account or account family.
-- The Balance Sheet classifies and balances each displayed account line from that line's concrete `Account`. A redeployed or unresolved cash
-  account remains a separate report line and drill-down; only report totals deliberately aggregate those accounts.
+- The Balance Sheet reuses the Trial Balance's concrete account rows and separates them into assets, liabilities, and equity. A redeployed
+  or unresolved account remains a separate report line and drill-down; only report totals deliberately aggregate those accounts. The current
+  result appears as `Earnings to date`, with each contributing income and expense account shown separately.
 - Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
@@ -176,9 +177,12 @@ flowchart LR
 - [x] Trial-balance debit and credit totals remain equal for balanced books.
 - [x] The summary, income statement, balance sheet, and their exports project the same validated `JournalEntry` collection as the General
       Ledger.
-- [x] Retained earnings aggregates the income and expense accounts included through the selected date.
-- [x] The Balance Sheet derives each asset, liability, equity, contra-equity, and cash-by-currency line from its concrete `Account`; the
-      account family provides the chart class and normal balance without merging a later deployment or unresolved account.
+- [x] Earnings to date equals income-account contributions minus expense-account contributions through the selected date; it is distinct
+      from any posted `Retained Earnings` equity account.
+- [x] The Balance Sheet reuses the Trial Balance's concrete account rows for assets, liabilities, equity, and contra-equity. The account
+      family provides the chart class and normal balance without merging a later deployment or unresolved account.
+- [x] Each Balance Sheet account line opens the drill-down for that concrete `Account`, while `Earnings to date` opens the union of its
+      contributing income and expense accounts.
 - [x] Statement drill-downs use the same reporting boundary as their parent statement.
 
 #### Edge & Error Cases
@@ -211,6 +215,8 @@ flowchart LR
 - [x] A drill-down export preserves the complete `JournalEntry` records and the same concrete-account or account-family scope as the
       reviewed drill-down.
 - [x] A statement export applies the same period or as-of date as the reviewed statement.
+- [x] A Balance Sheet export preserves the displayed concrete account rows and includes the income and expense account contributions that
+      explain `Earnings to date`.
 - [x] An export is generated from one snapshot of the current accounting books.
 - [x] The full-ledger export count follows the journal's operations, including memo-only operations, rather than the number of source events
       or debit and credit lines.
@@ -311,7 +317,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c7f058d0227a463709ac7a54ea95f3164cf385b2`
+**Implementation evidence reviewed against:** `47b4491f581ff46f0e1982d7f7576ded7594cefb`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -360,10 +366,11 @@ flowchart LR
   [concrete-account Balance Sheet](../../../app/src/utils/accounting/balanceSheet.ts), and
   [statement presenter](../../../app/src/utils/accounting/presenter.ts)
 - [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue) and
-  [statement line](../../../app/src/components/sections/AccountingView/StatementLine.vue)
+  [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue)
 - [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
 - [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
+  [Balance Sheet table tests](../../../app/src/components/sections/AccountingView/__tests__/BalanceSheetTable.spec.ts),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
   [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),
   [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
