@@ -13,7 +13,7 @@
  *   `MultiplierUpdated` events into a date-keyed rate, so a **withdrawal / mint is
  *   valued at the multiplier in effect on its own date** and stays frozen there — the
  *   realization price never moves afterwards.
- * - {@link resolveCurrentSherMultiplier} gives the **current** multiplier, used to
+ * - {@link currentSherUsdRate} derives the **current** rate, used to
  *   value SHER that is **accrued but not yet withdrawn** (still pending in
  *   `SHERS To Be Issued`) — that portion floats at today's rate until it is taken.
  *
@@ -127,7 +127,7 @@ export function makeSherUsdRate(
  * most recent change event, else a deposit-implied value, else the 1x default. Always
  * returns a positive multiplier so pending SHER never values to $0 for lack of a price.
  */
-export function resolveCurrentSherMultiplier(
+function resolveCurrentSherMultiplier(
   updates: readonly SafeMultiplierUpdatedRow[] | undefined,
   deposits: readonly SafeDepositRow[] | undefined,
   currentMultiplier?: number | null

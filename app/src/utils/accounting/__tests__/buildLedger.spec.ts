@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildLedger, dedupeInternalTransfers } from '@/utils/accounting/buildLedger'
+import { buildLedger } from '@/utils/accounting/buildLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { catalogueLedger } from './catalogueLedger'
 
@@ -47,7 +47,7 @@ describe('buildLedger — rolls up transaction fees as a dedicated metric', () =
   })
 })
 
-describe('dedupeInternalTransfers', () => {
+describe('buildLedger — internal transfer reconciliation', () => {
   const base: Omit<LedgerEntry, 'id'> = {
     timestamp: 100,
     useCase: 'INTERNAL',
@@ -64,7 +64,7 @@ describe('dedupeInternalTransfers', () => {
   it('collapses the two contract-side recordings of one internal transfer', () => {
     const bankSide: LedgerEntry = { ...base, id: 'bank-1' }
     const safeSide: LedgerEntry = { ...base, id: 'safe-1' }
-    const result = dedupeInternalTransfers([bankSide, safeSide])
+    const result = buildLedger([bankSide, safeSide]).entries
     expect(result).toHaveLength(1)
     expect(result[0]!.id).toBe('bank-1') // first occurrence wins
   })
@@ -72,13 +72,13 @@ describe('dedupeInternalTransfers', () => {
   it('keeps internal moves that differ in amount or token', () => {
     const usd: LedgerEntry = { ...base, id: 'a', amountUsd: 50, rawAmount: '50000000' }
     const pol: LedgerEntry = { ...base, id: 'b', amountUsd: 1.72, rawAmount: '22', token: 'native' }
-    expect(dedupeInternalTransfers([usd, pol])).toHaveLength(2)
+    expect(buildLedger([usd, pol]).entries).toHaveLength(2)
   })
 
   it('never dedupes external postings (unique source events)', () => {
     const ext: LedgerEntry = { ...base, id: 'x', internal: false, useCase: 'UC-BANK-02' }
     const twin: LedgerEntry = { ...ext, id: 'y' }
-    expect(dedupeInternalTransfers([ext, twin])).toHaveLength(2)
+    expect(buildLedger([ext, twin]).entries).toHaveLength(2)
   })
 })
 

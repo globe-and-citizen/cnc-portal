@@ -223,9 +223,7 @@ export interface LedgerEntry {
 }
 
 /** Checksum-normalize an address, returning `undefined` for invalid input. */
-export function normalizeCounterparty(
-  address: Address | string | null | undefined
-): Address | undefined {
+function normalizeCounterparty(address: Address | string | null | undefined): Address | undefined {
   if (!address || !isAddress(address)) return undefined
   return getAddress(address)
 }

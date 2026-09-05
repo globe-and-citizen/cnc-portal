@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { type Address } from 'viem'
 import { mapVestingEvents } from '@/utils/accounting/mappers/vesting'
 import { mapInvestorEvents } from '@/utils/accounting/mappers/investor'
-import { assembleCncAccounting } from '@/utils/accounting/assemble'
 import { makeCtx, ADDR, balanceOf } from './fixtures'
+import { assembleAccounting } from './assembleAccounting'
 
 const ctx = makeCtx()
 
@@ -170,7 +170,7 @@ function assembleVesting(options: {
   stoppeds: ReturnType<typeof stop>[]
   mintAmounts: string[]
 }) {
-  return assembleCncAccounting({
+  return assembleAccounting({
     contracts: [
       {
         type: 'Vesting',

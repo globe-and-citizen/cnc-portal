@@ -9,10 +9,11 @@ import GeneralLedger from '../GeneralLedger.vue'
 import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
 import StatementLine from '../StatementLine.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import { entriesForAccount, accountBalance, NO_OPENING } from '@/utils/accounting/accountLedger'
+import { entriesForAccount, scopedNet, NO_OPENING } from '@/utils/accounting/accountLedger'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerPresenter'
 import type { StatementLineView } from '@/utils/accounting/presenter'
+import { money } from '@/utils/accounting/presenter'
 
 // Clicking an export button used to run the real writers: `exportTablesPdf`
 // ends on `doc.save(filename)`, and jsPDF — which only knows how to trigger a
@@ -159,6 +160,8 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
   const account = 'Investor Equity'
   const entries = entriesForAccount(catalogueLedger, account)
   const columnsStorageKey = 'cnc-accounting-modal-test-columns'
+  const accountBalance = (entries: readonly (typeof catalogueLedger)[number][], account: string) =>
+    money(scopedNet(entries, account))
 
   it('lists the account entries, count and balance', async () => {
     const wrapper = renderWithProviders(LedgerDrilldownModal, {

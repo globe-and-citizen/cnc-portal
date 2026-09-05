@@ -5,10 +5,11 @@
  */
 import { formatUnits, type Address } from 'viem'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
-import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
+import type { CncAccounting } from '@/utils/accounting/assemble'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { MapperContext } from '@/utils/accounting/mappers/context'
+import { assembleAccounting } from './assembleAccounting'
 
 /** Lowercase addresses are always valid (no checksum to fail) — safe for tests. */
 export const ADDR = {
@@ -106,7 +107,7 @@ export function balanceOf(entries: readonly LedgerEntry[], account: string): num
  * rather than hand-built entries.
  */
 export function sampleBooks(): CncAccounting {
-  return assembleCncAccounting({
+  return assembleAccounting({
     contracts: [
       { type: 'Bank', address: ADDR.bank as Address, deployer: ADDR.bank as Address, admins: [] },
       {

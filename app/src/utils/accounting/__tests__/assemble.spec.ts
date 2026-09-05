@@ -1,15 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import type { Address } from 'viem'
 import type { TeamContract, ContractType } from '@/types/teamContract'
-import {
-  assembleCncAccounting,
-  emptyCncAccounting,
-  phase1RateOfRecord,
-  type CncAccountingInput
-} from '@/utils/accounting/assemble'
+import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
 import { ADDR } from './fixtures'
+import { assembleAccounting } from './assembleAccounting'
 
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 const INVESTOR = '0xcccccccccccccccccccccccccccccccccccccccc'
@@ -40,9 +36,9 @@ const BASE: CncAccountingInput = {
   rateOfRecord: RATE
 }
 
-describe('assembleCncAccounting', () => {
+describe('accounting assembly boundary', () => {
   it('returns an empty, balanced result for no feeds', () => {
-    const a = emptyCncAccounting()
+    const a = assembleAccounting({})
     expect(a.entries).toEqual([])
     expect(a.journal).toEqual([])
     expect(a.summary).toMatchObject({ cash: 0, income: 0, expense: 0, equity: 0 })
@@ -52,7 +48,7 @@ describe('assembleCncAccounting', () => {
   })
 
   it('books a client USDC deposit into Bank as Service Revenue', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       bankEvents: {
         bankDeposits: { items: [] },
@@ -84,7 +80,7 @@ describe('assembleCncAccounting', () => {
   })
 
   it('collapses the cross-contract internal-transfer twin (Bank → Payroll)', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       // Same native move indexed twice: Bank `Transfer` out and CashRem `Deposited`.
       bankEvents: {
@@ -138,7 +134,7 @@ describe('assembleCncAccounting', () => {
   })
 
   it('enriches a wage settlement with its off-chain Payroll category', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       cashRemunerationEvents: {
         cashRemunerationDeposits: { items: [] },
@@ -180,7 +176,7 @@ describe('assembleCncAccounting', () => {
   })
 
   it('books an investment via the SafeDepositRouter as Investor Equity', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       safeDepositRouterEvents: {
         safeDeposits: {
@@ -227,7 +223,7 @@ describe('assembleCncAccounting', () => {
   })
 
   it('issues an unbacked direct mint into equity (Dr SHERS To Be Issued · Cr Investor Equity)', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       // No backing deposit/withdraw → the mint is a direct share issuance.
       investorEvents: {
@@ -288,16 +284,16 @@ describe('assembleCncAccounting', () => {
       rawContractTokenTransfers: { items: [] }
     }
 
-    const withRate = assembleCncAccounting({ ...BASE, bankEvents })
+    const withRate = assembleAccounting({ ...BASE, bankEvents })
     expect(withRate.summary.income).toBe(2) // 1 native @ $2
 
-    const phase1 = assembleCncAccounting({ ...BASE, rateOfRecord: phase1RateOfRecord, bankEvents })
+    const phase1 = assembleAccounting({ ...BASE, rateOfRecord: () => 0, bankEvents })
     expect(phase1.summary.income).toBe(0) // native priced at $0 until the FX gap is filled
   })
 
   it('does not throw when optional feeds are null or absent', () => {
     expect(() =>
-      assembleCncAccounting({ ...BASE, safeTransfers: null, bankEvents: null })
+      assembleAccounting({ ...BASE, safeTransfers: null, bankEvents: null })
     ).not.toThrow()
   })
 })

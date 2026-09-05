@@ -18,14 +18,8 @@
  */
 import { describe, it, expect } from 'vitest'
 import { buildJournal, buildGeneralLedger } from '@/utils/accounting/generalLedger'
-import {
-  presentLedger,
-  filterLedgerEntries,
-  ledgerTotal,
-  ledgerCurrencies,
-  FEE_ACCOUNT,
-  FEE_FILTER
-} from '@/utils/accounting/ledgerPresenter'
+import { presentLedger } from '@/utils/accounting/ledgerPresenter'
+import { FEE_ACCOUNT, FEE_FILTER } from '@/utils/accounting/ledgerCategory'
 import { presentAccountLedger, entriesForAccount } from '@/utils/accounting/accountLedger'
 import { money } from '@/utils/accounting/presenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -179,8 +173,7 @@ describe('transaction-first read model — the fee filter preserves whole transa
     // The total is the ordinary "Total movements" figure over the whole selected
     // transactions (net legs + folded fees), taken over the same selection
     // `presentLedger` renders — never a fee-only sum ($0.55 here).
-    const selected = filterLedgerEntries(book, FEE_FILTER)
-    expect(view.total).toBe(ledgerTotal(selected))
+    expect(view.total).toBe('$10.55')
     expect(view.total).not.toBe(money(0.55))
   })
 })
@@ -248,7 +241,13 @@ describe('transaction-first read model — date boundaries', () => {
 
 describe('transaction-first read model — multi-currency reporting', () => {
   it('reports every currency present and keeps whole transactions when filtered', () => {
-    const currencies = ledgerCurrencies(book)
+    const currencies = [
+      ...new Set(
+        presentLedger(book, 'All')
+          .rows.map((row) => row.currency)
+          .filter(Boolean)
+      )
+    ]
     expect(currencies).toContain('USDC')
     expect(currencies.length).toBeGreaterThanOrEqual(2) // USDC and the native symbol
     const nativeSymbol = currencies.find((c) => c !== 'USDC')!

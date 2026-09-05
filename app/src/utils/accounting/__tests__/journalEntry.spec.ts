@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import {
-  buildJournal,
-  createJournalEntry,
-  isBalanced,
-  type JournalEntry
-} from '@/utils/accounting/generalLedger'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { createJournalEntry, type JournalEntry } from '@/utils/accounting/journalEntry'
 
 const accounts = buildAccountRegistry([])
 
@@ -40,6 +36,12 @@ function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
   }
 }
 
+function hasBalancedLines(entry: JournalEntry): boolean {
+  const debit = entry.lines.reduce((sum, line) => sum + (line.debit ?? 0), 0)
+  const credit = entry.lines.reduce((sum, line) => sum + (line.credit ?? 0), 0)
+  return debit === credit
+}
+
 describe('JournalEntry', () => {
   it('models a source operation as one multi-line JournalEntry', () => {
     const entry = createJournalEntry(
@@ -55,7 +57,7 @@ describe('JournalEntry', () => {
     expect(entry.id).toBe('operation-42:principal')
     expect(entry.sourceOperationId).toBe('operation-42')
     expect(entry.lines).toHaveLength(3)
-    expect(isBalanced(entry)).toBe(true)
+    expect(hasBalancedLines(entry)).toBe(true)
   })
 
   it('accepts a compound entry with one credit and several debit lines', () => {
@@ -74,7 +76,7 @@ describe('JournalEntry', () => {
     )
 
     expect(compound.lines).toHaveLength(3)
-    expect(isBalanced(compound)).toBe(true)
+    expect(hasBalancedLines(compound)).toBe(true)
   })
 
   it('represents a memo-only entry explicitly without monetary lines', () => {
@@ -92,7 +94,7 @@ describe('JournalEntry', () => {
 
     expect(memo.kind).toBe('memo')
     expect(memo.lines).toEqual([])
-    expect(isBalanced(memo)).toBe(true)
+    expect(hasBalancedLines(memo)).toBe(true)
   })
 
   it('rejects a memo entry that contains a monetary line', () => {

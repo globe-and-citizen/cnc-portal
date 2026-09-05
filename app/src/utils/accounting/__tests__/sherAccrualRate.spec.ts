@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import type { Address } from 'viem'
 import type { TeamContract, ContractType } from '@/types/teamContract'
-import { assembleCncAccounting, type CncAccountingInput } from '@/utils/accounting/assemble'
+import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import { ADDR } from './fixtures'
+import { assembleAccounting } from './assembleAccounting'
 
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 const DEPLOYER = ADDR.founder as Address
@@ -37,7 +38,7 @@ function claim(weekStartSeconds: number) {
 }
 
 describe('SHER accrual valuation at the current multiplier', () => {
-  const a = assembleCncAccounting({
+  const a = assembleAccounting({
     ...BASE,
     safeDepositRouterEvents: {
       safeDeposits: { items: [] },

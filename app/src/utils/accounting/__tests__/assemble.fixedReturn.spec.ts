@@ -7,10 +7,11 @@
 import { describe, it, expect } from 'vitest'
 import type { Address } from 'viem'
 import type { TeamContract, ContractType } from '@/types/teamContract'
-import { assembleCncAccounting, type CncAccountingInput } from '@/utils/accounting/assemble'
+import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
 import { ADDR } from './fixtures'
+import { assembleAccounting } from './assembleAccounting'
 
 const FIXED_RETURN = ADDR.credit as Address
 const DEPLOYER = ADDR.founder as Address
@@ -33,7 +34,7 @@ const BASE: CncAccountingInput = {
   rateOfRecord: RATE
 }
 
-describe('assembleCncAccounting — Community Credit', () => {
+describe('accounting assembly — Community Credit', () => {
   it('runs a Community Credit round through to the statements', () => {
     const emptyFixedReturn = {
       fixedReturnLendingOfferRefundables: { items: [] },
@@ -45,7 +46,7 @@ describe('assembleCncAccounting — Community Credit', () => {
       fixedReturnTokenSupportAddeds: { items: [] },
       fixedReturnTokenSupportRemoveds: { items: [] }
     }
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       fixedReturnEvents: {
         ...emptyFixedReturn,

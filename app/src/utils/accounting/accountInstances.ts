@@ -12,7 +12,7 @@ import { accountFamilyOf, type AccountName } from './chartOfAccounts'
 import type { LedgerEntry } from './ledgerEntry'
 
 /** Cash account family owned by each company money-pocket contract type. */
-export const CASH_ACCOUNT_BY_CONTRACT_TYPE = {
+const CASH_ACCOUNT_BY_CONTRACT_TYPE = {
   Safe: 'Cash — Safe',
   Bank: 'Cash — Bank',
   CashRemunerationEIP712: 'Cash — Payroll',

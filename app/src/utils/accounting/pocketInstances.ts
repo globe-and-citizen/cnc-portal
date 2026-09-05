@@ -2,7 +2,7 @@
  * Which **contract deployment** a cash-pocket leg belongs to.
  *
  * A team can redeploy a pocket (Bank / Payroll / Expense / Credit — see
- * {@link isInstancedPocket}): the account keeps its name but the cash now sits in
+ * {@link isDeploymentScopedAccountFamily}): the account keeps its name but the cash now sits in
  * a new contract. The books number those deployments oldest-first — the original
  * keeps the plain account name, each later one reads `Cash — Bank 2` / `3` — so
  * the trial balance can show one line per deployment and the general ledger can
@@ -12,7 +12,7 @@
  * Canonical JournalEntry lines use AccountId from `accountRegistry.ts` and never
  * use this display index to decide accounting identity.
  */
-import { isInstancedPocket, type AccountName } from './chartOfAccounts'
+import { isDeploymentScopedAccountFamily, type AccountName } from './chartOfAccounts'
 import type { LedgerEntry } from './ledgerEntry'
 
 /** One deployment of a cash pocket, as the books number it. */
@@ -59,7 +59,7 @@ function noteLeg(
   instance: string | undefined,
   timestamp: number
 ): void {
-  if (!account || !instance || !isInstancedPocket(account as AccountName)) return
+  if (!account || !instance || !isDeploymentScopedAccountFamily(account as AccountName)) return
   let byInstance = seen.get(account)
   if (!byInstance) {
     byInstance = new Map()

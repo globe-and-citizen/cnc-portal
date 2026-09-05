@@ -131,7 +131,7 @@ export interface CncAccounting {
  * oracle is wired, so stablecoin (USDC) figures still render. Callers can inject
  * a real resolver (e.g. the agreed SHER mint price) via `rateOfRecord`.
  */
-export const phase1RateOfRecord: UsdRateOfRecord = () => 0
+const phase1RateOfRecord: UsdRateOfRecord = () => 0
 
 /** Pull a Ponder query field's `.items`, tolerating a missing/null result. */
 function items<T>(field: { items: T[] } | null | undefined): T[] {
@@ -330,11 +330,10 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
 
 /**
  * Consolidate a raw feed into the ledger and the three statements. Split from
- * {@link assembleCncAccounting} so a caller that already holds the raw entries
- * (the composable, which derives the price-fetch days from them) doesn't run the
- * whole mapper pipeline a second time.
+ * {@link assembleWithAccountEvidence} so the accounting composable can derive
+ * price-fetch days from the raw entries without running the mapper pipeline twice.
  */
-export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
+function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
   const reconciliation = reconcileJournalEntrySources(rawEntries)
   const { entries, summary } = buildLedger(reconciliation.entries)
   const accountRegistry = buildAccountRegistry(entries)
@@ -362,17 +361,4 @@ export function assembleWithAccountEvidence(
   evidence: TransactionAccountEvidence
 ): CncAccounting {
   return assembleFromRawEntries(resolveAccountInstances(rawEntries, deploymentAccounts, evidence))
-}
-
-/**
- * Assemble a team's consolidated ledger and the three statements from its raw
- * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
- */
-export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
-  return assembleFromRawEntries(buildRawCncEntries(input))
-}
-
-/** An empty accounting result — used before any data has loaded. */
-export function emptyCncAccounting(): CncAccounting {
-  return assembleCncAccounting({})
 }

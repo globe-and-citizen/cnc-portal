@@ -16,7 +16,7 @@ type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount'
 export type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
 /** Soft badge classes per trial-balance account nature. */
-export const NATURE_BADGE: Record<TrialNature, string> = {
+const NATURE_BADGE: Record<TrialNature, string> = {
   Asset: 'bg-info/10 text-info',
   Equity: 'bg-primary/10 text-primary',
   'Contra-equity': 'bg-primary/10 text-primary',
@@ -130,7 +130,7 @@ export function dayLabel(date: Date): string {
 /**
  * The headings the statement exports (PDF page / Excel title row) print, spelling
  * out the active reporting scope so a printed page is self-describing — mirroring
- * {@link ledgerExportTitle}. The plain base name alone for the whole book, with
+ * the General Ledger export title. The plain base name alone for the whole book, with
  * the selected period / "as of" date appended when the page has one set.
  */
 export function incomeExportTitle(from?: Date | null, to?: Date | null): string {

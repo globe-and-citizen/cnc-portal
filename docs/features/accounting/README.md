@@ -36,6 +36,8 @@ These acceptance criteria follow the
 - **Journal-entry assembly:** Accounting constructs a validated double-entry `JournalEntry` collection and preserves concrete accounts
   across redeployments. The source-operation model, canonical account terminology, report-projection boundary, and verified optimisation
   considerations are owned by the [Accounting Read Model](../../implementation/accounting-read-model/README.md).
+- **Runtime assembly boundary:** The application calls the explicit raw-mapping and evidence-aware assembly stages. Fixture conveniences and
+  implementation helpers are private, so production accounting APIs represent real read-model boundaries rather than test setup.
 
 ## Lifecycle
 
@@ -276,7 +278,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
+**Implementation evidence reviewed against:** `373757491a43ce390196880e2d4cc666ae76cdfa`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and

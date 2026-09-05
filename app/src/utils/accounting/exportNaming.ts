@@ -22,7 +22,7 @@ function safeName(name: string): string {
 }
 
 /** The self-describing base name (no extension) for a section's export. */
-export function exportBaseName(spec: SectionSpec): string {
+function exportBaseName(spec: SectionSpec): string {
   switch (spec.key) {
     case 'summary':
       return 'Accounting Report'

@@ -19,7 +19,7 @@ import type { ContractType, TeamContract } from '@/types/teamContract'
  * `FeeCollector` is intentionally **not** here: it is a protocol-wide
  * counterparty, not a CNC-owned pocket.
  */
-export const INTERNAL_POCKET_CONTRACT_TYPES = [
+const INTERNAL_POCKET_CONTRACT_TYPES = [
   'Safe',
   'Bank',
   'CashRemunerationEIP712',
