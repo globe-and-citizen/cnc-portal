@@ -43,32 +43,14 @@ displays a reconciliation warning until the counterpart evidence is available.
 
 ## Cash, Capital, and Treasury Entries
 
-### Founder Deposit into Bank — `UC-BANK-01`
+### Direct External Deposit into Bank — `UC-BANK-02`
 
-A founder deposits 100 USD without receiving SHER.
-
-| Account       | Debit | Credit |
-| ------------- | ----: | -----: |
-| Cash — Bank   |   100 |        |
-| Owner Capital |       |    100 |
-
-### Client Payment into Bank — `UC-BANK-02`
-
-A client pays 100 USD for a service.
+An external party deposits 100 USD directly into Bank. The sender's role does not change this source-evidence posting.
 
 | Account         | Debit | Credit |
 | --------------- | ----: | -----: |
 | Cash — Bank     |   100 |        |
 | Service Revenue |       |    100 |
-
-### Founder Deposit into Safe — `UC-BANK-01`
-
-A founder deposits 100 USD into the Safe without receiving SHER.
-
-| Account       | Debit | Credit |
-| ------------- | ----: | -----: |
-| Cash — Safe   |   100 |        |
-| Owner Capital |       |    100 |
 
 ### Investment through SafeDepositRouter — `UC-SDR-01`
 
@@ -79,15 +61,17 @@ An investor contributes 100 USD through SafeDepositRouter and receives SHER.
 | Cash — Safe     |   100 |        |
 | Investor Equity |       |    100 |
 
-### Member Contribution into Safe — `UC-MEMBER-01`
+The Safe transfer from this transaction is supplementary source evidence. It never adds a direct-deposit or Service Revenue line because the
+transaction hash already identifies the SafeDepositRouter investment.
 
-A company member contributes 100 USD directly into the Safe when the matching SafeDepositRouter event is unavailable. The entry is the same
-capital contribution as an investment and records the SHER value in `Investor Equity`.
+### Direct External Deposit into Safe — `UC-BANK-02`
+
+An external party deposits 100 USD directly into the Safe without a matching SafeDepositRouter transaction.
 
 | Account         | Debit | Credit |
 | --------------- | ----: | -----: |
 | Cash — Safe     |   100 |        |
-| Investor Equity |       |    100 |
+| Service Revenue |       |    100 |
 
 ### Bank Funds Payroll — `UC-BANK-03`
 

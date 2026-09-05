@@ -165,9 +165,10 @@ it to an earlier or later deployment based on activity order.
 - A monetary `JournalEntryLine` has exactly one debit or credit amount and exactly one concrete `Account`.
 - Each monetary `JournalEntry` has equal debit and credit totals. Invalid normalized postings are rejected before a journal projection can
   consume them.
-- A direct external deposit into Bank or Safe credits `Service Revenue` regardless of the sender address. Deposits and company-pocket
-  transfers retain their source-evidence accounts even when a legacy category exists. A dedicated SafeDepositRouter investment that issues
-  SHER remains an `Investor Equity` operation.
+- A direct external deposit into Bank or Safe with no matching SafeDepositRouter transaction credits `Service Revenue` regardless of the
+  sender address. Deposits and company-pocket transfers retain their source-evidence accounts even when a legacy category exists.
+- A SafeDepositRouter operation that issues SHER owns the `Cash — Safe` and `Investor Equity` lines. Its Safe token transfer has the same
+  transaction hash and is duplicate source evidence, so it cannot add `Service Revenue` or a second cash debit.
 - Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
 - A deployment-specific instance is resolved only when it is a known company deployment of the matching family, either named directly by the
   mapper or proven by an unambiguous ERC-20 receipt `Transfer` direction. Missing, external, ambiguous, and native-only evidence remains
@@ -242,12 +243,15 @@ aggregate statement line has no single running balance. A fee remains an ordinar
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `2a67e27828894093162fccfc368eb13039704396`
+**Implementation evidence reviewed against:** `266b29312adc557918ae04864c2a71d2b7294ac7`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
 - [Transaction evidence reader](../../../app/src/composables/accounting/useTransactionEvidence.ts)
-- [Pure assembly](../../../app/src/utils/accounting/assemble.ts) and [consolidation](../../../app/src/utils/accounting/buildLedger.ts)
+- [Pure assembly](../../../app/src/utils/accounting/assemble.ts),
+  [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts),
+  [SafeDepositRouter mapper](../../../app/src/utils/accounting/mappers/safeDepositRouter.ts), and
+  [consolidation](../../../app/src/utils/accounting/buildLedger.ts)
 - [Chart of accounts](../../../app/src/utils/accounting/chartOfAccounts.ts) and
   [concrete account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
   [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
