@@ -66,19 +66,19 @@ describe('journal Classification projection', () => {
         id: 'safe-transfer-service-id',
         txHash: TX,
         credit: 'Cash — Safe',
-        debit: 'Loan Payable',
-        classified: 'SHAREHOLDER_LOAN',
-        memo: 'Repay the founder'
+        debit: 'Interest Expense',
+        classified: 'INTEREST_EXPENSE',
+        memo: 'Pay the founder interest'
       })
     ])
     const row = presentJournalClassification(journal).rows[0]!
     expect(row.journalEntryId).toBe(TX)
     expect(row.target).toEqual({
       sourceEntryId: 'safe-transfer-service-id',
-      category: 'SHAREHOLDER_LOAN',
-      memo: 'Repay the founder'
+      category: 'INTEREST_EXPENSE',
+      memo: 'Pay the founder interest'
     })
-    expect(row.account).toBe('Loan Payable')
+    expect(row.account).toBe('Interest Expense')
   })
 
   it('reads amounts and concrete accounts from journal lines even if source metadata differs', () => {

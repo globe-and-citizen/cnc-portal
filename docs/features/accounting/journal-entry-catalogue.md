@@ -158,24 +158,6 @@ An owner classifies a 100 USD Bank withdrawal as a return of previously contribu
 | Owner Capital |   100 |        |
 | Cash — Bank   |       |    100 |
 
-### Classified Shareholder-Loan Inflow — `CASH-IN`
-
-The company receives a 100 USD shareholder loan.
-
-| Account      | Debit | Credit |
-| ------------ | ----: | -----: |
-| Cash — Bank  |   100 |        |
-| Loan Payable |       |    100 |
-
-### Classified Shareholder-Loan Repayment — `CASH-OUT`
-
-The company repays 100 USD of a shareholder loan.
-
-| Account      | Debit | Credit |
-| ------------ | ----: | -----: |
-| Loan Payable |   100 |        |
-| Cash — Bank  |       |    100 |
-
 ### Classified Operating Expense — `CASH-OUT`
 
 An owner classifies a 100 USD Bank or Safe outflow as an operating expense.

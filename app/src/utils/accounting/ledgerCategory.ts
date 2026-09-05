@@ -65,15 +65,14 @@ export function categoryLabelOf(entry: LedgerEntry): string {
 /**
  * The badge a manual classification maps to. A classified Bank/Safe movement collapses
  * to the generic `CASH-IN` / `CASH-OUT` use case, which alone would read as a bare
- * "Revenue" / "Expense" — so a shareholder loan, a payroll run or a dividend would all
- * be mislabelled. This restores each classification to the pill that matches its nature
- * (a loan under Credit, a capital contribution under Investment, and so on).
+ * "Revenue" / "Expense" — so loan interest, a payroll run or a dividend would all be
+ * mislabelled. This restores each classification to the pill that matches its nature
+ * (interest under Credit, a capital contribution under Investment, and so on).
  */
 const CLASSIFIED_CATEGORY: Record<ClassificationCategory, LedgerCategory> = {
   REVENUE: 'Revenue',
   EXPENSE: 'Expense',
   OWNER_CAPITAL: 'Investment',
-  SHAREHOLDER_LOAN: 'Credit',
   INTERNAL_TRANSFER: 'Transfer',
   PAYROLL_EXPENSE: 'Payroll',
   INTEREST_EXPENSE: 'Credit',

@@ -9,8 +9,8 @@
  *
  * Guaranteed-internal invariant: a movement whose counterparty is one of the team's
  * own pockets is provably an internal transfer, so it can never be reclassified as
- * external income, expense, capital or a loan. Passing that `pocket` is what asserts
- * the movement is internal, so the guard cannot be bypassed by forgetting a flag.
+ * external income, expense or capital. Passing that `pocket` is what asserts the
+ * movement is internal, so the guard cannot be bypassed by forgetting a flag.
  */
 import type { AccountName } from './chartOfAccounts'
 
@@ -24,7 +24,6 @@ export type ClassificationDirection = 'in' | 'out'
 export type ClassificationCategory =
   | 'REVENUE'
   | 'EXPENSE'
-  | 'SHAREHOLDER_LOAN'
   | 'OWNER_CAPITAL'
   | 'INTERNAL_TRANSFER'
   | 'PAYROLL_EXPENSE'
@@ -41,7 +40,6 @@ export interface ClassificationOverride {
 export const CATEGORY_LABEL: Record<ClassificationCategory, string> = {
   REVENUE: 'Revenue',
   EXPENSE: 'Expense',
-  SHAREHOLDER_LOAN: 'Shareholder Loan',
   OWNER_CAPITAL: 'Owner Capital',
   INTERNAL_TRANSFER: 'Internal Transfer',
   PAYROLL_EXPENSE: 'Payroll',
@@ -53,7 +51,6 @@ export const CATEGORY_LABEL: Record<ClassificationCategory, string> = {
 const COUNTER_ACCOUNT: Record<Exclude<ClassificationCategory, 'INTERNAL_TRANSFER'>, AccountName> = {
   REVENUE: 'Service Revenue',
   EXPENSE: 'Operating Expense',
-  SHAREHOLDER_LOAN: 'Loan Payable',
   OWNER_CAPITAL: 'Owner Capital',
   PAYROLL_EXPENSE: 'Payroll Expense',
   INTEREST_EXPENSE: 'Interest Expense',
@@ -62,21 +59,20 @@ const COUNTER_ACCOUNT: Record<Exclude<ClassificationCategory, 'INTERNAL_TRANSFER
 
 /**
  * Which categories a user may pick for each direction, and the menu the UI offers.
- * Revenue only makes sense on an inflow and an expense only on an outflow; capital, a
- * shareholder loan and an internal transfer are meaningful both ways.
+ * Revenue only makes sense on an inflow and an expense only on an outflow; capital and
+ * an internal transfer are meaningful both ways.
  */
 export const ALLOWED_BY_DIRECTION: Record<
   ClassificationDirection,
   readonly ClassificationCategory[]
 > = {
-  in: ['REVENUE', 'OWNER_CAPITAL', 'SHAREHOLDER_LOAN', 'INTERNAL_TRANSFER'],
+  in: ['REVENUE', 'OWNER_CAPITAL', 'INTERNAL_TRANSFER'],
   out: [
     'EXPENSE',
     'PAYROLL_EXPENSE',
     'INTEREST_EXPENSE',
     'DIVIDEND_EXPENSE',
     'OWNER_CAPITAL',
-    'SHAREHOLDER_LOAN',
     'INTERNAL_TRANSFER'
   ]
 }

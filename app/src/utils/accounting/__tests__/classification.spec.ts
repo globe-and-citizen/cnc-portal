@@ -24,10 +24,9 @@ describe('direction constraints', () => {
     expect(resolve('in', 'EXPENSE')).toBeNull()
   })
 
-  it('allows capital and a shareholder loan both ways', () => {
+  it('allows capital both ways', () => {
     for (const direction of ['in', 'out'] as ClassificationDirection[]) {
       expect(resolve(direction, 'OWNER_CAPITAL')).not.toBeNull()
-      expect(resolve(direction, 'SHAREHOLDER_LOAN')).not.toBeNull()
     }
   })
 
@@ -50,16 +49,6 @@ describe('resolveClassifiedAccounts — deposits (cash in)', () => {
     expect(
       resolveClassifiedAccounts({ direction: 'in', cashAccount: BANK, category: 'OWNER_CAPITAL' })
     ).toEqual({ debit: BANK, credit: 'Owner Capital', internal: false })
-  })
-
-  it('books a shareholder loan as Dr Cash · Cr Loan Payable', () => {
-    expect(
-      resolveClassifiedAccounts({
-        direction: 'in',
-        cashAccount: BANK,
-        category: 'SHAREHOLDER_LOAN'
-      })
-    ).toEqual({ debit: BANK, credit: 'Loan Payable', internal: false })
   })
 
   it('uses the Safe cash pocket when that is the source', () => {
@@ -86,16 +75,6 @@ describe('resolveClassifiedAccounts — withdrawals (cash out)', () => {
     expect(
       resolveClassifiedAccounts({ direction: 'out', cashAccount: BANK, category: 'OWNER_CAPITAL' })
     ).toEqual({ debit: 'Owner Capital', credit: BANK, internal: false })
-  })
-
-  it('books a loan repayment as Dr Loan Payable · Cr Cash', () => {
-    expect(
-      resolveClassifiedAccounts({
-        direction: 'out',
-        cashAccount: BANK,
-        category: 'SHAREHOLDER_LOAN'
-      })
-    ).toEqual({ debit: 'Loan Payable', credit: BANK, internal: false })
   })
 
   it('books a payroll payment as Dr Payroll Expense · Cr Cash', () => {

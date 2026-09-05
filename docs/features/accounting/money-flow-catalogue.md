@@ -324,14 +324,13 @@ identically.
 
 A classification re-resolves the two balanced legs deterministically: the chosen counter-account is debited and the cash pocket is credited.
 
-| Classification       | Withdrawal (cash out)          |
-| -------------------- | ------------------------------ |
-| **Expense**          | Dr Operating Expense · Cr Cash |
-| **Payroll**          | Dr Payroll Expense · Cr Cash   |
-| **Interest**         | Dr Interest Expense · Cr Cash  |
-| **Dividend**         | Dr Dividend Expense · Cr Cash  |
-| **Owner Capital**    | Dr Owner Capital · Cr Cash     |
-| **Shareholder Loan** | Dr Loan Payable · Cr Cash      |
+| Classification    | Withdrawal (cash out)          |
+| ----------------- | ------------------------------ |
+| **Expense**       | Dr Operating Expense · Cr Cash |
+| **Payroll**       | Dr Payroll Expense · Cr Cash   |
+| **Interest**      | Dr Interest Expense · Cr Cash  |
+| **Dividend**      | Dr Dividend Expense · Cr Cash  |
+| **Owner Capital** | Dr Owner Capital · Cr Cash     |
 
 - **Evidence wins.** Direct deposits and company-pocket transfers cannot be reclassified. This keeps a treasury sweep from being misread as
   revenue or a cost and prevents a persisted deposit category from replacing Service Revenue.

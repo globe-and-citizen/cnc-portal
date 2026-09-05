@@ -92,7 +92,7 @@ describe('accounting assembly — legacy manual classification', () => {
       ...BASE,
       bankEvents,
       classifications: [
-        { ...classification(sourceId, 'SHAREHOLDER_LOAN'), memo: 'Repay principal' }
+        { ...classification(sourceId, 'INTEREST_EXPENSE'), memo: 'Pay loan interest' }
       ]
     }
     const saved = assembleAccounting(input)
@@ -103,12 +103,12 @@ describe('accounting assembly — legacy manual classification', () => {
       legacyClassification: {
         editable: true,
         targets: [
-          { sourceEntryId: sourceId, category: 'SHAREHOLDER_LOAN', memo: 'Repay principal' }
+          { sourceEntryId: sourceId, category: 'INTEREST_EXPENSE', memo: 'Pay loan interest' }
         ]
       }
     })
     expect(saved.journal[0]!.lines[0]).toMatchObject({
-      account: { family: { name: 'Loan Payable' } },
+      account: { family: { name: 'Interest Expense' } },
       debit: 100
     })
 
@@ -130,24 +130,6 @@ describe('accounting assembly — legacy manual classification', () => {
     expect(a.balanceSheet.balanced).toBe(true)
   })
 
-  it('keeps a direct deposit as revenue despite a shareholder-loan category', () => {
-    const a = assembleAccounting({
-      ...BASE,
-      bankEvents: clientBankDeposit,
-      classifications: [classification('bd1', 'SHAREHOLDER_LOAN')]
-    })
-
-    expect(a.summary.income).toBe(100)
-    expect(a.incomeStatement.revenue).toContainEqual({
-      account: 'Service Revenue',
-      amount: 100
-    })
-    expect(a.balanceSheet.totalLiabilities).toBe(0)
-    expect(a.entries.find((entry) => entry.id === 'bd1')).not.toHaveProperty('classified')
-    expect(a.generalLedger.balanced).toBe(true)
-    expect(a.balanceSheet.balanced).toBe(true)
-  })
-
   it('keeps a direct deposit as revenue despite an owner-capital category', () => {
     const a = assembleAccounting({
       ...BASE,
@@ -157,6 +139,7 @@ describe('accounting assembly — legacy manual classification', () => {
 
     expect(a.summary.income).toBe(100)
     expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
+    expect(a.balanceSheet.totalLiabilities).toBe(0)
     expect(a.entries.find((entry) => entry.id === 'bd1')).not.toHaveProperty('classified')
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
