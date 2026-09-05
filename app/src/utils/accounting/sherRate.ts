@@ -21,7 +21,7 @@
  * pending one) lives in `mappers/sherIssuance.ts` ({@link settleWithdrawnSher}).
  */
 import { formatUnits } from 'viem'
-import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/ponder/investor'
+import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/contract-events/investor'
 import { resolveTokenIdByAddress, getTokenDecimals } from '@/utils/tokens/metadata'
 import { isUsdPegged } from '@/utils/accounting/toUsd'
 

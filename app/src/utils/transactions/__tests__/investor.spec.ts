@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
 import { formatDateTime, fromUnix } from '@/utils/format'
-import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
+import type {
+  InvestorEventFeed,
+  SafeDepositRouterEventFeed
+} from '@/types/contract-events/investor'
 import {
   buildRawInvestorTransactions,
   formatInvestorTransactionDate,
@@ -16,7 +19,7 @@ const SAFE_A = '0x5555555555555555555555555555555555555555'
 const SAFE_B = '0x6666666666666666666666666666666666666666'
 const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
 
-const buildInvestorEvents = (): InvestorEventsQuery => ({
+const buildInvestorEvents = (): InvestorEventFeed => ({
   investorMints: {
     items: [
       {
@@ -68,7 +71,7 @@ const buildInvestorEvents = (): InvestorEventsQuery => ({
   }
 })
 
-const buildSafeEvents = (): SafeDepositRouterEventsQuery => ({
+const buildSafeEvents = (): SafeDepositRouterEventFeed => ({
   safeDeposits: {
     items: [
       {

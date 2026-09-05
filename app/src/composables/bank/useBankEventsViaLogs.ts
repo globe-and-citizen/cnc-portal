@@ -1,7 +1,6 @@
 /**
- * EXPERIMENT (getLogs vs indexer) — reconstruct the Bank transaction feed from
- * the RPC via `eth_getLogs` instead of Ponder, in the exact `BankEventsQuery`
- * shape. Uses the shared `useContractEventsViaLogs` base; only the ABI union,
+ * Reconstruct the Bank transaction feed from RPC `eth_getLogs` in the
+ * `BankEventFeed` shape. Uses the shared `useContractEventsViaLogs` base; only the ABI union,
  * empty shape, and per-event mapping are Bank-specific.
  *
  * FeePaid events aren't on the Bank — the global FeeCollector emits them with
@@ -22,7 +21,7 @@ import { FEE_COLLECTOR_ADDRESS } from '@/constant'
 import BankV1 from '@/artifacts/abi/V1/json/Bank.json'
 import BankV01 from '@/artifacts/abi/V0.1/json/Bank.json'
 import BankV0 from '@/artifacts/abi/V0/json/Bank.json'
-import type { BankEventsQuery } from '@/types/ponder/bank'
+import type { BankEventFeed } from '@/types/contract-events/bank'
 import {
   START_BLOCK,
   str,
@@ -102,7 +101,7 @@ export async function rawTokenTransferLogs(
   return perToken.flat() as unknown as DecodedLogLike[]
 }
 
-export const empty = (): BankEventsQuery => ({
+export const empty = (): BankEventFeed => ({
   bankDeposits: { items: [] },
   bankTokenDeposits: { items: [] },
   bankTransfers: { items: [] },
@@ -122,7 +121,7 @@ const mapEvent = ({
   contract,
   eventName,
   args
-}: EventMapContext<BankEventsQuery>) => {
+}: EventMapContext<BankEventFeed>) => {
   switch (eventName) {
     case 'Deposited':
       out.bankDeposits.items.push({
@@ -239,7 +238,7 @@ export function mapBankExtra({
   eventName,
   args,
   log
-}: EventMapContext<BankEventsQuery>) {
+}: EventMapContext<BankEventFeed>) {
   if (eventName === 'Transfer') {
     const from = String(args.from ?? '').toLowerCase()
     const to = String(args.to ?? '').toLowerCase()
@@ -268,7 +267,7 @@ export function mapBankExtra({
 }
 
 export function useBankEventsViaLogs(contractAddress: MaybeRefOrGetter<ContractAddressInput>) {
-  return useContractEventsViaLogs<BankEventsQuery>({
+  return useContractEventsViaLogs<BankEventFeed>({
     contractAddress,
     queryKey: 'bank-events-logs',
     eventAbi: BANK_EVENT_ABI,

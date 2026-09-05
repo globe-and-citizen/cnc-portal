@@ -91,7 +91,7 @@ export type ExpenseOwnershipTransferredRow = {
   timestamp: number
 }
 
-export type ExpenseEventsQuery = {
+export type ExpenseEventFeed = {
   expenseDeposits: { items: ExpenseDepositRow[] }
   expenseTokenDeposits: { items: ExpenseTokenDepositRow[] }
   expenseTransfers: { items: ExpenseTransferRow[] }

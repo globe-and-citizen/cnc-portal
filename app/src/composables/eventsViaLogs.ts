@@ -86,7 +86,7 @@ export function unionEventAbi(abis: unknown[]): Abi {
   return events
 }
 
-/** Stringify bigints (amounts) the way Ponder returns them. */
+/** Stringify bigint event amounts for the client event-feed representation. */
 export const str = (v: unknown): string => (typeof v === 'bigint' ? v.toString() : String(v))
 
 export type ChainClient = NonNullable<ReturnType<typeof getPublicClient>>
@@ -118,10 +118,10 @@ export interface EventsViaLogsOptions<T> {
   /** A single contract address, or one {@link ScanTarget} per generation. */
   contractAddress: MaybeRefOrGetter<ContractAddressInput>
   /** Cache-key prefix, e.g. 'bank-events-logs'. */
-  queryKey: string
+  queryKey: MaybeRefOrGetter<string>
   /** Union of the contract's event fragments across versions. */
   eventAbi: Abi
-  /** Fresh, empty result matching the Ponder query shape. */
+  /** Fresh, empty event feed. */
   empty: () => T
   /** Fold one decoded contract log into the accumulator. */
   mapEvent: (ctx: EventMapContext<T>) => void
@@ -251,6 +251,7 @@ export async function scanContractLogs<T>(
 
 export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
   const targets = computed(() => normalizeTargets(toValue(opts.contractAddress)))
+  const queryKey = computed(() => toValue(opts.queryKey))
   const addressKey = computed(() =>
     targets.value
       .map((t) => t.address)
@@ -259,7 +260,7 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
   )
 
   const query = useQuery({
-    queryKey: computed(() => [opts.queryKey, addressKey.value]),
+    queryKey: computed(() => [queryKey.value, addressKey.value]),
     enabled: computed(() => targets.value.length > 0),
     staleTime: 30_000,
     queryFn: async (): Promise<ScanResult<T>> => {
@@ -269,9 +270,8 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
     }
   })
 
-  // Mirror @vue/apollo-composable's shape so it drops into the *Transactions.vue.
-  // `gaps` surfaces generations whose scan failed; `refetch` lets consumers force
-  // a re-scan the same way they did with the Apollo queries.
+  // `gaps` surfaces generations whose scan failed; `refetch` lets consumers
+  // explicitly refresh the RPC log scan.
   return {
     result: computed(() => query.data.value?.data ?? null),
     gaps: computed<ScanGap[]>(() => query.data.value?.gaps ?? []),

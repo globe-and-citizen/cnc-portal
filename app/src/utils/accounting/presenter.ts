@@ -41,7 +41,7 @@ export function formatUnixDate(timestamp: number): string {
 
 /**
  * Unix-seconds → `Jan 8, 2026, 14:05:32` — date **with time of day**, so the
- * ledger keeps Ponder's per-second precision (events in the same day stay
+ * ledger retains per-second event precision (events in the same day stay
  * distinguishable and read in true chronological order).
  */
 export function formatUnixDateTime(timestamp: number): string {

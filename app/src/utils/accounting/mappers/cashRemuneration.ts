@@ -20,7 +20,7 @@ import type {
   CashRemunerationWithdrawTokenRow,
   CashRemunerationOwnerTreasuryWithdrawNativeRow,
   CashRemunerationOwnerTreasuryWithdrawTokenRow
-} from '@/types/ponder/cash-remuneration'
+} from '@/types/contract-events/cash-remuneration'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { isNegligibleAmount } from '@/utils/accounting/toUsd'

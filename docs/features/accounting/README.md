@@ -295,7 +295,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `50628f5dd98d2737c4c72587f0cf49b073b985e6`
+**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -355,6 +355,7 @@ flowchart LR
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
+- [Contract Event Feeds implementation](../../implementation/contract-event-feeds/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Accounting Read Model](../../implementation/accounting-read-model/README.md)
 - [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md)

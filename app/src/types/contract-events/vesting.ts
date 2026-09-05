@@ -24,7 +24,7 @@ export type VestingStoppedRow = {
   timestamp: number
 }
 
-export type VestingEventsQuery = {
+export type VestingEventFeed = {
   vestingCreateds: { items: VestingCreatedRow[] }
   vestingTokensReleaseds: { items: VestingTokensReleasedRow[] }
   vestingStoppeds: { items: VestingStoppedRow[] }

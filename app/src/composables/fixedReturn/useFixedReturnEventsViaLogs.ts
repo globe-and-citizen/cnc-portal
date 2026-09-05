@@ -1,14 +1,13 @@
 /**
- * EXPERIMENT (getLogs vs indexer) — FixedReturn (Community Credit) event feed
- * from the RPC via `eth_getLogs` instead of Ponder, in the exact
- * `FixedReturnEventsQuery` shape. Uses the shared `useContractEventsViaLogs`
+ * FixedReturn (Community Credit) event feed from RPC `eth_getLogs` in the
+ * `FixedReturnEventFeed` shape. Uses the shared `useContractEventsViaLogs`
  * base; only the ABI union, empty shape, and per-event mapping are
  * FixedReturn-specific.
  */
 import type { MaybeRefOrGetter } from 'vue'
 import FixedReturnAbi from '@/artifacts/abi/json/FixedReturn.json'
 import FixedReturnV2Abi from '@/artifacts/abi/V2/json/FixedReturn.json'
-import type { FixedReturnEventsQuery } from '@/types/ponder/fixedReturn'
+import type { FixedReturnEventFeed } from '@/types/contract-events/fixedReturn'
 import {
   str,
   unionEventAbi,
@@ -19,7 +18,7 @@ import {
 
 const FIXED_RETURN_EVENT_ABI = unionEventAbi([FixedReturnAbi, FixedReturnV2Abi])
 
-const empty = (): FixedReturnEventsQuery => ({
+const empty = (): FixedReturnEventFeed => ({
   fixedReturnLendingOfferCreateds: { items: [] },
   fixedReturnFundsLents: { items: [] },
   fixedReturnLenderRepaids: { items: [] },
@@ -41,7 +40,7 @@ const mapEvent = ({
   contract,
   eventName,
   args
-}: EventMapContext<FixedReturnEventsQuery>) => {
+}: EventMapContext<FixedReturnEventFeed>) => {
   switch (eventName) {
     case 'LendingOfferCreated':
       out.fixedReturnLendingOfferCreateds.items.push({
@@ -157,7 +156,7 @@ const mapEvent = ({
 export function useFixedReturnEventsViaLogs(
   contractAddress: MaybeRefOrGetter<ContractAddressInput>
 ) {
-  return useContractEventsViaLogs<FixedReturnEventsQuery>({
+  return useContractEventsViaLogs<FixedReturnEventFeed>({
     contractAddress,
     queryKey: 'fixed-return-events-logs',
     eventAbi: FIXED_RETURN_EVENT_ABI,

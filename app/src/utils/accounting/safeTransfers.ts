@@ -5,7 +5,7 @@
  * pipeline itself.
  */
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
-import type { SafeDepositRow } from '@/types/ponder/investor'
+import type { SafeDepositRow } from '@/types/contract-events/investor'
 import { transactionHashOf } from '@/utils/accounting/ledgerEntry'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
 

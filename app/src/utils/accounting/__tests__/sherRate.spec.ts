@@ -6,7 +6,7 @@ import {
   type SherMultiplierPoint
 } from '@/utils/accounting/sherRate'
 import { USDC_ADDRESS } from '@/constant'
-import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/ponder/investor'
+import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/contract-events/investor'
 
 /** A `MultiplierUpdated` row (multipliers in 6-decimal base units). */
 function update(timestamp: number, oldX: number, newX: number): SafeMultiplierUpdatedRow {

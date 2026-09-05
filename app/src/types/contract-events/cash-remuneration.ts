@@ -77,7 +77,7 @@ export type CashRemunerationOwnershipTransferredRow = {
   timestamp: number
 }
 
-export type CashRemunerationEventsQuery = {
+export type CashRemunerationEventFeed = {
   cashRemunerationDeposits: { items: CashRemunerationDepositRow[] }
   cashRemunerationWithdraws: { items: CashRemunerationWithdrawRow[] }
   cashRemunerationWithdrawTokens: { items: CashRemunerationWithdrawTokenRow[] }
