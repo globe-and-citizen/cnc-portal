@@ -112,8 +112,8 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
+      :all-entries="accounting.journal.value"
       :balance="drilldownBalance"
-      :instances="drilldownInstances"
       columns-storage-key="cnc-accounting-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
@@ -208,24 +208,17 @@ const {
   selectedLine: drilldownLine,
   balance: drilldownBalance,
   drilldownEntries,
-  instances: drilldownInstances,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(accounting.entries, () => ({ from: null, to: asOf.value }))
+} = useLedgerDrilldown(accounting.journal, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(row: TrialTableRow): void {
   if (!row.account) return
   // The line's balance sits in whichever column isn't the em-dash placeholder.
   const value = row.dr === '—' ? row.cr : row.dr
-  // A resolved row scopes to its exact deployment. A line with no source contract
-  // opens the separate unresolved account rather than the oldest deployment.
-  if (row.account.resolution === 'unresolved') {
-    openFor(row.account.family.name, value, row.label, { unresolved: true })
-  } else if (row.account.contractAddress) {
-    openFor(row.account.family.name, value, row.label, { instance: row.account.contractAddress })
-  } else {
-    openFor(row.account.family.name, value)
-  }
+  // The concrete Account preserves a resolved deployment or the explicit
+  // unresolved account without reconstructing scope from a contract address.
+  openFor(row.account, value, row.label)
 }
 
 const route = useRoute()
@@ -233,30 +226,39 @@ const router = useRouter()
 
 /**
  * Auto-open the drill-down for an account arrived at from the General Ledger
- * (`?account=…`, plus `?instance=…` when the posting moved a redeployed pocket's
- * later contract). We hold off until the books carry entries so the trial rows are
- * built and a split pocket opens with the right instance scope, then strip the query
- * so closing the modal is final and a reload doesn't reopen it. An account with no
- * matching row (e.g. one closed to a nil balance) still drills directly.
+ * (`?accountId=…` with a family/contract fallback for older links). We hold off
+ * until the journal is ready, then strip the query so closing the modal is final
+ * and a reload does not reopen it. An account with no matching row still drills
+ * directly by its chart family.
  */
 watch(
-  [() => route.query.account, () => route.query.instance, () => accounting.entries.value.length],
-  ([account, instance, entryCount]) => {
-    if (typeof account !== 'string' || !account || entryCount === 0) return
+  [
+    () => route.query.account,
+    () => route.query.instance,
+    () => route.query.accountId,
+    () => accounting.journal.value.length
+  ],
+  ([account, instance, accountId, entryCount]) => {
+    if ((typeof account !== 'string' || !account) && typeof accountId !== 'string') return
+    if (entryCount === 0) return
     const wanted = typeof instance === 'string' ? instance.toLowerCase() : null
     const row = tableRows.value.find(
       (candidate) =>
         !candidate.isTotal &&
-        candidate.account?.family.name === account &&
-        (!wanted ||
-          candidate.account.contractAddress?.toLowerCase() === wanted ||
-          !candidate.account.contractAddress)
+        (typeof accountId === 'string'
+          ? candidate.account?.id === accountId
+          : candidate.account?.family.name === account &&
+            (!wanted ||
+              candidate.account?.contractAddress?.toLowerCase() === wanted ||
+              !candidate.account?.contractAddress))
     )
     if (row) openDrilldown(row)
-    else openFor(account, '')
+    else if (typeof account === 'string')
+      openFor(account as import('@/utils/accounting/chartOfAccounts').AccountName, '')
     const query = { ...route.query }
     delete query.account
     delete query.instance
+    delete query.accountId
     router.replace({ query })
   },
   { immediate: true }

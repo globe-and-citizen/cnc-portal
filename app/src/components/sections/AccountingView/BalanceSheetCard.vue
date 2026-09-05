@@ -71,8 +71,8 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
+      :all-entries="accounting.journal.value"
       :balance="drilldownBalance"
-      :instances="drilldownInstances"
       columns-storage-key="cnc-accounting-balance-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
@@ -103,10 +103,9 @@ const {
   selectedLine: drilldownLine,
   balance: drilldownBalance,
   drilldownEntries,
-  instances: drilldownInstances,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(accounting.entries, () => ({ from: null, to: asOf.value }))
+} = useLedgerDrilldown(accounting.journal, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(line: StatementLineView): void {
   // Retained earnings is an aggregate of every income + expense account; other

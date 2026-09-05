@@ -163,7 +163,16 @@ describe('buildTables (section selection)', () => {
   })
 
   it('drills a single account, heading and total scoped to it (issue #2249)', () => {
-    const [ledger] = buildTables(sampleBooks(), [{ key: 'ledger', account: 'Cash — Bank' }])
+    const books = sampleBooks()
+    const accountId = books.journal[0]!.lines[0]!.account.id
+    const [ledger] = buildTables(books, [
+      {
+        key: 'ledger',
+        journalAccounts: [accountId],
+        journalAccountLabel: 'Cash — Bank',
+        journalAccountTotal: '$100.00'
+      }
+    ])
     expect(ledger.title).toBe('General Ledger — Cash — Bank')
     // The $100 deposit posts a Cash — Bank leg; the total nets the account balance.
     expect(ledger.body.at(-1)!.some((c) => c === '$100.00')).toBe(true)
@@ -173,9 +182,9 @@ describe('buildTables (section selection)', () => {
     const [ledger] = buildTables(sampleBooks(), [
       {
         key: 'ledger',
-        account: ['Service Revenue'],
-        accountLabel: 'Retained earnings',
-        accountTotal: '$100.00'
+        journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
+        journalAccountLabel: 'Retained earnings',
+        journalAccountTotal: '$100.00'
       }
     ])
     expect(ledger.title).toBe('General Ledger — Retained earnings')

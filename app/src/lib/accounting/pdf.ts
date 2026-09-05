@@ -149,11 +149,8 @@ function sectionTable(
         columns: spec.columns,
         currencies: spec.currencies,
         journalAccounts: spec.journalAccounts,
-        account: spec.account,
-        accountLabel: spec.accountLabel,
-        accountTotal: spec.accountTotal,
-        instance: spec.instance,
-        unresolved: spec.unresolved
+        journalAccountLabel: spec.journalAccountLabel,
+        journalAccountTotal: spec.journalAccountTotal
       })
   }
 }

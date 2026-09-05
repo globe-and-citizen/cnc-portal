@@ -11,9 +11,8 @@ These acceptance criteria follow the
 
 - Accounting presents one consolidated set of double-entry books for the company across its money-moving contracts and relevant portal
   records.
-- The General Ledger, Trial Balance, summary, income statement, balance sheet, and their exports project the validated `JournalEntry`
-  collection. Account and statement drill-downs retain transitional `LedgerEntry` postings for source-level detail and instance-scoped
-  running balances.
+- The General Ledger, Trial Balance, summary, income statement, balance sheet, drill-downs, and their exports project the validated
+  `JournalEntry` collection. A drill-down keeps every line of an entry that touches its selected concrete account or account family.
 - Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
@@ -50,7 +49,7 @@ flowchart LR
     Journal --> GeneralLedger[General Ledger UI]
     Journal --> Trial[Trial Balance projection]
     Journal --> Statements[Summary and financial statements]
-    Postings --> Drilldowns[Account and statement drill-downs]
+    Journal --> Drilldowns[Account and statement drill-downs]
     GeneralLedger --> GeneralLedgerExports[General Ledger exports]
     Trial --> TrialExports[Trial Balance exports]
     Statements --> StatementExports[Statement exports]
@@ -123,6 +122,8 @@ flowchart LR
 - [x] Pagination does not change the totals for the complete filtered ledger.
 - [x] Filtering the ledger by account or currency keeps whole `JournalEntry` records, so each shown entry still carries every debit and
       credit line.
+- [x] An account or statement drill-down selects complete `JournalEntry` records and updates a running balance only from the selected
+      concrete account or account family lines.
 - [x] An internal-transfer activity identifies its concrete source and destination accounts, including a later deployment or an unresolved
       account.
 - [x] The selected General Ledger export retains each transaction-backed entry's full transaction hash.
@@ -197,6 +198,8 @@ flowchart LR
 
 - [x] A General Ledger export applies the selected concrete accounts, period, currencies, and columns while retaining complete journal
       entries.
+- [x] A drill-down export preserves the complete `JournalEntry` records and the same concrete-account or account-family scope as the
+      reviewed drill-down.
 - [x] A statement export applies the same period or as-of date as the reviewed statement.
 - [x] An export is generated from one snapshot of the current accounting books.
 
@@ -239,7 +242,8 @@ flowchart LR
 - [x] A generation with no events does not remove events from other generations.
 - [x] A failed generation scan preserves the other generations and reports a reconciliation gap.
 - [x] A deployment-specific leg without proof of a matching known company contract remains a separate unresolved Trial Balance account; its
-      drill-down and export scope the selected account to unaddressed legs and never fall back to an older deployment.
+      drill-down and export select JournalEntry records that touch that unresolved account, retain every line of those entries, and never
+      fall back to an older deployment.
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
@@ -284,7 +288,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `dc50827a10cf9a02850e104ede6c935b9413fa64`
+**Implementation evidence reviewed against:** `2a67e27828894093162fccfc368eb13039704396`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and

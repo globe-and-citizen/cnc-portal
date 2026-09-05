@@ -104,15 +104,15 @@ const router = useRouter()
 
 /**
  * Jump to the Trial Balance for a clicked account — it reads the `account` query
- * param and auto-opens that account's drill-down (its own transactions).
+ * param and auto-opens that account's JournalEntry drill-down.
  */
-function openInTrialBalance(account: string, instance?: string): void {
+function openInTrialBalance(account: string, instance?: string, accountId?: string): void {
   router.push({
     name: 'accounting-trial',
     params: { id: route.params.id },
-    // A redeployed pocket carries the contract too, so the jump lands on that
-    // deployment's line rather than on the pocket's first one.
-    query: { account, ...(instance ? { instance } : {}) }
+    // `accountId` is authoritative for resolved and unresolved deployments;
+    // the family and contract remain readable fallbacks for old deep links.
+    query: { account, ...(instance ? { instance } : {}), ...(accountId ? { accountId } : {}) }
   })
 }
 
@@ -162,7 +162,7 @@ watch([period, selectedAccounts, selectedCurrencies], reset, { deep: true })
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
   const slice = filteredByCurrency.value.slice(start, start + pageSize.value)
-  return journalLedgerRows(slice)
+  return journalLedgerRows(slice, accounting.journal.value)
 })
 
 // A real date window is in play only when the picker isn't on "All time" (whose

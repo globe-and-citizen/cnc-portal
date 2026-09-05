@@ -9,8 +9,9 @@ import GeneralLedger from '../GeneralLedger.vue'
 import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
 import StatementLine from '../StatementLine.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import { entriesForAccount, scopedNet, NO_OPENING } from '@/utils/accounting/accountLedger'
+import { accountNet, entriesForAccount, NO_OPENING } from '@/utils/accounting/accountLedger'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerPresenter'
 import type { StatementLineView } from '@/utils/accounting/presenter'
 import { money } from '@/utils/accounting/presenter'
@@ -158,10 +159,11 @@ describe('BalanceSheetCard', () => {
 
 describe('LedgerDrilldownModal (issue #2249)', () => {
   const account = 'Investor Equity'
-  const entries = entriesForAccount(catalogueLedger, account)
+  const journal = buildJournal(catalogueLedger)
+  const entries = entriesForAccount(journal, account)
   const columnsStorageKey = 'cnc-accounting-modal-test-columns'
-  const accountBalance = (entries: readonly (typeof catalogueLedger)[number][], account: string) =>
-    money(scopedNet(entries, account))
+  const accountBalance = (entries: typeof journal, account: 'Investor Equity') =>
+    money(accountNet(entries, account))
 
   it('lists the account entries, count and balance', async () => {
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
@@ -274,7 +276,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
         open: true,
         account: 'All accounts',
         total: '$0.00',
-        entries: catalogueLedger,
+        entries: journal,
         columnsStorageKey
       }
     })
@@ -284,7 +286,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
     pager.vm.$emit('update:page', 2)
     await flushPromises()
     // The count badge always reflects the full entry set, not the page.
-    expect(wrapper.text()).toContain(`${catalogueLedger.length} entries`)
+    expect(wrapper.text()).toContain(`${journal.length} entries`)
     wrapper.unmount()
   })
 })

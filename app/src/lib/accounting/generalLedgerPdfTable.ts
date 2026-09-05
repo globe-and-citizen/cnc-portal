@@ -1,5 +1,5 @@
 /** General Ledger table projection for the PDF exporter. */
-import { presentAccountLedger, accountLedgerTitle } from '@/utils/accounting/accountLedger'
+import { accountLedgerTitle } from '@/utils/accounting/accountLedger'
 import { activityText } from '@/utils/accounting/describeEntry'
 import {
   presentJournalLedger,
@@ -24,11 +24,8 @@ export interface GeneralLedgerPdfOptions {
   columns?: LedgerColumnKey[]
   currencies?: string[]
   journalAccounts?: string[]
-  account?: string | readonly string[]
-  accountLabel?: string
-  accountTotal?: string
-  instance?: string | null
-  unresolved?: boolean
+  journalAccountLabel?: string
+  journalAccountTotal?: string
 }
 
 /** How each ledger column renders in the PDF: alignment + cell value. */
@@ -49,31 +46,28 @@ const PDF_CELL: Record<
   rate: { align: 'right', pick: (row) => row.rate }
 }
 
-/** Display name for a drill-down: the account, or the aggregate's label. */
-function drillName(opts: GeneralLedgerPdfOptions): string {
-  return Array.isArray(opts.account) ? (opts.accountLabel ?? 'Ledger') : (opts.account as string)
-}
-
-/** Build the General Ledger PDF table from journal entries or a legacy account drill-down. */
+/** Build a General Ledger PDF table from the canonical journal. */
 export function generalLedgerPdfTable(
   books: CncAccounting,
   resolveName?: ResolveName,
   opts: GeneralLedgerPdfOptions = {}
 ): AccountingPdfTable {
-  const { rows, total } = opts.account
-    ? presentAccountLedger(books.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
-        instance: opts.instance,
-        unresolved: opts.unresolved
-      })
-    : presentJournalLedger(books.journal, opts.from, opts.to, opts.currencies, opts.journalAccounts)
+  const journal = presentJournalLedger(
+    books.journal,
+    opts.from,
+    opts.to,
+    opts.currencies,
+    opts.journalAccounts
+  )
+  const total = opts.journalAccountTotal ?? journal.total
   const columns = resolveLedgerColumns(opts.columns)
-  const body = rows.map((row) =>
+  const body = journal.rows.map((row) =>
     columns.map((column) => PDF_CELL[column.value].pick(row, resolveName))
   )
   body.push(ledgerTotalRow(columns, total))
   return {
-    title: opts.account
-      ? accountLedgerTitle(drillName(opts), opts.from, opts.to)
+    title: opts.journalAccountLabel
+      ? accountLedgerTitle(opts.journalAccountLabel, opts.from, opts.to)
       : journalLedgerExportTitle(opts.from, opts.to),
     head: columns.map((column) => column.label),
     align: columns.map((column) => PDF_CELL[column.value].align),

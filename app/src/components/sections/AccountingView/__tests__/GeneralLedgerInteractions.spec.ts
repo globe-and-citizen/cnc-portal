@@ -21,7 +21,10 @@ describe('General Ledger → Trial Balance jump', () => {
       expect(mockRouterPush).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'accounting-trial',
-          query: { account: expect.any(String) }
+          query: expect.objectContaining({
+            account: expect.any(String),
+            accountId: expect.any(String)
+          })
         })
       )
     }
