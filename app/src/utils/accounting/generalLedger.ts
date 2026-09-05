@@ -22,6 +22,7 @@ import {
   type Account
 } from './accountRegistry'
 import { sourceOperationIdOf, transactionHashOf, type LedgerEntry } from './ledgerEntry'
+import { legacyClassificationTargetOf } from './classificationTarget'
 import {
   createJournalEntry,
   creditOf,
@@ -128,6 +129,11 @@ function journalEntryFromLedgerEntries(
   )
   const source = counterparties.size > 1 ? { ...primary, counterparty: undefined } : primary
   const txHash = ordered.find((entry) => entry.txHash)?.txHash ?? transactionHashOf(operationId)
+  const withdrawals = ordered.flatMap((entry) => {
+    const target = legacyClassificationTargetOf(entry)
+    return target ? [target] : []
+  })
+  const nonFeeSources = ordered.filter((entry) => !isBankFeePosting(entry))
   return createJournalEntry({
     id: operationId,
     sourceOperationId: operationId,
@@ -139,6 +145,14 @@ function journalEntryFromLedgerEntries(
     ...(primary.category ? { category: primary.category } : {}),
     ...(txHash ? { txHash } : {}),
     source,
+    ...(withdrawals.length
+      ? {
+          legacyClassification: {
+            targets: withdrawals,
+            editable: withdrawals.length === 1 && nonFeeSources.length === 1
+          }
+        }
+      : {}),
     lines: monetary ? mergedLines(lineEntries, accounts) : []
   })
 }
