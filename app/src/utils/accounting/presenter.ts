@@ -1,17 +1,14 @@
 import type { AccountClass, AccountName } from './chartOfAccounts'
 import type { Account } from './accountRegistry'
-import { buildGeneralLedger, type GeneralLedger } from './generalLedger'
+import type { GeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
-import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
+import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
 import type { JournalEntry } from './journalEntry'
 import { NETWORK, type TokenId } from '@/constant'
-import { formatDate, formatDateTime, formatToken, formatUsd, fromUnix } from '@/utils/format'
+import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
 
 // The summary metric cards live in their own module — see ./summaryCards.
 export { presentSummaryCards, type SummaryCard } from './summaryCards'
-
-/** The breakdown-line fields the display helpers read (subset of {@link CashCurrencyLine}). */
-type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount'>
 
 export type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
@@ -90,12 +87,20 @@ export interface IncomeView {
 }
 
 export interface BalanceView {
-  assetLines: StatementLineView[]
-  liabilityLines: StatementLineView[]
-  equityLines: StatementLineView[]
+  assetLines: BalanceLineView[]
+  liabilityLines: BalanceLineView[]
+  equityLines: BalanceLineView[]
+  earningsLines: BalanceLineView[]
   totalAssets: string
+  totalLiabilities: string
+  earningsToDate: string
   totalEquity: string
   liabilitiesPlusEquity: string
+}
+
+export interface BalanceLineView extends StatementLineView {
+  nature: TrialNature
+  natureClass: string
 }
 
 /** The trial-balance "nature" label for an account class. */
@@ -200,85 +205,39 @@ export function currencySymbol(token: TokenId): string {
   return token.toUpperCase() // usdc → USDC, usdt → USDT, sher → SHER
 }
 
-/** Drop the `Cash — ` chart prefix for the compact breakdown label. */
-function pocketShortName(label: string): string {
-  return label.replace(/^Cash — /, '')
-}
-
-/** `12.5` → `12.5 POL`; trims to at most 6 decimals so dust reads cleanly. */
-function tokenQuantity(amount: number, token: TokenId): string {
-  return formatToken(amount, currencySymbol(token), { maxDecimals: 6 })
-}
-
-/**
- * One breakdown line's display value. A stablecoin shows its USD value directly;
- * native (POL/ETH) shows its quantity *and* USD equivalent at the closing rate of
- * record — `0.023953 POL ≈ $0.00` (spec §5) — so a holding worth a few cents is
- * still legible as a POL balance.
- */
-function cashCurrencyValue(line: CashLineData): string {
-  if (line.token !== 'native') return money(line.amountUsd)
-  return `${tokenQuantity(line.tokenAmount, line.token)} ≈ ${money(line.amountUsd)}`
-}
-
 /** Balance-sheet lines as of a point in time. */
 export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | null): BalanceView {
   const scoped = filterByPeriod(entries, null, asOf)
   const balance = buildBalanceSheet(scoped)
-  const income = buildIncomeStatement(scoped)
-  const retainedAccounts = [...income.revenue, ...income.expenses].map((line) => line.account)
-  const accountLabels = new Map(
-    buildGeneralLedger(scoped).trialBalance.map((line) => [line.account.id, line.accountLabel])
-  )
-  const accountLabel = (account: Account): string =>
-    accountLabels.get(account.id) ?? account.family.name
-  const assetLines: StatementLineView[] = [
-    { label: 'Cash (all pockets)', value: money(balance.cash) },
-    ...balance.cashByPocketCurrency.map((line) => ({
-      label: `• ${pocketShortName(accountLabel(line.account))} · ${currencySymbol(line.token)}`,
-      value: cashCurrencyValue(line),
-      account: line.account
-    })),
-    ...balance.otherAssets.map((asset) => ({
-      label: accountLabel(asset.account),
-      value: money(asset.amount),
-      account: asset.account
-    }))
-  ]
-  const liabilityLines: StatementLineView[] = balance.liabilities.length
-    ? balance.liabilities.map((line) => ({
-        label: accountLabel(line.account),
-        value: money(line.amount),
-        account: line.account
-      }))
-    : [{ label: 'None (no debt)', value: money(0) }]
-  const equityLines: StatementLineView[] = [
+  const presentLine = (line: BalanceSheet['assets'][number]): BalanceLineView => {
+    const nature = natureOf(line.account)
+    return {
+      label: line.accountLabel,
+      value: money(line.contribution),
+      account: line.account,
+      nature,
+      natureClass: NATURE_BADGE[nature]
+    }
+  }
+  const earningsAccounts = [...new Set(balance.earnings.map((line) => line.account.family.name))]
+  const equityLines: BalanceLineView[] = [
+    ...balance.equity.map(presentLine),
     {
-      label: 'Owner capital',
-      value: money(balance.ownerCapital.amount),
-      account: balance.ownerCapital.account
-    },
-    {
-      label: 'Investor equity (SHER)',
-      value: money(balance.investorEquity.amount),
-      account: balance.investorEquity.account
-    },
-    ...balance.contraEquity.map((line) => ({
-      label: accountLabel(line.account),
-      value: money(-line.amount),
-      account: line.account
-    })),
-    {
-      label: 'Retained earnings (net profit)',
-      value: money(balance.retainedEarnings),
-      accounts: retainedAccounts
+      label: 'Earnings to date',
+      value: money(balance.earningsToDate),
+      accounts: earningsAccounts,
+      nature: 'Equity',
+      natureClass: NATURE_BADGE.Equity
     }
   ]
   return {
-    assetLines,
-    liabilityLines,
+    assetLines: balance.assets.map(presentLine),
+    liabilityLines: balance.liabilities.map(presentLine),
     equityLines,
+    earningsLines: balance.earnings.map(presentLine),
     totalAssets: money(balance.totalAssets),
+    totalLiabilities: money(balance.totalLiabilities),
+    earningsToDate: money(balance.earningsToDate),
     totalEquity: money(balance.totalEquity),
     liabilitiesPlusEquity: money(balance.totalLiabilitiesAndEquity)
   }

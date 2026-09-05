@@ -1,9 +1,5 @@
 /**
- * Family-level balances projected from the canonical JournalEntry lines.
- *
- * Statement views retain their current family-level display contract (for
- * example, one Cash — Bank line across deployments), while JournalEntryLine
- * remains the concrete-account source of every amount.
+ * Account balances projected from the canonical JournalEntry lines.
  */
 import type { AccountId, Account } from './accountRegistry'
 import type { AccountName } from './chartOfAccounts'
@@ -17,8 +13,8 @@ export interface JournalAccountBalance {
 
 /**
  * Net balances by concrete Account on each account's normal side, before display
- * rounding. A Balance Sheet must preserve this identity until it deliberately
- * presents an aggregate such as total cash.
+ * rounding. A Balance Sheet preserves these concrete accounts and aggregates
+ * only explicit statement totals.
  */
 export function journalAccountBalancesUnrounded(
   entries: readonly JournalEntry[]

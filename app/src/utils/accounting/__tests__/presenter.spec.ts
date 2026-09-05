@@ -9,8 +9,7 @@ import {
   filterByPeriod,
   incomeExportTitle,
   balanceExportTitle,
-  trialExportTitle,
-  currencySymbol
+  trialExportTitle
 } from '@/utils/accounting/presenter'
 import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { accountFor } from '@/utils/accounting/accountRegistry'
@@ -71,28 +70,24 @@ describe('presentIncome', () => {
 })
 
 describe('presentBalance', () => {
-  it('rolls cash into a single line plus equity breakdown', () => {
+  it('presents concrete account rows and an explicit earnings contribution', () => {
     const balance = presentBalance(books().journal)
-    expect(balance.assetLines[0].label).toBe('Cash (all pockets)')
-    expect(balance.equityLines.map((l) => l.label)).toEqual([
-      'Owner capital',
-      'Investor equity (SHER)',
-      'Retained earnings (net profit)'
-    ])
-    expect(balance.liabilityLines).toContainEqual({ label: 'None (no debt)', value: '$0.00' })
-  })
-
-  it('breaks cash down by pocket and currency under the total', () => {
-    const balance = presentBalance(books().journal)
-    // The USDC deposit lands in the Bank pocket → a "• Bank · USDC" drill-down
-    // line that opens the Cash — Bank account.
-    expect(balance.assetLines.find((line) => line.label === '• Bank · USDC')).toMatchObject({
+    expect(balance.assetLines.find((line) => line.label === 'Cash — Bank')).toMatchObject({
       value: '$100.00',
       account: { family: { name: 'Cash — Bank' } }
     })
+    expect(balance.equityLines.at(-1)).toMatchObject({
+      label: 'Earnings to date',
+      value: '$70.00',
+      accounts: ['Service Revenue', 'Operating Expense']
+    })
+    expect(balance.earningsLines.map((line) => [line.label, line.value])).toEqual([
+      ['Service Revenue', '$100.00'],
+      ['Operating Expense', '-$30.00']
+    ])
+    expect(balance.totalLiabilities).toBe('$0.00')
   })
 
-  const nativeLabel = `• Bank · ${currencySymbol('native')}`
   const nativeEntry = (amountUsd: number): LedgerEntry => ({
     id: 'pol',
     timestamp: 1,
@@ -105,15 +100,6 @@ describe('presentBalance', () => {
     internal: false,
     memo: '',
     enrichment: 'not-applicable'
-  })
-
-  it('shows a native holding as its quantity and its USD equivalent', () => {
-    // 0.028953 POL at ~$0.08 → ~$0.0023, which rounds to $0.00 — the quantity is
-    // what keeps the holding legible, but the $ equivalence is still printed.
-    const line = presentBalance(buildJournal([nativeEntry(0.002328)])).assetLines.find(
-      (l) => l.label === nativeLabel
-    )
-    expect(line?.value).toBe(`0.028953 ${currencySymbol('native')} ≈ $0.00`)
   })
 
   it('lists a non-cash asset (Trading account) as its own drillable asset line', () => {
@@ -156,10 +142,10 @@ describe('presentBalance', () => {
       }
     ])
     const bankLines = presentBalance(journal).assetLines.filter((line) =>
-      line.label.startsWith('• Bank')
+      line.label.startsWith('Cash — Bank')
     )
 
-    expect(bankLines.map((line) => line.label)).toEqual(['• Bank · USDC', '• Bank 2 · USDC'])
+    expect(bankLines.map((line) => line.label)).toEqual(['Cash — Bank', 'Cash — Bank 2'])
     expect(
       bankLines.map((line) => (typeof line.account === 'string' ? line.account : line.account?.id))
     ).toEqual([

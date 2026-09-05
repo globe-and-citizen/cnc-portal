@@ -101,10 +101,15 @@ function balanceTable(books: AccountingExportSnapshot, asOf?: Date | null): Acco
       GAP,
       ['Liabilities', ''],
       ...balance.liabilityLines.map((line) => [line.label, line.value]),
+      ['Total liabilities', balance.totalLiabilities],
       GAP,
       ['Equity', ''],
       ...balance.equityLines.map((line) => [line.label, line.value]),
       ['Total equity', balance.totalEquity],
+      GAP,
+      ['Earnings to date calculation', ''],
+      ...balance.earningsLines.map((line) => [line.label, line.value]),
+      ['Earnings to date', balance.earningsToDate],
       GAP,
       ['Liabilities + Equity', balance.liabilitiesPlusEquity]
     ]

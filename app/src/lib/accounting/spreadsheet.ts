@@ -91,10 +91,15 @@ function balanceSheetRows(books: AccountingExportSnapshot, asOf?: Date | null): 
     [],
     ['Liabilities'],
     ...balance.liabilityLines.map((line) => [line.label, usd(line.value)]),
+    ['Total liabilities', usd(balance.totalLiabilities)],
     [],
     ['Equity'],
     ...balance.equityLines.map((line) => [line.label, usd(line.value)]),
     ['Total equity', usd(balance.totalEquity)],
+    [],
+    ['Earnings to date calculation'],
+    ...balance.earningsLines.map((line) => [line.label, usd(line.value)]),
+    ['Earnings to date', usd(balance.earningsToDate)],
     [],
     ['Liabilities + Equity', usd(balance.liabilitiesPlusEquity)]
   ]

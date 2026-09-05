@@ -69,8 +69,9 @@ flowchart LR
 ```
 
 `JournalEntry` is the canonical double-entry representation for every financial report and drill-down. `LedgerEntry` remains a transitional
-mapping input only; it is not a report projection boundary. The Balance Sheet keeps each `JournalEntryLine.account` through its account
-lines and cash-by-currency holdings; only explicit presentation totals such as all cash and retained earnings aggregate accounts.
+mapping input only; it is not a report projection boundary. The Balance Sheet starts from the Trial Balance rows, preserving each concrete
+account in the assets, liabilities, and equity sections. Income and expense rows remain visible in a separate calculation and contribute to
+one `Earnings to date` equity line; only explicit statement totals aggregate accounts.
 
 ## Account Domain Model
 
@@ -109,14 +110,16 @@ classDiagram
     }
     class BalanceSheetAccountLine {
         +account: Account
-        +amount
+        +accountLabel
+        +balance
+        +contribution
     }
 
     AccountFamily "1" <-- "1" Account : family
     Account "1" <-- "many" JournalEntryLine : account
     JournalEntry "1" *-- "many" JournalEntryLine : lines
     Account "1" <-- "1" TrialBalanceRow : account
-    Account "1" <-- "many" BalanceSheetAccountLine : account
+    Account "1" <-- "1" BalanceSheetAccountLine : account
 ```
 
 An `AccountFamily` is reusable chart metadata. An `Account` is the concrete accounting identity used by journal, Trial Balance, and Balance
@@ -125,18 +128,20 @@ text derived after identity has been resolved; it is never an account key.
 
 ## Canonical Nomenclature
 
-| Term               | Meaning and boundary                                                                                                                                                                                                                                                   |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Source operation   | The on-chain transaction or off-chain record from which postings originate. For an indexed transaction, its hash is the `sourceOperationId`; the raw `<txHash>-<logIndex>` identifier remains event evidence. A synthetic operation uses its explicit stable identity. |
-| `LedgerEntry`      | A mapped, consolidated posting in the transitional feed. It carries legacy family names and optional source-instance values; it is not the concrete account model.                                                                                                     |
-| `AccountName`      | A legacy raw family name in a `LedgerEntry`, not an `Account` identity.                                                                                                                                                                                                |
-| `AccountFamily`    | Canonical reusable chart metadata: stable family key, display name, class, normal balance, and deployment scope.                                                                                                                                                       |
-| `Account`          | Canonical concrete account object: `AccountId`, `AccountFamily`, optional `contractAddress`, and `resolution`.                                                                                                                                                         |
-| `AccountId`        | Stable identity used to group journal lines and Trial Balance rows.                                                                                                                                                                                                    |
-| `JournalEntry`     | Validated double-entry record for one source operation, with ordered monetary lines or an explicit memo-only entry. A transaction-backed entry uses its `txHash` for `id` and `sourceOperationId`; its source snapshot is narration-only.                              |
-| `JournalEntryLine` | One debit or credit line carrying exactly one concrete `Account` and optional token movement evidence for its display projection.                                                                                                                                      |
-| `TrialBalanceRow`  | Projection grouped by `AccountId`; the balance follows the family normal side.                                                                                                                                                                                         |
-| `accountLabel`     | Human-readable display text. It may include a deployment number or unresolved marker but must not be used for identity or filtering.                                                                                                                                   |
+| Term                      | Meaning and boundary                                                                                                                                                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source operation          | The on-chain transaction or off-chain record from which postings originate. For an indexed transaction, its hash is the `sourceOperationId`; the raw `<txHash>-<logIndex>` identifier remains event evidence. A synthetic operation uses its explicit stable identity. |
+| `LedgerEntry`             | A mapped, consolidated posting in the transitional feed. It carries legacy family names and optional source-instance values; it is not the concrete account model.                                                                                                     |
+| `AccountName`             | A legacy raw family name in a `LedgerEntry`, not an `Account` identity.                                                                                                                                                                                                |
+| `AccountFamily`           | Canonical reusable chart metadata: stable family key, display name, class, normal balance, and deployment scope.                                                                                                                                                       |
+| `Account`                 | Canonical concrete account object: `AccountId`, `AccountFamily`, optional `contractAddress`, and `resolution`.                                                                                                                                                         |
+| `AccountId`               | Stable identity used to group journal lines and Trial Balance rows.                                                                                                                                                                                                    |
+| `JournalEntry`            | Validated double-entry record for one source operation, with ordered monetary lines or an explicit memo-only entry. A transaction-backed entry uses its `txHash` for `id` and `sourceOperationId`; its source snapshot is narration-only.                              |
+| `JournalEntryLine`        | One debit or credit line carrying exactly one concrete `Account` and optional token movement evidence for its display projection.                                                                                                                                      |
+| `TrialBalanceRow`         | Projection grouped by `AccountId`; the balance follows the family normal side.                                                                                                                                                                                         |
+| `BalanceSheetAccountLine` | A Trial Balance account row classified for the Balance Sheet, with its normal-side balance and signed section contribution.                                                                                                                                            |
+| Earnings to date          | Current income-account contributions minus expense-account contributions through the selected date; it does not rename or replace a posted `Retained Earnings` account.                                                                                                |
+| `accountLabel`            | Human-readable display text. It may include a deployment number or unresolved marker but must not be used for identity or filtering.                                                                                                                                   |
 
 The raw `LedgerEntry.debit` and `LedgerEntry.credit` fields currently contain `AccountName` values, while `debitInstance` and
 `creditInstance` carry source-instance values such as a contract address. These names are ambiguous at the transitional boundary. New code
@@ -182,8 +187,10 @@ it to an earlier or later deployment based on activity order.
 - A SafeDepositRouter operation that issues SHER owns the `Cash — Safe` and `Investor Equity` lines. Its Safe token transfer has the same
   transaction hash and is duplicate source evidence, so it cannot add `Service Revenue` or a second cash debit.
 - Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
-- Balance Sheet account and cash-by-currency lines group by `AccountId`. The account's family supplies its account class and normal balance;
-  a later deployment or unresolved account never merges into another deployment before the report line and drill-down are selected.
+- Balance Sheet account lines reuse the Trial Balance grouping by `AccountId`. The account's family supplies its account class and normal
+  balance; a later deployment or unresolved account never merges into another deployment before the report line and drill-down are selected.
+- Earnings to date is calculated from the same Trial Balance income and expense rows. The supporting rows remain concrete and drillable;
+  their signed contributions are the only temporary-account aggregate added to total equity.
 - A deployment-specific instance is resolved only when it is a known company deployment of the matching family, either named directly by the
   mapper or proven by an unambiguous ERC-20 receipt `Transfer` direction. Missing, external, ambiguous, and native-only evidence remains
   unresolved; activity order and current-generation status are never evidence.
@@ -220,21 +227,21 @@ flowchart TB
 
 This is a current implementation boundary, not an accounting-policy distinction. The General Ledger filters reporting period, concrete
 `AccountId`, and currency at the journal-entry level, retaining all lines of every selected entry. The Summary and Income Statement
-aggregate the same journal lines by account family. The Balance Sheet derives each asset, liability, equity, contra-equity, and
-cash-by-currency line from its concrete `Account`, using that account's family only for chart class and normal balance; its explicit totals
-then aggregate those account lines. Internal-transfer narration reads the source and destination display labels from the debit and credit
-`JournalEntryLine` accounts, so later deployments and unresolved accounts remain explicit rather than being inferred from family-level event
-text. Every transaction-backed journal group uses its transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains
-traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or
-separate fee entry in this projection. The General Ledger renders the transaction hash once on the entry's first line and preserves its full
-value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A transaction-backed hash links to the configured
-network block explorer in a separate tab. Every visible General Ledger column, including the account drill-down Balance column, has bounded
-widths and supports pointer, touch, and keyboard resizing; a double-click restores its default width. JournalEntry assembly groups source
-postings and withholds a `FeePaid` source without matching Bank-outflow evidence, returning it as a reconciliation gap. The global
-FeeCollector is not part of the company's internal-pocket registry. Account and statement drill-downs select complete JournalEntry records
-by a concrete Account or account family, then flatten their validated lines for display and exports. Their running balances update only on
-lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an ordinary line of the
-source operation in every drill-down.
+aggregate the same journal lines by account family. The Balance Sheet reuses the Trial Balance's concrete rows, classifies permanent
+accounts into assets, liabilities, and equity, and retains the same account identity and label for every drill-down. Its separate earnings
+calculation shows each income and expense account's signed contribution before adding `Earnings to date` to total equity. Internal-transfer
+narration reads the source and destination display labels from the debit and credit `JournalEntryLine` accounts, so later deployments and
+unresolved accounts remain explicit rather than being inferred from family-level event text. Every transaction-backed journal group uses its
+transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains traceability evidence. A fee is an ordinary
+`Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or separate fee entry in this projection. The
+General Ledger renders the transaction hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports;
+synthetic operations have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate
+tab. Every visible General Ledger column, including the account drill-down Balance column, has bounded widths and supports pointer, touch,
+and keyboard resizing; a double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid`
+source without matching Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not part of the company's
+internal-pocket registry. Account and statement drill-downs select complete JournalEntry records by a concrete Account or account family,
+then flatten their validated lines for display and exports. Their running balances update only on lines posted to the selected account; an
+aggregate statement line has no single running balance. A fee remains an ordinary line of the source operation in every drill-down.
 
 ## Classification Boundary
 
@@ -279,7 +286,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c7f058d0227a463709ac7a54ea95f3164cf385b2`
+**Implementation evidence reviewed against:** `47b4491f581ff46f0e1982d7f7576ded7594cefb`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -297,7 +304,9 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [shared ledger columns](../../../app/src/utils/accounting/ledgerColumns.ts)
 - [Balance Sheet projection](../../../app/src/utils/accounting/balanceSheet.ts),
   [statement presenter](../../../app/src/utils/accounting/presenter.ts), and
-  [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue)
+  [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue),
+  [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue), and
+  [Balance Sheet tests](../../../app/src/utils/accounting/__tests__/balanceSheet.spec.ts)
 - [Chart of accounts](../../../app/src/utils/accounting/chartOfAccounts.ts) and
   [concrete account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
   [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)

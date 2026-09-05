@@ -94,8 +94,14 @@ describe('accounting assembly — Community Credit', () => {
 
     // The borrowed cash reached Bank, then left again with the interest on top.
     expect(a.summary.cash).toBe(-5)
-    // Principal in and out nets the liability to zero; only the return is a cost.
-    expect(a.balanceSheet.liabilities).toEqual([])
+    // Principal in and out nets the liability to zero. The account stays visible
+    // because the Balance Sheet reuses the Trial Balance's activity-backed rows.
+    expect(a.balanceSheet.liabilities).toHaveLength(1)
+    expect(a.balanceSheet.liabilities[0]).toMatchObject({
+      account: { family: { name: 'Loan Payable' } },
+      balance: 0,
+      contribution: 0
+    })
     expect(a.incomeStatement.expenses).toContainEqual({ account: 'Interest Expense', amount: 5 })
     expect(a.incomeStatement.netIncome).toBe(-5)
     expect(a.generalLedger.balanced).toBe(true)

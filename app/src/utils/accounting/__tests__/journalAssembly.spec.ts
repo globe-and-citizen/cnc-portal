@@ -89,8 +89,8 @@ describe('accounting journal assembly', () => {
       netIncome: 99.95
     })
     expect(accounting.balanceSheet).toMatchObject({
-      cash: 99.95,
-      retainedEarnings: 99.95,
+      totalAssets: 99.95,
+      earningsToDate: 99.95,
       balanced: true
     })
   })
