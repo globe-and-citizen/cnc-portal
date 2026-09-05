@@ -11,8 +11,9 @@ These acceptance criteria follow the
 
 - Accounting presents one consolidated set of double-entry books for the company across its money-moving contracts and relevant portal
   records.
-- The General Ledger and Trial Balance project the validated `JournalEntry` collection. The summary, income statement, balance sheet, and
-  account drill-downs remain transitional `LedgerEntry` projections.
+- The General Ledger, Trial Balance, summary, income statement, balance sheet, and their exports project the validated `JournalEntry`
+  collection. Account and statement drill-downs retain transitional `LedgerEntry` postings for source-level detail and instance-scoped
+  running balances.
 - Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
@@ -46,12 +47,14 @@ flowchart LR
     Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
     Consolidate --> Postings[Consolidated postings: transitional feed]
     Consolidate --> Journal[Validated JournalEntry collection]
-    Journal --> GeneralLedger[General Ledger UI and exports]
+    Journal --> GeneralLedger[General Ledger UI]
     Journal --> Trial[Trial Balance projection]
-    Postings --> Legacy[Current summary, statements, and account drill-downs]
-    GeneralLedger --> Export
-    Trial --> Export[PDF or Excel report]
-    Legacy --> Export
+    Journal --> Statements[Summary and financial statements]
+    Postings --> Drilldowns[Account and statement drill-downs]
+    GeneralLedger --> GeneralLedgerExports[General Ledger exports]
+    Trial --> TrialExports[Trial Balance exports]
+    Statements --> StatementExports[Statement exports]
+    Drilldowns --> DrilldownExports[Drill-down exports]
 ```
 
 ## Status Overview
@@ -75,7 +78,8 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The summary reports revenue, expenses, net income, assets, liabilities, equity, and debt from one consolidated ledger.
+- [x] The summary reports revenue, expenses, net income, assets, liabilities, equity, and debt from one consolidated `JournalEntry`
+      collection.
 - [x] The summary reports whether assets equal liabilities plus equity and whether total debits equal total credits.
 - [x] Refreshing Accounting reloads the underlying books and recalculates every report from the same entries.
 
@@ -161,6 +165,8 @@ flowchart LR
 
 - [x] The balance sheet preserves the identity `Assets = Liabilities + Equity` for balanced books.
 - [x] Trial-balance debit and credit totals remain equal for balanced books.
+- [x] The summary, income statement, balance sheet, and their exports project the same validated `JournalEntry` collection as the General
+      Ledger.
 - [x] Retained earnings aggregates the income and expense accounts included through the selected date.
 - [x] Statement drill-downs use the same reporting boundary as their parent statement.
 
@@ -278,7 +284,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `373757491a43ce390196880e2d4cc666ae76cdfa`
+**Implementation evidence reviewed against:** `dc50827a10cf9a02850e104ede6c935b9413fa64`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
