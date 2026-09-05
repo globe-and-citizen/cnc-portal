@@ -74,7 +74,6 @@ import ExportReportModal, { type ExportFormat } from './ExportReportModal.vue'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { presentSummaryCards, presentBanner } from '@/utils/accounting/presenter'
-import { presentLedger } from '@/utils/accounting/ledgerPresenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 
 const accounting = useAccountingContext()
@@ -104,7 +103,7 @@ function cardSpan(index: number): string {
 
 // Whole-book ledger size — surfaced in the modal so the user knows a full ledger
 // export may be long.
-const ledgerEntryCount = computed(() => presentLedger(accounting.entries.value, 'All').entryCount)
+const ledgerEntryCount = computed(() => accounting.journal.value.length)
 
 // The Summary report exports the whole book (no per-page filters) for the
 // sections picked in the modal — as a PDF (one section per page) or an Excel
