@@ -1,8 +1,8 @@
 <template>
   <UPopover v-model:open="open" :content="{ align: 'end' }">
     <UButton
-      :color="category ? 'primary' : 'neutral'"
-      :variant="category ? 'subtle' : 'outline'"
+      :color="target.category ? 'primary' : 'neutral'"
+      :variant="target.category ? 'subtle' : 'outline'"
       size="md"
       class="justify-between gap-2 font-medium"
       :trailing-icon="open ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
@@ -13,9 +13,7 @@
 
     <template #content>
       <div class="flex w-64 flex-col gap-3 p-3">
-        <p class="text-muted text-xs">
-          Classify this {{ direction === 'in' ? 'deposit' : 'withdrawal' }}
-        </p>
+        <p class="text-muted text-xs">Classify this withdrawal</p>
         <USelect
           v-model="selected"
           :items="categoryOptions"
@@ -23,6 +21,7 @@
           placeholder="Choose a category"
           size="sm"
           data-test="ledger-classify-select"
+          :disabled="saving || removing"
         />
         <UTextarea
           v-model="memoDraft"
@@ -30,14 +29,17 @@
           placeholder="Optional note"
           size="sm"
           :maxlength="500"
+          :disabled="saving || removing"
+          data-test="ledger-classify-memo"
         />
         <div class="flex items-center justify-between gap-2">
           <UButton
-            v-if="category"
+            v-if="target.category"
             color="neutral"
             variant="ghost"
             size="xs"
             :loading="removing"
+            :disabled="saving || removing"
             data-test="ledger-classify-clear"
             @click="clear"
           >
@@ -48,7 +50,7 @@
             color="primary"
             size="xs"
             :loading="saving"
-            :disabled="!selected"
+            :disabled="!selected || saving || removing"
             data-test="ledger-classify-save"
             @click="save"
           >
@@ -62,26 +64,22 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useToast } from '@nuxt/ui/composables'
 import {
   ALLOWED_BY_DIRECTION,
   CATEGORY_LABEL,
-  type ClassificationCategory,
-  type ClassificationDirection
+  type ClassificationCategory
 } from '@/utils/accounting/classification'
+import type { LegacyClassificationTarget } from '@/utils/accounting/classificationTarget'
 import {
   useUpsertClassificationMutation,
   useDeleteClassificationMutation
 } from '@/queries/classification.queries'
 
 const props = defineProps<{
-  /** The stable transaction identity `${txHash}-${logIndex}` to classify. */
-  entryId: string
-  direction: ClassificationDirection
+  /** The exact legacy mutation key and saved decision, provided by journal assembly. */
+  target: LegacyClassificationTarget
   teamId: string
-  /** The currently applied category, when the transaction is already classified. */
-  category?: ClassificationCategory
-  /** The note carried by an already-classified transaction, so an edit preserves it. */
-  memo?: string
 }>()
 
 /** The categories a user can pick — internal transfers are auto-detected, never manual. */
@@ -89,58 +87,69 @@ type ExternalCategory = Exclude<ClassificationCategory, 'INTERNAL_TRANSFER'>
 
 const toast = useToast()
 const open = ref(false)
-const selected = ref<ExternalCategory | undefined>(props.category as ExternalCategory | undefined)
-const memoDraft = ref<string>(props.memo ?? '')
+const selected = ref<ExternalCategory | undefined>(
+  props.target.category as ExternalCategory | undefined
+)
+const memoDraft = ref<string>(props.target.memo ?? '')
 
 /** Re-seed the form when the underlying classification changes (a refetch after a save). */
 watch(
-  () => [props.category, props.memo] as const,
-  ([category, memo]) => {
+  () => [props.target.sourceEntryId, props.target.category, props.target.memo] as const,
+  ([, category, memo]) => {
     selected.value = category as ExternalCategory | undefined
     memoDraft.value = memo ?? ''
   }
 )
 
 const categoryOptions = computed(() =>
-  ALLOWED_BY_DIRECTION[props.direction]
+  ALLOWED_BY_DIRECTION.out
     .filter((category): category is ExternalCategory => category !== 'INTERNAL_TRANSFER')
     .map((category) => ({ label: CATEGORY_LABEL[category], value: category }))
 )
 
-const triggerLabel = computed(() => (props.category ? CATEGORY_LABEL[props.category] : 'Inferred'))
+const triggerLabel = computed(() =>
+  props.target.category ? CATEGORY_LABEL[props.target.category] : 'Inferred'
+)
 
 const upsert = useUpsertClassificationMutation()
 const remove = useDeleteClassificationMutation()
 const saving = computed(() => upsert.isPending.value)
 const removing = computed(() => remove.isPending.value)
 
-async function save(): Promise<void> {
-  if (!selected.value) return
-  try {
-    await upsert.mutateAsync({
+function save(): void {
+  if (!selected.value || saving.value || removing.value) return
+  upsert.mutate(
+    {
       body: {
         teamId: props.teamId,
-        txId: props.entryId,
+        txId: props.target.sourceEntryId,
         category: selected.value,
         memo: memoDraft.value.trim() || undefined
       }
-    })
-    open.value = false
-    toast.add({ title: 'Transaction classified', color: 'success' })
-  } catch {
-    toast.add({ title: 'Could not save the classification', color: 'error' })
-  }
+    },
+    {
+      onSuccess: () => {
+        open.value = false
+        toast.add({ title: 'Transaction classified', color: 'success' })
+      },
+      onError: () => toast.add({ title: 'Could not save the classification', color: 'error' })
+    }
+  )
 }
 
-async function clear(): Promise<void> {
-  try {
-    await remove.mutateAsync({
-      queryParams: { teamId: props.teamId, txId: props.entryId }
-    })
-    open.value = false
-    toast.add({ title: 'Reverted to the inferred classification', color: 'success' })
-  } catch {
-    toast.add({ title: 'Could not revert the classification', color: 'error' })
-  }
+function clear(): void {
+  if (saving.value || removing.value) return
+  remove.mutate(
+    {
+      queryParams: { teamId: props.teamId, txId: props.target.sourceEntryId }
+    },
+    {
+      onSuccess: () => {
+        open.value = false
+        toast.add({ title: 'Reverted to the inferred classification', color: 'success' })
+      },
+      onError: () => toast.add({ title: 'Could not revert the classification', color: 'error' })
+    }
+  )
 }
 </script>

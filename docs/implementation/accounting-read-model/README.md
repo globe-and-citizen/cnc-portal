@@ -59,6 +59,7 @@ flowchart LR
     journal --> statements[Summary, Income Statement, and Balance Sheet]
     statements --> statementExports[Statement PDF or Excel exports]
     journal --> drilldowns[Account and statement drill-downs]
+    journal --> classification[Classification journal projection]
     trial --> trialCard[Trial Balance and its scoped exports]
 ```
 
@@ -228,6 +229,21 @@ by a concrete Account or account family, then flatten their validated lines for 
 lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an ordinary line of the
 source operation in every drill-down.
 
+## Classification Boundary
+
+Classification selects complete journal entries containing an eligible external Bank/Safe withdrawal and reuses the General Ledger line
+presenter. Account labels are resolved against the full journal, so filtering to eligible withdrawals does not renumber historical Bank
+deployments. Amounts, currencies and concrete accounts come exclusively from journal lines.
+
+During assembly, `legacyClassification` captures the exact source-record identifiers and applied owner decisions separately from monetary
+lines. These identifiers remain the mutation keys for the existing classification API; replacing one with the journal transaction hash would
+address a different persisted record. A source decision never supplies the displayed accounts or amounts.
+
+Only an operation with one supported external withdrawal, optionally accompanied by Bank fee postings, is editable. Multiple withdrawals, or
+a withdrawal combined with another kind of source movement, remain one read-only journal group with their decisions visible. Deposits,
+company-pocket movements, standalone fees and system-owned payouts are not legacy edit targets. Mutations continue to use the existing
+query-cache invalidation and owner API; replacing persisted categories with account-backed assignment remains incomplete.
+
 ## Optimisation Review
 
 ### Existing Protections
@@ -248,12 +264,13 @@ source operation in every drill-down.
 - The legacy raw posting field names do not make the distinction between an account family, a concrete account, and a source instance
   explicit.
 - Legacy manual categories remain only for eligible external disbursements; account-backed `JournalEntryLine` assignment has not yet
-  replaced that category surface.
+  replaced that category surface. The legacy API cannot edit a compound journal entry as a whole, so Classification keeps those entries
+  read-only rather than selecting one source decision on the owner's behalf.
 - Optional Safe-service and enrichment failures can leave books incomplete without every omission being surfaced to the reviewer.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
+**Implementation evidence reviewed against:** `acaa8ddc2436ce7faaaea4dab6055be1e9db221a`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -264,6 +281,8 @@ source operation in every drill-down.
   [consolidation](../../../app/src/utils/accounting/buildLedger.ts)
 - [Canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts) and
   [concrete-account journal balances](../../../app/src/utils/accounting/journalBalances.ts)
+- [Journal Classification projection](../../../app/src/utils/accounting/journalClassification.ts) and
+  [legacy source-target capture](../../../app/src/utils/accounting/classificationTarget.ts)
 - [Balance Sheet projection](../../../app/src/utils/accounting/balanceSheet.ts),
   [statement presenter](../../../app/src/utils/accounting/presenter.ts), and
   [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue)

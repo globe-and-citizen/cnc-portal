@@ -69,6 +69,60 @@ function classification(
 }
 
 describe('accounting assembly — legacy manual classification', () => {
+  it('preserves the saved withdrawal identity and memo when refreshing or reverting the journal', () => {
+    const txHash = `0x${'f'.repeat(64)}`
+    const sourceId = `${txHash}-4`
+    const bankEvents: CncAccountingInput['bankEvents'] = {
+      ...clientBankDeposit,
+      bankTokenDeposits: { items: [] },
+      bankTokenTransfers: {
+        items: [
+          {
+            id: sourceId,
+            contractAddress: ADDR.bank,
+            to: ADDR.client,
+            token: USDC_ADDRESS,
+            amount: '100000000',
+            timestamp: 100
+          }
+        ]
+      }
+    }
+    const input = {
+      ...BASE,
+      bankEvents,
+      classifications: [
+        { ...classification(sourceId, 'SHAREHOLDER_LOAN'), memo: 'Repay principal' }
+      ]
+    }
+    const saved = assembleAccounting(input)
+    const refreshed = assembleAccounting(input)
+    expect(refreshed.journal).toEqual(saved.journal)
+    expect(saved.journal[0]).toMatchObject({
+      id: txHash,
+      legacyClassification: {
+        editable: true,
+        targets: [
+          { sourceEntryId: sourceId, category: 'SHAREHOLDER_LOAN', memo: 'Repay principal' }
+        ]
+      }
+    })
+    expect(saved.journal[0]!.lines[0]).toMatchObject({
+      account: { family: { name: 'Loan Payable' } },
+      debit: 100
+    })
+
+    const reverted = assembleAccounting({ ...input, classifications: [] })
+    expect(reverted.journal[0]!.legacyClassification?.targets).toEqual([
+      { sourceEntryId: sourceId }
+    ])
+    expect(reverted.journal[0]!.lines[0]).toMatchObject({
+      account: { family: { name: 'Operating Expense' } },
+      debit: 100
+    })
+    expect(reverted.generalLedger.balanced).toBe(true)
+  })
+
   it('infers the deposit as Service Revenue with no classification', () => {
     const a = assembleAccounting({ ...BASE, bankEvents: clientBankDeposit })
     expect(a.summary.income).toBe(100)

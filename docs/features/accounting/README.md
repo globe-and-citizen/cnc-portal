@@ -34,7 +34,9 @@ These acceptance criteria follow the
   `Investor Equity` lines for its transaction hash; the matching Safe transfer is duplicate source evidence, not revenue. A movement between
   company pockets remains internal.
 - **Legacy manual classifications** apply only to eligible external Bank/Safe withdrawals. Direct deposits and movements between company
-  pockets retain the accounts determined by their source evidence; see catalogue §5.5.
+  pockets retain the accounts determined by their source evidence; see catalogue §5.5. Classification shows complete journal entries with
+  the same concrete accounts, currencies, debits, credits, and fees as the General Ledger. An entry with several source movements remains
+  read-only, with its saved decisions visible, because the current editor can update only one source withdrawal.
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
 - **Journal-entry assembly:** Accounting constructs a validated double-entry `JournalEntry` collection and preserves concrete accounts
   across redeployments. The source-operation model, canonical account terminology, report-projection boundary, and verified optimisation
@@ -53,6 +55,7 @@ flowchart LR
     Journal --> Trial[Trial Balance projection]
     Journal --> Statements[Summary and financial statements]
     Journal --> Drilldowns[Account and statement drill-downs]
+    Journal --> Classification[External withdrawal classification]
     GeneralLedger --> GeneralLedgerExports[General Ledger exports]
     Trial --> TrialExports[Trial Balance exports]
     Statements --> StatementExports[Statement exports]
@@ -257,30 +260,38 @@ flowchart LR
 ## US-ACCT-006: Classify an Eligible External Withdrawal
 
 **As a** company owner\
-**I want to** assign the economic account of an eligible external Bank withdrawal\
+**I want to** assign the economic account of an eligible external Bank or Safe withdrawal\
 **So that** the books record why the company paid money out
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [ ] The company owner can classify an eligible external Bank withdrawal with a supported accounting category and an optional memo.
+- [x] The company owner can classify a supported single-source external Bank or Safe withdrawal with a supported accounting category and an
+      optional memo.
+- [x] Classification shows every debit and credit line of each eligible journal entry, including protocol fees, with the same amounts and
+      concrete accounts as the General Ledger.
 - [x] Every direct external deposit, including one initiated by the company owner or a member, posts to Service Revenue (`UC-BANK-02`).
-- [ ] A saved classification remains visible in the accounting books after a refresh.
+- [x] A saved classification and its note remain visible in the accounting books after the underlying records are refreshed.
 
 #### Business Rules
 
-- [ ] A classification is stored against a stable on-chain transaction identity and deterministically produces balanced ledger entries.
+- [x] Saving or reverting a classification retains the source record's exact identifier even when its journal entry is grouped by
+      transaction hash.
 - [x] Direct deposits and company-pocket transfers retain their source-evidence accounts and cannot be reclassified by a legacy category.
-- [ ] The classification action is available only for supported external Bank and Safe withdrawals.
+- [x] The classification action is available only for supported external Bank and Safe withdrawals; direct deposits, internal transfers,
+      standalone fees and system-owned payouts are excluded.
+- [x] An entry containing several source movements is shown once with all of its lines and saved decisions, without offering an edit that
+      would affect only part of the operation.
 - [ ] Only the company owner can create or change a classification.
+- [x] Company members can inspect eligible journal entries and saved decisions without classification editing controls.
 
 #### Edge & Error Cases
 
 - [ ] An unknown transaction, invalid category, duplicate submission, or concurrent edit is rejected without changing the existing books.
-- [ ] A failed save leaves the previous classification visible and explains that the change was not applied.
+- [x] A failed save leaves the previous classification visible and explains that the change was not applied.
 
-**Dependencies:** US-ACCT-002, a company-owned Bank transaction, and the planned Bank-classification delivery
+**Dependencies:** US-ACCT-002, a company-owned Bank or Safe withdrawal, and the classification API
 
 ## Known Gaps
 
@@ -290,6 +301,8 @@ flowchart LR
 - Off-platform activity without a connected data source is absent from the automated books.
 - Legacy manual categories are still persisted for external withdrawals. They have not yet been replaced with account-backed
   `JournalEntryLine` assignment.
+- Compound journal entries cannot be edited as a whole through the existing classification API. Their saved decisions remain visible while
+  account-backed assignment and persistence are pending.
 - JournalEntry assembly withholds a Bank fee log without matching Bank-outflow evidence and shows it as incomplete evidence until the source
   feed can be reconciled (`US-ACCT-002`).
 
@@ -310,6 +323,10 @@ flowchart LR
 - [Classification query](../../../app/src/queries/classification.queries.ts),
   [classification types](../../../app/src/types/accounting-classification.ts), and
   [classification assembly](../../../app/src/utils/accounting/classification.ts)
+- [Journal Classification projection](../../../app/src/utils/accounting/journalClassification.ts),
+  [legacy edit-target boundary](../../../app/src/utils/accounting/classificationTarget.ts),
+  [Classification journal tests](../../../app/src/utils/accounting/__tests__/journalClassification.spec.ts), and
+  [Classification owner interactions](../../../app/src/components/sections/AccountingView/__tests__/ClassificationTable.spec.ts)
 - [Classification controller](../../../backend/src/controllers/classificationController.ts),
   [classification route](../../../backend/src/routes/classificationRoute.ts),
   [classification validation](../../../backend/src/validation/schemas/classification.ts), and
