@@ -55,8 +55,8 @@ describe('classificationTargetOf', () => {
         entry({
           useCase: 'CASH-IN',
           debit: 'Cash — Bank',
-          credit: 'Loan Payable',
-          classified: 'SHAREHOLDER_LOAN'
+          credit: 'Owner Capital',
+          classified: 'OWNER_CAPITAL'
         })
       )
     ).toEqual({ direction: 'in', cashAccount: 'Cash — Bank' })

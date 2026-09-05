@@ -38,7 +38,6 @@ describe('categoryOf', () => {
   it('lets a manual classification drive the badge, not the CASH-IN/OUT use case', () => {
     // Owner's deliberate call wins over the generic collapsed use case.
     expect(categoryOf(entry('CASH-IN', { classified: 'OWNER_CAPITAL' }))).toBe('Investment')
-    expect(categoryOf(entry('CASH-IN', { classified: 'SHAREHOLDER_LOAN' }))).toBe('Credit')
     expect(categoryOf(entry('CASH-IN', { classified: 'REVENUE' }))).toBe('Revenue')
     expect(categoryOf(entry('CASH-OUT', { classified: 'PAYROLL_EXPENSE' }))).toBe('Payroll')
     expect(categoryOf(entry('CASH-OUT', { classified: 'INTEREST_EXPENSE' }))).toBe('Credit')

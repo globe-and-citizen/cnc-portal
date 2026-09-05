@@ -62,8 +62,7 @@ describe('mapSafeTransfers', () => {
 
   it('does not let a legacy classification reclassify a direct inflow', () => {
     const classifiedCtx = makeCtx({
-      classificationOf: (id) =>
-        id === 'i2-classified' ? { category: 'SHAREHOLDER_LOAN' } : undefined
+      classificationOf: (id) => (id === 'i2-classified' ? { category: 'OWNER_CAPITAL' } : undefined)
     })
     const [entry] = mapSafeTransfers(
       {
