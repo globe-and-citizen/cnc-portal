@@ -20,8 +20,7 @@ const CONTRACTS: TeamContract[] = (
 const BASE: CncAccountingInput = {
   contracts: CONTRACTS,
   safeAddress: ADDR.safe,
-  sherTokenAddress: ADDR.sherToken,
-  safeDepositRouterAddress: ROUTER
+  sherTokenAddress: ADDR.sherToken
 }
 
 // Multiplier 1x → 6x at t = 1,000,000 s.

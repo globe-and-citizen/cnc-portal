@@ -37,6 +37,7 @@ export function mapSafeDepositRouterEvents(
       token: tokenId,
       rawAmount: row.tokenAmount,
       counterparty: row.depositor,
+      txHash: row.txHash,
       shares: Number(formatUnits(BigInt(row.sherAmount), 6)),
       memo: 'Investment via SafeDepositRouter → SHER mint'
     })

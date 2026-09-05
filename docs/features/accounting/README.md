@@ -29,9 +29,10 @@ These acceptance criteria follow the
   vesting** books the **whole award when the schedule is defined** and issues it as shares are released (a restricted-stock grant, off the
   income statement). The precise use-case templates and verified current gaps are in the
   [Accounting Journal Entry Catalogue](./journal-entry-catalogue.md).
-- **Direct treasury deposits:** an external deposit into Bank or Safe credits `Service Revenue`, regardless of the sender address. A
-  SafeDepositRouter operation that issues SHER is instead an investment credited to `Investor Equity`; a movement between company pockets
-  remains internal.
+- **Direct treasury deposits:** an external deposit into Bank or Safe with no matching SafeDepositRouter operation credits
+  `Service Revenue`, regardless of the sender address. A SafeDepositRouter operation that issues SHER owns the Cash — Safe and
+  `Investor Equity` lines for its transaction hash; the matching Safe transfer is duplicate source evidence, not revenue. A movement between
+  company pockets remains internal.
 - **Legacy manual classifications** apply only to eligible external Bank/Safe withdrawals. Direct deposits and movements between company
   pockets retain the accounts determined by their source evidence; see catalogue §5.5.
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
@@ -135,6 +136,8 @@ flowchart LR
       withheld and surfaced as a reconciliation warning.
 - [x] Every on-chain transaction with a transaction hash is represented by one complete `JournalEntry`, even when it produces several source
       events.
+- [x] A SafeDepositRouter investment and its matching Safe token transfer share one transaction hash and produce only Cash — Safe and
+      Investor Equity lines; a non-matching direct Safe deposit credits Service Revenue.
 - [x] A distribution paid to several recipients in one transaction — a dividend across shareholders, a multi-currency wage, a
       community-credit round — is shown as one ledger entry with aggregated compatible account lines; recipient-level evidence remains
       traceable through the transaction.
@@ -292,14 +295,16 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8fffb896d09c9062a71f401b9e225a0ab7e74959`
+**Implementation evidence reviewed against:** `50628f5dd98d2737c4c72587f0cf49b073b985e6`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
-  [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+  [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
+  [SafeDepositRouter event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts), and
+  [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts)
 - [Team internal-address registry](../../../app/src/composables/accounting/useTeamInternalAddresses.ts)
 - [Accounting backend feeds](../../../app/src/composables/accounting/useAccountingBackendFeeds.ts)
 - [Classification query](../../../app/src/queries/classification.queries.ts),

@@ -29,6 +29,7 @@ const empty = (): SafeDepositRouterEventsQuery => ({
 const mapEvent = ({
   out,
   id,
+  log,
   timestamp,
   contract,
   eventName,
@@ -38,6 +39,7 @@ const mapEvent = ({
     case 'Deposited':
       out.safeDeposits.items.push({
         id,
+        ...(log.transactionHash ? { txHash: log.transactionHash } : {}),
         contractAddress: contract,
         depositor: args.depositor,
         token: args.token,
