@@ -85,10 +85,9 @@ describe('presentBalance', () => {
     const balance = presentBalance(books().journal)
     // The USDC deposit lands in the Bank pocket → a "• Bank · USDC" drill-down
     // line that opens the Cash — Bank account.
-    expect(balance.assetLines).toContainEqual({
-      label: '• Bank · USDC',
+    expect(balance.assetLines.find((line) => line.label === '• Bank · USDC')).toMatchObject({
       value: '$100.00',
-      account: 'Cash — Bank'
+      account: { family: { name: 'Cash — Bank' } }
     })
   })
 
@@ -131,11 +130,41 @@ describe('presentBalance', () => {
       enrichment: 'not-applicable'
     }
     const balance = presentBalance(buildJournal([tradingEntry]))
-    expect(balance.assetLines).toContainEqual({
-      label: 'Trading account',
+    expect(balance.assetLines.find((line) => line.label === 'Trading account')).toMatchObject({
       value: '$30.00',
-      account: 'Trading account'
+      account: { family: { name: 'Trading account' } }
     })
+  })
+
+  it('labels later Bank deployments separately while retaining their concrete account selections', () => {
+    const journal = buildJournal([
+      {
+        ...nativeEntry(100),
+        id: 'bank-1',
+        token: 'usdc',
+        rawAmount: '100000000',
+        debitInstance: '0x1111111111111111111111111111111111111111'
+      },
+      {
+        ...nativeEntry(25),
+        id: 'bank-2',
+        timestamp: 2,
+        token: 'usdc',
+        rawAmount: '25000000',
+        debitInstance: '0x2222222222222222222222222222222222222222'
+      }
+    ])
+    const bankLines = presentBalance(journal).assetLines.filter((line) =>
+      line.label.startsWith('• Bank')
+    )
+
+    expect(bankLines.map((line) => line.label)).toEqual(['• Bank · USDC', '• Bank 2 · USDC'])
+    expect(
+      bankLines.map((line) => (typeof line.account === 'string' ? line.account : line.account?.id))
+    ).toEqual([
+      'cash-bank:0x1111111111111111111111111111111111111111',
+      'cash-bank:0x2222222222222222222222222222222222222222'
+    ])
   })
 })
 

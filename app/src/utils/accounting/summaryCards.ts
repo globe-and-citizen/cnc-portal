@@ -48,7 +48,7 @@ const DEBT_ACCOUNTS: ReadonlySet<string> = new Set(['Loan Payable', 'Interest Pa
 
 function outstandingDebt(balance: BalanceSheet): number {
   return balance.liabilities
-    .filter((line) => DEBT_ACCOUNTS.has(line.account))
+    .filter((line) => DEBT_ACCOUNTS.has(line.account.family.name))
     .reduce((sum, line) => sum + line.amount, 0)
 }
 

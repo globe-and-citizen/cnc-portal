@@ -48,8 +48,8 @@ function normalizeContractAddress(value: string | null | undefined): Address | u
   return value && isAddress(value) ? getAddress(value) : undefined
 }
 
-/** Build one concrete account. Only a contract address can resolve a deployment-specific family. */
-function makeAccount(familyName: AccountName, contractAddress?: string | null): Account {
+/** Resolve one chart family and optional deployment address into its concrete Account identity. */
+export function accountFor(familyName: AccountName, contractAddress?: string | null): Account {
   const family = accountFamilyOf(familyName)
   const address = family.deploymentScoped ? normalizeContractAddress(contractAddress) : undefined
   const resolution: AccountResolution =
@@ -74,7 +74,7 @@ function noteAccount(
   contractAddress?: string | null
 ): void {
   if (!family) return
-  const account = makeAccount(family, contractAddress)
+  const account = accountFor(family, contractAddress)
   accounts.set(account.id, account)
 }
 
@@ -109,7 +109,7 @@ export function buildAccountRegistry(entries: readonly LedgerEntry[]): AccountRe
   return {
     accounts: ordered,
     resolve(family, contractAddress) {
-      const account = makeAccount(family, contractAddress)
+      const account = accountFor(family, contractAddress)
       return byId.get(account.id) ?? account
     },
     get(id) {

@@ -1,6 +1,6 @@
 import type { AccountClass, AccountName } from './chartOfAccounts'
 import type { Account } from './accountRegistry'
-import type { GeneralLedger } from './generalLedger'
+import { buildGeneralLedger, type GeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
 import type { JournalEntry } from './journalEntry'
@@ -53,7 +53,7 @@ export function formatUnixDateTime(timestamp: number): string {
 export interface StatementLineView {
   label: string
   value: string
-  account?: AccountName
+  account?: Account | AccountName
   accounts?: AccountName[]
 }
 
@@ -201,8 +201,8 @@ export function currencySymbol(token: TokenId): string {
 }
 
 /** Drop the `Cash — ` chart prefix for the compact breakdown label. */
-function pocketShortName(account: AccountName): string {
-  return account.replace(/^Cash — /, '')
+function pocketShortName(label: string): string {
+  return label.replace(/^Cash — /, '')
 }
 
 /** `12.5` → `12.5 POL`; trims to at most 6 decimals so dust reads cleanly. */
@@ -227,35 +227,44 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
   const balance = buildBalanceSheet(scoped)
   const income = buildIncomeStatement(scoped)
   const retainedAccounts = [...income.revenue, ...income.expenses].map((line) => line.account)
+  const accountLabels = new Map(
+    buildGeneralLedger(scoped).trialBalance.map((line) => [line.account.id, line.accountLabel])
+  )
+  const accountLabel = (account: Account): string =>
+    accountLabels.get(account.id) ?? account.family.name
   const assetLines: StatementLineView[] = [
     { label: 'Cash (all pockets)', value: money(balance.cash) },
     ...balance.cashByPocketCurrency.map((line) => ({
-      label: `• ${pocketShortName(line.account)} · ${currencySymbol(line.token)}`,
+      label: `• ${pocketShortName(accountLabel(line.account))} · ${currencySymbol(line.token)}`,
       value: cashCurrencyValue(line),
       account: line.account
     })),
     ...balance.otherAssets.map((asset) => ({
-      label: asset.account,
+      label: accountLabel(asset.account),
       value: money(asset.amount),
       account: asset.account
     }))
   ]
   const liabilityLines: StatementLineView[] = balance.liabilities.length
     ? balance.liabilities.map((line) => ({
-        label: line.account,
+        label: accountLabel(line.account),
         value: money(line.amount),
         account: line.account
       }))
     : [{ label: 'None (no debt)', value: money(0) }]
   const equityLines: StatementLineView[] = [
-    { label: 'Owner capital', value: money(balance.ownerCapital), account: 'Owner Capital' },
+    {
+      label: 'Owner capital',
+      value: money(balance.ownerCapital.amount),
+      account: balance.ownerCapital.account
+    },
     {
       label: 'Investor equity (SHER)',
-      value: money(balance.investorEquity),
-      account: 'Investor Equity'
+      value: money(balance.investorEquity.amount),
+      account: balance.investorEquity.account
     },
     ...balance.contraEquity.map((line) => ({
-      label: line.account,
+      label: accountLabel(line.account),
       value: money(-line.amount),
       account: line.account
     })),

@@ -231,7 +231,7 @@ describe('accounting assembly boundary', () => {
       }
     })
 
-    expect(a.balanceSheet.investorEquity).toBe(2)
+    expect(a.balanceSheet.investorEquity.amount).toBe(2)
     expect(a.summary.income).toBe(0)
     expect(a.journal).toMatchObject([
       {
@@ -283,7 +283,7 @@ describe('accounting assembly boundary', () => {
     // Equity increased and the trial balance still balances (Dr = Cr). No prior
     // accrual in this fixture, so the liability reads −$60 alone; in production the
     // wage accrual credits it first and the issuance nets it down.
-    expect(a.balanceSheet.investorEquity).toBe(60)
+    expect(a.balanceSheet.investorEquity.amount).toBe(60)
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
   })

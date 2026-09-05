@@ -111,7 +111,7 @@ function openDrilldown(line: StatementLineView): void {
   // Retained earnings is an aggregate of every income + expense account; other
   // lines drill into their single account.
   if (line.accounts?.length) openFor(line.accounts, line.value, 'Retained earnings')
-  else if (line.account) openFor(line.account, line.value)
+  else if (line.account) openFor(line.account, line.value, line.label)
 }
 
 // Export the current, as-of-filtered balance sheet. The filename carries the
