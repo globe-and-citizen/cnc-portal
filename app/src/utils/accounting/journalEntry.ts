@@ -6,6 +6,7 @@
  * consume it.
  */
 import type { Account } from './accountRegistry'
+import type { LegacyClassificationTarget } from './classificationTarget'
 import { sourceOperationIdOf, type LedgerEntry, type UseCase } from './ledgerEntry'
 import type { TokenId } from '@/constant'
 
@@ -67,6 +68,12 @@ export interface JournalEntry {
    * come from `lines`.
    */
   source?: LedgerEntry
+  /** Transitional API keys and decisions; accounts and amounts always belong to lines. */
+  legacyClassification?: {
+    targets: LegacyClassificationTarget[]
+    /** One eligible source withdrawal, optionally accompanied by protocol-fee postings. */
+    editable: boolean
+  }
   /** Ordered and validated journal lines; empty only when {@link kind} is `memo`. */
   lines: JournalEntryLine[]
 }
@@ -210,6 +217,14 @@ export function createJournalEntry(entry: JournalEntry): JournalEntry {
   const validated: JournalEntry = {
     ...entry,
     ...(entry.source ? { source: { ...entry.source } } : {}),
+    ...(entry.legacyClassification
+      ? {
+          legacyClassification: {
+            ...entry.legacyClassification,
+            targets: entry.legacyClassification.targets.map((target) => ({ ...target }))
+          }
+        }
+      : {}),
     lines: entry.lines.map(
       (line) => ({ ...line, account: { ...line.account } }) as JournalEntryLine
     )
