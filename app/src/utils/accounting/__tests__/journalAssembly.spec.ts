@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { assembleFromRawEntries } from '@/utils/accounting/assemble'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { assembleRawAccounting } from './assembleAccounting'
 
 function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
   return {
@@ -34,7 +34,7 @@ describe('accounting journal assembly', () => {
       memo: 'Transaction fee'
     })
 
-    const accounting = assembleFromRawEntries([fee, transfer])
+    const accounting = assembleRawAccounting([fee, transfer])
 
     expect(accounting.journal).toHaveLength(1)
     expect(accounting.journal[0]).toMatchObject({
@@ -71,7 +71,7 @@ describe('accounting journal assembly', () => {
       })
     )
 
-    const accounting = assembleFromRawEntries(repayments)
+    const accounting = assembleRawAccounting(repayments)
 
     expect(accounting.journal).toMatchObject([
       {
@@ -100,7 +100,7 @@ describe('accounting journal assembly', () => {
       memo: 'Transaction fee'
     })
 
-    const accounting = assembleFromRawEntries([fee])
+    const accounting = assembleRawAccounting([fee])
 
     expect(accounting.entries).toEqual([])
     expect(accounting.journal).toEqual([])
@@ -110,7 +110,7 @@ describe('accounting journal assembly', () => {
   it('rejects an invalid normalized posting at the assembly boundary', () => {
     const invalid = posting({ id: 'broken-posting', useCase: 'CASH-IN', credit: null })
 
-    expect(() => assembleFromRawEntries([invalid])).toThrow(
+    expect(() => assembleRawAccounting([invalid])).toThrow(
       'monetary entries require at least one debit and one credit line'
     )
   })

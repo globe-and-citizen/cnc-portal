@@ -1,5 +1,4 @@
 import { filterByPeriod, money, dayLabel, periodLabel } from './presenter'
-import { netBalanceByAccount } from './generalLedger'
 import { ledgerRows, type LedgerRow, type LedgerView } from './ledgerPresenter'
 import { mergeBankFees } from './mergeBankFees'
 import { buildPocketInstances } from './pocketInstances'
@@ -57,16 +56,6 @@ export function entriesForAccount(
     .sort((a, b) => a.timestamp - b.timestamp)
 }
 
-/** The net balance (natural, non-negative side) of an account over its postings. */
-export function accountNet(entries: readonly LedgerEntry[], account: string): number {
-  return netBalanceByAccount(entries).get(account as AccountName) ?? 0
-}
-
-/** The net balance (natural, non-negative side) of an account over its postings, as USD. */
-export function accountBalance(entries: readonly LedgerEntry[], account: string): string {
-  return money(accountNet(entries, account))
-}
-
 /** A rendered `$` cell back as a number; a blank cell moved nothing. */
 function amountOf(cell: string): number {
   return cell ? Number(cell.replace(/[$,]/g, '')) : 0
@@ -120,7 +109,7 @@ function scopedMovement(entry: LedgerEntry, account: string, scope?: InstanceSco
 
 /**
  * The net balance of `account` over its postings, scoped to one pocket instance
- * (natural side). The drill-down equivalent of {@link accountNet}: it reconciles a
+ * (natural side). It reconciles a
  * split pocket's line, and reads a merged Bank fee off its transfer.
  */
 export function scopedNet(

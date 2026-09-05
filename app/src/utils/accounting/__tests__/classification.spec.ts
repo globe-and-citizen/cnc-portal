@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   ALLOWED_BY_DIRECTION,
-  CLASSIFICATION_CATEGORIES,
   resolveClassifiedAccounts,
   type ClassificationCategory,
   type ClassificationDirection
@@ -10,21 +9,6 @@ import {
 const BANK = 'Cash — Bank'
 const SAFE = 'Cash — Safe'
 const PAYROLL = 'Cash — Payroll'
-
-describe('classification categories', () => {
-  it('exposes the supported categories', () => {
-    expect(CLASSIFICATION_CATEGORIES).toEqual([
-      'REVENUE',
-      'EXPENSE',
-      'SHAREHOLDER_LOAN',
-      'OWNER_CAPITAL',
-      'INTERNAL_TRANSFER',
-      'PAYROLL_EXPENSE',
-      'INTEREST_EXPENSE',
-      'DIVIDEND_EXPENSE'
-    ])
-  })
-})
 
 describe('direction constraints', () => {
   const resolve = (direction: ClassificationDirection, category: ClassificationCategory) =>

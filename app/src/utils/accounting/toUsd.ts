@@ -20,14 +20,6 @@ import { formatUnits } from 'viem'
 import type { TokenId } from '@/constant'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
 
-/**
- * Storage / internal-calculation precision (spec §3): every ledger value — the
- * rate of record, the whole-token quantity and the derived USD amount — is kept
- * and manipulated at **6 decimals**. The final 2-decimal rounding happens once,
- * at render time only (see {@link ./presenter.money}), never here.
- */
-export const USD_STORAGE_DECIMALS = 6
-
 /** Round to the 6-decimal storage precision (spec §3) — never the 2-dp display. */
 export function round6(value: number): number {
   return Math.round(value * 1e6) / 1e6
@@ -53,7 +45,7 @@ export function isUsdPegged(tokenId: TokenId): boolean {
  * their peg, so this only ever runs for non-pegged tokens — for which there is
  * no feed yet. It throws to surface the Phase 2 gap.
  */
-export const requireRateOfRecord: UsdRateOfRecord = (tokenId) => {
+const requireRateOfRecord: UsdRateOfRecord = (tokenId) => {
   throw new Error(
     `No USD rate-of-record for "${tokenId}". Native (POL/ETH) and SHER need a ` +
       `price-of-record source (Phase 2 oracle / agreed mint price) — pass a ` +

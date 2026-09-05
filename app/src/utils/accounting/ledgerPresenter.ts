@@ -4,7 +4,7 @@
  * category/date filter. Split from {@link ./presenter} (which handles the
  * statement-level views) to keep each module focused. Pure and unit-testable.
  */
-import { money, formatUnixDateTime, filterByPeriod, periodLabel, currencySymbol } from './presenter'
+import { money, formatUnixDateTime, filterByPeriod, currencySymbol } from './presenter'
 import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { activityDestinationOf, type ActivityDestination } from './activityDestination'
@@ -24,25 +24,8 @@ import type { LedgerEntry } from './ledgerEntry'
 import type { TokenId } from '@/constant'
 import { formatNumber } from '@/utils/format'
 
-// Currency derivation / filtering lives in its own module, re-exported here.
-export { entryCurrency, ledgerCurrencies, filterLedgerByCurrency } from './ledgerCurrency'
-// So is the Activity's link target — see ./activityDestination.
-export { activityDestinationOf } from './activityDestination'
-export type { ActivityDestination, LedgerSection } from './activityDestination'
-// So do the category vocabulary and its badges — see ./ledgerCategory.
-export {
-  badgeClassOf,
-  categoryOf,
-  categoryLabelOf,
-  CATEGORY_BADGE,
-  FEE_ACCOUNT,
-  FEE_FILTER,
-  ledgerCategories,
-  type LedgerCategory
-} from './ledgerCategory'
-
 // So does the pocket-deployment numbering a redeployed account reads under.
-export { buildPocketInstances, NO_POCKET_INSTANCES } from './pocketInstances'
+export { NO_POCKET_INSTANCES } from './pocketInstances'
 export type { PocketInstance, PocketInstanceIndex } from './pocketInstances'
 
 // So does the column list the table, the selector and the exporters share.
@@ -98,35 +81,6 @@ export interface LedgerView {
   rows: LedgerRow[]
   total: string
   entryCount: number
-}
-
-/** The empty account leg placeholder — a memo posting carries no real account. */
-const NO_ACCOUNT = ''
-
-/**
- * The distinct real accounts a set of postings touches (either leg), A–Z. Backs
- * the ledger's account filter. Memo postings carry no leg, so contribute nothing.
- */
-export function ledgerAccounts(entries: readonly LedgerEntry[]): string[] {
-  const seen = new Set<string>()
-  for (const entry of entries) {
-    if (entry.debit) seen.add(entry.debit)
-    if (entry.credit) seen.add(entry.credit)
-  }
-  seen.delete(NO_ACCOUNT)
-  return [...seen].sort((a, b) => a.localeCompare(b))
-}
-
-/**
- * Narrow the feed to the postings that touch **any** of `accounts` on either leg —
- * whole entries, so a kept posting always shows both its debit and its credit row.
- */
-export function filterLedgerByAccount(
-  entries: readonly LedgerEntry[],
-  accounts: readonly string[]
-): LedgerEntry[] {
-  const wanted = new Set(accounts)
-  return entries.filter((entry) => wanted.has(entry.debit ?? '') || wanted.has(entry.credit ?? ''))
 }
 
 /** The account fields of one journal line: its name, and which deployment it moved. */
@@ -305,7 +259,7 @@ function rowsOf(entry: LedgerEntry, instances: PocketInstanceIndex): LedgerRow[]
  * fee-only entry, so the fee view reconciles line-for-line with the General
  * Ledger, drill-downs and exports.
  */
-export function filterLedgerEntries(
+function filterLedgerEntries(
   entries: readonly LedgerEntry[],
   filter: string,
   from?: Date | null,
@@ -332,7 +286,7 @@ export function ledgerRows(
 }
 
 /** True when an entry carries a {@link FEE_ACCOUNT} leg (folded or standalone). */
-export function entryHasFee(entry: LedgerEntry): boolean {
+function entryHasFee(entry: LedgerEntry): boolean {
   return entry.mergedBankFee != null || entry.debit === FEE_ACCOUNT
 }
 
@@ -341,7 +295,7 @@ export function entryHasFee(entry: LedgerEntry): boolean {
  * Bank fee ({@link mergeBankFees}) is an extra debit leg on its transfer, so its
  * amount is added in too (the standalone fee posting it replaced is gone).
  */
-export function ledgerTotal(entries: readonly LedgerEntry[]): string {
+function ledgerTotal(entries: readonly LedgerEntry[]): string {
   return money(
     entries.reduce(
       (sum, e) => sum + (e.debit ? e.amountUsd : 0) + (e.mergedBankFee?.amountUsd ?? 0),
@@ -369,16 +323,4 @@ export function presentLedger(
   // the same number whatever the active filter.
   const instances = buildPocketInstances(entries)
   return { rows: ledgerRows(shown, instances), total: ledgerTotal(shown), entryCount: shown.length }
-}
-
-/**
- * The heading a ledger export prints, spelling out the active scope so the file
- * is self-describing: the category (when narrowed from "All") and the reporting
- * period (when a date range is set). Plain `"General Ledger"` for the whole book.
- */
-export function ledgerExportTitle(filter?: string, from?: Date | null, to?: Date | null): string {
-  const parts = ['General Ledger']
-  if (filter && filter !== 'All') parts.push(filter)
-  if (from || to) parts.push(periodLabel(from, to))
-  return parts.join(' — ')
 }

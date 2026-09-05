@@ -1,26 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import {
-  makeEntry,
-  normalizeCounterparty,
-  sourceOperationIdOf,
-  transactionHashOf
-} from '@/utils/accounting/ledgerEntry'
+import { makeEntry, sourceOperationIdOf, transactionHashOf } from '@/utils/accounting/ledgerEntry'
 
 const TX_HASH = `0x${'a'.repeat(64)}`
-
-describe('normalizeCounterparty', () => {
-  it('checksum-normalizes a valid address', () => {
-    expect(normalizeCounterparty('0x6666666666666666666666666666666666666666')).toBe(
-      '0x6666666666666666666666666666666666666666'
-    )
-  })
-
-  it('returns undefined for invalid / missing input', () => {
-    expect(normalizeCounterparty(null)).toBeUndefined()
-    expect(normalizeCounterparty(undefined)).toBeUndefined()
-    expect(normalizeCounterparty('not-an-address')).toBeUndefined()
-  })
-})
 
 describe('makeEntry', () => {
   it('fills the common defaults (internal=false, enrichment=not-applicable)', () => {

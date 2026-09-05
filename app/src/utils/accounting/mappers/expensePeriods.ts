@@ -10,7 +10,7 @@
  */
 
 /** Approval reset behaviour, matching the contract's `FrequencyType` enum. */
-export const FREQUENCY = {
+const FREQUENCY = {
   ONE_TIME: 0,
   DAILY: 1,
   WEEKLY: 2,

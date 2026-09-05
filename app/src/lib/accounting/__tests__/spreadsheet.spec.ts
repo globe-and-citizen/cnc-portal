@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { Address } from 'viem'
 import { buildAccountingSheets, buildSheets, exportAccountingExcel } from '../spreadsheet'
-import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
+import type { CncAccounting } from '@/utils/accounting/assemble'
+import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
 
 const BANK = '0x1111111111111111111111111111111111111111'
@@ -22,7 +23,7 @@ const emptyBankEvents = {
 
 /** A tiny live book: one $100 client deposit into the Bank → Service Revenue 100. */
 function sampleBooks(): CncAccounting {
-  return assembleCncAccounting({
+  return assembleAccounting({
     contracts: [{ type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] }],
     bankEvents: {
       ...emptyBankEvents,
@@ -44,7 +45,7 @@ function sampleBooks(): CncAccounting {
 
 /** The same book plus a $30 expense payout, so the income statement carries both sides. */
 function booksWithExpense(): CncAccounting {
-  return assembleCncAccounting({
+  return assembleAccounting({
     contracts: [
       { type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] },
       {

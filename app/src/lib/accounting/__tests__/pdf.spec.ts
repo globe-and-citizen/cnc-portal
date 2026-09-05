@@ -2,7 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { Address } from 'viem'
 import { buildAccountingTables, buildTables, exportAccountingPdf, exportTablesPdf } from '../pdf'
 import { periodLabel } from '@/utils/accounting/presenter'
-import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
+import type { CncAccounting } from '@/utils/accounting/assemble'
+import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
 
 const BANK = '0x1111111111111111111111111111111111111111'
@@ -11,7 +12,7 @@ const TX_HASH = `0x${'a'.repeat(64)}`
 
 /** A tiny live book: one $100 client deposit into the Bank → Service Revenue 100. */
 function sampleBooks(): CncAccounting {
-  return assembleCncAccounting({
+  return assembleAccounting({
     contracts: [{ type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] }],
     bankEvents: {
       bankDeposits: { items: [] },

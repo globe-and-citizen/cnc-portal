@@ -86,7 +86,7 @@ function internalKey(entry: LedgerEntry): string {
  * postings are deduped — external entries keep their unique source ids. The
  * first occurrence wins (mapper order makes the Bank-side row canonical).
  */
-export function dedupeInternalTransfers(entries: readonly LedgerEntry[]): LedgerEntry[] {
+function dedupeInternalTransfers(entries: readonly LedgerEntry[]): LedgerEntry[] {
   const seen = new Set<string>()
   const out: LedgerEntry[] = []
   for (const entry of entries) {

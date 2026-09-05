@@ -11,11 +11,8 @@ import { flushPromises } from '@vue/test-utils'
 import { NETWORK } from '@/constant'
 import { renderWithProviders } from '@/tests/mocks'
 import LedgerTable from '../LedgerTable.vue'
-import {
-  ledgerRows,
-  buildPocketInstances,
-  LEDGER_COLUMNS
-} from '@/utils/accounting/ledgerPresenter'
+import { ledgerRows, LEDGER_COLUMNS } from '@/utils/accounting/ledgerPresenter'
+import { buildPocketInstances } from '@/utils/accounting/pocketInstances'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 const BANK_1 = '0x1111111111111111111111111111111111111111'

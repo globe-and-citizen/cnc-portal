@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { getAddress } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
-import {
-  INTERNAL_POCKET_CONTRACT_TYPES,
-  collectInternalAddresses,
-  isInternalAddress
-} from '../internalAddresses'
+import { collectInternalAddresses, isInternalAddress } from '../internalAddresses'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const INVESTOR = '0x2222222222222222222222222222222222222222'
@@ -19,21 +15,6 @@ const contract = (type: TeamContract['type'], address: string): TeamContract => 
   type,
   deployer: BANK as TeamContract['deployer'],
   admins: []
-})
-
-describe('INTERNAL_POCKET_CONTRACT_TYPES', () => {
-  it('lists the eight money-pocket TeamContract types (FeeCollector excluded)', () => {
-    expect([...INTERNAL_POCKET_CONTRACT_TYPES]).toEqual([
-      'Safe',
-      'Bank',
-      'CashRemunerationEIP712',
-      'ExpenseAccountEIP712',
-      'FixedReturn',
-      'InvestorV1',
-      'Investor',
-      'SafeDepositRouter'
-    ])
-  })
 })
 
 describe('collectInternalAddresses', () => {

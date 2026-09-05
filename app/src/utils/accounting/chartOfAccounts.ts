@@ -213,15 +213,6 @@ export type AccountName = AccountFamily['name']
 /** Ordered chart names retained for raw ledger compatibility. */
 export const ACCOUNT_NAMES: readonly AccountName[] = ACCOUNT_FAMILIES.map((family) => family.name)
 
-/** Legacy class lookup, derived from the canonical family registry. */
-export const CHART_OF_ACCOUNTS: Readonly<Record<AccountName, AccountClass>> = Object.fromEntries(
-  ACCOUNT_FAMILIES.map((family) => [family.name, family.accountClass])
-) as Readonly<Record<AccountName, AccountClass>>
-
-/** @deprecated Use {@link ACCOUNT_FAMILIES}; this compatibility view is derived from it. */
-export const ACCOUNTS: readonly { readonly name: AccountName; readonly class: AccountClass }[] =
-  ACCOUNT_FAMILIES.map((family) => ({ name: family.name, class: family.accountClass }))
-
 const FAMILIES_BY_NAME: Readonly<Record<AccountName, AccountFamily>> = Object.fromEntries(
   ACCOUNT_FAMILIES.map((family) => [family.name, family])
 ) as Readonly<Record<AccountName, AccountFamily>>
@@ -241,22 +232,7 @@ export function isDeploymentScopedAccountFamily(account: AccountName): boolean {
   return FAMILIES_BY_NAME[account]?.deploymentScoped ?? false
 }
 
-/** @deprecated Use {@link isDeploymentScopedAccountFamily}. */
-export function isInstancedPocket(account: AccountName): boolean {
-  return isDeploymentScopedAccountFamily(account)
-}
-
-/** Whether a class's normal balance is a debit. */
-export function isDebitNormalClass(accountClass: AccountClass): boolean {
-  return accountClass === 'ASSET' || accountClass === 'EXPENSE' || accountClass === 'CONTRA_EQUITY'
-}
-
 /** Whether a legacy chart name's normal balance is a debit. */
 export function isDebitNormal(account: AccountName): boolean {
   return FAMILIES_BY_NAME[account]?.normalBalance === 'debit'
-}
-
-/** The normal-balance side of a legacy chart name. */
-export function normalBalance(account: AccountName): NormalBalance {
-  return isDebitNormal(account) ? 'debit' : 'credit'
 }

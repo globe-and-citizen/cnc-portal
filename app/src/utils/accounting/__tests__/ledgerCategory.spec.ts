@@ -1,11 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import {
-  badgeClassOf,
-  categoryOf,
-  categoryLabelOf,
-  CATEGORY_BADGE,
-  ledgerRows
-} from '@/utils/accounting/ledgerPresenter'
+import { badgeClassOf, categoryOf, categoryLabelOf } from '@/utils/accounting/ledgerCategory'
+import { ledgerRows } from '@/utils/accounting/ledgerPresenter'
 import type { LedgerEntry, UseCase } from '@/utils/accounting/ledgerEntry'
 
 const base = {
@@ -82,7 +77,7 @@ describe('badgeClassOf', () => {
 
     expect(new Set([lent, repaid, refunded]).size).toBe(3)
     // Money borrowed in keeps the category's teal; the two outflows move away from it.
-    expect(lent).toBe(CATEGORY_BADGE.Credit)
+    expect(lent).toContain('accent')
     expect(repaid).toContain('violet')
     expect(refunded).toContain('slate')
   })
@@ -94,11 +89,11 @@ describe('badgeClassOf', () => {
   })
 
   it('leaves the other categories on their category colour', () => {
-    expect(badgeClassOf(entry('UC-CREDIT-02'))).toBe(CATEGORY_BADGE.Transfer)
-    expect(badgeClassOf(entry('UC-EXP-01'))).toBe(CATEGORY_BADGE.Expense)
-    expect(badgeClassOf(entry('UC-CASH-02'))).toBe(CATEGORY_BADGE.Payroll)
+    expect(badgeClassOf(entry('UC-CREDIT-02'))).toContain('neutral')
+    expect(badgeClassOf(entry('UC-EXP-01'))).toContain('error')
+    expect(badgeClassOf(entry('UC-CASH-02'))).toContain('warning')
     // A settled wage stays split from an accrued one (pre-existing behaviour).
-    expect(badgeClassOf(entry('UC-CASH-03'))).not.toBe(CATEGORY_BADGE.Payroll)
+    expect(badgeClassOf(entry('UC-CASH-03'))).not.toContain('warning')
   })
 })
 

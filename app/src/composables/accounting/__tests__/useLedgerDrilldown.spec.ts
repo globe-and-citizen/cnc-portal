@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
-import { entriesForAccount, accountBalance } from '@/utils/accounting/accountLedger'
+import { entriesForAccount, scopedNet } from '@/utils/accounting/accountLedger'
+import { money } from '@/utils/accounting/presenter'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
@@ -15,6 +16,8 @@ vi.mock('@/composables/accounting/useAccountingExport', () => ({
 describe('useLedgerDrilldown', () => {
   const entries = ref<readonly LedgerEntry[]>(catalogueLedger)
   const bounds = () => ({ from: null, to: null })
+  const accountBalance = (entries: readonly LedgerEntry[], account: string) =>
+    money(scopedNet(entries, account))
 
   beforeEach(() => {
     exportPdf.mockClear()

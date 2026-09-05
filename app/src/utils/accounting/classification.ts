@@ -21,18 +21,15 @@ export type ClassificationDirection = 'in' | 'out'
  * The accounting categories a Bank/Safe movement can be classified into. Mirrors the
  * backend Prisma `TransactionClassificationCategory` enum.
  */
-export const CLASSIFICATION_CATEGORIES = [
-  'REVENUE',
-  'EXPENSE',
-  'SHAREHOLDER_LOAN',
-  'OWNER_CAPITAL',
-  'INTERNAL_TRANSFER',
-  'PAYROLL_EXPENSE',
-  'INTEREST_EXPENSE',
-  'DIVIDEND_EXPENSE'
-] as const
-
-export type ClassificationCategory = (typeof CLASSIFICATION_CATEGORIES)[number]
+export type ClassificationCategory =
+  | 'REVENUE'
+  | 'EXPENSE'
+  | 'SHAREHOLDER_LOAN'
+  | 'OWNER_CAPITAL'
+  | 'INTERNAL_TRANSFER'
+  | 'PAYROLL_EXPENSE'
+  | 'INTEREST_EXPENSE'
+  | 'DIVIDEND_EXPENSE'
 
 /** A manual classification an owner attached to one transaction. */
 export interface ClassificationOverride {

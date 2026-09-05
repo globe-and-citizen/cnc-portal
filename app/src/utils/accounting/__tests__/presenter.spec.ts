@@ -12,7 +12,8 @@ import {
   trialExportTitle,
   currencySymbol
 } from '@/utils/accounting/presenter'
-import { presentLedger, categoryOf } from '@/utils/accounting/ledgerPresenter'
+import { presentLedger } from '@/utils/accounting/ledgerPresenter'
+import { categoryOf } from '@/utils/accounting/ledgerCategory'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { sampleBooks } from './fixtures'
 

@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
   entriesForAccount,
-  accountBalance,
-  accountNet,
   accountOpening,
   openingRow,
+  scopedNet,
   withRunningBalance,
   NO_OPENING,
   presentAccountLedger,
@@ -23,6 +22,9 @@ describe('accountLedger — statement-line drill-down', () => {
   const gl = buildGeneralLedger(buildJournal(catalogueLedger))
   const balanceOf = (account: AccountName): number =>
     gl.trialBalance.find((r) => r.account.family.name === account)?.balance ?? 0
+  const accountNet = scopedNet
+  const accountBalance = (entries: readonly (typeof catalogueLedger)[number][], account: string) =>
+    money(scopedNet(entries, account))
 
   describe('entriesForAccount', () => {
     it('returns only postings whose debit or credit leg touches the account', () => {

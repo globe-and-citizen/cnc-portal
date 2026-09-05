@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
 import { USDC_ADDRESS } from '@/constant'
-import { assembleCncAccounting, type CncAccountingInput } from '@/utils/accounting/assemble'
+import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import { ADDR } from './fixtures'
+import { assembleAccounting } from './assembleAccounting'
 
 const CONTRACTS: TeamContract[] = [
   { type: 'Bank', address: ADDR.bank as Address, deployer: ADDR.founder as Address, admins: [] },
@@ -57,7 +58,7 @@ function bankEvents(operationId: string, includeTransfer: boolean) {
 describe('Bank fee journal assembly', () => {
   it('assembles a Bank-to-Safe transfer and its fee as one JournalEntry', () => {
     const operationId = `0x${'d'.repeat(64)}`
-    const accounting = assembleCncAccounting({
+    const accounting = assembleAccounting({
       ...BASE,
       bankEvents: bankEvents(operationId, true)
     })
@@ -78,7 +79,7 @@ describe('Bank fee journal assembly', () => {
 
   it('withholds an unmatched FeePaid instead of producing a fee-only JournalEntry', () => {
     const operationId = `0x${'e'.repeat(64)}`
-    const accounting = assembleCncAccounting({
+    const accounting = assembleAccounting({
       ...BASE,
       bankEvents: bankEvents(operationId, false)
     })

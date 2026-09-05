@@ -10,10 +10,11 @@
  */
 import { describe, it, expect } from 'vitest'
 import { parseEther, type Address } from 'viem'
-import { assembleCncAccounting, type CncAccountingInput } from '../assemble'
+import type { CncAccountingInput } from '../assemble'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { TeamContract } from '@/types/teamContract'
 import type { UsdRateOfRecord } from '../toUsd'
+import { assembleAccounting } from './assembleAccounting'
 
 // All-numeric hex so `getAddress` is a no-op — the addresses survive the
 // checksum normalization the mapper context applies (matches the shared fixtures).
@@ -90,8 +91,8 @@ function sampleInput(): CncAccountingInput {
 
 describe('accounting non-regression', () => {
   it('produces identical statements when the same history is exported twice', () => {
-    const first = assembleCncAccounting(sampleInput())
-    const second = assembleCncAccounting(sampleInput())
+    const first = assembleAccounting(sampleInput())
+    const second = assembleAccounting(sampleInput())
 
     expect(second.summary).toEqual(first.summary)
     expect(second.generalLedger).toEqual(first.generalLedger)
@@ -100,7 +101,7 @@ describe('accounting non-regression', () => {
   })
 
   it('keeps the balance-sheet identity and a single Net income across the reports', () => {
-    const { incomeStatement, balanceSheet } = assembleCncAccounting(sampleInput())
+    const { incomeStatement, balanceSheet } = assembleAccounting(sampleInput())
 
     // Assets = Liabilities + Equity, exactly (spec §5).
     expect(balanceSheet.balanced).toBe(true)
@@ -111,7 +112,7 @@ describe('accounting non-regression', () => {
   })
 
   it('values POL at its rate of record: the fee metric and assets are no longer $0.00', () => {
-    const { summary, balanceSheet } = assembleCncAccounting(sampleInput())
+    const { summary, balanceSheet } = assembleAccounting(sampleInput())
 
     // 100 − 20 − 5 = 75 POL in Bank, at $0.08 → $6.00 total assets.
     expect(balanceSheet.totalAssets).toBe(6)
@@ -125,7 +126,7 @@ describe('accounting non-regression', () => {
   })
 
   it('stamps every posting with its currency, quantity and rate of record (Taux)', () => {
-    const { entries } = assembleCncAccounting(sampleInput())
+    const { entries } = assembleAccounting(sampleInput())
 
     expect(entries.length).toBeGreaterThan(0)
     for (const entry of entries) {

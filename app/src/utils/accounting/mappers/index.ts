@@ -51,7 +51,7 @@ export interface LedgerSources {
  * portal `expenses` (off-chain) supply each budget's cap so a partial expense
  * payout can report its remaining balance.
  */
-export function mapAllSources(
+function mapAllSources(
   sources: LedgerSources,
   ctx: MapperContext,
   offChain: EnrichmentSources = {}

@@ -28,7 +28,7 @@ export type LedgerCategory =
  * the "Action" column reads at a glance (static strings so Tailwind keeps them).
  * Colours come from the project palette (see `assets/main.css`).
  */
-export const CATEGORY_BADGE: Record<LedgerCategory, string> = {
+const CATEGORY_BADGE: Record<LedgerCategory, string> = {
   Investment: 'bg-secondary/10 text-secondary', // capital in — blue
   Credit: 'bg-accent/10 text-accent', // borrowed money — teal
   Revenue: 'bg-success/10 text-success', // income earned — green
@@ -46,20 +46,6 @@ export const CATEGORY_BADGE: Record<LedgerCategory, string> = {
  * `filterLedgerEntries` / `presentLedger` rather than via {@link categoryOf}.
  */
 export const FEE_FILTER = 'Fee'
-
-/** Ledger filter categories shown as pills (in design order). */
-export const ledgerCategories: Array<LedgerCategory | 'All' | typeof FEE_FILTER> = [
-  'All',
-  'Investment',
-  'Credit',
-  'Revenue',
-  'Trading',
-  'Transfer',
-  'Payroll',
-  'Expense',
-  'Dividend',
-  FEE_FILTER
-]
 
 /**
  * The label shown on the "Action" badge (and carried into the ledger exports).

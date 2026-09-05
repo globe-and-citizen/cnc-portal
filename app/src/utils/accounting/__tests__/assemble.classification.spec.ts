@@ -3,10 +3,11 @@ import type { Address } from 'viem'
 import type { TeamContract, ContractType } from '@/types/teamContract'
 import type { TransactionClassificationRecord } from '@/types/accounting-classification'
 import type { ClassificationCategory } from '@/utils/accounting/classification'
-import { assembleCncAccounting, type CncAccountingInput } from '@/utils/accounting/assemble'
+import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
 import { ADDR } from './fixtures'
+import { assembleAccounting } from './assembleAccounting'
 
 const DEPLOYER = ADDR.founder as Address
 
@@ -67,16 +68,16 @@ function classification(
   }
 }
 
-describe('assembleCncAccounting — legacy manual classification', () => {
+describe('accounting assembly — legacy manual classification', () => {
   it('infers the deposit as Service Revenue with no classification', () => {
-    const a = assembleCncAccounting({ ...BASE, bankEvents: clientBankDeposit })
+    const a = assembleAccounting({ ...BASE, bankEvents: clientBankDeposit })
     expect(a.summary.income).toBe(100)
     expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
     expect(a.balanceSheet.balanced).toBe(true)
   })
 
   it('keeps a direct deposit as revenue despite a shareholder-loan category', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       bankEvents: clientBankDeposit,
       classifications: [classification('bd1', 'SHAREHOLDER_LOAN')]
@@ -94,7 +95,7 @@ describe('assembleCncAccounting — legacy manual classification', () => {
   })
 
   it('keeps a direct deposit as revenue despite an owner-capital category', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       bankEvents: clientBankDeposit,
       classifications: [classification('bd1', 'OWNER_CAPITAL')]
@@ -124,7 +125,7 @@ describe('assembleCncAccounting — legacy manual classification', () => {
       bankTokenDeposits: { items: [] }
     }
 
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       bankEvents: internalDeposit,
       classifications: [classification('bd-int', 'REVENUE')]

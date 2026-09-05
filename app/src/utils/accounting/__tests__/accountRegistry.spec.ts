@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
-import { assembleFromRawEntries } from '@/utils/accounting/assemble'
 import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { assembleRawAccounting } from './assembleAccounting'
 
 const BANK_1 = '0x1111111111111111111111111111111111111111' as Address
 const BANK_2 = '0x2222222222222222222222222222222222222222' as Address
@@ -72,7 +72,7 @@ describe('canonical account registry', () => {
       posting('credit-sweep', 'Cash — Bank'),
       posting('bank-2', 'Cash — Bank', BANK_2)
     ]
-    const books = assembleFromRawEntries(entries)
+    const books = assembleRawAccounting(entries)
     const registry = books.accountRegistry
     const unresolved = registry.resolve('Cash — Bank')
 

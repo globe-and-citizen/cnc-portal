@@ -33,7 +33,6 @@ import {
   type JournalEntryLine
 } from './journalEntry'
 
-export { createJournalEntry, isBalanced } from './journalEntry'
 export type { JournalEntry, JournalEntryLine } from './journalEntry'
 
 /** Convert a current two-leg consolidated posting into journal lines with concrete account identity. */

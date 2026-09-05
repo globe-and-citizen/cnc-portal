@@ -1,12 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import {
-  ledgerRows,
-  ledgerTotal,
-  entryHasFee,
-  presentLedger,
-  FEE_ACCOUNT,
-  FEE_FILTER
-} from '@/utils/accounting/ledgerPresenter'
+import { ledgerRows, presentLedger } from '@/utils/accounting/ledgerPresenter'
+import { FEE_ACCOUNT, FEE_FILTER } from '@/utils/accounting/ledgerCategory'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 // A standalone fee posting (its transfer isn't in view, so it stays on its own).
@@ -70,12 +64,6 @@ describe('Fee badge (isFee row flag)', () => {
 })
 
 describe('Fee filter', () => {
-  it('entryHasFee matches folded and standalone fees only', () => {
-    expect(entryHasFee(standaloneFee)).toBe(true)
-    expect(entryHasFee(transferWithFee)).toBe(true)
-    expect(entryHasFee(plainTransfer)).toBe(false)
-  })
-
   it('presentLedger(FEE_FILTER) selects the fee-bearing transactions and keeps every leg', () => {
     // The Fee filter narrows to the transactions touching Transaction Fee Expense
     // and renders each of them whole — never a fee-only projection (issue #2678).
@@ -104,6 +92,6 @@ describe('Fee filter', () => {
     const allView = presentLedger([transferWithFee], 'All')
     expect(feeView.rows).toEqual(allView.rows)
     expect(feeView.total).toBe(allView.total)
-    expect(feeView.total).toBe(ledgerTotal([transferWithFee]))
+    expect(feeView.total).toBe('$10.05')
   })
 })

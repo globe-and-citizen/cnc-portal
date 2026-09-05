@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
   isUsdPegged,
-  requireRateOfRecord,
   round6,
   toUsd,
   tokenUsdRate,
@@ -59,10 +58,6 @@ describe('toUsd', () => {
     unfed.forEach((tokenId) => {
       expect(() => toUsd(1n, tokenId, AT)).toThrow(/rate-of-record/)
     })
-  })
-
-  it('default resolver always throws (only reached for non-pegged tokens)', () => {
-    expect(() => requireRateOfRecord('native', AT)).toThrow()
   })
 
   it('stores the USD amount at 6-dp precision (spec §3)', () => {

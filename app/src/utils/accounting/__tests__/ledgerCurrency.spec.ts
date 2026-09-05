@@ -1,13 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import {
-  entryCurrency,
-  ledgerCurrencies,
-  filterLedgerByCurrency,
-  filterLedgerEntries,
-  presentLedger,
-  FEE_ACCOUNT,
-  FEE_FILTER
-} from '@/utils/accounting/ledgerPresenter'
+import { filterLedgerByCurrency } from '@/utils/accounting/ledgerCurrency'
+import { presentLedger } from '@/utils/accounting/ledgerPresenter'
+import { FEE_ACCOUNT, FEE_FILTER } from '@/utils/accounting/ledgerCategory'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 const base = {
@@ -33,30 +27,6 @@ const feeInSher: LedgerEntry = {
   mergedBankFee: { amountUsd: 0.05, rawAmount: '50000000000000000', token: 'sher' }
 }
 
-describe('entryCurrency', () => {
-  it('reads the transaction token — the fee leg token never overrides it', () => {
-    expect(entryCurrency(usdtEntry)).toBe('USDT')
-    expect(entryCurrency(usdcEntry)).toBe('USDC')
-    // A transfer that skimmed its fee in another token is still the transfer's own
-    // currency — the whole transaction is kept in view, not a fee-only leg.
-    expect(entryCurrency(feeInSher)).toBe('USDC')
-  })
-})
-
-describe('ledgerCurrencies', () => {
-  it('lists the distinct currencies in view, sorted, de-duplicated', () => {
-    expect(ledgerCurrencies([usdtEntry, usdcEntry, usdcEntry2])).toEqual(['USDC', 'USDT'])
-  })
-
-  it('collapses to a single currency when only one is present', () => {
-    expect(ledgerCurrencies([usdcEntry, usdcEntry2])).toEqual(['USDC'])
-  })
-
-  it('is empty for no entries', () => {
-    expect(ledgerCurrencies([])).toEqual([])
-  })
-})
-
 describe('filterLedgerByCurrency', () => {
   it('keeps only entries whose currency is selected', () => {
     const kept = filterLedgerByCurrency([usdtEntry, usdcEntry, usdcEntry2], ['USDC'])
@@ -71,14 +41,15 @@ describe('filterLedgerByCurrency', () => {
 describe('currency filter threaded through the funnel', () => {
   const all = [usdtEntry, usdcEntry, usdcEntry2]
 
-  it('filterLedgerEntries narrows by currency alongside category + date', () => {
-    const rows = filterLedgerEntries(all, 'All', null, null, ['USDT'])
-    expect(rows.map((e) => e.id)).toEqual(['usdt'])
+  it('the visible General Ledger narrows by currency while preserving complete entries', () => {
+    const view = presentLedger(all, 'All', null, null, ['USDT'])
+    expect(view.entryCount).toBe(1)
+    expect(view.rows.map((row) => row.account)).toEqual(['Cash — Expense', 'Cash — Bank'])
   })
 
-  it('a null / absent currency selection leaves the set untouched', () => {
-    expect(filterLedgerEntries(all, 'All')).toHaveLength(3)
-    expect(filterLedgerEntries(all, 'All', null, null, null)).toHaveLength(3)
+  it('a null / absent currency selection leaves the visible ledger untouched', () => {
+    expect(presentLedger(all, 'All').entryCount).toBe(3)
+    expect(presentLedger(all, 'All', null, null, null).entryCount).toBe(3)
   })
 
   it('presentLedger honours the currency selection for the export path', () => {

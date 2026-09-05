@@ -143,7 +143,7 @@ class InvalidJournalEntryError extends Error {
 }
 
 /** Whether a journal entry's debit and credit line totals match in reporting currency. */
-export function isBalanced(entry: JournalEntry): boolean {
+function isBalanced(entry: JournalEntry): boolean {
   if (entry.kind === 'memo') return entry.lines.length === 0
 
   let debit = 0

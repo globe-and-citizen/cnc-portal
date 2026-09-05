@@ -13,19 +13,8 @@ import type { LedgerEntry } from './ledgerEntry'
  * transactions in view, so the transaction's currency is always its own token
  * rather than a fee leg's (issue #2678).
  */
-export function entryCurrency(entry: LedgerEntry): string {
+function entryCurrency(entry: LedgerEntry): string {
   return currencySymbol(entry.token)
-}
-
-/**
- * The distinct currencies present across the given entries, sorted, feeding the
- * General-ledger currency selector — recomputed as the upstream category / date /
- * fee filters change, so it always reflects the data currently in view.
- */
-export function ledgerCurrencies(entries: readonly LedgerEntry[]): string[] {
-  const seen = new Set<string>()
-  for (const entry of entries) seen.add(entryCurrency(entry))
-  return [...seen].sort()
 }
 
 /**
