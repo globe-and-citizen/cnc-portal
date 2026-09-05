@@ -2,7 +2,7 @@
  * Balance sheet (issue #2117, catalogue §6.6).
  *
  * Assets = Liabilities + Equity, as of the end of the period. Built from the
- * consolidated feed plus the period's net income, which closes into
+ * canonical journal plus the period's net income, which closes into
  * **Retained Earnings**:
  *
  *  - Assets       cash pockets (rolled up) + Trading account + any other asset
@@ -18,9 +18,9 @@
  */
 import { formatUnits } from 'viem'
 import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
-import { netBalanceByAccount, netBalanceByAccountUnrounded } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
-import type { LedgerEntry } from './ledgerEntry'
+import { journalFamilyBalances, journalFamilyBalancesUnrounded } from './journalBalances'
+import type { JournalEntry } from './journalEntry'
 import type { StatementLine } from './incomeStatement'
 import type { TokenId } from '@/constant'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
@@ -93,12 +93,12 @@ function round2(value: number): number {
  * The full-precision (unrounded) side totals of the balance-sheet identity.
  * Net income closes into equity, so income accounts add and expense accounts
  * subtract into `equityAndResult`. CONTRA_EQUITY is debit-normal and reduces
- * equity, so it is subtracted. Summed from the raw net balances so the
+ * equity, so it is subtracted. Summed from unrounded journal-line balances so the
  * grand totals are rounded exactly **once** — summing already-rounded
  * per-account balances (multi-currency values rounded before summation) drifts a
  * cent and would break `Assets = Liabilities + Equity`.
  */
-function rawSideTotals(entries: readonly LedgerEntry[]): {
+function rawSideTotals(entries: readonly JournalEntry[]): {
   assets: number
   cash: number
   liabilities: number
@@ -108,7 +108,7 @@ function rawSideTotals(entries: readonly LedgerEntry[]): {
   let cash = 0
   let liabilities = 0
   let equityAndResult = 0
-  for (const [account, value] of netBalanceByAccountUnrounded(entries)) {
+  for (const [account, value] of journalFamilyBalancesUnrounded(entries)) {
     switch (classOf(account)) {
       case 'ASSET':
         assets += value
@@ -147,7 +147,7 @@ function toBigInt(raw: string): bigint {
  * raw token amount, so a holding is tracked in both — a native pocket is reported
  * in POL as well as dollars. Fully-settled (net-zero) holdings are dropped.
  */
-function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrencyLine[] {
+function buildCashByPocketCurrency(entries: readonly JournalEntry[]): CashCurrencyLine[] {
   const holdings = new Map<
     string,
     { account: AccountName; token: TokenId; usd: number; raw: bigint }
@@ -160,11 +160,16 @@ function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrenc
     holdings.set(key, holding)
   }
   for (const entry of entries) {
-    const raw = toBigInt(entry.rawAmount)
-    if (entry.debit && CASH_ACCOUNTS.has(entry.debit))
-      addHolding(entry.debit, entry.token, entry.amountUsd, raw)
-    if (entry.credit && CASH_ACCOUNTS.has(entry.credit))
-      addHolding(entry.credit, entry.token, -entry.amountUsd, -raw)
+    for (const line of entry.lines) {
+      const movement = line.movement
+      const account = line.account.family.name
+      if (!movement || !CASH_ACCOUNTS.has(account)) continue
+      const raw = toBigInt(movement.rawAmount)
+      const amount = line.debit ?? line.credit ?? 0
+      const signed = line.debit !== undefined ? amount : -amount
+      const signedRaw = line.debit !== undefined ? raw : -raw
+      addHolding(account, movement.token, signed, signedRaw)
+    }
   }
 
   // Emit pocket-by-pocket (chart order), currency-by-currency (display order),
@@ -184,9 +189,9 @@ function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrenc
   return lines
 }
 
-/** Build the balance sheet as of the end of the supplied feed. */
-export function buildBalanceSheet(entries: readonly LedgerEntry[]): BalanceSheet {
-  const net = netBalanceByAccount(entries)
+/** Build the balance sheet as of the end of the supplied journal. */
+export function buildBalanceSheet(entries: readonly JournalEntry[]): BalanceSheet {
+  const net = journalFamilyBalances(entries)
   const balanceOf = (account: AccountName): number => net.get(account) ?? 0
 
   const cashByPocket: StatementLine[] = []

@@ -60,7 +60,7 @@ function summarySheet(books: CncAccounting): SheetRows {
 }
 
 function incomeSheet(books: CncAccounting, from?: Date | null, to?: Date | null): SheetRows {
-  const income = presentIncome(books.entries, from, to)
+  const income = presentIncome(books.journal, from, to)
   return [
     [incomeExportTitle(from, to)],
     [],
@@ -77,7 +77,7 @@ function incomeSheet(books: CncAccounting, from?: Date | null, to?: Date | null)
 }
 
 function balanceSheetRows(books: CncAccounting, asOf?: Date | null): SheetRows {
-  const balance = presentBalance(books.entries, asOf)
+  const balance = presentBalance(books.journal, asOf)
   return [
     [balanceExportTitle(asOf)],
     [],

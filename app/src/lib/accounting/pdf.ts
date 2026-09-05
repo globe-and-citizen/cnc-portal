@@ -69,7 +69,7 @@ function incomeTable(
   from?: Date | null,
   to?: Date | null
 ): AccountingPdfTable {
-  const income = presentIncome(books.entries, from, to)
+  const income = presentIncome(books.journal, from, to)
   return {
     title: incomeExportTitle(from, to),
     head: ['Item', 'Amount'],
@@ -89,7 +89,7 @@ function incomeTable(
 }
 
 function balanceTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTable {
-  const balance = presentBalance(books.entries, asOf)
+  const balance = presentBalance(books.journal, asOf)
   return {
     title: balanceExportTitle(asOf),
     head: ['Item', 'Amount'],

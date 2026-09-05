@@ -1,7 +1,7 @@
 /**
  * Income statement (issue #2117, catalogue §6.5).
  *
- * Groups the income and expense accounts of the consolidated feed into revenue
+ * Groups the income and expense accounts of the canonical journal into revenue
  * and expense lines and derives the net result:
  *
  *     Net income = Σ revenue − Σ expenses
@@ -12,8 +12,8 @@
  * (Payroll 50.80 + Operating 20 + Trading Loss 20 + Dividend 20) → net +4.20.
  */
 import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
-import { netBalanceByAccount } from './generalLedger'
-import type { LedgerEntry } from './ledgerEntry'
+import { journalFamilyBalances } from './journalBalances'
+import type { JournalEntry } from './journalEntry'
 
 export interface StatementLine {
   account: AccountName
@@ -35,9 +35,9 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
 
-/** Build the income statement from the consolidated ledger feed. */
-export function buildIncomeStatement(entries: readonly LedgerEntry[]): IncomeStatement {
-  const net = netBalanceByAccount(entries)
+/** Build the income statement from canonical JournalEntry lines. */
+export function buildIncomeStatement(entries: readonly JournalEntry[]): IncomeStatement {
+  const net = journalFamilyBalances(entries)
 
   const revenue: StatementLine[] = []
   const expenses: StatementLine[] = []

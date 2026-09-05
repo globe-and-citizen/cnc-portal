@@ -49,6 +49,52 @@ describe('accounting journal assembly', () => {
     expect(accounting.generalLedger.entries).toEqual(accounting.journal)
   })
 
+  it('projects one Bank transfer with its fee consistently into every statement', () => {
+    const sourceOperationId = 'bank-transfer-with-fee'
+    const deposit = posting({
+      id: 'client-deposit',
+      sourceOperationId: 'client-deposit',
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Bank',
+      credit: 'Service Revenue',
+      amountUsd: 100,
+      rawAmount: '100000000',
+      internal: false,
+      memo: 'Client payment'
+    })
+    const transfer = posting({ id: `${sourceOperationId}:transfer`, sourceOperationId })
+    const fee = posting({
+      id: `${sourceOperationId}:fee`,
+      sourceOperationId,
+      useCase: 'FEE',
+      debit: 'Transaction Fee Expense',
+      amountUsd: 0.05,
+      rawAmount: '50000',
+      internal: false,
+      memo: 'Transaction fee'
+    })
+
+    const accounting = assembleRawAccounting([deposit, transfer, fee])
+
+    expect(accounting.journal).toHaveLength(2)
+    expect(accounting.summary).toMatchObject({
+      cash: 99.95,
+      income: 100,
+      expense: 0.05,
+      transactionFees: 0.05
+    })
+    expect(accounting.incomeStatement).toMatchObject({
+      totalRevenue: 100,
+      totalExpenses: 0.05,
+      netIncome: 99.95
+    })
+    expect(accounting.balanceSheet).toMatchObject({
+      cash: 99.95,
+      retainedEarnings: 99.95,
+      balanced: true
+    })
+  })
+
   it('groups every indexed event from one transaction into one JournalEntry', () => {
     const txHash = `0x${'a'.repeat(64)}`
     const counterparties = [

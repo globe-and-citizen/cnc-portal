@@ -11,9 +11,9 @@
  * Pipeline (spec §2):
  *   raw feeds → {@link LedgerSources} + {@link MapperContext} + enrichment
  *             → buildCncLedgerEntries (#2113 mappers + off-chain join)
- *             → buildLedger (#2117 consolidation: dedupe twins + summary)
+ *             → buildLedger (#2117 consolidation: dedupe twins)
  *             → buildJournal (validated canonical journal)
- *             → General Ledger / Trial Balance; legacy statement projections
+ *             → General Ledger / Trial Balance / financial-statement projections
  */
 import { type Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
@@ -32,7 +32,11 @@ import type { ClassificationOverride } from '@/utils/accounting/classification'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
-import { buildLedger, type AccountingSummary } from '@/utils/accounting/buildLedger'
+import { buildLedger } from '@/utils/accounting/buildLedger'
+import {
+  buildAccountingSummary,
+  type AccountingSummary
+} from '@/utils/accounting/accountingSummary'
 import { buildAccountRegistry, type AccountRegistry } from '@/utils/accounting/accountRegistry'
 import {
   resolveAccountInstances,
@@ -107,7 +111,7 @@ export interface CncAccountingInput {
 export interface CncAccounting {
   /**
    * Deduped, chronologically sorted mapper postings. Transitional input for
-   * report projections that have not migrated to journal lines yet.
+   * account-level drill-downs, which still preserve source-posting detail.
    */
   entries: LedgerEntry[]
   /** The canonical concrete-account source of truth for this assembled book. */
@@ -335,7 +339,7 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
  */
 function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
   const reconciliation = reconcileJournalEntrySources(rawEntries)
-  const { entries, summary } = buildLedger(reconciliation.entries)
+  const { entries } = buildLedger(reconciliation.entries)
   const accountRegistry = buildAccountRegistry(entries)
   const journal = buildJournal(entries, accountRegistry)
 
@@ -343,10 +347,10 @@ function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounti
     entries,
     accountRegistry,
     journal,
-    summary,
+    summary: buildAccountingSummary(journal),
     generalLedger: buildGeneralLedger(journal),
-    incomeStatement: buildIncomeStatement(entries),
-    balanceSheet: buildBalanceSheet(entries),
+    incomeStatement: buildIncomeStatement(journal),
+    balanceSheet: buildBalanceSheet(journal),
     unmatchedFeeOperationIds: reconciliation.unmatchedFeeOperationIds
   }
 }

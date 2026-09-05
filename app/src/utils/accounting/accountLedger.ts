@@ -83,8 +83,8 @@ function legInScope(instance: string | undefined, scope?: InstanceScope): boolea
 
 /**
  * One entry's signed movement of `account` **within the instance scope**, on the
- * account's natural side. Unlike {@link netBalanceByAccount}, which keys on the
- * account name alone, this counts only the legs whose contract instance is in
+ * account's natural side. Unlike the family-level statement projections, this
+ * counts only the legs whose contract instance is in
  * scope — so a redeployed pocket's own line reconciles even when a single posting
  * touches the account on two different deployments (a Bank → Bank treasury move
  * credits one Bank and debits another, both `Cash — Bank`). A folded Bank fee
