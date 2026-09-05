@@ -13,6 +13,8 @@ These acceptance criteria follow the
   records.
 - The General Ledger, Trial Balance, summary, income statement, balance sheet, drill-downs, and their exports project the validated
   `JournalEntry` collection. A drill-down keeps every line of an entry that touches its selected concrete account or account family.
+- The Balance Sheet classifies and balances each displayed account line from that line's concrete `Account`. A redeployed or unresolved cash
+  account remains a separate report line and drill-down; only report totals deliberately aggregate those accounts.
 - Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
@@ -169,6 +171,8 @@ flowchart LR
 - [x] The summary, income statement, balance sheet, and their exports project the same validated `JournalEntry` collection as the General
       Ledger.
 - [x] Retained earnings aggregates the income and expense accounts included through the selected date.
+- [x] The Balance Sheet derives each asset, liability, equity, contra-equity, and cash-by-currency line from its concrete `Account`; the
+      account family provides the chart class and normal balance without merging a later deployment or unresolved account.
 - [x] Statement drill-downs use the same reporting boundary as their parent statement.
 
 #### Edge & Error Cases
@@ -288,7 +292,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `2a67e27828894093162fccfc368eb13039704396`
+**Implementation evidence reviewed against:** `8fffb896d09c9062a71f401b9e225a0ab7e74959`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -319,13 +323,17 @@ flowchart LR
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts),
   [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts),
+  [concrete-account journal balances](../../../app/src/utils/accounting/journalBalances.ts),
   [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts),
   [transaction identity helper](../../../app/src/utils/accounting/ledgerEntry.ts),
   [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
   [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
-- [Family-level income statement](../../../app/src/utils/accounting/incomeStatement.ts) and
-  [balance sheet](../../../app/src/utils/accounting/balanceSheet.ts)
+- [Family-level income statement](../../../app/src/utils/accounting/incomeStatement.ts),
+  [concrete-account Balance Sheet](../../../app/src/utils/accounting/balanceSheet.ts), and
+  [statement presenter](../../../app/src/utils/accounting/presenter.ts)
+- [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue) and
+  [statement line](../../../app/src/components/sections/AccountingView/StatementLine.vue)
 - [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
 - [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
