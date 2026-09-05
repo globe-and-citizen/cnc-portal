@@ -37,31 +37,18 @@
       <span v-else-if="row.isFirst" class="text-sm font-semibold">{{ row.label }}</span>
     </template>
 
-    <template #txHash-header="{ header, table }">
-      <div class="relative flex items-center pr-2">
-        <span>Tx hash</span>
-        <span
-          v-if="header.column.getCanResize()"
-          role="separator"
-          aria-label="Resize transaction hash column"
-          aria-orientation="vertical"
-          :aria-valuenow="header.column.getSize()"
-          :aria-valuemin="TX_HASH_COLUMN_MIN_SIZE"
-          :aria-valuemax="TX_HASH_COLUMN_MAX_SIZE"
-          tabindex="0"
-          class="group focus-visible:ring-primary absolute inset-y-0 right-0 w-2 translate-x-1/2 cursor-col-resize touch-none outline-none focus-visible:ring-2"
-          data-test="ledger-tx-hash-resizer"
-          @dblclick="header.column.resetSize()"
-          @keydown.left.prevent="resizeColumn(table, header.column, -TX_HASH_COLUMN_KEYBOARD_STEP)"
-          @keydown.right.prevent="resizeColumn(table, header.column, TX_HASH_COLUMN_KEYBOARD_STEP)"
-          @mousedown.stop.prevent="header.getResizeHandler()($event)"
-          @touchstart.stop.prevent="header.getResizeHandler()($event)"
-        >
-          <span
-            class="bg-default/50 group-hover:bg-primary group-focus-visible:bg-primary absolute inset-y-1 left-1/2 w-px -translate-x-1/2"
-          />
-        </span>
-      </div>
+    <template
+      v-for="header in RESIZABLE_HEADERS"
+      :key="header.value"
+      #[`${header.value}-header`]="{ column, table }"
+    >
+      <LedgerColumnHeader
+        :column-key="header.value"
+        :label="header.label"
+        :column="column"
+        :table="table"
+        :align-end="isNumericColumn(header.value)"
+      />
     </template>
 
     <template #txHash-cell="{ row: { original: row } }">
@@ -139,27 +126,18 @@
       <span v-if="!row.isTotal" class="text-muted text-sm">{{ row.currency }}</span>
     </template>
 
-    <template #quantity-header>
-      <div class="text-right">Quantity</div>
-    </template>
     <template #quantity-cell="{ row: { original: row } }">
       <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
         {{ row.quantity }}
       </div>
     </template>
 
-    <template #rate-header>
-      <div class="text-right">Rate</div>
-    </template>
     <template #rate-cell="{ row: { original: row } }">
       <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
         {{ row.rate }}
       </div>
     </template>
 
-    <template #dr-header>
-      <div class="text-right">Debit</div>
-    </template>
     <template #dr-cell="{ row: { original: row } }">
       <div
         class="text-right text-sm tabular-nums"
@@ -169,9 +147,6 @@
       </div>
     </template>
 
-    <template #cr-header>
-      <div class="text-right">Credit</div>
-    </template>
     <template #cr-cell="{ row: { original: row } }">
       <div
         class="text-right text-sm tabular-nums"
@@ -181,9 +156,6 @@
       </div>
     </template>
 
-    <template #balance-header>
-      <div class="text-right">Balance</div>
-    </template>
     <template #balance-cell="{ row: { original: row } }">
       <div
         class="text-right text-sm tabular-nums"
@@ -198,9 +170,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Column, Table } from '@tanstack/vue-table'
 import type { TableColumn } from '@nuxt/ui'
 import LedgerActivityCell from './LedgerActivityCell.vue'
+import LedgerColumnHeader from './LedgerColumnHeader.vue'
 import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
 import { NETWORK } from '@/constant'
 import { formatTxHash } from '@/utils/format'
@@ -239,10 +211,31 @@ type LedgerTableRow = LedgerRow & { isTotal: boolean }
 // (CATEGORY_BADGE in ledgerPresenter). A static string so Tailwind keeps it.
 const FEE_BADGE = 'bg-warning/10 text-warning'
 
-const TX_HASH_COLUMN_SIZE = 180
-const TX_HASH_COLUMN_MIN_SIZE = 140
-const TX_HASH_COLUMN_MAX_SIZE = 480
-const TX_HASH_COLUMN_KEYBOARD_STEP = 24
+type ResizableColumnKey = LedgerColumnKey | 'balance'
+
+interface ColumnSize {
+  size: number
+  minSize: number
+  maxSize: number
+}
+
+const COLUMN_SIZES: Record<ResizableColumnKey, ColumnSize> = {
+  date: { size: 160, minSize: 120, maxSize: 280 },
+  action: { size: 120, minSize: 90, maxSize: 220 },
+  transaction: { size: 180, minSize: 130, maxSize: 320 },
+  txHash: { size: 180, minSize: 140, maxSize: 480 },
+  activity: { size: 320, minSize: 180, maxSize: 640 },
+  account: { size: 200, minSize: 140, maxSize: 420 },
+  currency: { size: 100, minSize: 80, maxSize: 180 },
+  quantity: { size: 120, minSize: 90, maxSize: 240 },
+  rate: { size: 100, minSize: 80, maxSize: 200 },
+  dr: { size: 120, minSize: 90, maxSize: 240 },
+  cr: { size: 120, minSize: 90, maxSize: 240 },
+  balance: { size: 130, minSize: 100, maxSize: 280 }
+}
+
+const NUMERIC_COLUMNS = new Set<ResizableColumnKey>(['quantity', 'rate', 'dr', 'cr', 'balance'])
+const RESIZABLE_HEADERS = [...LEDGER_COLUMNS, { value: 'balance' as const, label: 'Balance' }]
 
 // "Where did this happen?" — resolved once for the table, so each Activity cell
 // only has to say whether it is clickable.
@@ -263,24 +256,37 @@ function transactionExplorerUrl(txHash: string): string | undefined {
   return `${NETWORK.blockExplorerUrl.replace(/\/$/, '')}/tx/${txHash}`
 }
 
-function resizeColumn(
-  table: Table<LedgerTableRow>,
-  column: Column<LedgerTableRow, unknown>,
-  delta: number
-): void {
-  const minimum = column.columnDef.minSize ?? TX_HASH_COLUMN_MIN_SIZE
-  const maximum = column.columnDef.maxSize ?? TX_HASH_COLUMN_MAX_SIZE
-  const nextSize = Math.min(maximum, Math.max(minimum, column.getSize() + delta))
-
-  table.setColumnSizing((sizes) => ({ ...sizes, [column.id]: nextSize }))
+function isNumericColumn(column: ResizableColumnKey): boolean {
+  return NUMERIC_COLUMNS.has(column)
 }
 
-function txHashColumnStyle(column: { getSize: () => number }): Record<string, string> {
+function columnStyle(column: {
+  getSize: () => number
+  columnDef: { minSize?: number; maxSize?: number }
+}): Record<string, string> {
   const width = `${column.getSize()}px`
   return {
     width,
-    minWidth: `${TX_HASH_COLUMN_MIN_SIZE}px`,
-    maxWidth: `${TX_HASH_COLUMN_MAX_SIZE}px`
+    minWidth: `${column.columnDef.minSize ?? 80}px`,
+    maxWidth: `${column.columnDef.maxSize ?? 640}px`
+  }
+}
+
+function resizableColumn(
+  column: TableColumn<LedgerTableRow>,
+  key: ResizableColumnKey
+): TableColumn<LedgerTableRow> {
+  const sizing = COLUMN_SIZES[key]
+  return {
+    ...column,
+    ...sizing,
+    enableResizing: true,
+    meta: {
+      style: {
+        th: (header) => columnStyle(header.column),
+        td: (cell) => columnStyle(cell.column)
+      }
+    }
   }
 }
 
@@ -308,36 +314,23 @@ const tableRows = computed<LedgerTableRow[]>(() => [
 // Data columns bind to a row field (accessorKey); slot-only columns use an id.
 // Every column also has a `<key>-cell` template, so the key drives both.
 const COLUMN_DEFS: Record<LedgerColumnKey, TableColumn<LedgerTableRow>> = {
-  date: { accessorKey: 'date', header: 'Date' },
-  action: { id: 'action', header: 'Action' },
-  transaction: { id: 'transaction', header: 'Transaction' },
-  txHash: {
-    accessorKey: 'txHash',
-    header: 'Tx hash',
-    size: TX_HASH_COLUMN_SIZE,
-    minSize: TX_HASH_COLUMN_MIN_SIZE,
-    maxSize: TX_HASH_COLUMN_MAX_SIZE,
-    enableResizing: true,
-    meta: {
-      style: {
-        th: (header) => txHashColumnStyle(header.column),
-        td: (cell) => txHashColumnStyle(cell.column)
-      }
-    }
-  },
-  activity: { id: 'activity', header: 'Activity' },
-  account: { accessorKey: 'account', header: 'Account' },
-  dr: { accessorKey: 'dr', header: 'Debit' },
-  cr: { accessorKey: 'cr', header: 'Credit' },
-  currency: { accessorKey: 'currency', header: 'Currency' },
-  quantity: { accessorKey: 'quantity', header: 'Quantity' },
-  rate: { accessorKey: 'rate', header: 'Rate' }
+  date: resizableColumn({ accessorKey: 'date', header: 'Date' }, 'date'),
+  action: resizableColumn({ id: 'action', header: 'Action' }, 'action'),
+  transaction: resizableColumn({ id: 'transaction', header: 'Transaction' }, 'transaction'),
+  txHash: resizableColumn({ accessorKey: 'txHash', header: 'Tx hash' }, 'txHash'),
+  activity: resizableColumn({ id: 'activity', header: 'Activity' }, 'activity'),
+  account: resizableColumn({ accessorKey: 'account', header: 'Account' }, 'account'),
+  dr: resizableColumn({ accessorKey: 'dr', header: 'Debit' }, 'dr'),
+  cr: resizableColumn({ accessorKey: 'cr', header: 'Credit' }, 'cr'),
+  currency: resizableColumn({ accessorKey: 'currency', header: 'Currency' }, 'currency'),
+  quantity: resizableColumn({ accessorKey: 'quantity', header: 'Quantity' }, 'quantity'),
+  rate: resizableColumn({ accessorKey: 'rate', header: 'Rate' }, 'rate')
 }
 
 // The running balance closes the table, right after Credit. It isn't a
 // LEDGER_COLUMNS entry: it only exists for a single account's ledger (the
 // drill-down), so it's neither toggleable nor exported.
-const BALANCE_COLUMN: TableColumn<LedgerTableRow> = { accessorKey: 'balance', header: 'Balance' }
+const BALANCE_COLUMN = resizableColumn({ accessorKey: 'balance', header: 'Balance' }, 'balance')
 
 const columns = computed<TableColumn<LedgerTableRow>[]>(() => {
   const visible = props.visibleColumns ?? LEDGER_COLUMNS.map((column) => column.value)
