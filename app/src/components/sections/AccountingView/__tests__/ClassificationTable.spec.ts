@@ -42,15 +42,15 @@ const withdrawal = () =>
     id: `${TX}-2`,
     timestamp: 100,
     useCase: 'CASH-OUT',
-    debit: 'Loan Payable',
+    debit: 'Interest Expense',
     credit: 'Cash — Bank',
     creditInstance: '0x1111111111111111111111111111111111111111',
     amountUsd: 100,
     token: 'usdc',
     rawAmount: '100000000',
     rate: 1,
-    classified: 'SHAREHOLDER_LOAN',
-    memo: 'Repay principal'
+    classified: 'INTEREST_EXPENSE',
+    memo: 'Pay loan interest'
   })
 
 let wrapper: ReturnType<typeof renderWithProviders> | undefined
@@ -88,7 +88,7 @@ describe('Classification journal owner workflow', () => {
     const view = render()
     expect(view.get('[data-test="classify-count"]').text()).toContain('1 journal')
     expect(view.findAll('[data-test="classify-account"]').map((node) => node.text())).toEqual([
-      'Loan Payable',
+      'Interest Expense',
       'Transaction Fee Expense',
       'Cash — Bank'
     ])
@@ -110,8 +110,8 @@ describe('Classification journal owner workflow', () => {
         body: {
           teamId: '1',
           txId: `${TX}-2`,
-          category: 'SHAREHOLDER_LOAN',
-          memo: 'Repay principal'
+          category: 'INTEREST_EXPENSE',
+          memo: 'Pay loan interest'
         }
       },
       expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
@@ -146,8 +146,10 @@ describe('Classification journal owner workflow', () => {
     await view.get('[data-test="ledger-classify-save"]').trigger('click')
     state.upsert.mock.calls[0]![1].onError(new Error('Request failed'))
     await flushPromises()
-    expect(view.get('[data-test="ledger-classify-trigger"]').text()).toBe('Shareholder Loan')
-    expect(state.journal!.value[0]!.legacyClassification!.targets[0]!.memo).toBe('Repay principal')
+    expect(view.get('[data-test="ledger-classify-trigger"]').text()).toBe('Interest')
+    expect(state.journal!.value[0]!.legacyClassification!.targets[0]!.memo).toBe(
+      'Pay loan interest'
+    )
     expect(mockToast.add).toHaveBeenCalledWith({
       title: 'Could not save the classification',
       color: 'error'
@@ -159,8 +161,10 @@ describe('Classification journal owner workflow', () => {
     await view.get('[data-test="ledger-classify-clear"]').trigger('click')
     state.remove.mock.calls[0]![1].onError(new Error('Request failed'))
     await flushPromises()
-    expect(view.get('[data-test="ledger-classify-trigger"]').text()).toBe('Shareholder Loan')
-    expect(state.journal!.value[0]!.legacyClassification!.targets[0]!.memo).toBe('Repay principal')
+    expect(view.get('[data-test="ledger-classify-trigger"]').text()).toBe('Interest')
+    expect(state.journal!.value[0]!.legacyClassification!.targets[0]!.memo).toBe(
+      'Pay loan interest'
+    )
     expect(mockToast.add).toHaveBeenCalledWith({
       title: 'Could not revert the classification',
       color: 'error'
@@ -196,21 +200,21 @@ describe('Classification journal owner workflow', () => {
     mockUserStore.address = '0x2222222222222222222222222222222222222222'
     const view = render()
     expect(view.find('[data-test="ledger-classify-trigger"]').exists()).toBe(false)
-    expect(view.text()).toContain('Shareholder Loan — Repay principal')
+    expect(view.text()).toContain('Interest — Pay loan interest')
     expect(view.findAll('[data-test="classify-account"]')).toHaveLength(3)
   })
 
   it('keeps a compound transaction visible once with saved decisions but no editor', () => {
     state.journal!.value = buildJournal([
       withdrawal(),
-      makeEntry({ ...withdrawal(), id: `${TX}-8`, memo: 'Second repayment' })
+      makeEntry({ ...withdrawal(), id: `${TX}-8`, memo: 'Second interest payment' })
     ])
     const view = render()
     expect(view.get('[data-test="classify-count"]').text()).toContain('1 journal')
     expect(view.find('[data-test="ledger-classify-trigger"]').exists()).toBe(false)
     expect(view.findAll('[data-test="classify-readonly"]')).toHaveLength(1)
-    expect(view.text()).toContain('Repay principal')
-    expect(view.text()).toContain('Second repayment')
+    expect(view.text()).toContain('Pay loan interest')
+    expect(view.text()).toContain('Second interest payment')
   })
 
   it('shows loading then an empty state when the journal contains only a deposit', async () => {

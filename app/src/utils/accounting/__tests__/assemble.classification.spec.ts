@@ -92,7 +92,7 @@ describe('accounting assembly — legacy manual classification', () => {
       ...BASE,
       bankEvents,
       classifications: [
-        { ...classification(sourceId, 'SHAREHOLDER_LOAN'), memo: 'Repay principal' }
+        { ...classification(sourceId, 'INTEREST_EXPENSE'), memo: 'Pay loan interest' }
       ]
     }
     const saved = assembleAccounting(input)
@@ -103,12 +103,12 @@ describe('accounting assembly — legacy manual classification', () => {
       legacyClassification: {
         editable: true,
         targets: [
-          { sourceEntryId: sourceId, category: 'SHAREHOLDER_LOAN', memo: 'Repay principal' }
+          { sourceEntryId: sourceId, category: 'INTEREST_EXPENSE', memo: 'Pay loan interest' }
         ]
       }
     })
     expect(saved.journal[0]!.lines[0]).toMatchObject({
-      account: { family: { name: 'Loan Payable' } },
+      account: { family: { name: 'Interest Expense' } },
       debit: 100
     })
 
