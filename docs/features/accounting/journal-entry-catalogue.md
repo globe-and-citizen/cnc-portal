@@ -22,6 +22,13 @@ For a source event with an on-chain transaction hash, the transaction hash is th
 All source events with the same transaction hash are assembled into one `JournalEntry` before its compatible account lines are aggregated. A
 synthetic operation without an on-chain transaction keeps its explicit stable identity.
 
+### Deployment Account Evidence
+
+Bank, Payroll, Expense, and Credit are deployment-scoped cash families. A line uses a concrete deployment only when its source mapper names
+a known company contract of that family, or an ERC-20 `Transfer` in the transaction receipt unambiguously proves that the deployment sent or
+received the cash. Missing, external, ambiguous, native-only, or unavailable receipt evidence leaves the line on the explicit unresolved
+account; no historical deployment is selected by timing or prior activity.
+
 ### Fee Invariant
 
 A Bank fee never creates a `JournalEntry` by itself. It is an additional debit line in the same entry as the Bank transfer that caused it:
@@ -369,7 +376,7 @@ have no current mapper. They are intentionally excluded from this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0c9c9fa6b657fa6abe741d44fd62f9f1cda5805a`
+**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
 
 - [Use-case identifiers and source-operation identity](../../../app/src/utils/accounting/ledgerEntry.ts)
 - [Journal assembly](../../../app/src/utils/accounting/generalLedger.ts) and

@@ -12,8 +12,9 @@
  *   - **Backend DB** — the team's contracts, signed weekly claims and approved
  *     expenses, the off-chain accrual + category context (spec §3.2).
  *
- * The raw feeds are handed to the pure {@link assembleCncAccounting}, which runs
- * the #2113 source mappers, the #2117 consolidation and the statement builders.
+ * The raw feeds are mapped into a pure posting feed, completed with transaction
+ * receipt account evidence, then consolidated into the canonical journal and
+ * statements.
  * Optional / flaky sources (the external Safe service, a contract a team has not
  * deployed) degrade gracefully: a missing or failed feed is simply absent from
  * the ledger and never blocks the page or surfaces as a hard error.
@@ -41,13 +42,15 @@ import {
   useGetSafeOutgoingTransactionsQuery
 } from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useTransferInitiators } from './useTransferInitiators'
+import { useTransactionEvidence } from './useTransactionEvidence'
 import { useAccountingBackendFeeds } from './useAccountingBackendFeeds'
 import {
-  assembleCncAccounting,
+  assembleWithAccountEvidence,
+  buildRawCncEntries,
   type CncAccounting,
   type CncAccountingInput
 } from '@/utils/accounting/assemble'
+import { knownDeploymentAccounts } from '@/utils/accounting/accountInstances'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 
@@ -69,7 +72,9 @@ export interface UseCNCAccountingReturn {
   /** Validated journal assembled from the consolidated postings. */
   journal: ComputedRef<CncAccounting['journal']>
   /** The summary and financial reports computed from the assembled accounting books. */
-  reports: ComputedRef<AccountingReports>
+  reports: ComputedRef<
+    Pick<CncAccounting, 'summary' | 'generalLedger' | 'incomeStatement' | 'balanceSheet'>
+  >
   /** True while any required feed is still loading. */
   isLoading: ComputedRef<boolean>
   /** The team query error (the only fatal one); optional feeds degrade silently. */
@@ -79,12 +84,6 @@ export interface UseCNCAccountingReturn {
   /** Re-run every underlying query. */
   refetch: () => Promise<unknown>
 }
-
-/** The report projections derived together from one consolidated accounting ledger. */
-export type AccountingReports = Pick<
-  CncAccounting,
-  'summary' | 'generalLedger' | 'incomeStatement' | 'balanceSheet'
->
 
 /** One contract generation that could not be loaded, for the UI gap warning. */
 export interface ReconciliationGap {
@@ -296,22 +295,30 @@ export function useCNCAccounting(
   // price moves (no per-date historical fetch). USDC is pegged $1 by `toUsd`; SHER
   // is valued from the router multiplier (see buildRateOfRecord). The live price is
   // already wired into `baseInput.rateOfRecord` (`liveRate`).
-  const accounting = computed<CncAccounting>(() => assembleCncAccounting(baseInput.value))
+  // Mapper-provided instances are accepted only when they name a known company
+  // deployment. Receipt Transfer logs may complete a missing instance; activity
+  // order and unrelated historical deployments are never used as a fallback.
+  const rawEntries = computed(() => buildRawCncEntries(baseInput.value))
+  const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
+  const transferHashes = computed<string[]>(() => [
+    ...new Set(
+      rawEntries.value.flatMap((entry) => (entry.internal && entry.txHash ? [entry.txHash] : []))
+    )
+  ])
+  const transactionEvidence = useTransactionEvidence(transferHashes, rawEntries, deploymentAccounts)
+  const accounting = computed<CncAccounting>(() =>
+    assembleWithAccountEvidence(
+      rawEntries.value,
+      deploymentAccounts.value,
+      transactionEvidence.accountEvidence.value
+    )
+  )
 
   // Resolve the human who signed each internal transfer (the tx feed carries only
   // a hash), then attach it so the ledger reads "Stravid87 transferred money from
   // Bank to Safe". Optional: an unresolved hash keeps the source-pocket fallback.
-  const transferHashes = computed<string[]>(() => {
-    const hashes = new Set<string>()
-    for (const entry of accounting.value.entries) {
-      if (entry.internal && entry.txHash) hashes.add(entry.txHash)
-    }
-    return [...hashes]
-  })
-  const transferInitiators = useTransferInitiators(transferHashes)
-
   const entries = computed<CncAccounting['entries']>(() => {
-    const initiators = transferInitiators.value
+    const initiators = transactionEvidence.initiators.value
     if (!initiators.size) return accounting.value.entries
     return accounting.value.entries.map((entry) =>
       entry.internal && entry.txHash && initiators.has(entry.txHash)
@@ -338,6 +345,10 @@ export function useCNCAccounting(
     ...accounting.value.unmatchedFeeOperationIds.map((operationId) => ({
       source: 'Bank fee evidence',
       operationId
+    })),
+    ...transactionEvidence.unavailableOperationIds.value.map((operationId) => ({
+      source: 'Transaction receipt evidence',
+      operationId
     }))
   ])
 
@@ -355,6 +366,7 @@ export function useCNCAccounting(
       investor.loading.value ||
       vesting.loading.value ||
       router.loading.value ||
+      transactionEvidence.isLoading.value ||
       weeklyClaims.isLoading.value ||
       expenses.isLoading.value
   )
@@ -379,7 +391,8 @@ export function useCNCAccounting(
         expenses,
         classifications,
         safeTransfers,
-        safeOutgoing
+        safeOutgoing,
+        transactionEvidence
       ].map((query) => query.refetch?.())
     )
 
@@ -387,7 +400,7 @@ export function useCNCAccounting(
     entries,
     accountRegistry: computed(() => accounting.value.accountRegistry),
     journal: computed(() => accounting.value.journal),
-    reports: computed<AccountingReports>(() => ({
+    reports: computed(() => ({
       summary: accounting.value.summary,
       generalLedger: accounting.value.generalLedger,
       incomeStatement: accounting.value.incomeStatement,

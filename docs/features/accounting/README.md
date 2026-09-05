@@ -230,8 +230,8 @@ flowchart LR
 - [x] When Officer history is unavailable, Accounting falls back to the current contract set.
 - [x] A generation with no events does not remove events from other generations.
 - [x] A failed generation scan preserves the other generations and reports a reconciliation gap.
-- [x] A deployment-specific source leg without a contract address remains a separate unresolved Trial Balance account; its drill-down and
-      export scope the selected account to unaddressed legs and never fall back to an older deployment.
+- [x] A deployment-specific leg without proof of a matching known company contract remains a separate unresolved Trial Balance account; its
+      drill-down and export scope the selected account to unaddressed legs and never fall back to an older deployment.
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
@@ -276,7 +276,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `718fef59e14b0220a114ac718e8692d870cc842a`
+**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -301,12 +301,13 @@ flowchart LR
   [vesting source mapper](../../../app/src/utils/accounting/mappers/vesting.ts)
 - [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts),
   [per-section export](../../../app/src/composables/accounting/useSectionExport.ts), and
-  [transfer-initiator resolver](../../../app/src/composables/accounting/useTransferInitiators.ts)
+  [transaction-evidence resolver](../../../app/src/composables/accounting/useTransactionEvidence.ts)
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
   [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts),
   [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts),
+  [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts),
   [transaction identity helper](../../../app/src/utils/accounting/ledgerEntry.ts),
   [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
   [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
@@ -320,6 +321,8 @@ flowchart LR
   [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),
   [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
   [accounting data tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts), and
+  [account-instance evidence tests](../../../app/src/utils/accounting/__tests__/accountInstances.spec.ts),
+  [transaction evidence tests](../../../app/src/composables/accounting/__tests__/useTransactionEvidence.spec.ts),
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts) and
   [accounting rule tests](../../../app/src/utils/accounting/__tests__)
 - [Contract-migration accounting tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)

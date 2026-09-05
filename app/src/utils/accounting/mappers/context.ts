@@ -12,8 +12,9 @@ import type { TokenId } from '@/constant'
 import { resolveTokenIdByAddress } from '@/utils/tokens/metadata'
 import { toUsd as toUsdUtil, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import { cashAccountForContractType } from '@/utils/accounting/accountInstances'
 import type { ClassificationOverride } from '@/utils/accounting/classification'
-import type { ContractType, TeamContract } from '@/types/teamContract'
+import type { TeamContract } from '@/types/teamContract'
 
 export interface MapperContext {
   /** The team's own contract addresses (checksum-normalized). */
@@ -37,21 +38,12 @@ export interface MapperContext {
  * FixedReturn (Community Credit) holds lender deposits until the offer funds.
  *SafeDepositRouter holds no balance — the cash it routes lands in the Safe.
  */
-const POCKET_ACCOUNT_BY_TYPE: Partial<Record<ContractType, AccountName>> = {
-  Safe: 'Cash — Safe',
-  Bank: 'Cash — Bank',
-  CashRemunerationEIP712: 'Cash — Payroll',
-  ExpenseAccountEIP712: 'Cash — Expense',
-  FixedReturn: 'Cash — Credit',
-  SafeDepositRouter: 'Cash — Safe'
-}
-
 function buildPocketIndex(
   contracts: readonly TeamContract[] | undefined
 ): Map<Address, AccountName> {
   const index = new Map<Address, AccountName>()
   for (const contract of contracts ?? []) {
-    const account = POCKET_ACCOUNT_BY_TYPE[contract.type]
+    const account = cashAccountForContractType(contract.type)
     if (account && isAddress(contract.address)) index.set(getAddress(contract.address), account)
   }
   return index
