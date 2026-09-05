@@ -493,7 +493,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `9ad9e135a6fc8d49f95fc2bee1b5d3dcbd5eb41e`
+**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
@@ -505,7 +505,8 @@ flowchart LR
   Community Credit round-detail view parameter does not alter Accounts entry points.
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts),
   [Bank transaction feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
-  [Bank event queries](../../../app/src/queries/ponder/bank.queries.ts), and [Bank contract](../../../contract/contracts/Bank.sol)
+  [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts), and
+  [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
 - [Bank transfer form](../../../app/src/components/forms/TransferForm.vue)

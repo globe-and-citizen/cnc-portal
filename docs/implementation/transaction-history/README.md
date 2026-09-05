@@ -26,6 +26,7 @@ flowchart LR
 ## Invariants and Failure Behaviour
 
 - History sections retain ownership of their query data; `useTransactionTable` only derives filtered, grouped, and paginated rows.
+- Contract activity reaches history sections through the shared RPC-log feeds; table filtering does not choose or replace that source.
 - History sections bind the shared `DatePicker` directly to a `{ start, end } | undefined` range. Their stable storage keys and date-filter
   test selectors are retained.
 - A date or type-filter change resets the page and collapses expanded rows without reacting to query refreshes.
@@ -34,7 +35,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Bank history](../../../app/src/components/sections/BankView/BankTransactions.vue),
@@ -47,4 +48,5 @@ flowchart LR
 ## Related Documentation
 
 - [Date Picker](../date-picker/README.md)
+- [Contract Event Feeds](../contract-event-feeds/README.md)
 - [Client Navigation](../client-navigation/README.md)
