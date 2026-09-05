@@ -117,6 +117,8 @@ flowchart LR
 - [x] Pagination does not change the totals for the complete filtered ledger.
 - [x] Filtering the ledger by account or currency keeps whole `JournalEntry` records, so each shown entry still carries every debit and
       credit line.
+- [x] An internal-transfer activity identifies its concrete source and destination accounts, including a later deployment or an unresolved
+      account.
 - [x] The selected General Ledger export retains each transaction-backed entry's full transaction hash.
 - [x] The General Ledger has no `Fee` pseudo-category. A Bank transfer and its protocol fee in the same transaction form one complete
       `JournalEntry`, with an ordinary `Transaction Fee Expense` line.
@@ -274,7 +276,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `44e63ba7fd37a00456c35706370367b9bda0232a`
+**Implementation evidence reviewed against:** `a95d2e12bcecc1ce679ac9c037235f979dc19d38`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and

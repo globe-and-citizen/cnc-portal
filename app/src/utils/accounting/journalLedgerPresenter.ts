@@ -162,6 +162,35 @@ function movementOf(line: JournalEntryLine): Pick<LedgerRow, 'currency' | 'quant
   }
 }
 
+/**
+ * Make an internal-transfer narration name the same concrete accounts as its
+ * journal rows. The source establishes the debit/credit direction, while the
+ * journal lines establish the authoritative deployment identity.
+ */
+function activityOfJournalEntry(
+  source: LedgerEntry,
+  entry: JournalEntry,
+  labels: ReadonlyMap<string, string>
+): ActivityCell {
+  const activity = activityOf(source)
+  if (activity.kind !== 'transfer') return activity
+
+  const labelOf = (side: 'debit' | 'credit', familyName: string): string => {
+    const line = entry.lines.find(
+      (candidate) =>
+        candidate.account.family.name === familyName &&
+        (side === 'debit' ? debitOf(candidate) > 0 : creditOf(candidate) > 0)
+    )
+    return line ? (labels.get(line.account.id) ?? line.account.family.name) : familyName
+  }
+
+  return {
+    ...activity,
+    from: labelOf('credit', activity.from),
+    to: labelOf('debit', activity.to)
+  }
+}
+
 /** Flatten whole JournalEntry records into the rows consumed by LedgerTable. */
 export function journalLedgerRows(entries: readonly JournalEntry[]): LedgerRow[] {
   const labels = accountLabels(entries)
@@ -176,7 +205,7 @@ export function journalLedgerRows(entries: readonly JournalEntry[]): LedgerRow[]
         date: isFirst ? formatUnixDateTime(entry.timestamp) : '',
         label: isFirst ? entryLabel(source) : '',
         ...(isFirst && entry.txHash ? { txHash: entry.txHash } : {}),
-        activity: isFirst ? activityOf(source) : NO_ACTIVITY,
+        activity: isFirst ? activityOfJournalEntry(source, entry, labels) : NO_ACTIVITY,
         ...(isFirst ? { destination: activityDestinationOf(source) } : {}),
         category: isFirst ? categoryLabelOf(source) : '',
         categoryClass: isFirst ? badgeClassOf(source) : '',

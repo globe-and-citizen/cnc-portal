@@ -177,16 +177,18 @@ flowchart TB
 ```
 
 This is a current implementation boundary, not an accounting-policy distinction. The General Ledger filters reporting period, concrete
-`AccountId`, and currency at the journal-entry level, retaining all lines of every selected entry. Every transaction-backed journal group
-uses its transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains traceability evidence. A fee is an ordinary
-`Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or separate fee entry in this projection. The
-General Ledger renders the transaction hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports;
-synthetic operations have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate
-tab. Its bounded-width table column can be resized with a pointer or keyboard controls. JournalEntry assembly groups source postings and
-withholds a `FeePaid` source without matching Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not
-part of the company's internal-pocket registry. A later migration of every remaining projection to journal lines must preserve report date
-scopes and mapper semantics. In particular, `mergedBankFee` is re-booked only while calculating legacy raw-posting account balances because
-that presentation metadata is not carried by the canonical journal feed.
+`AccountId`, and currency at the journal-entry level, retaining all lines of every selected entry. Internal-transfer narration reads the
+source and destination display labels from the debit and credit `JournalEntryLine` accounts, so later deployments and unresolved accounts
+remain explicit rather than being inferred from family-level event text. Every transaction-backed journal group uses its transaction hash as
+its identity; a raw `<txHash>-<logIndex>` value remains traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its
+source operation; there is no `Fee` pseudo-category or separate fee entry in this projection. The General Ledger renders the transaction
+hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no
+transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate tab. Its bounded-width table
+column can be resized with a pointer or keyboard controls. JournalEntry assembly groups source postings and withholds a `FeePaid` source
+without matching Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not part of the company's
+internal-pocket registry. A later migration of every remaining projection to journal lines must preserve report date scopes and mapper
+semantics. In particular, `mergedBankFee` is re-booked only while calculating legacy raw-posting account balances because that presentation
+metadata is not carried by the canonical journal feed.
 
 ## Optimisation Review
 
@@ -216,7 +218,7 @@ that presentation metadata is not carried by the canonical journal feed.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `44e63ba7fd37a00456c35706370367b9bda0232a`
+**Implementation evidence reviewed against:** `a95d2e12bcecc1ce679ac9c037235f979dc19d38`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)

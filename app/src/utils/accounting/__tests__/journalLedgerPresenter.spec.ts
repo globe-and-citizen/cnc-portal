@@ -75,6 +75,72 @@ describe('journalLedgerPresenter', () => {
     expect(journalLedgerRows(byCurrency)).toHaveLength(2)
   })
 
+  it('names both concrete Bank deployments in an internal-transfer activity', () => {
+    const journal = buildJournal([
+      posting({
+        id: 'bank-a-seed',
+        timestamp: 50,
+        useCase: 'UC-BANK-02',
+        debit: 'Cash — Bank',
+        debitInstance: BANK_A,
+        credit: 'Service Revenue',
+        creditInstance: undefined,
+        internal: false
+      }),
+      posting({
+        id: 'bank-b-seed',
+        timestamp: 90,
+        useCase: 'UC-BANK-02',
+        debit: 'Cash — Bank',
+        debitInstance: BANK_B,
+        credit: 'Service Revenue',
+        creditInstance: undefined,
+        internal: false
+      }),
+      posting({
+        id: 'bank-migration',
+        debit: 'Cash — Bank',
+        debitInstance: BANK_B,
+        credit: 'Cash — Bank',
+        creditInstance: BANK_A,
+        internal: true
+      })
+    ])
+
+    const rows = journalLedgerRows(journal)
+    const transferStart = rows.findIndex((row) => row.isFirst && row.label === 'Treasury funding')
+    const transferRows = rows.slice(transferStart, transferStart + 2)
+
+    expect(transferRows[0]?.activity).toEqual({
+      kind: 'transfer',
+      from: 'Cash — Bank',
+      to: 'Cash — Bank 2'
+    })
+    expect(transferRows.map((row) => row.accountLabel ?? row.account)).toEqual([
+      'Cash — Bank 2',
+      'Cash — Bank'
+    ])
+  })
+
+  it('keeps an unresolved Bank explicit in an internal-transfer activity', () => {
+    const journal = buildJournal([
+      posting({
+        id: 'unresolved-bank-transfer',
+        debit: 'Cash — Bank',
+        debitInstance: BANK_A,
+        credit: 'Cash — Bank',
+        creditInstance: undefined,
+        internal: true
+      })
+    ])
+
+    expect(journalLedgerRows(journal)[0]?.activity).toEqual({
+      kind: 'transfer',
+      from: 'Cash — Bank (unresolved)',
+      to: 'Cash — Bank'
+    })
+  })
+
   it('does not name individual lenders on one multi-lender credit repayment transaction', () => {
     const txHash = `0x${'b'.repeat(64)}`
     const journal = buildJournal([
