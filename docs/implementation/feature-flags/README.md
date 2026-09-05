@@ -55,6 +55,8 @@ only decides whether a submitted work date falls inside the claim-submission win
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `bb3c3e19191a28cce80152deb6dfe45a074b61df`
+
 - [Persistence models](../../../backend/prisma/schema.prisma), including the separate Accounting classification records
 - [Effective-status and persistence utilities](../../../backend/src/utils/featureUtils.ts)
 - [Administrator feature controller](../../../backend/src/controllers/featureController.ts)
