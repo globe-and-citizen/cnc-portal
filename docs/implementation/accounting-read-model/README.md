@@ -40,8 +40,8 @@ The production assembly API exposes only the two stages the reactive read model 
 constructors, empty-book conveniences, raw-posting assembly shortcuts, and implementation details of account, price, fee, and presentation
 shaping stay private to their modules. Tests exercise the public stages through a test-only fixture helper; they do not add runtime APIs
 solely for test construction. The General Ledger, Trial Balance, Summary, Income Statement, Balance Sheet, and their exports project the
-validated `JournalEntry` collection. Only account and statement drill-downs retain transitional `LedgerEntry` postings so they can preserve
-source-posting detail and their instance-scoped running balances.
+validated `JournalEntry` collection. Account and statement drill-downs project the same collection: they select complete entries by a
+concrete `Account` or an account family and compute a running balance only from the selected account's own lines.
 
 ## Main Assembly Flow
 
@@ -58,12 +58,12 @@ flowchart LR
     journal --> generalLedgerUi[General Ledger UI and PDF or Excel exports]
     journal --> statements[Summary, Income Statement, and Balance Sheet]
     statements --> statementExports[Statement PDF or Excel exports]
-    entries --> drilldowns[Account and statement drill-downs]
+    journal --> drilldowns[Account and statement drill-downs]
     trial --> trialCard[Trial Balance and its scoped exports]
 ```
 
-`JournalEntry` is the canonical double-entry representation for every financial report. `LedgerEntry` remains a transitional input only for
-account and statement drill-downs, where the UI must retain source-posting detail and the concrete-account scope of a running balance.
+`JournalEntry` is the canonical double-entry representation for every financial report and drill-down. `LedgerEntry` remains a transitional
+mapping input only; it is not a report projection boundary.
 
 ## Account Domain Model
 
@@ -187,7 +187,6 @@ it to an earlier or later deployment based on activity order.
 
 ```mermaid
 flowchart TB
-    entries --> drilldowns[Account and statement drill-downs]
     journal[Validated JournalEntry collection] --> ledgerUI[General Ledger UI and filters]
     journal --> ledgerExports[General Ledger PDF and Excel exports]
     journal --> trial[Trial Balance]
@@ -195,9 +194,11 @@ flowchart TB
     journal --> summary[Accounting summary]
     journal --> income[Income Statement]
     journal --> balance[Balance Sheet]
+    journal --> drilldowns[Account and statement drill-downs]
     summary --> summaryExports[Summary exports]
     income --> incomeExports[Income Statement PDF and Excel exports]
     balance --> balanceExports[Balance Sheet PDF and Excel exports]
+    drilldowns --> drilldownExports[Drill-down PDF and Excel exports]
 ```
 
 This is a current implementation boundary, not an accounting-policy distinction. The General Ledger filters reporting period, concrete
@@ -212,9 +213,9 @@ synthetic operations have no transaction-hash value. A transaction-backed hash l
 tab. Every visible General Ledger column, including the account drill-down Balance column, has bounded widths and supports pointer, touch,
 and keyboard resizing; a double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid`
 source without matching Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not part of the company's
-internal-pocket registry. Account and statement drill-downs retain the raw posting feed only to show source-level detail and an
-instance-scoped running balance. In that view, `mergedBankFee` is re-booked on its Bank credit leg because it is display metadata rather
-than a separate journal line.
+internal-pocket registry. Account and statement drill-downs select complete JournalEntry records by a concrete Account or account family,
+then flatten their validated lines for display and exports. Their running balances update only on lines posted to the selected account; an
+aggregate statement line has no single running balance. A fee remains an ordinary line of the source operation in every drill-down.
 
 ## Optimisation Review
 
@@ -228,16 +229,11 @@ than a separate journal line.
 
 - Event queries fan out across every known contract generation and have an `EVENT_LIMIT` of 500. Measure result volume, pagination needs,
   and user-visible load time before altering source selection or limits.
-- Date-specific views perform their own projection work from a date-filtered journal. Account and statement drill-downs additionally filter
-  the transitional source feed to retain their instance-scoped running balances. Profile realistic multi-generation books before introducing
-  caching or alternate snapshots.
-- Moving the remaining drill-down projection from `LedgerEntry` to `JournalEntry` is a semantic migration, not a mechanical performance
-  change. It must retain date handling, source-level detail, instance scope, and the accounting meaning established by the source mappers.
+- Date-specific views perform their own projection work from a date-filtered journal. Account and statement drill-downs select whole
+  JournalEntry records from that same boundary. Profile realistic multi-generation books before introducing caching or alternate snapshots.
 
 ## Known Gaps
 
-- Account and statement drill-downs still read `LedgerEntry` postings to retain source-level detail and their instance-scoped running
-  balances. All financial statements and their PDF or Excel exports now read `JournalEntry` lines.
 - The legacy raw posting field names do not make the distinction between an account family, a concrete account, and a source instance
   explicit.
 - Legacy manual categories remain only for eligible external disbursements; account-backed `JournalEntryLine` assignment has not yet
@@ -246,7 +242,7 @@ than a separate journal line.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `dc50827a10cf9a02850e104ede6c935b9413fa64`
+**Implementation evidence reviewed against:** `2a67e27828894093162fccfc368eb13039704396`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -263,6 +259,9 @@ than a separate journal line.
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [General Ledger card](../../../app/src/components/sections/AccountingView/GeneralLedger.vue),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
+  [drill-down modal](../../../app/src/components/sections/AccountingView/LedgerDrilldownModal.vue),
+  [drill-down composable](../../../app/src/composables/accounting/useLedgerDrilldown.ts), and
+  [account drill-down utilities](../../../app/src/utils/accounting/accountLedger.ts),
   [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),
   [PDF projection](../../../app/src/lib/accounting/generalLedgerPdfTable.ts),
   [spreadsheet projection](../../../app/src/lib/accounting/generalLedgerSheet.ts), and
