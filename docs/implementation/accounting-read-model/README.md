@@ -31,7 +31,16 @@ flowchart LR
 ```
 
 `useCNCAccounting` owns I/O and reactive loading state. The shared context prevents the page's cards from independently fetching and
-assembling the same books. The assembly is pure: it receives `CncAccountingInput` and returns `CncAccounting` without Vue or network I/O.
+assembling the same books. Its two pure runtime stages are `buildRawCncEntries(CncAccountingInput)` and
+`assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence)`, which returns `CncAccounting` without Vue or network I/O.
+
+### Runtime Export Boundary
+
+The production assembly API exposes only the two stages the reactive read model calls: raw mapping and evidence-aware book assembly. Fixture
+constructors, empty-book conveniences, raw-posting assembly shortcuts, and implementation details of account, price, fee, and presentation
+shaping stay private to their modules. Tests exercise the public stages through a test-only fixture helper; they do not add runtime APIs
+solely for test construction. This boundary does not change the current report boundary below: the General Ledger and Trial Balance read
+`JournalEntry`, while the other projections still read transitional `LedgerEntry` postings.
 
 ## Main Assembly Flow
 
@@ -230,7 +239,7 @@ the canonical journal feed.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
+**Implementation evidence reviewed against:** `373757491a43ce390196880e2d4cc666ae76cdfa`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
