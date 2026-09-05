@@ -96,7 +96,7 @@
           class="focus-visible:ring-neutral rounded text-sm tabular-nums underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:outline-none"
           :class="row.accountMuted ? 'text-muted' : 'text-default'"
           :data-test="`ledger-account-link-${row.account}`"
-          @click="emit('accountSelect', row.account, row.accountInstance)"
+          @click="selectAccount(row)"
         >
           {{ row.accountLabel ?? row.account }}
         </button>
@@ -198,7 +198,9 @@ const props = defineProps<{
   linkAccount?: boolean
 }>()
 
-const emit = defineEmits<{ accountSelect: [account: string, instance?: string] }>()
+const emit = defineEmits<{
+  accountSelect: [account: string, instance?: string, accountId?: string]
+}>()
 
 // Shown beside a leg posted to a redeployed pocket's later contract — the same
 // explanation the trial balance gives on its numbered lines.
@@ -258,6 +260,12 @@ function transactionExplorerUrl(txHash: string): string | undefined {
 
 function isNumericColumn(column: ResizableColumnKey): boolean {
   return NUMERIC_COLUMNS.has(column)
+}
+
+/** Forward the concrete journal identity when it is available. */
+function selectAccount(row: LedgerRow): void {
+  if (row.accountId) emit('accountSelect', row.account, row.accountInstance, row.accountId)
+  else emit('accountSelect', row.account, row.accountInstance)
 }
 
 function columnStyle(column: {

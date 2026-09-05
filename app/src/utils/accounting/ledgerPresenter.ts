@@ -52,6 +52,8 @@ export interface LedgerRow {
   category: string
   categoryClass: string
   account: string
+  /** Canonical concrete account identity on JournalEntry projections. */
+  accountId?: string
   /** Display name for the account — `Cash — Bank 2` on a redeployed pocket's later
    *  deployment ({@link ./pocketInstances}), else exactly {@link account}. Absent
    *  when the account never split, so a normal book reads as before. */

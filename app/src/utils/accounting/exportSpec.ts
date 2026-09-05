@@ -31,12 +31,8 @@ export interface SectionSpec {
   currencies?: string[]
   /** General Ledger concrete AccountIds selected in the journal projection. */
   journalAccounts?: string[]
-
-  account?: string | readonly string[]
-  accountLabel?: string
-  accountTotal?: string
-  /** Pocket-instance scope for a split-pocket ledger export (a redeployed Bank / Payroll / Expense). */
-  instance?: string | null
-  /** Export only legs with no resolved deployment account, for reconciliation. */
-  unresolved?: boolean
+  /** Drill-down title while its rows remain a JournalEntry projection. */
+  journalAccountLabel?: string
+  /** Statement-line balance shown in a drill-down export. */
+  journalAccountTotal?: string
 }

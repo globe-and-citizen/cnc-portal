@@ -1,200 +1,115 @@
-import { filterByPeriod, money, dayLabel, periodLabel } from './presenter'
-import { ledgerRows, type LedgerRow, type LedgerView } from './ledgerPresenter'
-import { mergeBankFees } from './mergeBankFees'
-import { buildPocketInstances } from './pocketInstances'
-import { isDebitNormal } from './chartOfAccounts'
-import type { LedgerEntry } from './ledgerEntry'
-import type { AccountName } from './chartOfAccounts'
+import { dayLabel, filterByPeriod, money, periodLabel } from './presenter'
+import type { Account } from './accountRegistry'
+import { accountFamilyOf, type AccountName } from './chartOfAccounts'
+import { creditOf, debitOf, type JournalEntry } from './journalEntry'
+import type { LedgerRow } from './ledgerPresenter'
 
 /**
- * One account's postings over a window, **oldest first** — the reading order of
- * a general ledger: the opening balance heads the page, each posting moves it,
- * and the closing balance lands at the foot.
+ * A statement line selects a chart family; a Trial Balance line selects one
+ * concrete account. Both select complete JournalEntry records, never raw source
+ * postings or a contract-address side channel.
  */
-/**
- * Scope a drill-down to a single concrete deployment account, or to the explicit
- * unresolved account when source evidence contains no contract address. A blank leg
- * never belongs to a resolved deployment merely because that deployment was active
- * around the same time.
- */
-export interface InstanceScope {
-  instance?: string | null
-  /** Select only legs whose deployment contract is absent from source evidence. */
-  unresolved?: boolean
+export type AccountSelection = Account | AccountName | readonly AccountName[]
+
+function isAggregateSelection(selection: AccountSelection): selection is readonly AccountName[] {
+  return Array.isArray(selection)
 }
 
-/** Whether an entry touches `account` on a leg that matches the instance scope. */
-function touchesAccount(
-  entry: LedgerEntry,
-  wanted: ReadonlySet<string>,
-  scope?: InstanceScope
+function isConcreteAccount(selection: AccountSelection): selection is Account {
+  return !isAggregateSelection(selection) && typeof selection !== 'string'
+}
+
+function lineMatchesSelection(
+  line: JournalEntry['lines'][number],
+  selection: AccountSelection
 ): boolean {
-  const inst = scope?.instance?.toLowerCase()
-  const legMatches = (leg: string | null, legInstance?: string): boolean => {
-    if (!wanted.has(leg ?? '')) return false
-    if (scope?.unresolved) return !legInstance
-    if (!inst) return true
-    if (legInstance && legInstance.toLowerCase() === inst) return true
-    return false
-  }
-  return (
-    legMatches(entry.debit, entry.debitInstance) || legMatches(entry.credit, entry.creditInstance)
-  )
-}
-
-export function entriesForAccount(
-  entries: readonly LedgerEntry[],
-  account: string | readonly string[],
-  from?: Date | null,
-  to?: Date | null,
-  scope?: InstanceScope
-): LedgerEntry[] {
-  const wanted = new Set(typeof account === 'string' ? [account] : account)
-  return filterByPeriod(entries, from, to)
-    .filter((entry) => touchesAccount(entry, wanted, scope))
-    .slice()
-    .sort((a, b) => a.timestamp - b.timestamp)
-}
-
-/** A rendered `$` cell back as a number; a blank cell moved nothing. */
-function amountOf(cell: string): number {
-  return cell ? Number(cell.replace(/[$,]/g, '')) : 0
+  if (isConcreteAccount(selection)) return line.account.id === selection.id
+  const families = isAggregateSelection(selection) ? selection : [selection]
+  return families.includes(line.account.family.name)
 }
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
 
-const BANK_ACCOUNT = 'Cash — Bank'
-
 /**
- * Whether a leg's contract instance falls within a drill-down's instance scope —
- * the same rule {@link touchesAccount} filters entries by. An unset scope (or one
- * with no instance) matches every leg (a non-split account); otherwise the leg's
- * own instance must match. An explicit unresolved scope matches only blank legs.
+ * Complete JournalEntry records that touch the selected account or account
+ * family, in chronological order for a ledger reading.
  */
-function legInScope(instance: string | undefined, scope?: InstanceScope): boolean {
-  const inst = scope?.instance?.toLowerCase()
-  if (scope?.unresolved) return !instance
-  if (!inst) return true
-  if (instance && instance.toLowerCase() === inst) return true
-  return false
+export function entriesForAccount(
+  entries: readonly JournalEntry[],
+  selection: AccountSelection,
+  from?: Date | null,
+  to?: Date | null
+): JournalEntry[] {
+  return filterByPeriod(entries, from, to)
+    .filter((entry) => entry.lines.some((line) => lineMatchesSelection(line, selection)))
+    .slice()
+    .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
 }
 
-/**
- * One entry's signed movement of `account` **within the instance scope**, on the
- * account's natural side. Unlike the family-level statement projections, this
- * counts only the legs whose contract instance is in
- * scope — so a redeployed pocket's own line reconciles even when a single posting
- * touches the account on two different deployments (a Bank → Bank treasury move
- * credits one Bank and debits another, both `Cash — Bank`). A folded Bank fee
- * ({@link ./mergeBankFees}) rides on its transfer's Bank credit leg, so it counts
- * on that same instance.
- */
-function scopedMovement(entry: LedgerEntry, account: string, scope?: InstanceScope): number {
-  let signed = 0
-  if (entry.debit === account && legInScope(entry.debitInstance, scope)) signed += entry.amountUsd
-  if (entry.credit === account && legInScope(entry.creditInstance, scope)) signed -= entry.amountUsd
-  const fee = entry.mergedBankFee
-  if (
-    fee &&
-    account === BANK_ACCOUNT &&
-    entry.credit === BANK_ACCOUNT &&
-    legInScope(entry.creditInstance, scope)
-  ) {
-    signed -= fee.amountUsd
+/** The debit and credit totals posted to one selected account or family. */
+function accountMovements(
+  entries: readonly JournalEntry[],
+  selection: Exclude<AccountSelection, readonly AccountName[]>
+): { debits: number; credits: number } {
+  let debits = 0
+  let credits = 0
+  for (const entry of entries) {
+    for (const line of entry.lines) {
+      if (!lineMatchesSelection(line, selection)) continue
+      debits += debitOf(line)
+      credits += creditOf(line)
+    }
   }
-  return isDebitNormal(account as AccountName) ? signed : -signed
+  return { debits: round2(debits), credits: round2(credits) }
 }
 
 /**
- * The net balance of `account` over its postings, scoped to one pocket instance
- * (natural side). It reconciles a
- * split pocket's line, and reads a merged Bank fee off its transfer.
+ * Net balance on the selected account family's normal side. Concrete accounts
+ * retain their deployment identity through `Account.id`; family selections roll
+ * over every deployment under the same chart family.
  */
-export function scopedNet(
-  entries: readonly LedgerEntry[],
-  account: string,
-  scope?: InstanceScope
+export function accountNet(
+  entries: readonly JournalEntry[],
+  selection: Exclude<AccountSelection, readonly AccountName[]>
 ): number {
-  return round2(entries.reduce((sum, entry) => sum + scopedMovement(entry, account, scope), 0))
-}
-
-/**
- * Annotate one account's ledger rows with a **running balance** — what the
- * account stands at once each posting is booked.
- *
- * Rows read oldest-first, so the walk opens on `startingBalance` (the balance
- * carried into the first row) and adds each posting's own movement on the way
- * down, from the very figures the Debit / Credit columns show. Only the rows
- * carrying the account's own leg — on the scoped instance — move it: the facing
- * leg, and a leg on another deployment, stay blank.
- */
-export function withRunningBalance(
-  rows: readonly LedgerRow[],
-  account: string,
-  startingBalance: number,
-  scope?: InstanceScope
-): LedgerRow[] {
-  const debitNormal = isDebitNormal(account as AccountName)
-  let balance = startingBalance
-  return rows.map((row) => {
-    if (row.account !== account || !legInScope(row.accountInstance, scope)) return row
-    const movement = amountOf(row.dr) - amountOf(row.cr)
-    balance = round2(balance + (debitNormal ? movement : -movement))
-    return { ...row, balance: money(balance) }
-  })
+  const family = isConcreteAccount(selection) ? selection.family : accountFamilyOf(selection)
+  if (!family) return 0
+  const { debits, credits } = accountMovements(entries, selection)
+  return round2(family.normalBalance === 'debit' ? debits - credits : credits - debits)
 }
 
 /** What an account carries into a reporting window: prior movements and balance. */
 export interface AccountOpening {
-  /** Σ of the debit legs booked before the window. */
+  /** Sum of debit lines booked before the window. */
   debits: number
-  /** Σ of the credit legs booked before the window. */
+  /** Sum of credit lines booked before the window. */
   credits: number
-  /** The balance those movements leave, on the account's natural side. */
+  /** Balance on the selected account's normal side. */
   balance: number
 }
 
-/** Nothing carried in — an open-ended window, or a line with no single account. */
+/** Nothing carried in — an open-ended window, or an aggregate statement line. */
 export const NO_OPENING: AccountOpening = { debits: 0, credits: 0, balance: 0 }
 
 /**
- * What `account` carries into a window opening at `from`: everything booked
- * strictly before it. An open-ended window (no `from`) opens the book itself, so
- * nothing precedes it.
+ * What a concrete account or one account family carries into a window opening
+ * at `from`. An aggregate can mix normal sides, so it intentionally has no
+ * running balance.
  */
 export function accountOpening(
-  entries: readonly LedgerEntry[],
-  account: string,
-  from?: Date | null,
-  scope?: InstanceScope
+  entries: readonly JournalEntry[],
+  selection: Exclude<AccountSelection, readonly AccountName[]> | null,
+  from?: Date | null
 ): AccountOpening {
-  if (!from || !account) return NO_OPENING
-  // `filterByPeriod` is inclusive, so cut one second short of the window.
-  const prior = entriesForAccount(entries, account, null, new Date(from.getTime() - 1000), scope)
-  let debits = 0
-  let credits = 0
-  // Count only the legs on the scoped instance, so a redeployed pocket's opening
-  // brings forward its own deployment's movements, not the whole account's.
-  for (const entry of prior) {
-    if (entry.debit === account && legInScope(entry.debitInstance, scope)) debits += entry.amountUsd
-    if (entry.credit === account && legInScope(entry.creditInstance, scope)) {
-      credits += entry.amountUsd
-    }
-  }
-  return {
-    debits: round2(debits),
-    credits: round2(credits),
-    balance: scopedNet(prior, account, scope)
-  }
+  if (!from || !selection) return NO_OPENING
+  const prior = entriesForAccount(entries, selection, null, new Date(from.getTime() - 1000))
+  const { debits, credits } = accountMovements(prior, selection)
+  return { debits, credits, balance: accountNet(prior, selection) }
 }
 
-/**
- * The "Opening balance" line that heads an account's ledger — the balance
- * brought forward, with the movements behind it. Not a posting: it carries no
- * date, action or activity.
- */
+/** The non-posting opening row that heads a drill-down ledger. */
 export function openingRow(opening: AccountOpening): LedgerRow {
   return {
     isFirst: true,
@@ -215,29 +130,34 @@ export function openingRow(opening: AccountOpening): LedgerRow {
   }
 }
 
-export function presentAccountLedger(
-  entries: readonly LedgerEntry[],
-  account: string | readonly string[],
-  from?: Date | null,
-  to?: Date | null,
-  total?: string,
-  scope?: InstanceScope
-): LedgerView {
-  const scoped = entriesForAccount(entries, account, from, to, scope)
-  // Fold each Bank fee into its transfer for display, as the general ledger does,
-  // so a transfer-plus-fee reads as one compound entry rather than two rows. The
-  // total stays on the un-merged slice, whose net is unchanged by the fold.
-  const display = mergeBankFees(scoped)
-  return {
-    // Deployments are numbered off the whole book, not the drilled slice, so a
-    // redeployed pocket reads under the same number the trial balance gave it.
-    rows: ledgerRows(display, buildPocketInstances(entries)),
-    // Net the scoped slice on its own instance so a redeployed pocket's line
-    // reconciles; an aggregate (a list of accounts) keeps the caller's figure.
-    total:
-      total ?? (typeof account === 'string' ? money(scopedNet(scoped, account, scope)) : money(0)),
-    entryCount: display.length
-  }
+function rowMatchesSelection(
+  row: LedgerRow,
+  selection: Exclude<AccountSelection, readonly AccountName[]>
+): boolean {
+  return isConcreteAccount(selection) ? row.accountId === selection.id : row.account === selection
+}
+
+/**
+ * Annotate journal rows with the selected account's running balance. Every
+ * JournalEntry remains intact in the table; only lines posted to the selected
+ * account move the balance.
+ */
+export function withRunningBalance(
+  rows: readonly LedgerRow[],
+  selection: Exclude<AccountSelection, readonly AccountName[]>,
+  startingBalance: number
+): LedgerRow[] {
+  const family = isConcreteAccount(selection) ? selection.family : accountFamilyOf(selection)
+  if (!family) return [...rows]
+  let balance = startingBalance
+  return rows.map((row) => {
+    if (!rowMatchesSelection(row, selection)) return row
+    const debit = Number(row.dr.replace(/[$,]/g, '') || 0)
+    const credit = Number(row.cr.replace(/[$,]/g, '') || 0)
+    const movement = family.normalBalance === 'debit' ? debit - credit : credit - debit
+    balance = round2(balance + movement)
+    return { ...row, balance: money(balance) }
+  })
 }
 
 export function accountLedgerTitle(account: string, from?: Date | null, to?: Date | null): string {

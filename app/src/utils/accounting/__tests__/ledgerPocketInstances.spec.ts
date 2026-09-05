@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { ledgerRows, presentLedger } from '../ledgerPresenter'
-import { presentAccountLedger } from '../accountLedger'
+import { entriesForAccount } from '../accountLedger'
 import { buildPocketInstances } from '../pocketInstances'
+import { buildGeneralLedger, buildJournal } from '../generalLedger'
+import { journalLedgerRows } from '../journalLedgerPresenter'
 import type { LedgerEntry } from '../ledgerEntry'
 
 const BANK_1 = '0x1111111111111111111111111111111111111111'
@@ -95,10 +97,14 @@ describe('general ledger — redeployed pocket labelling', () => {
   })
 
   it('keeps the numbering in a drill-down scoped to one deployment', () => {
-    const view = presentAccountLedger(REDEPLOYED, 'Cash — Bank', null, null, undefined, {
-      instance: BANK_2
-    })
-    expect(view.entryCount).toBe(1)
-    expect(view.rows.find((r) => r.account === 'Cash — Bank')?.accountLabel).toBe('Cash — Bank 2')
+    const journal = buildJournal(REDEPLOYED)
+    const account = buildGeneralLedger(journal).trialBalance.find(
+      (row) => row.account.contractAddress?.toLowerCase() === BANK_2
+    )!.account
+    const entries = entriesForAccount(journal, account)
+    expect(entries).toHaveLength(1)
+    expect(
+      journalLedgerRows(entries, journal).find((r) => r.account === 'Cash — Bank')?.accountLabel
+    ).toBe('Cash — Bank 2')
   })
 })

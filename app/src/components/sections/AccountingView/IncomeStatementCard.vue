@@ -77,8 +77,8 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
+      :all-entries="accounting.journal.value"
       :balance="drilldownBalance"
-      :instances="drilldownInstances"
       columns-storage-key="cnc-accounting-income-drilldown-columns-v1"
       @export="onDrilldownExport"
     />
@@ -115,10 +115,9 @@ const {
   selectedLine: drilldownLine,
   balance: drilldownBalance,
   drilldownEntries,
-  instances: drilldownInstances,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(accounting.entries, () => ({
+} = useLedgerDrilldown(accounting.journal, () => ({
   from: dateSelected.value ? period.value.start : null,
   to: dateSelected.value ? period.value.end : null
 }))

@@ -20,7 +20,8 @@ import { describe, it, expect } from 'vitest'
 import { buildJournal, buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { presentLedger } from '@/utils/accounting/ledgerPresenter'
 import { FEE_ACCOUNT, FEE_FILTER } from '@/utils/accounting/ledgerCategory'
-import { presentAccountLedger, entriesForAccount } from '@/utils/accounting/accountLedger'
+import { entriesForAccount } from '@/utils/accounting/accountLedger'
+import { journalLedgerRows, presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
@@ -208,21 +209,22 @@ describe('transaction-first read model — drill-downs reconcile with the genera
   it('renders a transaction with the same lines and values as the general ledger', () => {
     // Drill into Bank: the fee transfer touches Bank, so its folded three-line
     // posting must read exactly as it does in the "All" ledger.
-    const drill = presentAccountLedger([feeTransferOut, feeTransferFee], 'Cash — Bank')
-    const all = presentLedger([feeTransferOut, feeTransferFee], 'All')
+    const journal = buildJournal([feeTransferOut, feeTransferFee])
+    const drill = journalLedgerRows(entriesForAccount(journal, 'Cash — Bank'), journal)
+    const all = presentJournalLedger(journal)
     const accounts = (rows: typeof all.rows): string[] => rows.map((r) => r.account)
-    expect(accounts(drill.rows)).toEqual(accounts(all.rows))
-    expect(drill.rows.map((r) => r.dr)).toEqual(all.rows.map((r) => r.dr))
-    expect(drill.rows.map((r) => r.cr)).toEqual(all.rows.map((r) => r.cr))
+    expect(accounts(drill)).toEqual(accounts(all.rows))
+    expect(drill.map((r) => r.dr)).toEqual(all.rows.map((r) => r.dr))
+    expect(drill.map((r) => r.cr)).toEqual(all.rows.map((r) => r.cr))
   })
 
   it('selects transactions touching the account and keeps their whole context', () => {
-    const scoped = entriesForAccount(book, 'Cash — Bank')
-    // Every posting that credits or debits Bank is kept whole (both legs present).
-    expect(scoped).toContain(classifiedRevenue)
-    expect(scoped).toContain(ordinaryTransfer)
-    expect(scoped).toContain(feeTransferOut)
-    expect(buildJournal(scoped).some((entry) => entry.sourceOperationId === TX(1))).toBe(false)
+    const scoped = entriesForAccount(buildJournal(book), 'Cash — Bank')
+    // Every matching operation stays whole through its complete journal lines.
+    expect(scoped.some((entry) => entry.sourceOperationId === TX(2))).toBe(true)
+    expect(scoped.some((entry) => entry.sourceOperationId === TX(3))).toBe(true)
+    expect(scoped.some((entry) => entry.sourceOperationId === TX(4))).toBe(true)
+    expect(scoped.some((entry) => entry.sourceOperationId === TX(1))).toBe(false)
   })
 })
 

@@ -66,35 +66,29 @@ import { useLocalStorage } from '@vueuse/core'
 import LedgerTable from './LedgerTable.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
+import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
 import {
-  ledgerRows,
-  LEDGER_COLUMNS,
-  NO_POCKET_INSTANCES,
-  type LedgerColumnKey,
-  type PocketInstanceIndex
-} from '@/utils/accounting/ledgerPresenter'
-import {
-  scopedNet,
+  accountNet,
   openingRow,
   withRunningBalance,
   NO_OPENING
 } from '@/utils/accounting/accountLedger'
 import type { DrilldownBalance } from '@/composables/accounting/useLedgerDrilldown'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import type { JournalEntry } from '@/utils/accounting/journalEntry'
 
 const props = defineProps<{
   account: string
   total: string
-  entries: LedgerEntry[]
+  entries: JournalEntry[]
+  /** The full journal supplies stable concrete-account labels for a narrowed slice. */
+  allEntries?: JournalEntry[]
   /** The running "Balance" column: the one account being drilled, what it carries
    *  into the window (the ledger's "Opening balance" line) and where it closes.
    *  Absent for an aggregate line, whose accounts share no single natural side. */
   balance?: DrilldownBalance
   /** Storage key for this statement's persisted column preference. */
   columnsStorageKey: string
-  /** Deployment numbering for the whole book, so a redeployed pocket's postings
-   *  read under the same numbered name here as in the trial balance. */
-  instances?: PocketInstanceIndex
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -127,21 +121,20 @@ watch(
 
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
-  const rows = ledgerRows(
+  const rows = journalLedgerRows(
     props.entries.slice(start, start + pageSize.value),
-    props.instances ?? NO_POCKET_INSTANCES
+    props.allEntries ?? props.entries
   )
   const account = props.balance?.account
   if (!account) return rows
 
   // Entries read oldest-first: the page opens on what the account was left
   // standing at by everything above it — the balance carried into the window
-  // plus the pages already turned. Scoped to the drilled deployment, so a
-  // redeployed pocket's line reconciles (a Bank → Bank move counts on one side).
-  const scope = props.balance?.scope
+  // plus the pages already turned. A concrete Account identity keeps redeployed
+  // pockets separate even when a Bank → Bank entry touches the same family twice.
   const opening = props.balance?.opening ?? NO_OPENING
-  const carried = opening.balance + scopedNet(props.entries.slice(0, start), account, scope)
-  const walked = withRunningBalance(rows, account, carried, scope)
+  const carried = opening.balance + accountNet(props.entries.slice(0, start), account)
+  const walked = withRunningBalance(rows, account, carried)
   // The "Opening balance" line heads the ledger, so it belongs to page one.
   return start === 0 ? [openingRow(opening), ...walked] : walked
 })

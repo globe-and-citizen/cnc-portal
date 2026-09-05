@@ -97,7 +97,15 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
   })
 
   it('shows the fee inside the BANK_A drill-down', () => {
-    const scoped = entriesForAccount(entries, 'Cash — Bank', null, null, { instance: BANK_A })
-    expect(scoped.some((e) => e.useCase === 'FEE')).toBe(true)
+    const journal = buildJournal(entries)
+    const account = buildGeneralLedger(journal).trialBalance.find(
+      (row) => row.account.contractAddress?.toLowerCase() === BANK_A
+    )!.account
+    const scoped = entriesForAccount(journal, account)
+    expect(
+      scoped.some((entry) =>
+        entry.lines.some((line) => line.account.family.name === 'Transaction Fee Expense')
+      )
+    ).toBe(true)
   })
 })

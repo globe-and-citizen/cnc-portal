@@ -192,8 +192,11 @@ function activityOfJournalEntry(
 }
 
 /** Flatten whole JournalEntry records into the rows consumed by LedgerTable. */
-export function journalLedgerRows(entries: readonly JournalEntry[]): LedgerRow[] {
-  const labels = accountLabels(entries)
+export function journalLedgerRows(
+  entries: readonly JournalEntry[],
+  labelEntries: readonly JournalEntry[] = entries
+): LedgerRow[] {
+  const labels = accountLabels(labelEntries)
   const rows: LedgerRow[] = []
   for (const entry of entries) {
     const source = sourceOf(entry)
@@ -210,6 +213,7 @@ export function journalLedgerRows(entries: readonly JournalEntry[]): LedgerRow[]
         category: isFirst ? categoryLabelOf(source) : '',
         categoryClass: isFirst ? badgeClassOf(source) : '',
         account: line.account.family.name,
+        accountId: line.account.id,
         ...(accountLabel !== line.account.family.name ? { accountLabel } : {}),
         ...(line.account.contractAddress ? { accountInstance: line.account.contractAddress } : {}),
         accountMuted: creditOf(line) > 0,
@@ -247,7 +251,7 @@ export function presentJournalLedger(
     ? filterJournalLedgerByCurrency(accountScoped, currencies)
     : accountScoped
   return {
-    rows: journalLedgerRows(shown),
+    rows: journalLedgerRows(shown, entries),
     total: journalLedgerTotal(shown),
     entryCount: shown.length
   }

@@ -33,11 +33,8 @@ function exportBaseName(spec: SectionSpec): string {
     case 'trial':
       return spec.asOf ? `Trial Balance - As of ${dayLabel(spec.asOf)}` : 'Trial Balance'
     case 'ledger': {
-      if (spec.account) {
-        const name = Array.isArray(spec.account)
-          ? (spec.accountLabel ?? 'Aggregate')
-          : (spec.account as string)
-        const parts = ['General Ledger', name]
+      if (spec.journalAccountLabel) {
+        const parts = ['General Ledger', spec.journalAccountLabel]
         if (spec.from) parts.push(periodLabel(spec.from, spec.to))
         else if (spec.to) parts.push(`As of ${dayLabel(spec.to)}`)
         return parts.join(' - ')

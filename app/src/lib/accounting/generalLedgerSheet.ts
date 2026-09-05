@@ -1,5 +1,5 @@
 /** General Ledger row projection for the spreadsheet exporter. */
-import { presentAccountLedger, accountLedgerTitle } from '@/utils/accounting/accountLedger'
+import { accountLedgerTitle } from '@/utils/accounting/accountLedger'
 import { activityText } from '@/utils/accounting/describeEntry'
 import {
   presentJournalLedger,
@@ -24,11 +24,8 @@ export interface GeneralLedgerSheetOptions {
   columns?: LedgerColumnKey[]
   currencies?: string[]
   journalAccounts?: string[]
-  account?: string | readonly string[]
-  accountLabel?: string
-  accountTotal?: string
-  instance?: string | null
-  unresolved?: boolean
+  journalAccountLabel?: string
+  journalAccountTotal?: string
 }
 
 /** Convert one displayed amount to a spreadsheet number, preserving blank cells. */
@@ -53,33 +50,32 @@ const SHEET_CELL: Record<LedgerColumnKey, (row: LedgerRow, resolveName?: Resolve
   rate: (row) => usd(row.rate)
 }
 
-/** Display name for a drill-down: the account, or the aggregate's label. */
-function drillName(opts: GeneralLedgerSheetOptions): string {
-  return Array.isArray(opts.account) ? (opts.accountLabel ?? 'Ledger') : (opts.account as string)
-}
-
-/** Build General Ledger spreadsheet rows from journal entries or a legacy account drill-down. */
+/** Build General Ledger spreadsheet rows from the canonical journal. */
 export function generalLedgerSheetRows(
   books: CncAccounting,
   resolveName?: ResolveName,
   opts: GeneralLedgerSheetOptions = {}
 ): SheetRows {
-  const { rows, total } = opts.account
-    ? presentAccountLedger(books.entries, opts.account, opts.from, opts.to, opts.accountTotal, {
-        instance: opts.instance,
-        unresolved: opts.unresolved
-      })
-    : presentJournalLedger(books.journal, opts.from, opts.to, opts.currencies, opts.journalAccounts)
+  const journal = presentJournalLedger(
+    books.journal,
+    opts.from,
+    opts.to,
+    opts.currencies,
+    opts.journalAccounts
+  )
+  const total = opts.journalAccountTotal ?? journal.total
   const columns = resolveLedgerColumns(opts.columns)
   return [
     [
-      opts.account
-        ? accountLedgerTitle(drillName(opts), opts.from, opts.to)
+      opts.journalAccountLabel
+        ? accountLedgerTitle(opts.journalAccountLabel, opts.from, opts.to)
         : journalLedgerExportTitle(opts.from, opts.to)
     ],
     [],
     columns.map((column) => column.label),
-    ...rows.map((row) => columns.map((column) => SHEET_CELL[column.value](row, resolveName))),
+    ...journal.rows.map((row) =>
+      columns.map((column) => SHEET_CELL[column.value](row, resolveName))
+    ),
     ledgerTotalRow(columns, usd(total))
   ]
 }

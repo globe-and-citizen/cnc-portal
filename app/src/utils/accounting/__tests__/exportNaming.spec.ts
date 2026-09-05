@@ -39,13 +39,12 @@ describe('exportFilename', () => {
   })
 
   it('names the account (not the category) for a single-line drill-down', () => {
-    // Account drill-down (issue #2249): the account leads, with its as-of date.
-    expect(filenameBase({ key: 'ledger', account: 'Investor Equity' })).toBe(
+    expect(filenameBase({ key: 'ledger', journalAccountLabel: 'Investor Equity' })).toBe(
       'General Ledger - Investor Equity'
     )
     const dated = filenameBase({
       key: 'ledger',
-      account: 'Cash — Bank',
+      journalAccountLabel: 'Cash — Bank',
       to: new Date('2026-07-08')
     })
     expect(dated).toContain('General Ledger - Cash — Bank - As of')
@@ -55,17 +54,16 @@ describe('exportFilename', () => {
     expect(
       filenameBase({
         key: 'ledger',
-        account: ['Payroll Expense', 'Deferred SHER Compensation'],
-        accountLabel: 'Retained earnings',
+        journalAccountLabel: 'Retained earnings',
         from: FROM,
         to: TO
       })
     ).toContain('General Ledger - Retained earnings -')
   })
 
-  it('falls back to "Aggregate" when a multi-account drill-down carries no label', () => {
-    expect(filenameBase({ key: 'ledger', account: ['Payroll Expense', 'Operating Expense'] })).toBe(
-      'General Ledger - Aggregate'
+  it('keeps the general ledger name when no drill-down label is supplied', () => {
+    expect(filenameBase({ key: 'ledger', journalAccounts: ['payroll-expense'] })).toBe(
+      'General Ledger'
     )
   })
 
@@ -82,7 +80,7 @@ describe('exportFilename extension and sanitization', () => {
   })
 
   it('strips characters no filesystem allows', () => {
-    const spec = { key: 'ledger', account: 'A/B:C' } as const
+    const spec = { key: 'ledger', journalAccountLabel: 'A/B:C' } as const
     expect(exportFilename(spec, 'pdf')).toBe('General Ledger - ABC.pdf')
   })
 })

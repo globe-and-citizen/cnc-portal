@@ -193,7 +193,16 @@ describe('buildSheets (section selection)', () => {
   })
 
   it('drills a single account into its own sheet (issue #2249)', () => {
-    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', account: 'Cash — Bank' }])
+    const books = sampleBooks()
+    const accountId = books.journal[0]!.lines[0]!.account.id
+    const [ledger] = buildSheets(books, [
+      {
+        key: 'ledger',
+        journalAccounts: [accountId],
+        journalAccountLabel: 'Cash — Bank',
+        journalAccountTotal: '$100.00'
+      }
+    ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Cash — Bank')
     // Excel renders the total as a number; the account nets to 100.
     expect(ledger.rows.at(-1)!.some((c) => c === 100)).toBe(true)
@@ -203,9 +212,9 @@ describe('buildSheets (section selection)', () => {
     const [ledger] = buildSheets(sampleBooks(), [
       {
         key: 'ledger',
-        account: ['Service Revenue'],
-        accountLabel: 'Retained earnings',
-        accountTotal: '$100.00'
+        journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
+        journalAccountLabel: 'Retained earnings',
+        journalAccountTotal: '$100.00'
       }
     ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Retained earnings')
