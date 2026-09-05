@@ -253,7 +253,7 @@ source operation in every drill-down.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `266b29312adc557918ae04864c2a71d2b7294ac7`
+**Implementation evidence reviewed against:** `50628f5dd98d2737c4c72587f0cf49b073b985e6`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
