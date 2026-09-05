@@ -183,12 +183,13 @@ remain explicit rather than being inferred from family-level event text. Every t
 its identity; a raw `<txHash>-<logIndex>` value remains traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its
 source operation; there is no `Fee` pseudo-category or separate fee entry in this projection. The General Ledger renders the transaction
 hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no
-transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate tab. Its bounded-width table
-column can be resized with a pointer or keyboard controls. JournalEntry assembly groups source postings and withholds a `FeePaid` source
-without matching Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not part of the company's
-internal-pocket registry. A later migration of every remaining projection to journal lines must preserve report date scopes and mapper
-semantics. In particular, `mergedBankFee` is re-booked only while calculating legacy raw-posting account balances because that presentation
-metadata is not carried by the canonical journal feed.
+transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate tab. Every visible General
+Ledger column, including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a
+double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching
+Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not part of the company's internal-pocket registry.
+A later migration of every remaining projection to journal lines must preserve report date scopes and mapper semantics. In particular,
+`mergedBankFee` is re-booked only while calculating legacy raw-posting account balances because that presentation metadata is not carried by
+the canonical journal feed.
 
 ## Optimisation Review
 
@@ -218,7 +219,7 @@ metadata is not carried by the canonical journal feed.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a95d2e12bcecc1ce679ac9c037235f979dc19d38`
+**Implementation evidence reviewed against:** `718fef59e14b0220a114ac718e8692d870cc842a`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -231,6 +232,7 @@ metadata is not carried by the canonical journal feed.
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [General Ledger card](../../../app/src/components/sections/AccountingView/GeneralLedger.vue),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
+  [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),
   [PDF projection](../../../app/src/lib/accounting/generalLedgerPdfTable.ts),
   [spreadsheet projection](../../../app/src/lib/accounting/generalLedgerSheet.ts), and
   [Trial Balance card](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)

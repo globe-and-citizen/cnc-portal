@@ -276,7 +276,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a95d2e12bcecc1ce679ac9c037235f979dc19d38`
+**Implementation evidence reviewed against:** `718fef59e14b0220a114ac718e8692d870cc842a`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -317,6 +317,7 @@ flowchart LR
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
 - [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
+  [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),
   [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
   [accounting data tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts), and
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts) and
