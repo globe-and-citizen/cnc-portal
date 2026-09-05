@@ -8,7 +8,7 @@
  * everything here, so callers can keep importing from it.
  */
 import { formatUsd } from '@/utils/format'
-import type { AccountingSummary } from './buildLedger'
+import type { AccountingSummary } from './accountingSummary'
 import type { BalanceSheet } from './balanceSheet'
 import type { IncomeStatement } from './incomeStatement'
 

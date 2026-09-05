@@ -11,11 +11,10 @@
  *   balances (`debitBalanceTotal === creditBalanceTotal`) — 253 in the worked example.
  *
  * Accounting assembly adapts the consolidated {@link LedgerEntry} feed into
- * validated {@link JournalEntry} records once. A later migration will make those
- * records the input to every report; the General Ledger and Trial Balance already
- * consume only that assembled journal.
+ * validated {@link JournalEntry} records once. The General Ledger, Trial Balance,
+ * Summary, Income Statement, and Balance Sheet consume that assembled journal.
  */
-import { ACCOUNT_NAMES, isDebitNormal, type AccountName } from './chartOfAccounts'
+import { ACCOUNT_NAMES, type AccountName } from './chartOfAccounts'
 import {
   buildAccountRegistry,
   type AccountId,
@@ -208,50 +207,6 @@ const CENT = 0.01
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100
-}
-
-/**
- * Net balance of every touched account, signed on its **normal** side
- * (debit-normal → debit − credit; credit-normal → credit − debit), so a clean
- * book yields non-negative balances. Shared by the income statement and balance
- * sheet so all three statements roll up the exact same numbers.
- */
-export function netBalanceByAccount(entries: readonly LedgerEntry[]): Map<AccountName, number> {
-  const net = netBalanceByAccountUnrounded(entries)
-  for (const [account, value] of net) net.set(account, round2(value))
-  return net
-}
-
-/**
- * Same roll-up as {@link netBalanceByAccount} but **without** the per-account
- * cent rounding — used for the balance-sheet identity check, which must run on
- * full precision (rounding each account then summing can drift a cent and flag a
- * balanced book "out of balance").
- */
-export function netBalanceByAccountUnrounded(
-  entries: readonly LedgerEntry[]
-): Map<AccountName, number> {
-  const net = new Map<AccountName, number>()
-  const add = (account: AccountName, signed: number): void => {
-    net.set(account, (net.get(account) ?? 0) + signed)
-  }
-  for (const entry of entries) {
-    if (entry.debit)
-      add(entry.debit, isDebitNormal(entry.debit) ? entry.amountUsd : -entry.amountUsd)
-    if (entry.credit) {
-      add(entry.credit, isDebitNormal(entry.credit) ? -entry.amountUsd : entry.amountUsd)
-    }
-    // A folded Bank fee ({@link ./mergeBankFees}) drops its standalone posting and
-    // rides on the transfer as `mergedBankFee`. Re-book its two legs here so a
-    // merged feed nets exactly like the canonical one it stands in for — a no-op
-    // on the canonical feed, which never carries `mergedBankFee`.
-    const fee = entry.mergedBankFee
-    if (fee) {
-      add('Transaction Fee Expense', fee.amountUsd)
-      add('Cash — Bank', -fee.amountUsd)
-    }
-  }
-  return net
 }
 
 /** One trial-balance roll-up bucket: one concrete account, never an inferred instance. */

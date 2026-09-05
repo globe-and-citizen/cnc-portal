@@ -3,7 +3,7 @@ import type { Account } from './accountRegistry'
 import type { GeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
-import type { LedgerEntry } from './ledgerEntry'
+import type { JournalEntry } from './journalEntry'
 import { NETWORK, type TokenId } from '@/constant'
 import { formatDate, formatDateTime, formatToken, formatUsd, fromUnix } from '@/utils/format'
 
@@ -170,7 +170,7 @@ export function presentBanner(balance: BalanceSheet, ledger: GeneralLedger): Sum
 
 /** Income-statement lines for a reporting period. */
 export function presentIncome(
-  entries: readonly LedgerEntry[],
+  entries: readonly JournalEntry[],
   from?: Date | null,
   to?: Date | null
 ): IncomeView {
@@ -222,7 +222,7 @@ function cashCurrencyValue(line: CashLineData): string {
 }
 
 /** Balance-sheet lines as of a point in time. */
-export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | null): BalanceView {
+export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | null): BalanceView {
   const scoped = filterByPeriod(entries, null, asOf)
   const balance = buildBalanceSheet(scoped)
   const income = buildIncomeStatement(scoped)

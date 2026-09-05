@@ -68,8 +68,8 @@ export function useLedgerDrilldown(
   // The postings composing the drilled-in line, over the statement's own window,
   // with each Bank fee folded into its transfer ({@link mergeBankFees}) — so a
   // transfer-plus-fee reads as one compound entry here exactly as in the general
-  // ledger, instead of two separate rows. The net roll-up stays correct: a folded
-  // fee is re-booked in {@link netBalanceByAccountUnrounded}.
+  // ledger, instead of two separate rows. The drill-down's scoped running balance
+  // re-books the folded fee on the Bank credit leg.
   const drilldownEntries = computed(() => {
     const accounts = target.value
     if (!accounts || (Array.isArray(accounts) && accounts.length === 0)) return []

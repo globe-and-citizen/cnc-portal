@@ -1,6 +1,6 @@
 /**
  * The money-flow catalogue worked example (§6) as a consolidated
- * {@link LedgerEntry} feed — the canonical fixture for the statement layer.
+ * {@link LedgerEntry} feed — the canonical fixture before journal assembly.
  *
  * It is the §6.2 general-ledger journal, with every multi-leg transaction split
  * into balanced debit/credit pairs (the shape the source mappers emit). It

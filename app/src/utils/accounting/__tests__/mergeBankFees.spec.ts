@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mergeBankFees, txHashOf } from '@/utils/accounting/mergeBankFees'
 import { presentLedger } from '@/utils/accounting/ledgerPresenter'
-import { netBalanceByAccount } from '@/utils/accounting/generalLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 const TX_A = `0x${'a'.repeat(64)}`
@@ -83,15 +82,11 @@ describe('mergeBankFees', () => {
     expect(mergeBankFees(entries)).toEqual(entries)
   })
 
-  it('nets the same after folding — the merged fee is re-booked into the roll-up', () => {
+  it('preserves the fee evidence on the transfer used by the account drill-down', () => {
     const canonical = [transfer(eventId(TX_A, 5)), fee(eventId(TX_A, 3))]
     const merged = mergeBankFees(canonical)
-    // Folding drops the standalone fee posting, yet the net roll-up is unchanged:
-    // Cash — Bank still lost the gross (net + fee), the fee is still an expense.
-    const net = netBalanceByAccount(merged)
-    expect(net.get('Cash — Bank')).toBe(-2.5)
-    expect(net.get('Transaction Fee Expense')).toBe(0.5)
-    expect(net).toEqual(netBalanceByAccount(canonical))
+    expect(merged).toHaveLength(1)
+    expect(merged[0]?.mergedBankFee).toMatchObject({ amountUsd: 0.5, rawAmount: '500000' })
   })
 })
 

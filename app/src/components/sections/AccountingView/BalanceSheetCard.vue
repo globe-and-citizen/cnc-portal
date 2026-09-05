@@ -95,7 +95,7 @@ import { presentBalance, type StatementLineView } from '@/utils/accounting/prese
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
 const accounting = useAccountingContext()
-const balance = computed(() => presentBalance(accounting.entries.value, asOf.value))
+const balance = computed(() => presentBalance(accounting.journal.value, asOf.value))
 
 // Per-line drill-down — over the same as-of slice the balance sheet is built from.
 const {

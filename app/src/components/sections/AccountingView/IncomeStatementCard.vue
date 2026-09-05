@@ -102,7 +102,7 @@ const period = ref<Range>(defaultValueForMode('range') as Range)
 
 const accounting = useAccountingContext()
 const income = computed(() =>
-  presentIncome(accounting.entries.value, period.value.start, period.value.end)
+  presentIncome(accounting.journal.value, period.value.start, period.value.end)
 )
 
 // A real date window is in play only when the picker isn't on "All time" (whose

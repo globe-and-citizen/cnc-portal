@@ -3,7 +3,7 @@
 **Scope:** The client-side read model that turns company contract and portal feeds into consolidated accounting postings, a validated
 double-entry journal, and the report projections consumed by Accounting. It does not create or persist manual journal entries.
 
-**Last verified:** 2026-09-04
+**Last verified:** 2026-09-05
 
 ## Consumers
 
@@ -39,8 +39,9 @@ assembling the same books. Its two pure runtime stages are `buildRawCncEntries(C
 The production assembly API exposes only the two stages the reactive read model calls: raw mapping and evidence-aware book assembly. Fixture
 constructors, empty-book conveniences, raw-posting assembly shortcuts, and implementation details of account, price, fee, and presentation
 shaping stay private to their modules. Tests exercise the public stages through a test-only fixture helper; they do not add runtime APIs
-solely for test construction. This boundary does not change the current report boundary below: the General Ledger and Trial Balance read
-`JournalEntry`, while the other projections still read transitional `LedgerEntry` postings.
+solely for test construction. The General Ledger, Trial Balance, Summary, Income Statement, Balance Sheet, and their exports project the
+validated `JournalEntry` collection. Only account and statement drill-downs retain transitional `LedgerEntry` postings so they can preserve
+source-posting detail and their instance-scoped running balances.
 
 ## Main Assembly Flow
 
@@ -49,19 +50,20 @@ flowchart LR
     input[CncAccountingInput] --> context[LedgerSources and MapperContext]
     context --> mapped[Mapped LedgerEntry feed]
     mapped --> raw[Rate-stamped and settled raw postings]
-    raw --> ledger[buildLedger: sort, deduplicate, and summarize]
+    raw --> ledger[buildLedger: sort and deduplicate]
     ledger --> entries[Consolidated LedgerEntry feed]
     entries --> registry[buildAccountRegistry]
     registry --> journal[buildJournal: validated JournalEntry collection]
     journal --> trial[buildGeneralLedger: journal and Trial Balance]
-    journal --> ledger[General Ledger UI and PDF or Excel exports]
-    entries --> legacy[Current family-level report projections]
-    legacy --> summary[Summary, statements, and account drill-downs]
+    journal --> generalLedgerUi[General Ledger UI and PDF or Excel exports]
+    journal --> statements[Summary, Income Statement, and Balance Sheet]
+    statements --> statementExports[Statement PDF or Excel exports]
+    entries --> drilldowns[Account and statement drill-downs]
     trial --> trialCard[Trial Balance and its scoped exports]
 ```
 
-The two outgoing branches are intentional current behaviour. `JournalEntry` is the canonical double-entry representation for the General
-Ledger and Trial Balance. `LedgerEntry` remains a transitional input for projections that have not yet migrated to journal lines.
+`JournalEntry` is the canonical double-entry representation for every financial report. `LedgerEntry` remains a transitional input only for
+account and statement drill-downs, where the UI must retain source-posting detail and the concrete-account scope of a running balance.
 
 ## Account Domain Model
 
@@ -185,31 +187,34 @@ it to an earlier or later deployment based on activity order.
 
 ```mermaid
 flowchart TB
-    entries[Consolidated LedgerEntry feed] --> summary[Accounting summary]
-    entries --> income[Income Statement]
-    entries --> balance[Balance Sheet]
     entries --> drilldowns[Account and statement drill-downs]
-    entries --> remainingExports[Remaining report exports]
     journal[Validated JournalEntry collection] --> ledgerUI[General Ledger UI and filters]
     journal --> ledgerExports[General Ledger PDF and Excel exports]
     journal --> trial[Trial Balance]
     trial --> trialExports[Trial Balance PDF and Excel exports]
+    journal --> summary[Accounting summary]
+    journal --> income[Income Statement]
+    journal --> balance[Balance Sheet]
+    summary --> summaryExports[Summary exports]
+    income --> incomeExports[Income Statement PDF and Excel exports]
+    balance --> balanceExports[Balance Sheet PDF and Excel exports]
 ```
 
 This is a current implementation boundary, not an accounting-policy distinction. The General Ledger filters reporting period, concrete
-`AccountId`, and currency at the journal-entry level, retaining all lines of every selected entry. Internal-transfer narration reads the
-source and destination display labels from the debit and credit `JournalEntryLine` accounts, so later deployments and unresolved accounts
-remain explicit rather than being inferred from family-level event text. Every transaction-backed journal group uses its transaction hash as
-its identity; a raw `<txHash>-<logIndex>` value remains traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its
-source operation; there is no `Fee` pseudo-category or separate fee entry in this projection. The General Ledger renders the transaction
-hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no
-transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate tab. Every visible General
-Ledger column, including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a
-double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching
-Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not part of the company's internal-pocket registry.
-A later migration of every remaining projection to journal lines must preserve report date scopes and mapper semantics. In particular,
-`mergedBankFee` is re-booked only while calculating legacy raw-posting account balances because that presentation metadata is not carried by
-the canonical journal feed.
+`AccountId`, and currency at the journal-entry level, retaining all lines of every selected entry. The Summary, Income Statement, and
+Balance Sheet aggregate the same journal lines by account family while preserving their concrete `Account` identity at the input boundary.
+Internal-transfer narration reads the source and destination display labels from the debit and credit `JournalEntryLine` accounts, so later
+deployments and unresolved accounts remain explicit rather than being inferred from family-level event text. Every transaction-backed
+journal group uses its transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains traceability evidence. A fee is an
+ordinary `Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or separate fee entry in this projection.
+The General Ledger renders the transaction hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports;
+synthetic operations have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate
+tab. Every visible General Ledger column, including the account drill-down Balance column, has bounded widths and supports pointer, touch,
+and keyboard resizing; a double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid`
+source without matching Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not part of the company's
+internal-pocket registry. Account and statement drill-downs retain the raw posting feed only to show source-level detail and an
+instance-scoped running balance. In that view, `mergedBankFee` is re-booked on its Bank credit leg because it is display metadata rather
+than a separate journal line.
 
 ## Optimisation Review
 
@@ -223,14 +228,16 @@ the canonical journal feed.
 
 - Event queries fan out across every known contract generation and have an `EVENT_LIMIT` of 500. Measure result volume, pagination needs,
   and user-visible load time before altering source selection or limits.
-- Date-specific views perform their own projection work: Trial Balance rebuilds from a date-filtered journal, while statement presenters
-  filter and project the transitional feed. Profile realistic multi-generation books before introducing caching or alternate snapshots.
-- Moving the remaining projections from `LedgerEntry` to `JournalEntry` is a semantic migration, not a mechanical performance change. It
-  must retain date handling, fee re-booking, drill-down scope, and the accounting meaning established by the source mappers.
+- Date-specific views perform their own projection work from a date-filtered journal. Account and statement drill-downs additionally filter
+  the transitional source feed to retain their instance-scoped running balances. Profile realistic multi-generation books before introducing
+  caching or alternate snapshots.
+- Moving the remaining drill-down projection from `LedgerEntry` to `JournalEntry` is a semantic migration, not a mechanical performance
+  change. It must retain date handling, source-level detail, instance scope, and the accounting meaning established by the source mappers.
 
 ## Known Gaps
 
-- The summary, Income Statement, Balance Sheet, account drill-downs, and their remaining exports have not migrated to `JournalEntry` lines.
+- Account and statement drill-downs still read `LedgerEntry` postings to retain source-level detail and their instance-scoped running
+  balances. All financial statements and their PDF or Excel exports now read `JournalEntry` lines.
 - The legacy raw posting field names do not make the distinction between an account family, a concrete account, and a source instance
   explicit.
 - Legacy manual categories remain only for eligible external disbursements; account-backed `JournalEntryLine` assignment has not yet
@@ -239,7 +246,7 @@ the canonical journal feed.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `373757491a43ce390196880e2d4cc666ae76cdfa`
+**Implementation evidence reviewed against:** `dc50827a10cf9a02850e104ede6c935b9413fa64`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -251,6 +258,8 @@ the canonical journal feed.
 - [Validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
   [transaction-identity helper](../../../app/src/utils/accounting/ledgerEntry.ts),
   [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
+  [journal balance projection](../../../app/src/utils/accounting/journalBalances.ts),
+  [journal summary projection](../../../app/src/utils/accounting/accountingSummary.ts),
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [General Ledger card](../../../app/src/components/sections/AccountingView/GeneralLedger.vue),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
@@ -264,7 +273,8 @@ the canonical journal feed.
   [account-registry tests](../../../app/src/utils/accounting/__tests__/accountRegistry.spec.ts),
   [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), and
-  [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts)
+  [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts), and
+  [journal statement-projection tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts)
 
 ## Related Documentation
 

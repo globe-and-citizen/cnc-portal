@@ -1,11 +1,16 @@
 import { describe, it, expect } from 'vitest'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { catalogueLedger } from './catalogueLedger'
 
+function balanceSheet(entries: readonly LedgerEntry[]) {
+  return buildBalanceSheet(buildJournal(entries))
+}
+
 describe('buildBalanceSheet — catalogue §6.6', () => {
-  const bs = buildBalanceSheet(catalogueLedger)
+  const bs = balanceSheet(catalogueLedger)
 
   it('satisfies Assets = Liabilities + Equity', () => {
     expect(bs.totalAssets).toBeCloseTo(142.2, 2)
@@ -29,7 +34,7 @@ describe('buildBalanceSheet — catalogue §6.6', () => {
   it('surfaces Wage Payable as a liability and SHER as contra-equity when accrued without a withdrawal', () => {
     // Only the accrual legs of transaction #9 (claim), no withdrawal #10.
     const claimOnly = catalogueLedger.filter((e) => e.useCase === 'UC-CASH-02')
-    const bs = buildBalanceSheet(claimOnly)
+    const bs = balanceSheet(claimOnly)
     const wagePayable = bs.liabilities.find((l) => l.account === 'Wage Payable')?.amount ?? 0
     expect(wagePayable).toBeCloseTo(40.8, 2)
     // SHER is now in contra-equity, not liabilities.
@@ -60,7 +65,7 @@ describe('buildBalanceSheet — catalogue §6.6', () => {
       memo: '',
       enrichment: 'not-applicable'
     })
-    const bs = buildBalanceSheet([invest('a', 'Cash — Bank'), invest('b', 'Cash — Safe')])
+    const bs = balanceSheet([invest('a', 'Cash — Bank'), invest('b', 'Cash — Safe')])
     expect(bs.identityGap).toBeCloseTo(0, 2)
     expect(bs.balanced).toBe(true)
   })
@@ -83,7 +88,7 @@ describe('buildBalanceSheet — catalogue §6.6', () => {
       memo: '',
       enrichment: 'not-applicable'
     })
-    const bs = buildBalanceSheet([invest('a', 'Cash — Bank'), invest('b', 'Cash — Safe')])
+    const bs = balanceSheet([invest('a', 'Cash — Bank'), invest('b', 'Cash — Safe')])
     // The two grand totals are exactly equal, to the cent (the acceptance criterion).
     expect(bs.totalLiabilitiesAndEquity).toBe(bs.totalAssets)
     // And the displayed split still foots: Liabilities + Equity === Total assets.
@@ -119,7 +124,7 @@ describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
   })
 
   it('splits each pocket into its per-currency holdings', () => {
-    const bs = buildBalanceSheet([
+    const bs = balanceSheet([
       cashIn('a', 'Cash — Bank', 'usdc', '100000000', 100), // 100 USDC → $100
       cashIn('b', 'Cash — Bank', 'native', '2000000000000000000', 0.16), // 2 POL → $0.16
       cashIn('c', 'Cash — Safe', 'usdc', '50000000', 50) // 50 USDC → $50
@@ -132,9 +137,7 @@ describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
   })
 
   it('reports a native holding in POL as well as USD', () => {
-    const bs = buildBalanceSheet([
-      cashIn('a', 'Cash — Payroll', 'native', '3500000000000000000', 0.28)
-    ])
+    const bs = balanceSheet([cashIn('a', 'Cash — Payroll', 'native', '3500000000000000000', 0.28)])
     expect(bs.cashByPocketCurrency.find((l) => l.token === 'native')).toMatchObject({
       account: 'Cash — Payroll',
       amountUsd: 0.28,
@@ -145,9 +148,7 @@ describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
   it('keeps a native dust holding whose USD value rounds to $0.00', () => {
     // 0.028953 POL at ~$0.08 → ~$0.0023, which rounds to $0.00 — but the POL
     // quantity keeps the holding on the balance sheet instead of vanishing.
-    const bs = buildBalanceSheet([
-      cashIn('a', 'Cash — Bank', 'native', '28953000000000000', 0.002328)
-    ])
+    const bs = balanceSheet([cashIn('a', 'Cash — Bank', 'native', '28953000000000000', 0.002328)])
     const pol = bs.cashByPocketCurrency.find((l) => l.token === 'native')
     expect(pol).toMatchObject({ account: 'Cash — Bank', amountUsd: 0 })
     expect(pol?.tokenAmount).toBeCloseTo(0.028953, 6)
@@ -159,10 +160,7 @@ describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
       debit: 'Service Revenue',
       credit: 'Cash — Bank'
     })
-    const bs = buildBalanceSheet([
-      cashIn('in', 'Cash — Bank', 'usdc', '100000000', 100),
-      out('out')
-    ])
+    const bs = balanceSheet([cashIn('in', 'Cash — Bank', 'usdc', '100000000', 100), out('out')])
     expect(bs.cashByPocketCurrency).toHaveLength(0)
   })
 })
