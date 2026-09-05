@@ -1,9 +1,8 @@
 /**
  * A redeployed cash pocket reads as its own deployment in the general ledger.
  *
- * The numbering itself is covered in `pocketInstances.spec.ts` and its mapping into
- * rows in `ledgerPocketInstances.spec.ts`; here we only check that the table shows
- * the numbered name, flags the later deployment, and carries the contract with the
+ * The numbering itself is covered in `journalLedgerPresenter.spec.ts`; here we
+ * check that the table shows the numbered name and carries the concrete account and contract with the
  * account when the row is clicked through to the trial balance.
  */
 import { afterEach, beforeEach, describe, it, expect } from 'vitest'
@@ -11,8 +10,10 @@ import { flushPromises } from '@vue/test-utils'
 import { NETWORK } from '@/constant'
 import { renderWithProviders } from '@/tests/mocks'
 import LedgerTable from '../LedgerTable.vue'
-import { ledgerRows, LEDGER_COLUMNS } from '@/utils/accounting/ledgerPresenter'
-import { buildPocketInstances } from '@/utils/accounting/pocketInstances'
+import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerColumns'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import { buildJournal } from '@/utils/accounting/generalLedger'
+import { accountFor } from '@/utils/accounting/accountRegistry'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 const BANK_1 = '0x1111111111111111111111111111111111111111'
@@ -54,7 +55,7 @@ const REDEPLOYED = [deposit('a', BANK_1, 1_700_000_000), deposit('b', BANK_2, 1_
 function renderLedger(entries: LedgerEntry[]) {
   return renderWithProviders(LedgerTable, {
     props: {
-      rows: ledgerRows(entries, buildPocketInstances(entries)),
+      rows: journalLedgerRows(buildJournal(entries)),
       total: '$200.00',
       linkAccount: true
     },
@@ -63,14 +64,14 @@ function renderLedger(entries: LedgerEntry[]) {
 }
 
 describe('General ledger — redeployed pocket', () => {
-  it('names the later deployment and flags it, leaving the original plain', async () => {
+  it('names the later deployment while leaving the original plain', async () => {
     const wrapper = renderLedger(REDEPLOYED)
     await flushPromises()
 
     expect(wrapper.text()).toContain('Cash — Bank 2')
-    // One hint icon only — beside the later deployment, never the original.
-    expect(wrapper.findAll('[data-test^="ledger-redeploy-hint-"]')).toHaveLength(1)
-    expect(wrapper.find('[data-test="ledger-redeploy-hint-Cash — Bank 2"]').exists()).toBe(true)
+    expect(
+      wrapper.findAll('[data-test="ledger-account-link-Cash — Bank"]').map((link) => link.text())
+    ).toEqual(['Cash — Bank', 'Cash — Bank 2'])
   })
 
   it('carries the contract with the account when the row is clicked', async () => {
@@ -81,16 +82,19 @@ describe('General ledger — redeployed pocket', () => {
     const links = wrapper.findAll('[data-test="ledger-account-link-Cash — Bank"]')
     expect(links).toHaveLength(2)
     await links[1]!.trigger('click')
-    expect(wrapper.emitted('accountSelect')?.[0]).toEqual(['Cash — Bank', BANK_2])
+    expect(wrapper.emitted('accountSelect')?.[0]).toEqual([
+      'Cash — Bank',
+      BANK_2,
+      accountFor('Cash — Bank', BANK_2).id
+    ])
   })
 
-  it('shows no deployment name or hint on a book with no redeploy', async () => {
+  it('keeps a plain account label on a book with no redeploy', async () => {
     const wrapper = renderLedger([deposit('a', BANK_1, 1_700_000_000)])
     await flushPromises()
 
     expect(wrapper.text()).toContain('Cash — Bank')
     expect(wrapper.text()).not.toContain('Cash — Bank 2')
-    expect(wrapper.find('[data-test^="ledger-redeploy-hint-"]').exists()).toBe(false)
   })
 
   it('links each transaction hash once to the configured explorer, while leaving synthetic entries plain', async () => {
@@ -148,7 +152,7 @@ describe('General ledger — redeployed pocket', () => {
   it('resizes the balance column in an account drill-down', async () => {
     const wrapper = renderWithProviders(LedgerTable, {
       props: {
-        rows: ledgerRows([deposit('a', BANK_1, 1_700_000_000)]),
+        rows: journalLedgerRows(buildJournal([deposit('a', BANK_1, 1_700_000_000)])),
         total: '$100.00',
         showBalance: true
       },

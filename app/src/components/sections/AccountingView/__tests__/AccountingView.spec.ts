@@ -12,7 +12,7 @@ import TablePagination from '@/components/ui/TablePagination.vue'
 import { accountNet, entriesForAccount, NO_OPENING } from '@/utils/accounting/accountLedger'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import { buildJournal } from '@/utils/accounting/generalLedger'
-import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerPresenter'
+import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerColumns'
 import type { StatementLineView } from '@/utils/accounting/presenter'
 import { money } from '@/utils/accounting/presenter'
 

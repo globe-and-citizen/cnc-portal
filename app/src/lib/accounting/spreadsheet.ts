@@ -3,12 +3,12 @@
  *
  * Section sheets — Summary, Income Statement, Balance Sheet, Trial Balance,
  * General Ledger — are built by pure, unit-tested functions that read the live
- * engine output ({@link CncAccounting}) through the same presenters the view
+ * engine output ({@link AccountingExportSnapshot}) through the same presenters the view
  * uses. {@link buildAccountingSheets} yields the classic four exported tabs
  * (everything except the Summary); {@link buildSheets} builds an arbitrary
  * selection. {@link exportSheetsExcel} lazy-loads SheetJS and writes the file.
  */
-import type { CncAccounting } from '@/utils/accounting/assemble'
+import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import {
   presentIncome,
   presentBalance,
@@ -45,7 +45,7 @@ function usd(value: string): number | '' {
   return Number.isNaN(n) ? '' : n
 }
 
-function summarySheet(books: CncAccounting): SheetRows {
+function summarySheet(books: AccountingExportSnapshot): SheetRows {
   const cards = presentSummaryCards(books.summary, books.incomeStatement, books.balanceSheet)
   const banner = presentBanner(books.balanceSheet, books.generalLedger)
   return [
@@ -59,7 +59,11 @@ function summarySheet(books: CncAccounting): SheetRows {
   ]
 }
 
-function incomeSheet(books: CncAccounting, from?: Date | null, to?: Date | null): SheetRows {
+function incomeSheet(
+  books: AccountingExportSnapshot,
+  from?: Date | null,
+  to?: Date | null
+): SheetRows {
   const income = presentIncome(books.journal, from, to)
   return [
     [incomeExportTitle(from, to)],
@@ -76,7 +80,7 @@ function incomeSheet(books: CncAccounting, from?: Date | null, to?: Date | null)
   ]
 }
 
-function balanceSheetRows(books: CncAccounting, asOf?: Date | null): SheetRows {
+function balanceSheetRows(books: AccountingExportSnapshot, asOf?: Date | null): SheetRows {
   const balance = presentBalance(books.journal, asOf)
   return [
     [balanceExportTitle(asOf)],
@@ -96,7 +100,7 @@ function balanceSheetRows(books: CncAccounting, asOf?: Date | null): SheetRows {
   ]
 }
 
-function trialSheet(books: CncAccounting, asOf?: Date | null): SheetRows {
+function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetRows {
   const ledger = asOf
     ? buildGeneralLedger(filterByPeriod(books.journal, null, asOf))
     : books.generalLedger
@@ -121,7 +125,7 @@ const SHEET_NAME: Record<SectionKey, string> = {
 
 /** Build a single section's sheet from its spec. */
 function sectionSheet(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   spec: SectionSpec,
   resolveName?: ResolveName
 ): AccountingSheet {
@@ -152,7 +156,7 @@ function sectionSheet(
 
 /** Build sheets for an arbitrary section selection, in the order given. */
 export function buildSheets(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   specs: readonly SectionSpec[],
   resolveName?: ResolveName
 ): AccountingSheet[] {
@@ -161,7 +165,7 @@ export function buildSheets(
 
 /** The four exported tabs (everything except the Summary), in display order. */
 export function buildAccountingSheets(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   resolveName?: ResolveName
 ): AccountingSheet[] {
   return [
@@ -264,7 +268,7 @@ export async function exportSheetsExcel(
 }
 
 export async function exportAccountingExcel(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   resolveName?: ResolveName
 ): Promise<void> {
   await exportSheetsExcel(buildAccountingSheets(books, resolveName), 'cnc-accounting.xlsx')

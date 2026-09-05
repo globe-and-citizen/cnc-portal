@@ -48,7 +48,7 @@ describe('useCNCAccounting', () => {
 
     // Every posting is balanced by construction, so the books balance regardless
     // of whether the mocked feeds produce any entries (e.g. payroll accruals).
-    expect(Array.isArray(acc.entries.value)).toBe(true)
+    expect(acc).not.toHaveProperty('entries')
     expect(Array.isArray(acc.journal.value)).toBe(true)
     expect(acc.reports.value.summary).toHaveProperty('cash')
     expect(acc.reports.value.generalLedger.balanced).toBe(true)
@@ -69,7 +69,7 @@ describe('useCNCAccounting', () => {
 
   it('degrades gracefully when the team id is null (no contracts)', () => {
     const acc = useCNCAccounting(null)
-    expect(Array.isArray(acc.entries.value)).toBe(true)
+    expect(Array.isArray(acc.journal.value)).toBe(true)
     expect(acc.reports.value.balanceSheet.balanced).toBe(true)
   })
 })

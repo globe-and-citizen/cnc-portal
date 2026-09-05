@@ -23,7 +23,6 @@ import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
-import { FEE_COLLECTOR_ADDRESS } from '@/constant'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouter/model'
 import type { ContractType, TeamContract } from '@/types/teamContract'
 import type { ScanTarget } from '@/composables/eventsViaLogs'
@@ -65,8 +64,6 @@ export interface UseCNCAccountingOptions {
 }
 
 export interface UseCNCAccountingReturn {
-  /** Consolidated, deduped legacy postings retained for projections not yet migrated. */
-  entries: ComputedRef<CncAccounting['entries']>
   /** Canonical concrete-account source of truth for the assembled books. */
   accountRegistry: ComputedRef<CncAccounting['accountRegistry']>
   /** Validated journal assembled from the consolidated postings. */
@@ -268,7 +265,6 @@ export function useCNCAccounting(
   const baseInput = computed<CncAccountingInput>(() => ({
     contracts: allContracts.value,
     safeAddress: safeAddress.value,
-    feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
     sherTokenAddress: options.sherTokenAddress ?? (investorAddress.value || null),
     currentSherMultiplier: currentSherMultiplier.value,
     rateOfRecord: liveRate,
@@ -299,12 +295,7 @@ export function useCNCAccounting(
   // order and unrelated historical deployments are never used as a fallback.
   const rawEntries = computed(() => buildRawCncEntries(baseInput.value))
   const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
-  const transferHashes = computed<string[]>(() => [
-    ...new Set(
-      rawEntries.value.flatMap((entry) => (entry.internal && entry.txHash ? [entry.txHash] : []))
-    )
-  ])
-  const transactionEvidence = useTransactionEvidence(transferHashes, rawEntries, deploymentAccounts)
+  const transactionEvidence = useTransactionEvidence(rawEntries, deploymentAccounts)
   const accounting = computed<CncAccounting>(() =>
     assembleWithAccountEvidence(
       rawEntries.value,
@@ -312,19 +303,6 @@ export function useCNCAccounting(
       transactionEvidence.accountEvidence.value
     )
   )
-
-  // Resolve the human who signed each internal transfer (the tx feed carries only
-  // a hash), then attach it so the ledger reads "Stravid87 transferred money from
-  // Bank to Safe". Optional: an unresolved hash keeps the source-pocket fallback.
-  const entries = computed<CncAccounting['entries']>(() => {
-    const initiators = transactionEvidence.initiators.value
-    if (!initiators.size) return accounting.value.entries
-    return accounting.value.entries.map((entry) =>
-      entry.internal && entry.txHash && initiators.has(entry.txHash)
-        ? { ...entry, initiator: initiators.get(entry.txHash) }
-        : entry
-    )
-  })
 
   // A generation whose on-chain scan failed is surfaced as a reconciliation gap
   // (rather than silently dropping the whole contract type), so the view can warn
@@ -396,7 +374,6 @@ export function useCNCAccounting(
     )
 
   return {
-    entries,
     accountRegistry: computed(() => accounting.value.accountRegistry),
     journal: computed(() => accounting.value.journal),
     reports: computed(() => ({

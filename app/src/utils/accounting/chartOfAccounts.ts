@@ -226,13 +226,3 @@ export function accountFamilyOf(account: AccountName): AccountFamily {
 export function classOf(account: AccountName): AccountClass {
   return accountFamilyOf(account).accountClass
 }
-
-/** Whether a family splits into a concrete account per source contract deployment. */
-export function isDeploymentScopedAccountFamily(account: AccountName): boolean {
-  return FAMILIES_BY_NAME[account]?.deploymentScoped ?? false
-}
-
-/** Whether a legacy chart name's normal balance is a debit. */
-export function isDebitNormal(account: AccountName): boolean {
-  return FAMILIES_BY_NAME[account]?.normalBalance === 'debit'
-}

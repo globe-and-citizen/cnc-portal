@@ -3,15 +3,15 @@ import { accountLedgerTitle } from '@/utils/accounting/accountLedger'
 import { activityText } from '@/utils/accounting/describeEntry'
 import {
   presentJournalLedger,
-  journalLedgerExportTitle
+  journalLedgerExportTitle,
+  type LedgerRow
 } from '@/utils/accounting/journalLedgerPresenter'
 import {
   ledgerTotalRow,
   resolveLedgerColumns,
-  type LedgerColumnKey,
-  type LedgerRow
-} from '@/utils/accounting/ledgerPresenter'
-import type { CncAccounting } from '@/utils/accounting/assemble'
+  type LedgerColumnKey
+} from '@/utils/accounting/ledgerColumns'
+import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import type { ResolveName } from './spreadsheet'
 
 type Cell = string | number
@@ -52,7 +52,7 @@ const SHEET_CELL: Record<LedgerColumnKey, (row: LedgerRow, resolveName?: Resolve
 
 /** Build General Ledger spreadsheet rows from the canonical journal. */
 export function generalLedgerSheetRows(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   resolveName?: ResolveName,
   opts: GeneralLedgerSheetOptions = {}
 ): SheetRows {

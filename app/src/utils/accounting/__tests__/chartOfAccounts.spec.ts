@@ -4,7 +4,6 @@ import {
   ACCOUNT_NAMES,
   accountFamilyOf,
   classOf,
-  isDebitNormal,
   type AccountName
 } from '../chartOfAccounts'
 
@@ -67,8 +66,8 @@ describe('chart of accounts', () => {
   it('books SHER compensation as contra-equity, not as an expense', () => {
     expect(classOf('Deferred SHER Compensation')).toBe('CONTRA_EQUITY')
     expect(classOf('SHERS To Be Issued')).toBe('EQUITY')
-    expect(isDebitNormal('Deferred SHER Compensation')).toBe(true)
-    expect(isDebitNormal('SHERS To Be Issued')).toBe(false)
+    expect(accountFamilyOf('Deferred SHER Compensation').normalBalance).toBe('debit')
+    expect(accountFamilyOf('SHERS To Be Issued').normalBalance).toBe('credit')
   })
 
   it('keeps every shared account attribute in one canonical family object', () => {
@@ -97,7 +96,6 @@ describe('chart of accounts', () => {
         ['Service Revenue', false]
       ]
       expectations.forEach(([account, debit]) => {
-        expect(isDebitNormal(account)).toBe(debit)
         expect(accountFamilyOf(account).normalBalance).toBe(debit ? 'debit' : 'credit')
       })
     })
@@ -106,7 +104,7 @@ describe('chart of accounts', () => {
       ACCOUNT_NAMES.forEach((name) => {
         const cls = classOf(name)
         const expectedDebit = cls === 'ASSET' || cls === 'EXPENSE' || cls === 'CONTRA_EQUITY'
-        expect(isDebitNormal(name)).toBe(expectedDebit)
+        expect(accountFamilyOf(name).normalBalance).toBe(expectedDebit ? 'debit' : 'credit')
       })
     })
   })

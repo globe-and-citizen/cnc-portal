@@ -32,6 +32,62 @@ function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): Led
 }
 
 describe('journalLedgerPresenter', () => {
+  it('keeps a multi-currency wage in one journal entry when either currency is selected', () => {
+    const txHash = `0x${'c'.repeat(64)}`
+    const usdc = posting({
+      id: `${txHash}-1`,
+      useCase: 'UC-CASH-03',
+      debit: 'Wage Payable',
+      credit: 'Cash — Payroll',
+      internal: false
+    })
+    const native = posting({
+      ...usdc,
+      id: `${txHash}-2`,
+      token: 'native',
+      rawAmount: '2000000000000000000',
+      amountUsd: 2
+    })
+    const journal = buildJournal([usdc, native])
+    const rows = journalLedgerRows(journal)
+
+    expect(journal).toHaveLength(1)
+    expect(rows).toHaveLength(4)
+    expect(rows.filter((row) => row.isFirst)).toHaveLength(1)
+    expect(new Set(rows.map((row) => row.currency)).size).toBe(2)
+    expect(journalLedgerTotal(journal)).toBe('$102.00')
+    expect(filterJournalLedgerByCurrency(journal, ['USDC'])).toEqual(journal)
+    expect(journalLedgerRows(filterJournalLedgerByCurrency(journal, ['USDC']))).toEqual(rows)
+  })
+
+  it('aggregates a dividend by transaction without grouping a later distribution', () => {
+    const firstHash = `0x${'d'.repeat(64)}`
+    const laterHash = `0x${'e'.repeat(64)}`
+    const dividend = posting({
+      id: `${firstHash}-1`,
+      useCase: 'UC-INV-01',
+      debit: 'Dividend Expense',
+      credit: 'Cash — Bank',
+      internal: false,
+      amountUsd: 2,
+      rawAmount: '2000000'
+    })
+    const journal = buildJournal([
+      dividend,
+      posting({ ...dividend, id: `${firstHash}-2`, amountUsd: 3, rawAmount: '3000000' }),
+      posting({ ...dividend, id: `${laterHash}-1`, timestamp: 200 })
+    ])
+    const rows = journalLedgerRows(journal)
+
+    expect(journal).toHaveLength(2)
+    expect(rows.filter((row) => row.isFirst).map((row) => row.txHash)).toEqual([
+      firstHash,
+      laterHash
+    ])
+    expect(rows.map((row) => row.dr || row.cr)).toEqual(['$5.00', '$5.00', '$2.00', '$2.00'])
+    expect(journalLedgerTotal(journal)).toBe('$7.00')
+  })
+
   it('renders every line of a transfer plus fee as one ordinary JournalEntry', () => {
     const journal = buildJournal([
       posting({ id: 'transfer', sourceOperationId: 'operation-42' }),
@@ -55,7 +111,7 @@ describe('journalLedgerPresenter', () => {
       'Transaction Fee Expense',
       'Cash — Bank'
     ])
-    expect(rows.map((row) => row.isFee)).toEqual([undefined, undefined, undefined])
+    expect(rows.map((row) => row.category)).toEqual(['Transfer', '', ''])
     expect(rows.map((row) => row.isFirst)).toEqual([true, false, false])
     expect(journalLedgerTotal(journal)).toBe('$101.00')
   })

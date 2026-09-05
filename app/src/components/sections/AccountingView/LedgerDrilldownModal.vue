@@ -66,7 +66,7 @@ import { useLocalStorage } from '@vueuse/core'
 import LedgerTable from './LedgerTable.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
-import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
+import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
 import {
   accountNet,
   openingRow,

@@ -9,7 +9,7 @@ import {
 } from '@/utils/accounting/accountLedger'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
-import type { LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
+import type { LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
 import type { Account } from '@/utils/accounting/accountRegistry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'

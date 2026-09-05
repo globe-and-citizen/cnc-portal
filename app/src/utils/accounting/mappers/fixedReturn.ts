@@ -290,7 +290,7 @@ export function mapFixedReturnEvents(
 
 /**
  * A repayment leg's id. The suffix goes **after** the `${txHash}-${logIndex}`
- * event id, which `txHashOf` reads past by matching the leading hash, so both
+ * event id, whose leading transaction hash is preserved by makeEntry, so both
  * legs still resolve to the transaction they were paid in.
  */
 function legId(eventId: string, leg: string): string {

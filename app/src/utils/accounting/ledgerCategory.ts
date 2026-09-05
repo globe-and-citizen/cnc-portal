@@ -1,16 +1,6 @@
-/**
- * The ledger's category vocabulary — the "Action" badge and the filter pills.
- *
- * Split from {@link ./ledgerPresenter} (which turns entries into table rows) the
- * same way {@link ./ledgerCurrency} was, so each module stays focused; the
- * presenter re-exports everything here, and callers can keep importing from it.
- * Pure and unit-testable.
- */
+/** Action badge labels and colors derived from source narration metadata. */
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 import type { ClassificationCategory } from './classification'
-
-/** Exact chart-of-accounts label for a protocol-fee leg; drives badge + filter. */
-export const FEE_ACCOUNT = 'Transaction Fee Expense'
 
 export type LedgerCategory =
   | 'Investment'
@@ -39,13 +29,6 @@ const CATEGORY_BADGE: Record<LedgerCategory, string> = {
   Dividend: 'bg-primary/10 text-primary', // profit distribution — green
   Memo: 'bg-muted text-dimmed' // share-count note — grey
 }
-
-/**
- * The pseudo-category the Fee pill filters on — not a {@link LedgerCategory} (a
- * fee is a leg of a Transfer/Expense entry), so it's handled specially by
- * `filterLedgerEntries` / `presentLedger` rather than via {@link categoryOf}.
- */
-export const FEE_FILTER = 'Fee'
 
 /**
  * The label shown on the "Action" badge (and carried into the ledger exports).

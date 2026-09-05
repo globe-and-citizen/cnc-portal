@@ -14,17 +14,8 @@
     </template>
 
     <template #action-cell="{ row: { original: row } }">
-      <!-- A fee leg reads as its own action ("Fee"), on the same footing as the
-           category pills (Expense / Transfer / …) — even on a continuation row. -->
       <span
-        v-if="row.isFee"
-        class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
-        :class="FEE_BADGE"
-      >
-        Fee
-      </span>
-      <span
-        v-else-if="row.isFirst && !row.isTotal"
+        v-if="row.isFirst && !row.isTotal"
         class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
         :class="row.categoryClass"
       >
@@ -109,16 +100,6 @@
         >
           {{ row.accountLabel ?? row.account }}
         </span>
-        <UTooltip
-          v-if="(row.instanceNumber ?? 1) > 1"
-          :text="REDEPLOY_HINT"
-          :data-test="`ledger-redeploy-hint-${row.accountLabel}`"
-        >
-          <UIcon
-            name="i-heroicons-information-circle"
-            class="text-warning size-4 shrink-0 cursor-help"
-          />
-        </UTooltip>
       </div>
     </template>
 
@@ -176,11 +157,8 @@ import LedgerColumnHeader from './LedgerColumnHeader.vue'
 import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
 import { NETWORK } from '@/constant'
 import { formatTxHash } from '@/utils/format'
-import {
-  LEDGER_COLUMNS,
-  type LedgerRow,
-  type LedgerColumnKey
-} from '@/utils/accounting/ledgerPresenter'
+import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
+import type { LedgerRow } from '@/utils/accounting/journalLedgerPresenter'
 
 const props = defineProps<{
   rows: LedgerRow[]
@@ -202,16 +180,7 @@ const emit = defineEmits<{
   accountSelect: [account: string, instance?: string, accountId?: string]
 }>()
 
-// Shown beside a leg posted to a redeployed pocket's later contract — the same
-// explanation the trial balance gives on its numbered lines.
-const REDEPLOY_HINT =
-  'This account was redeployed to a new contract. This posting moved that later deployment.'
-
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
-
-// Action-pill classes for a fee leg — amber, a peer of the category badges
-// (CATEGORY_BADGE in ledgerPresenter). A static string so Tailwind keeps it.
-const FEE_BADGE = 'bg-warning/10 text-warning'
 
 type ResizableColumnKey = LedgerColumnKey | 'balance'
 

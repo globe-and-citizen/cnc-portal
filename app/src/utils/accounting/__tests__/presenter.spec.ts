@@ -12,7 +12,8 @@ import {
   trialExportTitle,
   currencySymbol
 } from '@/utils/accounting/presenter'
-import { presentLedger } from '@/utils/accounting/ledgerPresenter'
+import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
+import { accountFor } from '@/utils/accounting/accountRegistry'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { categoryOf } from '@/utils/accounting/ledgerCategory'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -179,9 +180,9 @@ describe('presentTrial', () => {
   })
 })
 
-describe('presentLedger', () => {
+describe('presentJournalLedger', () => {
   it('emits two rows per posting and counts entries (not rows)', () => {
-    const ledger = presentLedger(books().entries, 'All')
+    const ledger = presentJournalLedger(books().journal)
     expect(ledger.entryCount).toBe(2)
     expect(ledger.rows).toHaveLength(4)
     // First leg carries the date + label; the credit leg is blanked.
@@ -189,8 +190,10 @@ describe('presentLedger', () => {
     expect(ledger.rows[1].isFirst).toBe(false)
   })
 
-  it('filters by category', () => {
-    const ledger = presentLedger(books().entries, 'Revenue')
+  it('filters by account', () => {
+    const ledger = presentJournalLedger(books().journal, null, null, null, [
+      accountFor('Service Revenue').id
+    ])
     expect(ledger.entryCount).toBe(1)
     expect(ledger.rows[0].category).toBe('Revenue')
   })
@@ -209,21 +212,22 @@ describe('presentLedger', () => {
       enrichment: 'not-applicable'
     }
     expect(categoryOf(fee)).toBe('Expense')
-    const ledger = presentLedger([fee], 'Expense')
-    expect(ledger.entryCount).toBe(1)
-    expect(ledger.rows[0].category).toBe('Expense')
-    expect(ledger.rows[0].label).toBe('Transaction fee')
-    expect(ledger.rows[0].account).toBe('Transaction Fee Expense')
-    expect(ledger.rows[0].dr).toBe('$0.50')
+    const ledger = presentJournalLedger(buildJournal([fee]))
+    expect(ledger.entryCount).toBe(0)
+    expect(ledger.rows).toEqual([])
   })
 
   it('labels the transaction by its accounting entry, not the raw memo', () => {
-    const ledger = presentLedger(books().entries, 'Revenue')
+    const ledger = presentJournalLedger(books().journal, null, null, null, [
+      accountFor('Service Revenue').id
+    ])
     expect(ledger.rows[0].label).toBe('Service revenue') // normalized UC-BANK-02 label
   })
 
   it('attaches a structured activity (actor + predicate) without touching the accounting label', () => {
-    const ledger = presentLedger(books().entries, 'Revenue')
+    const ledger = presentJournalLedger(books().journal, null, null, null, [
+      accountFor('Service Revenue').id
+    ])
     expect(ledger.rows[0].label).toBe('Service revenue') // accounting label unchanged
     expect(ledger.rows[0].activity).toMatchObject({
       kind: 'actor',

@@ -2,7 +2,7 @@ import { dayLabel, filterByPeriod, money, periodLabel } from './presenter'
 import type { Account } from './accountRegistry'
 import { accountFamilyOf, type AccountName } from './chartOfAccounts'
 import { creditOf, debitOf, type JournalEntry } from './journalEntry'
-import type { LedgerRow } from './ledgerPresenter'
+import type { LedgerRow } from './journalLedgerPresenter'
 
 /**
  * A statement line selects a chart family; a Trial Balance line selects one
