@@ -22,7 +22,9 @@ flowchart LR
     dataLayer --> feeds[On-chain, Safe, and portal feeds]
     history --> input[CncAccountingInput]
     feeds --> input
-    input --> assembly[Pure accounting assembly]
+    input --> mapped[Pure source mapping]
+    mapped --> evidence[Transaction and receipt evidence]
+    evidence --> assembly[Pure accounting assembly]
     assembly --> books[CncAccounting books]
     books --> cards[Accounting cards and drill-downs]
     books --> exports[Accounting exports]
@@ -125,16 +127,21 @@ flowchart LR
     raw[LedgerEntry family and source instance] --> family[Resolve AccountFamily]
     family --> scoped{Deployment scoped?}
     scoped -->|No| shared[One resolved family account]
-    scoped -->|Yes, address present| concrete[Resolved AccountId per contract address]
-    scoped -->|Yes, address absent| unresolved[Unresolved AccountId for that family]
+    scoped -->|Yes| proof{Known source instance?}
+    proof -->|Yes| concrete[Resolved AccountId per contract address]
+    proof -->|No| receipt{One matching receipt Transfer direction?}
+    receipt -->|Yes| concrete
+    receipt -->|No or ambiguous| unresolved[Unresolved AccountId for that family]
     shared --> journal[JournalEntryLine account]
     concrete --> journal
     unresolved --> journal
     journal --> trial[Trial Balance grouped by AccountId]
 ```
 
-Bank, Payroll, Expense, and Credit families are deployment-scoped. Their resolved addresses receive distinct account identities. A missing
-address remains an unresolved concrete account; the registry never assigns it to an earlier or later deployment based on activity order.
+Bank, Payroll, Expense, and Credit families are deployment-scoped. Their resolved addresses receive distinct account identities only when a
+mapper names a known company deployment of the matching family, or when an ERC-20 `Transfer` in the operation receipt proves that known
+deployment sent or received the cash. A missing, external, ambiguous, or native-only address remains unresolved; the registry never assigns
+it to an earlier or later deployment based on activity order.
 
 ## Invariants and Failure Behaviour
 
@@ -151,12 +158,16 @@ address remains an unresolved concrete account; the registry never assigns it to
   transfers retain their source-evidence accounts even when a legacy category exists. A dedicated SafeDepositRouter investment that issues
   SHER remains an `Investor Equity` operation.
 - Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
-- Resolved contract addresses, and only those addresses, determine deployment-specific identity. Missing addresses remain unresolved.
+- A deployment-specific instance is resolved only when it is a known company deployment of the matching family, either named directly by the
+  mapper or proven by an unambiguous ERC-20 receipt `Transfer` direction. Missing, external, ambiguous, and native-only evidence remains
+  unresolved; activity order and current-generation status are never evidence.
 
 ### Failure Behaviour
 
 - A company-query failure is fatal because Accounting cannot establish the contract set that owns the books.
 - A failed on-chain scan for one contract generation leaves other generations in the assembled books and records a reconciliation gap.
+- A failed transaction-receipt read leaves its deployment-specific leg unresolved and records a reconciliation gap. A readable receipt with
+  no matching or more than one matching company deployment is an explicit unresolved result rather than a read failure.
 - Safe-service feeds are optional and do not block the page's loading state. Their absence can omit Safe activity without generating a
   reconciliation gap, which remains a known limitation.
 - A standalone report card falls back to its route's company identifier when it is rendered outside the shared Accounting page context.
@@ -219,13 +230,15 @@ the canonical journal feed.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `718fef59e14b0220a114ac718e8692d870cc842a`
+**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
+- [Transaction evidence reader](../../../app/src/composables/accounting/useTransactionEvidence.ts)
 - [Pure assembly](../../../app/src/utils/accounting/assemble.ts) and [consolidation](../../../app/src/utils/accounting/buildLedger.ts)
 - [Chart of accounts](../../../app/src/utils/accounting/chartOfAccounts.ts) and
-  [concrete account registry](../../../app/src/utils/accounting/accountRegistry.ts)
+  [concrete account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
+  [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
 - [Validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
   [transaction-identity helper](../../../app/src/utils/accounting/ledgerEntry.ts),
   [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
@@ -237,6 +250,8 @@ the canonical journal feed.
   [spreadsheet projection](../../../app/src/lib/accounting/generalLedgerSheet.ts), and
   [Trial Balance card](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
 - [Assembly tests](../../../app/src/utils/accounting/__tests__/assemble.spec.ts),
+  [account-instance evidence tests](../../../app/src/utils/accounting/__tests__/accountInstances.spec.ts),
+  [transaction evidence tests](../../../app/src/composables/accounting/__tests__/useTransactionEvidence.spec.ts),
   [account-registry tests](../../../app/src/utils/accounting/__tests__/accountRegistry.spec.ts),
   [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), and

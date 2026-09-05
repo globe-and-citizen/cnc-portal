@@ -13,8 +13,8 @@ owned by [`US-ACCT-005`](./README.md#us-acct-005-preserve-books-across-contract-
 - A **redeployed cash pocket** (Bank, Payroll, Expense, or Credit) has one concrete account per source contract address. The Trial Balance
   shows each resolved deployment on its own row. The Safe is not deployment-scoped — its address is persistent. The original resolved
   deployment keeps the plain account name; later ones are numbered (`Cash — Bank 2`, `Cash — Bank 3`) and carry a redeploy hint.
-- A deployment-specific source leg without a contract address is an explicit **unresolved** account. It is not a generation and is never
-  assigned to the earliest or most recently active deployment.
+- A deployment-specific leg without proof of a matching known company contract is an explicit **unresolved** account. It is not a generation
+  and is never assigned to the earliest or most recently active deployment.
 
 ## Consolidation Flow
 
@@ -39,13 +39,15 @@ flowchart LR
 5. Events are merged, sorted, and deduplicated by their on-chain transaction and log identity.
 6. Every current and historical money-pocket address participates in internal-transfer classification.
 7. A failed generation scan does not discard successful generations; Accounting reports the affected source as a reconciliation gap.
-8. The canonical account registry resolves Bank, Payroll, Expense, and Credit lines from each source operation's contract address. Each
-   address has a distinct `AccountId` in one concrete `Account` object, while the reusable `AccountFamily` supplies the stable family key,
-   display name, classification, normal side, and deployment scope.
+8. The canonical account registry resolves Bank, Payroll, Expense, and Credit lines only from a matching known source-contract address or an
+   unambiguous ERC-20 `Transfer` direction in the operation receipt. Each resolved address has a distinct `AccountId` in one concrete
+   `Account` object, while the reusable `AccountFamily` supplies the stable family key, display name, classification, normal side, and
+   deployment scope.
 9. The assembled JournalEntry collection and Trial Balance preserve that concrete identity. Resolved rows are ordered by first activity only
    for display numbering; activity order never decides account identity.
-10. A source leg with no contract address remains an unresolved account. Its Trial Balance drill-down and export scope the selected account
-    to unaddressed legs while retaining each posting's balanced context; no historical-instance fallback is permitted.
+10. A leg with no matching known source address, no receipt proof, or ambiguous receipt proof remains an unresolved account. Its Trial
+    Balance drill-down and export scope the selected account to unaddressed legs while retaining each posting's balanced context; no
+    historical-instance fallback is permitted.
 11. The General Ledger UI and its PDF and Excel exports project the canonical `JournalEntry` collection, retaining complete entries when
     filtering by a concrete account or currency. The summary, Income Statement, Balance Sheet, and account drill-downs remain family-level
     projections of the transitional posting feed; their JournalEntry migration is separate work.
@@ -62,8 +64,8 @@ report-projection boundary, and implementation evidence.
 5. Confirm that the movement changes the account pockets without changing revenue, expenses, or total team cash.
 6. Open the trial balance and confirm the redeployed pocket reads as separate resolved rows — the original keeps its plain name, later
    deployments are numbered and show a redeploy hint — and that drilling each row lists only that deployment's entries.
-7. Confirm that a deployment-specific source leg without a contract address appears as an unresolved row and its drill-down does not use a
-   resolved deployment's account leg.
+7. Confirm that a deployment-specific leg without proof of a matching known contract appears as an unresolved row and its drill-down does
+   not use a resolved deployment's account leg.
 8. Repeat the migration to verify consolidation across more than two generations.
 9. Simulate one failed generation scan and confirm that the remaining books load with an incomplete-history warning.
 
@@ -76,19 +78,23 @@ report-projection boundary, and implementation evidence.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6aebce776e9406bb85f5512cf8daf43d8d3b0adc`
+**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+- [Transaction evidence reader](../../../app/src/composables/accounting/useTransactionEvidence.ts)
 - [Migration wiring tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 - [Internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
 - [Internal-address tests](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts)
 - [Canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts) and
-  [Account registry](../../../app/src/utils/accounting/accountRegistry.ts)
+  [Account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
+  [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
 - [Validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts)
 - [Concrete-account journal and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts) and
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [Trial-balance card and redeploy hint](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
 - [Instance-scoped drill-down](../../../app/src/utils/accounting/accountLedger.ts)
 - [Split and drill-down tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts)
+- [Account-instance evidence tests](../../../app/src/utils/accounting/__tests__/accountInstances.spec.ts) and
+  [transaction evidence tests](../../../app/src/composables/accounting/__tests__/useTransactionEvidence.spec.ts)
 
 _[← Back to Accounting](./README.md)_

@@ -59,9 +59,10 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
+- [Pure accounting account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
 - [Utility boundary validator](../../../app/scripts/check-utility-boundaries.mjs) and
   [validator tests](../../../app/scripts/__tests__/check-utility-boundaries.node.mjs)
 - [Store-backed transaction presentation](../../../app/src/composables/transactions/useTransactionPresentation.ts) and
