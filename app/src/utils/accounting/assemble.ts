@@ -77,9 +77,6 @@ export interface CncAccountingInput {
   feeCollectorAddress?: Address | string | null
   /** On-chain SHER token address, so it resolves to the `sher` token id. */
   sherTokenAddress?: Address | string | null
-  /** SafeDepositRouter address — its inflows to the Safe are booked from its own
-   *  event (UC-SDR-01), so the matching Safe transfer is excluded here. */
-  safeDepositRouterAddress?: Address | string | null
   /** Live SHER-per-token multiplier (whole units) read straight from the router,
    *  used to value SHER when there are no `MultiplierUpdated` events (the
    *  constructor's initial multiplier emits none). Defaults to 1x (1 SHER = $1). */
@@ -245,7 +242,6 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
   if (input.safeAddress) {
     const incomingRows = toSafeTransferRows(
       input.safeTransfers,
-      input.safeDepositRouterAddress,
       input.safeDepositRouterEvents?.safeDeposits?.items
     )
     const outgoingRows = toSafeOutgoingTransferRows(

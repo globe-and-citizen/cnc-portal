@@ -270,7 +270,6 @@ export function useCNCAccounting(
     safeAddress: safeAddress.value,
     feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
     sherTokenAddress: options.sherTokenAddress ?? (investorAddress.value || null),
-    safeDepositRouterAddress: routerAddress.value || null,
     currentSherMultiplier: currentSherMultiplier.value,
     rateOfRecord: liveRate,
     bankEvents: bank.result.value,

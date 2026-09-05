@@ -10,6 +10,7 @@ import { assembleAccounting } from './assembleAccounting'
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 const INVESTOR = '0xcccccccccccccccccccccccccccccccccccccccc'
 const DEPLOYER = ADDR.founder as Address
+const SAFE_DEPOSIT_TX = `0x${'d'.repeat(64)}`
 
 /** Minimal `TeamContract` rows covering the team's money pockets. */
 const CONTRACTS: TeamContract[] = (
@@ -32,7 +33,6 @@ const BASE: CncAccountingInput = {
   safeAddress: ADDR.safe,
   feeCollectorAddress: ADDR.feeCollector,
   sherTokenAddress: ADDR.sherToken,
-  safeDepositRouterAddress: ROUTER,
   rateOfRecord: RATE
 }
 
@@ -182,12 +182,13 @@ describe('accounting assembly boundary', () => {
         safeDeposits: {
           items: [
             {
-              id: 's1',
+              id: `${SAFE_DEPOSIT_TX}-3`,
+              txHash: SAFE_DEPOSIT_TX,
               contractAddress: ROUTER,
               depositor: ADDR.client,
               token: USDC_ADDRESS,
-              tokenAmount: '200000000', // 200 USDC
-              sherAmount: '400000000',
+              tokenAmount: '2000000', // 2 USDC
+              sherAmount: '4000000',
               timestamp: 150
             }
           ]
@@ -197,6 +198,20 @@ describe('accounting assembly boundary', () => {
         safeAddressUpdateds: { items: [] },
         safeMultiplierUpdateds: { items: [] }
       },
+      // The Safe service observes the token transfer too. It is evidence for the
+      // same transaction, not a second direct Service Revenue deposit.
+      safeTransfers: [
+        {
+          type: 'ERC20_TRANSFER',
+          executionDate: new Date(150 * 1000).toISOString(),
+          blockNumber: 150,
+          transactionHash: SAFE_DEPOSIT_TX,
+          to: ADDR.safe,
+          from: ADDR.client,
+          value: '2000000',
+          tokenAddress: USDC_ADDRESS
+        }
+      ],
       // The matching mint must NOT be double-booked as equity.
       investorEvents: {
         investorMints: {
@@ -205,7 +220,7 @@ describe('accounting assembly boundary', () => {
               id: 'm1',
               contractAddress: INVESTOR,
               shareholder: ADDR.client,
-              amount: '400000000',
+              amount: '4000000',
               timestamp: 151
             }
           ]
@@ -216,7 +231,18 @@ describe('accounting assembly boundary', () => {
       }
     })
 
-    expect(a.balanceSheet.investorEquity).toBe(200)
+    expect(a.balanceSheet.investorEquity).toBe(2)
+    expect(a.summary.income).toBe(0)
+    expect(a.journal).toMatchObject([
+      {
+        id: SAFE_DEPOSIT_TX,
+        txHash: SAFE_DEPOSIT_TX,
+        lines: [
+          { account: { family: { name: 'Cash — Safe' } }, debit: 2 },
+          { account: { family: { name: 'Investor Equity' } }, credit: 2 }
+        ]
+      }
+    ])
     // The backed mint dropped out — no Default-D memo entry survives.
     expect(a.entries.some((e) => e.useCase === 'DEFAULT-D')).toBe(false)
     expect(a.balanceSheet.balanced).toBe(true)

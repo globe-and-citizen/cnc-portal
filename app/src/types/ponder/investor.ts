@@ -37,6 +37,8 @@ export type InvestorDividendPaymentFailedRow = {
 
 export type SafeDepositRow = {
   id: string
+  /** On-chain transaction that produced this deposit, when the feed exposes it. */
+  txHash?: string
   contractAddress: string
   depositor: string
   token: string
