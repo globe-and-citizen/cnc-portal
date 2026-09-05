@@ -35,6 +35,7 @@ const bankTransfer = makeEntry({
   amountUsd: 100,
   token: 'usdc',
   rawAmount: '100000000',
+  memo: 'Fund payroll',
   internal: true
 })
 const fee = makeEntry({

@@ -4,15 +4,14 @@
  * Wraps the pure PDF / Excel builders ({@link buildTables} / {@link buildSheets})
  * with the live books, the party-name resolver and toast + error handling, so a
  * page only has to declare *which* sections (and their current filter state) to
- * export. Snapshots the reactive context into a plain {@link CncAccounting} at
+ * export. Snapshots the reactive journal and reports at
  * call time, so the file reflects exactly what's on screen when the button is hit.
  */
 import { useAccountingContext } from './useAccountingContext'
-import type { CncAccounting } from '@/utils/accounting/assemble'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import { log } from '@/lib/logging'
 import { buildTables, exportTablesPdf, type ExportPdfOptions } from '@/lib/accounting/pdf'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
+import type { AccountingExportSnapshot, SectionSpec } from '@/utils/accounting/exportSpec'
 import { buildSheets, exportSheetsExcel } from '@/lib/accounting/spreadsheet'
 
 export function useAccountingExport() {
@@ -25,11 +24,8 @@ export function useAccountingExport() {
   const resolveName = (address: string) => resolveUser(address).name
 
   /** Freeze the reactive books into a plain value for the pure builders. */
-  const snapshot = (): CncAccounting => ({
-    entries: accounting.entries.value,
-    accountRegistry: accounting.accountRegistry.value,
+  const snapshot = (): AccountingExportSnapshot => ({
     journal: accounting.journal.value,
-    unmatchedFeeOperationIds: [],
     ...accounting.reports.value
   })
 

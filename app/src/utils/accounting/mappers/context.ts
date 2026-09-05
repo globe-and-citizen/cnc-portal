@@ -54,11 +54,6 @@ export interface BuildMapperContextInput {
   contracts: readonly TeamContract[] | undefined
   /** The set of internal addresses (from `collectInternalAddresses`). */
   internalAddresses: ReadonlySet<Address>
-  /**
-   * Legacy FeeCollector address input, retained for call-site compatibility. The
-   * global protocol treasury is deliberately not added to the team pocket index.
-   */
-  feeCollectorAddress?: Address | string | null
   /** The on-chain SHER token address, so it resolves to the `sher` {@link TokenId}. */
   sherTokenAddress?: Address | string | null
   /** FX resolver for non-pegged tokens (native, SHER) — see {@link toUsdUtil}. */

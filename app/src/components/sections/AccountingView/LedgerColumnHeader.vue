@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import type { Column, Table } from '@tanstack/vue-table'
-import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
+import type { LedgerRow } from '@/utils/accounting/journalLedgerPresenter'
 
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
 

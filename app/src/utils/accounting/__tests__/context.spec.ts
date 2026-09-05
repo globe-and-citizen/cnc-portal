@@ -14,7 +14,6 @@ describe('buildMapperContext', () => {
   const ctx = buildMapperContext({
     contracts,
     internalAddresses: new Set(),
-    feeCollectorAddress: ADDR.feeCollector,
     sherTokenAddress: ADDR.sherToken,
     rateOfRecord: () => 3 // $3 for every non-pegged token
   })

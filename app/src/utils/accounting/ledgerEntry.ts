@@ -156,7 +156,7 @@ export interface LedgerEntry {
   /**
    * The Community Credit round (`FixedReturn` offer id) a `UC-CREDIT-*` posting
    * belongs to. What lets a lender's principal and their fixed return be rendered
-   * as one compound posting (see {@link ./creditGrouping}) without confusing two
+   * as one journal operation without confusing two
    * rounds the same member lent into.
    */
   creditOfferId?: string
@@ -196,21 +196,6 @@ export interface LedgerEntry {
    * pocket balance, so historical entries stay accurate.
    */
   expenseRemainingUsd?: number
-  /**
-   * The Bank protocol fee charged in the **same on-chain transaction** as this
-   * transfer, folded in for the general-ledger view only — Dr destination (net) ·
-   * Dr Transaction Fee Expense · Cr Cash — Bank (gross). Set by the presenter
-   * ({@link mergeBankFees}), never by a mapper: the canonical feed the statements
-   * roll up keeps the fee as its own posting, so nothing is double counted.
-   */
-  mergedBankFee?: {
-    amountUsd: number
-    /** Raw on-chain amount, in the token's base units. */
-    rawAmount: string
-    token: TokenId
-    /** USD rate of record, when resolved. */
-    rate?: number
-  }
   /**
    * The manual category a team owner classified the source transaction as
    * (issue #2457), overriding the address inference. Absent means the entry is

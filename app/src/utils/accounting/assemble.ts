@@ -72,12 +72,6 @@ export interface CncAccountingInput {
   contracts?: readonly TeamContract[]
   /** The team's Gnosis Safe address — classifies each Safe transfer. */
   safeAddress?: Address | string | null
-  /**
-   * Legacy FeeCollector address input. It is intentionally ignored: the global
-   * protocol treasury is not a company-owned pocket and never joins the internal
-   * address registry.
-   */
-  feeCollectorAddress?: Address | string | null
   /** On-chain SHER token address, so it resolves to the `sher` token id. */
   sherTokenAddress?: Address | string | null
   /** Live SHER-per-token multiplier (whole units) read straight from the router,
@@ -110,8 +104,8 @@ export interface CncAccountingInput {
 /** The transitional posting feed, canonical journal, and report projections a team's books resolve to. */
 export interface CncAccounting {
   /**
-   * Deduped, chronologically sorted mapper postings. Transitional input for
-   * account-level drill-downs, which still preserve source-posting detail.
+   * Deduped, chronologically sorted mapper postings retained at the assembly
+   * boundary. Views and exports consume the journal, never these source pairs.
    */
   entries: LedgerEntry[]
   /** The canonical concrete-account source of truth for this assembled book. */
@@ -297,7 +291,6 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
   const ctx = buildMapperContext({
     contracts: input.contracts,
     internalAddresses,
-    feeCollectorAddress: input.feeCollectorAddress,
     sherTokenAddress: input.sherTokenAddress,
     rateOfRecord,
     classifications: toClassificationMap(input.classifications)

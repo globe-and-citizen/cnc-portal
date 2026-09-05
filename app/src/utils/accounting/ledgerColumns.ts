@@ -1,8 +1,7 @@
 /**
  * The general-ledger table columns — the single list the show/hide selector, the
  * table and both exporters read, so an exported ledger keeps the exact columns
- * (and order) the screen shows. Split from {@link ./ledgerPresenter} (which maps
- * entries into rows) and re-exported from it for convenience.
+ * (and order) the screen shows.
  */
 
 /** The toggleable ledger table columns (keys match the table's cell slots). */

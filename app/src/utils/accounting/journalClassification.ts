@@ -3,7 +3,7 @@ import { CATEGORY_LABEL } from './classification'
 import type { LegacyClassificationTarget } from './classificationTarget'
 import type { JournalEntry } from './journalEntry'
 import { filterJournalLedgerEntries, journalLedgerRows } from './journalLedgerPresenter'
-import type { LedgerRow } from './ledgerPresenter'
+import type { LedgerRow } from './journalLedgerPresenter'
 
 export interface JournalClassificationRow extends LedgerRow {
   journalEntryId: string

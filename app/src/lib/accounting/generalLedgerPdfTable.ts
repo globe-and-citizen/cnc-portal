@@ -3,15 +3,15 @@ import { accountLedgerTitle } from '@/utils/accounting/accountLedger'
 import { activityText } from '@/utils/accounting/describeEntry'
 import {
   presentJournalLedger,
-  journalLedgerExportTitle
+  journalLedgerExportTitle,
+  type LedgerRow
 } from '@/utils/accounting/journalLedgerPresenter'
 import {
   ledgerTotalRow,
   resolveLedgerColumns,
-  type LedgerColumnKey,
-  type LedgerRow
-} from '@/utils/accounting/ledgerPresenter'
-import type { CncAccounting } from '@/utils/accounting/assemble'
+  type LedgerColumnKey
+} from '@/utils/accounting/ledgerColumns'
+import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import type { AccountingPdfTable, ResolveName } from './pdf'
 
 type Cell = string | number
@@ -48,7 +48,7 @@ const PDF_CELL: Record<
 
 /** Build a General Ledger PDF table from the canonical journal. */
 export function generalLedgerPdfTable(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   resolveName?: ResolveName,
   opts: GeneralLedgerPdfOptions = {}
 ): AccountingPdfTable {

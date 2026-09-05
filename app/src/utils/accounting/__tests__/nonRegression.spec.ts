@@ -45,7 +45,6 @@ function bankEvents(partial: Partial<BankEventFeed>): BankEventFeed {
 function sampleInput(): CncAccountingInput {
   return {
     contracts: [contract('Bank', ADDR.bank)],
-    feeCollectorAddress: ADDR.feeCollector,
     rateOfRecord,
     bankEvents: bankEvents({
       // 100 POL direct deposit → Service Revenue

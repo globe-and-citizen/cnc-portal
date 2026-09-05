@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { badgeClassOf, categoryOf, categoryLabelOf } from '@/utils/accounting/ledgerCategory'
-import { ledgerRows } from '@/utils/accounting/ledgerPresenter'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 import type { LedgerEntry, UseCase } from '@/utils/accounting/ledgerEntry'
 
 const base = {
@@ -98,10 +99,10 @@ describe('badgeClassOf', () => {
 
 describe('ledger rows', () => {
   it('carries the phase colour onto the posting lead row', () => {
-    const [lentRow] = ledgerRows([entry('UC-CREDIT-01')])
-    const [repaidRow] = ledgerRows([
-      entry('UC-CREDIT-03', { debit: 'Loan Payable', credit: 'Cash — Bank' })
-    ])
+    const [lentRow] = journalLedgerRows(buildJournal([entry('UC-CREDIT-01')]))
+    const [repaidRow] = journalLedgerRows(
+      buildJournal([entry('UC-CREDIT-03', { debit: 'Loan Payable', credit: 'Cash — Bank' })])
+    )
     expect(lentRow.category).toBe('Credit')
     expect(repaidRow.category).toBe('Credit')
     expect(lentRow.categoryClass).not.toBe(repaidRow.categoryClass)

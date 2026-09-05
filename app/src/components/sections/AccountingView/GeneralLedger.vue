@@ -83,7 +83,7 @@ import {
   journalLedgerRows,
   journalLedgerTotal
 } from '@/utils/accounting/journalLedgerPresenter'
-import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
+import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
 
 // Show/hide table columns — persisted across sessions so the choice sticks.
 const columnItems = [...LEDGER_COLUMNS]

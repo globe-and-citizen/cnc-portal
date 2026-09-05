@@ -7,7 +7,7 @@
  * operation, never a second transaction or a special filter category.
  */
 import { formatNumber } from '@/utils/format'
-import { activityDestinationOf } from './activityDestination'
+import { activityDestinationOf, type ActivityDestination } from './activityDestination'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { badgeClassOf, categoryLabelOf } from './ledgerCategory'
 import { currencySymbol, filterByPeriod, formatUnixDateTime, money, periodLabel } from './presenter'
@@ -15,7 +15,45 @@ import { wholeTokenAmount } from './toUsd'
 import { creditOf, debitOf, type JournalEntry, type JournalEntryLine } from './journalEntry'
 import type { Account } from './accountRegistry'
 import type { LedgerEntry } from './ledgerEntry'
-import type { LedgerRow } from './ledgerPresenter'
+
+/** Display-ready journal line shared by the ledger, drill-downs and exporters. */
+export interface LedgerRow {
+  isFirst: boolean
+  date: string
+  /** The generic accounting-entry label (the "Transaction" column), e.g. "Wage accrual". */
+  label: string
+  /** Transaction hash for an on-chain entry; absent for a synthetic operation or continuation row. */
+  txHash?: string
+  /** The structured narration (the "Activity" column) — avatar(s) + predicate. */
+  activity: ActivityCell
+  /** The section the Activity links to ({@link ./activityDestination}); absent on
+   *  a continuation row, and on a posting with no portal surface of its own. */
+  destination?: ActivityDestination | null
+  /** The "Action" badge text — {@link categoryLabelOf} (a plain category, or a
+   *  spelled-out payroll phase); empty on a posting's continuation rows. */
+  category: string
+  categoryClass: string
+  account: string
+  /** Canonical concrete account identity on JournalEntry projections. */
+  accountId?: string
+  /** Concrete account label, including a deployment number or unresolved marker. */
+  accountLabel?: string
+  /** Contract address carried by the concrete journal account. */
+  accountInstance?: string
+  accountMuted: boolean
+  accountDimmed: boolean
+  dr: string
+  cr: string
+  /** The posting's currency (spec §2 "Devise"), e.g. `POL` / `USDC`. */
+  currency: string
+  /** Whole-token quantity moved (spec §2 "Quantité"), 6-dp, e.g. `0.070352`. */
+  quantity: string
+  /** USD rate of record (spec §2 "Taux"), up to 6-dp with trailing zeros trimmed, e.g. `$0.08` / `$1`. */
+  rate: string
+  /** Running balance of the drilled account after this posting (see
+   *  {@link ./accountLedger.withRunningBalance}); absent outside a drill-down. */
+  balance?: string
+}
 
 /** A concrete account offered by the General Ledger account filter. */
 export interface JournalAccountFilterOption {
