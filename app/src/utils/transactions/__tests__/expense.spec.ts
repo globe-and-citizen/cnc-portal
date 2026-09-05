@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
 import { formatDateTime, fromUnix } from '@/utils/format'
-import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
-import type { ExpenseEventsQuery } from '@/types/ponder/expense'
+import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
+import type { ExpenseEventFeed } from '@/types/contract-events/expense'
 import {
   buildRawExpenseTransactions,
   formatExpenseTransactionDate,
@@ -15,7 +15,7 @@ const USER_B = '0x3333333333333333333333333333333333333333'
 const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
 const SIGNATURE_HASH = '0xabc123'
 
-const buildExpenseEvents = (): ExpenseEventsQuery => ({
+const buildExpenseEvents = (): ExpenseEventFeed => ({
   expenseDeposits: {
     items: [
       {
@@ -151,7 +151,7 @@ const buildExpenseEvents = (): ExpenseEventsQuery => ({
   }
 })
 
-const buildIncomingTokenTransfers = (): IncomingBankTokenTransfersQuery => ({
+const buildIncomingTokenTransfers = (): IncomingBankTokenTransferFeed => ({
   bankTokenTransfers: {
     items: [
       {

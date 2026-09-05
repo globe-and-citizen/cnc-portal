@@ -1,20 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { USDC_ADDRESS } from '@/constant'
-import type { ExpenseEventsQuery } from '@/types/ponder/expense'
+import type { ExpenseEventFeed } from '@/types/contract-events/expense'
 import ExpenseMonthSpent from '../ExpenseMonthSpent.vue'
 
 // The component now derives monthly spend from the RPC-sourced Expense events
 // (via useExpenseEventsViaLogs), filtering token transfers by timestamp. This
 // holds the single result ref the mocked composable returns.
 const state = vi.hoisted(() => ({
-  result: null as unknown as { value: ExpenseEventsQuery | undefined },
+  result: null as unknown as { value: ExpenseEventFeed | undefined },
   error: null as unknown as { value: Error | null }
 }))
 
 vi.mock('@/composables/expense/useExpenseEventsViaLogs', async () => {
   const { ref } = await import('vue')
-  state.result = ref<ExpenseEventsQuery | undefined>(undefined)
+  state.result = ref<ExpenseEventFeed | undefined>(undefined)
   state.error = ref<Error | null>(null)
   return {
     useExpenseEventsViaLogs: () => ({
@@ -34,7 +34,7 @@ const tsInPrevMonth = Math.floor(
   new Date(now.getFullYear(), now.getMonth() - 1, 15, 12).getTime() / 1000
 )
 
-const emptyEvents = (): ExpenseEventsQuery => ({
+const emptyEvents = (): ExpenseEventFeed => ({
   expenseDeposits: { items: [] },
   expenseTokenDeposits: { items: [] },
   expenseTransfers: { items: [] },

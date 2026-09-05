@@ -77,14 +77,14 @@ export type SafeMultiplierUpdatedRow = {
   timestamp: number
 }
 
-export type InvestorEventsQuery = {
+export type InvestorEventFeed = {
   investorMints: { items: InvestorMintRow[] }
   investorDividendDistributeds: { items: InvestorDividendDistributedRow[] }
   investorDividendPaids: { items: InvestorDividendPaidRow[] }
   investorDividendPaymentFaileds: { items: InvestorDividendPaymentFailedRow[] }
 }
 
-export type SafeDepositRouterEventsQuery = {
+export type SafeDepositRouterEventFeed = {
   safeDeposits: { items: SafeDepositRow[] }
   safeDepositsEnableds: { items: SafeDepositsEnabledRow[] }
   safeDepositsDisableds: { items: SafeDepositsDisabledRow[] }

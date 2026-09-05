@@ -28,9 +28,9 @@ import type {
   InvestorMintRow,
   InvestorDividendPaidRow,
   SafeDepositRow
-} from '@/types/ponder/investor'
-import type { CashRemunerationWithdrawTokenRow } from '@/types/ponder/cash-remuneration'
-import type { VestingTokensReleasedRow } from '@/types/ponder/vesting'
+} from '@/types/contract-events/investor'
+import type { CashRemunerationWithdrawTokenRow } from '@/types/contract-events/cash-remuneration'
+import type { VestingTokensReleasedRow } from '@/types/contract-events/vesting'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { atDate, type MapperContext } from './context'
 

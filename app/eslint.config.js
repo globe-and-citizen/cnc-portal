@@ -66,7 +66,6 @@ const bannedGlobalMockPaths = [
   '@nuxt/ui/composables',
   // composables.setup.ts
   '@tanstack/vue-query',
-  '@vue/apollo-composable',
   '@/api',
   'vue-router',
   '@vueuse/core',

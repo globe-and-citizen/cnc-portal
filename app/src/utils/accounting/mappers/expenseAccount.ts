@@ -29,7 +29,7 @@ import type {
   ExpenseTokenTransferRow,
   ExpenseOwnerTreasuryWithdrawNativeRow,
   ExpenseOwnerTreasuryWithdrawTokenRow
-} from '@/types/ponder/expense'
+} from '@/types/contract-events/expense'
 import type { ExpenseResponse } from '@/types/expense-account'
 import { getTokenAddress, getTokenDecimals, tokenSymbol } from '@/utils/tokens/metadata'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'

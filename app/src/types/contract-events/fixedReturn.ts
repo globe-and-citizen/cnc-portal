@@ -94,7 +94,7 @@ export type FixedReturnTokenSupportRemovedRow = {
   timestamp: number
 }
 
-export type FixedReturnEventsQuery = {
+export type FixedReturnEventFeed = {
   fixedReturnLendingOfferCreateds: { items: FixedReturnLendingOfferCreatedRow[] }
   fixedReturnFundsLents: { items: FixedReturnFundsLentRow[] }
   fixedReturnLenderRepaids: { items: FixedReturnLenderRepaidRow[] }

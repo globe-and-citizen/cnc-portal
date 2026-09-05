@@ -215,8 +215,6 @@ const currencyStore = useCurrencyStore()
 const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.bankAddress.toLowerCase())
 
-// EXPERIMENT: source the Bank transaction history from the RPC (eth_getLogs)
-// instead of Ponder. Returns the same { result, loading, error } shape.
 const { result, error, loading } = useBankEventsViaLogs(contractAddress)
 
 const rawTransactions = computed(() => buildRawBankTransactions(result.value))
@@ -270,7 +268,7 @@ const columns = computed(() => [
 
 watch(error, (newError) => {
   if (newError) {
-    log.error('Ponder bank transaction query error:', newError)
+    log.error('RPC log bank transaction query error:', newError)
   }
 })
 </script>

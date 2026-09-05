@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest'
 import { parseEther, type Address } from 'viem'
 import type { CncAccountingInput } from '../assemble'
-import type { BankEventsQuery } from '@/types/ponder/bank'
+import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { TeamContract } from '@/types/teamContract'
 import type { UsdRateOfRecord } from '../toUsd'
 import { assembleAccounting } from './assembleAccounting'
@@ -36,9 +36,9 @@ function contract(type: TeamContract['type'], address: string): TeamContract {
   return { type, address: address as Address, deployer: address as Address, admins: [] }
 }
 
-/** A minimal `BankEventsQuery` carrying only the events the mappers read. */
-function bankEvents(partial: Partial<BankEventsQuery>): BankEventsQuery {
-  return partial as BankEventsQuery
+/** A minimal `BankEventFeed` carrying only the events the mappers read. */
+function bankEvents(partial: Partial<BankEventFeed>): BankEventFeed {
+  return partial as BankEventFeed
 }
 
 /** One team's history: a direct deposit, an external payout and a protocol fee — all in POL. */

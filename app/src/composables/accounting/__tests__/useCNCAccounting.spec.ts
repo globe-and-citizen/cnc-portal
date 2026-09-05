@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { ref } from 'vue'
 
-// The on-chain feeds now come from the `use*EventsViaLogs` composables (getLogs
-// instead of Ponder). Mock each to an empty, non-loading result — the same
+// The on-chain feeds come from the `use*EventsViaLogs` composables. Mock each
+// to an empty, non-loading result — the same
 // pattern the *Transactions.vue specs use — so this spec exercises the assembly
 // logic without touching the RPC. `refetch` resolves so the refresh test passes.
 const emptyLogsFeed = () => ({

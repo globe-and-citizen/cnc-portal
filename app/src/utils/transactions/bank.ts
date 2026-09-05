@@ -1,11 +1,11 @@
-import type { BankEventsQuery, RawBankTransaction } from '@/types/ponder/bank'
+import type { BankEventFeed, RawBankTransaction } from '@/types/contract-events/bank'
 import type { UBadgeColor } from '@/types/ui'
 import { zeroAddress } from 'viem'
 import { formatDateTime, fromUnix } from '@/utils/format'
 import { buildRawTransactions, extractTxHashFromId } from './raw'
 
 export const buildRawBankTransactions = (
-  bankResult?: BankEventsQuery | null
+  bankResult?: BankEventFeed | null
 ): RawBankTransaction[] => {
   const deposits = bankResult?.bankDeposits?.items ?? []
   const tokenDeposits = bankResult?.bankTokenDeposits?.items ?? []

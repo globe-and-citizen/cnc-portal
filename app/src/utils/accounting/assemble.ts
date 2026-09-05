@@ -1,7 +1,7 @@
 /**
  * Pure assembly of a team's CNC accounting (issue #2118, the data layer's core).
  *
- * The composable {@link useCNCAccounting} fetches the raw feeds — Ponder contract
+ * The composable {@link useCNCAccounting} fetches the raw feeds — RPC contract
  * events, the team's Safe incoming transfers and the portal DB rows — and hands
  * them to this **pure** function. Keeping the adaptation + statement build here
  * (rather than inside the composable) means the whole pipeline is unit-testable
@@ -21,12 +21,15 @@ import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import type { TransactionClassificationRecord } from '@/types/accounting-classification'
-import type { BankEventsQuery } from '@/types/ponder/bank'
-import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
-import type { ExpenseEventsQuery } from '@/types/ponder/expense'
-import type { FixedReturnEventsQuery } from '@/types/ponder/fixedReturn'
-import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
-import type { VestingEventsQuery } from '@/types/ponder/vesting'
+import type { BankEventFeed } from '@/types/contract-events/bank'
+import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
+import type { ExpenseEventFeed } from '@/types/contract-events/expense'
+import type { FixedReturnEventFeed } from '@/types/contract-events/fixedReturn'
+import type {
+  InvestorEventFeed,
+  SafeDepositRouterEventFeed
+} from '@/types/contract-events/investor'
+import type { VestingEventFeed } from '@/types/contract-events/vesting'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
 import type { ClassificationOverride } from '@/utils/accounting/classification'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
@@ -84,16 +87,16 @@ export interface CncAccountingInput {
   /** FX resolver for non-pegged tokens (native, SHER) — see toUsd. */
   rateOfRecord?: UsdRateOfRecord
   // ── raw query results (any may be null: source absent, disabled or failed) ──
-  bankEvents?: BankEventsQuery | null
-  cashRemunerationEvents?: CashRemunerationEventsQuery | null
-  expenseEvents?: ExpenseEventsQuery | null
-  fixedReturnEvents?: FixedReturnEventsQuery | null
+  bankEvents?: BankEventFeed | null
+  cashRemunerationEvents?: CashRemunerationEventFeed | null
+  expenseEvents?: ExpenseEventFeed | null
+  fixedReturnEvents?: FixedReturnEventFeed | null
   /** Rate + maturity per Community Credit offer, read from the contract — what
    *  lets the interest be accrued over the term instead of expensed at payment. */
   fixedReturnOfferTerms?: readonly CreditOfferTerms[] | null
-  investorEvents?: InvestorEventsQuery | null
-  vestingEvents?: VestingEventsQuery | null
-  safeDepositRouterEvents?: SafeDepositRouterEventsQuery | null
+  investorEvents?: InvestorEventFeed | null
+  vestingEvents?: VestingEventFeed | null
+  safeDepositRouterEvents?: SafeDepositRouterEventFeed | null
   safeTransfers?: readonly SafeIncomingTransfer[] | null
   /** Executed multisig transactions — outflows from the Safe. */
   safeOutgoingTransactions?: readonly SafeTransaction[] | null
@@ -134,7 +137,7 @@ export interface CncAccounting {
  */
 const phase1RateOfRecord: UsdRateOfRecord = () => 0
 
-/** Pull a Ponder query field's `.items`, tolerating a missing/null result. */
+/** Pull an event-feed field's `.items`, tolerating a missing/null result. */
 function items<T>(field: { items: T[] } | null | undefined): T[] {
   return field?.items ?? []
 }

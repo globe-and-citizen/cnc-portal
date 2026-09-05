@@ -95,7 +95,7 @@ export type RawBankTransaction = {
   type: string
 }
 
-export type BankEventsQuery = {
+export type BankEventFeed = {
   bankDeposits: { items: BankDepositRow[] }
   bankTokenDeposits: { items: BankTokenDepositRow[] }
   bankTransfers: { items: BankTransferRow[] }
@@ -108,7 +108,7 @@ export type BankEventsQuery = {
   rawContractTokenTransfers: { items: RawContractTokenTransferRow[] }
 }
 
-export type IncomingBankTokenTransfersQuery = {
+export type IncomingBankTokenTransferFeed = {
   bankTokenTransfers: {
     items: Array<{
       id: string

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
 import { formatDateTime, fromUnix } from '@/utils/format'
-import type { BankEventsQuery } from '@/types/ponder/bank'
+import type { BankEventFeed } from '@/types/contract-events/bank'
 import {
   buildRawBankTransactions,
   formatBankTransactionDate,
@@ -14,7 +14,7 @@ const USER_B = '0x3333333333333333333333333333333333333333'
 const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
 const USDT_ADDRESS = '0xc5fA85B5C5f9C3A17f5A24b2B55B4516C3A4fA5B'
 
-const buildBankEvents = (): BankEventsQuery => ({
+const buildBankEvents = (): BankEventFeed => ({
   bankDeposits: {
     items: [
       {

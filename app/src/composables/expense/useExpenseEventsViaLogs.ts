@@ -1,14 +1,13 @@
 /**
- * EXPERIMENT (getLogs vs indexer) — ExpenseAccount event feed from the RPC, in
- * the exact `ExpenseEventsQuery` shape, via the shared `useContractEventsViaLogs`
- * base. Scope: the contract's OWN events; incoming Bank→Expense transfers remain
- * a separate Ponder feed in the component.
+ * ExpenseAccount event feed from the RPC in the `ExpenseEventFeed` shape via
+ * the shared `useContractEventsViaLogs` base. Scope: the contract's OWN events;
+ * incoming Bank→Expense transfers use the dedicated Bank RPC-log feed.
  */
 import type { MaybeRefOrGetter } from 'vue'
 import ExpenseV1 from '@/artifacts/abi/V1/json/ExpenseAccountEIP712.json'
 import ExpenseV01 from '@/artifacts/abi/V0.1/json/ExpenseAccountEIP712.json'
 import ExpenseV0 from '@/artifacts/abi/V0/json/ExpenseAccountEIP712.json'
-import type { ExpenseEventsQuery } from '@/types/ponder/expense'
+import type { ExpenseEventFeed } from '@/types/contract-events/expense'
 import {
   str,
   unionEventAbi,
@@ -19,7 +18,7 @@ import {
 
 const EXPENSE_EVENT_ABI = unionEventAbi([ExpenseV1, ExpenseV01, ExpenseV0])
 
-const empty = (): ExpenseEventsQuery => ({
+const empty = (): ExpenseEventFeed => ({
   expenseDeposits: { items: [] },
   expenseTokenDeposits: { items: [] },
   expenseTransfers: { items: [] },
@@ -40,7 +39,7 @@ const mapEvent = ({
   contract,
   eventName,
   args
-}: EventMapContext<ExpenseEventsQuery>) => {
+}: EventMapContext<ExpenseEventFeed>) => {
   switch (eventName) {
     case 'Deposited':
       out.expenseDeposits.items.push({
@@ -151,7 +150,7 @@ const mapEvent = ({
 }
 
 export function useExpenseEventsViaLogs(contractAddress: MaybeRefOrGetter<ContractAddressInput>) {
-  return useContractEventsViaLogs<ExpenseEventsQuery>({
+  return useContractEventsViaLogs<ExpenseEventFeed>({
     contractAddress,
     queryKey: 'expense-events-logs',
     eventAbi: EXPENSE_EVENT_ABI,

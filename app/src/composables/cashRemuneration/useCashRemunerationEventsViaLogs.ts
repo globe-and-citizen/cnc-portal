@@ -1,14 +1,14 @@
 /**
- * EXPERIMENT (getLogs vs indexer) — CashRemuneration (payroll) event feed from
- * the RPC, in the exact `CashRemunerationEventsQuery` shape, via the shared
- * `useContractEventsViaLogs` base. Scope: the contract's OWN events; incoming
- * Bank→payroll transfers remain a separate Ponder feed in the component.
+ * CashRemuneration (payroll) event feed from the RPC in the
+ * `CashRemunerationEventFeed` shape via the shared `useContractEventsViaLogs`
+ * base. Scope: the contract's OWN events; incoming Bank→payroll transfers use
+ * the dedicated Bank RPC-log feed.
  */
 import type { MaybeRefOrGetter } from 'vue'
 import CashRemV1 from '@/artifacts/abi/V1/json/CashRemunerationEIP712.json'
 import CashRemV01 from '@/artifacts/abi/V0.1/json/CashRemunerationEIP712.json'
 import CashRemV0 from '@/artifacts/abi/V0/json/CashRemunerationEIP712.json'
-import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
+import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
 import {
   str,
   unionEventAbi,
@@ -19,7 +19,7 @@ import {
 
 const CASH_REM_EVENT_ABI = unionEventAbi([CashRemV1, CashRemV01, CashRemV0])
 
-const empty = (): CashRemunerationEventsQuery => ({
+const empty = (): CashRemunerationEventFeed => ({
   cashRemunerationDeposits: { items: [] },
   cashRemunerationWithdraws: { items: [] },
   cashRemunerationWithdrawTokens: { items: [] },
@@ -39,7 +39,7 @@ const mapEvent = ({
   contract,
   eventName,
   args
-}: EventMapContext<CashRemunerationEventsQuery>) => {
+}: EventMapContext<CashRemunerationEventFeed>) => {
   switch (eventName) {
     case 'Deposited':
       out.cashRemunerationDeposits.items.push({
@@ -137,7 +137,7 @@ const mapEvent = ({
 export function useCashRemunerationEventsViaLogs(
   contractAddress: MaybeRefOrGetter<ContractAddressInput>
 ) {
-  return useContractEventsViaLogs<CashRemunerationEventsQuery>({
+  return useContractEventsViaLogs<CashRemunerationEventFeed>({
     contractAddress,
     queryKey: 'cash-remuneration-events-logs',
     eventAbi: CASH_REM_EVENT_ABI,

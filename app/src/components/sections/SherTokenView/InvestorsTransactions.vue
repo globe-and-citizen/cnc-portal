@@ -244,8 +244,6 @@ const getUsdPrice = (tokenId: TokenId | null): number => {
   return 0
 }
 
-// EXPERIMENT: source Investor + SafeDepositRouter events from the RPC (eth_getLogs)
-// instead of Ponder.
 const { result, error, loading: investorLoading } = useInvestorEventsViaLogs(investorAddress)
 
 const {
@@ -308,7 +306,7 @@ const columns = computed(() => [
 ])
 
 watch([error, safeError], ([newError, newSafeError]) => {
-  if (newError) log.error('Ponder investor transaction query error:', newError)
-  if (newSafeError) log.error('Ponder safe deposit router transaction query error:', newSafeError)
+  if (newError) log.error('RPC log investor transaction query error:', newError)
+  if (newSafeError) log.error('RPC log safe deposit router transaction query error:', newSafeError)
 })
 </script>

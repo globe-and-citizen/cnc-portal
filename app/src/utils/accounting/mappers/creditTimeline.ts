@@ -13,7 +13,7 @@ import type {
   FixedReturnLendingOfferFundedRow,
   FixedReturnLenderRepaidRow,
   FixedReturnPrincipalRefundedRow
-} from '@/types/ponder/fixedReturn'
+} from '@/types/contract-events/fixedReturn'
 
 /**
  * A funded round's economics, read from `getLendingOffer`. Only the rate is

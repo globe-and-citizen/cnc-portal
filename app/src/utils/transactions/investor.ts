@@ -1,8 +1,8 @@
 import type {
-  InvestorEventsQuery,
+  InvestorEventFeed,
   RawInvestorTransaction,
-  SafeDepositRouterEventsQuery
-} from '@/types/ponder/investor'
+  SafeDepositRouterEventFeed
+} from '@/types/contract-events/investor'
 import type { InvestorsTransaction } from '@/types/transactions'
 import type { TokenId } from '@/constant'
 import type { UBadgeColor } from '@/types/ui'
@@ -16,8 +16,8 @@ import { formatSafeDepositRouterMultiplier } from '../safeDepositRouter/model'
 import type { SupportedTokenPresentation } from './presentation'
 
 export const buildRawInvestorTransactions = (
-  investorResult?: InvestorEventsQuery | null,
-  safeResult?: SafeDepositRouterEventsQuery | null
+  investorResult?: InvestorEventFeed | null,
+  safeResult?: SafeDepositRouterEventFeed | null
 ): RawInvestorTransaction[] => {
   const mints = investorResult?.investorMints?.items ?? []
   const distributed = investorResult?.investorDividendDistributeds?.items ?? []

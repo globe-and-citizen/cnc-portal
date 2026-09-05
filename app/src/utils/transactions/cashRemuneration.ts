@@ -1,8 +1,8 @@
 import type {
-  CashRemunerationEventsQuery,
+  CashRemunerationEventFeed,
   RawCashRemunerationTransaction
-} from '@/types/ponder/cash-remuneration'
-import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
+} from '@/types/contract-events/cash-remuneration'
+import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
 import type { UBadgeColor } from '@/types/ui'
 import { zeroAddress } from 'viem'
 import { formatDateTime, fromUnix } from '@/utils/format'
@@ -13,8 +13,8 @@ import {
 } from './raw'
 
 export const buildRawCashRemunerationTransactions = (
-  cashRemunerationResult?: CashRemunerationEventsQuery | null,
-  incomingTokenTransfersResult?: IncomingBankTokenTransfersQuery | null
+  cashRemunerationResult?: CashRemunerationEventFeed | null,
+  incomingTokenTransfersResult?: IncomingBankTokenTransferFeed | null
 ): RawCashRemunerationTransaction[] => {
   const deposits = cashRemunerationResult?.cashRemunerationDeposits?.items ?? []
   const withdraws = cashRemunerationResult?.cashRemunerationWithdraws?.items ?? []

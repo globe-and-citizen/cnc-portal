@@ -1,5 +1,5 @@
-import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
-import type { ExpenseEventsQuery, RawExpenseTransaction } from '@/types/ponder/expense'
+import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
+import type { ExpenseEventFeed, RawExpenseTransaction } from '@/types/contract-events/expense'
 import type { UBadgeColor } from '@/types/ui'
 import { zeroAddress } from 'viem'
 import { formatDateTime, fromUnix } from '@/utils/format'
@@ -10,8 +10,8 @@ import {
 } from './raw'
 
 export const buildRawExpenseTransactions = (
-  expenseResult?: ExpenseEventsQuery | null,
-  incomingTokenTransfersResult?: IncomingBankTokenTransfersQuery | null
+  expenseResult?: ExpenseEventFeed | null,
+  incomingTokenTransfersResult?: IncomingBankTokenTransferFeed | null
 ): RawExpenseTransaction[] => {
   const deposits = expenseResult?.expenseDeposits?.items ?? []
   const tokenDeposits = expenseResult?.expenseTokenDeposits?.items ?? []

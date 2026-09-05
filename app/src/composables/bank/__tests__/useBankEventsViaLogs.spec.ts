@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { ChainClient, DecodedLogLike, EventMapContext } from '@/composables/eventsViaLogs'
-import type { BankEventsQuery } from '@/types/ponder/bank'
+import type { BankEventFeed } from '@/types/contract-events/bank'
 import {
   bankExtraLogs,
   empty,
@@ -106,7 +106,7 @@ describe('bankExtraLogs', () => {
 })
 
 describe('mapBankExtra', () => {
-  const fold = (log: DecodedLogLike): BankEventsQuery => {
+  const fold = (log: DecodedLogLike): BankEventFeed => {
     const out = empty()
     mapBankExtra({
       out,
@@ -116,7 +116,7 @@ describe('mapBankExtra', () => {
       eventName: log.eventName ?? '',
       args: log.args,
       log
-    } as EventMapContext<BankEventsQuery>)
+    } as EventMapContext<BankEventFeed>)
     return out
   }
 

@@ -16,7 +16,7 @@
  * validates the complete operation, withholds an orphaned fee, and reports it
  * for reconciliation.
  */
-import type { BankFeePaidRow } from '@/types/ponder/bank'
+import type { BankFeePaidRow } from '@/types/contract-events/bank'
 import { makeEntry, sourceOperationIdOf, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { atDate, type MapperContext } from './context'
 

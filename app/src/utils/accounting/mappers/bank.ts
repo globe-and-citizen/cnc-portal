@@ -18,7 +18,7 @@ import type {
   BankTokenDepositRow,
   BankTransferRow,
   BankTokenTransferRow
-} from '@/types/ponder/bank'
+} from '@/types/contract-events/bank'
 import { makeEntry, sourceOperationIdOf, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import { atDate, type MapperContext } from './context'

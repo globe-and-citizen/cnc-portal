@@ -1,13 +1,13 @@
 /**
  * EXPERIMENT (getLogs vs indexer) — SafeDepositRouter event feed from the RPC,
- * in the exact `SafeDepositRouterEventsQuery` shape, via the shared
+ * in the exact `SafeDepositRouterEventFeed` shape, via the shared
  * `useContractEventsViaLogs` base.
  */
 import type { MaybeRefOrGetter } from 'vue'
 import SafeRouterV1 from '@/artifacts/abi/V1/json/SafeDepositRouter.json'
 import SafeRouterV01 from '@/artifacts/abi/V0.1/json/SafeDepositRouter.json'
 import SafeRouterV0 from '@/artifacts/abi/V0/json/SafeDepositRouter.json'
-import type { SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
+import type { SafeDepositRouterEventFeed } from '@/types/contract-events/investor'
 import {
   str,
   unionEventAbi,
@@ -18,7 +18,7 @@ import {
 
 const SAFE_ROUTER_EVENT_ABI = unionEventAbi([SafeRouterV1, SafeRouterV01, SafeRouterV0])
 
-const empty = (): SafeDepositRouterEventsQuery => ({
+const empty = (): SafeDepositRouterEventFeed => ({
   safeDeposits: { items: [] },
   safeDepositsEnableds: { items: [] },
   safeDepositsDisableds: { items: [] },
@@ -34,7 +34,7 @@ const mapEvent = ({
   contract,
   eventName,
   args
-}: EventMapContext<SafeDepositRouterEventsQuery>) => {
+}: EventMapContext<SafeDepositRouterEventFeed>) => {
   switch (eventName) {
     case 'Deposited':
       out.safeDeposits.items.push({
@@ -88,7 +88,7 @@ const mapEvent = ({
 export function useSafeDepositRouterEventsViaLogs(
   contractAddress: MaybeRefOrGetter<ContractAddressInput>
 ) {
-  return useContractEventsViaLogs<SafeDepositRouterEventsQuery>({
+  return useContractEventsViaLogs<SafeDepositRouterEventFeed>({
     contractAddress,
     queryKey: 'safe-deposit-router-events-logs',
     eventAbi: SAFE_ROUTER_EVENT_ABI,

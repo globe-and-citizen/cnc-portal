@@ -223,8 +223,6 @@ const currencyStore = useCurrencyStore()
 const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.fixedReturnAddress.toLowerCase())
 
-// EXPERIMENT: source the Credit Account transaction history from the RPC
-// (eth_getLogs) instead of Ponder — mirrors Bank's useBankEventsViaLogs.
 const { result, error, loading } = useFixedReturnEventsViaLogs(contractAddress)
 
 const rawTransactions = computed(() => {
@@ -282,7 +280,7 @@ const columns = computed(() => [
 
 watch(error, (newError) => {
   if (newError) {
-    log.error('Ponder credit account transaction query error:', newError)
+    log.error('RPC log credit account transaction query error:', newError)
   }
 })
 </script>

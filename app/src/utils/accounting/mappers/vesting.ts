@@ -34,7 +34,7 @@ import type {
   VestingCreatedRow,
   VestingTokensReleasedRow,
   VestingStoppedRow
-} from '@/types/ponder/vesting'
+} from '@/types/contract-events/vesting'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { atDate, type MapperContext } from './context'
 

@@ -12,7 +12,7 @@
  * Minted` is **not** re-booked by the investor mapper — see {@link mapInvestorEvents}.
  */
 import { formatUnits } from 'viem'
-import type { SafeDepositRow } from '@/types/ponder/investor'
+import type { SafeDepositRow } from '@/types/contract-events/investor'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { atDate, type MapperContext } from './context'
 
