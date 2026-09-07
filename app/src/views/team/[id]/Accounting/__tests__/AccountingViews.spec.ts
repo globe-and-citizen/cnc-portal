@@ -1,55 +1,59 @@
 import { describe, it, expect } from 'vitest'
-import { renderWithProviders } from '@/tests/mocks'
+import { shallowMount } from '@vue/test-utils'
 import SummaryView from '../SummaryView.vue'
 import IncomeStatementView from '../IncomeStatementView.vue'
 import BalanceSheetView from '../BalanceSheetView.vue'
 import TrialBalanceView from '../TrialBalanceView.vue'
 import GeneralLedgerView from '../GeneralLedgerView.vue'
+import ClassificationView from '../ClassificationView.vue'
+import AccountingSummary from '@/components/sections/AccountingView/AccountingSummary.vue'
+import IncomeStatementCard from '@/components/sections/AccountingView/IncomeStatementCard.vue'
+import BalanceSheetCard from '@/components/sections/AccountingView/BalanceSheetCard.vue'
+import TrialBalanceCard from '@/components/sections/AccountingView/TrialBalanceCard.vue'
+import GeneralLedger from '@/components/sections/AccountingView/GeneralLedger.vue'
+import ClassificationTable from '@/components/sections/AccountingView/ClassificationTable.vue'
 
-// Each accounting page is a thin view wrapping its section card in the shared
-// `AccountingPage` shell (header + error banner + one `provideAccounting` per
-// page). The books resolve through the globally-mocked queries; the numeric
-// mapping is covered by `presenter.spec.ts` and the card internals by
-// `AccountingView.spec.ts` — here we assert each page mounts its shell and
-// section without error.
+// AccountingPage owns the shared route context. These leaf views render only
+// their report so navigation can replace them without remounting that owner.
 
 describe('SummaryView', () => {
-  it('renders the shell header and the summary section', () => {
-    const wrapper = renderWithProviders(SummaryView)
-    expect(wrapper.text()).toContain('Accounting')
-    expect(wrapper.find('[data-test="balance-banner"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="accounting-error"]').exists()).toBe(false)
+  it('renders the summary section', () => {
+    const wrapper = shallowMount(SummaryView)
+    expect(wrapper.findComponent(AccountingSummary).exists()).toBe(true)
   })
 })
 
 describe('IncomeStatementView', () => {
-  it('renders the shell header and the income statement', () => {
-    const wrapper = renderWithProviders(IncomeStatementView)
-    expect(wrapper.text()).toContain('Accounting')
-    expect(wrapper.text()).toContain('Income statement')
+  it('renders the income statement', () => {
+    const wrapper = shallowMount(IncomeStatementView)
+    expect(wrapper.findComponent(IncomeStatementCard).exists()).toBe(true)
   })
 })
 
 describe('BalanceSheetView', () => {
-  it('renders the shell header and the balance sheet', () => {
-    const wrapper = renderWithProviders(BalanceSheetView)
-    expect(wrapper.text()).toContain('Accounting')
-    expect(wrapper.text()).toContain('Balance sheet')
+  it('renders the balance sheet', () => {
+    const wrapper = shallowMount(BalanceSheetView)
+    expect(wrapper.findComponent(BalanceSheetCard).exists()).toBe(true)
   })
 })
 
 describe('TrialBalanceView', () => {
-  it('renders the shell header and the trial balance', () => {
-    const wrapper = renderWithProviders(TrialBalanceView)
-    expect(wrapper.text()).toContain('Accounting')
-    expect(wrapper.text()).toContain('Trial balance')
+  it('renders the trial balance', () => {
+    const wrapper = shallowMount(TrialBalanceView)
+    expect(wrapper.findComponent(TrialBalanceCard).exists()).toBe(true)
   })
 })
 
 describe('GeneralLedgerView', () => {
-  it('renders the shell header and the ledger', () => {
-    const wrapper = renderWithProviders(GeneralLedgerView)
-    expect(wrapper.text()).toContain('Accounting')
-    expect(wrapper.text()).toContain('Total movements')
+  it('renders the ledger', () => {
+    const wrapper = shallowMount(GeneralLedgerView)
+    expect(wrapper.findComponent(GeneralLedger).exists()).toBe(true)
+  })
+})
+
+describe('ClassificationView', () => {
+  it('renders the classification table', () => {
+    const wrapper = shallowMount(ClassificationView)
+    expect(wrapper.findComponent(ClassificationTable).exists()).toBe(true)
   })
 })

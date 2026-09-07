@@ -25,21 +25,23 @@ import { money } from '@/utils/accounting/presenter'
 // `app/` on every run. Stub the composable so the click stops at the boundary;
 // the builders behind it are covered by `accountingPdf.spec.ts` and the
 // filenames by `exportNaming.spec.ts`.
+const accountingContext = vi.hoisted(() => ({ journal: { value: [] as unknown[] } }))
 const { exportPdf, exportExcel } = vi.hoisted(() => ({ exportPdf: vi.fn(), exportExcel: vi.fn() }))
 vi.mock('@/composables/accounting/useAccountingExport', () => ({
   useAccountingExport: () => ({ exportPdf, exportExcel })
 }))
+vi.mock('@/composables/accounting/useAccountingContext', () => ({
+  useAccountingContext: () => accountingContext
+}))
 
 beforeEach(() => {
-  exportPdf.mockClear()
-  exportExcel.mockClear()
+  accountingContext.journal.value = buildJournal(catalogueLedger)
+  vi.clearAllMocks()
 })
 
-// The cards now read live books via `useAccountingContext`. Rendered standalone
-// (no parent provider) they self-fetch through the globally-mocked queries, which
-// return a valid, always-balanced book (off-chain payroll accruals from the
-// mocked weekly claims may appear). The numeric mapping is covered by
-// `presenter.spec.ts`; here we assert the sections render without error.
+// Route-mounted cards read the journal from `useAccountingContext`. These
+// component-focused specs use one shared fixture; projection values are covered
+// by the pure presenter specs.
 
 describe('AccountingSummary', () => {
   it('shows the balance banner and live metric cards', () => {

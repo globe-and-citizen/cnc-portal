@@ -22,20 +22,20 @@
       data-test="accounting-gaps"
     />
 
-    <slot />
+    <RouterView />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import AccountingHeader from './AccountingHeader.vue'
 import { provideAccounting } from '@/composables/accounting/useAccountingContext'
 
 const route = useRoute()
 
-// Resolve the team's books once here; the slotted section injects them via
-// `useAccountingContext` (its export bar included) instead of re-fetching.
+// Resolve the team's books once for the complete Accounting route tree. Child
+// reports inject this result while their local filters and projections remount.
 const accounting = provideAccounting(() => (route.params.id as string) ?? null)
 const error = computed(() => accounting.error.value)
 

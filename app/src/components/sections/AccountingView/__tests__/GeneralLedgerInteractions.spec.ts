@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
 import GeneralLedger from '../GeneralLedger.vue'
@@ -6,10 +6,19 @@ import TrialBalanceCard from '../TrialBalanceCard.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import ColumnVisibilitySelect from '../ColumnVisibilitySelect.vue'
 import { mockRouterPush, mockRouterReplace } from '@/tests/mocks/router.mock'
+import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 
-// The mocked book self-fetched by `useAccountingContext` is valid and balanced,
-// but its exact rows aren't asserted here — these specs exercise the ledger's
-// interactions (account jump + account filter), guarding the branch when empty.
+const { accountingContext } = vi.hoisted(() => ({
+  accountingContext: { journal: { value: [] as unknown[] } }
+}))
+vi.mock('@/composables/accounting/useAccountingContext', () => ({
+  useAccountingContext: () => accountingContext
+}))
+accountingContext.journal.value = buildJournal(catalogueLedger)
+
+// These specs exercise the ledger's interactions against the shared journal,
+// guarding the interaction branches when the supplied journal is empty.
 
 describe('General Ledger → Trial Balance jump', () => {
   it('routes a clicked account to its Trial Balance drill-down', async () => {
