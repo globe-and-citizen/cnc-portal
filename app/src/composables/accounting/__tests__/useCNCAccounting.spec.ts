@@ -40,20 +40,18 @@ import { useCNCAccounting } from '../useCNCAccounting'
 //   • `useGetTeamQuery` → `mockTeamData` (one InvestorV1 pocket, an owner address)
 //   • the on-chain feeds → the empty getLogs mocks above (no on-chain events)
 //   • the backend query hooks → mock responses (weekly claims may yield accruals)
-// So the composable assembles a valid, always-balanced set of books for team "1".
+// So the composable assembles a valid journal for team "1".
 
 describe('useCNCAccounting', () => {
-  it('exposes the ledger, the three statements and query state', () => {
+  it('exposes the canonical journal without parallel source or report state', () => {
     const acc = useCNCAccounting('1')
 
     // Every posting is balanced by construction, so the books balance regardless
     // of whether the mocked feeds produce any entries (e.g. payroll accruals).
     expect(acc).not.toHaveProperty('entries')
+    expect(acc).not.toHaveProperty('accountRegistry')
+    expect(acc).not.toHaveProperty('reports')
     expect(Array.isArray(acc.journal.value)).toBe(true)
-    expect(acc.reports.value.summary).toHaveProperty('cash')
-    expect(acc.reports.value.generalLedger.balanced).toBe(true)
-    expect(typeof acc.reports.value.incomeStatement.netIncome).toBe('bigint')
-    expect(acc.reports.value.balanceSheet.balanced).toBe(true)
   })
 
   it('surfaces the team query loading / error state', () => {
@@ -70,6 +68,5 @@ describe('useCNCAccounting', () => {
   it('degrades gracefully when the team id is null (no contracts)', () => {
     const acc = useCNCAccounting(null)
     expect(Array.isArray(acc.journal.value)).toBe(true)
-    expect(acc.reports.value.balanceSheet.balanced).toBe(true)
   })
 })

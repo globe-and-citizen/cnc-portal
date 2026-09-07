@@ -223,7 +223,7 @@ describe('presentJournalLedger', () => {
 })
 
 describe('filterByPeriod', () => {
-  const entries = books().entries
+  const entries = books().journal
   it('keeps entries inside an inclusive window', () => {
     expect(filterByPeriod(entries, new Date(150_000), null)).toHaveLength(1) // only ts=200
     expect(filterByPeriod(entries, null, new Date(150_000))).toHaveLength(1) // only ts=100

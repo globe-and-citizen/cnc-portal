@@ -5,13 +5,12 @@
  * (and the view) depend on this module rather than on each other.
  */
 import type { LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
-import type { CncAccounting } from './assemble'
+import type { JournalEntry } from './journalEntry'
 
-/** Only journal records and report projections cross the export boundary. */
-export type AccountingExportSnapshot = Pick<
-  CncAccounting,
-  'journal' | 'summary' | 'generalLedger' | 'incomeStatement' | 'balanceSheet'
->
+/** The canonical journal is the only Accounting data that crosses the export boundary. */
+export interface AccountingExportSnapshot {
+  journal: readonly JournalEntry[]
+}
 
 /** The exportable accounting sections, in display order. */
 export type SectionKey = 'summary' | 'income' | 'balance' | 'trial' | 'ledger'

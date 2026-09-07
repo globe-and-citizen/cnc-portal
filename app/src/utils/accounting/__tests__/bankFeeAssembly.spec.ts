@@ -73,7 +73,11 @@ describe('Bank fee journal assembly', () => {
         { account: { family: { name: 'Cash — Bank' } }, credit: usd(101) }
       ]
     })
-    expect(accounting.entries.filter((entry) => entry.useCase === 'FEE')).toHaveLength(1)
+    expect(
+      accounting.journal[0]!.lines.filter(
+        (line) => line.account.family.name === 'Transaction Fee Expense'
+      )
+    ).toHaveLength(1)
     expect(accounting.unmatchedFeeOperationIds).toEqual([])
   })
 
@@ -84,7 +88,6 @@ describe('Bank fee journal assembly', () => {
       bankEvents: bankEvents(operationId, false)
     })
 
-    expect(accounting.entries).toEqual([])
     expect(accounting.journal).toEqual([])
     expect(accounting.unmatchedFeeOperationIds).toEqual([operationId])
   })

@@ -1,26 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { mockToast } from '@/tests/mocks/store.mock'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
-const {
-  buildTables,
-  exportTablesPdf,
-  buildSheets,
-  exportSheetsExcel,
-  journal,
-  reports,
-  resolveUser
-} = vi.hoisted(() => ({
-  buildTables: vi.fn(() => ['pdf-table']),
-  exportTablesPdf: vi.fn(),
-  buildSheets: vi.fn(() => ['excel-sheet']),
-  exportSheetsExcel: vi.fn(),
-  journal: [],
-  reports: { trialBalance: [] },
-  resolveUser: vi.fn(() => ({ name: 'Ali' }))
-}))
+const { buildTables, exportTablesPdf, buildSheets, exportSheetsExcel, journal, resolveUser } =
+  vi.hoisted(() => ({
+    buildTables: vi.fn(() => ['pdf-table']),
+    exportTablesPdf: vi.fn(),
+    buildSheets: vi.fn(() => ['excel-sheet']),
+    exportSheetsExcel: vi.fn(),
+    journal: [],
+    resolveUser: vi.fn(() => ({ name: 'Ali' }))
+  }))
 
 // The composable takes `useToast` from @nuxt/ui's auto-import, which resolves to the
 // runtime file rather than the '@nuxt/ui/composables' entry the global setup mocks.
@@ -34,8 +26,7 @@ vi.mock('@/composables/transactions/useTransactionPresentation', () => ({
 }))
 vi.mock('@/composables/accounting/useAccountingContext', () => ({
   useAccountingContext: () => ({
-    journal: ref(journal),
-    reports: computed(() => reports)
+    journal: ref(journal)
   })
 }))
 
@@ -46,7 +37,7 @@ describe('useAccountingExport', () => {
 
   it('exports a PDF from a snapshot of the live books', async () => {
     await useAccountingExport().exportPdf(specs, { filename: 'ledger.pdf' })
-    expect(buildTables).toHaveBeenCalledWith({ journal, ...reports }, specs, expect.any(Function))
+    expect(buildTables).toHaveBeenCalledWith({ journal }, specs, expect.any(Function))
     expect(exportTablesPdf).toHaveBeenCalledWith(['pdf-table'], { filename: 'ledger.pdf' })
     expect(mockToast.add).toHaveBeenCalledWith({ title: 'Exported to PDF', color: 'success' })
   })
@@ -60,7 +51,7 @@ describe('useAccountingExport', () => {
 
   it('exports an Excel workbook and confirms with a custom message', async () => {
     await useAccountingExport().exportExcel(specs, 'ledger.xlsx', 'Ledger saved')
-    expect(buildSheets).toHaveBeenCalledWith({ journal, ...reports }, specs, expect.any(Function))
+    expect(buildSheets).toHaveBeenCalledWith({ journal }, specs, expect.any(Function))
     expect(exportSheetsExcel).toHaveBeenCalledWith(['excel-sheet'], 'ledger.xlsx')
     expect(mockToast.add).toHaveBeenCalledWith({ title: 'Ledger saved', color: 'success' })
   })

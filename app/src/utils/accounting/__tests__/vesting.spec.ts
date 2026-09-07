@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { type Address } from 'viem'
 import { mapVestingEvents } from '@/utils/accounting/mappers/vesting'
 import { mapInvestorEvents } from '@/utils/accounting/mappers/investor'
-import { makeCtx, ADDR, balanceOf } from './fixtures'
+import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
+import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
+import { journalFamilyBalances } from '@/utils/accounting/journalBalances'
+import type { JournalEntry } from '@/utils/accounting/journalEntry'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import { makeCtx, ADDR, usdNumber } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
 
 const ctx = makeCtx()
@@ -18,6 +23,17 @@ const release = (amount: string, timestamp = 200, id = 'vr1') => ({
   timestamp
 })
 const stop = (timestamp = 300) => ({ id: 'vs1', ...SCHEDULE, timestamp })
+
+function journalBalance(entries: readonly JournalEntry[], account: AccountName): number {
+  return usdNumber(journalFamilyBalances(entries).get(account) ?? 0n)
+}
+
+function equityContribution(entries: readonly JournalEntry[], account: AccountName): number {
+  const line = buildBalanceSheet(entries).equity.find(
+    (candidate) => candidate.account.family.name === account
+  )
+  return usdNumber(line?.contribution ?? 0n)
+}
 
 describe('mapVestingEvents', () => {
   it('books the grant upfront as Dr Deferred SHER Compensation · Cr SHERS To Be Issued', () => {
@@ -219,17 +235,18 @@ describe('vesting through the whole pipeline', () => {
     })
 
     // The equity is booked once by the vesting mapper; the twin mint is dropped.
-    expect(acc.entries.filter((entry) => entry.useCase === 'DEFAULT-D')).toHaveLength(0)
+    expect(acc.journal.filter((entry) => entry.useCase === 'DEFAULT-D')).toHaveLength(0)
     // Issued shares only ever come from an actual mint.
-    expect(balanceOf(acc.entries, 'Investor Equity')).toBeCloseTo(12.5, 6)
+    expect(journalBalance(acc.journal, 'Investor Equity')).toBeCloseTo(12.5, 6)
     // The remaining 75 SHER stay promised but unminted.
-    expect(balanceOf(acc.entries, 'SHERS To Be Issued')).toBeCloseTo(37.5, 6)
+    expect(journalBalance(acc.journal, 'SHERS To Be Issued')).toBeCloseTo(37.5, 6)
     // The whole award sits in contra-equity, so net equity is unchanged.
-    expect(balanceOf(acc.entries, 'Deferred SHER Compensation')).toBeCloseTo(-50, 6)
+    expect(equityContribution(acc.journal, 'Deferred SHER Compensation')).toBeCloseTo(-50, 6)
     // Nothing on the income statement, and the books still balance.
-    expect(acc.incomeStatement.netIncome).toBe(0n)
-    expect(acc.balanceSheet.balanced).toBe(true)
-    expect(acc.balanceSheet.totalEquity).toBe(0n)
+    expect(buildIncomeStatement(acc.journal).netIncome).toBe(0n)
+    const balance = buildBalanceSheet(acc.journal)
+    expect(balance.balanced).toBe(true)
+    expect(balance.totalEquity).toBe(0n)
   })
 
   it('nets a fully released grant to zero equity, with Investor Equity at the released value', () => {
@@ -240,10 +257,10 @@ describe('vesting through the whole pipeline', () => {
       mintAmounts: ['100000000']
     })
 
-    expect(balanceOf(acc.entries, 'Investor Equity')).toBeCloseTo(50, 6)
-    expect(balanceOf(acc.entries, 'SHERS To Be Issued')).toBeCloseTo(0, 6)
-    expect(balanceOf(acc.entries, 'Deferred SHER Compensation')).toBeCloseTo(-50, 6)
-    expect(acc.incomeStatement.netIncome).toBe(0n)
+    expect(journalBalance(acc.journal, 'Investor Equity')).toBeCloseTo(50, 6)
+    expect(journalBalance(acc.journal, 'SHERS To Be Issued')).toBeCloseTo(0, 6)
+    expect(equityContribution(acc.journal, 'Deferred SHER Compensation')).toBeCloseTo(-50, 6)
+    expect(buildIncomeStatement(acc.journal).netIncome).toBe(0n)
   })
 
   it('leaves only the vested part behind once a schedule is stopped', () => {
@@ -255,10 +272,10 @@ describe('vesting through the whole pipeline', () => {
     })
 
     // Only the minted part survives: the forfeited remainder leaves no trace.
-    expect(balanceOf(acc.entries, 'Investor Equity')).toBeCloseTo(12.5, 6)
-    expect(balanceOf(acc.entries, 'SHERS To Be Issued')).toBeCloseTo(0, 6)
-    expect(balanceOf(acc.entries, 'Deferred SHER Compensation')).toBeCloseTo(-12.5, 6)
-    expect(acc.incomeStatement.netIncome).toBe(0n)
+    expect(journalBalance(acc.journal, 'Investor Equity')).toBeCloseTo(12.5, 6)
+    expect(journalBalance(acc.journal, 'SHERS To Be Issued')).toBeCloseTo(0, 6)
+    expect(equityContribution(acc.journal, 'Deferred SHER Compensation')).toBeCloseTo(-12.5, 6)
+    expect(buildIncomeStatement(acc.journal).netIncome).toBe(0n)
   })
 
   it('unwinds the whole grant when a schedule is stopped before anything vests', () => {
@@ -269,9 +286,9 @@ describe('vesting through the whole pipeline', () => {
       mintAmounts: []
     })
 
-    expect(balanceOf(acc.entries, 'Investor Equity')).toBe(0)
-    expect(balanceOf(acc.entries, 'SHERS To Be Issued')).toBeCloseTo(0, 6)
-    expect(balanceOf(acc.entries, 'Deferred SHER Compensation')).toBeCloseTo(0, 6)
+    expect(journalBalance(acc.journal, 'Investor Equity')).toBe(0)
+    expect(journalBalance(acc.journal, 'SHERS To Be Issued')).toBeCloseTo(0, 6)
+    expect(equityContribution(acc.journal, 'Deferred SHER Compensation')).toBeCloseTo(0, 6)
   })
 
   it('keeps the three vesting actions visible in the books', () => {
@@ -282,9 +299,9 @@ describe('vesting through the whole pipeline', () => {
       mintAmounts: ['25000000']
     })
 
-    expect(acc.entries.map((entry) => entry.useCase)).toEqual(
+    expect(acc.journal.map((entry) => entry.useCase)).toEqual(
       expect.arrayContaining(['UC-VEST-01', 'UC-VEST-02', 'UC-VEST-03'])
     )
-    expect(acc.entries.find((entry) => entry.useCase === 'UC-VEST-01')?.shares).toBe(100)
+    expect(acc.journal.find((entry) => entry.useCase === 'UC-VEST-01')?.source?.shares).toBe(100)
   })
 })

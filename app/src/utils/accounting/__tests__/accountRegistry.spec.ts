@@ -74,7 +74,7 @@ describe('canonical account registry', () => {
       posting('bank-2', 'Cash — Bank', BANK_2)
     ]
     const books = assembleRawAccounting(entries)
-    const registry = books.accountRegistry
+    const registry = buildAccountRegistry(entries)
     const unresolved = registry.resolve('Cash — Bank')
 
     expect(unresolved).toMatchObject({

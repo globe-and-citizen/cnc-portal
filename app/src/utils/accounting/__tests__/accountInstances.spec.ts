@@ -125,8 +125,14 @@ describe('deployment account evidence', () => {
 
     const books = assembleWithAccountEvidence(entries, accounts, evidence)
     expect(
-      books.accountRegistry.accounts.filter((account) => account.contractAddress)
-    ).toHaveLength(4)
+      new Set(
+        books.journal.flatMap((entry) =>
+          entry.lines.flatMap((line) =>
+            line.account.contractAddress ? [line.account.contractAddress] : []
+          )
+        )
+      ).size
+    ).toBe(4)
     expect(
       books.journal.find((entry) => entry.id === HASH_BANK_IN)?.lines[0].account
     ).toMatchObject({

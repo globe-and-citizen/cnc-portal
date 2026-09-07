@@ -10,14 +10,12 @@ import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 // spans several accounts and three currencies (usdc, native, sher) and carries fee
 // legs, so every selector shows and can be exercised.
 const ctx = vi.hoisted(() => ({
-  entries: null as null | { value: LedgerEntry[] },
   journal: null as null | { value: JournalEntry[] }
 }))
 vi.mock('@/composables/accounting/useAccountingContext', async () => {
   const { ref } = await vi.importActual<typeof import('vue')>('vue')
-  ctx.entries = ref<LedgerEntry[]>([])
   ctx.journal = ref<JournalEntry[]>([])
-  return { useAccountingContext: () => ({ entries: ctx.entries, journal: ctx.journal }) }
+  return { useAccountingContext: () => ({ journal: ctx.journal }) }
 })
 
 // Stop exports at the composable boundary: the real writers end on a browser
@@ -33,7 +31,6 @@ import AccountFilterSelect from '../AccountFilterSelect.vue'
 import CurrencyFilterSelect from '../CurrencyFilterSelect.vue'
 
 const setBook = (entries: LedgerEntry[]) => {
-  ctx.entries!.value = entries
   ctx.journal!.value = buildJournal(entries)
 }
 

@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
+import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { assembleRawAccounting } from './assembleAccounting'
 import { usd } from './fixtures'
@@ -48,7 +52,7 @@ describe('accounting journal assembly', () => {
         { account: { family: { name: 'Cash — Bank' } }, credit: usd(10.05) }
       ]
     })
-    expect(accounting.generalLedger.entries).toEqual(accounting.journal)
+    expect(buildGeneralLedger(accounting.journal).entries).toEqual(accounting.journal)
   })
 
   it('projects one Bank transfer with its fee consistently into every statement', () => {
@@ -77,20 +81,23 @@ describe('accounting journal assembly', () => {
     })
 
     const accounting = assembleRawAccounting([deposit, transfer, fee])
+    const summary = buildAccountingSummary(accounting.journal)
+    const income = buildIncomeStatement(accounting.journal)
+    const balance = buildBalanceSheet(accounting.journal)
 
     expect(accounting.journal).toHaveLength(2)
-    expect(accounting.summary).toMatchObject({
+    expect(summary).toMatchObject({
       cash: usd(99.95),
       income: usd(100),
       expense: usd(0.05),
       transactionFees: usd(0.05)
     })
-    expect(accounting.incomeStatement).toMatchObject({
+    expect(income).toMatchObject({
       totalRevenue: usd(100),
       totalExpenses: usd(0.05),
       netIncome: usd(99.95)
     })
-    expect(accounting.balanceSheet).toMatchObject({
+    expect(balance).toMatchObject({
       totalAssets: usd(99.95),
       earningsToDate: usd(99.95),
       balanced: true
@@ -150,7 +157,6 @@ describe('accounting journal assembly', () => {
 
     const accounting = assembleRawAccounting([fee])
 
-    expect(accounting.entries).toEqual([])
     expect(accounting.journal).toEqual([])
     expect(accounting.unmatchedFeeOperationIds).toEqual([sourceOperationId])
   })

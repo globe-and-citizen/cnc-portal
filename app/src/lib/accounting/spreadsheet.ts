@@ -13,8 +13,7 @@ import {
   presentIncome,
   presentBalance,
   presentTrial,
-  presentSummaryCards,
-  presentBanner,
+  presentSummary,
   incomeExportTitle,
   balanceExportTitle,
   trialExportTitle
@@ -44,8 +43,7 @@ function usd(value: string): number | '' {
 }
 
 function summarySheet(books: AccountingExportSnapshot): SheetRows {
-  const cards = presentSummaryCards(books.summary, books.incomeStatement, books.balanceSheet)
-  const banner = presentBanner(books.balanceSheet, books.generalLedger)
+  const { cards, banner } = presentSummary(books.journal)
   return [
     ['Summary'],
     [],
