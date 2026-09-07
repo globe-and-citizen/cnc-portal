@@ -49,6 +49,8 @@ flowchart LR
 - Utility runtime imports are acyclic. Type-only relationships are erased by TypeScript and do not participate in the runtime graph.
 - Contract reads, store-backed transaction presentation, Safe browser access, logging, spreadsheet/PDF generation, and Safe SDK transaction
   effects remain outside `utils`.
+- Accounting utilities keep token movements and USD calculations as fixed-scale `bigint` values through journal validation and every report
+  projection. Conversion to a JavaScript `number` belongs only to presentation and export boundaries.
 - Boundary validation fails with the exact files and imports that violate the contract; it does not silently maintain an exception baseline.
 - Utility specs remain colocated with their domain owner and validate unchanged formatting, accounting, and transaction semantics.
 
@@ -59,9 +61,10 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c7f058d0227a463709ac7a54ea95f3164cf385b2`
+**Implementation evidence reviewed against:** `4e0df0f277d5c787ed7b0bd958280b46c1fe6430`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
+- [Fixed-scale accounting monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts)
 - [Pure accounting account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
 - [Utility boundary validator](../../../app/scripts/check-utility-boundaries.mjs) and
   [validator tests](../../../app/scripts/__tests__/check-utility-boundaries.node.mjs)

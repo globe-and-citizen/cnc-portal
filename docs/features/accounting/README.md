@@ -16,7 +16,9 @@ These acceptance criteria follow the
 - The Balance Sheet reuses the Trial Balance's concrete account rows and separates them into assets, liabilities, and equity. A redeployed
   or unresolved account remains a separate report line and drill-down; only report totals deliberately aggregate those accounts. The current
   result appears as `Earnings to date`, with each contributing income and expense account shown separately.
-- Monetary entries are reported in USD while retaining their original currency, quantity, and rate of record.
+- Monetary entries are reported in USD while retaining their original currency, exact token base units, token decimals, and rate of record.
+  The journal and every report aggregate fixed-scale integers without rounding; only presentation and export boundaries convert those exact
+  values into human-readable amounts.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
 - Accounting includes every known contract generation. Individual account pages intentionally remain scoped to their current contract.
@@ -93,6 +95,9 @@ flowchart LR
 
 - [x] Every journal posting has equal debit and credit totals.
 - [x] USD-pegged tokens use a one-dollar rate, while native tokens and SHER use their configured rates of record.
+- [x] Every monetary journal line retains its token movement in exact base units and uses one shared fixed-scale USD amount for validation
+      and reporting.
+- [x] A non-zero token movement remains in the books even when its displayed USD value rounds to zero at the selected display precision.
 - [x] Payroll obligations are recognized when an eligible work week ends, before settlement.
 - [x] Internal transfers between known company accounts do not change revenue or expenses.
 - [ ] Reported closing cash balances are reconciled against the corresponding on-chain balances.
@@ -177,6 +182,8 @@ flowchart LR
 - [x] Trial-balance debit and credit totals remain equal for balanced books.
 - [x] The summary, income statement, balance sheet, and their exports project the same validated `JournalEntry` collection as the General
       Ledger.
+- [x] The General Ledger, Trial Balance, summary, income statement, and balance sheet aggregate exact journal amounts and test their
+      accounting identities without per-line, per-account, or per-family rounding.
 - [x] Earnings to date equals income-account contributions minus expense-account contributions through the selected date; it is distinct
       from any posted `Retained Earnings` equity account.
 - [x] The Balance Sheet reuses the Trial Balance's concrete account rows for assets, liabilities, equity, and contra-equity. The account
@@ -218,6 +225,7 @@ flowchart LR
 - [x] A Balance Sheet export preserves the displayed concrete account rows and includes the income and expense account contributions that
       explain `Earnings to date`.
 - [x] An export is generated from one snapshot of the current accounting books.
+- [x] An export converts and rounds monetary values only after the exact journal snapshot and report totals have been calculated.
 - [x] The full-ledger export count follows the journal's operations, including memo-only operations, rather than the number of source events
       or debit and credit lines.
 
@@ -317,7 +325,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `47b4491f581ff46f0e1982d7f7576ded7594cefb`
+**Implementation evidence reviewed against:** `4e0df0f277d5c787ed7b0bd958280b46c1fe6430`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -354,9 +362,11 @@ flowchart LR
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
   [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
+  [fixed-scale monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts),
   [canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts),
   [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts),
   [concrete-account journal balances](../../../app/src/utils/accounting/journalBalances.ts),
+  [exact-precision regression tests](../../../app/src/utils/accounting/__tests__/exactPrecision.spec.ts),
   [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts),
   [transaction identity helper](../../../app/src/utils/accounting/ledgerEntry.ts),
   [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
