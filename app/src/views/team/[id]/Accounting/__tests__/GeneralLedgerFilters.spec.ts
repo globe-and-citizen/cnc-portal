@@ -20,15 +20,15 @@ vi.mock('@/composables/accounting/useAccountingContext', async () => {
 
 // Stop exports at the composable boundary: the real writers end on a browser
 // download that, under jsdom, drops files into the process cwd (see the same stub
-// in AccountingView.spec.ts). The builders behind it have their own specs.
+// in AccountingReports.spec.ts). The builders behind it have their own specs.
 const { exportPdf, exportExcel } = vi.hoisted(() => ({ exportPdf: vi.fn(), exportExcel: vi.fn() }))
 vi.mock('@/composables/accounting/useAccountingExport', () => ({
   useAccountingExport: () => ({ exportPdf, exportExcel })
 }))
 
-import GeneralLedger from '../GeneralLedger.vue'
-import AccountFilterSelect from '../AccountFilterSelect.vue'
-import CurrencyFilterSelect from '../CurrencyFilterSelect.vue'
+import GeneralLedgerView from '../GeneralLedgerView.vue'
+import AccountFilterSelect from '@/components/sections/AccountingView/AccountFilterSelect.vue'
+import CurrencyFilterSelect from '@/components/sections/AccountingView/CurrencyFilterSelect.vue'
 
 const setBook = (entries: LedgerEntry[]) => {
   ctx.journal!.value = buildJournal(entries)
@@ -45,9 +45,9 @@ beforeEach(() => {
   exportPdf.mockClear()
 })
 
-describe('GeneralLedger export', () => {
+describe('GeneralLedgerView export', () => {
   it('exports the current scope to Excel and PDF from the export bar', async () => {
-    const wrapper = renderWithProviders(GeneralLedger)
+    const wrapper = renderWithProviders(GeneralLedgerView)
     await flushPromises()
 
     await wrapper.find('[data-test="export-excel"]').trigger('click')
@@ -59,7 +59,7 @@ describe('GeneralLedger export', () => {
   })
 
   it('does not expose a Fee pseudo-category', async () => {
-    const wrapper = renderWithProviders(GeneralLedger)
+    const wrapper = renderWithProviders(GeneralLedgerView)
     await flushPromises()
 
     expect(wrapper.find('[data-test="pill-Fee"]').exists()).toBe(false)
@@ -68,9 +68,9 @@ describe('GeneralLedger export', () => {
   })
 })
 
-describe('GeneralLedger account filter', () => {
+describe('GeneralLedgerView account filter', () => {
   it('narrows the journal to a chosen account and reconciles when the book changes', async () => {
-    const wrapper = renderWithProviders(GeneralLedger)
+    const wrapper = renderWithProviders(GeneralLedgerView)
     await flushPromises()
 
     const filter = wrapper.findComponent(AccountFilterSelect)
@@ -92,9 +92,9 @@ describe('GeneralLedger account filter', () => {
   })
 })
 
-describe('GeneralLedger currency filter', () => {
+describe('GeneralLedgerView currency filter', () => {
   it('narrows by a currency subset, carries it into the export, and reconciles', async () => {
-    const wrapper = renderWithProviders(GeneralLedger)
+    const wrapper = renderWithProviders(GeneralLedgerView)
     await flushPromises()
 
     const filter = wrapper.findComponent(CurrencyFilterSelect)

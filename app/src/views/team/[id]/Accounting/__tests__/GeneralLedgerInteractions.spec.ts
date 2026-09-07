@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
-import GeneralLedger from '../GeneralLedger.vue'
-import TrialBalanceCard from '../TrialBalanceCard.vue'
+import GeneralLedgerView from '../GeneralLedgerView.vue'
+import TrialBalanceView from '../TrialBalanceView.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import ColumnVisibilitySelect from '../ColumnVisibilitySelect.vue'
+import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
 import { mockRouterPush, mockRouterReplace } from '@/tests/mocks/router.mock'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import { buildJournal } from '@/utils/accounting/generalLedger'
@@ -17,13 +17,12 @@ vi.mock('@/composables/accounting/useAccountingContext', () => ({
 }))
 accountingContext.journal.value = buildJournal(catalogueLedger)
 
-// These specs exercise the ledger's interactions against the shared journal,
-// guarding the interaction branches when the supplied journal is empty.
+// These specs exercise the ledger's interactions against the shared journal.
 
 describe('General Ledger → Trial Balance jump', () => {
   it('routes a clicked account to its Trial Balance drill-down', async () => {
     mockRouterPush.mockClear()
-    const wrapper = renderWithProviders(GeneralLedger)
+    const wrapper = renderWithProviders(GeneralLedgerView)
     const link = wrapper.find('[data-test^="ledger-account-link-"]')
     if (link.exists()) {
       await link.trigger('click')
@@ -41,13 +40,13 @@ describe('General Ledger → Trial Balance jump', () => {
   })
 
   it('auto-opens the drill-down for ?account= and strips the query', async () => {
-    const ledger = renderWithProviders(GeneralLedger)
+    const ledger = renderWithProviders(GeneralLedgerView)
     const link = ledger.find('[data-test^="ledger-account-link-"]')
     if (!link.exists()) return ledger.unmount()
     const account = link.attributes('data-test')!.replace('ledger-account-link-', '')
     ledger.unmount()
     mockRouterReplace.mockClear()
-    const wrapper = renderWithProviders(TrialBalanceCard, { route: { query: { account } } })
+    const wrapper = renderWithProviders(TrialBalanceView, { route: { query: { account } } })
     await flushPromises()
     // Drill-down modal open (export controls mounted); query stripped so a close is final.
     expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
@@ -59,7 +58,7 @@ describe('General Ledger → Trial Balance jump', () => {
     // An account closed to a nil balance shows no trial row, so the watch takes the
     // `openFor(account, '')` fallback rather than `openDrilldown(row)`.
     mockRouterReplace.mockClear()
-    const wrapper = renderWithProviders(TrialBalanceCard, {
+    const wrapper = renderWithProviders(TrialBalanceView, {
       route: { query: { account: 'No Such Account — nil balance' } }
     })
     await flushPromises()
@@ -71,7 +70,7 @@ describe('General Ledger → Trial Balance jump', () => {
 
 describe('General Ledger account filter', () => {
   it('narrows the journal to a single chosen account', async () => {
-    const wrapper = renderWithProviders(GeneralLedger)
+    const wrapper = renderWithProviders(GeneralLedgerView)
     // Defaults to every account selected — the summary reads "All accounts".
     const options = wrapper.findAll('[data-test^="account-filter-"]')
     // Needs at least the "All accounts" row plus two real accounts to filter.
@@ -103,7 +102,7 @@ describe('General Ledger account filter', () => {
 
 describe('General Ledger table controls', () => {
   it('flows page and page-size changes through the pagination footer', async () => {
-    const wrapper = renderWithProviders(GeneralLedger)
+    const wrapper = renderWithProviders(GeneralLedgerView)
     const pagination = wrapper.findComponent(TablePagination)
     if (!pagination.exists()) return wrapper.unmount()
 
@@ -116,7 +115,7 @@ describe('General Ledger table controls', () => {
   })
 
   it('applies a column-visibility change from the selector', async () => {
-    const wrapper = renderWithProviders(GeneralLedger)
+    const wrapper = renderWithProviders(GeneralLedgerView)
     const columns = wrapper.findComponent(ColumnVisibilitySelect)
     if (!columns.exists()) return wrapper.unmount()
 
