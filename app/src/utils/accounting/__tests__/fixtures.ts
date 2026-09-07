@@ -9,7 +9,18 @@ import type { CncAccounting } from '@/utils/accounting/assemble'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { MapperContext } from '@/utils/accounting/mappers/context'
+import {
+  usdAmountFromLegacyNumber,
+  usdAmountToNumber,
+  type UsdAmount
+} from '@/utils/accounting/monetaryAmount'
 import { assembleAccounting } from './assembleAccounting'
+
+/** Exact accounting amount shorthand for domain-level assertions. */
+export const usd = usdAmountFromLegacyNumber
+
+/** Presentation-boundary conversion for approximate legacy expectations. */
+export const usdNumber = (amount: UsdAmount): number => usdAmountToNumber(amount)
 
 /** Lowercase addresses are always valid (no checksum to fail) — safe for tests. */
 export const ADDR = {

@@ -1,7 +1,8 @@
 /** Summary metrics projected from canonical JournalEntry lines. */
 import { classOf, type AccountName } from './chartOfAccounts'
-import { journalFamilyBalancesUnrounded } from './journalBalances'
+import { journalFamilyBalances } from './journalBalances'
 import type { JournalEntry } from './journalEntry'
+import { ZERO_USD_AMOUNT, type UsdAmount } from './monetaryAmount'
 
 const CASH_ACCOUNTS: ReadonlySet<AccountName> = new Set<AccountName>([
   'Cash — Bank',
@@ -24,30 +25,26 @@ const DEBT_REPAYMENT_ACCOUNTS: ReadonlySet<AccountName> = new Set([
 
 export interface AccountingSummary {
   /** Net cash across every company cash pocket. */
-  cash: number
+  cash: UsdAmount
   /** Income-account total. */
-  income: number
+  income: UsdAmount
   /** Expense-account total. */
-  expense: number
+  expense: UsdAmount
   /** Transaction Fee Expense, a subset of expense. */
-  transactionFees: number
+  transactionFees: UsdAmount
   /** Principal and interest returned to Community Credit lenders. */
-  debtRepaid: number
+  debtRepaid: UsdAmount
   /** Contributed owner and investor capital, excluding retained earnings. */
-  equity: number
-}
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
+  equity: UsdAmount
 }
 
 /** Build the Summary metrics from the assembled journal. */
 export function buildAccountingSummary(entries: readonly JournalEntry[]): AccountingSummary {
-  const balances = journalFamilyBalancesUnrounded(entries)
-  let cash = 0
-  let income = 0
-  let expense = 0
-  let equity = 0
+  const balances = journalFamilyBalances(entries)
+  let cash = ZERO_USD_AMOUNT
+  let income = ZERO_USD_AMOUNT
+  let expense = ZERO_USD_AMOUNT
+  let equity = ZERO_USD_AMOUNT
 
   for (const [account, amount] of balances) {
     if (CASH_ACCOUNTS.has(account)) cash += amount
@@ -56,19 +53,19 @@ export function buildAccountingSummary(entries: readonly JournalEntry[]): Accoun
     if (CONTRIBUTED_EQUITY.has(account)) equity += amount
   }
 
-  const transactionFees = balances.get('Transaction Fee Expense') ?? 0
+  const transactionFees = balances.get('Transaction Fee Expense') ?? ZERO_USD_AMOUNT
   const debtRepaid = entries
     .filter((entry) => entry.useCase === 'UC-CREDIT-03')
     .flatMap((entry) => entry.lines)
     .filter((line) => DEBT_REPAYMENT_ACCOUNTS.has(line.account.family.name))
-    .reduce((sum, line) => sum + (line.debit ?? 0), 0)
+    .reduce((sum, line) => sum + (line.debit ?? ZERO_USD_AMOUNT), ZERO_USD_AMOUNT)
 
   return {
-    cash: round2(cash),
-    income: round2(income),
-    expense: round2(expense),
-    transactionFees: round2(transactionFees),
-    debtRepaid: round2(debtRepaid),
-    equity: round2(equity)
+    cash,
+    income,
+    expense,
+    transactionFees,
+    debtRepaid,
+    equity
   }
 }

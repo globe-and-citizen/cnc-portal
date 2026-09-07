@@ -227,9 +227,9 @@ describe('vesting through the whole pipeline', () => {
     // The whole award sits in contra-equity, so net equity is unchanged.
     expect(balanceOf(acc.entries, 'Deferred SHER Compensation')).toBeCloseTo(-50, 6)
     // Nothing on the income statement, and the books still balance.
-    expect(acc.incomeStatement.netIncome).toBe(0)
+    expect(acc.incomeStatement.netIncome).toBe(0n)
     expect(acc.balanceSheet.balanced).toBe(true)
-    expect(acc.balanceSheet.totalEquity).toBeCloseTo(0, 6)
+    expect(acc.balanceSheet.totalEquity).toBe(0n)
   })
 
   it('nets a fully released grant to zero equity, with Investor Equity at the released value', () => {
@@ -243,7 +243,7 @@ describe('vesting through the whole pipeline', () => {
     expect(balanceOf(acc.entries, 'Investor Equity')).toBeCloseTo(50, 6)
     expect(balanceOf(acc.entries, 'SHERS To Be Issued')).toBeCloseTo(0, 6)
     expect(balanceOf(acc.entries, 'Deferred SHER Compensation')).toBeCloseTo(-50, 6)
-    expect(acc.incomeStatement.netIncome).toBe(0)
+    expect(acc.incomeStatement.netIncome).toBe(0n)
   })
 
   it('leaves only the vested part behind once a schedule is stopped', () => {
@@ -258,7 +258,7 @@ describe('vesting through the whole pipeline', () => {
     expect(balanceOf(acc.entries, 'Investor Equity')).toBeCloseTo(12.5, 6)
     expect(balanceOf(acc.entries, 'SHERS To Be Issued')).toBeCloseTo(0, 6)
     expect(balanceOf(acc.entries, 'Deferred SHER Compensation')).toBeCloseTo(-12.5, 6)
-    expect(acc.incomeStatement.netIncome).toBe(0)
+    expect(acc.incomeStatement.netIncome).toBe(0n)
   })
 
   it('unwinds the whole grant when a schedule is stopped before anything vests', () => {

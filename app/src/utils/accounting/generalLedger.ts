@@ -23,6 +23,14 @@ import {
 } from './accountRegistry'
 import { sourceOperationIdOf, transactionHashOf, type LedgerEntry } from './ledgerEntry'
 import { legacyClassificationTargetOf } from './classificationTarget'
+import { getTokenDecimals } from '@/utils/tokens/metadata'
+import {
+  ZERO_USD_AMOUNT,
+  usdAmountFromLegacyNumber,
+  usdAmountFromToken,
+  usdRateFromNumber,
+  type UsdAmount
+} from './monetaryAmount'
 import {
   createJournalEntry,
   creditOf,
@@ -38,6 +46,12 @@ export type { JournalEntry, JournalEntryLine } from './journalEntry'
 /** Convert a current two-leg consolidated posting into journal lines with concrete account identity. */
 function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLine[] {
   const lines: JournalEntryLine[] = []
+  const rate = entry.rate != null ? usdRateFromNumber(entry.rate) : undefined
+  const rawAmount = BigInt(entry.rawAmount)
+  const amount =
+    rate === undefined
+      ? usdAmountFromLegacyNumber(entry.amountUsd)
+      : usdAmountFromToken(rawAmount, entry.token, rate)
   if (entry.debit) {
     const account = accounts.resolve(entry.debit, entry.debitInstance)
     lines.push({
@@ -45,10 +59,11 @@ function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLin
       account,
       movement: {
         token: entry.token,
-        rawAmount: entry.rawAmount,
-        ...(entry.rate != null ? { rate: entry.rate } : {})
+        rawAmount,
+        decimals: getTokenDecimals(entry.token),
+        ...(rate !== undefined ? { rate } : {})
       },
-      debit: entry.amountUsd
+      debit: amount
     })
   }
   if (entry.credit) {
@@ -58,10 +73,11 @@ function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLin
       account,
       movement: {
         token: entry.token,
-        rawAmount: entry.rawAmount,
-        ...(entry.rate != null ? { rate: entry.rate } : {})
+        rawAmount,
+        decimals: getTokenDecimals(entry.token),
+        ...(rate !== undefined ? { rate } : {})
       },
-      credit: entry.amountUsd
+      credit: amount
     })
   }
   return lines
@@ -72,8 +88,12 @@ function mergedLines(
   entries: readonly LedgerEntry[],
   accounts: AccountRegistry
 ): JournalEntryLine[] {
-  const debit = entries.flatMap((entry) => linesOf(entry, accounts).filter((line) => line.debit))
-  const credit = entries.flatMap((entry) => linesOf(entry, accounts).filter((line) => line.credit))
+  const debit = entries.flatMap((entry) =>
+    linesOf(entry, accounts).filter((line) => line.debit !== undefined)
+  )
+  const credit = entries.flatMap((entry) =>
+    linesOf(entry, accounts).filter((line) => line.credit !== undefined)
+  )
   const merge = (lines: readonly JournalEntryLine[]): JournalEntryLine[] => {
     const byMovement = new Map<string, JournalEntryLine>()
     for (const line of lines) {
@@ -95,14 +115,7 @@ function mergedLines(
       if (existing.debit !== undefined && line.debit !== undefined) existing.debit += line.debit
       if (existing.credit !== undefined && line.credit !== undefined) existing.credit += line.credit
       if (existing.movement && movement) {
-        try {
-          existing.movement.rawAmount = (
-            BigInt(existing.movement.rawAmount) + BigInt(movement.rawAmount)
-          ).toString()
-        } catch {
-          // A malformed token amount remains visible on its first source line;
-          // reporting amounts still come from the validated USD debit/credit.
-        }
+        existing.movement.rawAmount += movement.rawAmount
       }
     }
     return [...byMovement.values()]
@@ -193,11 +206,11 @@ export interface TrialBalanceRow {
   /** True on the earliest resolved deployment row, used only for display. */
   isPrimaryInstance: boolean
   /** Σ of every debit line posted to this account (gross). */
-  totalDebit: number
+  totalDebit: UsdAmount
   /** Σ of every credit line posted to this account (gross). */
-  totalCredit: number
+  totalCredit: UsdAmount
   /** Net balance on the account's normal side (≥ 0 for a clean book). */
-  balance: number
+  balance: UsdAmount
 }
 
 export interface GeneralLedger {
@@ -206,28 +219,22 @@ export interface GeneralLedger {
   /** Per-account roll-up; rows with no activity are dropped. */
   trialBalance: TrialBalanceRow[]
   /** Σ of all gross debit lines (the journal total). */
-  totalDebit: number
+  totalDebit: UsdAmount
   /** Σ of all gross credit lines (the journal total). */
-  totalCredit: number
+  totalCredit: UsdAmount
   /** Σ of the debit-normal account balances (the trial-balance debit column). */
-  debitBalanceTotal: number
+  debitBalanceTotal: UsdAmount
   /** Σ of the credit-normal account balances (the trial-balance credit column). */
-  creditBalanceTotal: number
-  /** True when both the gross and net identities hold to the cent. */
+  creditBalanceTotal: UsdAmount
+  /** True when both the gross and net identities hold exactly. */
   balanced: boolean
-}
-
-const CENT = 0.01
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
 }
 
 /** One trial-balance roll-up bucket: one concrete account, never an inferred instance. */
 interface AccountBucket {
   account: Account
-  debit: number
-  credit: number
+  debit: UsdAmount
+  credit: UsdAmount
   /** Earliest posting time orders display labels but never determines account identity. */
   firstTs: number
 }
@@ -251,8 +258,8 @@ function accumulateBuckets(journal: readonly JournalEntry[]): Map<AccountName, A
       if (!bucket) {
         bucket = {
           account: line.account,
-          debit: 0,
-          credit: 0,
+          debit: ZERO_USD_AMOUNT,
+          credit: ZERO_USD_AMOUNT,
           firstTs: entry.timestamp
         }
         buckets.set(line.account.id, bucket)
@@ -280,16 +287,10 @@ function accountLabel(account: Account, number: number): string {
 export function buildGeneralLedger(journal: readonly JournalEntry[]): GeneralLedger {
   const groups = accumulateBuckets(journal)
 
-  // Totals + the balanced check run on the **raw** (full-precision) sums: every
-  // posting is internally balanced, so the raw debit/credit totals are exactly
-  // equal. Rounding each account to the cent first and *then* summing lets those
-  // per-account roundings drift a cent apart (e.g. SHER values like 7.165 / 7.465
-  // each rounding up), which would otherwise flag a balanced book "out of balance".
-  // We round only for display.
-  let rawTotalDebit = 0
-  let rawTotalCredit = 0
-  let rawDebitBalance = 0
-  let rawCreditBalance = 0
+  let totalDebit = ZERO_USD_AMOUNT
+  let totalCredit = ZERO_USD_AMOUNT
+  let debitBalanceTotal = ZERO_USD_AMOUNT
+  let creditBalanceTotal = ZERO_USD_AMOUNT
   const trialBalance: TrialBalanceRow[] = []
 
   // Iterate the chart in declared order so the trial balance reads top-down. A
@@ -304,32 +305,28 @@ export function buildGeneralLedger(journal: readonly JournalEntry[]): GeneralLed
     const split = resolved.length > 1
     let resolvedNumber = 0
     buckets.forEach((bucket) => {
-      const rawDebit = bucket.debit
-      const rawCredit = bucket.credit
-      if (rawDebit === 0 && rawCredit === 0) return
+      const debit = bucket.debit
+      const credit = bucket.credit
+      if (debit === ZERO_USD_AMOUNT && credit === ZERO_USD_AMOUNT) return
 
       const number =
         bucket.account.resolution === 'resolved' ? (resolvedNumber += 1) : Number.POSITIVE_INFINITY
 
-      rawTotalDebit += rawDebit
-      rawTotalCredit += rawCredit
+      totalDebit += debit
+      totalCredit += credit
       const debitNormal = bucket.account.family.normalBalance === 'debit'
-      const rawBalance = debitNormal ? rawDebit - rawCredit : rawCredit - rawDebit
-      if (debitNormal) rawDebitBalance += rawBalance
-      else rawCreditBalance += rawBalance
-
-      const grossDebit = round2(rawDebit)
-      const grossCredit = round2(rawCredit)
-      if (grossDebit === 0 && grossCredit === 0) return // sub-cent residual: not shown
+      const balance = debitNormal ? debit - credit : credit - debit
+      if (debitNormal) debitBalanceTotal += balance
+      else creditBalanceTotal += balance
 
       trialBalance.push({
         account: bucket.account,
         accountLabel: accountLabel(bucket.account, number),
         split,
         isPrimaryInstance: bucket.account.resolution === 'resolved' && number === 1,
-        totalDebit: grossDebit,
-        totalCredit: grossCredit,
-        balance: round2(rawBalance)
+        totalDebit: debit,
+        totalCredit: credit,
+        balance
       })
     })
   }
@@ -337,12 +334,10 @@ export function buildGeneralLedger(journal: readonly JournalEntry[]): GeneralLed
   return {
     entries: journal.slice(),
     trialBalance,
-    totalDebit: round2(rawTotalDebit),
-    totalCredit: round2(rawTotalCredit),
-    debitBalanceTotal: round2(rawDebitBalance),
-    creditBalanceTotal: round2(rawCreditBalance),
-    balanced:
-      Math.abs(rawTotalDebit - rawTotalCredit) < CENT &&
-      Math.abs(rawDebitBalance - rawCreditBalance) < CENT
+    totalDebit,
+    totalCredit,
+    debitBalanceTotal,
+    creditBalanceTotal,
+    balanced: totalDebit === totalCredit && debitBalanceTotal === creditBalanceTotal
   }
 }

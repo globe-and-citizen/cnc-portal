@@ -15,6 +15,12 @@ import { wholeTokenAmount } from './toUsd'
 import { creditOf, debitOf, type JournalEntry, type JournalEntryLine } from './journalEntry'
 import type { Account } from './accountRegistry'
 import type { LedgerEntry } from './ledgerEntry'
+import {
+  ZERO_USD_AMOUNT,
+  usdAmountToNumber,
+  usdRateToNumber,
+  type UsdAmount
+} from './monetaryAmount'
 
 /** Display-ready journal line shared by the ledger, drill-downs and exporters. */
 export interface LedgerRow {
@@ -44,6 +50,10 @@ export interface LedgerRow {
   accountDimmed: boolean
   dr: string
   cr: string
+  /** Exact debit used by running-balance projections; formatting never becomes source data. */
+  debitAmount?: UsdAmount
+  /** Exact credit used by running-balance projections; formatting never becomes source data. */
+  creditAmount?: UsdAmount
   /** The posting's currency (spec §2 "Devise"), e.g. `POL` / `USDC`. */
   currency: string
   /** Whole-token quantity moved (spec §2 "Quantité"), 6-dp, e.g. `0.070352`. */
@@ -82,10 +92,12 @@ function sourceOf(entry: JournalEntry): LedgerEntry {
     useCase: entry.useCase,
     debit: debit?.account.family.name ?? null,
     credit: credit?.account.family.name ?? null,
-    amountUsd: entry.lines.reduce((sum, line) => sum + debitOf(line), 0),
+    amountUsd: usdAmountToNumber(
+      entry.lines.reduce((sum, line) => sum + debitOf(line), ZERO_USD_AMOUNT)
+    ),
     token: movement?.token ?? 'usdc',
-    rawAmount: movement?.rawAmount ?? '0',
-    ...(movement?.rate != null ? { rate: movement.rate } : {}),
+    rawAmount: movement?.rawAmount.toString() ?? '0',
+    ...(movement?.rate != null ? { rate: usdRateToNumber(movement.rate) } : {}),
     internal: entry.internal,
     memo: entry.memo,
     enrichment: 'not-applicable',
@@ -188,7 +200,7 @@ function movementOf(line: JournalEntryLine): Pick<LedgerRow, 'currency' | 'quant
   if (!line.movement) return NO_MOVEMENT
   let whole = 0
   try {
-    whole = wholeTokenAmount(BigInt(line.movement.rawAmount), line.movement.token)
+    whole = wholeTokenAmount(line.movement.rawAmount, line.movement.token)
   } catch {
     // A malformed raw amount does not alter the validated reporting amount.
   }
@@ -196,7 +208,9 @@ function movementOf(line: JournalEntryLine): Pick<LedgerRow, 'currency' | 'quant
     currency: currencySymbol(line.movement.token),
     quantity: formatNumber(whole, { maxDecimals: 6 }),
     rate:
-      line.movement.rate == null ? '' : `$${formatNumber(line.movement.rate, { maxDecimals: 6 })}`
+      line.movement.rate == null
+        ? ''
+        : `$${formatNumber(usdRateToNumber(line.movement.rate), { maxDecimals: 6 })}`
   }
 }
 
@@ -217,7 +231,9 @@ function activityOfJournalEntry(
     const line = entry.lines.find(
       (candidate) =>
         candidate.account.family.name === familyName &&
-        (side === 'debit' ? debitOf(candidate) > 0 : creditOf(candidate) > 0)
+        (side === 'debit'
+          ? debitOf(candidate) > ZERO_USD_AMOUNT
+          : creditOf(candidate) > ZERO_USD_AMOUNT)
     )
     return line ? (labels.get(line.account.id) ?? line.account.family.name) : familyName
   }
@@ -254,10 +270,12 @@ export function journalLedgerRows(
         accountId: line.account.id,
         ...(accountLabel !== line.account.family.name ? { accountLabel } : {}),
         ...(line.account.contractAddress ? { accountInstance: line.account.contractAddress } : {}),
-        accountMuted: creditOf(line) > 0,
+        accountMuted: creditOf(line) > ZERO_USD_AMOUNT,
         accountDimmed: false,
-        dr: debitOf(line) > 0 ? money(debitOf(line)) : '',
-        cr: creditOf(line) > 0 ? money(creditOf(line)) : '',
+        dr: debitOf(line) > ZERO_USD_AMOUNT ? money(debitOf(line)) : '',
+        cr: creditOf(line) > ZERO_USD_AMOUNT ? money(creditOf(line)) : '',
+        debitAmount: debitOf(line),
+        creditAmount: creditOf(line),
         ...movementOf(line)
       })
     })
@@ -269,8 +287,9 @@ export function journalLedgerRows(
 export function journalLedgerTotal(entries: readonly JournalEntry[]): string {
   return money(
     entries.reduce(
-      (sum, entry) => sum + entry.lines.reduce((lineSum, line) => lineSum + debitOf(line), 0),
-      0
+      (sum, entry) =>
+        sum + entry.lines.reduce((lineSum, line) => lineSum + debitOf(line), ZERO_USD_AMOUNT),
+      ZERO_USD_AMOUNT
     )
   )
 }

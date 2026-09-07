@@ -4,16 +4,17 @@ import { buildLedger } from '@/utils/accounting/buildLedger'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { catalogueLedger } from './catalogueLedger'
+import { usdNumber } from './fixtures'
 
 describe('buildAccountingSummary — catalogue worked example', () => {
   const entries = buildLedger(catalogueLedger).entries
   const summary = buildAccountingSummary(buildJournal(entries))
 
   it('rolls up the period totals (cash / income / expense / equity)', () => {
-    expect(summary.cash).toBeCloseTo(142.2, 2)
-    expect(summary.income).toBeCloseTo(115, 2)
-    expect(summary.expense).toBeCloseTo(100.8, 2)
-    expect(summary.equity).toBeCloseTo(138, 2)
+    expect(usdNumber(summary.cash)).toBeCloseTo(142.2, 2)
+    expect(usdNumber(summary.income)).toBeCloseTo(115, 2)
+    expect(usdNumber(summary.expense)).toBeCloseTo(100.8, 2)
+    expect(usdNumber(summary.equity)).toBeCloseTo(138, 2)
   })
 
   it('keeps memo-only postings in the transitional feed', () => {
@@ -60,9 +61,9 @@ describe('buildLedger — rolls up transaction fees as a dedicated metric', () =
         { ...fee, id: 'fee-2', sourceOperationId: 'bank-outflow', amountUsd: 0.25 }
       ])
     )
-    expect(summary.transactionFees).toBeCloseTo(0.75, 4)
+    expect(usdNumber(summary.transactionFees)).toBeCloseTo(0.75, 4)
     // The fee is also part of total expense, so the two agree here.
-    expect(summary.expense).toBeCloseTo(0.75, 4)
+    expect(usdNumber(summary.expense)).toBeCloseTo(0.75, 4)
   })
 })
 

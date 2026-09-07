@@ -6,7 +6,7 @@ import type { ClassificationCategory } from '@/utils/accounting/classification'
 import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
-import { ADDR } from './fixtures'
+import { ADDR, usd } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
 
 const DEPLOYER = ADDR.founder as Address
@@ -108,7 +108,7 @@ describe('accounting assembly — legacy manual classification', () => {
     })
     expect(saved.journal[0]!.lines[0]).toMatchObject({
       account: { family: { name: 'Interest Expense' } },
-      debit: 100
+      debit: usd(100)
     })
 
     const reverted = assembleAccounting({ ...input, classifications: [] })
@@ -117,15 +117,18 @@ describe('accounting assembly — legacy manual classification', () => {
     ])
     expect(reverted.journal[0]!.lines[0]).toMatchObject({
       account: { family: { name: 'Operating Expense' } },
-      debit: 100
+      debit: usd(100)
     })
     expect(reverted.generalLedger.balanced).toBe(true)
   })
 
   it('infers the deposit as Service Revenue with no classification', () => {
     const a = assembleAccounting({ ...BASE, bankEvents: clientBankDeposit })
-    expect(a.summary.income).toBe(100)
-    expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
+    expect(a.summary.income).toBe(usd(100))
+    expect(a.incomeStatement.revenue).toContainEqual({
+      account: 'Service Revenue',
+      amount: usd(100)
+    })
     expect(a.balanceSheet.balanced).toBe(true)
   })
 
@@ -136,9 +139,12 @@ describe('accounting assembly — legacy manual classification', () => {
       classifications: [classification('bd1', 'OWNER_CAPITAL')]
     })
 
-    expect(a.summary.income).toBe(100)
-    expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
-    expect(a.balanceSheet.totalLiabilities).toBe(0)
+    expect(a.summary.income).toBe(usd(100))
+    expect(a.incomeStatement.revenue).toContainEqual({
+      account: 'Service Revenue',
+      amount: usd(100)
+    })
+    expect(a.balanceSheet.totalLiabilities).toBe(0n)
     expect(a.entries.find((entry) => entry.id === 'bd1')).not.toHaveProperty('classified')
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
@@ -167,7 +173,7 @@ describe('accounting assembly — legacy manual classification', () => {
       classifications: [classification('bd-int', 'REVENUE')]
     })
 
-    expect(a.summary.income).toBe(0)
+    expect(a.summary.income).toBe(0n)
     const entry = a.entries.find((e) => e.id === 'bd-int')
     expect(entry).toMatchObject({ useCase: 'INTERNAL', internal: true })
     expect(entry?.classified).toBeUndefined()

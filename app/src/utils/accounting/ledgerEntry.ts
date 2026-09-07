@@ -122,7 +122,11 @@ export interface LedgerEntry {
   debitInstance?: Address
   /** The pocket contract instance holding the credited cash — see {@link debitInstance}. */
   creditInstance?: Address
-  /** Absolute USD amount. `0` for memo-only entries. */
+  /**
+   * Transitional six-decimal USD projection used by source narration. Reports
+   * recompute their exact amount from {@link rawAmount} and {@link rate} at the
+   * JournalEntry boundary. `0` for memo-only entries.
+   */
   amountUsd: number
   /** Token actually moved on-chain — the entry's currency (spec §2 "Devise"). */
   token: TokenId
@@ -130,8 +134,9 @@ export interface LedgerEntry {
   rawAmount: string
   /**
    * USD-per-whole-token rate of record at the transaction time (spec §2 "Taux"),
-   * stored at 6-dp precision: `1.000000` for USD-pegged stablecoins, the
-   * timestamped price for native (POL) / SHER. `amountUsd = Quantité × rate`.
+   * represented at 6-dp precision: `1.000000` for USD-pegged stablecoins, the
+   * timestamped price for native (POL) / SHER. Journal assembly converts this
+   * value to a fixed-scale bigint before any report calculation.
    * Absent on entries produced before a rate resolver has run (e.g. raw mapper
    * output in unit tests); the consolidation layer fills it in for every entry.
    */

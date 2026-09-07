@@ -8,6 +8,7 @@
 import type { Account } from './accountRegistry'
 import type { LegacyClassificationTarget } from './classificationTarget'
 import { sourceOperationIdOf, type LedgerEntry, type UseCase } from './ledgerEntry'
+import { ZERO_USD_AMOUNT, type UsdAmount, type UsdRate } from './monetaryAmount'
 import type { TokenId } from '@/constant'
 
 /** The token movement evidenced by one monetary journal line. */
@@ -15,9 +16,11 @@ export interface JournalEntryLineMovement {
   /** Token transferred on the source operation. */
   token: TokenId
   /** Token base units transferred on the source operation. */
-  rawAmount: string
+  rawAmount: bigint
+  /** Decimal places used by the token's base unit. */
+  decimals: number
   /** USD-per-whole-token rate of record, when it is available. */
-  rate?: number
+  rate?: UsdRate
 }
 
 /** One ordered debit or credit line belonging to a {@link JournalEntry}. */
@@ -29,7 +32,7 @@ export type JournalEntryLine =
       account: Account
       /** Token-level movement evidence for the line's display projection. */
       movement?: JournalEntryLineMovement
-      debit: number
+      debit: UsdAmount
       credit?: never
     }
   | {
@@ -40,7 +43,7 @@ export type JournalEntryLine =
       /** Token-level movement evidence for the line's display projection. */
       movement?: JournalEntryLineMovement
       debit?: never
-      credit: number
+      credit: UsdAmount
     }
 
 export interface JournalEntry {
@@ -130,16 +133,14 @@ export function reconcileJournalEntrySources(
 }
 
 /** One line's debit amount, or zero when it is a credit line. */
-export function debitOf(line: JournalEntryLine): number {
-  return line.debit ?? 0
+export function debitOf(line: JournalEntryLine): UsdAmount {
+  return line.debit ?? ZERO_USD_AMOUNT
 }
 
 /** One line's credit amount, or zero when it is a debit line. */
-export function creditOf(line: JournalEntryLine): number {
-  return line.credit ?? 0
+export function creditOf(line: JournalEntryLine): UsdAmount {
+  return line.credit ?? ZERO_USD_AMOUNT
 }
-
-const BALANCE_TOLERANCE = 1e-9
 
 /** The domain error raised before a projection can consume an invalid entry. */
 class InvalidJournalEntryError extends Error {
@@ -153,13 +154,13 @@ class InvalidJournalEntryError extends Error {
 function isBalanced(entry: JournalEntry): boolean {
   if (entry.kind === 'memo') return entry.lines.length === 0
 
-  let debit = 0
-  let credit = 0
+  let debit = ZERO_USD_AMOUNT
+  let credit = ZERO_USD_AMOUNT
   for (const line of entry.lines) {
     debit += debitOf(line)
     credit += creditOf(line)
   }
-  return Math.abs(debit - credit) < BALANCE_TOLERANCE
+  return debit === credit
 }
 
 /** Validate the shape and balance invariant of one journal entry. */
@@ -200,8 +201,8 @@ function validationErrors(entry: JournalEntry): string[] {
     }
 
     const amount = line.debit ?? line.credit
-    if (amount === undefined || !Number.isFinite(amount) || amount < 0)
-      errors.push(`line "${line.id}" amount must be finite and non-negative`)
+    if (amount === undefined || amount < ZERO_USD_AMOUNT)
+      errors.push(`line "${line.id}" amount must be non-negative`)
     if (hasDebit) debitLines += 1
     else creditLines += 1
   }

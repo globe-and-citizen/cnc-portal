@@ -12,6 +12,7 @@
  * them, but the catalogue exercises them and the books must still balance.
  */
 import type { TokenId } from '@/constant'
+import { parseUnits } from 'viem'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry, UseCase } from '@/utils/accounting/ledgerEntry'
 
@@ -38,6 +39,7 @@ interface PostInput {
 /** Build one balanced posting (or a memo-only entry when debit/credit are null). */
 function post(input: PostInput): LedgerEntry {
   seq += 1
+  const token = input.token ?? 'usdc'
   return {
     id: `cat-${seq}`,
     timestamp: march(input.day),
@@ -45,8 +47,8 @@ function post(input: PostInput): LedgerEntry {
     debit: input.debit,
     credit: input.credit,
     amountUsd: input.usd,
-    token: input.token ?? 'usdc',
-    rawAmount: String(input.usd),
+    token,
+    rawAmount: parseUnits(String(input.usd), token === 'native' ? 18 : 6).toString(),
     internal: input.internal ?? false,
     memo: input.memo ?? '',
     enrichment: 'not-applicable',

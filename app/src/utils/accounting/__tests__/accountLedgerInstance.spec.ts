@@ -5,6 +5,7 @@ import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { Address } from 'viem'
+import { usd } from './fixtures'
 
 const BANK1 = '0x1111111111111111111111111111111111111111' as Address
 const BANK2 = '0x2222222222222222222222222222222222222222' as Address
@@ -79,8 +80,8 @@ describe('accountLedger — concrete redeployed accounts', () => {
     const bank1 = bank(BANK1)
     const bank2 = bank(BANK2)
 
-    expect(accountNet(entriesForAccount(journal, bank1), bank1)).toBe(99.5)
-    expect(accountNet(entriesForAccount(journal, bank2), bank2)).toBe(110)
+    expect(accountNet(entriesForAccount(journal, bank1), bank1)).toBe(usd(99.5))
+    expect(accountNet(entriesForAccount(journal, bank2), bank2)).toBe(usd(110))
   })
 
   it('reconciles each JournalEntry drill-down with its Trial Balance line', () => {
@@ -103,7 +104,7 @@ describe('accountLedger — concrete redeployed accounts', () => {
 
   it('brings forward only the selected deployment', () => {
     const opening = accountOpening(journal, bank(BANK1), new Date(95 * 1000))
-    expect(opening.balance).toBe(200)
-    expect(opening.debits).toBe(200)
+    expect(opening.balance).toBe(usd(200))
+    expect(opening.debits).toBe(usd(200))
   })
 })

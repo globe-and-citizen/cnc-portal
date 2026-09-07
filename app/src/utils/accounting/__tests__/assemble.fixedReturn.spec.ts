@@ -10,7 +10,7 @@ import type { TeamContract, ContractType } from '@/types/teamContract'
 import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
-import { ADDR } from './fixtures'
+import { ADDR, usd } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
 
 const FIXED_RETURN = ADDR.credit as Address
@@ -93,17 +93,20 @@ describe('accounting assembly — Community Credit', () => {
     })
 
     // The borrowed cash reached Bank, then left again with the interest on top.
-    expect(a.summary.cash).toBe(-5)
+    expect(a.summary.cash).toBe(-usd(5))
     // Principal in and out nets the liability to zero. The account stays visible
     // because the Balance Sheet reuses the Trial Balance's activity-backed rows.
     expect(a.balanceSheet.liabilities).toHaveLength(1)
     expect(a.balanceSheet.liabilities[0]).toMatchObject({
       account: { family: { name: 'Loan Payable' } },
-      balance: 0,
-      contribution: 0
+      balance: 0n,
+      contribution: 0n
     })
-    expect(a.incomeStatement.expenses).toContainEqual({ account: 'Interest Expense', amount: 5 })
-    expect(a.incomeStatement.netIncome).toBe(-5)
+    expect(a.incomeStatement.expenses).toContainEqual({
+      account: 'Interest Expense',
+      amount: usd(5)
+    })
+    expect(a.incomeStatement.netIncome).toBe(-usd(5))
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
   })

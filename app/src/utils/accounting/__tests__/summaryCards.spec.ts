@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { money, presentSummaryCards, presentBanner } from '@/utils/accounting/presenter'
 import { accountFor } from '@/utils/accounting/accountRegistry'
-import { sampleBooks } from './fixtures'
+import { sampleBooks, usd } from './fixtures'
 
 describe('presentSummaryCards / presentBanner', () => {
   const acc = sampleBooks()
@@ -34,21 +34,21 @@ describe('presentSummaryCards / presentBanner', () => {
         {
           account: accountFor('Loan Payable'),
           accountLabel: 'Loan Payable',
-          balance: 1000,
-          contribution: 1000
+          balance: usd(1000),
+          contribution: usd(1000)
         },
         {
           account: accountFor('Interest Payable'),
           accountLabel: 'Interest Payable',
-          balance: 100,
-          contribution: 100
+          balance: usd(100),
+          contribution: usd(100)
         },
         // A liability outside the borrowing accounts stays out of the figure.
         {
           account: accountFor('Wage Payable'),
           accountLabel: 'Wage Payable',
-          balance: 40,
-          contribution: 40
+          balance: usd(40),
+          contribution: usd(40)
         }
       ]
     })
@@ -57,7 +57,7 @@ describe('presentSummaryCards / presentBanner', () => {
 
   it('shows the debt-repaid card only once a lender has been paid back', () => {
     const cards = presentSummaryCards(
-      { ...acc.summary, debtRepaid: 880 },
+      { ...acc.summary, debtRepaid: usd(880) },
       acc.incomeStatement,
       acc.balanceSheet
     )

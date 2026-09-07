@@ -134,9 +134,9 @@ describe('mapCashRemunerationEvents', () => {
     })
   })
 
-  it('drops a dust native withdrawal that rounds to $0.00 (not just an exact zero)', () => {
-    // A few wei of the 18-decimal native token: > 0, so the old `amount <= 0` guard
-    // let it through, but it renders as quantity 0 / $0.00 — pure clutter. Skipped.
+  it('keeps a non-zero native base unit even when its source projection rounds to $0.00', () => {
+    // A few wei of the 18-decimal native token still represent source evidence,
+    // even though the current quantity and money displays round them to zero.
     const entries = mapCashRemunerationEvents(
       {
         withdraws: [
@@ -151,7 +151,8 @@ describe('mapCashRemunerationEvents', () => {
       },
       ctx
     )
-    expect(entries).toHaveLength(0)
+    expect(entries).toHaveLength(1)
+    expect(entries[0]?.rawAmount).toBe('1000000')
   })
 
   it('books an owner sweep back to Bank as an internal move', () => {

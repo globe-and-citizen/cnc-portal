@@ -3,22 +3,23 @@ import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedg
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { catalogueLedger } from './catalogueLedger'
+import { usdNumber } from './fixtures'
 
 const generalLedger = (entries: readonly LedgerEntry[]) => buildGeneralLedger(buildJournal(entries))
 
 describe('buildGeneralLedger — catalogue worked example', () => {
   const gl = generalLedger(catalogueLedger)
   const balanceOf = (account: AccountName): number =>
-    gl.trialBalance.find((r) => r.account.family.name === account)?.balance ?? 0
+    usdNumber(gl.trialBalance.find((r) => r.account.family.name === account)?.balance ?? 0n)
 
   it('is balanced gross (Σ debit lines = Σ credit lines = journal total)', () => {
-    expect(gl.totalDebit).toBeCloseTo(678.1, 2)
-    expect(gl.totalCredit).toBeCloseTo(678.1, 2)
+    expect(usdNumber(gl.totalDebit)).toBeCloseTo(678.1, 2)
+    expect(usdNumber(gl.totalCredit)).toBeCloseTo(678.1, 2)
   })
 
   it('is balanced net (Σ debit balances = Σ credit balances = trial balance)', () => {
-    expect(gl.debitBalanceTotal).toBeCloseTo(253, 2)
-    expect(gl.creditBalanceTotal).toBeCloseTo(253, 2)
+    expect(usdNumber(gl.debitBalanceTotal)).toBeCloseTo(253, 2)
+    expect(usdNumber(gl.creditBalanceTotal)).toBeCloseTo(253, 2)
     expect(gl.balanced).toBe(true)
   })
 
@@ -69,7 +70,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       cent('b', 'Cash — Safe', 'Service Revenue')
     ])
     expect(gl2.balanced).toBe(true)
-    expect(gl2.debitBalanceTotal).toBeCloseTo(gl2.creditBalanceTotal, 2)
+    expect(gl2.debitBalanceTotal).toBe(gl2.creditBalanceTotal)
   })
 
   it('keeps an unresolved redeployment leg separate from concrete Bank accounts', () => {
@@ -127,12 +128,12 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(bank1Row?.accountLabel).toBe('Cash — Bank')
     expect(bank1Row?.split).toBe(true)
     expect(bank1Row?.isPrimaryInstance).toBe(true)
-    expect(bank1Row?.balance).toBeCloseTo(150, 2)
+    expect(usdNumber(bank1Row!.balance)).toBeCloseTo(150, 2)
     expect(bank2Row?.accountLabel).toBe('Cash — Bank 2')
     expect(bank2Row?.isPrimaryInstance).toBe(false)
-    expect(bank2Row?.balance).toBeCloseTo(30, 2) // only the post-redeploy deposit
+    expect(usdNumber(bank2Row!.balance)).toBeCloseTo(30, 2) // only the post-redeploy deposit
     expect(unresolvedRow?.accountLabel).toBe('Cash — Bank (unresolved)')
-    expect(unresolvedRow?.balance).toBeCloseTo(20, 2)
+    expect(usdNumber(unresolvedRow!.balance)).toBeCloseTo(20, 2)
     // The book remains balanced even while one account needs reconciliation.
     expect(gl2.balanced).toBe(true)
   })
@@ -161,7 +162,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     const safeRows = gl2.trialBalance.filter((r) => r.account.family.name === 'Cash — Safe')
     expect(safeRows).toHaveLength(1)
     expect(safeRows[0].accountLabel).toBe('Cash — Safe')
-    expect(safeRows[0].balance).toBeCloseTo(15, 2)
+    expect(usdNumber(safeRows[0].balance)).toBeCloseTo(15, 2)
   })
 
   it('keeps a single un-redeployed pocket as one un-suffixed row', () => {
