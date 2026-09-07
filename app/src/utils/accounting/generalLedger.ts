@@ -15,32 +15,27 @@
  * Summary, Income Statement, and Balance Sheet consume that assembled journal.
  */
 import { ACCOUNT_NAMES, type AccountName } from './chartOfAccounts'
-import {
-  buildAccountRegistry,
-  type AccountId,
-  type AccountRegistry,
-  type Account
-} from './accountRegistry'
+import { buildAccountRegistry } from './accountRegistry'
 import { sourceOperationIdOf, transactionHashOf, type LedgerEntry } from './ledgerEntry'
 import { legacyClassificationTargetOf } from './classificationTarget'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
-import {
-  ZERO_USD_AMOUNT,
-  usdAmountFromToken,
-  usdRateFromNumber,
-  type UsdAmount
-} from './monetaryAmount'
+import { ZERO_USD_AMOUNT, usdAmountFromToken, usdRateFromNumber } from './monetaryAmount'
 import {
   createJournalEntry,
   creditOf,
   debitOf,
   isBankFeePosting,
-  reconcileJournalEntrySources,
-  type JournalEntry,
-  type JournalEntryLine
+  reconcileJournalEntrySources
 } from './journalEntry'
-
-export type { JournalEntry, JournalEntryLine } from './journalEntry'
+import type {
+  Account,
+  AccountId,
+  AccountRegistry,
+  GeneralLedger,
+  JournalEntry,
+  JournalEntryLine,
+  UsdAmount
+} from './types'
 
 /** Convert a current two-leg consolidated posting into journal lines with concrete account identity. */
 function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLine[] {
@@ -190,44 +185,7 @@ export function buildJournal(
     .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
 }
 
-export interface TrialBalanceRow {
-  /** Canonical concrete account; use it for report selection and reconciliation. */
-  account: Account
-  /**
-   * Display name for the row — the account itself for the original deployment, then
-   * numbered ` 2` / ` 3` for each later deployment (a redeploy), so each shows as its
-   * own line. It is derived separately from the concrete account, so an un-redeployed
-   * book reads exactly as before.
-   */
-  accountLabel: string
-  /** True when this account is split across several instances (a redeploy) — drives the redeploy hint. */
-  split: boolean
-  /** True on the earliest resolved deployment row, used only for display. */
-  isPrimaryInstance: boolean
-  /** Σ of every debit line posted to this account (gross). */
-  totalDebit: UsdAmount
-  /** Σ of every credit line posted to this account (gross). */
-  totalCredit: UsdAmount
-  /** Net balance on the account's normal side (≥ 0 for a clean book). */
-  balance: UsdAmount
-}
-
-export interface GeneralLedger {
-  /** The journal, chronologically ordered. */
-  entries: JournalEntry[]
-  /** Per-account roll-up; rows with no activity are dropped. */
-  trialBalance: TrialBalanceRow[]
-  /** Σ of all gross debit lines (the journal total). */
-  totalDebit: UsdAmount
-  /** Σ of all gross credit lines (the journal total). */
-  totalCredit: UsdAmount
-  /** Σ of the debit-normal account balances (the trial-balance debit column). */
-  debitBalanceTotal: UsdAmount
-  /** Σ of the credit-normal account balances (the trial-balance credit column). */
-  creditBalanceTotal: UsdAmount
-  /** True when both the gross and net identities hold exactly. */
-  balanced: boolean
-}
+type TrialBalanceRow = GeneralLedger['trialBalance'][number]
 
 /** One trial-balance roll-up bucket: one concrete account, never an inferred instance. */
 interface AccountBucket {

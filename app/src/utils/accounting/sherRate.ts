@@ -39,7 +39,7 @@ function toWhole(value: string | bigint, decimals: number): number {
 }
 
 /** The whole-units SHER-per-token multiplier in effect from `timestamp` onward. */
-export interface SherMultiplierPoint {
+interface SherMultiplierPoint {
   timestamp: number
   multiplier: number
 }

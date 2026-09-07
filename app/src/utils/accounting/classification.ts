@@ -78,14 +78,14 @@ export const ALLOWED_BY_DIRECTION: Record<
 }
 
 /** A balanced pair of accounts a classification books to, plus whether it is internal. */
-export interface ClassifiedAccounts {
+interface ClassifiedAccounts {
   debit: AccountName
   credit: AccountName
   /** True only for `INTERNAL_TRANSFER` (both legs are CNC-owned pockets). */
   internal: boolean
 }
 
-export interface ResolveClassifiedAccountsInput {
+interface ResolveClassifiedAccountsInput {
   direction: ClassificationDirection
   /** The Bank/Safe cash pocket the money moved through (e.g. `'Cash — Bank'`). */
   cashAccount: AccountName

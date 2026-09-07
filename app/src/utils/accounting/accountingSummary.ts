@@ -1,8 +1,8 @@
 /** Summary metrics projected from canonical JournalEntry lines. */
 import { classOf, type AccountName } from './chartOfAccounts'
 import { journalFamilyBalances } from './journalBalances'
-import type { JournalEntry } from './journalEntry'
-import { ZERO_USD_AMOUNT, type UsdAmount } from './monetaryAmount'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import type { AccountingSummary, JournalEntry } from './types'
 
 const CASH_ACCOUNTS: ReadonlySet<AccountName> = new Set<AccountName>([
   'Cash — Bank',
@@ -22,21 +22,6 @@ const DEBT_REPAYMENT_ACCOUNTS: ReadonlySet<AccountName> = new Set([
   'Loan Payable',
   'Interest Payable'
 ])
-
-export interface AccountingSummary {
-  /** Net cash across every company cash pocket. */
-  cash: UsdAmount
-  /** Income-account total. */
-  income: UsdAmount
-  /** Expense-account total. */
-  expense: UsdAmount
-  /** Transaction Fee Expense, a subset of expense. */
-  transactionFees: UsdAmount
-  /** Principal and interest returned to Community Credit lenders. */
-  debtRepaid: UsdAmount
-  /** Contributed owner and investor capital, excluding retained earnings. */
-  equity: UsdAmount
-}
 
 /** Build the Summary metrics from the assembled journal. */
 export function buildAccountingSummary(entries: readonly JournalEntry[]): AccountingSummary {

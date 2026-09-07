@@ -22,7 +22,7 @@ const CASH_ACCOUNT_BY_CONTRACT_TYPE = {
 } as const satisfies Partial<Record<ContractType, AccountName>>
 
 /** One decoded ERC-20 transfer observed in a transaction receipt. */
-export interface TokenTransferEvidence {
+interface TokenTransferEvidence {
   from: Address
   to: Address
 }
@@ -31,7 +31,7 @@ export interface TokenTransferEvidence {
 export type TransactionAccountEvidence = ReadonlyMap<string, readonly TokenTransferEvidence[]>
 
 /** The receipt fields needed to decode one ERC-20 `Transfer` log. */
-export interface ReceiptLog {
+interface ReceiptLog {
   data: Hex
   topics: readonly Hex[]
 }

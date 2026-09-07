@@ -18,10 +18,10 @@
 export type AccountClass = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'CONTRA_EQUITY' | 'INCOME' | 'EXPENSE'
 
 /** The side on which an account normally carries its balance. */
-export type NormalBalance = 'debit' | 'credit'
+type NormalBalance = 'debit' | 'credit'
 
 /** One reusable family in the chart of accounts. */
-export interface AccountFamilyDefinition {
+interface AccountFamilyDefinition {
   /** Stable machine key; never use the display name as an identity. */
   readonly id: string
   /** Human-readable chart name used by the legacy posting feed. */
@@ -203,9 +203,6 @@ export const ACCOUNT_FAMILIES = [
 
 /** A reusable account-family object from the canonical registry. */
 export type AccountFamily = (typeof ACCOUNT_FAMILIES)[number]
-
-/** Stable machine key of an account family. */
-export type AccountFamilyId = AccountFamily['id']
 
 /** Human-readable chart name carried by the legacy ledger-entry boundary. */
 export type AccountName = AccountFamily['name']

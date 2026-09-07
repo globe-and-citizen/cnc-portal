@@ -21,7 +21,7 @@ interface ReceiptEvidenceResult {
   unavailableOperationIds: readonly string[]
 }
 
-export interface UseTransactionEvidenceReturn {
+interface UseTransactionEvidenceReturn {
   accountEvidence: ComputedRef<TransactionAccountEvidence>
   /** Transaction hashes whose receipt could not be read. */
   unavailableOperationIds: ComputedRef<readonly string[]>

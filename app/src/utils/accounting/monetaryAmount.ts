@@ -7,18 +7,13 @@
  */
 import type { TokenId } from '@/constant'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
+import type { UsdAmount, UsdRate } from './types'
 
 /** Decimal places retained for a USD price of one whole token. */
 export const USD_RATE_DECIMALS = 6
 
 /** Decimal places retained for every accounting amount. */
 export const USD_AMOUNT_DECIMALS = 24
-
-/** USD amount scaled by {@link USD_AMOUNT_DECIMALS}. */
-export type UsdAmount = bigint
-
-/** USD-per-token rate scaled by {@link USD_RATE_DECIMALS}. */
-export type UsdRate = bigint
 
 export const ZERO_USD_AMOUNT: UsdAmount = 0n
 

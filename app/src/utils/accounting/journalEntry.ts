@@ -5,84 +5,12 @@
  * concrete AccountId resolved by `accountRegistry.ts` before report projections
  * consume it.
  */
-import type { Account } from './accountRegistry'
-import type { LegacyClassificationTarget } from './classificationTarget'
-import { sourceOperationIdOf, type LedgerEntry, type UseCase } from './ledgerEntry'
-import { ZERO_USD_AMOUNT, type UsdAmount, type UsdRate } from './monetaryAmount'
-import type { TokenId } from '@/constant'
-
-/** The token movement evidenced by one monetary journal line. */
-export interface JournalEntryLineMovement {
-  /** Token transferred on the source operation. */
-  token: TokenId
-  /** Token base units transferred on the source operation. */
-  rawAmount: bigint
-  /** Decimal places used by the token's base unit. */
-  decimals: number
-  /** USD-per-whole-token rate of record used to value this movement. */
-  rate: UsdRate
-}
-
-/** One ordered debit or credit line belonging to a {@link JournalEntry}. */
-export type JournalEntryLine =
-  | {
-      /** Stable within-entry line identity. */
-      id: string
-      /** Canonical concrete account, including its identity, family and resolution. */
-      account: Account
-      /** Token-level movement evidence for the line's display projection. */
-      movement?: JournalEntryLineMovement
-      debit: UsdAmount
-      credit?: never
-    }
-  | {
-      /** Stable within-entry line identity. */
-      id: string
-      /** Canonical concrete account, including its identity, family and resolution. */
-      account: Account
-      /** Token-level movement evidence for the line's display projection. */
-      movement?: JournalEntryLineMovement
-      debit?: never
-      credit: UsdAmount
-    }
-
-export interface JournalEntry {
-  /** Stable journal-entry identity. One source operation produces one journal entry. */
-  id: string
-  /** Stable identity of the source accounting operation behind this entry. */
-  sourceOperationId: string
-  /** Event time, Unix seconds. */
-  timestamp: number
-  /** The journal template the source operation realised. */
-  useCase: UseCase
-  /** Human-readable narration. */
-  memo: string
-  /** True when both legs are CNC-owned pockets (internal move, no IS impact). */
-  internal: boolean
-  /** Whether this entry carries monetary lines or only memo metadata. */
-  kind: 'monetary' | 'memo'
-  /** Off-chain category, when enriched (e.g. "Payroll", "Operating"). */
-  category?: string
-  /** Transaction hash, when known. */
-  txHash?: string
-  /**
-   * The primary source posting's contextual metadata. It is a snapshot used for
-   * narration and drill-down links; report amounts and account identity always
-   * come from `lines`.
-   */
-  source?: LedgerEntry
-  /** Transitional API keys and decisions; accounts and amounts always belong to lines. */
-  legacyClassification?: {
-    targets: LegacyClassificationTarget[]
-    /** One eligible source withdrawal, optionally accompanied by protocol-fee postings. */
-    editable: boolean
-  }
-  /** Ordered and validated journal lines; empty only when {@link kind} is `memo`. */
-  lines: JournalEntryLine[]
-}
+import { sourceOperationIdOf, type LedgerEntry } from './ledgerEntry'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import type { JournalEntry, JournalEntryLine, UsdAmount } from './types'
 
 /** Result of validating source postings before they become JournalEntry records. */
-export interface JournalSourceReconciliation {
+interface JournalSourceReconciliation {
   /** Postings that can participate in a complete accounting operation. */
   entries: LedgerEntry[]
   /** Fee source operations whose Bank outflow evidence is missing. */

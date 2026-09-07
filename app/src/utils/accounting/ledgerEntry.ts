@@ -93,7 +93,7 @@ export type UseCase =
  * that need no join (deposits, internal moves, dividends, …); `needs-off-chain-data`
  * flags a payroll/expense entry that found no matching portal record.
  */
-export type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-data'
+type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-data'
 
 export interface LedgerEntry {
   /** Stable id — the source row id, suffixed when one event yields several entries. */

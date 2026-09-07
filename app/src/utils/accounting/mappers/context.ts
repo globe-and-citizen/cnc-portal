@@ -49,7 +49,7 @@ function buildPocketIndex(
   return index
 }
 
-export interface BuildMapperContextInput {
+interface BuildMapperContextInput {
   /** The team's `TeamContract` rows — resolve the internal pockets. */
   contracts: readonly TeamContract[] | undefined
   /** The set of internal addresses (from `collectInternalAddresses`). */

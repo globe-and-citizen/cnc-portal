@@ -51,6 +51,8 @@ flowchart LR
   effects remain outside `utils`.
 - Accounting utilities keep token movements and USD calculations as fixed-scale `bigint` values through journal validation and every report
   projection. Conversion to a JavaScript `number` belongs only to presentation and export boundaries.
+- Accounting contracts shared across account resolution, the journal, and financial-statement projections are declared in one type-only
+  module. Types that describe one mapper, export adapter, composable, or presenter remain local to that implementation.
 - Accounting journal assembly accepts only rate-stamped source postings and rejects monetary input without a rate instead of adapting a
   transitional JavaScript `number`.
 - Every Accounting presenter accepts a `JournalEntry` collection directly, so components and exporters do not compose lower-level filtering
@@ -65,9 +67,10 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `734459c047e2f00e530fa4089018397fcd3015f1`
+**Implementation evidence reviewed against:** `194deeebc9d207dacda762afa652b04f08f0b6e6`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
+- [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
 - [Fixed-scale accounting monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts)
 - [Pure accounting account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
 - [Utility boundary validator](../../../app/scripts/check-utility-boundaries.mjs) and

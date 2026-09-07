@@ -5,7 +5,7 @@
  * (and the view) depend on this module rather than on each other.
  */
 import type { LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
-import type { JournalEntry } from './journalEntry'
+import type { JournalEntry } from './types'
 
 /** The canonical journal is the only Accounting data that crosses the export boundary. */
 export interface AccountingExportSnapshot {

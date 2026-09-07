@@ -3,8 +3,9 @@ import { buildJournal } from '@/utils/accounting/generalLedger'
 import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import { createJournalEntry, type JournalEntry } from '@/utils/accounting/journalEntry'
+import { createJournalEntry } from '@/utils/accounting/journalEntry'
 import { ZERO_USD_AMOUNT } from '@/utils/accounting/monetaryAmount'
+import type { JournalEntry } from '@/utils/accounting/types'
 import { usd } from './fixtures'
 
 const accounts = buildAccountRegistry([])

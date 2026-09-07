@@ -42,9 +42,10 @@ import {
   type TransactionAccountEvidence
 } from '@/utils/accounting/accountInstances'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import { buildJournal, type JournalEntry } from '@/utils/accounting/generalLedger'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 import { reconcileJournalEntrySources } from '@/utils/accounting/journalEntry'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntry } from '@/utils/accounting/types'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import {
   buildSherMultiplierTimeline,

@@ -9,11 +9,8 @@ import type { CncAccounting } from '@/utils/accounting/assemble'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { MapperContext } from '@/utils/accounting/mappers/context'
-import {
-  USD_AMOUNT_DECIMALS,
-  usdAmountToNumber,
-  type UsdAmount
-} from '@/utils/accounting/monetaryAmount'
+import { USD_AMOUNT_DECIMALS, usdAmountToNumber } from '@/utils/accounting/monetaryAmount'
+import type { UsdAmount } from '@/utils/accounting/types'
 import { assembleAccounting } from './assembleAccounting'
 
 /** Exact accounting amount shorthand for domain-level assertions. */

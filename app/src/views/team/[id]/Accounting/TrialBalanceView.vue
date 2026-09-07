@@ -131,7 +131,7 @@ import { defaultValueForMode } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
-import type { Account } from '@/utils/accounting/accountRegistry'
+import type { Account } from '@/utils/accounting/types'
 import { presentTrial } from '@/utils/accounting/presenter'
 
 interface TrialTableRow {
