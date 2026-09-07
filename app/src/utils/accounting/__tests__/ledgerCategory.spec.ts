@@ -12,6 +12,7 @@ const base = {
   amountUsd: 100,
   token: 'usdc' as const,
   rawAmount: '100000000',
+  rate: 1,
   memo: '',
   internal: false,
   enrichment: 'not-applicable' as const

@@ -15,7 +15,7 @@ import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { accountFor } from '@/utils/accounting/accountRegistry'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { categoryOf } from '@/utils/accounting/ledgerCategory'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { sampleBooks } from './fixtures'
 
 /** The shared live book: a $100 client deposit and a $30 expense payout. */
@@ -88,22 +88,23 @@ describe('presentBalance', () => {
     expect(balance.totalLiabilities).toBe('$0.00')
   })
 
-  const nativeEntry = (amountUsd: number): LedgerEntry => ({
-    id: 'pol',
+  const bankDeposit = (amountUsd: number): RateStampedLedgerEntry => ({
+    id: 'bank',
     timestamp: 1,
     useCase: 'UC-BANK-02',
     debit: 'Cash — Bank',
     credit: 'Service Revenue',
     amountUsd,
-    token: 'native',
-    rawAmount: '28953000000000000', // 0.028953 POL
+    token: 'usdc',
+    rawAmount: String(amountUsd * 1_000_000),
+    rate: 1,
     internal: false,
     memo: '',
     enrichment: 'not-applicable'
   })
 
   it('lists a non-cash asset (Trading account) as its own drillable asset line', () => {
-    const tradingEntry: LedgerEntry = {
+    const tradingEntry: RateStampedLedgerEntry = {
       id: 'trd',
       timestamp: 1,
       useCase: 'CASH-OUT',
@@ -112,6 +113,7 @@ describe('presentBalance', () => {
       amountUsd: 30,
       token: 'usdc',
       rawAmount: '30000000',
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
@@ -126,18 +128,14 @@ describe('presentBalance', () => {
   it('labels later Bank deployments separately while retaining their concrete account selections', () => {
     const journal = buildJournal([
       {
-        ...nativeEntry(100),
+        ...bankDeposit(100),
         id: 'bank-1',
-        token: 'usdc',
-        rawAmount: '100000000',
         debitInstance: '0x1111111111111111111111111111111111111111'
       },
       {
-        ...nativeEntry(25),
+        ...bankDeposit(25),
         id: 'bank-2',
         timestamp: 2,
-        token: 'usdc',
-        rawAmount: '25000000',
         debitInstance: '0x2222222222222222222222222222222222222222'
       }
     ])
@@ -185,7 +183,7 @@ describe('presentJournalLedger', () => {
   })
 
   it('categorizes the Bank protocol fee as an Expense (not a neutral Transfer)', () => {
-    const fee: LedgerEntry = {
+    const fee: RateStampedLedgerEntry = {
       id: 'fee-1',
       timestamp: 100,
       useCase: 'FEE',
@@ -194,6 +192,7 @@ describe('presentJournalLedger', () => {
       amountUsd: 0.5,
       token: 'usdc',
       rawAmount: '500000',
+      rate: 1,
       memo: 'Transaction fee skimmed from Bank',
       enrichment: 'not-applicable'
     }

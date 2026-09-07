@@ -173,11 +173,11 @@ export function needsAccountInstanceEvidence(
  * unambiguous receipt evidence. No evidence, a native-only transfer, or more
  * than one matching deployment intentionally remains unresolved.
  */
-export function resolveAccountInstances(
-  entries: readonly LedgerEntry[],
+export function resolveAccountInstances<T extends LedgerEntry>(
+  entries: readonly T[],
   accounts: ReadonlyMap<string, AccountName>,
   evidence: TransactionAccountEvidence = new Map()
-): LedgerEntry[] {
+): T[] {
   return entries.map((entry) => {
     const transfers = transactionEvidenceFor(entry.txHash, evidence)
     const debitInstance =
@@ -193,6 +193,6 @@ export function resolveAccountInstances(
       ...rest,
       ...(debitInstance ? { debitInstance } : {}),
       ...(creditInstance ? { creditInstance } : {})
-    }
+    } as T
   })
 }

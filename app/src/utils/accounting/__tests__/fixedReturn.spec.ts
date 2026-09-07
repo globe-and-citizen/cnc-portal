@@ -92,7 +92,9 @@ describe('mapFixedReturnEvents', () => {
       ctx
     )
 
-    const repayment = buildJournal(entries).find((entry) => entry.id === txHash)
+    const repayment = buildJournal(entries.map((entry) => ({ ...entry, rate: 1 }))).find(
+      (entry) => entry.id === txHash
+    )
 
     expect(repayment).toMatchObject({
       sourceOperationId: txHash,

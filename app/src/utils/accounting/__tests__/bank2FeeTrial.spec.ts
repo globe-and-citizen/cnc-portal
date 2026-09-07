@@ -66,7 +66,7 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
     },
     ctx
   )
-  const entries = [...bankEntries, ...feeEntries]
+  const entries = [...bankEntries, ...feeEntries].map((entry) => ({ ...entry, rate: 1 }))
 
   it('books the fee on the same Bank deployment as its transfer (BANK_A)', () => {
     const fee = entries.find((e) => e.useCase === 'FEE')!

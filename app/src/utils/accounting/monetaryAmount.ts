@@ -23,7 +23,6 @@ export type UsdRate = bigint
 export const ZERO_USD_AMOUNT: UsdAmount = 0n
 
 const RATE_SCALE = 10 ** USD_RATE_DECIMALS
-const LEGACY_TO_ACCOUNTING_SCALE = 10n ** BigInt(USD_AMOUNT_DECIMALS - USD_RATE_DECIMALS)
 
 function scaledSixDecimalInteger(value: number, label: string): bigint {
   const scaled = Math.round(value * RATE_SCALE)
@@ -60,16 +59,6 @@ export function usdAmountFromToken(rawAmount: bigint, tokenId: TokenId, rate: Us
   }
   const absoluteAmount = rawAmount < 0n ? -rawAmount : rawAmount
   return absoluteAmount * rate * 10n ** BigInt(scaleDelta)
-}
-
-/**
- * Adapt the transitional LedgerEntry USD value, whose contract is six decimals,
- * when no raw rate-of-record is available (mainly old fixtures and memo sources).
- */
-export function usdAmountFromLegacyNumber(amount: number): UsdAmount {
-  if (!Number.isFinite(amount) || amount < 0)
-    throw new Error('USD amount must be finite and non-negative')
-  return scaledSixDecimalInteger(amount, 'USD amount') * LEGACY_TO_ACCOUNTING_SCALE
 }
 
 /** Convert an exact amount to a number only at a presentation or export boundary. */

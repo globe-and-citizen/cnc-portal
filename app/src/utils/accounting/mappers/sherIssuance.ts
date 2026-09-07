@@ -105,8 +105,11 @@ function laneKey(lane: SherLane, entry: LedgerEntry): string {
 }
 
 /** Narrow a `(entry, lane)` pair to the legs that belong to a lane. */
-function isLaned(candidate: { entry: LedgerEntry; lane: SherLane | null }): candidate is {
-  entry: LedgerEntry
+function isLaned<T extends LedgerEntry>(candidate: {
+  entry: T
+  lane: SherLane | null
+}): candidate is {
+  entry: T
   lane: SherLane
 } {
   return candidate.lane !== null
@@ -165,10 +168,10 @@ function consumeAccruals(issuance: LedgerEntry, queue: AccrualState[] | undefine
  * only matched/pending accrual legs change (`amountUsd` and the displayed `rate`).
  * Issuance legs are left at their own-date (frozen) value.
  */
-export function settleWithdrawnSher(
-  entries: readonly LedgerEntry[],
+export function settleWithdrawnSher<T extends LedgerEntry>(
+  entries: readonly T[],
   currentSherRate: number
-): LedgerEntry[] {
+): T[] {
   const { states, queues } = buildAccrualQueues(entries)
 
   // Issuances consume their own lane's accrual queue, in chronological order (FIFO).

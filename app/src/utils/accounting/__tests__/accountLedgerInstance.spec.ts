@@ -3,7 +3,7 @@ import { accountNet, accountOpening, entriesForAccount } from '@/utils/accountin
 import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry, RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { Address } from 'viem'
 import { usd } from './fixtures'
 
@@ -11,7 +11,9 @@ const BANK1 = '0x1111111111111111111111111111111111111111' as Address
 const BANK2 = '0x2222222222222222222222222222222222222222' as Address
 const TRANSFER_TX_HASH = `0x${'a'.repeat(64)}`
 
-function entry(over: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
+function entry(
+  over: Partial<RateStampedLedgerEntry> & Pick<LedgerEntry, 'id'>
+): RateStampedLedgerEntry {
   return {
     timestamp: 100,
     useCase: 'UC-BANK-02',
@@ -20,6 +22,7 @@ function entry(over: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntr
     amountUsd: 0,
     token: 'usdc',
     rawAmount: '0',
+    rate: 1,
     internal: false,
     memo: '',
     enrichment: 'not-applicable',
@@ -27,7 +30,7 @@ function entry(over: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntr
   }
 }
 
-function migrationBook(): LedgerEntry[] {
+function migrationBook(): RateStampedLedgerEntry[] {
   return [
     entry({
       id: 'seed1',
@@ -35,7 +38,8 @@ function migrationBook(): LedgerEntry[] {
       debit: 'Cash — Bank',
       debitInstance: BANK1,
       credit: 'Service Revenue',
-      amountUsd: 200
+      amountUsd: 200,
+      rawAmount: '200000000'
     }),
     entry({
       id: 'seed2',
@@ -43,7 +47,8 @@ function migrationBook(): LedgerEntry[] {
       debit: 'Cash — Bank',
       debitInstance: BANK2,
       credit: 'Service Revenue',
-      amountUsd: 10
+      amountUsd: 10,
+      rawAmount: '10000000'
     }),
     entry({
       id: `${TRANSFER_TX_HASH}-5`,
@@ -54,6 +59,7 @@ function migrationBook(): LedgerEntry[] {
       credit: 'Cash — Bank',
       creditInstance: BANK1,
       amountUsd: 100,
+      rawAmount: '100000000',
       internal: true
     }),
     entry({
@@ -63,7 +69,8 @@ function migrationBook(): LedgerEntry[] {
       debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
       creditInstance: BANK1,
-      amountUsd: 0.5
+      amountUsd: 0.5,
+      rawAmount: '500000'
     })
   ]
 }

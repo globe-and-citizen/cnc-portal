@@ -27,6 +27,7 @@ function entry(partial: Partial<LedgerEntry>): LedgerEntry {
     amountUsd: 500,
     token: 'usdc',
     rawAmount: '500000000',
+    rate: 1,
     internal: false,
     memo: 'raw memo',
     enrichment: 'not-applicable',

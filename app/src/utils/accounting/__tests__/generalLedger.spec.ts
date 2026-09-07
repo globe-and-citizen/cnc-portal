@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { catalogueLedger } from './catalogueLedger'
 import { usdNumber } from './fixtures'
 
-const generalLedger = (entries: readonly LedgerEntry[]) => buildGeneralLedger(buildJournal(entries))
+const generalLedger = (entries: readonly RateStampedLedgerEntry[]) =>
+  buildGeneralLedger(buildJournal(entries))
 
 describe('buildGeneralLedger — catalogue worked example', () => {
   const gl = generalLedger(catalogueLedger)
@@ -52,7 +53,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     // but the pooled 0.01 credit rounds to a single 0.01. Rounding per account
     // then summing reads 0.02 vs 0.01 — "out of balance" — yet the raw totals are
     // exactly equal. The balanced check must run on the raw sums.
-    const cent = (id: string, debit: AccountName, credit: AccountName): LedgerEntry => ({
+    const cent = (id: string, debit: AccountName, credit: AccountName): RateStampedLedgerEntry => ({
       id,
       timestamp: 1,
       useCase: 'UC-BANK-02',
@@ -61,6 +62,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       amountUsd: 0.005,
       token: 'usdc',
       rawAmount: '5000',
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
@@ -84,7 +86,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       instance: string,
       amountUsd: number,
       timestamp: number
-    ): LedgerEntry => ({
+    ): RateStampedLedgerEntry => ({
       id,
       timestamp,
       useCase: 'UC-BANK-02',
@@ -94,13 +96,14 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       amountUsd,
       token: 'usdc',
       rawAmount: String(amountUsd * 1e6),
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
     })
     // A leg with NO instance (a FixedReturn sweep straight to Bank) has no source
     // evidence for either Bank deployment. It remains explicit for reconciliation.
-    const blankBankLeg: LedgerEntry = {
+    const blankBankLeg: RateStampedLedgerEntry = {
       id: 'd',
       timestamp: 15,
       useCase: 'UC-CREDIT-01',
@@ -109,6 +112,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       amountUsd: 20,
       token: 'usdc',
       rawAmount: '20000000',
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
@@ -139,7 +143,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
   })
 
   it('does not split Safe — its address survives redeploys', () => {
-    const safeLeg = (id: string, instance: string, amountUsd: number): LedgerEntry => ({
+    const safeLeg = (id: string, instance: string, amountUsd: number): RateStampedLedgerEntry => ({
       id,
       timestamp: Number(id),
       useCase: 'UC-BANK-02',
@@ -149,6 +153,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       amountUsd,
       token: 'usdc',
       rawAmount: String(amountUsd * 1e6),
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
@@ -178,6 +183,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
         amountUsd: 42,
         token: 'usdc',
         rawAmount: '42000000',
+        rate: 1,
         internal: false,
         memo: '',
         enrichment: 'not-applicable'
@@ -190,7 +196,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
   })
 
   it('rejects an unbalanced posting before the trial-balance projection runs', () => {
-    const halfPosting: LedgerEntry = {
+    const halfPosting: RateStampedLedgerEntry = {
       id: 'broken',
       timestamp: 1,
       useCase: 'CASH-IN',
@@ -199,6 +205,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       amountUsd: 5,
       token: 'usdc',
       rawAmount: '5000000',
+      rate: 1,
       internal: false,
       memo: 'half posting',
       enrichment: 'not-applicable'

@@ -19,8 +19,8 @@ export interface JournalEntryLineMovement {
   rawAmount: bigint
   /** Decimal places used by the token's base unit. */
   decimals: number
-  /** USD-per-whole-token rate of record, when it is available. */
-  rate?: UsdRate
+  /** USD-per-whole-token rate of record used to value this movement. */
+  rate: UsdRate
 }
 
 /** One ordered debit or credit line belonging to a {@link JournalEntry}. */
@@ -82,9 +82,9 @@ export interface JournalEntry {
 }
 
 /** Result of validating source postings before they become JournalEntry records. */
-export interface JournalSourceReconciliation {
+export interface JournalSourceReconciliation<T extends LedgerEntry = LedgerEntry> {
   /** Postings that can participate in a complete accounting operation. */
-  entries: LedgerEntry[]
+  entries: T[]
   /** Fee source operations whose Bank outflow evidence is missing. */
   unmatchedFeeOperationIds: string[]
 }
@@ -112,9 +112,9 @@ function operationIdOf(entry: LedgerEntry): string {
  * it by source operation, withholds only an orphaned fee, and lets unrelated
  * postings from the same operation remain available to the journal.
  */
-export function reconcileJournalEntrySources(
-  entries: readonly LedgerEntry[]
-): JournalSourceReconciliation {
+export function reconcileJournalEntrySources<T extends LedgerEntry>(
+  entries: readonly T[]
+): JournalSourceReconciliation<T> {
   const operationsWithBankOutflow = new Set<string>()
   for (const entry of entries) {
     if (isBankOutflowPosting(entry)) operationsWithBankOutflow.add(operationIdOf(entry))

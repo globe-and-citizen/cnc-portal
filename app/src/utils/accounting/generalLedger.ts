@@ -1,7 +1,7 @@
 /**
  * General ledger + trial balance (issue #2117).
  *
- * Turns the consolidated {@link LedgerEntry} feed into the double-entry journal
+ * Turns the consolidated {@link RateStampedLedgerEntry} feed into the double-entry journal
  * (catalogue §6.2) and rolls it up into a trial balance (catalogue §6.4) that
  * must satisfy two identities:
  *
@@ -10,7 +10,7 @@
  * - **Net**: Σ of the debit-normal account balances = Σ of the credit-normal
  *   balances (`debitBalanceTotal === creditBalanceTotal`) — 253 in the worked example.
  *
- * Accounting assembly adapts the consolidated {@link LedgerEntry} feed into
+ * Accounting assembly adapts the consolidated {@link RateStampedLedgerEntry} feed into
  * validated {@link JournalEntry} records once. The General Ledger, Trial Balance,
  * Summary, Income Statement, and Balance Sheet consume that assembled journal.
  */
@@ -21,12 +21,11 @@ import {
   type AccountRegistry,
   type Account
 } from './accountRegistry'
-import { sourceOperationIdOf, transactionHashOf, type LedgerEntry } from './ledgerEntry'
+import { sourceOperationIdOf, transactionHashOf, type RateStampedLedgerEntry } from './ledgerEntry'
 import { legacyClassificationTargetOf } from './classificationTarget'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
 import {
   ZERO_USD_AMOUNT,
-  usdAmountFromLegacyNumber,
   usdAmountFromToken,
   usdRateFromNumber,
   type UsdAmount
@@ -44,14 +43,14 @@ import {
 export type { JournalEntry, JournalEntryLine } from './journalEntry'
 
 /** Convert a current two-leg consolidated posting into journal lines with concrete account identity. */
-function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLine[] {
+function linesOf(entry: RateStampedLedgerEntry, accounts: AccountRegistry): JournalEntryLine[] {
   const lines: JournalEntryLine[] = []
-  const rate = entry.rate != null ? usdRateFromNumber(entry.rate) : undefined
+  if (typeof entry.rate !== 'number') {
+    throw new Error(`Ledger entry "${entry.id}" requires a rate before journal assembly`)
+  }
+  const rate = usdRateFromNumber(entry.rate)
   const rawAmount = BigInt(entry.rawAmount)
-  const amount =
-    rate === undefined
-      ? usdAmountFromLegacyNumber(entry.amountUsd)
-      : usdAmountFromToken(rawAmount, entry.token, rate)
+  const amount = usdAmountFromToken(rawAmount, entry.token, rate)
   if (entry.debit) {
     const account = accounts.resolve(entry.debit, entry.debitInstance)
     lines.push({
@@ -61,7 +60,7 @@ function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLin
         token: entry.token,
         rawAmount,
         decimals: getTokenDecimals(entry.token),
-        ...(rate !== undefined ? { rate } : {})
+        rate
       },
       debit: amount
     })
@@ -75,7 +74,7 @@ function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLin
         token: entry.token,
         rawAmount,
         decimals: getTokenDecimals(entry.token),
-        ...(rate !== undefined ? { rate } : {})
+        rate
       },
       credit: amount
     })
@@ -85,7 +84,7 @@ function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLin
 
 /** One source operation's monetary lines, coalesced by their concrete account and token movement. */
 function mergedLines(
-  entries: readonly LedgerEntry[],
+  entries: readonly RateStampedLedgerEntry[],
   accounts: AccountRegistry
 ): JournalEntryLine[] {
   const debit = entries.flatMap((entry) =>
@@ -103,7 +102,7 @@ function mergedLines(
         side,
         line.account.id,
         movement?.token ?? '',
-        movement?.rate ?? '',
+        movement ? movement.rate : '',
         movement ? 'movement' : 'none'
       ].join('|')
       const existing = byMovement.get(key)
@@ -127,7 +126,7 @@ function mergedLines(
 
 /** Adapt one source operation's consolidated postings at the validated journal boundary. */
 function journalEntryFromLedgerEntries(
-  entries: readonly LedgerEntry[],
+  entries: readonly RateStampedLedgerEntry[],
   accounts: AccountRegistry,
   operationId: string
 ): JournalEntry {
@@ -172,12 +171,12 @@ function journalEntryFromLedgerEntries(
 
 /** Adapt consolidated postings into the validated, ordered double-entry journal. */
 export function buildJournal(
-  entries: readonly LedgerEntry[],
+  entries: readonly RateStampedLedgerEntry[],
   accounts?: AccountRegistry
 ): JournalEntry[] {
   const reconciled = reconcileJournalEntrySources(entries)
   const accountRegistry = accounts ?? buildAccountRegistry(reconciled.entries)
-  const byOperation = new Map<string, LedgerEntry[]>()
+  const byOperation = new Map<string, RateStampedLedgerEntry[]>()
   for (const entry of reconciled.entries) {
     const operationId = sourceOperationIdOf(entry.txHash ?? entry.sourceOperationId ?? entry.id)
     const group = byOperation.get(operationId)

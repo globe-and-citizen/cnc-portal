@@ -212,6 +212,9 @@ export interface LedgerEntry {
   enrichment: EnrichmentStatus
 }
 
+/** A source posting after the rate-of-record stage and safe for journal assembly. */
+export type RateStampedLedgerEntry = LedgerEntry & { rate: number }
+
 /** Checksum-normalize an address, returning `undefined` for invalid input. */
 function normalizeCounterparty(address: Address | string | null | undefined): Address | undefined {
   if (!address || !isAddress(address)) return undefined

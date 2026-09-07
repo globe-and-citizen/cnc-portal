@@ -38,6 +38,7 @@ describe('buildLedger — rolls up transaction fees as a dedicated metric', () =
     amountUsd: 0.5,
     token: 'usdc',
     rawAmount: '500000',
+    rate: 1,
     memo: 'Transaction fee skimmed from Bank',
     enrichment: 'not-applicable'
   }
@@ -58,7 +59,13 @@ describe('buildLedger — rolls up transaction fees as a dedicated metric', () =
       buildJournal([
         transfer,
         { ...fee, id: 'fee-1', sourceOperationId: 'bank-outflow' },
-        { ...fee, id: 'fee-2', sourceOperationId: 'bank-outflow', amountUsd: 0.25 }
+        {
+          ...fee,
+          id: 'fee-2',
+          sourceOperationId: 'bank-outflow',
+          amountUsd: 0.25,
+          rawAmount: '250000'
+        }
       ])
     )
     expect(usdNumber(summary.transactionFees)).toBeCloseTo(0.75, 4)

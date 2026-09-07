@@ -11,7 +11,7 @@ import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
 import StatementLine from '../StatementLine.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { accountNet, entriesForAccount, NO_OPENING } from '@/utils/accounting/accountLedger'
-import { usdAmountFromLegacyNumber } from '@/utils/accounting/monetaryAmount'
+import { usd } from '@/utils/accounting/__tests__/fixtures'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerColumns'
@@ -240,9 +240,9 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
 
   it('carries an opening balance into the ledger and closes on the remainder', async () => {
     const opening = {
-      debits: usdAmountFromLegacyNumber(100),
-      credits: usdAmountFromLegacyNumber(0),
-      balance: usdAmountFromLegacyNumber(100)
+      debits: usd(100),
+      credits: usd(0),
+      balance: usd(100)
     }
     const wrapper = renderWithProviders(LedgerDrilldownModal, {
       props: {

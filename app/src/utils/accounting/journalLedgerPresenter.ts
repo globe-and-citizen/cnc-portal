@@ -97,7 +97,7 @@ function sourceOf(entry: JournalEntry): LedgerEntry {
     ),
     token: movement?.token ?? 'usdc',
     rawAmount: movement?.rawAmount.toString() ?? '0',
-    ...(movement?.rate != null ? { rate: usdRateToNumber(movement.rate) } : {}),
+    ...(movement ? { rate: usdRateToNumber(movement.rate) } : {}),
     internal: entry.internal,
     memo: entry.memo,
     enrichment: 'not-applicable',
@@ -207,10 +207,7 @@ function movementOf(line: JournalEntryLine): Pick<LedgerRow, 'currency' | 'quant
   return {
     currency: currencySymbol(line.movement.token),
     quantity: formatNumber(whole, { maxDecimals: 6 }),
-    rate:
-      line.movement.rate == null
-        ? ''
-        : `$${formatNumber(usdRateToNumber(line.movement.rate), { maxDecimals: 6 })}`
+    rate: `$${formatNumber(usdRateToNumber(line.movement.rate), { maxDecimals: 6 })}`
   }
 }
 

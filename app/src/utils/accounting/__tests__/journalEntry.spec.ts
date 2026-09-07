@@ -2,17 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry, RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { createJournalEntry, type JournalEntry } from '@/utils/accounting/journalEntry'
-import { ZERO_USD_AMOUNT, usdAmountFromLegacyNumber } from '@/utils/accounting/monetaryAmount'
+import { ZERO_USD_AMOUNT } from '@/utils/accounting/monetaryAmount'
+import { usd } from './fixtures'
 
 const accounts = buildAccountRegistry([])
 
 function account(name: AccountName) {
   return accounts.resolve(name)
 }
-
-const usd = usdAmountFromLegacyNumber
 
 function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
   return {
@@ -161,8 +160,28 @@ describe('JournalEntry', () => {
     ).toThrow('account id is required')
   })
 
-  it('adapts a consolidated posting with deterministic source, line and account identities', () => {
+  it('rejects a monetary source posting without a rate of record', () => {
     const posting: LedgerEntry = {
+      id: 'unstamped-bank-event',
+      timestamp: 1_700_000_000,
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Bank',
+      credit: 'Service Revenue',
+      amountUsd: 100,
+      token: 'usdc',
+      rawAmount: '100000000',
+      internal: false,
+      memo: 'Client payment',
+      enrichment: 'not-applicable'
+    }
+
+    expect(() => buildJournal([posting as RateStampedLedgerEntry])).toThrow(
+      'Ledger entry "unstamped-bank-event" requires a rate before journal assembly'
+    )
+  })
+
+  it('adapts a consolidated posting with deterministic source, line and account identities', () => {
+    const posting: RateStampedLedgerEntry = {
       id: 'bank-event-7',
       timestamp: 1_700_000_001,
       useCase: 'UC-BANK-02',
@@ -171,6 +190,7 @@ describe('JournalEntry', () => {
       amountUsd: 100,
       token: 'usdc',
       rawAmount: '100000000',
+      rate: 1,
       internal: false,
       memo: 'Client payment',
       enrichment: 'not-applicable'
