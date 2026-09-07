@@ -29,7 +29,7 @@ const sources: LedgerSources = {
       }
     ]
   },
-  cashRemuneration: {
+  payroll: {
     withdraws: [
       {
         id: 'c1',
@@ -92,7 +92,7 @@ describe('buildCncLedgerEntries', () => {
   it('books an expense payout cash-basis, enriches it, and reports the remaining budget', () => {
     const withExpenses = buildCncLedgerEntries(
       {
-        expenseAccount: {
+        expense: {
           tokenTransfers: [
             {
               id: 'x1',

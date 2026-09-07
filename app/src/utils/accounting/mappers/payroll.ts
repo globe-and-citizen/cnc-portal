@@ -1,5 +1,5 @@
 /**
- * CashRemuneration source mapper — payroll settlement (spec §4, UC-CASH-03).
+ * Payroll source mapper — weekly accrual and on-chain settlement (spec §4).
  *
  * - `Withdraw` (native) / `WithdrawToken` (USDC): the cash leg settles the wage
  *   liability — Dr Wage Payable · Cr Cash — Payroll. Flagged `needs-off-chain-data`
@@ -14,6 +14,8 @@
  *   back to Bank.
  */
 import { formatUnits } from 'viem'
+import type { TokenId } from '@/constant'
+import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type {
   CashRemunerationDepositRow,
   CashRemunerationWithdrawRow,
@@ -22,15 +24,17 @@ import type {
   CashRemunerationOwnerTreasuryWithdrawTokenRow
 } from '@/types/contract-events/cash-remuneration'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import { buildClaimRatesWithOvertime } from '@/utils/wages/model'
 import { atDate, type MapperContext } from './context'
+import { createInternalPosting } from './internalPosting'
 
-export interface CashRemunerationMapperInput {
+export interface PayrollMapperInput {
   deposits?: readonly CashRemunerationDepositRow[]
   withdraws?: readonly CashRemunerationWithdrawRow[]
   withdrawTokens?: readonly CashRemunerationWithdrawTokenRow[]
   ownerTreasuryWithdrawNatives?: readonly CashRemunerationOwnerTreasuryWithdrawNativeRow[]
   ownerTreasuryWithdrawTokens?: readonly CashRemunerationOwnerTreasuryWithdrawTokenRow[]
+  weeklyClaims?: readonly WeeklyClaim[]
 }
 
 const PAYROLL = 'Cash — Payroll' as const
@@ -83,48 +87,82 @@ function shareSettlement(row: CashRemunerationWithdrawTokenRow, ctx: MapperConte
   })
 }
 
-/** A pocket-to-pocket move that nets out of the income statement. */
-function internalMove(
-  row: { id: string; amount: string; timestamp: number },
-  token: string | null,
-  ctx: MapperContext,
-  opts: {
-    debit: AccountName
-    credit: AccountName
-    debitInstance?: string
-    creditInstance?: string
-    counterparty?: string
-    memo: string
-  }
-): LedgerEntry {
-  const tokenId = ctx.tokenIdOf(token)
-  return makeEntry({
-    id: row.id,
-    timestamp: row.timestamp,
-    useCase: 'INTERNAL',
-    debit: opts.debit,
-    debitInstance: opts.debitInstance,
-    credit: opts.credit,
-    creditInstance: opts.creditInstance,
-    amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
-    token: tokenId,
-    rawAmount: row.amount,
-    counterparty: opts.counterparty,
-    internal: true,
-    memo: opts.memo
-  })
+/** A weekly claim spans the seven days from its `weekStart` (UTC ISO Monday). */
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
+function isWeekEnded(claim: WeeklyClaim, now: number): boolean {
+  const start = new Date(claim.weekStart).getTime()
+  return !Number.isFinite(start) || now >= start + WEEK_MS
 }
 
-/** Map every indexed CashRemuneration event to ledger entries. */
-export function mapCashRemunerationEvents(
-  input: CashRemunerationMapperInput,
-  ctx: MapperContext
+function submissionSeconds(claim: WeeklyClaim): number {
+  const ms = new Date(claim.createdAt || claim.weekStart).getTime()
+  return Number.isFinite(ms) ? Math.floor(ms / 1000) : 0
+}
+
+function weekEndSeconds(claim: WeeklyClaim): number | undefined {
+  const start = new Date(claim.weekStart).getTime()
+  if (!Number.isFinite(start)) return undefined
+  return Math.floor((start + WEEK_MS - 12 * 60 * 60 * 1000) / 1000)
+}
+
+/** Map ended weekly claims to their payroll expense or deferred-SHER accrual. */
+function mapAccruals(
+  weeklyClaims: readonly WeeklyClaim[] | undefined,
+  ctx: MapperContext,
+  now: number
+): LedgerEntry[] {
+  const entries: LedgerEntry[] = []
+  for (const claim of weeklyClaims ?? []) {
+    if (claim.status === 'disabled' || !isWeekEnded(claim, now) || !claim.wage) continue
+    const weekEnd = weekEndSeconds(claim)
+    const at = weekEnd ?? submissionSeconds(claim)
+    const rates = buildClaimRatesWithOvertime({
+      totalMinutesWorked: claim.minutesWorked,
+      maximumHoursPerWeek: claim.wage.maximumHoursPerWeek,
+      ratePerHour: claim.wage.ratePerHour ?? [],
+      overtimeRatePerHour: claim.wage.overtimeRatePerHour
+    })
+    for (const rate of rates) {
+      const tokenId = rate.type as TokenId
+      const base = rate.totalAmount
+      if (base === 0n) continue
+      const isShare = tokenId === 'sher'
+      entries.push(
+        makeEntry({
+          id: `accrual-${claim.id}-${tokenId}`,
+          sourceOperationId: `accrual-${claim.id}`,
+          timestamp: at,
+          useCase: 'UC-CASH-02',
+          debit: isShare ? 'Deferred SHER Compensation' : 'Payroll Expense',
+          credit: isShare ? 'SHERS To Be Issued' : 'Wage Payable',
+          amountUsd: ctx.toUsd(base, tokenId, atDate(at)),
+          token: tokenId,
+          rawAmount: base.toString(),
+          counterparty: claim.memberAddress,
+          minutesWorked: claim.minutesWorked,
+          periodEnd: weekEnd,
+          category: 'Payroll',
+          enrichment: 'enriched',
+          memo: 'Wage earned — weekly claim submitted'
+        })
+      )
+    }
+  }
+  return entries
+}
+
+/** Map the complete Payroll domain: weekly accruals and CashRemuneration events. */
+export function mapPayroll(
+  input: PayrollMapperInput,
+  ctx: MapperContext,
+  now: number = Date.now()
 ): LedgerEntry[] {
   const entries: LedgerEntry[] = []
 
   for (const row of input.deposits ?? []) {
     entries.push(
-      internalMove(row, null, ctx, {
+      createInternalPosting(row, null, ctx, {
         debit: PAYROLL,
         debitInstance: row.contractAddress,
         credit: ctx.pocketOf(row.depositor) ?? BANK,
@@ -150,7 +188,7 @@ export function mapCashRemunerationEvents(
 
   for (const row of input.ownerTreasuryWithdrawNatives ?? []) {
     entries.push(
-      internalMove(row, null, ctx, {
+      createInternalPosting(row, null, ctx, {
         debit: BANK,
         credit: PAYROLL,
         creditInstance: row.contractAddress,
@@ -162,7 +200,7 @@ export function mapCashRemunerationEvents(
 
   for (const row of input.ownerTreasuryWithdrawTokens ?? []) {
     entries.push(
-      internalMove(row, row.tokenAddress, ctx, {
+      createInternalPosting(row, row.tokenAddress, ctx, {
         debit: BANK,
         credit: PAYROLL,
         creditInstance: row.contractAddress,
@@ -172,5 +210,6 @@ export function mapCashRemunerationEvents(
     )
   }
 
+  entries.push(...mapAccruals(input.weeklyClaims, ctx, now))
   return entries
 }

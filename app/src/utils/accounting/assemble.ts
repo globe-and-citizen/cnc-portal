@@ -142,20 +142,21 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
     }
   }
 
-  if (input.cashRemunerationEvents) {
+  if (input.cashRemunerationEvents || input.weeklyClaims) {
     const events = input.cashRemunerationEvents
-    sources.cashRemuneration = {
-      deposits: items(events.cashRemunerationDeposits),
-      withdraws: items(events.cashRemunerationWithdraws),
-      withdrawTokens: items(events.cashRemunerationWithdrawTokens),
-      ownerTreasuryWithdrawNatives: items(events.cashRemunerationOwnerTreasuryWithdrawNatives),
-      ownerTreasuryWithdrawTokens: items(events.cashRemunerationOwnerTreasuryWithdrawTokens)
+    sources.payroll = {
+      deposits: items(events?.cashRemunerationDeposits),
+      withdraws: items(events?.cashRemunerationWithdraws),
+      withdrawTokens: items(events?.cashRemunerationWithdrawTokens),
+      ownerTreasuryWithdrawNatives: items(events?.cashRemunerationOwnerTreasuryWithdrawNatives),
+      ownerTreasuryWithdrawTokens: items(events?.cashRemunerationOwnerTreasuryWithdrawTokens),
+      weeklyClaims: input.weeklyClaims
     }
   }
 
   if (input.expenseEvents) {
     const events = input.expenseEvents
-    sources.expenseAccount = {
+    sources.expense = {
       deposits: items(events.expenseDeposits),
       tokenDeposits: items(events.expenseTokenDeposits),
       transfers: items(events.expenseTransfers),

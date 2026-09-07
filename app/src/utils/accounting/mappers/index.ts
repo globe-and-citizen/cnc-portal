@@ -9,33 +9,20 @@
 import { enrichEntries, type EnrichmentSources } from '@/utils/accounting/enrichment'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { mapBankEvents, type BankMapperInput } from './bank'
-import { mapCashRemunerationEvents, type CashRemunerationMapperInput } from './cashRemuneration'
-import { mapExpenseAccountEvents, type ExpenseMapperInput } from './expenseAccount'
+import { mapPayroll, type PayrollMapperInput } from './payroll'
+import { mapExpense, type ExpenseMapperInput } from './expenseAccount'
 import { mapFixedReturnEvents, type FixedReturnMapperInput } from './fixedReturn'
 import { mapInvestorEvents, type InvestorMapperInput } from './investor'
 import { mapVestingEvents, type VestingMapperInput } from './vesting'
 import { mapSafeTransfers, type SafeMapperInput } from './safe'
 import { mapSafeDepositRouterEvents, type SafeDepositRouterMapperInput } from './safeDepositRouter'
-import { mapPayrollAccruals } from './payrollAccrual'
-import { mapExpenseDrawsFromPortal } from './expenseAccount'
 import type { MapperContext } from './context'
-
-export * from './context'
-export * from './payrollAccrual'
-export * from './bank'
-export * from './cashRemuneration'
-export * from './expenseAccount'
-export * from './fixedReturn'
-export * from './investor'
-export * from './vesting'
-export * from './safe'
-export * from './safeDepositRouter'
 
 /** Every raw-event source the mappers consume, grouped by contract. */
 export interface LedgerSources {
   bank?: BankMapperInput
-  cashRemuneration?: CashRemunerationMapperInput
-  expenseAccount?: ExpenseMapperInput
+  payroll?: PayrollMapperInput
+  expense?: ExpenseMapperInput
   fixedReturn?: FixedReturnMapperInput
   investor?: InvestorMapperInput
   vesting?: VestingMapperInput
@@ -55,12 +42,16 @@ function mapAllSources(
 ): LedgerEntry[] {
   const entries: LedgerEntry[] = []
   if (sources.bank) entries.push(...mapBankEvents(sources.bank, ctx))
-  if (sources.cashRemuneration) {
-    entries.push(...mapCashRemunerationEvents(sources.cashRemuneration, ctx))
-  }
-  if (sources.expenseAccount) {
-    entries.push(...mapExpenseAccountEvents(sources.expenseAccount, ctx, offChain.expenses))
-  }
+  entries.push(
+    ...mapPayroll(
+      {
+        ...(sources.payroll ?? {}),
+        weeklyClaims: offChain.weeklyClaims ?? sources.payroll?.weeklyClaims
+      },
+      ctx
+    )
+  )
+  entries.push(...mapExpense(sources.expense ?? {}, ctx, offChain.expenses))
   if (sources.fixedReturn) entries.push(...mapFixedReturnEvents(sources.fixedReturn, ctx))
   if (sources.investor) entries.push(...mapInvestorEvents(sources.investor, ctx))
   if (sources.vesting) entries.push(...mapVestingEvents(sources.vesting, ctx))
@@ -72,14 +63,13 @@ function mapAllSources(
 }
 
 /**
- * Build the CNC general ledger end to end: map every on-chain source, add the
- * off-chain payroll accruals (UC-CASH-02, booked at claim submission), sort by
- * time, then enrich payroll/expense entries with their off-chain category.
+ * Build the CNC general ledger end to end: map every domain, sort by time, then
+ * enrich Payroll and Expense entries with their off-chain category.
  *
  * Expenses stay cash-basis (booked at each on-chain payout). When the indexer
  * returned **no** expense payout at all — its events aren't synced for the team —
  * the drawn amount is instead recognised from the portal budget balance
- * (`mapExpenseDrawsFromPortal`) so the books still reflect the spend. The two are
+ * inside the Expense boundary so the books still reflect the spend. The two are
  * mutually exclusive, so the fallback never double-counts an indexed payout.
  */
 export function buildCncLedgerEntries(
@@ -87,12 +77,6 @@ export function buildCncLedgerEntries(
   ctx: MapperContext,
   offChain: EnrichmentSources = {}
 ): LedgerEntry[] {
-  const onChain = mapAllSources(sources, ctx, offChain)
-  const hasIndexedExpensePayout = onChain.some((entry) => entry.useCase === 'UC-EXP-01')
-  const mapped = [
-    ...onChain,
-    ...mapPayrollAccruals(offChain.weeklyClaims, ctx),
-    ...(hasIndexedExpensePayout ? [] : mapExpenseDrawsFromPortal(offChain.expenses, ctx))
-  ].sort((a, b) => a.timestamp - b.timestamp)
+  const mapped = mapAllSources(sources, ctx, offChain).sort((a, b) => a.timestamp - b.timestamp)
   return enrichEntries(mapped, offChain, ctx.tokenIdOf)
 }
