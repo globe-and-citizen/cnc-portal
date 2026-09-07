@@ -3,7 +3,7 @@ import { accountNet, accountOpening, entriesForAccount } from '@/utils/accountin
 import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
-import type { LedgerEntry, RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { Address } from 'viem'
 import { usd } from './fixtures'
 
@@ -11,9 +11,7 @@ const BANK1 = '0x1111111111111111111111111111111111111111' as Address
 const BANK2 = '0x2222222222222222222222222222222222222222' as Address
 const TRANSFER_TX_HASH = `0x${'a'.repeat(64)}`
 
-function entry(
-  over: Partial<RateStampedLedgerEntry> & Pick<LedgerEntry, 'id'>
-): RateStampedLedgerEntry {
+function entry(over: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
   return {
     timestamp: 100,
     useCase: 'UC-BANK-02',
@@ -30,7 +28,7 @@ function entry(
   }
 }
 
-function migrationBook(): RateStampedLedgerEntry[] {
+function migrationBook(): LedgerEntry[] {
   return [
     entry({
       id: 'seed1',

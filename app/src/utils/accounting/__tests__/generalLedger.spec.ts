@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { catalogueLedger } from './catalogueLedger'
 import { usdNumber } from './fixtures'
 
-const generalLedger = (entries: readonly RateStampedLedgerEntry[]) =>
-  buildGeneralLedger(buildJournal(entries))
+const generalLedger = (entries: readonly LedgerEntry[]) => buildGeneralLedger(buildJournal(entries))
 
 describe('buildGeneralLedger — catalogue worked example', () => {
   const gl = generalLedger(catalogueLedger)
@@ -53,7 +52,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     // but the pooled 0.01 credit rounds to a single 0.01. Rounding per account
     // then summing reads 0.02 vs 0.01 — "out of balance" — yet the raw totals are
     // exactly equal. The balanced check must run on the raw sums.
-    const cent = (id: string, debit: AccountName, credit: AccountName): RateStampedLedgerEntry => ({
+    const cent = (id: string, debit: AccountName, credit: AccountName): LedgerEntry => ({
       id,
       timestamp: 1,
       useCase: 'UC-BANK-02',
@@ -86,7 +85,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       instance: string,
       amountUsd: number,
       timestamp: number
-    ): RateStampedLedgerEntry => ({
+    ): LedgerEntry => ({
       id,
       timestamp,
       useCase: 'UC-BANK-02',
@@ -103,7 +102,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     })
     // A leg with NO instance (a FixedReturn sweep straight to Bank) has no source
     // evidence for either Bank deployment. It remains explicit for reconciliation.
-    const blankBankLeg: RateStampedLedgerEntry = {
+    const blankBankLeg: LedgerEntry = {
       id: 'd',
       timestamp: 15,
       useCase: 'UC-CREDIT-01',
@@ -143,7 +142,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
   })
 
   it('does not split Safe — its address survives redeploys', () => {
-    const safeLeg = (id: string, instance: string, amountUsd: number): RateStampedLedgerEntry => ({
+    const safeLeg = (id: string, instance: string, amountUsd: number): LedgerEntry => ({
       id,
       timestamp: Number(id),
       useCase: 'UC-BANK-02',
@@ -196,7 +195,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
   })
 
   it('rejects an unbalanced posting before the trial-balance projection runs', () => {
-    const halfPosting: RateStampedLedgerEntry = {
+    const halfPosting: LedgerEntry = {
       id: 'broken',
       timestamp: 1,
       useCase: 'CASH-IN',

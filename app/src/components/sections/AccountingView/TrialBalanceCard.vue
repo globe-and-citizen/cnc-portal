@@ -132,8 +132,7 @@ import { useAccountingContext } from '@/composables/accounting/useAccountingCont
 import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import type { Account } from '@/utils/accounting/accountRegistry'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
-import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
+import { presentTrial } from '@/utils/accounting/presenter'
 
 interface TrialTableRow {
   /** Canonical concrete account. Absent only on the total row. */
@@ -163,9 +162,7 @@ const REDEPLOY_HINT =
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
 const accounting = useAccountingContext()
-const trial = computed(() =>
-  presentTrial(buildGeneralLedger(filterByPeriod(accounting.journal.value, null, asOf.value)))
-)
+const trial = computed(() => presentTrial(accounting.journal.value, asOf.value))
 
 const tableRows = computed<TrialTableRow[]>(() => [
   ...trial.value.rows.map((row) => ({ ...row, isTotal: false })),

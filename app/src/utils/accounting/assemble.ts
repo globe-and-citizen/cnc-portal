@@ -55,7 +55,7 @@ import {
 import { reconcileJournalEntrySources } from '@/utils/accounting/journalEntry'
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
-import type { RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import {
   buildSherMultiplierTimeline,
@@ -107,7 +107,7 @@ export interface CncAccounting {
    * Deduped, chronologically sorted mapper postings retained at the assembly
    * boundary. Views and exports consume the journal, never these source pairs.
    */
-  entries: RateStampedLedgerEntry[]
+  entries: LedgerEntry[]
   /** The canonical concrete-account source of truth for this assembled book. */
   accountRegistry: AccountRegistry
   /** The validated, ordered double-entry journal built once after consolidation. */
@@ -284,7 +284,7 @@ function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
  * the raw, pre-consolidation feed: Devise (`token`), Quantité (`rawAmount`), Taux
  * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
  */
-export function buildRawCncEntries(input: CncAccountingInput): RateStampedLedgerEntry[] {
+export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
   const internalAddresses = collectInternalAddresses(input.contracts)
   const rateOfRecord = buildRateOfRecord(input)
 
@@ -329,7 +329,7 @@ export function buildRawCncEntries(input: CncAccountingInput): RateStampedLedger
  * {@link assembleWithAccountEvidence} so the accounting composable can derive
  * price-fetch days from the raw entries without running the mapper pipeline twice.
  */
-function assembleFromRawEntries(rawEntries: readonly RateStampedLedgerEntry[]): CncAccounting {
+function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
   const reconciliation = reconcileJournalEntrySources(rawEntries)
   const { entries } = buildLedger(reconciliation.entries)
   const accountRegistry = buildAccountRegistry(entries)
@@ -352,7 +352,7 @@ function assembleFromRawEntries(rawEntries: readonly RateStampedLedgerEntry[]): 
  * before building every canonical report projection.
  */
 export function assembleWithAccountEvidence(
-  rawEntries: readonly RateStampedLedgerEntry[],
+  rawEntries: readonly LedgerEntry[],
   deploymentAccounts: ReadonlyMap<string, AccountName>,
   evidence: TransactionAccountEvidence
 ): CncAccounting {

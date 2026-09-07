@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
 import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import { entriesForAccount } from '@/utils/accounting/accountLedger'
-import type { RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { catalogueLedger } from './catalogueLedger'
 import { usd } from './fixtures'
 
-function balanceSheet(entries: readonly RateStampedLedgerEntry[]) {
+function balanceSheet(entries: readonly LedgerEntry[]) {
   return buildBalanceSheet(buildJournal(entries))
 }
 
@@ -16,7 +16,7 @@ function posting(
   debit: AccountName,
   credit: AccountName,
   amountUsd: number
-): RateStampedLedgerEntry {
+): LedgerEntry {
   return {
     id,
     timestamp: 1,

@@ -23,7 +23,7 @@ import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { journalLedgerRows, presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
 import { usd } from './fixtures'
-import type { RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 /** A 64-hex transaction hash, so a fee and its transfer pair by shared tx. */
 const TX = (n: number): string => `0x${String(n).padStart(64, '0')}`
@@ -32,7 +32,7 @@ const DAY = 86_400
 const day = (n: number): number => 1_700_000_000 + n * DAY
 
 // Orphan fee source evidence: withheld from the journal until its Bank outflow is available.
-const standaloneFee: RateStampedLedgerEntry = {
+const standaloneFee: LedgerEntry = {
   id: `${TX(1)}-1`,
   timestamp: day(1),
   useCase: 'FEE',
@@ -48,7 +48,7 @@ const standaloneFee: RateStampedLedgerEntry = {
 }
 
 // A client payment an owner manually classified as Service Revenue.
-const classifiedRevenue: RateStampedLedgerEntry = {
+const classifiedRevenue: LedgerEntry = {
   id: `${TX(2)}-0`,
   timestamp: day(2),
   useCase: 'CASH-IN',
@@ -65,7 +65,7 @@ const classifiedRevenue: RateStampedLedgerEntry = {
 }
 
 // An ordinary internal transfer, no fee — Bank funds the Payroll pocket.
-const ordinaryTransfer: RateStampedLedgerEntry = {
+const ordinaryTransfer: LedgerEntry = {
   id: `${TX(3)}-0`,
   timestamp: day(2),
   useCase: 'UC-BANK-03',
@@ -81,7 +81,7 @@ const ordinaryTransfer: RateStampedLedgerEntry = {
 }
 
 // A transfer and its fee share a transaction and become one three-line JournalEntry.
-const feeTransferOut: RateStampedLedgerEntry = {
+const feeTransferOut: LedgerEntry = {
   id: `${TX(4)}-0`,
   timestamp: day(3),
   useCase: 'UC-BANK-03',
@@ -95,7 +95,7 @@ const feeTransferOut: RateStampedLedgerEntry = {
   memo: 'Fund expenses (net of fee)',
   enrichment: 'not-applicable'
 }
-const feeTransferFee: RateStampedLedgerEntry = {
+const feeTransferFee: LedgerEntry = {
   id: `${TX(4)}-1`,
   timestamp: day(3),
   useCase: 'FEE',
@@ -111,7 +111,7 @@ const feeTransferFee: RateStampedLedgerEntry = {
 }
 
 // A native-token internal transfer — the multi-currency case (POL, not USDC).
-const nativeTransfer: RateStampedLedgerEntry = {
+const nativeTransfer: LedgerEntry = {
   id: `${TX(5)}-0`,
   timestamp: day(4),
   useCase: 'UC-BANK-03',
@@ -127,7 +127,7 @@ const nativeTransfer: RateStampedLedgerEntry = {
 }
 
 /** The whole book, canonical feed (fee and its transfer are separate postings). */
-const book: RateStampedLedgerEntry[] = [
+const book: LedgerEntry[] = [
   standaloneFee,
   classifiedRevenue,
   ordinaryTransfer,

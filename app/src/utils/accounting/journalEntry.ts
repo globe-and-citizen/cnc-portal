@@ -82,9 +82,9 @@ export interface JournalEntry {
 }
 
 /** Result of validating source postings before they become JournalEntry records. */
-export interface JournalSourceReconciliation<T extends LedgerEntry = LedgerEntry> {
+export interface JournalSourceReconciliation {
   /** Postings that can participate in a complete accounting operation. */
-  entries: T[]
+  entries: LedgerEntry[]
   /** Fee source operations whose Bank outflow evidence is missing. */
   unmatchedFeeOperationIds: string[]
 }
@@ -112,9 +112,9 @@ function operationIdOf(entry: LedgerEntry): string {
  * it by source operation, withholds only an orphaned fee, and lets unrelated
  * postings from the same operation remain available to the journal.
  */
-export function reconcileJournalEntrySources<T extends LedgerEntry>(
-  entries: readonly T[]
-): JournalSourceReconciliation<T> {
+export function reconcileJournalEntrySources(
+  entries: readonly LedgerEntry[]
+): JournalSourceReconciliation {
   const operationsWithBankOutflow = new Set<string>()
   for (const entry of entries) {
     if (isBankOutflowPosting(entry)) operationsWithBankOutflow.add(operationIdOf(entry))

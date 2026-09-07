@@ -15,7 +15,7 @@ import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { accountFor } from '@/utils/accounting/accountRegistry'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { categoryOf } from '@/utils/accounting/ledgerCategory'
-import type { RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { sampleBooks } from './fixtures'
 
 /** The shared live book: a $100 client deposit and a $30 expense payout. */
@@ -88,7 +88,7 @@ describe('presentBalance', () => {
     expect(balance.totalLiabilities).toBe('$0.00')
   })
 
-  const bankDeposit = (amountUsd: number): RateStampedLedgerEntry => ({
+  const bankDeposit = (amountUsd: number): LedgerEntry => ({
     id: 'bank',
     timestamp: 1,
     useCase: 'UC-BANK-02',
@@ -104,7 +104,7 @@ describe('presentBalance', () => {
   })
 
   it('lists a non-cash asset (Trading account) as its own drillable asset line', () => {
-    const tradingEntry: RateStampedLedgerEntry = {
+    const tradingEntry: LedgerEntry = {
       id: 'trd',
       timestamp: 1,
       useCase: 'CASH-OUT',
@@ -155,7 +155,7 @@ describe('presentBalance', () => {
 
 describe('presentTrial', () => {
   it('puts each account balance on its normal side and stays balanced', () => {
-    const trial = presentTrial(books().generalLedger)
+    const trial = presentTrial(books().journal)
     expect(trial.balanced).toBe(true)
     const revenue = trial.rows.find((r) => r.account.family.name === 'Service Revenue')
     expect(revenue?.nature).toBe('Income')
@@ -183,7 +183,7 @@ describe('presentJournalLedger', () => {
   })
 
   it('categorizes the Bank protocol fee as an Expense (not a neutral Transfer)', () => {
-    const fee: RateStampedLedgerEntry = {
+    const fee: LedgerEntry = {
       id: 'fee-1',
       timestamp: 100,
       useCase: 'FEE',

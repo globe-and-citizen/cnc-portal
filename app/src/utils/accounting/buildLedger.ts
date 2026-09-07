@@ -24,9 +24,9 @@
  */
 import type { LedgerEntry } from './ledgerEntry'
 
-export interface BuiltLedger<T extends LedgerEntry = LedgerEntry> {
+export interface BuiltLedger {
   /** Deduped, chronologically sorted postings — the canonical consolidated feed. */
-  entries: T[]
+  entries: LedgerEntry[]
 }
 
 /** Content key for an internal posting, so the two contract-side twins collapse. */
@@ -39,9 +39,9 @@ function internalKey(entry: LedgerEntry): string {
  * postings are deduped — external entries keep their unique source ids. The
  * first occurrence wins (mapper order makes the Bank-side row canonical).
  */
-function dedupeInternalTransfers<T extends LedgerEntry>(entries: readonly T[]): T[] {
+function dedupeInternalTransfers(entries: readonly LedgerEntry[]): LedgerEntry[] {
   const seen = new Set<string>()
-  const out: T[] = []
+  const out: LedgerEntry[] = []
   for (const entry of entries) {
     if (entry.internal) {
       const key = internalKey(entry)
@@ -75,7 +75,7 @@ function isZeroValuePosting(entry: LedgerEntry): boolean {
  * collapse internal-transfer twins. The result is then adapted once into the
  * canonical journal before every statement projection runs.
  */
-export function buildLedger<T extends LedgerEntry>(entries: readonly T[]): BuiltLedger<T> {
+export function buildLedger(entries: readonly LedgerEntry[]): BuiltLedger {
   const deduped = dedupeInternalTransfers(entries)
     .filter((entry) => !isZeroValuePosting(entry))
     .sort((a, b) => a.timestamp - b.timestamp)

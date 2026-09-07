@@ -1,6 +1,6 @@
 import type { AccountClass, AccountName } from './chartOfAccounts'
 import type { Account } from './accountRegistry'
-import type { GeneralLedger } from './generalLedger'
+import { buildGeneralLedger, type GeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
 import type { JournalEntry } from './journalEntry'
@@ -244,12 +244,17 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
   }
 }
 
-/** Trial-balance rows + balanced total from the live general ledger. */
-export function presentTrial(ledger: GeneralLedger): {
+/** Build and present the Trial Balance directly from the canonical journal. */
+export function presentTrial(
+  entries: readonly JournalEntry[],
+  asOf?: Date | null
+): {
   rows: TrialRow[]
   total: string
   balanced: boolean
 } {
+  const scopedEntries = filterByPeriod(entries, null, asOf)
+  const ledger = buildGeneralLedger(scopedEntries)
   const rows: TrialRow[] = ledger.trialBalance.map((row) => {
     const debitSide = row.account.family.normalBalance === 'debit'
     return {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { LedgerEntry, RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { createJournalEntry, type JournalEntry } from '@/utils/accounting/journalEntry'
 import { ZERO_USD_AMOUNT } from '@/utils/accounting/monetaryAmount'
 import { usd } from './fixtures'
@@ -175,13 +175,13 @@ describe('JournalEntry', () => {
       enrichment: 'not-applicable'
     }
 
-    expect(() => buildJournal([posting as RateStampedLedgerEntry])).toThrow(
+    expect(() => buildJournal([posting])).toThrow(
       'Ledger entry "unstamped-bank-event" requires a rate before journal assembly'
     )
   })
 
   it('adapts a consolidated posting with deterministic source, line and account identities', () => {
-    const posting: RateStampedLedgerEntry = {
+    const posting: LedgerEntry = {
       id: 'bank-event-7',
       timestamp: 1_700_000_001,
       useCase: 'UC-BANK-02',

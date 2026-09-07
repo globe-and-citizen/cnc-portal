@@ -18,12 +18,10 @@ import {
   presentTrial,
   presentSummaryCards,
   presentBanner,
-  filterByPeriod,
   incomeExportTitle,
   balanceExportTitle,
   trialExportTitle
 } from '@/utils/accounting/presenter'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import { formatDateTime } from '@/utils/format'
 import { generalLedgerPdfTable } from './generalLedgerPdfTable'
@@ -117,10 +115,7 @@ function balanceTable(books: AccountingExportSnapshot, asOf?: Date | null): Acco
 }
 
 function trialTable(books: AccountingExportSnapshot, asOf?: Date | null): AccountingPdfTable {
-  const ledger = asOf
-    ? buildGeneralLedger(filterByPeriod(books.journal, null, asOf))
-    : books.generalLedger
-  const trial = presentTrial(ledger)
+  const trial = presentTrial(books.journal, asOf)
   return {
     title: trialExportTitle(asOf),
     head: ['Account', 'Nature', 'Debit', 'Credit'],

@@ -15,12 +15,10 @@ import {
   presentTrial,
   presentSummaryCards,
   presentBanner,
-  filterByPeriod,
   incomeExportTitle,
   balanceExportTitle,
   trialExportTitle
 } from '@/utils/accounting/presenter'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 import { generalLedgerSheetRows } from './generalLedgerSheet'
 
@@ -106,10 +104,7 @@ function balanceSheetRows(books: AccountingExportSnapshot, asOf?: Date | null): 
 }
 
 function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetRows {
-  const ledger = asOf
-    ? buildGeneralLedger(filterByPeriod(books.journal, null, asOf))
-    : books.generalLedger
-  const trial = presentTrial(ledger)
+  const trial = presentTrial(books.journal, asOf)
   return [
     [trialExportTitle(asOf)],
     [],

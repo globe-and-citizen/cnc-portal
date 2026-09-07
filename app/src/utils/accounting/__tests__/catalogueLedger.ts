@@ -14,7 +14,7 @@
 import type { TokenId } from '@/constant'
 import { parseUnits } from 'viem'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { RateStampedLedgerEntry, UseCase } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry, UseCase } from '@/utils/accounting/ledgerEntry'
 
 /** Unix seconds for a given day in March 2026 (the worked-example period). */
 function march(day: number): number {
@@ -37,7 +37,7 @@ interface PostInput {
 }
 
 /** Build one balanced posting (or a memo-only entry when debit/credit are null). */
-function post(input: PostInput): RateStampedLedgerEntry {
+function post(input: PostInput): LedgerEntry {
   seq += 1
   const token = input.token ?? 'usdc'
   return {
@@ -59,7 +59,7 @@ function post(input: PostInput): RateStampedLedgerEntry {
 }
 
 /** The §6.2 journal, balanced pair by balanced pair (18 transactions, #17 memo). */
-export const catalogueLedger: RateStampedLedgerEntry[] = [
+export const catalogueLedger: LedgerEntry[] = [
   // 1 — Ravi invests $100 & gets SHER
   post({ day: 1, useCase: 'UC-SDR-01', debit: 'Cash — Safe', credit: 'Investor Equity', usd: 100 }),
   // 2 — Geor invests $10 & gets SHER

@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { LedgerEntry, RateStampedLedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { assembleRawAccounting } from './assembleAccounting'
 import { usd } from './fixtures'
 
-function posting(
-  overrides: Partial<RateStampedLedgerEntry> & Pick<LedgerEntry, 'id'>
-): RateStampedLedgerEntry {
+function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
   return {
     timestamp: 100,
     useCase: 'UC-BANK-03',
