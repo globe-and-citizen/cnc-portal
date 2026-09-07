@@ -9,7 +9,6 @@
 import { enrichEntries, type EnrichmentSources } from '@/utils/accounting/enrichment'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { mapBankEvents, type BankMapperInput } from './bank'
-import { mapFees, type FeeMapperInput } from './fees'
 import { mapCashRemunerationEvents, type CashRemunerationMapperInput } from './cashRemuneration'
 import { mapExpenseAccountEvents, type ExpenseMapperInput } from './expenseAccount'
 import { mapFixedReturnEvents, type FixedReturnMapperInput } from './fixedReturn'
@@ -24,7 +23,6 @@ import type { MapperContext } from './context'
 export * from './context'
 export * from './payrollAccrual'
 export * from './bank'
-export * from './fees'
 export * from './cashRemuneration'
 export * from './expenseAccount'
 export * from './fixedReturn'
@@ -36,7 +34,6 @@ export * from './safeDepositRouter'
 /** Every raw-event source the mappers consume, grouped by contract. */
 export interface LedgerSources {
   bank?: BankMapperInput
-  fees?: FeeMapperInput
   cashRemuneration?: CashRemunerationMapperInput
   expenseAccount?: ExpenseMapperInput
   fixedReturn?: FixedReturnMapperInput
@@ -58,7 +55,6 @@ function mapAllSources(
 ): LedgerEntry[] {
   const entries: LedgerEntry[] = []
   if (sources.bank) entries.push(...mapBankEvents(sources.bank, ctx))
-  if (sources.fees) entries.push(...mapFees(sources.fees, ctx))
   if (sources.cashRemuneration) {
     entries.push(...mapCashRemunerationEvents(sources.cashRemuneration, ctx))
   }

@@ -137,10 +137,8 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
       deposits: items(input.bankEvents.bankDeposits),
       tokenDeposits: items(input.bankEvents.bankTokenDeposits),
       transfers: items(input.bankEvents.bankTransfers),
-      tokenTransfers: items(input.bankEvents.bankTokenTransfers)
-    }
-    sources.fees = {
-      bankFeePaids: items(input.bankEvents.bankFeePaids)
+      tokenTransfers: items(input.bankEvents.bankTokenTransfers),
+      fees: items(input.bankEvents.bankFeePaids)
     }
   }
 

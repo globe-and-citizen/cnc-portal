@@ -17,10 +17,8 @@ const sources: LedgerSources = {
     ],
     transfers: [
       { id: 'b2', sender: ADDR.bank, to: ADDR.payroll, amount: '2000000', timestamp: 100 }
-    ]
-  },
-  fees: {
-    bankFeePaids: [
+    ],
+    fees: [
       {
         id: 'f1',
         contractAddress: ADDR.bank,

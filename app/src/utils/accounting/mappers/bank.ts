@@ -9,12 +9,15 @@
  *   - to an internal pocket → **UC-BANK-03** funding move (Dr that pocket · Cr Cash — Bank)
  *   - to anyone else        → unclassified outflow, flagged `needs-off-chain-data`
  *
- * Not mapped here: `FeePaid` (handled by the fee mapper — spec §5.1) and
- * `DividendDistributionTriggered` (a summary event — booking it as well as the
- * per-shareholder `Investor DividendPaid` would double-count the dividend).
+ * - `FeePaid` → another posting of the same source operation
+ *   (Dr Transaction Fee Expense · Cr Cash — Bank).
+ *
+ * `DividendDistributionTriggered` is not mapped: booking it as well as the
+ * per-shareholder `Investor DividendPaid` would double-count the dividend.
  */
 import type {
   BankDepositRow,
+  BankFeePaidRow,
   BankTokenDepositRow,
   BankTransferRow,
   BankTokenTransferRow
@@ -29,6 +32,7 @@ export interface BankMapperInput {
   tokenDeposits?: readonly BankTokenDepositRow[]
   transfers?: readonly BankTransferRow[]
   tokenTransfers?: readonly BankTokenTransferRow[]
+  fees?: readonly BankFeePaidRow[]
 }
 
 const BANK = 'Cash — Bank' as const
@@ -135,12 +139,31 @@ function mapTransfer(
   return inferred.internal ? inferred : applyClassification(inferred, 'out', BANK, ctx)
 }
 
-/** Map every indexed Bank event in `input` to ledger entries. */
+/** Map a protocol fee as another posting of its Bank transaction. */
+function mapFee(row: BankFeePaidRow, ctx: MapperContext): LedgerEntry {
+  const tokenId = ctx.tokenIdOf(row.token)
+  return makeEntry({
+    id: row.id,
+    sourceOperationId: sourceOperationIdOf(row.id),
+    timestamp: row.timestamp,
+    useCase: 'FEE',
+    debit: 'Transaction Fee Expense',
+    credit: BANK,
+    creditInstance: row.contractAddress,
+    amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
+    token: tokenId,
+    rawAmount: row.amount,
+    memo: 'Transaction fee skimmed from Bank'
+  })
+}
+
+/** Map every monetary Bank event, including its transaction-bound fees. */
 export function mapBankEvents(input: BankMapperInput, ctx: MapperContext): LedgerEntry[] {
   return [
     ...(input.deposits ?? []).map((row) => mapDeposit(row, null, ctx)),
     ...(input.tokenDeposits ?? []).map((row) => mapDeposit(row, row.token, ctx)),
     ...(input.transfers ?? []).map((row) => mapTransfer(row, null, ctx)),
-    ...(input.tokenTransfers ?? []).map((row) => mapTransfer(row, row.token, ctx))
+    ...(input.tokenTransfers ?? []).map((row) => mapTransfer(row, row.token, ctx)),
+    ...(input.fees ?? []).map((row) => mapFee(row, ctx))
   ]
 }
