@@ -331,7 +331,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a99818e80337bc6e44147cdb5df772886ed71ab8`
+**Implementation evidence reviewed against:** `194deeebc9d207dacda762afa652b04f08f0b6e6`
 
 - [Classification route view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue) and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
@@ -370,6 +370,7 @@ flowchart LR
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
   [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
+  [shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts),
   [fixed-scale monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts),
   [canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts),
   [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts),

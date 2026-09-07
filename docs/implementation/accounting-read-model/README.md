@@ -307,6 +307,8 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 - The persistent Accounting route context shares one `useCNCAccounting` result across every report route for the same team. Report filters
   and projections remain local; only the journal and its load, error, reconciliation, and refresh state are shared.
+- `types.ts` owns the cross-module Account, JournalEntry, exact-monetary, and financial-statement contracts through type-only imports.
+  Responsibility-specific runtime utilities and their local mapper, export, composable, and presentation types remain colocated.
 - Mapping and assembly are pure functions, which makes their cost and semantics independently testable.
 - The account registry is built once inside assembly; each `JournalEntryLine` then carries its complete concrete `Account` downstream.
 - The export count does not build table rows. No view-level source regrouping, fee folding or separate pocket-numbering index runs beside
@@ -333,7 +335,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `2ea3a119d816ef7eaa2baccdbbe24496b94bca2a`
+**Implementation evidence reviewed against:** `194deeebc9d207dacda762afa652b04f08f0b6e6`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -345,7 +347,8 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts),
   [SafeDepositRouter mapper](../../../app/src/utils/accounting/mappers/safeDepositRouter.ts), and
   [consolidation](../../../app/src/utils/accounting/buildLedger.ts)
-- [Canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts) and
+- [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts),
+  [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
   [concrete-account journal balances](../../../app/src/utils/accounting/journalBalances.ts)
 - [Journal Classification projection](../../../app/src/utils/accounting/journalClassification.ts) and
   [legacy source-target capture](../../../app/src/utils/accounting/classificationTarget.ts)
