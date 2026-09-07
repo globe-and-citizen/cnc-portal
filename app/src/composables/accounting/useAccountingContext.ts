@@ -1,14 +1,11 @@
 /**
- * Shared accounting context for the Accounting view tree.
+ * Shared accounting context for the persistent Accounting route tree.
  *
- * The shared `AccountingPage.vue` shell resolves the team's books once with
- * {@link useCNCAccounting} and `provide()`s the result; the section cards it
- * wraps ({@link useAccountingContext}) `inject()` it instead of each re-fetching.
- * When a card is rendered standalone (a direct route hit, or a unit test), it
- * falls back to self-fetching from the route's `:id` param so it still works alone.
+ * `AccountingPage.vue` resolves the team's books once with {@link useCNCAccounting}
+ * and `provide()`s the result to every nested report route. Consumers must remain
+ * below that route boundary so a second journal cannot be created accidentally.
  */
 import { inject, provide, type InjectionKey } from 'vue'
-import { useRoute } from 'vue-router'
 import { useCNCAccounting, type UseCNCAccountingReturn } from './useCNCAccounting'
 
 const ACCOUNTING_KEY: InjectionKey<UseCNCAccountingReturn> = Symbol('cnc-accounting')
@@ -22,10 +19,11 @@ export function provideAccounting(
   return accounting
 }
 
-/** Read the shared books, or self-fetch from the route when rendered standalone. */
+/** Read the books owned by the Accounting route. */
 export function useAccountingContext(): UseCNCAccountingReturn {
   const injected = inject(ACCOUNTING_KEY, null)
-  if (injected) return injected
-  const route = useRoute()
-  return useCNCAccounting(() => (route.params.id as string) ?? null)
+  if (!injected) {
+    throw new Error('useAccountingContext must be used within the Accounting route')
+  }
+  return injected
 }

@@ -5,7 +5,7 @@ import { renderWithProviders } from '@/tests/mocks'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { makeEntry } from '@/utils/accounting/ledgerEntry'
 import type { JournalEntry } from '@/utils/accounting/journalEntry'
-import AccountingSummary from '../AccountingSummary.vue'
+import SummaryView from '../SummaryView.vue'
 
 const state = vi.hoisted(() => ({
   journal: null as Ref<JournalEntry[]> | null,
@@ -80,7 +80,7 @@ beforeEach(() => {
 afterEach(() => wrapper?.unmount())
 
 async function openExport() {
-  wrapper = renderWithProviders(AccountingSummary)
+  wrapper = renderWithProviders(SummaryView)
   await wrapper.get('[data-test="open-export-report"]').trigger('click')
   await flushPromises()
   return wrapper

@@ -8,17 +8,19 @@ entries.
 
 ## Consumers
 
-- The [Accounting feature](../../features/accounting/README.md) uses this read model for its consolidated books, report cards, drill-downs,
-  and exports.
-- [AccountingPage](../../../app/src/components/sections/AccountingView/AccountingPage.vue) resolves one shared result for the report-card
-  tree; standalone cards can resolve the same model through the accounting context.
+- The [Accounting feature](../../features/accounting/README.md) uses this read model for its consolidated books, reports, drill-downs, and
+  exports.
+- [AccountingPage](../../../app/src/components/sections/AccountingView/AccountingPage.vue) is the persistent parent route that resolves one
+  shared result for every nested report route. Reports require that accounting context instead of constructing another journal.
 
 ## Runtime Model
 
 ```mermaid
 flowchart LR
-    page[AccountingPage] --> context[Shared accounting context]
-    context --> dataLayer[useCNCAccounting]
+    route[Accounting parent route] --> page[AccountingPage]
+    page --> context[Shared accounting context]
+    page --> dataLayer[useCNCAccounting]
+    page --> outlet[Nested report RouterView]
     dataLayer --> history[Officer and contract history]
     dataLayer --> feeds[On-chain, Safe, and portal feeds]
     history --> input[CncAccountingInput]
@@ -28,14 +30,18 @@ flowchart LR
     evidence --> assembly[Pure accounting assembly]
     assembly --> journal[JournalEntry collection]
     assembly --> diagnostics[Reconciliation diagnostics]
-    journal --> cards[Accounting cards and drill-downs]
-    journal --> exports[Accounting exports]
+    journal --> context
+    diagnostics --> context
+    outlet --> reports[Accounting reports and drill-downs]
+    context --> reports
+    context --> exports[Accounting exports]
 ```
 
-`useCNCAccounting` owns I/O and reactive loading state. The shared context prevents the page's cards from independently fetching and
-assembling the same books. Its two pure runtime stages are `buildRawCncEntries(CncAccountingInput)` and
-`assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence)`, which returns the journal and reconciliation diagnostics without
-Vue or network I/O.
+`useCNCAccounting` owns I/O and reactive loading state. The parent Accounting route remains mounted while its report child changes, so the
+shared context prevents those reports from independently fetching and assembling the same books. The team workspace gives that route owner a
+stable key within one team and a new key when the team identifier changes. Its two pure runtime stages are
+`buildRawCncEntries(CncAccountingInput)` and `assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence)`, which returns the
+journal and reconciliation diagnostics without Vue or network I/O.
 
 ### Runtime Export Boundary
 
@@ -232,7 +238,9 @@ it to an earlier or later deployment based on activity order.
   no matching or more than one matching company deployment is an explicit unresolved result rather than a read failure.
 - Safe-service feeds are optional and do not block the page's loading state. Their absence can omit Safe activity without generating a
   reconciliation gap, which remains a known limitation.
-- A standalone report card falls back to its route's company identifier when it is rendered outside the shared Accounting page context.
+- A report mounted outside the Accounting route context fails explicitly. This is a programming error rather than permission to construct a
+  second journal implicitly.
+- Changing the route team identifier remounts the Accounting owner, so the previous team's journal cannot survive into the new team scope.
 - Transaction evidence reads only receipts needed to resolve deployment accounts. There is no additional signer lookup for a discarded
   source-posting presentation; receipt failures remain explicit reconciliation gaps.
 
@@ -297,7 +305,8 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 ### Existing Protections
 
-- The page-level context shares one `useCNCAccounting` result instead of fetching and assembling once per card.
+- The persistent Accounting route context shares one `useCNCAccounting` result across every report route for the same team. Report filters
+  and projections remain local; only the journal and its load, error, reconciliation, and refresh state are shared.
 - Mapping and assembly are pure functions, which makes their cost and semantics independently testable.
 - The account registry is built once inside assembly; each `JournalEntryLine` then carries its complete concrete `Account` downstream.
 - The export count does not build table rows. No view-level source regrouping, fee folding or separate pocket-numbering index runs beside
@@ -324,10 +333,13 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `734459c047e2f00e530fa4089018397fcd3015f1`
+**Implementation evidence reviewed against:** `2ea3a119d816ef7eaa2baccdbbe24496b94bca2a`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
+- [Persistent Accounting route](../../../app/src/router/index.ts),
+  [team route-owner lifetime](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue), and
+  [Accounting report route views](../../../app/src/views/team/%5Bid%5D/Accounting/)
 - [Transaction evidence reader](../../../app/src/composables/accounting/useTransactionEvidence.ts)
 - [Pure assembly](../../../app/src/utils/accounting/assemble.ts),
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts),
@@ -344,7 +356,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [shared ledger columns](../../../app/src/utils/accounting/ledgerColumns.ts)
 - [Balance Sheet projection](../../../app/src/utils/accounting/balanceSheet.ts),
   [statement presenter](../../../app/src/utils/accounting/presenter.ts), and
-  [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue),
+  [Balance Sheet route view](../../../app/src/views/team/%5Bid%5D/Accounting/BalanceSheetView.vue),
   [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue), and
   [Balance Sheet tests](../../../app/src/utils/accounting/__tests__/balanceSheet.spec.ts)
 - [Chart of accounts](../../../app/src/utils/accounting/chartOfAccounts.ts) and
@@ -358,7 +370,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [journal summary projection](../../../app/src/utils/accounting/accountingSummary.ts),
   [Summary presenter](../../../app/src/utils/accounting/summaryCards.ts),
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
-- [General Ledger card](../../../app/src/components/sections/AccountingView/GeneralLedger.vue),
+- [General Ledger route view](../../../app/src/views/team/%5Bid%5D/Accounting/GeneralLedgerView.vue),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
   [drill-down modal](../../../app/src/components/sections/AccountingView/LedgerDrilldownModal.vue),
   [drill-down composable](../../../app/src/composables/accounting/useLedgerDrilldown.ts), and
@@ -366,8 +378,10 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),
   [PDF projection](../../../app/src/lib/accounting/generalLedgerPdfTable.ts),
   [spreadsheet projection](../../../app/src/lib/accounting/generalLedgerSheet.ts), and
-  [Trial Balance card](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
+  [Trial Balance route view](../../../app/src/views/team/%5Bid%5D/Accounting/TrialBalanceView.vue)
 - [Assembly tests](../../../app/src/utils/accounting/__tests__/assemble.spec.ts),
+  [Accounting context tests](../../../app/src/composables/accounting/__tests__/useAccountingContext.spec.ts),
+  [Accounting route-owner tests](../../../app/src/views/team/%5Bid%5D/__tests__/ShowIndex.spec.ts),
   [account-instance evidence tests](../../../app/src/utils/accounting/__tests__/accountInstances.spec.ts),
   [transaction evidence tests](../../../app/src/composables/accounting/__tests__/useTransactionEvidence.spec.ts),
   [account-registry tests](../../../app/src/utils/accounting/__tests__/accountRegistry.spec.ts),
@@ -376,7 +390,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts), and
   [journal statement-projection tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts), and
   [exact-precision regression tests](../../../app/src/utils/accounting/__tests__/exactPrecision.spec.ts)
-- [Summary journal-count tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingSummary.spec.ts) and
+- [Summary journal-count tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/SummaryView.spec.ts) and
   [cross-report journal projections](../../../app/src/utils/accounting/__tests__/transactionFirst.spec.ts)
 
 ## Related Documentation

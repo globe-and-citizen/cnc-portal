@@ -11,6 +11,8 @@ These acceptance criteria follow the
 
 - Accounting presents one consolidated set of double-entry books for the company across its money-moving contracts and relevant portal
   records.
+- One team-scoped Accounting route owns the journal while members move between Summary, General Ledger, Trial Balance, Balance Sheet, Income
+  Statement, and Classification. Each report keeps its own filters and projects the shared journal on demand.
 - The General Ledger, Trial Balance, summary, income statement, balance sheet, drill-downs, and their exports project the validated
   `JournalEntry` collection. A drill-down keeps every line of an entry that touches its selected concrete account or account family.
 - The Balance Sheet reuses the Trial Balance's concrete account rows and separates them into assets, liabilities, and equity. A redeployed
@@ -55,11 +57,12 @@ flowchart LR
     Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
     Consolidate --> Postings[Consolidated postings: transitional feed]
     Consolidate --> Journal[Validated JournalEntry collection]
-    Journal --> GeneralLedger[General Ledger UI]
-    Journal --> Trial[Trial Balance projection]
-    Journal --> Statements[Summary and financial statements]
-    Journal --> Drilldowns[Account and statement drill-downs]
-    Journal --> Classification[External withdrawal classification]
+    Journal --> Context[Team-scoped Accounting route context]
+    Context --> GeneralLedger[General Ledger UI]
+    Context --> Trial[Trial Balance projection]
+    Context --> Statements[Summary and financial statements]
+    Context --> Drilldowns[Account and statement drill-downs]
+    Context --> Classification[External withdrawal classification]
     GeneralLedger --> GeneralLedgerExports[General Ledger exports]
     Trial --> TrialExports[Trial Balance exports]
     Statements --> StatementExports[Statement exports]
@@ -328,13 +331,13 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `734459c047e2f00e530fa4089018397fcd3015f1`
+**Implementation evidence reviewed against:** `2ea3a119d816ef7eaa2baccdbbe24496b94bca2a`
 
-- [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
-  [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
+- [Classification route view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue) and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
+  [nested Accounting routes](../../../app/src/router/index.ts),
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [SafeDepositRouter event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts), and
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts)
@@ -346,7 +349,7 @@ flowchart LR
 - [Journal Classification projection](../../../app/src/utils/accounting/journalClassification.ts),
   [legacy edit-target boundary](../../../app/src/utils/accounting/classificationTarget.ts),
   [Classification journal tests](../../../app/src/utils/accounting/__tests__/journalClassification.spec.ts), and
-  [Classification owner interactions](../../../app/src/components/sections/AccountingView/__tests__/ClassificationTable.spec.ts)
+  [Classification owner interactions](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/ClassificationView.spec.ts)
 - [Classification controller](../../../backend/src/controllers/classificationController.ts),
   [classification route](../../../backend/src/routes/classificationRoute.ts),
   [classification validation](../../../backend/src/validation/schemas/classification.ts), and
@@ -362,8 +365,8 @@ flowchart LR
   [Summary presenter](../../../app/src/utils/accounting/summaryCards.ts),
   [per-section export](../../../app/src/composables/accounting/useSectionExport.ts), and
   [transaction-evidence resolver](../../../app/src/composables/accounting/useTransactionEvidence.ts)
-- [Summary export count](../../../app/src/components/sections/AccountingView/AccountingSummary.vue) and
-  [journal-count interaction tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingSummary.spec.ts)
+- [Summary export count](../../../app/src/views/team/%5Bid%5D/Accounting/SummaryView.vue) and
+  [journal-count interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/SummaryView.spec.ts)
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
   [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
@@ -380,11 +383,11 @@ flowchart LR
 - [Family-level income statement](../../../app/src/utils/accounting/incomeStatement.ts),
   [concrete-account Balance Sheet](../../../app/src/utils/accounting/balanceSheet.ts), and
   [statement presenter](../../../app/src/utils/accounting/presenter.ts)
-- [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue) and
+- [Balance Sheet route view](../../../app/src/views/team/%5Bid%5D/Accounting/BalanceSheetView.vue) and
   [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue)
 - [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
-- [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
+- [Accounting report tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts),
   [Balance Sheet table tests](../../../app/src/components/sections/AccountingView/__tests__/BalanceSheetTable.spec.ts),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
   [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),

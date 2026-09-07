@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
-import AccountingSummary from '../AccountingSummary.vue'
-import TrialBalanceCard from '../TrialBalanceCard.vue'
-import IncomeStatementCard from '../IncomeStatementCard.vue'
-import BalanceSheetCard from '../BalanceSheetCard.vue'
-import BalanceSheetTable from '../BalanceSheetTable.vue'
-import GeneralLedger from '../GeneralLedger.vue'
-import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
-import StatementLine from '../StatementLine.vue'
+import SummaryView from '../SummaryView.vue'
+import TrialBalanceView from '../TrialBalanceView.vue'
+import IncomeStatementView from '../IncomeStatementView.vue'
+import BalanceSheetView from '../BalanceSheetView.vue'
+import BalanceSheetTable from '@/components/sections/AccountingView/BalanceSheetTable.vue'
+import GeneralLedgerView from '../GeneralLedgerView.vue'
+import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
+import StatementLine from '@/components/sections/AccountingView/StatementLine.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { accountNet, entriesForAccount, NO_OPENING } from '@/utils/accounting/accountLedger'
 import { usd } from '@/utils/accounting/__tests__/fixtures'
@@ -25,41 +25,43 @@ import { money } from '@/utils/accounting/presenter'
 // `app/` on every run. Stub the composable so the click stops at the boundary;
 // the builders behind it are covered by `accountingPdf.spec.ts` and the
 // filenames by `exportNaming.spec.ts`.
+const accountingContext = vi.hoisted(() => ({ journal: { value: [] as unknown[] } }))
 const { exportPdf, exportExcel } = vi.hoisted(() => ({ exportPdf: vi.fn(), exportExcel: vi.fn() }))
 vi.mock('@/composables/accounting/useAccountingExport', () => ({
   useAccountingExport: () => ({ exportPdf, exportExcel })
 }))
+vi.mock('@/composables/accounting/useAccountingContext', () => ({
+  useAccountingContext: () => accountingContext
+}))
 
 beforeEach(() => {
-  exportPdf.mockClear()
-  exportExcel.mockClear()
+  accountingContext.journal.value = buildJournal(catalogueLedger)
+  vi.clearAllMocks()
 })
 
-// The cards now read live books via `useAccountingContext`. Rendered standalone
-// (no parent provider) they self-fetch through the globally-mocked queries, which
-// return a valid, always-balanced book (off-chain payroll accruals from the
-// mocked weekly claims may appear). The numeric mapping is covered by
-// `presenter.spec.ts`; here we assert the sections render without error.
+// Route-mounted cards read the journal from `useAccountingContext`. These
+// component-focused specs use one shared fixture; projection values are covered
+// by the pure presenter specs.
 
-describe('AccountingSummary', () => {
+describe('SummaryView', () => {
   it('shows the balance banner and live metric cards', () => {
-    const wrapper = renderWithProviders(AccountingSummary)
+    const wrapper = renderWithProviders(SummaryView)
     expect(wrapper.find('[data-test="balance-banner"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="summary-Net income"]').text()).toContain('$')
     expect(wrapper.find('[data-test="summary-Total assets"]').text()).toContain('$')
   })
 })
 
-describe('TrialBalanceCard', () => {
+describe('TrialBalanceView', () => {
   it('renders the trial-balance table, balanced for an empty book', () => {
-    const wrapper = renderWithProviders(TrialBalanceCard)
+    const wrapper = renderWithProviders(TrialBalanceView)
     const text = wrapper.text()
     expect(text).toContain('Trial balance')
     expect(text).toContain('In balance')
   })
 
   it('opens a per-account drill-down when a row is clicked', async () => {
-    const wrapper = renderWithProviders(TrialBalanceCard)
+    const wrapper = renderWithProviders(TrialBalanceView)
     const row = wrapper.find('[data-test^="drilldown-"]')
     // Empty books show no account rows; only exercise the drill-down when present.
     if (row.exists()) {
@@ -71,7 +73,7 @@ describe('TrialBalanceCard', () => {
   })
 
   it('opens the account drill-down when a whole trial-balance row is selected', async () => {
-    const wrapper = renderWithProviders(TrialBalanceCard)
+    const wrapper = renderWithProviders(TrialBalanceView)
     const rows = wrapper.findAll('tbody tr')
     // Empty books show only the total row; only exercise row-select when account
     // rows are present. Clicking the row (not the account button) fires @select.
@@ -83,7 +85,7 @@ describe('TrialBalanceCard', () => {
   })
 
   it('exports and prints the trial balance from the export bar', async () => {
-    const wrapper = renderWithProviders(TrialBalanceCard)
+    const wrapper = renderWithProviders(TrialBalanceView)
     await wrapper.find('[data-test="export-excel"]').trigger('click')
     await wrapper.find('[data-test="export-pdf"]').trigger('click')
     await flushPromises()
@@ -95,16 +97,16 @@ describe('TrialBalanceCard', () => {
   })
 })
 
-describe('IncomeStatementCard', () => {
+describe('IncomeStatementView', () => {
   it('renders the income statement with its per-line drill-down rows', () => {
-    const wrapper = renderWithProviders(IncomeStatementCard)
+    const wrapper = renderWithProviders(IncomeStatementView)
     const text = wrapper.text()
     expect(text).toContain('Income statement')
     expect(text).toContain('Net income')
   })
 
   it('opens the drill-down when a revenue / expense line is clicked', async () => {
-    const wrapper = renderWithProviders(IncomeStatementCard)
+    const wrapper = renderWithProviders(IncomeStatementView)
     const line = wrapper.find('[data-test^="income-drilldown-"]')
     // The mocked book may hold no income lines; only assert when one is present.
     if (line.exists()) {
@@ -116,7 +118,7 @@ describe('IncomeStatementCard', () => {
   })
 
   it('exports and prints the income statement from the export bar', async () => {
-    const wrapper = renderWithProviders(IncomeStatementCard)
+    const wrapper = renderWithProviders(IncomeStatementView)
     await wrapper.find('[data-test="export-excel"]').trigger('click')
     await wrapper.find('[data-test="export-pdf"]').trigger('click')
     await flushPromises()
@@ -126,9 +128,9 @@ describe('IncomeStatementCard', () => {
   })
 })
 
-describe('BalanceSheetCard', () => {
+describe('BalanceSheetView', () => {
   it('renders the three account tables and the earnings calculation', () => {
-    const wrapper = renderWithProviders(BalanceSheetCard)
+    const wrapper = renderWithProviders(BalanceSheetView)
     const text = wrapper.text()
     expect(text).toContain('Balance sheet')
     expect(text).toContain('Total assets')
@@ -139,7 +141,7 @@ describe('BalanceSheetCard', () => {
   })
 
   it('opens the drill-down from a rendered account or earnings row', async () => {
-    const wrapper = renderWithProviders(BalanceSheetCard)
+    const wrapper = renderWithProviders(BalanceSheetView)
     const tables = wrapper.findAllComponents(BalanceSheetTable)
     const line = tables.flatMap((table) => table.props('rows'))[0]
     if (line) {
@@ -151,7 +153,7 @@ describe('BalanceSheetCard', () => {
   })
 
   it('exports and prints the balance sheet from the export bar', async () => {
-    const wrapper = renderWithProviders(BalanceSheetCard)
+    const wrapper = renderWithProviders(BalanceSheetView)
     await wrapper.find('[data-test="export-excel"]').trigger('click')
     await wrapper.find('[data-test="export-pdf"]').trigger('click')
     await flushPromises()
@@ -335,9 +337,9 @@ describe('StatementLine', () => {
   })
 })
 
-describe('GeneralLedger', () => {
+describe('GeneralLedgerView', () => {
   it('shows the movement total without category filter controls', async () => {
-    const wrapper = renderWithProviders(GeneralLedger)
+    const wrapper = renderWithProviders(GeneralLedgerView)
     const text = wrapper.text()
     expect(text).toContain('Total movements')
     expect(text).toContain('entries')

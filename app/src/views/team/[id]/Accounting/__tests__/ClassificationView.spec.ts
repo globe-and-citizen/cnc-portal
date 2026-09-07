@@ -6,7 +6,7 @@ import { mockTeamData, mockToast, mockUserStore, renderWithProviders } from '@/t
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { makeEntry } from '@/utils/accounting/ledgerEntry'
 import type { JournalEntry } from '@/utils/accounting/journalEntry'
-import ClassificationTable from '../ClassificationTable.vue'
+import ClassificationView from '../ClassificationView.vue'
 
 const state = vi.hoisted(() => ({
   journal: null as Ref<JournalEntry[]> | null,
@@ -54,7 +54,7 @@ const withdrawal = () =>
   })
 
 let wrapper: ReturnType<typeof renderWithProviders> | undefined
-const render = () => (wrapper = renderWithProviders(ClassificationTable))
+const render = () => (wrapper = renderWithProviders(ClassificationView))
 
 beforeEach(() => {
   vi.clearAllMocks()

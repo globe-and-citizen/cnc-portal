@@ -135,43 +135,46 @@ const router = createRouter({
         {
           path: '/teams/:id/accounting',
           name: 'accounting',
-          redirect: { name: 'accounting-summary' }
-        },
-        {
-          path: '/teams/:id/accounting/summary',
-          name: 'accounting-summary',
-          meta: { name: 'Summary' },
-          component: () => import('@/views/team/[id]/Accounting/SummaryView.vue')
-        },
-        {
-          path: '/teams/:id/accounting/income',
-          name: 'accounting-income',
-          meta: { name: 'Income Statement' },
-          component: () => import('@/views/team/[id]/Accounting/IncomeStatementView.vue')
-        },
-        {
-          path: '/teams/:id/accounting/balance',
-          name: 'accounting-balance',
-          meta: { name: 'Balance Sheet' },
-          component: () => import('@/views/team/[id]/Accounting/BalanceSheetView.vue')
-        },
-        {
-          path: '/teams/:id/accounting/trial',
-          name: 'accounting-trial',
-          meta: { name: 'Trial Balance' },
-          component: () => import('@/views/team/[id]/Accounting/TrialBalanceView.vue')
-        },
-        {
-          path: '/teams/:id/accounting/ledger',
-          name: 'accounting-ledger',
-          meta: { name: 'General Ledger' },
-          component: () => import('@/views/team/[id]/Accounting/GeneralLedgerView.vue')
-        },
-        {
-          path: '/teams/:id/accounting/classification',
-          name: 'accounting-classification',
-          meta: { name: 'Classification' },
-          component: () => import('@/views/team/[id]/Accounting/ClassificationView.vue')
+          redirect: { name: 'accounting-summary' },
+          component: () => import('@/components/sections/AccountingView/AccountingPage.vue'),
+          children: [
+            {
+              path: 'summary',
+              name: 'accounting-summary',
+              meta: { name: 'Summary' },
+              component: () => import('@/views/team/[id]/Accounting/SummaryView.vue')
+            },
+            {
+              path: 'income',
+              name: 'accounting-income',
+              meta: { name: 'Income Statement' },
+              component: () => import('@/views/team/[id]/Accounting/IncomeStatementView.vue')
+            },
+            {
+              path: 'balance',
+              name: 'accounting-balance',
+              meta: { name: 'Balance Sheet' },
+              component: () => import('@/views/team/[id]/Accounting/BalanceSheetView.vue')
+            },
+            {
+              path: 'trial',
+              name: 'accounting-trial',
+              meta: { name: 'Trial Balance' },
+              component: () => import('@/views/team/[id]/Accounting/TrialBalanceView.vue')
+            },
+            {
+              path: 'ledger',
+              name: 'accounting-ledger',
+              meta: { name: 'General Ledger' },
+              component: () => import('@/views/team/[id]/Accounting/GeneralLedgerView.vue')
+            },
+            {
+              path: 'classification',
+              name: 'accounting-classification',
+              meta: { name: 'Classification' },
+              component: () => import('@/views/team/[id]/Accounting/ClassificationView.vue')
+            }
+          ]
         },
         {
           path: '/teams/:id/community-credit',
