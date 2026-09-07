@@ -52,7 +52,7 @@ import {
   makeSherUsdRate,
   currentSherUsdRate
 } from '@/utils/accounting/sherRate'
-import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
+import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
 
@@ -137,27 +137,26 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
       deposits: items(input.bankEvents.bankDeposits),
       tokenDeposits: items(input.bankEvents.bankTokenDeposits),
       transfers: items(input.bankEvents.bankTransfers),
-      tokenTransfers: items(input.bankEvents.bankTokenTransfers)
-    }
-    sources.fees = {
-      bankFeePaids: items(input.bankEvents.bankFeePaids)
+      tokenTransfers: items(input.bankEvents.bankTokenTransfers),
+      fees: items(input.bankEvents.bankFeePaids)
     }
   }
 
-  if (input.cashRemunerationEvents) {
+  if (input.cashRemunerationEvents || input.weeklyClaims) {
     const events = input.cashRemunerationEvents
-    sources.cashRemuneration = {
-      deposits: items(events.cashRemunerationDeposits),
-      withdraws: items(events.cashRemunerationWithdraws),
-      withdrawTokens: items(events.cashRemunerationWithdrawTokens),
-      ownerTreasuryWithdrawNatives: items(events.cashRemunerationOwnerTreasuryWithdrawNatives),
-      ownerTreasuryWithdrawTokens: items(events.cashRemunerationOwnerTreasuryWithdrawTokens)
+    sources.payroll = {
+      deposits: items(events?.cashRemunerationDeposits),
+      withdraws: items(events?.cashRemunerationWithdraws),
+      withdrawTokens: items(events?.cashRemunerationWithdrawTokens),
+      ownerTreasuryWithdrawNatives: items(events?.cashRemunerationOwnerTreasuryWithdrawNatives),
+      ownerTreasuryWithdrawTokens: items(events?.cashRemunerationOwnerTreasuryWithdrawTokens),
+      weeklyClaims: input.weeklyClaims
     }
   }
 
   if (input.expenseEvents) {
     const events = input.expenseEvents
-    sources.expenseAccount = {
+    sources.expense = {
       deposits: items(events.expenseDeposits),
       tokenDeposits: items(events.expenseTokenDeposits),
       transfers: items(events.expenseTransfers),

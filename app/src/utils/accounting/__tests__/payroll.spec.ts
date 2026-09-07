@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { mapCashRemunerationEvents } from '@/utils/accounting/mappers/cashRemuneration'
+import { mapPayroll } from '@/utils/accounting/mappers/payroll'
 import { makeCtx, ADDR } from './fixtures'
 
 const ctx = makeCtx()
 
-describe('mapCashRemunerationEvents', () => {
+describe('mapPayroll settlements', () => {
   it('settles a native wage withdrawal against Wage Payable (UC-CASH-03)', () => {
-    const [entry] = mapCashRemunerationEvents(
+    const [entry] = mapPayroll(
       {
         withdraws: [
           {
@@ -30,7 +30,7 @@ describe('mapCashRemunerationEvents', () => {
   })
 
   it('books a SHER WithdrawToken as the equity leg (SHERS To Be Issued → Investor Equity)', () => {
-    const [entry] = mapCashRemunerationEvents(
+    const [entry] = mapPayroll(
       {
         withdrawTokens: [
           {
@@ -56,7 +56,7 @@ describe('mapCashRemunerationEvents', () => {
   })
 
   it('books a USDC WithdrawToken as a cash settlement', () => {
-    const [entry] = mapCashRemunerationEvents(
+    const [entry] = mapPayroll(
       {
         withdrawTokens: [
           {
@@ -75,7 +75,7 @@ describe('mapCashRemunerationEvents', () => {
   })
 
   it('books a deposit as internal funding from its source pocket', () => {
-    const [entry] = mapCashRemunerationEvents(
+    const [entry] = mapPayroll(
       {
         deposits: [
           {
@@ -101,7 +101,7 @@ describe('mapCashRemunerationEvents', () => {
     // A claim paid only in SHER still fires a native Withdraw(employee, 0) for the
     // wage's zero-rate GO component (the contract emits per component, no >0 guard).
     // Only the SHER equity leg should survive — no phantom $0 "Wage settlement".
-    const entries = mapCashRemunerationEvents(
+    const entries = mapPayroll(
       {
         withdraws: [
           {
@@ -137,7 +137,7 @@ describe('mapCashRemunerationEvents', () => {
   it('keeps a non-zero native base unit even when its source projection rounds to $0.00', () => {
     // A few wei of the 18-decimal native token still represent source evidence,
     // even though the current quantity and money displays round them to zero.
-    const entries = mapCashRemunerationEvents(
+    const entries = mapPayroll(
       {
         withdraws: [
           {
@@ -156,7 +156,7 @@ describe('mapCashRemunerationEvents', () => {
   })
 
   it('books an owner sweep back to Bank as an internal move', () => {
-    const [entry] = mapCashRemunerationEvents(
+    const [entry] = mapPayroll(
       {
         ownerTreasuryWithdrawNatives: [
           {

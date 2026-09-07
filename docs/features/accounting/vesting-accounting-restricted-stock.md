@@ -143,7 +143,7 @@ release never consumes a wage accrual.
 ## Implementation Evidence
 
 - [Vesting source mapper](../../../app/src/utils/accounting/mappers/vesting.ts) — the three journal entries and the reconstructed remainder
-- [SHER realization settlement](../../../app/src/utils/accounting/mappers/sherIssuance.ts) — the wage and vesting lanes and their valuation
+- [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts) — the wage and vesting lanes and their valuation
 - [Investor source mapper](../../../app/src/utils/accounting/mappers/investor.ts) — the backed-mint rule that prevents the double count
 - [Share-vesting event feed (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts)
 - [Vesting accounting tests](../../../app/src/utils/accounting/__tests__/vesting.spec.ts)

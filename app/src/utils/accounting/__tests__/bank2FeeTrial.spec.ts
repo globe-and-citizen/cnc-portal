@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { mapBankEvents } from '@/utils/accounting/mappers/bank'
-import { mapFees } from '@/utils/accounting/mappers/fees'
 import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
 import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { makeCtx, usd } from './fixtures'
@@ -26,7 +25,7 @@ const ctx = makeCtx({
 
 describe('repro: Bank 2 transfer fee on the trial balance', () => {
   // A deposit establishes BANK_B as an instance; the transfer establishes BANK_A.
-  const bankEntries = mapBankEvents(
+  const entries = mapBankEvents(
     {
       tokenDeposits: [
         {
@@ -47,13 +46,8 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
           amount: '100000000', // 100 USDC BANK_A -> Payroll, ts 300
           timestamp: 300
         }
-      ]
-    },
-    ctx
-  )
-  const feeEntries = mapFees(
-    {
-      bankFeePaids: [
+      ],
+      fees: [
         {
           id: `${TX}-3`,
           contractAddress: BANK_A,
@@ -65,8 +59,7 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
       ]
     },
     ctx
-  )
-  const entries = [...bankEntries, ...feeEntries].map((entry) => ({ ...entry, rate: 1 }))
+  ).map((entry) => ({ ...entry, rate: 1 }))
 
   it('books the fee on the same Bank deployment as its transfer (BANK_A)', () => {
     const fee = entries.find((e) => e.useCase === 'FEE')!

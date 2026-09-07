@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
+import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { round6 } from '@/utils/accounting/toUsd'
 import { ADDR } from './fixtures'

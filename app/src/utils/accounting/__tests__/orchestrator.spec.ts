@@ -17,10 +17,8 @@ const sources: LedgerSources = {
     ],
     transfers: [
       { id: 'b2', sender: ADDR.bank, to: ADDR.payroll, amount: '2000000', timestamp: 100 }
-    ]
-  },
-  fees: {
-    bankFeePaids: [
+    ],
+    fees: [
       {
         id: 'f1',
         contractAddress: ADDR.bank,
@@ -31,7 +29,7 @@ const sources: LedgerSources = {
       }
     ]
   },
-  cashRemuneration: {
+  payroll: {
     withdraws: [
       {
         id: 'c1',
@@ -94,7 +92,7 @@ describe('buildCncLedgerEntries', () => {
   it('books an expense payout cash-basis, enriches it, and reports the remaining budget', () => {
     const withExpenses = buildCncLedgerEntries(
       {
-        expenseAccount: {
+        expense: {
           tokenTransfers: [
             {
               id: 'x1',

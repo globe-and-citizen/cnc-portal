@@ -58,6 +58,27 @@ the journal. The table and exporters share `LedgerRow` from the journal presente
 `ledgerColumns`. Each report surface calls one focused presenter with the canonical journal and its optional scope. For example, Summary
 calls `presentSummary(journal)`, while the Trial Balance card and both export formats call `presentTrial(journal, asOf)`.
 
+### Source Mapping Boundaries
+
+The mapper directory exposes one public mapping function per accounting domain. A mapper may consume several forms of evidence when they
+produce the same domain postings; event names and fallback mechanisms do not create additional public mappers.
+
+| Domain              | Public boundary              | Evidence owned by the boundary                                       |
+| ------------------- | ---------------------------- | -------------------------------------------------------------------- |
+| Bank                | `mapBankEvents`              | Deposits, transfers, and transaction-bound protocol fees             |
+| Payroll             | `mapPayroll`                 | Weekly claim accruals and CashRemuneration settlements               |
+| Expense             | `mapExpense`                 | Indexed payouts and the portal drawn-balance fallback                |
+| Community Credit    | `mapFixedReturnEvents`       | Credit funding, lending, repayment, and refund events                |
+| Investor            | `mapInvestorEvents`          | Share mints, dividends, and evidence that prevents backed-mint reuse |
+| Vesting             | `mapVestingEvents`           | Grant, release, and stop events                                      |
+| Safe                | `mapSafeTransfers`           | Incoming and outgoing Safe transfers                                 |
+| Safe Deposit Router | `mapSafeDepositRouterEvents` | Investment deposits that mint SHER                                   |
+
+The mapper barrel publishes only the ledger orchestrator and its grouped input type. Tests that exercise one domain import that domain
+module directly. Context construction, credit timelines, expense periods, classification application, and the shared internal-transfer
+posting are support modules rather than source mappers. SHER realization settlement runs after rate stamping and therefore lives at the
+Accounting assembly level, outside the mapper directory.
+
 ## Main Assembly Flow
 
 ```mermaid
@@ -310,6 +331,8 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 - `types.ts` owns the cross-module Account, JournalEntry, exact-monetary, and financial-statement contracts through type-only imports.
   Responsibility-specific runtime utilities and their local mapper, export, composable, and presentation types remain colocated.
 - Mapping and assembly are pure functions, which makes their cost and semantics independently testable.
+- Source mapping has one public function per accounting domain. Bank owns its fees, Payroll owns accrual and settlement, and Expense owns
+  indexed and fallback evidence instead of exposing event-specific public mappers.
 - The account registry is built once inside assembly; each `JournalEntryLine` then carries its complete concrete `Account` downstream.
 - The export count does not build table rows. No view-level source regrouping, fee folding or separate pocket-numbering index runs beside
   the journal presenter. Mapper inputs do not accept an ignored global FeeCollector address.
@@ -335,7 +358,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `194deeebc9d207dacda762afa652b04f08f0b6e6`
+**Implementation evidence reviewed against:** `8767f7775f1d2d5c0b6bf31c4571909a4108e922`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -344,6 +367,10 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [Accounting report route views](../../../app/src/views/team/%5Bid%5D/Accounting/)
 - [Transaction evidence reader](../../../app/src/composables/accounting/useTransactionEvidence.ts)
 - [Pure assembly](../../../app/src/utils/accounting/assemble.ts),
+  [source-mapper orchestrator](../../../app/src/utils/accounting/mappers/index.ts),
+  [Bank mapper](../../../app/src/utils/accounting/mappers/bank.ts), [Payroll mapper](../../../app/src/utils/accounting/mappers/payroll.ts),
+  [Expense mapper](../../../app/src/utils/accounting/mappers/expenseAccount.ts),
+  [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts),
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts),
   [SafeDepositRouter mapper](../../../app/src/utils/accounting/mappers/safeDepositRouter.ts), and
   [consolidation](../../../app/src/utils/accounting/buildLedger.ts)

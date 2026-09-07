@@ -53,6 +53,8 @@ flowchart LR
   projection. Conversion to a JavaScript `number` belongs only to presentation and export boundaries.
 - Accounting contracts shared across account resolution, the journal, and financial-statement projections are declared in one type-only
   module. Types that describe one mapper, export adapter, composable, or presenter remain local to that implementation.
+- Accounting source mapping exposes one public function per domain. Its barrel owns orchestration only; evidence-specific helpers and
+  fallbacks remain private, and post-mapping settlement stays at the assembly level.
 - Accounting journal assembly accepts only rate-stamped source postings and rejects monetary input without a rate instead of adapting a
   transitional JavaScript `number`.
 - Every Accounting presenter accepts a `JournalEntry` collection directly, so components and exporters do not compose lower-level filtering
@@ -67,12 +69,14 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `194deeebc9d207dacda762afa652b04f08f0b6e6`
+**Implementation evidence reviewed against:** `8767f7775f1d2d5c0b6bf31c4571909a4108e922`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
 - [Fixed-scale accounting monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts)
 - [Pure accounting account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
+- [Accounting source-mapper orchestrator](../../../app/src/utils/accounting/mappers/index.ts) and
+  [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts)
 - [Utility boundary validator](../../../app/scripts/check-utility-boundaries.mjs) and
   [validator tests](../../../app/scripts/__tests__/check-utility-boundaries.node.mjs)
 - [Store-backed transaction presentation](../../../app/src/composables/transactions/useTransactionPresentation.ts) and

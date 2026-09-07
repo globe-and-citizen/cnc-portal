@@ -342,14 +342,16 @@ have no current mapper. They are intentionally excluded from this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
+**Implementation evidence reviewed against:** `8767f7775f1d2d5c0b6bf31c4571909a4108e922`
 
 - [Use-case identifiers and source-operation identity](../../../app/src/utils/accounting/ledgerEntry.ts)
 - [Journal assembly](../../../app/src/utils/accounting/generalLedger.ts) and
   [validated journal model](../../../app/src/utils/accounting/journalEntry.ts)
-- [Source mappers](../../../app/src/utils/accounting/mappers/), including [Bank](../../../app/src/utils/accounting/mappers/bank.ts),
-  [fees](../../../app/src/utils/accounting/mappers/fees.ts), [Community Credit](../../../app/src/utils/accounting/mappers/fixedReturn.ts),
-  and [manual classification](../../../app/src/utils/accounting/classification.ts)
+- [Source mappers](../../../app/src/utils/accounting/mappers/), including
+  [Bank and its transaction-bound fees](../../../app/src/utils/accounting/mappers/bank.ts),
+  [Payroll](../../../app/src/utils/accounting/mappers/payroll.ts), [Expense](../../../app/src/utils/accounting/mappers/expenseAccount.ts),
+  [Community Credit](../../../app/src/utils/accounting/mappers/fixedReturn.ts), and
+  [manual classification](../../../app/src/utils/accounting/classification.ts)
 - [Journal assembly regression tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts) and
   [General Ledger projection tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), including
   [Community Credit mapper coverage](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts)
