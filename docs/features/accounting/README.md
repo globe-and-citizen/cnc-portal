@@ -331,10 +331,9 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `84ed792ab66f9f09339c4cad3dce176998dbab33`
+**Implementation evidence reviewed against:** `2ea3a119d816ef7eaa2baccdbbe24496b94bca2a`
 
-- [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
-  [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
+- [Classification route view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue) and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
@@ -350,7 +349,7 @@ flowchart LR
 - [Journal Classification projection](../../../app/src/utils/accounting/journalClassification.ts),
   [legacy edit-target boundary](../../../app/src/utils/accounting/classificationTarget.ts),
   [Classification journal tests](../../../app/src/utils/accounting/__tests__/journalClassification.spec.ts), and
-  [Classification owner interactions](../../../app/src/components/sections/AccountingView/__tests__/ClassificationTable.spec.ts)
+  [Classification owner interactions](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/ClassificationView.spec.ts)
 - [Classification controller](../../../backend/src/controllers/classificationController.ts),
   [classification route](../../../backend/src/routes/classificationRoute.ts),
   [classification validation](../../../backend/src/validation/schemas/classification.ts), and
@@ -366,8 +365,8 @@ flowchart LR
   [Summary presenter](../../../app/src/utils/accounting/summaryCards.ts),
   [per-section export](../../../app/src/composables/accounting/useSectionExport.ts), and
   [transaction-evidence resolver](../../../app/src/composables/accounting/useTransactionEvidence.ts)
-- [Summary export count](../../../app/src/components/sections/AccountingView/AccountingSummary.vue) and
-  [journal-count interaction tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingSummary.spec.ts)
+- [Summary export count](../../../app/src/views/team/%5Bid%5D/Accounting/SummaryView.vue) and
+  [journal-count interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/SummaryView.spec.ts)
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
   [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
@@ -384,11 +383,11 @@ flowchart LR
 - [Family-level income statement](../../../app/src/utils/accounting/incomeStatement.ts),
   [concrete-account Balance Sheet](../../../app/src/utils/accounting/balanceSheet.ts), and
   [statement presenter](../../../app/src/utils/accounting/presenter.ts)
-- [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue) and
+- [Balance Sheet route view](../../../app/src/views/team/%5Bid%5D/Accounting/BalanceSheetView.vue) and
   [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue)
 - [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
-- [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingView.spec.ts),
+- [Accounting report tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts),
   [Balance Sheet table tests](../../../app/src/components/sections/AccountingView/__tests__/BalanceSheetTable.spec.ts),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
   [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),

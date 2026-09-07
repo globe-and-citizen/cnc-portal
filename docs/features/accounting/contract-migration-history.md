@@ -91,7 +91,7 @@ report-projection boundary, and implementation evidence.
 - [Validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts)
 - [Concrete-account journal and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts) and
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
-- [Trial-balance card and redeploy hint](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
+- [Trial-balance view and redeploy hint](../../../app/src/views/team/%5Bid%5D/Accounting/TrialBalanceView.vue)
 - [Instance-scoped drill-down](../../../app/src/utils/accounting/accountLedger.ts)
 - [Split and drill-down tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts)
 - [Account-instance evidence tests](../../../app/src/utils/accounting/__tests__/accountInstances.spec.ts) and

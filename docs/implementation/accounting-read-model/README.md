@@ -8,10 +8,10 @@ entries.
 
 ## Consumers
 
-- The [Accounting feature](../../features/accounting/README.md) uses this read model for its consolidated books, report cards, drill-downs,
-  and exports.
+- The [Accounting feature](../../features/accounting/README.md) uses this read model for its consolidated books, reports, drill-downs, and
+  exports.
 - [AccountingPage](../../../app/src/components/sections/AccountingView/AccountingPage.vue) is the persistent parent route that resolves one
-  shared result for every nested report route. Report cards require that accounting context instead of constructing another journal.
+  shared result for every nested report route. Reports require that accounting context instead of constructing another journal.
 
 ## Runtime Model
 
@@ -32,8 +32,8 @@ flowchart LR
     assembly --> diagnostics[Reconciliation diagnostics]
     journal --> context
     diagnostics --> context
-    outlet --> cards[Accounting cards and drill-downs]
-    context --> cards
+    outlet --> reports[Accounting reports and drill-downs]
+    context --> reports
     context --> exports[Accounting exports]
 ```
 
@@ -333,7 +333,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `84ed792ab66f9f09339c4cad3dce176998dbab33`
+**Implementation evidence reviewed against:** `2ea3a119d816ef7eaa2baccdbbe24496b94bca2a`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -356,7 +356,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [shared ledger columns](../../../app/src/utils/accounting/ledgerColumns.ts)
 - [Balance Sheet projection](../../../app/src/utils/accounting/balanceSheet.ts),
   [statement presenter](../../../app/src/utils/accounting/presenter.ts), and
-  [Balance Sheet card](../../../app/src/components/sections/AccountingView/BalanceSheetCard.vue),
+  [Balance Sheet route view](../../../app/src/views/team/%5Bid%5D/Accounting/BalanceSheetView.vue),
   [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue), and
   [Balance Sheet tests](../../../app/src/utils/accounting/__tests__/balanceSheet.spec.ts)
 - [Chart of accounts](../../../app/src/utils/accounting/chartOfAccounts.ts) and
@@ -370,7 +370,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [journal summary projection](../../../app/src/utils/accounting/accountingSummary.ts),
   [Summary presenter](../../../app/src/utils/accounting/summaryCards.ts),
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
-- [General Ledger card](../../../app/src/components/sections/AccountingView/GeneralLedger.vue),
+- [General Ledger route view](../../../app/src/views/team/%5Bid%5D/Accounting/GeneralLedgerView.vue),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
   [drill-down modal](../../../app/src/components/sections/AccountingView/LedgerDrilldownModal.vue),
   [drill-down composable](../../../app/src/composables/accounting/useLedgerDrilldown.ts), and
@@ -378,7 +378,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),
   [PDF projection](../../../app/src/lib/accounting/generalLedgerPdfTable.ts),
   [spreadsheet projection](../../../app/src/lib/accounting/generalLedgerSheet.ts), and
-  [Trial Balance card](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
+  [Trial Balance route view](../../../app/src/views/team/%5Bid%5D/Accounting/TrialBalanceView.vue)
 - [Assembly tests](../../../app/src/utils/accounting/__tests__/assemble.spec.ts),
   [Accounting context tests](../../../app/src/composables/accounting/__tests__/useAccountingContext.spec.ts),
   [Accounting route-owner tests](../../../app/src/views/team/%5Bid%5D/__tests__/ShowIndex.spec.ts),
@@ -390,7 +390,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts), and
   [journal statement-projection tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts), and
   [exact-precision regression tests](../../../app/src/utils/accounting/__tests__/exactPrecision.spec.ts)
-- [Summary journal-count tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingSummary.spec.ts) and
+- [Summary journal-count tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/SummaryView.spec.ts) and
   [cross-report journal projections](../../../app/src/utils/accounting/__tests__/transactionFirst.spec.ts)
 
 ## Related Documentation
