@@ -3,7 +3,7 @@
 **Scope:** The client-side read model that turns company contract and portal feeds into consolidated accounting postings, a validated
 double-entry journal, and the report projections consumed by Accounting. It does not create or persist manual journal entries.
 
-**Last verified:** 2026-09-05
+**Last verified:** 2026-09-07
 
 ## Consumers
 
@@ -46,7 +46,9 @@ concrete `Account` or an account family and compute a running balance only from 
 The reactive view context exposes the journal and its report projections, not the transitional source-posting feed. The Summary export
 dialog reads the journal length directly, counting monetary and memo-only operations once. Export snapshots contain only journal records and
 report projections; they do not carry raw postings or presentation-specific fee aggregates. The table and exporters share `LedgerRow` from
-the journal presenter and import their column definitions directly from `ledgerColumns`.
+the journal presenter and import their column definitions directly from `ledgerColumns`. Statement presenters accept the canonical journal
+directly; for example, the Trial Balance card and both export formats call `presentTrial(journal, asOf)` instead of composing filtering,
+ledger construction, and presentation in the view.
 
 ## Main Assembly Flow
 
@@ -54,9 +56,9 @@ the journal presenter and import their column definitions directly from `ledgerC
 flowchart LR
     input[CncAccountingInput] --> context[LedgerSources and MapperContext]
     context --> mapped[Mapped LedgerEntry feed]
-    mapped --> raw[Rate-stamped and settled raw postings]
+    mapped --> raw[Rate-resolved LedgerEntry feed]
     raw --> ledger[buildLedger: sort and deduplicate]
-    ledger --> entries[Consolidated LedgerEntry feed]
+    ledger --> entries[Consolidated source postings]
     entries --> registry[buildAccountRegistry]
     registry --> journal[buildJournal: exact fixed-scale JournalEntry collection]
     journal --> trial[buildGeneralLedger: journal and Trial Balance]
@@ -69,9 +71,9 @@ flowchart LR
 ```
 
 `JournalEntry` is the canonical double-entry representation for every financial report and drill-down. `LedgerEntry` remains a transitional
-mapping input only; it is not a report projection boundary. The Balance Sheet starts from the Trial Balance rows, preserving each concrete
-account in the assets, liabilities, and equity sections. Income and expense rows remain visible in a separate calculation and contribute to
-one `Earnings to date` equity line; only explicit statement totals aggregate accounts.
+mapping input only; assembly attaches the rate of record before a monetary posting reaches journal validation. The Balance Sheet starts from
+the Trial Balance rows, preserving each concrete account in the assets, liabilities, and equity sections. Income and expense rows remain
+visible in a separate calculation and contribute to one `Earnings to date` equity line; only explicit statement totals aggregate accounts.
 
 ## Account Domain Model
 
@@ -106,7 +108,7 @@ classDiagram
         +token
         +rawAmount: bigint
         +decimals
-        +rate?: UsdRate bigint
+        +rate: UsdRate bigint
     }
     class TrialBalanceRow {
         +account: Account
@@ -146,7 +148,7 @@ text derived after identity has been resolved; it is never an account key.
 | `AccountId`                | Stable identity used to group journal lines and Trial Balance rows.                                                                                                                                                                                                    |
 | `JournalEntry`             | Validated double-entry record for one source operation, with ordered monetary lines or an explicit memo-only entry. A transaction-backed entry uses its `txHash` for `id` and `sourceOperationId`; its source snapshot is narration-only.                              |
 | `JournalEntryLine`         | One debit or credit line carrying exactly one concrete `Account` and optional token movement evidence for its display projection.                                                                                                                                      |
-| `JournalEntryLineMovement` | Exact token evidence carried by a monetary line: token, `bigint` base units, token decimals, and the fixed-scale rate of record when available.                                                                                                                        |
+| `JournalEntryLineMovement` | Exact token evidence carried by a monetary line: token, `bigint` base units, token decimals, and the required fixed-scale rate of record used for valuation.                                                                                                           |
 | `UsdAmount`                | USD value stored as a `bigint` with a shared 24-decimal scale throughout journal validation and report calculations.                                                                                                                                                   |
 | `UsdRate`                  | USD price of one whole token stored as a `bigint` with the source rate's six-decimal scale.                                                                                                                                                                            |
 | `TrialBalanceRow`          | Projection grouped by `AccountId`; the balance follows the family normal side.                                                                                                                                                                                         |
@@ -191,6 +193,8 @@ it to an earlier or later deployment based on activity order.
   assembled into that entry before compatible debit and credit lines are aggregated. A synthetic operation retains its explicit stable
   identity.
 - A monetary `JournalEntryLine` has exactly one debit or credit amount and exactly one concrete `Account`.
+- Journal assembly requires a rate of record on every monetary source posting. Missing rates are rejected instead of falling back to the
+  transitional `amountUsd` number.
 - Each monetary `JournalEntry` has equal debit and credit totals by exact integer equality. Invalid normalized postings are rejected before
   a journal projection can consume them.
 - Token movement evidence retains the exact blockchain base-unit `bigint` and token decimals. The current maximum of 18 token decimals plus
@@ -299,9 +303,9 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 - The legacy raw posting field names do not make the distinction between an account family, a concrete account, and a source instance
   explicit.
-- The transitional `LedgerEntry.amountUsd` remains a six-decimal `number` for source narration and legacy fixtures. When a rate of record is
-  available, journal assembly recomputes the report-authoritative amount from exact token base units and that rate; reports never consume
-  the transitional number.
+- The transitional `LedgerEntry.amountUsd` remains a six-decimal `number` for source narration and mapper compatibility. Journal assembly
+  always computes the report-authoritative amount from exact token base units and the required rate of record; reports never consume the
+  transitional number.
 - Legacy manual categories remain only for eligible external disbursements; account-backed `JournalEntryLine` assignment has not yet
   replaced that category surface. The legacy API cannot edit a compound journal entry as a whole, so Classification keeps those entries
   read-only rather than selecting one source decision on the owner's behalf.
@@ -309,7 +313,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4e0df0f277d5c787ed7b0bd958280b46c1fe6430`
+**Implementation evidence reviewed against:** `0d4f9272dd27da09d811d428a58fa7e53489807c`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)

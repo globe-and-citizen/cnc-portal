@@ -17,8 +17,9 @@ These acceptance criteria follow the
   or unresolved account remains a separate report line and drill-down; only report totals deliberately aggregate those accounts. The current
   result appears as `Earnings to date`, with each contributing income and expense account shown separately.
 - Monetary entries are reported in USD while retaining their original currency, exact token base units, token decimals, and rate of record.
-  The journal and every report aggregate fixed-scale integers without rounding; only presentation and export boundaries convert those exact
-  values into human-readable amounts.
+  Journal assembly accepts only rate-stamped source postings and derives their USD value from the exact base units and rate. The journal and
+  every report aggregate fixed-scale integers without rounding; only presentation and export boundaries convert those exact values into
+  human-readable amounts.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
 - Accounting includes every known contract generation. Individual account pages intentionally remain scoped to their current contract.
@@ -97,6 +98,8 @@ flowchart LR
 - [x] USD-pegged tokens use a one-dollar rate, while native tokens and SHER use their configured rates of record.
 - [x] Every monetary journal line retains its token movement in exact base units and uses one shared fixed-scale USD amount for validation
       and reporting.
+- [x] A monetary source posting without a rate of record is rejected before journal assembly; the transitional `amountUsd` number is never
+      used as a reporting fallback.
 - [x] A non-zero token movement remains in the books even when its displayed USD value rounds to zero at the selected display precision.
 - [x] Payroll obligations are recognized when an eligible work week ends, before settlement.
 - [x] Internal transfers between known company accounts do not change revenue or expenses.
@@ -325,7 +328,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4e0df0f277d5c787ed7b0bd958280b46c1fe6430`
+**Implementation evidence reviewed against:** `0d4f9272dd27da09d811d428a58fa7e53489807c`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and

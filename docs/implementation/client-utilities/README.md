@@ -3,7 +3,7 @@
 **Scope:** Pure, shared data-shaping boundaries for the `app/` frontend and the separation of their stateful, network, browser, SDK, and
 file-export effects.
 
-**Last verified:** 2026-09-05
+**Last verified:** 2026-09-07
 
 ## Consumers
 
@@ -51,6 +51,10 @@ flowchart LR
   effects remain outside `utils`.
 - Accounting utilities keep token movements and USD calculations as fixed-scale `bigint` values through journal validation and every report
   projection. Conversion to a JavaScript `number` belongs only to presentation and export boundaries.
+- Accounting journal assembly accepts only rate-stamped source postings and rejects monetary input without a rate instead of adapting a
+  transitional JavaScript `number`.
+- Accounting statement presenters accept `JournalEntry` collections directly, so components and exporters do not compose lower-level
+  filtering and report builders to obtain display rows.
 - Boundary validation fails with the exact files and imports that violate the contract; it does not silently maintain an exception baseline.
 - Utility specs remain colocated with their domain owner and validate unchanged formatting, accounting, and transaction semantics.
 
@@ -61,7 +65,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4e0df0f277d5c787ed7b0bd958280b46c1fe6430`
+**Implementation evidence reviewed against:** `0d4f9272dd27da09d811d428a58fa7e53489807c`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Fixed-scale accounting monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts)
