@@ -331,7 +331,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `2ea3a119d816ef7eaa2baccdbbe24496b94bca2a`
+**Implementation evidence reviewed against:** `a99818e80337bc6e44147cdb5df772886ed71ab8`
 
 - [Classification route view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue) and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
@@ -341,7 +341,7 @@ flowchart LR
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [SafeDepositRouter event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts), and
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts)
-- [Team internal-address registry](../../../app/src/composables/accounting/useTeamInternalAddresses.ts)
+- [Pure internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
 - [Accounting backend feeds](../../../app/src/composables/accounting/useAccountingBackendFeeds.ts)
 - [Classification query](../../../app/src/queries/classification.queries.ts),
   [classification types](../../../app/src/types/accounting-classification.ts), and

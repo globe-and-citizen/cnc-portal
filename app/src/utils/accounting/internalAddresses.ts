@@ -7,9 +7,8 @@
  * expense. The global FeeCollector is deliberately excluded: a Bank fee is an
  * external company expense, not a move between company pockets.
  *
- * The reactive, team-scoped wrapper lives in
- * `@/composables/accounting/useTeamInternalAddresses`; the pure helpers here
- * carry the logic so they can be unit-tested without Vue.
+ * Journal assembly calls these pure helpers directly so the classification rule
+ * stays independent from Vue and can be tested without a reactive wrapper.
  */
 import { getAddress, isAddress, type Address } from 'viem'
 import type { ContractType, TeamContract } from '@/types/teamContract'
