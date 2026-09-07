@@ -24,6 +24,7 @@ function posting(id: string, account: LedgerEntry['debit'], instance?: Address):
     amountUsd: 10,
     token: 'usdc',
     rawAmount: '10000000',
+    rate: 1,
     memo: 'Test posting'
   })
 }

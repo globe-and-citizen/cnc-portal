@@ -52,7 +52,7 @@ describe('useCNCAccounting', () => {
     expect(Array.isArray(acc.journal.value)).toBe(true)
     expect(acc.reports.value.summary).toHaveProperty('cash')
     expect(acc.reports.value.generalLedger.balanced).toBe(true)
-    expect(typeof acc.reports.value.incomeStatement.netIncome).toBe('number')
+    expect(typeof acc.reports.value.incomeStatement.netIncome).toBe('bigint')
     expect(acc.reports.value.balanceSheet.balanced).toBe(true)
   })
 

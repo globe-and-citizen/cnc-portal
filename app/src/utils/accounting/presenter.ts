@@ -1,11 +1,12 @@
 import type { AccountClass, AccountName } from './chartOfAccounts'
 import type { Account } from './accountRegistry'
-import type { GeneralLedger } from './generalLedger'
+import { buildGeneralLedger, type GeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
 import type { JournalEntry } from './journalEntry'
 import { NETWORK, type TokenId } from '@/constant'
 import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
+import { usdAmountToNumber, type UsdAmount } from './monetaryAmount'
 
 // The summary metric cards live in their own module — see ./summaryCards.
 export { presentSummaryCards, type SummaryCard } from './summaryCards'
@@ -27,8 +28,8 @@ const NATURE_BADGE: Record<TrialNature, string> = {
  * JS negative zero) is collapsed to a clean `$0.00` — never the misleading
  * `$-0.00` that a hand-rolled currency formatter can emit for `−0`.
  */
-export function money(amountUsd: number): string {
-  return formatUsd(amountUsd)
+export function money(amountUsd: number | UsdAmount): string {
+  return formatUsd(typeof amountUsd === 'bigint' ? usdAmountToNumber(amountUsd) : amountUsd)
 }
 
 /** Unix-seconds → `Jan 8, 2026` (matches the dashboard ledger date style). */
@@ -194,7 +195,7 @@ export function presentIncome(
     totalRevenue: money(income.totalRevenue),
     totalExpenses: money(income.totalExpenses),
     netIncome: money(income.netIncome),
-    netNegative: income.netIncome < 0
+    netNegative: income.netIncome < 0n
   }
 }
 
@@ -243,12 +244,17 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
   }
 }
 
-/** Trial-balance rows + balanced total from the live general ledger. */
-export function presentTrial(ledger: GeneralLedger): {
+/** Build and present the Trial Balance directly from the canonical journal. */
+export function presentTrial(
+  entries: readonly JournalEntry[],
+  asOf?: Date | null
+): {
   rows: TrialRow[]
   total: string
   balanced: boolean
 } {
+  const scopedEntries = filterByPeriod(entries, null, asOf)
+  const ledger = buildGeneralLedger(scopedEntries)
   const rows: TrialRow[] = ledger.trialBalance.map((row) => {
     const debitSide = row.account.family.normalBalance === 'debit'
     return {

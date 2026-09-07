@@ -5,6 +5,7 @@ import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { catalogueLedger } from './catalogueLedger'
+import { usd } from './fixtures'
 
 function balanceSheet(entries: readonly LedgerEntry[]) {
   return buildBalanceSheet(buildJournal(entries))
@@ -25,6 +26,7 @@ function posting(
     amountUsd,
     token: 'usdc',
     rawAmount: String(Math.round(amountUsd * 1_000_000)),
+    rate: 1,
     internal: false,
     memo: '',
     enrichment: 'not-applicable'
@@ -60,7 +62,7 @@ describe('buildBalanceSheet', () => {
       'Cash — Bank',
       'Cash — Payroll'
     ])
-    expect(balance.assets.map((line) => line.balance)).toEqual([100, 25])
+    expect(balance.assets.map((line) => line.balance)).toEqual([usd(100), usd(25)])
   })
 
   it('explains earnings to date with its concrete revenue and expense accounts', () => {
@@ -72,11 +74,11 @@ describe('buildBalanceSheet', () => {
     expect(
       balance.earnings.map((line) => [line.account.family.name, line.balance, line.contribution])
     ).toEqual([
-      ['Service Revenue', 100, 100],
-      ['Operating Expense', 30, -30]
+      ['Service Revenue', usd(100), usd(100)],
+      ['Operating Expense', usd(30), -usd(30)]
     ])
-    expect(balance.earningsToDate).toBe(70)
-    expect(balance.totalEquity).toBe(70)
+    expect(balance.earningsToDate).toBe(usd(70))
+    expect(balance.totalEquity).toBe(usd(70))
   })
 
   it('shows SHERS To Be Issued and contra-equity as separate signed contributions', () => {
@@ -87,10 +89,10 @@ describe('buildBalanceSheet', () => {
     expect(
       balance.equity.map((line) => [line.account.family.name, line.balance, line.contribution])
     ).toEqual([
-      ['Deferred SHER Compensation', 6, -6],
-      ['SHERS To Be Issued', 6, 6]
+      ['Deferred SHER Compensation', usd(6), -usd(6)],
+      ['SHERS To Be Issued', usd(6), usd(6)]
     ])
-    expect(balance.totalEquity).toBe(0)
+    expect(balance.totalEquity).toBe(0n)
     expect(balance.balanced).toBe(true)
   })
 
@@ -118,16 +120,16 @@ describe('buildBalanceSheet', () => {
     )
   })
 
-  it('rounds section totals once from the unrounded account balances', () => {
+  it('keeps sub-cent account balances exact and rounds only when presented', () => {
     const balance = balanceSheet([
       posting('bank', 'Cash — Bank', 'Investor Equity', 0.005),
       posting('safe', 'Cash — Safe', 'Investor Equity', 0.005)
     ])
 
-    expect(balance.assets.map((line) => line.balance)).toEqual([0.01, 0.01])
-    expect(balance.totalAssets).toBe(0.01)
-    expect(balance.totalLiabilitiesAndEquity).toBe(0.01)
-    expect(balance.identityGap).toBe(0)
+    expect(balance.assets.map((line) => line.balance)).toEqual([usd(0.005), usd(0.005)])
+    expect(balance.totalAssets).toBe(usd(0.01))
+    expect(balance.totalLiabilitiesAndEquity).toBe(usd(0.01))
+    expect(balance.identityGap).toBe(0n)
     expect(balance.balanced).toBe(true)
   })
 })

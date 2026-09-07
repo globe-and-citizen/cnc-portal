@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { assembleRawAccounting } from './assembleAccounting'
+import { usd } from './fixtures'
 
 function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
   return {
@@ -11,6 +12,7 @@ function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): Led
     amountUsd: 10,
     token: 'usdc',
     rawAmount: '10000000',
+    rate: 1,
     internal: true,
     memo: 'Fund payroll',
     enrichment: 'not-applicable',
@@ -41,9 +43,9 @@ describe('accounting journal assembly', () => {
       id: sourceOperationId,
       sourceOperationId,
       lines: [
-        { account: { family: { name: 'Cash — Payroll' } }, debit: 10 },
-        { account: { family: { name: 'Transaction Fee Expense' } }, debit: 0.05 },
-        { account: { family: { name: 'Cash — Bank' } }, credit: 10.05 }
+        { account: { family: { name: 'Cash — Payroll' } }, debit: usd(10) },
+        { account: { family: { name: 'Transaction Fee Expense' } }, debit: usd(0.05) },
+        { account: { family: { name: 'Cash — Bank' } }, credit: usd(10.05) }
       ]
     })
     expect(accounting.generalLedger.entries).toEqual(accounting.journal)
@@ -78,19 +80,19 @@ describe('accounting journal assembly', () => {
 
     expect(accounting.journal).toHaveLength(2)
     expect(accounting.summary).toMatchObject({
-      cash: 99.95,
-      income: 100,
-      expense: 0.05,
-      transactionFees: 0.05
+      cash: usd(99.95),
+      income: usd(100),
+      expense: usd(0.05),
+      transactionFees: usd(0.05)
     })
     expect(accounting.incomeStatement).toMatchObject({
-      totalRevenue: 100,
-      totalExpenses: 0.05,
-      netIncome: 99.95
+      totalRevenue: usd(100),
+      totalExpenses: usd(0.05),
+      netIncome: usd(99.95)
     })
     expect(accounting.balanceSheet).toMatchObject({
-      totalAssets: 99.95,
-      earningsToDate: 99.95,
+      totalAssets: usd(99.95),
+      earningsToDate: usd(99.95),
       balanced: true
     })
   })
@@ -125,8 +127,8 @@ describe('accounting journal assembly', () => {
         sourceOperationId: txHash,
         txHash,
         lines: [
-          { account: { family: { name: 'Loan Payable' } }, debit: 8 },
-          { account: { family: { name: 'Cash — Bank' } }, credit: 8 }
+          { account: { family: { name: 'Loan Payable' } }, debit: usd(8) },
+          { account: { family: { name: 'Cash — Bank' } }, credit: usd(8) }
         ]
       }
     ])

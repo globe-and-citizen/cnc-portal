@@ -14,12 +14,15 @@ import { money } from '@/utils/accounting/presenter'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { catalogueLedger } from './catalogueLedger'
+import { usd } from './fixtures'
 
 const journal = buildJournal(catalogueLedger)
 const generalLedger = buildGeneralLedger(journal)
 
-function trialBalanceOf(account: AccountName): number {
-  return generalLedger.trialBalance.find((row) => row.account.family.name === account)?.balance ?? 0
+function trialBalanceOf(account: AccountName): bigint {
+  return (
+    generalLedger.trialBalance.find((row) => row.account.family.name === account)?.balance ?? 0n
+  )
 }
 
 describe('accountLedger — JournalEntry drill-downs', () => {
@@ -64,7 +67,7 @@ describe('accountLedger — JournalEntry drill-downs', () => {
   it('runs the balance only on rows posted to the selected account', () => {
     const account: AccountName = 'Cash — Safe'
     const entries = entriesForAccount(journal, account)
-    const rows = withRunningBalance(journalLedgerRows(entries, journal), account, 0)
+    const rows = withRunningBalance(journalLedgerRows(entries, journal), account, 0n)
     const balances = rows.filter((row) => row.balance)
 
     expect(balances.length).toBeGreaterThan(1)
@@ -88,7 +91,7 @@ describe('accountLedger — JournalEntry drill-downs', () => {
   })
 
   it('renders an opening balance as a non-posting row', () => {
-    const row = openingRow({ debits: 12, credits: 4, balance: 8 })
+    const row = openingRow({ debits: usd(12), credits: usd(4), balance: usd(8) })
     expect(row).toMatchObject({
       label: 'Opening balance',
       date: '',

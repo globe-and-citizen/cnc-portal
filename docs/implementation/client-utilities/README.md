@@ -3,7 +3,7 @@
 **Scope:** Pure, shared data-shaping boundaries for the `app/` frontend and the separation of their stateful, network, browser, SDK, and
 file-export effects.
 
-**Last verified:** 2026-09-05
+**Last verified:** 2026-09-07
 
 ## Consumers
 
@@ -49,6 +49,12 @@ flowchart LR
 - Utility runtime imports are acyclic. Type-only relationships are erased by TypeScript and do not participate in the runtime graph.
 - Contract reads, store-backed transaction presentation, Safe browser access, logging, spreadsheet/PDF generation, and Safe SDK transaction
   effects remain outside `utils`.
+- Accounting utilities keep token movements and USD calculations as fixed-scale `bigint` values through journal validation and every report
+  projection. Conversion to a JavaScript `number` belongs only to presentation and export boundaries.
+- Accounting journal assembly accepts only rate-stamped source postings and rejects monetary input without a rate instead of adapting a
+  transitional JavaScript `number`.
+- Accounting statement presenters accept `JournalEntry` collections directly, so components and exporters do not compose lower-level
+  filtering and report builders to obtain display rows.
 - Boundary validation fails with the exact files and imports that violate the contract; it does not silently maintain an exception baseline.
 - Utility specs remain colocated with their domain owner and validate unchanged formatting, accounting, and transaction semantics.
 
@@ -59,9 +65,10 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c7f058d0227a463709ac7a54ea95f3164cf385b2`
+**Implementation evidence reviewed against:** `0d4f9272dd27da09d811d428a58fa7e53489807c`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
+- [Fixed-scale accounting monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts)
 - [Pure accounting account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
 - [Utility boundary validator](../../../app/scripts/check-utility-boundaries.mjs) and
   [validator tests](../../../app/scripts/__tests__/check-utility-boundaries.node.mjs)

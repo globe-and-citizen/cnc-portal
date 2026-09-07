@@ -14,10 +14,11 @@
 import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
 import { journalFamilyBalances } from './journalBalances'
 import type { JournalEntry } from './journalEntry'
+import { ZERO_USD_AMOUNT, type UsdAmount } from './monetaryAmount'
 
 export interface StatementLine {
   account: AccountName
-  amount: number
+  amount: UsdAmount
 }
 
 export interface IncomeStatement {
@@ -25,14 +26,10 @@ export interface IncomeStatement {
   revenue: StatementLine[]
   /** Expense accounts with non-zero activity (costs + losses). */
   expenses: StatementLine[]
-  totalRevenue: number
-  totalExpenses: number
+  totalRevenue: UsdAmount
+  totalExpenses: UsdAmount
   /** totalRevenue − totalExpenses. */
-  netIncome: number
-}
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
+  netIncome: UsdAmount
 }
 
 /** Build the income statement from canonical JournalEntry lines. */
@@ -41,13 +38,13 @@ export function buildIncomeStatement(entries: readonly JournalEntry[]): IncomeSt
 
   const revenue: StatementLine[] = []
   const expenses: StatementLine[] = []
-  let totalRevenue = 0
-  let totalExpenses = 0
+  let totalRevenue = ZERO_USD_AMOUNT
+  let totalExpenses = ZERO_USD_AMOUNT
 
   // Walk the chart in declared order so lines read top-down and stay stable.
   for (const account of ACCOUNT_NAMES) {
-    const amount = net.get(account) ?? 0
-    if (amount === 0) continue
+    const amount = net.get(account) ?? ZERO_USD_AMOUNT
+    if (amount === ZERO_USD_AMOUNT) continue
     const cls = classOf(account)
     if (cls === 'INCOME') {
       revenue.push({ account, amount })
@@ -58,13 +55,11 @@ export function buildIncomeStatement(entries: readonly JournalEntry[]): IncomeSt
     }
   }
 
-  totalRevenue = round2(totalRevenue)
-  totalExpenses = round2(totalExpenses)
   return {
     revenue,
     expenses,
     totalRevenue,
     totalExpenses,
-    netIncome: round2(totalRevenue - totalExpenses)
+    netIncome: totalRevenue - totalExpenses
   }
 }

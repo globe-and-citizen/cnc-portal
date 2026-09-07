@@ -4,7 +4,7 @@ import type { TeamContract, ContractType } from '@/types/teamContract'
 import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
-import { ADDR } from './fixtures'
+import { ADDR, usd } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
 
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
@@ -40,10 +40,10 @@ describe('accounting assembly boundary', () => {
     const a = assembleAccounting({})
     expect(a.entries).toEqual([])
     expect(a.journal).toEqual([])
-    expect(a.summary).toMatchObject({ cash: 0, income: 0, expense: 0, equity: 0 })
+    expect(a.summary).toMatchObject({ cash: 0n, income: 0n, expense: 0n, equity: 0n })
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
-    expect(a.incomeStatement.netIncome).toBe(0)
+    expect(a.incomeStatement.netIncome).toBe(0n)
   })
 
   it('books a client USDC deposit into Bank as Service Revenue', () => {
@@ -72,8 +72,11 @@ describe('accounting assembly boundary', () => {
       }
     })
 
-    expect(a.summary.income).toBe(100)
-    expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
+    expect(a.summary.income).toBe(usd(100))
+    expect(a.incomeStatement.revenue).toContainEqual({
+      account: 'Service Revenue',
+      amount: usd(100)
+    })
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
   })
@@ -232,15 +235,15 @@ describe('accounting assembly boundary', () => {
 
     expect(
       a.balanceSheet.equity.find((line) => line.account.family.name === 'Investor Equity')?.balance
-    ).toBe(2)
-    expect(a.summary.income).toBe(0)
+    ).toBe(usd(2))
+    expect(a.summary.income).toBe(0n)
     expect(a.journal).toMatchObject([
       {
         id: SAFE_DEPOSIT_TX,
         txHash: SAFE_DEPOSIT_TX,
         lines: [
-          { account: { family: { name: 'Cash — Safe' } }, debit: 2 },
-          { account: { family: { name: 'Investor Equity' } }, credit: 2 }
+          { account: { family: { name: 'Cash — Safe' } }, debit: usd(2) },
+          { account: { family: { name: 'Investor Equity' } }, credit: usd(2) }
         ]
       }
     ])
@@ -286,7 +289,7 @@ describe('accounting assembly boundary', () => {
     // wage accrual credits it first and the issuance nets it down.
     expect(
       a.balanceSheet.equity.find((line) => line.account.family.name === 'Investor Equity')?.balance
-    ).toBe(60)
+    ).toBe(usd(60))
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
   })
@@ -314,10 +317,10 @@ describe('accounting assembly boundary', () => {
     }
 
     const withRate = assembleAccounting({ ...BASE, bankEvents })
-    expect(withRate.summary.income).toBe(2) // 1 native @ $2
+    expect(withRate.summary.income).toBe(usd(2)) // 1 native @ $2
 
     const phase1 = assembleAccounting({ ...BASE, rateOfRecord: () => 0, bankEvents })
-    expect(phase1.summary.income).toBe(0) // native priced at $0 until the FX gap is filled
+    expect(phase1.summary.income).toBe(0n) // native priced at $0 until the FX gap is filled
   })
 
   it('does not throw when optional feeds are null or absent', () => {

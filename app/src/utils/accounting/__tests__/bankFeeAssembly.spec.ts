@@ -3,7 +3,7 @@ import type { Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
 import { USDC_ADDRESS } from '@/constant'
 import type { CncAccountingInput } from '@/utils/accounting/assemble'
-import { ADDR } from './fixtures'
+import { ADDR, usd } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
 
 const CONTRACTS: TeamContract[] = [
@@ -68,9 +68,9 @@ describe('Bank fee journal assembly', () => {
       id: operationId,
       internal: false,
       lines: [
-        { account: { family: { name: 'Cash — Safe' } }, debit: 100 },
-        { account: { family: { name: 'Transaction Fee Expense' } }, debit: 1 },
-        { account: { family: { name: 'Cash — Bank' } }, credit: 101 }
+        { account: { family: { name: 'Cash — Safe' } }, debit: usd(100) },
+        { account: { family: { name: 'Transaction Fee Expense' } }, debit: usd(1) },
+        { account: { family: { name: 'Cash — Bank' } }, credit: usd(101) }
       ]
     })
     expect(accounting.entries.filter((entry) => entry.useCase === 'FEE')).toHaveLength(1)

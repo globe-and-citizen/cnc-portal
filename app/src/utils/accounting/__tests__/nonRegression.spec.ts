@@ -14,6 +14,7 @@ import type { CncAccountingInput } from '../assemble'
 import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { TeamContract } from '@/types/teamContract'
 import type { UsdRateOfRecord } from '../toUsd'
+import { usdAmountToNumber } from '../monetaryAmount'
 import { assembleAccounting } from './assembleAccounting'
 
 // All-numeric hex so `getAddress` is a no-op — the addresses survive the
@@ -114,14 +115,14 @@ describe('accounting non-regression', () => {
     const { summary, balanceSheet } = assembleAccounting(sampleInput())
 
     // 100 − 20 − 5 = 75 POL in Bank, at $0.08 → $6.00 total assets.
-    expect(balanceSheet.totalAssets).toBe(6)
-    expect(summary.cash).toBe(6)
+    expect(usdAmountToNumber(balanceSheet.totalAssets)).toBe(6)
+    expect(usdAmountToNumber(summary.cash)).toBe(6)
     // The 5 POL fee is now a real, non-zero Transaction Fee Expense.
-    expect(summary.transactionFees).toBeCloseTo(0.4, 6)
-    expect(summary.transactionFees).toBeGreaterThan(0)
+    expect(usdAmountToNumber(summary.transactionFees)).toBeCloseTo(0.4, 6)
+    expect(summary.transactionFees).toBeGreaterThan(0n)
     // revenue 8.0 − expense (1.6 operating + 0.4 fee) = 6.0
-    expect(summary.expense).toBeCloseTo(2, 6)
-    expect(balanceSheet.earningsToDate).toBeCloseTo(6, 6)
+    expect(usdAmountToNumber(summary.expense)).toBeCloseTo(2, 6)
+    expect(usdAmountToNumber(balanceSheet.earningsToDate)).toBeCloseTo(6, 6)
   })
 
   it('stamps every posting with its currency, quantity and rate of record (Taux)', () => {

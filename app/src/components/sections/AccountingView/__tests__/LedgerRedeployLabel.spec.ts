@@ -43,6 +43,7 @@ function deposit(id: string, instance: string, timestamp: number, txHash?: strin
     amountUsd: 100,
     token: 'usdc',
     rawAmount: '100000000',
+    rate: 1,
     internal: false,
     memo: '',
     enrichment: 'not-applicable',

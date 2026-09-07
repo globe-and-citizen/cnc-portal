@@ -46,6 +46,7 @@ function posting(
     amountUsd: 1,
     token: 'usdc',
     rawAmount: '1000000',
+    rate: 1,
     internal: true,
     memo: 'Test movement',
     ...fields

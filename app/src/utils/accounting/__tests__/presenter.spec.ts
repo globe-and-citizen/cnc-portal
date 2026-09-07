@@ -88,15 +88,16 @@ describe('presentBalance', () => {
     expect(balance.totalLiabilities).toBe('$0.00')
   })
 
-  const nativeEntry = (amountUsd: number): LedgerEntry => ({
-    id: 'pol',
+  const bankDeposit = (amountUsd: number): LedgerEntry => ({
+    id: 'bank',
     timestamp: 1,
     useCase: 'UC-BANK-02',
     debit: 'Cash — Bank',
     credit: 'Service Revenue',
     amountUsd,
-    token: 'native',
-    rawAmount: '28953000000000000', // 0.028953 POL
+    token: 'usdc',
+    rawAmount: String(amountUsd * 1_000_000),
+    rate: 1,
     internal: false,
     memo: '',
     enrichment: 'not-applicable'
@@ -112,6 +113,7 @@ describe('presentBalance', () => {
       amountUsd: 30,
       token: 'usdc',
       rawAmount: '30000000',
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
@@ -126,18 +128,14 @@ describe('presentBalance', () => {
   it('labels later Bank deployments separately while retaining their concrete account selections', () => {
     const journal = buildJournal([
       {
-        ...nativeEntry(100),
+        ...bankDeposit(100),
         id: 'bank-1',
-        token: 'usdc',
-        rawAmount: '100000000',
         debitInstance: '0x1111111111111111111111111111111111111111'
       },
       {
-        ...nativeEntry(25),
+        ...bankDeposit(25),
         id: 'bank-2',
         timestamp: 2,
-        token: 'usdc',
-        rawAmount: '25000000',
         debitInstance: '0x2222222222222222222222222222222222222222'
       }
     ])
@@ -157,7 +155,7 @@ describe('presentBalance', () => {
 
 describe('presentTrial', () => {
   it('puts each account balance on its normal side and stays balanced', () => {
-    const trial = presentTrial(books().generalLedger)
+    const trial = presentTrial(books().journal)
     expect(trial.balanced).toBe(true)
     const revenue = trial.rows.find((r) => r.account.family.name === 'Service Revenue')
     expect(revenue?.nature).toBe('Income')
@@ -194,6 +192,7 @@ describe('presentJournalLedger', () => {
       amountUsd: 0.5,
       token: 'usdc',
       rawAmount: '500000',
+      rate: 1,
       memo: 'Transaction fee skimmed from Bank',
       enrichment: 'not-applicable'
     }

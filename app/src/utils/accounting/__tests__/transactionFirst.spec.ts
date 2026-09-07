@@ -22,6 +22,7 @@ const FEE_ACCOUNT_ID = accountFor(FEE_ACCOUNT).id
 import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { journalLedgerRows, presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
+import { usd } from './fixtures'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 /** A 64-hex transaction hash, so a fee and its transfer pair by shared tx. */
@@ -40,6 +41,7 @@ const standaloneFee: LedgerEntry = {
   amountUsd: 0.5,
   token: 'usdc',
   rawAmount: '500000',
+  rate: 1,
   internal: false,
   memo: 'Transaction fee skimmed from Bank',
   enrichment: 'not-applicable'
@@ -55,6 +57,7 @@ const classifiedRevenue: LedgerEntry = {
   amountUsd: 100,
   token: 'usdc',
   rawAmount: '100000000',
+  rate: 1,
   internal: false,
   classified: 'REVENUE',
   memo: 'Client payment',
@@ -71,6 +74,7 @@ const ordinaryTransfer: LedgerEntry = {
   amountUsd: 30,
   token: 'usdc',
   rawAmount: '30000000',
+  rate: 1,
   internal: true,
   memo: 'Fund payroll',
   enrichment: 'not-applicable'
@@ -86,6 +90,7 @@ const feeTransferOut: LedgerEntry = {
   amountUsd: 10,
   token: 'usdc',
   rawAmount: '10000000',
+  rate: 1,
   internal: true,
   memo: 'Fund expenses (net of fee)',
   enrichment: 'not-applicable'
@@ -99,6 +104,7 @@ const feeTransferFee: LedgerEntry = {
   amountUsd: 0.05,
   token: 'usdc',
   rawAmount: '50000',
+  rate: 1,
   internal: false,
   memo: 'Transaction fee on the funding transfer',
   enrichment: 'not-applicable'
@@ -184,8 +190,8 @@ describe('transaction-first read model — the trial balance aggregates the same
   it('stays balanced gross and net over the whole book', () => {
     const gl = buildGeneralLedger(buildJournal(book))
     expect(gl.balanced).toBe(true)
-    expect(gl.totalDebit).toBeCloseTo(gl.totalCredit, 2)
-    expect(gl.debitBalanceTotal).toBeCloseTo(gl.creditBalanceTotal, 2)
+    expect(gl.totalDebit).toBe(gl.totalCredit)
+    expect(gl.debitBalanceTotal).toBe(gl.creditBalanceTotal)
   })
 
   it('remains balanced for a narrowed reporting boundary', () => {
@@ -194,7 +200,7 @@ describe('transaction-first read model — the trial balance aggregates the same
     const gl = buildGeneralLedger(buildJournal(asOfDay2))
     expect(asOfDay2.length).toBeGreaterThan(0)
     expect(gl.balanced).toBe(true)
-    expect(gl.totalDebit).toBeCloseTo(gl.totalCredit, 2)
+    expect(gl.totalDebit).toBe(gl.totalCredit)
     // The day-3 fee transfer and day-4 native sweep are excluded from the boundary.
     expect(gl.trialBalance.some((r) => r.account.family.name === 'Cash — Safe')).toBe(false)
   })
@@ -202,7 +208,7 @@ describe('transaction-first read model — the trial balance aggregates the same
   it('excludes an orphan fee from the canonical JournalEntry balance', () => {
     const gl = buildGeneralLedger(buildJournal(book))
     const feeRow = gl.trialBalance.find((r) => r.account.family.name === FEE_ACCOUNT)
-    expect(feeRow?.balance).toBeCloseTo(0.05, 2)
+    expect(feeRow?.balance).toBe(usd(0.05))
   })
 })
 
