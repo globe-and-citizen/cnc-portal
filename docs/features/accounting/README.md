@@ -49,6 +49,9 @@ These acceptance criteria follow the
   considerations are owned by the [Accounting Read Model](../../implementation/accounting-read-model/README.md).
 - **Runtime assembly boundary:** The application calls the explicit raw-mapping and evidence-aware assembly stages. Fixture conveniences and
   implementation helpers are private, so production accounting APIs represent real read-model boundaries rather than test setup.
+- **Source mapping boundary:** Each accounting domain exposes one mapper. Bank includes transaction-bound fees, Payroll includes weekly
+  accrual and settlement, and Expense includes indexed payouts plus its portal fallback; support transforms remain private to those
+  boundaries or to assembly.
 
 ## Lifecycle
 
@@ -331,7 +334,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `194deeebc9d207dacda762afa652b04f08f0b6e6`
+**Implementation evidence reviewed against:** `8767f7775f1d2d5c0b6bf31c4571909a4108e922`
 
 - [Classification route view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue) and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
@@ -370,6 +373,10 @@ flowchart LR
 - [Reusable multi-select filter](../../../app/src/components/ui/MultiSelectFilter.vue) and its
   [facet-filter composable](../../../app/src/composables/useFacetFilter.ts) — shared by the ledger's account and currency filters
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
+  [source-mapper orchestrator](../../../app/src/utils/accounting/mappers/index.ts),
+  [Bank mapper](../../../app/src/utils/accounting/mappers/bank.ts), [Payroll mapper](../../../app/src/utils/accounting/mappers/payroll.ts),
+  [Expense mapper](../../../app/src/utils/accounting/mappers/expenseAccount.ts),
+  [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts),
   [shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts),
   [fixed-scale monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts),
   [canonical account-family chart](../../../app/src/utils/accounting/chartOfAccounts.ts),
