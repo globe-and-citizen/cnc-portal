@@ -52,7 +52,7 @@ import {
   makeSherUsdRate,
   currentSherUsdRate
 } from '@/utils/accounting/sherRate'
-import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
+import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
 
