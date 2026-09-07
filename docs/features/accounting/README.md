@@ -11,6 +11,8 @@ These acceptance criteria follow the
 
 - Accounting presents one consolidated set of double-entry books for the company across its money-moving contracts and relevant portal
   records.
+- One team-scoped Accounting route owns the journal while members move between Summary, General Ledger, Trial Balance, Balance Sheet, Income
+  Statement, and Classification. Each report keeps its own filters and projects the shared journal on demand.
 - The General Ledger, Trial Balance, summary, income statement, balance sheet, drill-downs, and their exports project the validated
   `JournalEntry` collection. A drill-down keeps every line of an entry that touches its selected concrete account or account family.
 - The Balance Sheet reuses the Trial Balance's concrete account rows and separates them into assets, liabilities, and equity. A redeployed
@@ -55,11 +57,12 @@ flowchart LR
     Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
     Consolidate --> Postings[Consolidated postings: transitional feed]
     Consolidate --> Journal[Validated JournalEntry collection]
-    Journal --> GeneralLedger[General Ledger UI]
-    Journal --> Trial[Trial Balance projection]
-    Journal --> Statements[Summary and financial statements]
-    Journal --> Drilldowns[Account and statement drill-downs]
-    Journal --> Classification[External withdrawal classification]
+    Journal --> Context[Team-scoped Accounting route context]
+    Context --> GeneralLedger[General Ledger UI]
+    Context --> Trial[Trial Balance projection]
+    Context --> Statements[Summary and financial statements]
+    Context --> Drilldowns[Account and statement drill-downs]
+    Context --> Classification[External withdrawal classification]
     GeneralLedger --> GeneralLedgerExports[General Ledger exports]
     Trial --> TrialExports[Trial Balance exports]
     Statements --> StatementExports[Statement exports]
@@ -328,13 +331,14 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `734459c047e2f00e530fa4089018397fcd3015f1`
+**Implementation evidence reviewed against:** `84ed792ab66f9f09339c4cad3dce176998dbab33`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
   [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
+  [nested Accounting routes](../../../app/src/router/index.ts),
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [SafeDepositRouter event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts), and
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts)

@@ -2,7 +2,7 @@
 
 **Scope:** Shared client routing, authentication redirects, application-shell route rendering, and sidebar navigation for the portal.
 
-**Last verified:** 2026-08-26
+**Last verified:** 2026-09-07
 
 This capability owns the shared navigation boundary. Product goals, permissions, and acceptance criteria remain in the linked feature
 READMEs.
@@ -39,6 +39,8 @@ flowchart LR
 2. The guard redirects an unauthenticated visitor to Login and redirects an authenticated visitor away from Login to Companies.
 3. The application shell renders the named login view or, for an authenticated session, the team workspace and its default route view.
 4. The sidebar derives its entries, disabled state, active section, and active child from the current route plus the current team and user.
+5. Accounting report routes render below one persistent Accounting parent route. Moving between reports replaces only the nested report;
+   changing the team replaces the parent and its team-scoped journal.
 
 ## Invariants and Failure Behaviour
 
@@ -49,17 +51,21 @@ flowchart LR
   manually expanded section open at a time.
 - Sidebar targets use named routes. A route-name change therefore requires the corresponding navigation target and its regression coverage
   to be updated together.
+- Team-route outlet keys remain stable across sibling Accounting reports for one team and change with the team identifier. This preserves
+  the Accounting read-model owner without allowing state to cross company boundaries.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `84ed792ab66f9f09339c4cad3dce176998dbab33`
 
 - [Team selection menu](../../../app/src/components/layout/TeamSelectMenu.vue)
 - [Router definition and authentication guard](../../../app/src/router/index.ts)
+- [Team route-owner lifetime](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue)
 - [Application shell and route-view rendering](../../../app/src/App.vue)
 - [Sidebar layout and controlled accordion](../../../app/src/components/ui/SidebarLayout.vue)
 - [Sidebar navigation derivation](../../../app/src/composables/useSidebarNavItems.ts)
 - [Router behaviour tests](../../../app/src/router/__tests__/index.spec.ts)
+- [Team route-owner tests](../../../app/src/views/team/%5Bid%5D/__tests__/ShowIndex.spec.ts)
 - [Sidebar navigation behaviour tests](../../../app/src/composables/__tests__/useSidebarNavItems.spec.ts)
 - [Sidebar layout tests](../../../app/src/components/ui/__tests__/SidebarLayout.spec.ts)
 
