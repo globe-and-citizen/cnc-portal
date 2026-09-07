@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
-import { buildJournal, type JournalEntry } from '@/utils/accounting/generalLedger'
+import { buildJournal } from '@/utils/accounting/generalLedger'
+import type { JournalEntry } from '@/utils/accounting/types'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 // A controlled, reactive book so the account / currency filters, their

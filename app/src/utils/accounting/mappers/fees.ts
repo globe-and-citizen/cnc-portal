@@ -21,7 +21,7 @@ import { makeEntry, sourceOperationIdOf, type LedgerEntry } from '@/utils/accoun
 import { atDate, type MapperContext } from './context'
 
 /** A `FeePaid` row emitted by the FeeCollector contract (the dual-write twin). */
-export interface FeeCollectorFeePaidRow {
+interface FeeCollectorFeePaidRow {
   id: string
   contractAddress: string
   payer: string

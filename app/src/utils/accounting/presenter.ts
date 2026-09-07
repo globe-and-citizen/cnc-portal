@@ -1,12 +1,11 @@
 import type { AccountClass, AccountName } from './chartOfAccounts'
-import type { Account } from './accountRegistry'
 import { buildGeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
-import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
-import type { JournalEntry } from './journalEntry'
+import { buildBalanceSheet } from './balanceSheet'
 import { NETWORK, type TokenId } from '@/constant'
 import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
-import { usdAmountToNumber, type UsdAmount } from './monetaryAmount'
+import { usdAmountToNumber } from './monetaryAmount'
+import type { Account, BalanceSheet, JournalEntry, UsdAmount } from './types'
 
 // The summary display model lives in its own module — see ./summaryCards.
 export {
@@ -16,7 +15,7 @@ export {
   type SummaryView
 } from './summaryCards'
 
-export type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
+type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
 /** Soft badge classes per trial-balance account nature. */
 const NATURE_BADGE: Record<TrialNature, string> = {
@@ -60,7 +59,7 @@ export interface StatementLineView {
   accounts?: AccountName[]
 }
 
-export interface TrialRow {
+interface TrialRow {
   /** Canonical concrete account for drill-down and reconciliation. */
   account: Account
   /** Display name — the account, suffixed ` #2` / ` #3` for a redeployed pocket's later instances. */
@@ -77,7 +76,7 @@ export interface TrialRow {
   crMuted: boolean
 }
 
-export interface IncomeView {
+interface IncomeView {
   revenueLines: StatementLineView[]
   expenseLines: StatementLineView[]
   totalRevenue: string
@@ -86,7 +85,7 @@ export interface IncomeView {
   netNegative: boolean
 }
 
-export interface BalanceView {
+interface BalanceView {
   assetLines: BalanceLineView[]
   liabilityLines: BalanceLineView[]
   equityLines: BalanceLineView[]

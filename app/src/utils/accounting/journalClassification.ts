@@ -1,9 +1,9 @@
 /** Classification is a projection of complete journal entries, with a legacy edit boundary. */
 import { CATEGORY_LABEL } from './classification'
 import type { LegacyClassificationTarget } from './classificationTarget'
-import type { JournalEntry } from './journalEntry'
 import { filterJournalLedgerEntries, journalLedgerRows } from './journalLedgerPresenter'
 import type { LedgerRow } from './journalLedgerPresenter'
+import type { JournalEntry } from './types'
 
 export interface JournalClassificationRow extends LedgerRow {
   journalEntryId: string

@@ -11,26 +11,10 @@
  * example: revenue 115 (Service 100 + Trading Gain 15), expenses 110.80
  * (Payroll 50.80 + Operating 20 + Trading Loss 20 + Dividend 20) → net +4.20.
  */
-import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
+import { ACCOUNT_NAMES, classOf } from './chartOfAccounts'
 import { journalFamilyBalances } from './journalBalances'
-import type { JournalEntry } from './journalEntry'
-import { ZERO_USD_AMOUNT, type UsdAmount } from './monetaryAmount'
-
-export interface StatementLine {
-  account: AccountName
-  amount: UsdAmount
-}
-
-export interface IncomeStatement {
-  /** Income accounts with non-zero activity (revenue + gains). */
-  revenue: StatementLine[]
-  /** Expense accounts with non-zero activity (costs + losses). */
-  expenses: StatementLine[]
-  totalRevenue: UsdAmount
-  totalExpenses: UsdAmount
-  /** totalRevenue − totalExpenses. */
-  netIncome: UsdAmount
-}
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import type { IncomeStatement, JournalEntry, StatementLine } from './types'
 
 /** Build the income statement from canonical JournalEntry lines. */
 export function buildIncomeStatement(entries: readonly JournalEntry[]): IncomeStatement {

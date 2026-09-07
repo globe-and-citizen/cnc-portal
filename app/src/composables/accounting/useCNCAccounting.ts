@@ -55,7 +55,7 @@ import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 /** How many of each event type to pull per contract (newest first). */
 const EVENT_LIMIT = 500
 
-export interface UseCNCAccountingOptions {
+interface UseCNCAccountingOptions {
   /** FX resolver for native / SHER (defaults to the Phase-1 zero-rate gap). */
   rateOfRecord?: UsdRateOfRecord
   /** On-chain SHER token address, so SHER amounts resolve to the `sher` token. */
@@ -76,7 +76,7 @@ export interface UseCNCAccountingReturn {
 }
 
 /** One contract generation that could not be loaded, for the UI gap warning. */
-export interface ReconciliationGap {
+interface ReconciliationGap {
   /** The source whose evidence is incomplete (e.g. 'Bank'). */
   source: string
   /** The failed generation's contract address, when a source scan failed. */

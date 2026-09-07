@@ -102,7 +102,7 @@ interface BudgetCap {
 }
 
 /** Everything the ledger entry needs to narrate a matched expense payout. */
-export interface ExpenseDrawInfo {
+interface ExpenseDrawInfo {
   frequencyType: number
   tokenId: TokenId
   /** Approved cap in base units. */

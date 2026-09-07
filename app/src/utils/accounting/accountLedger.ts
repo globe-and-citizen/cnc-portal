@@ -1,9 +1,9 @@
 import { dayLabel, filterByPeriod, money, periodLabel } from './presenter'
-import type { Account } from './accountRegistry'
 import { accountFamilyOf, type AccountName } from './chartOfAccounts'
-import { creditOf, debitOf, type JournalEntry } from './journalEntry'
+import { creditOf, debitOf } from './journalEntry'
 import type { LedgerRow } from './journalLedgerPresenter'
-import { ZERO_USD_AMOUNT, type UsdAmount } from './monetaryAmount'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import type { Account, JournalEntry, UsdAmount } from './types'
 
 /**
  * A statement line selects a chart family; a Trial Balance line selects one

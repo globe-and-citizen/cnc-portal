@@ -12,15 +12,10 @@ import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { badgeClassOf, categoryLabelOf } from './ledgerCategory'
 import { currencySymbol, filterByPeriod, formatUnixDateTime, money, periodLabel } from './presenter'
 import { wholeTokenAmount } from './toUsd'
-import { creditOf, debitOf, type JournalEntry, type JournalEntryLine } from './journalEntry'
-import type { Account } from './accountRegistry'
+import { creditOf, debitOf } from './journalEntry'
 import type { LedgerEntry } from './ledgerEntry'
-import {
-  ZERO_USD_AMOUNT,
-  usdAmountToNumber,
-  usdRateToNumber,
-  type UsdAmount
-} from './monetaryAmount'
+import { ZERO_USD_AMOUNT, usdAmountToNumber, usdRateToNumber } from './monetaryAmount'
+import type { Account, JournalEntry, JournalEntryLine, UsdAmount } from './types'
 
 /** Display-ready journal line shared by the ledger, drill-downs and exporters. */
 export interface LedgerRow {
@@ -66,7 +61,7 @@ export interface LedgerRow {
 }
 
 /** A concrete account offered by the General Ledger account filter. */
-export interface JournalAccountFilterOption {
+interface JournalAccountFilterOption {
   value: string
   label: string
 }

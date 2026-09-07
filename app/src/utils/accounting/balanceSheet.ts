@@ -7,36 +7,11 @@
  */
 import { buildGeneralLedger } from './generalLedger'
 import { journalAccountBalances } from './journalBalances'
-import type { Account } from './accountRegistry'
 import type { AccountClass } from './chartOfAccounts'
-import type { JournalEntry } from './journalEntry'
-import { ZERO_USD_AMOUNT, type UsdAmount } from './monetaryAmount'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import type { BalanceSheet, JournalEntry, UsdAmount } from './types'
 
-/** One concrete account shared with the as-of Trial Balance projection. */
-export interface BalanceSheetAccountLine {
-  account: Account
-  accountLabel: string
-  /** The account's balance on its normal side, matching the Trial Balance. */
-  balance: UsdAmount
-  /** Signed contribution to its Balance Sheet section. */
-  contribution: UsdAmount
-}
-
-export interface BalanceSheet {
-  assets: BalanceSheetAccountLine[]
-  liabilities: BalanceSheetAccountLine[]
-  /** Equity and contra-equity accounts; contra-equity contributions are negative. */
-  equity: BalanceSheetAccountLine[]
-  /** Income and expense accounts explaining the Earnings to date line. */
-  earnings: BalanceSheetAccountLine[]
-  totalAssets: UsdAmount
-  totalLiabilities: UsdAmount
-  earningsToDate: UsdAmount
-  totalEquity: UsdAmount
-  totalLiabilitiesAndEquity: UsdAmount
-  identityGap: UsdAmount
-  balanced: boolean
-}
+type BalanceSheetAccountLine = BalanceSheet['assets'][number]
 
 function contributionFor(accountClass: AccountClass, balance: UsdAmount): UsdAmount {
   return accountClass === 'CONTRA_EQUITY' || accountClass === 'EXPENSE' ? -balance : balance

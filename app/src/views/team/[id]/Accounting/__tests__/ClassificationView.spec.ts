@@ -5,7 +5,7 @@ import { NETWORK } from '@/constant'
 import { mockTeamData, mockToast, mockUserStore, renderWithProviders } from '@/tests/mocks'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { makeEntry } from '@/utils/accounting/ledgerEntry'
-import type { JournalEntry } from '@/utils/accounting/journalEntry'
+import type { JournalEntry } from '@/utils/accounting/types'
 import ClassificationView from '../ClassificationView.vue'
 
 const state = vi.hoisted(() => ({

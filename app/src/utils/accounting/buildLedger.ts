@@ -24,7 +24,7 @@
  */
 import type { LedgerEntry } from './ledgerEntry'
 
-export interface BuiltLedger {
+interface BuiltLedger {
   /** Deduped, chronologically sorted postings — the canonical consolidated feed. */
   entries: LedgerEntry[]
 }

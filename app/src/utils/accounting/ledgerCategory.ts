@@ -2,7 +2,7 @@
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 import type { ClassificationCategory } from './classification'
 
-export type LedgerCategory =
+type LedgerCategory =
   | 'Investment'
   | 'Credit'
   | 'Revenue'

@@ -10,13 +10,12 @@ import {
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
 import type { LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
-import type { Account } from '@/utils/accounting/accountRegistry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
-import type { JournalEntry } from '@/utils/accounting/journalEntry'
+import type { Account, JournalEntry } from '@/utils/accounting/types'
 
 /** The reporting window a drill-down inherits from its statement. */
-export interface DrilldownBounds {
+interface DrilldownBounds {
   from: Date | null
   to: Date | null
 }
@@ -42,7 +41,7 @@ export interface DrilldownBalance {
 }
 
 /** The statement line currently shown in the drill-down modal. */
-export interface LedgerDrilldownLine {
+interface LedgerDrilldownLine {
   accounts: AccountSelection
   label: string
   total: string

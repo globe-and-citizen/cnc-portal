@@ -26,7 +26,7 @@ type SheetRows = Cell[][]
 /** Turns a party's address into a display name; defaults to a shortened address. */
 export type ResolveName = (address: string) => string
 
-export interface AccountingSheet {
+interface AccountingSheet {
   name: string
   rows: SheetRows
 }
