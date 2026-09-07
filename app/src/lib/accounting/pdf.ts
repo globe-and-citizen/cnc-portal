@@ -16,8 +16,7 @@ import {
   presentIncome,
   presentBalance,
   presentTrial,
-  presentSummaryCards,
-  presentBanner,
+  presentSummary,
   incomeExportTitle,
   balanceExportTitle,
   trialExportTitle
@@ -46,8 +45,7 @@ export interface AccountingPdfTable {
 const GAP: Cell[] = ['', '']
 
 function summaryTable(books: AccountingExportSnapshot): AccountingPdfTable {
-  const cards = presentSummaryCards(books.summary, books.incomeStatement, books.balanceSheet)
-  const banner = presentBanner(books.balanceSheet, books.generalLedger)
+  const { cards, banner } = presentSummary(books.journal)
   return {
     title: 'Summary',
     head: ['Metric', 'Value'],

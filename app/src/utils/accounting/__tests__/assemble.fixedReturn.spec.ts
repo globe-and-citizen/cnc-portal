@@ -8,6 +8,10 @@ import { describe, it, expect } from 'vitest'
 import type { Address } from 'viem'
 import type { TeamContract, ContractType } from '@/types/teamContract'
 import type { CncAccountingInput } from '@/utils/accounting/assemble'
+import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
+import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
 import { ADDR, usd } from './fixtures'
@@ -93,21 +97,24 @@ describe('accounting assembly — Community Credit', () => {
     })
 
     // The borrowed cash reached Bank, then left again with the interest on top.
-    expect(a.summary.cash).toBe(-usd(5))
+    const summary = buildAccountingSummary(a.journal)
+    const balance = buildBalanceSheet(a.journal)
+    const income = buildIncomeStatement(a.journal)
+    expect(summary.cash).toBe(-usd(5))
     // Principal in and out nets the liability to zero. The account stays visible
     // because the Balance Sheet reuses the Trial Balance's activity-backed rows.
-    expect(a.balanceSheet.liabilities).toHaveLength(1)
-    expect(a.balanceSheet.liabilities[0]).toMatchObject({
+    expect(balance.liabilities).toHaveLength(1)
+    expect(balance.liabilities[0]).toMatchObject({
       account: { family: { name: 'Loan Payable' } },
       balance: 0n,
       contribution: 0n
     })
-    expect(a.incomeStatement.expenses).toContainEqual({
+    expect(income.expenses).toContainEqual({
       account: 'Interest Expense',
       amount: usd(5)
     })
-    expect(a.incomeStatement.netIncome).toBe(-usd(5))
-    expect(a.generalLedger.balanced).toBe(true)
-    expect(a.balanceSheet.balanced).toBe(true)
+    expect(income.netIncome).toBe(-usd(5))
+    expect(buildGeneralLedger(a.journal).balanced).toBe(true)
+    expect(balance.balanced).toBe(true)
   })
 })

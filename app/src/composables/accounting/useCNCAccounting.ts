@@ -1,8 +1,8 @@
 /**
  * `useCNCAccounting(teamId)` — the accounting data layer (issue #2118, step 4/5).
  *
- * Loads every feed a team's books need and exposes the consolidated ledger plus
- * the three financial statements to the UI from a single composable:
+ * Loads every feed a team's books need and exposes the canonical journal to the
+ * UI from a single composable:
  *
  *   - **On-chain (getLogs)** — events for the team's Bank, CashRemuneration,
  *     Expense, FixedReturn (Community Credit), Investor and SafeDepositRouter
@@ -13,8 +13,7 @@
  *     expenses, the off-chain accrual + category context (spec §3.2).
  *
  * The raw feeds are mapped into a pure posting feed, completed with transaction
- * receipt account evidence, then consolidated into the canonical journal and
- * statements.
+ * receipt account evidence, then consolidated into the canonical journal.
  * Optional / flaky sources (the external Safe service, a contract a team has not
  * deployed) degrade gracefully: a missing or failed feed is simply absent from
  * the ledger and never blocks the page or surfaces as a hard error.
@@ -64,14 +63,8 @@ export interface UseCNCAccountingOptions {
 }
 
 export interface UseCNCAccountingReturn {
-  /** Canonical concrete-account source of truth for the assembled books. */
-  accountRegistry: ComputedRef<CncAccounting['accountRegistry']>
   /** Validated journal assembled from the consolidated postings. */
   journal: ComputedRef<CncAccounting['journal']>
-  /** The summary and financial reports computed from the assembled accounting books. */
-  reports: ComputedRef<
-    Pick<CncAccounting, 'summary' | 'generalLedger' | 'incomeStatement' | 'balanceSheet'>
-  >
   /** True while any required feed is still loading. */
   isLoading: ComputedRef<boolean>
   /** The team query error (the only fatal one); optional feeds degrade silently. */
@@ -374,14 +367,7 @@ export function useCNCAccounting(
     )
 
   return {
-    accountRegistry: computed(() => accounting.value.accountRegistry),
     journal: computed(() => accounting.value.journal),
-    reports: computed(() => ({
-      summary: accounting.value.summary,
-      generalLedger: accounting.value.generalLedger,
-      incomeStatement: accounting.value.incomeStatement,
-      balanceSheet: accounting.value.balanceSheet
-    })),
     isLoading,
     error,
     reconciliationGaps,

@@ -13,7 +13,7 @@
  *             → buildCncLedgerEntries (#2113 mappers + off-chain join)
  *             → buildLedger (#2117 consolidation: dedupe twins)
  *             → buildJournal (validated canonical journal)
- *             → General Ledger / Trial Balance / financial-statement projections
+ *             → JournalEntry[]
  */
 import { type Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
@@ -36,25 +36,14 @@ import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
 import { buildLedger } from '@/utils/accounting/buildLedger'
-import {
-  buildAccountingSummary,
-  type AccountingSummary
-} from '@/utils/accounting/accountingSummary'
-import { buildAccountRegistry, type AccountRegistry } from '@/utils/accounting/accountRegistry'
+import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 import {
   resolveAccountInstances,
   type TransactionAccountEvidence
 } from '@/utils/accounting/accountInstances'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import {
-  buildGeneralLedger,
-  buildJournal,
-  type GeneralLedger,
-  type JournalEntry
-} from '@/utils/accounting/generalLedger'
+import { buildJournal, type JournalEntry } from '@/utils/accounting/generalLedger'
 import { reconcileJournalEntrySources } from '@/utils/accounting/journalEntry'
-import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
-import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import {
@@ -101,23 +90,10 @@ export interface CncAccountingInput {
   classifications?: readonly TransactionClassificationRecord[] | null
 }
 
-/** The transitional posting feed, canonical journal, and report projections a team's books resolve to. */
+/** The canonical journal and reconciliation diagnostics resolved for a team's books. */
 export interface CncAccounting {
-  /**
-   * Deduped, chronologically sorted mapper postings retained at the assembly
-   * boundary. Views and exports consume the journal, never these source pairs.
-   */
-  entries: LedgerEntry[]
-  /** The canonical concrete-account source of truth for this assembled book. */
-  accountRegistry: AccountRegistry
   /** The validated, ordered double-entry journal built once after consolidation. */
   journal: JournalEntry[]
-  /** Roll-up totals for the summary cards. */
-  summary: AccountingSummary
-  /** Double-entry journal + trial balance. */
-  generalLedger: GeneralLedger
-  incomeStatement: IncomeStatement
-  balanceSheet: BalanceSheet
   /** Fee logs withheld because their Bank outflow counterpart is missing. */
   unmatchedFeeOperationIds: string[]
 }
@@ -325,7 +301,7 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
 }
 
 /**
- * Consolidate a raw feed into the ledger and the three statements. Split from
+ * Consolidate a raw feed into the canonical journal. Split from
  * {@link assembleWithAccountEvidence} so the accounting composable can derive
  * price-fetch days from the raw entries without running the mapper pipeline twice.
  */
@@ -336,20 +312,14 @@ function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounti
   const journal = buildJournal(entries, accountRegistry)
 
   return {
-    entries,
-    accountRegistry,
     journal,
-    summary: buildAccountingSummary(journal),
-    generalLedger: buildGeneralLedger(journal),
-    incomeStatement: buildIncomeStatement(journal),
-    balanceSheet: buildBalanceSheet(journal),
     unmatchedFeeOperationIds: reconciliation.unmatchedFeeOperationIds
   }
 }
 
 /**
  * Complete deployment-specific cash legs from verified transaction evidence
- * before building every canonical report projection.
+ * before building the canonical journal.
  */
 export function assembleWithAccountEvidence(
   rawEntries: readonly LedgerEntry[],

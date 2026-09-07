@@ -1,6 +1,6 @@
 import type { AccountClass, AccountName } from './chartOfAccounts'
 import type { Account } from './accountRegistry'
-import { buildGeneralLedger, type GeneralLedger } from './generalLedger'
+import { buildGeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
 import type { JournalEntry } from './journalEntry'
@@ -8,8 +8,13 @@ import { NETWORK, type TokenId } from '@/constant'
 import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
 import { usdAmountToNumber, type UsdAmount } from './monetaryAmount'
 
-// The summary metric cards live in their own module — see ./summaryCards.
-export { presentSummaryCards, type SummaryCard } from './summaryCards'
+// The summary display model lives in its own module — see ./summaryCards.
+export {
+  presentSummary,
+  type SummaryBanner,
+  type SummaryCard,
+  type SummaryView
+} from './summaryCards'
 
 export type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
@@ -53,12 +58,6 @@ export interface StatementLineView {
   value: string
   account?: Account | AccountName
   accounts?: AccountName[]
-}
-
-export interface SummaryBanner {
-  balanced: boolean
-  identity: string
-  trial: string
 }
 
 export interface TrialRow {
@@ -163,16 +162,6 @@ export function filterByPeriod<T extends { timestamp: number }>(
 }
 
 // ── Presenters ──────────────────────────────────────────────────────────────
-
-/** The "books are balanced" banner copy from the live statements. */
-export function presentBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBanner {
-  // `totalEquity` is the balancing residual, so the three figures foot exactly.
-  return {
-    balanced: balance.balanced && ledger.balanced,
-    identity: `${money(balance.totalAssets)} = ${money(balance.totalLiabilities)} + ${money(balance.totalEquity)}`,
-    trial: `Trial balance Dr ${money(ledger.debitBalanceTotal)} = Cr ${money(ledger.creditBalanceTotal)}`
-  }
-}
 
 /** Income-statement lines for a reporting period. */
 export function presentIncome(

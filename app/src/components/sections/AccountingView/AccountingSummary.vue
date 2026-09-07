@@ -73,21 +73,14 @@ import { computed } from 'vue'
 import ExportReportModal, { type ExportFormat } from './ExportReportModal.vue'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
-import { presentSummaryCards, presentBanner } from '@/utils/accounting/presenter'
+import { presentSummary } from '@/utils/accounting/presenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 
 const accounting = useAccountingContext()
 
-const summaryCards = computed(() =>
-  presentSummaryCards(
-    accounting.reports.value.summary,
-    accounting.reports.value.incomeStatement,
-    accounting.reports.value.balanceSheet
-  )
-)
-const banner = computed(() =>
-  presentBanner(accounting.reports.value.balanceSheet, accounting.reports.value.generalLedger)
-)
+const summary = computed(() => presentSummary(accounting.journal.value))
+const summaryCards = computed(() => summary.value.cards)
+const banner = computed(() => summary.value.banner)
 
 const LAST_ROW_SPAN: Record<number, string> = {
   1: 'lg:col-span-12',

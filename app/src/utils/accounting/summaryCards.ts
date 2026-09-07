@@ -1,6 +1,5 @@
 /**
- * The Accounting page's metric cards — the eight figures that head the summary,
- * derived from the live roll-up and the two statements.
+ * The Accounting summary view projected directly from the canonical journal.
  *
  * Split from {@link ./presenter} (which turns the statements into their line
  * views) the way {@link ./ledgerCategory} was split from the ledger presenter, so
@@ -8,9 +7,11 @@
  * everything here, so callers can keep importing from it.
  */
 import { formatUsd } from '@/utils/format'
-import type { AccountingSummary } from './accountingSummary'
-import type { BalanceSheet } from './balanceSheet'
-import type { IncomeStatement } from './incomeStatement'
+import { buildAccountingSummary, type AccountingSummary } from './accountingSummary'
+import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
+import { buildGeneralLedger, type GeneralLedger } from './generalLedger'
+import { buildIncomeStatement, type IncomeStatement } from './incomeStatement'
+import type { JournalEntry } from './journalEntry'
 import { ZERO_USD_AMOUNT, usdAmountToNumber, type UsdAmount } from './monetaryAmount'
 
 export interface SummaryCard {
@@ -23,6 +24,17 @@ export interface SummaryCard {
   accent: boolean
   accentClass?: string
   trend?: string
+}
+
+export interface SummaryBanner {
+  balanced: boolean
+  identity: string
+  trial: string
+}
+
+export interface SummaryView {
+  cards: SummaryCard[]
+  banner: SummaryBanner
 }
 
 /** The violet the ledger badges give the whole credit lifecycle. */
@@ -58,7 +70,7 @@ function displayUsd(amount: UsdAmount): string {
 }
 
 /** The summary metric cards from the live roll-up + statements. */
-export function presentSummaryCards(
+function summaryCards(
   summary: AccountingSummary,
   income: IncomeStatement,
   balance: BalanceSheet
@@ -133,4 +145,26 @@ export function presentSummaryCards(
         ]
       : [])
   ]
+}
+
+/** The balance checks displayed beside the Summary metrics. */
+function summaryBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBanner {
+  return {
+    balanced: balance.balanced && ledger.balanced,
+    identity: `${displayUsd(balance.totalAssets)} = ${displayUsd(balance.totalLiabilities)} + ${displayUsd(balance.totalEquity)}`,
+    trial: `Trial balance Dr ${displayUsd(ledger.debitBalanceTotal)} = Cr ${displayUsd(ledger.creditBalanceTotal)}`
+  }
+}
+
+/** Build the complete Summary display model from one canonical journal input. */
+export function presentSummary(entries: readonly JournalEntry[]): SummaryView {
+  const summary = buildAccountingSummary(entries)
+  const income = buildIncomeStatement(entries)
+  const balance = buildBalanceSheet(entries)
+  const ledger = buildGeneralLedger(entries)
+
+  return {
+    cards: summaryCards(summary, income, balance),
+    banner: summaryBanner(balance, ledger)
+  }
 }

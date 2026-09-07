@@ -227,7 +227,7 @@ flowchart LR
 - [x] A statement export applies the same period or as-of date as the reviewed statement.
 - [x] A Balance Sheet export preserves the displayed concrete account rows and includes the income and expense account contributions that
       explain `Earnings to date`.
-- [x] An export is generated from one snapshot of the current accounting books.
+- [x] An export is generated from one snapshot of the current `JournalEntry` collection.
 - [x] An export converts and rounds monetary values only after the exact journal snapshot and report totals have been calculated.
 - [x] The full-ledger export count follows the journal's operations, including memo-only operations, rather than the number of source events
       or debit and credit lines.
@@ -328,7 +328,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0d4f9272dd27da09d811d428a58fa7e53489807c`
+**Implementation evidence reviewed against:** `734459c047e2f00e530fa4089018397fcd3015f1`
 
 - [Classification view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue),
   [classification table](../../../app/src/components/sections/AccountingView/ClassificationTable.vue), and
@@ -358,6 +358,8 @@ flowchart LR
 - [Share-vesting event feed (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts) and
   [vesting source mapper](../../../app/src/utils/accounting/mappers/vesting.ts)
 - [Accounting export pipeline](../../../app/src/composables/accounting/useAccountingExport.ts),
+  [journal-only export snapshot](../../../app/src/utils/accounting/exportSpec.ts),
+  [Summary presenter](../../../app/src/utils/accounting/summaryCards.ts),
   [per-section export](../../../app/src/composables/accounting/useSectionExport.ts), and
   [transaction-evidence resolver](../../../app/src/composables/accounting/useTransactionEvidence.ts)
 - [Summary export count](../../../app/src/components/sections/AccountingView/AccountingSummary.vue) and

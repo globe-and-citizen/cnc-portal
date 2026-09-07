@@ -1,7 +1,8 @@
 # Accounting Read Model
 
-**Scope:** The client-side read model that turns company contract and portal feeds into consolidated accounting postings, a validated
-double-entry journal, and the report projections consumed by Accounting. It does not create or persist manual journal entries.
+**Scope:** The client-side read model that turns company contract and portal feeds into consolidated accounting postings and a validated
+double-entry journal. Accounting report projections consume that journal on demand. This model does not create or persist manual journal
+entries.
 
 **Last verified:** 2026-09-07
 
@@ -25,14 +26,16 @@ flowchart LR
     input --> mapped[Pure source mapping]
     mapped --> evidence[Transaction and receipt evidence]
     evidence --> assembly[Pure accounting assembly]
-    assembly --> books[CncAccounting books]
-    books --> cards[Accounting cards and drill-downs]
-    books --> exports[Accounting exports]
+    assembly --> journal[JournalEntry collection]
+    assembly --> diagnostics[Reconciliation diagnostics]
+    journal --> cards[Accounting cards and drill-downs]
+    journal --> exports[Accounting exports]
 ```
 
 `useCNCAccounting` owns I/O and reactive loading state. The shared context prevents the page's cards from independently fetching and
 assembling the same books. Its two pure runtime stages are `buildRawCncEntries(CncAccountingInput)` and
-`assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence)`, which returns `CncAccounting` without Vue or network I/O.
+`assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence)`, which returns the journal and reconciliation diagnostics without
+Vue or network I/O.
 
 ### Runtime Export Boundary
 
@@ -43,12 +46,11 @@ solely for test construction. The General Ledger, Trial Balance, Summary, Income
 validated `JournalEntry` collection. Account and statement drill-downs project the same collection: they select complete entries by a
 concrete `Account` or an account family and compute a running balance only from the selected account's own lines.
 
-The reactive view context exposes the journal and its report projections, not the transitional source-posting feed. The Summary export
-dialog reads the journal length directly, counting monetary and memo-only operations once. Export snapshots contain only journal records and
-report projections; they do not carry raw postings or presentation-specific fee aggregates. The table and exporters share `LedgerRow` from
-the journal presenter and import their column definitions directly from `ledgerColumns`. Statement presenters accept the canonical journal
-directly; for example, the Trial Balance card and both export formats call `presentTrial(journal, asOf)` instead of composing filtering,
-ledger construction, and presentation in the view.
+The reactive view context exposes the journal, not the transitional source-posting feed, account registry, or precomputed report objects.
+The Summary export dialog reads the journal length directly, counting monetary and memo-only operations once. Export snapshots contain only
+the journal. The table and exporters share `LedgerRow` from the journal presenter and import their column definitions directly from
+`ledgerColumns`. Each report surface calls one focused presenter with the canonical journal and its optional scope. For example, Summary
+calls `presentSummary(journal)`, while the Trial Balance card and both export formats call `presentTrial(journal, asOf)`.
 
 ## Main Assembly Flow
 
@@ -61,13 +63,18 @@ flowchart LR
     ledger --> entries[Consolidated source postings]
     entries --> registry[buildAccountRegistry]
     registry --> journal[buildJournal: exact fixed-scale JournalEntry collection]
-    journal --> trial[buildGeneralLedger: journal and Trial Balance]
-    journal --> generalLedgerUi[General Ledger UI and PDF or Excel exports]
-    journal --> statements[Summary, Income Statement, and Balance Sheet]
-    statements --> statementExports[Statement PDF or Excel exports]
+    journal --> ledgerPresenter[General Ledger presenter]
+    journal --> summaryPresenter[Summary presenter]
+    journal --> incomePresenter[Income Statement presenter]
+    journal --> balancePresenter[Balance Sheet presenter]
+    journal --> trialPresenter[Trial Balance presenter]
+    ledgerPresenter --> generalLedgerUi[General Ledger UI and exports]
+    summaryPresenter --> summaryUi[Summary UI and exports]
+    incomePresenter --> incomeUi[Income Statement UI and exports]
+    balancePresenter --> balanceUi[Balance Sheet UI and exports]
+    trialPresenter --> trialUi[Trial Balance UI and exports]
     journal --> drilldowns[Account and statement drill-downs]
     journal --> classification[Classification journal projection]
-    trial --> trialCard[Trial Balance and its scoped exports]
 ```
 
 `JournalEntry` is the canonical double-entry representation for every financial report and drill-down. `LedgerEntry` remains a transitional
@@ -202,6 +209,8 @@ it to an earlier or later deployment based on activity order.
   rounding.
 - General Ledger, Trial Balance, account running balances, Summary, Income Statement, and Balance Sheet aggregate `UsdAmount` integers. A
   non-zero base-unit movement is never discarded because its presentation value is below a display threshold.
+- The assembled Accounting result carries only the canonical journal and reconciliation diagnostics. UI and export consumers never receive
+  transitional postings, an account registry, or precomputed report projections beside the journal.
 - A direct external deposit into Bank or Safe with no matching SafeDepositRouter transaction credits `Service Revenue` regardless of the
   sender address. Deposits and company-pocket transfers retain their source-evidence accounts even when a legacy category exists.
 - A SafeDepositRouter operation that issues SHER owns the `Cash — Safe` and `Investor Equity` lines. Its Safe token transfer has the same
@@ -249,19 +258,21 @@ This is a current implementation boundary, not an accounting-policy distinction.
 `AccountId`, and currency at the journal-entry level, retaining all lines of every selected entry. The Summary and Income Statement
 aggregate the same journal lines by account family. The Balance Sheet reuses the Trial Balance's concrete rows, classifies permanent
 accounts into assets, liabilities, and equity, and retains the same account identity and label for every drill-down. Its separate earnings
-calculation shows each income and expense account's signed contribution before adding `Earnings to date` to total equity. Internal-transfer
-narration reads the source and destination display labels from the debit and credit `JournalEntryLine` accounts, so later deployments and
-unresolved accounts remain explicit rather than being inferred from family-level event text. Every transaction-backed journal group uses its
-transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains traceability evidence. A fee is an ordinary
-`Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or separate fee entry in this projection. The
-General Ledger renders the transaction hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports;
-synthetic operations have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate
-tab. Every visible General Ledger column, including the account drill-down Balance column, has bounded widths and supports pointer, touch,
-and keyboard resizing; a double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid`
-source without matching Bank-outflow evidence, returning it as a reconciliation gap. The global FeeCollector is not part of the company's
-internal-pocket registry. Account and statement drill-downs select complete JournalEntry records by a concrete Account or account family,
-then flatten their validated lines for display and exports. Their running balances update only on lines posted to the selected account; an
-aggregate statement line has no single running balance. A fee remains an ordinary line of the source operation in every drill-down.
+calculation shows each income and expense account's signed contribution before adding `Earnings to date` to total equity. Each UI card and
+export section supplies `JournalEntry[]` to one responsibility-specific presenter; derived reports are local values, not reactive state kept
+in parallel with the journal. Internal-transfer narration reads the source and destination display labels from the debit and credit
+`JournalEntryLine` accounts, so later deployments and unresolved accounts remain explicit rather than being inferred from family-level event
+text. Every transaction-backed journal group uses its transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains
+traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or
+separate fee entry in this projection. The General Ledger renders the transaction hash once on the entry's first line and preserves its full
+value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A transaction-backed hash links to the configured
+network block explorer in a separate tab. Every visible General Ledger column, including the account drill-down Balance column, has bounded
+widths and supports pointer, touch, and keyboard resizing; a double-click restores its default width. JournalEntry assembly groups source
+postings and withholds a `FeePaid` source without matching Bank-outflow evidence, returning it as a reconciliation gap. The global
+FeeCollector is not part of the company's internal-pocket registry. Account and statement drill-downs select complete JournalEntry records
+by a concrete Account or account family, then flatten their validated lines for display and exports. Their running balances update only on
+lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an ordinary line of the
+source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
@@ -288,7 +299,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 - The page-level context shares one `useCNCAccounting` result instead of fetching and assembling once per card.
 - Mapping and assembly are pure functions, which makes their cost and semantics independently testable.
-- The account registry and validated journal are built once from the consolidated feed and reused by the Trial Balance projection.
+- The account registry is built once inside assembly; each `JournalEntryLine` then carries its complete concrete `Account` downstream.
 - The export count does not build table rows. No view-level source regrouping, fee folding or separate pocket-numbering index runs beside
   the journal presenter. Mapper inputs do not accept an ignored global FeeCollector address.
 
@@ -313,7 +324,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0d4f9272dd27da09d811d428a58fa7e53489807c`
+**Implementation evidence reviewed against:** `734459c047e2f00e530fa4089018397fcd3015f1`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -328,6 +339,8 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [legacy source-target capture](../../../app/src/utils/accounting/classificationTarget.ts)
 - [Journal-only export snapshot](../../../app/src/utils/accounting/exportSpec.ts),
   [export orchestration](../../../app/src/composables/accounting/useAccountingExport.ts), and
+  [PDF report projection](../../../app/src/lib/accounting/pdf.ts),
+  [spreadsheet report projection](../../../app/src/lib/accounting/spreadsheet.ts), and
   [shared ledger columns](../../../app/src/utils/accounting/ledgerColumns.ts)
 - [Balance Sheet projection](../../../app/src/utils/accounting/balanceSheet.ts),
   [statement presenter](../../../app/src/utils/accounting/presenter.ts), and
@@ -343,6 +356,7 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
   [journal balance projection](../../../app/src/utils/accounting/journalBalances.ts),
   [journal summary projection](../../../app/src/utils/accounting/accountingSummary.ts),
+  [Summary presenter](../../../app/src/utils/accounting/summaryCards.ts),
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [General Ledger card](../../../app/src/components/sections/AccountingView/GeneralLedger.vue),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),

@@ -53,8 +53,8 @@ flowchart LR
   projection. Conversion to a JavaScript `number` belongs only to presentation and export boundaries.
 - Accounting journal assembly accepts only rate-stamped source postings and rejects monetary input without a rate instead of adapting a
   transitional JavaScript `number`.
-- Accounting statement presenters accept `JournalEntry` collections directly, so components and exporters do not compose lower-level
-  filtering and report builders to obtain display rows.
+- Every Accounting presenter accepts a `JournalEntry` collection directly, so components and exporters do not compose lower-level filtering
+  and report builders or synchronize parallel report objects to obtain display values.
 - Boundary validation fails with the exact files and imports that violate the contract; it does not silently maintain an exception baseline.
 - Utility specs remain colocated with their domain owner and validate unchanged formatting, accounting, and transaction semantics.
 
@@ -65,7 +65,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0d4f9272dd27da09d811d428a58fa7e53489807c`
+**Implementation evidence reviewed against:** `734459c047e2f00e530fa4089018397fcd3015f1`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Fixed-scale accounting monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts)
