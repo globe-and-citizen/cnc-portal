@@ -12,13 +12,6 @@
       "metric": "singleConsumerComposableNestedCalls",
       "allowed": 6,
       "reason": "Workflow orchestrator coordinating Officer deployment, registration, cache refresh, and migration recovery; tracked by #2531."
-    },
-    {
-      "path": "src/composables/vesting/useVestingSchedules.ts",
-      "subject": "useVestingSchedules",
-      "metric": "singleConsumerComposableNestedCalls",
-      "allowed": 4,
-      "reason": "Vesting read model shared by the screen's summaries, filters, details, and actions; tracked by #2531."
     }
   ]
 }
