@@ -12,7 +12,7 @@ These acceptance criteria follow the
 - Accounting presents one consolidated set of double-entry books for the company across its money-moving contracts and relevant portal
   records.
 - One team-scoped Accounting route owns the journal while members move between Summary, General Ledger, Trial Balance, Balance Sheet, Income
-  Statement, and Classification. Each report keeps its own filters and projects the shared journal on demand.
+  Statement, and Account Assignments. Each report keeps its own filters and projects the shared journal on demand.
 - The General Ledger, Trial Balance, summary, income statement, balance sheet, drill-downs, and their exports project the validated
   `JournalEntry` collection. A drill-down keeps every line of an entry that touches its selected concrete account or account family.
 - The Balance Sheet reuses the Trial Balance's concrete account rows and separates them into assets, liabilities, and equity. A redeployed
@@ -39,10 +39,11 @@ These acceptance criteria follow the
   `Service Revenue`, regardless of the sender address. A SafeDepositRouter operation that issues SHER owns the Cash — Safe and
   `Investor Equity` lines for its transaction hash; the matching Safe transfer is duplicate source evidence, not revenue. A movement between
   company pockets remains internal.
-- **Legacy manual classifications** apply only to eligible external Bank/Safe withdrawals. Direct deposits and movements between company
-  pockets retain the accounts determined by their source evidence; see catalogue §5.5. Classification shows complete journal entries with
-  the same concrete accounts, currencies, debits, credits, and fees as the General Ledger. An entry with several source movements remains
-  read-only, with its saved decisions visible, because the current editor can update only one source withdrawal.
+- **Manual account assignments** apply directly to the counter-account line of an eligible external Bank/Safe withdrawal. The transaction
+  hash is the assignment identity, and the selected value is a concrete chart-of-accounts family rather than an intermediate category.
+  Direct deposits and movements between company pockets retain the accounts determined by their source evidence. Account Assignments shows
+  the complete journal entry with the same accounts, currencies, debits, credits, and fees as the General Ledger. A compound entry remains
+  read-only because one selected counter-account cannot safely describe several source movements.
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
 - **Journal-entry assembly:** Accounting constructs a validated double-entry `JournalEntry` collection and preserves concrete accounts
   across redeployments. The source-operation model, canonical account terminology, report-projection boundary, and verified optimisation
@@ -65,7 +66,7 @@ flowchart LR
     Context --> Trial[Trial Balance projection]
     Context --> Statements[Summary and financial statements]
     Context --> Drilldowns[Account and statement drill-downs]
-    Context --> Classification[External withdrawal classification]
+    Context --> Assignments[External withdrawal account assignments]
     GeneralLedger --> GeneralLedgerExports[General Ledger exports]
     Trial --> TrialExports[Trial Balance exports]
     Statements --> StatementExports[Statement exports]
@@ -81,7 +82,7 @@ flowchart LR
 | US-ACCT-003 | Review the financial statements            | Company member | 🧪 Validation  |
 | US-ACCT-004 | Export accounting reports                  | Company member | 🧪 Validation  |
 | US-ACCT-005 | Preserve books across contract migrations  | Company member | 🚧 In Progress |
-| US-ACCT-006 | Classify an eligible external withdrawal   | Company owner  | 🚧 In Progress |
+| US-ACCT-006 | Assign an eligible withdrawal account      | Company owner  | 🧪 Validation  |
 
 ## US-ACCT-001: Review the Consolidated Accounting Summary
 
@@ -283,7 +284,7 @@ flowchart LR
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
-## US-ACCT-006: Classify an Eligible External Withdrawal
+## US-ACCT-006: Assign an Eligible Withdrawal Account
 
 **As a** company owner\
 **I want to** assign the economic account of an eligible external Bank or Safe withdrawal\
@@ -293,31 +294,32 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The company owner can classify a supported single-source external Bank or Safe withdrawal with a supported accounting category and an
-      optional memo.
-- [x] Classification shows every debit and credit line of each eligible journal entry, including protocol fees, with the same amounts and
-      concrete accounts as the General Ledger.
-- [x] Every direct external deposit, including one initiated by the company owner or a member, posts to Service Revenue (`UC-BANK-02`).
-- [x] A saved classification and its note remain visible in the accounting books after the underlying records are refreshed.
+- [x] The company owner can assign one supported chart-of-accounts family and an optional memo to a transaction-backed, single-source
+      external Bank or Safe withdrawal.
+- [x] Account Assignments shows every debit and credit line of each eligible journal entry, including protocol fees, with the same amounts
+      and concrete accounts as the General Ledger.
+- [x] A saved assignment replaces only the eligible withdrawal's inferred counter-account and remains visible after the books are refreshed.
+- [x] The company owner can remove an assignment to restore the account inferred from source evidence.
 
 #### Business Rules
 
-- [x] Saving or reverting a classification retains the source record's exact identifier even when its journal entry is grouped by
-      transaction hash.
-- [x] Direct deposits and company-pocket transfers retain their source-evidence accounts and cannot be reclassified by a legacy category.
-- [x] The classification action is available only for supported external Bank and Safe withdrawals; direct deposits, internal transfers,
-      standalone fees and system-owned payouts are excluded.
-- [x] An entry containing several source movements is shown once with all of its lines and saved decisions, without offering an edit that
-      would affect only part of the operation.
-- [ ] Only the company owner can create or change a classification.
-- [x] Company members can inspect eligible journal entries and saved decisions without classification editing controls.
+- [x] One assignment is uniquely keyed by company and lowercase transaction hash, which is also the transaction-backed `JournalEntry`
+      identity.
+- [x] Owners can select only Operating Expense, Owner Capital, Payroll Expense, Interest Expense, or Dividend Expense.
+- [x] An assignment changes neither the cash line nor a transaction-bound `Transaction Fee Expense` line, so the journal remains balanced.
+- [x] Direct deposits, internal transfers, standalone fees, and system-owned payouts retain their source-evidence accounts and cannot be
+      assigned manually.
+- [x] A compound journal entry is shown once with all of its lines but remains read-only rather than applying one account to part of the
+      operation.
+- [x] Only the company owner can create, replace, or remove an assignment; a company member can inspect the journal and saved decision only.
 
 #### Edge & Error Cases
 
-- [ ] An unknown transaction, invalid category, duplicate submission, or concurrent edit is rejected without changing the existing books.
-- [x] A failed save leaves the previous classification visible and explains that the change was not applied.
+- [x] A malformed transaction hash or unsupported account is rejected without changing the existing assignment.
+- [x] A persisted record is ignored unless it matches an eligible current journal entry and an allowed account.
+- [x] A failed save or removal leaves the previous journal visible and reports that the change was not applied.
 
-**Dependencies:** US-ACCT-002, a company-owned Bank or Safe withdrawal, and the classification API
+**Dependencies:** US-ACCT-002, a company-owned Bank or Safe withdrawal, and the journal account-assignment API
 
 ## Known Gaps
 
@@ -325,19 +327,15 @@ flowchart LR
 - Safe feeds and off-chain enrichment failures can omit entries without an incomplete-books warning (`US-ACCT-001`).
 - Historical Community Credit terms and SHER valuation inputs are read from current-generation contracts (`US-ACCT-005`).
 - Off-platform activity without a connected data source is absent from the automated books.
-- Legacy manual categories are still persisted for external withdrawals. They have not yet been replaced with account-backed
-  `JournalEntryLine` assignment.
-- Compound journal entries cannot be edited as a whole through the existing classification API. Their saved decisions remain visible while
-  account-backed assignment and persistence are pending.
 - JournalEntry assembly withholds a Bank fee log without matching Bank-outflow evidence and shows it as incomplete evidence until the source
   feed can be reconciled (`US-ACCT-002`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8767f7775f1d2d5c0b6bf31c4571909a4108e922`
+**Implementation evidence reviewed against:** `472758b7c5a4fcdb7fd4de7ceca2a4ca5a66dd27`
 
-- [Classification route view](../../../app/src/views/team/%5Bid%5D/Accounting/ClassificationView.vue) and
-  [ledger classification cell](../../../app/src/components/sections/AccountingView/LedgerClassificationCell.vue)
+- [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
+  [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
 - [Accounting page orchestration](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
   [nested Accounting routes](../../../app/src/router/index.ts),
@@ -345,20 +343,20 @@ flowchart LR
   [SafeDepositRouter event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts), and
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts)
 - [Pure internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
-- [Accounting backend feeds](../../../app/src/composables/accounting/useAccountingBackendFeeds.ts)
-- [Classification query](../../../app/src/queries/classification.queries.ts),
-  [classification types](../../../app/src/types/accounting-classification.ts), and
-  [classification assembly](../../../app/src/utils/accounting/classification.ts)
-- [Journal Classification projection](../../../app/src/utils/accounting/journalClassification.ts),
-  [legacy edit-target boundary](../../../app/src/utils/accounting/classificationTarget.ts),
-  [Classification journal tests](../../../app/src/utils/accounting/__tests__/journalClassification.spec.ts), and
-  [Classification owner interactions](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/ClassificationView.spec.ts)
-- [Classification controller](../../../backend/src/controllers/classificationController.ts),
-  [classification route](../../../backend/src/routes/classificationRoute.ts),
-  [classification validation](../../../backend/src/validation/schemas/classification.ts), and
+- [Journal account-assignment query](../../../app/src/queries/journalAccountAssignment.queries.ts),
+  [account-assignment types](../../../app/src/types/journal-account-assignment.ts),
+  [journal assignment boundary](../../../app/src/utils/accounting/journalAccountAssignment.ts), and
+  [assignment presenter](../../../app/src/utils/accounting/journalAccountAssignmentPresenter.ts)
+- [Journal assignment tests](../../../app/src/utils/accounting/__tests__/assemble.accountAssignment.spec.ts),
+  [assignment presenter tests](../../../app/src/utils/accounting/__tests__/journalAccountAssignmentPresenter.spec.ts), and
+  [owner and member interactions](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountAssignmentsView.spec.ts)
+- [Journal account-assignment controller](../../../backend/src/controllers/journalAccountAssignmentController.ts),
+  [account-assignment route](../../../backend/src/routes/journalAccountAssignmentRoute.ts),
+  [account-assignment validation](../../../backend/src/validation/schemas/journalAccountAssignment.ts), and
   [validation registry](../../../backend/src/validation/index.ts)
-- [Classification persistence schema](../../../backend/prisma/schema.prisma) and
-  [classification migrations](../../../backend/prisma/migrations/20260821000000_add_transaction_classification/)
+- [Account-assignment persistence schema](../../../backend/prisma/schema.prisma),
+  [classification-to-assignment migration](../../../backend/prisma/migrations/20260908000000_migrate_journal_account_assignments/), and
+  [assignment controller tests](../../../backend/src/controllers/__tests__/journalAccountAssignmentController.test.ts)
 - [Statement-line drill-down](../../../app/src/composables/accounting/useLedgerDrilldown.ts)
 - [Ledger Activity destination resolver](../../../app/src/composables/accounting/useActivityDestination.ts)
 - [Share-vesting event feed (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts) and
@@ -393,7 +391,7 @@ flowchart LR
   [statement presenter](../../../app/src/utils/accounting/presenter.ts)
 - [Balance Sheet route view](../../../app/src/views/team/%5Bid%5D/Accounting/BalanceSheetView.vue) and
   [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue)
-- [Current Bank classification inference](../../../app/src/utils/accounting/mappers/bank.ts) and
+- [Current Bank source inference](../../../app/src/utils/accounting/mappers/bank.ts) and
   [Bank mapper tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
 - [Accounting report tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts),
   [Balance Sheet table tests](../../../app/src/components/sections/AccountingView/__tests__/BalanceSheetTable.spec.ts),

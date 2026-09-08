@@ -37,9 +37,9 @@ const route = useRoute()
 // Resolve the team's books once for the complete Accounting route tree. Child
 // reports inject this result while their local filters and projections remount.
 const accounting = provideAccounting(() => (route.params.id as string) ?? null)
-const error = computed(() => accounting.error.value)
+const error = computed(() => accounting.status.error.value)
 
-const reconciliationGaps = computed(() => accounting.reconciliationGaps.value)
+const reconciliationGaps = computed(() => accounting.status.reconciliationGaps.value)
 const gapsDescription = computed(() => {
   const failedSources = [
     ...new Set(reconciliationGaps.value.filter((gap) => gap.address).map((gap) => gap.source))

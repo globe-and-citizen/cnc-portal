@@ -12,7 +12,8 @@ export function assembleAccounting(input: CncAccountingInput): CncAccounting {
   return assembleWithAccountEvidence(
     buildRawCncEntries(input),
     knownDeploymentAccounts(input.contracts),
-    new Map()
+    new Map(),
+    input.accountAssignments
   )
 }
 

@@ -30,6 +30,8 @@ interface AccountFamilyDefinition {
   readonly normalBalance: NormalBalance
   /** Whether each source contract deployment is a separate concrete account. */
   readonly deploymentScoped: boolean
+  /** Whether owners may select this family for an eligible external treasury outflow. */
+  readonly manualAssignment?: 'external-outflow'
 }
 
 /**
@@ -127,7 +129,8 @@ export const ACCOUNT_FAMILIES = [
     name: 'Owner Capital',
     accountClass: 'EQUITY',
     normalBalance: 'credit',
-    deploymentScoped: false
+    deploymentScoped: false,
+    manualAssignment: 'external-outflow'
   },
   {
     id: 'investor-equity',
@@ -162,28 +165,32 @@ export const ACCOUNT_FAMILIES = [
     name: 'Payroll Expense',
     accountClass: 'EXPENSE',
     normalBalance: 'debit',
-    deploymentScoped: false
+    deploymentScoped: false,
+    manualAssignment: 'external-outflow'
   },
   {
     id: 'operating-expense',
     name: 'Operating Expense',
     accountClass: 'EXPENSE',
     normalBalance: 'debit',
-    deploymentScoped: false
+    deploymentScoped: false,
+    manualAssignment: 'external-outflow'
   },
   {
     id: 'interest-expense',
     name: 'Interest Expense',
     accountClass: 'EXPENSE',
     normalBalance: 'debit',
-    deploymentScoped: false
+    deploymentScoped: false,
+    manualAssignment: 'external-outflow'
   },
   {
     id: 'dividend-expense',
     name: 'Dividend Expense',
     accountClass: 'EXPENSE',
     normalBalance: 'debit',
-    deploymentScoped: false
+    deploymentScoped: false,
+    manualAssignment: 'external-outflow'
   },
   {
     id: 'trading-loss',
@@ -214,9 +221,18 @@ const FAMILIES_BY_NAME: Readonly<Record<AccountName, AccountFamily>> = Object.fr
   ACCOUNT_FAMILIES.map((family) => [family.name, family])
 ) as Readonly<Record<AccountName, AccountFamily>>
 
+const FAMILIES_BY_ID = new Map<string, AccountFamily>(
+  ACCOUNT_FAMILIES.map((family) => [family.id, family])
+)
+
 /** Read a reusable account family by its legacy chart name. */
 export function accountFamilyOf(account: AccountName): AccountFamily {
   return FAMILIES_BY_NAME[account]
+}
+
+/** Read a reusable account family by its stable machine identity. */
+export function accountFamilyById(accountId: string): AccountFamily | undefined {
+  return FAMILIES_BY_ID.get(accountId)
 }
 
 /** The class of a given legacy chart name. */

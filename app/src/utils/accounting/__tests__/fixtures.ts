@@ -64,7 +64,6 @@ export function makeCtx(overrides: Partial<MapperContext> = {}): MapperContext {
     toUsd: (amount, token) => Number(formatUnits(amount, DECIMALS[token])) * RATE[token],
     tokenIdOf,
     pocketOf: (address) => (address ? (POCKETS[address.toLowerCase()] ?? null) : null),
-    classificationOf: () => undefined,
     ...overrides
   }
 }

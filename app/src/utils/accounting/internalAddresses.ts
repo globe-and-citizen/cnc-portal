@@ -7,7 +7,7 @@
  * expense. The global FeeCollector is deliberately excluded: a Bank fee is an
  * external company expense, not a move between company pockets.
  *
- * Journal assembly calls these pure helpers directly so the classification rule
+ * Journal assembly calls these pure helpers directly so the internal-movement rule
  * stays independent from Vue and can be tested without a reactive wrapper.
  */
 import { getAddress, isAddress, type Address } from 'viem'

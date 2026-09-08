@@ -1,10 +1,10 @@
 # Accounting Read Model
 
 **Scope:** The client-side read model that turns company contract and portal feeds into consolidated accounting postings and a validated
-double-entry journal. Accounting report projections consume that journal on demand. This model does not create or persist manual journal
-entries.
+double-entry journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on
+demand. This model does not create or persist manual journal entries.
 
-**Last verified:** 2026-09-07
+**Last verified:** 2026-09-08
 
 ## Consumers
 
@@ -23,8 +23,10 @@ flowchart LR
     page --> outlet[Nested report RouterView]
     dataLayer --> history[Officer and contract history]
     dataLayer --> feeds[On-chain, Safe, and portal feeds]
+    dataLayer --> assignments[Journal account assignment API]
     history --> input[CncAccountingInput]
     feeds --> input
+    assignments --> input
     input --> mapped[Pure source mapping]
     mapped --> evidence[Transaction and receipt evidence]
     evidence --> assembly[Pure accounting assembly]
@@ -37,11 +39,12 @@ flowchart LR
     context --> exports[Accounting exports]
 ```
 
-`useCNCAccounting` owns I/O and reactive loading state. The parent Accounting route remains mounted while its report child changes, so the
-shared context prevents those reports from independently fetching and assembling the same books. The team workspace gives that route owner a
-stable key within one team and a new key when the team identifier changes. Its two pure runtime stages are
-`buildRawCncEntries(CncAccountingInput)` and `assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence)`, which returns the
-journal and reconciliation diagnostics without Vue or network I/O.
+`useCNCAccounting` calls the on-chain, Safe, and portal queries directly and owns their reactive state. It exposes only the journal, a
+grouped status, and a refresh operation. The parent Accounting route remains mounted while its report child changes, so the shared context
+prevents those reports from independently fetching and assembling the same books. The team workspace gives that route owner a stable key
+within one team and a new key when the team identifier changes. Its two pure runtime stages are `buildRawCncEntries(CncAccountingInput)` and
+`assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
+diagnostics without Vue or network I/O.
 
 ### Runtime Export Boundary
 
@@ -75,9 +78,10 @@ produce the same domain postings; event names and fallback mechanisms do not cre
 | Safe Deposit Router | `mapSafeDepositRouterEvents` | Investment deposits that mint SHER                                   |
 
 The mapper barrel publishes only the ledger orchestrator and its grouped input type. Tests that exercise one domain import that domain
-module directly. Context construction, credit timelines, expense periods, classification application, and the shared internal-transfer
-posting are support modules rather than source mappers. SHER realization settlement runs after rate stamping and therefore lives at the
-Accounting assembly level, outside the mapper directory.
+module directly. Context construction, credit timelines, expense periods, and the shared internal-transfer posting are support modules
+rather than source mappers. Account assignments apply only after journal construction, so source mappers remain responsible for evidence
+inference rather than owner decisions. SHER realization settlement runs after rate stamping and therefore lives at the Accounting assembly
+level, outside the mapper directory.
 
 ## Main Assembly Flow
 
@@ -89,7 +93,10 @@ flowchart LR
     raw --> ledger[buildLedger: sort and deduplicate]
     ledger --> entries[Consolidated source postings]
     entries --> registry[buildAccountRegistry]
-    registry --> journal[buildJournal: exact fixed-scale JournalEntry collection]
+    registry --> inferredJournal[buildJournal: inferred exact JournalEntry collection]
+    assignments[Persisted account assignments] --> assignmentProjection[applyJournalAccountAssignments]
+    inferredJournal --> assignmentProjection
+    assignmentProjection --> journal[Validated assigned JournalEntry collection]
     journal --> ledgerPresenter[General Ledger presenter]
     journal --> summaryPresenter[Summary presenter]
     journal --> incomePresenter[Income Statement presenter]
@@ -101,7 +108,7 @@ flowchart LR
     balancePresenter --> balanceUi[Balance Sheet UI and exports]
     trialPresenter --> trialUi[Trial Balance UI and exports]
     journal --> drilldowns[Account and statement drill-downs]
-    journal --> classification[Classification journal projection]
+    journal --> assignmentView[Account Assignments projection]
 ```
 
 `JournalEntry` is the canonical double-entry representation for every financial report and drill-down. `LedgerEntry` remains a transitional
@@ -119,6 +126,7 @@ classDiagram
         +accountClass
         +normalBalance
         +deploymentScoped
+        +manualAssignment?
     }
     class Account {
         +id: AccountId
@@ -132,6 +140,7 @@ classDiagram
         +timestamp
         +description
         +lines
+        +accountAssignment?
     }
     class JournalEntryLine {
         +account: Account
@@ -157,6 +166,12 @@ classDiagram
         +balance
         +contribution
     }
+    class JournalAccountAssignment {
+        +teamId
+        +journalEntryId: txHash
+        +accountId
+        +memo?
+    }
 
     AccountFamily "1" <-- "1" Account : family
     Account "1" <-- "many" JournalEntryLine : account
@@ -164,11 +179,15 @@ classDiagram
     JournalEntryLine "1" o-- "0..1" JournalEntryLineMovement : movement
     Account "1" <-- "1" TrialBalanceRow : account
     Account "1" <-- "1" BalanceSheetAccountLine : account
+    AccountFamily "1" <-- "many" JournalAccountAssignment : selected by accountId
+    JournalEntry "1" <-- "0..1" JournalAccountAssignment : targets by txHash
 ```
 
-An `AccountFamily` is reusable chart metadata. An `Account` is the concrete accounting identity used by journal, Trial Balance, and Balance
-Sheet account lines. For deployment-scoped families, a source contract address distinguishes each deployment. `accountLabel` is presentation
-text derived after identity has been resolved; it is never an account key.
+An `AccountFamily` is reusable chart metadata, including whether it can be selected for an external-outflow assignment. An `Account` is the
+concrete accounting identity used by journal, Trial Balance, and Balance Sheet account lines. For deployment-scoped families, a source
+contract address distinguishes each deployment. `accountLabel` is presentation text derived after identity has been resolved; it is never an
+account key. A persisted `JournalAccountAssignment` selects an allowed account-family ID for one transaction-backed `JournalEntry`; it does
+not store or replace journal amounts.
 
 ## Canonical Nomenclature
 
@@ -183,6 +202,7 @@ text derived after identity has been resolved; it is never an account key.
 | `JournalEntry`             | Validated double-entry record for one source operation, with ordered monetary lines or an explicit memo-only entry. A transaction-backed entry uses its `txHash` for `id` and `sourceOperationId`; its source snapshot is narration-only.                              |
 | `JournalEntryLine`         | One debit or credit line carrying exactly one concrete `Account` and optional token movement evidence for its display projection.                                                                                                                                      |
 | `JournalEntryLineMovement` | Exact token evidence carried by a monetary line: token, `bigint` base units, token decimals, and the required fixed-scale rate of record used for valuation.                                                                                                           |
+| `JournalAccountAssignment` | One owner-selected counter-account family for a transaction-backed `JournalEntry`, uniquely identified by company and lowercase transaction hash. It contains no debit, credit, quantity, rate, or fee.                                                                |
 | `UsdAmount`                | USD value stored as a `bigint` with a shared 24-decimal scale throughout journal validation and report calculations.                                                                                                                                                   |
 | `UsdRate`                  | USD price of one whole token stored as a `bigint` with the source rate's six-decimal scale.                                                                                                                                                                            |
 | `TrialBalanceRow`          | Projection grouped by `AccountId`; the balance follows the family normal side.                                                                                                                                                                                         |
@@ -239,7 +259,13 @@ it to an earlier or later deployment based on activity order.
 - The assembled Accounting result carries only the canonical journal and reconciliation diagnostics. UI and export consumers never receive
   transitional postings, an account registry, or precomputed report projections beside the journal.
 - A direct external deposit into Bank or Safe with no matching SafeDepositRouter transaction credits `Service Revenue` regardless of the
-  sender address. Deposits and company-pocket transfers retain their source-evidence accounts even when a legacy category exists.
+  sender address. Deposits and company-pocket transfers retain their source-evidence accounts and are never manual assignment targets.
+- A persisted account assignment is keyed by company and lowercase transaction hash. It applies only to an editable transaction-backed
+  external Bank/Safe outflow and replaces exactly one non-cash, non-fee debit account.
+- Account assignment never changes a cash line, a transaction-bound `Transaction Fee Expense` line, a token movement, or a monetary value;
+  the resulting journal entry is validated again before report projection.
+- The assignable accounts come from canonical account-family metadata and are limited to Operating Expense, Owner Capital, Payroll Expense,
+  Interest Expense, and Dividend Expense.
 - A SafeDepositRouter operation that issues SHER owns the `Cash — Safe` and `Investor Equity` lines. Its Safe token transfer has the same
   transaction hash and is duplicate source evidence, so it cannot add `Service Revenue` or a second cash debit.
 - Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
@@ -293,41 +319,53 @@ in parallel with the journal. Internal-transfer narration reads the source and d
 `JournalEntryLine` accounts, so later deployments and unresolved accounts remain explicit rather than being inferred from family-level event
 text. Every transaction-backed journal group uses its transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains
 traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or
-separate fee entry in this projection. The General Ledger renders the transaction hash once on the entry's first line and preserves its full
-value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A transaction-backed hash links to the configured
-network block explorer in a separate tab. Every visible General Ledger column, including the account drill-down Balance column, has bounded
-widths and supports pointer, touch, and keyboard resizing; a double-click restores its default width. JournalEntry assembly groups source
-postings and withholds a `FeePaid` source without matching Bank-outflow evidence, returning it as a reconciliation gap. The global
-FeeCollector is not part of the company's internal-pocket registry. Account and statement drill-downs select complete JournalEntry records
-by a concrete Account or account family, then flatten their validated lines for display and exports. Their running balances update only on
-lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an ordinary line of the
-source operation in every drill-down.
+separate fee entry in this projection. Ledger action and transaction labels are derived from the entry's assigned or inferred accounts and
+source use-case evidence; no persisted presentation category participates. The General Ledger renders the transaction hash once on the
+entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A
+transaction-backed hash links to the configured network block explorer in a separate tab. Every visible General Ledger column, including the
+account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a double-click restores its
+default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching Bank-outflow evidence,
+returning it as a reconciliation gap. The global FeeCollector is not part of the company's internal-pocket registry. Account and statement
+drill-downs select complete JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and
+exports. Their running balances update only on lines posted to the selected account; an aggregate statement line has no single running
+balance. A fee remains an ordinary line of the source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
 running balances never parse the already-formatted debit or credit strings.
 
-## Classification Boundary
+## Account Assignment Boundary
 
-Classification selects complete journal entries containing an eligible external Bank/Safe withdrawal and reuses the General Ledger line
-presenter. Account labels are resolved against the full journal, so filtering to eligible withdrawals does not renumber historical Bank
-deployments. Amounts, currencies and concrete accounts come exclusively from journal lines.
+Account Assignments selects complete journal entries containing an eligible external Bank/Safe withdrawal and reuses the General Ledger line
+presentation. Account labels are resolved against the full journal, so filtering to eligible withdrawals does not renumber historical Bank
+deployments. Amounts, currencies, fees, and concrete accounts come exclusively from validated journal lines.
 
-During assembly, `legacyClassification` captures the exact source-record identifiers and applied owner decisions separately from monetary
-lines. These identifiers remain the mutation keys for the existing classification API; replacing one with the journal transaction hash would
-address a different persisted record. A source decision never supplies the displayed accounts or amounts.
+Source mapping first infers a complete balanced entry. Before journal projection, the grouped source records mark whether the entry contains
+exactly one supported external withdrawal. An entry with that one withdrawal and no other non-fee source movement is editable; a Bank fee
+may remain another line of the same entry. Multiple withdrawals and other compound operations remain complete but read-only. Deposits,
+company-pocket movements, standalone fees, and system-owned payouts do not receive assignment state.
 
-Only an operation with one supported external withdrawal, optionally accompanied by Bank fee postings, is editable. Multiple withdrawals, or
-a withdrawal combined with another kind of source movement, remain one read-only journal group with their decisions visible. Deposits,
-company-pocket movements, standalone fees and system-owned payouts are not legacy edit targets. Mutations continue to use the existing
-query-cache invalidation and owner API; replacing persisted categories with account-backed assignment remains incomplete.
+After `buildJournal`, `applyJournalAccountAssignments` matches persisted records by the lowercase transaction hash used as
+`JournalEntry.id`. A valid record replaces only the entry's single non-cash, non-fee debit account with the selected canonical account. It
+does not reconstruct the entry or map through a category. The utility ignores unmatched, ineligible, compound, and unsupported records and
+revalidates every changed entry with `createJournalEntry`.
+
+The team-scoped API stores one record per `(teamId, journalEntryId)`. Team members may read assignments; only the company owner may create,
+replace, or remove one, and archived companies reject mutations. The API accepts the canonical transaction-hash format, a memo of at most
+500 characters, and only the five account-family IDs exposed by the chart of accounts for external outflows.
+
+The database migration preserves every former category decision by renaming the old table to an audit-only table that Prisma and production
+runtime no longer map. For each company and transaction hash, the latest former expense, owner-capital, payroll-expense, interest-expense,
+or dividend-expense decision becomes an active account assignment. Former revenue and internal-transfer records remain audit evidence only
+because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Optimisation Review
 
 ### Existing Protections
 
 - The persistent Accounting route context shares one `useCNCAccounting` result across every report route for the same team. Report filters
-  and projections remain local; only the journal and its load, error, reconciliation, and refresh state are shared.
+  and projections remain local; the root exposes only `journal`, grouped `status`, and `refetch`. The backend queries are direct members of
+  that root rather than a second feed wrapper.
 - `types.ts` owns the cross-module Account, JournalEntry, exact-monetary, and financial-statement contracts through type-only imports.
   Responsibility-specific runtime utilities and their local mapper, export, composable, and presentation types remain colocated.
 - Mapping and assembly are pure functions, which makes their cost and semantics independently testable.
@@ -351,14 +389,11 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 - The transitional `LedgerEntry.amountUsd` remains a six-decimal `number` for source narration and mapper compatibility. Journal assembly
   always computes the report-authoritative amount from exact token base units and the required rate of record; reports never consume the
   transitional number.
-- Legacy manual categories remain only for eligible external disbursements; account-backed `JournalEntryLine` assignment has not yet
-  replaced that category surface. The legacy API cannot edit a compound journal entry as a whole, so Classification keeps those entries
-  read-only rather than selecting one source decision on the owner's behalf.
 - Optional Safe-service and enrichment failures can leave books incomplete without every omission being surfaced to the reviewer.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8767f7775f1d2d5c0b6bf31c4571909a4108e922`
+**Implementation evidence reviewed against:** `472758b7c5a4fcdb7fd4de7ceca2a4ca5a66dd27`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
@@ -377,8 +412,15 @@ query-cache invalidation and owner API; replacing persisted categories with acco
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts),
   [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
   [concrete-account journal balances](../../../app/src/utils/accounting/journalBalances.ts)
-- [Journal Classification projection](../../../app/src/utils/accounting/journalClassification.ts) and
-  [legacy source-target capture](../../../app/src/utils/accounting/classificationTarget.ts)
+- [Journal account-assignment projection](../../../app/src/utils/accounting/journalAccountAssignment.ts),
+  [assignment presenter](../../../app/src/utils/accounting/journalAccountAssignmentPresenter.ts),
+  [assignment query](../../../app/src/queries/journalAccountAssignment.queries.ts), and
+  [Account Assignments route](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue)
+- [Account-assignment controller](../../../backend/src/controllers/journalAccountAssignmentController.ts),
+  [route](../../../backend/src/routes/journalAccountAssignmentRoute.ts),
+  [validation](../../../backend/src/validation/schemas/journalAccountAssignment.ts),
+  [persistence model](../../../backend/prisma/schema.prisma), and
+  [audit-preserving migration](../../../backend/prisma/migrations/20260908000000_migrate_journal_account_assignments/)
 - [Journal-only export snapshot](../../../app/src/utils/accounting/exportSpec.ts),
   [export orchestration](../../../app/src/composables/accounting/useAccountingExport.ts), and
   [PDF report projection](../../../app/src/lib/accounting/pdf.ts),
@@ -410,6 +452,10 @@ query-cache invalidation and owner API; replacing persisted categories with acco
   [spreadsheet projection](../../../app/src/lib/accounting/generalLedgerSheet.ts), and
   [Trial Balance route view](../../../app/src/views/team/%5Bid%5D/Accounting/TrialBalanceView.vue)
 - [Assembly tests](../../../app/src/utils/accounting/__tests__/assemble.spec.ts),
+  [account-assignment assembly tests](../../../app/src/utils/accounting/__tests__/assemble.accountAssignment.spec.ts),
+  [account-assignment presentation tests](../../../app/src/utils/accounting/__tests__/journalAccountAssignmentPresenter.spec.ts),
+  [account-assignment owner and member tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountAssignmentsView.spec.ts),
+  [account-assignment API tests](../../../backend/src/controllers/__tests__/journalAccountAssignmentController.test.ts),
   [Accounting context tests](../../../app/src/composables/accounting/__tests__/useAccountingContext.spec.ts),
   [Accounting route-owner tests](../../../app/src/views/team/%5Bid%5D/__tests__/ShowIndex.spec.ts),
   [account-instance evidence tests](../../../app/src/utils/accounting/__tests__/accountInstances.spec.ts),

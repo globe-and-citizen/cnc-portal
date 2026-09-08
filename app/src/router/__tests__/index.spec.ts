@@ -116,8 +116,8 @@ vi.mock('@/views/team/[id]/Accounting/GeneralLedgerView.vue', () => ({
   default: { name: 'GeneralLedgerView', template: '<div>General Ledger</div>' }
 }))
 
-vi.mock('@/views/team/[id]/Accounting/ClassificationView.vue', () => ({
-  default: { name: 'ClassificationView', template: '<div>Classification</div>' }
+vi.mock('@/views/team/[id]/Accounting/AccountAssignmentsView.vue', () => ({
+  default: { name: 'AccountAssignmentsView', template: '<div>Account Assignments</div>' }
 }))
 
 import router from '@/router/index'
@@ -264,8 +264,8 @@ describe('Router Configuration', () => {
         { path: '/teams/123/accounting/trial', name: 'accounting-trial' },
         { path: '/teams/123/accounting/ledger', name: 'accounting-ledger' },
         {
-          path: '/teams/123/accounting/classification',
-          name: 'accounting-classification'
+          path: '/teams/123/accounting/account-assignments',
+          name: 'accounting-account-assignments'
         }
       ]
       for (const { path, name } of accountingRoutes) {

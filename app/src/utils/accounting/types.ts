@@ -9,7 +9,6 @@
 import type { Address } from 'viem'
 import type { TokenId } from '@/constant'
 import type { AccountFamily, AccountName } from './chartOfAccounts'
-import type { LegacyClassificationTarget } from './classificationTarget'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 
 /** USD amount scaled by the canonical Accounting amount precision. */
@@ -28,7 +27,7 @@ type AccountResolution = 'resolved' | 'unresolved'
 export interface Account {
   /** Stable key used by journal lines and report roll-ups. */
   id: AccountId
-  /** The shared family that supplies this account's classification and normal side. */
+  /** The shared family that supplies this account's class and normal side. */
   family: AccountFamily
   /** The authoritative contract identity for a deployment-specific account. */
   contractAddress?: Address
@@ -103,11 +102,14 @@ export interface JournalEntry {
   txHash?: string
   /** Contextual source snapshot used for narration and drill-down links. */
   source?: LedgerEntry
-  /** Transitional API keys and decisions; accounts and amounts always belong to lines. */
-  legacyClassification?: {
-    targets: LegacyClassificationTarget[]
-    /** One eligible source withdrawal, optionally accompanied by protocol-fee postings. */
+  /** Optional owner workflow for the entry's assignable counter-account line. */
+  accountAssignment?: {
+    /** False for compound operations, which remain visible but read-only. */
     editable: boolean
+    /** The selected account is already applied to the authoritative journal line. */
+    accountId?: AccountId
+    /** Optional owner note stored with the assignment. */
+    memo?: string
   }
   /** Ordered and validated journal lines; empty only when kind is `memo`. */
   lines: JournalEntryLine[]

@@ -32,12 +32,13 @@ cases.
 - [ ] **25.** (Optional) Open another offer that **misses its target** and **refund** the principal.
 - [ ] **26.** Ravi **sweeps Payroll → Bank and Expense → Bank** to reconcile.
 - [ ] **27.** Ravi **pays a dividend** to the shareholders of whatever is left.
-- [ ] **28.** Add a **memo** on one eligible external withdrawal.
-- [ ] **29.** On the **Classification** page (owner): classify Ravi's Bank withdrawal (step 15) as an **Expense** and confirm the income
-      statement and balance sheet update after a **refresh**. A direct deposit remains `Service Revenue` even when legacy classification
-      data exists. Confirm a company-pocket move (for example, Bank → Payroll, step 16) remains internal, and that a **non-owner** sees the
-      classifications read-only.
-- [ ] **30.** Open the **ledger**: search rows, filter by each category, toggle column visibility, paginate.
+- [ ] **28.** Add a **memo** to one eligible external withdrawal's account assignment.
+- [ ] **29.** On **Account Assignments** as owner, assign Ravi's Bank withdrawal (step 15) to **Owner Capital** and confirm the income
+      statement and balance sheet update after a **refresh**; then revert it and confirm the inferred Operating Expense returns. Verify that
+      the complete entry and any Bank fee remain unchanged apart from the selected counter-account. Confirm direct deposits and a
+      company-pocket move such as Bank → Payroll (step 16) are unavailable, a compound entry is read-only, and a non-owner sees assignments
+      without editing controls.
+- [ ] **30.** Open the **ledger**: search rows, filter by account and currency, toggle column visibility, resize columns, and paginate.
 - [ ] **31.** Open a **line drill-down** (loupe / Details) on an account.
 - [ ] **32.** **Export** the ledger / a statement.
 - [ ] **33.** Refresh and re-open the page on an **empty team**, and with a **failed / NFT** transfer present.

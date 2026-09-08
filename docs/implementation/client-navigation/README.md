@@ -2,7 +2,7 @@
 
 **Scope:** Shared client routing, authentication redirects, application-shell route rendering, and sidebar navigation for the portal.
 
-**Last verified:** 2026-09-07
+**Last verified:** 2026-09-08
 
 This capability owns the shared navigation boundary. Product goals, permissions, and acceptance criteria remain in the linked feature
 READMEs.
@@ -39,8 +39,8 @@ flowchart LR
 2. The guard redirects an unauthenticated visitor to Login and redirects an authenticated visitor away from Login to Companies.
 3. The application shell renders the named login view or, for an authenticated session, the team workspace and its default route view.
 4. The sidebar derives its entries, disabled state, active section, and active child from the current route plus the current team and user.
-5. Accounting report routes render below one persistent Accounting parent route. Moving between reports replaces only the nested report;
-   changing the team replaces the parent and its team-scoped journal.
+5. Accounting report and account-assignment routes render below one persistent Accounting parent route. Moving between children replaces
+   only the nested view; changing the team replaces the parent and its team-scoped journal.
 
 ## Invariants and Failure Behaviour
 
@@ -56,7 +56,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `84ed792ab66f9f09339c4cad3dce176998dbab33`
+**Implementation evidence reviewed against:** `722692bad36db94c22ce1918c03e59a1e0f2dd65`
 
 - [Team selection menu](../../../app/src/components/layout/TeamSelectMenu.vue)
 - [Router definition and authentication guard](../../../app/src/router/index.ts)

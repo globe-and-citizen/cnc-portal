@@ -11,7 +11,7 @@
  * own export regression suites.
  *
  * Fixtures cover the scenarios the ticket enumerates: ordinary transfers,
- * transfers with fees, standalone fees, classified cash movements, multi-line
+ * transfers with fees, standalone fees, cash movements, multi-line
  * transactions, date boundaries, and multi-currency reporting.
  */
 import { describe, it, expect } from 'vitest'
@@ -47,8 +47,8 @@ const standaloneFee: LedgerEntry = {
   enrichment: 'not-applicable'
 }
 
-// A client payment an owner manually classified as Service Revenue.
-const classifiedRevenue: LedgerEntry = {
+// A client payment booked to Service Revenue from source evidence.
+const serviceRevenue: LedgerEntry = {
   id: `${TX(2)}-0`,
   timestamp: day(2),
   useCase: 'CASH-IN',
@@ -59,7 +59,6 @@ const classifiedRevenue: LedgerEntry = {
   rawAmount: '100000000',
   rate: 1,
   internal: false,
-  classified: 'REVENUE',
   memo: 'Client payment',
   enrichment: 'not-applicable'
 }
@@ -129,7 +128,7 @@ const nativeTransfer: LedgerEntry = {
 /** The whole book, canonical feed (fee and its transfer are separate postings). */
 const book: LedgerEntry[] = [
   standaloneFee,
-  classifiedRevenue,
+  serviceRevenue,
   ordinaryTransfer,
   feeTransferOut,
   feeTransferFee,
@@ -139,7 +138,7 @@ const book: LedgerEntry[] = [
 describe('transaction-first read model — the general ledger shows complete transactions', () => {
   it('renders each selected transaction with all of its balanced lines', () => {
     const view = presentJournalLedger(buildJournal(book))
-    // Ordinary transfer → 2 lines, classified revenue → 2, native transfer → 2,
+    // Ordinary transfer → 2 lines, service revenue → 2, native transfer → 2,
     // fee transfer → 3; the orphan fee is withheld.
     expect(view.entryCount).toBe(4) // six source postings, one orphan withheld and one shared transaction
     expect(view.rows).toHaveLength(2 + 2 + 2 + 3)
@@ -147,8 +146,8 @@ describe('transaction-first read model — the general ledger shows complete tra
     expect(feeRows).toHaveLength(1) // only the fee attached to a Bank outflow
   })
 
-  it('keeps a classified cash movement whole, with both its legs', () => {
-    const view = presentJournalLedger(buildJournal([classifiedRevenue]))
+  it('keeps a cash movement whole, with both its legs', () => {
+    const view = presentJournalLedger(buildJournal([serviceRevenue]))
     expect(view.rows.map((r) => r.account)).toEqual(['Cash — Bank', 'Service Revenue'])
     expect(view.rows.map((r) => r.dr || r.cr)).toEqual(['$100.00', '$100.00'])
   })

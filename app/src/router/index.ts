@@ -169,10 +169,10 @@ const router = createRouter({
               component: () => import('@/views/team/[id]/Accounting/GeneralLedgerView.vue')
             },
             {
-              path: 'classification',
-              name: 'accounting-classification',
-              meta: { name: 'Classification' },
-              component: () => import('@/views/team/[id]/Accounting/ClassificationView.vue')
+              path: 'account-assignments',
+              name: 'accounting-account-assignments',
+              meta: { name: 'Account Assignments' },
+              component: () => import('@/views/team/[id]/Accounting/AccountAssignmentsView.vue')
             }
           ]
         },

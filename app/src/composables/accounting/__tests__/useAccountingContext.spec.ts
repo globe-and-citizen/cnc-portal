@@ -5,9 +5,11 @@ import { describe, expect, it, vi } from 'vitest'
 const { accounting, mockUseCNCAccounting } = vi.hoisted(() => {
   const accounting = {
     journal: { value: [] },
-    isLoading: { value: false },
-    error: { value: null },
-    reconciliationGaps: { value: [] },
+    status: {
+      isLoading: { value: false },
+      error: { value: null },
+      reconciliationGaps: { value: [] }
+    },
     refetch: vi.fn()
   }
   return {

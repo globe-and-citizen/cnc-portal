@@ -20,7 +20,7 @@ import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
-import type { TransactionClassificationRecord } from '@/types/accounting-classification'
+import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
 import type { ExpenseEventFeed } from '@/types/contract-events/expense'
@@ -31,7 +31,6 @@ import type {
 } from '@/types/contract-events/investor'
 import type { VestingEventFeed } from '@/types/contract-events/vesting'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
-import type { ClassificationOverride } from '@/utils/accounting/classification'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
@@ -43,6 +42,7 @@ import {
 } from '@/utils/accounting/accountInstances'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { buildJournal } from '@/utils/accounting/generalLedger'
+import { applyJournalAccountAssignments } from '@/utils/accounting/journalAccountAssignment'
 import { reconcileJournalEntrySources } from '@/utils/accounting/journalEntry'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { JournalEntry } from '@/utils/accounting/types'
@@ -87,8 +87,8 @@ export interface CncAccountingInput {
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
   weeklyClaims?: readonly WeeklyClaim[]
   expenses?: readonly ExpenseResponse[]
-  /** Manual Bank/Safe transaction classifications, overriding address inference (#2457). */
-  classifications?: readonly TransactionClassificationRecord[] | null
+  /** Owner-selected counter-accounts, keyed by transaction-backed JournalEntry. */
+  accountAssignments?: readonly JournalAccountAssignmentRecord[] | null
 }
 
 /** The canonical journal and reconciliation diagnostics resolved for a team's books. */
@@ -111,21 +111,6 @@ const phase1RateOfRecord: UsdRateOfRecord = () => 0
 /** Pull an event-feed field's `.items`, tolerating a missing/null result. */
 function items<T>(field: { items: T[] } | null | undefined): T[] {
   return field?.items ?? []
-}
-
-/**
- * Index the manual classifications by their transaction identity so the mapper
- * context can look one up per ledger entry. Keys are lowercased to match the entry
- * ids (`${txHash}-${logIndex}`), guarding against a mixed-case hash from the API.
- */
-function toClassificationMap(
-  records: readonly TransactionClassificationRecord[] | null | undefined
-): Map<string, ClassificationOverride> {
-  const map = new Map<string, ClassificationOverride>()
-  for (const record of records ?? []) {
-    map.set(record.txId.toLowerCase(), { category: record.category, memo: record.memo })
-  }
-  return map
 }
 
 /** Build the {@link LedgerSources} the mappers consume from the raw query results. */
@@ -268,8 +253,7 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     contracts: input.contracts,
     internalAddresses,
     sherTokenAddress: input.sherTokenAddress,
-    rateOfRecord,
-    classifications: toClassificationMap(input.classifications)
+    rateOfRecord
   })
 
   const rawEntries = buildCncLedgerEntries(toLedgerSources(input), ctx, {
@@ -305,11 +289,17 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
  * {@link assembleWithAccountEvidence} so the accounting composable can derive
  * price-fetch days from the raw entries without running the mapper pipeline twice.
  */
-function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
+function assembleFromRawEntries(
+  rawEntries: readonly LedgerEntry[],
+  accountAssignments?: readonly JournalAccountAssignmentRecord[] | null
+): CncAccounting {
   const reconciliation = reconcileJournalEntrySources(rawEntries)
   const { entries } = buildLedger(reconciliation.entries)
   const accountRegistry = buildAccountRegistry(entries)
-  const journal = buildJournal(entries, accountRegistry)
+  const journal = applyJournalAccountAssignments(
+    buildJournal(entries, accountRegistry),
+    accountAssignments
+  )
 
   return {
     journal,
@@ -324,7 +314,11 @@ function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounti
 export function assembleWithAccountEvidence(
   rawEntries: readonly LedgerEntry[],
   deploymentAccounts: ReadonlyMap<string, AccountName>,
-  evidence: TransactionAccountEvidence
+  evidence: TransactionAccountEvidence,
+  accountAssignments?: readonly JournalAccountAssignmentRecord[] | null
 ): CncAccounting {
-  return assembleFromRawEntries(resolveAccountInstances(rawEntries, deploymentAccounts, evidence))
+  return assembleFromRawEntries(
+    resolveAccountInstances(rawEntries, deploymentAccounts, evidence),
+    accountAssignments
+  )
 }

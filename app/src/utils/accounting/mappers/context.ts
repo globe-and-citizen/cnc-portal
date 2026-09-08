@@ -13,7 +13,6 @@ import { resolveTokenIdByAddress } from '@/utils/tokens/metadata'
 import { toUsd as toUsdUtil, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { cashAccountForContractType } from '@/utils/accounting/accountInstances'
-import type { ClassificationOverride } from '@/utils/accounting/classification'
 import type { TeamContract } from '@/types/teamContract'
 
 export interface MapperContext {
@@ -25,13 +24,6 @@ export interface MapperContext {
   tokenIdOf: (tokenAddress: string | null | undefined) => TokenId
   /** The Cash pocket account of a CNC-owned address, or `null` if external. */
   pocketOf: (address: string | null | undefined) => AccountName | null
-  /**
-   * The legacy manual classification a team owner attached to a transaction (keyed by
-   * the ledger entry id, i.e. `${txHash}-${logIndex}`), or `undefined` when none
-   * exists. Source mappers apply it only to eligible external outflows; deposits and
-   * company-pocket transfers are determined by their source evidence.
-   */
-  classificationOf: (id: string) => ClassificationOverride | undefined
 }
 
 /** Maps each CNC money-pocket contract type to its Cash account in the chart.
@@ -58,8 +50,6 @@ interface BuildMapperContextInput {
   sherTokenAddress?: Address | string | null
   /** FX resolver for non-pegged tokens (native, SHER) — see {@link toUsdUtil}. */
   rateOfRecord?: UsdRateOfRecord
-  /** Manual transaction classifications, keyed by ledger entry id (issue #2457). */
-  classifications?: ReadonlyMap<string, ClassificationOverride>
 }
 
 /**
@@ -88,16 +78,11 @@ export function buildMapperContext(input: BuildMapperContextInput): MapperContex
     return pocketIndex.get(getAddress(address)) ?? null
   }
 
-  const classifications = input.classifications
-  const classificationOf = (id: string): ClassificationOverride | undefined =>
-    classifications?.get(id)
-
   return {
     internalAddresses: input.internalAddresses,
     toUsd: (amount, token, at) => toUsdUtil(amount, token, at, input.rateOfRecord),
     tokenIdOf,
-    pocketOf,
-    classificationOf
+    pocketOf
   }
 }
 

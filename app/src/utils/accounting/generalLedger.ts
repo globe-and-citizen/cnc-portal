@@ -17,7 +17,7 @@
 import { ACCOUNT_NAMES, type AccountName } from './chartOfAccounts'
 import { buildAccountRegistry } from './accountRegistry'
 import { sourceOperationIdOf, transactionHashOf, type LedgerEntry } from './ledgerEntry'
-import { legacyClassificationTargetOf } from './classificationTarget'
+import { accountAssignmentStateForSources } from './journalAccountAssignment'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
 import { ZERO_USD_AMOUNT, usdAmountFromToken, usdRateFromNumber } from './monetaryAmount'
 import {
@@ -136,30 +136,22 @@ function journalEntryFromLedgerEntries(
   )
   const source = counterparties.size > 1 ? { ...primary, counterparty: undefined } : primary
   const txHash = ordered.find((entry) => entry.txHash)?.txHash ?? transactionHashOf(operationId)
-  const withdrawals = ordered.flatMap((entry) => {
-    const target = legacyClassificationTargetOf(entry)
-    return target ? [target] : []
-  })
   const nonFeeSources = ordered.filter((entry) => !isBankFeePosting(entry))
+  const accountAssignment = accountAssignmentStateForSources(ordered, operationId)
   return createJournalEntry({
     id: operationId,
     sourceOperationId: operationId,
     timestamp: ordered[0]!.timestamp,
     useCase: primary.useCase,
     memo: primary.memo,
-    internal: ordered.every((entry) => entry.internal),
+    // A protocol fee adds an expense line but does not turn a proven pocket-to-pocket
+    // transfer into an external movement.
+    internal: nonFeeSources.length > 0 && nonFeeSources.every((entry) => entry.internal),
     kind: monetary ? 'monetary' : 'memo',
     ...(primary.category ? { category: primary.category } : {}),
     ...(txHash ? { txHash } : {}),
     source,
-    ...(withdrawals.length
-      ? {
-          legacyClassification: {
-            targets: withdrawals,
-            editable: withdrawals.length === 1 && nonFeeSources.length === 1
-          }
-        }
-      : {}),
+    ...(accountAssignment ? { accountAssignment } : {}),
     lines: monetary ? mergedLines(lineEntries, accounts) : []
   })
 }
