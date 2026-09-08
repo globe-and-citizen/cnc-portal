@@ -312,33 +312,35 @@ flowchart TD
 > `SHERS To Be Issued`; a mint with **no accrual behind it** debits `SHERS To Be Issued` into a **contra (negative) balance** — a known edge
 > to reconcile (`Σ Minted` = on-chain supply, checked against the value in `Investor Equity`).
 
-### 5.5 Legacy manual classification of eligible Bank & Safe withdrawals
+### 5.5 Manual account assignment for eligible Bank & Safe withdrawals
 
-Direct deposits and company-pocket transfers are determined by source evidence (§5.1–§5.2), not a manual category. A direct external deposit
-is always `Dr Cash · Cr Service Revenue`; a transfer between CNC-owned pockets is always internal. A legacy category stored with either
-operation is ignored by journal assembly.
+Direct deposits and company-pocket transfers are determined by source evidence (§5.1–§5.2), not a manual decision. A direct external deposit
+is `Dr Cash · Cr Service Revenue` unless its transaction is owned by another mapped use case such as a SafeDepositRouter investment; a
+transfer between CNC-owned pockets is always internal. Neither operation is eligible for manual assignment.
 
-A company owner can still classify an eligible external Bank or Safe withdrawal. The classification is keyed to the transaction's stable
-on-chain identity (`${txHash}-${logIndex}`), persisted, and shared across the company. Native and ERC-20 withdrawals are covered
-identically.
+A company owner can assign the counter-account of an eligible external Bank or Safe withdrawal. The assignment is keyed by company and the
+transaction's lowercase hash, which is also the `JournalEntry` identity. Native and ERC-20 withdrawals are covered identically.
 
-A classification re-resolves the two balanced legs deterministically: the chosen counter-account is debited and the cash pocket is credited.
+The selected canonical account replaces only the source-inferred counter-account. The cash credit, movement evidence, amount, and any
+transaction-bound fee line remain unchanged, and the resulting entry is validated again.
 
-| Classification    | Withdrawal (cash out)          |
-| ----------------- | ------------------------------ |
-| **Expense**       | Dr Operating Expense · Cr Cash |
-| **Payroll**       | Dr Payroll Expense · Cr Cash   |
-| **Interest**      | Dr Interest Expense · Cr Cash  |
-| **Dividend**      | Dr Dividend Expense · Cr Cash  |
-| **Owner Capital** | Dr Owner Capital · Cr Cash     |
+| Assignable account    | Withdrawal (cash out)          |
+| --------------------- | ------------------------------ |
+| **Operating Expense** | Dr Operating Expense · Cr Cash |
+| **Payroll Expense**   | Dr Payroll Expense · Cr Cash   |
+| **Interest Expense**  | Dr Interest Expense · Cr Cash  |
+| **Dividend Expense**  | Dr Dividend Expense · Cr Cash  |
+| **Owner Capital**     | Dr Owner Capital · Cr Cash     |
 
-- **Evidence wins.** Direct deposits and company-pocket transfers cannot be reclassified. This keeps a treasury sweep from being misread as
-  revenue or a cost and prevents a persisted deposit category from replacing Service Revenue.
+- **Evidence wins.** Direct deposits and company-pocket transfers cannot receive an assignment. This keeps a treasury sweep from being
+  misread as revenue or a cost and prevents an owner decision from replacing a source-owned deposit account.
+- **One decision per journal entry.** A supported transaction with exactly one external withdrawal is editable. A compound entry is shown in
+  full but remains read-only, and a fee is never an independent assignment target.
 - **Not exposed for manual pick.** `Investor Equity` must track SHER shares, so only a mint can book it. The `Trading` lines remain owned by
   the deferred trading integration.
-- **Reversible.** Removing an eligible external-withdrawal classification restores its address-inferred fallback. Reclassifying updates the
-  General Ledger, Income Statement, and Balance Sheet consistently.
-- **Authorization.** Only the company owner may create, edit, or remove a classification; everyone else sees it read-only. The backend
+- **Reversible.** Removing an eligible external-withdrawal assignment restores its source-inferred fallback. Reassigning updates the General
+  Ledger, Income Statement, and Balance Sheet consistently.
+- **Authorization.** Only the company owner may create, replace, or remove an assignment; everyone else sees it read-only. The backend
   enforces this independently of the UI.
 
 ### 5.6 Share vesting — grant, release, stop
@@ -669,10 +671,10 @@ belong to different reporting layers; the fee is not an internal transfer within
 
 ### Coverage scorecard
 
-| Step                          | Coverage                                                                     |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| 1 — Contracts that move money | ✅ 6 used contracts (§2)                                                     |
-| 2 — Monetary interactions     | ✅ listed per contract (§3)                                                  |
-| 3 — Use cases + entries       | ✅ UC-BANK / SDR / CASH / EXP / INV / TRD + manual classification (§5, §5.5) |
-| 4 — Chart of accounts         | ✅ asset / liability / equity / income / expense (§4)                        |
-| 5 — Reconciliation            | ✅ full worked example, balanced at every level (§6–§7)                      |
+| Step                          | Coverage                                                                         |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| 1 — Contracts that move money | ✅ 6 used contracts (§2)                                                         |
+| 2 — Monetary interactions     | ✅ listed per contract (§3)                                                      |
+| 3 — Use cases + entries       | ✅ UC-BANK / SDR / CASH / EXP / INV / TRD + manual account assignment (§5, §5.5) |
+| 4 — Chart of accounts         | ✅ asset / liability / equity / income / expense (§4)                            |
+| 5 — Reconciliation            | ✅ full worked example, balanced at every level (§6–§7)                          |
