@@ -117,7 +117,7 @@ function mapTransfer(
         memo: `Fund ${destPocket} from Bank`
       })
     : // External outflow with no Phase-1 use case — provisionally an operating cost,
-      // flagged so an off-chain / manual review can reclassify it (spec §6).
+      // flagged so an owner can assign its counter-account after manual review.
       makeEntry({
         id: row.id,
         sourceOperationId: sourceOperationIdOf(row.id),

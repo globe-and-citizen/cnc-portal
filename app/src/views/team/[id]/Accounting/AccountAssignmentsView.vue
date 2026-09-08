@@ -32,7 +32,7 @@
       class="text-muted py-10 text-center text-sm"
       data-test="assignment-empty"
     >
-      No eligible external Bank or Safe withdrawals to classify yet.
+      No eligible external Bank or Safe withdrawals to assign yet.
     </div>
 
     <UTable v-else :data="view.rows" :columns="columns" data-test="account-assignment-table">
