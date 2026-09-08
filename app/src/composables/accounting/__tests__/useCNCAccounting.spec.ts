@@ -56,8 +56,8 @@ describe('useCNCAccounting', () => {
 
   it('surfaces the team query loading / error state', () => {
     const { status } = useCNCAccounting('1')
-    expect(status.value.isLoading).toBe(false)
-    expect(status.value.error).toBeNull()
+    expect(status.isLoading.value).toBe(false)
+    expect(status.error.value).toBeNull()
   })
 
   it('refetches every underlying query without throwing', async () => {

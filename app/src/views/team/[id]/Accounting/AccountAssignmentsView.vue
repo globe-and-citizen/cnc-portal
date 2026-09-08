@@ -21,7 +21,7 @@
     </template>
 
     <div
-      v-if="accounting.status.value.isLoading"
+      v-if="accounting.status.isLoading.value"
       class="text-muted py-10 text-center text-sm"
       data-test="assignment-loading"
     >

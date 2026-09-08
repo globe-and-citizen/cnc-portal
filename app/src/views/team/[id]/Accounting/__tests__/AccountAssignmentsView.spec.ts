@@ -26,11 +26,11 @@ vi.mock('@/composables/accounting/useAccountingContext', async () => {
   return {
     useAccountingContext: () => ({
       journal: state.journal,
-      status: computed(() => ({
-        isLoading: state.loading.value,
-        error: null,
-        reconciliationGaps: []
-      }))
+      status: {
+        isLoading: state.loading,
+        error: computed(() => null),
+        reconciliationGaps: computed(() => [])
+      }
     })
   }
 })

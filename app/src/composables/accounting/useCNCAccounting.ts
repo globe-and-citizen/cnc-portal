@@ -69,18 +69,18 @@ export interface UseCNCAccountingReturn {
   /** Validated journal assembled from the consolidated postings. */
   journal: ComputedRef<CncAccounting['journal']>
   /** Loading, fatal-error, and reconciliation metadata for the journal. */
-  status: ComputedRef<AccountingStatus>
+  status: AccountingStatus
   /** Re-run every underlying query. */
   refetch: () => Promise<unknown>
 }
 
 export interface AccountingStatus {
   /** True while any required feed is still loading. */
-  isLoading: boolean
+  isLoading: ComputedRef<boolean>
   /** The team query error (the only fatal one); optional feeds degrade silently. */
-  error: unknown
+  error: ComputedRef<unknown>
   /** Contract generations whose on-chain scan failed — a partial-history warning. */
-  reconciliationGaps: ReconciliationGap[]
+  reconciliationGaps: ComputedRef<ReconciliationGap[]>
 }
 
 /** One contract generation that could not be loaded, for the UI gap warning. */
@@ -336,8 +336,8 @@ export function useCNCAccounting(
   // The team query is the only fatal one — without contracts there are no books.
   // Loading reflects the team + on-chain + enrichment feeds; the Safe service is
   // optional, so it is excluded to keep a slow/flaky transfer feed from blocking.
-  const status = computed<AccountingStatus>(() => ({
-    isLoading:
+  const isLoading = computed(
+    () =>
       team.isLoading.value ||
       officers.isPending.value ||
       bank.loading.value ||
@@ -349,10 +349,13 @@ export function useCNCAccounting(
       router.loading.value ||
       transactionEvidence.isLoading.value ||
       weeklyClaims.isLoading.value ||
-      expenses.isLoading.value,
-    error: team.error.value,
-    reconciliationGaps: reconciliationGaps.value
-  }))
+      expenses.isLoading.value
+  )
+  const status: AccountingStatus = {
+    isLoading,
+    error: computed(() => team.error.value),
+    reconciliationGaps
+  }
 
   const refetch = (): Promise<unknown> =>
     Promise.allSettled(
