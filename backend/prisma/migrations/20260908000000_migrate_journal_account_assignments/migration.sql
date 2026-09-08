@@ -27,12 +27,13 @@ CREATE TABLE "JournalAccountAssignment" (
 -- JournalEntry identity is the lowercase transaction hash, not an individual log.
 -- If legacy rows somehow contain several decisions for the same transaction, the
 -- latest decision becomes active and every original row remains in the audit table.
+-- Revenue and internal-transfer categories are not promoted because deposits and
+-- internal movements are not manually assignable in the JournalEntry workflow.
 WITH ranked_legacy_decisions AS (
   SELECT
     "teamId",
     lower(split_part("txId", '-', 1)) AS "journalEntryId",
     CASE "category"
-      WHEN 'REVENUE' THEN 'service-revenue'
       WHEN 'EXPENSE' THEN 'operating-expense'
       WHEN 'OWNER_CAPITAL' THEN 'owner-capital'
       WHEN 'PAYROLL_EXPENSE' THEN 'payroll-expense'
@@ -48,7 +49,13 @@ WITH ranked_legacy_decisions AS (
       ORDER BY "updatedAt" DESC, "id" DESC
     ) AS decision_rank
   FROM "LegacyTransactionClassificationAudit"
-  WHERE "category" <> 'INTERNAL_TRANSFER'
+  WHERE "category" IN (
+    'EXPENSE',
+    'OWNER_CAPITAL',
+    'PAYROLL_EXPENSE',
+    'INTEREST_EXPENSE',
+    'DIVIDEND_EXPENSE'
+  )
 )
 INSERT INTO "JournalAccountAssignment" (
   "teamId",
