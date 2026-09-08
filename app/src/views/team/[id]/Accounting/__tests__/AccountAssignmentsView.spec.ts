@@ -20,10 +20,19 @@ const state = vi.hoisted(() => ({
 }))
 
 vi.mock('@/composables/accounting/useAccountingContext', async () => {
-  const { ref } = await vi.importActual<typeof import('vue')>('vue')
+  const { computed, ref } = await vi.importActual<typeof import('vue')>('vue')
   state.journal = ref([])
   state.loading = ref(false)
-  return { useAccountingContext: () => ({ journal: state.journal, isLoading: state.loading }) }
+  return {
+    useAccountingContext: () => ({
+      journal: state.journal,
+      status: computed(() => ({
+        isLoading: state.loading.value,
+        error: null,
+        reconciliationGaps: []
+      }))
+    })
+  }
 })
 
 vi.mock('@/queries/journalAccountAssignment.queries', async () => {

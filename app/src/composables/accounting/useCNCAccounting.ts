@@ -10,7 +10,8 @@
  *     composables (no indexer dependency).
  *   - **Safe** — the team Safe's incoming native / ERC-20 transfers (spec §3.1).
  *   - **Backend DB** — the team's contracts, signed weekly claims and approved
- *     expenses, the off-chain accrual + category context (spec §3.2).
+ *     expenses, the off-chain accrual and journal account-assignment context
+ *     (spec §3.2).
  *
  * The raw feeds are mapped into a pure posting feed, completed with transaction
  * receipt account evidence, then consolidated into the canonical journal.
@@ -35,13 +36,15 @@ import { useVestingEventsViaLogs } from '@/composables/vesting/useVestingEventsV
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
+import { useGetExpensesQuery } from '@/queries/expense.queries'
+import { useGetJournalAccountAssignmentsQuery } from '@/queries/journalAccountAssignment.queries'
 import {
   useGetSafeIncomingTransfersQuery,
   useGetSafeOutgoingTransactionsQuery
 } from '@/queries/safe.queries'
+import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransactionEvidence } from './useTransactionEvidence'
-import { useAccountingBackendFeeds } from './useAccountingBackendFeeds'
 import {
   assembleWithAccountEvidence,
   buildRawCncEntries,
@@ -65,18 +68,23 @@ interface UseCNCAccountingOptions {
 export interface UseCNCAccountingReturn {
   /** Validated journal assembled from the consolidated postings. */
   journal: ComputedRef<CncAccounting['journal']>
-  /** True while any required feed is still loading. */
-  isLoading: ComputedRef<boolean>
-  /** The team query error (the only fatal one); optional feeds degrade silently. */
-  error: ComputedRef<unknown>
-  /** Contract generations whose on-chain scan failed — a partial-history warning. */
-  reconciliationGaps: ComputedRef<ReconciliationGap[]>
+  /** Loading, fatal-error, and reconciliation metadata for the journal. */
+  status: ComputedRef<AccountingStatus>
   /** Re-run every underlying query. */
   refetch: () => Promise<unknown>
 }
 
+export interface AccountingStatus {
+  /** True while any required feed is still loading. */
+  isLoading: boolean
+  /** The team query error (the only fatal one); optional feeds degrade silently. */
+  error: unknown
+  /** Contract generations whose on-chain scan failed — a partial-history warning. */
+  reconciliationGaps: ReconciliationGap[]
+}
+
 /** One contract generation that could not be loaded, for the UI gap warning. */
-interface ReconciliationGap {
+export interface ReconciliationGap {
   /** The source whose evidence is incomplete (e.g. 'Bank'). */
   source: string
   /** The failed generation's contract address, when a source scan failed. */
@@ -234,7 +242,9 @@ export function useCNCAccounting(
   )
 
   // ── Backend DB: off-chain enrichment and JournalEntry account assignments ──
-  const { weeklyClaims, expenses, accountAssignments } = useAccountingBackendFeeds(teamId)
+  const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
+  const expenses = useGetExpensesQuery({ queryParams: { teamId } })
+  const accountAssignments = useGetJournalAccountAssignmentsQuery({ queryParams: { teamId } })
 
   // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
   const safeTransfers = useGetSafeIncomingTransfersQuery({
@@ -326,8 +336,8 @@ export function useCNCAccounting(
   // The team query is the only fatal one — without contracts there are no books.
   // Loading reflects the team + on-chain + enrichment feeds; the Safe service is
   // optional, so it is excluded to keep a slow/flaky transfer feed from blocking.
-  const isLoading = computed(
-    () =>
+  const status = computed<AccountingStatus>(() => ({
+    isLoading:
       team.isLoading.value ||
       officers.isPending.value ||
       bank.loading.value ||
@@ -339,10 +349,10 @@ export function useCNCAccounting(
       router.loading.value ||
       transactionEvidence.isLoading.value ||
       weeklyClaims.isLoading.value ||
-      expenses.isLoading.value
-  )
-
-  const error = computed(() => team.error.value)
+      expenses.isLoading.value,
+    error: team.error.value,
+    reconciliationGaps: reconciliationGaps.value
+  }))
 
   const refetch = (): Promise<unknown> =>
     Promise.allSettled(
@@ -369,9 +379,7 @@ export function useCNCAccounting(
 
   return {
     journal: computed(() => accounting.value.journal),
-    isLoading,
-    error,
-    reconciliationGaps,
+    status,
     refetch
   }
 }
