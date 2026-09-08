@@ -39,11 +39,12 @@ flowchart LR
     context --> exports[Accounting exports]
 ```
 
-`useCNCAccounting` owns I/O and reactive loading state. The parent Accounting route remains mounted while its report child changes, so the
-shared context prevents those reports from independently fetching and assembling the same books. The team workspace gives that route owner a
-stable key within one team and a new key when the team identifier changes. Its two pure runtime stages are
-`buildRawCncEntries(CncAccountingInput)` and `assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence, accountAssignments)`,
-which returns the journal and reconciliation diagnostics without Vue or network I/O.
+`useCNCAccounting` calls the on-chain, Safe, and portal queries directly and owns their reactive state. It exposes only the journal, a
+grouped status, and a refresh operation. The parent Accounting route remains mounted while its report child changes, so the shared context
+prevents those reports from independently fetching and assembling the same books. The team workspace gives that route owner a stable key
+within one team and a new key when the team identifier changes. Its two pure runtime stages are `buildRawCncEntries(CncAccountingInput)` and
+`assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
+diagnostics without Vue or network I/O.
 
 ### Runtime Export Boundary
 
@@ -363,7 +364,8 @@ because deposits and company-pocket transfers are not manual assignment targets.
 ### Existing Protections
 
 - The persistent Accounting route context shares one `useCNCAccounting` result across every report route for the same team. Report filters
-  and projections remain local; only the journal and its load, error, reconciliation, and refresh state are shared.
+  and projections remain local; the root exposes only `journal`, grouped `status`, and `refetch`. The backend queries are direct members of
+  that root rather than a second feed wrapper.
 - `types.ts` owns the cross-module Account, JournalEntry, exact-monetary, and financial-statement contracts through type-only imports.
   Responsibility-specific runtime utilities and their local mapper, export, composable, and presentation types remain colocated.
 - Mapping and assembly are pure functions, which makes their cost and semantics independently testable.
@@ -391,7 +393,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `722692bad36db94c22ce1918c03e59a1e0f2dd65`
+**Implementation evidence reviewed against:** `70af4c4b445d7dda149a16a9f3ca014fb0fe7128`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)

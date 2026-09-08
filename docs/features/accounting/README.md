@@ -332,7 +332,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `722692bad36db94c22ce1918c03e59a1e0f2dd65`
+**Implementation evidence reviewed against:** `70af4c4b445d7dda149a16a9f3ca014fb0fe7128`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
@@ -343,7 +343,6 @@ flowchart LR
   [SafeDepositRouter event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts), and
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts)
 - [Pure internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
-- [Accounting backend feeds](../../../app/src/composables/accounting/useAccountingBackendFeeds.ts)
 - [Journal account-assignment query](../../../app/src/queries/journalAccountAssignment.queries.ts),
   [account-assignment types](../../../app/src/types/journal-account-assignment.ts),
   [journal assignment boundary](../../../app/src/utils/accounting/journalAccountAssignment.ts), and
