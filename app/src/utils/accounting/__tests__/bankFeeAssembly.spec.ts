@@ -66,7 +66,7 @@ describe('Bank fee journal assembly', () => {
     expect(accounting.journal).toHaveLength(1)
     expect(accounting.journal[0]).toMatchObject({
       id: operationId,
-      internal: false,
+      internal: true,
       lines: [
         { account: { family: { name: 'Cash — Safe' } }, debit: usd(100) },
         { account: { family: { name: 'Transaction Fee Expense' } }, debit: usd(1) },
