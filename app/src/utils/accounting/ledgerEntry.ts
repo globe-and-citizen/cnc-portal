@@ -14,7 +14,6 @@
 import { getAddress, isAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
 import type { AccountName } from './chartOfAccounts'
-import type { ClassificationCategory } from './classification'
 
 /** The transaction-hash head of an indexed event id (`<txHash>-<logIndex>`). */
 const EVENT_ID_TRANSACTION_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
@@ -201,13 +200,6 @@ export interface LedgerEntry {
    * pocket balance, so historical entries stay accurate.
    */
   expenseRemainingUsd?: number
-  /**
-   * The manual category a team owner classified the source transaction as
-   * (issue #2457), overriding the address inference. Absent means the entry is
-   * address-inferred — the visible fallback the UI flags as such. Set only on
-   * Bank/Safe deposit/withdrawal entries whose transaction has a classification.
-   */
-  classified?: ClassificationCategory
   /** Off-chain enrichment status. */
   enrichment: EnrichmentStatus
 }

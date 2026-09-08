@@ -9,7 +9,7 @@
  * render time via `resolveUser`, so this layer stays pure and unit-testable.
  *
  * Entries with no human actor and no pocket-to-pocket move (memo mints,
- * unclassified cash) fall back to the generic per-use-case {@link entryLabel}.
+ * unassigned cash) fall back to the generic per-use-case {@link entryLabel}.
  */
 import { money, formatUnixDate } from './presenter'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
@@ -50,7 +50,7 @@ export function entryLabel(entry: LedgerEntry): string {
  * The structured "Activity" cell the ledger table renders:
  * - `actor`    — one party's address; show its avatar + the predicate text.
  * - `transfer` — a pocket-to-pocket move; show `from → to` contract avatars.
- * - `plain`    — no actor (memo / unclassified); just the text.
+ * - `plain`    — no actor (memo / unassigned); just the text.
  */
 export type ActivityCell =
   | { kind: 'actor'; actor: string; text: string }

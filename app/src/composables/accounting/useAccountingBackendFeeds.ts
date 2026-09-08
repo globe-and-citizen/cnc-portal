@@ -8,12 +8,12 @@
 import type { MaybeRefOrGetter } from 'vue'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
-import { useGetClassificationsQuery } from '@/queries/classification.queries'
+import { useGetJournalAccountAssignmentsQuery } from '@/queries/journalAccountAssignment.queries'
 
 export function useAccountingBackendFeeds(teamId: MaybeRefOrGetter<string | null>) {
   const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
   const expenses = useGetExpensesQuery({ queryParams: { teamId } })
-  const classifications = useGetClassificationsQuery({ queryParams: { teamId } })
+  const accountAssignments = useGetJournalAccountAssignmentsQuery({ queryParams: { teamId } })
 
-  return { weeklyClaims, expenses, classifications }
+  return { weeklyClaims, expenses, accountAssignments }
 }

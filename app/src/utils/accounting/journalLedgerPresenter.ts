@@ -30,8 +30,7 @@ export interface LedgerRow {
   /** The section the Activity links to ({@link ./activityDestination}); absent on
    *  a continuation row, and on a posting with no portal surface of its own. */
   destination?: ActivityDestination | null
-  /** The "Action" badge text — {@link categoryLabelOf} (a plain category, or a
-   *  spelled-out payroll phase); empty on a posting's continuation rows. */
+  /** Account-derived Action badge text; empty on continuation rows. */
   category: string
   categoryClass: string
   account: string
@@ -256,8 +255,8 @@ export function journalLedgerRows(
         ...(isFirst && entry.txHash ? { txHash: entry.txHash } : {}),
         activity: isFirst ? activityOfJournalEntry(source, entry, labels) : NO_ACTIVITY,
         ...(isFirst ? { destination: activityDestinationOf(source) } : {}),
-        category: isFirst ? categoryLabelOf(source) : '',
-        categoryClass: isFirst ? badgeClassOf(source) : '',
+        category: isFirst ? categoryLabelOf(entry) : '',
+        categoryClass: isFirst ? badgeClassOf(entry) : '',
         account: line.account.family.name,
         accountId: line.account.id,
         ...(accountLabel !== line.account.family.name ? { accountLabel } : {}),

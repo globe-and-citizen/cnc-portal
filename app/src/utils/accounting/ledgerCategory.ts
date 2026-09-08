@@ -1,6 +1,5 @@
-/** Action badge labels and colors derived from source narration metadata. */
-import type { LedgerEntry, UseCase } from './ledgerEntry'
-import type { ClassificationCategory } from './classification'
+/** Action labels and colours derived from the accounts on a complete JournalEntry. */
+import type { JournalEntry } from './types'
 
 type LedgerCategory =
   | 'Investment'
@@ -13,123 +12,69 @@ type LedgerCategory =
   | 'Dividend'
   | 'Memo'
 
-/**
- * Soft badge classes per ledger category — one distinct theme colour each, so
- * the "Action" column reads at a glance (static strings so Tailwind keeps them).
- * Colours come from the project palette (see `assets/main.css`).
- */
 const CATEGORY_BADGE: Record<LedgerCategory, string> = {
-  Investment: 'bg-secondary/10 text-secondary', // capital in — blue
-  Credit: 'bg-accent/10 text-accent', // borrowed money — teal
-  Revenue: 'bg-success/10 text-success', // income earned — green
-  Trading: 'bg-info/10 text-info', // market activity — cyan
-  Transfer: 'bg-neutral/10 text-neutral', // internal move — neutral
-  Payroll: 'bg-warning/10 text-warning', // wage accrued / owed — amber
-  Expense: 'bg-error/10 text-error', // cost out — red
-  Dividend: 'bg-primary/10 text-primary', // profit distribution — green
-  Memo: 'bg-muted text-dimmed' // share-count note — grey
+  Investment: 'bg-secondary/10 text-secondary',
+  Credit: 'bg-accent/10 text-accent',
+  Revenue: 'bg-success/10 text-success',
+  Trading: 'bg-info/10 text-info',
+  Transfer: 'bg-neutral/10 text-neutral',
+  Payroll: 'bg-warning/10 text-warning',
+  Expense: 'bg-error/10 text-error',
+  Dividend: 'bg-primary/10 text-primary',
+  Memo: 'bg-muted text-dimmed'
 }
 
-/**
- * The label shown on the "Action" badge (and carried into the ledger exports).
- * Usually the plain {@link categoryOf} name, but the two payroll phases spell out
- * which one it is — `"Payroll: Claim"` for a wage submitted / accrued
- * (`UC-CASH-02`) and `"Payroll: Withdraw"` for one actually paid out
- * (`UC-CASH-03`) — so the journal reads clearly instead of a bare "Payroll" for
- * both. The filter pills and badge colour still key off {@link categoryOf}, so the
- * "Payroll" filter keeps gathering both phases.
- */
-export function categoryLabelOf(entry: LedgerEntry): string {
+const CREDIT_ACCOUNTS = new Set([
+  'cash-credit',
+  'loan-payable',
+  'interest-payable',
+  'interest-expense'
+])
+const INVESTMENT_ACCOUNTS = new Set([
+  'owner-capital',
+  'investor-equity',
+  'deferred-sher-compensation',
+  'shers-to-be-issued'
+])
+const TRADING_ACCOUNTS = new Set(['trading-account', 'trading-gain', 'trading-loss'])
+
+/** Derive the reporting/action family from journal-line accounts, never a category field. */
+export function categoryOf(entry: JournalEntry): LedgerCategory {
+  if (entry.kind === 'memo') {
+    return entry.useCase === 'DEFAULT-D' || entry.useCase.startsWith('UC-VEST-')
+      ? 'Investment'
+      : 'Memo'
+  }
+  if (entry.internal) return 'Transfer'
+
+  const accounts = new Set(entry.lines.map((line) => line.account.family.id))
+  const classes = new Set(entry.lines.map((line) => line.account.family.accountClass))
+  if ([...accounts].some((account) => TRADING_ACCOUNTS.has(account))) return 'Trading'
+  if (accounts.has('dividend-expense')) return 'Dividend'
+  if (accounts.has('payroll-expense') || accounts.has('wage-payable')) return 'Payroll'
+  if ([...accounts].some((account) => CREDIT_ACCOUNTS.has(account))) return 'Credit'
+  if ([...accounts].some((account) => INVESTMENT_ACCOUNTS.has(account))) return 'Investment'
+  if (classes.has('INCOME')) return 'Revenue'
+  if (classes.has('EXPENSE')) return 'Expense'
+  return 'Transfer'
+}
+
+/** Spell out payroll lifecycle phases while retaining their account-derived family. */
+export function categoryLabelOf(entry: JournalEntry): string {
   if (entry.useCase === 'UC-CASH-02') return 'Payroll: Claim'
   if (entry.useCase === 'UC-CASH-03') return 'Payroll: Withdraw'
   return categoryOf(entry)
 }
 
-/**
- * The badge a manual classification maps to. A classified Bank/Safe movement collapses
- * to the generic `CASH-IN` / `CASH-OUT` use case, which alone would read as a bare
- * "Revenue" / "Expense" — so loan interest, a payroll run or a dividend would all be
- * mislabelled. This restores each classification to the pill that matches its nature
- * (interest under Credit, a capital contribution under Investment, and so on).
- */
-const CLASSIFIED_CATEGORY: Record<ClassificationCategory, LedgerCategory> = {
-  REVENUE: 'Revenue',
-  EXPENSE: 'Expense',
-  OWNER_CAPITAL: 'Investment',
-  INTERNAL_TRANSFER: 'Transfer',
-  PAYROLL_EXPENSE: 'Payroll',
-  INTEREST_EXPENSE: 'Credit',
-  DIVIDEND_EXPENSE: 'Dividend'
-}
-
-/** The display category a ledger entry falls under, from its use case. */
-export function categoryOf(entry: LedgerEntry): LedgerCategory {
-  // A manual classification wins: the badge follows the owner's deliberate call rather
-  // than the CASH-IN / CASH-OUT use case that classified entries all collapse to.
-  if (entry.classified) return CLASSIFIED_CATEGORY[entry.classified]
-
-  const byUseCase: Partial<Record<UseCase, LedgerCategory>> = {
-    'UC-SDR-01': 'Investment',
-    'UC-CREDIT-01': 'Credit',
-    'UC-CREDIT-03': 'Credit',
-    'UC-CREDIT-04': 'Credit',
-    'UC-CREDIT-05': 'Credit',
-    'UC-BANK-02': 'Revenue',
-    'CASH-IN': 'Revenue',
-    'UC-CASH-02': 'Payroll',
-    'UC-CASH-03': 'Payroll',
-    'UC-EXP-01': 'Expense',
-    'CASH-OUT': 'Expense',
-    'UC-INV-01': 'Dividend',
-    'DEFAULT-D': 'Investment',
-    'UC-VEST-01': 'Investment',
-    'UC-VEST-02': 'Investment',
-    'UC-VEST-03': 'Investment',
-    FEE: 'Expense',
-    INTERNAL: 'Transfer',
-    'UC-BANK-03': 'Transfer',
-    // The funded-offer sweep is Credit → Bank: an internal move, not a credit event.
-    'UC-CREDIT-02': 'Transfer'
-  }
-  return byUseCase[entry.useCase] ?? 'Transfer'
-}
-
-/**
- * Credit is the one category whose entries move money in **opposite directions** —
- * a loan comes in, a repayment goes out — so each phase of the borrowing lifecycle
- * gets its own badge colour instead of all three sharing the category teal. The
- * "Credit" filter pill still gathers them all; only the colour differs, and the
- * "Transaction" column already spells the phase out in words, so nothing is
- * conveyed by colour alone.
- *
- * (`UC-CREDIT-02`, the funded-offer sweep to Bank, is a Transfer — not here.)
- */
-const CREDIT_BADGE: Partial<Record<UseCase, string>> = {
-  // Money borrowed in, liability created — the category's teal.
-  'UC-CREDIT-01': 'bg-accent/10 text-accent',
-  // Debt settled, cash out (principal and fixed return alike) — violet, so a
-  // repayment can never be mistaken for a fresh loan on a busy journal page.
+const CREDIT_BADGE: Partial<Record<JournalEntry['useCase'], string>> = {
   'UC-CREDIT-03': 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  // The fixed return owed to the lenders but not yet paid: the same violet as the
-  // repayment it anticipates, outlined instead of filled because no cash moved.
   'UC-CREDIT-05':
     'text-violet-600 ring-1 ring-violet-500/40 dark:text-violet-400 dark:ring-violet-400/40',
-  // The offer missed its target and the deposit went straight back — slate, an
-  // unwind rather than a real borrowing event.
   'UC-CREDIT-04': 'bg-slate-500/15 text-slate-600 dark:text-slate-300'
 }
 
-/**
- * Badge classes for a ledger entry's "Action" pill. Normally one colour per
- * category, but two categories split by lifecycle phase: the payroll use cases,
- * so the journal shows at a glance whether a wage was merely **accrued**
- * (submitted, still owed — amber) or **settled** (withdrawn, actually paid out),
- * and the credit ones (see {@link CREDIT_BADGE}).
- */
-export function badgeClassOf(entry: LedgerEntry): string {
-  // A settled wage (UC-CASH-03 — withdrawn / actually paid out) reads as cyan,
-  // distinct from a wage merely accrued (UC-CASH-02 — submitted, still owed),
-  // which keeps the category's amber. Every other entry takes its category colour.
+/** Badge style for an account-derived JournalEntry category. */
+export function badgeClassOf(entry: JournalEntry): string {
   if (entry.useCase === 'UC-CASH-03') return 'bg-accent/10 text-accent'
   return CREDIT_BADGE[entry.useCase] ?? CATEGORY_BADGE[categoryOf(entry)]
 }

@@ -183,8 +183,9 @@ describe('presentJournalLedger', () => {
   })
 
   it('categorizes the Bank protocol fee as an Expense (not a neutral Transfer)', () => {
+    const tx = `0x${'f'.repeat(64)}`
     const fee: LedgerEntry = {
-      id: 'fee-1',
+      id: `${tx}-2`,
       timestamp: 100,
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
@@ -196,7 +197,15 @@ describe('presentJournalLedger', () => {
       memo: 'Transaction fee skimmed from Bank',
       enrichment: 'not-applicable'
     }
-    expect(categoryOf(fee)).toBe('Expense')
+    const outflow: LedgerEntry = {
+      ...fee,
+      id: `${tx}-1`,
+      useCase: 'CASH-OUT',
+      debit: 'Operating Expense',
+      amountUsd: 5,
+      rawAmount: '5000000'
+    }
+    expect(categoryOf(buildJournal([outflow, fee])[0]!)).toBe('Expense')
     const ledger = presentJournalLedger(buildJournal([fee]))
     expect(ledger.entryCount).toBe(0)
     expect(ledger.rows).toEqual([])

@@ -5,37 +5,37 @@
         <span class="bg-muted text-muted flex size-7 items-center justify-center rounded-lg">
           <UIcon name="i-heroicons-tag" class="size-4.5" />
         </span>
-        <span class="text-[15px] font-semibold">Transaction classification</span>
+        <span class="text-[15px] font-semibold">Journal account assignments</span>
         <UBadge
           color="primary"
           variant="subtle"
           :label="`${view.entryCount} journal ${view.entryCount === 1 ? 'entry' : 'entries'}`"
-          data-test="classify-count"
+          data-test="assignment-count"
         />
       </div>
       <p class="text-muted mt-2 text-sm">
         Review the journal lines for external Bank and Safe withdrawals, including any fees.
-        <span v-if="isOwner">You can classify individual withdrawals.</span>
-        <span v-else>Only the company owner can change a classification.</span>
+        <span v-if="isOwner">You can assign the counter-account of an individual withdrawal.</span>
+        <span v-else>Only the company owner can change an account assignment.</span>
       </p>
     </template>
 
     <div
       v-if="accounting.isLoading.value"
       class="text-muted py-10 text-center text-sm"
-      data-test="classify-loading"
+      data-test="assignment-loading"
     >
       Loading journal entries…
     </div>
     <div
       v-else-if="!view.entryCount"
       class="text-muted py-10 text-center text-sm"
-      data-test="classify-empty"
+      data-test="assignment-empty"
     >
       No eligible external Bank or Safe withdrawals to classify yet.
     </div>
 
-    <UTable v-else :data="view.rows" :columns="columns" data-test="classification-table">
+    <UTable v-else :data="view.rows" :columns="columns" data-test="account-assignment-table">
       <template #date-cell="{ row: { original: row } }">
         <span class="text-muted text-sm whitespace-nowrap tabular-nums">{{ row.date }}</span>
       </template>
@@ -53,7 +53,7 @@
           target="_blank"
           rel="noopener noreferrer"
           class="text-muted hover:text-primary font-mono text-xs underline decoration-dotted underline-offset-4"
-          data-test="classify-tx-hash"
+          data-test="assignment-tx-hash"
         >
           {{ formatTxHash(row.txHash) }}
         </a>
@@ -63,7 +63,7 @@
       </template>
 
       <template #account-cell="{ row: { original: row } }">
-        <span class="text-sm" :title="row.accountInstance" data-test="classify-account">
+        <span class="text-sm" :title="row.accountInstance" data-test="assignment-account">
           {{ row.accountLabel ?? row.account }}
         </span>
       </template>
@@ -74,34 +74,32 @@
 
       <template #dr-header><span class="block text-right">Debit (USD)</span></template>
       <template #dr-cell="{ row: { original: row } }">
-        <span class="block text-right text-sm tabular-nums" data-test="classify-debit">{{
+        <span class="block text-right text-sm tabular-nums" data-test="assignment-debit">{{
           row.dr
         }}</span>
       </template>
 
       <template #cr-header><span class="block text-right">Credit (USD)</span></template>
       <template #cr-cell="{ row: { original: row } }">
-        <span class="block text-right text-sm tabular-nums" data-test="classify-credit">{{
+        <span class="block text-right text-sm tabular-nums" data-test="assignment-credit">{{
           row.cr
         }}</span>
       </template>
 
-      <template #classification-cell="{ row: { original: row } }">
+      <template #assignment-cell="{ row: { original: row } }">
         <template v-if="row.isFirst">
-          <LedgerClassificationCell
+          <LedgerAccountAssignmentCell
             v-if="isOwner && row.target"
-            :key="row.target.sourceEntryId"
+            :key="row.target.journalEntryId"
             :target="row.target"
             :team-id="teamId"
           />
           <div v-else class="text-muted flex flex-col gap-1 text-xs">
-            <span v-if="row.reviewRequired" data-test="classify-readonly">
-              This journal entry combines movements and cannot be classified as one withdrawal.
+            <span v-if="row.reviewRequired" data-test="assignment-readonly">
+              This journal entry combines movements and cannot receive one account assignment.
             </span>
-            <span v-for="(decision, index) in row.savedDecisions" :key="index">
-              {{ decision }}
-            </span>
-            <span v-if="!row.savedDecisions.length">Inferred from source evidence</span>
+            <span v-if="row.savedDecision">{{ row.savedDecision }}</span>
+            <span v-else>Inferred from source evidence</span>
           </div>
         </template>
       </template>
@@ -113,16 +111,16 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import type { TableColumn } from '@nuxt/ui'
-import LedgerClassificationCell from '@/components/sections/AccountingView/LedgerClassificationCell.vue'
+import LedgerAccountAssignmentCell from '@/components/sections/AccountingView/LedgerAccountAssignmentCell.vue'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { useUserDataStore } from '@/stores/user'
 import { NETWORK } from '@/constant'
 import { formatTxHash } from '@/utils/format'
 import {
-  presentJournalClassification,
-  type JournalClassificationRow
-} from '@/utils/accounting/journalClassification'
+  presentJournalAccountAssignments,
+  type JournalAccountAssignmentRow
+} from '@/utils/accounting/journalAccountAssignmentPresenter'
 
 const accounting = useAccountingContext()
 const route = useRoute()
@@ -135,9 +133,9 @@ const isOwner = computed(() => {
   return !!owner && !!me && owner.toLowerCase() === me.toLowerCase()
 })
 
-const view = computed(() => presentJournalClassification(accounting.journal.value))
+const view = computed(() => presentJournalAccountAssignments(accounting.journal.value))
 
-const columns: TableColumn<JournalClassificationRow>[] = [
+const columns: TableColumn<JournalAccountAssignmentRow>[] = [
   { accessorKey: 'date', header: 'Date' },
   { id: 'transaction', header: 'Transaction' },
   { id: 'txHash', header: 'Tx hash' },
@@ -145,6 +143,6 @@ const columns: TableColumn<JournalClassificationRow>[] = [
   { id: 'currency', header: 'Currency' },
   { id: 'dr', header: 'Debit (USD)' },
   { id: 'cr', header: 'Credit (USD)' },
-  { id: 'classification', header: 'Classification' }
+  { id: 'assignment', header: 'Account assignment' }
 ]
 </script>

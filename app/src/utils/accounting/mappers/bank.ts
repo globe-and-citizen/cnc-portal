@@ -7,7 +7,7 @@
  *   - from anyone external     → **UC-BANK-02** (Dr Cash — Bank · Cr Service Revenue)
  * - `Transfer` / `TokenTransfer` (cash out):
  *   - to an internal pocket → **UC-BANK-03** funding move (Dr that pocket · Cr Cash — Bank)
- *   - to anyone else        → unclassified outflow, flagged `needs-off-chain-data`
+ *   - to anyone else        → unassigned outflow, flagged `needs-off-chain-data`
  *
  * - `FeePaid` → another posting of the same source operation
  *   (Dr Transaction Fee Expense · Cr Cash — Bank).
@@ -25,7 +25,6 @@ import type {
 import { makeEntry, sourceOperationIdOf, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import { atDate, type MapperContext } from './context'
-import { applyClassification } from './applyClassification'
 
 export interface BankMapperInput {
   deposits?: readonly BankDepositRow[]
@@ -132,11 +131,11 @@ function mapTransfer(
         rawAmount: row.amount,
         counterparty: row.to,
         internal: isInternalAddress(row.to, ctx.internalAddresses),
-        memo: 'Unclassified Bank outflow to external address',
+        memo: 'Unassigned Bank outflow to external address',
         enrichment: 'needs-off-chain-data'
       })
 
-  return inferred.internal ? inferred : applyClassification(inferred, 'out', BANK, ctx)
+  return inferred
 }
 
 /** Map a protocol fee as another posting of its Bank transaction. */

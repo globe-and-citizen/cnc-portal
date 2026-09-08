@@ -233,8 +233,8 @@ export function useCNCAccounting(
     }))
   )
 
-  // ── Backend DB: the off-chain enrichment feeds (claims, expenses, classifications) ──
-  const { weeklyClaims, expenses, classifications } = useAccountingBackendFeeds(teamId)
+  // ── Backend DB: off-chain enrichment and JournalEntry account assignments ──
+  const { weeklyClaims, expenses, accountAssignments } = useAccountingBackendFeeds(teamId)
 
   // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
   const safeTransfers = useGetSafeIncomingTransfersQuery({
@@ -273,7 +273,7 @@ export function useCNCAccounting(
     safeOutgoingTransactions: safeOutgoing.data.value,
     weeklyClaims: weeklyClaims.data.value?.data,
     expenses: expenses.data.value,
-    classifications: classifications.data.value
+    accountAssignments: accountAssignments.data.value
   }))
 
   // Native (POL/ETH) is valued at the **current** live price (currency store /
@@ -293,7 +293,8 @@ export function useCNCAccounting(
     assembleWithAccountEvidence(
       rawEntries.value,
       deploymentAccounts.value,
-      transactionEvidence.accountEvidence.value
+      transactionEvidence.accountEvidence.value,
+      baseInput.value.accountAssignments
     )
   )
 
@@ -359,7 +360,7 @@ export function useCNCAccounting(
         routerMultiplier,
         weeklyClaims,
         expenses,
-        classifications,
+        accountAssignments,
         safeTransfers,
         safeOutgoing,
         transactionEvidence

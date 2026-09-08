@@ -146,12 +146,9 @@ export function createJournalEntry(entry: JournalEntry): JournalEntry {
   const validated: JournalEntry = {
     ...entry,
     ...(entry.source ? { source: { ...entry.source } } : {}),
-    ...(entry.legacyClassification
+    ...(entry.accountAssignment
       ? {
-          legacyClassification: {
-            ...entry.legacyClassification,
-            targets: entry.legacyClassification.targets.map((target) => ({ ...target }))
-          }
+          accountAssignment: { ...entry.accountAssignment }
         }
       : {}),
     lines: entry.lines.map(
