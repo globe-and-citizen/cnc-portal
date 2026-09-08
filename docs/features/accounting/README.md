@@ -332,7 +332,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `70af4c4b445d7dda149a16a9f3ca014fb0fe7128`
+**Implementation evidence reviewed against:** `472758b7c5a4fcdb7fd4de7ceca2a4ca5a66dd27`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
