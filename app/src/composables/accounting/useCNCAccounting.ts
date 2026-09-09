@@ -55,8 +55,8 @@ import { knownDeploymentAccounts } from '@/utils/accounting/accountInstances'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 
-/** How many of each event type to pull per contract (newest first). */
-const EVENT_LIMIT = 500
+/** Safe Transaction Service page size; every page is loaded before assembly. */
+const SAFE_PAGE_SIZE = 500
 
 interface UseCNCAccountingOptions {
   /** FX resolver for native / SHER (defaults to the Phase-1 zero-rate gap). */
@@ -249,11 +249,11 @@ export function useCNCAccounting(
   // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
   const safeTransfers = useGetSafeIncomingTransfersQuery({
     pathParams: { safeAddress },
-    queryParams: { limit: EVENT_LIMIT }
+    queryParams: { limit: SAFE_PAGE_SIZE }
   })
   const safeOutgoing = useGetSafeOutgoingTransactionsQuery({
     pathParams: { safeAddress },
-    queryParams: { limit: EVENT_LIMIT }
+    queryParams: { limit: SAFE_PAGE_SIZE }
   })
 
   // Live-price fallback: the caller's resolver, else the app's live prices from

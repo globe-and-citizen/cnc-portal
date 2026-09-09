@@ -38,7 +38,8 @@ These acceptance criteria follow the
 - **Direct treasury deposits:** an external deposit into Bank or Safe with no matching SafeDepositRouter operation credits
   `Service Revenue`, regardless of the sender address. A SafeDepositRouter operation that issues SHER owns the Cash — Safe and
   `Investor Equity` lines for its transaction hash; the matching Safe transfer is duplicate source evidence, not revenue. A movement between
-  company pockets remains internal.
+  company pockets remains internal. Safe history starts when the asynchronously loaded company Safe address becomes available and includes
+  every page returned by the Safe Transaction Service; the configured request limit is a page size, not a history cap.
 - **Manual account assignments** apply directly to the counter-account line of an eligible external Bank/Safe withdrawal. The transaction
   hash is the assignment identity, and the selected value is a concrete chart-of-accounts family rather than an intermediate category.
   Direct deposits and movements between company pockets retain the accounts determined by their source evidence. Account Assignments shows
@@ -117,6 +118,7 @@ flowchart LR
 - [x] A company with no accounting activity produces balanced zero-value books.
 - [x] Failure to load the company prevents Accounting from presenting books for an unknown contract set.
 - [x] A failed contract-generation scan preserves available books and identifies the affected source as incomplete.
+- [x] Safe operations from every available history page are included after the company Safe address resolves.
 - [ ] Every unavailable optional or enrichment source that can make the books incomplete is identified to the reviewer.
 
 **Dependencies:** Current company, contract-event providers, and accounting enrichment records
@@ -332,7 +334,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `472758b7c5a4fcdb7fd4de7ceca2a4ca5a66dd27`
+**Implementation evidence reviewed against:** `6eb32e3d7f00bec270c027d004715c66844cf8ce`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
@@ -340,6 +342,7 @@ flowchart LR
   [Accounting view components](../../../app/src/components/sections/AccountingView/), and
   [nested Accounting routes](../../../app/src/router/index.ts),
   [accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
+  [reactive paginated Safe history queries](../../../app/src/queries/safe.queries.ts),
   [SafeDepositRouter event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts), and
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts)
 - [Pure internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
@@ -399,6 +402,8 @@ flowchart LR
   [General Ledger column header](../../../app/src/components/sections/AccountingView/LedgerColumnHeader.vue),
   [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
   [accounting data tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts), and
+  [Safe history query tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
+  [Safe address reactivity test](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts),
   [account-instance evidence tests](../../../app/src/utils/accounting/__tests__/accountInstances.spec.ts),
   [transaction evidence tests](../../../app/src/composables/accounting/__tests__/useTransactionEvidence.spec.ts),
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts) and
