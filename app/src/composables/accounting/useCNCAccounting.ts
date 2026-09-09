@@ -24,6 +24,7 @@ import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouter/model'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 import type { ContractType, TeamContract } from '@/types/teamContract'
 import type { ScanTarget } from '@/composables/eventsViaLogs'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
@@ -185,11 +186,13 @@ export function useCNCAccounting(
   const fixedReturnAddress = addressOf('FixedReturn')
   const investorAddress = addressOfInvestor()
   const routerAddress = addressOf('SafeDepositRouter')
-  const safeAddress = computed(
-    () =>
+  const safeAddress = computed(() => {
+    const address =
       team.data.value?.safeAddress ??
       contracts.value.find((contract) => contract.type === 'Safe')?.address
-  )
+
+    return address ? normalizeSafeAddress(address) : undefined
+  })
 
   const bankTargets = targetsOf('Bank')
   const cashRemTargets = targetsOf('CashRemunerationEIP712')

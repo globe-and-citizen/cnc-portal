@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import type { Address } from 'viem'
 import { ref, watch } from 'vue'
 import { useGetTeamQuery } from '@/queries/team.queries'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 
 export const useTeamStore = defineStore('team', () => {
   const currentTeamId = ref<string | null>(null)
@@ -31,8 +32,11 @@ export const useTeamStore = defineStore('team', () => {
   }
 
   const getContractAddressByType = (type: ContractType): Address | undefined => {
-    return currentTeamMeta.data.value?.teamContracts.find((contract) => contract.type === type)
-      ?.address
+    const address = currentTeamMeta.data.value?.teamContracts.find(
+      (contract) => contract.type === type
+    )?.address
+
+    return type === 'Safe' && address ? normalizeSafeAddress(address) : address
   }
 
   // Auto-detect Investor address: V2 ('Investor') preferred, V1 ('InvestorV1') fallback

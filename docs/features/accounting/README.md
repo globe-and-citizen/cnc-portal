@@ -38,8 +38,9 @@ These acceptance criteria follow the
 - **Direct treasury deposits:** an external deposit into Bank or Safe with no matching SafeDepositRouter operation credits
   `Service Revenue`, regardless of the sender address. A SafeDepositRouter operation that issues SHER owns the Cash — Safe and
   `Investor Equity` lines for its transaction hash; the matching Safe transfer is duplicate source evidence, not revenue. A movement between
-  company pockets remains internal. Safe history starts when the asynchronously loaded company Safe address becomes available and includes
-  every page returned by the Safe Transaction Service; the configured request limit is a page size, not a history cap.
+  company pockets remains internal. Safe history starts when the asynchronously loaded company Safe address becomes available. The address
+  is checksum-normalized before cache keys and Transaction Service requests, and the history includes every page returned by the service;
+  the configured request limit is a page size, not a history cap.
 - **Manual account assignments** apply directly to the counter-account line of an eligible external Bank/Safe withdrawal. The transaction
   hash is the assignment identity, and the selected value is a concrete chart-of-accounts family rather than an intermediate category.
   Direct deposits and movements between company pockets retain the accounts determined by their source evidence. Account Assignments shows
@@ -334,7 +335,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6eb32e3d7f00bec270c027d004715c66844cf8ce`
+**Implementation evidence reviewed against:** `aad4fb72035cd939690f8757382ac95179953d9a`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)

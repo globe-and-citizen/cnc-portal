@@ -286,7 +286,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `84ed792ab66f9f09339c4cad3dce176998dbab33`
+**Implementation evidence reviewed against:** `aad4fb72035cd939690f8757382ac95179953d9a`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and

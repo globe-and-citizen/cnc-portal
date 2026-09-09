@@ -14,14 +14,23 @@ import {
 import type { SafeTransaction } from '@/types/safe'
 import type { SafeIncomingTransfer } from '@/types'
 
+const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
+const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
+
 describe('safe utils', () => {
   it('builds safe app URLs with chain fallback', () => {
-    expect(getSafeHomeUrl(137, '0xABCDEF1234567890ABCDEF1234567890ABCDEF12')).toContain('polygon:')
-    expect(getSafeHomeUrl(999999, '0xABCDEF1234567890ABCDEF1234567890ABCDEF12')).toContain(
-      'ethereum:'
+    expect(getSafeHomeUrl(137, LOWERCASE_SAFE_ADDRESS)).toContain(
+      `polygon:${CHECKSUM_SAFE_ADDRESS}`
     )
-    expect(getSafeSettingsUrl(11155111, '0xSafeAddr')).toContain('sepolia:0xSafeAddr')
-    expect(getSafeSettingsUrl(999999, '0xSafeAddr')).toContain('ethereum:0xSafeAddr')
+    expect(getSafeHomeUrl(999999, LOWERCASE_SAFE_ADDRESS)).toContain(
+      `ethereum:${CHECKSUM_SAFE_ADDRESS}`
+    )
+    expect(getSafeSettingsUrl(11155111, LOWERCASE_SAFE_ADDRESS)).toContain(
+      `sepolia:${CHECKSUM_SAFE_ADDRESS}`
+    )
+    expect(getSafeSettingsUrl(999999, LOWERCASE_SAFE_ADDRESS)).toContain(
+      `ethereum:${CHECKSUM_SAFE_ADDRESS}`
+    )
   })
 
   describe('formatSafeTransactionValue', () => {
@@ -143,7 +152,7 @@ describe('safe utils', () => {
 
   describe('transformToSafeMultisigResponse', () => {
     const baseTx: SafeTransaction = {
-      safe: '0xSafe',
+      safe: LOWERCASE_SAFE_ADDRESS,
       to: '0xTo',
       value: '1000',
       data: '0xdata',
@@ -180,7 +189,7 @@ describe('safe utils', () => {
 
     it('maps scalar fields and normalises nullables', () => {
       const result = transformToSafeMultisigResponse(baseTx)
-      expect(result.safe).toBe('0xSafe')
+      expect(result.safe).toBe(CHECKSUM_SAFE_ADDRESS)
       expect(result.nonce).toBe('1')
       expect(result.safeTxGas).toBe('21000')
       expect(result.baseGas).toBe('0')
