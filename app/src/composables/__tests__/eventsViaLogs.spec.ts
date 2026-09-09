@@ -140,6 +140,48 @@ describe('scanContractLogs', () => {
     expect(out.data.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x3-1'])
     expect(out.data.items.find((i) => i.id === '0x1-0')?.timestamp).toBe(1010)
     expect(out.data.items.find((i) => i.id === '0x3-1')?.timestamp).toBe(1030)
+    expect(out.timestampGaps).toEqual([])
+  })
+
+  it('withholds an event whose block timestamp cannot be resolved', async () => {
+    const client = makeClient({
+      [OLD]: [log({ transactionHash: '0x1', logIndex: 0, blockNumber: 10n })]
+    })
+
+    const out = await scanContractLogs(
+      client as unknown as ChainClient,
+      [{ address: OLD }],
+      opts,
+      async () => {
+        throw new Error('block unavailable')
+      }
+    )
+
+    expect(out.data.items).toEqual([])
+    expect(out.timestampGaps).toEqual([
+      {
+        transactionHash: '0x1',
+        blockNumber: 10n,
+        reason: 'block-unavailable'
+      }
+    ])
+  })
+
+  it('withholds an event that has no block number instead of assigning timestamp zero', async () => {
+    const client = makeClient({
+      [OLD]: [log({ transactionHash: '0x1', logIndex: 0, blockNumber: null })]
+    })
+
+    const out = await scanContractLogs(client as unknown as ChainClient, [{ address: OLD }], opts)
+
+    expect(out.data.items).toEqual([])
+    expect(out.timestampGaps).toEqual([
+      {
+        transactionHash: '0x1',
+        blockNumber: null,
+        reason: 'missing-block-number'
+      }
+    ])
   })
 
   it('preserves the loaded generations when another returns no logs', async () => {

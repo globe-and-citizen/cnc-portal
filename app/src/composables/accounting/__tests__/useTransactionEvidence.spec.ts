@@ -46,6 +46,7 @@ describe('useTransactionEvidence', () => {
       return {
         data: ref(undefined),
         isLoading: ref(false),
+        error: ref(null),
         refetch: vi.fn().mockResolvedValue(undefined)
       }
     })

@@ -20,6 +20,52 @@ export type UsdRate = bigint
 /** Stable identity of one concrete account in the books. */
 export type AccountId = string
 
+/** Material evidence feeds that determine whether the Accounting books are complete. */
+export type AccountingSourceId =
+  | 'company'
+  | 'contract-history'
+  | 'bank-events'
+  | 'payroll-events'
+  | 'expense-events'
+  | 'credit-events'
+  | 'credit-terms'
+  | 'investor-events'
+  | 'vesting-events'
+  | 'safe-deposit-router-events'
+  | 'safe-incoming-transfers'
+  | 'safe-outgoing-transactions'
+  | 'weekly-claims'
+  | 'expenses'
+  | 'account-assignments'
+  | 'sher-multiplier'
+  | 'transaction-receipts'
+  | 'token-rates'
+
+/** Availability of one material evidence source. */
+export interface AccountingSourceStatus {
+  source: AccountingSourceId
+  label: string
+  state: 'ready' | 'loading' | 'partial' | 'failed' | 'not-applicable'
+  reason?: string
+}
+
+/** Whether reports can be treated as complete. */
+export type AccountingCompleteness = 'ready' | 'loading' | 'partial' | 'failed'
+
+/** Typed reason why an otherwise balanced journal may not represent complete evidence. */
+export type AccountingDiagnostic =
+  | { kind: 'source-unavailable'; source: AccountingSourceId }
+  | { kind: 'source-scan-failed'; source: AccountingSourceId; address: string }
+  | {
+      kind: 'block-timestamp-unavailable'
+      source: AccountingSourceId
+      txHash?: string
+      blockNumber?: string
+    }
+  | { kind: 'orphan-bank-fee'; txHash: string }
+  | { kind: 'receipt-unavailable'; txHash: string }
+  | { kind: 'rate-unavailable'; token: TokenId }
+
 /** Whether a deployment-specific account could be resolved from source evidence. */
 type AccountResolution = 'resolved' | 'unresolved'
 

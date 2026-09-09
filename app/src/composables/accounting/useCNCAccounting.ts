@@ -15,9 +15,8 @@
  *
  * The raw feeds are mapped into a pure posting feed, completed with transaction
  * receipt account evidence, then consolidated into the canonical journal.
- * Optional / flaky sources (the external Safe service, a contract a team has not
- * deployed) degrade gracefully: a missing or failed feed is simply absent from
- * the ledger and never blocks the page or surfaces as a hard error.
+ * Every material source exposes an explicit availability state. A partial feed
+ * may preserve usable journal entries, but it is never presented as complete.
  */
 import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import { useReadContract } from '@wagmi/vue'
@@ -47,6 +46,12 @@ import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransactionEvidence } from './useTransactionEvidence'
 import {
+  accountingEventSource,
+  accountingQuerySource,
+  useAccountingStatus,
+  type AccountingStatus
+} from './useAccountingStatus'
+import {
   assembleWithAccountEvidence,
   buildRawCncEntries,
   type CncAccounting,
@@ -75,24 +80,7 @@ export interface UseCNCAccountingReturn {
   refetch: () => Promise<unknown>
 }
 
-export interface AccountingStatus {
-  /** True while any required feed is still loading. */
-  isLoading: ComputedRef<boolean>
-  /** The team query error (the only fatal one); optional feeds degrade silently. */
-  error: ComputedRef<unknown>
-  /** Contract generations whose on-chain scan failed — a partial-history warning. */
-  reconciliationGaps: ComputedRef<ReconciliationGap[]>
-}
-
-/** One contract generation that could not be loaded, for the UI gap warning. */
-export interface ReconciliationGap {
-  /** The source whose evidence is incomplete (e.g. 'Bank'). */
-  source: string
-  /** The failed generation's contract address, when a source scan failed. */
-  address?: string
-  /** The source operation whose counterpart evidence is absent. */
-  operationId?: string
-}
+export type { AccountingStatus } from './useAccountingStatus'
 
 export function useCNCAccounting(
   teamId: MaybeRefOrGetter<string | null>,
@@ -311,81 +299,95 @@ export function useCNCAccounting(
     )
   )
 
-  // A generation whose on-chain scan failed is surfaced as a reconciliation gap
-  // (rather than silently dropping the whole contract type), so the view can warn
-  // that history may be partial (issue #2456).
-  const reconciliationGaps = computed<ReconciliationGap[]>(() => [
-    ...(
-      [
-        ['Bank', bank],
-        ['CashRemuneration', cashRem],
-        ['Expense', expense],
-        ['FixedReturn', fixedReturn],
-        ['Investor', investor],
-        ['Vesting', vesting],
-        ['SafeDepositRouter', router]
-      ] as const
-    ).flatMap(([source, feed]) => feed.gaps.value.map((gap) => ({ source, address: gap.address }))),
-    ...accounting.value.unmatchedFeeOperationIds.map((operationId) => ({
-      source: 'Bank fee evidence',
-      operationId
-    })),
-    ...transactionEvidence.unavailableOperationIds.value.map((operationId) => ({
-      source: 'Transaction receipt evidence',
-      operationId
-    }))
-  ])
+  const eventSources = [
+    accountingEventSource('bank-events', 'Bank history', bankTargets, bank),
+    accountingEventSource('payroll-events', 'Payroll history', cashRemTargets, cashRem),
+    accountingEventSource('expense-events', 'Expense history', expenseTargets, expense),
+    accountingEventSource(
+      'credit-events',
+      'Community Credit history',
+      fixedReturnTargets,
+      fixedReturn
+    ),
+    accountingEventSource('investor-events', 'Investor history', investorTargets, investor),
+    accountingEventSource('vesting-events', 'Vesting history', vestingTargets, vesting),
+    accountingEventSource(
+      'safe-deposit-router-events',
+      'Safe deposit history',
+      routerTargets,
+      router
+    )
+  ]
 
-  // The team query is the only fatal one — without contracts there are no books.
-  // Loading reflects the team + on-chain + enrichment feeds; the Safe service is
-  // optional, so it is excluded to keep a slow/flaky transfer feed from blocking.
-  const isLoading = computed(
-    () =>
-      team.isLoading.value ||
-      officers.isPending.value ||
-      bank.loading.value ||
-      cashRem.loading.value ||
-      expense.loading.value ||
-      fixedReturn.loading.value ||
-      investor.loading.value ||
-      vesting.loading.value ||
-      router.loading.value ||
-      transactionEvidence.isLoading.value ||
-      weeklyClaims.isLoading.value ||
-      expenses.isLoading.value
-  )
-  const status: AccountingStatus = {
-    isLoading,
-    error: computed(() => team.error.value),
-    reconciliationGaps
-  }
+  const hasTeamId = () => Boolean(toValue(teamId))
+  const hasSafe = () => Boolean(safeAddress.value)
+  const sourceDefinitions = [
+    accountingQuerySource('company', 'Company', hasTeamId, team, { fatal: true }),
+    accountingQuerySource('contract-history', 'Contract deployment history', hasTeamId, officers),
+    accountingQuerySource(
+      'credit-terms',
+      'Community Credit terms',
+      () => Boolean(fixedReturnAddress.value),
+      fixedReturnOffers
+    ),
+    accountingQuerySource(
+      'safe-incoming-transfers',
+      'Safe incoming transfers',
+      hasSafe,
+      safeTransfers
+    ),
+    accountingQuerySource(
+      'safe-outgoing-transactions',
+      'Safe outgoing transactions',
+      hasSafe,
+      safeOutgoing
+    ),
+    accountingQuerySource('weekly-claims', 'Weekly claims', hasTeamId, weeklyClaims),
+    accountingQuerySource('expenses', 'Approved expenses', hasTeamId, expenses),
+    accountingQuerySource(
+      'account-assignments',
+      'Journal account assignments',
+      hasTeamId,
+      accountAssignments
+    ),
+    accountingQuerySource(
+      'sher-multiplier',
+      'SHER multiplier',
+      () => Boolean(routerAddress.value),
+      routerMultiplier
+    ),
+    accountingQuerySource(
+      'transaction-receipts',
+      'Transaction receipt evidence',
+      () => transactionEvidence.isApplicable.value,
+      transactionEvidence,
+      {
+        partialReason: () =>
+          transactionEvidence.unavailableOperationIds.value.length
+            ? 'Some required transaction receipts could not be loaded.'
+            : undefined
+      }
+    )
+  ]
+
+  const status = useAccountingStatus({
+    sources: sourceDefinitions,
+    eventSources,
+    reconciliation: {
+      unmatchedFeeOperationIds: computed(() => accounting.value.unmatchedFeeOperationIds),
+      unavailableReceiptOperationIds: transactionEvidence.unavailableOperationIds
+    },
+    rates: {
+      rawEntries,
+      hasCustomResolver: Boolean(options.rateOfRecord),
+      isTokenLoading: (token) => currencyStore.isTokenLoading(token)
+    }
+  })
 
   const refetch = (): Promise<unknown> =>
     Promise.allSettled(
-      [
-        team,
-        officers,
-        bank,
-        cashRem,
-        expense,
-        fixedReturn,
-        fixedReturnOffers,
-        investor,
-        vesting,
-        router,
-        routerMultiplier,
-        weeklyClaims,
-        expenses,
-        accountAssignments,
-        safeTransfers,
-        safeOutgoing,
-        transactionEvidence
-      ].map((query) => query.refetch?.())
+      [...sourceDefinitions, ...eventSources].map(({ query }) => query.refetch?.())
     )
 
-  return {
-    journal: computed(() => accounting.value.journal),
-    status,
-    refetch
-  }
+  return { journal: computed(() => accounting.value.journal), status, refetch }
 }
