@@ -4,7 +4,7 @@
 double-entry journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on
 demand. This model does not create or persist manual journal entries.
 
-**Last verified:** 2026-09-08
+**Last verified:** 2026-09-09
 
 ## Consumers
 
@@ -45,6 +45,11 @@ prevents those reports from independently fetching and assembling the same books
 within one team and a new key when the team identifier changes. Its two pure runtime stages are `buildRawCncEntries(CncAccountingInput)` and
 `assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
 diagnostics without Vue or network I/O.
+
+The incoming-transfer and executed-transaction Safe queries remain disabled until the reactive company Safe address resolves. Once enabled,
+each query follows the Transaction Service's `next` links to exhaustion before publishing its array to Accounting. The configured `limit`
+controls the request page size rather than the total history returned. A later-page failure rejects the whole query instead of publishing a
+silently partial Safe history.
 
 ### Runtime Export Boundary
 
@@ -377,8 +382,8 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ### Measure Before Changing
 
-- Event queries fan out across every known contract generation and have an `EVENT_LIMIT` of 500. Measure result volume, pagination needs,
-  and user-visible load time before altering source selection or limits.
+- Contract event queries fan out across every known contract generation. Safe history uses pages of 500 records and follows every available
+  page. Measure source volume and user-visible load time before altering scan selection, page size, or request scheduling.
 - Date-specific views perform their own projection work from a date-filtered journal. Account and statement drill-downs select whole
   JournalEntry records from that same boundary. Profile realistic multi-generation books before introducing caching or alternate snapshots.
 
@@ -393,10 +398,13 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `472758b7c5a4fcdb7fd4de7ceca2a4ca5a66dd27`
+**Implementation evidence reviewed against:** `6eb32e3d7f00bec270c027d004715c66844cf8ce`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
-  [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts)
+  [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts),
+  [reactive paginated Safe history queries](../../../app/src/queries/safe.queries.ts),
+  [Safe query behaviour tests](../../../app/src/queries/__tests__/safe.queries.spec.ts), and
+  [Safe address reactivity test](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts)
 - [Persistent Accounting route](../../../app/src/router/index.ts),
   [team route-owner lifetime](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue), and
   [Accounting report route views](../../../app/src/views/team/%5Bid%5D/Accounting/)
