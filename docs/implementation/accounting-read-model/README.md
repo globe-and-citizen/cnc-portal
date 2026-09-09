@@ -47,9 +47,9 @@ within one team and a new key when the team identifier changes. Its two pure run
 diagnostics without Vue or network I/O.
 
 The incoming-transfer and executed-transaction Safe queries remain disabled until the reactive company Safe address resolves. Once enabled,
-each query follows the Transaction Service's `next` links to exhaustion before publishing its array to Accounting. The configured `limit`
-controls the request page size rather than the total history returned. A later-page failure rejects the whole query instead of publishing a
-silently partial Safe history.
+the address is checksum-normalized before it enters the query key or Transaction Service request. Each query then follows the service's
+`next` links to exhaustion before publishing its array to Accounting. The configured `limit` controls the request page size rather than the
+total history returned. A later-page failure rejects the whole query instead of publishing a silently partial Safe history.
 
 ### Runtime Export Boundary
 
@@ -398,7 +398,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6eb32e3d7f00bec270c027d004715c66844cf8ce`
+**Implementation evidence reviewed against:** `aad4fb72035cd939690f8757382ac95179953d9a`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts),
