@@ -1,41 +1,24 @@
 import { describe, expect, it, vi } from 'vitest';
-import { generateUniqueSlug, slugify } from '../slug.util';
-
-describe('slugify', () => {
-  it('lowercases and hyphenates words', () => {
-    expect(slugify('Acme Corp')).toBe('acme-corp');
-  });
-
-  it('collapses runs of non-alphanumerics into a single hyphen', () => {
-    expect(slugify('Acme   Corp!!! & Co')).toBe('acme-corp-co');
-  });
-
-  it('trims leading and trailing hyphens', () => {
-    expect(slugify('  --Hello World--  ')).toBe('hello-world');
-  });
-
-  it('keeps digits', () => {
-    expect(slugify('Team 42')).toBe('team-42');
-  });
-
-  it('drops accented / non-ascii characters', () => {
-    expect(slugify('Café Déjà')).toBe('caf-d-j');
-  });
-
-  it('falls back to "team" when nothing usable remains', () => {
-    expect(slugify('!!!')).toBe('team');
-    expect(slugify('   ')).toBe('team');
-    expect(slugify('')).toBe('team');
-  });
-
-  it('always produces a value that matches the slug regex', () => {
-    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-    expect(slugify('Hello, World! 123')).toMatch(slugRegex);
-    expect(slugify('###')).toMatch(slugRegex);
-  });
-});
+import { generateUniqueSlug } from '../slug.util';
 
 describe('generateUniqueSlug', () => {
+  it.each([
+    ['Acme Corp', 'acme-corp'],
+    ['Acme   Corp!!! & Co', 'acme-corp-co'],
+    ['  --Hello World--  ', 'hello-world'],
+    ['Team 42', 'team-42'],
+    ['Café Déjà', 'caf-d-j'],
+    ['!!!', 'team'],
+    ['   ', 'team'],
+    ['', 'team'],
+  ])('normalizes %j before checking uniqueness', async (input, expected) => {
+    const exists = vi.fn().mockResolvedValue(false);
+
+    await expect(generateUniqueSlug(input, exists)).resolves.toBe(expected);
+    expect(exists).toHaveBeenCalledWith(expected);
+    expect(expected).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  });
+
   it('returns the base slug when it is free', async () => {
     const exists = vi.fn().mockResolvedValue(false);
     await expect(generateUniqueSlug('Acme Corp', exists)).resolves.toBe('acme-corp');

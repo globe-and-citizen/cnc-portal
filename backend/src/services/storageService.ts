@@ -20,13 +20,8 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const MAX_FILES_UPLOAD = 10;
 
-export const ALLOWED_IMAGE_MIMETYPES = [
-  'image/png',
-  'image/jpeg',
-  'image/jpg',
-  'image/webp',
-] as const;
-export const ALLOWED_DOCUMENT_MIMETYPES = [
+const ALLOWED_IMAGE_MIMETYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'] as const;
+const ALLOWED_DOCUMENT_MIMETYPES = [
   'application/pdf',
   'text/plain',
   'application/zip',
@@ -48,7 +43,6 @@ type StorageConfig = {
   secretAccessKey: string;
   region: string;
   endpoint: string;
-  publicBaseUrl: string;
 };
 
 const REQUIRED_ENV_VARS = {
@@ -75,23 +69,18 @@ export function isStorageConfigured(): boolean {
   }
   return true;
 }
-export function getStorageConfig(): StorageConfig {
+function getStorageConfig(): StorageConfig {
   const bucket = process.env.AWS_S3_BUCKET_NAME;
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
   const region = process.env.AWS_DEFAULT_REGION ?? 'auto';
   const endpoint = process.env.AWS_ENDPOINT_URL ?? 'https://storage.railway.app';
-  const publicBaseUrl =
-    process.env.AWS_PUBLIC_BASE_URL ??
-    process.env.AWS_S3_PUBLIC_BASE_URL ??
-    `${endpoint.replace(/\/$/, '')}/${bucket}`;
   return {
     bucket: bucket as string,
     accessKeyId: accessKeyId as string,
     secretAccessKey: secretAccessKey as string,
     region,
     endpoint,
-    publicBaseUrl,
   };
 }
 
@@ -126,7 +115,7 @@ export function generateFileKey(folder: string, originalName: string): string {
   return `${folder}/${hash}${ext}`;
 }
 
-export function validateFile(
+function validateFile(
   file: Express.Multer.File,
   allowed: readonly string[] = ALLOWED_MIMETYPES,
   maxSize: number = MAX_FILE_SIZE
@@ -149,7 +138,7 @@ export function validateFile(
   return { valid: true };
 }
 
-export async function uploadFile(
+async function uploadFile(
   file: Express.Multer.File,
   folder: string = 'uploads'
 ): Promise<UploadResult> {
@@ -221,21 +210,6 @@ export async function uploadFiles(
   return results;
 }
 
-const normalizeStorageKey = (fileKey: string): string => {
-  return fileKey
-    .split('/')
-    .filter((segment) => segment.length > 0)
-    .map((segment) => encodeURIComponent(segment))
-    .join('/');
-};
-
-export function getPublicFileUrl(fileKey: string): string {
-  const cfg = getStorageConfig();
-  const normalizedBase = cfg.publicBaseUrl.replace(/\/$/, '');
-  const normalizedKey = normalizeStorageKey(fileKey);
-  return `${normalizedBase}/${normalizedKey}`;
-}
-
 export async function getPresignedDownloadUrl(
   fileKey: string,
   expiresIn: number = PRESIGNED_URL_EXPIRATION
@@ -263,15 +237,10 @@ export async function deleteFile(fileKey: string): Promise<boolean> {
 
 export default {
   isStorageConfigured,
-  uploadFile,
   uploadFiles,
   deleteFile,
-  getPublicFileUrl,
   getPresignedDownloadUrl,
-  validateFile,
   generateFileKey,
-  ALLOWED_IMAGE_MIMETYPES,
-  ALLOWED_DOCUMENT_MIMETYPES,
   ALLOWED_MIMETYPES,
   MAX_FILE_SIZE,
   MAX_FILES_UPLOAD,

@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   addClaimBodySchema,
-  DAILY_CLAIM_MEMO_MAX_LENGTH,
-  fileAttachmentSchema,
-  fileAttachmentsArraySchema,
   parseStoredAttachments,
   updateClaimBodySchema,
 } from '../schemas/claim';
+
+const DAILY_CLAIM_MEMO_MAX_LENGTH = 3_000;
 
 const valid = {
   fileKey: 'uploads/abc.pdf',
@@ -15,40 +14,50 @@ const valid = {
   fileSize: 100,
 };
 
-describe('fileAttachmentSchema', () => {
+describe('stored attachment validation', () => {
   it('accepts a well-formed attachment', () => {
-    expect(fileAttachmentSchema.safeParse(valid).success).toBe(true);
+    expect(parseStoredAttachments([valid])).toEqual([valid]);
   });
 
   it('rejects an empty fileKey', () => {
-    const result = fileAttachmentSchema.safeParse({ ...valid, fileKey: '' });
-    expect(result.success).toBe(false);
+    expect(parseStoredAttachments([{ ...valid, fileKey: '' }])).toEqual([]);
   });
 
   it('rejects an invalid fileUrl', () => {
-    const result = fileAttachmentSchema.safeParse({ ...valid, fileUrl: 'not-a-url' });
-    expect(result.success).toBe(false);
+    expect(parseStoredAttachments([{ ...valid, fileUrl: 'not-a-url' }])).toEqual([]);
   });
 
   it('rejects a non-positive fileSize', () => {
-    const result = fileAttachmentSchema.safeParse({ ...valid, fileSize: 0 });
-    expect(result.success).toBe(false);
+    expect(parseStoredAttachments([{ ...valid, fileSize: 0 }])).toEqual([]);
   });
 
   it('rejects extra null / scalar entries', () => {
-    expect(fileAttachmentSchema.safeParse(null).success).toBe(false);
-    expect(fileAttachmentSchema.safeParse('string').success).toBe(false);
+    expect(parseStoredAttachments([null, 'string'])).toEqual([]);
   });
 });
 
-describe('fileAttachmentsArraySchema', () => {
+describe('claim attachment limits', () => {
   it('enforces the 10-file upper bound', () => {
     const eleven = Array.from({ length: 11 }, () => valid);
-    expect(fileAttachmentsArraySchema.safeParse(eleven).success).toBe(false);
+    expect(
+      addClaimBodySchema.safeParse({
+        teamId: 1,
+        minutesWorked: 10,
+        memo: 'Worked on the release',
+        attachments: eleven,
+      }).success
+    ).toBe(false);
   });
 
   it('accepts an empty array', () => {
-    expect(fileAttachmentsArraySchema.safeParse([]).success).toBe(true);
+    expect(
+      addClaimBodySchema.safeParse({
+        teamId: 1,
+        minutesWorked: 10,
+        memo: 'Worked on the release',
+        attachments: [],
+      }).success
+    ).toBe(true);
   });
 });
 

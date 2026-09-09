@@ -10,17 +10,15 @@ This document summarizes the migration from base64 file storage to Railway Objec
 
 Centralized service handling all S3 operations:
 
-| Function                    | Description                         |
-| --------------------------- | ----------------------------------- |
-| `uploadFile()`              | Upload single file to S3            |
-| `uploadFiles()`             | Upload multiple files (claims)      |
-| `uploadProfileImage()`      | Upload user profile image           |
-| `deleteFile()`              | Delete file from S3                 |
-| `fileExists()`              | Check if file exists                |
-| `getPresignedDownloadUrl()` | Generate presigned URL for download |
-| `isStorageConfigured()`     | Check if storage env vars are set   |
-| `validateFile()`            | Validate file type and size         |
-| `generateFileKey()`         | Generate SHA256-hashed filename     |
+| Function                    | Visibility | Description                         |
+| --------------------------- | ---------- | ----------------------------------- |
+| `uploadFile()`              | Internal   | Upload one validated file           |
+| `uploadFiles()`             | Public     | Upload one or more files            |
+| `deleteFile()`              | Public     | Delete file from S3                 |
+| `getPresignedDownloadUrl()` | Public     | Generate presigned URL for download |
+| `isStorageConfigured()`     | Public     | Check if storage env vars are set   |
+| `validateFile()`            | Internal   | Validate file type and size         |
+| `generateFileKey()`         | Public     | Generate SHA256-hashed filename     |
 
 ### File Key Format
 
@@ -73,8 +71,8 @@ interface OldFileAttachment {
 ### Backend
 
 - `src/services/storageService.ts` - New centralized storage service
-- `src/controllers/claimController.ts` - Uses uploadFiles/deleteFile
-- `src/controllers/userController.ts` - Uses uploadProfileImage
+- `src/controllers/uploadController.ts` - Uses uploadFiles/getPresignedDownloadUrl
+- `src/controllers/userController.ts` - Uses isStorageConfigured
 - `src/routes/userRoutes.ts` - Added upload middleware
 - `src/routes/uploadRoute.ts` - Generic file upload endpoint
 - `src/utils/upload.ts` - Multer memory storage configuration
