@@ -355,7 +355,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a61919c6d9bf77c4a179be46a85f7f8db585bb6f`
+**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
@@ -438,6 +438,8 @@ flowchart LR
 - [Contract-migration accounting tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 
 ## Related Documentation
+
+- [Request Validation implementation](../../implementation/request-validation/README.md)
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Contract Event Feeds implementation](../../implementation/contract-event-feeds/README.md)

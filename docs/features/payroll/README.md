@@ -471,7 +471,7 @@ Functional gaps map to unchecked acceptance criteria.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `722692bad36db94c22ce1918c03e59a1e0f2dd65`
+**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
 
 - [Cash Remuneration components](../../../app/src/components/sections/CashRemunerationView/),
   [claim-history components](../../../app/src/components/sections/ClaimHistoryView/), and
@@ -503,6 +503,8 @@ Functional gaps map to unchecked acceptance criteria.
 - [Payroll persistence models](../../../backend/prisma/schema.prisma)
 - [Daily claim request validation](../../../backend/src/validation/schemas/claim.ts)
 - [Daily claim validation tests](../../../backend/src/validation/__tests__/claim.test.ts)
+- [Cash Remuneration ownership boundary](../../../backend/src/utils/cashRemunerationUtil.ts) and
+  [week-start calculation](../../../backend/src/utils/dayUtils.ts)
 - [Weekly claim API and reconciliation](../../../backend/src/controllers/weeklyClaimController.ts)
 - [Cash Remuneration contract](../../../contract/contracts/CashRemunerationEIP712.sol)
 - [Bank contract](../../../contract/contracts/Bank.sol)
@@ -514,6 +516,8 @@ Functional gaps map to unchecked acceptance criteria.
 
 ## Related Documentation
 
+- [File Storage implementation](../../implementation/file-storage/README.md)
+- [Request Validation implementation](../../implementation/request-validation/README.md)
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Cash Remuneration contract](../../contracts/features/cash-remuneration/README.md)
 - [Bank contract](../../contracts/features/bank/README.md)

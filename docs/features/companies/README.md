@@ -286,7 +286,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `aad4fb72035cd939690f8757382ac95179953d9a`
+**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and
@@ -302,6 +302,8 @@ This validation does not attest to a live on-chain Officer deployment.
 - [Company-creation form](../../../app/src/components/sections/TeamView/forms/AddTeamForm.vue),
   [request validation](../../../backend/src/validation/schemas/team.ts), and
   [company-creation tests](../../../app/src/components/sections/TeamView/forms/__tests__/AddTeamForm.spec.ts)
+- [Company slug generation](../../../backend/src/utils/slug.util.ts) and
+  [slug-generation tests](../../../backend/src/utils/__tests__/slug.util.test.ts)
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue),
   [Officer deployment composable](../../../app/src/composables/contracts/useOfficerDeployment.ts), and
   [initial Officer setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/InvestorContractStep.spec.ts)
