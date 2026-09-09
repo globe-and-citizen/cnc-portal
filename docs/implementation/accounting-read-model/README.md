@@ -351,10 +351,12 @@ entry's first line and preserves its full value in PDF and spreadsheet exports; 
 transaction-backed hash links to the configured network block explorer in a separate tab. Every visible General Ledger column, including the
 account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a double-click restores its
 default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching Bank-outflow evidence,
-returning it as a reconciliation gap. The global FeeCollector is not part of the company's internal-pocket registry. Account and statement
-drill-downs select complete JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and
-exports. Their running balances update only on lines posted to the selected account; an aggregate statement line has no single running
-balance. A fee remains an ordinary line of the source operation in every drill-down.
+returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events infer an ERC-20 currency
+only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific FeeCollectors by payer. Those
+protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement drill-downs select complete
+JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and exports. Their running
+balances update only on lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an
+ordinary line of the source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
@@ -418,7 +420,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f18025018821e51a28712821bf445db8a37ce488`
+**Implementation evidence reviewed against:** `a61919c6d9bf77c4a179be46a85f7f8db585bb6f`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -431,6 +433,8 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [Accounting report route views](../../../app/src/views/team/%5Bid%5D/Accounting/)
 - [Transaction evidence reader](../../../app/src/composables/accounting/useTransactionEvidence.ts)
 - [Contract event scanner](../../../app/src/composables/eventsViaLogs.ts),
+  [version-aware Bank event feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
+  [legacy Bank fee currency normalization](../../../app/src/composables/bank/bankFees.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts),
   [shared query client](../../../app/src/queries/queryClient.ts), and
   [block timestamp cache tests](../../../app/src/queries/__tests__/blockTimestamp.queries.spec.ts)
