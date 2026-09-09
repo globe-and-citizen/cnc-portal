@@ -25,7 +25,10 @@ interface UseTransactionEvidenceReturn {
   accountEvidence: ComputedRef<TransactionAccountEvidence>
   /** Transaction hashes whose receipt could not be read. */
   unavailableOperationIds: ComputedRef<readonly string[]>
+  /** Whether at least one journal operation needs receipt evidence. */
+  isApplicable: ComputedRef<boolean>
   isLoading: ComputedRef<boolean>
+  error: ComputedRef<unknown>
   refetch: () => Promise<unknown>
 }
 
@@ -81,7 +84,9 @@ export function useTransactionEvidence(
     unavailableOperationIds: computed(
       () => receiptsQuery.data.value?.unavailableOperationIds ?? []
     ),
+    isApplicable: computed(() => receiptHashes.value.length > 0),
     isLoading: computed(() => receiptsQuery.isLoading.value),
+    error: computed(() => receiptsQuery.error.value),
     refetch: () => Promise.allSettled([receiptsQuery.refetch?.()])
   }
 }

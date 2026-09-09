@@ -25,6 +25,11 @@ These acceptance criteria follow the
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
 - Accounting includes every known contract generation. Individual account pages intentionally remain scoped to their current contract.
+- Accounting tracks every applicable contract, Safe, portal, receipt, and valuation source as `loading`, `ready`, `partial`, or `failed`;
+  sources that do not apply to the company are explicit. Reports render only when the complete source registry is `ready`. Loading, partial,
+  and failed books are withheld with typed diagnostics instead of being presented as final.
+- On-chain events enter the journal only after their block timestamp resolves. Mined block timestamps are cached without expiry by network
+  and block number; an unavailable timestamp withholds the affected event and marks its source partial rather than inventing epoch time.
 - Off-platform activity without a connected data source, including infrastructure bills, is outside the current automated books.
 
 - **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter, Vesting — the
@@ -61,14 +66,25 @@ These acceptance criteria follow the
 ```mermaid
 flowchart LR
     Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
+    Sources --> Completeness[Source completeness registry]
+    Sources --> TimestampCache[Immutable block timestamp cache]
+    TimestampCache --> Consolidate
     Consolidate --> Postings[Consolidated postings: transitional feed]
     Consolidate --> Journal[Validated JournalEntry collection]
+    Completeness --> Ready{All applicable sources ready?}
     Journal --> Context[Team-scoped Accounting route context]
-    Context --> GeneralLedger[General Ledger UI]
-    Context --> Trial[Trial Balance projection]
-    Context --> Statements[Summary and financial statements]
-    Context --> Drilldowns[Account and statement drill-downs]
-    Context --> Assignments[External withdrawal account assignments]
+    Context --> Ready
+    Ready -->|Yes| GeneralLedger
+    Ready -->|Yes| Trial
+    Ready -->|Yes| Statements
+    Ready -->|Yes| Drilldowns
+    Ready -->|Yes| Assignments
+    Ready -->|No| Diagnostics[Loading, partial, or failed diagnostics]
+    GeneralLedger[General Ledger UI]
+    Trial[Trial Balance projection]
+    Statements[Summary and financial statements]
+    Drilldowns[Account and statement drill-downs]
+    Assignments[External withdrawal account assignments]
     GeneralLedger --> GeneralLedgerExports[General Ledger exports]
     Trial --> TrialExports[Trial Balance exports]
     Statements --> StatementExports[Statement exports]
@@ -120,7 +136,10 @@ flowchart LR
 - [x] Failure to load the company prevents Accounting from presenting books for an unknown contract set.
 - [x] A failed contract-generation scan preserves available books and identifies the affected source as incomplete.
 - [x] Safe operations from every available history page are included after the company Safe address resolves.
-- [ ] Every unavailable optional or enrichment source that can make the books incomplete is identified to the reviewer.
+- [x] Every unavailable optional or enrichment source that can make the books incomplete is identified to the reviewer.
+- [x] Reports remain withheld while an applicable source is loading or when evidence is partial or failed.
+- [x] An event whose block timestamp cannot be resolved is withheld and identifies its source, transaction hash or block, and incomplete
+      status without creating a zero-date journal entry.
 
 **Dependencies:** Current company, contract-event providers, and accounting enrichment records
 
@@ -327,7 +346,6 @@ flowchart LR
 ## Known Gaps
 
 - Accounting does not reconcile ledger closing cash balances against live on-chain balances (`US-ACCT-001`).
-- Safe feeds and off-chain enrichment failures can omit entries without an incomplete-books warning (`US-ACCT-001`).
 - Historical Community Credit terms and SHER valuation inputs are read from current-generation contracts (`US-ACCT-005`).
 - Off-platform activity without a connected data source is absent from the automated books.
 - JournalEntry assembly withholds a Bank fee log without matching Bank-outflow evidence and shows it as incomplete evidence until the source
@@ -335,7 +353,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `aad4fb72035cd939690f8757382ac95179953d9a`
+**Implementation evidence reviewed against:** `f18025018821e51a28712821bf445db8a37ce488`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
@@ -346,6 +364,10 @@ flowchart LR
   [reactive paginated Safe history queries](../../../app/src/queries/safe.queries.ts),
   [SafeDepositRouter event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts), and
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts)
+- [Accounting source-status registry](../../../app/src/composables/accounting/useAccountingStatus.ts),
+  [source completeness projection](../../../app/src/utils/accounting/accountingCompleteness.ts),
+  [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
+  [shared application query cache](../../../app/src/queries/queryClient.ts)
 - [Pure internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
 - [Journal account-assignment query](../../../app/src/queries/journalAccountAssignment.queries.ts),
   [account-assignment types](../../../app/src/types/journal-account-assignment.ts),

@@ -6,9 +6,10 @@ const { accounting, mockUseCNCAccounting } = vi.hoisted(() => {
   const accounting = {
     journal: { value: [] },
     status: {
-      isLoading: { value: false },
-      error: { value: null },
-      reconciliationGaps: { value: [] }
+      state: { value: 'ready' },
+      sources: { value: [] },
+      diagnostics: { value: [] },
+      isLoading: { value: false }
     },
     refetch: vi.fn()
   }

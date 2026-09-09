@@ -20,7 +20,9 @@ flowchart LR
     route[Accounting parent route] --> page[AccountingPage]
     page --> context[Shared accounting context]
     page --> dataLayer[useCNCAccounting]
-    page --> outlet[Nested report RouterView]
+    page --> gate{Source registry ready?}
+    gate -->|Yes| outlet[Nested report RouterView]
+    gate -->|No| diagnosticsUi[Loading or incomplete evidence notice]
     dataLayer --> history[Officer and contract history]
     dataLayer --> feeds[On-chain, Safe, and portal feeds]
     dataLayer --> assignments[Journal account assignment API]
@@ -31,7 +33,9 @@ flowchart LR
     mapped --> evidence[Transaction and receipt evidence]
     evidence --> assembly[Pure accounting assembly]
     assembly --> journal[JournalEntry collection]
-    assembly --> diagnostics[Reconciliation diagnostics]
+    feeds --> sourceStatus[Reactive source states]
+    sourceStatus --> gate
+    assembly --> diagnostics[Typed reconciliation diagnostics]
     journal --> context
     diagnostics --> context
     outlet --> reports[Accounting reports and drill-downs]
@@ -40,9 +44,13 @@ flowchart LR
 ```
 
 `useCNCAccounting` calls the on-chain, Safe, and portal queries directly and owns their reactive state. It exposes only the journal, a
-grouped status, and a refresh operation. The parent Accounting route remains mounted while its report child changes, so the shared context
-prevents those reports from independently fetching and assembling the same books. The team workspace gives that route owner a stable key
-within one team and a new key when the team identifier changes. Its two pure runtime stages are `buildRawCncEntries(CncAccountingInput)` and
+grouped status, and a refresh operation. `useAccountingStatus` projects each applicable source into `loading`, `ready`, `partial`, or
+`failed`; a source that does not apply is `not-applicable`. A fatal company failure takes precedence, then loading, then partial evidence.
+Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken for final books. Typed diagnostics identify source errors,
+contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, and unavailable rates. The parent Accounting route remains
+mounted while its report child changes, so the shared context prevents those reports from independently fetching and assembling the same
+books. The team workspace gives that route owner a stable key within one team and a new key when the team identifier changes. Its two pure
+runtime stages are `buildRawCncEntries(CncAccountingInput)` and
 `assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
 diagnostics without Vue or network I/O.
 
@@ -50,6 +58,11 @@ The incoming-transfer and executed-transaction Safe queries remain disabled unti
 the address is checksum-normalized before it enters the query key or Transaction Service request. Each query then follows the service's
 `next` links to exhaustion before publishing its array to Accounting. The configured `limit` controls the request page size rather than the
 total history returned. A later-page failure rejects the whole query instead of publishing a silently partial Safe history.
+
+Contract logs do not carry timestamps. `eventsViaLogs` resolves every distinct mined block through the shared TanStack Query client, keyed
+by network and block number with infinite staleness and garbage-collection time because a mined block is immutable. Concurrent event feeds
+and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
+timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
 
 ### Runtime Export Boundary
 
@@ -263,6 +276,10 @@ it to an earlier or later deployment based on activity order.
   non-zero base-unit movement is never discarded because its presentation value is below a display threshold.
 - The assembled Accounting result carries only the canonical journal and reconciliation diagnostics. UI and export consumers never receive
   transitional postings, an account registry, or precomputed report projections beside the journal.
+- Every material source has an explicit availability state. Accounting reports mount only when all applicable sources are ready; balanced
+  entries assembled from partial evidence remain internal and are not presented as final reports.
+- Every on-chain journal posting has a verified block timestamp. A missing or unavailable block timestamp withholds the source event rather
+  than mapping it to Unix epoch time.
 - A direct external deposit into Bank or Safe with no matching SafeDepositRouter transaction credits `Service Revenue` regardless of the
   sender address. Deposits and company-pocket transfers retain their source-evidence accounts and are never manual assignment targets.
 - A persisted account assignment is keyed by company and lowercase transaction hash. It applies only to an editable transaction-backed
@@ -285,11 +302,15 @@ it to an earlier or later deployment based on activity order.
 ### Failure Behaviour
 
 - A company-query failure is fatal because Accounting cannot establish the contract set that owns the books.
-- A failed on-chain scan for one contract generation leaves other generations in the assembled books and records a reconciliation gap.
-- A failed transaction-receipt read leaves its deployment-specific leg unresolved and records a reconciliation gap. A readable receipt with
-  no matching or more than one matching company deployment is an explicit unresolved result rather than a read failure.
-- Safe-service feeds are optional and do not block the page's loading state. Their absence can omit Safe activity without generating a
-  reconciliation gap, which remains a known limitation.
+- A failed on-chain scan for one contract generation leaves other generations internally assembled, marks that source partial, and withholds
+  every report until the gap is resolved.
+- A failed transaction-receipt read leaves its deployment-specific leg unresolved, marks receipt evidence partial, and withholds reports. A
+  readable receipt with no matching or more than one matching company deployment is an explicit unresolved result rather than a read
+  failure.
+- Applicable Safe-service and portal enrichment queries participate in completeness. A pending query keeps Accounting loading; a failed
+  query marks the books partial and identifies its source rather than silently publishing the available subset.
+- A failed immutable block read withholds every decoded event from that block and marks the owning event source partial. A log without a
+  block number is handled the same way; neither case creates a timestamp-zero posting.
 - A report mounted outside the Accounting route context fails explicitly. This is a programming error rather than permission to construct a
   second journal implicitly.
 - Changing the route team identifier remounts the Accounting owner, so the previous team's journal cannot survive into the new team scope.
@@ -394,13 +415,13 @@ because deposits and company-pocket transfers are not manual assignment targets.
 - The transitional `LedgerEntry.amountUsd` remains a six-decimal `number` for source narration and mapper compatibility. Journal assembly
   always computes the report-authoritative amount from exact token base units and the required rate of record; reports never consume the
   transitional number.
-- Optional Safe-service and enrichment failures can leave books incomplete without every omission being surfaced to the reviewer.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `aad4fb72035cd939690f8757382ac95179953d9a`
+**Implementation evidence reviewed against:** `f18025018821e51a28712821bf445db8a37ce488`
 
-- [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
+- [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
+  [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts),
   [reactive paginated Safe history queries](../../../app/src/queries/safe.queries.ts),
   [Safe query behaviour tests](../../../app/src/queries/__tests__/safe.queries.spec.ts), and
@@ -409,6 +430,13 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [team route-owner lifetime](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue), and
   [Accounting report route views](../../../app/src/views/team/%5Bid%5D/Accounting/)
 - [Transaction evidence reader](../../../app/src/composables/accounting/useTransactionEvidence.ts)
+- [Contract event scanner](../../../app/src/composables/eventsViaLogs.ts),
+  [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts),
+  [shared query client](../../../app/src/queries/queryClient.ts), and
+  [block timestamp cache tests](../../../app/src/queries/__tests__/blockTimestamp.queries.spec.ts)
+- [Accounting source contracts](../../../app/src/utils/accounting/types.ts),
+  [pure completeness projection](../../../app/src/utils/accounting/accountingCompleteness.ts), and
+  [source-status integration tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
 - [Pure assembly](../../../app/src/utils/accounting/assemble.ts),
   [source-mapper orchestrator](../../../app/src/utils/accounting/mappers/index.ts),
   [Bank mapper](../../../app/src/utils/accounting/mappers/bank.ts), [Payroll mapper](../../../app/src/utils/accounting/mappers/payroll.ts),

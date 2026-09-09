@@ -5,8 +5,8 @@
  *   - getLogs on the contract from the deploy start block,
  *   - decode against a multi-version union ABI (a beacon proxy's logs span every
  *     implementation it ran, so we need all versions),
- *   - a getBlock per *uncached* block for timestamps (logs don't carry them; a
- *     process-wide cache dedupes blocks across feeds and refetches),
+ *   - one immutable TanStack-cached block read for timestamps (logs don't carry
+ *     them),
  *   - iterate the decoded logs through a caller-supplied `mapEvent`.
  *
  * Optionally, `extraLogs` fetches a second, already-filtered log set (e.g. the
@@ -23,6 +23,8 @@ import { getPublicClient } from '@wagmi/core'
 import { parseEventLogs, type Abi, type AbiEvent, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { currentChainId } from '@/constant'
+import { fetchBlockTimestamp } from '@/queries/blockTimestamp.queries'
+import { queryClient } from '@/queries/queryClient'
 
 // CNC contracts were first deployed around this Polygon block — scan from here.
 // On other chains (local Hardhat, testnets) the deployment starts near genesis,
@@ -57,18 +59,15 @@ export interface ScanGap {
 export interface ScanResult<T> {
   data: T
   gaps: ScanGap[]
+  timestampGaps: TimestampGap[]
 }
 
-/**
- * Shared block-number → Unix-seconds cache. A mined block's timestamp never
- * changes, so it is memoised process-wide and reused across every contract feed
- * and every refetch: a block that several feeds touch (or the same feed re-scans)
- * is fetched from the RPC only once, instead of one `getBlock` per contract and
- * again on each re-scan. Keyed by chain so it stays correct if the active chain
- * changes within a session.
- */
-const blockTimestampCache = new Map<string, number>()
-const blockCacheKey = (blockNumber: bigint): string => `${currentChainId}-${blockNumber}`
+/** A decoded event withheld because its immutable block time was unavailable. */
+export interface TimestampGap {
+  transactionHash: string | null
+  blockNumber: bigint | null
+  reason: 'missing-block-number' | 'block-unavailable'
+}
 
 /** Concatenate several ABIs into a single event ABI, deduped by signature. */
 export function unionEventAbi(abis: unknown[]): Abi {
@@ -131,6 +130,8 @@ export interface EventsViaLogsOptions<T> {
   mapExtra?: (ctx: EventMapContext<T>) => void
 }
 
+type BlockTimestampResolver = (blockNumber: bigint) => Promise<number>
+
 /** Normalize the address input to a deduped list of lower-cased scan targets. */
 function normalizeTargets(input: ContractAddressInput): ScanTarget[] {
   const raw: readonly ScanTarget[] =
@@ -171,9 +172,13 @@ interface TaggedLog {
 export async function scanContractLogs<T>(
   client: ChainClient,
   targets: readonly ScanTarget[],
-  opts: Pick<EventsViaLogsOptions<T>, 'eventAbi' | 'empty' | 'mapEvent' | 'extraLogs' | 'mapExtra'>
+  opts: Pick<EventsViaLogsOptions<T>, 'eventAbi' | 'empty' | 'mapEvent' | 'extraLogs' | 'mapExtra'>,
+  resolveBlockTimestamp: BlockTimestampResolver = async (blockNumber) => {
+    const block = await client.getBlock({ blockNumber })
+    return Number(block.timestamp)
+  }
 ): Promise<ScanResult<T>> {
-  if (targets.length === 0) return { data: opts.empty(), gaps: [] }
+  if (targets.length === 0) return { data: opts.empty(), gaps: [], timestampGaps: [] }
 
   const mainById = new Map<string, TaggedLog>()
   const extraById = new Map<string, TaggedLog>()
@@ -214,27 +219,35 @@ export async function scanContractLogs<T>(
   const blockNumbers = [
     ...new Set(allTagged.map((t) => t.log.blockNumber).filter((b): b is bigint => b != null))
   ]
-  const uncached = blockNumbers.filter((n) => !blockTimestampCache.has(blockCacheKey(n)))
+  const timestampByBlock = new Map<bigint, number>()
   const fetched = await Promise.allSettled(
-    uncached.map((blockNumber) => client.getBlock({ blockNumber }))
+    blockNumbers.map(
+      async (blockNumber) => [blockNumber, await resolveBlockTimestamp(blockNumber)] as const
+    )
   )
   for (const result of fetched) {
-    if (result.status === 'fulfilled') {
-      blockTimestampCache.set(blockCacheKey(result.value.number), Number(result.value.timestamp))
-    }
+    if (result.status === 'fulfilled') timestampByBlock.set(...result.value)
   }
-  const tsOf = (blockNumber: bigint | null) =>
-    blockNumber == null ? 0 : (blockTimestampCache.get(blockCacheKey(blockNumber)) ?? 0)
 
   const out = opts.empty()
+  const timestampGaps: TimestampGap[] = []
 
   const fold = (map: Map<string, TaggedLog>, mapFn?: (ctx: EventMapContext<T>) => void) => {
     if (!mapFn) return
     for (const { log, contract } of map.values()) {
+      const timestamp = log.blockNumber == null ? undefined : timestampByBlock.get(log.blockNumber)
+      if (timestamp === undefined) {
+        timestampGaps.push({
+          transactionHash: log.transactionHash,
+          blockNumber: log.blockNumber,
+          reason: log.blockNumber == null ? 'missing-block-number' : 'block-unavailable'
+        })
+        continue
+      }
       mapFn({
         out,
         id: `${log.transactionHash}-${log.logIndex}`,
-        timestamp: tsOf(log.blockNumber),
+        timestamp,
         contract,
         eventName: log.eventName ?? '',
         args: log.args ?? {},
@@ -246,7 +259,7 @@ export async function scanContractLogs<T>(
   fold(mainById, opts.mapEvent)
   fold(extraById, opts.mapExtra)
 
-  return { data: out, gaps }
+  return { data: out, gaps, timestampGaps }
 }
 
 export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
@@ -265,8 +278,10 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
     staleTime: 30_000,
     queryFn: async (): Promise<ScanResult<T>> => {
       const client = getPublicClient(config, { chainId: currentChainId })
-      if (!client) return { data: opts.empty(), gaps: [] }
-      return scanContractLogs(client, targets.value, opts)
+      if (!client) throw new Error('No public client is available for the active chain')
+      return scanContractLogs(client, targets.value, opts, (blockNumber) =>
+        fetchBlockTimestamp(queryClient, client, currentChainId, blockNumber)
+      )
     }
   })
 
@@ -275,6 +290,7 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
   return {
     result: computed(() => query.data.value?.data ?? null),
     gaps: computed<ScanGap[]>(() => query.data.value?.gaps ?? []),
+    timestampGaps: computed<TimestampGap[]>(() => query.data.value?.timestampGaps ?? []),
     loading: query.isPending,
     error: query.error,
     refetch: query.refetch
