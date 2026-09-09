@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue } from 'vue'
-import type { Address } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import externalApiClient from '@/lib/external.axios.ts'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
@@ -21,6 +22,14 @@ const txService = TX_SERVICE_BY_CHAIN[chainId]
 interface SafePage<T> {
   next: string | null
   results: T[]
+}
+
+const safeAddressKey = (address: string | undefined): string | undefined =>
+  address && isAddress(address.trim()) ? normalizeSafeAddress(address) : address
+
+function requireSafeAddress(address: string | undefined): Address {
+  if (!address) throw new Error('Missing Safe address')
+  return normalizeSafeAddress(address)
 }
 
 /** Load every page in service order; a repeated next link is an invalid partial response. */
@@ -48,25 +57,32 @@ async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSignal): Pr
 export const safeKeys = {
   all: ['safe'] as const,
   infos: () => [...safeKeys.all, 'info'] as const,
-  info: (safeAddress: string | undefined) => [...safeKeys.infos(), { safeAddress }] as const,
+  info: (safeAddress: string | undefined) =>
+    [...safeKeys.infos(), { safeAddress: safeAddressKey(safeAddress) }] as const,
   transactionLists: () => [...safeKeys.all, 'transactions'] as const,
   transactions: (safeAddress: string | undefined) =>
-    [...safeKeys.transactionLists(), { safeAddress }] as const,
+    [...safeKeys.transactionLists(), { safeAddress: safeAddressKey(safeAddress) }] as const,
   transactionDetails: () => [...safeKeys.all, 'transaction'] as const,
   transaction: (safeTxHash: string | undefined) =>
     [...safeKeys.transactionDetails(), { safeTxHash }] as const,
   incomingTransferLists: () => [...safeKeys.all, 'incoming-transfers'] as const,
   incomingTransfers: (safeAddress: string | undefined, limit?: number) =>
-    [...safeKeys.incomingTransferLists(), { safeAddress, limit }] as const,
+    [
+      ...safeKeys.incomingTransferLists(),
+      { safeAddress: safeAddressKey(safeAddress), limit }
+    ] as const,
   outgoingTransactionLists: () => [...safeKeys.all, 'outgoing-transactions'] as const,
   outgoingTransactions: (safeAddress: string | undefined, limit?: number) =>
-    [...safeKeys.outgoingTransactionLists(), { safeAddress, limit }] as const,
+    [
+      ...safeKeys.outgoingTransactionLists(),
+      { safeAddress: safeAddressKey(safeAddress), limit }
+    ] as const,
   /**
    * The Safe's token holdings — native and ERC-20 alike — live on the one key
    * `useContractBalance` owns, so this delegates rather than restating it.
    */
   balance: (address: string | undefined, chainId: number | undefined) =>
-    contractBalanceKeys.detail(address as Address | undefined, chainId)
+    contractBalanceKeys.detail(safeAddressKey(address) as Address | undefined, chainId)
 }
 
 // ============================================================================
@@ -83,13 +99,13 @@ export const safeKeys = {
  */
 export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
   const { pathParams } = params
+  const safeAddress = computed(() => toValue(pathParams.safeAddress))
 
   return useQuery<SafeInfo>({
-    queryKey: safeKeys.info(toValue(pathParams.safeAddress)),
-    enabled: !!toValue(pathParams.safeAddress),
+    queryKey: computed(() => safeKeys.info(safeAddress.value)),
+    enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async () => {
-      const address = toValue(pathParams.safeAddress)
-      if (!address) throw new Error('Missing Safe address')
+      const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const { data } = await externalApiClient.get<SafeInfo>(
@@ -116,13 +132,13 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
  */
 export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
   const { pathParams } = params
+  const safeAddress = computed(() => toValue(pathParams.safeAddress))
 
   return useQuery<SafeTransaction[]>({
-    queryKey: safeKeys.transactions(toValue(pathParams.safeAddress)),
-    enabled: !!toValue(pathParams.safeAddress),
+    queryKey: computed(() => safeKeys.transactions(safeAddress.value)),
+    enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async () => {
-      const address = toValue(pathParams.safeAddress)
-      if (!address) throw new Error('Missing Safe address')
+      const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
@@ -189,8 +205,7 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
     queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
-      const address = safeAddress.value
-      if (!address) throw new Error('Missing Safe address')
+      const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       // Only use limit parameter
@@ -222,8 +237,7 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
     queryKey: computed(() => safeKeys.outgoingTransactions(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
-      const address = safeAddress.value
-      if (!address) throw new Error('Missing Safe address')
+      const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const qp = new URLSearchParams({ executed: 'true' })

@@ -4,6 +4,11 @@ import { defineComponent, h, ref } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import externalApiClient from '@/lib/external.axios'
 
+const FIRST_LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
+const FIRST_CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
+const SECOND_LOWERCASE_SAFE_ADDRESS = '0x52908400098527886e0f7030069857d2e4169ee7'
+const SECOND_CHECKSUM_SAFE_ADDRESS = '0x52908400098527886E0F7030069857D2E4169EE7'
+
 vi.unmock('@tanstack/vue-query')
 vi.mock('@/constant/index', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/constant/index')>()),
@@ -45,23 +50,23 @@ describe('Safe query reactivity', () => {
     await flushPromises()
     expect(get).not.toHaveBeenCalled()
 
-    address.value = '0xFirstSafe'
+    address.value = FIRST_LOWERCASE_SAFE_ADDRESS
 
     await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(2))
     expect(get.mock.calls.map(([url]) => url)).toEqual(
       expect.arrayContaining([
-        expect.stringContaining('/safes/0xFirstSafe/incoming-transfers/'),
-        expect.stringContaining('/safes/0xFirstSafe/multisig-transactions/')
+        expect.stringContaining(`/safes/${FIRST_CHECKSUM_SAFE_ADDRESS}/incoming-transfers/`),
+        expect.stringContaining(`/safes/${FIRST_CHECKSUM_SAFE_ADDRESS}/multisig-transactions/`)
       ])
     )
 
-    address.value = '0xSecondSafe'
+    address.value = SECOND_LOWERCASE_SAFE_ADDRESS
 
     await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(4))
     expect(get.mock.calls.slice(2).map(([url]) => url)).toEqual(
       expect.arrayContaining([
-        expect.stringContaining('/safes/0xSecondSafe/incoming-transfers/'),
-        expect.stringContaining('/safes/0xSecondSafe/multisig-transactions/')
+        expect.stringContaining(`/safes/${SECOND_CHECKSUM_SAFE_ADDRESS}/incoming-transfers/`),
+        expect.stringContaining(`/safes/${SECOND_CHECKSUM_SAFE_ADDRESS}/multisig-transactions/`)
       ])
     )
 

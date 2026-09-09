@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSafeSDK } from '../useSafeSdk'
 import { mockUseConnection } from '@/tests/mocks'
 
+const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
+const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
+
 const { mockSafeInit, mockGetInjectedProvider } = vi.hoisted(() => ({
   mockSafeInit: vi.fn(),
   mockGetInjectedProvider: vi.fn()
@@ -34,11 +37,11 @@ describe('useSafeSDK', () => {
       await expect(loadSafe('invalid-safe')).rejects.toThrow('Invalid Safe address')
     })
 
-    it('caches SDK instances by safe address and signer', async () => {
+    it('normalizes Safe addresses and caches equivalent casing as one SDK instance', async () => {
       const { loadSafe } = useSafeSDK()
 
-      const firstPromise = loadSafe('0x1111111111111111111111111111111111111111')
-      const secondPromise = loadSafe('0x1111111111111111111111111111111111111111')
+      const firstPromise = loadSafe(LOWERCASE_SAFE_ADDRESS)
+      const secondPromise = loadSafe(CHECKSUM_SAFE_ADDRESS)
 
       const [firstSdk, secondSdk] = await Promise.all([firstPromise, secondPromise])
 
@@ -47,7 +50,7 @@ describe('useSafeSDK', () => {
       expect(mockSafeInit).toHaveBeenCalledWith({
         provider: 'mock-provider',
         signer: '0x1111111111111111111111111111111111111111',
-        safeAddress: '0x1111111111111111111111111111111111111111'
+        safeAddress: CHECKSUM_SAFE_ADDRESS
       })
     })
 
