@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/vue-query'
-import { toValue } from 'vue'
+import { computed, toValue } from 'vue'
 import type { Address } from 'viem'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import externalApiClient from '@/lib/external.axios.ts'
@@ -12,12 +12,35 @@ import type {
   GetSafeTransactionsParams,
   GetSafeIncomingTransfersParams,
   GetSafeOutgoingTransactionsParams,
-  SafeIncomingTransfersResponse,
   SafeIncomingTransfer
 } from '@/types'
 
 const chainId = currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
+
+interface SafePage<T> {
+  next: string | null
+  results: T[]
+}
+
+/** Load every page in service order; a repeated next link is an invalid partial response. */
+async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSignal): Promise<T[]> {
+  const visited = new Set<string>()
+  const results: T[] = []
+  let pageUrl: string | null = initialUrl
+
+  while (pageUrl) {
+    if (visited.has(pageUrl)) throw new Error('Safe pagination returned a repeated page')
+    visited.add(pageUrl)
+
+    const currentUrl: string = pageUrl
+    const { data } = await externalApiClient.get<SafePage<T>>(currentUrl, { signal })
+    results.push(...(data.results ?? []))
+    pageUrl = data.next ? new URL(data.next, currentUrl).toString() : null
+  }
+
+  return results
+}
 
 /**
  * Query key factory for safe-related queries
@@ -160,12 +183,13 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
  */
 export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfersParams) {
   const { pathParams, queryParams } = params
+  const safeAddress = computed(() => toValue(pathParams.safeAddress))
 
   return useQuery<SafeIncomingTransfer[]>({
-    queryKey: safeKeys.incomingTransfers(toValue(pathParams.safeAddress), queryParams?.limit),
-    enabled: !!toValue(pathParams.safeAddress),
-    queryFn: async () => {
-      const address = toValue(pathParams.safeAddress)
+    queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),
+    enabled: computed(() => Boolean(safeAddress.value)),
+    queryFn: async ({ signal }) => {
+      const address = safeAddress.value
       if (!address) throw new Error('Missing Safe address')
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
@@ -176,10 +200,10 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
       }
 
       const queryString = params.toString() ? `?${params.toString()}` : ''
-      const { data } = await externalApiClient.get<SafeIncomingTransfersResponse>(
-        `${txService.url}/api/v1/safes/${address}/incoming-transfers/${queryString}`
+      return fetchAllSafePages<SafeIncomingTransfer>(
+        `${txService.url}/api/v1/safes/${address}/incoming-transfers/${queryString}`,
+        signal
       )
-      return data.results || []
     },
     staleTime: 300_000,
     refetchInterval: 300_000
@@ -192,12 +216,13 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
 
 export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTransactionsParams) {
   const { pathParams, queryParams } = params
+  const safeAddress = computed(() => toValue(pathParams.safeAddress))
 
   return useQuery<SafeTransaction[]>({
-    queryKey: safeKeys.outgoingTransactions(toValue(pathParams.safeAddress), queryParams?.limit),
-    enabled: !!toValue(pathParams.safeAddress),
-    queryFn: async () => {
-      const address = toValue(pathParams.safeAddress)
+    queryKey: computed(() => safeKeys.outgoingTransactions(safeAddress.value, queryParams?.limit)),
+    enabled: computed(() => Boolean(safeAddress.value)),
+    queryFn: async ({ signal }) => {
+      const address = safeAddress.value
       if (!address) throw new Error('Missing Safe address')
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
@@ -206,10 +231,10 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
         qp.append('limit', queryParams.limit.toString())
       }
 
-      const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
-        `${txService.url}/api/v1/safes/${address}/multisig-transactions/?${qp.toString()}`
+      return fetchAllSafePages<SafeTransaction>(
+        `${txService.url}/api/v1/safes/${address}/multisig-transactions/?${qp.toString()}`,
+        signal
       )
-      return data.results || []
     },
     staleTime: 300_000,
     refetchInterval: 300_000
