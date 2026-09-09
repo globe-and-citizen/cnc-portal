@@ -282,6 +282,8 @@ flowchart LR
 - [x] Accounting consolidates entries from every known contract generation into the same books.
 - [x] Each contract generation is scanned from its own deployment boundary.
 - [x] Transactions made before and after a migration contribute to the same reports.
+- [x] Bank fees from V0/V0.1 local events and V1/V2 version-specific FeeCollectors appear in their source operation and remain attached to
+      the Bank deployment that paid them.
 - [x] A treasury sweep between old and replacement company contracts remains an internal transfer.
 - [x] The trial balance presents each resolved Bank, Payroll, Expense, or Credit deployment as its own account row, and drilling a
       deployment's row shows only that deployment's entries.
@@ -353,7 +355,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f18025018821e51a28712821bf445db8a37ce488`
+**Implementation evidence reviewed against:** `a61919c6d9bf77c4a179be46a85f7f8db585bb6f`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
@@ -369,6 +371,8 @@ flowchart LR
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
   [shared application query cache](../../../app/src/queries/queryClient.ts)
 - [Pure internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
+- [Version-aware Bank fee ingestion](../../../app/src/composables/bank/useBankEventsViaLogs.ts) and
+  [legacy fee currency normalization](../../../app/src/composables/bank/bankFees.ts)
 - [Journal account-assignment query](../../../app/src/queries/journalAccountAssignment.queries.ts),
   [account-assignment types](../../../app/src/types/journal-account-assignment.ts),
   [journal assignment boundary](../../../app/src/utils/accounting/journalAccountAssignment.ts), and

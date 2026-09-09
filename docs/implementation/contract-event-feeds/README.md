@@ -40,7 +40,9 @@ flowchart LR
 4. A decoded log enters its domain mapper only after its timestamp resolves. Missing block identity or a failed block read withholds that
    log and records a timestamp gap for completeness-aware consumers.
 5. The domain mapper returns its source-neutral event feed for a transaction history or Accounting assembly.
-6. Incoming Bank token transfers use every known Officer-generation Bank target, so a later Bank deployment does not hide prior transfers.
+6. The Bank feed maps V0/V0.1 Bank-emitted fees and queries the V1/V2 FeeCollectors by paying Bank. For legacy ERC-20 fees, it takes the
+   currency only from the next transfer event in the same transaction and Bank generation; native and unmatched fees remain tokenless.
+7. Incoming Bank token transfers use every known Officer-generation Bank target, so a later Bank deployment does not hide prior transfers.
 
 ## Invariants and Failure Behaviour
 
@@ -53,15 +55,18 @@ flowchart LR
   be resolved; they withhold the affected log and expose its transaction hash, block number, and failure reason as a timestamp gap.
 - An unavailable public client fails the event query instead of returning an empty feed that is indistinguishable from a successful scan.
 - The current Bank remains a fallback target for companies without Officer history.
+- Every supported Bank generation contributes its fees: V0/V0.1 through local `FeePaid` events and V1/V2 through their version-specific
+  FeeCollectors. Fee rows retain the paying Bank address.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f18025018821e51a28712821bf445db8a37ce488`
+**Implementation evidence reviewed against:** `a61919c6d9bf77c4a179be46a85f7f8db585bb6f`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
   [shared query client](../../../app/src/queries/queryClient.ts)
-- [Bank event feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts) and
+- [Bank event feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
+  [version-aware Bank fee normalization](../../../app/src/composables/bank/bankFees.ts), and
   [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts)
 - [Expense event feed](../../../app/src/composables/expense/useExpenseEventsViaLogs.ts) and
   [Cash Remuneration event feed](../../../app/src/composables/cashRemuneration/useCashRemunerationEventsViaLogs.ts)

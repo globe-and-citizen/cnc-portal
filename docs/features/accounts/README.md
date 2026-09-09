@@ -16,8 +16,9 @@ These acceptance criteria follow the
   receiving custody of the whole account.
 - Bank and Expense Account actions use the current contracts selected for the company. Safe actions use the Safe registered to the company
   on the active network.
-- A Bank transfer with a positive `BANK` fee sends that fee to the global FeeCollector. Native transfers assess the configured rate, while
-  ERC-20 transfers are fee-bearing only when the token is supported by the FeeCollector.
+- A Bank transfer with a positive `BANK` fee sends that fee to the FeeCollector deployed for its contract generation. Native transfers
+  assess the configured rate, while ERC-20 transfers are fee-bearing only when the token is supported by that FeeCollector. Activity feeds
+  retain fees from every supported Bank generation for Accounting.
 - A Bank owner can cash out available treasury funds by first consolidating Cash Remuneration and Expense Account balances into the Bank,
   then moving the Bank's held assets to the connected wallet. A historic generation can instead forward its available funds to the company's
   current Bank.
@@ -117,9 +118,9 @@ flowchart LR
 - [x] A transfer amount must be positive and cannot exceed the available balance after protocol fees.
 - [x] A transfer recipient cannot be the zero address. _(contract)_
 - [x] SHER transfers are not available through the Bank transfer journey.
-- [x] A native Bank transfer with a positive `BANK` rate pays its calculated fee to the global FeeCollector and delivers the net amount to
-      the recipient. _(contract)_
-- [x] An ERC-20 Bank transfer with a positive `BANK` rate pays its calculated fee to the global FeeCollector only when that token is
+- [x] A native Bank transfer with a positive `BANK` rate pays its calculated fee to its generation's FeeCollector and delivers the net
+      amount to the recipient. _(contract)_
+- [x] An ERC-20 Bank transfer with a positive `BANK` rate pays its calculated fee to its generation's FeeCollector only when that token is
       FeeCollector-supported; otherwise it delivers the full amount to the recipient. _(contract)_
 
 #### Edge & Error Cases
@@ -495,7 +496,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `aad4fb72035cd939690f8757382ac95179953d9a`
+**Implementation evidence reviewed against:** `a61919c6d9bf77c4a179be46a85f7f8db585bb6f`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
@@ -507,6 +508,7 @@ flowchart LR
   Community Credit round-detail view parameter does not alter Accounts entry points.
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts),
   [Bank transaction feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
+  [version-aware Bank fee normalization](../../../app/src/composables/bank/bankFees.ts),
   [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts), and
   [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
