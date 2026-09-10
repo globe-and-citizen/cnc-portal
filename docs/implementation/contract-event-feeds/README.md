@@ -57,10 +57,12 @@ flowchart LR
 - The current Bank remains a fallback target for companies without Officer history.
 - Every supported Bank generation contributes its fees: V0/V0.1 through local `FeePaid` events and V1/V2 through their version-specific
   FeeCollectors. Fee rows retain the paying Bank address.
+- Multi-generation feeds import typed `generated.ts` modules derived from the canonical snapshots in `contract/versions`; the app does not
+  carry a second historical ABI archive as JSON.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a61919c6d9bf77c4a179be46a85f7f8db585bb6f`
+**Implementation evidence reviewed against:** `fa7a1732154709f65a459eb1122ead83fcf05ecf`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
