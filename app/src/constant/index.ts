@@ -109,7 +109,7 @@ export function resolveAddressWithFallback(
   return safeResolveAddress(key) ?? fallback
 }
 // Token addresses for different networks
-export const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
+const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
   // Polygon Mainnet
   137: {
     USDCe: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // Polygon USDC.e

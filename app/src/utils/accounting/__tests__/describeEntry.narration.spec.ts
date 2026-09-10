@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activityOf, activityText, entryLabel, withSherTail } from '../describeEntry'
+import { activityOf, activityText, entryLabel } from '../describeEntry'
 import type { LedgerEntry } from '../ledgerEntry'
 
 const ALI = '0x1111111111111111111111111111111111111111'
@@ -69,22 +69,6 @@ describe('activityOf — vesting rows', () => {
 
   it('falls back to the memo for a use case with no catalogue label', () => {
     expect(entryLabel(entry({ useCase: 'UC-CASH-01' as LedgerEntry['useCase'] }))).toBe('raw memo')
-  })
-})
-
-describe('withSherTail', () => {
-  const cell = { kind: 'actor', actor: ALI, text: 'was paid for 5h of work' } as const
-
-  it('names the equity part of a compound payroll posting', () => {
-    expect(withSherTail(cell, 10)).toEqual({ ...cell, text: `${cell.text} + 10 SHER` })
-  })
-
-  it('leaves the narration alone when there is nothing to add', () => {
-    const mentioned = { ...cell, text: 'vested 300 SHER' } as const
-    const plain = { kind: 'plain', text: 'Internal transfer' } as const
-    expect(withSherTail(cell, 0)).toBe(cell)
-    expect(withSherTail(mentioned, 10)).toBe(mentioned)
-    expect(withSherTail(plain, 10)).toBe(plain)
   })
 })
 

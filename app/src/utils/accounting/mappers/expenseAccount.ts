@@ -33,9 +33,9 @@ import type {
 import type { ExpenseResponse } from '@/types/expense-account'
 import { getTokenAddress, getTokenDecimals, tokenSymbol } from '@/utils/tokens/metadata'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { atDate, type MapperContext } from './context'
 import { periodIndex } from './expensePeriods'
+import { createInternalPosting } from './internalPosting'
 
 export interface ExpenseMapperInput {
   deposits?: readonly ExpenseDepositRow[]
@@ -51,38 +51,6 @@ const BANK = 'Cash — Bank' as const
 
 /** Tag a native (token-less) row for a combined native + ERC-20 pass. */
 const nativeTag = <T>(row: T): { row: T; token: string | null } => ({ row, token: null })
-
-/** A pocket-to-pocket move that nets out of the income statement. */
-function internalMove(
-  row: { id: string; amount: string; timestamp: number },
-  token: string | null,
-  ctx: MapperContext,
-  opts: {
-    debit: AccountName
-    credit: AccountName
-    debitInstance?: string
-    creditInstance?: string
-    counterparty?: string
-    memo: string
-  }
-): LedgerEntry {
-  const tokenId = ctx.tokenIdOf(token)
-  return makeEntry({
-    id: row.id,
-    timestamp: row.timestamp,
-    useCase: 'INTERNAL',
-    debit: opts.debit,
-    debitInstance: opts.debitInstance,
-    credit: opts.credit,
-    creditInstance: opts.creditInstance,
-    amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
-    token: tokenId,
-    rawAmount: row.amount,
-    counterparty: opts.counterparty,
-    internal: true,
-    memo: opts.memo
-  })
-}
 
 /** An approved budget, normalized for per-period remaining-balance tracking. */
 interface BudgetCap {
@@ -102,7 +70,7 @@ interface BudgetCap {
 }
 
 /** Everything the ledger entry needs to narrate a matched expense payout. */
-export interface ExpenseDrawInfo {
+interface ExpenseDrawInfo {
   frequencyType: number
   tokenId: TokenId
   /** Approved cap in base units. */
@@ -244,7 +212,7 @@ function mapTransfer(
 ): LedgerEntry {
   const destPocket = ctx.pocketOf(row.to)
   if (destPocket) {
-    return internalMove(row, token, ctx, {
+    return createInternalPosting(row, token, ctx, {
       debit: destPocket,
       debitInstance: row.to,
       credit: EXPENSE,
@@ -283,7 +251,7 @@ function mapTransfer(
  * approved `expenses` supply each budget's cap so a partial payout can report
  * the remaining balance in its memo.
  */
-export function mapExpenseAccountEvents(
+export function mapExpense(
   input: ExpenseMapperInput,
   ctx: MapperContext,
   expenses?: readonly ExpenseResponse[]
@@ -297,7 +265,7 @@ export function mapExpenseAccountEvents(
   ]
   for (const { row, token } of deposits) {
     entries.push(
-      internalMove(row, token, ctx, {
+      createInternalPosting(row, token, ctx, {
         debit: EXPENSE,
         debitInstance: row.contractAddress,
         credit: ctx.pocketOf(row.depositor) ?? BANK,
@@ -325,7 +293,7 @@ export function mapExpenseAccountEvents(
   ]
   for (const { row, token } of sweeps) {
     entries.push(
-      internalMove(row, token, ctx, {
+      createInternalPosting(row, token, ctx, {
         debit: BANK,
         credit: EXPENSE,
         creditInstance: row.contractAddress,
@@ -335,6 +303,9 @@ export function mapExpenseAccountEvents(
     )
   }
 
+  if (!entries.some((entry) => entry.useCase === 'UC-EXP-01')) {
+    entries.push(...mapPortalFallback(expenses, ctx))
+  }
   return entries
 }
 
@@ -349,7 +320,7 @@ export function mapExpenseAccountEvents(
  * to its creation, and booked `enriched` — the budget itself names the category,
  * so the enrichment join leaves it alone.
  */
-export function mapExpenseDrawsFromPortal(
+function mapPortalFallback(
   expenses: readonly ExpenseResponse[] | undefined,
   ctx: MapperContext
 ): LedgerEntry[] {

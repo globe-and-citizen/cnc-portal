@@ -14,7 +14,6 @@
 import { getAddress, isAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
 import type { AccountName } from './chartOfAccounts'
-import type { ClassificationCategory } from './classification'
 
 /** The transaction-hash head of an indexed event id (`<txHash>-<logIndex>`). */
 const EVENT_ID_TRANSACTION_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
@@ -93,7 +92,7 @@ export type UseCase =
  * that need no join (deposits, internal moves, dividends, …); `needs-off-chain-data`
  * flags a payroll/expense entry that found no matching portal record.
  */
-export type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-data'
+type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-data'
 
 export interface LedgerEntry {
   /** Stable id — the source row id, suffixed when one event yields several entries. */
@@ -122,7 +121,11 @@ export interface LedgerEntry {
   debitInstance?: Address
   /** The pocket contract instance holding the credited cash — see {@link debitInstance}. */
   creditInstance?: Address
-  /** Absolute USD amount. `0` for memo-only entries. */
+  /**
+   * Transitional six-decimal USD projection used by source narration. Reports
+   * recompute their exact amount from {@link rawAmount} and {@link rate} at the
+   * JournalEntry boundary. `0` for memo-only entries.
+   */
   amountUsd: number
   /** Token actually moved on-chain — the entry's currency (spec §2 "Devise"). */
   token: TokenId
@@ -130,8 +133,9 @@ export interface LedgerEntry {
   rawAmount: string
   /**
    * USD-per-whole-token rate of record at the transaction time (spec §2 "Taux"),
-   * stored at 6-dp precision: `1.000000` for USD-pegged stablecoins, the
-   * timestamped price for native (POL) / SHER. `amountUsd = Quantité × rate`.
+   * represented at 6-dp precision: `1.000000` for USD-pegged stablecoins, the
+   * timestamped price for native (POL) / SHER. Journal assembly converts this
+   * value to a fixed-scale bigint before any report calculation.
    * Absent on entries produced before a rate resolver has run (e.g. raw mapper
    * output in unit tests); the consolidation layer fills it in for every entry.
    */
@@ -156,7 +160,7 @@ export interface LedgerEntry {
   /**
    * The Community Credit round (`FixedReturn` offer id) a `UC-CREDIT-*` posting
    * belongs to. What lets a lender's principal and their fixed return be rendered
-   * as one compound posting (see {@link ./creditGrouping}) without confusing two
+   * as one journal operation without confusing two
    * rounds the same member lent into.
    */
   creditOfferId?: string
@@ -196,28 +200,6 @@ export interface LedgerEntry {
    * pocket balance, so historical entries stay accurate.
    */
   expenseRemainingUsd?: number
-  /**
-   * The Bank protocol fee charged in the **same on-chain transaction** as this
-   * transfer, folded in for the general-ledger view only — Dr destination (net) ·
-   * Dr Transaction Fee Expense · Cr Cash — Bank (gross). Set by the presenter
-   * ({@link mergeBankFees}), never by a mapper: the canonical feed the statements
-   * roll up keeps the fee as its own posting, so nothing is double counted.
-   */
-  mergedBankFee?: {
-    amountUsd: number
-    /** Raw on-chain amount, in the token's base units. */
-    rawAmount: string
-    token: TokenId
-    /** USD rate of record, when resolved. */
-    rate?: number
-  }
-  /**
-   * The manual category a team owner classified the source transaction as
-   * (issue #2457), overriding the address inference. Absent means the entry is
-   * address-inferred — the visible fallback the UI flags as such. Set only on
-   * Bank/Safe deposit/withdrawal entries whose transaction has a classification.
-   */
-  classified?: ClassificationCategory
   /** Off-chain enrichment status. */
   enrichment: EnrichmentStatus
 }

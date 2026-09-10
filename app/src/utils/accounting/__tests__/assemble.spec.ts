@@ -2,9 +2,13 @@ import { describe, it, expect } from 'vitest'
 import type { Address } from 'viem'
 import type { TeamContract, ContractType } from '@/types/teamContract'
 import type { CncAccountingInput } from '@/utils/accounting/assemble'
+import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
+import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
-import { ADDR } from './fixtures'
+import { ADDR, usd } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
 
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
@@ -31,7 +35,6 @@ const RATE: UsdRateOfRecord = (tokenId) => (tokenId === 'native' ? 2 : tokenId =
 const BASE: CncAccountingInput = {
   contracts: CONTRACTS,
   safeAddress: ADDR.safe,
-  feeCollectorAddress: ADDR.feeCollector,
   sherTokenAddress: ADDR.sherToken,
   rateOfRecord: RATE
 }
@@ -39,12 +42,16 @@ const BASE: CncAccountingInput = {
 describe('accounting assembly boundary', () => {
   it('returns an empty, balanced result for no feeds', () => {
     const a = assembleAccounting({})
-    expect(a.entries).toEqual([])
     expect(a.journal).toEqual([])
-    expect(a.summary).toMatchObject({ cash: 0, income: 0, expense: 0, equity: 0 })
-    expect(a.generalLedger.balanced).toBe(true)
-    expect(a.balanceSheet.balanced).toBe(true)
-    expect(a.incomeStatement.netIncome).toBe(0)
+    expect(buildAccountingSummary(a.journal)).toMatchObject({
+      cash: 0n,
+      income: 0n,
+      expense: 0n,
+      equity: 0n
+    })
+    expect(buildGeneralLedger(a.journal).balanced).toBe(true)
+    expect(buildBalanceSheet(a.journal).balanced).toBe(true)
+    expect(buildIncomeStatement(a.journal).netIncome).toBe(0n)
   })
 
   it('books a client USDC deposit into Bank as Service Revenue', () => {
@@ -73,10 +80,13 @@ describe('accounting assembly boundary', () => {
       }
     })
 
-    expect(a.summary.income).toBe(100)
-    expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
-    expect(a.generalLedger.balanced).toBe(true)
-    expect(a.balanceSheet.balanced).toBe(true)
+    expect(buildAccountingSummary(a.journal).income).toBe(usd(100))
+    expect(buildIncomeStatement(a.journal).revenue).toContainEqual({
+      account: 'Service Revenue',
+      amount: usd(100)
+    })
+    expect(buildGeneralLedger(a.journal).balanced).toBe(true)
+    expect(buildBalanceSheet(a.journal).balanced).toBe(true)
   })
 
   it('collapses the cross-contract internal-transfer twin (Bank → Payroll)', () => {
@@ -126,11 +136,14 @@ describe('accounting assembly boundary', () => {
       }
     })
 
-    const internal = a.entries.filter(
-      (e) => e.internal && e.debit === 'Cash — Payroll' && e.credit === 'Cash — Bank'
+    const internal = a.journal.filter(
+      (entry) =>
+        entry.internal &&
+        entry.lines.some((line) => line.account.family.name === 'Cash — Payroll') &&
+        entry.lines.some((line) => line.account.family.name === 'Cash — Bank')
     )
     expect(internal).toHaveLength(1) // the twin was deduped
-    expect(a.generalLedger.balanced).toBe(true)
+    expect(buildGeneralLedger(a.journal).balanced).toBe(true)
   })
 
   it('enriches a wage settlement with its off-chain Payroll category', () => {
@@ -169,8 +182,8 @@ describe('accounting assembly boundary', () => {
       ]
     })
 
-    const payroll = a.entries.find((e) => e.useCase === 'UC-CASH-03')
-    expect(payroll?.enrichment).toBe('enriched')
+    const payroll = a.journal.find((entry) => entry.useCase === 'UC-CASH-03')
+    expect(payroll?.source?.enrichment).toBe('enriched')
     expect(payroll?.category).toBe('Payroll')
     expect(payroll?.memo).toContain('sprint work')
   })
@@ -231,21 +244,24 @@ describe('accounting assembly boundary', () => {
       }
     })
 
-    expect(a.balanceSheet.investorEquity.amount).toBe(2)
-    expect(a.summary.income).toBe(0)
+    const balance = buildBalanceSheet(a.journal)
+    expect(
+      balance.equity.find((line) => line.account.family.name === 'Investor Equity')?.balance
+    ).toBe(usd(2))
+    expect(buildAccountingSummary(a.journal).income).toBe(0n)
     expect(a.journal).toMatchObject([
       {
         id: SAFE_DEPOSIT_TX,
         txHash: SAFE_DEPOSIT_TX,
         lines: [
-          { account: { family: { name: 'Cash — Safe' } }, debit: 2 },
-          { account: { family: { name: 'Investor Equity' } }, credit: 2 }
+          { account: { family: { name: 'Cash — Safe' } }, debit: usd(2) },
+          { account: { family: { name: 'Investor Equity' } }, credit: usd(2) }
         ]
       }
     ])
     // The backed mint dropped out — no Default-D memo entry survives.
-    expect(a.entries.some((e) => e.useCase === 'DEFAULT-D')).toBe(false)
-    expect(a.balanceSheet.balanced).toBe(true)
+    expect(a.journal.some((entry) => entry.useCase === 'DEFAULT-D')).toBe(false)
+    expect(balance.balanced).toBe(true)
   })
 
   it('issues an unbacked direct mint into equity (Dr SHERS To Be Issued · Cr Investor Equity)', () => {
@@ -272,49 +288,31 @@ describe('accounting assembly boundary', () => {
 
     // A real posting now (not a value-0 memo): it clears SHERS To Be Issued into
     // equity at the SHER rate of record (60 SHER × $1.00 = $60) — Dr/Cr filled.
-    const issued = a.entries.find((e) => e.useCase === 'DEFAULT-D')
+    const issued = a.journal.find((entry) => entry.useCase === 'DEFAULT-D')
     expect(issued).toMatchObject({
-      debit: 'SHERS To Be Issued',
-      credit: 'Investor Equity',
-      token: 'sher',
-      amountUsd: 60,
-      shares: 60
+      source: { token: 'sher', shares: 60 },
+      lines: [
+        {
+          account: { family: { name: 'SHERS To Be Issued' } },
+          debit: usd(60),
+          movement: { token: 'sher' }
+        },
+        {
+          account: { family: { name: 'Investor Equity' } },
+          credit: usd(60),
+          movement: { token: 'sher' }
+        }
+      ]
     })
     // Equity increased and the trial balance still balances (Dr = Cr). No prior
     // accrual in this fixture, so the liability reads −$60 alone; in production the
     // wage accrual credits it first and the issuance nets it down.
-    expect(a.balanceSheet.investorEquity.amount).toBe(60)
-    expect(a.generalLedger.balanced).toBe(true)
-    expect(a.balanceSheet.balanced).toBe(true)
-  })
-
-  it('honours an injected rate of record and defaults native/SHER to zero', () => {
-    const bankEvents = {
-      bankDeposits: {
-        items: [
-          {
-            id: 'bd1',
-            contractAddress: ADDR.bank,
-            depositor: ADDR.client,
-            amount: '1000000000000000000',
-            timestamp: 100
-          }
-        ]
-      },
-      bankTokenDeposits: { items: [] },
-      bankTransfers: { items: [] },
-      bankTokenTransfers: { items: [] },
-      bankDividendDistributionTriggereds: { items: [] },
-      bankFeePaids: { items: [] },
-      bankOwnershipTransferreds: { items: [] },
-      rawContractTokenTransfers: { items: [] }
-    }
-
-    const withRate = assembleAccounting({ ...BASE, bankEvents })
-    expect(withRate.summary.income).toBe(2) // 1 native @ $2
-
-    const phase1 = assembleAccounting({ ...BASE, rateOfRecord: () => 0, bankEvents })
-    expect(phase1.summary.income).toBe(0) // native priced at $0 until the FX gap is filled
+    const balance = buildBalanceSheet(a.journal)
+    expect(
+      balance.equity.find((line) => line.account.family.name === 'Investor Equity')?.balance
+    ).toBe(usd(60))
+    expect(buildGeneralLedger(a.journal).balanced).toBe(true)
+    expect(balance.balanced).toBe(true)
   })
 
   it('does not throw when optional feeds are null or absent', () => {

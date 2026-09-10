@@ -22,7 +22,13 @@ npm run knip:production
 `knip:report` always completes successfully and is the appropriate starting point for an existing codebase. `npm run knip` exits non-zero
 when candidates are found, which makes it suitable for a focused local cleanup after the baseline has been reviewed.
 
-`knip:production` ignores test sources. Compare it with `knip:report` to identify exports that are statically referenced only by tests.
+`knip:production` ignores test sources. Production `entry` and `project` patterns in `knip.json` carry Knip's trailing `!` marker, while
+test-only patterns do not. Compare the production report with `knip:report` to identify exports that are statically referenced only by
+tests.
+
+The `app` workspace declares its `@/*` path alias explicitly because its root TypeScript configuration delegates to referenced configs. Keep
+that mapping aligned with `app/tsconfig.app.json`; without it, Knip cannot follow Vue application imports and reports connected exports as
+unused.
 
 Neither command changes source files. Do not use Knip's automatic fix mode in this repository.
 

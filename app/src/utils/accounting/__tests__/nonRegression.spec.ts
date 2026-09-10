@@ -14,6 +14,11 @@ import type { CncAccountingInput } from '../assemble'
 import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { TeamContract } from '@/types/teamContract'
 import type { UsdRateOfRecord } from '../toUsd'
+import { buildAccountingSummary } from '../accountingSummary'
+import { buildBalanceSheet } from '../balanceSheet'
+import { buildGeneralLedger } from '../generalLedger'
+import { buildIncomeStatement } from '../incomeStatement'
+import { usdAmountToNumber, usdRateFromNumber } from '../monetaryAmount'
 import { assembleAccounting } from './assembleAccounting'
 
 // All-numeric hex so `getAddress` is a no-op — the addresses survive the
@@ -45,7 +50,6 @@ function bankEvents(partial: Partial<BankEventFeed>): BankEventFeed {
 function sampleInput(): CncAccountingInput {
   return {
     contracts: [contract('Bank', ADDR.bank)],
-    feeCollectorAddress: ADDR.feeCollector,
     rateOfRecord,
     bankEvents: bankEvents({
       // 100 POL direct deposit → Service Revenue
@@ -91,50 +95,55 @@ function sampleInput(): CncAccountingInput {
 
 describe('accounting non-regression', () => {
   it('produces identical statements when the same history is exported twice', () => {
-    const first = assembleAccounting(sampleInput())
-    const second = assembleAccounting(sampleInput())
+    const first = assembleAccounting(sampleInput()).journal
+    const second = assembleAccounting(sampleInput()).journal
 
-    expect(second.summary).toEqual(first.summary)
-    expect(second.generalLedger).toEqual(first.generalLedger)
-    expect(second.incomeStatement).toEqual(first.incomeStatement)
-    expect(second.balanceSheet).toEqual(first.balanceSheet)
+    expect(buildAccountingSummary(second)).toEqual(buildAccountingSummary(first))
+    expect(buildGeneralLedger(second)).toEqual(buildGeneralLedger(first))
+    expect(buildIncomeStatement(second)).toEqual(buildIncomeStatement(first))
+    expect(buildBalanceSheet(second)).toEqual(buildBalanceSheet(first))
   })
 
   it('keeps the balance-sheet identity and a single Net income across the reports', () => {
-    const { incomeStatement, balanceSheet } = assembleAccounting(sampleInput())
+    const { journal } = assembleAccounting(sampleInput())
+    const incomeStatement = buildIncomeStatement(journal)
+    const balanceSheet = buildBalanceSheet(journal)
 
     // Assets = Liabilities + Equity, exactly (spec §5).
     expect(balanceSheet.balanced).toBe(true)
     expect(balanceSheet.totalAssets).toBe(balanceSheet.totalLiabilitiesAndEquity)
-    // Net income is one number — the income statement's figure is what closes
-    // into Retained Earnings, so the Summary card and the balance sheet agree.
-    expect(balanceSheet.retainedEarnings).toBe(incomeStatement.netIncome)
+    // Net income is one number — the income statement's figure is the explicit
+    // Earnings to date contribution in Equity until closing entries exist.
+    expect(balanceSheet.earningsToDate).toBe(incomeStatement.netIncome)
   })
 
   it('values POL at its rate of record: the fee metric and assets are no longer $0.00', () => {
-    const { summary, balanceSheet } = assembleAccounting(sampleInput())
+    const { journal } = assembleAccounting(sampleInput())
+    const summary = buildAccountingSummary(journal)
+    const balanceSheet = buildBalanceSheet(journal)
 
     // 100 − 20 − 5 = 75 POL in Bank, at $0.08 → $6.00 total assets.
-    expect(balanceSheet.totalAssets).toBe(6)
-    expect(summary.cash).toBe(6)
+    expect(usdAmountToNumber(balanceSheet.totalAssets)).toBe(6)
+    expect(usdAmountToNumber(summary.cash)).toBe(6)
     // The 5 POL fee is now a real, non-zero Transaction Fee Expense.
-    expect(summary.transactionFees).toBeCloseTo(0.4, 6)
-    expect(summary.transactionFees).toBeGreaterThan(0)
+    expect(usdAmountToNumber(summary.transactionFees)).toBeCloseTo(0.4, 6)
+    expect(summary.transactionFees).toBeGreaterThan(0n)
     // revenue 8.0 − expense (1.6 operating + 0.4 fee) = 6.0
-    expect(summary.expense).toBeCloseTo(2, 6)
-    expect(balanceSheet.retainedEarnings).toBeCloseTo(6, 6)
+    expect(usdAmountToNumber(summary.expense)).toBeCloseTo(2, 6)
+    expect(usdAmountToNumber(balanceSheet.earningsToDate)).toBeCloseTo(6, 6)
   })
 
   it('stamps every posting with its currency, quantity and rate of record (Taux)', () => {
-    const { entries } = assembleAccounting(sampleInput())
+    const { journal } = assembleAccounting(sampleInput())
+    const lines = journal.flatMap((entry) => entry.lines)
 
-    expect(entries.length).toBeGreaterThan(0)
-    for (const entry of entries) {
-      expect(entry.token).toBe('native')
+    expect(lines.length).toBeGreaterThan(0)
+    for (const line of lines) {
+      expect(line.movement?.token).toBe('native')
       // Every native posting carries the $0.08 rate of record, stored at 6-dp.
-      expect(entry.rate).toBe(POL_USD)
+      expect(line.movement?.rate).toBe(usdRateFromNumber(POL_USD))
       // amountUsd = whole-token quantity × rate, so the derived USD is consistent.
-      expect(entry.amountUsd).toBeGreaterThan(0)
+      expect(line.debit ?? line.credit).toBeGreaterThan(0n)
     }
   })
 })

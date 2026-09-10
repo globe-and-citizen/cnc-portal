@@ -9,10 +9,10 @@ import {
   filterByPeriod,
   incomeExportTitle,
   balanceExportTitle,
-  trialExportTitle,
-  currencySymbol
+  trialExportTitle
 } from '@/utils/accounting/presenter'
-import { presentLedger } from '@/utils/accounting/ledgerPresenter'
+import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
+import { accountFor } from '@/utils/accounting/accountRegistry'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { categoryOf } from '@/utils/accounting/ledgerCategory'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -70,49 +70,37 @@ describe('presentIncome', () => {
 })
 
 describe('presentBalance', () => {
-  it('rolls cash into a single line plus equity breakdown', () => {
+  it('presents concrete account rows and an explicit earnings contribution', () => {
     const balance = presentBalance(books().journal)
-    expect(balance.assetLines[0].label).toBe('Cash (all pockets)')
-    expect(balance.equityLines.map((l) => l.label)).toEqual([
-      'Owner capital',
-      'Investor equity (SHER)',
-      'Retained earnings (net profit)'
-    ])
-    expect(balance.liabilityLines).toContainEqual({ label: 'None (no debt)', value: '$0.00' })
-  })
-
-  it('breaks cash down by pocket and currency under the total', () => {
-    const balance = presentBalance(books().journal)
-    // The USDC deposit lands in the Bank pocket → a "• Bank · USDC" drill-down
-    // line that opens the Cash — Bank account.
-    expect(balance.assetLines.find((line) => line.label === '• Bank · USDC')).toMatchObject({
+    expect(balance.assetLines.find((line) => line.label === 'Cash — Bank')).toMatchObject({
       value: '$100.00',
       account: { family: { name: 'Cash — Bank' } }
     })
+    expect(balance.equityLines.at(-1)).toMatchObject({
+      label: 'Earnings to date',
+      value: '$70.00',
+      accounts: ['Service Revenue', 'Operating Expense']
+    })
+    expect(balance.earningsLines.map((line) => [line.label, line.value])).toEqual([
+      ['Service Revenue', '$100.00'],
+      ['Operating Expense', '-$30.00']
+    ])
+    expect(balance.totalLiabilities).toBe('$0.00')
   })
 
-  const nativeLabel = `• Bank · ${currencySymbol('native')}`
-  const nativeEntry = (amountUsd: number): LedgerEntry => ({
-    id: 'pol',
+  const bankDeposit = (amountUsd: number): LedgerEntry => ({
+    id: 'bank',
     timestamp: 1,
     useCase: 'UC-BANK-02',
     debit: 'Cash — Bank',
     credit: 'Service Revenue',
     amountUsd,
-    token: 'native',
-    rawAmount: '28953000000000000', // 0.028953 POL
+    token: 'usdc',
+    rawAmount: String(amountUsd * 1_000_000),
+    rate: 1,
     internal: false,
     memo: '',
     enrichment: 'not-applicable'
-  })
-
-  it('shows a native holding as its quantity and its USD equivalent', () => {
-    // 0.028953 POL at ~$0.08 → ~$0.0023, which rounds to $0.00 — the quantity is
-    // what keeps the holding legible, but the $ equivalence is still printed.
-    const line = presentBalance(buildJournal([nativeEntry(0.002328)])).assetLines.find(
-      (l) => l.label === nativeLabel
-    )
-    expect(line?.value).toBe(`0.028953 ${currencySymbol('native')} ≈ $0.00`)
   })
 
   it('lists a non-cash asset (Trading account) as its own drillable asset line', () => {
@@ -125,6 +113,7 @@ describe('presentBalance', () => {
       amountUsd: 30,
       token: 'usdc',
       rawAmount: '30000000',
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
@@ -139,26 +128,22 @@ describe('presentBalance', () => {
   it('labels later Bank deployments separately while retaining their concrete account selections', () => {
     const journal = buildJournal([
       {
-        ...nativeEntry(100),
+        ...bankDeposit(100),
         id: 'bank-1',
-        token: 'usdc',
-        rawAmount: '100000000',
         debitInstance: '0x1111111111111111111111111111111111111111'
       },
       {
-        ...nativeEntry(25),
+        ...bankDeposit(25),
         id: 'bank-2',
         timestamp: 2,
-        token: 'usdc',
-        rawAmount: '25000000',
         debitInstance: '0x2222222222222222222222222222222222222222'
       }
     ])
     const bankLines = presentBalance(journal).assetLines.filter((line) =>
-      line.label.startsWith('• Bank')
+      line.label.startsWith('Cash — Bank')
     )
 
-    expect(bankLines.map((line) => line.label)).toEqual(['• Bank · USDC', '• Bank 2 · USDC'])
+    expect(bankLines.map((line) => line.label)).toEqual(['Cash — Bank', 'Cash — Bank 2'])
     expect(
       bankLines.map((line) => (typeof line.account === 'string' ? line.account : line.account?.id))
     ).toEqual([
@@ -170,7 +155,7 @@ describe('presentBalance', () => {
 
 describe('presentTrial', () => {
   it('puts each account balance on its normal side and stays balanced', () => {
-    const trial = presentTrial(books().generalLedger)
+    const trial = presentTrial(books().journal)
     expect(trial.balanced).toBe(true)
     const revenue = trial.rows.find((r) => r.account.family.name === 'Service Revenue')
     expect(revenue?.nature).toBe('Income')
@@ -179,9 +164,9 @@ describe('presentTrial', () => {
   })
 })
 
-describe('presentLedger', () => {
+describe('presentJournalLedger', () => {
   it('emits two rows per posting and counts entries (not rows)', () => {
-    const ledger = presentLedger(books().entries, 'All')
+    const ledger = presentJournalLedger(books().journal)
     expect(ledger.entryCount).toBe(2)
     expect(ledger.rows).toHaveLength(4)
     // First leg carries the date + label; the credit leg is blanked.
@@ -189,15 +174,18 @@ describe('presentLedger', () => {
     expect(ledger.rows[1].isFirst).toBe(false)
   })
 
-  it('filters by category', () => {
-    const ledger = presentLedger(books().entries, 'Revenue')
+  it('filters by account', () => {
+    const ledger = presentJournalLedger(books().journal, null, null, null, [
+      accountFor('Service Revenue').id
+    ])
     expect(ledger.entryCount).toBe(1)
     expect(ledger.rows[0].category).toBe('Revenue')
   })
 
   it('categorizes the Bank protocol fee as an Expense (not a neutral Transfer)', () => {
+    const tx = `0x${'f'.repeat(64)}`
     const fee: LedgerEntry = {
-      id: 'fee-1',
+      id: `${tx}-2`,
       timestamp: 100,
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
@@ -205,25 +193,35 @@ describe('presentLedger', () => {
       amountUsd: 0.5,
       token: 'usdc',
       rawAmount: '500000',
+      rate: 1,
       memo: 'Transaction fee skimmed from Bank',
       enrichment: 'not-applicable'
     }
-    expect(categoryOf(fee)).toBe('Expense')
-    const ledger = presentLedger([fee], 'Expense')
-    expect(ledger.entryCount).toBe(1)
-    expect(ledger.rows[0].category).toBe('Expense')
-    expect(ledger.rows[0].label).toBe('Transaction fee')
-    expect(ledger.rows[0].account).toBe('Transaction Fee Expense')
-    expect(ledger.rows[0].dr).toBe('$0.50')
+    const outflow: LedgerEntry = {
+      ...fee,
+      id: `${tx}-1`,
+      useCase: 'CASH-OUT',
+      debit: 'Operating Expense',
+      amountUsd: 5,
+      rawAmount: '5000000'
+    }
+    expect(categoryOf(buildJournal([outflow, fee])[0]!)).toBe('Expense')
+    const ledger = presentJournalLedger(buildJournal([fee]))
+    expect(ledger.entryCount).toBe(0)
+    expect(ledger.rows).toEqual([])
   })
 
   it('labels the transaction by its accounting entry, not the raw memo', () => {
-    const ledger = presentLedger(books().entries, 'Revenue')
+    const ledger = presentJournalLedger(books().journal, null, null, null, [
+      accountFor('Service Revenue').id
+    ])
     expect(ledger.rows[0].label).toBe('Service revenue') // normalized UC-BANK-02 label
   })
 
   it('attaches a structured activity (actor + predicate) without touching the accounting label', () => {
-    const ledger = presentLedger(books().entries, 'Revenue')
+    const ledger = presentJournalLedger(books().journal, null, null, null, [
+      accountFor('Service Revenue').id
+    ])
     expect(ledger.rows[0].label).toBe('Service revenue') // accounting label unchanged
     expect(ledger.rows[0].activity).toMatchObject({
       kind: 'actor',
@@ -234,7 +232,7 @@ describe('presentLedger', () => {
 })
 
 describe('filterByPeriod', () => {
-  const entries = books().entries
+  const entries = books().journal
   it('keeps entries inside an inclusive window', () => {
     expect(filterByPeriod(entries, new Date(150_000), null)).toHaveLength(1) // only ts=200
     expect(filterByPeriod(entries, null, new Date(150_000))).toHaveLength(1) // only ts=100

@@ -12,6 +12,7 @@ import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
 import { type DecodedCall } from '@/types'
 import type { SafeIncomingTransfer } from '@/types'
 import { formatToken } from '@/utils/format'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 
 /**
  * Get Safe transaction service URL for a given chain ID
@@ -30,12 +31,7 @@ export function getTxServiceUrl(chainId: number): string {
  */
 export function getSafeHomeUrl(chainId: number, safeAddress: Address): string {
   const chainName = CHAIN_NAMES[chainId] || 'ethereum'
-  return `https://app.safe.global/home?safe=${chainName}:${safeAddress}`
-}
-
-export function getSafeSettingsUrl(chainId: number, safeAddress: string): string {
-  const chainName = CHAIN_NAMES[chainId] || 'ethereum'
-  return `https://app.safe.global/settings/setup?safe=${chainName}:${safeAddress}`
+  return `https://app.safe.global/home?safe=${chainName}:${normalizeSafeAddress(safeAddress)}`
 }
 
 export function transformToSafeMultisigResponse(
@@ -53,7 +49,7 @@ export function transformToSafeMultisigResponse(
   })
 
   return {
-    safe: transaction.safe,
+    safe: normalizeSafeAddress(transaction.safe),
     to: transaction.to,
     value: transaction.value,
     data: transaction.data ?? undefined,

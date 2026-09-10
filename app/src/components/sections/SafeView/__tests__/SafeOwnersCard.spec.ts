@@ -29,10 +29,8 @@ interface MockTeam {
 }
 
 // Hoisted mocks
-const { mockuseGetSafeInfoQuery, mockGetSafeSettingsUrl, mockOpenSafeAppUrl } = vi.hoisted(() => ({
-  mockuseGetSafeInfoQuery: vi.fn(),
-  mockGetSafeSettingsUrl: vi.fn(),
-  mockOpenSafeAppUrl: vi.fn()
+const { mockuseGetSafeInfoQuery } = vi.hoisted(() => ({
+  mockuseGetSafeInfoQuery: vi.fn()
 }))
 
 // Test constants - defined before mocks
@@ -70,12 +68,6 @@ vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
 
-// Mock Safe composables
-vi.mock('@/composables/safe', () => ({
-  getSafeSettingsUrl: mockGetSafeSettingsUrl,
-  openSafeAppUrl: mockOpenSafeAppUrl
-}))
-
 // Component stubs
 const SELECTORS = {
   card: '[data-test="card-component"]',
@@ -88,8 +80,7 @@ const SELECTORS = {
   removeOwnerBtn: '[data-test="remove-owner-button"]',
   addSignerModal: '[data-test="add-signer-modal"]',
   updateThresholdModal: '[data-test="update-threshold-modal"]',
-  loadingSpinner: '.animate-spin',
-  openSafeAppFooter: '[data-test="open-safe-app-footer"]'
+  loadingSpinner: '.animate-spin'
 } as const
 
 const AddressTooltipStub = defineComponent({
@@ -157,12 +148,6 @@ describe('SafeOwnersCard', () => {
     vi.mocked(useUserDataStore).mockReturnValue({
       address: ''
     } as ReturnType<typeof useUserDataStore>)
-
-    mockGetSafeSettingsUrl.mockReturnValue(
-      'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
-    )
-
-    mockOpenSafeAppUrl.mockImplementation(() => {})
 
     // Reset reactive values
     mockSafeInfoData.value = null

@@ -108,6 +108,31 @@ describe('Team Store', () => {
       const store = useTeamStore()
       expect(store.getInvestorAddress()).toBeUndefined()
     })
+
+    it('checksum-normalizes a Safe address loaded from team metadata', () => {
+      vi.mocked(useGetTeamQuery).mockReturnValueOnce(
+        buildQueryReturn({
+          data: ref({
+            ...mockTeamData,
+            teamContracts: [
+              ...mockTeamData.teamContracts,
+              {
+                address: '0x0557f280d9da274254e85ee70c2936694e494275',
+                admins: [],
+                type: 'Safe',
+                deployer: '0x0000000000000000000000000000000000000001'
+              }
+            ]
+          })
+        })
+      )
+
+      const store = useTeamStore()
+
+      expect(store.getContractAddressByType('Safe')).toBe(
+        '0x0557F280D9DA274254e85Ee70c2936694e494275'
+      )
+    })
   })
 
   describe('error reactivity', () => {

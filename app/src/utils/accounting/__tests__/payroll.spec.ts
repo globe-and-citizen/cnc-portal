@@ -1,0 +1,180 @@
+import { describe, it, expect } from 'vitest'
+import { mapPayroll } from '@/utils/accounting/mappers/payroll'
+import { makeCtx, ADDR } from './fixtures'
+
+const ctx = makeCtx()
+
+describe('mapPayroll settlements', () => {
+  it('settles a native wage withdrawal against Wage Payable (UC-CASH-03)', () => {
+    const [entry] = mapPayroll(
+      {
+        withdraws: [
+          {
+            id: 'w1',
+            contractAddress: ADDR.payroll,
+            withdrawer: ADDR.member,
+            amount: '1000000000000000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entry).toMatchObject({
+      useCase: 'UC-CASH-03',
+      debit: 'Wage Payable',
+      credit: 'Cash — Payroll',
+      amountUsd: 2,
+      enrichment: 'needs-off-chain-data'
+    })
+  })
+
+  it('books a SHER WithdrawToken as the equity leg (SHERS To Be Issued → Investor Equity)', () => {
+    const [entry] = mapPayroll(
+      {
+        withdrawTokens: [
+          {
+            id: 'w2',
+            contractAddress: ADDR.payroll,
+            withdrawer: ADDR.member,
+            tokenAddress: ADDR.sherToken,
+            amount: '10000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entry).toMatchObject({
+      useCase: 'UC-CASH-03',
+      debit: 'SHERS To Be Issued',
+      credit: 'Investor Equity',
+      token: 'sher',
+      shares: 10,
+      amountUsd: 5 // 10 sher * $0.50
+    })
+  })
+
+  it('books a USDC WithdrawToken as a cash settlement', () => {
+    const [entry] = mapPayroll(
+      {
+        withdrawTokens: [
+          {
+            id: 'w3',
+            contractAddress: ADDR.payroll,
+            withdrawer: ADDR.member,
+            tokenAddress: ADDR.usdcToken,
+            amount: '3000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entry).toMatchObject({ debit: 'Wage Payable', credit: 'Cash — Payroll', token: 'usdc' })
+  })
+
+  it('books a deposit as internal funding from its source pocket', () => {
+    const [entry] = mapPayroll(
+      {
+        deposits: [
+          {
+            id: 'dep',
+            contractAddress: ADDR.payroll,
+            depositor: ADDR.bank,
+            amount: '1000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entry).toMatchObject({
+      useCase: 'INTERNAL',
+      debit: 'Cash — Payroll',
+      credit: 'Cash — Bank',
+      internal: true
+    })
+  })
+
+  it('drops the empty GO leg of a SHER-only claim, keeping just the share issuance', () => {
+    // A claim paid only in SHER still fires a native Withdraw(employee, 0) for the
+    // wage's zero-rate GO component (the contract emits per component, no >0 guard).
+    // Only the SHER equity leg should survive — no phantom $0 "Wage settlement".
+    const entries = mapPayroll(
+      {
+        withdraws: [
+          {
+            id: 'go-0',
+            contractAddress: ADDR.payroll,
+            withdrawer: ADDR.member,
+            amount: '0',
+            timestamp: 100
+          }
+        ],
+        withdrawTokens: [
+          {
+            id: 'sher-25',
+            contractAddress: ADDR.payroll,
+            withdrawer: ADDR.member,
+            tokenAddress: ADDR.sherToken,
+            amount: '25000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toMatchObject({
+      debit: 'SHERS To Be Issued',
+      credit: 'Investor Equity',
+      token: 'sher',
+      shares: 25
+    })
+  })
+
+  it('keeps a non-zero native base unit even when its source projection rounds to $0.00', () => {
+    // A few wei of the 18-decimal native token still represent source evidence,
+    // even though the current quantity and money displays round them to zero.
+    const entries = mapPayroll(
+      {
+        withdraws: [
+          {
+            id: 'dust',
+            contractAddress: ADDR.payroll,
+            withdrawer: ADDR.member,
+            amount: '1000000', // 1e6 wei ≈ 1e-12 native → rounds to 0 at 6 dp
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entries).toHaveLength(1)
+    expect(entries[0]?.rawAmount).toBe('1000000')
+  })
+
+  it('books an owner sweep back to Bank as an internal move', () => {
+    const [entry] = mapPayroll(
+      {
+        ownerTreasuryWithdrawNatives: [
+          {
+            id: 's1',
+            contractAddress: ADDR.payroll,
+            ownerAddress: ADDR.founder,
+            amount: '1000000000000000000',
+            timestamp: 100
+          }
+        ]
+      },
+      ctx
+    )
+    expect(entry).toMatchObject({
+      useCase: 'INTERNAL',
+      debit: 'Cash — Bank',
+      credit: 'Cash — Payroll',
+      internal: true
+    })
+  })
+})

@@ -48,9 +48,8 @@ flowchart LR
 10. A leg with no matching known source address, no receipt proof, or ambiguous receipt proof remains an unresolved account. Its Trial
     Balance drill-down and export scope the selected account to unaddressed legs while retaining each posting's balanced context; no
     historical-instance fallback is permitted.
-11. The General Ledger UI and its PDF and Excel exports project the canonical `JournalEntry` collection, retaining complete entries when
-    filtering by a concrete account or currency. The summary, Income Statement, Balance Sheet, and account drill-downs remain family-level
-    projections of the transitional posting feed; their JournalEntry migration is separate work.
+11. The General Ledger, summary, Income Statement, Balance Sheet, Trial Balance, drill-downs, and PDF and Excel exports project the
+    canonical `JournalEntry` collection. Filters retain complete entries when selecting a concrete account, currency, or reporting period.
 
 The [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the current account terminology, runtime flow,
 report-projection boundary, and implementation evidence.
@@ -78,7 +77,7 @@ report-projection boundary, and implementation evidence.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
+**Implementation evidence reviewed against:** `a99818e80337bc6e44147cdb5df772886ed71ab8`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
 - [Transaction evidence reader](../../../app/src/composables/accounting/useTransactionEvidence.ts)
@@ -91,7 +90,7 @@ report-projection boundary, and implementation evidence.
 - [Validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts)
 - [Concrete-account journal and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts) and
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
-- [Trial-balance card and redeploy hint](../../../app/src/components/sections/AccountingView/TrialBalanceCard.vue)
+- [Trial-balance view and redeploy hint](../../../app/src/views/team/%5Bid%5D/Accounting/TrialBalanceView.vue)
 - [Instance-scoped drill-down](../../../app/src/utils/accounting/accountLedger.ts)
 - [Split and drill-down tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts)
 - [Account-instance evidence tests](../../../app/src/utils/accounting/__tests__/accountInstances.spec.ts) and

@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   buildSherMultiplierTimeline,
   makeSherUsdRate,
-  currentSherUsdRate,
-  type SherMultiplierPoint
+  currentSherUsdRate
 } from '@/utils/accounting/sherRate'
 import { USDC_ADDRESS } from '@/constant'
 import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/contract-events/investor'
@@ -43,7 +42,7 @@ describe('makeSherUsdRate (per-date timeline — freezes a leg at its own date)'
   })
 
   it('values 1 SHER as 1 / multiplier', () => {
-    const points: SherMultiplierPoint[] = [{ timestamp: 0, multiplier: 2 }]
+    const points = [{ timestamp: 0, multiplier: 2 }]
     const rate = makeSherUsdRate(points)!
     expect(rate(new Date(1_000 * 1000))).toBeCloseTo(0.5) // 2x → $0.50 / SHER
   })

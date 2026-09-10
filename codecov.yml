@@ -24,13 +24,13 @@ coverage:
         #
         # `patch` is a required check on develop, so this is a merge blocker
         # rather than the "informational" signal the previous comment here
-        # claimed. Keep the 50% floor; just measure it against the suites that
+        # claimed. Keep the 90% target; just measure it against the suites that
         # are actually meant to cover new lines.
         flags:
           - app-unit-tests
           - api-unit-tests
           - contract-unit-tests
-        target: 50%
+        target: 90%
         threshold: 10%
 
 github_checks:

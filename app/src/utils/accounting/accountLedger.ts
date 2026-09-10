@@ -1,8 +1,9 @@
 import { dayLabel, filterByPeriod, money, periodLabel } from './presenter'
-import type { Account } from './accountRegistry'
 import { accountFamilyOf, type AccountName } from './chartOfAccounts'
-import { creditOf, debitOf, type JournalEntry } from './journalEntry'
-import type { LedgerRow } from './ledgerPresenter'
+import { creditOf, debitOf } from './journalEntry'
+import type { LedgerRow } from './journalLedgerPresenter'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import type { Account, JournalEntry, UsdAmount } from './types'
 
 /**
  * A statement line selects a chart family; a Trial Balance line selects one
@@ -28,10 +29,6 @@ function lineMatchesSelection(
   return families.includes(line.account.family.name)
 }
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
-}
-
 /**
  * Complete JournalEntry records that touch the selected account or account
  * family, in chronological order for a ledger reading.
@@ -52,9 +49,9 @@ export function entriesForAccount(
 function accountMovements(
   entries: readonly JournalEntry[],
   selection: Exclude<AccountSelection, readonly AccountName[]>
-): { debits: number; credits: number } {
-  let debits = 0
-  let credits = 0
+): { debits: UsdAmount; credits: UsdAmount } {
+  let debits = ZERO_USD_AMOUNT
+  let credits = ZERO_USD_AMOUNT
   for (const entry of entries) {
     for (const line of entry.lines) {
       if (!lineMatchesSelection(line, selection)) continue
@@ -62,7 +59,7 @@ function accountMovements(
       credits += creditOf(line)
     }
   }
-  return { debits: round2(debits), credits: round2(credits) }
+  return { debits, credits }
 }
 
 /**
@@ -73,25 +70,29 @@ function accountMovements(
 export function accountNet(
   entries: readonly JournalEntry[],
   selection: Exclude<AccountSelection, readonly AccountName[]>
-): number {
+): UsdAmount {
   const family = isConcreteAccount(selection) ? selection.family : accountFamilyOf(selection)
-  if (!family) return 0
+  if (!family) return ZERO_USD_AMOUNT
   const { debits, credits } = accountMovements(entries, selection)
-  return round2(family.normalBalance === 'debit' ? debits - credits : credits - debits)
+  return family.normalBalance === 'debit' ? debits - credits : credits - debits
 }
 
 /** What an account carries into a reporting window: prior movements and balance. */
 export interface AccountOpening {
   /** Sum of debit lines booked before the window. */
-  debits: number
+  debits: UsdAmount
   /** Sum of credit lines booked before the window. */
-  credits: number
+  credits: UsdAmount
   /** Balance on the selected account's normal side. */
-  balance: number
+  balance: UsdAmount
 }
 
 /** Nothing carried in — an open-ended window, or an aggregate statement line. */
-export const NO_OPENING: AccountOpening = { debits: 0, credits: 0, balance: 0 }
+export const NO_OPENING: AccountOpening = {
+  debits: ZERO_USD_AMOUNT,
+  credits: ZERO_USD_AMOUNT,
+  balance: ZERO_USD_AMOUNT
+}
 
 /**
  * What a concrete account or one account family carries into a window opening
@@ -123,6 +124,8 @@ export function openingRow(opening: AccountOpening): LedgerRow {
     accountDimmed: false,
     dr: money(opening.debits),
     cr: money(opening.credits),
+    debitAmount: opening.debits,
+    creditAmount: opening.credits,
     currency: '',
     quantity: '',
     rate: '',
@@ -145,17 +148,17 @@ function rowMatchesSelection(
 export function withRunningBalance(
   rows: readonly LedgerRow[],
   selection: Exclude<AccountSelection, readonly AccountName[]>,
-  startingBalance: number
+  startingBalance: UsdAmount
 ): LedgerRow[] {
   const family = isConcreteAccount(selection) ? selection.family : accountFamilyOf(selection)
   if (!family) return [...rows]
   let balance = startingBalance
   return rows.map((row) => {
     if (!rowMatchesSelection(row, selection)) return row
-    const debit = Number(row.dr.replace(/[$,]/g, '') || 0)
-    const credit = Number(row.cr.replace(/[$,]/g, '') || 0)
+    const debit = row.debitAmount ?? ZERO_USD_AMOUNT
+    const credit = row.creditAmount ?? ZERO_USD_AMOUNT
     const movement = family.normalBalance === 'debit' ? debit - credit : credit - debit
-    balance = round2(balance + movement)
+    balance += movement
     return { ...row, balance: money(balance) }
   })
 }

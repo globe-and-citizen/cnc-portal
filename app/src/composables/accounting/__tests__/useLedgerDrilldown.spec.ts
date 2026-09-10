@@ -55,10 +55,10 @@ describe('useLedgerDrilldown', () => {
   it('keeps an aggregate statement figure and selects the union of its journal entries', () => {
     const drilldown = useLedgerDrilldown(entries, bounds)
     const accounts = ['Payroll Expense', 'Deferred SHER Compensation'] as const
-    drilldown.openFor(accounts, '-$50.00', 'Retained earnings')
+    drilldown.openFor(accounts, '-$50.00', 'Earnings to date')
 
     expect(drilldown.selectedLine.value).toMatchObject({
-      label: 'Retained earnings',
+      label: 'Earnings to date',
       total: '-$50.00'
     })
     expect(drilldown.drilldownEntries.value).toEqual(entriesForAccount(journal, accounts))

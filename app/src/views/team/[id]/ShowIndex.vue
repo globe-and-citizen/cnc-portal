@@ -49,9 +49,12 @@ const teamStore = useTeamStore()
 
 const route = useRoute()
 
-/** Same component for list + detail — key by full path so the view always updates. */
+/** Preserve section layouts that own route-scoped state; remount them when the team changes. */
 const teamOutletKey = computed(() => {
   const name = route.name
+  if (typeof name === 'string' && name.startsWith('accounting')) {
+    return `accounting:${String(route.params.id ?? '')}`
+  }
   if (name === 'bod-proposals' || name === 'proposal-detail') {
     return route.fullPath
   }

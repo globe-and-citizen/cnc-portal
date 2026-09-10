@@ -2,14 +2,14 @@
  * Safe source mapper — plain treasury cash in/out through the team's Gnosis Safe.
  *
  * The Safe emits no bespoke accounting events, so its moves arrive as generic
- * token transfers (native or ERC-20) classified relative to the Safe address:
+ * token transfers (native or ERC-20) interpreted relative to the Safe address:
  *
  * - **Inflow** (to the Safe):
  *   - from an internal pocket → internal move (Dr Cash — Safe · Cr that pocket)
  *   - from anyone external    → UC-BANK-02 (Dr Cash — Safe · Cr Service Revenue)
  * - **Outflow** (from the Safe):
  *   - to an internal pocket → internal move (Dr that pocket · Cr Cash — Safe)
- *   - to anyone else        → unclassified outflow, flagged `needs-off-chain-data`
+ *   - to anyone else        → unassigned outflow, flagged `needs-off-chain-data`
  *
  * Investments routed through the SafeDepositRouter also land in the Safe, but they
  * are booked from the router event (UC-SDR-01) — those transfers should be excluded
@@ -19,7 +19,6 @@ import { getAddress, isAddress } from 'viem'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import { atDate, type MapperContext } from './context'
-import { applyClassification } from './applyClassification'
 
 /** A normalized token transfer touching the Safe (native = `token: null`). */
 export interface SafeTransferRow {
@@ -105,7 +104,7 @@ function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: str
     useCase: 'CASH-OUT',
     debit: 'Operating Expense',
     internal: isInternalAddress(row.to, ctx.internalAddresses),
-    memo: 'Unclassified Safe outflow to external address',
+    memo: 'Unassigned Safe outflow to external address',
     enrichment: 'needs-off-chain-data'
   })
 }
@@ -120,8 +119,7 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Le
       // with a legacy manual category.
       entries.push(inferInflow(row, ctx, input.safeAddress))
     } else if (sameAddress(row.from, input.safeAddress)) {
-      const inferred = inferOutflow(row, ctx, input.safeAddress)
-      entries.push(inferred.internal ? inferred : applyClassification(inferred, 'out', SAFE, ctx))
+      entries.push(inferOutflow(row, ctx, input.safeAddress))
     }
     // A transfer touching neither side of the Safe is not a Safe move — skip it.
   }

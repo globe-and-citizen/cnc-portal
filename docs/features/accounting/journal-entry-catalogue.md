@@ -96,8 +96,8 @@ This is the only fee representation. There is no separate fee entry before, afte
 
 ### Bank Transfer to an External Recipient with a Fee — `CASH-OUT` + Fee
 
-Bank transfers 100 USD to an external recipient and the operation charges a 1 USD fee. Until an owner classifies the reason, the transfer is
-provisionally an operating expense.
+Bank transfers 100 USD to an external recipient and the operation charges a 1 USD fee. Until an owner assigns a different counter-account,
+source inference posts the transfer provisionally to Operating Expense.
 
 | Account                 | Debit | Credit |
 | ----------------------- | ----: | -----: |
@@ -114,85 +114,71 @@ The Safe transfers 100 USD to Bank. This changes the cash location but does not 
 | Cash — Bank |   100 |        |
 | Cash — Safe |       |    100 |
 
-### Unclassified Bank or Safe Outflow — `CASH-OUT`
+### Unassigned Bank or Safe Outflow — `CASH-OUT`
 
-Bank sends 100 USD to an external address and no manual classification is available yet.
+Bank sends 100 USD to an external address and no manual account assignment is available yet.
 
 | Account           | Debit | Credit |
 | ----------------- | ----: | -----: |
 | Operating Expense |   100 |        |
 | Cash — Bank       |       |    100 |
 
-This is a visible provisional classification and is marked as needing off-chain data. It is not evidence that every external transfer is an
+This is a visible source-inferred account and is marked as needing off-chain data. It is not evidence that every external transfer is an
 operating expense.
 
-## Classified Bank and Safe Entries
+## Account-Assigned Bank and Safe Outflows
 
-An owner can classify a Bank or Safe movement only when its counterparty is external. A movement between known company pockets remains the
-`INTERNAL` entry above and cannot be reclassified.
+An owner can assign one supported counter-account directly to a transaction-backed Bank or Safe outflow only when its counterparty is
+external and the entry contains one source withdrawal. A movement between known company pockets remains the `INTERNAL` entry above. A
+deposit retains its source-evidence account, and a compound journal entry remains read-only.
 
-### Classified Revenue Inflow — `CASH-IN`
+### Owner-Capital Assignment — `CASH-OUT`
 
-An owner classifies a 100 USD Bank deposit as revenue.
-
-| Account         | Debit | Credit |
-| --------------- | ----: | -----: |
-| Cash — Bank     |   100 |        |
-| Service Revenue |       |    100 |
-
-### Classified Owner-Capital Inflow — `CASH-IN`
-
-An owner classifies a 100 USD Bank deposit as capital contributed without SHER.
-
-| Account       | Debit | Credit |
-| ------------- | ----: | -----: |
-| Cash — Bank   |   100 |        |
-| Owner Capital |       |    100 |
-
-### Classified Owner-Capital Withdrawal — `CASH-OUT`
-
-An owner classifies a 100 USD Bank withdrawal as a return of previously contributed capital.
+An owner assigns Owner Capital to a 100 USD Bank withdrawal that returns previously contributed capital.
 
 | Account       | Debit | Credit |
 | ------------- | ----: | -----: |
 | Owner Capital |   100 |        |
 | Cash — Bank   |       |    100 |
 
-### Classified Operating Expense — `CASH-OUT`
+### Operating-Expense Assignment — `CASH-OUT`
 
-An owner classifies a 100 USD Bank or Safe outflow as an operating expense.
+An owner assigns Operating Expense to a 100 USD Bank or Safe outflow.
 
 | Account           | Debit | Credit |
 | ----------------- | ----: | -----: |
 | Operating Expense |   100 |        |
 | Cash — Bank/Safe  |       |    100 |
 
-### Classified Payroll Expense — `CASH-OUT`
+### Payroll-Expense Assignment — `CASH-OUT`
 
-An owner classifies a 100 USD Bank or Safe outflow as a payroll payment.
+An owner assigns Payroll Expense to a 100 USD Bank or Safe outflow.
 
 | Account          | Debit | Credit |
 | ---------------- | ----: | -----: |
 | Payroll Expense  |   100 |        |
 | Cash — Bank/Safe |       |    100 |
 
-### Classified Interest Expense — `CASH-OUT`
+### Interest-Expense Assignment — `CASH-OUT`
 
-An owner classifies a 100 USD Bank or Safe outflow as interest.
+An owner assigns Interest Expense to a 100 USD Bank or Safe outflow.
 
 | Account          | Debit | Credit |
 | ---------------- | ----: | -----: |
 | Interest Expense |   100 |        |
 | Cash — Bank/Safe |       |    100 |
 
-### Classified Dividend — `CASH-OUT`
+### Dividend-Expense Assignment — `CASH-OUT`
 
-An owner classifies a 100 USD Bank or Safe outflow as a dividend.
+An owner assigns Dividend Expense to a 100 USD Bank or Safe outflow.
 
 | Account          | Debit | Credit |
 | ---------------- | ----: | -----: |
 | Dividend Expense |   100 |        |
 | Cash — Bank/Safe |       |    100 |
+
+For a Bank outflow with a transaction-bound fee, the selected account replaces only the provisional Operating Expense line. The
+`Transaction Fee Expense` debit and gross Cash — Bank credit remain unchanged in the same balanced `JournalEntry`.
 
 ## Payroll, Expense, and Dividend Entries
 
@@ -342,16 +328,19 @@ have no current mapper. They are intentionally excluded from this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `355aa31a0acb30d889a6067df5d8719a8201e35b`
+**Implementation evidence reviewed against:** `722692bad36db94c22ce1918c03e59a1e0f2dd65`
 
 - [Use-case identifiers and source-operation identity](../../../app/src/utils/accounting/ledgerEntry.ts)
 - [Journal assembly](../../../app/src/utils/accounting/generalLedger.ts) and
   [validated journal model](../../../app/src/utils/accounting/journalEntry.ts)
-- [Source mappers](../../../app/src/utils/accounting/mappers/), including [Bank](../../../app/src/utils/accounting/mappers/bank.ts),
-  [fees](../../../app/src/utils/accounting/mappers/fees.ts), [Community Credit](../../../app/src/utils/accounting/mappers/fixedReturn.ts),
-  and [manual classification](../../../app/src/utils/accounting/classification.ts)
-- [Journal assembly regression tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts) and
-  [General Ledger projection tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), including
+- [Source mappers](../../../app/src/utils/accounting/mappers/), including
+  [Bank and its transaction-bound fees](../../../app/src/utils/accounting/mappers/bank.ts),
+  [Payroll](../../../app/src/utils/accounting/mappers/payroll.ts), [Expense](../../../app/src/utils/accounting/mappers/expenseAccount.ts),
+  [Community Credit](../../../app/src/utils/accounting/mappers/fixedReturn.ts), and
+  [manual journal account assignment](../../../app/src/utils/accounting/journalAccountAssignment.ts)
+- [Journal assembly regression tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts),
+  [account-assignment regression tests](../../../app/src/utils/accounting/__tests__/assemble.accountAssignment.spec.ts),
+  [General Ledger projection tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), and
   [Community Credit mapper coverage](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts)
 
 ## Related Documentation

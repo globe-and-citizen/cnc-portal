@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildJournal } from '@/utils/accounting/generalLedger'
 import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
-import { makeCtx, ADDR, creditOffer, creditEvent } from './fixtures'
+import { makeCtx, ADDR, creditOffer, creditEvent, usd } from './fixtures'
 
 const ctx = makeCtx()
 // The three per-lender feeds share one row shape; the alias names the event.
@@ -92,14 +92,16 @@ describe('mapFixedReturnEvents', () => {
       ctx
     )
 
-    const repayment = buildJournal(entries).find((entry) => entry.id === txHash)
+    const repayment = buildJournal(entries.map((entry) => ({ ...entry, rate: 1 }))).find(
+      (entry) => entry.id === txHash
+    )
 
     expect(repayment).toMatchObject({
       sourceOperationId: txHash,
       txHash,
       lines: [
-        { account: { family: { name: 'Loan Payable' } }, debit: 4 },
-        { account: { family: { name: 'Cash — Bank' } }, credit: 4 }
+        { account: { family: { name: 'Loan Payable' } }, debit: usd(4) },
+        { account: { family: { name: 'Cash — Bank' } }, credit: usd(4) }
       ]
     })
   })

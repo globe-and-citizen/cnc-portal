@@ -7,18 +7,60 @@
  * operation, never a second transaction or a special filter category.
  */
 import { formatNumber } from '@/utils/format'
-import { activityDestinationOf } from './activityDestination'
+import { activityDestinationOf, type ActivityDestination } from './activityDestination'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { badgeClassOf, categoryLabelOf } from './ledgerCategory'
 import { currencySymbol, filterByPeriod, formatUnixDateTime, money, periodLabel } from './presenter'
 import { wholeTokenAmount } from './toUsd'
-import { creditOf, debitOf, type JournalEntry, type JournalEntryLine } from './journalEntry'
-import type { Account } from './accountRegistry'
+import { creditOf, debitOf } from './journalEntry'
 import type { LedgerEntry } from './ledgerEntry'
-import type { LedgerRow } from './ledgerPresenter'
+import { ZERO_USD_AMOUNT, usdAmountToNumber, usdRateToNumber } from './monetaryAmount'
+import type { Account, JournalEntry, JournalEntryLine, UsdAmount } from './types'
+
+/** Display-ready journal line shared by the ledger, drill-downs and exporters. */
+export interface LedgerRow {
+  isFirst: boolean
+  date: string
+  /** The generic accounting-entry label (the "Transaction" column), e.g. "Wage accrual". */
+  label: string
+  /** Transaction hash for an on-chain entry; absent for a synthetic operation or continuation row. */
+  txHash?: string
+  /** The structured narration (the "Activity" column) — avatar(s) + predicate. */
+  activity: ActivityCell
+  /** The section the Activity links to ({@link ./activityDestination}); absent on
+   *  a continuation row, and on a posting with no portal surface of its own. */
+  destination?: ActivityDestination | null
+  /** Account-derived Action badge text; empty on continuation rows. */
+  category: string
+  categoryClass: string
+  account: string
+  /** Canonical concrete account identity on JournalEntry projections. */
+  accountId?: string
+  /** Concrete account label, including a deployment number or unresolved marker. */
+  accountLabel?: string
+  /** Contract address carried by the concrete journal account. */
+  accountInstance?: string
+  accountMuted: boolean
+  accountDimmed: boolean
+  dr: string
+  cr: string
+  /** Exact debit used by running-balance projections; formatting never becomes source data. */
+  debitAmount?: UsdAmount
+  /** Exact credit used by running-balance projections; formatting never becomes source data. */
+  creditAmount?: UsdAmount
+  /** The posting's currency (spec §2 "Devise"), e.g. `POL` / `USDC`. */
+  currency: string
+  /** Whole-token quantity moved (spec §2 "Quantité"), 6-dp, e.g. `0.070352`. */
+  quantity: string
+  /** USD rate of record (spec §2 "Taux"), up to 6-dp with trailing zeros trimmed, e.g. `$0.08` / `$1`. */
+  rate: string
+  /** Running balance of the drilled account after this posting (see
+   *  {@link ./accountLedger.withRunningBalance}); absent outside a drill-down. */
+  balance?: string
+}
 
 /** A concrete account offered by the General Ledger account filter. */
-export interface JournalAccountFilterOption {
+interface JournalAccountFilterOption {
   value: string
   label: string
 }
@@ -44,10 +86,12 @@ function sourceOf(entry: JournalEntry): LedgerEntry {
     useCase: entry.useCase,
     debit: debit?.account.family.name ?? null,
     credit: credit?.account.family.name ?? null,
-    amountUsd: entry.lines.reduce((sum, line) => sum + debitOf(line), 0),
+    amountUsd: usdAmountToNumber(
+      entry.lines.reduce((sum, line) => sum + debitOf(line), ZERO_USD_AMOUNT)
+    ),
     token: movement?.token ?? 'usdc',
-    rawAmount: movement?.rawAmount ?? '0',
-    ...(movement?.rate != null ? { rate: movement.rate } : {}),
+    rawAmount: movement?.rawAmount.toString() ?? '0',
+    ...(movement ? { rate: usdRateToNumber(movement.rate) } : {}),
     internal: entry.internal,
     memo: entry.memo,
     enrichment: 'not-applicable',
@@ -150,15 +194,14 @@ function movementOf(line: JournalEntryLine): Pick<LedgerRow, 'currency' | 'quant
   if (!line.movement) return NO_MOVEMENT
   let whole = 0
   try {
-    whole = wholeTokenAmount(BigInt(line.movement.rawAmount), line.movement.token)
+    whole = wholeTokenAmount(line.movement.rawAmount, line.movement.token)
   } catch {
     // A malformed raw amount does not alter the validated reporting amount.
   }
   return {
     currency: currencySymbol(line.movement.token),
     quantity: formatNumber(whole, { maxDecimals: 6 }),
-    rate:
-      line.movement.rate == null ? '' : `$${formatNumber(line.movement.rate, { maxDecimals: 6 })}`
+    rate: `$${formatNumber(usdRateToNumber(line.movement.rate), { maxDecimals: 6 })}`
   }
 }
 
@@ -179,7 +222,9 @@ function activityOfJournalEntry(
     const line = entry.lines.find(
       (candidate) =>
         candidate.account.family.name === familyName &&
-        (side === 'debit' ? debitOf(candidate) > 0 : creditOf(candidate) > 0)
+        (side === 'debit'
+          ? debitOf(candidate) > ZERO_USD_AMOUNT
+          : creditOf(candidate) > ZERO_USD_AMOUNT)
     )
     return line ? (labels.get(line.account.id) ?? line.account.family.name) : familyName
   }
@@ -210,16 +255,18 @@ export function journalLedgerRows(
         ...(isFirst && entry.txHash ? { txHash: entry.txHash } : {}),
         activity: isFirst ? activityOfJournalEntry(source, entry, labels) : NO_ACTIVITY,
         ...(isFirst ? { destination: activityDestinationOf(source) } : {}),
-        category: isFirst ? categoryLabelOf(source) : '',
-        categoryClass: isFirst ? badgeClassOf(source) : '',
+        category: isFirst ? categoryLabelOf(entry) : '',
+        categoryClass: isFirst ? badgeClassOf(entry) : '',
         account: line.account.family.name,
         accountId: line.account.id,
         ...(accountLabel !== line.account.family.name ? { accountLabel } : {}),
         ...(line.account.contractAddress ? { accountInstance: line.account.contractAddress } : {}),
-        accountMuted: creditOf(line) > 0,
+        accountMuted: creditOf(line) > ZERO_USD_AMOUNT,
         accountDimmed: false,
-        dr: debitOf(line) > 0 ? money(debitOf(line)) : '',
-        cr: creditOf(line) > 0 ? money(creditOf(line)) : '',
+        dr: debitOf(line) > ZERO_USD_AMOUNT ? money(debitOf(line)) : '',
+        cr: creditOf(line) > ZERO_USD_AMOUNT ? money(creditOf(line)) : '',
+        debitAmount: debitOf(line),
+        creditAmount: creditOf(line),
         ...movementOf(line)
       })
     })
@@ -231,8 +278,9 @@ export function journalLedgerRows(
 export function journalLedgerTotal(entries: readonly JournalEntry[]): string {
   return money(
     entries.reduce(
-      (sum, entry) => sum + entry.lines.reduce((lineSum, line) => lineSum + debitOf(line), 0),
-      0
+      (sum, entry) =>
+        sum + entry.lines.reduce((lineSum, line) => lineSum + debitOf(line), ZERO_USD_AMOUNT),
+      ZERO_USD_AMOUNT
     )
   )
 }

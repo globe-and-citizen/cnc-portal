@@ -12,7 +12,7 @@ export * from './schemas/user';
 export * from './schemas/claim';
 export * from './schemas/contract';
 export * from './schemas/expense';
-export * from './schemas/classification';
+export * from './schemas/journalAccountAssignment';
 export * from './schemas/fixedReturnOffering';
 export * from './schemas/investorMigration';
 export * from './schemas/wage';
@@ -26,9 +26,6 @@ export * from './schemas/actions';
 export * from './schemas/notification';
 export * from './schemas/elections';
 export * from './schemas/health';
-
-// Advanced validation utilities (Zod v4 best practices)
-export * from './utils';
 
 // Type inference helpers and core Zod exports
 export { z } from 'zod';

@@ -3,7 +3,10 @@ import { buildJournal } from '@/utils/accounting/generalLedger'
 import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import { createJournalEntry, type JournalEntry } from '@/utils/accounting/journalEntry'
+import { createJournalEntry } from '@/utils/accounting/journalEntry'
+import { ZERO_USD_AMOUNT } from '@/utils/accounting/monetaryAmount'
+import type { JournalEntry } from '@/utils/accounting/types'
+import { usd } from './fixtures'
 
 const accounts = buildAccountRegistry([])
 
@@ -24,12 +27,12 @@ function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
       {
         id: 'operation-42:principal:debit',
         account: account('Cash — Payroll'),
-        debit: 10
+        debit: usd(10)
       },
       {
         id: 'operation-42:principal:credit',
         account: account('Cash — Bank'),
-        credit: 10
+        credit: usd(10)
       }
     ],
     ...overrides
@@ -37,8 +40,14 @@ function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
 }
 
 function hasBalancedLines(entry: JournalEntry): boolean {
-  const debit = entry.lines.reduce((sum, line) => sum + (line.debit ?? 0), 0)
-  const credit = entry.lines.reduce((sum, line) => sum + (line.credit ?? 0), 0)
+  const debit = entry.lines.reduce(
+    (sum, line) => sum + (line.debit ?? ZERO_USD_AMOUNT),
+    ZERO_USD_AMOUNT
+  )
+  const credit = entry.lines.reduce(
+    (sum, line) => sum + (line.credit ?? ZERO_USD_AMOUNT),
+    ZERO_USD_AMOUNT
+  )
   return debit === credit
 }
 
@@ -47,9 +56,13 @@ describe('JournalEntry', () => {
     const entry = createJournalEntry(
       monetaryEntry({
         lines: [
-          { id: 'operation-42:destination', account: account('Cash — Payroll'), debit: 10 },
-          { id: 'operation-42:fee', account: account('Transaction Fee Expense'), debit: 0.05 },
-          { id: 'operation-42:bank', account: account('Cash — Bank'), credit: 10.05 }
+          { id: 'operation-42:destination', account: account('Cash — Payroll'), debit: usd(10) },
+          {
+            id: 'operation-42:fee',
+            account: account('Transaction Fee Expense'),
+            debit: usd(0.05)
+          },
+          { id: 'operation-42:bank', account: account('Cash — Bank'), credit: usd(10.05) }
         ]
       })
     )
@@ -64,13 +77,13 @@ describe('JournalEntry', () => {
     const compound = createJournalEntry(
       monetaryEntry({
         lines: [
-          { id: 'operation-42:cash', account: account('Cash — Expense'), debit: 10 },
+          { id: 'operation-42:cash', account: account('Cash — Expense'), debit: usd(10) },
           {
             id: 'operation-42:fee',
             account: account('Transaction Fee Expense'),
-            debit: 0.05
+            debit: usd(0.05)
           },
-          { id: 'operation-42:bank', account: account('Cash — Bank'), credit: 10.05 }
+          { id: 'operation-42:bank', account: account('Cash — Bank'), credit: usd(10.05) }
         ]
       })
     )
@@ -102,7 +115,7 @@ describe('JournalEntry', () => {
       createJournalEntry(
         monetaryEntry({
           kind: 'memo',
-          lines: [{ id: 'operation-42:memo', account: account('Cash — Bank'), debit: 10 }]
+          lines: [{ id: 'operation-42:memo', account: account('Cash — Bank'), debit: usd(10) }]
         })
       )
     ).toThrow('memo entries cannot contain monetary lines')
@@ -113,8 +126,8 @@ describe('JournalEntry', () => {
       createJournalEntry(
         monetaryEntry({
           lines: [
-            { id: 'operation-42:debit', account: account('Cash — Payroll'), debit: 10 },
-            { id: 'operation-42:credit', account: account('Cash — Bank'), credit: 9.99 }
+            { id: 'operation-42:debit', account: account('Cash — Payroll'), debit: usd(10) },
+            { id: 'operation-42:credit', account: account('Cash — Bank'), credit: usd(9.99) }
           ]
         })
       )
@@ -125,7 +138,7 @@ describe('JournalEntry', () => {
     expect(() =>
       createJournalEntry(
         monetaryEntry({
-          lines: [{ id: 'operation-42:debit', account: account('Cash — Payroll'), debit: 10 }]
+          lines: [{ id: 'operation-42:debit', account: account('Cash — Payroll'), debit: usd(10) }]
         })
       )
     ).toThrow('monetary entries require at least one debit and one credit line')
@@ -139,13 +152,33 @@ describe('JournalEntry', () => {
             {
               id: 'operation-42:debit',
               account: { ...account('Cash — Payroll'), id: '' },
-              debit: 10
+              debit: usd(10)
             },
-            { id: 'operation-42:credit', account: account('Cash — Bank'), credit: 10 }
+            { id: 'operation-42:credit', account: account('Cash — Bank'), credit: usd(10) }
           ]
         })
       )
     ).toThrow('account id is required')
+  })
+
+  it('rejects a monetary source posting without a rate of record', () => {
+    const posting: LedgerEntry = {
+      id: 'unstamped-bank-event',
+      timestamp: 1_700_000_000,
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Bank',
+      credit: 'Service Revenue',
+      amountUsd: 100,
+      token: 'usdc',
+      rawAmount: '100000000',
+      internal: false,
+      memo: 'Client payment',
+      enrichment: 'not-applicable'
+    }
+
+    expect(() => buildJournal([posting])).toThrow(
+      'Ledger entry "unstamped-bank-event" requires a rate before journal assembly'
+    )
   })
 
   it('adapts a consolidated posting with deterministic source, line and account identities', () => {
@@ -158,6 +191,7 @@ describe('JournalEntry', () => {
       amountUsd: 100,
       token: 'usdc',
       rawAmount: '100000000',
+      rate: 1,
       internal: false,
       memo: 'Client payment',
       enrichment: 'not-applicable'
@@ -176,7 +210,7 @@ describe('JournalEntry', () => {
               family: { id: 'cash-bank', name: 'Cash — Bank' },
               resolution: 'unresolved'
             },
-            debit: 100
+            debit: usd(100)
           },
           {
             id: 'bank-event-7:credit',
@@ -185,7 +219,7 @@ describe('JournalEntry', () => {
               family: { id: 'service-revenue', name: 'Service Revenue' },
               resolution: 'resolved'
             },
-            credit: 100
+            credit: usd(100)
           }
         ]
       }

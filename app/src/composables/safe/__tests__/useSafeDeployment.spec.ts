@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseEventLogs, type Address } from 'viem'
+import { getAddress, parseEventLogs, type Address } from 'viem'
 import { getConnections } from '@wagmi/core'
 
 // Both `@wagmi/core` (incl. getConnections) and `parseEventLogs` are globally
@@ -107,7 +107,7 @@ describe('deploySafe (pure)', () => {
     const result = await deploySafe({ owners: [OWNER], threshold: 1 })
 
     expect(result.hash).toBe(TX_HASH)
-    expect(result.safeAddress).toBe(SAFE_ADDRESS)
+    expect(result.safeAddress).toBe(getAddress(SAFE_ADDRESS))
   })
 
   it('throws when no ProxyCreation event is found in the receipt', async () => {
@@ -154,6 +154,6 @@ describe('useDeploySafe (TanStack wrapper)', () => {
     await m.mutateAsync({ owners: [OWNER], threshold: 1 })
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toContainEqual(['safe', 'info', { safeAddress: SAFE_ADDRESS }])
+    expect(keys).toContainEqual(['safe', 'info', { safeAddress: getAddress(SAFE_ADDRESS) }])
   })
 })

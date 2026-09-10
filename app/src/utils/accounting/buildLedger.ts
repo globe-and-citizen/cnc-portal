@@ -24,14 +24,9 @@
  */
 import type { LedgerEntry } from './ledgerEntry'
 
-export interface BuiltLedger {
+interface BuiltLedger {
   /** Deduped, chronologically sorted postings — the canonical consolidated feed. */
   entries: LedgerEntry[]
-}
-
-/** Round to cents — statement figures are USD reporting currency. */
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
 }
 
 /** Content key for an internal posting, so the two contract-side twins collapse. */
@@ -64,17 +59,15 @@ function isMonetary(entry: LedgerEntry): boolean {
 }
 
 /**
- * An **unpriced** posting: real accounts, but $0.00 with no rate of record — a
+ * An **unpriced** posting: real accounts, but exactly zero USD with no rate of record — a
  * native (POL/ETH) leg no price-of-record resolved for. In a USD-reported book it
  * moves nothing and only clutters the journal, so it is dropped.
  *
- * The `!entry.rate` guard is what makes this "unpriced" rather than merely "tiny":
- * a small but *priced* posting — the 0.5% fee on a few POL, ~$0.003 — carries a
- * real rate and is kept, so its token quantity stays visible even when the USD
- * figure rounds to zero.
+ * The `!entry.rate` guard is what makes this "unpriced" rather than merely "tiny".
+ * Sub-cent postings are retained whether or not their display later rounds to zero.
  */
 function isZeroValuePosting(entry: LedgerEntry): boolean {
-  return isMonetary(entry) && round2(entry.amountUsd) === 0 && !entry.shares && !entry.rate
+  return isMonetary(entry) && entry.amountUsd === 0 && !entry.shares && !entry.rate
 }
 
 /**

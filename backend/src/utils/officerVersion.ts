@@ -12,12 +12,12 @@ import publicClient from './viem.config';
 // per-chain even while both point at the same folder. Polygon is on V2 since
 // that rollout (Officer#FactoryBeacon 0xF4265dC2236012C2Fd5bC771D0f6c3f30D210FFc,
 // see contract/versions/README.md).
-export const ACTIVE_OFFICER_FOLDER_BY_CHAIN: Record<number, string> = {
+const ACTIVE_OFFICER_FOLDER_BY_CHAIN: Record<number, string> = {
   137: 'V2',
   31337: 'V2',
 };
 
-export const getActiveOfficerFolder = (chainId: number = publicClient.chain?.id ?? 137) =>
+const getActiveOfficerFolder = (chainId: number = publicClient.chain?.id ?? 137) =>
   ACTIVE_OFFICER_FOLDER_BY_CHAIN[chainId];
 
 // ERC-1967 beacon slot: bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1).
@@ -44,19 +44,6 @@ type RegistryFolder = {
 };
 
 const folders = registry.folders as Record<string, RegistryFolder>;
-
-/**
- * The semver a generation's Officers report. Generations predating the on-chain
- * `version()` getter have no way to state it themselves, so the registry's floor
- * (`onchainVersionMin`: V0 -> 0.0.0, V0.1 -> 0.1.0, V1 -> 1.0.0) is the tag they
- * are recorded under.
- */
-export const semverForVersionFolder = (folder: string): string | undefined =>
-  folders[folder]?.onchainVersionMin;
-
-/** The floor of the active generation on a network, e.g. '2.0.0' on Polygon. */
-export const getActiveOfficerVersion = (chainId?: number): string | undefined =>
-  semverForVersionFolder(getActiveOfficerFolder(chainId));
 
 // Lenient on purpose: a stored tag is only ever compared, never rendered from
 // here. Non-numeric tags ('legacy', 'v0.10', 'unknown') and pre-release suffixes

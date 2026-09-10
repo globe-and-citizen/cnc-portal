@@ -252,12 +252,11 @@ Validated on 2026-08-21 against the current contract behaviour, automated eviden
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
+**Implementation evidence reviewed against:** `0ee17e05aa8fda1ef0d6603ad3b358eb10d168cd`
 
 - [Vesting components](../../../app/src/components/sections/VestingView/)
-- [Vesting page](../../../app/src/views/team/%5Bid%5D/VestingView.vue)
+- [Vesting page and read orchestration](../../../app/src/views/team/%5Bid%5D/VestingView.vue)
 - [Schedule overview and actions](../../../app/src/components/sections/VestingView/VestingFlow.vue)
-- [V2 schedule read model](../../../app/src/composables/vesting/useVestingSchedules.ts)
 - [V2 schedule calculations](../../../app/src/utils/vesting/schedule.ts)
 - [Release and Stop review](../../../app/src/components/sections/VestingView/VestingActionReviewModal.vue)
 - [Schedule creation, validation, and submission](../../../app/src/components/sections/VestingView/forms/)

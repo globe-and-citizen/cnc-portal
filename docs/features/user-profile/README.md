@@ -53,7 +53,7 @@ The display name and profile image can be changed from the client navigation and
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `787921e5cf9dd1cf46fd0f69f651dba7d8785374`
+**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
 
 - [Navigation profile entry](../../../app/src/components/layout/NavBar.vue) and
   [sidebar profile entry](../../../app/src/components/ui/SidebarLayout.vue)
@@ -61,11 +61,15 @@ The display name and profile image can be changed from the client navigation and
   [profile-image upload](../../../app/src/components/forms/ProfileImageUpload.vue)
 - [User update mutation](../../../app/src/queries/user.queries.ts) and
   [single-file upload mutation](../../../app/src/queries/file.queries.ts)
+- [User request schema](../../../backend/src/validation/schemas/user.ts) and
+  [user-schema tests](../../../backend/src/validation/schemas/__tests__/user.test.ts)
 - [Profile-image component tests](../../../app/src/components/forms/__tests__/ProfileImageUpload.spec.ts) and
   [file-query tests](../../../app/src/queries/__tests__/file.queries.spec.ts)
 
 ## Related Documentation
 
+- [File Storage implementation](../../implementation/file-storage/README.md)
+- [Request Validation implementation](../../implementation/request-validation/README.md)
 - [Client data access implementation](../../implementation/client-data-access/README.md)
 - [Authentication](../authentication/README.md)
 

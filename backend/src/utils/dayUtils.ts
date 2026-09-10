@@ -6,9 +6,3 @@ export function getMondayStart(date: Date): Date {
   d.setHours(0, 0, 0, 0); // Met à 00:00:00.000
   return d;
 }
-
-export function todayMidnight(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0); // Met à 00:00:00.000
-  return d;
-}

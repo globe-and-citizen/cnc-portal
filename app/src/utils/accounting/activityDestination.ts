@@ -23,7 +23,7 @@ import type { LedgerEntry } from './ledgerEntry'
 import type { AccountName } from './chartOfAccounts'
 
 /** A portal surface the ledger can send a reader to. */
-export type LedgerSection =
+type LedgerSection =
   | 'bank'
   | 'safe'
   | 'expense'

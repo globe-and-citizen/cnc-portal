@@ -3,7 +3,7 @@
  *
  * Section tables — Summary, Income Statement, Balance Sheet, Trial Balance,
  * General Ledger — are built by pure, unit-tested functions that read the live
- * engine output ({@link CncAccounting}) through the same presenters the view and
+ * engine output ({@link AccountingExportSnapshot}) through the same presenters the view and
  * the Excel export use. {@link buildAccountingTables} yields the classic four
  * printed tabs (everything except the Summary); {@link buildTables} builds an
  * arbitrary selection (used by the Summary "Export report" modal and the
@@ -11,19 +11,16 @@
  * renders each table with a sober header colour and zebra-striped rows, stamps a
  * diagonal "CNC Portal" watermark on every page, and downloads the file.
  */
-import type { CncAccounting } from '@/utils/accounting/assemble'
+import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import {
   presentIncome,
   presentBalance,
   presentTrial,
-  presentSummaryCards,
-  presentBanner,
-  filterByPeriod,
+  presentSummary,
   incomeExportTitle,
   balanceExportTitle,
   trialExportTitle
 } from '@/utils/accounting/presenter'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import { formatDateTime } from '@/utils/format'
 import { generalLedgerPdfTable } from './generalLedgerPdfTable'
@@ -47,9 +44,8 @@ export interface AccountingPdfTable {
 /** A blank spacer row, used to separate sub-sections inside a statement. */
 const GAP: Cell[] = ['', '']
 
-function summaryTable(books: CncAccounting): AccountingPdfTable {
-  const cards = presentSummaryCards(books.summary, books.incomeStatement, books.balanceSheet)
-  const banner = presentBanner(books.balanceSheet, books.generalLedger)
+function summaryTable(books: AccountingExportSnapshot): AccountingPdfTable {
+  const { cards, banner } = presentSummary(books.journal)
   return {
     title: 'Summary',
     head: ['Metric', 'Value'],
@@ -65,7 +61,7 @@ function summaryTable(books: CncAccounting): AccountingPdfTable {
 }
 
 function incomeTable(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   from?: Date | null,
   to?: Date | null
 ): AccountingPdfTable {
@@ -88,7 +84,7 @@ function incomeTable(
   }
 }
 
-function balanceTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTable {
+function balanceTable(books: AccountingExportSnapshot, asOf?: Date | null): AccountingPdfTable {
   const balance = presentBalance(books.journal, asOf)
   return {
     title: balanceExportTitle(asOf),
@@ -101,21 +97,23 @@ function balanceTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTa
       GAP,
       ['Liabilities', ''],
       ...balance.liabilityLines.map((line) => [line.label, line.value]),
+      ['Total liabilities', balance.totalLiabilities],
       GAP,
       ['Equity', ''],
       ...balance.equityLines.map((line) => [line.label, line.value]),
       ['Total equity', balance.totalEquity],
+      GAP,
+      ['Earnings to date calculation', ''],
+      ...balance.earningsLines.map((line) => [line.label, line.value]),
+      ['Earnings to date', balance.earningsToDate],
       GAP,
       ['Liabilities + Equity', balance.liabilitiesPlusEquity]
     ]
   }
 }
 
-function trialTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTable {
-  const ledger = asOf
-    ? buildGeneralLedger(filterByPeriod(books.journal, null, asOf))
-    : books.generalLedger
-  const trial = presentTrial(ledger)
+function trialTable(books: AccountingExportSnapshot, asOf?: Date | null): AccountingPdfTable {
+  const trial = presentTrial(books.journal, asOf)
   return {
     title: trialExportTitle(asOf),
     head: ['Account', 'Nature', 'Debit', 'Credit'],
@@ -129,7 +127,7 @@ function trialTable(books: CncAccounting, asOf?: Date | null): AccountingPdfTabl
 
 /** Build a single section's table from its spec. */
 function sectionTable(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   spec: SectionSpec,
   resolveName?: ResolveName
 ): AccountingPdfTable {
@@ -157,7 +155,7 @@ function sectionTable(
 
 /** Build tables for an arbitrary section selection, in the order given. */
 export function buildTables(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   specs: readonly SectionSpec[],
   resolveName?: ResolveName
 ): AccountingPdfTable[] {
@@ -166,7 +164,7 @@ export function buildTables(
 
 /** The four printed tabs (everything except the Summary), in display order. */
 export function buildAccountingTables(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   resolveName?: ResolveName
 ): AccountingPdfTable[] {
   return [
@@ -273,7 +271,7 @@ export async function exportTablesPdf(
 }
 
 export async function exportAccountingPdf(
-  books: CncAccounting,
+  books: AccountingExportSnapshot,
   resolveName?: ResolveName
 ): Promise<void> {
   await exportTablesPdf(buildAccountingTables(books, resolveName), {

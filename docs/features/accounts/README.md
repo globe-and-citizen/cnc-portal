@@ -16,8 +16,9 @@ These acceptance criteria follow the
   receiving custody of the whole account.
 - Bank and Expense Account actions use the current contracts selected for the company. Safe actions use the Safe registered to the company
   on the active network.
-- A Bank transfer with a positive `BANK` fee sends that fee to the global FeeCollector. Native transfers assess the configured rate, while
-  ERC-20 transfers are fee-bearing only when the token is supported by the FeeCollector.
+- A Bank transfer with a positive `BANK` fee sends that fee to the FeeCollector deployed for its contract generation. Native transfers
+  assess the configured rate, while ERC-20 transfers are fee-bearing only when the token is supported by that FeeCollector. Activity feeds
+  retain fees from every supported Bank generation for Accounting.
 - A Bank owner can cash out available treasury funds by first consolidating Cash Remuneration and Expense Account balances into the Bank,
   then moving the Bank's held assets to the connected wallet. A historic generation can instead forward its available funds to the company's
   current Bank.
@@ -117,9 +118,9 @@ flowchart LR
 - [x] A transfer amount must be positive and cannot exceed the available balance after protocol fees.
 - [x] A transfer recipient cannot be the zero address. _(contract)_
 - [x] SHER transfers are not available through the Bank transfer journey.
-- [x] A native Bank transfer with a positive `BANK` rate pays its calculated fee to the global FeeCollector and delivers the net amount to
-      the recipient. _(contract)_
-- [x] An ERC-20 Bank transfer with a positive `BANK` rate pays its calculated fee to the global FeeCollector only when that token is
+- [x] A native Bank transfer with a positive `BANK` rate pays its calculated fee to its generation's FeeCollector and delivers the net
+      amount to the recipient. _(contract)_
+- [x] An ERC-20 Bank transfer with a positive `BANK` rate pays its calculated fee to its generation's FeeCollector only when that token is
       FeeCollector-supported; otherwise it delivers the full amount to the recipient. _(contract)_
 
 #### Edge & Error Cases
@@ -334,6 +335,8 @@ flowchart LR
 - [x] A newly deployed Safe starts with the company owner as its only signer and a threshold of one.
 - [x] Importing a Safe preserves its owners, threshold, assets, and on-chain configuration.
 - [x] An imported address must resolve to a Safe on the active network before registration.
+- [x] Every valid registered Safe address is checksum-normalized before routing, reads, writes, SDK initialization, or transaction-service
+      requests.
 
 #### Edge & Error Cases
 
@@ -493,7 +496,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
+**Implementation evidence reviewed against:** `20542e47a9e16dbdf9fc6befbc7704d23cdff379`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
@@ -505,6 +508,7 @@ flowchart LR
   Community Credit round-detail view parameter does not alter Accounts entry points.
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts),
   [Bank transaction feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
+  [version-aware Bank fee normalization](../../../app/src/composables/bank/bankFees.ts),
   [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts), and
   [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
@@ -518,16 +522,21 @@ flowchart LR
   [historic-generation action tests](../../../app/src/components/sections/ContractManagementView/__tests__/LegacyGenerationWithdrawAction.spec.ts)
 - [Safe page](../../../app/src/views/team/%5Bid%5D/Accounts/SafeView.vue),
   [Safe deposit form](../../../app/src/components/sections/SafeView/forms/DepositSafeForm.vue),
-  [Safe composables](../../../app/src/composables/safe/), and [Safe transaction state](../../../app/src/utils/safe/transactionState.ts)
+  [Safe composables](../../../app/src/composables/safe/), [Safe address normalization](../../../app/src/utils/safe/address.ts),
+  [Safe transaction helpers](../../../app/src/lib/safe/transactions.ts), and
+  [Safe transaction state](../../../app/src/utils/safe/transactionState.ts)
 - [Safe transaction queue](../../../app/src/components/sections/SafeView/SafeTransactions.vue),
   [Safe transaction table](../../../app/src/components/sections/SafeView/SafeTransactionsTable.vue), and
   [Safe mobile transaction list](../../../app/src/components/sections/SafeView/SafeTransactionMobileList.vue),
+  [Safe queries and cache keys](../../../app/src/queries/safe.queries.ts),
   [Safe transaction mutations](../../../app/src/queries/safe.mutations.ts),
   [Safe transaction state and conflict rules](../../../app/src/utils/safe/transactionState.ts), and
   [Safe conflict warning](../../../app/src/components/sections/SafeView/SafeTransactionsWarning.vue)
 - [Safe component tests](../../../app/src/components/sections/SafeView/__tests__) and
   [Safe composable tests](../../../app/src/composables/safe/__tests__)
 - [Safe transaction queue tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactions.spec.ts),
+  [Safe address normalization tests](../../../app/src/utils/safe/__tests__/address.spec.ts),
+  [Safe proposal tests](../../../app/src/lib/safe/__tests__/transactions.spec.ts),
   [Safe transaction state tests](../../../app/src/utils/safe/__tests__/transactionState.spec.ts), and
   [Safe conflict warning tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactionsWarning.spec.ts)
 - [Expense Account page](../../../app/src/views/team/%5Bid%5D/Accounts/ExpenseAccountView.vue),

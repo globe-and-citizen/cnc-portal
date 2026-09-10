@@ -4,7 +4,13 @@
  * is currently showing. Format-agnostic — it belongs to neither builder, so both
  * (and the view) depend on this module rather than on each other.
  */
-import type { LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
+import type { LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
+import type { JournalEntry } from './types'
+
+/** The canonical journal is the only Accounting data that crosses the export boundary. */
+export interface AccountingExportSnapshot {
+  journal: readonly JournalEntry[]
+}
 
 /** The exportable accounting sections, in display order. */
 export type SectionKey = 'summary' | 'income' | 'balance' | 'trial' | 'ledger'

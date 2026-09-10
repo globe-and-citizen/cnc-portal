@@ -5,7 +5,6 @@
  */
 import { describe, it, expect } from 'vitest'
 import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
-import { txHashOf } from '@/utils/accounting/mergeBankFees'
 import { makeCtx, ADDR, creditOffer, creditEvent, balanceOf, totalDebited } from './fixtures'
 
 const ctx = makeCtx()
@@ -160,6 +159,6 @@ describe('the fixed return owed', () => {
     )
     const legs = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
     expect(legs).toHaveLength(2)
-    legs.forEach((e) => expect(txHashOf(e)).toBe(txHash))
+    legs.forEach((entry) => expect(entry.txHash).toBe(txHash))
   })
 })

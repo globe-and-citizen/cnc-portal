@@ -9,7 +9,7 @@
  * render time via `resolveUser`, so this layer stays pure and unit-testable.
  *
  * Entries with no human actor and no pocket-to-pocket move (memo mints,
- * unclassified cash) fall back to the generic per-use-case {@link entryLabel}.
+ * unassigned cash) fall back to the generic per-use-case {@link entryLabel}.
  */
 import { money, formatUnixDate } from './presenter'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
@@ -50,7 +50,7 @@ export function entryLabel(entry: LedgerEntry): string {
  * The structured "Activity" cell the ledger table renders:
  * - `actor`    — one party's address; show its avatar + the predicate text.
  * - `transfer` — a pocket-to-pocket move; show `from → to` contract avatars.
- * - `plain`    — no actor (memo / unclassified); just the text.
+ * - `plain`    — no actor (memo / unassigned); just the text.
  */
 export type ActivityCell =
   | { kind: 'actor'; actor: string; text: string }
@@ -196,17 +196,6 @@ export function activityOf(entry: LedgerEntry): ActivityCell {
     return { kind: 'actor', actor: entry.counterparty, text: predicate(entry) }
   }
   return { kind: 'plain', text: entryLabel(entry) }
-}
-
-/**
- * Append "· + N SHER" to an actor narration when a compound payroll posting also
- * issued shares, so the grouped entry's single Activity still names the equity
- * part (e.g. "was paid for 5h of work + 10 SHER"). No-op when there are no shares,
- * when the text already mentions SHER, or when the cell names no actor.
- */
-export function withSherTail(cell: ActivityCell, sherShares: number): ActivityCell {
-  if (sherShares <= 0 || cell.kind !== 'actor' || /SHER/.test(cell.text)) return cell
-  return { ...cell, text: `${cell.text} + ${sherShares} SHER` }
 }
 
 /** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */

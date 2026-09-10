@@ -54,11 +54,11 @@ describe('exportFilename', () => {
     expect(
       filenameBase({
         key: 'ledger',
-        journalAccountLabel: 'Retained earnings',
+        journalAccountLabel: 'Earnings to date',
         from: FROM,
         to: TO
       })
-    ).toContain('General Ledger - Retained earnings -')
+    ).toContain('General Ledger - Earnings to date -')
   })
 
   it('keeps the general ledger name when no drill-down label is supplied', () => {

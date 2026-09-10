@@ -10,7 +10,8 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders, mockRouterPush } from '@/tests/mocks'
 import LedgerTable from '../LedgerTable.vue'
-import { ledgerRows } from '@/utils/accounting/ledgerPresenter'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import { buildJournal } from '@/utils/accounting/generalLedger'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 const MEMBER = '0x1111111111111111111111111111111111111111'
@@ -26,6 +27,7 @@ function entry(partial: Partial<LedgerEntry>): LedgerEntry {
     amountUsd: 500,
     token: 'usdc',
     rawAmount: '500000000',
+    rate: 1,
     internal: false,
     memo: 'raw memo',
     enrichment: 'not-applicable',
@@ -35,7 +37,7 @@ function entry(partial: Partial<LedgerEntry>): LedgerEntry {
 
 function renderLedger(entries: LedgerEntry[]) {
   return renderWithProviders(LedgerTable, {
-    props: { rows: ledgerRows(entries), total: '$500.00' },
+    props: { rows: journalLedgerRows(buildJournal(entries)), total: '$500.00' },
     route: { params: { id: '42' } }
   })
 }

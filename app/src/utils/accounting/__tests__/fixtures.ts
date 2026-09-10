@@ -3,13 +3,22 @@
  * {@link MapperContext} with hand-picked addresses and a stub FX rate, so each
  * mapper spec can exercise pure logic without Vue, the chain, or a price oracle.
  */
-import { formatUnits, type Address } from 'viem'
+import { formatUnits, parseUnits, type Address } from 'viem'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { CncAccounting } from '@/utils/accounting/assemble'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { MapperContext } from '@/utils/accounting/mappers/context'
+import { USD_AMOUNT_DECIMALS, usdAmountToNumber } from '@/utils/accounting/monetaryAmount'
+import type { UsdAmount } from '@/utils/accounting/types'
 import { assembleAccounting } from './assembleAccounting'
+
+/** Exact accounting amount shorthand for domain-level assertions. */
+export const usd = (amount: number | string): UsdAmount =>
+  parseUnits(String(amount), USD_AMOUNT_DECIMALS)
+
+/** Presentation-boundary conversion for approximate legacy expectations. */
+export const usdNumber = (amount: UsdAmount): number => usdAmountToNumber(amount)
 
 /** Lowercase addresses are always valid (no checksum to fail) — safe for tests. */
 export const ADDR = {
@@ -55,7 +64,6 @@ export function makeCtx(overrides: Partial<MapperContext> = {}): MapperContext {
     toUsd: (amount, token) => Number(formatUnits(amount, DECIMALS[token])) * RATE[token],
     tokenIdOf,
     pocketOf: (address) => (address ? (POCKETS[address.toLowerCase()] ?? null) : null),
-    classificationOf: () => undefined,
     ...overrides
   }
 }
