@@ -19,6 +19,9 @@
         "test/**/*.{ts,vue}",
         "scripts/**/*.mjs!"
       ],
+      "paths": {
+        "@/*": ["./src/*"]
+      },
       "eslint": false,
       "playwright": false,
       "vite": { "config": [] },
