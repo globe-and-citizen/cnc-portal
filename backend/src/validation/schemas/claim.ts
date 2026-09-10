@@ -16,14 +16,14 @@ export const ratePerHourSchema = z.object({
  * (Prisma `Json?`). Also used to validate incoming attachment entries on write
  * paths and to tolerantly parse stored rows on read paths.
  */
-export const fileAttachmentSchema = z.object({
+const fileAttachmentSchema = z.object({
   fileKey: z.string().min(1, 'File key is required'),
   fileUrl: z.string().url('Invalid file URL'),
   fileType: z.string().min(1, 'File type is required'),
   fileSize: z.number().positive('File size must be positive'),
 });
 
-export const fileAttachmentsArraySchema = z
+const fileAttachmentsArraySchema = z
   .array(fileAttachmentSchema)
   .max(10, 'Maximum 10 files allowed');
 
@@ -52,7 +52,7 @@ const workedMinutesSchema = z.coerce
     message: 'Minutes must be in 10-minute increments (10, 20, 30, ...)',
   });
 
-export const DAILY_CLAIM_MEMO_MAX_LENGTH = 3_000;
+const DAILY_CLAIM_MEMO_MAX_LENGTH = 3_000;
 
 export const dailyClaimMemoSchema = z
   .string()

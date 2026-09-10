@@ -29,7 +29,7 @@ All request validation is now handled through reusable schemas and middleware.
 All validation schemas are organized by feature:
 
 - `common.ts` - Base schemas used across the application with enhanced error messages
-- `user.ts` - User-related validation with profile validation
+- `user.ts` - User update and pagination validation
 - `claim.ts` - Claim validation with complex business rules
 - `contract.ts` - Contract validation with enum types
 - `expense.ts` - Expense validation with union types
@@ -37,22 +37,13 @@ All validation schemas are organized by feature:
 
 ### 2. Enhanced Validation Middleware (`src/validation/middleware/validate.ts`)
 
-Provides flexible validation functions with Zod v4 improvements:
+Provides focused request-validation middleware with Zod v4 improvements:
 
-- `validate({ body, query, params })` - Main validation function with better error formatting
 - `validateBody(schema)` - Validates request body only
 - `validateQuery(schema)` - Validates query parameters only
 - `validateParams(schema)` - Validates path parameters only
-- Helper functions for combinations
-
-### 3. Advanced Utilities (`src/validation/utils.ts`)
-
-New Zod v4 best practices utilities:
-
-- Performance tracking for validation
-- Caching for expensive validations
-- Advanced schema composition patterns
-- Type-safe API handler types
+- `validateRequest(schema)` - Validates cross-field rules across params, query, and body
+- Focused helpers combine the request sections used by production routes
 
 ## Usage Examples
 
@@ -173,45 +164,13 @@ const nameSchema = z
 const nameSchema = z.string().min(1).max(100);
 ```
 
-### 2. Performance Optimization
-
-```typescript
-// Use caching for expensive validations
-import { createCachedValidationSchema } from "./utils";
-
-const expensiveSchema = createCachedValidationSchema(
-  complexValidationSchema,
-  { maxSize: 50, ttl: 300000 }, // 5 minutes cache
-);
-```
-
-### 3. Type-Safe API Handlers
-
-```typescript
-import { ApiHandler, InferInput, InferOutput } from "../validation";
-
-const createUserHandler: ApiHandler<
-  typeof createUserBodySchema,
-  typeof userQuerySchema,
-  typeof userParamsSchema
-> = {
-  body: createUserBodySchema,
-  query: userQuerySchema,
-  params: userParamsSchema,
-  handler: async ({ body, query, params }) => {
-    // All parameters are properly typed
-    return await createUser(body, query, params);
-  },
-};
-```
-
-### 4. Schema Composition
+### 2. Schema Composition
 
 ```typescript
 // Build complex schemas from simple ones
 const baseUserSchema = z.object({
   name: nonEmptyStringSchema,
-  email: emailSchema,
+  email: z.string().email(),
 });
 
 const extendedUserSchema = baseUserSchema.extend({
@@ -238,7 +197,6 @@ Zod v4 provides enhanced error messages with the new `issues` format:
 1. **Error Access**: `error.errors` → `error.issues`
 2. **Enum Messages**: `errorMap: () => ({ message })` → `message: "..."`
 3. **Enhanced Type Messages**: Added proper error messages to all type definitions
-4. **Performance**: Optimized schema caching and validation tracking
 
 ### Before (Zod v3)
 

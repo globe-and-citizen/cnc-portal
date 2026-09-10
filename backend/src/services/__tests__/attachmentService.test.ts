@@ -12,7 +12,6 @@ import {
   refreshAttachmentUrls,
   deleteAttachments,
   deleteFileByKey,
-  batchRefreshUrls,
   type FileAttachmentData,
 } from '../attachmentService';
 
@@ -250,54 +249,6 @@ describe('attachmentService', () => {
       expect(warnSpy).toHaveBeenCalled();
 
       warnSpy.mockRestore();
-    });
-  });
-
-  describe('batchRefreshUrls', () => {
-    it('should refresh URLs for all provided file keys', async () => {
-      mockGetPresignedDownloadUrl
-        .mockResolvedValueOnce('https://fresh1.com')
-        .mockResolvedValueOnce('https://fresh2.com');
-
-      const result = await batchRefreshUrls(['uploads/a.pdf', 'uploads/b.png']);
-
-      expect(result.refreshed).toHaveLength(2);
-      expect(result.errors).toHaveLength(0);
-      expect(result.refreshed).toEqual(
-        expect.arrayContaining([
-          { fileKey: 'uploads/a.pdf', fileUrl: 'https://fresh1.com' },
-          { fileKey: 'uploads/b.png', fileUrl: 'https://fresh2.com' },
-        ])
-      );
-    });
-
-    it('should pass expirySeconds to getPresignedDownloadUrl', async () => {
-      mockGetPresignedDownloadUrl.mockResolvedValue('https://url.com');
-
-      await batchRefreshUrls(['uploads/a.pdf'], 7200);
-
-      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith('uploads/a.pdf', 7200);
-    });
-
-    it('should report errors for failed keys without throwing', async () => {
-      mockGetPresignedDownloadUrl
-        .mockResolvedValueOnce('https://ok.com')
-        .mockRejectedValueOnce(new Error('Not found'));
-
-      const result = await batchRefreshUrls(['uploads/ok.pdf', 'uploads/missing.pdf']);
-
-      expect(result.refreshed).toHaveLength(1);
-      expect(result.refreshed[0]).toEqual({ fileKey: 'uploads/ok.pdf', fileUrl: 'https://ok.com' });
-      expect(result.errors).toHaveLength(1);
-      expect(result.errors[0]).toEqual({ fileKey: 'uploads/missing.pdf', error: 'Not found' });
-    });
-
-    it('should handle empty array', async () => {
-      const result = await batchRefreshUrls([]);
-
-      expect(result.refreshed).toHaveLength(0);
-      expect(result.errors).toHaveLength(0);
-      expect(mockGetPresignedDownloadUrl).not.toHaveBeenCalled();
     });
   });
 });

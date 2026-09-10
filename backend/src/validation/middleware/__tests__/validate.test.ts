@@ -2,14 +2,11 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import {
-  validate,
   validateBody,
   validateQuery,
   validateParams,
   validateBodyAndParams,
-  validateBodyAndQuery,
   validateParamsAndQuery,
-  validateAll,
 } from '../validate';
 
 // Mock errorResponse
@@ -41,12 +38,12 @@ describe('validation/middleware/validate', () => {
     mockNext = vi.fn();
   });
 
-  describe('validate', () => {
+  describe('request validation behavior', () => {
     it('should validate body successfully', () => {
       const schema = z.object({ name: z.string() });
       mockRequest.body = { name: 'John' };
 
-      const middleware = validate({ body: schema });
+      const middleware = validateBody(schema);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
@@ -57,7 +54,7 @@ describe('validation/middleware/validate', () => {
       const schema = z.object({ name: z.string() });
       mockRequest.body = { name: 123 };
 
-      const middleware = validate({ body: schema });
+      const middleware = validateBody(schema);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -68,7 +65,7 @@ describe('validation/middleware/validate', () => {
       const schema = z.object({ page: z.string() });
       mockRequest.query = { page: '1' };
 
-      const middleware = validate({ query: schema });
+      const middleware = validateQuery(schema);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
@@ -79,7 +76,7 @@ describe('validation/middleware/validate', () => {
       const schema = z.object({ page: z.number() });
       mockRequest.query = { page: 'invalid' };
 
-      const middleware = validate({ query: schema });
+      const middleware = validateQuery(schema);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -90,7 +87,7 @@ describe('validation/middleware/validate', () => {
       const schema = z.object({ id: z.string() });
       mockRequest.params = { id: '123' };
 
-      const middleware = validate({ params: schema });
+      const middleware = validateParams(schema);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
@@ -101,7 +98,7 @@ describe('validation/middleware/validate', () => {
       const schema = z.object({ id: z.number() });
       mockRequest.params = { id: 'invalid' };
 
-      const middleware = validate({ params: schema });
+      const middleware = validateParams(schema);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -110,11 +107,11 @@ describe('validation/middleware/validate', () => {
 
     it('should validate multiple schemas successfully', () => {
       const bodySchema = z.object({ name: z.string() });
-      const querySchema = z.object({ page: z.string() });
+      const paramsSchema = z.object({ id: z.string() });
       mockRequest.body = { name: 'John' };
-      mockRequest.query = { page: '1' };
+      mockRequest.params = { id: '1' };
 
-      const middleware = validate({ body: bodySchema, query: querySchema });
+      const middleware = validateBodyAndParams(bodySchema, paramsSchema);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
@@ -126,7 +123,7 @@ describe('validation/middleware/validate', () => {
       mockRequest.body = { name: 'John' };
 
       // Force an error by making safeParse throw
-      const middleware = validate({ body: schema });
+      const middleware = validateBody(schema);
       vi.spyOn(schema, 'safeParse').mockImplementation(() => {
         throw new Error('Unexpected error');
       });
@@ -144,7 +141,7 @@ describe('validation/middleware/validate', () => {
       });
       mockRequest.body = { name: 123, age: 'invalid' };
 
-      const middleware = validate({ body: schema });
+      const middleware = validateBody(schema);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -205,21 +202,6 @@ describe('validation/middleware/validate', () => {
       expect(mockNext).toHaveBeenCalled();
     });
   });
-
-  describe('validateBodyAndQuery', () => {
-    it('should validate body and query using helper function', () => {
-      const bodySchema = z.object({ name: z.string() });
-      const querySchema = z.object({ page: z.string() });
-      mockRequest.body = { name: 'John' };
-      mockRequest.query = { page: '1' };
-
-      const middleware = validateBodyAndQuery(bodySchema, querySchema);
-      middleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-  });
-
   describe('validateParamsAndQuery', () => {
     it('should validate params and query using helper function', () => {
       const paramsSchema = z.object({ id: z.string() });
@@ -228,22 +210,6 @@ describe('validation/middleware/validate', () => {
       mockRequest.query = { page: '1' };
 
       const middleware = validateParamsAndQuery(paramsSchema, querySchema);
-      middleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-  });
-
-  describe('validateAll', () => {
-    it('should validate all three using helper function', () => {
-      const bodySchema = z.object({ name: z.string() });
-      const querySchema = z.object({ page: z.string() });
-      const paramsSchema = z.object({ id: z.string() });
-      mockRequest.body = { name: 'John' };
-      mockRequest.query = { page: '1' };
-      mockRequest.params = { id: '123' };
-
-      const middleware = validateAll(bodySchema, querySchema, paramsSchema);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();

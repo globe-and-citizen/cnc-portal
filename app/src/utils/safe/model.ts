@@ -34,11 +34,6 @@ export function getSafeHomeUrl(chainId: number, safeAddress: Address): string {
   return `https://app.safe.global/home?safe=${chainName}:${normalizeSafeAddress(safeAddress)}`
 }
 
-export function getSafeSettingsUrl(chainId: number, safeAddress: string): string {
-  const chainName = CHAIN_NAMES[chainId] || 'ethereum'
-  return `https://app.safe.global/settings/setup?safe=${chainName}:${normalizeSafeAddress(safeAddress)}`
-}
-
 export function transformToSafeMultisigResponse(
   transaction: SafeTransaction
 ): SafeMultisigTransactionResponse {

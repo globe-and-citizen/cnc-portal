@@ -3,7 +3,6 @@ import { zeroAddress } from 'viem'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import {
   getSafeHomeUrl,
-  getSafeSettingsUrl,
   formatSafeTransactionValue,
   getExecutedErc20TransferTokenAddress,
   getSafeTransactionMethod,
@@ -18,17 +17,11 @@ const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
 
 describe('safe utils', () => {
-  it('builds safe app URLs with chain fallback', () => {
+  it('builds Safe home URLs with chain fallback', () => {
     expect(getSafeHomeUrl(137, LOWERCASE_SAFE_ADDRESS)).toContain(
       `polygon:${CHECKSUM_SAFE_ADDRESS}`
     )
     expect(getSafeHomeUrl(999999, LOWERCASE_SAFE_ADDRESS)).toContain(
-      `ethereum:${CHECKSUM_SAFE_ADDRESS}`
-    )
-    expect(getSafeSettingsUrl(11155111, LOWERCASE_SAFE_ADDRESS)).toContain(
-      `sepolia:${CHECKSUM_SAFE_ADDRESS}`
-    )
-    expect(getSafeSettingsUrl(999999, LOWERCASE_SAFE_ADDRESS)).toContain(
       `ethereum:${CHECKSUM_SAFE_ADDRESS}`
     )
   })

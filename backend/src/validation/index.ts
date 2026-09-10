@@ -27,9 +27,6 @@ export * from './schemas/notification';
 export * from './schemas/elections';
 export * from './schemas/health';
 
-// Advanced validation utilities (Zod v4 best practices)
-export * from './utils';
-
 // Type inference helpers and core Zod exports
 export { z } from 'zod';
 export type { ZodError, ZodSchema, ZodIssue, ZodErrorMap } from 'zod';

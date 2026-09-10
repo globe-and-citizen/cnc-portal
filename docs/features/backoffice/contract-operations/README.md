@@ -157,6 +157,8 @@ flowchart LR
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
+
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts),
   [contract history page](../../../../dashboard/app/pages/contracts/history.vue), and
@@ -169,9 +171,11 @@ flowchart LR
   [Officer-version table](../../../../dashboard/app/components/contracts/OfficerVersionTable.vue)
 - [Synchronization API client](../../../../dashboard/app/api/contract.ts),
   [administrator route registration](../../../../backend/src/config/serverConfig.ts),
+  [contract controller](../../../../backend/src/controllers/contractController.ts),
   [synchronization route](../../../../backend/src/routes/officerVersionRoutes.ts), and
   [synchronization controller](../../../../backend/src/controllers/officerVersionController.ts)
 - [Officer-version resolution](../../../../backend/src/utils/officerVersion.ts),
+  [shared chain client](../../../../backend/src/utils/viem.config.ts),
   [controller tests](../../../../backend/src/controllers/__tests__/officerVersionController.test.ts), and
   [version-resolution tests](../../../../backend/src/utils/__tests__/officerVersion.test.ts)
 

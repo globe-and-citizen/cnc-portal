@@ -3,10 +3,11 @@ import { Prisma, Team, User } from '@prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getActiveOfficerVersion } from '../contractController';
 import { authorizeUser } from '../../middleware/authMiddleware';
 import teamRoutes from '../../routes/teamRoutes';
 import { addNotification, prisma } from '../../utils';
+
+const ACTIVE_OFFICER_VERSION = '2.0.0';
 
 const { mockGetPresignedDownloadUrl, mockCaller } = vi.hoisted(() => ({
   mockGetPresignedDownloadUrl: vi.fn((key: string) => `https://signed.example.com/${key}`),
@@ -405,7 +406,7 @@ describe('Team Controller', () => {
             deployBlockNumber: null,
             deployedAt: null,
             previousOfficerId: null,
-            version: getActiveOfficerVersion(),
+            version: ACTIVE_OFFICER_VERSION,
             createdAt: new Date(),
             updatedAt: new Date(),
             previousOfficer: null,
@@ -421,7 +422,7 @@ describe('Team Controller', () => {
       const response = await request(app).get('/1');
       expect(response.status).toBe(200);
       expect(response.body.isMigrated).toBe(true);
-      expect(response.body.currentOfficer?.version).toBe(getActiveOfficerVersion());
+      expect(response.body.currentOfficer?.version).toBe(ACTIVE_OFFICER_VERSION);
     });
 
     it('exposes isMigrated=true for a point release of the active generation', async () => {
