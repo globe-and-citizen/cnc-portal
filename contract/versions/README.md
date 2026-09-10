@@ -31,11 +31,17 @@ as a new beacon.
 contract/versions/registry.json               # version registry (source of truth, distributed as version-registry.json)
 contract/versions/<version>/abi/*.json         # ABIs recompiled at the deploy commit
 contract/versions/<version>/deployed_addresses/chain-137.json   # from git at the deploy commit
+app/src/artifacts/abi/<version>/generated.ts   # typed frontend module generated from the canonical JSON snapshot
 ```
 
-app, dashboard, and ponder receive the same per-version JSON ABIs + `deployed_addresses/<version>/chain-137.json`; backend gets its 6
-hand-named raw-ABI files. Only the JSON ABIs are packaged (ponder's typed `.ts` wrappers are a deferred runtime concern; these folders are
-for tracking/audit). Distribute with `node contract/scripts/distribute-versions.mjs` after `contract/versions/` changes.
+`contract/versions/<version>/abi` is the only canonical historical ABI archive. The app receives one typed `generated.ts` module per version
+and does not package duplicate ABI JSON files. Dashboard and ponder still receive their per-version JSON ABIs through their own runtime
+paths; backend gets its six hand-named raw-ABI files. Distribute with `node contract/scripts/distribute-versions.mjs` after
+`contract/versions/` changes.
+
+Historical Solidity is not copied into parallel source directories. The immutable commit recorded in `registry.json` owns the source,
+compiler configuration, and dependency lockfile for that generation. `regenerate-version.sh` checks out that commit in an isolated clone
+when the canonical JSON snapshot must be independently rebuilt.
 
 ## Regenerating
 
@@ -46,10 +52,12 @@ contract/scripts/regenerate-version.sh V1 9613f0882
 contract/scripts/regenerate-version.sh V2 026a2377b
 node contract/scripts/build-version-registry.mjs   # rebuild registry from the folders
 node contract/scripts/distribute-versions.mjs      # fan the folders out to every consumer
+cd contract && npm run verify-versioned-abi-sync   # prove generated.ts matches the canonical snapshots
 ```
 
-ABIs are extracted from the compiled hardhat artifacts (restricted to the current contract set), so older versions correctly have fewer
-contracts (e.g. `FixedReturn` absent from V0/V0.1).
+Canonical ABIs are extracted from the compiled Hardhat artifacts, excluding interface-only and empty artifacts. The frontend generator then
+selects only the contracts consumed by the app, so older versions correctly omit contracts that did not exist yet (for example,
+`FixedReturn` in V0/V0.1).
 
 ## Caveats
 

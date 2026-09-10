@@ -43,8 +43,9 @@ Slither cannot catch everything. Confirm each of these by hand:
 
 ## Outputs
 
-- [ ] **Client ABI regenerated.** Run `npm run generate-abi` and commit the refreshed `app/src/artifacts/abi/generated.ts`. Contract CI
-      repeats this generation and rejects a stale file. Review version snapshots and Ponder artifacts through their separate change paths.
+- [ ] **Client ABI regenerated.** Run `npm run generate-abi` for the current contracts and `npm run generate-versioned-abi` for historical
+      snapshots. Commit the refreshed `app/src/artifacts/abi/**/generated.ts` files. Contract CI rejects current or versioned modules that
+      are stale. Review Ponder artifacts through their separate change path.
 - [ ] **`CHANGELOG.md` updated** for any deployed change.
 
 ## Local commands
@@ -56,6 +57,7 @@ npm run lint                # solhint + eslint
 npm run test
 npm run validate-upgrade:polygon
 npm run generate-abi        # regenerate app/src/artifacts/abi/generated.ts
+npm run generate-versioned-abi # regenerate V0 / V0.1 / V1 / V2 modules from contract/versions
 ```
 
 Slither itself is **not** required locally — CI runs it. To run it locally anyway:

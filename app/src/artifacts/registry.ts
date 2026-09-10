@@ -3,15 +3,16 @@ import registryJson from './version-registry.json'
 /**
  * Contract-version signal (no magic ABI resolution).
  *
- * Artifacts are versioned in snapshot folders (see contract/versions/registry.json
- * and scripts/freeze-version.ts): the current set lives at the top level, older
- * sets are frozen under `abi/<version>/`. `version-registry.json` maps a team's
- * Officer-generation tag to a folder.
+ * Artifacts are versioned in canonical snapshot folders (see
+ * contract/versions/registry.json). The current set lives at the top level; typed
+ * historical modules are generated under `abi/<version>/`. `version-registry.json`
+ * maps a team's Officer-generation tag to a folder.
  *
  * This module only tells you WHICH version a team runs (`resolveFolder`). Picking
  * the ABI / call flow stays EXPLICIT at the call site: for a function that differs
  * across versions, write an explicit `useXxxV2` composable that imports the pinned
- * version ABI (e.g. `@/artifacts/abi/v1/bank`), and branch on `useContractVersion()`.
+ * version ABI (e.g. a named export from `@/artifacts/abi/V1/generated`), and branch on
+ * `useContractVersion()`.
  * Functions whose signature is unchanged across versions need no versioning — their
  * single composable keeps using the current ABI. See composables/contracts/README.md.
  */
