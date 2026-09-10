@@ -94,7 +94,7 @@ Only one unpublished election can exist at a time. An ended election still block
 #### Edge & Error Cases
 
 - [x] Rejecting the wallet signature does not record a vote.
-- [ ] After a successful vote, the portal refreshes the voter's recorded choice and the election counts without requiring a manual reload.
+- [x] After a successful vote, the portal refreshes the voter's recorded choice and the election counts without requiring a manual reload.
 - [ ] A member who is not eligible receives an explanation in the portal before attempting a wallet signature.
 
 **Dependencies:** US-EL-01
@@ -196,7 +196,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 #### Edge & Error Cases
 
-- [ ] Election pages keep their contract-read and rendering work bounded as the number of candidates grows.
+- [x] Election pages keep their contract-read and rendering work bounded as the number of candidates grows.
 
 **Dependencies:** US-EL-02
 
@@ -320,7 +320,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `b4f3e0551e7c765b89f84247f7066c149df1e4d1`
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
@@ -328,6 +328,7 @@ Only one unpublished election can exist at a time. An ended election still block
 - [Election creation form](../../../app/src/components/sections/AdministrationView/forms/CreateElectionForm.vue)
 - [Election action guards](../../../app/src/components/sections/AdministrationView/ElectionActions.vue)
 - [Election reads and writes](../../../app/src/composables/elections/)
+- [Election decoding helpers](../../../app/src/utils/elections/election.ts)
 - [Current and past election sections](../../../app/src/components/sections/AdministrationView/)
 - [Current Elections contract](../../../contract/contracts/Elections/Elections.sol)
 - [Elections contract tests](../../../contract/test/Elections.spec.ts)

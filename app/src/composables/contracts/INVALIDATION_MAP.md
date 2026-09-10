@@ -123,11 +123,11 @@ Legend — **A** built-in predicate · **B** hand-written · **C** left to stale
 
 ### Elections
 
-| Write            | Reads dirtied                                                                                        | Covered by                                                                                |
-| ---------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `createElection` | `getElection`, `getVoteCount`, `getElectionCandidates`, `getElectionEligibleVoters`                  | **A** ✅                                                                                  |
-| `castVote`       | `getVoteCount`, `hasVoted`                                                                           | **A** ✅                                                                                  |
-| `publishResults` | `getElectionWinners`, `['pastElections']`, **cross-contract** BoD `getBoardOfDirectors` / `isMember` | **A** ✅ same-address · **B** `PublishResult.vue:64` `['pastElections']` ✅ · BoD side ❌ |
+| Write            | Reads dirtied                                                                                        | Covered by                                                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `createElection` | `getElection`, `getVoteCount`, `getElectionCandidates`, `getElectionEligibleVoters`                  | **A** ✅                                                                                                                                                           |
+| `castVote`       | `getVoteCount`, grouped `getVoteCounts`, `hasVoted`, `getVoterChoice`, `getElectionResults`          | **B** `elections/invalidation.ts` refreshes only ballot reads, intentionally skipping immutable `getElection` ✅                                                   |
+| `publishResults` | `getElectionWinners`, `['pastElections']`, **cross-contract** BoD `getBoardOfDirectors` / `isMember` | **A** ✅ same-address · **B** `elections/writes.ts` `useElectionsPublishResults` invalidates `['pastElections']` and the BoD reads via `contractReadsOfAddress` ✅ |
 
 ### BoardOfDirectors
 
@@ -185,8 +185,9 @@ Covered separately in [`queries/safe.mutations.ts`](../../queries/safe.mutations
 3. **`TransferAction.vue` (ExpenseAccount `transfer`) invalidates only the backend expense list** — no chain balance.
 4. **The 4 `executeContractWrite` call sites bypass mechanism A entirely** (`useClaimMigration`, `useSweepMigration`, `useSetMigrationRoot`,
    `useShareholderMigration`). Two of them compensate by hand; the Merkle-claim paths don't.
-5. **Cross-contract pairs with no invalidation:** ExpenseAccount/CashRemuneration `ownerWithdrawAllToBank` → Bank balances · Elections
-   `publishResults` → BoD membership · SafeDepositRouter `deposit` → Safe balance · Bank `fundFixedReturnRepayment` → both token balances.
+5. **Cross-contract pairs with no invalidation:** ExpenseAccount/CashRemuneration `ownerWithdrawAllToBank` → Bank balances ·
+   SafeDepositRouter `deposit` → Safe balance · Bank `fundFixedReturnRepayment` → both token balances. _(Elections `publishResults` → BoD
+   membership is closed — see §6.)_
 6. **Dead keys** — `['getBodActions']` ([`bod/writes.ts:47`](../bod/writes.ts), `:164`) matches no query. Backend-side equivalents:
    `['weekly-claims', teamId]` (`WeeklyClaimActionEnable.vue:68`, `WeeklyClaimActionDropdown.vue:253`) and `['team', {teamId}]`
    (`CreateAddCampaign.vue:163`), plus the `undefined`-laden key from `useSyncWeeklyClaimsMutation`.
@@ -221,6 +222,11 @@ export function useInvalidateBankQueries() {
   };
 }
 ```
+
+Elections `publishResults` is the first write to follow this shape: [`useElectionsPublishResults`](../elections/writes.ts) declares, in the
+write layer rather than in a component, that publication dirties the Board of Directors, and reaches those reads with
+[`contractReadsOfAddress`](./useContractWritesV3.ts) — the same address predicate mechanism A uses for the written contract, now exported so
+a cross-contract write can reuse it instead of inventing a marker of its own.
 
 Three rules that follow from §1:
 

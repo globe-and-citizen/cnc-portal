@@ -18,7 +18,8 @@ The deployment helpers `useOfficerDeployment` / `useOfficerRedeploy` are the two
 2. submits the validated request via `writeContract`,
 3. waits for the receipt and throws `ContractWriteRevertedError` if the transaction reverted on-chain — with the ABI-decoded revert reason
    attached as `cause` when recoverable,
-4. on success, invalidates every `useReadContract` query targeting the same contract address (scoped to `chainId` when pinned).
+4. on success, invalidates every `useReadContract` query targeting the same contract address (scoped to `chainId` when pinned), unless the
+   caller supplies a narrower, documented invalidation plan.
 
 `cfg.onSuccess` is awaited, so cross-contract invalidation queued by the caller settles before `mutateAsync` resolves. `cfg.onError` runs
 after the built-in error log.
@@ -27,6 +28,10 @@ Step 4 is narrower than it looks: it matches only keys shaped `['readContract', 
 (`['balance', …]`), ERC-20 balances (keyed on the **token** address), the `*-events-logs` transaction feeds and every hand-rolled aggregate
 key are outside its reach and need an explicit `cfg.onSuccess`. [`INVALIDATION_MAP.md`](./INVALIDATION_MAP.md) maps each write to the reads
 it dirties and to what covers them today — read it before adding a write.
+
+Set `config.invalidateContractReads` to `false` only when the write changes a bounded derived view while the underlying contract record
+remains current, and pair it with an `onSuccess` predicate that invalidates every affected query. `castVote` is the reference: it refreshes
+the ballot's counts and voter state, but leaves the immutable election record in cache.
 
 ## 1. Shape of a write composable
 
