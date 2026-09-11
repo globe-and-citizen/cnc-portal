@@ -320,6 +320,10 @@ with that hash before projecting the entry and aggregates compatible account lin
 retain their explicit stable source-operation identity. A multi-counterparty transaction uses transaction-level narration; the raw indexed
 events retain the recipient-level detail.
 
+An internal transfer is de-duplicated only when the same transaction hash, accounts, token, raw amount, rate, and complementary emitting
+contract sides prove that two logs describe the same movement. Equal values or timestamps do not establish duplication, and repeated equal
+transfers inside one transaction retain their full count.
+
 JournalEntry assembly validates the fee invariant after grouping source postings: a `FeePaid` log without matching Bank-outflow evidence is
 withheld, never turned into a fee-only `JournalEntry`, and is exposed as incomplete evidence for reconciliation.
 
@@ -328,11 +332,12 @@ have no current mapper. They are intentionally excluded from this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `722692bad36db94c22ce1918c03e59a1e0f2dd65`
+**Implementation evidence reviewed against:** `f3c9924f9dde1bf0b391b1c873fc9cbb89295029`
 
-- [Use-case identifiers and source-operation identity](../../../app/src/utils/accounting/ledgerEntry.ts)
-- [Journal assembly](../../../app/src/utils/accounting/generalLedger.ts) and
-  [validated journal model](../../../app/src/utils/accounting/journalEntry.ts)
+- [Journal-draft, use-case, and source-operation identity](../../../app/src/utils/accounting/journalEntryDraft.ts)
+- [Journal finalization](../../../app/src/utils/accounting/journalEntry.ts),
+  [validation](../../../app/src/utils/accounting/journalEntryValidation.ts), and
+  [Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts)
 - [Source mappers](../../../app/src/utils/accounting/mappers/), including
   [Bank and its transaction-bound fees](../../../app/src/utils/accounting/mappers/bank.ts),
   [Payroll](../../../app/src/utils/accounting/mappers/payroll.ts), [Expense](../../../app/src/utils/accounting/mappers/expenseAccount.ts),
