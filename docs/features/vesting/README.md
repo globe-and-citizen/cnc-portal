@@ -252,7 +252,7 @@ Validated on 2026-08-21 against the current contract behaviour, automated eviden
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0ee17e05aa8fda1ef0d6603ad3b358eb10d168cd`
+**Implementation evidence reviewed against:** `fa7a1732154709f65a459eb1122ead83fcf05ecf`
 
 - [Vesting components](../../../app/src/components/sections/VestingView/)
 - [Vesting page and read orchestration](../../../app/src/views/team/%5Bid%5D/VestingView.vue)

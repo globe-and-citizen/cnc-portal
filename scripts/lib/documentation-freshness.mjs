@@ -29,6 +29,7 @@ const IMPLEMENTATION_EVIDENCE_REVISION_LINE_PATTERN = new RegExp(
   `^\\*\\*${IMPLEMENTATION_EVIDENCE_REVISION_LABEL}:\\*\\*`,
   'im'
 )
+const GIT_OUTPUT_MAX_BUFFER = 64 * 1024 * 1024
 
 function normalizePath(path) {
   return path.split(sep).join('/').replace(/^\.\//, '').replace(/\/$/, '')
@@ -221,7 +222,11 @@ export function readCanonicalDocuments(repositoryRoot) {
 }
 
 function git(repositoryRoot, args) {
-  return execFileSync('git', args, { cwd: repositoryRoot, encoding: 'utf8' }).trim()
+  return execFileSync('git', args, {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+    maxBuffer: GIT_OUTPUT_MAX_BUFFER
+  }).trim()
 }
 
 export function documentationBaseCommit(repositoryRoot, configuredBase = process.env.DOCS_BASE_COMMIT) {

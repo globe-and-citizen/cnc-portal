@@ -5,8 +5,8 @@
  * FixedReturn-specific.
  */
 import type { MaybeRefOrGetter } from 'vue'
-import FixedReturnAbi from '@/artifacts/abi/json/FixedReturn.json'
-import FixedReturnV2Abi from '@/artifacts/abi/V2/json/FixedReturn.json'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
+import { fixedReturnAbi as fixedReturnV2Abi } from '@/artifacts/abi/V2/generated'
 import type { FixedReturnEventFeed } from '@/types/contract-events/fixedReturn'
 import {
   str,
@@ -16,7 +16,7 @@ import {
   type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
-const FIXED_RETURN_EVENT_ABI = unionEventAbi([FixedReturnAbi, FixedReturnV2Abi])
+const FIXED_RETURN_EVENT_ABI = unionEventAbi([fixedReturnAbi, fixedReturnV2Abi])
 
 const empty = (): FixedReturnEventFeed => ({
   fixedReturnLendingOfferCreateds: { items: [] },

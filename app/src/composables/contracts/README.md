@@ -248,9 +248,10 @@ Practical notes:
 
 ## Contract versioning (V0 / V0.1 / V1 / V2)
 
-Contracts are versioned in snapshot folders (`app/src/artifacts/abi/<version>/`, frozen by `contract/scripts/freeze-version.ts`;
-`version-registry.json` describes each generation). There is **no magic ABI resolver** — a version difference can be behavioural (changed
-args, new/removed functions), so the version a function targets is chosen **explicitly** by the developer.
+Contracts are versioned in canonical snapshot folders under `contract/versions/<version>/`; distribution generates the app's typed
+`app/src/artifacts/abi/<version>/generated.ts` modules. `version-registry.json` describes each generation. There is **no magic ABI
+resolver** — a version difference can be behavioural (changed args, new/removed functions), so the version a function targets is chosen
+**explicitly** by the developer.
 
 - **Know the team's version** — `useContractVersion()` returns the current team's folder (`V0` / `V0.1` / `V1` / …). Resolution order:
   1. `Team.contractVersion` — the backend-resolved folder. **Not populated yet**; the DB backfill is a planned, separate task. Once it lands
@@ -261,20 +262,21 @@ args, new/removed functions), so the version a function targets is chosen **expl
 - **Unchanged function → no versioning.** If a function's signature is identical across versions, its single composable keeps using the
   current ABI; the encoding is version-invariant, so it works for every team.
 - **Divergent / V2-only function → explicit `useXxxV2`.** When a function changes or only exists in V2, add an explicit composable (e.g.
-  `useFundFixedReturnRepaymentV2`) that imports the pinned version ABI (`@/artifacts/abi/V2/json/<Contract>.json`) and implements the V2
-  flow. Keep the V1 composable for teams still on V1; the component picks which to call based on `useContractVersion()`. The `…V2` suffix
-  makes it obvious the flow is version-specific.
+  `useFundFixedReturnRepaymentV2`) that imports the named ABI from `@/artifacts/abi/V2/generated` and implements the V2 flow. Keep the V1
+  composable for teams still on V1; the component picks which to call based on `useContractVersion()`. The `…V2` suffix makes it obvious the
+  flow is version-specific.
 
-### Adding V2 when its contracts are frozen
+### Adding a frozen contract generation
 
-1. `contract/scripts/freeze-version.ts` + `distribute-versions.mjs` snapshot the V2 ABIs and `deployed_addresses` into
-   `app/src/artifacts/{abi,deployed_addresses}/V2/` and add the `V2` entry to `version-registry.json` (with `current: "V2"` once it's the
-   default). No app change is needed for **resolution**: `folderForOfficerBeacon` and the `ADDRESSES` map in `registry.ts` pick up the V2
-   folder automatically — just add the `V2` import line in `registry.ts` (there's a comment marking where).
-2. For each function that **diverges** V1→V2, write a `useXxxV2` and branch on `useContractVersion()` at the call site. Unchanged functions
-   need nothing.
-3. Event history already decodes across versions: the `useContractEventsViaLogs` composables build a **union** ABI
-   (`unionEventAbi([...V2, V1, …])`) — add the V2 ABI to each union in `composables/{bank,expense,cashRemuneration,investor}`.
+1. Record the generation in `contract/versions/<version>/` and `registry.json`. If it must be reconstructed, run
+   `contract/scripts/regenerate-version.sh <version> <deploy-commit>`; Git supplies the matching Solidity source and toolchain.
+2. Run `build-version-registry.mjs` and `distribute-versions.mjs`. Distribution generates the typed app module, copies the versioned
+   addresses, and updates the remaining consumers. No app change is needed for **resolution**: `folderForOfficerBeacon` and the `ADDRESSES`
+   map in `registry.ts` read the distributed registry.
+3. For each function that **diverges** between generations, write a version-specific composable and branch on `useContractVersion()` at the
+   call site. Unchanged functions need nothing.
+4. Event history already decodes across versions: the `useContractEventsViaLogs` composables build a **union** ABI
+   (`unionEventAbi([...V2, V1, …])`) — add the generation's ABI to each affected union.
 
 Do **not** reintroduce a `useContractAbi(type)`-style resolver that auto-swaps the ABI by team version: it only changes the encoding, not
 the call logic, so it silently breaks when a version diverges — and it hides the version choice the developer must make.

@@ -8,10 +8,10 @@
  *   - `VestingStopped`      — a schedule stopped, its unvested remainder dropped.
  */
 import type { MaybeRefOrGetter } from 'vue'
-import VestingV2abi from '@/artifacts/abi/V2/json/Vesting.json'
-import VestingV1abi from '@/artifacts/abi/V1/json/Vesting.json'
-import VestingV01abi from '@/artifacts/abi/V0.1/json/Vesting.json'
-import VestingV0abi from '@/artifacts/abi/V0/json/Vesting.json'
+import { vestingAbi as vestingV2Abi } from '@/artifacts/abi/V2/generated'
+import { vestingAbi as vestingV1Abi } from '@/artifacts/abi/V1/generated'
+import { vestingAbi as vestingV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { vestingAbi as vestingV0Abi } from '@/artifacts/abi/V0/generated'
 import type { VestingEventFeed } from '@/types/contract-events/vesting'
 import {
   str,
@@ -21,7 +21,7 @@ import {
   type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
-const VESTING_EVENT_ABI = unionEventAbi([VestingV2abi, VestingV1abi, VestingV01abi, VestingV0abi])
+const VESTING_EVENT_ABI = unionEventAbi([vestingV2Abi, vestingV1Abi, vestingV01Abi, vestingV0Abi])
 
 const empty = (): VestingEventFeed => ({
   vestingCreateds: { items: [] },
