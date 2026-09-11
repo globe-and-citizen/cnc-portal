@@ -22,6 +22,9 @@ These acceptance criteria follow the
   Journal assembly accepts only rate-stamped source postings and derives their USD value from the exact base units and rate. The journal and
   every report aggregate fixed-scale integers without rounding; only presentation and export boundaries convert those exact values into
   human-readable amounts.
+- Native-token postings use the immutable market snapshot for the source operation's UTC date, not the current market price. Successful
+  token/date snapshots are cached without expiry. If a snapshot is unavailable, the non-zero token movement remains in the journal with a
+  zero rate, Accounting becomes partial with `rate-unavailable`, and reports remain withheld until refresh resolves the rate.
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
 - Accounting includes every known contract generation. Individual account pages intentionally remain scoped to their current contract.
@@ -67,12 +70,17 @@ These acceptance criteria follow the
 
 ```mermaid
 flowchart LR
-    Sources[Contract events and portal records] --> Consolidate[Consolidate and deduplicate]
+    Sources[Contract events and portal records] --> Mapping[Map source postings]
     Sources --> Completeness[Source completeness registry]
     Sources --> TimestampCache[Immutable block timestamp cache]
-    TimestampCache --> Consolidate
-    Consolidate --> Postings[Consolidated postings: transitional feed]
+    TimestampCache --> Mapping
+    Mapping --> RateTargets[Native token and UTC date targets]
+    RateTargets --> RateCache[Immutable historical rate cache]
+    RateCache --> Valuation[Stamp rate of record]
+    Mapping --> Valuation
+    Valuation --> Consolidate[Consolidate and deduplicate]
     Consolidate --> Journal[Validated JournalEntry collection]
+    RateCache --> Completeness
     Completeness --> Ready{All applicable sources ready?}
     Journal --> Context[Team-scoped Accounting route context]
     Context --> Ready
@@ -122,12 +130,15 @@ flowchart LR
 #### Business Rules
 
 - [x] Every journal posting has equal debit and credit totals.
-- [x] USD-pegged tokens use a one-dollar rate, while native tokens and SHER use their configured rates of record.
+- [x] USD-pegged tokens use a one-dollar rate, native tokens use their immutable UTC transaction-date market snapshot, and SHER uses its
+      compensation-multiplier policy.
 - [x] Every monetary journal line retains its token movement in exact base units and uses one shared fixed-scale USD amount for validation
       and reporting.
-- [x] A monetary source posting without a rate of record is rejected before journal assembly; the transitional `amountUsd` number is never
-      used as a reporting fallback.
+- [x] A non-zero token movement whose rate is unavailable remains in the journal at a zero rate, produces a `rate-unavailable` diagnostic,
+      and keeps reports withheld; the transitional `amountUsd` number is never used as a reporting fallback.
 - [x] A non-zero token movement remains in the books even when its displayed USD value rounds to zero at the selected display precision.
+- [x] Refreshing after the current market price changes does not rewrite a historical native-token posting; fair-value changes require
+      explicit revaluation entries rather than an implicit replacement rate.
 - [x] Payroll obligations are recognized when an eligible work week ends, before settlement.
 - [x] Internal transfers between known company accounts do not change revenue or expenses.
 - [ ] Reported closing cash balances are reconciled against the corresponding on-chain balances.
@@ -361,7 +372,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5cdd495a12e9eec43bcc4391563fd2fcb25fd782`
+**Implementation evidence reviewed against:** `172a73b4a15112114b9560a03be929c35d8f7996`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
@@ -376,6 +387,10 @@ flowchart LR
   [source completeness projection](../../../app/src/utils/accounting/accountingCompleteness.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
   [shared application query cache](../../../app/src/queries/queryClient.ts)
+- [Immutable historical token-rate query](../../../app/src/queries/historicalTokenRate.queries.ts),
+  [valuation boundary](../../../app/src/utils/accounting/toUsd.ts),
+  [historical rate cache tests](../../../app/src/queries/__tests__/historicalTokenRate.queries.spec.ts), and
+  [valuation and missing-rate retention tests](../../../app/src/utils/accounting/__tests__/toUsd.spec.ts)
 - [Pure internal-address rules](../../../app/src/utils/accounting/internalAddresses.ts)
 - [Version-aware Bank fee ingestion](../../../app/src/composables/bank/useBankEventsViaLogs.ts) and
   [legacy fee currency normalization](../../../app/src/composables/bank/bankFees.ts)

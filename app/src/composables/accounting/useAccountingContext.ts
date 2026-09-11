@@ -6,7 +6,9 @@
  * below that route boundary so a second journal cannot be created accidentally.
  */
 import { inject, provide, type InjectionKey } from 'vue'
-import { useCNCAccounting, type UseCNCAccountingReturn } from './useCNCAccounting'
+import { useCNCAccounting } from './useCNCAccounting'
+
+type UseCNCAccountingReturn = ReturnType<typeof useCNCAccounting>
 
 const ACCOUNTING_KEY: InjectionKey<UseCNCAccountingReturn> = Symbol('cnc-accounting')
 

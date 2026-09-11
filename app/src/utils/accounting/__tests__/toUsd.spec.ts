@@ -1,13 +1,18 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
+  applyHistoricalRates,
+  historicalRateTargets,
   isUsdPegged,
   round6,
   toUsd,
   tokenUsdRate,
+  utcRateDate,
   wholeTokenAmount,
   type UsdRateOfRecord
 } from '../toUsd'
 import type { TokenId } from '@/constant'
+import type { LedgerEntry } from '../ledgerEntry'
+import { buildLedger } from '../buildLedger'
 
 const AT = new Date('2026-03-13T00:00:00Z')
 
@@ -95,5 +100,70 @@ describe('tokenUsdRate', () => {
   it('resolves and 6-dp-rounds the rate for non-pegged tokens', () => {
     expect(tokenUsdRate('native', AT, () => 0.08)).toBe(0.08)
     expect(tokenUsdRate('sher', AT, () => 1 / 3)).toBe(0.333333)
+  })
+})
+
+describe('historical Accounting valuation', () => {
+  const posting = (overrides: Partial<LedgerEntry> = {}): LedgerEntry => ({
+    id: 'native-1',
+    timestamp: Date.parse('2026-03-13T23:59:59Z') / 1000,
+    useCase: 'CASH-IN',
+    debit: 'Cash — Safe',
+    credit: 'Service Revenue',
+    amountUsd: 0,
+    token: 'native',
+    rawAmount: '2000000000000000000',
+    rate: 0,
+    internal: false,
+    memo: 'Native deposit',
+    enrichment: 'not-applicable',
+    ...overrides
+  })
+
+  it('uses the UTC calendar date at both sides of midnight', () => {
+    expect(utcRateDate(new Date('2026-03-13T23:59:59Z'))).toBe('2026-03-13')
+    expect(utcRateDate(new Date('2026-03-14T00:00:00Z'))).toBe('2026-03-14')
+  })
+
+  it('derives unique sorted targets only for non-zero market-valued movements', () => {
+    expect(
+      historicalRateTargets([
+        posting(),
+        posting({ id: 'same-day' }),
+        posting({ id: 'next-day', timestamp: Date.parse('2026-03-14T00:00:00Z') / 1000 }),
+        posting({ id: 'stable', token: 'usdc', rawAmount: '1000000', rate: 1 }),
+        posting({ id: 'sher', token: 'sher', rawAmount: '1000000', rate: 0.5 }),
+        posting({ id: 'zero', rawAmount: '0' }),
+        posting({ id: 'memo', debit: null, credit: null })
+      ])
+    ).toEqual([
+      { token: 'native', date: '2026-03-13' },
+      { token: 'native', date: '2026-03-14' }
+    ])
+  })
+
+  it('stamps the transaction-date rate without mutating the raw source entry', () => {
+    const source = posting()
+    const rate = vi.fn<UsdRateOfRecord>(() => 0.625)
+    const [valued] = applyHistoricalRates([source], rate)
+
+    expect(valued).toMatchObject({ rawAmount: source.rawAmount, rate: 0.625, amountUsd: 1.25 })
+    expect(rate).toHaveBeenCalledWith('native', new Date('2026-03-13T23:59:59Z'))
+    expect(source).toMatchObject({ rate: 0, amountUsd: 0 })
+  })
+
+  it('retains the raw movement when its historical rate is unavailable', () => {
+    const [unvalued] = applyHistoricalRates([posting()], () => 0)
+    expect(unvalued).toMatchObject({ rawAmount: '2000000000000000000', rate: 0, amountUsd: 0 })
+    expect(buildLedger([unvalued!]).entries).toHaveLength(1)
+  })
+
+  it('leaves stablecoin and SHER valuation policies unchanged', () => {
+    const stable = posting({ id: 'stable', token: 'usdc', rawAmount: '1000000', rate: 1 })
+    const sher = posting({ id: 'sher', token: 'sher', rawAmount: '1000000', rate: 0.5 })
+
+    const valued = applyHistoricalRates([stable, sher], () => 999)
+    expect(valued[0]).toBe(stable)
+    expect(valued[1]).toBe(sher)
   })
 })

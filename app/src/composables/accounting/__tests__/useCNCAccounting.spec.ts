@@ -1,14 +1,15 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest'
-import { ref } from 'vue'
+import { ref, toValue, type MaybeRefOrGetter } from 'vue'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { mockTeamData } from '@/tests/mocks'
 import type { InvestorEventFeed } from '@/types/contract-events/investor'
+import { zeroAddress } from 'viem'
 
 // The on-chain feeds come from the `use*EventsViaLogs` composables. Mock each
 // to an empty, non-loading result — the same
 // pattern the *Transactions.vue specs use — so this spec exercises the assembly
 // logic without touching the RPC. `refetch` resolves so the refresh test passes.
-const { feeds } = vi.hoisted(() => {
+const { feeds, historicalRates, useHistoricalRatesQuery } = vi.hoisted(() => {
   const feed = () => ({
     result: { value: null },
     gaps: { value: [] as Array<{ address: string; error: unknown }> },
@@ -23,7 +24,14 @@ const { feeds } = vi.hoisted(() => {
     error: { value: null as unknown },
     refetch: vi.fn().mockResolvedValue(undefined)
   })
+  const historicalRates = {
+    rateOfRecord: vi.fn(() => 1),
+    isLoading: { value: false },
+    refetch: vi.fn().mockResolvedValue(undefined)
+  }
   return {
+    historicalRates,
+    useHistoricalRatesQuery: vi.fn(() => historicalRates),
     feeds: {
       bank: feed(),
       payroll: feed(),
@@ -35,6 +43,9 @@ const { feeds } = vi.hoisted(() => {
     }
   }
 })
+vi.mock('@/queries/historicalTokenRate.queries', () => ({
+  useHistoricalTokenRatesQuery: useHistoricalRatesQuery
+}))
 vi.mock('@/composables/bank/useBankEventsViaLogs', () => ({
   useBankEventsViaLogs: () => feeds.bank
 }))
@@ -102,6 +113,8 @@ describe('useCNCAccounting', () => {
       feed.loading.value = false
       feed.error.value = null
     })
+    historicalRates.isLoading.value = false
+    historicalRates.rateOfRecord.mockReturnValue(1)
     vi.mocked(useGetTeamQuery).mockReturnValue({
       data: ref(mockTeamData),
       isLoading: ref(false),
@@ -170,6 +183,35 @@ describe('useCNCAccounting', () => {
     expect(status.isLoading.value).toBe(false)
     expect(status.state.value).toBe('ready')
     expect(status.diagnostics.value).toEqual([])
+  })
+
+  it('retains an unvalued native movement and reports its missing rate', () => {
+    historicalRates.rateOfRecord.mockReturnValue(0)
+    setInvestorFeed(dividendFeed(zeroAddress))
+
+    const { journal, status } = useCNCAccounting('1')
+    const dividend = journal.value.find(({ useCase }) => useCase === 'UC-INV-01')
+
+    expect(dividend?.lines).toHaveLength(2)
+    expect(dividend?.lines.every((line) => line.movement?.rawAmount === 1_000_000n)).toBe(true)
+    expect(status.state.value).toBe('partial')
+    expect(status.diagnostics.value).toContainEqual({ kind: 'rate-unavailable', token: 'native' })
+  })
+
+  it('derives historical rate targets and enables their query without an override', () => {
+    setInvestorFeed(dividendFeed(zeroAddress))
+
+    expect(useCNCAccounting('1').journal.value).toBeDefined()
+    const [targets, enabled] = useHistoricalRatesQuery.mock.calls.at(-1) as unknown as [
+      MaybeRefOrGetter<readonly unknown[]>,
+      MaybeRefOrGetter<boolean>
+    ]
+
+    expect(toValue(targets)).toEqual([
+      { token: 'native', date: '2023-11-14' },
+      { token: 'native', date: '2024-01-07' }
+    ])
+    expect(toValue(enabled)).toBe(true)
   })
 
   it('marks the journal partial when a contract generation scan fails', () => {
@@ -288,6 +330,7 @@ describe('useCNCAccounting', () => {
   it('refetches every underlying query without throwing', async () => {
     const { refetch } = useCNCAccounting('1')
     await expect(refetch()).resolves.toBeDefined()
+    expect(historicalRates.refetch).toHaveBeenCalled()
   })
 
   it('degrades gracefully when the team id is null (no contracts)', () => {

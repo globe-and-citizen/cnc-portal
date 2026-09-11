@@ -18,7 +18,7 @@
  * Every material source exposes an explicit availability state. A partial feed
  * may preserve usable journal entries, but it is never presented as complete.
  */
-import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
@@ -43,13 +43,12 @@ import {
   useGetSafeOutgoingTransactionsQuery
 } from '@/queries/safe.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
-import { useCurrencyStore } from '@/stores/currencyStore'
+import { useHistoricalTokenRatesQuery } from '@/queries/historicalTokenRate.queries'
 import { useTransactionEvidence } from './useTransactionEvidence'
 import {
   accountingEventSource,
   accountingQuerySource,
-  useAccountingStatus,
-  type AccountingStatus
+  useAccountingStatus
 } from './useAccountingStatus'
 import {
   assembleWithAccountEvidence,
@@ -59,33 +58,22 @@ import {
 } from '@/utils/accounting/assemble'
 import { knownDeploymentAccounts } from '@/utils/accounting/accountInstances'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
-import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
+import * as accountingValuation from '@/utils/accounting/toUsd'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
 const SAFE_PAGE_SIZE = 500
 
 interface UseCNCAccountingOptions {
-  /** FX resolver for native / SHER (defaults to the Phase-1 zero-rate gap). */
-  rateOfRecord?: UsdRateOfRecord
+  /** Deterministic non-pegged rate resolver override, primarily for isolated consumers/tests. */
+  rateOfRecord?: accountingValuation.UsdRateOfRecord
   /** On-chain SHER token address, so SHER amounts resolve to the `sher` token. */
   sherTokenAddress?: Address | string | null
 }
 
-export interface UseCNCAccountingReturn {
-  /** Validated journal assembled from the consolidated postings. */
-  journal: ComputedRef<CncAccounting['journal']>
-  /** Loading, fatal-error, and reconciliation metadata for the journal. */
-  status: AccountingStatus
-  /** Re-run every underlying query. */
-  refetch: () => Promise<unknown>
-}
-
-export type { AccountingStatus } from './useAccountingStatus'
-
 export function useCNCAccounting(
   teamId: MaybeRefOrGetter<string | null>,
   options: UseCNCAccountingOptions = {}
-): UseCNCAccountingReturn {
+) {
   const team = useGetTeamQuery({ pathParams: { teamId } })
   const contracts = computed(() => team.data.value?.teamContracts ?? [])
 
@@ -139,8 +127,8 @@ export function useCNCAccounting(
   )
 
   /** Scan targets for a contract type across every generation, each with its deploy block. */
-  const targetsOf = (...types: ContractType[]): ComputedRef<ScanTarget[]> =>
-    computed(() => {
+  const targetsOf = (...types: ContractType[]) =>
+    computed<ScanTarget[]>(() => {
       const wanted = new Set<string>(types)
       const targets: ScanTarget[] = []
       for (const generation of generations.value) {
@@ -161,8 +149,8 @@ export function useCNCAccounting(
    * Types are checked in preference order so API result ordering cannot select
    * a legacy deployment over its current replacement.
    */
-  const addressOf = (...types: ContractType[]): ComputedRef<string> =>
-    computed(() => {
+  const addressOf = (...types: ContractType[]) =>
+    computed<string>(() => {
       for (const type of types) {
         const address = contracts.value.find((contract) => contract.type === type)?.address
         if (address) return address.toLowerCase()
@@ -246,21 +234,15 @@ export function useCNCAccounting(
     queryParams: { limit: SAFE_PAGE_SIZE }
   })
 
-  // Live-price fallback: the caller's resolver, else the app's live prices from
-  // the currency store (CoinGecko). Used only while a day's historical price is
-  // in flight — the timestamped rate below is the actual rate of record.
-  const currencyStore = useCurrencyStore()
-  const liveRate: UsdRateOfRecord =
-    options.rateOfRecord ?? ((tokenId) => currencyStore.getTokenPrice(tokenId, false, 'usd'))
-
-  // The raw feeds + the live-price fallback — everything the ledger needs except
-  // the resolved historical rate.
+  // The raw feeds are first mapped with the explicit override when supplied, or
+  // with the zero-rate gap. This produces the token/date request set without
+  // running the source mappers twice.
   const baseInput = computed<CncAccountingInput>(() => ({
     contracts: allContracts.value,
     safeAddress: safeAddress.value,
     sherTokenAddress: options.sherTokenAddress ?? (investorAddress.value || null),
     currentSherMultiplier: currentSherMultiplier.value,
-    rateOfRecord: liveRate,
+    ...(options.rateOfRecord ? { rateOfRecord: options.rateOfRecord } : {}),
     bankEvents: bank.result.value,
     cashRemunerationEvents: cashRem.result.value,
     expenseEvents: expense.result.value,
@@ -276,17 +258,30 @@ export function useCNCAccounting(
     accountAssignments: accountAssignments.data.value
   }))
 
-  // Native (POL/ETH) is valued at the **current** live price (currency store /
-  // CoinGecko) — the same "current rate everywhere" rule SHER follows. A fixed POL
-  // quantity is worth today's price wherever it appears, so the treasury asset
-  // reflects real current value and the whole POL book re-values together when the
-  // price moves (no per-date historical fetch). USDC is pegged $1 by `toUsd`; SHER
-  // is valued from the router multiplier (see buildRateOfRecord). The live price is
-  // already wired into `baseInput.rateOfRecord` (`liveRate`).
+  const provisionalRawEntries = computed(() => buildRawCncEntries(baseInput.value))
+  const historicalTargets = computed(() =>
+    accountingValuation.historicalRateTargets(provisionalRawEntries.value)
+  )
+  const historicalRates = useHistoricalTokenRatesQuery(
+    historicalTargets,
+    () => !options.rateOfRecord
+  )
+
+  // Native (POL/ETH) is valued from the immutable UTC transaction-date snapshot.
+  // Stablecoins retain their $1 peg and SHER retains the multiplier policy applied
+  // by `buildRawCncEntries`. Missing market data stamps a zero rate but never
+  // removes the evidenced token movement; completeness reports the gap.
   // Mapper-provided instances are accepted only when they name a known company
   // deployment. Receipt Transfer logs may complete a missing instance; activity
   // order and unrelated historical deployments are never used as a fallback.
-  const rawEntries = computed(() => buildRawCncEntries(baseInput.value))
+  const rawEntries = computed(() =>
+    options.rateOfRecord
+      ? provisionalRawEntries.value
+      : accountingValuation.applyHistoricalRates(
+          provisionalRawEntries.value,
+          historicalRates.rateOfRecord
+        )
+  )
   const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
   const transactionEvidence = useTransactionEvidence(rawEntries, deploymentAccounts)
   const accounting = computed<CncAccounting>(() =>
@@ -378,15 +373,15 @@ export function useCNCAccounting(
     },
     rates: {
       rawEntries,
-      hasCustomResolver: Boolean(options.rateOfRecord),
-      isTokenLoading: (token) => currencyStore.isTokenLoading(token)
+      isLoading: historicalRates.isLoading
     }
   })
 
   const refetch = (): Promise<unknown> =>
-    Promise.allSettled(
-      [...sourceDefinitions, ...eventSources].map(({ query }) => query.refetch?.())
-    )
+    Promise.allSettled([
+      ...[...sourceDefinitions, ...eventSources].map(({ query }) => query.refetch?.()),
+      historicalRates.refetch()
+    ])
 
   return { journal: computed(() => accounting.value.journal), status, refetch }
 }

@@ -30,7 +30,11 @@ flowchart LR
     feeds --> input
     assignments --> input
     input --> mapped[Pure source mapping]
-    mapped --> evidence[Transaction and receipt evidence]
+    mapped --> rateTargets[Native token and UTC date targets]
+    rateTargets --> rateCache[Immutable historical rate cache]
+    rateCache --> valued[Rate-stamped postings]
+    mapped --> valued
+    valued --> evidence[Transaction and receipt evidence]
     evidence --> assembly[Pure accounting assembly]
     assembly --> journal[JournalEntry collection]
     feeds --> sourceStatus[Reactive source states]
@@ -49,8 +53,8 @@ grouped status, and a refresh operation. `useAccountingStatus` projects each app
 Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken for final books. Typed diagnostics identify source errors,
 contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, and unavailable rates. The parent Accounting route remains
 mounted while its report child changes, so the shared context prevents those reports from independently fetching and assembling the same
-books. The team workspace gives that route owner a stable key within one team and a new key when the team identifier changes. Its two pure
-runtime stages are `buildRawCncEntries(CncAccountingInput)` and
+books. The team workspace gives that route owner a stable key within one team and a new key when the team identifier changes. Its three pure
+runtime stages are `buildRawCncEntries(CncAccountingInput)`, `applyHistoricalRates(rawEntries, rateOfRecord)`, and
 `assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
 diagnostics without Vue or network I/O.
 
@@ -63,6 +67,13 @@ Contract logs do not carry timestamps. `eventsViaLogs` resolves every distinct m
 by network and block number with infinite staleness and garbage-collection time because a mined block is immutable. Concurrent event feeds
 and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
 timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
+
+The provisional raw feed derives one unique native-token target per UTC transaction date. `historicalTokenRate.queries.ts` resolves each
+target through the shared TanStack Query client using an atomic `coinId + date + USD` identity. A successful snapshot has infinite staleness
+and garbage-collection time because it is the immutable rate of record; concurrent operations and later refreshes reuse it. The aggregate
+target-set query remains retryable, so a failed or not-yet-published date can resolve on Accounting refresh without refetching successful
+dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its separate
+multiplier realization policy.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -115,7 +126,10 @@ level, outside the mapper directory.
 flowchart LR
     input[CncAccountingInput] --> context[LedgerSources and MapperContext]
     context --> mapped[Mapped LedgerEntry feed]
-    mapped --> raw[Rate-resolved LedgerEntry feed]
+    mapped --> rateTargets[Native token and UTC date targets]
+    rateTargets --> rateCache[Immutable historical rate cache]
+    rateCache --> raw[Rate-resolved LedgerEntry feed]
+    mapped --> raw
     raw --> ledger[buildLedger: sort and deduplicate]
     ledger --> entries[Consolidated source postings]
     entries --> registry[buildAccountRegistry]
@@ -273,15 +287,17 @@ it to an earlier or later deployment based on activity order.
   assembled into that entry before compatible debit and credit lines are aggregated. A synthetic operation retains its explicit stable
   identity.
 - A monetary `JournalEntryLine` has exactly one debit or credit amount and exactly one concrete `Account`.
-- Journal assembly requires a rate of record on every monetary source posting. Missing rates are rejected instead of falling back to the
-  transitional `amountUsd` number.
+- Journal assembly requires an explicit rate on every monetary source posting. An unavailable market rate is stamped as zero, retains its
+  non-zero base-unit movement, and makes the source registry partial; the transitional `amountUsd` number is never a reporting fallback.
 - Each monetary `JournalEntry` has equal debit and credit totals by exact integer equality. Invalid normalized postings are rejected before
   a journal projection can consume them.
 - Token movement evidence retains the exact blockchain base-unit `bigint` and token decimals. The current maximum of 18 token decimals plus
   the six-decimal rate of record determines the common 24-decimal `UsdAmount` scale, so token-to-USD conversion requires no division or
   rounding.
 - General Ledger, Trial Balance, account running balances, Summary, Income Statement, and Balance Sheet aggregate `UsdAmount` integers. A
-  non-zero base-unit movement is never discarded because its presentation value is below a display threshold.
+  non-zero base-unit movement is never discarded because its rate is unavailable or its presentation value is below a display threshold.
+- A native-token posting uses the provider snapshot for its source operation's UTC date. Current market prices cannot replace that rate or
+  silently rewrite historical profit and loss; fair-value changes require explicit revaluation JournalEntries.
 - The assembled Accounting result carries only the canonical journal and reconciliation diagnostics. UI and export consumers never receive
   transitional postings, an account registry, or precomputed report projections beside the journal.
 - Every material source has an explicit availability state. Accounting reports mount only when all applicable sources are ready; balanced
@@ -319,6 +335,8 @@ it to an earlier or later deployment based on activity order.
   query marks the books partial and identifies its source rather than silently publishing the available subset.
 - A failed immutable block read withholds every decoded event from that block and marks the owning event source partial. A log without a
   block number is handled the same way; neither case creates a timestamp-zero posting.
+- A failed historical-rate read leaves the token quantity in the journal at a zero rate, emits `rate-unavailable`, and withholds reports.
+  Accounting refresh retries that date while every successful token/date snapshot remains cached.
 - A report mounted outside the Accounting route context fails explicitly. This is a programming error rather than permission to construct a
   second journal implicitly.
 - Changing the route team identifier remounts the Accounting owner, so the previous team's journal cannot survive into the new team scope.
@@ -425,10 +443,12 @@ because deposits and company-pocket transfers are not manual assignment targets.
 - The transitional `LedgerEntry.amountUsd` remains a six-decimal `number` for source narration and mapper compatibility. Journal assembly
   always computes the report-authoritative amount from exact token base units and the required rate of record; reports never consume the
   transitional number.
+- Historical market-data retention and publication timing are provider constraints. Accounting exposes an unavailable date as partial
+  evidence instead of substituting the current price.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5cdd495a12e9eec43bcc4391563fd2fcb25fd782`
+**Implementation evidence reviewed against:** `172a73b4a15112114b9560a03be929c35d8f7996`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -448,6 +468,10 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [block timestamp cache tests](../../../app/src/queries/__tests__/blockTimestamp.queries.spec.ts),
   [event-query identity tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts), and
   [Investor source-resolution tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
+- [Immutable historical token-rate query](../../../app/src/queries/historicalTokenRate.queries.ts),
+  [valuation utilities](../../../app/src/utils/accounting/toUsd.ts),
+  [historical rate cache tests](../../../app/src/queries/__tests__/historicalTokenRate.queries.spec.ts), and
+  [valuation and missing-rate retention tests](../../../app/src/utils/accounting/__tests__/toUsd.spec.ts)
 - [Accounting source contracts](../../../app/src/utils/accounting/types.ts),
   [pure completeness projection](../../../app/src/utils/accounting/accountingCompleteness.ts), and
   [source-status integration tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
