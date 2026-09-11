@@ -2,6 +2,7 @@ import { beforeEach, describe, it, expect, vi } from 'vitest'
 import { ref } from 'vue'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { mockTeamData } from '@/tests/mocks'
+import type { InvestorEventFeed } from '@/types/contract-events/investor'
 
 // The on-chain feeds come from the `use*EventsViaLogs` composables. Mock each
 // to an empty, non-loading result — the same
@@ -58,6 +59,33 @@ vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', () => ({
 
 import { useCNCAccounting } from '../useCNCAccounting'
 
+const INVESTOR_V1 = '0x1111111111111111111111111111111111111111'
+const INVESTOR_V2 = '0x2222222222222222222222222222222222222222'
+const TX_HASH = `0x${'a'.repeat(64)}`
+
+const dividendFeed = (token: string): InvestorEventFeed => ({
+  investorMints: { items: [] },
+  investorDividendDistributeds: { items: [] },
+  investorDividendPaids: {
+    items: [
+      {
+        id: `${TX_HASH}-0`,
+        contractAddress: token,
+        shareholder: '0x3333333333333333333333333333333333333333',
+        token,
+        amount: '1000000',
+        timestamp: 1_700_000_000
+      }
+    ]
+  },
+  investorDividendPaymentFaileds: { items: [] }
+})
+
+const setInvestorFeed = (value: InvestorEventFeed) => {
+  const result = feeds.investor.result as { value: InvestorEventFeed | null }
+  result.value = value
+}
+
 // Relies on the global mocks (tests/setup/composables.setup.ts):
 //   • `useGetTeamQuery` → `mockTeamData` (one InvestorV1 pocket, an owner address)
 //   • the on-chain feeds → the empty getLogs mocks above (no on-chain events)
@@ -92,6 +120,49 @@ describe('useCNCAccounting', () => {
     expect(acc).not.toHaveProperty('accountRegistry')
     expect(acc).not.toHaveProperty('reports')
     expect(Array.isArray(acc.journal.value)).toBe(true)
+  })
+
+  it('prefers the current Investor address even when InvestorV1 is listed first', () => {
+    vi.mocked(useGetTeamQuery).mockReturnValue({
+      data: ref({
+        ...mockTeamData,
+        teamContracts: [
+          {
+            address: INVESTOR_V1,
+            type: 'InvestorV1',
+            deployer: INVESTOR_V1,
+            admins: []
+          },
+          {
+            address: INVESTOR_V2,
+            type: 'Investor',
+            deployer: INVESTOR_V2,
+            admins: []
+          }
+        ]
+      }),
+      isLoading: ref(false),
+      isPending: ref(false),
+      error: ref(null),
+      refetch: vi.fn().mockResolvedValue(undefined)
+    } as unknown as ReturnType<typeof useGetTeamQuery>)
+    setInvestorFeed(dividendFeed(INVESTOR_V2))
+
+    const entry = useCNCAccounting('1', { rateOfRecord: () => 1 }).journal.value.find(
+      ({ useCase }) => useCase === 'UC-INV-01'
+    )
+
+    expect(entry?.lines.map((line) => line.movement?.token)).toEqual(['sher', 'sher'])
+  })
+
+  it('falls back to InvestorV1 when no current Investor exists', () => {
+    setInvestorFeed(dividendFeed(INVESTOR_V1))
+
+    const entry = useCNCAccounting('1', { rateOfRecord: () => 1 }).journal.value.find(
+      ({ useCase }) => useCase === 'UC-INV-01'
+    )
+
+    expect(entry?.lines.map((line) => line.movement?.token)).toEqual(['sher', 'sher'])
   })
 
   it('reports ready books when every applicable source is available', () => {

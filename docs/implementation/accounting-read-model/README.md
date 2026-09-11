@@ -4,7 +4,7 @@
 double-entry journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on
 demand. This model does not create or persist manual journal entries.
 
-**Last verified:** 2026-09-09
+**Last verified:** 2026-09-11
 
 ## Consumers
 
@@ -63,6 +63,14 @@ Contract logs do not carry timestamps. `eventsViaLogs` resolves every distinct m
 by network and block number with infinite staleness and garbage-collection time because a mined block is immutable. Concurrent event feeds
 and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
 timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
+
+Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
+sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
+addresses retain the earliest boundary so no known portion of that deployment's history is hidden.
+
+Investor history still scans both `InvestorV1` and current `Investor` deployments. Live SHER identity is separate from that historical
+collection: the current `Investor` address always takes precedence when both types exist in the current contract set, regardless of API
+ordering, and `InvestorV1` is used only when no current `Investor` exists.
 
 ### Runtime Export Boundary
 
@@ -420,7 +428,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fa7a1732154709f65a459eb1122ead83fcf05ecf`
+**Implementation evidence reviewed against:** `5cdd495a12e9eec43bcc4391563fd2fcb25fd782`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -437,7 +445,9 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [legacy Bank fee currency normalization](../../../app/src/composables/bank/bankFees.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts),
   [shared query client](../../../app/src/queries/queryClient.ts), and
-  [block timestamp cache tests](../../../app/src/queries/__tests__/blockTimestamp.queries.spec.ts)
+  [block timestamp cache tests](../../../app/src/queries/__tests__/blockTimestamp.queries.spec.ts),
+  [event-query identity tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts), and
+  [Investor source-resolution tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
 - [Accounting source contracts](../../../app/src/utils/accounting/types.ts),
   [pure completeness projection](../../../app/src/utils/accounting/accountingCompleteness.ts), and
   [source-status integration tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)

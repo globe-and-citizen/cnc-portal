@@ -25,6 +25,8 @@ These acceptance criteria follow the
 - Payroll is recognized on an accrual basis. Expense Account spending is recognized on a cash basis.
 - Transfers between the company's own accounts are internal movements, not revenue or expenses.
 - Accounting includes every known contract generation. Individual account pages intentionally remain scoped to their current contract.
+  Investor history includes both `InvestorV1` and `Investor`, while the current `Investor` address is the authoritative SHER identity;
+  `InvestorV1` is its fallback only when no current deployment exists.
 - Accounting tracks every applicable contract, Safe, portal, receipt, and valuation source as `loading`, `ready`, `partial`, or `failed`;
   sources that do not apply to the company are explicit. Reports render only when the complete source registry is `ready`. Loading, partial,
   and failed books are withheld with typed diagnostics instead of being presented as final.
@@ -32,8 +34,8 @@ These acceptance criteria follow the
   and block number; an unavailable timestamp withholds the affected event and marks its source partial rather than inventing epoch time.
 - Off-platform activity without a connected data source, including infrastructure bills, is outside the current automated books.
 
-- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter, Vesting — the
-  contracts the CNC actually uses.
+- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, Investor, SafeDepositRouter, Vesting
+  — the contracts the CNC actually uses.
 - **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares**
   booked to `Investor Equity`; a direct mint with nothing behind it issues shares straight to equity; a Bank protocol fee is a
   `Transaction Fee Expense` line in the Bank outflow that caused it; the global FeeCollector is not a company-owned cash pocket; **share
@@ -281,6 +283,8 @@ flowchart LR
 
 - [x] Accounting consolidates entries from every known contract generation into the same books.
 - [x] Each contract generation is scanned from its own deployment boundary.
+- [x] Contract-event cache identity includes each normalized deployment address and its effective boundary, and changes when a boundary
+      resolves or changes.
 - [x] Transactions made before and after a migration contribute to the same reports.
 - [x] Bank fees from V0/V0.1 local events and V1/V2 version-specific FeeCollectors appear in their source operation and remain attached to
       the Bank deployment that paid them.
@@ -293,6 +297,8 @@ flowchart LR
 #### Business Rules
 
 - [x] Contracts from every known generation are recognized as company-owned when classifying internal transfers.
+- [x] Current Investor identity prefers `Investor` over `InvestorV1` independently of API ordering, while `InvestorV1` remains the fallback
+      for companies without a current Investor deployment.
 - [x] The persistent company Safe and other officerless accounts are included once across generations.
 - [x] Merged generation events are deduplicated by their on-chain identity.
 - [ ] Historical Community Credit terms and SHER valuation inputs are resolved from their owning contract generation.
@@ -355,7 +361,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fa7a1732154709f65a459eb1122ead83fcf05ecf`
+**Implementation evidence reviewed against:** `5cdd495a12e9eec43bcc4391563fd2fcb25fd782`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)

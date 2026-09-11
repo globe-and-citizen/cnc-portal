@@ -3,7 +3,7 @@
 **Scope:** Shared client runtime for reconstructing Bank, Expense, Payroll, Community Credit, Investor, Safe Deposit Router, and Vesting
 activity directly from on-chain RPC logs.
 
-**Last verified:** 2026-09-09
+**Last verified:** 2026-09-11
 
 ## Consumers
 
@@ -33,8 +33,9 @@ flowchart LR
 ## Main Flow
 
 1. A domain feed selects the relevant contract address or generation targets.
-2. `useContractEventsViaLogs` fetches and decodes the relevant logs, then resolves each distinct block timestamp through the shared TanStack
-   Query client.
+2. `useContractEventsViaLogs` lowercases and deduplicates the targets, retains the earliest effective deployment boundary for each address,
+   and fetches and decodes the relevant logs. Its TanStack query identity contains the sorted target address and effective `fromBlock`, so a
+   boundary that resolves asynchronously starts the correct scan instead of reusing a cache entry for another range.
 3. The immutable timestamp query is keyed by network and block number with infinite staleness and garbage-collection time, so concurrent
    feeds and later scans reuse one block read.
 4. A decoded log enters its domain mapper only after its timestamp resolves. Missing block identity or a failed block read withholds that
@@ -49,6 +50,8 @@ flowchart LR
 - RPC logs are the only client-side source for these contract event feeds.
 - A decoded event has the stable identity `<txHash>-<logIndex>`; duplicate scans collapse on that identity.
 - Contract generations scan from their deployment boundary whenever it is known.
+- Equivalent target sets share one deterministic event-query identity regardless of input order or address casing. Changing an address or
+  its effective deployment boundary changes that identity.
 - A failed generation scan leaves the remaining generations available and records a scan gap for consumers that surface reconciliation
   state.
 - A mined block timestamp is immutable and cached by network plus block number. Event feeds never substitute zero when that timestamp cannot
@@ -62,7 +65,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fa7a1732154709f65a459eb1122ead83fcf05ecf`
+**Implementation evidence reviewed against:** `5cdd495a12e9eec43bcc4391563fd2fcb25fd782`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
