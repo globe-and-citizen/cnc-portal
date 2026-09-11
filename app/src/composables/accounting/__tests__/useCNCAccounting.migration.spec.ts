@@ -46,6 +46,8 @@ import { useCNCAccounting } from '../useCNCAccounting'
 const OLD_BANK = '0x1111111111111111111111111111111111111111'
 const NEW_BANK = '0x2222222222222222222222222222222222222222'
 const SAFE = '0x3333333333333333333333333333333333333333'
+const INVESTOR_V1 = '0x4444444444444444444444444444444444444444'
+const INVESTOR_V2 = '0x5555555555555555555555555555555555555555'
 const OWNER = '0x0000000000000000000000000000000000000001'
 
 const contract = (address: string, type = 'Bank') => ({
@@ -94,5 +96,26 @@ describe('useCNCAccounting — contract migration', () => {
     useCNCAccounting('1')
 
     expect(toValue(captured.bank)).toEqual([{ address: NEW_BANK, fromBlock: undefined }])
+  })
+
+  it('scans both Investor generations from their own deploy blocks', () => {
+    setTeam([contract(INVESTOR_V2, 'Investor')])
+    setOfficers([
+      {
+        deployBlockNumber: '300',
+        contracts: [contract(INVESTOR_V1, 'InvestorV1')]
+      },
+      {
+        deployBlockNumber: '400',
+        contracts: [contract(INVESTOR_V2, 'Investor')]
+      }
+    ])
+
+    useCNCAccounting('1')
+
+    expect(toValue(captured.investor)).toEqual([
+      { address: INVESTOR_V1, fromBlock: 300n },
+      { address: INVESTOR_V2, fromBlock: 400n }
+    ])
   })
 })

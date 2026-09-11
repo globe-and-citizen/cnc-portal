@@ -156,23 +156,22 @@ export function useCNCAccounting(
       return targets
     })
 
-  /** Current-generation address for reads that reflect live contract state. */
-  const addressOf = (type: ContractType): ComputedRef<string> =>
-    computed(
-      () => contracts.value.find((contract) => contract.type === type)?.address?.toLowerCase() ?? ''
-    )
-
-  // Auto-detect Investor: V2 ('Investor') preferred, V1 ('InvestorV1') fallback
-  const addressOfInvestor = (): ComputedRef<string> =>
-    computed(
-      () =>
-        contracts.value
-          .find((contract) => contract.type === 'Investor' || contract.type === 'InvestorV1')
-          ?.address?.toLowerCase() ?? ''
-    )
+  /**
+   * Current-generation address for reads that reflect live contract state.
+   * Types are checked in preference order so API result ordering cannot select
+   * a legacy deployment over its current replacement.
+   */
+  const addressOf = (...types: ContractType[]): ComputedRef<string> =>
+    computed(() => {
+      for (const type of types) {
+        const address = contracts.value.find((contract) => contract.type === type)?.address
+        if (address) return address.toLowerCase()
+      }
+      return ''
+    })
 
   const fixedReturnAddress = addressOf('FixedReturn')
-  const investorAddress = addressOfInvestor()
+  const investorAddress = addressOf('Investor', 'InvestorV1')
   const routerAddress = addressOf('SafeDepositRouter')
   const safeAddress = computed(() => {
     const address =
