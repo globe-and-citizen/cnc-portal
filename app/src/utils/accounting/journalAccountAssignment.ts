@@ -14,7 +14,7 @@ export const JOURNAL_ASSIGNABLE_ACCOUNTS: readonly Account[] = ACCOUNT_FAMILIES.
 const ASSIGNABLE_ACCOUNT_IDS = new Set(JOURNAL_ASSIGNABLE_ACCOUNTS.map((account) => account.id))
 
 /** Whether an API value names an account allowed by the canonical chart. */
-export function isJournalAssignableAccountId(accountId: string): boolean {
+function isJournalAssignableAccountId(accountId: string): boolean {
   return ASSIGNABLE_ACCOUNT_IDS.has(accountId)
 }
 

@@ -62,7 +62,7 @@ describe('activityOf — vesting rows', () => {
 describe('activityText', () => {
   it('shortens an address, and passes a non-address through, when no resolver is given', () => {
     expect(activityText({ kind: 'actor', actor: ALI, text: 'was paid their wages' })).toBe(
-      '0x1111…1111 was paid their wages'
+      '0x1111...1111 was paid their wages'
     )
     expect(activityText({ kind: 'actor', actor: 'Treasury', text: 'paid a fee' })).toBe(
       'Treasury paid a fee'

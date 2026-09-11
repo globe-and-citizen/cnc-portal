@@ -14,7 +14,7 @@ import {
 import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { accountFor } from '@/utils/accounting/accountRegistry'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { categoryOf } from '@/utils/accounting/ledgerCategory'
+import { categoryLabelOf } from '@/utils/accounting/ledgerCategory'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { sampleBooks } from './fixtures'
 
@@ -201,7 +201,7 @@ describe('presentJournalLedger', () => {
       debit: 'Operating Expense',
       rawAmount: '5000000'
     }
-    expect(categoryOf(finalizeJournal([outflow, fee])[0]!)).toBe('Expense')
+    expect(categoryLabelOf(finalizeJournal([outflow, fee])[0]!)).toBe('Expense')
     const ledger = presentJournalLedger(finalizeJournal([fee]))
     expect(ledger.entryCount).toBe(0)
     expect(ledger.rows).toEqual([])

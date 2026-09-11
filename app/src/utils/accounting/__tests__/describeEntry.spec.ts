@@ -18,7 +18,7 @@ describe('activityOf — actor rows', () => {
       })
     )
     expect(a).toMatchObject({ kind: 'actor', actor: ALI })
-    expect(a).toHaveProperty('text', expect.stringContaining('submitted 16h'))
+    expect(a).toHaveProperty('text', expect.stringContaining('submitted 16 h'))
     expect(a).toHaveProperty('text', expect.stringContaining('week ending'))
   })
 
@@ -33,18 +33,18 @@ describe('activityOf — actor rows', () => {
   it('renders hours and minutes (never a decimal) and a wage settlement', () => {
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 90 }))
-    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1h 30min of work' })
-    // 20h 50min = 1250 min — must read "20h 50min", not "20.8h".
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1 h 30 min of work' })
+    // 20 h 50 min = 1250 min — must not read as decimal hours.
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 1250 })).text
-    ).toBe('submitted 20h 50min of work')
+    ).toBe('submitted 20 h 50 min of work')
     // Under an hour shows minutes only; a whole hour drops the minutes.
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 50 })).text
-    ).toBe('submitted 50min of work')
+    ).toBe('submitted 50 min of work')
     expect(
       activityOf(entry({ useCase: 'UC-CASH-03', counterparty: ALI, minutesWorked: 960 }))
-    ).toEqual({ kind: 'actor', actor: ALI, text: 'was paid for 16h of work' })
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'was paid for 16 h of work' })
     expect(activityOf(entry({ useCase: 'UC-CASH-03', counterparty: ALI }))).toEqual({
       kind: 'actor',
       actor: ALI,

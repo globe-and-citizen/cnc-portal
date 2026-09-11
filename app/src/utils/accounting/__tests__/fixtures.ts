@@ -11,13 +11,17 @@ import { accountFor } from '@/utils/accounting/accountRegistry'
 import { createJournalEntry } from '@/utils/accounting/journalEntry'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { MapperContext } from '@/utils/accounting/mappers/context'
-import { USD_AMOUNT_DECIMALS, usdAmountToNumber } from '@/utils/accounting/monetaryAmount'
+import {
+  usdAmountFromToken,
+  usdAmountToNumber,
+  usdRateFromNumber
+} from '@/utils/accounting/monetaryAmount'
 import type { JournalEntry, UsdAmount } from '@/utils/accounting/types'
 import { assembleAccounting } from './assembleAccounting'
 
 /** Exact accounting amount shorthand for domain-level assertions. */
 export const usd = (amount: number | string): UsdAmount =>
-  parseUnits(String(amount), USD_AMOUNT_DECIMALS)
+  usdAmountFromToken(parseUnits(String(amount), 6), 'usdc', usdRateFromNumber(1))
 
 /** Presentation-boundary conversion for approximate legacy expectations. */
 export const usdNumber = (amount: UsdAmount): number => usdAmountToNumber(amount)
