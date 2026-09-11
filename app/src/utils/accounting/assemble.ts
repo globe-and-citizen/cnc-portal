@@ -99,14 +99,8 @@ export interface CncAccounting {
   unmatchedFeeOperationIds: string[]
 }
 
-/**
- * Phase-1 default FX resolver. Native (POL/ETH) and SHER have **no historical
- * price feed yet** (spec §6 "FX / price-of-record" is a Phase-2 gap). Rather than
- * throw — which would blank the whole page — we value them at 0 until a price
- * oracle is wired, so stablecoin (USDC) figures still render. Callers can inject
- * a real resolver (e.g. the agreed SHER mint price) via `rateOfRecord`.
- */
-const phase1RateOfRecord: UsdRateOfRecord = () => 0
+/** Preserve non-pegged source movements until their rate-of-record source resolves. */
+const unavailableRateOfRecord: UsdRateOfRecord = () => 0
 
 /** Pull an event-feed field's `.items`, tolerating a missing/null result. */
 function items<T>(field: { items: T[] } | null | undefined): T[] {
@@ -227,7 +221,7 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
  * (un-withdrawn) accruals to the current multiplier — see {@link buildRawCncEntries}.
  */
 function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
-  const baseRate = input.rateOfRecord ?? phase1RateOfRecord
+  const baseRate = input.rateOfRecord ?? unavailableRateOfRecord
   const sherRate = makeSherUsdRate(
     buildSherMultiplierTimeline(
       input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,

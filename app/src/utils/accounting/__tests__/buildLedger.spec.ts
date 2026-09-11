@@ -109,7 +109,7 @@ describe('buildLedger — internal transfer reconciliation', () => {
   })
 })
 
-describe('buildLedger — drops orphaned $0 postings (unpriced native legs)', () => {
+describe('buildLedger — preserves evidenced movements while valuation is unavailable', () => {
   const wageSettlement: LedgerEntry = {
     id: 'withdraw-1',
     timestamp: 100,
@@ -137,15 +137,15 @@ describe('buildLedger — drops orphaned $0 postings (unpriced native legs)', ()
     enrichment: 'not-applicable'
   }
 
-  it('removes a $0 posting with real accounts but no share count', () => {
+  it('keeps a non-zero native movement with a zero USD valuation', () => {
     const { entries } = buildLedger([realDeposit, wageSettlement])
-    expect(entries.map((e) => e.id)).toEqual(['bd1']) // the orphan $0 line is gone
+    expect(entries.map((e) => e.id)).toEqual(['bd1', 'withdraw-1'])
   })
 
   it('keeps a priced sub-cent fee so every transfer surfaces its own fee line', () => {
     // 0.5% fee on a few POL: 0.015 POL × ~$0.2 ≈ $0.003 → rounds to $0.00, but it
     // carries a real rate of record, so it is a genuine (tiny) posting, not an
-    // unpriced phantom — it must stay visible in the general ledger.
+    // unpriced movement — it must stay visible in the general ledger.
     const polFee: LedgerEntry = {
       id: 'fee-1',
       timestamp: 120,
@@ -162,11 +162,6 @@ describe('buildLedger — drops orphaned $0 postings (unpriced native legs)', ()
     }
     const { entries } = buildLedger([realDeposit, polFee])
     expect(entries.map((e) => e.id)).toEqual(['bd1', 'fee-1'])
-  })
-
-  it('still drops the same $0 leg when it is unpriced (no rate of record)', () => {
-    const { entries } = buildLedger([realDeposit, wageSettlement])
-    expect(entries.map((e) => e.id)).toEqual(['bd1']) // rate-less → unpriced phantom, gone
   })
 
   it('keeps a $0 posting that still records a share count', () => {

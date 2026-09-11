@@ -124,7 +124,7 @@ export interface LedgerEntry {
   /**
    * Transitional six-decimal USD projection used by source narration. Reports
    * recompute their exact amount from {@link rawAmount} and {@link rate} at the
-   * JournalEntry boundary. `0` for memo-only entries.
+   * JournalEntry boundary. `0` for memo-only entries or while a required rate is unavailable.
    */
   amountUsd: number
   /** Token actually moved on-chain — the entry's currency (spec §2 "Devise"). */
@@ -136,8 +136,8 @@ export interface LedgerEntry {
    * represented at 6-dp precision: `1.000000` for USD-pegged stablecoins, the
    * timestamped price for native (POL) / SHER. Journal assembly converts this
    * value to a fixed-scale bigint before any report calculation.
-   * Absent on entries produced before a rate resolver has run (e.g. raw mapper
-   * output in unit tests); the consolidation layer fills it in for every entry.
+   * Absent only on mapper output before valuation; assembly stamps every entry,
+   * using zero when the required rate is unavailable so the movement is retained.
    */
   rate?: number
   /** The other party of the move (checksum address), when there is one. */

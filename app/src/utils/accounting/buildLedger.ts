@@ -53,31 +53,14 @@ function dedupeInternalTransfers(entries: readonly LedgerEntry[]): LedgerEntry[]
   return out
 }
 
-/** Whether a posting moves real value (memo-only Default-D entries have no legs). */
-function isMonetary(entry: LedgerEntry): boolean {
-  return entry.debit !== null || entry.credit !== null
-}
-
-/**
- * An **unpriced** posting: real accounts, but exactly zero USD with no rate of record — a
- * native (POL/ETH) leg no price-of-record resolved for. In a USD-reported book it
- * moves nothing and only clutters the journal, so it is dropped.
- *
- * The `!entry.rate` guard is what makes this "unpriced" rather than merely "tiny".
- * Sub-cent postings are retained whether or not their display later rounds to zero.
- */
-function isZeroValuePosting(entry: LedgerEntry): boolean {
-  return isMonetary(entry) && entry.amountUsd === 0 && !entry.shares && !entry.rate
-}
-
 /**
  * Consolidate a merged, sorted {@link LedgerEntry} feed into the canonical ledger:
- * collapse internal-transfer twins. The result is then adapted once into the
- * canonical journal before every statement projection runs.
+ * collapse internal-transfer twins while retaining every evidenced movement,
+ * including a non-zero token quantity whose USD rate is temporarily unavailable.
+ * The result is then adapted once into the canonical journal before every
+ * statement projection runs.
  */
 export function buildLedger(entries: readonly LedgerEntry[]): BuiltLedger {
-  const deduped = dedupeInternalTransfers(entries)
-    .filter((entry) => !isZeroValuePosting(entry))
-    .sort((a, b) => a.timestamp - b.timestamp)
+  const deduped = dedupeInternalTransfers(entries).sort((a, b) => a.timestamp - b.timestamp)
   return { entries: deduped }
 }

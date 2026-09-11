@@ -80,8 +80,7 @@ interface AccountingStatusInput {
   }
   rates: {
     rawEntries: ReactiveValue<readonly LedgerEntry[]>
-    hasCustomResolver: boolean
-    isTokenLoading: (token: TokenId) => boolean
+    isLoading: ReactiveValue<boolean>
   }
 }
 
@@ -157,11 +156,7 @@ export function useAccountingStatus(input: AccountingStatusInput): AccountingSta
 
   const sources = computed<readonly AccountingSourceStatus[]>(() => {
     const statuses = definitions.map(availabilityOf)
-    const rateLoading =
-      !input.rates.hasCustomResolver &&
-      unavailableRateTokens.value.some(
-        (token) => token !== 'sher' && input.rates.isTokenLoading(token)
-      )
+    const rateLoading = input.rates.isLoading.value && unavailableRateTokens.value.length > 0
     const rateStatus: AccountingSourceStatus = !nonPeggedTokens.value.length
       ? { source: 'token-rates', label: 'Token USD rates', state: 'not-applicable' }
       : rateLoading
