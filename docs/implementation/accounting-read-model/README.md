@@ -381,15 +381,16 @@ traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in it
 separate fee entry in this projection. Ledger action and transaction labels are derived from the entry's assigned or inferred accounts and
 source use-case evidence; no persisted presentation category participates. The General Ledger renders the transaction hash once on the
 entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A
-transaction-backed hash links to the configured network block explorer in a separate tab. Every visible General Ledger column, including the
-account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a double-click restores its
-default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching Bank-outflow evidence,
-returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events infer an ERC-20 currency
-only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific FeeCollectors by payer. Those
-protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement drill-downs select complete
-JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and exports. Their running
-balances update only on lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an
-ordinary line of the source operation in every drill-down.
+transaction-backed hash links to the configured network block explorer in a separate tab. Activity narration and exported activity text
+reuse the canonical address and duration formatters rather than maintaining Accounting-specific display rules. Every visible General Ledger
+column, including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a
+double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching
+Bank-outflow evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events
+infer an ERC-20 currency only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific
+FeeCollectors by payer. Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement
+drill-downs select complete JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and
+exports. Their running balances update only on lines posted to the selected account; an aggregate statement line has no single running
+balance. A fee remains an ordinary line of the source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
@@ -452,7 +453,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f3c9924f9dde1bf0b391b1c873fc9cbb89295029`
+**Implementation evidence reviewed against:** `e8ed3decda3b6e1b46e6fc81c25a8bcfaed442ee`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
