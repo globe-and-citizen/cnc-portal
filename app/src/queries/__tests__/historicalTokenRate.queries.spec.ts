@@ -1,6 +1,13 @@
 import { QueryClient } from '@tanstack/vue-query'
-import { describe, expect, it, vi } from 'vitest'
-import { fetchHistoricalTokenRate, historicalTokenRateKeys } from '../historicalTokenRate.queries'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ref, toValue, type MaybeRefOrGetter } from 'vue'
+import { useQueryFn } from '@/tests/mocks/composables.mock'
+import { queryClient as sharedQueryClient } from '../queryClient'
+import {
+  fetchHistoricalTokenRate,
+  historicalTokenRateKeys,
+  useHistoricalTokenRatesQuery
+} from '../historicalTokenRate.queries'
 
 const response = (usd: unknown, ok = true) => ({
   ok,
@@ -9,7 +16,20 @@ const response = (usd: unknown, ok = true) => ({
 
 const queryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
+interface CapturedHistoricalRateQuery {
+  queryKey: MaybeRefOrGetter<readonly unknown[]>
+  enabled: MaybeRefOrGetter<boolean>
+  queryFn: () => Promise<Record<string, number>>
+}
+
+const capturedQuery = (): CapturedHistoricalRateQuery =>
+  useQueryFn.mock.calls.at(-1)?.[0] as CapturedHistoricalRateQuery
+
 describe('historical token rate queries', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('keys immutable rates by provider coin id, UTC date, and currency', () => {
     expect(historicalTokenRateKeys.rate('polygon-ecosystem-token', '2026-03-13')).toEqual([
       'historical-token-rate',
@@ -87,5 +107,71 @@ describe('historical token rate queries', () => {
       fetchHistoricalTokenRate(client, 'polygon-ecosystem-token', '2026-03-13', request)
     ).resolves.toBe(0.8)
     expect(request).toHaveBeenCalledTimes(2)
+  })
+
+  it('normalizes target sets and exposes reactive query state', async () => {
+    const data = ref<Record<string, number>>()
+    const isLoading = ref(false)
+    const isFetching = ref(false)
+    const refetch = vi.fn().mockResolvedValue({ data: { 'native:2026-03-13': 0.5 } })
+    useQueryFn.mockReturnValue({ data, isLoading, isFetching, refetch })
+    const enabled = ref(false)
+    const targets = ref([
+      { token: 'native' as const, date: '2026-03-14' },
+      { token: 'sher' as const, date: '2026-03-13' },
+      { token: 'native' as const, date: '2026-03-13' },
+      { token: 'native' as const, date: '2026-03-14' }
+    ])
+
+    const rates = useHistoricalTokenRatesQuery(targets, enabled)
+    const query = capturedQuery()
+
+    expect(toValue(query.queryKey)).toEqual([
+      'historical-token-rate',
+      'set',
+      [
+        { token: 'native', coinId: 'ethereum', date: '2026-03-13' },
+        { token: 'native', coinId: 'ethereum', date: '2026-03-14' }
+      ]
+    ])
+    expect(toValue(query.enabled)).toBe(false)
+    enabled.value = true
+    expect(toValue(query.enabled)).toBe(true)
+    expect(rates.rateOfRecord('native', new Date('2026-03-13T23:59:59Z'))).toBe(0)
+
+    data.value = { 'native:2026-03-13': 0.5 }
+    expect(rates.rateOfRecord('native', new Date('2026-03-13T23:59:59Z'))).toBe(0.5)
+    expect(rates.isLoading.value).toBe(false)
+    isLoading.value = true
+    expect(rates.isLoading.value).toBe(true)
+    isLoading.value = false
+    isFetching.value = true
+    expect(rates.isLoading.value).toBe(true)
+    await expect(rates.refetch()).resolves.toEqual({ data: { 'native:2026-03-13': 0.5 } })
+  })
+
+  it('keeps unavailable targets explicit while retaining successful snapshots', async () => {
+    useQueryFn.mockReturnValue({
+      data: ref<Record<string, number>>(),
+      isLoading: ref(false),
+      isFetching: ref(false)
+    })
+    const fetchQuery = vi
+      .spyOn(sharedQueryClient, 'fetchQuery')
+      .mockResolvedValueOnce(0.5)
+      .mockRejectedValueOnce(new Error('rate unavailable'))
+
+    const rates = useHistoricalTokenRatesQuery([
+      { token: 'native', date: '2026-03-13' },
+      { token: 'native', date: '2026-03-14' }
+    ])
+
+    await expect(capturedQuery().queryFn()).resolves.toEqual({
+      'native:2026-03-13': 0.5,
+      'native:2026-03-14': 0
+    })
+    await expect(rates.refetch()).resolves.toBeUndefined()
+    expect(fetchQuery).toHaveBeenCalledTimes(2)
+    fetchQuery.mockRestore()
   })
 })
