@@ -3,20 +3,27 @@ import { computed } from 'vue'
 import type { Address } from 'viem'
 import { mockElectionsReads, mockElectionsWrites } from '../mocks/contract.mock'
 
-const MOCK_ELECTIONS_ADDRESS = '0x1234567890123456789012345678901234567890' as Address
-
 /**
- * Mock all Elections read composables
+ * Mock all Elections read composables.
+ *
+ * The address is driven by `mockElectionsReads.address` so a test can take it
+ * away and exercise what the pages do before the team's contracts have landed.
  */
 vi.mock('@/composables/elections/reads', () => ({
-  useElectionsAddress: vi.fn(() => computed(() => MOCK_ELECTIONS_ADDRESS)),
+  useElectionsAddress: vi.fn(() =>
+    computed(() => mockElectionsReads.address.data.value as Address | undefined)
+  ),
   useElectionsOwner: vi.fn(() => mockElectionsReads.owner),
+  useElectionsNextElectionId: vi.fn(() => mockElectionsReads.nextElectionId),
   useElectionsGetElection: vi.fn(() => mockElectionsReads.getElection),
   useElectionsGetVoteCount: vi.fn(() => mockElectionsReads.getVoteCount),
+  useElectionsGetCandidateVoteCounts: vi.fn(() => mockElectionsReads.getCandidateVoteCounts),
   useElectionsGetCandidates: vi.fn(() => mockElectionsReads.getCandidates),
   useElectionsGetEligibleVoters: vi.fn(() => mockElectionsReads.getEligibleVoters),
   useElectionsGetWinners: vi.fn(() => mockElectionsReads.getWinners),
-  useElectionsHasVoted: vi.fn(() => mockElectionsReads.hasVoted)
+  useElectionsGetResults: vi.fn(() => mockElectionsReads.getResults),
+  useElectionsHasVoted: vi.fn(() => mockElectionsReads.hasVoted),
+  useElectionsGetVoterChoice: vi.fn(() => mockElectionsReads.getVoterChoice)
 }))
 
 vi.mock('@/composables/elections/writes', () => ({
