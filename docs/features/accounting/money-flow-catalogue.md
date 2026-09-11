@@ -152,14 +152,17 @@ The accounts used across the use cases and the worked example.
 
 ### Currency & valuation (rate of record)
 
-Every entry is reported in **USD**. The **quantity** of each currency is what actually moved on-chain and never changes; only its USD
-equivalence does. How each currency is converted:
+Every entry is reported in **USD**. The **quantity** of each currency is what actually moved on-chain and never changes. Its rate of record
+is selected by the policy below and is not replaced silently after the entry is assembled:
 
-| Currency         | Rate of record                                                         | Behaviour when the rate moves                                                                                                                                                                                             |
-| ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **USDC / USDT**  | pegged **$1.00**                                                       | never moves                                                                                                                                                                                                               |
-| **POL (native)** | the **current live price** (CoinGecko)                                 | The POL quantity is fixed; only its USD value moves. **Every** POL posting — past and present — is shown at **today's** price, so the whole POL book re-values together and stays balanced (no per-date historical rate). |
-| **SHER**         | the router **compensation multiplier** (1 SHER = `1 / multiplier` USD) | **Realization model** — a _taken_ leg freezes, a _pending_ leg floats (see below).                                                                                                                                        |
+| Currency         | Rate of record                                                         | Behaviour when the rate moves                                                                                                                                                       |
+| ---------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **USDC / USDT**  | pegged **$1.00**                                                       | Never moves.                                                                                                                                                                        |
+| **POL (native)** | immutable market snapshot at **00:00 UTC on the transaction date**     | The source quantity and historical USD value remain fixed. A current fair-value change requires a separate revaluation `JournalEntry`; refreshing never replaces the original rate. |
+| **SHER**         | the router **compensation multiplier** (1 SHER = `1 / multiplier` USD) | **Realization model** — a _taken_ leg freezes, a _pending_ leg floats (see below).                                                                                                  |
+
+A successful POL token/date snapshot is cached without expiry. If the provider has no snapshot, the journal keeps the non-zero token
+quantity with a zero rate, emits `rate-unavailable`, and withholds reports until a later refresh resolves the same date.
 
 **SHER — freeze at withdrawal, float while pending.** A wage is a **fixed quantity of SHER** (e.g. 10 h × 5 SHER/h = 50 SHER, whatever the
 multiplier is); the multiplier only changes its USD value, never the number of SHER minted. So:
@@ -177,9 +180,8 @@ cancelled quantity at its stop date, while whatever is still promised floats at 
 vesting grants are settled **separately** — a wage withdrawal never consumes a vesting grant, and a release never consumes a wage accrual.
 
 > **Why POL and SHER differ.** Pending SHER is _deferred compensation_ the company has committed to (contra-equity), so marking it to the
-> current rate just restates what is committed; once withdrawn it is _realized_ equity and locks. POL is cash the company _holds_ — its
-> dollar-equivalence is simply recomputed at the current price, and because both sides of every POL entry move together the books never fall
-> out of balance.
+> current multiplier restates what is committed; once withdrawn it is _realized_ equity and locks. A POL source operation records historical
+> cost at its UTC-date market snapshot. Current fair value is a distinct accounting event and cannot rewrite the original journal lines.
 
 ---
 
@@ -377,10 +379,10 @@ The full treatment, with the source model it follows and its worked netting, is 
 
 ## 6. Worked example — a full period
 
-This is the scenario in the companion spreadsheet, booked end to end for **one team**. Amounts in USD — POL at its current price, SHER at
-the router multiplier (see [Currency & valuation](#currency--valuation-rate-of-record)). This period has **no rate change**, so every SHER
-is valued at $1 and every POL amount is stable; the realization/float rules only bite once a rate moves. Team usage fees are expenses in
-this ledger; the corresponding CNC revenue entry is shown in §6.7.
+This is the scenario in the companion spreadsheet, booked end to end for **one team**. Amounts in USD — POL at its transaction-date
+snapshot, SHER at the router multiplier (see [Currency & valuation](#currency--valuation-rate-of-record)). This period has **no rate
+change**, so every SHER is valued at $1 and every POL amount is stable; the realization/float rules only bite once a rate moves. Team usage
+fees are expenses in this ledger; the corresponding CNC revenue entry is shown in §6.7.
 
 ### 6.1 The events
 
