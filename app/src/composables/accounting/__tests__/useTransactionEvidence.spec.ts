@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import { useTransactionEvidence } from '../useTransactionEvidence'
@@ -13,14 +13,13 @@ const BANK = '0x1111111111111111111111111111111111111111' as Address
 
 type CapturedConfig = { enabled: { value: boolean }; queryFn: () => Promise<unknown> }
 
-function unresolvedEntry(hash: string): LedgerEntry {
-  return makeEntry({
+function unresolvedEntry(hash: string): JournalEntryDraft {
+  return makeJournalEntryDraft({
     id: `${hash}-1`,
     timestamp: 1,
     useCase: 'UC-CREDIT-01',
     debit: 'Cash — Bank',
     credit: 'Loan Payable',
-    amountUsd: 1,
     token: 'usdc',
     rawAmount: '1000000',
     txHash: hash,
@@ -28,7 +27,7 @@ function unresolvedEntry(hash: string): LedgerEntry {
   })
 }
 
-function useEvidence(entries: readonly LedgerEntry[]) {
+function useEvidence(entries: readonly JournalEntryDraft[]) {
   return useTransactionEvidence(
     computed(() => entries),
     computed(() => new Map<string, AccountName>([[BANK.toLowerCase(), 'Cash — Bank']]))

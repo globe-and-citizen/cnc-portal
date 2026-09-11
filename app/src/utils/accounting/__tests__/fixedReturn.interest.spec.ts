@@ -5,7 +5,15 @@
  */
 import { describe, it, expect } from 'vitest'
 import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
-import { makeCtx, ADDR, creditOffer, creditEvent, balanceOf, totalDebited } from './fixtures'
+import {
+  makeCtx,
+  ADDR,
+  creditOffer,
+  creditEvent,
+  balanceOf,
+  totalDebited,
+  draftUsdValue
+} from './fixtures'
 
 const ctx = makeCtx()
 const offer = creditOffer
@@ -36,12 +44,12 @@ describe('the fixed return owed', () => {
       id: `credit-interest-1-${ADDR.lender}`,
       debit: 'Interest Expense',
       credit: 'Interest Payable',
-      amountUsd: 12,
       token: 'usdc',
       // Dated the day the round closed, not the day it matures.
       timestamp: jan1,
       internal: false
     })
+    expect(draftUsdValue(owed[0]!)).toBe(12)
     expect(owed[0]?.counterparty?.toLowerCase()).toBe(ADDR.lender)
   })
 
@@ -54,13 +62,13 @@ describe('the fixed return owed', () => {
       ctx
     )
     const owed = entries.filter((e) => e.useCase === 'UC-CREDIT-05')
-    expect(owed.map((e) => [e.counterparty?.toLowerCase(), e.amountUsd])).toEqual([
+    expect(owed.map((e) => [e.counterparty?.toLowerCase(), draftUsdValue(e)])).toEqual([
       [ADDR.lender, 7.2],
       [ADDR.client, 4.8]
     ])
     // The shares foot to the flat fee exactly — the last lender absorbs any
     // rounding remainder, as `totalEntitlementOf` does on-chain.
-    expect(owed.reduce((sum, e) => sum + e.amountUsd, 0)).toBeCloseTo(12, 6)
+    expect(owed.reduce((sum, e) => sum + draftUsdValue(e), 0)).toBeCloseTo(12, 6)
   })
 
   it('clears each lender against their own share, not the round total', () => {
@@ -73,7 +81,7 @@ describe('the fixed return owed', () => {
       ctx
     )
     const paid = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
-    expect(paid.map((e) => [e.debit, e.amountUsd])).toEqual([
+    expect(paid.map((e) => [e.debit, draftUsdValue(e)])).toEqual([
       ['Loan Payable', 60],
       ['Interest Payable', 7.2]
     ])
@@ -100,7 +108,7 @@ describe('the fixed return owed', () => {
       ctx
     )
     const paid = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
-    expect(paid.map((e) => [e.debit, e.amountUsd])).toEqual([
+    expect(paid.map((e) => [e.debit, draftUsdValue(e)])).toEqual([
       ['Loan Payable', 100],
       ['Interest Payable', 12]
     ])

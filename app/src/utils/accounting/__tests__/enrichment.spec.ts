@@ -1,18 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import { enrichEntries } from '@/utils/accounting/enrichment'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import { ADDR } from './fixtures'
 
-const payrollEntry = (): LedgerEntry =>
-  makeEntry({
+const payrollEntry = (): JournalEntryDraft =>
+  makeJournalEntryDraft({
     id: 'p1',
     timestamp: 1_700_000_100,
     useCase: 'UC-CASH-03',
     debit: 'Wage Payable',
     credit: 'Cash — Payroll',
-    amountUsd: 2,
     token: 'native',
     rawAmount: '1',
     counterparty: ADDR.member,
@@ -20,14 +19,13 @@ const payrollEntry = (): LedgerEntry =>
     enrichment: 'needs-off-chain-data'
   })
 
-const expenseEntry = (): LedgerEntry =>
-  makeEntry({
+const expenseEntry = (): JournalEntryDraft =>
+  makeJournalEntryDraft({
     id: 'e1',
     timestamp: 1_700_000_100,
     useCase: 'UC-EXP-01',
     debit: 'Operating Expense',
     credit: 'Cash — Expense',
-    amountUsd: 4,
     token: 'usdc',
     rawAmount: '4000000',
     counterparty: ADDR.member,
@@ -105,14 +103,13 @@ describe('enrichEntries', () => {
       claims: []
     } as unknown as WeeklyClaim
 
-    const settle = (id: string, rawAmount: string): LedgerEntry =>
-      makeEntry({
+    const settle = (id: string, rawAmount: string): JournalEntryDraft =>
+      makeJournalEntryDraft({
         id,
         timestamp: 1_700_650_000, // both near the 10h week
         useCase: 'UC-CASH-03',
         debit: 'Wage Payable',
         credit: 'Cash — Payroll',
-        amountUsd: 0,
         token: 'usdc',
         rawAmount,
         counterparty: ADDR.member,
@@ -135,13 +132,12 @@ describe('enrichEntries', () => {
   })
 
   it('leaves entries that need no off-chain data untouched', () => {
-    const internal = makeEntry({
+    const internal = makeJournalEntryDraft({
       id: 'i1',
       timestamp: 1,
       useCase: 'INTERNAL',
       debit: 'Cash — Bank',
       credit: 'Cash — Safe',
-      amountUsd: 1,
       token: 'native',
       rawAmount: '1',
       internal: true,

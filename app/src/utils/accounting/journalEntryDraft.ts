@@ -1,15 +1,14 @@
 /**
- * The normalized accounting record the source mappers produce.
+ * The normalized accounting draft the source mappers produce.
  *
- * A {@link LedgerEntry} is a **single balanced double-entry posting** — one debit
- * account and one credit account for the same USD amount — derived from a raw
- * indexed on-chain event (catalogue §5 / spec §4). A source event that needs more
- * than two legs (e.g. a wage withdrawal that settles cash *and* mints shares) is
- * emitted as several entries, one balanced pair each, so the trial balance always
- * balances by construction.
+ * A {@link JournalEntryDraft} is one balanced source posting awaiting canonical
+ * account resolution and validation. Source adapters emit these drafts directly.
+ * Several drafts can share one source-operation identity; finalization combines
+ * them into one multi-line {@link JournalEntry}.
  *
- * A memo-only entry (no monetary legs) carries `debit === credit === null` and
- * `amountUsd === 0`, recording only a share-count change, not money.
+ * A memo-only draft carries `debit === credit === null` and records metadata but
+ * no money. Monetary value is derived exactly from `rawAmount × rate` only when
+ * the final JournalEntry lines are built.
  */
 import { getAddress, isAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
@@ -36,7 +35,7 @@ export function sourceOperationIdOf(eventId: string): string {
 }
 
 /**
- * The use case (catalogue §5 / spec §4) a ledger entry realises. The `UC-*`
+ * The use case (catalogue §5 / spec §4) a journal draft realises. The `UC-*`
  * codes match the money-flow catalogue; the lowercase codes cover moves the
  * catalogue treats specially (internal pocket-to-pocket moves and fee skims).
  */
@@ -94,7 +93,7 @@ export type UseCase =
  */
 type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-data'
 
-export interface LedgerEntry {
+export interface JournalEntryDraft {
   /** Stable id — the source row id, suffixed when one event yields several entries. */
   id: string
   /**
@@ -121,12 +120,6 @@ export interface LedgerEntry {
   debitInstance?: Address
   /** The pocket contract instance holding the credited cash — see {@link debitInstance}. */
   creditInstance?: Address
-  /**
-   * Transitional six-decimal USD projection used by source narration. Reports
-   * recompute their exact amount from {@link rawAmount} and {@link rate} at the
-   * JournalEntry boundary. `0` for memo-only entries or while a required rate is unavailable.
-   */
-  amountUsd: number
   /** Token actually moved on-chain — the entry's currency (spec §2 "Devise"). */
   token: TokenId
   /** Raw on-chain amount in the token's base units (stringified bigint). */
@@ -144,8 +137,8 @@ export interface LedgerEntry {
   counterparty?: Address
   /** True when both sides are CNC-owned pockets — an internal move (no IS impact). */
   internal: boolean
-  /** The contract that emitted the source event (the pocket), when known. */
-  contract?: Address
+  /** Contract that emitted this exact source event, when the draft came from a log. */
+  sourceContract?: Address
   /** Transaction hash, when known. */
   txHash?: string
   /**
@@ -205,42 +198,52 @@ export interface LedgerEntry {
 }
 
 /** Checksum-normalize an address, returning `undefined` for invalid input. */
-function normalizeCounterparty(address: Address | string | null | undefined): Address | undefined {
+function normalizeAddress(address: Address | string | null | undefined): Address | undefined {
   if (!address || !isAddress(address)) return undefined
   return getAddress(address)
 }
 
 /**
- * Build a {@link LedgerEntry}, filling the common defaults
+ * Build a {@link JournalEntryDraft}, filling the common defaults
  * (`internal: false`, `enrichment: 'not-applicable'`) so call sites only specify
- * what differs. `counterparty` is checksum-normalized; nullish/invalid is dropped.
+ * what differs. Source addresses are checksum-normalized; nullish/invalid values
+ * are dropped at this shared boundary.
  */
-export function makeEntry(
+export function makeJournalEntryDraft(
   fields: Omit<
-    LedgerEntry,
-    'internal' | 'enrichment' | 'counterparty' | 'debitInstance' | 'creditInstance'
+    JournalEntryDraft,
+    | 'internal'
+    | 'enrichment'
+    | 'counterparty'
+    | 'debitInstance'
+    | 'creditInstance'
+    | 'sourceContract'
   > &
-    Partial<Pick<LedgerEntry, 'internal' | 'enrichment'>> & {
+    Partial<Pick<JournalEntryDraft, 'internal' | 'enrichment'>> & {
       counterparty?: Address | string | null
       /** Cash-pocket instance for the debit leg — checksum-normalized, invalid dropped. */
       debitInstance?: Address | string | null
       /** Cash-pocket instance for the credit leg — checksum-normalized, invalid dropped. */
       creditInstance?: Address | string | null
+      /** Contract that emitted this source event — checksum-normalized, invalid dropped. */
+      sourceContract?: Address | string | null
     }
-): LedgerEntry {
+): JournalEntryDraft {
   const {
     counterparty,
     debitInstance,
     creditInstance,
+    sourceContract,
     sourceOperationId,
     txHash,
     internal = false,
     enrichment = 'not-applicable',
     ...rest
   } = fields
-  const normalized = normalizeCounterparty(counterparty)
-  const debitAt = normalizeCounterparty(debitInstance)
-  const creditAt = normalizeCounterparty(creditInstance)
+  const normalized = normalizeAddress(counterparty)
+  const debitAt = normalizeAddress(debitInstance)
+  const creditAt = normalizeAddress(creditInstance)
+  const emittedBy = normalizeAddress(sourceContract)
   const resolvedTxHash =
     txHash ?? transactionHashOf(sourceOperationId) ?? transactionHashOf(rest.id)
   const resolvedOperationId = resolvedTxHash ?? sourceOperationId ?? rest.id
@@ -252,6 +255,7 @@ export function makeEntry(
     ...(resolvedTxHash ? { txHash: resolvedTxHash } : {}),
     ...(normalized ? { counterparty: normalized } : {}),
     ...(debitAt ? { debitInstance: debitAt } : {}),
-    ...(creditAt ? { creditInstance: creditAt } : {})
+    ...(creditAt ? { creditInstance: creditAt } : {}),
+    ...(emittedBy ? { sourceContract: emittedBy } : {})
   }
 }

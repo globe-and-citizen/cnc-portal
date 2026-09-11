@@ -1,29 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { activityOf, activityText, entryLabel } from '../describeEntry'
-import type { LedgerEntry } from '../ledgerEntry'
+import type { JournalEntryDraft } from '../journalEntryDraft'
+import { journalFixture } from './fixtures'
 
 const ALI = '0x1111111111111111111111111111111111111111'
 
-/** A minimal balanced entry; override only what each case needs. */
-function entry(partial: Partial<LedgerEntry>): LedgerEntry {
-  return {
-    id: 'e1',
-    timestamp: 1_700_000_000,
-    useCase: 'CASH-IN',
-    debit: 'Cash — Bank',
-    credit: 'Service Revenue',
-    amountUsd: 500,
-    token: 'usdc',
-    rawAmount: '500000000',
-    internal: false,
-    memo: 'raw memo',
-    enrichment: 'not-applicable',
-    ...partial
-  }
-}
+const entry = (partial: Partial<JournalEntryDraft>) => journalFixture(partial)
 
 /** The predicate `activityOf` puts after the actor's avatar. */
-const narrate = (partial: Partial<LedgerEntry>) =>
+const narrate = (partial: Partial<JournalEntryDraft>) =>
   (activityOf(entry({ counterparty: ALI, ...partial })) as { text: string }).text
 
 describe('activityOf — community credit rows', () => {
@@ -68,7 +53,9 @@ describe('activityOf — vesting rows', () => {
   })
 
   it('falls back to the memo for a use case with no catalogue label', () => {
-    expect(entryLabel(entry({ useCase: 'UC-CASH-01' as LedgerEntry['useCase'] }))).toBe('raw memo')
+    expect(entryLabel(entry({ useCase: 'UC-CASH-01' as JournalEntryDraft['useCase'] }))).toBe(
+      'raw memo'
+    )
   })
 })
 

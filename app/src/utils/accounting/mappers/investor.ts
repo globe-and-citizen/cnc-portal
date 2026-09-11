@@ -31,8 +31,8 @@ import type {
 } from '@/types/contract-events/investor'
 import type { CashRemunerationWithdrawTokenRow } from '@/types/contract-events/cash-remuneration'
 import type { VestingTokensReleasedRow } from '@/types/contract-events/vesting'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import { atDate, type MapperContext } from './context'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import type { MapperContext } from './context'
 
 export interface InvestorMapperInput {
   mints?: readonly InvestorMintRow[]
@@ -68,9 +68,12 @@ function buildBackedMints(input: InvestorMapperInput, ctx: MapperContext): Map<s
 }
 
 /** Map Investor events: backed mints drop out, the rest become memos/dividends. */
-export function mapInvestorEvents(input: InvestorMapperInput, ctx: MapperContext): LedgerEntry[] {
+export function mapInvestorEvents(
+  input: InvestorMapperInput,
+  ctx: MapperContext
+): JournalEntryDraft[] {
   const backed = buildBackedMints(input, ctx)
-  const entries: LedgerEntry[] = []
+  const entries: JournalEntryDraft[] = []
 
   for (const row of input.mints ?? []) {
     const key = backingKey(row.shareholder, row.amount)
@@ -80,13 +83,13 @@ export function mapInvestorEvents(input: InvestorMapperInput, ctx: MapperContext
       continue
     }
     entries.push(
-      makeEntry({
+      makeJournalEntryDraft({
         id: row.id,
+        sourceContract: row.contractAddress,
         timestamp: row.timestamp,
         useCase: 'DEFAULT-D',
         debit: 'SHERS To Be Issued',
         credit: 'Investor Equity',
-        amountUsd: ctx.toUsd(BigInt(row.amount), 'sher', atDate(row.timestamp)),
         token: 'sher',
         rawAmount: row.amount,
         counterparty: row.shareholder,
@@ -99,13 +102,13 @@ export function mapInvestorEvents(input: InvestorMapperInput, ctx: MapperContext
   for (const row of input.dividendPaids ?? []) {
     const tokenId = ctx.tokenIdOf(row.token)
     entries.push(
-      makeEntry({
+      makeJournalEntryDraft({
         id: row.id,
+        sourceContract: row.contractAddress,
         timestamp: row.timestamp,
         useCase: 'UC-INV-01',
         debit: 'Dividend Expense',
         credit: 'Cash — Bank',
-        amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
         token: tokenId,
         rawAmount: row.amount,
         counterparty: row.shareholder,

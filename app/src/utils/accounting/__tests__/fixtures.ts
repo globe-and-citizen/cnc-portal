@@ -7,10 +7,12 @@ import { formatUnits, parseUnits, type Address } from 'viem'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { CncAccounting } from '@/utils/accounting/assemble'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { accountFor } from '@/utils/accounting/accountRegistry'
+import { createJournalEntry } from '@/utils/accounting/journalEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { MapperContext } from '@/utils/accounting/mappers/context'
 import { USD_AMOUNT_DECIMALS, usdAmountToNumber } from '@/utils/accounting/monetaryAmount'
-import type { UsdAmount } from '@/utils/accounting/types'
+import type { JournalEntry, UsdAmount } from '@/utils/accounting/types'
 import { assembleAccounting } from './assembleAccounting'
 
 /** Exact accounting amount shorthand for domain-level assertions. */
@@ -19,6 +21,72 @@ export const usd = (amount: number | string): UsdAmount =>
 
 /** Presentation-boundary conversion for approximate legacy expectations. */
 export const usdNumber = (amount: UsdAmount): number => usdAmountToNumber(amount)
+
+interface JournalFixtureInput extends Partial<JournalEntryDraft> {
+  /** Test-only display value used to build exact final lines. */
+  amountUsd?: number
+}
+
+/** Build a validated final entry for pure presenter tests without source reconciliation. */
+export function journalFixture(partial: JournalFixtureInput = {}): JournalEntry {
+  const { amountUsd = 500, ...draftFields } = partial
+  const draft: JournalEntryDraft = {
+    id: 'entry-1',
+    timestamp: 1_700_000_000,
+    useCase: 'CASH-IN',
+    debit: 'Cash — Bank',
+    credit: 'Service Revenue',
+    token: 'usdc',
+    rawAmount: '500000000',
+    rate: 1,
+    internal: false,
+    memo: 'raw memo',
+    enrichment: 'not-applicable',
+    ...draftFields
+  }
+  const amount = usd(amountUsd)
+  const monetary = draft.debit !== null || draft.credit !== null
+  return createJournalEntry({
+    id: draft.id,
+    sourceOperationId: draft.sourceOperationId ?? draft.id,
+    timestamp: draft.timestamp,
+    useCase: draft.useCase,
+    memo: draft.memo,
+    internal: draft.internal,
+    kind: monetary ? 'monetary' : 'memo',
+    activityAmount: amount,
+    ...(draft.category ? { category: draft.category } : {}),
+    ...(draft.txHash ? { txHash: draft.txHash } : {}),
+    ...(draft.counterparty ? { counterparty: draft.counterparty } : {}),
+    ...(draft.initiator ? { initiator: draft.initiator } : {}),
+    ...(draft.shares !== undefined ? { shares: draft.shares } : {}),
+    ...(draft.creditOfferId ? { creditOfferId: draft.creditOfferId } : {}),
+    ...(draft.creditRemainingUsd !== undefined
+      ? { creditRemainingUsd: draft.creditRemainingUsd }
+      : {}),
+    ...(draft.minutesWorked !== undefined ? { minutesWorked: draft.minutesWorked } : {}),
+    ...(draft.periodEnd !== undefined ? { periodEnd: draft.periodEnd } : {}),
+    ...(draft.expenseFrequencyType !== undefined
+      ? { expenseFrequencyType: draft.expenseFrequencyType }
+      : {}),
+    ...(draft.expenseApprovedUsd !== undefined
+      ? { expenseApprovedUsd: draft.expenseApprovedUsd }
+      : {}),
+    ...(draft.expenseRemainingUsd !== undefined
+      ? { expenseRemainingUsd: draft.expenseRemainingUsd }
+      : {}),
+    lines: monetary
+      ? [
+          ...(draft.debit
+            ? [{ id: `${draft.id}:debit`, account: accountFor(draft.debit), debit: amount }]
+            : []),
+          ...(draft.credit
+            ? [{ id: `${draft.id}:credit`, account: accountFor(draft.credit), credit: amount }]
+            : [])
+        ]
+      : []
+  })
+}
 
 /** Lowercase addresses are always valid (no checksum to fail) — safe for tests. */
 export const ADDR = {
@@ -96,16 +164,29 @@ export function creditEvent(
 }
 
 /** Σ of an account's debit legs, in USD — what a cost account was charged. */
-export function totalDebited(entries: readonly LedgerEntry[], account: string): number {
-  return entries.reduce((sum, e) => sum + (e.debit === account ? e.amountUsd : 0), 0)
+export function totalDebited(entries: readonly JournalEntryDraft[], account: string): number {
+  return entries.reduce(
+    (sum, entry) => sum + (entry.debit === account ? draftUsdValue(entry) : 0),
+    0
+  )
 }
 
 /** A liability's net balance — what it still owes once every leg is booked. */
-export function balanceOf(entries: readonly LedgerEntry[], account: string): number {
+export function balanceOf(entries: readonly JournalEntryDraft[], account: string): number {
   return entries.reduce(
-    (sum, e) =>
-      sum + (e.credit === account ? e.amountUsd : 0) - (e.debit === account ? e.amountUsd : 0),
+    (sum, entry) =>
+      sum +
+      (entry.credit === account ? draftUsdValue(entry) : 0) -
+      (entry.debit === account ? draftUsdValue(entry) : 0),
     0
+  )
+}
+
+/** Approximate draft valuation for mapper-level assertions only. */
+export function draftUsdValue(entry: JournalEntryDraft): number {
+  return (
+    Number(formatUnits(BigInt(entry.rawAmount), DECIMALS[entry.token])) *
+    (entry.rate ?? RATE[entry.token])
   )
 }
 

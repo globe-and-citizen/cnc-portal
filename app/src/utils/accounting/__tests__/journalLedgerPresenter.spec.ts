@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildJournal } from '@/utils/accounting/generalLedger'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import {
   filterJournalLedgerByAccount,
   filterJournalLedgerByCurrency,
@@ -12,7 +12,9 @@ import {
 const BANK_A = '0x1111111111111111111111111111111111111111'
 const BANK_B = '0x2222222222222222222222222222222222222222'
 
-function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
+function posting(
+  overrides: Partial<JournalEntryDraft> & Pick<JournalEntryDraft, 'id'>
+): JournalEntryDraft {
   return {
     timestamp: 100,
     useCase: 'UC-BANK-03',
@@ -20,7 +22,6 @@ function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): Led
     credit: 'Cash — Bank',
     debitInstance: '0x3333333333333333333333333333333333333333',
     creditInstance: BANK_A,
-    amountUsd: 100,
     token: 'usdc',
     rawAmount: '100000000',
     rate: 1,
@@ -45,10 +46,9 @@ describe('journalLedgerPresenter', () => {
       ...usdc,
       id: `${txHash}-2`,
       token: 'native',
-      rawAmount: '2000000000000000000',
-      amountUsd: 2
+      rawAmount: '2000000000000000000'
     })
-    const journal = buildJournal([usdc, native])
+    const journal = finalizeJournal([usdc, native])
     const rows = journalLedgerRows(journal)
 
     expect(journal).toHaveLength(1)
@@ -69,12 +69,11 @@ describe('journalLedgerPresenter', () => {
       debit: 'Dividend Expense',
       credit: 'Cash — Bank',
       internal: false,
-      amountUsd: 2,
       rawAmount: '2000000'
     })
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       dividend,
-      posting({ ...dividend, id: `${firstHash}-2`, amountUsd: 3, rawAmount: '3000000' }),
+      posting({ ...dividend, id: `${firstHash}-2`, rawAmount: '3000000' }),
       posting({ ...dividend, id: `${laterHash}-1`, timestamp: 200 })
     ])
     const rows = journalLedgerRows(journal)
@@ -89,7 +88,7 @@ describe('journalLedgerPresenter', () => {
   })
 
   it('renders every line of a transfer plus fee as one ordinary JournalEntry', () => {
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       posting({ id: 'transfer', sourceOperationId: 'operation-42' }),
       posting({
         id: 'fee',
@@ -97,7 +96,6 @@ describe('journalLedgerPresenter', () => {
         useCase: 'FEE',
         debit: 'Transaction Fee Expense',
         debitInstance: undefined,
-        amountUsd: 1,
         rawAmount: '1000000',
         internal: false,
         memo: 'Transaction fee'
@@ -117,7 +115,7 @@ describe('journalLedgerPresenter', () => {
   })
 
   it('filters by concrete account and currency without dropping the other entry lines', () => {
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       posting({ id: 'a', sourceOperationId: 'operation-a', creditInstance: BANK_A }),
       posting({ id: 'b', sourceOperationId: 'operation-b', creditInstance: BANK_B, timestamp: 200 })
     ])
@@ -132,7 +130,7 @@ describe('journalLedgerPresenter', () => {
   })
 
   it('names both concrete Bank deployments in an internal-transfer activity', () => {
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       posting({
         id: 'bank-a-seed',
         timestamp: 50,
@@ -179,7 +177,7 @@ describe('journalLedgerPresenter', () => {
   })
 
   it('keeps an unresolved Bank explicit in an internal-transfer activity', () => {
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       posting({
         id: 'unresolved-bank-transfer',
         debit: 'Cash — Bank',
@@ -199,13 +197,12 @@ describe('journalLedgerPresenter', () => {
 
   it('does not name individual lenders on one multi-lender credit repayment transaction', () => {
     const txHash = `0x${'b'.repeat(64)}`
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       posting({
         id: `${txHash}-8`,
         useCase: 'UC-CREDIT-03',
         debit: 'Loan Payable',
         credit: 'Cash — Bank',
-        amountUsd: 2,
         rawAmount: '2000000',
         counterparty: '0x4444444444444444444444444444444444444444',
         internal: false
@@ -215,7 +212,6 @@ describe('journalLedgerPresenter', () => {
         useCase: 'UC-CREDIT-03',
         debit: 'Loan Payable',
         credit: 'Cash — Bank',
-        amountUsd: 2,
         rawAmount: '2000000',
         counterparty: '0x5555555555555555555555555555555555555555',
         internal: false

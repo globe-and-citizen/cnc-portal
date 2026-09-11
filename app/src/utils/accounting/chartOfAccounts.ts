@@ -2,7 +2,7 @@
  * CNC chart of accounts — the shared vocabulary every statement reads from.
  *
  * Names and classes are aligned 1:1 with the money-flow catalogue §4
- * (`docs/features/accounting/money-flow-catalogue.md`). Every raw ledger entry
+ * (`docs/features/accounting/money-flow-catalogue.md`). Every journal draft
  * identifies an account family by name; the journal resolves that family to a
  * concrete account in `accountRegistry.ts`.
  *
@@ -214,7 +214,7 @@ export type AccountFamily = (typeof ACCOUNT_FAMILIES)[number]
 /** Human-readable chart name carried by the legacy ledger-entry boundary. */
 export type AccountName = AccountFamily['name']
 
-/** Ordered chart names retained for raw ledger compatibility. */
+/** Ordered chart family names accepted by source journal drafts. */
 export const ACCOUNT_NAMES: readonly AccountName[] = ACCOUNT_FAMILIES.map((family) => family.name)
 
 const FAMILIES_BY_NAME: Readonly<Record<AccountName, AccountFamily>> = Object.fromEntries(

@@ -1,17 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { makeEntry, sourceOperationIdOf, transactionHashOf } from '@/utils/accounting/ledgerEntry'
+import {
+  makeJournalEntryDraft,
+  sourceOperationIdOf,
+  transactionHashOf
+} from '@/utils/accounting/journalEntryDraft'
 
 const TX_HASH = `0x${'a'.repeat(64)}`
 
-describe('makeEntry', () => {
+describe('makeJournalEntryDraft', () => {
   it('fills the common defaults (internal=false, enrichment=not-applicable)', () => {
-    const entry = makeEntry({
+    const entry = makeJournalEntryDraft({
       id: '1',
       timestamp: 1,
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 1,
       token: 'native',
       rawAmount: '1',
       memo: 'x'
@@ -23,13 +26,12 @@ describe('makeEntry', () => {
   })
 
   it('drops an invalid counterparty rather than storing it', () => {
-    const entry = makeEntry({
+    const entry = makeJournalEntryDraft({
       id: '1',
       timestamp: 1,
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 1,
       token: 'native',
       rawAmount: '1',
       memo: 'x',
@@ -40,15 +42,14 @@ describe('makeEntry', () => {
   })
 })
 
-describe('transaction-backed ledger entry identity', () => {
+describe('transaction-backed journal draft identity', () => {
   it('derives the transaction hash and operation identity from an indexed event id', () => {
-    const entry = makeEntry({
+    const entry = makeJournalEntryDraft({
       id: `${TX_HASH}-17`,
       timestamp: 100,
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 10,
       token: 'usdc',
       rawAmount: '10000000',
       memo: 'Client payment'

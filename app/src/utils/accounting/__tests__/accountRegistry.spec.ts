@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
 import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { assembleRawAccounting } from './assembleAccounting'
 
 const BANK_1 = '0x1111111111111111111111111111111111111111' as Address
@@ -13,15 +13,18 @@ const EXPENSE_2 = '0x6666666666666666666666666666666666666666' as Address
 const CREDIT_1 = '0x7777777777777777777777777777777777777777' as Address
 const CREDIT_2 = '0x8888888888888888888888888888888888888888' as Address
 
-function posting(id: string, account: LedgerEntry['debit'], instance?: Address): LedgerEntry {
-  return makeEntry({
+function posting(
+  id: string,
+  account: JournalEntryDraft['debit'],
+  instance?: Address
+): JournalEntryDraft {
+  return makeJournalEntryDraft({
     id,
     timestamp: 1,
     useCase: 'UC-BANK-02',
     debit: account,
     ...(instance ? { debitInstance: instance } : {}),
     credit: 'Service Revenue',
-    amountUsd: 10,
     token: 'usdc',
     rawAmount: '10000000',
     rate: 1,

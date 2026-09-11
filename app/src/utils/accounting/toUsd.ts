@@ -18,7 +18,7 @@
 import { formatUnits } from 'viem'
 import type { TokenId } from '@/constant'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
-import type { LedgerEntry } from './ledgerEntry'
+import type { JournalEntryDraft } from './journalEntryDraft'
 
 /** Round to the 6-decimal storage precision (spec §3) — never the 2-dp display. */
 export function round6(value: number): number {
@@ -56,7 +56,9 @@ export function utcRateDate(at: Date): string {
  * Derive the unique market-rate snapshots required by a raw Accounting feed.
  * Stablecoins and SHER already have domain-owned rates and require no market read.
  */
-export function historicalRateTargets(entries: readonly LedgerEntry[]): HistoricalRateTarget[] {
+export function historicalRateTargets(
+  entries: readonly JournalEntryDraft[]
+): HistoricalRateTarget[] {
   const targets = new Map<string, HistoricalRateTarget>()
   for (const entry of entries) {
     if (
@@ -112,9 +114,9 @@ export function wholeTokenAmount(amount: bigint, tokenId: TokenId): number {
 
 /** Stamp market-valued entries without changing stablecoin or SHER valuation policy. */
 export function applyHistoricalRates(
-  entries: readonly LedgerEntry[],
+  entries: readonly JournalEntryDraft[],
   rateOfRecord: UsdRateOfRecord
-): LedgerEntry[] {
+): JournalEntryDraft[] {
   return entries.map((entry) => {
     if (isUsdPegged(entry.token) || entry.token === 'sher' || BigInt(entry.rawAmount) === 0n) {
       return entry
@@ -122,11 +124,7 @@ export function applyHistoricalRates(
 
     const at = new Date(entry.timestamp * 1000)
     const rate = tokenUsdRate(entry.token, at, rateOfRecord)
-    return {
-      ...entry,
-      rate,
-      amountUsd: round6(wholeTokenAmount(BigInt(entry.rawAmount), entry.token) * rate)
-    }
+    return { ...entry, rate }
   })
 }
 

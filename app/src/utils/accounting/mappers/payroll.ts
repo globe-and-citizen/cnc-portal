@@ -23,9 +23,9 @@ import type {
   CashRemunerationOwnerTreasuryWithdrawNativeRow,
   CashRemunerationOwnerTreasuryWithdrawTokenRow
 } from '@/types/contract-events/cash-remuneration'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { buildClaimRatesWithOvertime } from '@/utils/wages/model'
-import { atDate, type MapperContext } from './context'
+import type { MapperContext } from './context'
 import { createInternalPosting } from './internalPosting'
 
 export interface PayrollMapperInput {
@@ -51,16 +51,16 @@ function cashSettlement(
   },
   token: string | null,
   ctx: MapperContext
-): LedgerEntry {
+): JournalEntryDraft {
   const tokenId = ctx.tokenIdOf(token)
-  return makeEntry({
+  return makeJournalEntryDraft({
     id: row.id,
+    sourceContract: row.contractAddress,
     timestamp: row.timestamp,
     useCase: 'UC-CASH-03',
     debit: 'Wage Payable',
     credit: PAYROLL,
     creditInstance: row.contractAddress,
-    amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
     counterparty: row.withdrawer,
@@ -70,14 +70,14 @@ function cashSettlement(
 }
 
 /** Share leg: wage paid in freshly issued SHER. */
-function shareSettlement(row: CashRemunerationWithdrawTokenRow, ctx: MapperContext): LedgerEntry {
-  return makeEntry({
+function shareSettlement(row: CashRemunerationWithdrawTokenRow): JournalEntryDraft {
+  return makeJournalEntryDraft({
     id: row.id,
+    sourceContract: row.contractAddress,
     timestamp: row.timestamp,
     useCase: 'UC-CASH-03',
     debit: 'SHERS To Be Issued',
     credit: 'Investor Equity',
-    amountUsd: ctx.toUsd(BigInt(row.amount), 'sher', atDate(row.timestamp)),
     token: 'sher',
     rawAmount: row.amount,
     counterparty: row.withdrawer,
@@ -111,8 +111,8 @@ function mapAccruals(
   weeklyClaims: readonly WeeklyClaim[] | undefined,
   ctx: MapperContext,
   now: number
-): LedgerEntry[] {
-  const entries: LedgerEntry[] = []
+): JournalEntryDraft[] {
+  const entries: JournalEntryDraft[] = []
   for (const claim of weeklyClaims ?? []) {
     if (claim.status === 'disabled' || !isWeekEnded(claim, now) || !claim.wage) continue
     const weekEnd = weekEndSeconds(claim)
@@ -129,14 +129,13 @@ function mapAccruals(
       if (base === 0n) continue
       const isShare = tokenId === 'sher'
       entries.push(
-        makeEntry({
+        makeJournalEntryDraft({
           id: `accrual-${claim.id}-${tokenId}`,
           sourceOperationId: `accrual-${claim.id}`,
           timestamp: at,
           useCase: 'UC-CASH-02',
           debit: isShare ? 'Deferred SHER Compensation' : 'Payroll Expense',
           credit: isShare ? 'SHERS To Be Issued' : 'Wage Payable',
-          amountUsd: ctx.toUsd(base, tokenId, atDate(at)),
           token: tokenId,
           rawAmount: base.toString(),
           counterparty: claim.memberAddress,
@@ -157,8 +156,8 @@ export function mapPayroll(
   input: PayrollMapperInput,
   ctx: MapperContext,
   now: number = Date.now()
-): LedgerEntry[] {
-  const entries: LedgerEntry[] = []
+): JournalEntryDraft[] {
+  const entries: JournalEntryDraft[] = []
 
   for (const row of input.deposits ?? []) {
     entries.push(
@@ -182,7 +181,7 @@ export function mapPayroll(
     const tokenId = ctx.tokenIdOf(row.tokenAddress)
     if (BigInt(row.amount) === 0n) continue
     entries.push(
-      tokenId === 'sher' ? shareSettlement(row, ctx) : cashSettlement(row, row.tokenAddress, ctx)
+      tokenId === 'sher' ? shareSettlement(row) : cashSettlement(row, row.tokenAddress, ctx)
     )
   }
 

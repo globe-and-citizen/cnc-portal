@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { createJournalEntry } from '@/utils/accounting/journalEntry'
 import { ZERO_USD_AMOUNT } from '@/utils/accounting/monetaryAmount'
 import type { JournalEntry } from '@/utils/accounting/types'
@@ -162,13 +162,12 @@ describe('JournalEntry', () => {
   })
 
   it('rejects a monetary source posting without a rate of record', () => {
-    const posting: LedgerEntry = {
+    const posting: JournalEntryDraft = {
       id: 'unstamped-bank-event',
       timestamp: 1_700_000_000,
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 100,
       token: 'usdc',
       rawAmount: '100000000',
       internal: false,
@@ -176,19 +175,18 @@ describe('JournalEntry', () => {
       enrichment: 'not-applicable'
     }
 
-    expect(() => buildJournal([posting])).toThrow(
-      'Ledger entry "unstamped-bank-event" requires a rate before journal assembly'
+    expect(() => finalizeJournal([posting])).toThrow(
+      'Journal entry draft "unstamped-bank-event" requires a rate before finalization'
     )
   })
 
   it('adapts a consolidated posting with deterministic source, line and account identities', () => {
-    const posting: LedgerEntry = {
+    const posting: JournalEntryDraft = {
       id: 'bank-event-7',
       timestamp: 1_700_000_001,
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 100,
       token: 'usdc',
       rawAmount: '100000000',
       rate: 1,
@@ -197,7 +195,7 @@ describe('JournalEntry', () => {
       enrichment: 'not-applicable'
     }
 
-    expect(buildJournal([posting])).toMatchObject([
+    expect(finalizeJournal([posting])).toMatchObject([
       {
         id: 'bank-event-7',
         sourceOperationId: 'bank-event-7',

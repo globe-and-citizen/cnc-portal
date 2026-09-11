@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
 import { catalogueLedger } from './catalogueLedger'
 import { usdNumber } from './fixtures'
 
 describe('buildIncomeStatement — catalogue §6.5', () => {
-  const is = buildIncomeStatement(buildJournal(catalogueLedger))
+  const is = buildIncomeStatement(finalizeJournal(catalogueLedger))
   const lineFor = (account: string): number =>
     usdNumber([...is.revenue, ...is.expenses].find((l) => l.account === account)?.amount ?? 0n)
 
@@ -31,7 +31,7 @@ describe('buildIncomeStatement — catalogue §6.5', () => {
 
   it('ignores internal cash-to-cash moves (no income/expense impact)', () => {
     const internalOnly = catalogueLedger.filter((e) => e.internal)
-    const is = buildIncomeStatement(buildJournal(internalOnly))
+    const is = buildIncomeStatement(finalizeJournal(internalOnly))
     expect(is.revenue).toHaveLength(0)
     expect(is.expenses).toHaveLength(0)
     expect(is.netIncome).toBe(0n)

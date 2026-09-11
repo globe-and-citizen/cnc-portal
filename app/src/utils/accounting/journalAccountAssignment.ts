@@ -2,12 +2,9 @@
 import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import { accountFor } from './accountRegistry'
 import { ACCOUNT_FAMILIES, accountFamilyById } from './chartOfAccounts'
-import { createJournalEntry, debitOf, isBankFeePosting } from './journalEntry'
-import type { LedgerEntry } from './ledgerEntry'
+import { createJournalEntry, debitOf } from './journalEntry'
 import { ZERO_USD_AMOUNT } from './monetaryAmount'
 import type { Account, JournalEntry } from './types'
-
-const TRANSACTION_HASH = /^0x[0-9a-fA-F]{64}$/
 
 /** Canonical accounts offered for an eligible external treasury outflow. */
 export const JOURNAL_ASSIGNABLE_ACCOUNTS: readonly Account[] = ACCOUNT_FAMILIES.filter(
@@ -19,33 +16,6 @@ const ASSIGNABLE_ACCOUNT_IDS = new Set(JOURNAL_ASSIGNABLE_ACCOUNTS.map((account)
 /** Whether an API value names an account allowed by the canonical chart. */
 export function isJournalAssignableAccountId(accountId: string): boolean {
   return ASSIGNABLE_ACCOUNT_IDS.has(accountId)
-}
-
-function isExternalOutflowSource(entry: LedgerEntry): boolean {
-  return (
-    !entry.internal &&
-    entry.useCase === 'CASH-OUT' &&
-    entry.debit !== null &&
-    entry.credit !== null &&
-    !entry.debit.startsWith('Cash — ') &&
-    entry.debit !== 'Transaction Fee Expense' &&
-    (entry.credit === 'Cash — Bank' || entry.credit === 'Cash — Safe')
-  )
-}
-
-/**
- * Mark a transaction-backed external outflow for the assignment screen. A single
- * source withdrawal is editable; compound operations remain visible and read-only.
- */
-export function accountAssignmentStateForSources(
-  entries: readonly LedgerEntry[],
-  journalEntryId: string
-): JournalEntry['accountAssignment'] | undefined {
-  if (!TRANSACTION_HASH.test(journalEntryId)) return undefined
-  const withdrawals = entries.filter(isExternalOutflowSource)
-  if (!withdrawals.length) return undefined
-  const nonFeeSources = entries.filter((entry) => !isBankFeePosting(entry))
-  return { editable: withdrawals.length === 1 && nonFeeSources.length === 1 }
 }
 
 function assignableLineIndex(entry: JournalEntry): number {

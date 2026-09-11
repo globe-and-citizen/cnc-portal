@@ -9,10 +9,8 @@
  * as the source mappers, spec §2).
  *
  * Pipeline (spec §2):
- *   raw feeds → {@link LedgerSources} + {@link MapperContext} + enrichment
- *             → buildCncLedgerEntries (#2113 mappers + off-chain join)
- *             → buildLedger (#2117 consolidation: dedupe twins)
- *             → buildJournal (validated canonical journal)
+ *   raw feeds → source adapters → JournalEntryDraft[]
+ *             → account evidence → reconcile and finalize once
  *             → JournalEntry[]
  */
 import { type Address } from 'viem'
@@ -33,18 +31,15 @@ import type { VestingEventFeed } from '@/types/contract-events/vesting'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
-import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
-import { buildLedger } from '@/utils/accounting/buildLedger'
-import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
+import { mapCncJournalEntryDrafts, type JournalEntrySources } from '@/utils/accounting/mappers'
 import {
   resolveAccountInstances,
   type TransactionAccountEvidence
 } from '@/utils/accounting/accountInstances'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import { buildJournal } from '@/utils/accounting/generalLedger'
 import { applyJournalAccountAssignments } from '@/utils/accounting/journalAccountAssignment'
-import { reconcileJournalEntrySources } from '@/utils/accounting/journalEntry'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { finalizeJournalEntryDrafts } from '@/utils/accounting/journalEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { JournalEntry } from '@/utils/accounting/types'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import {
@@ -107,9 +102,9 @@ function items<T>(field: { items: T[] } | null | undefined): T[] {
   return field?.items ?? []
 }
 
-/** Build the {@link LedgerSources} the mappers consume from the raw query results. */
-function toLedgerSources(input: CncAccountingInput): LedgerSources {
-  const sources: LedgerSources = {}
+/** Build the {@link JournalEntrySources} the mappers consume from the raw query results. */
+function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
+  const sources: JournalEntrySources = {}
 
   if (input.bankEvents) {
     sources.bank = {
@@ -218,7 +213,7 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
  * increase Investor Equity. Here each SHER leg is stamped at the multiplier of its
  * **own date** (historised timeline), so a withdrawal / mint freezes at its
  * realization-date rate. {@link settleWithdrawnSher} then re-values the *pending*
- * (un-withdrawn) accruals to the current multiplier — see {@link buildRawCncEntries}.
+ * (un-withdrawn) accruals to the current multiplier — see {@link buildCncJournalEntryDrafts}.
  */
 function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? unavailableRateOfRecord
@@ -236,10 +231,10 @@ function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
 
 /**
  * Run the source mappers and stamp each posting with its rate of record, yielding
- * the raw, pre-consolidation feed: Devise (`token`), Quantité (`rawAmount`), Taux
- * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
+ * the drafts' Devise (`token`), Quantité (`rawAmount`) and Taux (`rate`), spec §2.
+ * The exact USD amount does not exist until final JournalEntry lines are built.
  */
-export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
+export function buildCncJournalEntryDrafts(input: CncAccountingInput): JournalEntryDraft[] {
   const internalAddresses = collectInternalAddresses(input.contracts)
   const rateOfRecord = buildRateOfRecord(input)
 
@@ -250,16 +245,15 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     rateOfRecord
   })
 
-  const rawEntries = buildCncLedgerEntries(toLedgerSources(input), ctx, {
+  const drafts = mapCncJournalEntryDrafts(toJournalEntrySources(input), ctx, {
     weeklyClaims: input.weeklyClaims,
     expenses: input.expenses
   })
 
   // The rate is a pure function of (token, timestamp), so it is resolved once here
-  // rather than threaded through every mapper — with the same resolver the mappers
-  // valued `amountUsd` with, so amountUsd = Quantité × rate. Each SHER leg lands at
-  // its own-date rate, so a withdrawal / mint is frozen at its realization value.
-  const stamped = rawEntries.map((entry) => ({
+  // rather than threaded through every mapper. Each SHER leg lands at its own-date
+  // rate, so a withdrawal / mint is frozen at its realization value.
+  const stamped = drafts.map((entry) => ({
     ...entry,
     rate: tokenUsdRate(entry.token, atDate(entry.timestamp), rateOfRecord)
   }))
@@ -279,25 +273,20 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
 }
 
 /**
- * Consolidate a raw feed into the canonical journal. Split from
+ * Consolidate source drafts into the canonical journal. Split from
  * {@link assembleWithAccountEvidence} so the accounting composable can derive
- * price-fetch days from the raw entries without running the mapper pipeline twice.
+ * price-fetch days from the drafts without running the mapper pipeline twice.
  */
-function assembleFromRawEntries(
-  rawEntries: readonly LedgerEntry[],
+function assembleFromDrafts(
+  drafts: readonly JournalEntryDraft[],
   accountAssignments?: readonly JournalAccountAssignmentRecord[] | null
 ): CncAccounting {
-  const reconciliation = reconcileJournalEntrySources(rawEntries)
-  const { entries } = buildLedger(reconciliation.entries)
-  const accountRegistry = buildAccountRegistry(entries)
-  const journal = applyJournalAccountAssignments(
-    buildJournal(entries, accountRegistry),
-    accountAssignments
-  )
+  const finalized = finalizeJournalEntryDrafts(drafts)
+  const journal = applyJournalAccountAssignments(finalized.journal, accountAssignments)
 
   return {
     journal,
-    unmatchedFeeOperationIds: reconciliation.unmatchedFeeOperationIds
+    unmatchedFeeOperationIds: finalized.unmatchedFeeOperationIds
   }
 }
 
@@ -306,13 +295,13 @@ function assembleFromRawEntries(
  * before building the canonical journal.
  */
 export function assembleWithAccountEvidence(
-  rawEntries: readonly LedgerEntry[],
+  drafts: readonly JournalEntryDraft[],
   deploymentAccounts: ReadonlyMap<string, AccountName>,
   evidence: TransactionAccountEvidence,
   accountAssignments?: readonly JournalAccountAssignmentRecord[] | null
 ): CncAccounting {
-  return assembleFromRawEntries(
-    resolveAccountInstances(rawEntries, deploymentAccounts, evidence),
+  return assembleFromDrafts(
+    resolveAccountInstances(drafts, deploymentAccounts, evidence),
     accountAssignments
   )
 }

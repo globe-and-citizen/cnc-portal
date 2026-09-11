@@ -1,9 +1,10 @@
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import { atDate, type MapperContext } from './context'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import type { MapperContext } from './context'
 
 interface InternalPostingRow {
   id: string
+  contractAddress: string
   amount: string
   timestamp: number
 }
@@ -23,17 +24,17 @@ export function createInternalPosting(
   token: string | null,
   ctx: MapperContext,
   accounts: InternalPostingAccounts
-): LedgerEntry {
+): JournalEntryDraft {
   const tokenId = ctx.tokenIdOf(token)
-  return makeEntry({
+  return makeJournalEntryDraft({
     id: row.id,
+    sourceContract: row.contractAddress,
     timestamp: row.timestamp,
     useCase: 'INTERNAL',
     debit: accounts.debit,
     debitInstance: accounts.debitInstance,
     credit: accounts.credit,
     creditInstance: accounts.creditInstance,
-    amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
     counterparty: accounts.counterparty,

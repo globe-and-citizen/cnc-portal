@@ -7,7 +7,7 @@ import TablePagination from '@/components/ui/TablePagination.vue'
 import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
 import { mockRouterPush, mockRouterReplace } from '@/tests/mocks/router.mock'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 
 const { accountingContext } = vi.hoisted(() => ({
   accountingContext: { journal: { value: [] as unknown[] } }
@@ -15,7 +15,7 @@ const { accountingContext } = vi.hoisted(() => ({
 vi.mock('@/composables/accounting/useAccountingContext', () => ({
   useAccountingContext: () => accountingContext
 }))
-accountingContext.journal.value = buildJournal(catalogueLedger)
+accountingContext.journal.value = finalizeJournal(catalogueLedger)
 
 // These specs exercise the ledger's interactions against the shared journal.
 

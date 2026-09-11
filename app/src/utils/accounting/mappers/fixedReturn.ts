@@ -62,7 +62,7 @@
  * the sum of their per-lender events, so booking them too would double-count.
  */
 import type { TokenId } from '@/constant'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import {
   creditTimeline,
   toBigInt,
@@ -110,7 +110,7 @@ function addDeposit(
 }
 
 /**
- * Map the FixedReturn feed to ledger entries by replaying the credit lifecycle.
+ * Map the FixedReturn feed to journal drafts by replaying the credit lifecycle.
  *
  * An offer whose `LendingOfferCreated` is missing from the feed cannot be valued:
  * that event is the only carrier of the offer's token, and posting a base-unit
@@ -123,7 +123,7 @@ function addDeposit(
 export function mapFixedReturnEvents(
   input: FixedReturnMapperInput,
   ctx: MapperContext
-): LedgerEntry[] {
+): JournalEntryDraft[] {
   const tokenByOffer = new Map<string, TokenId>()
   for (const row of input.lendingOfferCreateds ?? []) {
     tokenByOffer.set(row.offerId, ctx.tokenIdOf(row.token))
@@ -146,7 +146,7 @@ export function mapFixedReturnEvents(
   /** Offers already flagged as unvaluable — one memo each, not one per event. */
   const unvalued = new Set<string>()
 
-  const entries: LedgerEntry[] = []
+  const entries: JournalEntryDraft[] = []
 
   for (const event of creditTimeline(input)) {
     const token = tokenByOffer.get(event.offerId)
@@ -185,14 +185,14 @@ export function mapFixedReturnEvents(
         for (const { lender, amount } of deposits.values()) {
           if (amount <= 0n) continue
           entries.push(
-            makeEntry({
+            makeJournalEntryDraft({
               id: `credit-principal-${event.offerId}-${lender.toLowerCase()}`,
               sourceOperationId: event.id,
+              sourceContract: event.contractAddress,
               timestamp: event.timestamp,
               useCase: 'UC-CREDIT-01',
               debit: BANK,
               credit: LOAN_PAYABLE,
-              amountUsd: usd(amount),
               token,
               rawAmount: amount.toString(),
               counterparty: lender,
@@ -213,14 +213,14 @@ export function mapFixedReturnEvents(
         bump(payableToLender, key, owed)
         bump(owedByRound, event.offerId, owed)
         entries.push(
-          makeEntry({
+          makeJournalEntryDraft({
             id: event.id,
+            sourceContract: event.contractAddress,
             ...(event.sourceOperationId ? { sourceOperationId: event.sourceOperationId } : {}),
             timestamp: event.timestamp,
             useCase: 'UC-CREDIT-05',
             debit: INTEREST_EXPENSE,
             credit: INTEREST_PAYABLE,
-            amountUsd: usd(owed),
             token,
             rawAmount: owed.toString(),
             counterparty: event.lender,
@@ -240,13 +240,13 @@ export function mapFixedReturnEvents(
         if (principal > 0n) {
           owedToLender.set(key, outstanding - principal)
           entries.push(
-            makeEntry({
+            makeJournalEntryDraft({
               id: legId(event.id, 'principal'),
+              sourceContract: event.contractAddress,
               timestamp: event.timestamp,
               useCase: 'UC-CREDIT-03',
               debit: LOAN_PAYABLE,
               credit: BANK,
-              amountUsd: usd(principal),
               token,
               rawAmount: principal.toString(),
               counterparty: event.lender,
@@ -263,7 +263,6 @@ export function mapFixedReturnEvents(
             key,
             payableToLender,
             token,
-            usd,
             creditRemainingUsd
           })
         )
@@ -290,7 +289,7 @@ export function mapFixedReturnEvents(
 
 /**
  * A repayment leg's id. The suffix goes **after** the `${txHash}-${logIndex}`
- * event id, whose leading transaction hash is preserved by makeEntry, so both
+ * event id, whose leading transaction hash is preserved by makeJournalEntryDraft, so both
  * legs still resolve to the transaction they were paid in.
  */
 function legId(eventId: string, leg: string): string {
@@ -328,24 +327,23 @@ function interestLegs(input: {
   key: string
   payableToLender: Map<string, bigint>
   token: TokenId
-  usd: (raw: bigint) => number
   creditRemainingUsd: number
-}): LedgerEntry[] {
-  const { event, interest, key, payableToLender, token, usd, creditRemainingUsd } = input
+}): JournalEntryDraft[] {
+  const { event, interest, key, payableToLender, token, creditRemainingUsd } = input
   if (interest <= 0n) return []
   const payable = payableToLender.get(key) ?? 0n
   const fromPayable = interest < payable ? interest : payable
   const unrecognised = interest - fromPayable
-  const legs: LedgerEntry[] = []
+  const legs: JournalEntryDraft[] = []
 
   const leg = (id: string, debit: typeof INTEREST_PAYABLE | typeof INTEREST_EXPENSE, raw: bigint) =>
-    makeEntry({
+    makeJournalEntryDraft({
       id: legId(event.id, id),
+      sourceContract: event.contractAddress,
       timestamp: event.timestamp,
       useCase: 'UC-CREDIT-03' as const,
       debit,
       credit: BANK,
-      amountUsd: usd(raw),
       token,
       rawAmount: raw.toString(),
       counterparty: event.lender,
@@ -367,14 +365,14 @@ function interestLegs(input: {
  * the gap in the journal instead of leaving a hole nothing explains. Memo-only
  * (both legs `null`, `$0`), so no statement and no trial balance is disturbed.
  */
-function unvaluedOfferMemo(event: CreditEvent): LedgerEntry {
-  return makeEntry({
+function unvaluedOfferMemo(event: CreditEvent): JournalEntryDraft {
+  return makeJournalEntryDraft({
     id: `credit-unvalued-${event.offerId}`,
+    sourceContract: event.contractAddress,
     timestamp: event.timestamp,
     useCase: 'UC-CREDIT-01',
     debit: null,
     credit: null,
-    amountUsd: 0,
     token: 'native',
     rawAmount: '0',
     enrichment: 'needs-off-chain-data',

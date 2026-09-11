@@ -19,8 +19,8 @@
  * An entry that touches no team surface (a pure accrual, a FeeCollector-only leg)
  * resolves to `null` and its Activity stays plain text.
  */
-import type { LedgerEntry } from './ledgerEntry'
 import type { AccountName } from './chartOfAccounts'
+import type { JournalEntry } from './types'
 
 /** A portal surface the ledger can send a reader to. */
 type LedgerSection =
@@ -83,7 +83,7 @@ function to(
  * wage belongs to payroll even though it credits Cash — Payroll, and a credit
  * leg belongs to its round rather than to the generic pocket.
  */
-function sectionOfUseCase(entry: LedgerEntry): ActivityDestination | null {
+function sectionOfUseCase(entry: JournalEntry): ActivityDestination | null {
   switch (entry.useCase) {
     case 'UC-CASH-02':
     case 'UC-CASH-03':
@@ -113,9 +113,13 @@ function sectionOfUseCase(entry: LedgerEntry): ActivityDestination | null {
 }
 
 /** The section of the pocket the money moved through — source leg first. */
-function sectionOfPocket(entry: LedgerEntry): ActivityDestination | null {
+function sectionOfPocket(entry: JournalEntry): ActivityDestination | null {
+  const sourceAccount = entry.lines.find((line) => line.credit !== undefined)?.account.family.name
+  const destinationAccount = entry.lines.find((line) => line.debit !== undefined)?.account.family
+    .name
   const section =
-    (entry.credit && POCKET_SECTION[entry.credit]) || (entry.debit && POCKET_SECTION[entry.debit])
+    (sourceAccount && POCKET_SECTION[sourceAccount]) ||
+    (destinationAccount && POCKET_SECTION[destinationAccount])
   return section ? to(section) : null
 }
 
@@ -123,6 +127,6 @@ function sectionOfPocket(entry: LedgerEntry): ActivityDestination | null {
  * Where the reader should be sent to see a posting happen, or `null` when the
  * entry has no portal surface of its own.
  */
-export function activityDestinationOf(entry: LedgerEntry): ActivityDestination | null {
+export function activityDestinationOf(entry: JournalEntry): ActivityDestination | null {
   return sectionOfUseCase(entry) ?? sectionOfPocket(entry)
 }
