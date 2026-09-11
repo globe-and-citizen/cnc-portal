@@ -27,7 +27,7 @@ test.describe('Sign in', () => {
     // the post-login screens make (e.g. /api/notification). Scoped to the
     // backend origin via regex so Vite source imports under
     // `/src/api/index.ts` aren't intercepted.
-    await page.route(/\/\/[^/]+:4000\/api\//, (route) => route.fulfill(json({})))
+    await page.route(/\/\/[^/]+(?::\d+)?\/api\//, (route) => route.fulfill(json({})))
     await page.route('**/api/user/nonce/**', (route) => route.fulfill(json({ nonce: NONCE })))
     await page.route('**/api/auth/siwe', (route) =>
       route.fulfill(json({ accessToken: 'e2e.test.token' }))
