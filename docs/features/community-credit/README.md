@@ -107,6 +107,8 @@ automatically when a deadline or maturity date passes.
 - [x] Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
 - [x] Once the on-chain round exists, a metadata failure can be retried without creating a second round.
 
+**Accounting:** Publishing terms moves no company funds and creates no journal entry.
+
 ## US-CC-003: Lend to an Open Round
 
 **As a** company member\
@@ -136,6 +138,10 @@ automatically when a deadline or maturity date passes.
 - [x] Rejecting approval, rejecting the lending transaction, or an on-chain failure leaves the round unchanged and returns a recoverable
       failure outcome.
 
+**Accounting:** A contribution remains source evidence while the round is open. When the round becomes funded, Accounting books principal
+through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--funded-principal) and fixed return through
+[`UC-CREDIT-05`](../accounting/journal-entry-catalogue.md#uc-credit-05--fixed-return-recognized).
+
 ## US-CC-004: Resolve a Stalled Round
 
 **As a** company issuer\
@@ -160,6 +166,9 @@ automatically when a deadline or maturity date passes.
 
 - [x] A partial raise of 0 cannot be accepted.
 - [x] A failed resolution leaves the round unchanged and returns a failure outcome.
+
+**Accounting:** Accepting a partial raise activates `UC-CREDIT-01` and `UC-CREDIT-05`. Refunding lenders returns funds that never entered
+the company's books and creates no journal entry.
 
 ## US-CC-005: Repay Lenders
 
@@ -202,6 +211,10 @@ automatically when a deadline or maturity date passes.
 - [x] A round that is still raising cannot be repaid.
 - [x] A settled round cannot be repaid again.
 - [x] Rejecting or failing a repayment preserves the outstanding amount and returns a recoverable failure outcome.
+
+**Accounting:** Each repayment settles principal and interest through
+[`UC-CREDIT-03`](../accounting/journal-entry-catalogue.md#uc-credit-03--principal-and-interest-repaid). Lender payments from the same
+transaction remain one General Ledger entry.
 
 ## Known Gaps
 
@@ -253,5 +266,5 @@ The following verified gaps have technical evidence and remediation directions i
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Transaction History implementation](../../implementation/transaction-history/README.md)
 - [Detailed flow and implementation analysis](./user-flow-analysis.md)
-- [Community Credit accounting rules](../accounting/cnc-accounting-spec.md)
+- [Accounting use cases and journal entries](../accounting/journal-entry-catalogue.md)
 - [Product Feature Inventory](../README.md)

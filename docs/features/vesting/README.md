@@ -52,14 +52,14 @@ stateDiagram-v2
 
 ## Status Overview
 
-| User Story     | Title                                    | Actor          | Status        |
-| -------------- | ---------------------------------------- | -------------- | ------------- |
-| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done       |
-| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | ✅ Done       |
-| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done       |
-| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done       |
-| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done       |
-| US-VESTING-006 | See vesting in the company books         | Member / Owner | 🧪 Validation |
+| User Story     | Title                                    | Actor          | Status       |
+| -------------- | ---------------------------------------- | -------------- | ------------ |
+| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done      |
+| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | ✅ Done      |
+| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done      |
+| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done      |
+| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done      |
+| US-VESTING-006 | See vesting in the company books         | Member / Owner | 🔗 Reference |
 
 ## US-VESTING-001: Create a Minute-Precise Vesting Schedule
 
@@ -91,6 +91,9 @@ stateDiagram-v2
 
 - [x] Cancelling schedule creation does not create an on-chain schedule.
 - [x] A failed schedule creation does not create an on-chain schedule and preserves the entered context.
+
+**Accounting:** Creating the grant records its full commitment through
+[`UC-VEST-01`](../accounting/journal-entry-catalogue.md#uc-vest-01--vesting-grant) without minting shares.
 
 **Dependencies:** Current team, current Vesting contract, current Investor contract
 
@@ -149,6 +152,9 @@ stateDiagram-v2
 - [x] Cancelling a release does not change the schedule or mint shares.
 - [x] A failed release does not change the schedule or mint shares.
 
+**Accounting:** A successful release moves promised shares into Investor Equity through
+[`UC-VEST-02`](../accounting/journal-entry-catalogue.md#uc-vest-02--vested-sher-released). Its matching Investor mint is not booked again.
+
 **Dependencies:** US-VESTING-001
 
 ## US-VESTING-004: Stop an Active Vesting Schedule
@@ -177,6 +183,9 @@ stateDiagram-v2
 
 - [x] Cancelling a stop does not change the active schedule.
 - [x] A failed stop leaves the schedule active.
+
+**Accounting:** A stop may group an accrued release (`UC-VEST-02`) with cancellation of the unvested remainder through
+[`UC-VEST-03`](../accounting/journal-entry-catalogue.md#uc-vest-03--unvested-grant-cancelled) in one journal entry.
 
 **Dependencies:** US-VESTING-001
 
@@ -208,34 +217,12 @@ stateDiagram-v2
 
 ## US-VESTING-006: See Vesting in the Company Books
 
-**As a** team member or owner\
-**I want to** see a vesting schedule recorded in the company accounting from the day it is defined\
-**So that** the share compensation the company has committed to is visible without waiting for shares to be claimed
+This is a reference story. Accounting owns the user journey and acceptance criteria for viewing vesting entries. The
+[Accounting use-case catalogue](../accounting/journal-entry-catalogue.md#shareholder-and-vesting-use-cases) defines how creation, release,
+and stop evidence becomes `UC-VEST-01`, `UC-VEST-02`, and `UC-VEST-03` in the General Ledger. The focused
+[Vesting accounting policy](../accounting/vesting-accounting-restricted-stock.md) explains the restricted-stock treatment.
 
-### Acceptance Criteria
-
-#### Happy Path
-
-- [x] Creating a schedule records its full promised award in the company books on the day it is defined.
-- [x] Releasing shares moves the released amount from promised shares to issued shares in the books.
-- [x] Stopping a schedule records the cancellation of its unvested remainder.
-- [x] Creating, releasing, and stopping a schedule each remain visible as their own accounting entry.
-
-#### Business Rules
-
-- [x] Share vesting never affects the company profit: no vesting entry reaches the income statement.
-- [x] A promised award leaves total equity unchanged until, and after, its shares are issued.
-- [x] Issued shares are recorded only when shares are actually minted, so the books reconcile to the on-chain share supply.
-- [x] One release is recorded once, even though the release also mints through the share contract.
-- [x] A stop cancels only its own schedule remainder, never another schedule held by the same member.
-
-#### Edge & Error Cases
-
-- [x] Stopping a schedule before anything vests cancels the whole award and leaves no promised shares behind.
-- [x] Stopping a fully released schedule cancels nothing and leaves the released shares issued.
-- [x] A schedule never released keeps its whole award recorded as promised, never as issued shares.
-
-**Dependencies:** US-VESTING-001, US-VESTING-003, US-VESTING-004
+**Dependencies:** US-VESTING-001, US-VESTING-003, US-VESTING-004, and US-ACCT-002
 
 ## UI/UX Notes
 
@@ -247,8 +234,8 @@ stateDiagram-v2
 ## Human Validation
 
 Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product review, for `US-VESTING-001` through
-`US-VESTING-005`. Checked criteria record the verified implementation; this validation records the product review. `US-VESTING-006`
-(accounting) is implemented and covered by automated evidence, and awaits its product review.
+`US-VESTING-005`. Checked criteria record the verified implementation; this validation records the product review. `US-VESTING-006` is a
+reference to the Accounting-owned acceptance contract and has no independent validation status.
 
 ## Implementation Evidence
 
@@ -272,7 +259,7 @@ Validated on 2026-08-21 against the current contract behaviour, automated eviden
 ## Related Documentation
 
 - [Vesting V2 contract behaviour](../../contracts/features/vesting/README.md)
-- [Share Vesting Accounting — Restricted-Stock grant](../accounting/vesting-accounting-restricted-stock.md)
+- [Vesting accounting policy](../accounting/vesting-accounting-restricted-stock.md)
 - [Accounting — User Stories](../accounting/README.md)
 - [Shared member-selection implementation](../../implementation/member-selection/README.md)
 - [Contract features index](../../contracts/features/README.md)

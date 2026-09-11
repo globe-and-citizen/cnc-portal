@@ -79,7 +79,7 @@ flowchart LR
 - [x] A company member can open the investment form when the company has a registered Safe and router deposits are enabled.
 - [x] The investment form accepts USDC and calculates the corresponding SHER amount from the current router multiplier.
 - [x] A successful investment approves USDC only when the allowance is insufficient, then deposits the selected amount through the router.
-- [x] The resulting accounting event is recorded as `UC-SDR-01`, increasing Cash — Safe and Investor Equity rather than Service Revenue.
+- [x] A successful investment transfers the deposited USDC to the company Safe and mints the calculated SHER to the investor.
 
 #### Business Rules
 
@@ -93,6 +93,10 @@ flowchart LR
 - [x] Rejecting or failing the approval stops the flow before any deposit is submitted.
 - [x] A failed deposit resets the form to the amount step and shows an error without reporting a successful investment.
 - [x] Cancelling the form resets its amount and closes the investment modal.
+
+**Accounting:** The complete router operation is booked once by
+[`UC-SDR-01`](../accounting/journal-entry-catalogue.md#uc-sdr-01--investor-contribution); the matching Safe receipt and Investor mint are
+supporting evidence, not separate entries.
 
 **Dependencies:** US-SHER-005, an active Safe Deposit Router, a connected wallet, and a USDC balance
 
@@ -124,6 +128,9 @@ flowchart LR
 - [x] A zero, non-numeric, or over-balance amount does not submit a dividend action.
 - [x] A Board-action attempt without a Bank address does not create an action.
 - [x] A failure while reading the Bank owner is reported without enabling an unauthorized dividend action.
+
+**Accounting:** Per-shareholder payments are grouped into [`UC-INV-01`](../accounting/journal-entry-catalogue.md#uc-inv-01--dividend-paid).
+Bank's distribution trigger is not booked again.
 
 **Dependencies:** US-SHER-001, US-BANK-001, a current Bank owner or eligible Board member, and at least one shareholder
 
@@ -180,6 +187,9 @@ flowchart LR
 - [x] An invalid recipient or invalid stake does not submit an individual issuance.
 - [x] A rejected or failed individual issuance does not report SHER as issued.
 
+**Accounting:** A direct mint not backed by Router, Payroll, or Vesting evidence uses
+[`DEFAULT-D`](../accounting/journal-entry-catalogue.md#default-d--direct-sher-issuance).
+
 **Dependencies:** Current Investor contract, a connected issuer with `MINTER_ROLE`, and a connected wallet
 
 ## US-SHER-005: Configure Shareholder Investment
@@ -235,6 +245,9 @@ flowchart LR
 - [x] A failed claim remains visible as a failure and does not report migrated shares as received.
 - [x] A completed migration no longer accepts an additional self-claim. _(contract)_
 
+**Accounting:** A migration claim preserves an existing ownership allocation. It is not a new economic issuance and creates no journal
+entry.
+
 **Dependencies:** US-SHER-008, a connected shareholder, and a valid migration proof
 
 ## US-SHER-007: Settle and Close a Shareholder Migration
@@ -261,6 +274,8 @@ flowchart LR
 
 - [x] A migration with no usable proof does not dispatch a partial allocation.
 - [x] A failed dispatch or closure is reported without marking the migration complete.
+
+**Accounting:** Dispatch and closure complete an existing ownership migration. They do not create a new economic issuance or journal entry.
 
 **Dependencies:** US-SHER-008 and an Investor owner
 
