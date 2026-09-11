@@ -32,7 +32,7 @@ import type {
 } from '@/types/contract-events/expense'
 import type { ExpenseResponse } from '@/types/expense-account'
 import { getTokenAddress, getTokenDecimals, tokenSymbol } from '@/utils/tokens/metadata'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { atDate, type MapperContext } from './context'
 import { periodIndex } from './expensePeriods'
 import { createInternalPosting } from './internalPosting'
@@ -161,8 +161,8 @@ class RemainingBudgetTracker {
 }
 
 /** The structured approval fields carried on a matched UC-EXP-01 entry. */
-type ApprovalFields = Pick<LedgerEntry, 'expenseFrequencyType' | 'expenseApprovedUsd'> &
-  Partial<Pick<LedgerEntry, 'expenseRemainingUsd'>>
+type ApprovalFields = Pick<JournalEntryDraft, 'expenseFrequencyType' | 'expenseApprovedUsd'> &
+  Partial<Pick<JournalEntryDraft, 'expenseRemainingUsd'>>
 
 /** A token amount formatted with its symbol, e.g. `1.5 USDC`. */
 function tokenAmount(amountBase: bigint, tokenId: TokenId): string {
@@ -209,7 +209,7 @@ function mapTransfer(
   token: string | null,
   ctx: MapperContext,
   tracker: RemainingBudgetTracker
-): LedgerEntry {
+): JournalEntryDraft {
   const destPocket = ctx.pocketOf(row.to)
   if (destPocket) {
     return createInternalPosting(row, token, ctx, {
@@ -229,14 +229,14 @@ function mapTransfer(
   const info = tracker.draw(row.withdrawer, tokenId, row.timestamp, amountBase)
   const approval = info ? presentApproval(info, ctx, at) : null
   const base = paidElsewhere ? `Approved expense payout to ${row.to}` : 'Approved expense payout'
-  return makeEntry({
+  return makeJournalEntryDraft({
     id: row.id,
+    sourceContract: row.contractAddress,
     timestamp: row.timestamp,
     useCase: 'UC-EXP-01',
     debit: 'Operating Expense',
     credit: EXPENSE,
     creditInstance: row.contractAddress,
-    amountUsd: ctx.toUsd(amountBase, tokenId, at),
     token: tokenId,
     rawAmount: row.amount,
     counterparty: row.withdrawer,
@@ -247,7 +247,7 @@ function mapTransfer(
 }
 
 /**
- * Map every indexed ExpenseAccount event to ledger entries. The portal's
+ * Map every indexed ExpenseAccount event to journal drafts. The portal's
  * approved `expenses` supply each budget's cap so a partial payout can report
  * the remaining balance in its memo.
  */
@@ -255,9 +255,9 @@ export function mapExpense(
   input: ExpenseMapperInput,
   ctx: MapperContext,
   expenses?: readonly ExpenseResponse[]
-): LedgerEntry[] {
+): JournalEntryDraft[] {
   const tracker = new RemainingBudgetTracker(expenses, ctx)
-  const entries: LedgerEntry[] = []
+  const entries: JournalEntryDraft[] = []
 
   const deposits = [
     ...(input.deposits ?? []).map(nativeTag),
@@ -323,8 +323,8 @@ export function mapExpense(
 function mapPortalFallback(
   expenses: readonly ExpenseResponse[] | undefined,
   ctx: MapperContext
-): LedgerEntry[] {
-  const entries: LedgerEntry[] = []
+): JournalEntryDraft[] {
+  const entries: JournalEntryDraft[] = []
   for (const expense of expenses ?? []) {
     const data = expense.data
     if (!data) continue
@@ -351,13 +351,12 @@ function mapPortalFallback(
       at
     )
     entries.push(
-      makeEntry({
+      makeJournalEntryDraft({
         id: `expense-drawn-${expense.id}`,
         timestamp,
         useCase: 'UC-EXP-01',
         debit: 'Operating Expense',
         credit: EXPENSE,
-        amountUsd: ctx.toUsd(drawnBase, tokenId, at),
         token: tokenId,
         rawAmount: drawnBase.toString(),
         counterparty: member,

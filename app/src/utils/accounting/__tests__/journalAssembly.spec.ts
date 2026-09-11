@@ -3,17 +3,18 @@ import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { assembleRawAccounting } from './assembleAccounting'
 import { usd } from './fixtures'
 
-function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
+function posting(
+  overrides: Partial<JournalEntryDraft> & Pick<JournalEntryDraft, 'id'>
+): JournalEntryDraft {
   return {
     timestamp: 100,
     useCase: 'UC-BANK-03',
     debit: 'Cash — Payroll',
     credit: 'Cash — Bank',
-    amountUsd: 10,
     token: 'usdc',
     rawAmount: '10000000',
     rate: 1,
@@ -34,7 +35,6 @@ describe('accounting journal assembly', () => {
       timestamp: 101,
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
-      amountUsd: 0.05,
       rawAmount: '50000',
       internal: false,
       memo: 'Transaction fee'
@@ -63,7 +63,6 @@ describe('accounting journal assembly', () => {
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 100,
       rawAmount: '100000000',
       internal: false,
       memo: 'Client payment'
@@ -74,7 +73,6 @@ describe('accounting journal assembly', () => {
       sourceOperationId,
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
-      amountUsd: 0.05,
       rawAmount: '50000',
       internal: false,
       memo: 'Transaction fee'
@@ -118,7 +116,6 @@ describe('accounting journal assembly', () => {
         useCase: 'UC-CREDIT-03',
         debit: 'Loan Payable',
         credit: 'Cash — Bank',
-        amountUsd: 2,
         rawAmount: '2000000',
         counterparty,
         internal: false,
@@ -133,6 +130,7 @@ describe('accounting journal assembly', () => {
         id: txHash,
         sourceOperationId: txHash,
         txHash,
+        activityAmount: usd(8),
         lines: [
           { account: { family: { name: 'Loan Payable' } }, debit: usd(8) },
           { account: { family: { name: 'Cash — Bank' } }, credit: usd(8) }
@@ -149,7 +147,6 @@ describe('accounting journal assembly', () => {
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
-      amountUsd: 0.05,
       rawAmount: '50000',
       internal: false,
       memo: 'Transaction fee'

@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { badgeClassOf, categoryLabelOf, categoryOf } from '@/utils/accounting/ledgerCategory'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
-import type { LedgerEntry, UseCase } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft, UseCase } from '@/utils/accounting/journalEntryDraft'
 
 const base = {
   id: 'e1',
   timestamp: 1_700_000_000,
   debit: 'Cash — Credit' as const,
   credit: 'Loan Payable' as const,
-  amountUsd: 100,
   token: 'usdc' as const,
   rawAmount: '100000000',
   rate: 1,
@@ -18,13 +17,13 @@ const base = {
   enrichment: 'not-applicable' as const
 }
 
-const source = (useCase: UseCase, over: Partial<LedgerEntry> = {}): LedgerEntry => ({
+const source = (useCase: UseCase, over: Partial<JournalEntryDraft> = {}): JournalEntryDraft => ({
   ...base,
   useCase,
   ...over
 })
-const entry = (useCase: UseCase, over: Partial<LedgerEntry> = {}) =>
-  buildJournal([source(useCase, over)])[0]!
+const entry = (useCase: UseCase, over: Partial<JournalEntryDraft> = {}) =>
+  finalizeJournal([source(useCase, over)])[0]!
 
 describe('categoryOf', () => {
   it('gathers the borrowing lifecycle from its liability and interest accounts', () => {
@@ -60,7 +59,7 @@ describe('categoryOf', () => {
 
   it('keeps a company-pocket movement under Transfer even when it carries a fee line', () => {
     const tx = `0x${'c'.repeat(64)}`
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       source('UC-BANK-03', {
         id: `${tx}-1`,
         debit: 'Cash — Payroll',
@@ -71,7 +70,6 @@ describe('categoryOf', () => {
         id: `${tx}-2`,
         debit: 'Transaction Fee Expense',
         credit: 'Cash — Bank',
-        amountUsd: 1,
         rawAmount: '1000000'
       })
     ])[0]!
@@ -107,9 +105,9 @@ describe('badgeClassOf', () => {
   })
 
   it('carries the phase colour onto the JournalEntry lead row', () => {
-    const [lentRow] = journalLedgerRows(buildJournal([source('UC-CREDIT-01')]))
+    const [lentRow] = journalLedgerRows(finalizeJournal([source('UC-CREDIT-01')]))
     const [repaidRow] = journalLedgerRows(
-      buildJournal([source('UC-CREDIT-03', { debit: 'Loan Payable', credit: 'Cash — Bank' })])
+      finalizeJournal([source('UC-CREDIT-03', { debit: 'Loan Payable', credit: 'Cash — Bank' })])
     )
     expect(lentRow.category).toBe('Credit')
     expect(repaidRow.category).toBe('Credit')

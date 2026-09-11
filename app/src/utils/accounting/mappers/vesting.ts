@@ -35,8 +35,7 @@ import type {
   VestingTokensReleasedRow,
   VestingStoppedRow
 } from '@/types/contract-events/vesting'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import { atDate, type MapperContext } from './context'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 export interface VestingMapperInput {
   createds?: readonly VestingCreatedRow[]
@@ -100,18 +99,18 @@ function unvestedRemainders(input: VestingMapperInput): Map<string, bigint> {
 }
 
 /** Map every indexed Vesting event to its ledger entry. */
-export function mapVestingEvents(input: VestingMapperInput, ctx: MapperContext): LedgerEntry[] {
-  const entries: LedgerEntry[] = []
+export function mapVestingEvents(input: VestingMapperInput): JournalEntryDraft[] {
+  const entries: JournalEntryDraft[] = []
 
   for (const row of input.createds ?? []) {
     entries.push(
-      makeEntry({
+      makeJournalEntryDraft({
         id: row.id,
+        sourceContract: row.contractAddress,
         timestamp: row.timestamp,
         useCase: 'UC-VEST-01',
         debit: 'Deferred SHER Compensation',
         credit: 'SHERS To Be Issued',
-        amountUsd: ctx.toUsd(BigInt(row.amount), 'sher', atDate(row.timestamp)),
         token: 'sher',
         rawAmount: row.amount,
         counterparty: row.member,
@@ -123,13 +122,13 @@ export function mapVestingEvents(input: VestingMapperInput, ctx: MapperContext):
 
   for (const row of input.releases ?? []) {
     entries.push(
-      makeEntry({
+      makeJournalEntryDraft({
         id: row.id,
+        sourceContract: row.contractAddress,
         timestamp: row.timestamp,
         useCase: 'UC-VEST-02',
         debit: 'SHERS To Be Issued',
         credit: 'Investor Equity',
-        amountUsd: ctx.toUsd(BigInt(row.amount), 'sher', atDate(row.timestamp)),
         token: 'sher',
         rawAmount: row.amount,
         counterparty: row.member,
@@ -148,13 +147,13 @@ export function mapVestingEvents(input: VestingMapperInput, ctx: MapperContext):
     // history, but the books only record actual movements.
     if (remainder <= 0n) continue
     entries.push(
-      makeEntry({
+      makeJournalEntryDraft({
         id: row.id,
+        sourceContract: row.contractAddress,
         timestamp: row.timestamp,
         useCase: 'UC-VEST-03',
         debit: 'SHERS To Be Issued',
         credit: 'Deferred SHER Compensation',
-        amountUsd: ctx.toUsd(remainder, 'sher', atDate(row.timestamp)),
         token: 'sher',
         rawAmount: remainder.toString(),
         counterparty: row.member,

@@ -1,26 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { activityDestinationOf } from '../activityDestination'
-import type { LedgerEntry } from '../ledgerEntry'
+import type { JournalEntryDraft } from '../journalEntryDraft'
+import { journalFixture } from './fixtures'
 
 const ALI = '0x1111111111111111111111111111111111111111'
 
-/** A minimal balanced entry; override only what each case needs. */
-function entry(partial: Partial<LedgerEntry>): LedgerEntry {
-  return {
-    id: 'e1',
-    timestamp: 1_700_000_000,
-    useCase: 'CASH-IN',
-    debit: 'Cash — Bank',
-    credit: 'Service Revenue',
-    amountUsd: 500,
-    token: 'usdc',
-    rawAmount: '500000000',
-    internal: false,
-    memo: 'raw memo',
-    enrichment: 'not-applicable',
-    ...partial
-  }
-}
+const entry = (partial: Partial<JournalEntryDraft>) => journalFixture(partial)
 
 describe('activityDestinationOf — use cases with their own surface', () => {
   it('sends a wage to the member it belongs to', () => {

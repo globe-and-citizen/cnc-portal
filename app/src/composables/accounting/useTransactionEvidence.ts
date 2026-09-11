@@ -13,7 +13,7 @@ import {
   transfersFromReceiptLogs,
   type TransactionAccountEvidence
 } from '@/utils/accounting/accountInstances'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { config } from '@/wagmi.config'
 
 interface ReceiptEvidenceResult {
@@ -38,14 +38,14 @@ interface UseTransactionEvidenceReturn {
  * the accounting view can surface them as reconciliation gaps.
  */
 export function useTransactionEvidence(
-  entries: ComputedRef<readonly LedgerEntry[]>,
+  drafts: ComputedRef<readonly JournalEntryDraft[]>,
   accounts: ComputedRef<ReadonlyMap<string, AccountName>>
 ): UseTransactionEvidenceReturn {
   const receiptHashes = computed<string[]>(() => {
     const unresolved = new Set<string>()
-    for (const entry of entries.value) {
-      if (needsAccountInstanceEvidence(entry, accounts.value) && entry.txHash) {
-        unresolved.add(entry.txHash.toLowerCase())
+    for (const draft of drafts.value) {
+      if (needsAccountInstanceEvidence(draft, accounts.value) && draft.txHash) {
+        unresolved.add(draft.txHash.toLowerCase())
       }
     }
     return [...unresolved]

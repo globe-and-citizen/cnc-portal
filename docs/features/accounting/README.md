@@ -19,9 +19,9 @@ These acceptance criteria follow the
   or unresolved account remains a separate report line and drill-down; only report totals deliberately aggregate those accounts. The current
   result appears as `Earnings to date`, with each contributing income and expense account shown separately.
 - Monetary entries are reported in USD while retaining their original currency, exact token base units, token decimals, and rate of record.
-  Journal assembly accepts only rate-stamped source postings and derives their USD value from the exact base units and rate. The journal and
-  every report aggregate fixed-scale integers without rounding; only presentation and export boundaries convert those exact values into
-  human-readable amounts.
+  Journal finalization accepts only rate-stamped `JournalEntryDraft` records and derives their USD value from the exact base units and rate.
+  The journal and every report aggregate fixed-scale integers without rounding; only presentation and export boundaries convert those exact
+  values into human-readable amounts.
 - Native-token postings use the immutable market snapshot for the source operation's UTC date, not the current market price. Successful
   token/date snapshots are cached without expiry. If a snapshot is unavailable, the non-zero token movement remains in the journal with a
   zero rate, Accounting becomes partial with `rate-unavailable`, and reports remain withheld until refresh resolves the rate.
@@ -57,11 +57,13 @@ These acceptance criteria follow the
   the complete journal entry with the same accounts, currencies, debits, credits, and fees as the General Ledger. A compound entry remains
   read-only because one selected counter-account cannot safely describe several source movements.
 - **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
-- **Journal-entry assembly:** Accounting constructs a validated double-entry `JournalEntry` collection and preserves concrete accounts
-  across redeployments. The source-operation model, canonical account terminology, report-projection boundary, and verified optimisation
+- **Journal-entry finalization:** Source adapters emit `JournalEntryDraft` evidence. One evidence-aware boundary reconciles transaction
+  mirrors and fees, resolves concrete accounts, derives exact lines, groups by source-operation identity, and validates each resulting
+  `JournalEntry` once. The source-operation model, canonical account terminology, report-projection boundary, and verified optimisation
   considerations are owned by the [Accounting Read Model](../../implementation/accounting-read-model/README.md).
-- **Runtime assembly boundary:** The application calls the explicit raw-mapping and evidence-aware assembly stages. Fixture conveniences and
-  implementation helpers are private, so production accounting APIs represent real read-model boundaries rather than test setup.
+- **Runtime assembly boundary:** The application calls the explicit draft-mapping and evidence-aware finalization stages. Fixture
+  conveniences and implementation helpers are private, so production accounting APIs represent real read-model boundaries rather than test
+  setup.
 - **Source mapping boundary:** Each accounting domain exposes one mapper. Bank includes transaction-bound fees, Payroll includes weekly
   accrual and settlement, and Expense includes indexed payouts plus its portal fallback; support transforms remain private to those
   boundaries or to assembly.
@@ -70,7 +72,7 @@ These acceptance criteria follow the
 
 ```mermaid
 flowchart LR
-    Sources[Contract events and portal records] --> Mapping[Map source postings]
+    Sources[Contract events and portal records] --> Mapping[Map JournalEntryDraft evidence]
     Sources --> Completeness[Source completeness registry]
     Sources --> TimestampCache[Immutable block timestamp cache]
     TimestampCache --> Mapping
@@ -78,8 +80,9 @@ flowchart LR
     RateTargets --> RateCache[Immutable historical rate cache]
     RateCache --> Valuation[Stamp rate of record]
     Mapping --> Valuation
-    Valuation --> Consolidate[Consolidate and deduplicate]
-    Consolidate --> Journal[Validated JournalEntry collection]
+    Valuation --> Evidence[Resolve receipt account evidence]
+    Evidence --> Finalize[Reconcile and finalize once]
+    Finalize --> Journal[Validated JournalEntry collection]
     RateCache --> Completeness
     Completeness --> Ready{All applicable sources ready?}
     Journal --> Context[Team-scoped Accounting route context]
@@ -135,7 +138,9 @@ flowchart LR
 - [x] Every monetary journal line retains its token movement in exact base units and uses one shared fixed-scale USD amount for validation
       and reporting.
 - [x] A non-zero token movement whose rate is unavailable remains in the journal at a zero rate, produces a `rate-unavailable` diagnostic,
-      and keeps reports withheld; the transitional `amountUsd` number is never used as a reporting fallback.
+      and keeps reports withheld; no independently rounded source amount is used as a reporting fallback.
+- [x] When one SHER accrual contains quantities realized at different rates, the source operation retains exact quantity/rate slices rather
+      than replacing them with a rounded weighted-average rate.
 - [x] A non-zero token movement remains in the books even when its displayed USD value rounds to zero at the selected display precision.
 - [x] Refreshing after the current market price changes does not rewrite a historical native-token posting; fair-value changes require
       explicit revaluation entries rather than an implicit replacement rate.
@@ -372,7 +377,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `172a73b4a15112114b9560a03be929c35d8f7996`
+**Implementation evidence reviewed against:** `f3c9924f9dde1bf0b391b1c873fc9cbb89295029`
 
 - [Account Assignments route view](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue) and
   [ledger account-assignment cell](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
@@ -433,9 +438,10 @@ flowchart LR
   [concrete-account journal balances](../../../app/src/utils/accounting/journalBalances.ts),
   [exact-precision regression tests](../../../app/src/utils/accounting/__tests__/exactPrecision.spec.ts),
   [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts),
-  [transaction identity helper](../../../app/src/utils/accounting/ledgerEntry.ts),
-  [validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
-  [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
+  [journal-draft and transaction identity model](../../../app/src/utils/accounting/journalEntryDraft.ts),
+  [JournalEntry finalization](../../../app/src/utils/accounting/journalEntry.ts),
+  [JournalEntry validation](../../../app/src/utils/accounting/journalEntryValidation.ts),
+  [Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [Family-level income statement](../../../app/src/utils/accounting/incomeStatement.ts),
   [concrete-account Balance Sheet](../../../app/src/utils/accounting/balanceSheet.ts), and

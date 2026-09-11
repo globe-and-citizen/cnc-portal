@@ -52,7 +52,7 @@ import {
 } from './useAccountingStatus'
 import {
   assembleWithAccountEvidence,
-  buildRawCncEntries,
+  buildCncJournalEntryDrafts,
   type CncAccounting,
   type CncAccountingInput
 } from '@/utils/accounting/assemble'
@@ -234,7 +234,7 @@ export function useCNCAccounting(
     queryParams: { limit: SAFE_PAGE_SIZE }
   })
 
-  // The raw feeds are first mapped with the explicit override when supplied, or
+  // Source feeds are first mapped with the explicit override when supplied, or
   // with the zero-rate gap. This produces the token/date request set without
   // running the source mappers twice.
   const baseInput = computed<CncAccountingInput>(() => ({
@@ -258,9 +258,9 @@ export function useCNCAccounting(
     accountAssignments: accountAssignments.data.value
   }))
 
-  const provisionalRawEntries = computed(() => buildRawCncEntries(baseInput.value))
+  const provisionalDrafts = computed(() => buildCncJournalEntryDrafts(baseInput.value))
   const historicalTargets = computed(() =>
-    accountingValuation.historicalRateTargets(provisionalRawEntries.value)
+    accountingValuation.historicalRateTargets(provisionalDrafts.value)
   )
   const historicalRates = useHistoricalTokenRatesQuery(
     historicalTargets,
@@ -269,24 +269,24 @@ export function useCNCAccounting(
 
   // Native (POL/ETH) is valued from the immutable UTC transaction-date snapshot.
   // Stablecoins retain their $1 peg and SHER retains the multiplier policy applied
-  // by `buildRawCncEntries`. Missing market data stamps a zero rate but never
+  // by `buildCncJournalEntryDrafts`. Missing market data stamps a zero rate but never
   // removes the evidenced token movement; completeness reports the gap.
   // Mapper-provided instances are accepted only when they name a known company
   // deployment. Receipt Transfer logs may complete a missing instance; activity
   // order and unrelated historical deployments are never used as a fallback.
-  const rawEntries = computed(() =>
+  const drafts = computed(() =>
     options.rateOfRecord
-      ? provisionalRawEntries.value
+      ? provisionalDrafts.value
       : accountingValuation.applyHistoricalRates(
-          provisionalRawEntries.value,
+          provisionalDrafts.value,
           historicalRates.rateOfRecord
         )
   )
   const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
-  const transactionEvidence = useTransactionEvidence(rawEntries, deploymentAccounts)
+  const transactionEvidence = useTransactionEvidence(drafts, deploymentAccounts)
   const accounting = computed<CncAccounting>(() =>
     assembleWithAccountEvidence(
-      rawEntries.value,
+      drafts.value,
       deploymentAccounts.value,
       transactionEvidence.accountEvidence.value,
       baseInput.value.accountAssignments
@@ -372,7 +372,7 @@ export function useCNCAccounting(
       unavailableReceiptOperationIds: transactionEvidence.unavailableOperationIds
     },
     rates: {
-      rawEntries,
+      drafts,
       isLoading: historicalRates.isLoading
     }
   })

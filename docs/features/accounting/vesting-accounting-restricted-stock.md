@@ -86,6 +86,9 @@ realization rule as SHER wages, so each promise is settled at the value it actua
 - the **cancelled** quantity is frozen at the stop-date rate, so `UC-VEST-03` cancels its share of the grant exactly;
 - whatever is still promised and unminted floats at the **current** multiplier, like an open wage accrual.
 
+When one grant is only partly realized, Accounting keeps the realized and pending raw SHER quantities as separate rate slices under the same
+source-operation identity. The final `JournalEntry` adds their exact values; it does not replace them with a rounded weighted-average rate.
+
 A member's wage promises and their vesting grants are settled **separately**: a wage withdrawal never consumes a vesting grant, and a
 release never consumes a wage accrual.
 
@@ -141,6 +144,8 @@ release never consumes a wage accrual.
   account required.
 
 ## Implementation Evidence
+
+**Implementation evidence reviewed against:** `f3c9924f9dde1bf0b391b1c873fc9cbb89295029`
 
 - [Vesting source mapper](../../../app/src/utils/accounting/mappers/vesting.ts) — the three journal entries and the reconstructed remainder
 - [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts) — the wage and vesting lanes and their valuation

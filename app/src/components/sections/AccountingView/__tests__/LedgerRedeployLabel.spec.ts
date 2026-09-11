@@ -12,9 +12,9 @@ import { renderWithProviders } from '@/tests/mocks'
 import LedgerTable from '../LedgerTable.vue'
 import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerColumns'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { accountFor } from '@/utils/accounting/accountRegistry'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 const BANK_1 = '0x1111111111111111111111111111111111111111'
 const BANK_2 = '0x2222222222222222222222222222222222222222'
@@ -32,7 +32,12 @@ afterEach(() => {
 })
 
 /** A deposit into one Bank contract — two of them make a redeployed pocket. */
-function deposit(id: string, instance: string, timestamp: number, txHash?: string): LedgerEntry {
+function deposit(
+  id: string,
+  instance: string,
+  timestamp: number,
+  txHash?: string
+): JournalEntryDraft {
   return {
     id,
     timestamp,
@@ -40,7 +45,6 @@ function deposit(id: string, instance: string, timestamp: number, txHash?: strin
     debit: 'Cash — Bank',
     debitInstance: instance as `0x${string}`,
     credit: 'Service Revenue',
-    amountUsd: 100,
     token: 'usdc',
     rawAmount: '100000000',
     rate: 1,
@@ -53,10 +57,10 @@ function deposit(id: string, instance: string, timestamp: number, txHash?: strin
 
 const REDEPLOYED = [deposit('a', BANK_1, 1_700_000_000), deposit('b', BANK_2, 1_700_086_400)]
 
-function renderLedger(entries: LedgerEntry[]) {
+function renderLedger(entries: JournalEntryDraft[]) {
   return renderWithProviders(LedgerTable, {
     props: {
-      rows: journalLedgerRows(buildJournal(entries)),
+      rows: journalLedgerRows(finalizeJournal(entries)),
       total: '$200.00',
       linkAccount: true
     },
@@ -153,7 +157,7 @@ describe('General ledger — redeployed pocket', () => {
   it('resizes the balance column in an account drill-down', async () => {
     const wrapper = renderWithProviders(LedgerTable, {
       props: {
-        rows: journalLedgerRows(buildJournal([deposit('a', BANK_1, 1_700_000_000)])),
+        rows: journalLedgerRows(finalizeJournal([deposit('a', BANK_1, 1_700_000_000)])),
         total: '$100.00',
         showBalance: true
       },

@@ -90,6 +90,7 @@ describe('accounting assembly boundary', () => {
   })
 
   it('collapses the cross-contract internal-transfer twin (Bank → Payroll)', () => {
+    const txHash = `0x${'1'.repeat(64)}`
     const a = assembleAccounting({
       ...BASE,
       // Same native move indexed twice: Bank `Transfer` out and CashRem `Deposited`.
@@ -99,7 +100,8 @@ describe('accounting assembly boundary', () => {
         bankTransfers: {
           items: [
             {
-              id: 'bt1',
+              id: `${txHash}-1`,
+              contractAddress: ADDR.bank,
               sender: ADDR.bank,
               to: ADDR.payroll,
               amount: '1000000000000000000',
@@ -117,7 +119,7 @@ describe('accounting assembly boundary', () => {
         cashRemunerationDeposits: {
           items: [
             {
-              id: 'cd1',
+              id: `${txHash}-2`,
               contractAddress: ADDR.payroll,
               depositor: ADDR.bank,
               amount: '1000000000000000000',
@@ -183,7 +185,6 @@ describe('accounting assembly boundary', () => {
     })
 
     const payroll = a.journal.find((entry) => entry.useCase === 'UC-CASH-03')
-    expect(payroll?.source?.enrichment).toBe('enriched')
     expect(payroll?.category).toBe('Payroll')
     expect(payroll?.memo).toContain('sprint work')
   })
@@ -290,7 +291,7 @@ describe('accounting assembly boundary', () => {
     // equity at the SHER rate of record (60 SHER × $1.00 = $60) — Dr/Cr filled.
     const issued = a.journal.find((entry) => entry.useCase === 'DEFAULT-D')
     expect(issued).toMatchObject({
-      source: { token: 'sher', shares: 60 },
+      shares: 60,
       lines: [
         {
           account: { family: { name: 'SHERS To Be Issued' } },

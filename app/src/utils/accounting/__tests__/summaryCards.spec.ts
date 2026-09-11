@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { presentSummary } from '@/utils/accounting/presenter'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { sampleBooks } from './fixtures'
 
 function posting(
@@ -10,15 +10,14 @@ function posting(
   debit: AccountName,
   credit: AccountName,
   amount: number,
-  useCase: LedgerEntry['useCase'] = 'UC-CREDIT-01'
-): LedgerEntry {
+  useCase: JournalEntryDraft['useCase'] = 'UC-CREDIT-01'
+): JournalEntryDraft {
   return {
     id,
     timestamp: 300,
     useCase,
     debit,
     credit,
-    amountUsd: amount,
     token: 'usdc',
     rawAmount: String(amount * 1_000_000),
     rate: 1,
@@ -51,7 +50,7 @@ describe('presentSummary', () => {
   })
 
   it('adds up the credit liabilities into the outstanding-debt card', () => {
-    const debtJournal = buildJournal([
+    const debtJournal = finalizeJournal([
       posting('loan', 'Cash — Bank', 'Loan Payable', 1000),
       posting('interest', 'Cash — Bank', 'Interest Payable', 100),
       // A liability outside the borrowing accounts stays out of the figure.
@@ -62,7 +61,7 @@ describe('presentSummary', () => {
   })
 
   it('shows the debt-repaid card only once a lender has been paid back', () => {
-    const repayment = buildJournal([
+    const repayment = finalizeJournal([
       posting('repayment', 'Loan Payable', 'Cash — Bank', 880, 'UC-CREDIT-03')
     ])
     const { cards } = presentSummary([...acc.journal, ...repayment])

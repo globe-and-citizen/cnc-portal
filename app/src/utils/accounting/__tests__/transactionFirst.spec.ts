@@ -15,7 +15,8 @@
  * transactions, date boundaries, and multi-currency reporting.
  */
 import { describe, it, expect } from 'vitest'
-import { buildJournal, buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { accountFor } from '@/utils/accounting/accountRegistry'
 const FEE_ACCOUNT = 'Transaction Fee Expense'
 const FEE_ACCOUNT_ID = accountFor(FEE_ACCOUNT).id
@@ -23,7 +24,7 @@ import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { journalLedgerRows, presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
 import { usd } from './fixtures'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 /** A 64-hex transaction hash, so a fee and its transfer pair by shared tx. */
 const TX = (n: number): string => `0x${String(n).padStart(64, '0')}`
@@ -32,13 +33,12 @@ const DAY = 86_400
 const day = (n: number): number => 1_700_000_000 + n * DAY
 
 // Orphan fee source evidence: withheld from the journal until its Bank outflow is available.
-const standaloneFee: LedgerEntry = {
+const standaloneFee: JournalEntryDraft = {
   id: `${TX(1)}-1`,
   timestamp: day(1),
   useCase: 'FEE',
   debit: FEE_ACCOUNT,
   credit: 'Cash — Bank',
-  amountUsd: 0.5,
   token: 'usdc',
   rawAmount: '500000',
   rate: 1,
@@ -48,13 +48,12 @@ const standaloneFee: LedgerEntry = {
 }
 
 // A client payment booked to Service Revenue from source evidence.
-const serviceRevenue: LedgerEntry = {
+const serviceRevenue: JournalEntryDraft = {
   id: `${TX(2)}-0`,
   timestamp: day(2),
   useCase: 'CASH-IN',
   debit: 'Cash — Bank',
   credit: 'Service Revenue',
-  amountUsd: 100,
   token: 'usdc',
   rawAmount: '100000000',
   rate: 1,
@@ -64,13 +63,12 @@ const serviceRevenue: LedgerEntry = {
 }
 
 // An ordinary internal transfer, no fee — Bank funds the Payroll pocket.
-const ordinaryTransfer: LedgerEntry = {
+const ordinaryTransfer: JournalEntryDraft = {
   id: `${TX(3)}-0`,
   timestamp: day(2),
   useCase: 'UC-BANK-03',
   debit: 'Cash — Payroll',
   credit: 'Cash — Bank',
-  amountUsd: 30,
   token: 'usdc',
   rawAmount: '30000000',
   rate: 1,
@@ -80,13 +78,12 @@ const ordinaryTransfer: LedgerEntry = {
 }
 
 // A transfer and its fee share a transaction and become one three-line JournalEntry.
-const feeTransferOut: LedgerEntry = {
+const feeTransferOut: JournalEntryDraft = {
   id: `${TX(4)}-0`,
   timestamp: day(3),
   useCase: 'UC-BANK-03',
   debit: 'Cash — Expense',
   credit: 'Cash — Bank',
-  amountUsd: 10,
   token: 'usdc',
   rawAmount: '10000000',
   rate: 1,
@@ -94,13 +91,12 @@ const feeTransferOut: LedgerEntry = {
   memo: 'Fund expenses (net of fee)',
   enrichment: 'not-applicable'
 }
-const feeTransferFee: LedgerEntry = {
+const feeTransferFee: JournalEntryDraft = {
   id: `${TX(4)}-1`,
   timestamp: day(3),
   useCase: 'FEE',
   debit: FEE_ACCOUNT,
   credit: 'Cash — Bank',
-  amountUsd: 0.05,
   token: 'usdc',
   rawAmount: '50000',
   rate: 1,
@@ -110,13 +106,12 @@ const feeTransferFee: LedgerEntry = {
 }
 
 // A native-token internal transfer — the multi-currency case (POL, not USDC).
-const nativeTransfer: LedgerEntry = {
+const nativeTransfer: JournalEntryDraft = {
   id: `${TX(5)}-0`,
   timestamp: day(4),
   useCase: 'UC-BANK-03',
   debit: 'Cash — Safe',
   credit: 'Cash — Bank',
-  amountUsd: 8,
   token: 'native',
   rawAmount: '100000000000000000000',
   rate: 0.08,
@@ -126,7 +121,7 @@ const nativeTransfer: LedgerEntry = {
 }
 
 /** The whole book, canonical feed (fee and its transfer are separate postings). */
-const book: LedgerEntry[] = [
+const book: JournalEntryDraft[] = [
   standaloneFee,
   serviceRevenue,
   ordinaryTransfer,
@@ -137,7 +132,7 @@ const book: LedgerEntry[] = [
 
 describe('transaction-first read model — the general ledger shows complete transactions', () => {
   it('renders each selected transaction with all of its balanced lines', () => {
-    const view = presentJournalLedger(buildJournal(book))
+    const view = presentJournalLedger(finalizeJournal(book))
     // Ordinary transfer → 2 lines, service revenue → 2, native transfer → 2,
     // fee transfer → 3; the orphan fee is withheld.
     expect(view.entryCount).toBe(4) // six source postings, one orphan withheld and one shared transaction
@@ -147,7 +142,7 @@ describe('transaction-first read model — the general ledger shows complete tra
   })
 
   it('keeps a cash movement whole, with both its legs', () => {
-    const view = presentJournalLedger(buildJournal([serviceRevenue]))
+    const view = presentJournalLedger(finalizeJournal([serviceRevenue]))
     expect(view.rows.map((r) => r.account)).toEqual(['Cash — Bank', 'Service Revenue'])
     expect(view.rows.map((r) => r.dr || r.cr)).toEqual(['$100.00', '$100.00'])
   })
@@ -155,7 +150,7 @@ describe('transaction-first read model — the general ledger shows complete tra
 
 describe('transaction-first read model — the fee account filter preserves whole transactions', () => {
   it('selects only fee-bearing transactions and renders each of them whole', () => {
-    const view = presentJournalLedger(buildJournal(book), null, null, null, [FEE_ACCOUNT_ID])
+    const view = presentJournalLedger(finalizeJournal(book), null, null, null, [FEE_ACCOUNT_ID])
     // The fee-bearing transfer stays whole; orphan fee evidence stays withheld.
     expect(view.entryCount).toBe(1)
     expect(view.rows).toHaveLength(3)
@@ -164,19 +159,19 @@ describe('transaction-first read model — the fee account filter preserves whol
 
   it('shows a fee transaction identically in the fee account filter and the general ledger', () => {
     const feeView = presentJournalLedger(
-      buildJournal([feeTransferOut, feeTransferFee]),
+      finalizeJournal([feeTransferOut, feeTransferFee]),
       null,
       null,
       null,
       [FEE_ACCOUNT_ID]
     )
-    const allView = presentJournalLedger(buildJournal([feeTransferOut, feeTransferFee]))
+    const allView = presentJournalLedger(finalizeJournal([feeTransferOut, feeTransferFee]))
     expect(feeView.rows).toEqual(allView.rows)
     expect(feeView.total).toBe(allView.total)
   })
 
   it('preserves each transaction total — no fee-only sum', () => {
-    const view = presentJournalLedger(buildJournal(book), null, null, null, [FEE_ACCOUNT_ID])
+    const view = presentJournalLedger(finalizeJournal(book), null, null, null, [FEE_ACCOUNT_ID])
     // The total is the ordinary "Total movements" figure over the whole selected
     // transactions (net legs + folded fees), taken over the same selection
     // `presentJournalLedger` renders — never a fee-only sum ($0.05 here).
@@ -187,7 +182,7 @@ describe('transaction-first read model — the fee account filter preserves whol
 
 describe('transaction-first read model — the trial balance aggregates the same lines', () => {
   it('stays balanced gross and net over the whole book', () => {
-    const gl = buildGeneralLedger(buildJournal(book))
+    const gl = buildGeneralLedger(finalizeJournal(book))
     expect(gl.balanced).toBe(true)
     expect(gl.totalDebit).toBe(gl.totalCredit)
     expect(gl.debitBalanceTotal).toBe(gl.creditBalanceTotal)
@@ -196,7 +191,7 @@ describe('transaction-first read model — the trial balance aggregates the same
   it('remains balanced for a narrowed reporting boundary', () => {
     // Only the postings up to and including day 2 — a point-in-time boundary.
     const asOfDay2 = book.filter((e) => e.timestamp <= day(2))
-    const gl = buildGeneralLedger(buildJournal(asOfDay2))
+    const gl = buildGeneralLedger(finalizeJournal(asOfDay2))
     expect(asOfDay2.length).toBeGreaterThan(0)
     expect(gl.balanced).toBe(true)
     expect(gl.totalDebit).toBe(gl.totalCredit)
@@ -205,7 +200,7 @@ describe('transaction-first read model — the trial balance aggregates the same
   })
 
   it('excludes an orphan fee from the canonical JournalEntry balance', () => {
-    const gl = buildGeneralLedger(buildJournal(book))
+    const gl = buildGeneralLedger(finalizeJournal(book))
     const feeRow = gl.trialBalance.find((r) => r.account.family.name === FEE_ACCOUNT)
     expect(feeRow?.balance).toBe(usd(0.05))
   })
@@ -215,7 +210,7 @@ describe('transaction-first read model — drill-downs reconcile with the genera
   it('renders a transaction with the same lines and values as the general ledger', () => {
     // Drill into Bank: the fee transfer touches Bank, so its folded three-line
     // posting must read exactly as it does in the "All" ledger.
-    const journal = buildJournal([feeTransferOut, feeTransferFee])
+    const journal = finalizeJournal([feeTransferOut, feeTransferFee])
     const drill = journalLedgerRows(entriesForAccount(journal, 'Cash — Bank'), journal)
     const all = presentJournalLedger(journal)
     const accounts = (rows: typeof all.rows): string[] => rows.map((r) => r.account)
@@ -225,7 +220,7 @@ describe('transaction-first read model — drill-downs reconcile with the genera
   })
 
   it('selects transactions touching the account and keeps their whole context', () => {
-    const scoped = entriesForAccount(buildJournal(book), 'Cash — Bank')
+    const scoped = entriesForAccount(finalizeJournal(book), 'Cash — Bank')
     // Every matching operation stays whole through its complete journal lines.
     expect(scoped.some((entry) => entry.sourceOperationId === TX(2))).toBe(true)
     expect(scoped.some((entry) => entry.sourceOperationId === TX(3))).toBe(true)
@@ -238,7 +233,7 @@ describe('transaction-first read model — date boundaries', () => {
   it('includes a transaction exactly on the window edges and excludes those outside', () => {
     const from = new Date(day(2) * 1000)
     const to = new Date(day(3) * 1000)
-    const view = presentJournalLedger(buildJournal(book), from, to)
+    const view = presentJournalLedger(finalizeJournal(book), from, to)
     // day 1 (standalone fee) and day 4 (native transfer) fall outside.
     expect(view.rows.some((r) => r.account === 'Cash — Safe')).toBe(false)
     // day 2 and day 3 postings are in — including the fee transfer's fee leg.
@@ -251,7 +246,7 @@ describe('transaction-first read model — multi-currency reporting', () => {
   it('reports every currency present and keeps whole transactions when filtered', () => {
     const currencies = [
       ...new Set(
-        presentJournalLedger(buildJournal(book))
+        presentJournalLedger(finalizeJournal(book))
           .rows.map((row) => row.currency)
           .filter(Boolean)
       )
@@ -259,14 +254,14 @@ describe('transaction-first read model — multi-currency reporting', () => {
     expect(currencies).toContain('USDC')
     expect(currencies.length).toBeGreaterThanOrEqual(2) // USDC and the native symbol
     const nativeSymbol = currencies.find((c) => c !== 'USDC')!
-    const view = presentJournalLedger(buildJournal(book), null, null, [nativeSymbol])
+    const view = presentJournalLedger(finalizeJournal(book), null, null, [nativeSymbol])
     // Only the native transfer survives — and it survives whole (both legs).
     expect(view.entryCount).toBe(1)
     expect(view.rows.map((r) => r.account)).toEqual(['Cash — Safe', 'Cash — Bank'])
   })
 
   it('keeps the trial balance balanced across currencies', () => {
-    const gl = buildGeneralLedger(buildJournal(book))
+    const gl = buildGeneralLedger(finalizeJournal(book))
     expect(gl.balanced).toBe(true)
   })
 })

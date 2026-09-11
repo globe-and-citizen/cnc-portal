@@ -1,8 +1,8 @@
 # Accounting Read Model
 
-**Scope:** The client-side read model that turns company contract and portal feeds into consolidated accounting postings and a validated
-double-entry journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on
-demand. This model does not create or persist manual journal entries.
+**Scope:** The client-side read model that turns company contract and portal feeds into typed source evidence and a validated double-entry
+journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
+model does not create or persist manual journal entries.
 
 **Last verified:** 2026-09-11
 
@@ -29,13 +29,13 @@ flowchart LR
     history --> input[CncAccountingInput]
     feeds --> input
     assignments --> input
-    input --> mapped[Pure source mapping]
+    input --> mapped[Pure JournalEntryDraft mapping]
     mapped --> rateTargets[Native token and UTC date targets]
     rateTargets --> rateCache[Immutable historical rate cache]
-    rateCache --> valued[Rate-stamped postings]
+    rateCache --> valued[Rate-stamped drafts]
     mapped --> valued
     valued --> evidence[Transaction and receipt evidence]
-    evidence --> assembly[Pure accounting assembly]
+    evidence --> assembly[Reconcile, resolve, and validate once]
     assembly --> journal[JournalEntry collection]
     feeds --> sourceStatus[Reactive source states]
     sourceStatus --> gate
@@ -54,8 +54,8 @@ Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken 
 contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, and unavailable rates. The parent Accounting route remains
 mounted while its report child changes, so the shared context prevents those reports from independently fetching and assembling the same
 books. The team workspace gives that route owner a stable key within one team and a new key when the team identifier changes. Its three pure
-runtime stages are `buildRawCncEntries(CncAccountingInput)`, `applyHistoricalRates(rawEntries, rateOfRecord)`, and
-`assembleWithAccountEvidence(rawEntries, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
+runtime stages are `buildCncJournalEntryDrafts(CncAccountingInput)`, `applyHistoricalRates(drafts, rateOfRecord)`, and
+`assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
 diagnostics without Vue or network I/O.
 
 The incoming-transfer and executed-transaction Safe queries remain disabled until the reactive company Safe address resolves. Once enabled,
@@ -68,7 +68,7 @@ by network and block number with infinite staleness and garbage-collection time 
 and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
 timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
 
-The provisional raw feed derives one unique native-token target per UTC transaction date. `historicalTokenRate.queries.ts` resolves each
+The provisional draft feed derives one unique native-token target per UTC transaction date. `historicalTokenRate.queries.ts` resolves each
 target through the shared TanStack Query client using an atomic `coinId + date + USD` identity. A successful snapshot has infinite staleness
 and garbage-collection time because it is the immutable rate of record; concurrent operations and later refreshes reuse it. The aggregate
 target-set query remains retryable, so a failed or not-yet-published date can resolve on Accounting refresh without refetching successful
@@ -85,18 +85,18 @@ ordering, and `InvestorV1` is used only when no current `Investor` exists.
 
 ### Runtime Export Boundary
 
-The production assembly API exposes only the two stages the reactive read model calls: raw mapping and evidence-aware book assembly. Fixture
-constructors, empty-book conveniences, raw-posting assembly shortcuts, and implementation details of account, price, fee, and presentation
+The production assembly API exposes only the two stages the reactive read model calls: source-draft mapping and evidence-aware finalization.
+Fixture constructors, empty-book conveniences, draft-assembly shortcuts, and implementation details of account, price, fee, and presentation
 shaping stay private to their modules. Tests exercise the public stages through a test-only fixture helper; they do not add runtime APIs
 solely for test construction. The General Ledger, Trial Balance, Summary, Income Statement, Balance Sheet, and their exports project the
 validated `JournalEntry` collection. Account and statement drill-downs project the same collection: they select complete entries by a
 concrete `Account` or an account family and compute a running balance only from the selected account's own lines.
 
-The reactive view context exposes the journal, not the transitional source-posting feed, account registry, or precomputed report objects.
-The Summary export dialog reads the journal length directly, counting monetary and memo-only operations once. Export snapshots contain only
-the journal. The table and exporters share `LedgerRow` from the journal presenter and import their column definitions directly from
-`ledgerColumns`. Each report surface calls one focused presenter with the canonical journal and its optional scope. For example, Summary
-calls `presentSummary(journal)`, while the Trial Balance card and both export formats call `presentTrial(journal, asOf)`.
+The reactive view context exposes the journal, not the source-draft feed, account registry, or precomputed report objects. The Summary
+export dialog reads the journal length directly, counting monetary and memo-only operations once. Export snapshots contain only the journal.
+The table and exporters share `LedgerRow` from the journal presenter and import their column definitions directly from `ledgerColumns`. Each
+report surface calls one focused presenter with the canonical journal and its optional scope. For example, Summary calls
+`presentSummary(journal)`, while the Trial Balance card and both export formats call `presentTrial(journal, asOf)`.
 
 ### Source Mapping Boundaries
 
@@ -114,26 +114,27 @@ produce the same domain postings; event names and fallback mechanisms do not cre
 | Safe                | `mapSafeTransfers`           | Incoming and outgoing Safe transfers                                 |
 | Safe Deposit Router | `mapSafeDepositRouterEvents` | Investment deposits that mint SHER                                   |
 
-The mapper barrel publishes only the ledger orchestrator and its grouped input type. Tests that exercise one domain import that domain
-module directly. Context construction, credit timelines, expense periods, and the shared internal-transfer posting are support modules
-rather than source mappers. Account assignments apply only after journal construction, so source mappers remain responsible for evidence
-inference rather than owner decisions. SHER realization settlement runs after rate stamping and therefore lives at the Accounting assembly
-level, outside the mapper directory.
+The mapper barrel publishes only the journal-draft orchestrator and its grouped input type. Tests that exercise one domain import that
+domain module directly. Context construction, credit timelines, expense periods, and the shared internal-transfer posting are support
+modules rather than source mappers. Account assignments apply only after journal construction, so source mappers remain responsible for
+evidence inference rather than owner decisions. SHER realization settlement runs after rate stamping and therefore lives at the Accounting
+assembly level, outside the mapper directory.
 
 ## Main Assembly Flow
 
 ```mermaid
 flowchart LR
-    input[CncAccountingInput] --> context[LedgerSources and MapperContext]
-    context --> mapped[Mapped LedgerEntry feed]
+    input[CncAccountingInput] --> context[JournalEntrySources and MapperContext]
+    context --> mapped[Mapped JournalEntryDraft evidence]
     mapped --> rateTargets[Native token and UTC date targets]
     rateTargets --> rateCache[Immutable historical rate cache]
-    rateCache --> raw[Rate-resolved LedgerEntry feed]
-    mapped --> raw
-    raw --> ledger[buildLedger: sort and deduplicate]
-    ledger --> entries[Consolidated source postings]
-    entries --> registry[buildAccountRegistry]
-    registry --> inferredJournal[buildJournal: inferred exact JournalEntry collection]
+    rateCache --> drafts[Rate-resolved JournalEntryDraft evidence]
+    mapped --> drafts
+    drafts --> receipts[Resolve required receipt evidence]
+    receipts --> finalizer[finalizeJournalEntryDrafts]
+    finalizer --> reconciliation[Reconcile fees and proven transaction mirrors]
+    reconciliation --> registry[Resolve canonical Accounts]
+    registry --> inferredJournal[Derive exact lines and validate JournalEntry once]
     assignments[Persisted account assignments] --> assignmentProjection[applyJournalAccountAssignments]
     inferredJournal --> assignmentProjection
     assignmentProjection --> journal[Validated assigned JournalEntry collection]
@@ -151,10 +152,11 @@ flowchart LR
     journal --> assignmentView[Account Assignments projection]
 ```
 
-`JournalEntry` is the canonical double-entry representation for every financial report and drill-down. `LedgerEntry` remains a transitional
-mapping input only; assembly attaches the rate of record before a monetary posting reaches journal validation. The Balance Sheet starts from
-the Trial Balance rows, preserving each concrete account in the assets, liabilities, and equity sections. Income and expense rows remain
-visible in a separate calculation and contribute to one `Earnings to date` equity line; only explicit statement totals aggregate accounts.
+`JournalEntryDraft` is typed source evidence, not a report model. It retains raw token quantity, rate, transaction identity, emitting
+contract, and provisional account-family facts until one finalization boundary reconciles and resolves them. `JournalEntry` is the canonical
+double-entry representation for every financial report and drill-down. The Balance Sheet starts from the Trial Balance rows, preserving each
+concrete account in the assets, liabilities, and equity sections. Income and expense rows remain visible in a separate calculation and
+contribute to one `Earnings to date` equity line; only explicit statement totals aggregate accounts.
 
 ## Account Domain Model
 
@@ -234,12 +236,12 @@ not store or replace journal amounts.
 | Term                       | Meaning and boundary                                                                                                                                                                                                                                                   |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Source operation           | The on-chain transaction or off-chain record from which postings originate. For an indexed transaction, its hash is the `sourceOperationId`; the raw `<txHash>-<logIndex>` identifier remains event evidence. A synthetic operation uses its explicit stable identity. |
-| `LedgerEntry`              | A mapped, consolidated posting in the transitional feed. It carries legacy family names and optional source-instance values; it is not the concrete account model.                                                                                                     |
-| `AccountName`              | A legacy raw family name in a `LedgerEntry`, not an `Account` identity.                                                                                                                                                                                                |
+| `JournalEntryDraft`        | One balanced source posting awaiting reconciliation, canonical account resolution, exact line valuation, and validation. Several drafts can share one source-operation identity.                                                                                       |
+| `AccountName`              | A provisional account-family name in a `JournalEntryDraft`, not a concrete `Account` identity.                                                                                                                                                                         |
 | `AccountFamily`            | Canonical reusable chart metadata: stable family key, display name, class, normal balance, and deployment scope.                                                                                                                                                       |
 | `Account`                  | Canonical concrete account object: `AccountId`, `AccountFamily`, optional `contractAddress`, and `resolution`.                                                                                                                                                         |
 | `AccountId`                | Stable identity used to group journal lines and Trial Balance rows.                                                                                                                                                                                                    |
-| `JournalEntry`             | Validated double-entry record for one source operation, with ordered monetary lines or an explicit memo-only entry. A transaction-backed entry uses its `txHash` for `id` and `sourceOperationId`; its source snapshot is narration-only.                              |
+| `JournalEntry`             | Validated double-entry record for one source operation, with ordered monetary lines or an explicit memo-only entry. A transaction-backed entry uses its `txHash` for `id` and `sourceOperationId` and carries the contextual facts required for narration directly.    |
 | `JournalEntryLine`         | One debit or credit line carrying exactly one concrete `Account` and optional token movement evidence for its display projection.                                                                                                                                      |
 | `JournalEntryLineMovement` | Exact token evidence carried by a monetary line: token, `bigint` base units, token decimals, and the required fixed-scale rate of record used for valuation.                                                                                                           |
 | `JournalAccountAssignment` | One owner-selected counter-account family for a transaction-backed `JournalEntry`, uniquely identified by company and lowercase transaction hash. It contains no debit, credit, quantity, rate, or fee.                                                                |
@@ -250,16 +252,16 @@ not store or replace journal amounts.
 | Earnings to date           | Current income-account contributions minus expense-account contributions through the selected date; it does not rename or replace a posted `Retained Earnings` account.                                                                                                |
 | `accountLabel`             | Human-readable display text. It may include a deployment number or unresolved marker but must not be used for identity or filtering.                                                                                                                                   |
 
-The raw `LedgerEntry.debit` and `LedgerEntry.credit` fields currently contain `AccountName` values, while `debitInstance` and
-`creditInstance` carry source-instance values such as a contract address. These names are ambiguous at the transitional boundary. New code
-must use `AccountFamily`, `Account`, `contractAddress`, and `AccountId` according to the model above rather than calling an unscoped string
-an account.
+The `JournalEntryDraft.debit` and `JournalEntryDraft.credit` fields contain `AccountName` family values, while `debitInstance` and
+`creditInstance` carry source-instance evidence such as a contract address. Finalization resolves those provisional facts into canonical
+`Account` objects. Report and presentation code must use `AccountFamily`, `Account`, `contractAddress`, and `AccountId` according to the
+model above rather than calling an unscoped string an account.
 
 ## Account Resolution Across Redeployments
 
 ```mermaid
 flowchart LR
-    raw[LedgerEntry family and source instance] --> family[Resolve AccountFamily]
+    raw[JournalEntryDraft family and source instance] --> family[Resolve AccountFamily]
     family --> scoped{Deployment scoped?}
     scoped -->|No| shared[One resolved family account]
     scoped -->|Yes| proof{Known source instance?}
@@ -282,24 +284,29 @@ it to an earlier or later deployment based on activity order.
 
 ### Invariants
 
-- The consolidated posting feed is chronologically sorted and de-duplicated before account resolution.
+- Source adapters emit `JournalEntryDraft` evidence. Only the finalization boundary reconciles it, resolves accounts, derives exact lines,
+  groups source operations, and validates the resulting `JournalEntry` collection.
 - One transaction-backed operation uses its `txHash` as its `JournalEntry.id` and `sourceOperationId`; all source events with that hash are
   assembled into that entry before compatible debit and credit lines are aggregated. A synthetic operation retains its explicit stable
   identity.
+- Internal source postings are collapsed only when the same transaction, movement, and complementary emitting contract sides prove they
+  mirror one another. Equal amounts or timestamps alone never establish duplication, and repeated equal transfers retain their count.
 - A monetary `JournalEntryLine` has exactly one debit or credit amount and exactly one concrete `Account`.
-- Journal assembly requires an explicit rate on every monetary source posting. An unavailable market rate is stamped as zero, retains its
-  non-zero base-unit movement, and makes the source registry partial; the transitional `amountUsd` number is never a reporting fallback.
+- Journal finalization requires an explicit rate on every monetary source draft. An unavailable market rate is stamped as zero, retains its
+  non-zero base-unit movement, and makes the source registry partial; no separately rounded source amount is a reporting fallback.
 - Each monetary `JournalEntry` has equal debit and credit totals by exact integer equality. Invalid normalized postings are rejected before
   a journal projection can consume them.
 - Token movement evidence retains the exact blockchain base-unit `bigint` and token decimals. The current maximum of 18 token decimals plus
   the six-decimal rate of record determines the common 24-decimal `UsdAmount` scale, so token-to-USD conversion requires no division or
   rounding.
+- A SHER accrual realized across several rates retains separate exact raw-quantity/rate slices under one source-operation identity. The
+  final `JournalEntry` adds their exact line amounts instead of encoding them in a rounded weighted-average rate.
 - General Ledger, Trial Balance, account running balances, Summary, Income Statement, and Balance Sheet aggregate `UsdAmount` integers. A
   non-zero base-unit movement is never discarded because its rate is unavailable or its presentation value is below a display threshold.
 - A native-token posting uses the provider snapshot for its source operation's UTC date. Current market prices cannot replace that rate or
   silently rewrite historical profit and loss; fair-value changes require explicit revaluation JournalEntries.
 - The assembled Accounting result carries only the canonical journal and reconciliation diagnostics. UI and export consumers never receive
-  transitional postings, an account registry, or precomputed report projections beside the journal.
+  source drafts, an account registry, or precomputed report projections beside the journal.
 - Every material source has an explicit availability state. Accounting reports mount only when all applicable sources are ready; balanced
   entries assembled from partial evidence remain internal and are not presented as final reports.
 - Every on-chain journal posting has a verified block timestamp. A missing or unavailable block timestamp withholds the source event rather
@@ -399,7 +406,7 @@ exactly one supported external withdrawal. An entry with that one withdrawal and
 may remain another line of the same entry. Multiple withdrawals and other compound operations remain complete but read-only. Deposits,
 company-pocket movements, standalone fees, and system-owned payouts do not receive assignment state.
 
-After `buildJournal`, `applyJournalAccountAssignments` matches persisted records by the lowercase transaction hash used as
+After `finalizeJournalEntryDrafts`, `applyJournalAccountAssignments` matches persisted records by the lowercase transaction hash used as
 `JournalEntry.id`. A valid record replaces only the entry's single non-cash, non-fee debit account with the selected canonical account. It
 does not reconstruct the entry or map through a category. The utility ignores unmatched, ineligible, compound, and unsupported records and
 revalidates every changed entry with `createJournalEntry`.
@@ -438,17 +445,14 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Known Gaps
 
-- The legacy raw posting field names do not make the distinction between an account family, a concrete account, and a source instance
-  explicit.
-- The transitional `LedgerEntry.amountUsd` remains a six-decimal `number` for source narration and mapper compatibility. Journal assembly
-  always computes the report-authoritative amount from exact token base units and the required rate of record; reports never consume the
-  transitional number.
+- `JournalEntryDraft` still names provisional debit and credit account families before finalization resolves their concrete `Account`
+  identities; adapters therefore must also preserve source-instance evidence whenever it exists.
 - Historical market-data retention and publication timing are provider constraints. Accounting exposes an unavailable date as partial
   evidence instead of substituting the current price.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `172a73b4a15112114b9560a03be929c35d8f7996`
+**Implementation evidence reviewed against:** `f3c9924f9dde1bf0b391b1c873fc9cbb89295029`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -482,7 +486,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts),
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts),
   [SafeDepositRouter mapper](../../../app/src/utils/accounting/mappers/safeDepositRouter.ts), and
-  [consolidation](../../../app/src/utils/accounting/buildLedger.ts)
+  [journal-draft model](../../../app/src/utils/accounting/journalEntryDraft.ts)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts),
   [canonical Account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
   [concrete-account journal balances](../../../app/src/utils/accounting/journalBalances.ts)
@@ -508,10 +512,11 @@ because deposits and company-pocket transfers are not manual assignment targets.
 - [Chart of accounts](../../../app/src/utils/accounting/chartOfAccounts.ts) and
   [concrete account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
   [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
-- [Validated JournalEntry model](../../../app/src/utils/accounting/journalEntry.ts),
+- [JournalEntry finalization](../../../app/src/utils/accounting/journalEntry.ts),
+  [JournalEntry validation](../../../app/src/utils/accounting/journalEntryValidation.ts),
   [fixed-scale monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts),
-  [transaction-identity helper](../../../app/src/utils/accounting/ledgerEntry.ts),
-  [journal assembly and Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
+  [transaction-identity helper](../../../app/src/utils/accounting/journalEntryDraft.ts),
+  [Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts), and
   [journal balance projection](../../../app/src/utils/accounting/journalBalances.ts),
   [journal summary projection](../../../app/src/utils/accounting/accountingSummary.ts),
   [Summary presenter](../../../app/src/utils/accounting/summaryCards.ts),

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mapInvestorEvents } from '@/utils/accounting/mappers/investor'
-import { makeCtx, ADDR } from './fixtures'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 
@@ -84,9 +84,9 @@ describe('mapInvestorEvents', () => {
       useCase: 'DEFAULT-D',
       debit: 'SHERS To Be Issued',
       credit: 'Investor Equity',
-      amountUsd: 1.5,
       shares: 3
     })
+    expect(draftUsdValue(entry)).toBe(1.5)
   })
 
   it('books a DividendPaid as UC-INV-01 (Dividend Expense → Cash — Bank)', () => {
@@ -108,9 +108,9 @@ describe('mapInvestorEvents', () => {
     expect(entry).toMatchObject({
       useCase: 'UC-INV-01',
       debit: 'Dividend Expense',
-      credit: 'Cash — Bank',
-      amountUsd: 2
+      credit: 'Cash — Bank'
     })
+    expect(draftUsdValue(entry)).toBe(2)
   })
 
   it('only consumes one backing per matching mint', () => {

@@ -13,7 +13,7 @@ import TablePagination from '@/components/ui/TablePagination.vue'
 import { accountNet, entriesForAccount, NO_OPENING } from '@/utils/accounting/accountLedger'
 import { usd } from '@/utils/accounting/__tests__/fixtures'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerColumns'
 import type { StatementLineView } from '@/utils/accounting/presenter'
 import { money } from '@/utils/accounting/presenter'
@@ -35,7 +35,7 @@ vi.mock('@/composables/accounting/useAccountingContext', () => ({
 }))
 
 beforeEach(() => {
-  accountingContext.journal.value = buildJournal(catalogueLedger)
+  accountingContext.journal.value = finalizeJournal(catalogueLedger)
   vi.clearAllMocks()
 })
 
@@ -165,7 +165,7 @@ describe('BalanceSheetView', () => {
 
 describe('LedgerDrilldownModal (issue #2249)', () => {
   const account = 'Investor Equity'
-  const journal = buildJournal(catalogueLedger)
+  const journal = finalizeJournal(catalogueLedger)
   const entries = entriesForAccount(journal, account)
   const columnsStorageKey = 'cnc-accounting-modal-test-columns'
   const accountBalance = (entries: typeof journal, account: 'Investor Equity') =>

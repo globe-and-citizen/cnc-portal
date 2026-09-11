@@ -11,8 +11,8 @@ import {
   type UsdRateOfRecord
 } from '../toUsd'
 import type { TokenId } from '@/constant'
-import type { LedgerEntry } from '../ledgerEntry'
-import { buildLedger } from '../buildLedger'
+import type { JournalEntryDraft } from '../journalEntryDraft'
+import { finalizeJournalEntryDrafts } from '../journalEntry'
 
 const AT = new Date('2026-03-13T00:00:00Z')
 
@@ -104,13 +104,12 @@ describe('tokenUsdRate', () => {
 })
 
 describe('historical Accounting valuation', () => {
-  const posting = (overrides: Partial<LedgerEntry> = {}): LedgerEntry => ({
+  const posting = (overrides: Partial<JournalEntryDraft> = {}): JournalEntryDraft => ({
     id: 'native-1',
     timestamp: Date.parse('2026-03-13T23:59:59Z') / 1000,
     useCase: 'CASH-IN',
     debit: 'Cash — Safe',
     credit: 'Service Revenue',
-    amountUsd: 0,
     token: 'native',
     rawAmount: '2000000000000000000',
     rate: 0,
@@ -147,15 +146,15 @@ describe('historical Accounting valuation', () => {
     const rate = vi.fn<UsdRateOfRecord>(() => 0.625)
     const [valued] = applyHistoricalRates([source], rate)
 
-    expect(valued).toMatchObject({ rawAmount: source.rawAmount, rate: 0.625, amountUsd: 1.25 })
+    expect(valued).toMatchObject({ rawAmount: source.rawAmount, rate: 0.625 })
     expect(rate).toHaveBeenCalledWith('native', new Date('2026-03-13T23:59:59Z'))
-    expect(source).toMatchObject({ rate: 0, amountUsd: 0 })
+    expect(source).toMatchObject({ rate: 0 })
   })
 
   it('retains the raw movement when its historical rate is unavailable', () => {
     const [unvalued] = applyHistoricalRates([posting()], () => 0)
-    expect(unvalued).toMatchObject({ rawAmount: '2000000000000000000', rate: 0, amountUsd: 0 })
-    expect(buildLedger([unvalued!]).entries).toHaveLength(1)
+    expect(unvalued).toMatchObject({ rawAmount: '2000000000000000000', rate: 0 })
+    expect(finalizeJournalEntryDrafts([unvalued!]).journal).toHaveLength(1)
   })
 
   it('leaves stablecoin and SHER valuation policies unchanged', () => {

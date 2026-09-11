@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { getAddress } from 'viem'
 import type { ExpenseResponse } from '@/types/expense-account'
 import { mapExpense } from '@/utils/accounting/mappers/expenseAccount'
-import { makeCtx, ADDR } from './fixtures'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 const DAY = 86_400
@@ -58,9 +58,9 @@ describe('mapExpense indexed events', () => {
       useCase: 'UC-EXP-01',
       debit: 'Operating Expense',
       credit: 'Cash — Expense',
-      amountUsd: 8, // 4 native * $2 (native: token null)
       enrichment: 'needs-off-chain-data'
     })
+    expect(draftUsdValue(entry)).toBe(8) // 4 native * $2 (native: token null)
   })
 
   it('books a token payout with the right token and value', () => {
@@ -80,17 +80,18 @@ describe('mapExpense indexed events', () => {
       },
       ctx
     )
-    expect(entry).toMatchObject({ useCase: 'UC-EXP-01', token: 'usdc', amountUsd: 4 })
+    expect(entry).toMatchObject({ useCase: 'UC-EXP-01', token: 'usdc' })
+    expect(draftUsdValue(entry)).toBe(4)
   })
 
   it('books a one-time payout with the approved cap (no remaining) in its fields', () => {
     const [entry] = mapExpense({ tokenTransfers: [draw('x6', 80, 100)] }, ctx, [approvedBudget()])
     expect(entry).toMatchObject({
       useCase: 'UC-EXP-01',
-      amountUsd: 80,
       expenseFrequencyType: 0,
       expenseApprovedUsd: 300
     })
+    expect(draftUsdValue(entry)).toBe(80)
     // A one-time approval is single-use — no remaining is reported.
     expect(entry.expenseRemainingUsd).toBeUndefined()
     expect(entry.memo).toContain('one-time approval of 300 USDC')
@@ -103,7 +104,7 @@ describe('mapExpense indexed events', () => {
       ctx,
       [approvedBudget(1)]
     )
-    expect(entries.map((e) => e.amountUsd)).toEqual([120, 80])
+    expect(entries.map(draftUsdValue)).toEqual([120, 80])
     expect(entries.map((e) => e.expenseFrequencyType)).toEqual([1, 1])
     expect(entries.map((e) => e.expenseRemainingUsd)).toEqual([180, 100])
     expect(entries[0].memo).toContain('180 USDC left this period')
@@ -271,13 +272,13 @@ describe('mapExpense portal fallback', () => {
       useCase: 'UC-EXP-01',
       debit: 'Operating Expense',
       credit: 'Cash — Expense',
-      amountUsd: 99, // 99 USDC drawn @ $1
       timestamp: 300, // updatedAt
       category: 'Operating',
       enrichment: 'enriched',
       expenseFrequencyType: 0,
       expenseApprovedUsd: 200
     })
+    expect(draftUsdValue(entry)).toBe(99) // 99 USDC drawn @ $1
     expect(entry.counterparty).toBe(getAddress(ADDR.member))
     expect(entry.expenseRemainingUsd).toBeUndefined()
     expect(entry.memo).toContain('one-time approval of 200 USDC')
