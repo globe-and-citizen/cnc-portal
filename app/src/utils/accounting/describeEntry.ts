@@ -12,6 +12,7 @@
  * unassigned cash) fall back to the generic per-use-case {@link entryLabel}.
  */
 import { money, formatUnixDate } from './presenter'
+import { formatAddress, formatDuration } from '@/utils/format'
 import type { UseCase } from './journalEntryDraft'
 import type { JournalEntry } from './types'
 
@@ -113,23 +114,14 @@ function expensePredicate(entry: JournalEntry, amount: string): string {
   return `withdrew ${amount} for an expense`
 }
 
-/** Hours and minutes worked — e.g. "16h", "1h 30min", "50min" — never a decimal. */
-function formatDuration(minutes: number | undefined): string | null {
-  if (!minutes || minutes <= 0) return null
-  const hours = Math.floor(minutes / 60)
-  const mins = Math.round(minutes - hours * 60)
-  if (hours === 0) return `${mins}min`
-  if (mins === 0) return `${hours}h`
-  return `${hours}h ${mins}min`
-}
-
 /**
  * The name-less predicate shown after the actor's avatar (the avatar carries the
  * name). The "· N SHER" tail appears once the entry carries the share count.
  */
 function predicate(entry: JournalEntry): string {
   const amount = money(entry.activityAmount)
-  const hours = formatDuration(entry.minutesWorked)
+  const hours =
+    entry.minutesWorked && entry.minutesWorked > 0 ? formatDuration(entry.minutesWorked) : null
   const sher = entry.shares ? ` and got ${entry.shares} SHER` : ''
 
   switch (entry.useCase) {
@@ -202,11 +194,6 @@ export function activityOf(entry: JournalEntry): ActivityCell {
   return { kind: 'plain', text: entryLabel(entry) }
 }
 
-/** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */
-function shortAddress(value: string): string {
-  return /^0x[0-9a-fA-F]{40}$/.test(value) ? `${value.slice(0, 6)}…${value.slice(-4)}` : value
-}
-
 /** A pocket account name without its `"Cash — "` prefix, matching the on-screen avatar label. */
 function pocketName(account: string): string {
   return account.replace(/^Cash — /, '')
@@ -220,7 +207,7 @@ function pocketName(account: string): string {
  */
 export function activityText(
   cell: ActivityCell,
-  resolveName: (address: string) => string = shortAddress
+  resolveName: (address: string) => string = formatAddress
 ): string {
   switch (cell.kind) {
     case 'actor':

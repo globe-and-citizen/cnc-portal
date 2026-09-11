@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { badgeClassOf, categoryLabelOf, categoryOf } from '@/utils/accounting/ledgerCategory'
+import { badgeClassOf, categoryLabelOf } from '@/utils/accounting/ledgerCategory'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import type { JournalEntryDraft, UseCase } from '@/utils/accounting/journalEntryDraft'
 
@@ -25,35 +25,35 @@ const source = (useCase: UseCase, over: Partial<JournalEntryDraft> = {}): Journa
 const entry = (useCase: UseCase, over: Partial<JournalEntryDraft> = {}) =>
   finalizeJournal([source(useCase, over)])[0]!
 
-describe('categoryOf', () => {
+describe('categoryLabelOf', () => {
   it('gathers the borrowing lifecycle from its liability and interest accounts', () => {
-    expect(categoryOf(entry('UC-CREDIT-01'))).toBe('Credit')
+    expect(categoryLabelOf(entry('UC-CREDIT-01'))).toBe('Credit')
     expect(
-      categoryOf(entry('UC-CREDIT-03', { debit: 'Loan Payable', credit: 'Cash — Bank' }))
+      categoryLabelOf(entry('UC-CREDIT-03', { debit: 'Loan Payable', credit: 'Cash — Bank' }))
     ).toBe('Credit')
     expect(
-      categoryOf(entry('UC-CREDIT-04', { debit: 'Loan Payable', credit: 'Cash — Credit' }))
+      categoryLabelOf(entry('UC-CREDIT-04', { debit: 'Loan Payable', credit: 'Cash — Credit' }))
     ).toBe('Credit')
   })
 
   it('derives revenue and every assignable nature from concrete line accounts', () => {
     expect(
-      categoryOf(entry('UC-BANK-02', { debit: 'Cash — Bank', credit: 'Service Revenue' }))
+      categoryLabelOf(entry('UC-BANK-02', { debit: 'Cash — Bank', credit: 'Service Revenue' }))
     ).toBe('Revenue')
-    expect(categoryOf(entry('CASH-OUT', { debit: 'Owner Capital', credit: 'Cash — Bank' }))).toBe(
-      'Investment'
-    )
-    expect(categoryOf(entry('CASH-OUT', { debit: 'Payroll Expense', credit: 'Cash — Bank' }))).toBe(
-      'Payroll'
-    )
     expect(
-      categoryOf(entry('CASH-OUT', { debit: 'Interest Expense', credit: 'Cash — Bank' }))
+      categoryLabelOf(entry('CASH-OUT', { debit: 'Owner Capital', credit: 'Cash — Bank' }))
+    ).toBe('Investment')
+    expect(
+      categoryLabelOf(entry('CASH-OUT', { debit: 'Payroll Expense', credit: 'Cash — Bank' }))
+    ).toBe('Payroll')
+    expect(
+      categoryLabelOf(entry('CASH-OUT', { debit: 'Interest Expense', credit: 'Cash — Bank' }))
     ).toBe('Credit')
     expect(
-      categoryOf(entry('CASH-OUT', { debit: 'Dividend Expense', credit: 'Cash — Bank' }))
+      categoryLabelOf(entry('CASH-OUT', { debit: 'Dividend Expense', credit: 'Cash — Bank' }))
     ).toBe('Dividend')
     expect(
-      categoryOf(entry('CASH-OUT', { debit: 'Operating Expense', credit: 'Cash — Bank' }))
+      categoryLabelOf(entry('CASH-OUT', { debit: 'Operating Expense', credit: 'Cash — Bank' }))
     ).toBe('Expense')
   })
 
@@ -74,7 +74,7 @@ describe('categoryOf', () => {
       })
     ])[0]!
     expect(journal.internal).toBe(true)
-    expect(categoryOf(journal)).toBe('Transfer')
+    expect(categoryLabelOf(journal)).toBe('Transfer')
   })
 })
 
@@ -84,8 +84,6 @@ describe('categoryLabelOf', () => {
     const settlement = entry('UC-CASH-03', { debit: 'Wage Payable', credit: 'Cash — Payroll' })
     expect(categoryLabelOf(accrual)).toBe('Payroll: Claim')
     expect(categoryLabelOf(settlement)).toBe('Payroll: Withdraw')
-    expect(categoryOf(accrual)).toBe('Payroll')
-    expect(categoryOf(settlement)).toBe('Payroll')
   })
 })
 

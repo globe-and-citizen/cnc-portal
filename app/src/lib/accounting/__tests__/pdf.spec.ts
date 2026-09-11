@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { Address } from 'viem'
-import { buildAccountingTables, buildTables, exportAccountingPdf, exportTablesPdf } from '../pdf'
+import { buildTables, exportTablesPdf } from '../pdf'
 import { periodLabel } from '@/utils/accounting/presenter'
 import type { CncAccounting } from '@/utils/accounting/assemble'
 import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
@@ -38,8 +38,13 @@ function sampleBooks(): CncAccounting {
   })
 }
 
-describe('buildAccountingTables', () => {
-  const tables = buildAccountingTables(sampleBooks())
+describe('buildTables (complete report selection)', () => {
+  const tables = buildTables(sampleBooks(), [
+    { key: 'income' },
+    { key: 'balance' },
+    { key: 'trial' },
+    { key: 'ledger' }
+  ])
   const byTitle = (title: string) => tables.find((t) => t.title === title)!
 
   it('produces one table per tab except the Summary', () => {
@@ -112,7 +117,11 @@ describe('buildAccountingTables', () => {
   })
 
   it('renders the Activity column via the supplied name resolver', () => {
-    const named = buildAccountingTables(sampleBooks(), () => 'Acme Client')
+    const named = buildTables(
+      sampleBooks(),
+      [{ key: 'income' }, { key: 'balance' }, { key: 'trial' }, { key: 'ledger' }],
+      () => 'Acme Client'
+    )
     const ledger = named.find((t) => t.title === 'General Ledger')!
     // the deposit is an `actor` activity: "<name> paid $100.00 for services"
     const activity = String(ledger.body[0][4])
@@ -262,7 +271,7 @@ vi.mock('jspdf', () => {
 
 vi.mock('jspdf-autotable', () => ({ default: autoTableMock }))
 
-describe('exportAccountingPdf', () => {
+describe('exportTablesPdf (complete report selection)', () => {
   afterEach(() => {
     saveMock.mockClear()
     autoTableMock.mockClear()
@@ -270,7 +279,13 @@ describe('exportAccountingPdf', () => {
   })
 
   it('renders one table per section and downloads the PDF', async () => {
-    await exportAccountingPdf(sampleBooks())
+    const tables = buildTables(sampleBooks(), [
+      { key: 'income' },
+      { key: 'balance' },
+      { key: 'trial' },
+      { key: 'ledger' }
+    ])
+    await exportTablesPdf(tables, { filename: 'cnc-accounting.pdf' })
 
     // Income Statement, Balance Sheet, Trial Balance, General Ledger.
     expect(autoTableMock).toHaveBeenCalledTimes(4)

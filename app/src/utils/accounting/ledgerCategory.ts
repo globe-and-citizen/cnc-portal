@@ -39,7 +39,7 @@ const INVESTMENT_ACCOUNTS = new Set([
 const TRADING_ACCOUNTS = new Set(['trading-account', 'trading-gain', 'trading-loss'])
 
 /** Derive the reporting/action family from journal-line accounts, never a category field. */
-export function categoryOf(entry: JournalEntry): LedgerCategory {
+function categoryOf(entry: JournalEntry): LedgerCategory {
   if (entry.kind === 'memo') {
     return entry.useCase === 'DEFAULT-D' || entry.useCase.startsWith('UC-VEST-')
       ? 'Investment'

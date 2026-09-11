@@ -4,9 +4,8 @@
  * Section sheets — Summary, Income Statement, Balance Sheet, Trial Balance,
  * General Ledger — are built by pure, unit-tested functions that read the live
  * engine output ({@link AccountingExportSnapshot}) through the same presenters the view
- * uses. {@link buildAccountingSheets} yields the classic four exported tabs
- * (everything except the Summary); {@link buildSheets} builds an arbitrary
- * selection. {@link exportSheetsExcel} lazy-loads SheetJS and writes the file.
+ * uses. {@link buildSheets} builds the requested section selection and
+ * {@link exportSheetsExcel} lazy-loads SheetJS and writes the file.
  */
 import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import {
@@ -161,19 +160,6 @@ export function buildSheets(
   return specs.map((spec) => sectionSheet(books, spec, resolveName))
 }
 
-/** The four exported tabs (everything except the Summary), in display order. */
-export function buildAccountingSheets(
-  books: AccountingExportSnapshot,
-  resolveName?: ResolveName
-): AccountingSheet[] {
-  return [
-    { name: 'Income Statement', rows: incomeSheet(books) },
-    { name: 'Balance Sheet', rows: balanceSheetRows(books) },
-    { name: 'Trial Balance', rows: trialSheet(books) },
-    { name: 'General Ledger', rows: generalLedgerSheetRows(books, resolveName) }
-  ]
-}
-
 function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -263,11 +249,4 @@ export async function exportSheetsExcel(
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   })
   downloadBlob(blob, filename)
-}
-
-export async function exportAccountingExcel(
-  books: AccountingExportSnapshot,
-  resolveName?: ResolveName
-): Promise<void> {
-  await exportSheetsExcel(buildAccountingSheets(books, resolveName), 'cnc-accounting.xlsx')
 }

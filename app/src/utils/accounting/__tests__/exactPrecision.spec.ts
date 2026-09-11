@@ -5,11 +5,7 @@ import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import {
-  USD_AMOUNT_DECIMALS,
-  usdAmountFromToken,
-  usdRateFromNumber
-} from '@/utils/accounting/monetaryAmount'
+import { usdAmountFromToken, usdRateFromNumber } from '@/utils/accounting/monetaryAmount'
 import { presentBalance, presentIncome } from '@/utils/accounting/presenter'
 import type { TokenId } from '@/constant'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
@@ -46,8 +42,7 @@ function posting(
 }
 
 describe('exact accounting precision', () => {
-  it('represents every supported token base unit at the common 24-decimal USD scale', () => {
-    expect(USD_AMOUNT_DECIMALS).toBe(24)
+  it('represents every supported token base unit on one exact USD scale', () => {
     expect(usdAmountFromToken(1n, 'usdc', usdRateFromNumber(1))).toBe(10n ** 18n)
     expect(usdAmountFromToken(1n, 'native', usdRateFromNumber(0.08))).toBe(80_000n)
   })
