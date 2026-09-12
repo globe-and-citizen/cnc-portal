@@ -37,6 +37,7 @@ vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
 const NOW = 2_000_000_000n
 
 import { useCommunityCreditStore } from '@/stores/communityCredit'
+import { USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 
 const TOKEN = '0x0000000000000000000000000000000000000abc' as Address
 
@@ -149,7 +150,7 @@ describe('Community Credit store (contract-backed)', () => {
     expect(store.historyRounds.map((r) => r.id)).toContain('4')
     // 23,400 (open) + 23,400 (stalled) — a stalled round's principal is still
     // outstanding, awaiting the issuer's refund/accept decision.
-    expect(store.outstandingPrincipal).toBe(46800)
+    expect(store.outstandingPrincipalByToken.get('Token')).toBe(46800)
   })
 
   it('moves a funded round to history instead of the active list, but still counts its principal as outstanding', () => {
@@ -161,16 +162,56 @@ describe('Community Credit store (contract-backed)', () => {
     expect(store.getRound('3')?.status).toBe('funded')
     // 23,400 (open) + 40,000 (funded) — funded principal is still outstanding even
     // though the round itself moved out of the active list.
-    expect(store.outstandingPrincipal).toBe(63400)
+    expect(store.outstandingPrincipalByToken.get('Token')).toBe(63400)
   })
 
   it('derives the account stats from the offers', () => {
     const store = useCommunityCreditStore()
-    expect(store.outstandingPrincipal).toBe(23400)
-    expect(store.interestDue).toBe(1170) // 23400 × 5%
-    expect(store.raisedLifetime).toBe(41400)
-    expect(store.repaidLifetime).toBe(18990)
+    expect(store.outstandingPrincipalByToken.get('Token')).toBe(23400)
+    expect(store.interestDueByToken.get('Token')).toBe(1170) // 23400 × 5%
+    expect(store.raisedLifetimeByToken.get('Token')).toBe(41400)
+    expect(store.repaidLifetimeByToken.get('Token')).toBe(18990)
     expect(store.nextMaturity).not.toBe('—')
+  })
+
+  it('keeps two rounds on different tokens in independent buckets instead of summing them', () => {
+    const usdcOffer: FixedReturnRawOffer = {
+      offerId: 10,
+      decimals: 6,
+      offer: offer({ token: USDC_ADDRESS as Address, totalFunded: 10_000_000000n }),
+      lenderAddresses: []
+    }
+    const usdceOffer: FixedReturnRawOffer = {
+      offerId: 11,
+      decimals: 6,
+      offer: offer({
+        token: USDC_E_ADDRESS as Address,
+        totalFunded: 7_000_000000n,
+        totalRepaidByIssuer: 3_000_000000n
+      }),
+      lenderAddresses: []
+    }
+    mockFixedReturnReads.allOffers.data.value = [usdcOffer, usdceOffer]
+    const store = useCommunityCreditStore()
+
+    expect(store.outstandingPrincipalByToken).toEqual(
+      new Map([
+        ['USDC', 10000],
+        ['USDC.e', 7000]
+      ])
+    )
+    expect(store.raisedLifetimeByToken).toEqual(
+      new Map([
+        ['USDC', 10000],
+        ['USDC.e', 7000]
+      ])
+    )
+    expect(store.repaidLifetimeByToken).toEqual(
+      new Map([
+        ['USDC', 0],
+        ['USDC.e', 3000]
+      ])
+    )
   })
 
   it('passes the current team id into the off-chain metadata query', () => {
@@ -184,7 +225,7 @@ describe('Community Credit store (contract-backed)', () => {
     mockFixedReturnReads.allOffers.data.value = [REPAID_OFFER]
     const store = useCommunityCreditStore()
 
-    expect(store.outstandingPrincipal).toBe(0)
+    expect(store.outstandingPrincipalByToken.size).toBe(0)
     expect(store.nextMaturity).toBe('—')
   })
 
