@@ -59,6 +59,7 @@ import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useOfficerFeeBps } from '@/composables/officer/reads'
 import { useTransfer, useTransferToken } from '@/composables/bank/writes'
+import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 import type { TokenOption } from '@/types'
@@ -225,6 +226,7 @@ const handleTransfer = async (data: {
     await queryClient.invalidateQueries({
       queryKey: contractBalanceKeys.detail(props.bankAddress, chainId.value)
     })
+    await queryClient.invalidateQueries({ queryKey: bankEventKeys.all })
 
     resetTransferValues()
   }
