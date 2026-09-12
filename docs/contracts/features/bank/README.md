@@ -154,4 +154,14 @@
 
 ---
 
+## Implementation Evidence
+
+**Implementation evidence reviewed against:** `31ed7556f7c6c8540d76bc67339e039098106f17`
+
+- [Bank deposit form](../../../../app/src/components/sections/BankView/forms/DepositBankForm.vue),
+  [transfer form](../../../../app/src/components/sections/BankView/forms/TransferModal.vue), and
+  [Bank event feed](../../../../app/src/composables/bank/useBankEventsViaLogs.ts)
+- [Chain-backed Bank Account E2E test](../../../../app/test/e2e/bank-account.spec.ts) and
+  [its deployment fixture](../../../../app/test/e2e/bank-chain.ts)
+
 _[← Back to index](../README.md)_

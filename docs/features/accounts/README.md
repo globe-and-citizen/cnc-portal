@@ -81,6 +81,7 @@ flowchart LR
 - [x] A member can deposit the native token into the Bank.
 - [x] A member can deposit a supported ERC-20 token into the Bank.
 - [x] A successful deposit increases the corresponding Bank balance.
+- [x] A successful deposit refreshes the Bank balance and transaction history.
 
 #### Business Rules
 
@@ -110,6 +111,7 @@ flowchart LR
 - [x] The Bank owner can transfer a held native or supported ERC-20 balance to a valid recipient.
 - [x] A Board member can submit the same transfer as a Board action for approval.
 - [x] A successful transfer decreases the Bank balance and delivers the requested net amount to the recipient.
+- [x] A successful transfer refreshes the Bank balance and transaction history.
 
 #### Business Rules
 
@@ -496,7 +498,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `20542e47a9e16dbdf9fc6befbc7704d23cdff379`
+**Implementation evidence reviewed against:** `31ed7556f7c6c8540d76bc67339e039098106f17`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
