@@ -193,14 +193,45 @@ describe('CreditRepayPanel', () => {
     expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
   })
 
-  it('shows only the breakdown table for a non-owner, with no repayment form', () => {
+  it('shows only the breakdown table for a true outsider — neither the round issuer nor the Bank owner', () => {
     const wrapper = mount(CreditRepayPanel, {
-      props: panelProps({ isOwner: false })
+      props: panelProps({
+        isOwner: false,
+        repayment: repaymentState({ canRepayViaBank: false })
+      })
     })
 
     expect(wrapper.text()).toContain('Repayment breakdown')
     expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('Outstanding')
+  })
+
+  it('shows the repayment form to the Bank owner even when they are not the round issuer', async () => {
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({
+        isOwner: false,
+        repayment: repaymentState({ canRepayViaBank: true })
+      })
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Outstanding')
+    expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="repay-bank-blocked"]').exists()).toBe(false)
+  })
+
+  it("keeps the round issuer's repayment form visible (with the blocked explanation) when they are not the Bank owner", async () => {
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({
+        isOwner: true,
+        repayment: repaymentState({ canRepayViaBank: false })
+      })
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Outstanding')
+    expect(wrapper.find('[data-test="repay-bank-blocked"]').exists()).toBe(true)
+    expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
   })
 
   it('emits cancel instead of routing directly', async () => {

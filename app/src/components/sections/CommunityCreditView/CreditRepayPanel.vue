@@ -11,10 +11,13 @@
       </p>
     </div>
 
-    <div class="grid items-start gap-5" :class="isOwner ? 'lg:grid-cols-[1.55fr_1fr]' : ''">
+    <div
+      class="grid items-start gap-5"
+      :class="showRepayControls ? 'lg:grid-cols-[1.55fr_1fr]' : ''"
+    >
       <CreditRepayBreakdownTable :rows="rows" :token="round.token" />
 
-      <div v-if="isOwner" class="flex flex-col gap-4">
+      <div v-if="showRepayControls" class="flex flex-col gap-4">
         <div
           class="border-primary/20 from-primary/5 to-default rounded-2xl border bg-gradient-to-br p-6 shadow-sm"
         >
@@ -98,7 +101,7 @@
           color="warning"
           variant="soft"
           icon="i-lucide-circle-alert"
-          description="Repayment is unavailable right now — the connected wallet isn't the treasury's owner."
+          description="Repayment is unavailable right now — the connected wallet isn't the treasury's owner, or the treasury is paused."
           data-test="repay-bank-blocked"
         />
 
@@ -175,6 +178,11 @@ const emit = defineEmits<{
 }>()
 
 const status = computed(() => statusMeta(props.round.status))
+// Shown to whoever might plausibly repay: the round's issuer (who wants to know why
+// repayment isn't happening even when they can't trigger it themselves) or the Bank's
+// owner (who can actually execute it, even when that's a different wallet than the
+// issuer). A true outsider — neither — sees only the read-only breakdown table.
+const showRepayControls = computed(() => props.isOwner || props.repayment.canRepayViaBank)
 const outstanding = computed(() => props.repayment.outstanding)
 const treasuryBalance = computed(() => props.repayment.treasuryBalance)
 const isStillRaising = computed(() => props.round.status === 'open')

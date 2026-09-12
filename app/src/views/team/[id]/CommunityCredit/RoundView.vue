@@ -57,7 +57,7 @@ import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { formatUnits, isAddress, isAddressEqual, zeroAddress } from 'viem'
 import { useCommunityCreditStore, useUserDataStore } from '@/stores'
-import { useBankAddress, useBankOwner } from '@/composables/bank/reads'
+import { useBankAddress, useBankOwner, useBankPaused } from '@/composables/bank/reads'
 import { useFundFixedReturnRepayment } from '@/composables/bank/writes'
 import { useErc20BalanceOf } from '@/composables/erc20/reads'
 import {
@@ -148,6 +148,7 @@ const round = computed<CreditRound | undefined>(() => {
 const lendRound = ref<CreditRound | null>(null)
 const bankAddress = useBankAddress()
 const { data: bankOwner } = useBankOwner()
+const { data: bankPaused } = useBankPaused()
 const repayResult = useFundFixedReturnRepayment()
 const repaymentError = ref<string | null>(null)
 const decimals = computed(() =>
@@ -179,7 +180,8 @@ const canRepayViaBank = computed(() => {
     isAddress(owner) &&
     typeof userAddress === 'string' &&
     isAddress(userAddress) &&
-    isAddressEqual(owner, userAddress)
+    isAddressEqual(owner, userAddress) &&
+    bankPaused.value !== true
   )
 })
 const isRepaymentReady = computed(
