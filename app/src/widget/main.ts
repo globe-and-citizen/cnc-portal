@@ -13,17 +13,14 @@
  * compiled Tailwind/Nuxt UI CSS injected as an inline `<style>` so it stays
  * scoped to the widget and never leaks onto (or clashes with) the host page.
  */
-import { createApp, type App } from 'vue'
+import { createApp, type App, type Component } from 'vue'
 import ui from '@nuxt/ui/vue-plugin'
-import type { Address } from 'viem'
-// Import directly from `generalUtil`, not the `@/utils` barrel: the barrel's
-// `export *` re-exports pull in every util module transitively, several of
-// which import Vue/Pinia — dead weight this standalone widget bundle
-// shouldn't pay for.
-import { log } from '@/lib/logging'
+import { isAddress, type Address } from 'viem'
+import { z } from 'zod'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { WidgetPaymentStatus } from './payment'
 import WidgetApp, { type WidgetToken } from './WidgetApp.vue'
+import WidgetMisconfigured from './WidgetMisconfigured.vue'
 // `?inline` tells Vite to return the fully compiled CSS as a plain string
 // instead of injecting it into the page's <head> — we inject it ourselves,
 // into the shadow root, a few lines down.
@@ -65,20 +62,65 @@ declare global {
 }
 
 /**
- * Reads `data-bank` / `data-token` off the widget's <script> tag. Found by
- * attribute rather than `document.currentScript` — the latter is always
- * `null` for a `type="module"` script (Vite's dev server), so this also
- * works there, not just for the classic script tag production loads.
+ * Finds the widget's own <script> tag. `document.currentScript` is set to
+ * whichever <script> is currently executing its top-level code — exactly
+ * this one, at this point — and unlike matching on `data-bank`/`data-token`,
+ * that identification doesn't depend on either attribute actually being
+ * present, and can't accidentally match some *other* script tag on the
+ * host page. This only works for a classic script (`build.lib.formats` is
+ * `'iife'` in `vite.widget.config.ts` — never `'es'`, so every real embed
+ * loads this way, `async` included); `document.currentScript` is always
+ * `null` for a `type="module"` script, which is how Vite's dev server
+ * serves this entry — `widget/dev/index.html` is our own harness page, so
+ * falling back to an attribute match there is safe.
  */
+function widgetScriptTag(): HTMLScriptElement | undefined {
+  if (document.currentScript instanceof HTMLScriptElement) return document.currentScript
+  return (
+    document.querySelector<HTMLScriptElement>('script[data-bank], script[data-token]') ?? undefined
+  )
+}
+
+// `isAddress` (not a hand-rolled regex) is the same address-format check
+// used everywhere else in the app (see e.g. `types/safe.schemas.ts`) — wrapped
+// in a zod `.refine`, the repo's established pattern for turning a validity
+// check into a specific, safe-to-display error message via `.safeParse()`.
+// `{ strict: false }` mirrors the Setup page's own embed-snippet parser: a
+// plain format check, not a checksum one, so a manually-typed or
+// all-lowercase address a merchant pasted still works.
+const bankAddressSchema = z.string().refine((value) => isAddress(value, { strict: false }), {
+  message: "isn't a valid 0x-prefixed 40-hex-character address"
+})
+
+/** Reads `data-bank` / `data-token` off the widget's own <script> tag. */
 function readScriptConfig(): { bankAddress: Address; tokenSymbol: string } | undefined {
-  const script = document.querySelector<HTMLScriptElement>('script[data-bank]')
+  const script = widgetScriptTag()
   const bankAddress = script?.dataset.bank
   const tokenSymbol = script?.dataset.token
-  if (!script || !bankAddress || !tokenSymbol) {
-    log.error('[CNC Pay] missing data-bank/data-token on the widget <script> tag')
+  if (!bankAddress || !tokenSymbol) {
+    const missing = [!bankAddress && 'data-bank', !tokenSymbol && 'data-token']
+      .filter((attr): attr is string => Boolean(attr))
+      .join('/')
+    // Unconditional `console.error`, not the app's `log` util: `log`'s
+    // methods are dev-mode-only (see `@/lib/logging`), which is right for
+    // internal app telemetry but wrong here — this fires inside a merchant's
+    // own production page, and it's the only diagnostic they get for a
+    // broken embed snippet.
+    console.error(`[CNC Pay] missing ${missing} on the widget <script> tag`)
     return undefined
   }
-  return { bankAddress: bankAddress as Address, tokenSymbol }
+  // Caught here rather than left to fail once the customer clicks Pay: an
+  // invalid address (a stray placeholder like "0x…", a typo) otherwise
+  // still renders a completely normal-looking payment card, connects the
+  // customer's wallet, and only fails afterward, deep inside the allowance
+  // check — the same broken config, just discovered several steps too late.
+  const addressResult = bankAddressSchema.safeParse(bankAddress)
+  if (!addressResult.success) {
+    const reason = addressResult.error.issues[0]?.message ?? 'is invalid'
+    console.error(`[CNC Pay] data-bank "${bankAddress}" ${reason}`)
+    return undefined
+  }
+  return { bankAddress: addressResult.data as Address, tokenSymbol }
 }
 
 /**
@@ -112,6 +154,20 @@ function isValidFactureId(factureId: string): boolean {
   )
 }
 
+// A non-negative plain decimal (no sign, no exponent, no thousands
+// separator) — the same shape `formatToken`/`parseUnits` downstream actually
+// expect. Format-only, not decimals-aware: without this, "abc" rendered a
+// nonsensical-but-clickable "Pay — " button, and "-5" rendered a completely
+// normal-looking "Pay -5 USDC" button — both failed only after the customer
+// clicked Pay, "-5" with a raw viem uint256-range error dump rather than a
+// readable message (`parseUnits` rejects a negative value that way, not with
+// a friendly one). Caught here instead, at the same point `setFactureId`
+// already validates its own input.
+const AMOUNT_PATTERN = /^\d+(\.\d+)?$/
+const amountSchema = z.string().regex(AMOUNT_PATTERN, {
+  message: 'must be a non-negative decimal number, e.g. "10.50"'
+})
+
 const scriptConfig = readScriptConfig()
 
 const state: { factureId?: string; amount?: string; onStatus?: CncPayStatusCallback } = {}
@@ -122,19 +178,20 @@ const instances = new WeakMap<HTMLElement, { shadow: ShadowRoot; app: App }>()
 function resolveTarget(target: HTMLElement | string): HTMLElement | undefined {
   const element =
     typeof target === 'string' ? (document.querySelector<HTMLElement>(target) ?? undefined) : target
-  if (!element) log.error('[CNC Pay] show() target not found:', target)
+  if (!element) console.error('[CNC Pay] show() target not found:', target)
   return element
 }
 
-function show(target: HTMLElement | string): void {
-  if (!scriptConfig) return
-  if (!state.factureId || !state.amount) {
-    log.error('[CNC Pay] call setFactureId/setAmount before show()')
-    return
-  }
-  const mount = resolveTarget(target)
-  if (!mount) return
-
+/**
+ * Mounts `component` into `mount`'s shadow root, tearing down whatever was
+ * there before. Shared by the real payment card and the misconfigured-embed
+ * fallback below — both need the same host-page CSS isolation.
+ */
+function mountInShadowRoot(
+  mount: HTMLElement,
+  component: Component,
+  props: Record<string, unknown>
+): void {
   const existing = instances.get(mount)
   if (existing) {
     existing.app.unmount()
@@ -149,7 +206,34 @@ function show(target: HTMLElement | string): void {
   const container = document.createElement('div')
   shadow.appendChild(container)
 
-  const app = createApp(WidgetApp, {
+  const app = createApp(component, props)
+  // Registers Nuxt UI's components (UCard, UButton, UIcon, UAlert, …) on
+  // this app instance so the mounted component's template can use them.
+  app.use(ui)
+  app.mount(container)
+  instances.set(mount, { shadow, app })
+}
+
+function show(target: HTMLElement | string): void {
+  const mount = resolveTarget(target)
+  if (!mount) return
+
+  // A broken embed snippet (missing data-bank/data-token) is a merchant
+  // mistake, not a shopper one — but the shopper is the one looking at this
+  // page, so they still need to see *something* rather than an empty box
+  // with no explanation. `readScriptConfig` already logged the diagnostic
+  // the merchant needs, above.
+  if (!scriptConfig) {
+    mountInShadowRoot(mount, WidgetMisconfigured, {})
+    return
+  }
+
+  if (!state.factureId || !state.amount) {
+    console.error('[CNC Pay] call setFactureId/setAmount before show()')
+    return
+  }
+
+  mountInShadowRoot(mount, WidgetApp, {
     bankAddress: scriptConfig.bankAddress,
     token: resolveToken(scriptConfig.tokenSymbol),
     tokenSymbolRaw: scriptConfig.tokenSymbol,
@@ -157,11 +241,6 @@ function show(target: HTMLElement | string): void {
     factureId: state.factureId,
     onStatus: state.onStatus
   })
-  // Registers Nuxt UI's components (UCard, UButton, UIcon, UAlert, …) on
-  // this app instance so WidgetApp.vue's template can use them.
-  app.use(ui)
-  app.mount(container)
-  instances.set(mount, { shadow, app })
 }
 
 window.CncPay = {
@@ -174,6 +253,11 @@ window.CncPay = {
     state.factureId = factureId
   },
   setAmount(amount) {
+    const result = amountSchema.safeParse(amount)
+    if (!result.success) {
+      const reason = result.error.issues[0]?.message ?? 'is invalid'
+      throw new Error(`[CNC Pay] Invalid amount ${JSON.stringify(amount)} — ${reason}.`)
+    }
     state.amount = amount
   },
   setOnStatus(callback) {
@@ -183,7 +267,7 @@ window.CncPay = {
           try {
             callback(status, extra)
           } catch (error) {
-            log.error('[CNC Pay] onStatus callback threw', error)
+            console.error('[CNC Pay] onStatus callback threw', error)
           }
         }
       : undefined
