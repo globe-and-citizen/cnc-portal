@@ -6,7 +6,7 @@ export const apiFetch = $fetch.create({
   baseURL: `${useRuntimeConfig().public.backendUrl as string}/api`,
   credentials: 'include',
   onRequest({ options }) {
-    let token: string | null = null
+    let token: string | null
 
     try {
       const authStore = useAuthStore()

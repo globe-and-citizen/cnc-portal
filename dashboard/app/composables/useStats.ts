@@ -8,7 +8,8 @@ import type {
   ContractsStats,
   ActionsStats,
   RecentActivity,
-  StatsPeriod
+  StatsPeriod,
+  TvlStats
 } from '~/types'
 import { useAuthStore } from '~/stores/useAuthStore'
 
@@ -162,6 +163,14 @@ export function useStats() {
   }
 
   /**
+   * Get Total Value Locked statistics (global + per team) and platform-wide
+   * transfer volume. TVL is a live on-chain snapshot, so it takes no period.
+   */
+  const getTvlStats = async (): Promise<TvlStats | null> => {
+    return await fetchStats<TvlStats>('/tvl')
+  }
+
+  /**
    * Refresh all stats for a specific period
    */
   const refreshAllStats = async (period: StatsPeriod = '30d', teamId?: number) => {
@@ -202,6 +211,7 @@ export function useStats() {
     getContractsStats,
     getActionsStats,
     getRecentActivity,
+    getTvlStats,
     refreshAllStats
   }
 }
