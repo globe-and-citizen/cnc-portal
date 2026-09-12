@@ -453,7 +453,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `e8ed3decda3b6e1b46e6fc81c25a8bcfaed442ee`
+**Implementation evidence reviewed against:** `99b6b283d84f1b5013ff5d19707a8df638968a89`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -552,7 +552,6 @@ because deposits and company-pocket transfers are not manual assignment targets.
 ## Related Documentation
 
 - [Accounting user journey](../../features/accounting/README.md)
-- [Accounting Journal Entry Catalogue](../../features/accounting/journal-entry-catalogue.md)
-- [Accounting history across contract migrations](../../features/accounting/contract-migration-history.md)
-- [Money Flow Catalogue](../../features/accounting/money-flow-catalogue.md)
+- [Accounting use cases and journal entries](../../features/accounting/journal-entry-catalogue.md)
+- [Vesting accounting policy](../../features/accounting/vesting-accounting-restricted-stock.md)
 - [Implementation Documentation Guide](../../platform/implementation-documentation-guide.md)

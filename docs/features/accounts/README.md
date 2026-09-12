@@ -95,6 +95,9 @@ flowchart LR
 - [x] Cancelling or rejecting a deposit leaves the Bank balance unchanged.
 - [x] A failed deposit leaves the Bank balance unchanged.
 
+**Accounting:** An external receipt is booked by [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt).
+A receipt from another known company pocket is an internal transfer instead.
+
 **Dependencies:** Current Bank contract and a connected wallet
 
 ## US-BANK-002: Transfer Bank Funds
@@ -128,6 +131,11 @@ flowchart LR
 - [x] An archived company cannot initiate a transfer or Board action.
 - [x] A paused Bank rejects outgoing transfers. _(contract)_
 - [x] Cancelling, rejecting, or failing a transfer leaves the Bank balance unchanged.
+
+**Accounting:** The destination determines the rule: company-pocket funding uses
+[`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket), an external payment uses
+[`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment), and any matched protocol fee is attached
+through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-component).
 
 **Dependencies:** US-BANK-001 and the Board action capability for non-owner proposals
 
@@ -195,6 +203,10 @@ flowchart LR
 - [x] Rejecting a wallet request leaves the remaining steps unrun and identifies the rejected step to the owner.
 - [x] A cash-out run does not start when no eligible funded account is available.
 
+**Accounting:** Source-account sweeps are [`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
+The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment) with any matched
+[`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-component).
+
 **Dependencies:** US-BANK-001, US-BANK-002, and the current Cash Remuneration and Expense Account contracts
 
 ## US-EXP-001: Grant a Signed Spending Approval
@@ -223,6 +235,8 @@ flowchart LR
 - [x] An archived company cannot grant a spending approval.
 - [x] An invalid or mismatched signature is rejected without creating an approval.
 - [x] Cancelling or rejecting the signature leaves the recipient's approvals unchanged.
+
+**Accounting:** Creating an approval moves no money and creates no journal entry. A later spend owns the accounting operation.
 
 **Dependencies:** Current Expense Account contract and connected contract owner
 
@@ -255,6 +269,10 @@ flowchart LR
 - [x] A mismatched or unverifiable approval rejects spending without changing balances.
 - [x] A failed balance read prevents spending until the available amount can be verified.
 
+**Accounting:** An external payout is booked by [`UC-EXP-01`](../accounting/journal-entry-catalogue.md#uc-exp-01--approved-expense-payout);
+a transfer to another known company pocket is
+[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
+
 **Dependencies:** US-EXP-001 and a funded Expense Account
 
 ## US-EXP-003: Deactivate or Reactivate an Approval
@@ -282,6 +300,8 @@ flowchart LR
 - [x] An archived company cannot deactivate or reactivate an approval.
 - [x] A failed state change preserves the approval's prior reported state.
 - [x] Expired and exhausted approvals remain unavailable after state synchronization.
+
+**Accounting:** Changing an approval's active state moves no money and creates no journal entry.
 
 **Dependencies:** US-EXP-001
 
@@ -398,6 +418,11 @@ flowchart LR
 - [x] A proposal below the approval threshold remains pending without moving funds.
 - [x] A rejected or failed proposal leaves Safe balances unchanged.
 - [x] An archived company cannot initiate a Safe deposit or transfer.
+
+**Accounting:** A confirmed transfer is classified as
+[`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
+[`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment), or
+[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer) from its counterparty evidence.
 
 **Dependencies:** US-SAFE-001 and US-SAFE-006
 
