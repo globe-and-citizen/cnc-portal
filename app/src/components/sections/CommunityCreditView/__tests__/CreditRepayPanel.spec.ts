@@ -57,8 +57,9 @@ interface PanelProps {
 
 function repaymentState(overrides: Partial<RepaymentPanelState> = {}): RepaymentPanelState {
   return {
-    outstanding: 5250,
-    treasuryBalance: 10000,
+    outstanding: 5250_000000n,
+    treasuryBalance: 10000_000000n,
+    decimals: 6,
     isReady: true,
     isRepayable: true,
     canRepayViaBank: true,
@@ -88,6 +89,25 @@ describe('CreditRepayPanel', () => {
     expect(wrapper.emitted('repay')).toEqual([['5250']])
   })
 
+  it('round-trips a large, 18-decimal outstanding balance through Max without precision loss', async () => {
+    // Exceeds Number.MAX_SAFE_INTEGER — a Number()-based ceiling would silently round
+    // this, so "Max" would repay a fraction of a unit less than the real obligation.
+    const outstanding = 123456789012345678901n
+    const treasuryBalance = 999999999999999999999n
+    const wrapper = mount(CreditRepayPanel, {
+      props: panelProps({
+        repayment: repaymentState({ outstanding, treasuryBalance, decimals: 18 })
+      })
+    })
+    await flushPromises()
+
+    expect(wrapper.emitted('repay')).toBeUndefined()
+    await wrapper.get('[data-test="repay-quick-Max"]').trigger('click')
+    await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+
+    expect(wrapper.emitted('repay')).toEqual([['123.456789012345678901']])
+  })
+
   it("shows each lender's paid-so-far share in the breakdown table", async () => {
     const wrapper = mount(CreditRepayPanel, {
       props: panelProps({
@@ -98,7 +118,7 @@ describe('CreditRepayPanel', () => {
             remaining: 4250
           }
         ],
-        repayment: repaymentState({ outstanding: 4250 })
+        repayment: repaymentState({ outstanding: 4250_000000n })
       })
     })
     await flushPromises()
@@ -110,7 +130,7 @@ describe('CreditRepayPanel', () => {
   it('grays out and disables Repay once nothing is left outstanding', async () => {
     const wrapper = mount(CreditRepayPanel, {
       props: panelProps({
-        repayment: repaymentState({ outstanding: 0 }),
+        repayment: repaymentState({ outstanding: 0n }),
         rows: [
           {
             ...sampleRows()[0],
