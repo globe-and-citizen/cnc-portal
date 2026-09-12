@@ -4,12 +4,14 @@
 journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
 model does not create or persist manual journal entries.
 
-**Last verified:** 2026-09-11
+**Last verified:** 2026-09-12
 
 ## Consumers
 
 - The [Accounting feature](../../features/accounting/README.md) uses this read model for its consolidated books, reports, drill-downs, and
   exports.
+- The [six-question Accounting guide](../../features/accounting/accounting-model.md) projects the runtime rules into a business-level
+  explanation and links back here for technical detail.
 - [AccountingPage](../../../app/src/components/sections/AccountingView/AccountingPage.vue) is the persistent parent route that resolves one
   shared result for every nested report route. Reports require that accounting context instead of constructing another journal.
 
@@ -119,6 +121,151 @@ domain module directly. Context construction, credit timelines, expense periods,
 modules rather than source mappers. Account assignments apply only after journal construction, so source mappers remain responsible for
 evidence inference rather than owner decisions. SHER realization settlement runs after rate stamping and therefore lives at the Accounting
 assembly level, outside the mapper directory.
+
+## Treasury Boundary and Transfer Classification
+
+```mermaid
+flowchart LR
+    external[External counterparties]
+    feeCollector[CNC protocol FeeCollector]
+
+    subgraph books[Company-owned pockets in one journal]
+        safe[Safe shared across redeployments]
+
+        subgraph archived[Archived Officer generation]
+            oldBank[Bank G1]
+            oldPayroll[Payroll G1]
+            oldExpense[Expense G1]
+        end
+
+        subgraph current[Current Officer generation]
+            bank[Bank G2]
+            payroll[Payroll G2]
+            expense[Expense G2]
+        end
+    end
+
+    external --> safe
+    external --> bank
+    safe --> bank
+    safe --> payroll
+    safe --> expense
+    bank --> safe
+    bank --> payroll
+    bank --> expense
+    payroll --> bank
+    expense --> bank
+    oldPayroll -->|V1+ owner sweep| oldBank
+    oldExpense -->|V1+ owner sweep| oldBank
+    oldBank --> bank
+    safe --> external
+    bank --> external
+    payroll --> external
+    expense --> external
+    bank -.-> feeCollector
+    oldBank -.-> feeCollector
+```
+
+Every known Bank, Payroll, Expense, Credit, and Safe address participates in company-pocket classification. Bank, Payroll, Expense, and
+Credit are deployment-scoped; Safe is one shared account because it survives Officer redeployments. A transfer whose source and destination
+are both known company pockets is internal even when the addresses belong to different generations. The FeeCollector is deliberately absent
+from the internal-address registry: its receipt is CNC protocol revenue, while the paying company's matched Bank operation includes a
+`Transaction Fee Expense` line.
+
+Safe history is adapted from incoming transfers plus successfully executed outgoing multisig transactions. The outgoing adapter recognizes
+direct native value and Transaction Service calls decoded as ERC-20 `transfer(to, amount)`. It does not infer cash legs hidden inside
+MultiSend, module, or custom calls.
+
+## Contract Generation Lifecycle and Cash Recovery
+
+```mermaid
+flowchart TB
+    request[Redeploy Officer] --> deploy[Deploy new Officer and contract suite]
+    deploy --> register[Register address, deployment block, and timestamp]
+    register --> previous[Previous Officer remains as an archived generation]
+    register --> current[New Officer becomes the current generation]
+    register --> shareholder[Run separate shareholder migration]
+    shareholder -->|failure| recovery[Retry or explicitly skip for later recovery]
+
+    previous --> balances[Old contracts retain their own balances]
+    current --> fresh[New contracts have separate balances and addresses]
+    previous --> safe[Company Safe remains unchanged]
+    current --> safe
+
+    balances --> sources[Old Payroll and Expense balances]
+    balances --> oldBank[Old Bank balance]
+    sources --> folder{Archived artifact generation}
+    folder -->|V1 or later| sweepSources[Payroll and Expense ownerWithdrawAllToBank]
+    sweepSources --> oldBank
+    folder -->|V0 or V0.1| manualSources[Only wage claim and Expense budget payout paths remain]
+    manualSources --> recipients[Authorized legacy recipients]
+    oldBank --> bankTransfer[Bank transfer or transferToken]
+    bankTransfer --> currentBank[Current-generation Bank]
+
+    previous --> historicalScan[Accounting scans archived generation]
+    current --> currentScan[Accounting scans current generation]
+    safe --> safeScan[Accounting loads Safe once]
+    historicalScan --> journal[Consolidated journal]
+    currentScan --> journal
+    safeScan --> journal
+```
+
+Redeployment changes the current Officer head but does not move treasury balances. `ownerWithdrawAllToBank` resolves the Bank through the
+source contract's own Officer, so a V1-or-later Payroll or Expense sweep always lands in the Bank of that archived generation. Only the
+subsequent Bank transfer targets the current Bank. V0 and V0.1 source contracts cannot gain the newer function because each generation uses
+its own frozen beacon set. They have no generic source-to-Bank sweep: only their business-specific wage-claim and expense-budget payout
+paths remain, while their Bank can still transfer its own balance. The ordinary Bank transfer may include its generation's protocol fee.
+
+Cash recovery is operationally independent from Accounting history. Archived activity remains in the journal whether or not the balances
+have been consolidated. Shareholder migration is also independent from treasury recovery: it can be retried or skipped after the new Officer
+is registered, and it does not move Bank, Payroll, Expense, or Safe cash.
+
+## Multi-Generation Source Assembly
+
+```mermaid
+flowchart LR
+    team[Current company and contracts] --> officerHistory[Officer history endpoint]
+    officerHistory --> generations[All Officer generations]
+    generations --> targets[Targets by address and deployment fromBlock]
+    team --> officerless[Safe and other Officer-less contracts added once]
+
+    targets --> eventFeeds[Per-domain contract event feeds]
+    officerless --> safeFeeds[Safe and router feeds]
+    portal[Claims, expenses, and account assignments] --> input[CncAccountingInput]
+    eventFeeds --> input
+    safeFeeds --> input
+
+    input --> drafts[Business mappers produce JournalEntryDraft evidence]
+    blocks[Immutable block timestamps] --> drafts
+    drafts --> rates[Apply transaction-date rates]
+    rates --> receipts[Resolve required receipt transfer evidence]
+
+    generations --> deploymentRegistry[Known deployment accounts]
+    receipts --> finalizer[Reconcile mirrors, duplicates, and matched fees]
+    deploymentRegistry --> finalizer
+    portal --> finalizer
+    finalizer --> accounts[Resolve AccountId per proven deployment]
+    accounts --> validate[Create and validate complete balanced entries]
+    validate --> journal[One canonical JournalEntry collection]
+
+    eventFeeds --> status[Source registry and diagnostics]
+    safeFeeds --> status
+    portal --> status
+    blocks --> status
+    rates --> status
+    receipts --> status
+    status --> gate{All applicable evidence ready?}
+    gate -->|Yes| reports[Expose journal to reports and exports]
+    gate -->|No| withheld[Retain diagnostics and withhold reports]
+```
+
+Each contract type is queried across normalized generation targets keyed by lower-case address and effective `fromBlock`. Duplicate targets
+retain the earliest known boundary. Officer-less contracts are added once rather than once per generation. When Officer history is absent,
+the current contracts form one boundary-less fallback generation.
+
+Finalization uses mapper-provided instances and unambiguous ERC-20 receipt directions to resolve deployment-specific `AccountId` values. It
+never chooses a generation from activity order or current status. A failed scan for one target leaves other generations internally
+assembled, records a typed gap, and keeps the report gate out of `ready`.
 
 ## Main Assembly Flow
 
@@ -453,7 +600,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `99b6b283d84f1b5013ff5d19707a8df638968a89`
+**Implementation evidence reviewed against:** `51b89731ae01941c367b49b2cf03f763693ea150`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -551,6 +698,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Related Documentation
 
+- [Understanding Accounting through six questions](../../features/accounting/accounting-model.md)
 - [Accounting user journey](../../features/accounting/README.md)
 - [Accounting use cases and journal entries](../../features/accounting/journal-entry-catalogue.md)
 - [Vesting accounting policy](../../features/accounting/vesting-accounting-restricted-stock.md)

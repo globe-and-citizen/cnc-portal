@@ -21,6 +21,8 @@ These acceptance criteria follow the
   same account family.
 - Reports are available only when every applicable source is ready. Loading, partial, failed, missing-timestamp, and missing-rate states are
   explicit; Accounting does not present incomplete books as final.
+- [Understanding Accounting through six questions](./accounting-model.md) provides a progressive visual explanation of treasury pockets,
+  balanced entries, redeployments, multi-generation assembly, completeness, and report derivation.
 - The [Accounting use-case catalogue](./journal-entry-catalogue.md) maps transaction stories to booking rules and General Ledger output. The
   [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the shared processing architecture.
 
@@ -239,11 +241,12 @@ flowchart LR
 - Closing cash balances are not reconciled with live on-chain balances (`US-ACCT-001`).
 - Historical Community Credit terms and SHER valuation inputs still use current-generation sources (`US-ACCT-005`).
 - Off-platform activity without a connected data source is absent from the automated books.
+- Safe outgoing evidence does not infer cash movements hidden inside MultiSend, module, or custom calls.
 - A Bank fee without matching outflow evidence is withheld until the source feed can be reconciled (`US-ACCT-002`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `99b6b283d84f1b5013ff5d19707a8df638968a89`
+**Implementation evidence reviewed against:** `51b89731ae01941c367b49b2cf03f763693ea150`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
@@ -267,6 +270,7 @@ flowchart LR
 
 ## Related Documentation
 
+- [Understanding Accounting through six questions](./accounting-model.md)
 - [Accounting use cases and journal entries](./journal-entry-catalogue.md)
 - [Accounting Read Model](../../implementation/accounting-read-model/README.md)
 - [Vesting accounting policy](./vesting-accounting-restricted-stock.md)
