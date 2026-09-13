@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { config as wagmiConfig } from '@/wagmi.config'
 import { erc20Abi } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
+import { bankAbi } from '@/artifacts/abi/generated'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
@@ -126,18 +127,28 @@ export function useCashOutAll(options: CashOutOptions = {}) {
       await bankTransfer.mutateAsync({ args: [to, native.value] })
     }
 
-    // Then each supported ERC-20 the Bank holds.
-    const erc20s = SUPPORTED_TOKENS.filter((token) => token.id !== 'native')
-    for (const token of erc20s) {
+    // Then each ERC-20 configured on this exact Bank generation. Reading the
+    // contract-owned list avoids probing unrelated deployment addresses and
+    // ensures a historic Bank can still drain tokens that are no longer in the
+    // application's current global token list.
+    const tokenAddresses = (await readContract(wagmiConfig, {
+      address: bank,
+      abi: bankAbi,
+      functionName: 'getSupportedTokens'
+    })) as Address[]
+    for (const tokenAddress of tokenAddresses) {
       const balance = (await readContract(wagmiConfig, {
-        address: token.address,
+        address: tokenAddress,
         abi: erc20Abi,
         functionName: 'balanceOf',
         args: [bank]
       })) as bigint
       if (balance > 0n) {
-        step.detail = `Transferring ${token.symbol}…`
-        await bankTransferToken.mutateAsync({ args: [token.address, to, balance] })
+        const token = SUPPORTED_TOKENS.find(
+          (candidate) => candidate.address.toLowerCase() === tokenAddress.toLowerCase()
+        )
+        step.detail = `Transferring ${token?.symbol ?? 'token'}…`
+        await bankTransferToken.mutateAsync({ args: [tokenAddress, to, balance] })
       }
     }
 

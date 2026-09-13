@@ -1,8 +1,8 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { isAddress, type Address } from 'viem'
+import { isAddress, isAddressEqual, type Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { boardOfDirectorsAbi } from '@/artifacts/abi/generated'
+import { bankAbi, boardOfDirectorsAbi } from '@/artifacts/abi/generated'
 /**
  * BOD contract types and constants
  */
@@ -35,20 +35,16 @@ export function isValidBodFunction(functionName: string): functionName is BodFun
   return Object.values(BOD_FUNCTION_NAMES).includes(functionName as BodFunctionName)
 }
 
-/**
- * Read owner of a contract
- * TODO: This function return the list of owner of this contract no one owner, so the usage also should change
- */
+/** Read the owner of a Bank that may be controlled by a Board contract. */
 export function useBodOwner(contractAddress: MaybeRef<Address>) {
-  const bodAddress = computed(() => unref(contractAddress))
-  const isAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
+  const bankAddress = computed(() => unref(contractAddress))
+  const isAddressValid = computed(() => !!bankAddress.value && isAddress(bankAddress.value))
 
   return useReadContract({
-    address: bodAddress,
-    abi: boardOfDirectorsAbi,
-    functionName: 'getOwners',
-    query: { enabled: isAddressValid },
-    args: []
+    address: bankAddress,
+    abi: bankAbi,
+    functionName: 'owner',
+    query: { enabled: isAddressValid }
   })
 }
 
@@ -152,7 +148,15 @@ export function useBodIsBodAction(contractAddress: MaybeRef<Address>) {
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
 
   const isBodAction = computed(() => {
-    return owner.value === bodAddress.value && (isBodMember.value as boolean)
+    const ownerAddress = owner.value as Address | undefined
+    const currentBodAddress = bodAddress.value
+
+    return Boolean(
+      ownerAddress &&
+      currentBodAddress &&
+      isAddressEqual(ownerAddress, currentBodAddress) &&
+      isBodMember.value
+    )
   })
 
   return {
