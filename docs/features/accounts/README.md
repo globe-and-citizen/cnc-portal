@@ -55,7 +55,7 @@ flowchart LR
 | ----------- | ------------------------------------------ | -------------------------- | -------------- |
 | US-BANK-001 | Fund the Bank                              | Company member             | 🧪 Validation  |
 | US-BANK-002 | Transfer Bank funds                        | Owner / Board member       | 🧪 Validation  |
-| US-BANK-003 | Review the Bank position and history       | Company member             | 🚧 In Progress |
+| US-BANK-003 | Review the Bank position and history       | Company member             | 🧪 Validation  |
 | US-BANK-004 | Cash out available treasury funds          | Bank owner                 | 🧪 Validation  |
 | US-EXP-001  | Grant a signed spending approval           | Expense Account owner      | 🧪 Validation  |
 | US-EXP-002  | Spend from the Expense Account             | Approved recipient         | 🚧 In Progress |
@@ -158,7 +158,7 @@ flowchart LR
 #### Edge & Error Cases
 
 - [x] A history filter with no matching events returns an empty result.
-- [ ] A failed history read is distinguishable from a successfully loaded empty history.
+- [x] A failed history read is distinguishable from a successfully loaded empty history.
 
 **Dependencies:** Current Bank contract and an available chain event provider
 
@@ -491,7 +491,6 @@ flowchart LR
 
 ## Known Gaps
 
-- Bank history does not distinguish a failed event read from a successfully loaded empty history (`US-BANK-003`).
 - A one-time Expense approval can spend an unsupported ERC-20 token held by the contract (`US-EXP-002`).
 - Pausing the Expense Account does not prevent spending (`US-EXP-002`).
 - Deactivating an Expense approval changes its recorded state but does not prevent that signature from authorizing a spend (`US-EXP-003`).
@@ -511,10 +510,13 @@ flowchart LR
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts),
   [Bank transaction feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
   [version-aware Bank fee normalization](../../../app/src/composables/bank/bankFees.ts),
+  [Bank/Board ownership routing](../../../app/src/composables/bod/reads.ts),
   [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts), and
   [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
+- [Chain-backed Bank Account E2E journeys](../../../app/test/e2e/bank/bank-account.spec.ts) and
+  [their isolated deployment fixture](../../../app/test/e2e/bank/bank-chain.ts), covering `US-BANK-001` through `US-BANK-004`
 - [Bank transfer form](../../../app/src/components/forms/TransferForm.vue)
 - [Current treasury cash-out action](../../../app/src/components/sections/DashboardView/CashOutAllAction.vue),
   [historic-generation withdrawal action](../../../app/src/components/sections/ContractManagementView/LegacyGenerationWithdrawAction.vue),

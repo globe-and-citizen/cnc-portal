@@ -31,6 +31,8 @@ flowchart LR
   test selectors are retained.
 - A date or type-filter change resets the page and collapses expanded rows without reacting to query refreshes.
 - A selected row opens its detail in `TransactionDetailSlideover`; closing it does not alter the applied filters.
+- Bank history shows an explicit failure state when its query fails, a contract-generation scan is incomplete, or timestamps cannot be
+  resolved. The empty state is reserved for a successful scan with no matching transactions.
 - Date-range selection is documented by the [Date Picker capability](../date-picker/README.md).
 
 ## Implementation Evidence
