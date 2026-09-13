@@ -89,7 +89,7 @@ flowchart TB
 For example, Safe to Payroll debits `Cash — Payroll` and credits `Cash — Safe`; Payroll to Bank debits `Cash — Bank` and credits
 `Cash — Payroll`. Every filter, drill-down, and export keeps the complete entry so those two sides remain traceable together.
 
-The [Accounting use-case catalogue](./journal-entry-catalogue.md) owns the complete booking rules and examples.
+The [Accounting rule catalogue](./journal-entry-catalogue.md) owns the complete booking rules and examples.
 
 ## 3. What Changes When the Contracts Are Redeployed?
 
@@ -243,7 +243,7 @@ profit and loss.
 ## Related Documentation
 
 - [Accounting user stories](./README.md)
-- [Accounting use-case catalogue](./journal-entry-catalogue.md)
+- [Accounting rule catalogue](./journal-entry-catalogue.md)
 - [Accounting Read Model](../../implementation/accounting-read-model/README.md)
 - [Contract Management](../contract-management/README.md)
 

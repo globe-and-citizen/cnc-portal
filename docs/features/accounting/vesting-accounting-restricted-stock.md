@@ -7,7 +7,7 @@
 **Last reviewed:** Not yet reviewed
 
 The Vesting feature owns the [transaction user stories](../vesting/README.md). The
-[Accounting use-case catalogue](./journal-entry-catalogue.md#shareholder-and-vesting-use-cases) owns the processing and General Ledger
+[Accounting rule catalogue](./journal-entry-catalogue.md#shareholder-and-vesting-rules) owns the processing and General Ledger
 representation. This policy explains the accounting decision behind those rules.
 
 ## Policy
@@ -65,6 +65,6 @@ grant is outside the available feed, no reversal is invented. If the schedule is
 ## Related Documentation
 
 - [Accounting user stories](./README.md)
-- [Accounting use cases and journal entries](./journal-entry-catalogue.md)
+- [Accounting use cases, posting rules, and journal entries](./journal-entry-catalogue.md)
 - [Vesting user stories](../vesting/README.md)
 - [Vesting contract behaviour](../../contracts/features/vesting/README.md)

@@ -23,8 +23,9 @@ These acceptance criteria follow the
   explicit; Accounting does not present incomplete books as final.
 - [Understanding Accounting through six questions](./accounting-model.md) provides a progressive visual explanation of treasury pockets,
   balanced entries, redeployments, multi-generation assembly, completeness, and report derivation.
-- The [Accounting use-case catalogue](./journal-entry-catalogue.md) maps transaction stories to booking rules and General Ledger output. The
-  [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the shared processing architecture.
+- The [Accounting rule catalogue](./journal-entry-catalogue.md) maps transaction stories to domain use cases, generic posting rules, journal
+  components, and General Ledger output. The [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the shared
+  processing architecture.
 
 ## Lifecycle
 
@@ -105,7 +106,7 @@ flowchart LR
 - [x] A Bank fee appears as `Transaction Fee Expense` inside its matched Bank outflow, never as an orphan fee entry.
 - [x] Internal transfers identify both concrete deployment accounts without creating revenue or expense.
 - [x] Pagination changes visible rows, not filtered totals.
-- [x] Labels and accounts follow the canonical [Accounting use-case catalogue](./journal-entry-catalogue.md).
+- [x] Labels and accounts follow the canonical [Accounting rule catalogue](./journal-entry-catalogue.md).
 
 #### Edge & Error Cases
 
@@ -271,7 +272,7 @@ flowchart LR
 ## Related Documentation
 
 - [Understanding Accounting through six questions](./accounting-model.md)
-- [Accounting use cases and journal entries](./journal-entry-catalogue.md)
+- [Accounting use cases, posting rules, and journal entries](./journal-entry-catalogue.md)
 - [Accounting Read Model](../../implementation/accounting-read-model/README.md)
 - [Vesting accounting policy](./vesting-accounting-restricted-stock.md)
 - [Accounts](../accounts/README.md)
