@@ -125,13 +125,24 @@ const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
 
 // Export token addresses for current network
 export const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
+const e2eTokenAddress = (name: 'USDC' | 'USDCe'): Address | undefined => {
+  if (import.meta.env.VITE_E2E !== 'true') return undefined
+
+  const address = import.meta.env[`VITE_E2E_${name.toUpperCase()}_ADDRESS`]
+  return address && isAddress(address) ? (address as Address) : undefined
+}
+
 const getUSDCAddress = () => {
+  const e2eAddress = e2eTokenAddress('USDC')
+  if (e2eAddress) return e2eAddress
   if (currentChainId === 11155111 || currentChainId === 31337) {
     return safeResolveAddress('MockTokens#USDC') || ('' as Address)
   }
   return TOKEN_ADDRESSES[currentChainId]?.USDC || ''
 }
 const getUSDCeAddress = () => {
+  const e2eAddress = e2eTokenAddress('USDCe')
+  if (e2eAddress) return e2eAddress
   if (currentChainId === 11155111 || currentChainId === 31337) {
     return safeResolveAddress('MockTokens#USDCe') || ('' as Address)
   }
