@@ -218,8 +218,8 @@ stateDiagram-v2
 ## US-VESTING-006: See Vesting in the Company Books
 
 This is a reference story. Accounting owns the user journey and acceptance criteria for viewing vesting entries. The
-[Accounting use-case catalogue](../accounting/journal-entry-catalogue.md#shareholder-and-vesting-use-cases) defines how creation, release,
-and stop evidence becomes `UC-VEST-01`, `UC-VEST-02`, and `UC-VEST-03` in the General Ledger. The focused
+[Accounting rule catalogue](../accounting/journal-entry-catalogue.md#shareholder-and-vesting-rules) defines how creation, release, and stop
+evidence becomes `UC-VEST-01`, `UC-VEST-02`, and `UC-VEST-03` in the General Ledger. The focused
 [Vesting accounting policy](../accounting/vesting-accounting-restricted-stock.md) explains the restricted-stock treatment.
 
 **Dependencies:** US-VESTING-001, US-VESTING-003, US-VESTING-004, and US-ACCT-002

@@ -700,6 +700,6 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 - [Understanding Accounting through six questions](../../features/accounting/accounting-model.md)
 - [Accounting user journey](../../features/accounting/README.md)
-- [Accounting use cases and journal entries](../../features/accounting/journal-entry-catalogue.md)
+- [Accounting use cases, posting rules, and journal entries](../../features/accounting/journal-entry-catalogue.md)
 - [Vesting accounting policy](../../features/accounting/vesting-accounting-restricted-stock.md)
 - [Implementation Documentation Guide](../../platform/implementation-documentation-guide.md)

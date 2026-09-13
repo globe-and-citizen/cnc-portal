@@ -266,5 +266,5 @@ The following verified gaps have technical evidence and remediation directions i
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Transaction History implementation](../../implementation/transaction-history/README.md)
 - [Detailed flow and implementation analysis](./user-flow-analysis.md)
-- [Accounting use cases and journal entries](../accounting/journal-entry-catalogue.md)
+- [Accounting use cases, posting rules, and journal entries](../accounting/journal-entry-catalogue.md)
 - [Product Feature Inventory](../README.md)

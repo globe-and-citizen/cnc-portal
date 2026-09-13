@@ -1,6 +1,6 @@
-# Accounting Use Cases and Journal Entries
+# Accounting Use Cases, Posting Rules, and Journal Entries
 
-**Scope:** Canonical bridge from transaction user stories to Accounting use cases, processing rules, and General Ledger output
+**Scope:** Canonical bridge from transaction user stories to Accounting rule identifiers, processing, and General Ledger output
 
 **Last reviewed:** Not yet reviewed
 
@@ -10,8 +10,10 @@ interpretation. The [Accounting Read Model](../../implementation/accounting-read
 
 ## Reading the Catalogue
 
-- A user story describes a product action. An Accounting use-case ID identifies the booking rule applied to evidence from that action.
-- One user action may produce several use cases over time. For example, Community Credit funding recognizes principal and interest, while a
+- A user story describes a product action. An Accounting rule ID identifies how evidence from that action is booked.
+- The runtime type is named `UseCase`, but its values do not all represent domain use cases. It also contains generic posting rules, an
+  entry component, a legacy-named rule, and inactive identifiers.
+- One user action may activate several accounting rules. For example, Community Credit funding recognizes principal and interest, while a
   later repayment settles them.
 - One on-chain transaction becomes at most one finalized `JournalEntry`. Compatible lines from several events are grouped by the source
   operation; duplicate mirrors are removed.
@@ -20,6 +22,17 @@ interpretation. The [Accounting Read Model](../../implementation/accounting-read
 - Every journal entry balances. Account and currency filters retain the complete entry, not isolated lines.
 - `FEE` is component evidence. When a Bank outflow paid the fee, the fee line is merged into that outflow's entry and does not become a
   standalone General Ledger operation.
+
+## Accounting Rule Taxonomy
+
+| Kind                         | Identifiers                               | Meaning                                                                                            |
+| ---------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Domain use case              | Active emitted `UC-*` identifiers         | A specific business accounting event with its own trigger and journal result                       |
+| Legacy domain rule           | `DEFAULT-D`                               | Direct SHER issuance; semantically a domain rule despite its historical identifier                 |
+| Generic posting rule         | `CASH-OUT`, `INTERNAL`                    | A reusable classification selected from transaction evidence across several product stories        |
+| Entry component              | `FEE`                                     | Additional journal lines attached to a parent Bank outflow, never a standalone finalized operation |
+| Declared inactive identifier | `UC-CREDIT-02`, `UC-CREDIT-04`, `CASH-IN` | A runtime value that no current source mapper emits                                                |
+| No-posting boundary          | No identifier                             | Evidence is tracked, but no company journal entry is created at that lifecycle stage               |
 
 ## End-to-End Processing
 
@@ -38,31 +51,31 @@ Synthetic entries, such as a weekly wage accrual, use a deterministic portal ide
 transaction hash as their source-operation identity. If required source, timestamp, or valuation evidence is incomplete, Accounting reports
 that state instead of presenting the affected books as final.
 
-## Story-to-Use-Case Map
+## Story-to-Accounting-Rule Map
 
-| Transaction journey                                                                                              | Accounting use case                              | Posting moment                                      | General Ledger result                                       |
-| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------- | ----------------------------------------------------------- |
-| [Fund the Bank](../accounts/README.md#us-bank-001-fund-the-bank)                                                 | `UC-BANK-02`                                     | External funds reach Bank                           | Service revenue receipt                                     |
-| [Transfer Bank funds](../accounts/README.md#us-bank-002-transfer-bank-funds)                                     | `UC-BANK-03`, `CASH-OUT`, `FEE`, or `INTERNAL`   | Bank transfer executes                              | Treasury funding, external payment, and any transaction fee |
-| [Cash out treasury funds](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)                   | `INTERNAL`, then `CASH-OUT` and optional `FEE`   | Each cash-out step executes                         | Pocket sweep followed by external payment                   |
-| [Spend from Expense](../accounts/README.md#us-exp-002-spend-from-the-expense-account)                            | `UC-EXP-01` or `INTERNAL`                        | Approved transfer executes                          | Operating expense or pocket transfer                        |
-| [Manage Safe funds](../accounts/README.md#us-safe-003-manage-safe-funds)                                         | `UC-BANK-02`, `CASH-OUT`, or `INTERNAL`          | Confirmed Safe transfer is indexed                  | Receipt, external payment, or pocket transfer               |
-| [Fund Payroll](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)                                    | `UC-BANK-03` or `INTERNAL`                       | Funds reach Payroll                                 | Treasury funding transfer                                   |
-| [Submit a daily claim](../payroll/README.md#us-payroll-005-submit-a-daily-claim)                                 | `UC-CASH-02`                                     | The containing work week ends while eligible        | Wage accrual                                                |
-| [Disable or re-enable a claim](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim)   | `UC-CASH-02` eligibility                         | Claim status changes                                | Disabled claims are excluded; eligible claims accrue        |
-| [Withdraw a weekly claim](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim)                 | `UC-CASH-03`                                     | Withdrawal executes                                 | Wage or SHER settlement                                     |
-| [Publish a credit call](../community-credit/README.md#us-cc-002-publish-a-credit-call)                           | No posting                                       | Terms are created without company funds moving      | No ledger entry                                             |
-| [Lend to a round](../community-credit/README.md#us-cc-003-lend-to-an-open-round)                                 | No posting until funding                         | Lender funds remain in the round                    | No company entry yet                                        |
-| [Resolve a stalled round](../community-credit/README.md#us-cc-004-resolve-a-stalled-round)                       | `UC-CREDIT-01` and `UC-CREDIT-05`, or no posting | A partial raise is accepted; a refund is not posted | Principal receipt and interest obligation                   |
-| [Repay lenders](../community-credit/README.md#us-cc-005-repay-lenders)                                           | `UC-CREDIT-03`                                   | Repayment is distributed                            | Principal and interest settlement                           |
-| [Invest through the router](../shareholder-management/README.md#us-sher-001-invest-in-the-safe-and-receive-sher) | `UC-SDR-01`                                      | Router deposit and SHER mint execute                | Investor contribution                                       |
-| [Distribute dividends](../shareholder-management/README.md#us-sher-002-distribute-dividends-to-shareholders)     | `UC-INV-01`                                      | Investor pays shareholders                          | Dividend expense and cash outflow                           |
-| [Issue SHER directly](../shareholder-management/README.md#us-sher-004-issue-sher-to-a-shareholder)               | `DEFAULT-D`                                      | Unbacked mint executes                              | Share issuance                                              |
-| [Create a vesting schedule](../vesting/README.md#us-vesting-001-create-a-minute-precise-vesting-schedule)        | `UC-VEST-01`                                     | Grant is created                                    | Restricted-stock commitment                                 |
-| [Release vested shares](../vesting/README.md#us-vesting-003-release-accrued-shares)                              | `UC-VEST-02`                                     | Shares are released                                 | Promised shares become issued equity                        |
-| [Stop a vesting schedule](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule)                   | `UC-VEST-02` and/or `UC-VEST-03`                 | Stop executes                                       | Accrued release and unvested cancellation                   |
+| Transaction journey          | User story IDs                                                                                      | Accounting rule IDs                                  | Posting moment                                                     | General Ledger result                                       |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Fund the Bank                | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank)                                      | `UC-BANK-02`                                         | External funds reach Bank                                          | Service revenue receipt                                     |
+| Transfer Bank funds          | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds)                                | `UC-BANK-03`, `CASH-OUT`, `INTERNAL`; optional `FEE` | Bank transfer executes                                             | Treasury funding, external payment, and any transaction fee |
+| Cash out treasury funds      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)                  | `INTERNAL`, then `CASH-OUT`; optional `FEE`          | Each cash-out step executes                                        | Pocket sweep followed by external payment                   |
+| Spend from Expense           | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account)                       | `UC-EXP-01` or `INTERNAL`                            | Approved transfer executes                                         | Operating expense or pocket transfer                        |
+| Manage Safe funds            | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | `UC-BANK-02`, `CASH-OUT`, or `INTERNAL`              | Confirmed Safe transfer is indexed                                 | Receipt, external payment, or pocket transfer               |
+| Fund Payroll                 | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)                     | `UC-BANK-03` or `INTERNAL`                           | Funds reach Payroll                                                | Treasury funding transfer                                   |
+| Submit a daily claim         | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim)                          | `UC-CASH-02`                                         | The containing work week ends while eligible                       | Wage accrual                                                |
+| Disable or re-enable a claim | [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim)    | `UC-CASH-02`                                         | No entry on status change; ended claims accrue only while eligible | Wage accrual appears or is excluded                         |
+| Withdraw a weekly claim      | [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim)             | `UC-CASH-03`                                         | Withdrawal executes                                                | Wage or SHER settlement                                     |
+| Publish a credit call        | [US-CC-002](../community-credit/README.md#us-cc-002-publish-a-credit-call)                          | —                                                    | Terms are created without company funds moving                     | No ledger entry                                             |
+| Lend to a round              | [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round)                          | `UC-CREDIT-01` and `UC-CREDIT-05`                    | The contribution funds the round; otherwise no posting             | Principal receipt and interest obligation when funded       |
+| Resolve a stalled round      | [US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round)                        | `UC-CREDIT-01` and `UC-CREDIT-05`                    | A partial raise is accepted; a refund has no posting               | Principal receipt and interest obligation                   |
+| Repay lenders                | [US-CC-005](../community-credit/README.md#us-cc-005-repay-lenders)                                  | `UC-CREDIT-03`                                       | Repayment is distributed                                           | Principal and interest settlement                           |
+| Invest through the router    | [US-SHER-001](../shareholder-management/README.md#us-sher-001-invest-in-the-safe-and-receive-sher)  | `UC-SDR-01`                                          | Router deposit and SHER mint execute                               | Investor contribution                                       |
+| Distribute dividends         | [US-SHER-002](../shareholder-management/README.md#us-sher-002-distribute-dividends-to-shareholders) | `UC-INV-01`                                          | Investor pays shareholders                                         | Dividend expense and cash outflow                           |
+| Issue SHER directly          | [US-SHER-004](../shareholder-management/README.md#us-sher-004-issue-sher-to-a-shareholder)          | `DEFAULT-D`                                          | Unbacked mint executes                                             | Share issuance                                              |
+| Create a vesting schedule    | [US-VESTING-001](../vesting/README.md#us-vesting-001-create-a-minute-precise-vesting-schedule)      | `UC-VEST-01`                                         | Grant is created                                                   | Restricted-stock commitment                                 |
+| Release vested shares        | [US-VESTING-003](../vesting/README.md#us-vesting-003-release-accrued-shares)                        | `UC-VEST-02`                                         | Shares are released                                                | Promised shares become issued equity                        |
+| Stop a vesting schedule      | [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule)               | `UC-VEST-02` and/or `UC-VEST-03`                     | Stop executes                                                      | Accrued release and unvested cancellation                   |
 
-## Treasury and Cash Use Cases
+## Treasury and Cash Rules
 
 ### `UC-BANK-02` — External Cash Receipt
 
@@ -207,7 +220,7 @@ A published, open, refunded, or not-yet-funded round does not change the company
   unrecognized interest remainder; credit `Cash — Bank` for the total paid.
 - **General Ledger:** Label `Credit repayment`; activity links to Community Credit; one repayment transaction remains one entry.
 
-## Shareholder and Vesting Use Cases
+## Shareholder and Vesting Rules
 
 ### `UC-SDR-01` — Investor Contribution
 
@@ -293,7 +306,7 @@ and an update to this catalogue.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `99b6b283d84f1b5013ff5d19707a8df638968a89`
+**Implementation evidence reviewed against:** `b2939127ec1ee7d16f261cf04974f1b36f1345ce`
 
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [source mapper boundary](../../../app/src/utils/accounting/mappers/index.ts),
