@@ -19,7 +19,7 @@ vi.mock('@nuxt/ui/components/Table.vue', () => ({
   default: {
     name: 'UTable',
     props: ['data', 'columns', 'loading', 'getSubRows'],
-    template: '<div data-test="bank-table"></div>'
+    template: '<div data-test="bank-table"><slot v-if="!data?.length" name="empty" /></div>'
   }
 }))
 vi.mock('@nuxt/ui/components/Select.vue', () => ({
@@ -323,5 +323,28 @@ describe('BankTransactions', () => {
     await nextTick()
 
     expect(logErrorSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('distinguishes an empty history from a failed history read', () => {
+    mockBankQuery.result.value = undefined
+    wrapper = createWrapper()
+
+    expect(wrapper.find('[data-test="bank-transactions-empty"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="bank-transactions-error"]').exists()).toBe(false)
+
+    wrapper.unmount()
+    mockBankQuery.error.value = new Error('bank query failed')
+    wrapper = createWrapper()
+
+    expect(wrapper.find('[data-test="bank-transactions-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="bank-transactions-empty"]').exists()).toBe(false)
+
+    wrapper.unmount()
+    mockBankQuery.error.value = null
+    mockBankQuery.gaps.value = [{ address: BANK_ADDRESS, error: new Error('log scan failed') }]
+    wrapper = createWrapper()
+
+    expect(wrapper.find('[data-test="bank-transactions-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="bank-transactions-empty"]').exists()).toBe(false)
   })
 })
