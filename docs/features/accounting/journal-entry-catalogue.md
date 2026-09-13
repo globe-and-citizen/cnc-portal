@@ -1,355 +1,449 @@
-# Accounting Journal Entry Catalogue
+# Accounting Use Cases, Posting Rules, and Journal Entries
+
+**Scope:** Canonical bridge from transaction user stories to Accounting rule identifiers, processing, and General Ledger output
+
+**Last reviewed:** Not yet reviewed
+
+This catalogue answers one question for every supported transaction journey: **what evidence becomes which balanced journal entry, and how
+does that entry appear in the General Ledger?** Transaction feature documentation owns the user action. This document owns its accounting
+interpretation. The [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the shared implementation mechanics.
+
+## Reading the Catalogue
+
+- A user story describes a product action. An Accounting rule ID identifies how evidence from that action is booked.
+- The runtime type is named `UseCase`, but its values do not all represent domain use cases. It also contains generic posting rules, an
+  entry component, a legacy-named rule, and inactive identifiers.
+- One user action may activate several accounting rules. For example, Community Credit funding recognizes principal and interest, while a
+  later repayment settles them.
+- One on-chain transaction becomes at most one finalized `JournalEntry`. Compatible lines from several events are grouped by the source
+  operation; duplicate mirrors are removed.
+- When grouped evidence carries several use-case IDs, the entry label comes from its primary non-fee draft while every compatible line stays
+  visible.
+- Every journal entry balances. Account and currency filters retain the complete entry, not isolated lines.
+- `FEE` is component evidence. When a Bank outflow paid the fee, the fee line is merged into that outflow's entry and does not become a
+  standalone General Ledger operation.
+- Accounting rule IDs are stable, not gap-free. `UC-BANK-01` previously represented a founder deposit inferred as `Owner Capital`; that
+  address-role inference was retired, while the existing `UC-BANK-02` identifier was preserved for direct external receipts.
+
+The representative tables below show USD-valued General Ledger rows. The runtime also retains each line's original currency, quantity, and
+rate of record. The examples illustrate account direction and balance; they do not impose a fixed transaction amount.
+
+## Accounting Rule Taxonomy
+
+| Kind                         | Identifiers                               | Meaning                                                                                            |
+| ---------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Domain use case              | Active emitted `UC-*` identifiers         | A specific business accounting event with its own trigger and journal result                       |
+| Legacy domain rule           | `DEFAULT-D`                               | Direct SHER issuance; semantically a domain rule despite its historical identifier                 |
+| Generic posting rule         | `CASH-OUT`, `INTERNAL`                    | A reusable classification selected from transaction evidence across several product stories        |
+| Entry component              | `FEE`                                     | Additional journal lines attached to a parent Bank outflow, never a standalone finalized operation |
+| Declared inactive identifier | `UC-CREDIT-02`, `UC-CREDIT-04`, `CASH-IN` | A runtime value that no current source mapper emits                                                |
+| No-posting boundary          | No identifier                             | Evidence is tracked, but no company journal entry is created at that lifecycle stage               |
+
+## End-to-End Processing
+
+```mermaid
+flowchart LR
+    Story[Transaction user story] --> Evidence[Contract events, Safe transfers, or portal records]
+    Evidence --> Draft[Domain mapper creates JournalEntryDraft evidence]
+    Draft --> Enrichment[Resolve timestamp, valuation, deployment account, and receipt context]
+    Enrichment --> Reconcile[Remove mirrors and attach transaction fees]
+    Reconcile --> Group[Group by source-operation identity]
+    Group --> Validate[Build and validate one balanced JournalEntry]
+    Validate --> Ledger[Project complete entry into General Ledger rows]
+```
+
+Synthetic entries, such as a weekly wage accrual, use a deterministic portal identity and have no transaction hash. On-chain entries use the
+transaction hash as their source-operation identity. If required source, timestamp, or valuation evidence is incomplete, Accounting reports
+that state instead of presenting the affected books as final.
+
+## Story-to-Accounting-Rule Map
+
+| Transaction journey          | User story IDs                                                                                      | Accounting rule IDs                                  | Posting moment                                                     | General Ledger result                                       |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Fund the Bank                | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank)                                      | `UC-BANK-02`                                         | External funds reach Bank                                          | Service revenue receipt                                     |
+| Transfer Bank funds          | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds)                                | `UC-BANK-03`, `CASH-OUT`, `INTERNAL`; optional `FEE` | Bank transfer executes                                             | Treasury funding, external payment, and any transaction fee |
+| Cash out treasury funds      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)                  | `INTERNAL`, then `CASH-OUT`; optional `FEE`          | Each cash-out step executes                                        | Pocket sweep followed by external payment                   |
+| Spend from Expense           | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account)                       | `UC-EXP-01` or `INTERNAL`                            | Approved transfer executes                                         | Operating expense or pocket transfer                        |
+| Manage Safe funds            | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | `UC-BANK-02`, `CASH-OUT`, or `INTERNAL`              | Confirmed Safe transfer is indexed                                 | Receipt, external payment, or pocket transfer               |
+| Fund Payroll                 | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)                     | `UC-BANK-03` or `INTERNAL`                           | Funds reach Payroll                                                | Treasury funding transfer                                   |
+| Submit a daily claim         | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim)                          | `UC-CASH-02`                                         | The containing work week ends while eligible                       | Wage accrual                                                |
+| Disable or re-enable a claim | [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim)    | `UC-CASH-02`                                         | No entry on status change; ended claims accrue only while eligible | Wage accrual appears or is excluded                         |
+| Withdraw a weekly claim      | [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim)             | `UC-CASH-03`                                         | Withdrawal executes                                                | Wage or SHER settlement                                     |
+| Publish a credit call        | [US-CC-002](../community-credit/README.md#us-cc-002-publish-a-credit-call)                          | —                                                    | Terms are created without company funds moving                     | No ledger entry                                             |
+| Lend to a round              | [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round)                          | `UC-CREDIT-01` and `UC-CREDIT-05`                    | The contribution funds the round; otherwise no posting             | Principal receipt and interest obligation when funded       |
+| Resolve a stalled round      | [US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round)                        | `UC-CREDIT-01` and `UC-CREDIT-05`                    | A partial raise is accepted; a refund has no posting               | Principal receipt and interest obligation                   |
+| Repay lenders                | [US-CC-005](../community-credit/README.md#us-cc-005-repay-lenders)                                  | `UC-CREDIT-03`                                       | Repayment is distributed                                           | Principal and interest settlement                           |
+| Invest through the router    | [US-SHER-001](../shareholder-management/README.md#us-sher-001-invest-in-the-safe-and-receive-sher)  | `UC-SDR-01`                                          | Router deposit and SHER mint execute                               | Investor contribution                                       |
+| Distribute dividends         | [US-SHER-002](../shareholder-management/README.md#us-sher-002-distribute-dividends-to-shareholders) | `UC-INV-01`                                          | Investor pays shareholders                                         | Dividend expense and cash outflow                           |
+| Issue SHER directly          | [US-SHER-004](../shareholder-management/README.md#us-sher-004-issue-sher-to-a-shareholder)          | `DEFAULT-D`                                          | Unbacked mint executes                                             | Share issuance                                              |
+| Create a vesting schedule    | [US-VESTING-001](../vesting/README.md#us-vesting-001-create-a-minute-precise-vesting-schedule)      | `UC-VEST-01`                                         | Grant is created                                                   | Restricted-stock commitment                                 |
+| Release vested shares        | [US-VESTING-003](../vesting/README.md#us-vesting-003-release-accrued-shares)                        | `UC-VEST-02`                                         | Shares are released                                                | Promised shares become issued equity                        |
+| Stop a vesting schedule      | [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule)               | `UC-VEST-02` and/or `UC-VEST-03`                     | Stop executes                                                      | Accrued release and unvested cancellation                   |
+
+## Treasury and Cash Rules
+
+### `UC-BANK-02` — External Cash Receipt
+
+**Source stories:** [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) and
+[US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
+
+- **Input:** A Bank deposit event or confirmed Safe inflow whose sender is not a known company pocket.
+- **Processing:** The mapper resolves the receiving deployment account. A SafeDepositRouter-backed Safe inflow is removed here because
+  `UC-SDR-01` owns that operation.
+- **General Ledger:** Label `Service revenue`; activity links to the receiving Bank or Safe. The entry retains the original currency,
+  quantity, rate, and transaction hash.
+
+For a direct external receipt valued at $100:
+
+| Account                    | Debit (USD) | Credit (USD) |
+| -------------------------- | ----------: | -----------: |
+| Cash — Bank or Cash — Safe |         100 |              |
+| Service Revenue            |             |          100 |
 
-**Scope:** The use cases currently mapped into Accounting and the balanced `JournalEntry` templates they produce
+An external wallet may belong to a company member; that alone does not make the receipt an internal transfer.
 
-This is the canonical catalogue for the current Accounting use-case to journal-entry mapping. The
-[Money-Flow Catalogue](./money-flow-catalogue.md) remains a worked accounting exercise and reference model; it does not define the current
-mapper coverage or account nomenclature.
+### `UC-BANK-03` — Bank Funds a Company Pocket
 
-## Journal Entry Rules
+**Source stories:** [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) and
+[US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract).
 
-A `JournalEntry` is the validated accounting record displayed by the General Ledger. It has one or more debit lines and one or more credit
-lines; their USD totals must be equal. Account names below refer to account families. A deployment-scoped cash account is resolved to its
-concrete contract instance in the actual entry, for example `Cash — Bank 2` after a redeployment.
+- **Input:** A Bank transfer whose destination resolves to another known company cash pocket.
+- **Processing:** The Bank event establishes the source operation. Mirrored destination evidence is removed; a same-transaction fee is
+  attached before finalization.
+- **General Ledger:** Label `Treasury funding`; activity links to the funded pocket. All transfer and fee lines appear in one entry.
 
-Each example below is one complete `JournalEntry`; its debit and credit totals are equal. The amounts are illustrative USD reporting
-amounts. A SHER amount is valued at the rate of record for the operation date.
+For $100 received by the destination pocket and a $1 Bank fee:
 
-### Transaction Identity
+| Account                 | Debit (USD) | Credit (USD) |
+| ----------------------- | ----------: | -----------: |
+| Destination cash pocket |         100 |              |
+| Transaction Fee Expense |           1 |              |
+| Cash — Bank             |             |          101 |
 
-For a source event with an on-chain transaction hash, the transaction hash is the `JournalEntry` identity: `id`, `sourceOperationId`, and
-`txHash` use that value. The indexed raw-event identifier (`<txHash>-<logIndex>`) remains source evidence, not an accounting-entry identity.
-All source events with the same transaction hash are assembled into one `JournalEntry` before its compatible account lines are aggregated. A
-synthetic operation without an on-chain transaction keeps its explicit stable identity.
+### `INTERNAL` — Other Company-Pocket Transfer
 
-### Deployment Account Evidence
+**Source stories:** [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds),
+[US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account), and
+[US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
 
-Bank, Payroll, Expense, and Credit are deployment-scoped cash families. A line uses a concrete deployment only when its source mapper names
-a known company contract of that family, or an ERC-20 `Transfer` in the transaction receipt unambiguously proves that the deployment sent or
-received the cash. Missing, external, ambiguous, native-only, or unavailable receipt evidence leaves the line on the explicit unresolved
-account; no historical deployment is selected by timing or prior activity.
+- **Input:** A confirmed movement between two known company pockets that is not owned by a more specific rule.
+- **Processing:** Source and destination deployments are resolved separately. Mirrored evidence is deduplicated only when it describes the
+  same operation and complementary movement.
+- **General Ledger:** Label `Internal transfer`; activity links to the most specific owning journey. No revenue or expense is recognized.
 
-### Fee Invariant
+For a $100 movement between two company pockets:
 
-A Bank fee never creates a `JournalEntry` by itself. It is an additional debit line in the same entry as the Bank transfer that caused it:
+| Account                 | Debit (USD) | Credit (USD) |
+| ----------------------- | ----------: | -----------: |
+| Destination cash pocket |         100 |              |
+| Source cash pocket      |             |          100 |
 
-- the destination receives the transfer amount;
-- `Transaction Fee Expense` receives the fee amount; and
-- `Cash — Bank` is credited with the gross amount.
+### `CASH-OUT` — External Bank or Safe Payment
 
-JournalEntry assembly reconciles each `FeePaid` log with its fee-bearing Bank outflow in the same source operation. Without that outflow,
-the fee is incomplete source evidence, not a fee-only accounting operation: Accounting withholds it from the General Ledger and exports, and
-displays a reconciliation warning until the counterpart evidence is available.
+**Source stories:** [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds),
+[US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds), and
+[US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
 
-## Cash, Capital, and Treasury Entries
+- **Input:** A Bank or Safe outflow to an address that is not a known company pocket.
+- **Processing:** The mapper initially classifies the counter-account as `Operating Expense`. A valid account assignment may replace it with
+  `Owner Capital`, `Payroll Expense`, `Interest Expense`, or `Dividend Expense`. Compound entries remain read-only.
+- **General Ledger:** Label `Cash payment`; activity links to Bank or Safe. Account Assignments and the ledger show the same complete entry.
 
-### Direct External Deposit into Bank — `UC-BANK-02`
+For a $100 external Bank payment assigned to Operating Expense and a $1 fee:
 
-An external party deposits 100 USD directly into Bank. The sender's role does not change this source-evidence posting.
+| Account                 | Debit (USD) | Credit (USD) |
+| ----------------------- | ----------: | -----------: |
+| Operating Expense       |         100 |              |
+| Transaction Fee Expense |           1 |              |
+| Cash — Bank             |             |          101 |
 
-| Account         | Debit | Credit |
-| --------------- | ----: | -----: |
-| Cash — Bank     |   100 |        |
-| Service Revenue |       |    100 |
+### `FEE` — Transaction-Fee Component
 
-### Investment through SafeDepositRouter — `UC-SDR-01`
+**Source story:** [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds).
 
-An investor contributes 100 USD through SafeDepositRouter and receives SHER.
+- **Input:** A generation-aware `FeePaid` event matched to a Bank outflow from the same source operation.
+- **Processing:** Legacy local Bank fee events and current FeeCollector events are normalized, then attached to the parent transfer. An
+  unmatched fee is withheld and reported as incomplete evidence.
+- **General Ledger:** The lines appear inside the parent `UC-BANK-03` or `CASH-OUT` entry. `FEE` is used as a standalone label only by the
+  presenter contract; valid assembled books do not expose an orphan fee entry.
 
-| Account         | Debit | Credit |
-| --------------- | ----: | -----: |
-| Cash — Safe     |   100 |        |
-| Investor Equity |       |    100 |
+For a parent $100 Bank payment carrying a $1 fee, the complete entry—not a separate fee transaction—is:
 
-The Safe transfer from this transaction is supplementary source evidence. It never adds a direct-deposit or Service Revenue line because the
-transaction hash already identifies the SafeDepositRouter investment.
+| Account                         | Debit (USD) | Credit (USD) |
+| ------------------------------- | ----------: | -----------: |
+| Parent transfer counter-account |         100 |              |
+| Transaction Fee Expense         |           1 |              |
+| Cash — Bank                     |             |          101 |
 
-### Direct External Deposit into Safe — `UC-BANK-02`
+## Payroll and Expense Use Cases
 
-An external party deposits 100 USD directly into the Safe without a matching SafeDepositRouter transaction.
+### `UC-CASH-02` — Weekly Wage Accrual
 
-| Account         | Debit | Credit |
-| --------------- | ----: | -----: |
-| Cash — Safe     |   100 |        |
-| Service Revenue |       |    100 |
+**Source stories:** [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim) and
+[US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim).
 
-### Bank Funds Payroll — `UC-BANK-03`
+- **Input:** An ended weekly claim, its daily hours, applicable wage terms, overtime policy, and current eligibility status.
+- **Processing:** Accounting calculates the canonical weekly amount at the week-end timestamp. A disabled claim is excluded; signing is not
+  the accrual trigger. The entry is synthetic and has no transaction hash.
+- **General Ledger:** Label `Wage accrual`; activity `Payroll: Claim`; date is the end of the work week.
 
-Bank transfers 100 USD into the Payroll pocket without a fee.
+For an ended eligible week with $80 of cash wages and $20 of SHER wages:
 
-| Account        | Debit | Credit |
-| -------------- | ----: | -----: |
-| Cash — Payroll |   100 |        |
-| Cash — Bank    |       |    100 |
+| Account                    | Debit (USD) | Credit (USD) |
+| -------------------------- | ----------: | -----------: |
+| Payroll Expense            |          80 |              |
+| Deferred SHER Compensation |          20 |              |
+| Wage Payable               |             |           80 |
+| SHERS To Be Issued         |             |           20 |
 
-### Bank Transfer with a Fee — `UC-BANK-03` + Fee
+Edits or deletions made before the week ends change the source amount; they do not create separate accounting operations.
 
-Bank transfers 100 USD into the Payroll pocket and the operation charges a 1 USD fee.
+### `UC-CASH-03` — Wage Settlement
 
-| Account                 | Debit | Credit |
-| ----------------------- | ----: | -----: |
-| Cash — Payroll          |   100 |        |
-| Transaction Fee Expense |     1 |        |
-| Cash — Bank             |       |    101 |
+**Source story:** [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim).
 
-This is the only fee representation. There is no separate fee entry before, after, or alongside this `JournalEntry`.
+- **Input:** A Payroll withdrawal event enriched with the matching weekly claim.
+- **Processing:** Cash and SHER settlement paths are distinguished by currency. A matching Investor mint from SHER settlement is removed as
+  duplicate evidence.
+- **General Ledger:** Label `Wage settlement`; activity `Payroll: Withdraw`; the transaction hash traces the settlement.
 
-### Bank Transfer to an External Recipient with a Fee — `CASH-OUT` + Fee
+For settlement of $80 in cash wages and $20 in SHER wages:
 
-Bank transfers 100 USD to an external recipient and the operation charges a 1 USD fee. Until an owner assigns a different counter-account,
-source inference posts the transfer provisionally to Operating Expense.
+| Account            | Debit (USD) | Credit (USD) |
+| ------------------ | ----------: | -----------: |
+| Wage Payable       |          80 |              |
+| SHERS To Be Issued |          20 |              |
+| Cash — Payroll     |             |           80 |
+| Investor Equity    |             |           20 |
 
-| Account                 | Debit | Credit |
-| ----------------------- | ----: | -----: |
-| Operating Expense       |   100 |        |
-| Transaction Fee Expense |     1 |        |
-| Cash — Bank             |       |    101 |
+### `UC-EXP-01` — Approved Expense Payout
 
-### Internal Transfer between Company Pockets — `INTERNAL`
+**Source story:** [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account).
 
-The Safe transfers 100 USD to Bank. This changes the cash location but does not affect income, expenses, assets, or equity in aggregate.
+- **Input:** An Expense Account transfer to an external recipient and, when available, its approved portal budget.
+- **Processing:** The mapper reconstructs the approval cap and remaining amount for the operation. When indexed payout events are entirely
+  unavailable, the approved record's current drawn balance supplies one synthetic fallback entry per budget. An internal destination uses
+  `INTERNAL` instead.
+- **General Ledger:** Label `Operating expense`; activity links to the Expense journey. Indexed entries retain their transaction hash;
+  fallback entries identify their synthetic source.
 
-| Account     | Debit | Credit |
-| ----------- | ----: | -----: |
-| Cash — Bank |   100 |        |
-| Cash — Safe |       |    100 |
+For a $100 approved payout to an external recipient:
 
-### Unassigned Bank or Safe Outflow — `CASH-OUT`
+| Account           | Debit (USD) | Credit (USD) |
+| ----------------- | ----------: | -----------: |
+| Operating Expense |         100 |              |
+| Cash — Expense    |             |          100 |
 
-Bank sends 100 USD to an external address and no manual account assignment is available yet.
+Creating, deactivating, or reactivating an approval changes spending authority but moves no money, so it creates no journal entry.
 
-| Account           | Debit | Credit |
-| ----------------- | ----: | -----: |
-| Operating Expense |   100 |        |
-| Cash — Bank       |       |    100 |
+## Community Credit Use Cases
 
-This is a visible source-inferred account and is marked as needing off-chain data. It is not evidence that every external transfer is an
-operating expense.
+### `UC-CREDIT-01` — Funded Principal
 
-## Account-Assigned Bank and Safe Outflows
+**Source stories:** [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round) and
+[US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round).
 
-An owner can assign one supported counter-account directly to a transaction-backed Bank or Safe outflow only when its counterparty is
-external and the entry contains one source withdrawal. A movement between known company pockets remains the `INTERNAL` entry above. A
-deposit retains its source-evidence account, and a compound journal entry remains read-only.
+- **Input:** A funded-round event, lender contributions, creation terms, and token identity.
+- **Processing:** `FundsLent` events are held as contribution evidence while funds remain in the round. When the round funds or a partial
+  raise is accepted, contributions are grouped by funding operation. A missing token or creation record produces memo-only evidence rather
+  than a fabricated valuation.
+- **General Ledger:** A zero-interest funding operation is labelled `Credit funds lent`. When fixed return is recognized in the same source
+  operation, the principal and interest lines remain one entry under the primary use-case label.
 
-### Owner-Capital Assignment — `CASH-OUT`
+For a funded principal of $100:
 
-An owner assigns Owner Capital to a 100 USD Bank withdrawal that returns previously contributed capital.
+| Account      | Debit (USD) | Credit (USD) |
+| ------------ | ----------: | -----------: |
+| Cash — Bank  |         100 |              |
+| Loan Payable |             |          100 |
 
-| Account       | Debit | Credit |
-| ------------- | ----: | -----: |
-| Owner Capital |   100 |        |
-| Cash — Bank   |       |    100 |
+A published, open, refunded, or not-yet-funded round does not change the company's books.
 
-### Operating-Expense Assignment — `CASH-OUT`
+### `UC-CREDIT-05` — Fixed Return Recognized
 
-An owner assigns Operating Expense to a 100 USD Bank or Safe outflow.
+**Source stories:** [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round) and
+[US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round).
 
-| Account           | Debit | Credit |
-| ----------------- | ----: | -----: |
-| Operating Expense |   100 |        |
-| Cash — Bank/Safe  |       |    100 |
+- **Input:** The funded principal and the offer's flat-interest terms.
+- **Processing:** Accounting calculates each lender's fixed return when the round becomes funded. This synthetic obligation is grouped by
+  lender but remains traceable to the funded offer.
+- **General Ledger:** The interest lines share the funding operation with `UC-CREDIT-01`; the current primary label is
+  `Credit interest owed`. The obligation is visible before cash repayment without creating a second funding entry.
 
-### Payroll-Expense Assignment — `CASH-OUT`
+For a $10 fixed return recognized when the round funds:
 
-An owner assigns Payroll Expense to a 100 USD Bank or Safe outflow.
+| Account          | Debit (USD) | Credit (USD) |
+| ---------------- | ----------: | -----------: |
+| Interest Expense |          10 |              |
+| Interest Payable |             |           10 |
 
-| Account          | Debit | Credit |
-| ---------------- | ----: | -----: |
-| Payroll Expense  |   100 |        |
-| Cash — Bank/Safe |       |    100 |
+### `UC-CREDIT-03` — Principal and Interest Repaid
 
-### Interest-Expense Assignment — `CASH-OUT`
+**Source story:** [US-CC-005](../community-credit/README.md#us-cc-005-repay-lenders).
 
-An owner assigns Interest Expense to a 100 USD Bank or Safe outflow.
+- **Input:** Lender repayment events and the principal and interest already recognized for the offer.
+- **Processing:** Payments settle principal first, then recognized interest. Any interest not covered by a prior accrual is recognized as
+  `Interest Expense` in the repayment operation. Multiple lender events from one transaction are grouped.
+- **General Ledger:** Label `Credit repayment`; activity links to Community Credit; one repayment transaction remains one entry.
 
-| Account          | Debit | Credit |
-| ---------------- | ----: | -----: |
-| Interest Expense |   100 |        |
-| Cash — Bank/Safe |       |    100 |
+For repayment of $100 principal and $10 of previously recognized interest:
 
-### Dividend-Expense Assignment — `CASH-OUT`
+| Account          | Debit (USD) | Credit (USD) |
+| ---------------- | ----------: | -----------: |
+| Loan Payable     |         100 |              |
+| Interest Payable |          10 |              |
+| Cash — Bank      |             |          110 |
 
-An owner assigns Dividend Expense to a 100 USD Bank or Safe outflow.
+If interest was not recognized earlier because its valuation evidence was unavailable, that amount debits `Interest Expense` instead of
+`Interest Payable`.
 
-| Account          | Debit | Credit |
-| ---------------- | ----: | -----: |
-| Dividend Expense |   100 |        |
-| Cash — Bank/Safe |       |    100 |
+## Shareholder and Vesting Rules
 
-For a Bank outflow with a transaction-bound fee, the selected account replaces only the provisional Operating Expense line. The
-`Transaction Fee Expense` debit and gross Cash — Bank credit remain unchanged in the same balanced `JournalEntry`.
+### `UC-SDR-01` — Investor Contribution
 
-## Payroll, Expense, and Dividend Entries
+**Source story:** [US-SHER-001](../shareholder-management/README.md#us-sher-001-invest-in-the-safe-and-receive-sher).
 
-### Weekly Wage Accrual — `UC-CASH-02`
+- **Input:** A SafeDepositRouter deposit, its Safe receipt, and the matching Investor mint.
+- **Processing:** The router operation owns the accounting entry. Matching Safe transfer and Investor mint evidence are removed so the
+  investment is neither revenue nor a second share issuance.
+- **General Ledger:** Label `Investor contribution`; activity links to the shareholder investment journey.
 
-At the end of an eligible work week, a member has earned 100 USD in cash compensation and 40 USD in SHER compensation.
+For a router investment valued at $100:
 
-| Account                    | Debit | Credit |
-| -------------------------- | ----: | -----: |
-| Payroll Expense            |   100 |        |
-| Deferred SHER Compensation |    40 |        |
-| Wage Payable               |       |    100 |
-| SHERS To Be Issued         |       |     40 |
+| Account         | Debit (USD) | Credit (USD) |
+| --------------- | ----------: | -----------: |
+| Cash — Safe     |         100 |              |
+| Investor Equity |             |          100 |
 
-The cash part creates the wage liability. The SHER part is a non-cash equity movement and does not create Payroll Expense or Wage Payable.
+### `UC-INV-01` — Dividend Paid
 
-### Wage Settlement — `UC-CASH-03`
+**Source story:** [US-SHER-002](../shareholder-management/README.md#us-sher-002-distribute-dividends-to-shareholders).
 
-The member withdraws the 100 USD cash wage and receives the 40 USD SHER compensation that was previously accrued.
+- **Input:** Per-shareholder `DividendPaid` events emitted by Investor.
+- **Processing:** Bank's distribution-trigger summary is ignored to avoid double counting. Compatible shareholder payments in the same
+  transaction are aggregated.
+- **General Ledger:** Label `Dividend paid`; activity links to the shareholder journey. Recipient evidence remains available through the
+  transaction even though the ledger presents the grouped operation.
 
-| Account            | Debit | Credit |
-| ------------------ | ----: | -----: |
-| Wage Payable       |   100 |        |
-| SHERS To Be Issued |    40 |        |
-| Cash — Payroll     |       |    100 |
-| Investor Equity    |       |     40 |
+For a $100 dividend distribution:
 
-### Approved Expense Payout — `UC-EXP-01`
+| Account          | Debit (USD) | Credit (USD) |
+| ---------------- | ----------: | -----------: |
+| Dividend Expense |         100 |              |
+| Cash — Bank      |             |          100 |
 
-The Expense Account pays an approved 100 USD expense to an external recipient.
+### `DEFAULT-D` — Direct SHER Issuance
 
-| Account           | Debit | Credit |
-| ----------------- | ----: | -----: |
-| Operating Expense |   100 |        |
-| Cash — Expense    |       |    100 |
+**Source story:** [US-SHER-004](../shareholder-management/README.md#us-sher-004-issue-sher-to-a-shareholder).
 
-### Dividend Paid — `UC-INV-01`
+- **Input:** An Investor `Minted` event not matched to a router investment, Payroll settlement, or Vesting release.
+- **Processing:** Known backed mint paths are removed first. Only the remaining direct mint uses this default rule.
+- **General Ledger:** Label `Share issuance`; activity links to the shareholder journey.
 
-InvestorV1 pays a shareholder a 100 USD dividend.
+For directly issued SHER valued at $100:
 
-| Account          | Debit | Credit |
-| ---------------- | ----: | -----: |
-| Dividend Expense |   100 |        |
-| Cash — Bank      |       |    100 |
+| Account            | Debit (USD) | Credit (USD) |
+| ------------------ | ----------: | -----------: |
+| SHERS To Be Issued |         100 |              |
+| Investor Equity    |             |          100 |
 
-## Community Credit Entries
+Shareholder migration claims are ownership migration evidence, not new issuance, and do not create this entry.
 
-### Funded Community Credit Principal — `UC-CREDIT-01`
+### `UC-VEST-01` — Vesting Grant
 
-A Community Credit round funds and 100 USD of principal reaches Bank.
+**Source story:** [US-VESTING-001](../vesting/README.md#us-vesting-001-create-a-minute-precise-vesting-schedule).
 
-| Account      | Debit | Credit |
-| ------------ | ----: | -----: |
-| Cash — Bank  |   100 |        |
-| Loan Payable |       |    100 |
+- **Input:** A vesting-schedule creation event with beneficiary, grant, and schedule identity.
+- **Processing:** The full restricted-stock commitment is recognized when defined; no shares are minted at this point.
+- **General Ledger:** Label `Vesting grant`; activity links to Vesting. The entry affects equity accounts, not profit.
 
-`FundsLent` is only a lender pledge to an external contract. It has no company `JournalEntry` before the offer funds. An unfunded offer's
-refund likewise has no entry because the company never recognized the principal.
+For a restricted-stock grant valued at $100:
 
-### Fixed Return Recognized — `UC-CREDIT-05`
+| Account                    | Debit (USD) | Credit (USD) |
+| -------------------------- | ----------: | -----------: |
+| Deferred SHER Compensation |         100 |              |
+| SHERS To Be Issued         |             |          100 |
 
-When the funded round fixes a 10 USD return owed to lenders, the company recognizes the obligation.
+### `UC-VEST-02` — Vested SHER Released
 
-| Account          | Debit | Credit |
-| ---------------- | ----: | -----: |
-| Interest Expense |    10 |        |
-| Interest Payable |       |     10 |
+**Source stories:** [US-VESTING-003](../vesting/README.md#us-vesting-003-release-accrued-shares) and
+[US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule).
 
-### Community Credit Repayment — `UC-CREDIT-03`
+- **Input:** A vesting release event and its matching Investor mint.
+- **Processing:** The Vesting event owns the entry; the matching Investor mint is removed. A stop may release accrued shares in the same
+  transaction.
+- **General Ledger:** Label `Vesting released`; activity links to the affected schedule.
 
-The company repays 80 USD of principal and 10 USD of an already accrued fixed return in one repayment operation.
+For released SHER valued at $40:
 
-| Account          | Debit | Credit |
-| ---------------- | ----: | -----: |
-| Loan Payable     |    80 |        |
-| Interest Payable |    10 |        |
-| Cash — Bank      |       |     90 |
+| Account            | Debit (USD) | Credit (USD) |
+| ------------------ | ----------: | -----------: |
+| SHERS To Be Issued |          40 |              |
+| Investor Equity    |             |           40 |
 
-When one repayment transaction pays several lenders, Accounting keeps one `JournalEntry` for that transaction and aggregates compatible
-`Loan Payable`, `Interest Payable`, and `Cash — Bank` lines. The raw transaction remains the trace for lender-level event detail.
+### `UC-VEST-03` — Unvested Grant Cancelled
 
-### Community Credit Interest Paid without a Prior Accrual — `UC-CREDIT-03`
+**Source story:** [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule).
 
-If the source feed could not recognize the fixed return at funding time, paying 10 USD of interest records the expense at payment time.
+- **Input:** A vesting stop event and the schedule's unvested remainder.
+- **Processing:** Accounting reverses only the stopped schedule's unvested quantity. If nothing remains, no cancellation lines are posted.
+  Any same-transaction accrued release is grouped with `UC-VEST-02`.
+- **General Ledger:** A cancellation-only operation is labelled `Vesting stopped`. When the stop also releases accrued shares, both use
+  cases remain one complete entry under the primary release-or-stop label.
 
-| Account          | Debit | Credit |
-| ---------------- | ----: | -----: |
-| Interest Expense |    10 |        |
-| Cash — Bank      |       |     10 |
+For cancellation of an unvested remainder valued at $60:
 
-`UC-CREDIT-02` and `UC-CREDIT-04` remain declared legacy use-case identifiers, but no current mapper emits them. They do not have a
-generated `JournalEntry` template.
+| Account                    | Debit (USD) | Credit (USD) |
+| -------------------------- | ----------: | -----------: |
+| SHERS To Be Issued         |          60 |              |
+| Deferred SHER Compensation |             |           60 |
 
-## SHER Issuance and Vesting Entries
+The focused [Vesting accounting policy](./vesting-accounting-restricted-stock.md) explains why these entries remain outside the income
+statement.
 
-### Direct SHER Mint — `DEFAULT-D`
+## Declared but Inactive Identifiers
 
-An Investor `Minted` event for 100 USD of SHER is not backed by a router deposit, wage withdrawal, or vesting release.
+The shared type still declares `UC-CREDIT-02`, `UC-CREDIT-04`, and `CASH-IN`, but no current source mapper emits them. They are not active
+booking rules and must not be used to infer ledger coverage. New or reactivated identifiers require an implementation-backed rule, tests,
+and an update to this catalogue.
 
-| Account            | Debit | Credit |
-| ------------------ | ----: | -----: |
-| SHERS To Be Issued |   100 |        |
-| Investor Equity    |       |    100 |
+## Shared General Ledger Rules
 
-### Vesting Grant — `UC-VEST-01`
-
-The company creates a vesting schedule with a 100 USD SHER award.
-
-| Account                    | Debit | Credit |
-| -------------------------- | ----: | -----: |
-| Deferred SHER Compensation |   100 |        |
-| SHERS To Be Issued         |       |    100 |
-
-### Vested SHER Release — `UC-VEST-02`
-
-The company releases and mints 40 USD of vested SHER.
-
-| Account            | Debit | Credit |
-| ------------------ | ----: | -----: |
-| SHERS To Be Issued |    40 |        |
-| Investor Equity    |       |     40 |
-
-### Vesting Stop — `UC-VEST-03`
-
-The company stops a vesting schedule and cancels its 60 USD unvested remainder.
-
-| Account                    | Debit | Credit |
-| -------------------------- | ----: | -----: |
-| SHERS To Be Issued         |    60 |        |
-| Deferred SHER Compensation |       |     60 |
-
-The `Minted` event emitted by a router investment, SHER wage withdrawal, or vesting release is already represented by its backing use case
-and is not booked again as `DEFAULT-D`.
-
-## Operation Boundaries and Known Gaps
-
-Every transaction-backed operation has one complete `JournalEntry` identified by its transaction hash. The assembly groups all source events
-with that hash before projecting the entry and aggregates compatible account lines. Synthetic operations without an on-chain transaction
-retain their explicit stable source-operation identity. A multi-counterparty transaction uses transaction-level narration; the raw indexed
-events retain the recipient-level detail.
-
-An internal transfer is de-duplicated only when the same transaction hash, accounts, token, raw amount, rate, and complementary emitting
-contract sides prove that two logs describe the same movement. Equal values or timestamps do not establish duplication, and repeated equal
-transfers inside one transaction retain their full count.
-
-JournalEntry assembly validates the fee invariant after grouping source postings: a `FeePaid` log without matching Bank-outflow evidence is
-withheld, never turned into a fee-only `JournalEntry`, and is exposed as incomplete evidence for reconciliation.
-
-Trading use cases (`UC-TRD-01` through `UC-TRD-03`) appear in the historical Money-Flow Catalogue but are not current `UseCase` values and
-have no current mapper. They are intentionally excluded from this catalogue.
+- The first visible row carries the operation date, label, transaction hash when present, activity, and action category. Every row carries
+  its concrete account, debit or credit amount, currency, quantity, and rate.
+- Action categories are derived from the finalized accounts and use case, not copied from a source event label.
+- Redeployed cash accounts remain distinct concrete rows. General Ledger and Trial Balance navigation preserves that deployment identity.
+- Memo-only operations explain incomplete economic evidence but do not invent debit or credit lines.
+- A source feed marked loading, partial, or failed withholds final reports. A missing timestamp is never replaced with epoch time, and a
+  missing valuation is never replaced with a current price.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f3c9924f9dde1bf0b391b1c873fc9cbb89295029`
+**Implementation evidence reviewed against:** `b2939127ec1ee7d16f261cf04974f1b36f1345ce`
 
-- [Journal-draft, use-case, and source-operation identity](../../../app/src/utils/accounting/journalEntryDraft.ts)
-- [Journal finalization](../../../app/src/utils/accounting/journalEntry.ts),
-  [validation](../../../app/src/utils/accounting/journalEntryValidation.ts), and
-  [Trial Balance projection](../../../app/src/utils/accounting/generalLedger.ts)
-- [Source mappers](../../../app/src/utils/accounting/mappers/), including
-  [Bank and its transaction-bound fees](../../../app/src/utils/accounting/mappers/bank.ts),
-  [Payroll](../../../app/src/utils/accounting/mappers/payroll.ts), [Expense](../../../app/src/utils/accounting/mappers/expenseAccount.ts),
-  [Community Credit](../../../app/src/utils/accounting/mappers/fixedReturn.ts), and
-  [manual journal account assignment](../../../app/src/utils/accounting/journalAccountAssignment.ts)
-- [Journal assembly regression tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts),
-  [account-assignment regression tests](../../../app/src/utils/accounting/__tests__/assemble.accountAssignment.spec.ts),
-  [General Ledger projection tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), and
-  [Community Credit mapper coverage](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts)
+- [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
+  [source mapper boundary](../../../app/src/utils/accounting/mappers/index.ts),
+  [draft identity and use-case types](../../../app/src/utils/accounting/journalEntryDraft.ts), and
+  [journal finalization](../../../app/src/utils/accounting/journalEntry.ts)
+- [Bank mapper](../../../app/src/utils/accounting/mappers/bank.ts), [Safe mapper](../../../app/src/utils/accounting/mappers/safe.ts),
+  [Payroll mapper](../../../app/src/utils/accounting/mappers/payroll.ts),
+  [Expense mapper](../../../app/src/utils/accounting/mappers/expenseAccount.ts),
+  [Community Credit mapper](../../../app/src/utils/accounting/mappers/fixedReturn.ts),
+  [Investor mapper](../../../app/src/utils/accounting/mappers/investor.ts), and
+  [Vesting mapper](../../../app/src/utils/accounting/mappers/vesting.ts)
+- [General Ledger presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts),
+  [ledger action categories](../../../app/src/utils/accounting/ledgerCategory.ts), and
+  [activity destinations](../../../app/src/composables/accounting/useActivityDestination.ts)
+- [Accounting rule tests](../../../app/src/utils/accounting/__tests/) and
+  [contract-generation accounting tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 
 ## Related Documentation
 
 - [Accounting user stories](./README.md)
 - [Accounting Read Model](../../implementation/accounting-read-model/README.md)
-- [Money-Flow Catalogue and Accounting Exercise](./money-flow-catalogue.md)
+- [Vesting accounting policy](./vesting-accounting-restricted-stock.md)
+- [Accounts](../accounts/README.md)
+- [Payroll](../payroll/README.md)
+- [Community Credit](../community-credit/README.md)
+- [Shareholder Management](../shareholder-management/README.md)
+- [Vesting](../vesting/README.md)
