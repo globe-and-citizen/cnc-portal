@@ -67,6 +67,8 @@ automatically when a deadline or maturity date passes.
 #### Business Rules
 
 - [ ] Rounds that still require an issuer action remain accessible separately from settled rounds.
+- [x] Account-level statistics (outstanding principal, interest due, lifetime raised, lifetime repaid) are grouped and displayed per token;
+      amounts from different tokens are never summed into a single figure.
 
 #### Edge & Error Cases
 
