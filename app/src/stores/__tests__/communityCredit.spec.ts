@@ -197,19 +197,19 @@ describe('Community Credit store (contract-backed)', () => {
     expect(store.outstandingPrincipalByToken).toEqual(
       new Map([
         ['USDC', 10000],
-        ['USDC.e', 7000]
+        ['USDCe', 7000]
       ])
     )
     expect(store.raisedLifetimeByToken).toEqual(
       new Map([
         ['USDC', 10000],
-        ['USDC.e', 7000]
+        ['USDCe', 7000]
       ])
     )
     expect(store.repaidLifetimeByToken).toEqual(
       new Map([
         ['USDC', 0],
-        ['USDC.e', 3000]
+        ['USDCe', 3000]
       ])
     )
   })

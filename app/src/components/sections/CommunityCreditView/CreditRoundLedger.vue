@@ -8,9 +8,11 @@
           <div>
             <div class="text-muted text-sm font-medium">Raised so far</div>
             <div class="mt-1 text-[40px] leading-none font-extrabold tracking-tight">
-              {{ formatAmount(round.raised) }}
+              {{ formatAmount(round.raised, round.token) }}
             </div>
-            <div class="text-muted mt-1 text-sm">of {{ formatAmount(round.target) }} target</div>
+            <div class="text-muted mt-1 text-sm">
+              of {{ formatAmount(round.target, round.token) }} target
+            </div>
           </div>
           <div class="text-right">
             <div class="text-primary text-3xl font-extrabold tracking-tight">{{ pct }}%</div>
@@ -62,16 +64,16 @@
           </template>
           <template #amount-cell="{ row }">
             <span :class="row.original.refunded ? 'text-muted' : 'font-bold'">{{
-              formatAmount(row.original.amount)
+              formatAmount(row.original.amount, round.token)
             }}</span>
           </template>
           <template #expected-cell="{ row }">
             <span class="text-primary font-semibold">{{
-              formatAmount(row.original.expected)
+              formatAmount(row.original.expected, round.token)
             }}</span>
           </template>
           <template #paid-cell="{ row }">
-            <span class="font-semibold">{{ formatAmount(row.original.paid) }}</span>
+            <span class="font-semibold">{{ formatAmount(row.original.paid, round.token) }}</span>
           </template>
           <template #share-cell="{ row }">
             <span class="text-muted">{{ row.original.share }}%</span>
@@ -112,7 +114,7 @@ type CreditRoundLenderRow = CreditRound['lenders'][number] & { share: number }
 const pct = computed(() => percentOf(props.round.raised, props.round.target))
 const remainingNote = computed(() => {
   if (props.round.status === 'open' || props.round.status === 'stalled') {
-    return `${formatAmount(props.round.target - props.round.raised)} remaining`
+    return `${formatAmount(props.round.target - props.round.raised, props.round.token)} remaining`
   }
   if (props.round.status === 'refunded') {
     return 'Refunded — principal returned to lenders'
