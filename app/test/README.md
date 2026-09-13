@@ -11,8 +11,8 @@ Instead, when the app is started with `VITE_E2E=true`, `wagmi.config.ts` registe
 connector that wraps a viem local account (Hardhat test account #0). It handles `connect`, `switchChain` and message signing **in-page**, so
 Playwright drives the UI exactly like a real user, with no extension and no popups.
 
-Message signing is done locally with the test private key, so the login (SIWE) flow needs **no running chain**. Tests that submit real
-transactions would still need a local Hardhat node at `http://localhost:8545`.
+Message signing is done locally with the test private key. The Playwright configuration starts a dedicated Hardhat node on
+`http://127.0.0.1:8546` for the suite, so transaction scenarios never reset or mutate a developer's regular node on port 8545.
 
 ## Quick start
 
@@ -21,7 +21,7 @@ transactions would still need a local Hardhat node at `http://localhost:8545`.
 npm install
 npx playwright install chromium
 
-# Run the E2E suite (Playwright auto-starts the dev server in VITE_E2E mode)
+# Run the E2E suite (compiles contracts, starts Hardhat + Vite, then runs Playwright)
 npm run test:e2e
 ```
 
@@ -37,8 +37,12 @@ npm run test:e2e:report   # open the last HTML report
 If you prefer to run the dev server yourself:
 
 ```bash
-VITE_E2E=true VITE_APP_NETWORK_ALIAS=hardhat npm run dev   # terminal 1
-SKIP_SERVER=true npm run test:e2e                          # terminal 2
+npm --prefix ../contract run node -- --port 8546 # terminal 1
+VITE_E2E=true VITE_APP_NETWORK_ALIAS=hardhat \
+  VITE_E2E_RPC_URL=http://127.0.0.1:8546 \
+  VITE_E2E_USDC_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3 \
+  VITE_E2E_USDCE_ADDRESS=0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 npm run dev -- --port 5174 # terminal 2
+BASE_URL=http://127.0.0.1:5174 SKIP_SERVER=true npm run test:e2e # terminal 3
 ```
 
 ## Layout
@@ -46,15 +50,22 @@ SKIP_SERVER=true npm run test:e2e                          # terminal 2
 ```text
 test/
 └── e2e/
-    └── login.spec.ts   # SIWE login flow
+    ├── fixtures.ts             # shared Playwright fixtures
+    ├── login.spec.ts           # SIWE login flow
+    └── bank/
+        ├── bank-account.spec.ts # US-BANK-001..004 browser journeys
+        ├── bank-chain.ts        # isolated Bank, Board, account, fee, and token deployment
+        └── bank-page.ts         # Bank page, API, RPC, wallet, and cash-out test helpers
 ```
 
 The mock connector itself lives in `src/e2e/mockConnector.ts` and is wired in `src/wagmi.config.ts`.
 
 ## Writing tests
 
-Tests are plain Playwright — no special fixture. The wallet is already available in-page via the mock connector, so you only drive the UI
-and stub the backend:
+Tests are plain Playwright. The wallet is available in-page via the mock connector, so tests drive the UI and stub the backend. For a
+chain-backed journey, reset and deploy a narrow fixture through `test/e2e/bank/bank-chain.ts`; its first two deployments are intentionally
+the USDC and USDCe addresses injected into the E2E Vite build above. The Bank suite snapshots and restores the chain around every test, and
+runs serially because all scenarios share that deployment.
 
 ```ts
 import { test, expect } from "@playwright/test";
@@ -78,6 +89,9 @@ test("does something", async ({ page }) => {
 
 - Add stable `data-testid` attributes to interactive elements.
 - Stub backend calls with `page.route` to keep tests hermetic.
+- Use the dedicated E2E node (`VITE_E2E_RPC_URL`), never a developer node, for transaction scenarios.
+- Set `cnc-e2e-private-key` before page load to exercise another Hardhat account, or set `cnc-e2e-reject-next-transaction=true` to reject
+  exactly the next wallet transaction.
 - Prefer web-first assertions (`expect(locator).toBeVisible()`) and `page.waitForURL` over fixed `waitForTimeout` delays.
 
 ## Test wallet
