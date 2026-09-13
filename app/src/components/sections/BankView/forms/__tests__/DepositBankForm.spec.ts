@@ -10,8 +10,10 @@ import {
   mockERC20Reads,
   mockERC20Writes,
   mockBankWrites,
-  useQueryClientFn
+  useQueryClientFn,
+  mockUseChainId
 } from '@/tests/mocks'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 
 const defaultProps = {
   bankAddress: zeroAddress as Address
@@ -96,6 +98,7 @@ describe('DepositBankForm.vue', () => {
   })
 
   it('handles native token deposits successfully and on failure', async () => {
+    const { invalidateQueries } = createQueryClient()
     const wrapper = createWrapper({ title: 'Deposit Bank Form' })
 
     await setTokenAmount(wrapper, '0.1', 'native', true)
@@ -103,6 +106,9 @@ describe('DepositBankForm.vue', () => {
     await flushPromises()
 
     expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalled()
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: contractBalanceKeys.detail(defaultProps.bankAddress, mockUseChainId.value)
+    })
     expect(wrapper.emitted('closeModal')).toBeTruthy()
 
     mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Transaction failed'))

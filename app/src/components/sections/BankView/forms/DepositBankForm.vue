@@ -215,6 +215,9 @@ const submitForm = async () => {
   try {
     if (selectedTokenId.value === 'native') {
       await nativeDeposit.mutateAsync({ value: parseEther(amount.value) })
+      await queryClient.invalidateQueries({
+        queryKey: contractBalanceKeys.detail(props.bankAddress, chainId.value)
+      })
       void queryClient.invalidateQueries({ queryKey: bankEventKeys.all })
       amount.value = ''
       toast.add({
