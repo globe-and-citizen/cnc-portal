@@ -65,6 +65,7 @@ describe('RoundView repayment', () => {
     mockFixedReturnReads.offerLenders.data.value = repaymentLenderData
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
+      refetchQueries: vi.fn(),
       getQueryData: vi.fn(),
       setQueryData: vi.fn(),
       removeQueries: vi.fn()

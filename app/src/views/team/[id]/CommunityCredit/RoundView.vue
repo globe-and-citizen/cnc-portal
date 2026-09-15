@@ -194,7 +194,8 @@ const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
 const canLend = computed(() => {
   if (!round.value || !round.value.restricted) return true
   const position = myLenderPositions.value?.get(Number(round.value.id))
-  return !!position && position.allocation > 0n
+  // A failed read isn't a confirmed zero allocation — don't present it as ineligible.
+  return !!position && position.status === 'ok' && position.allocation > 0n
 })
 const goList = () => router.push({ name: 'community-credit', params: { id: teamId.value } })
 

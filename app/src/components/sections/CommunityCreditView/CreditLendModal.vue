@@ -106,6 +106,9 @@
           </div>
         </div>
 
+        <!-- Position unavailable -->
+        <CreditLendPositionAlert v-if="positionUnavailable" @retry="retryPosition" />
+
         <!-- Error -->
         <div v-if="submitError" class="px-6">
           <UAlert
@@ -131,7 +134,7 @@
             icon="heroicons:hand-raised"
             :label="isSubmitting ? 'Signing…' : confirmLabel"
             :loading="isSubmitting"
-            :disabled="numericAmount <= 0 || isSubmitting"
+            :disabled="numericAmount <= 0 || isSubmitting || positionUnavailable"
             data-test="lend-confirm"
             @click="confirm"
           />
@@ -149,21 +152,21 @@ import { useToast } from '@nuxt/ui/composables'
 import { useUserDataStore } from '@/stores'
 import {
   useFixedReturnAddress,
-  useFixedReturnGetLendingOffer,
-  useFixedReturnMyLenderPositions
+  useFixedReturnGetLendingOffer
 } from '@/composables/fixedReturn/reads'
+import { useMyLenderOffering } from '@/composables/fixedReturn/useMyLenderOffering'
 import { useFixedReturnLendFunds } from '@/composables/fixedReturn/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import {
   applyZodFieldErrors,
   formatAmount,
-  roundToDisplayPrecision,
-  UNCAPPED_ALLOCATION
+  roundToDisplayPrecision
 } from '@/utils/communityCredit/model'
 import { classifyError } from '@/utils/errors/classifyContractError'
-import { findCreditToken, toLenderOffering } from '@/utils/communityCredit/offer'
+import { findCreditToken } from '@/utils/communityCredit/offer'
 import { createLendAmountSchema, type CreditRound, type LendingOfferStruct } from '@/types'
+import CreditLendPositionAlert from './CreditLendPositionAlert.vue'
 
 const props = defineProps<{ round: CreditRound | null }>()
 const emit = defineEmits<{ close: []; lent: [] }>()
@@ -204,26 +207,13 @@ const isSubmitting = computed(() => approveResult.isPending.value || lendResult.
 // Read the live per-lender position the same way the Lender Marketplace does instead.
 const offerId = computed(() => (props.round ? BigInt(props.round.id) : 0n))
 const { data: rawOffer } = useFixedReturnGetLendingOffer(offerId)
-const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
-
-const lenderOffering = computed(() => {
-  if (!props.round || !rawOffer.value) return null
-  const position = myLenderPositions.value?.get(Number(props.round.id)) ?? {
-    allocation: 0n,
-    deposited: 0n
-  }
-  const offering = toLenderOffering(
-    Number(props.round.id),
-    rawOffer.value as LendingOfferStruct,
-    decimals.value,
-    position.allocation,
-    position.deposited
-  )
-  // toLenderOffering formatUnits-es the raw allocation as-is — for an uncapped whitelist
-  // lender that's UNCAPPED_ALLOCATION (near-max uint256), which would otherwise render
-  // as a nonsensical giant "cap" figure. Treat it exactly like no personal cap.
-  return position.allocation === UNCAPPED_ALLOCATION ? { ...offering, cap: null } : offering
-})
+const roundRef = computed(() => props.round)
+const rawOfferStruct = computed(() => rawOffer.value as LendingOfferStruct | undefined)
+const { lenderOffering, positionUnavailable, retryPosition } = useMyLenderOffering(
+  roundRef,
+  rawOfferStruct,
+  decimals
+)
 
 /** Personal ceiling left — whitelist allocation or general cap, whichever the offer uses. */
 const capLeft = computed(() => {
@@ -303,6 +293,10 @@ async function confirm() {
   }
   if (!token.value) {
     submitError.value = `Unsupported token: ${round.token}`
+    return
+  }
+  if (positionUnavailable.value) {
+    submitError.value = "Couldn't verify your lending position — retry before continuing."
     return
   }
 

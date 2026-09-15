@@ -78,6 +78,7 @@ describe('Community Credit views', () => {
     mockFixedReturnReads.myLenderPositions.data.value = new Map()
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
+      refetchQueries: vi.fn(),
       getQueryData: vi.fn(),
       setQueryData: vi.fn(),
       removeQueries: vi.fn()
@@ -265,7 +266,7 @@ describe('Community Credit views', () => {
     it('offers the Lend action on a restricted round once the owner has a whitelist allocation', async () => {
       store.isOwner = true
       mockFixedReturnReads.myLenderPositions.data.value = new Map([
-        [1, { allocation: 500n, deposited: 0n }]
+        [1, { status: 'ok', allocation: 500n, deposited: 0n }]
       ])
       const wrapper = mountRound(sampleRound({ restricted: true }))
       await flushPromises()

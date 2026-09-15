@@ -9,7 +9,7 @@ import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
 import { log } from '@/lib/logging'
 import type {
-  FixedReturnLenderPosition,
+  FixedReturnLenderPositionResult,
   FixedReturnOfferLender,
   FixedReturnRawOffer,
   LendingOfferStruct
@@ -266,7 +266,7 @@ export function useFixedReturnOfferLenders(
       )
     } catch (error) {
       log.error('Failed to fetch FixedReturn offer lenders:', error)
-      return []
+      throw error
     }
   }
 
@@ -307,7 +307,7 @@ export function useFixedReturnMyLenderPositions() {
   const lenderAddress = computed(() => userStore.address as Address | undefined)
   const { data: allOffers } = useFixedReturnAllOffers()
 
-  async function fetchMyLenderPositions(): Promise<Map<number, FixedReturnLenderPosition>> {
+  async function fetchMyLenderPositions(): Promise<Map<number, FixedReturnLenderPositionResult>> {
     const address = fixedReturnAddress.value
     const lender = lenderAddress.value
     if (!address || !lender) return new Map()
@@ -329,10 +329,10 @@ export function useFixedReturnMyLenderPositions() {
               args: [BigInt(offerId), lender]
             }) as Promise<bigint>
           ])
-          return [offerId, { allocation, deposited }] as const
+          return [offerId, { status: 'ok', allocation, deposited }] as const
         } catch (error) {
           log.error(`Failed to fetch lender position for offer #${offerId}:`, error)
-          return [offerId, { allocation: 0n, deposited: 0n }] as const
+          return [offerId, { status: 'error', error }] as const
         }
       })
     )
