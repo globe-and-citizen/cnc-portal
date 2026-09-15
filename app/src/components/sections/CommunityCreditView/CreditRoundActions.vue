@@ -62,19 +62,25 @@ const actions = computed<RoundAction[]>(() => {
         ]
       : []
   }
-  if (!props.isOwner) return []
-  if (isRepayableRoundStatus(round.status) && props.isRepaymentAvailable) {
-    return [
-      {
-        test: 'round-cta-repay',
-        label: 'Repay round',
-        icon: 'heroicons:arrow-uturn-left',
-        color: 'primary',
-        variant: 'solid',
-        emit: 'repay'
-      }
-    ]
+  // Repayable is gated purely by treasury capability (Bank owner, not paused) —
+  // deliberately independent of `isOwner` (the FixedReturn round issuer), since the
+  // wallet that can actually execute the repay may not be the same wallet that
+  // created the round.
+  if (isRepayableRoundStatus(round.status)) {
+    return props.isRepaymentAvailable
+      ? [
+          {
+            test: 'round-cta-repay',
+            label: 'Repay round',
+            icon: 'heroicons:arrow-uturn-left',
+            color: 'primary',
+            variant: 'solid',
+            emit: 'repay'
+          }
+        ]
+      : []
   }
+  if (!props.isOwner) return []
   if (round.status !== 'stalled') return []
 
   const actions: RoundAction[] = [

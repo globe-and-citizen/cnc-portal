@@ -67,6 +67,8 @@ automatically when a deadline or maturity date passes.
 #### Business Rules
 
 - [ ] Rounds that still require an issuer action remain accessible separately from settled rounds.
+- [x] Account-level statistics (outstanding principal, interest due, lifetime raised, lifetime repaid) are grouped and displayed per token;
+      amounts from different tokens are never summed into a single figure.
 
 #### Edge & Error Cases
 
@@ -204,7 +206,7 @@ the company's books and creates no journal entry.
 - [x] The Bank rejects repayment from an account other than its current owner.
 - [x] A paused Bank rejects repayment.
 - [x] The repayment action is unavailable to a wallet other than the current Bank owner.
-- [ ] The repayment action is unavailable while the Bank is paused.
+- [x] The repayment action is unavailable while the Bank is paused.
 
 #### Edge & Error Cases
 
@@ -226,11 +228,10 @@ The following verified gaps have technical evidence and remediation directions i
 - Rounds that require an issuer action are grouped with settled history.
 - Lenders cannot review their personal deposited and expected-return positions separately from the company's debt.
 - Lending and repayment refresh the matching activity feed but not every affected token balance.
-- The main repayment CTA requires both the Credit Account and Bank owner, and the product does not yet reflect the Bank pause state.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
+**Implementation evidence reviewed against:** `d22c21b7d46e0b07cc1720063dab67ce8c0074e9`
 
 - [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
@@ -242,6 +243,7 @@ The following verified gaps have technical evidence and remediation directions i
 - [Credit round read states](../../../app/src/components/sections/CommunityCreditView/CreditRoundReadState.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
+- [Bank reads (owner and paused state, gating repayment)](../../../app/src/composables/bank/reads.ts)
 - [Repayment amount validation](../../../app/src/types/communityCredit.schemas.ts)
 - [Repayment lifecycle status](../../../app/src/utils/communityCredit/roundStatus.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
