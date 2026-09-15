@@ -64,7 +64,7 @@ import {
   useFixedReturnAddress,
   useFixedReturnGetLendingOffer,
   useFixedReturnOfferLenders,
-  useFixedReturnMyLenderPositions
+  useFixedReturnMyLenderPosition
 } from '@/composables/fixedReturn/reads'
 import {
   useFixedReturnRefundLenders,
@@ -195,12 +195,10 @@ const repayment = computed<RepaymentPanelState>(() => ({
   isSubmitting: repayResult.isPending.value,
   errorMessage: repaymentError.value
 }))
-const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
+const { allocation: myAllocation } = useFixedReturnMyLenderPosition(offerId)
 const canLend = computed(() => {
   if (!round.value || !round.value.restricted) return true
-  const position = myLenderPositions.value?.get(Number(round.value.id))
-  // A failed read isn't a confirmed zero allocation — don't present it as ineligible.
-  return !!position && position.status === 'ok' && position.allocation > 0n
+  return typeof myAllocation.data.value === 'bigint' && myAllocation.data.value > 0n
 })
 const goList = () => router.push({ name: 'community-credit', params: { id: teamId.value } })
 

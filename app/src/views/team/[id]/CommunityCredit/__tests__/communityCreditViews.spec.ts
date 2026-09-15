@@ -257,7 +257,7 @@ describe('Community Credit views', () => {
 
     it('hides the Lend action on a restricted round when the owner has no whitelist allocation', async () => {
       store.isOwner = true
-      mockFixedReturnReads.myLenderPositions.data.value = new Map()
+      mockFixedReturnReads.lenderAllocation.data.value = 0n
       const wrapper = mountRound(sampleRound({ restricted: true }))
       await flushPromises()
       expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
@@ -265,9 +265,7 @@ describe('Community Credit views', () => {
 
     it('offers the Lend action on a restricted round once the owner has a whitelist allocation', async () => {
       store.isOwner = true
-      mockFixedReturnReads.myLenderPositions.data.value = new Map([
-        [1, { status: 'ok', allocation: 500n, deposited: 0n }]
-      ])
+      mockFixedReturnReads.lenderAllocation.data.value = 500n
       const wrapper = mountRound(sampleRound({ restricted: true }))
       await flushPromises()
       expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)

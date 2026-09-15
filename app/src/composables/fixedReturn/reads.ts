@@ -126,6 +126,22 @@ export function useFixedReturnHasDeposited(offerId: MaybeRef<bigint>, lender: Ma
   return useFixedReturnOfferLenderRead('getHasDeposited', offerId, lender)
 }
 
+/**
+ * The connected wallet's live position (whitelist allocation + cumulative deposits)
+ * on ONE offer — built on the existing single-value useReadContract wrappers above,
+ * which useContractWritesV3 already auto-invalidates on every FixedReturn write.
+ * For a single round's detail page, this is 2 reads instead of re-running
+ * useFixedReturnMyLenderPositions' full all-offers computation (1+4N reads) just to
+ * extract one Map entry — see RoundView.vue.
+ */
+export function useFixedReturnMyLenderPosition(offerId: MaybeRef<bigint>) {
+  const userStore = useUserDataStore()
+  const lender = computed(() => userStore.address as Address | undefined)
+  const allocation = useFixedReturnLenderAllocation(offerId, lender as MaybeRef<Address>)
+  const deposited = useFixedReturnLenderDeposits(offerId, lender as MaybeRef<Address>)
+  return { allocation, deposited }
+}
+
 export function useFixedReturnIsTokenSupported(token: MaybeRef<Address>) {
   const fixedReturnAddress = useFixedReturnAddress()
   const tokenValue = computed(() => unref(token))
