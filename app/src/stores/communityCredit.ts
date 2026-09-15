@@ -11,7 +11,7 @@ import { useGetFixedReturnOfferingsQuery } from '@/queries/fixedReturnOffering.q
 import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
 import { useTeamStore } from './teamStore'
 import { useUserDataStore } from './user'
-import { gradientForAddress } from '@/utils/communityCredit/offer'
+import { getCreditTokenSymbol, gradientForAddress } from '@/utils/communityCredit/offer'
 import {
   lendingOfferToCreditRound,
   offerMaturityDate,
@@ -110,19 +110,35 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
         r.status === 'overdue'
     )
   )
-  const outstandingPrincipal = computed(() =>
-    outstandingRounds.value.reduce((sum, r) => sum + r.raised, 0)
+  // Rounds aren't all necessarily denominated in the same ERC-20 — a flat sum across
+  // tokens would silently mix e.g. USDC and WETH into one meaningless number, so every
+  // account stat below is bucketed by the round's token symbol instead.
+  function groupByToken(
+    creditRounds: CreditRound[],
+    amountFor: (r: CreditRound) => number
+  ): Map<string, number> {
+    const totals = new Map<string, number>()
+    for (const r of creditRounds) {
+      totals.set(r.token, (totals.get(r.token) ?? 0) + amountFor(r))
+    }
+    return totals
+  }
+  const outstandingPrincipalByToken = computed(() =>
+    groupByToken(outstandingRounds.value, (r) => r.raised)
   )
-  const interestDue = computed(() =>
-    outstandingRounds.value.reduce((sum, r) => sum + roundInterest(r), 0)
-  )
-  const raisedLifetime = computed(() => rounds.value.reduce((sum, r) => sum + r.raised, 0))
-  const repaidLifetime = computed(() =>
-    (offersQuery.data.value ?? []).reduce(
-      (sum, raw) => sum + Number(formatUnits(raw.offer.totalRepaidByIssuer, raw.decimals)),
-      0
-    )
-  )
+  const interestDueByToken = computed(() => groupByToken(outstandingRounds.value, roundInterest))
+  const raisedLifetimeByToken = computed(() => groupByToken(rounds.value, (r) => r.raised))
+  // Grouped from the raw offers (not `rounds`) so each token keeps its own decimals
+  // rather than assuming the 6 every `CreditRound` amount is pre-formatted with.
+  const repaidLifetimeByToken = computed(() => {
+    const totals = new Map<string, number>()
+    for (const raw of offersQuery.data.value ?? []) {
+      const token = getCreditTokenSymbol(raw.offer.token)
+      const amount = Number(formatUnits(raw.offer.totalRepaidByIssuer, raw.decimals))
+      totals.set(token, (totals.get(token) ?? 0) + amount)
+    }
+    return totals
+  })
   const nextMaturity = computed(() => {
     const soonest = (offersQuery.data.value ?? [])
       .filter((raw) => {
@@ -163,11 +179,11 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
     activeRounds,
     historyRounds,
     getRound,
-    // account stats
-    outstandingPrincipal,
-    interestDue,
-    raisedLifetime,
-    repaidLifetime,
+    // account stats — Maps keyed by token symbol (see groupByToken)
+    outstandingPrincipalByToken,
+    interestDueByToken,
+    raisedLifetimeByToken,
+    repaidLifetimeByToken,
     nextMaturity,
     // members
     members

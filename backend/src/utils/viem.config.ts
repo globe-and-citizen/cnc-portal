@@ -20,7 +20,7 @@ const PUBLIC_FALLBACK_RPCS: Record<number, string[]> = {
   ],
 };
 
-export const getChain = (chainIdStr: string | undefined) => {
+const getChain = (chainIdStr: string | undefined) => {
   if (!chainIdStr) return sepolia; // default to sepolia
 
   const id = chainIdStr.startsWith('0x') ? parseInt(chainIdStr, 16) : parseInt(chainIdStr);
@@ -44,7 +44,7 @@ export const getChain = (chainIdStr: string | undefined) => {
 // A configured RPC_URL stays first (top priority); the chain's public endpoints
 // are appended as failover. Chains without public peers (hardhat) keep the
 // single transport, deferring to viem's chain default when RPC_URL is unset.
-export const getTransport = (chain: Chain): Transport => {
+const getTransport = (chain: Chain): Transport => {
   const urls = [...(rpcUrl ? [rpcUrl] : []), ...(PUBLIC_FALLBACK_RPCS[chain.id] ?? [])];
   if (urls.length === 0) return http();
   if (urls.length === 1) return http(urls[0]);

@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import PublishResult from '../PublishResult.vue'
-import { mockElectionsWrites, useQueryClientFn, mockWagmiCore } from '@/tests/mocks'
+import { mockElectionsWrites, mockWagmiCore } from '@/tests/mocks'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import { useTeamStore } from '@/stores'
 
@@ -22,7 +22,6 @@ type PublishOptions = {
 
 describe('PublishResult.vue', () => {
   const publish = mockElectionsWrites.publishResults
-  let queryClientMock: { invalidateQueries: ReturnType<typeof vi.fn> }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -40,8 +39,6 @@ describe('PublishResult.vue', () => {
         }) as ReturnType<typeof useTeamStore>
     )
 
-    queryClientMock = { invalidateQueries: vi.fn() }
-    useQueryClientFn.mockImplementation(() => queryClientMock)
     mockWagmiCore.estimateGas.mockImplementation(async () => ({ gas: 21000n }))
   })
 
@@ -56,18 +53,6 @@ describe('PublishResult.vue', () => {
       { args: [BigInt(42)] },
       expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
     )
-  })
-
-  it('invalidates queries when mutation resolves', async () => {
-    publish.mutate.mockImplementationOnce((_v: unknown, opts?: PublishOptions) => {
-      opts?.onSuccess?.()
-    })
-    const wrapper = mount(PublishResult, { props: { electionId: 7 } })
-
-    await wrapper.find('[data-test="publish-results-button"]').trigger('click')
-    await nextTick()
-    await Promise.resolve()
-    expect(queryClientMock.invalidateQueries).toHaveBeenCalled()
   })
 
   it('runs the onError path without scheduling a mutation re-run', async () => {

@@ -6,7 +6,7 @@ const ctx = makeCtx()
 const base = { token: null as string | null, amount: '1000000000000000000', timestamp: 100 }
 
 describe('mapSafeTransfers', () => {
-  it('books a founder inflow as UC-BANK-01 (Owner Capital)', () => {
+  it('books a founder inflow as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapSafeTransfers(
       {
         safeAddress: ADDR.safe,
@@ -15,9 +15,9 @@ describe('mapSafeTransfers', () => {
       ctx
     )
     expect(entry).toMatchObject({
-      useCase: 'UC-BANK-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Safe',
-      credit: 'Owner Capital'
+      credit: 'Service Revenue'
     })
   })
 
@@ -32,7 +32,20 @@ describe('mapSafeTransfers', () => {
     expect(entry).toMatchObject({ useCase: 'UC-BANK-02', credit: 'Service Revenue' })
   })
 
-  it('books a member inflow as UC-MEMBER-01 (Investor Equity — invest & get SHER)', () => {
+  it('propagates the transaction hash from an indexed Safe event', () => {
+    const txHash = `0x${'d'.repeat(64)}`
+    const [entry] = mapSafeTransfers(
+      {
+        safeAddress: ADDR.safe,
+        transfers: [{ ...base, id: `${txHash}-3`, from: ADDR.client, to: ADDR.safe }]
+      },
+      ctx
+    )
+
+    expect(entry).toMatchObject({ sourceOperationId: txHash, txHash })
+  })
+
+  it('books a member inflow as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapSafeTransfers(
       {
         safeAddress: ADDR.safe,
@@ -41,10 +54,9 @@ describe('mapSafeTransfers', () => {
       ctx
     )
     expect(entry).toMatchObject({
-      useCase: 'UC-MEMBER-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Safe',
-      credit: 'Investor Equity',
-      shares: 4 // $2 invested ÷ $0.50 per SHER (multiplier 2x)
+      credit: 'Service Revenue'
     })
   })
 
@@ -64,23 +76,7 @@ describe('mapSafeTransfers', () => {
     })
   })
 
-  it('books an outflow to an internal pocket as an internal move', () => {
-    const [entry] = mapSafeTransfers(
-      {
-        safeAddress: ADDR.safe,
-        transfers: [{ ...base, id: 'o1', from: ADDR.safe, to: ADDR.bank }]
-      },
-      ctx
-    )
-    expect(entry).toMatchObject({
-      useCase: 'INTERNAL',
-      debit: 'Cash — Bank',
-      credit: 'Cash — Safe',
-      internal: true
-    })
-  })
-
-  it('flags an external outflow for off-chain reclassification', () => {
+  it('flags an external outflow for an off-chain account assignment', () => {
     const [entry] = mapSafeTransfers(
       {
         safeAddress: ADDR.safe,

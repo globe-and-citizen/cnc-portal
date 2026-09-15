@@ -2,14 +2,8 @@ import { describe, it, expect } from 'vitest'
 import * as safeModule from '../index'
 
 describe('safe index exports', () => {
-  it('exports key Safe composables', () => {
-    expect(typeof safeModule.useSafeSDK).toBe('function')
-  })
-
-  it('exports Safe URL utilities', () => {
+  it('exports the Safe URL utilities used by the balance section', () => {
     expect(typeof safeModule.getSafeHomeUrl).toBe('function')
-    expect(typeof safeModule.getSafeSettingsUrl).toBe('function')
     expect(typeof safeModule.openSafeAppUrl).toBe('function')
-    expect(typeof safeModule.randomSaltNonce).toBe('function')
   })
 })

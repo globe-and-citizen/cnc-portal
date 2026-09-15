@@ -1,19 +1,20 @@
 import { describe, it, expect } from 'vitest'
 import type { Address } from 'viem'
 import type { TeamContract, ContractType } from '@/types/teamContract'
-import {
-  assembleCncAccounting,
-  emptyCncAccounting,
-  phase1RateOfRecord,
-  type CncAccountingInput
-} from '@/utils/accounting/assemble'
+import type { CncAccountingInput } from '@/utils/accounting/assemble'
+import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
+import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { USDC_ADDRESS } from '@/constant'
-import { ADDR } from './fixtures'
+import { ADDR, usd } from './fixtures'
+import { assembleAccounting } from './assembleAccounting'
 
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 const INVESTOR = '0xcccccccccccccccccccccccccccccccccccccccc'
 const DEPLOYER = ADDR.founder as Address
+const SAFE_DEPOSIT_TX = `0x${'d'.repeat(64)}`
 
 /** Minimal `TeamContract` rows covering the team's money pockets. */
 const CONTRACTS: TeamContract[] = (
@@ -30,30 +31,31 @@ const CONTRACTS: TeamContract[] = (
 /** Stub rate of record: native $2, SHER $0.50 (USDC is pegged $1 by toUsd). */
 const RATE: UsdRateOfRecord = (tokenId) => (tokenId === 'native' ? 2 : tokenId === 'sher' ? 0.5 : 1)
 
-/** Common context for the assembled team (USDC token + fee collector + founder). */
+/** Common context for the assembled team (USDC token + fee collector). */
 const BASE: CncAccountingInput = {
   contracts: CONTRACTS,
   safeAddress: ADDR.safe,
-  founderAddresses: [ADDR.founder],
-  feeCollectorAddress: ADDR.feeCollector,
   sherTokenAddress: ADDR.sherToken,
-  safeDepositRouterAddress: ROUTER,
   rateOfRecord: RATE
 }
 
-describe('assembleCncAccounting', () => {
+describe('accounting assembly boundary', () => {
   it('returns an empty, balanced result for no feeds', () => {
-    const a = emptyCncAccounting()
-    expect(a.entries).toEqual([])
+    const a = assembleAccounting({})
     expect(a.journal).toEqual([])
-    expect(a.summary).toMatchObject({ cash: 0, income: 0, expense: 0, equity: 0 })
-    expect(a.generalLedger.balanced).toBe(true)
-    expect(a.balanceSheet.balanced).toBe(true)
-    expect(a.incomeStatement.netIncome).toBe(0)
+    expect(buildAccountingSummary(a.journal)).toMatchObject({
+      cash: 0n,
+      income: 0n,
+      expense: 0n,
+      equity: 0n
+    })
+    expect(buildGeneralLedger(a.journal).balanced).toBe(true)
+    expect(buildBalanceSheet(a.journal).balanced).toBe(true)
+    expect(buildIncomeStatement(a.journal).netIncome).toBe(0n)
   })
 
   it('books a client USDC deposit into Bank as Service Revenue', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       bankEvents: {
         bankDeposits: { items: [] },
@@ -72,43 +74,24 @@ describe('assembleCncAccounting', () => {
         bankTransfers: { items: [] },
         bankTokenTransfers: { items: [] },
         bankDividendDistributionTriggereds: { items: [] },
-        bankFeePaids: {
-          items: [
-            {
-              id: 'f1',
-              contractAddress: ADDR.bank,
-              feeCollector: ADDR.feeCollector,
-              token: USDC_ADDRESS,
-              amount: '1000000', // 1 USDC fee
-              timestamp: 120
-            }
-          ]
-        },
+        bankFeePaids: { items: [] },
         bankOwnershipTransferreds: { items: [] },
         rawContractTokenTransfers: { items: [] }
       }
     })
 
-    expect(a.summary.income).toBe(100)
-    expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
-    // The protocol fee is booked as a Transaction Fee Expense leaving the Bank.
-    const fee = a.entries.find((e) => e.useCase === 'FEE')
-    expect(fee).toMatchObject({
-      debit: 'Transaction Fee Expense',
-      credit: 'Cash — Bank',
-      internal: false
+    expect(buildAccountingSummary(a.journal).income).toBe(usd(100))
+    expect(buildIncomeStatement(a.journal).revenue).toContainEqual({
+      account: 'Service Revenue',
+      amount: usd(100)
     })
-    expect(a.summary.expense).toBe(1)
-    expect(a.incomeStatement.expenses).toContainEqual({
-      account: 'Transaction Fee Expense',
-      amount: 1
-    })
-    expect(a.generalLedger.balanced).toBe(true)
-    expect(a.balanceSheet.balanced).toBe(true)
+    expect(buildGeneralLedger(a.journal).balanced).toBe(true)
+    expect(buildBalanceSheet(a.journal).balanced).toBe(true)
   })
 
   it('collapses the cross-contract internal-transfer twin (Bank → Payroll)', () => {
-    const a = assembleCncAccounting({
+    const txHash = `0x${'1'.repeat(64)}`
+    const a = assembleAccounting({
       ...BASE,
       // Same native move indexed twice: Bank `Transfer` out and CashRem `Deposited`.
       bankEvents: {
@@ -117,7 +100,8 @@ describe('assembleCncAccounting', () => {
         bankTransfers: {
           items: [
             {
-              id: 'bt1',
+              id: `${txHash}-1`,
+              contractAddress: ADDR.bank,
               sender: ADDR.bank,
               to: ADDR.payroll,
               amount: '1000000000000000000',
@@ -135,7 +119,7 @@ describe('assembleCncAccounting', () => {
         cashRemunerationDeposits: {
           items: [
             {
-              id: 'cd1',
+              id: `${txHash}-2`,
               contractAddress: ADDR.payroll,
               depositor: ADDR.bank,
               amount: '1000000000000000000',
@@ -154,15 +138,18 @@ describe('assembleCncAccounting', () => {
       }
     })
 
-    const internal = a.entries.filter(
-      (e) => e.internal && e.debit === 'Cash — Payroll' && e.credit === 'Cash — Bank'
+    const internal = a.journal.filter(
+      (entry) =>
+        entry.internal &&
+        entry.lines.some((line) => line.account.family.name === 'Cash — Payroll') &&
+        entry.lines.some((line) => line.account.family.name === 'Cash — Bank')
     )
     expect(internal).toHaveLength(1) // the twin was deduped
-    expect(a.generalLedger.balanced).toBe(true)
+    expect(buildGeneralLedger(a.journal).balanced).toBe(true)
   })
 
   it('enriches a wage settlement with its off-chain Payroll category', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       cashRemunerationEvents: {
         cashRemunerationDeposits: { items: [] },
@@ -197,25 +184,25 @@ describe('assembleCncAccounting', () => {
       ]
     })
 
-    const payroll = a.entries.find((e) => e.useCase === 'UC-CASH-03')
-    expect(payroll?.enrichment).toBe('enriched')
+    const payroll = a.journal.find((entry) => entry.useCase === 'UC-CASH-03')
     expect(payroll?.category).toBe('Payroll')
     expect(payroll?.memo).toContain('sprint work')
   })
 
   it('books an investment via the SafeDepositRouter as Investor Equity', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       safeDepositRouterEvents: {
         safeDeposits: {
           items: [
             {
-              id: 's1',
+              id: `${SAFE_DEPOSIT_TX}-3`,
+              txHash: SAFE_DEPOSIT_TX,
               contractAddress: ROUTER,
               depositor: ADDR.client,
               token: USDC_ADDRESS,
-              tokenAmount: '200000000', // 200 USDC
-              sherAmount: '400000000',
+              tokenAmount: '2000000', // 2 USDC
+              sherAmount: '4000000',
               timestamp: 150
             }
           ]
@@ -225,6 +212,20 @@ describe('assembleCncAccounting', () => {
         safeAddressUpdateds: { items: [] },
         safeMultiplierUpdateds: { items: [] }
       },
+      // The Safe service observes the token transfer too. It is evidence for the
+      // same transaction, not a second direct Service Revenue deposit.
+      safeTransfers: [
+        {
+          type: 'ERC20_TRANSFER',
+          executionDate: new Date(150 * 1000).toISOString(),
+          blockNumber: 150,
+          transactionHash: SAFE_DEPOSIT_TX,
+          to: ADDR.safe,
+          from: ADDR.client,
+          value: '2000000',
+          tokenAddress: USDC_ADDRESS
+        }
+      ],
       // The matching mint must NOT be double-booked as equity.
       investorEvents: {
         investorMints: {
@@ -233,7 +234,7 @@ describe('assembleCncAccounting', () => {
               id: 'm1',
               contractAddress: INVESTOR,
               shareholder: ADDR.client,
-              amount: '400000000',
+              amount: '4000000',
               timestamp: 151
             }
           ]
@@ -244,14 +245,28 @@ describe('assembleCncAccounting', () => {
       }
     })
 
-    expect(a.balanceSheet.investorEquity).toBe(200)
+    const balance = buildBalanceSheet(a.journal)
+    expect(
+      balance.equity.find((line) => line.account.family.name === 'Investor Equity')?.balance
+    ).toBe(usd(2))
+    expect(buildAccountingSummary(a.journal).income).toBe(0n)
+    expect(a.journal).toMatchObject([
+      {
+        id: SAFE_DEPOSIT_TX,
+        txHash: SAFE_DEPOSIT_TX,
+        lines: [
+          { account: { family: { name: 'Cash — Safe' } }, debit: usd(2) },
+          { account: { family: { name: 'Investor Equity' } }, credit: usd(2) }
+        ]
+      }
+    ])
     // The backed mint dropped out — no Default-D memo entry survives.
-    expect(a.entries.some((e) => e.useCase === 'DEFAULT-D')).toBe(false)
-    expect(a.balanceSheet.balanced).toBe(true)
+    expect(a.journal.some((entry) => entry.useCase === 'DEFAULT-D')).toBe(false)
+    expect(balance.balanced).toBe(true)
   })
 
   it('issues an unbacked direct mint into equity (Dr SHERS To Be Issued · Cr Investor Equity)', () => {
-    const a = assembleCncAccounting({
+    const a = assembleAccounting({
       ...BASE,
       // No backing deposit/withdraw → the mint is a direct share issuance.
       investorEvents: {
@@ -274,54 +289,36 @@ describe('assembleCncAccounting', () => {
 
     // A real posting now (not a value-0 memo): it clears SHERS To Be Issued into
     // equity at the SHER rate of record (60 SHER × $1.00 = $60) — Dr/Cr filled.
-    const issued = a.entries.find((e) => e.useCase === 'DEFAULT-D')
+    const issued = a.journal.find((entry) => entry.useCase === 'DEFAULT-D')
     expect(issued).toMatchObject({
-      debit: 'SHERS To Be Issued',
-      credit: 'Investor Equity',
-      token: 'sher',
-      amountUsd: 60,
-      shares: 60
+      shares: 60,
+      lines: [
+        {
+          account: { family: { name: 'SHERS To Be Issued' } },
+          debit: usd(60),
+          movement: { token: 'sher' }
+        },
+        {
+          account: { family: { name: 'Investor Equity' } },
+          credit: usd(60),
+          movement: { token: 'sher' }
+        }
+      ]
     })
     // Equity increased and the trial balance still balances (Dr = Cr). No prior
     // accrual in this fixture, so the liability reads −$60 alone; in production the
     // wage accrual credits it first and the issuance nets it down.
-    expect(a.balanceSheet.investorEquity).toBe(60)
-    expect(a.generalLedger.balanced).toBe(true)
-    expect(a.balanceSheet.balanced).toBe(true)
-  })
-
-  it('honours an injected rate of record and defaults native/SHER to zero', () => {
-    const bankEvents = {
-      bankDeposits: {
-        items: [
-          {
-            id: 'bd1',
-            contractAddress: ADDR.bank,
-            depositor: ADDR.client,
-            amount: '1000000000000000000',
-            timestamp: 100
-          }
-        ]
-      },
-      bankTokenDeposits: { items: [] },
-      bankTransfers: { items: [] },
-      bankTokenTransfers: { items: [] },
-      bankDividendDistributionTriggereds: { items: [] },
-      bankFeePaids: { items: [] },
-      bankOwnershipTransferreds: { items: [] },
-      rawContractTokenTransfers: { items: [] }
-    }
-
-    const withRate = assembleCncAccounting({ ...BASE, bankEvents })
-    expect(withRate.summary.income).toBe(2) // 1 native @ $2
-
-    const phase1 = assembleCncAccounting({ ...BASE, rateOfRecord: phase1RateOfRecord, bankEvents })
-    expect(phase1.summary.income).toBe(0) // native priced at $0 until the FX gap is filled
+    const balance = buildBalanceSheet(a.journal)
+    expect(
+      balance.equity.find((line) => line.account.family.name === 'Investor Equity')?.balance
+    ).toBe(usd(60))
+    expect(buildGeneralLedger(a.journal).balanced).toBe(true)
+    expect(balance.balanced).toBe(true)
   })
 
   it('does not throw when optional feeds are null or absent', () => {
     expect(() =>
-      assembleCncAccounting({ ...BASE, safeTransfers: null, bankEvents: null })
+      assembleAccounting({ ...BASE, safeTransfers: null, bankEvents: null })
     ).not.toThrow()
   })
 })

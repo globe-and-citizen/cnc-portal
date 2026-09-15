@@ -1,35 +1,41 @@
 /**
- * Bank source mapper — turns indexed Bank events into ledger entries.
+ * Bank source mapper — turns indexed Bank events into journal drafts.
  *
  * Coverage (spec §4):
  * - `Deposited` / `TokenDeposited` (cash in):
  *   - from an internal pocket → **internal funding move** (Dr Cash — Bank · Cr that pocket)
- *   - from a founder           → **UC-BANK-01** (Dr Cash — Bank · Cr Owner Capital)
- *   - from anyone else (client)→ **UC-BANK-02** (Dr Cash — Bank · Cr Service Revenue)
+ *   - from anyone external     → **UC-BANK-02** (Dr Cash — Bank · Cr Service Revenue)
  * - `Transfer` / `TokenTransfer` (cash out):
  *   - to an internal pocket → **UC-BANK-03** funding move (Dr that pocket · Cr Cash — Bank)
- *   - to anyone else        → unclassified outflow, flagged `needs-off-chain-data`
+ *   - to anyone else        → unassigned outflow, flagged `needs-off-chain-data`
  *
- * Not mapped here: `FeePaid` (handled by the fee mapper — spec §5.1) and
- * `DividendDistributionTriggered` (a summary event — booking it as well as the
- * per-shareholder `Investor DividendPaid` would double-count the dividend).
+ * - `FeePaid` → another posting of the same source operation
+ *   (Dr Transaction Fee Expense · Cr Cash — Bank).
+ *
+ * `DividendDistributionTriggered` is not mapped: booking it as well as the
+ * per-shareholder `Investor DividendPaid` would double-count the dividend.
  */
 import type {
   BankDepositRow,
+  BankFeePaidRow,
   BankTokenDepositRow,
   BankTransferRow,
   BankTokenTransferRow
-} from '@/types/ponder/bank'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+} from '@/types/contract-events/bank'
+import {
+  makeJournalEntryDraft,
+  sourceOperationIdOf,
+  type JournalEntryDraft
+} from '@/utils/accounting/journalEntryDraft'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
-import { atDate, type MapperContext } from './context'
-import { applyClassification } from './applyClassification'
+import type { MapperContext } from './context'
 
 export interface BankMapperInput {
   deposits?: readonly BankDepositRow[]
   tokenDeposits?: readonly BankTokenDepositRow[]
   transfers?: readonly BankTransferRow[]
   tokenTransfers?: readonly BankTokenTransferRow[]
+  fees?: readonly BankFeePaidRow[]
 }
 
 const BANK = 'Cash — Bank' as const
@@ -45,42 +51,45 @@ function mapDeposit(
   },
   token: string | null,
   ctx: MapperContext
-): LedgerEntry {
-  const amountUsd = ctx.toUsd(BigInt(row.amount), ctx.tokenIdOf(token), atDate(row.timestamp))
+): JournalEntryDraft {
   const sourcePocket = ctx.pocketOf(row.depositor)
-  const isFounder = ctx.founderAddresses.has(row.depositor as `0x${string}`)
 
   const inferred = sourcePocket
-    ? makeEntry({
+    ? makeJournalEntryDraft({
         id: row.id,
+        sourceContract: row.contractAddress,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'INTERNAL',
         debit: BANK,
         debitInstance: row.contractAddress,
         credit: sourcePocket,
         creditInstance: row.depositor,
-        amountUsd,
         token: ctx.tokenIdOf(token),
         rawAmount: row.amount,
         counterparty: row.depositor,
         internal: true,
         memo: `Internal funding into Bank from ${sourcePocket}`
       })
-    : makeEntry({
+    : makeJournalEntryDraft({
         id: row.id,
+        sourceContract: row.contractAddress,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
-        useCase: isFounder ? 'UC-BANK-01' : 'UC-BANK-02',
+        useCase: 'UC-BANK-02',
         debit: BANK,
         debitInstance: row.contractAddress,
-        credit: isFounder ? 'Owner Capital' : 'Service Revenue',
-        amountUsd,
+        credit: 'Service Revenue',
         token: ctx.tokenIdOf(token),
         rawAmount: row.amount,
         counterparty: row.depositor,
-        memo: isFounder ? 'Founder deposit into Bank' : 'Client payment into Bank'
+        memo: 'Direct deposit into Bank'
       })
 
-  return applyClassification(inferred, 'in', BANK, ctx)
+  // A deposit is determined by its source evidence: external cash is Service
+  // Revenue and a CNC-owned source is an internal move. A legacy category must
+  // not replace either journal account.
+  return inferred
 }
 
 /** Map a single Bank transfer-out (native or token) to its ledger entry. */
@@ -88,21 +97,21 @@ function mapTransfer(
   row: { id: string; contractAddress: string; to: string; amount: string; timestamp: number },
   token: string | null,
   ctx: MapperContext
-): LedgerEntry {
+): JournalEntryDraft {
   const tokenId = ctx.tokenIdOf(token)
-  const amountUsd = ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp))
   const destPocket = ctx.pocketOf(row.to)
 
   const inferred = destPocket
-    ? makeEntry({
+    ? makeJournalEntryDraft({
         id: row.id,
+        sourceContract: row.contractAddress,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'UC-BANK-03',
         debit: destPocket,
         debitInstance: row.to,
         credit: BANK,
         creditInstance: row.contractAddress,
-        amountUsd,
         token: tokenId,
         rawAmount: row.amount,
         counterparty: row.to,
@@ -110,32 +119,52 @@ function mapTransfer(
         memo: `Fund ${destPocket} from Bank`
       })
     : // External outflow with no Phase-1 use case — provisionally an operating cost,
-      // flagged so an off-chain / manual review can reclassify it (spec §6).
-      makeEntry({
+      // flagged so an owner can assign its counter-account after manual review.
+      makeJournalEntryDraft({
         id: row.id,
+        sourceContract: row.contractAddress,
+        sourceOperationId: sourceOperationIdOf(row.id),
         timestamp: row.timestamp,
         useCase: 'CASH-OUT',
         debit: 'Operating Expense',
         credit: BANK,
         creditInstance: row.contractAddress,
-        amountUsd,
         token: tokenId,
         rawAmount: row.amount,
         counterparty: row.to,
         internal: isInternalAddress(row.to, ctx.internalAddresses),
-        memo: 'Unclassified Bank outflow to external address',
+        memo: 'Unassigned Bank outflow to external address',
         enrichment: 'needs-off-chain-data'
       })
 
-  return applyClassification(inferred, 'out', BANK, ctx)
+  return inferred
 }
 
-/** Map every indexed Bank event in `input` to ledger entries. */
-export function mapBankEvents(input: BankMapperInput, ctx: MapperContext): LedgerEntry[] {
+/** Map a protocol fee as another posting of its Bank transaction. */
+function mapFee(row: BankFeePaidRow, ctx: MapperContext): JournalEntryDraft {
+  const tokenId = ctx.tokenIdOf(row.token)
+  return makeJournalEntryDraft({
+    id: row.id,
+    sourceContract: row.contractAddress,
+    sourceOperationId: sourceOperationIdOf(row.id),
+    timestamp: row.timestamp,
+    useCase: 'FEE',
+    debit: 'Transaction Fee Expense',
+    credit: BANK,
+    creditInstance: row.contractAddress,
+    token: tokenId,
+    rawAmount: row.amount,
+    memo: 'Transaction fee skimmed from Bank'
+  })
+}
+
+/** Map every monetary Bank event, including its transaction-bound fees. */
+export function mapBankEvents(input: BankMapperInput, ctx: MapperContext): JournalEntryDraft[] {
   return [
     ...(input.deposits ?? []).map((row) => mapDeposit(row, null, ctx)),
     ...(input.tokenDeposits ?? []).map((row) => mapDeposit(row, row.token, ctx)),
     ...(input.transfers ?? []).map((row) => mapTransfer(row, null, ctx)),
-    ...(input.tokenTransfers ?? []).map((row) => mapTransfer(row, row.token, ctx))
+    ...(input.tokenTransfers ?? []).map((row) => mapTransfer(row, row.token, ctx)),
+    ...(input.fees ?? []).map((row) => mapFee(row, ctx))
   ]
 }

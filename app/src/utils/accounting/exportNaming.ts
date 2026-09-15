@@ -2,7 +2,7 @@
  * Download filenames for the accounting exports.
  *
  * Each per-page export names its file after the active scope — the selected
- * reporting period / "as of" date, and (for the ledger) the active category — so
+ * reporting period / "as of" date — so
  * a folder of downloads is self-describing rather than a pile of
  * `general-ledger.pdf` collisions. Pure and unit-tested; the PDF/Excel builders
  * own the in-file heading ({@link incomeExportTitle} et al.), this owns the name
@@ -22,7 +22,7 @@ function safeName(name: string): string {
 }
 
 /** The self-describing base name (no extension) for a section's export. */
-export function exportBaseName(spec: SectionSpec): string {
+function exportBaseName(spec: SectionSpec): string {
   switch (spec.key) {
     case 'summary':
       return 'Accounting Report'
@@ -33,16 +33,13 @@ export function exportBaseName(spec: SectionSpec): string {
     case 'trial':
       return spec.asOf ? `Trial Balance - As of ${dayLabel(spec.asOf)}` : 'Trial Balance'
     case 'ledger': {
-      if (spec.account) {
-        const name = Array.isArray(spec.account)
-          ? (spec.accountLabel ?? 'Aggregate')
-          : (spec.account as string)
-        const parts = ['General Ledger', name]
+      if (spec.journalAccountLabel) {
+        const parts = ['General Ledger', spec.journalAccountLabel]
         if (spec.from) parts.push(periodLabel(spec.from, spec.to))
         else if (spec.to) parts.push(`As of ${dayLabel(spec.to)}`)
         return parts.join(' - ')
       }
-      const parts = ['General Ledger', spec.filter && spec.filter !== 'All' ? spec.filter : 'All']
+      const parts = ['General Ledger']
       if (spec.from || spec.to) parts.push(periodLabel(spec.from, spec.to))
       return parts.join(' - ')
     }

@@ -3,7 +3,7 @@
     <template #header>{{ electionId ? `Elected` : `Current` }} Board of Directors</template>
     <div
       class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-      v-if="normalizedBoardOfDirectors.length > 0"
+      v-if="_boardOfDirectors.length > 0"
     >
       <div
         v-for="(memberAddress, index) in _boardOfDirectors"
@@ -29,12 +29,13 @@
   </UCard>
 </template>
 <script setup lang="ts">
-import { boardOfDirectorsAbi, electionsAbi } from '@/artifacts/abi/generated'
+import { boardOfDirectorsAbi } from '@/artifacts/abi/generated'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import BodMembersEmptyState from './BodMembersEmptyState.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
+import { useElectionsGetWinners } from '@/composables/elections'
 import { computed, watch } from 'vue'
 import { log } from '@/lib/logging'
 
@@ -44,7 +45,6 @@ const props = defineProps<{
 
 const teamStore = useTeamStore()
 const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 const { data: boardOfDirectors, isFetching } = useReadContract({
   // Ref, not `.value`: on a page reload the team contracts land after setup
@@ -62,20 +62,14 @@ const normalizedBoardOfDirectors = computed<string[]>(() =>
     ? boardOfDirectors.value.filter((member): member is string => typeof member === 'string')
     : []
 )
-const winnersArgs = computed(() => [BigInt(props.electionId || 0)] as const)
-const { data: electionWinners, error: errorGetElectionWinners } = useReadContract({
-  address: electionsAddress,
-  abi: electionsAbi,
-  functionName: 'getElectionWinners',
-  args: winnersArgs,
-  //scopeKey: 'electionWinners'
-  query: { enabled: computed(() => !!props.electionId && !!electionsAddress.value) }
-})
+// Falls back to 0 so the shared read has an id to key on; it stays disabled
+// until a real election is named, and ids start at 1.
+const winnersElectionId = computed(() => props.electionId ?? 0n)
+const { data: electionWinners, error: errorGetElectionWinners } =
+  useElectionsGetWinners(winnersElectionId)
 
-const _boardOfDirectors = computed(() => {
-  if (props.electionId && Array.isArray(electionWinners.value)) {
-    return electionWinners.value.filter((member): member is string => typeof member === 'string')
-  }
+const _boardOfDirectors = computed<readonly string[]>(() => {
+  if (props.electionId && electionWinners.value) return electionWinners.value
 
   return normalizedBoardOfDirectors.value
 })

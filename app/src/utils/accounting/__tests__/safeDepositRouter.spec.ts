@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mapSafeDepositRouterEvents } from '@/utils/accounting/mappers/safeDepositRouter'
-import { makeCtx, ADDR } from './fixtures'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 
@@ -11,6 +11,7 @@ describe('mapSafeDepositRouterEvents', () => {
         deposits: [
           {
             id: 'sd1',
+            txHash: '0xrouterdeposit',
             contractAddress: ADDR.safe,
             depositor: ADDR.client,
             token: ADDR.usdcToken,
@@ -26,11 +27,12 @@ describe('mapSafeDepositRouterEvents', () => {
       useCase: 'UC-SDR-01',
       debit: 'Cash — Safe',
       credit: 'Investor Equity',
-      amountUsd: 5, // 5 usdc deposited * $1
       shares: 10, // 10 SHER minted
       token: 'usdc',
+      txHash: '0xrouterdeposit',
       internal: false
     })
+    expect(draftUsdValue(entry)).toBe(5) // 5 USDC deposited * $1
   })
 
   it('values a native deposit at the rate of record', () => {
@@ -50,6 +52,7 @@ describe('mapSafeDepositRouterEvents', () => {
       },
       ctx
     )
-    expect(entry).toMatchObject({ token: 'native', amountUsd: 2, shares: 2 })
+    expect(entry).toMatchObject({ token: 'native', shares: 2 })
+    expect(draftUsdValue(entry)).toBe(2)
   })
 })

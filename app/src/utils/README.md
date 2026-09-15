@@ -7,7 +7,7 @@ there is no global `@/utils` barrel.
 
 | Directory            | Responsibility                                                         |
 | -------------------- | ---------------------------------------------------------------------- |
-| `accounting/`        | Ledger construction, classification, grouping, and report shaping      |
+| `accounting/`        | Journal construction, account assignment, grouping, and report shaping |
 | `claims/`            | Daily-claim form rules and claim-history navigation                    |
 | `communityCredit/`   | Credit offer, round, whitelist, and wizard models                      |
 | `contracts/`         | ABI decoding plus contract deployment and action presentation          |

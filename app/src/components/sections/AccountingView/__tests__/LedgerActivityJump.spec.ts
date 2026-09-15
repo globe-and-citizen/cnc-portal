@@ -10,22 +10,23 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders, mockRouterPush } from '@/tests/mocks'
 import LedgerTable from '../LedgerTable.vue'
-import { ledgerRows } from '@/utils/accounting/ledgerPresenter'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 const MEMBER = '0x1111111111111111111111111111111111111111'
 
 /** A minimal balanced entry; override only what each case needs. */
-function entry(partial: Partial<LedgerEntry>): LedgerEntry {
+function entry(partial: Partial<JournalEntryDraft>): JournalEntryDraft {
   return {
     id: 'e1',
     timestamp: 1_700_000_000,
     useCase: 'CASH-IN',
     debit: 'Cash — Bank',
     credit: 'Service Revenue',
-    amountUsd: 500,
     token: 'usdc',
     rawAmount: '500000000',
+    rate: 1,
     internal: false,
     memo: 'raw memo',
     enrichment: 'not-applicable',
@@ -33,9 +34,9 @@ function entry(partial: Partial<LedgerEntry>): LedgerEntry {
   }
 }
 
-function renderLedger(entries: LedgerEntry[]) {
+function renderLedger(entries: JournalEntryDraft[]) {
   return renderWithProviders(LedgerTable, {
-    props: { rows: ledgerRows(entries), total: '$500.00' },
+    props: { rows: journalLedgerRows(finalizeJournal(entries)), total: '$500.00' },
     route: { params: { id: '42' } }
   })
 }

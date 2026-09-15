@@ -1,30 +1,29 @@
 /**
- * Activity narration for ledger entries — the "labélisation" layer.
+ * Activity narration for finalized journal entries — the "labélisation" layer.
  *
  * The general ledger's "Activity" column reads like a story: an avatar of the
  * actor (or the two contract pockets, for a transfer) plus a short predicate
  * ("submitted 35h · week ending Jun 14", "invested $105.00 in capital"). This
- * module turns a {@link LedgerEntry} into a structured {@link ActivityCell} the
+ * module turns a {@link JournalEntry} into a structured {@link ActivityCell} the
  * table renders; identity (member name + avatar, contract icon) is resolved at
  * render time via `resolveUser`, so this layer stays pure and unit-testable.
  *
  * Entries with no human actor and no pocket-to-pocket move (memo mints,
- * unclassified cash) fall back to the generic per-use-case {@link entryLabel}.
+ * unassigned cash) fall back to the generic per-use-case {@link entryLabel}.
  */
 import { money, formatUnixDate } from './presenter'
-import type { LedgerEntry, UseCase } from './ledgerEntry'
-import type { AccountName } from './chartOfAccounts'
+import { formatAddress, formatDuration } from '@/utils/format'
+import type { UseCase } from './journalEntryDraft'
+import type { JournalEntry } from './types'
 
 /**
  * Normalized accounting-entry label per use case — the generic fallback shown in
  * the "Transaction" column and for entries with no actor (catalogue §5 / spec §4).
  */
 const ENTRY_LABEL: Record<UseCase, string> = {
-  'UC-BANK-01': 'Owner capital contribution',
   'UC-BANK-02': 'Service revenue',
   'UC-BANK-03': 'Treasury funding',
   'UC-SDR-01': 'Investor contribution',
-  'UC-MEMBER-01': 'Member capital contribution',
   'UC-CREDIT-01': 'Credit funds lent',
   'UC-CREDIT-02': 'Credit principal to Bank',
   'UC-CREDIT-03': 'Credit repayment',
@@ -45,7 +44,7 @@ const ENTRY_LABEL: Record<UseCase, string> = {
 }
 
 /** The generic accounting-entry label a ledger row shows (falls back to the memo). */
-export function entryLabel(entry: LedgerEntry): string {
+export function entryLabel(entry: JournalEntry): string {
   return ENTRY_LABEL[entry.useCase] ?? entry.memo
 }
 
@@ -53,11 +52,17 @@ export function entryLabel(entry: LedgerEntry): string {
  * The structured "Activity" cell the ledger table renders:
  * - `actor`    — one party's address; show its avatar + the predicate text.
  * - `transfer` — a pocket-to-pocket move; show `from → to` contract avatars.
- * - `plain`    — no actor (memo / unclassified); just the text.
+ * - `plain`    — no actor (memo / unassigned); just the text.
  */
 export type ActivityCell =
   | { kind: 'actor'; actor: string; text: string }
-  | { kind: 'transfer'; from: AccountName; to: AccountName; actor?: string }
+  | {
+      kind: 'transfer'
+      /** Account display labels, which may distinguish concrete deployments. */
+      from: string
+      to: string
+      actor?: string
+    }
   | { kind: 'plain'; text: string }
 
 /** Internal pocket-to-pocket moves — rendered as two contract avatars (from → to). */
@@ -71,10 +76,8 @@ const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
 const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'UC-CASH-02',
   'UC-CASH-03',
-  'UC-BANK-01',
   'UC-BANK-02',
   'UC-SDR-01',
-  'UC-MEMBER-01',
   'UC-CREDIT-01',
   'UC-CREDIT-03',
   'UC-CREDIT-04',
@@ -97,7 +100,7 @@ const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
  * so no "today"/"this week" qualifier is needed. An unmatched withdrawal (no
  * approval on file) reads the generic phrase.
  */
-function expensePredicate(entry: LedgerEntry, amount: string): string {
+function expensePredicate(entry: JournalEntry, amount: string): string {
   if (entry.expenseFrequencyType === 0 && entry.expenseApprovedUsd != null) {
     return `withdrew ${amount} from a one-time expense approval of ${money(entry.expenseApprovedUsd)}`
   }
@@ -111,23 +114,14 @@ function expensePredicate(entry: LedgerEntry, amount: string): string {
   return `withdrew ${amount} for an expense`
 }
 
-/** Hours and minutes worked — e.g. "16h", "1h 30min", "50min" — never a decimal. */
-function formatDuration(minutes: number | undefined): string | null {
-  if (!minutes || minutes <= 0) return null
-  const hours = Math.floor(minutes / 60)
-  const mins = Math.round(minutes - hours * 60)
-  if (hours === 0) return `${mins}min`
-  if (mins === 0) return `${hours}h`
-  return `${hours}h ${mins}min`
-}
-
 /**
  * The name-less predicate shown after the actor's avatar (the avatar carries the
  * name). The "· N SHER" tail appears once the entry carries the share count.
  */
-function predicate(entry: LedgerEntry): string {
-  const amount = money(entry.amountUsd)
-  const hours = formatDuration(entry.minutesWorked)
+function predicate(entry: JournalEntry): string {
+  const amount = money(entry.activityAmount)
+  const hours =
+    entry.minutesWorked && entry.minutesWorked > 0 ? formatDuration(entry.minutesWorked) : null
   const sher = entry.shares ? ` and got ${entry.shares} SHER` : ''
 
   switch (entry.useCase) {
@@ -138,13 +132,9 @@ function predicate(entry: LedgerEntry): string {
     }
     case 'UC-CASH-03':
       return hours ? `was paid for ${hours} of work` : 'was paid their wages'
-    case 'UC-BANK-01':
-      return `contributed ${amount} in capital`
     case 'UC-BANK-02':
       return `paid ${amount} for services`
     case 'UC-SDR-01':
-      return `invested ${amount} in capital${sher}`
-    case 'UC-MEMBER-01':
       return `invested ${amount} in capital${sher}`
     case 'UC-CREDIT-01':
       return `lent ${amount} to the community credit`
@@ -152,7 +142,8 @@ function predicate(entry: LedgerEntry): string {
       // The legs of one installment read differently — the debit is what marks the
       // split (see the FixedReturn mapper): principal retires the loan, while both
       // interest legs settle the fixed return, accrued or not.
-      return entry.debit === 'Loan Payable'
+      return entry.lines.find((line) => line.debit !== undefined)?.account.family.name ===
+        'Loan Payable'
         ? `was repaid ${amount} of loan principal`
         : `was paid ${amount} of interest on their loan`
     case 'UC-CREDIT-04':
@@ -184,14 +175,16 @@ function predicate(entry: LedgerEntry): string {
  * to the debited one); an entry that names a party becomes an `actor`; anything
  * else is `plain` text.
  */
-export function activityOf(entry: LedgerEntry): ActivityCell {
-  if (TRANSFER_USE_CASES.has(entry.useCase) && entry.debit && entry.credit) {
+export function activityOf(entry: JournalEntry): ActivityCell {
+  const debit = entry.lines.find((line) => line.debit !== undefined)?.account.family.name
+  const credit = entry.lines.find((line) => line.credit !== undefined)?.account.family.name
+  if (TRANSFER_USE_CASES.has(entry.useCase) && debit && credit) {
     // `actor` (the signer who performed the move) is shown when resolved from the
     // transaction; otherwise the table reads the source pocket as the doer.
     return {
       kind: 'transfer',
-      from: entry.credit,
-      to: entry.debit,
+      from: credit,
+      to: debit,
       ...(entry.initiator ? { actor: entry.initiator } : {})
     }
   }
@@ -199,22 +192,6 @@ export function activityOf(entry: LedgerEntry): ActivityCell {
     return { kind: 'actor', actor: entry.counterparty, text: predicate(entry) }
   }
   return { kind: 'plain', text: entryLabel(entry) }
-}
-
-/**
- * Append "· + N SHER" to an actor narration when a compound payroll posting also
- * issued shares, so the grouped entry's single Activity still names the equity
- * part (e.g. "was paid for 5h of work + 10 SHER"). No-op when there are no shares,
- * when the text already mentions SHER, or when the cell names no actor.
- */
-export function withSherTail(cell: ActivityCell, sherShares: number): ActivityCell {
-  if (sherShares <= 0 || cell.kind !== 'actor' || /SHER/.test(cell.text)) return cell
-  return { ...cell, text: `${cell.text} + ${sherShares} SHER` }
-}
-
-/** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */
-function shortAddress(value: string): string {
-  return /^0x[0-9a-fA-F]{40}$/.test(value) ? `${value.slice(0, 6)}…${value.slice(-4)}` : value
 }
 
 /** A pocket account name without its `"Cash — "` prefix, matching the on-screen avatar label. */
@@ -230,7 +207,7 @@ function pocketName(account: string): string {
  */
 export function activityText(
   cell: ActivityCell,
-  resolveName: (address: string) => string = shortAddress
+  resolveName: (address: string) => string = formatAddress
 ): string {
   switch (cell.kind) {
     case 'actor':

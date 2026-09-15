@@ -10,14 +10,14 @@ effective governance tools.
 
 **Tech Stack:**
 
-- **Frontend** (`app/`): Vue 3, TypeScript, Vite, Pinia, TanStack Query, wagmi/viem, Apollo Client, Tailwind v4, Nuxt UI v4
+- **Frontend** (`app/`): Vue 3, TypeScript, Vite, Pinia, TanStack Query, wagmi/viem, Tailwind v4, Nuxt UI v4
 - **Backend** (`backend/`): Express.js, TypeScript, Prisma ORM, PostgreSQL, JWT authentication
 - **Contracts** (`contract/`): Hardhat, Solidity, TypeScript testing, Ethereum blockchain integration
 - **Subgraph** (`the-graph/`): The Graph Protocol
 
 **Component Relationships:**
 
-- Frontend communicates with backend via REST (TanStack Query) and GraphQL (Apollo Client), and directly with smart contracts via Web3
+- Frontend communicates with backend via REST (TanStack Query) and reads contract activity directly through RPC logs (wagmi/viem)
 - Backend manages user data, authentication, and serves as API gateway
 - Smart contracts handle on-chain governance and contribution tracking
 

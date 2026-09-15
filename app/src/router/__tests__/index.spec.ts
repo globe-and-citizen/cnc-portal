@@ -92,6 +92,10 @@ vi.mock('@/views/LockedView.vue', () => ({
   default: { name: 'LockedView', template: '<div>Locked View</div>' }
 }))
 
+vi.mock('@/components/sections/AccountingView/AccountingPage.vue', () => ({
+  default: { name: 'AccountingPage', template: '<div><RouterView /></div>' }
+}))
+
 vi.mock('@/views/team/[id]/Accounting/SummaryView.vue', () => ({
   default: { name: 'SummaryView', template: '<div>Accounting Summary</div>' }
 }))
@@ -110,6 +114,10 @@ vi.mock('@/views/team/[id]/Accounting/TrialBalanceView.vue', () => ({
 
 vi.mock('@/views/team/[id]/Accounting/GeneralLedgerView.vue', () => ({
   default: { name: 'GeneralLedgerView', template: '<div>General Ledger</div>' }
+}))
+
+vi.mock('@/views/team/[id]/Accounting/AccountAssignmentsView.vue', () => ({
+  default: { name: 'AccountAssignmentsView', template: '<div>Account Assignments</div>' }
 }))
 
 import router from '@/router/index'
@@ -244,18 +252,28 @@ describe('Router Configuration', () => {
       await nextTick()
       expect(router.currentRoute.value.name).toBe('accounting-summary')
       expect(router.currentRoute.value.path).toBe('/teams/123/accounting/summary')
+      expect(router.currentRoute.value.matched.map((route) => route.name)).toEqual([
+        'show-team',
+        'accounting',
+        'accounting-summary'
+      ])
 
       const accountingRoutes = [
         { path: '/teams/123/accounting/income', name: 'accounting-income' },
         { path: '/teams/123/accounting/balance', name: 'accounting-balance' },
         { path: '/teams/123/accounting/trial', name: 'accounting-trial' },
-        { path: '/teams/123/accounting/ledger', name: 'accounting-ledger' }
+        { path: '/teams/123/accounting/ledger', name: 'accounting-ledger' },
+        {
+          path: '/teams/123/accounting/account-assignments',
+          name: 'accounting-account-assignments'
+        }
       ]
       for (const { path, name } of accountingRoutes) {
         await router.push(path)
         await nextTick()
         expect(router.currentRoute.value.name).toBe(name)
         expect(router.currentRoute.value.params.id).toBe('123')
+        expect(router.currentRoute.value.matched[1]?.name).toBe('accounting')
       }
     })
   })

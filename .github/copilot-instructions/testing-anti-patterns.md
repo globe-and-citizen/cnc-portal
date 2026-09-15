@@ -8,7 +8,7 @@ is shown with examples of what NOT to do and the correct approach.
 ## ⚠️ Re-mocking globally-mocked modules
 
 `app/vitest.config.ts` loads setup files from `app/src/tests/setup/` that call `vi.mock(...)` once for every commonly used dependency
-(wagmi, viem, TanStack Query, Apollo, Pinia stores, the `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives,
+(wagmi, viem, TanStack Query, Pinia stores, the `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives,
 `@/lib/axios`, `@/lib/logging`, `@/utils/expenses/model`, `@/queries/*.queries`, …). Override hooks (`mockTeamStore`, `mockERC20Reads`,
 `resetERC20Mocks`, …) are re-exported from `@/tests/mocks`.
 

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  updateUserBodySchema,
-  userPaginationQuerySchema,
-  createUserBodySchema,
-  userProfileSchema,
-} from '../user';
+import { updateUserBodySchema, userPaginationQuerySchema } from '../user';
 
 describe('user schemas', () => {
   describe('updateUserBodySchema', () => {
@@ -75,88 +70,6 @@ describe('user schemas', () => {
     it('should throw error for non-integer page', () => {
       const query = { page: '1.5' };
       expect(() => userPaginationQuerySchema.parse(query)).toThrow('Page must be an integer');
-    });
-  });
-
-  describe('createUserBodySchema', () => {
-    it('should validate user creation with all fields', () => {
-      const body = {
-        name: 'John Doe',
-        address: '0x1234567890123456789012345678901234567890',
-        imageUrl: 'https://example.com/image.jpg',
-      };
-      const result = createUserBodySchema.parse(body);
-      expect(result).toEqual(body);
-    });
-
-    it('should validate user creation without optional imageUrl', () => {
-      const body = {
-        name: 'John Doe',
-        address: '0x1234567890123456789012345678901234567890',
-      };
-      const result = createUserBodySchema.parse(body);
-      expect(result.name).toBe('John Doe');
-      expect(result.address).toBe('0x1234567890123456789012345678901234567890');
-    });
-
-    it('should throw error for invalid address', () => {
-      const body = {
-        name: 'John Doe',
-        address: 'invalid-address',
-      };
-      expect(() => createUserBodySchema.parse(body)).toThrow();
-    });
-  });
-
-  describe('userProfileSchema', () => {
-    it('should validate complete profile', () => {
-      const profile = {
-        name: 'John Doe',
-        bio: 'Software developer',
-        website: 'https://johndoe.com',
-        twitter: '@johndoe',
-        github: 'johndoe',
-      };
-      const result = userProfileSchema.parse(profile);
-      expect(result).toEqual(profile);
-    });
-
-    it('should validate profile with minimum required fields', () => {
-      const profile = { name: 'John Doe' };
-      const result = userProfileSchema.parse(profile);
-      expect(result.name).toBe('John Doe');
-    });
-
-    it('should throw error for name with HTML tags', () => {
-      const profile = { name: 'John <script>alert(1)</script>' };
-      expect(() => userProfileSchema.parse(profile)).toThrow('Name cannot contain HTML tags');
-    });
-
-    it('should throw error for bio exceeding 500 characters', () => {
-      const profile = { name: 'John', bio: 'a'.repeat(501) };
-      expect(() => userProfileSchema.parse(profile)).toThrow('Bio cannot exceed 500 characters');
-    });
-
-    it('should throw error for invalid Twitter handle', () => {
-      const profile = { name: 'John', twitter: 'invalid handle with spaces' };
-      expect(() => userProfileSchema.parse(profile)).toThrow('Invalid Twitter handle format');
-    });
-
-    it('should validate Twitter handle without @', () => {
-      const profile = { name: 'John', twitter: 'johndoe' };
-      const result = userProfileSchema.parse(profile);
-      expect(result.twitter).toBe('johndoe');
-    });
-
-    it('should throw error for invalid GitHub username', () => {
-      const profile = { name: 'John', github: 'invalid-username-' };
-      expect(() => userProfileSchema.parse(profile)).toThrow('Invalid GitHub username format');
-    });
-
-    it('should validate GitHub username with hyphens', () => {
-      const profile = { name: 'John', github: 'john-doe-dev' };
-      const result = userProfileSchema.parse(profile);
-      expect(result.github).toBe('john-doe-dev');
     });
   });
 });

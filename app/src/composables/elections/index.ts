@@ -1,6 +1,7 @@
-import { computed, ref, watch, type ComputedRef } from 'vue'
-import { useIntervalFn, useNow } from '@vueuse/core'
+import { computed, inject, provide, watch, type ComputedRef, type InjectionKey } from 'vue'
+import { useNow } from '@vueuse/core'
 import { log } from '@/lib/logging'
+import { toElection } from '@/utils/elections/election'
 import {
   useElectionsAddress,
   useElectionsOwner,
@@ -13,14 +14,9 @@ import {
 export * from './reads'
 export * from './writes'
 
-/**
- * Composable for Board of Directors Elections with formatted data and computed properties
- * @param currentElectionId - Computed reference to the current election ID
- */
-export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
+function createBoDElections(currentElectionId: ComputedRef<bigint>) {
   const electionsAddress = useElectionsAddress()
 
-  // Composables
   const { data: owner } = useElectionsOwner()
 
   const { data: currentElection, error: errorGetCurrentElection } =
@@ -33,22 +29,15 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
 
   const { data: voterList } = useElectionsGetEligibleVoters(currentElectionId)
 
-  // Computed Properties
   const formattedElection = computed(() => {
-    if (!currentElection.value) return null
-    const raw = currentElection.value as unknown as readonly (string | bigint | boolean)[]
+    const election = toElection(currentElection.value)
+    if (!election) return null
+
     return {
-      id: Number(raw[0]),
-      title: String(raw[1]),
-      description: String(raw[2]),
-      createdBy: String(raw[3]),
-      startDate: new Date(Number(raw[4]) * 1000),
-      endDate: new Date(Number(raw[5]) * 1000),
-      seatCount: Number(raw[6]),
-      resultsPublished: Boolean(raw[7]),
-      votesCast: Number(voteCount.value || 0),
-      candidates: (candidateList.value as string[])?.length,
-      voters: (voterList.value as string[])?.length || 0
+      ...election,
+      votesCast: Number(voteCount.value ?? 0),
+      candidates: candidateList.value?.length ?? 0,
+      voters: voterList.value?.length ?? 0
     }
   })
 
@@ -64,19 +53,10 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
     }
   })
 
-  const leftToStart = ref(0)
-  const leftToEnd = ref(0)
-
-  const updateCountdowns = () => {
-    leftToStart.value = timeLeft.value.toStart
-    leftToEnd.value = timeLeft.value.toEnd
-  }
-
-  // Update every second
-  useIntervalFn(updateCountdowns, 1000)
-
-  // Initial update
-  updateCountdowns()
+  // `now` already ticks once a second, so these follow on their own — a second
+  // interval copying them into refs would only duplicate that timer.
+  const leftToStart = computed(() => timeLeft.value.toStart)
+  const leftToEnd = computed(() => timeLeft.value.toEnd)
 
   const electionStatus = computed(() => {
     if (!formattedElection.value) return null
@@ -86,7 +66,6 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
     return { text: 'Completed', color: 'neutral' }
   })
 
-  // Watchers
   watch(errorGetCurrentElection, (error) => {
     if (error) {
       log.error('errorGetCurrentElection.value:', error)
@@ -112,6 +91,29 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
     leftToEnd,
     currentElectionId,
     electionsAddress,
-    owner
+    owner,
+    candidateList,
+    voteCount,
+    voterList
   }
+}
+
+export type BoDElections = ReturnType<typeof createBoDElections>
+
+const BoDElectionsKey: InjectionKey<BoDElections> = Symbol('BoDElections')
+
+/**
+ * Shares the one election read and one-second clock a details page owns with
+ * its summary, actions and candidate cards.
+ */
+export function provideBoDElections(election: BoDElections) {
+  provide(BoDElectionsKey, election)
+}
+
+/**
+ * Composable for Board of Directors Elections with formatted data and computed properties
+ * @param currentElectionId - Computed reference to the current election ID
+ */
+export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
+  return inject(BoDElectionsKey, null) ?? createBoDElections(currentElectionId)
 }

@@ -1,19 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import {
-  ACCOUNTS,
+  ACCOUNT_FAMILIES,
   ACCOUNT_NAMES,
-  CHART_OF_ACCOUNTS,
+  accountFamilyOf,
   classOf,
-  isDebitNormal,
-  isDebitNormalClass,
-  normalBalance,
-  type AccountClass,
   type AccountName
 } from '../chartOfAccounts'
 
 describe('chart of accounts', () => {
   it('declares every CNC account from the catalogue with its class', () => {
-    expect(CHART_OF_ACCOUNTS).toEqual({
+    expect(
+      Object.fromEntries(ACCOUNT_FAMILIES.map((family) => [family.name, family.accountClass]))
+    ).toEqual({
       'Cash — Bank': 'ASSET',
       'Cash — Safe': 'ASSET',
       'Cash — Payroll': 'ASSET',
@@ -68,29 +66,25 @@ describe('chart of accounts', () => {
   it('books SHER compensation as contra-equity, not as an expense', () => {
     expect(classOf('Deferred SHER Compensation')).toBe('CONTRA_EQUITY')
     expect(classOf('SHERS To Be Issued')).toBe('EQUITY')
-    expect(isDebitNormal('Deferred SHER Compensation')).toBe(true)
-    expect(isDebitNormal('SHERS To Be Issued')).toBe(false)
+    expect(accountFamilyOf('Deferred SHER Compensation').normalBalance).toBe('debit')
+    expect(accountFamilyOf('SHERS To Be Issued').normalBalance).toBe('credit')
   })
 
-  it('exposes ACCOUNTS as { name, class } records matching the map', () => {
-    expect(ACCOUNTS).toHaveLength(ACCOUNT_NAMES.length)
-    ACCOUNTS.forEach((account) => {
-      expect(account.class).toBe(CHART_OF_ACCOUNTS[account.name])
+  it('keeps every shared account attribute in one canonical family object', () => {
+    const bank = accountFamilyOf('Cash — Bank')
+
+    expect(bank).toEqual({
+      id: 'cash-bank',
+      name: 'Cash — Bank',
+      accountClass: 'ASSET',
+      normalBalance: 'debit',
+      deploymentScoped: true
     })
+    expect(ACCOUNT_FAMILIES.map((family) => family.name)).toEqual(ACCOUNT_NAMES)
   })
 
   describe('normal balance', () => {
-    it('puts ASSET, EXPENSE and CONTRA_EQUITY on the debit side', () => {
-      const debitClasses: AccountClass[] = ['ASSET', 'EXPENSE', 'CONTRA_EQUITY']
-      debitClasses.forEach((cls) => expect(isDebitNormalClass(cls)).toBe(true))
-    })
-
-    it('puts LIABILITY, EQUITY and INCOME on the credit side', () => {
-      const creditClasses: AccountClass[] = ['LIABILITY', 'EQUITY', 'INCOME']
-      creditClasses.forEach((cls) => expect(isDebitNormalClass(cls)).toBe(false))
-    })
-
-    it('derives isDebitNormal / normalBalance per account', () => {
+    it('derives the normal side per account from its canonical family', () => {
       const expectations: Array<[AccountName, boolean]> = [
         ['Cash — Bank', true],
         ['Trading account', true],
@@ -102,8 +96,7 @@ describe('chart of accounts', () => {
         ['Service Revenue', false]
       ]
       expectations.forEach(([account, debit]) => {
-        expect(isDebitNormal(account)).toBe(debit)
-        expect(normalBalance(account)).toBe(debit ? 'debit' : 'credit')
+        expect(accountFamilyOf(account).normalBalance).toBe(debit ? 'debit' : 'credit')
       })
     })
 
@@ -111,7 +104,7 @@ describe('chart of accounts', () => {
       ACCOUNT_NAMES.forEach((name) => {
         const cls = classOf(name)
         const expectedDebit = cls === 'ASSET' || cls === 'EXPENSE' || cls === 'CONTRA_EQUITY'
-        expect(isDebitNormal(name)).toBe(expectedDebit)
+        expect(accountFamilyOf(name).normalBalance).toBe(expectedDebit ? 'debit' : 'credit')
       })
     })
   })

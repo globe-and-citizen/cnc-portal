@@ -84,6 +84,20 @@ describe('CreditRoundGauge', () => {
     expect(wrapper.text()).toContain('100%')
   })
 
+  it("renders every amount in the round's own token, not a hardcoded default", () => {
+    // Regression test: every formatAmount() call here used to omit the token
+    // argument, silently defaulting to 'USDC' regardless of the round's
+    // actual token — invisible in the other tests above because their fixture
+    // already used 'USDC'. A non-USDC token is the only way to catch this.
+    const wrapper = mountGauge(makeRound({ token: 'USDCe' }))
+
+    expect(wrapper.text()).toContain('250 USDCe')
+    expect(wrapper.text()).toContain('750 USDCe remaining')
+    expect(wrapper.text()).toContain('repaid of 275 USDCe')
+    expect(wrapper.text()).toContain('capped at 500 USDCe each')
+    expect(wrapper.text()).not.toContain('USDC ')
+  })
+
   it('shows refunded state and empty lender copy', () => {
     const wrapper = mountGauge(
       makeRound({

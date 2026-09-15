@@ -1,10 +1,13 @@
-import type { FixedReturnEventsQuery, RawFixedReturnTransaction } from '@/types/ponder/fixedReturn'
+import type {
+  FixedReturnEventFeed,
+  RawFixedReturnTransaction
+} from '@/types/contract-events/fixedReturn'
 import { zeroAddress } from 'viem'
 import { formatDateTime, fromUnix } from '@/utils/format'
 import { buildRawTransactions, extractTxHashFromId } from './raw'
 
 export const buildRawFixedReturnTransactions = (
-  fixedReturnResult?: FixedReturnEventsQuery | null
+  fixedReturnResult?: FixedReturnEventFeed | null
 ): RawFixedReturnTransaction[] => {
   const created = fixedReturnResult?.fixedReturnLendingOfferCreateds?.items ?? []
   const funded = fixedReturnResult?.fixedReturnLendingOfferFundeds?.items ?? []

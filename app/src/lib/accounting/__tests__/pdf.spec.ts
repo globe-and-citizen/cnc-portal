@@ -1,23 +1,25 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { Address } from 'viem'
-import { buildAccountingTables, buildTables, exportAccountingPdf, exportTablesPdf } from '../pdf'
+import { buildTables, exportTablesPdf } from '../pdf'
 import { periodLabel } from '@/utils/accounting/presenter'
-import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
+import type { CncAccounting } from '@/utils/accounting/assemble'
+import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const CLIENT = '0x7777777777777777777777777777777777777777'
+const TX_HASH = `0x${'a'.repeat(64)}`
 
 /** A tiny live book: one $100 client deposit into the Bank → Service Revenue 100. */
 function sampleBooks(): CncAccounting {
-  return assembleCncAccounting({
+  return assembleAccounting({
     contracts: [{ type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] }],
     bankEvents: {
       bankDeposits: { items: [] },
       bankTokenDeposits: {
         items: [
           {
-            id: 'bd1',
+            id: `${TX_HASH}-0`,
             contractAddress: BANK,
             depositor: CLIENT,
             token: USDC_ADDRESS,
@@ -36,8 +38,13 @@ function sampleBooks(): CncAccounting {
   })
 }
 
-describe('buildAccountingTables', () => {
-  const tables = buildAccountingTables(sampleBooks())
+describe('buildTables (complete report selection)', () => {
+  const tables = buildTables(sampleBooks(), [
+    { key: 'income' },
+    { key: 'balance' },
+    { key: 'trial' },
+    { key: 'ledger' }
+  ])
   const byTitle = (title: string) => tables.find((t) => t.title === title)!
 
   it('produces one table per tab except the Summary', () => {
@@ -53,13 +60,20 @@ describe('buildAccountingTables', () => {
     const income = byTitle('Income Statement').body
     const revenueRow = income.find((r) => r[0] === 'Total revenue')!
     expect(revenueRow[1]).toBe('$100.00')
+
+    const balance = byTitle('Balance Sheet').body
+    expect(balance.find((r) => r[0] === 'Cash — Bank')![1]).toBe('$100.00')
+    expect(balance.find((r) => r[0] === 'Earnings to date calculation')).toBeTruthy()
+    expect(balance.find((r) => r[0] === 'Service Revenue')![1]).toBe('$100.00')
+    expect(balance.find((r) => r[0] === 'Earnings to date')![1]).toBe('$100.00')
   })
 
   it('right-aligns the amount columns', () => {
     expect(byTitle('Income Statement').align).toEqual(['left', 'right'])
-    // date · action · transaction · activity · account · currency, then the
+    // date · action · transaction · hash · activity · account · currency, then the
     // right-aligned figures: quantity · rate · debit · credit.
     expect(byTitle('General Ledger').align).toEqual([
+      'left',
       'left',
       'left',
       'left',
@@ -84,6 +98,7 @@ describe('buildAccountingTables', () => {
       'Date',
       'Action',
       'Transaction',
+      'Tx hash',
       'Activity',
       'Account',
       'Currency',
@@ -96,15 +111,20 @@ describe('buildAccountingTables', () => {
     expect(ledger.body.length).toBe(3)
     const totalRow = ledger.body.at(-1)!
     expect(totalRow[2]).toBe('Total movements')
-    expect(totalRow[8]).toBe('$100.00') // Debit total
-    expect(totalRow[9]).toBe('$100.00') // Credit total
+    expect(totalRow[9]).toBe('$100.00') // Debit total
+    expect(totalRow[10]).toBe('$100.00') // Credit total
+    expect(ledger.body[0]![3]).toBe(TX_HASH)
   })
 
   it('renders the Activity column via the supplied name resolver', () => {
-    const named = buildAccountingTables(sampleBooks(), () => 'Acme Client')
+    const named = buildTables(
+      sampleBooks(),
+      [{ key: 'income' }, { key: 'balance' }, { key: 'trial' }, { key: 'ledger' }],
+      () => 'Acme Client'
+    )
     const ledger = named.find((t) => t.title === 'General Ledger')!
     // the deposit is an `actor` activity: "<name> paid $100.00 for services"
-    const activity = String(ledger.body[0][3])
+    const activity = String(ledger.body[0][4])
     expect(activity).toContain('Acme Client')
     expect(activity).toContain('for services')
   })
@@ -134,21 +154,21 @@ describe('buildTables (section selection)', () => {
     expect(ledger.body[0]).toHaveLength(3)
   })
 
-  it('honours the active category filter and still totals the filtered rows', () => {
-    const [ledger] = buildTables(sampleBooks(), [{ key: 'ledger', filter: 'Expense' }])
-    // The deposit is Revenue, filtered out — only the (zero) total row remains.
-    expect(ledger.body).toHaveLength(1)
-    const totalRow = ledger.body[0]
-    expect(totalRow[2]).toBe('Total movements')
-    expect(totalRow[8]).toBe('$0.00') // Debit total
+  it('honours a concrete-account filter and retains every journal line', () => {
+    const books = sampleBooks()
+    const accountId = books.journal[0]!.lines[0]!.account.id
+    const [ledger] = buildTables(books, [{ key: 'ledger', journalAccounts: [accountId] }])
+    expect(ledger.body).toHaveLength(3)
+    expect(ledger.body[0]![5]).toBe('Cash — Bank')
+    expect(ledger.body[1]![5]).toBe('Service Revenue')
+    expect(ledger.body.at(-1)![9]).toBe('$100.00')
   })
 
-  it('names the category and period in the ledger heading when narrowed', () => {
+  it('names the reporting period in the ledger heading', () => {
     const [ledger] = buildTables(sampleBooks(), [
-      { key: 'ledger', filter: 'Revenue', from: new Date('2026-01-01'), to: new Date('2026-02-01') }
+      { key: 'ledger', from: new Date('2026-01-01'), to: new Date('2026-02-01') }
     ])
     expect(ledger.title).toContain('General Ledger')
-    expect(ledger.title).toContain('Revenue')
     expect(ledger.title).toContain('Jan 1, 2026')
   })
 
@@ -158,22 +178,31 @@ describe('buildTables (section selection)', () => {
   })
 
   it('drills a single account, heading and total scoped to it (issue #2249)', () => {
-    const [ledger] = buildTables(sampleBooks(), [{ key: 'ledger', account: 'Cash — Bank' }])
+    const books = sampleBooks()
+    const accountId = books.journal[0]!.lines[0]!.account.id
+    const [ledger] = buildTables(books, [
+      {
+        key: 'ledger',
+        journalAccounts: [accountId],
+        journalAccountLabel: 'Cash — Bank',
+        journalAccountTotal: '$100.00'
+      }
+    ])
     expect(ledger.title).toBe('General Ledger — Cash — Bank')
     // The $100 deposit posts a Cash — Bank leg; the total nets the account balance.
     expect(ledger.body.at(-1)!.some((c) => c === '$100.00')).toBe(true)
   })
 
-  it('drills an aggregate line with its label and supplied total (Retained earnings)', () => {
+  it('drills an aggregate line with its label and supplied total (Earnings to date)', () => {
     const [ledger] = buildTables(sampleBooks(), [
       {
         key: 'ledger',
-        account: ['Service Revenue'],
-        accountLabel: 'Retained earnings',
-        accountTotal: '$100.00'
+        journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
+        journalAccountLabel: 'Earnings to date',
+        journalAccountTotal: '$100.00'
       }
     ])
-    expect(ledger.title).toBe('General Ledger — Retained earnings')
+    expect(ledger.title).toBe('General Ledger — Earnings to date')
     expect(ledger.body.at(-1)!.some((c) => c === '$100.00')).toBe(true)
   })
 
@@ -242,7 +271,7 @@ vi.mock('jspdf', () => {
 
 vi.mock('jspdf-autotable', () => ({ default: autoTableMock }))
 
-describe('exportAccountingPdf', () => {
+describe('exportTablesPdf (complete report selection)', () => {
   afterEach(() => {
     saveMock.mockClear()
     autoTableMock.mockClear()
@@ -250,7 +279,13 @@ describe('exportAccountingPdf', () => {
   })
 
   it('renders one table per section and downloads the PDF', async () => {
-    await exportAccountingPdf(sampleBooks())
+    const tables = buildTables(sampleBooks(), [
+      { key: 'income' },
+      { key: 'balance' },
+      { key: 'trial' },
+      { key: 'ledger' }
+    ])
+    await exportTablesPdf(tables, { filename: 'cnc-accounting.pdf' })
 
     // Income Statement, Balance Sheet, Trial Balance, General Ledger.
     expect(autoTableMock).toHaveBeenCalledTimes(4)

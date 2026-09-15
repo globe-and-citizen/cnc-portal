@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getMondayStart, todayMidnight } from '../dayUtils';
+import { getMondayStart } from '../dayUtils';
 
 describe('dayUtils', () => {
   describe('getMondayStart', () => {
@@ -62,51 +62,6 @@ describe('dayUtils', () => {
       expect(mondayStart.getFullYear()).toBe(2023);
       expect(mondayStart.getMonth()).toBe(11);
       expect(mondayStart.getDate()).toBe(25);
-    });
-  });
-
-  describe('todayMidnight', () => {
-    it('should return the same date at midnight', () => {
-      const date = new Date('2024-01-15T15:30:45.123');
-      const midnight = todayMidnight(date);
-
-      expect(midnight.getFullYear()).toBe(2024);
-      expect(midnight.getMonth()).toBe(0); // January
-      expect(midnight.getDate()).toBe(15);
-      expect(midnight.getHours()).toBe(0);
-      expect(midnight.getMinutes()).toBe(0);
-      expect(midnight.getSeconds()).toBe(0);
-      expect(midnight.getMilliseconds()).toBe(0);
-    });
-
-    it('should handle dates already at midnight', () => {
-      const date = new Date('2024-01-15T00:00:00.000');
-      const midnight = todayMidnight(date);
-
-      expect(midnight.getHours()).toBe(0);
-      expect(midnight.getMinutes()).toBe(0);
-      expect(midnight.getSeconds()).toBe(0);
-      expect(midnight.getMilliseconds()).toBe(0);
-    });
-
-    it('should handle dates near midnight', () => {
-      const lateNight = new Date('2024-01-15T23:59:59.999');
-      const midnight = todayMidnight(lateNight);
-
-      expect(midnight.getDate()).toBe(15);
-      expect(midnight.getHours()).toBe(0);
-      expect(midnight.getMinutes()).toBe(0);
-      expect(midnight.getSeconds()).toBe(0);
-      expect(midnight.getMilliseconds()).toBe(0);
-    });
-
-    it('should not modify the original date object', () => {
-      const originalDate = new Date('2024-01-15T15:30:00');
-      const originalTime = originalDate.getTime();
-
-      todayMidnight(originalDate);
-
-      expect(originalDate.getTime()).toBe(originalTime);
     });
   });
 });

@@ -42,10 +42,10 @@
       v-if="showFees"
       class="flex flex-col gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm dark:border-green-800 dark:bg-green-950"
     >
-      <div class="flex justify-between">
-        <span class="text-gray-500 dark:text-gray-400">Recipient receives</span>
-        <span class="font-medium text-gray-800 dark:text-gray-200">
-          {{ formatTransferAmount(numericAmount) }} {{ model.token.symbol }}
+      <div class="flex items-center justify-between">
+        <span class="font-semibold text-gray-800 dark:text-gray-200">Total you transfer</span>
+        <span class="font-bold text-green-600 dark:text-green-400">
+          {{ formatTransferAmount(totalToSend) }} {{ model.token.symbol }}
         </span>
       </div>
 
@@ -66,9 +66,9 @@
       <div
         class="flex items-center justify-between border-t border-green-200 pt-2 dark:border-green-800"
       >
-        <span class="font-semibold text-gray-800 dark:text-gray-200">Total you transfer</span>
-        <span class="font-bold text-green-600 dark:text-green-400">
-          {{ formatTransferAmount(totalToSend) }} {{ model.token.symbol }}
+        <span class="font-semibold text-gray-800 dark:text-gray-200">Recipient receives</span>
+        <span class="font-bold text-gray-800 dark:text-gray-200">
+          {{ formatTransferAmount(numericAmount) }} {{ model.token.symbol }}
         </span>
       </div>
     </div>

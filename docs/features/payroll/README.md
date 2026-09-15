@@ -164,6 +164,10 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] _(contract)_ A withdrawal in a non-mintable asset fails when the Cash Remuneration contract lacks the required balance.
 
+**Accounting:** Funding is a company-pocket movement booked by
+[`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket) or
+[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer); it is not payroll expense.
+
 **Dependencies:** Accounts, [Bank contract](../../contracts/features/bank/README.md)
 
 ## US-PAYROLL-004: Set Weekly Goals
@@ -235,6 +239,10 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] A disabled week rejects new daily claims.
 - [x] A paused wage rejects new claims.
 - [x] A rejected submission leaves the daily-claim state unchanged and returns its rejection reason.
+
+**Accounting:** The daily claim changes the source amount for
+[`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the
+containing work week ends and remains eligible.
 
 **Dependencies:** US-PAYROLL-001
 
@@ -330,6 +338,9 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
 - [x] Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
 
+**Accounting:** Signing authorizes settlement but does not trigger the wage accrual; `UC-CASH-02` is dated at the end of the eligible work
+week.
+
 **Dependencies:** US-PAYROLL-005
 
 ## US-PAYROLL-009: Disable or Re-enable a Signed Weekly Claim
@@ -356,6 +367,9 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] A withdrawn claim cannot transition to disabled.
 - [x] A withdrawn claim cannot transition to enabled.
+
+**Accounting:** A disabled weekly claim is excluded from
+[`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual); re-enabling it restores eligibility.
 
 **Dependencies:** US-PAYROLL-008
 
@@ -392,6 +406,10 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] _(contract)_ A claim reverts when the Cash Remuneration contract lacks the required balance.
 - [x] _(contract)_ A withdrawal reverts while the Cash Remuneration contract is paused.
 - [x] Cancelling the wallet transaction leaves the claim unpaid and its stored status unchanged.
+
+**Accounting:** A successful withdrawal settles the obligation through
+[`UC-CASH-03`](../accounting/journal-entry-catalogue.md#uc-cash-03--wage-settlement). Cash credits Payroll cash; SHER moves promised shares
+into Investor Equity.
 
 **Dependencies:** US-PAYROLL-008, US-PAYROLL-003
 
@@ -471,7 +489,7 @@ Functional gaps map to unchecked acceptance criteria.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `787921e5cf9dd1cf46fd0f69f651dba7d8785374`
+**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
 
 - [Cash Remuneration components](../../../app/src/components/sections/CashRemunerationView/),
   [claim-history components](../../../app/src/components/sections/ClaimHistoryView/), and
@@ -503,6 +521,8 @@ Functional gaps map to unchecked acceptance criteria.
 - [Payroll persistence models](../../../backend/prisma/schema.prisma)
 - [Daily claim request validation](../../../backend/src/validation/schemas/claim.ts)
 - [Daily claim validation tests](../../../backend/src/validation/__tests__/claim.test.ts)
+- [Cash Remuneration ownership boundary](../../../backend/src/utils/cashRemunerationUtil.ts) and
+  [week-start calculation](../../../backend/src/utils/dayUtils.ts)
 - [Weekly claim API and reconciliation](../../../backend/src/controllers/weeklyClaimController.ts)
 - [Cash Remuneration contract](../../../contract/contracts/CashRemunerationEIP712.sol)
 - [Bank contract](../../../contract/contracts/Bank.sol)
@@ -514,6 +534,8 @@ Functional gaps map to unchecked acceptance criteria.
 
 ## Related Documentation
 
+- [File Storage implementation](../../implementation/file-storage/README.md)
+- [Request Validation implementation](../../implementation/request-validation/README.md)
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Cash Remuneration contract](../../contracts/features/cash-remuneration/README.md)
 - [Bank contract](../../contracts/features/bank/README.md)

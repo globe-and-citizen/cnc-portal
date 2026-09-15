@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { Address } from 'viem'
-import { buildAccountingSheets, buildSheets, exportAccountingExcel } from '../spreadsheet'
-import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
+import { buildSheets, exportSheetsExcel } from '../spreadsheet'
+import type { CncAccounting } from '@/utils/accounting/assemble'
+import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const CLIENT = '0x7777777777777777777777777777777777777777'
+const TX_HASH = `0x${'a'.repeat(64)}`
 const EXPENSE = '0x2222222222222222222222222222222222222222'
 const MEMBER = '0x3333333333333333333333333333333333333333'
 
@@ -21,14 +23,14 @@ const emptyBankEvents = {
 
 /** A tiny live book: one $100 client deposit into the Bank → Service Revenue 100. */
 function sampleBooks(): CncAccounting {
-  return assembleCncAccounting({
+  return assembleAccounting({
     contracts: [{ type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] }],
     bankEvents: {
       ...emptyBankEvents,
       bankTokenDeposits: {
         items: [
           {
-            id: 'bd1',
+            id: `${TX_HASH}-0`,
             contractAddress: BANK,
             depositor: CLIENT,
             token: USDC_ADDRESS,
@@ -43,7 +45,7 @@ function sampleBooks(): CncAccounting {
 
 /** The same book plus a $30 expense payout, so the income statement carries both sides. */
 function booksWithExpense(): CncAccounting {
-  return assembleCncAccounting({
+  return assembleAccounting({
     contracts: [
       { type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] },
       {
@@ -95,8 +97,13 @@ function booksWithExpense(): CncAccounting {
   })
 }
 
-describe('buildAccountingSheets', () => {
-  const sheets = buildAccountingSheets(sampleBooks())
+describe('buildSheets (complete report selection)', () => {
+  const sheets = buildSheets(sampleBooks(), [
+    { key: 'income' },
+    { key: 'balance' },
+    { key: 'trial' },
+    { key: 'ledger' }
+  ])
   const byName = (name: string) => sheets.find((s) => s.name === name)!
 
   it('produces one sheet per tab except the Summary', () => {
@@ -116,6 +123,10 @@ describe('buildAccountingSheets', () => {
     const balance = byName('Balance Sheet').rows
     const totalAssetsRow = balance.find((r) => r[0] === 'Total assets')!
     expect(totalAssetsRow[1]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Cash — Bank')![1]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Earnings to date calculation')).toBeTruthy()
+    expect(balance.find((r) => r[0] === 'Service Revenue')![1]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Earnings to date')![1]).toBe(100)
   })
 
   it('trial balance totals debit = credit', () => {
@@ -129,6 +140,7 @@ describe('buildAccountingSheets', () => {
       'Date',
       'Action',
       'Transaction',
+      'Tx hash',
       'Activity',
       'Account',
       'Currency',
@@ -141,15 +153,18 @@ describe('buildAccountingSheets', () => {
     expect(rows.length).toBe(6)
     const totalRow = rows.at(-1)!
     expect(totalRow[2]).toBe('Total movements')
-    expect(totalRow[8]).toBe(100) // numeric Debit total
+    expect(totalRow[9]).toBe(100) // numeric Debit total
+    expect(rows[3]![3]).toBe(TX_HASH)
   })
 
   it('fills the Activity column via the supplied name resolver', () => {
-    const rows = buildAccountingSheets(sampleBooks(), () => 'Acme Client').find(
-      (s) => s.name === 'General Ledger'
-    )!.rows
-    // header + first journal line; Activity is the 4th column (index 3)
-    expect(String(rows[3][3])).toContain('Acme Client')
+    const rows = buildSheets(
+      sampleBooks(),
+      [{ key: 'income' }, { key: 'balance' }, { key: 'trial' }, { key: 'ledger' }],
+      () => 'Acme Client'
+    ).find((s) => s.name === 'General Ledger')!.rows
+    // header + first journal line; Activity is the 5th column (index 4).
+    expect(String(rows[3][4])).toContain('Acme Client')
   })
 })
 
@@ -172,21 +187,33 @@ describe('buildSheets (section selection)', () => {
     expect(ledger.rows[3]).toHaveLength(2)
   })
 
-  it('honours the active category filter and still appends a total row', () => {
-    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', filter: 'Expense' }])
-    // title + blank + header + total — the deposit is Revenue, filtered out.
-    expect(ledger.rows).toHaveLength(4)
-    expect(ledger.rows.at(-1)![2]).toBe('Total movements')
+  it('honours a concrete-account filter and retains every journal line', () => {
+    const books = sampleBooks()
+    const accountId = books.journal[0]!.lines[0]!.account.id
+    const [ledger] = buildSheets(books, [{ key: 'ledger', journalAccounts: [accountId] }])
+    expect(ledger.rows).toHaveLength(6)
+    expect(ledger.rows[3]![5]).toBe('Cash — Bank')
+    expect(ledger.rows[4]![5]).toBe('Service Revenue')
+    expect(ledger.rows.at(-1)![9]).toBe(100)
   })
 
-  it('names the category in the ledger title row but keeps a short tab name', () => {
-    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', filter: 'Revenue' }])
-    expect(String(ledger.rows[0][0])).toBe('General Ledger — Revenue')
+  it('keeps a short General Ledger title and tab name', () => {
+    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger' }])
+    expect(String(ledger.rows[0][0])).toBe('General Ledger')
     expect(ledger.name).toBe('General Ledger')
   })
 
   it('drills a single account into its own sheet (issue #2249)', () => {
-    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', account: 'Cash — Bank' }])
+    const books = sampleBooks()
+    const accountId = books.journal[0]!.lines[0]!.account.id
+    const [ledger] = buildSheets(books, [
+      {
+        key: 'ledger',
+        journalAccounts: [accountId],
+        journalAccountLabel: 'Cash — Bank',
+        journalAccountTotal: '$100.00'
+      }
+    ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Cash — Bank')
     // Excel renders the total as a number; the account nets to 100.
     expect(ledger.rows.at(-1)!.some((c) => c === 100)).toBe(true)
@@ -196,12 +223,12 @@ describe('buildSheets (section selection)', () => {
     const [ledger] = buildSheets(sampleBooks(), [
       {
         key: 'ledger',
-        account: ['Service Revenue'],
-        accountLabel: 'Retained earnings',
-        accountTotal: '$100.00'
+        journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
+        journalAccountLabel: 'Earnings to date',
+        journalAccountTotal: '$100.00'
       }
     ])
-    expect(String(ledger.rows[0][0])).toBe('General Ledger — Retained earnings')
+    expect(String(ledger.rows[0][0])).toBe('General Ledger — Earnings to date')
     expect(ledger.rows.at(-1)!.some((c) => c === 100)).toBe(true)
   })
 
@@ -224,7 +251,7 @@ describe('buildSheets (section selection)', () => {
   })
 })
 
-describe('exportAccountingExcel', () => {
+describe('exportSheetsExcel', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
@@ -244,7 +271,13 @@ describe('exportAccountingExcel', () => {
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
-    await exportAccountingExcel(sampleBooks())
+    const sheets = buildSheets(sampleBooks(), [
+      { key: 'income' },
+      { key: 'balance' },
+      { key: 'trial' },
+      { key: 'ledger' }
+    ])
+    await exportSheetsExcel(sheets, 'cnc-accounting.xlsx')
 
     expect(captured).not.toBeNull()
     expect(captured!.type).toContain('spreadsheetml')

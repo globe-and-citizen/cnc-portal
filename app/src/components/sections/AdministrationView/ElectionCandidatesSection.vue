@@ -3,11 +3,11 @@
     <template #header>Candidates</template>
     <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
       <ElectionCandidateCard
-        v-for="(election, index) in candidates"
-        :key="index"
-        :election="election"
-        @cast-vote="castVote"
+        v-for="candidate in candidates"
+        :key="candidate.address"
+        :candidate="candidate"
         :is-loading="isLoadingCastVote"
+        @cast-vote="castVote"
       />
     </div>
   </UCard>
@@ -15,90 +15,92 @@
 
 <script lang="ts" setup>
 import ElectionCandidateCard from './ElectionCandidateCard.vue'
-import { computed, reactive, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { electionsAbi } from '@/artifacts/abi/generated'
-import { useTeamStore } from '@/stores'
-import { zeroAddress, type Address } from 'viem'
-import { useReadContract } from '@wagmi/vue'
-import { useElectionsCastVote } from '@/composables/elections/writes'
-import { readContract, simulateContract } from '@wagmi/core'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import type { Address } from 'viem'
+import {
+  useElectionsAddress,
+  useElectionsCastVote,
+  useElectionsGetCandidateVoteCounts,
+  useElectionsGetResults,
+  useElectionsGetVoterChoice,
+  useElectionsHasVoted,
+  useBoDElections
+} from '@/composables/elections'
+import { simulateContract } from '@wagmi/core'
 import type { User } from '@/types'
 import { config } from '@/wagmi.config'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{ electionId: bigint }>()
 const teamStore = useTeamStore()
 const toast = useToast()
 const electionId = computed(() => props.electionId)
 
-const votesPerCandidate = reactive<Record<Address, number>>({})
-
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
-
-const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
-  functionName: 'getElectionCandidates',
-  address: electionsAddress,
-  abi: electionsAbi,
-  args: [electionId],
-  query: { enabled: true }
-})
-
-const { data: election /*, error: errorVoteCount*/ } = useReadContract({
-  functionName: 'getElection',
-  address: electionsAddress,
-  abi: electionsAbi,
-  args: [electionId],
-  query: { enabled: computed(() => !!electionId.value) }
-})
-
-const {
-  data: voteCount
-  // isLoading: isLoadingVoteCount,
-} = useReadContract({
-  functionName: 'getVoteCount',
-  address: electionsAddress,
-  abi: electionsAbi,
-  args: [electionId], // Supply currentElectionId as an argument
-  query: {
-    enabled: computed(() => !!electionId.value) // Only fetch if currentElectionId is available
-  }
-})
-
+const electionsAddress = useElectionsAddress()
+const userDataStore = useUserDataStore()
+const { candidateList, voteCount, electionStatus } = useBoDElections(electionId)
+const voter = computed(() => userDataStore.address as Address | undefined)
+const { data: candidateVoteCounts, error: errorCandidateVoteCounts } =
+  useElectionsGetCandidateVoteCounts(electionId, candidateList)
+const { data: hasVoted, error: errorHasVoted } = useElectionsHasVoted(electionId, voter)
+const { data: voterChoice } = useElectionsGetVoterChoice(electionId, voter)
+const { data: electionResults } = useElectionsGetResults(electionId)
 const { mutate: executeCastVote, isPending: isLoadingCastVote } = useElectionsCastVote()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
-type ElectionTuple = [bigint, string, string, Address, bigint, bigint, bigint, boolean]
+const totalVotes = computed(() => Number(voteCount.value ?? 0))
+const isVoteDisabled = computed(
+  () =>
+    isWriteDisabled.value ||
+    hasVoted.value === true ||
+    electionStatus.value?.text === 'Upcoming' ||
+    electionStatus.value?.text === 'Completed'
+)
+const voteTooltip = computed(() => archivedTooltip.value)
 
-const electionTuple = computed<ElectionTuple | null>(() => {
-  if (!Array.isArray(election.value) || election.value.length < 8) {
-    return null
-  }
-  return election.value as unknown as ElectionTuple
+const membersByAddress = computed(
+  () =>
+    new Map(
+      (teamStore.currentTeam?.members ?? []).map((member) => [
+        member.address.toLowerCase(),
+        member as User & { role?: string }
+      ])
+    )
+)
+
+const candidates = computed(() =>
+  (candidateList.value ?? []).map((address) => {
+    const member = membersByAddress.value.get(address.toLowerCase())
+
+    return {
+      address,
+      name: member?.name || 'Unknown',
+      role: member?.role || 'Candidate',
+      imageUrl: member?.imageUrl,
+      currentVotes: Number(candidateVoteCounts.value?.[address] ?? 0n),
+      totalVotes: totalVotes.value,
+      isSelected:
+        hasVoted.value === true && voterChoice.value?.toLowerCase() === address.toLowerCase(),
+      isElectionWinner:
+        electionStatus.value?.text === 'Completed' &&
+        (electionResults.value?.some((winner) => winner.toLowerCase() === address.toLowerCase()) ??
+          false),
+      isVoteDisabled: isVoteDisabled.value,
+      voteTooltip: voteTooltip.value
+    }
+  })
+)
+
+watch(errorCandidateVoteCounts, (error) => {
+  if (error) log.error('Error fetching candidate vote counts:', error)
 })
 
-const candidates = computed(() => {
-  const tuple = electionTuple.value
-  if (electionCandidates.value && Array.isArray(electionCandidates.value) && tuple) {
-    return electionCandidates.value.map((candidate: Address) => {
-      const user = teamStore.currentTeam?.members?.find(
-        (member) => member.address === candidate
-      ) as User & { role?: string }
-      const currentVotes = votesPerCandidate[candidate] ?? 0
-      return {
-        id: BigInt(tuple[0]),
-        user: {
-          address: candidate,
-          name: user?.name || 'Unknown',
-          role: user?.role || 'Candidate',
-          imageUrl: user?.imageUrl
-        },
-        totalVotes: Number(voteCount.value) || 0,
-        currentVotes: currentVotes as number,
-        startDate: new Date(Number(tuple[4]) * 1000),
-        endDate: new Date(Number(tuple[5]) * 1000)
-      }
-    })
-  } else return []
+watch(errorHasVoted, (error) => {
+  if (error) log.error('Error checking vote status:', error)
 })
 
 const castVote = async (candidateAddress: Address) => {
@@ -128,12 +130,14 @@ const castVote = async (candidateAddress: Address) => {
     return
   }
 
+  // The write layer refreshes the ballot as one bounded set: the total, grouped
+  // candidate counts and this voter's choice settle without re-fetching the
+  // immutable election record that owns the page.
   executeCastVote(
     { args },
     {
-      onSuccess: async () => {
+      onSuccess: () => {
         toast.add({ title: 'Vote Casted successfully!', color: 'success' })
-        await fetchVotes()
       },
       onError: (error) => {
         log.error('Error casting vote:', error)
@@ -144,43 +148,4 @@ const castVote = async (candidateAddress: Address) => {
     }
   )
 }
-
-const fetchVotes = async () => {
-  try {
-    if (!electionsAddress.value) {
-      toast.add({ title: 'Elections contract address not found', color: 'error' })
-      return
-    }
-    const candidatesList = electionCandidates.value as Address[]
-    if (candidatesList && candidatesList.length > 0) {
-      await Promise.all(
-        candidatesList.map(async (candidate) => {
-          const count = await readContract(config, {
-            address: electionsAddress.value || zeroAddress,
-            abi: electionsAbi,
-            functionName: 'getVoteCounts',
-            args: [props.electionId, candidate]
-          })
-          votesPerCandidate[candidate] = Number(count) || 0
-        })
-      )
-    }
-  } catch (error) {
-    log.error('Error fetching votes:', error)
-    toast.add({
-      title: classifyError(error, { contract: 'Elections' }).userMessage,
-      color: 'error'
-    })
-  }
-}
-
-watch(
-  electionCandidates,
-  async (newCandidates) => {
-    if (newCandidates) {
-      await fetchVotes()
-    }
-  },
-  { immediate: true, deep: true }
-)
 </script>

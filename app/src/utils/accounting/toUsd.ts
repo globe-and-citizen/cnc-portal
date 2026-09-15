@@ -9,24 +9,16 @@
  *
  * ## Rate source
  * - **Stablecoins** (USDC, USDC.e, USDT) are valued at their **$1.00 peg**.
- * - **Native (POL/ETH)** and **SHER** have **no historical price feed yet** — a
- *   defined price-of-record per period is a Phase 2 gap (spec §6 "FX /
- *   price-of-record": pin a price oracle and store the rate on each entry; SHER
- *   is valued at the agreed mint price). Until that exists, the caller must pass
- *   a {@link UsdRateOfRecord} resolver; the default one throws for these tokens
- *   so the gap is explicit rather than silently producing $0.
+ * - **Native (POL/ETH)** uses the immutable UTC transaction-date market snapshot.
+ * - **SHER** uses the compensation multiplier in force for the source operation.
+ *
+ * An unavailable non-pegged rate remains zero-valued but the source movement is
+ * retained. Accounting completeness reports the missing rate explicitly.
  */
 import { formatUnits } from 'viem'
 import type { TokenId } from '@/constant'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
-
-/**
- * Storage / internal-calculation precision (spec §3): every ledger value — the
- * rate of record, the whole-token quantity and the derived USD amount — is kept
- * and manipulated at **6 decimals**. The final 2-decimal rounding happens once,
- * at render time only (see {@link ./presenter.money}), never here.
- */
-export const USD_STORAGE_DECIMALS = 6
+import type { JournalEntryDraft } from './journalEntryDraft'
 
 /** Round to the 6-decimal storage precision (spec §3) — never the 2-dp display. */
 export function round6(value: number): number {
@@ -35,10 +27,16 @@ export function round6(value: number): number {
 
 /**
  * Resolves the USD price of one whole token at a given time — the
- * "rate of record" for that transaction. Phase 2 wires this to a price oracle;
- * for now callers inject their own (e.g. the agreed SHER mint price).
+ * "rate of record" for that transaction.
  */
 export type UsdRateOfRecord = (tokenId: TokenId, at: Date) => number
+
+/** One non-pegged token/date pair that needs an immutable market snapshot. */
+export interface HistoricalRateTarget {
+  token: TokenId
+  /** UTC calendar date in `YYYY-MM-DD` format. */
+  date: string
+}
 
 /** Tokens pinned to a $1.00 USD peg. */
 const USD_PEGGED_TOKENS: ReadonlySet<TokenId> = new Set<TokenId>(['usdc', 'usdc.e', 'usdt'])
@@ -48,15 +46,49 @@ export function isUsdPegged(tokenId: TokenId): boolean {
   return USD_PEGGED_TOKENS.has(tokenId)
 }
 
+/** Canonical UTC calendar date used by historical rate query identities. */
+export function utcRateDate(at: Date): string {
+  if (!Number.isFinite(at.getTime())) throw new Error('Historical rate requires a valid date')
+  return at.toISOString().slice(0, 10)
+}
+
+/**
+ * Derive the unique market-rate snapshots required by a raw Accounting feed.
+ * Stablecoins and SHER already have domain-owned rates and require no market read.
+ */
+export function historicalRateTargets(
+  entries: readonly JournalEntryDraft[]
+): HistoricalRateTarget[] {
+  const targets = new Map<string, HistoricalRateTarget>()
+  for (const entry of entries) {
+    if (
+      (entry.debit === null && entry.credit === null) ||
+      BigInt(entry.rawAmount) === 0n ||
+      isUsdPegged(entry.token) ||
+      entry.token === 'sher'
+    ) {
+      continue
+    }
+
+    const target = {
+      token: entry.token,
+      date: utcRateDate(new Date(entry.timestamp * 1000))
+    }
+    targets.set(`${target.token}:${target.date}`, target)
+  }
+  return [...targets.values()].sort(
+    (left, right) => left.date.localeCompare(right.date) || left.token.localeCompare(right.token)
+  )
+}
+
 /**
  * Default rate-of-record source: stablecoins are handled by {@link toUsd} at
- * their peg, so this only ever runs for non-pegged tokens — for which there is
- * no feed yet. It throws to surface the Phase 2 gap.
+ * their peg, so this only runs for a non-pegged token whose source was omitted.
  */
-export const requireRateOfRecord: UsdRateOfRecord = (tokenId) => {
+const requireRateOfRecord: UsdRateOfRecord = (tokenId) => {
   throw new Error(
     `No USD rate-of-record for "${tokenId}". Native (POL/ETH) and SHER need a ` +
-      `price-of-record source (Phase 2 oracle / agreed mint price) — pass a ` +
+      `historical market or compensation-multiplier source — pass a ` +
       `rateOfRecord resolver to toUsd().`
   )
 }
@@ -80,14 +112,20 @@ export function wholeTokenAmount(amount: bigint, tokenId: TokenId): number {
   return Number(formatUnits(amount, getTokenDecimals(tokenId)))
 }
 
-/**
- * True when a raw base-unit amount rounds to nothing — a `0` quantity / `$0.00`
- * leg at the ledger's 6-dp display: an exact zero, or **dust** (a tiny non-zero
- * amount, e.g. a native wage component of a few wei). Such a leg carries no value
- * and only clutters a posting, so mappers skip it.
- */
-export function isNegligibleAmount(amount: bigint, tokenId: TokenId): boolean {
-  return Math.abs(wholeTokenAmount(amount, tokenId)) < 0.5e-6
+/** Stamp market-valued entries without changing stablecoin or SHER valuation policy. */
+export function applyHistoricalRates(
+  entries: readonly JournalEntryDraft[],
+  rateOfRecord: UsdRateOfRecord
+): JournalEntryDraft[] {
+  return entries.map((entry) => {
+    if (isUsdPegged(entry.token) || entry.token === 'sher' || BigInt(entry.rawAmount) === 0n) {
+      return entry
+    }
+
+    const at = new Date(entry.timestamp * 1000)
+    const rate = tokenUsdRate(entry.token, at, rateOfRecord)
+    return { ...entry, rate }
+  })
 }
 
 /**

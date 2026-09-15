@@ -9,13 +9,13 @@ export const SAFE_ROUTER_ADDRESS = '0x2222222222222222222222222222222222222222'
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 export const {
-  apolloState,
+  eventFeedState,
   mockUseQuery,
   mockGetTokenPrice,
   mockInvestorSymbolData,
   mockGetContractAddressByType
 } = vi.hoisted(() => {
-  const apolloState = {
+  const eventFeedState = {
     investorResult: null as unknown as { value: unknown },
     investorError: null as unknown as { value: Error | null },
     investorLoading: null as unknown as { value: boolean },
@@ -34,7 +34,7 @@ export const {
   })
 
   return {
-    apolloState,
+    eventFeedState,
     mockUseQuery,
     mockGetTokenPrice,
     mockInvestorSymbolData,
@@ -197,13 +197,13 @@ export const setupDefaultState = () => {
     return null
   })
 
-  apolloState.investorResult.value = buildInvestorResult()
-  apolloState.investorError.value = null
-  apolloState.investorLoading.value = false
+  eventFeedState.investorResult.value = buildInvestorResult()
+  eventFeedState.investorError.value = null
+  eventFeedState.investorLoading.value = false
 
-  apolloState.safeResult.value = buildSafeResult()
-  apolloState.safeError.value = null
-  apolloState.safeLoading.value = false
+  eventFeedState.safeResult.value = buildSafeResult()
+  eventFeedState.safeError.value = null
+  eventFeedState.safeLoading.value = false
 
   mockGetTokenPrice.mockReturnValue(1)
   mockInvestorSymbolData.value = 'SHER'
@@ -211,13 +211,13 @@ export const setupDefaultState = () => {
   mockUseQuery.mockReset()
   mockUseQuery
     .mockReturnValueOnce({
-      result: apolloState.investorResult,
-      error: apolloState.investorError,
-      loading: apolloState.investorLoading
+      result: eventFeedState.investorResult,
+      error: eventFeedState.investorError,
+      loading: eventFeedState.investorLoading
     })
     .mockReturnValueOnce({
-      result: apolloState.safeResult,
-      error: apolloState.safeError,
-      loading: apolloState.safeLoading
+      result: eventFeedState.safeResult,
+      error: eventFeedState.safeError,
+      loading: eventFeedState.safeLoading
     })
 }

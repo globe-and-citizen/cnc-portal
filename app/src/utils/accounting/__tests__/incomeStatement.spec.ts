@@ -1,16 +1,18 @@
 import { describe, it, expect } from 'vitest'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
 import { catalogueLedger } from './catalogueLedger'
+import { usdNumber } from './fixtures'
 
 describe('buildIncomeStatement — catalogue §6.5', () => {
-  const is = buildIncomeStatement(catalogueLedger)
+  const is = buildIncomeStatement(finalizeJournal(catalogueLedger))
   const lineFor = (account: string): number =>
-    [...is.revenue, ...is.expenses].find((l) => l.account === account)?.amount ?? 0
+    usdNumber([...is.revenue, ...is.expenses].find((l) => l.account === account)?.amount ?? 0n)
 
   it('totals revenue, expenses and net income', () => {
-    expect(is.totalRevenue).toBeCloseTo(115, 2)
-    expect(is.totalExpenses).toBeCloseTo(100.8, 2) // no SHER compensation (was 110.8)
-    expect(is.netIncome).toBeCloseTo(14.2, 2) // was 4.2; the $10 SHER is off the IS
+    expect(usdNumber(is.totalRevenue)).toBeCloseTo(115, 2)
+    expect(usdNumber(is.totalExpenses)).toBeCloseTo(100.8, 2) // no SHER compensation (was 110.8)
+    expect(usdNumber(is.netIncome)).toBeCloseTo(14.2, 2) // was 4.2; the $10 SHER is off the IS
   })
 
   it('breaks revenue and expenses into their account lines', () => {
@@ -29,9 +31,9 @@ describe('buildIncomeStatement — catalogue §6.5', () => {
 
   it('ignores internal cash-to-cash moves (no income/expense impact)', () => {
     const internalOnly = catalogueLedger.filter((e) => e.internal)
-    const is = buildIncomeStatement(internalOnly)
+    const is = buildIncomeStatement(finalizeJournal(internalOnly))
     expect(is.revenue).toHaveLength(0)
     expect(is.expenses).toHaveLength(0)
-    expect(is.netIncome).toBe(0)
+    expect(is.netIncome).toBe(0n)
   })
 })

@@ -34,7 +34,7 @@ export default defineConfig(async (env) =>
       root: fileURLToPath(new URL('./', import.meta.url)),
       coverage: {
         provider: 'istanbul',
-        exclude: ['./src/tests/*'],
+        exclude: ['./src/tests/*', './src/artifacts/abi/**/generated.ts'],
         enabled: process.env.VITE_ENABLE_COVERAGE
           ? (process.env.VITE_ENABLE_COVERAGE as unknown as boolean)
           : false

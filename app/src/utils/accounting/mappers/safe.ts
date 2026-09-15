@@ -2,25 +2,23 @@
  * Safe source mapper — plain treasury cash in/out through the team's Gnosis Safe.
  *
  * The Safe emits no bespoke accounting events, so its moves arrive as generic
- * token transfers (native or ERC-20) classified relative to the Safe address:
+ * token transfers (native or ERC-20) interpreted relative to the Safe address:
  *
  * - **Inflow** (to the Safe):
  *   - from an internal pocket → internal move (Dr Cash — Safe · Cr that pocket)
- *   - from a founder          → UC-BANK-01 (Dr Cash — Safe · Cr Owner Capital)
- *   - from anyone else        → UC-BANK-02 (Dr Cash — Safe · Cr Service Revenue)
+ *   - from anyone external    → UC-BANK-02 (Dr Cash — Safe · Cr Service Revenue)
  * - **Outflow** (from the Safe):
  *   - to an internal pocket → internal move (Dr that pocket · Cr Cash — Safe)
- *   - to anyone else        → unclassified outflow, flagged `needs-off-chain-data`
+ *   - to anyone else        → unassigned outflow, flagged `needs-off-chain-data`
  *
  * Investments routed through the SafeDepositRouter also land in the Safe, but they
  * are booked from the router event (UC-SDR-01) — those transfers should be excluded
  * by the caller to avoid double-counting the same cash.
  */
 import { getAddress, isAddress } from 'viem'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
-import { atDate, type MapperContext } from './context'
-import { applyClassification } from './applyClassification'
+import type { MapperContext } from './context'
 
 /** A normalized token transfer touching the Safe (native = `token: null`). */
 export interface SafeTransferRow {
@@ -45,14 +43,18 @@ function sameAddress(a: string, b: string): boolean {
   return isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
 }
 
-function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
+function inferInflow(
+  row: SafeTransferRow,
+  ctx: MapperContext,
+  safeAddress: string
+): JournalEntryDraft {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
+    sourceContract: safeAddress,
     timestamp: row.timestamp,
     debit: SAFE,
     debitInstance: safeAddress,
-    amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
     counterparty: row.from,
@@ -60,7 +62,7 @@ function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: stri
   }
   const sourcePocket = ctx.pocketOf(row.from)
   if (sourcePocket) {
-    return makeEntry({
+    return makeJournalEntryDraft({
       ...base,
       useCase: 'INTERNAL',
       credit: sourcePocket,
@@ -69,44 +71,26 @@ function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: stri
       memo: `Internal funding into Safe from ${sourcePocket}`
     })
   }
-  if (ctx.founderAddresses.has(row.from as `0x${string}`)) {
-    return makeEntry({
-      ...base,
-      useCase: 'UC-BANK-01',
-      credit: 'Owner Capital',
-      memo: 'Founder deposit into Safe'
-    })
-  }
-  // A team member funding the Safe is investing in the company (invest & get
-  // SHER) → a capital contribution to Investor Equity, not client revenue. The
-  // SHER count lives on the SafeDepositRouter event (UC-SDR-01); when that feed is
-  // present the matching Safe inflow is excluded upstream and this branch is moot.
-  if (ctx.memberAddresses.has(row.from as `0x${string}`)) {
-    return makeEntry({
-      ...base,
-      useCase: 'UC-MEMBER-01',
-      credit: 'Investor Equity',
-      // SHER received = USD invested × router multiplier (no router event here).
-      shares: ctx.sherForUsd(base.amountUsd, atDate(row.timestamp)),
-      memo: 'Member capital contribution into Safe'
-    })
-  }
-  return makeEntry({
+  return makeJournalEntryDraft({
     ...base,
     useCase: 'UC-BANK-02',
     credit: 'Service Revenue',
-    memo: 'Client payment into Safe'
+    memo: 'Direct deposit into Safe'
   })
 }
 
-function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
+function inferOutflow(
+  row: SafeTransferRow,
+  ctx: MapperContext,
+  safeAddress: string
+): JournalEntryDraft {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
+    sourceContract: safeAddress,
     timestamp: row.timestamp,
     credit: SAFE,
     creditInstance: safeAddress,
-    amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
     counterparty: row.to,
@@ -114,7 +98,7 @@ function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: str
   }
   const destPocket = ctx.pocketOf(row.to)
   if (destPocket) {
-    return makeEntry({
+    return makeJournalEntryDraft({
       ...base,
       useCase: 'INTERNAL',
       debit: destPocket,
@@ -123,24 +107,27 @@ function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: str
       memo: `Internal move Safe → ${destPocket}`
     })
   }
-  return makeEntry({
+  return makeJournalEntryDraft({
     ...base,
     useCase: 'CASH-OUT',
     debit: 'Operating Expense',
     internal: isInternalAddress(row.to, ctx.internalAddresses),
-    memo: 'Unclassified Safe outflow to external address',
+    memo: 'Unassigned Safe outflow to external address',
     enrichment: 'needs-off-chain-data'
   })
 }
 
 /** Map every Safe transfer to a ledger entry, skipping ones that miss the Safe. */
-export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): LedgerEntry[] {
-  const entries: LedgerEntry[] = []
+export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): JournalEntryDraft[] {
+  const entries: JournalEntryDraft[] = []
   for (const row of input.transfers ?? []) {
     if (sameAddress(row.to, input.safeAddress)) {
-      entries.push(applyClassification(inferInflow(row, ctx, input.safeAddress), 'in', SAFE, ctx))
+      // A Safe inflow is either a direct Service Revenue deposit or an internal
+      // transfer, based on its source evidence. Do not override that posting
+      // with a legacy manual category.
+      entries.push(inferInflow(row, ctx, input.safeAddress))
     } else if (sameAddress(row.from, input.safeAddress)) {
-      entries.push(applyClassification(inferOutflow(row, ctx, input.safeAddress), 'out', SAFE, ctx))
+      entries.push(inferOutflow(row, ctx, input.safeAddress))
     }
     // A transfer touching neither side of the Safe is not a Safe move — skip it.
   }

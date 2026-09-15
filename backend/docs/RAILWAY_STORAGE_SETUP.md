@@ -109,21 +109,21 @@ ENDPOINT=${{Bucket.ENDPOINT}}
 
 The storage service provides essential functions for file management:
 
-| Function                    | Description                                             | Use Case                           |
-| --------------------------- | ------------------------------------------------------- | ---------------------------------- |
-| `uploadFile()`              | Upload single file to S3 with SHA-256 hashed filename   | General file uploads               |
-| `uploadFiles()`             | Upload multiple files (max 10 per claim)                | Claim documents upload             |
-| `getPresignedDownloadUrl()` | Generate time-limited presigned URL for secure download | File download authorization        |
-| `deleteFile()`              | Delete file from S3 storage                             | Cleanup when claim/data is removed |
-| `isStorageConfigured()`     | Check if Railway Storage environment variables are set  | Runtime configuration validation   |
-| `validateFile()`            | Validate file type (MIME) and size before upload        | Input validation and security      |
-| `generateFileKey()`         | Generate SHA-256 hashed key from timestamp + filename   | Unique file identification         |
+| Function                    | Visibility | Description                                             | Use Case                           |
+| --------------------------- | ---------- | ------------------------------------------------------- | ---------------------------------- |
+| `uploadFile()`              | Internal   | Upload single file with SHA-256 hashed filename         | Per-file batch step                |
+| `uploadFiles()`             | Public     | Upload one or more files (max 10 per request)           | File uploads                       |
+| `getPresignedDownloadUrl()` | Public     | Generate time-limited presigned URL for secure download | File download authorization        |
+| `deleteFile()`              | Public     | Delete file from S3 storage                             | Cleanup when claim/data is removed |
+| `isStorageConfigured()`     | Public     | Check if storage environment variables are set          | Runtime configuration validation   |
+| `validateFile()`            | Internal   | Validate file type (MIME) and size before upload        | Input validation and security      |
+| `generateFileKey()`         | Public     | Generate SHA-256 hashed key from timestamp + filename   | Unique file identification         |
 
 ### Function Details
 
 #### File Upload Functions
 
-**`uploadFile(file, folder)`** - Uploads a single file to Railway Storage
+**`uploadFile(file, folder)`** - Internal step that uploads a single file
 
 - Validates file type and size
 - Generates unique SHA-256 hashed key
@@ -133,7 +133,7 @@ The storage service provides essential functions for file management:
 **`uploadFiles(files, folder)`** - Batch upload for multiple files
 
 - Enforces 10-file limit per claim
-- Calls `uploadFile()` for each file
+- Calls the internal `uploadFile()` step for each file
 - Returns array of upload results
 
 #### Download & Access Functions
@@ -160,7 +160,7 @@ The storage service provides essential functions for file management:
 
 #### Validation & Security Functions
 
-**`validateFile(file, allowedTypes, maxSize)`** - File validation
+**`validateFile(file, allowedTypes, maxSize)`** - Internal file validation
 
 - Checks MIME type against whitelist
 - Enforces size limit (default: 10MB)
@@ -632,7 +632,7 @@ mindmap
 
 ✅ **Developer Experience**
 
-- Simple API: `uploadFile()`, `uploadFiles()`
+- Focused public upload API: `uploadFiles()`
 - Clear error messages
 - Type-safe with TypeScript
 - Comprehensive validation

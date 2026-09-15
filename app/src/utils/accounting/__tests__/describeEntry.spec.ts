@@ -1,26 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { activityOf, activityText, entryLabel } from '../describeEntry'
-import type { LedgerEntry } from '../ledgerEntry'
+import type { JournalEntryDraft } from '../journalEntryDraft'
+import { journalFixture } from './fixtures'
 
 const ALI = '0x1111111111111111111111111111111111111111'
 
-/** A minimal balanced entry; override only what each case needs. */
-function entry(partial: Partial<LedgerEntry>): LedgerEntry {
-  return {
-    id: 'e1',
-    timestamp: 1_700_000_000,
-    useCase: 'CASH-IN',
-    debit: 'Cash — Bank',
-    credit: 'Service Revenue',
-    amountUsd: 500,
-    token: 'usdc',
-    rawAmount: '500000000',
-    internal: false,
-    memo: 'raw memo',
-    enrichment: 'not-applicable',
-    ...partial
-  }
-}
+const entry = (partial: Partial<JournalEntryDraft>) => journalFixture(partial)
 
 describe('activityOf — actor rows', () => {
   it('narrates a wage accrual with the hours and the week-ending date', () => {
@@ -33,7 +18,7 @@ describe('activityOf — actor rows', () => {
       })
     )
     expect(a).toMatchObject({ kind: 'actor', actor: ALI })
-    expect(a).toHaveProperty('text', expect.stringContaining('submitted 16h'))
+    expect(a).toHaveProperty('text', expect.stringContaining('submitted 16 h'))
     expect(a).toHaveProperty('text', expect.stringContaining('week ending'))
   })
 
@@ -48,18 +33,18 @@ describe('activityOf — actor rows', () => {
   it('renders hours and minutes (never a decimal) and a wage settlement', () => {
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 90 }))
-    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1h 30min of work' })
-    // 20h 50min = 1250 min — must read "20h 50min", not "20.8h".
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1 h 30 min of work' })
+    // 20 h 50 min = 1250 min — must not read as decimal hours.
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 1250 })).text
-    ).toBe('submitted 20h 50min of work')
+    ).toBe('submitted 20 h 50 min of work')
     // Under an hour shows minutes only; a whole hour drops the minutes.
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 50 })).text
-    ).toBe('submitted 50min of work')
+    ).toBe('submitted 50 min of work')
     expect(
       activityOf(entry({ useCase: 'UC-CASH-03', counterparty: ALI, minutesWorked: 960 }))
-    ).toEqual({ kind: 'actor', actor: ALI, text: 'was paid for 16h of work' })
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'was paid for 16 h of work' })
     expect(activityOf(entry({ useCase: 'UC-CASH-03', counterparty: ALI }))).toEqual({
       kind: 'actor',
       actor: ALI,
@@ -67,19 +52,13 @@ describe('activityOf — actor rows', () => {
     })
   })
 
-  it('narrates capital, revenue and an investment with the SHER tail', () => {
-    expect(activityOf(entry({ useCase: 'UC-BANK-01', counterparty: ALI })).text).toBe(
-      'contributed $500.00 in capital'
-    )
+  it('narrates revenue and an investment with the SHER tail', () => {
     expect(activityOf(entry({ useCase: 'UC-BANK-02', counterparty: ALI })).text).toBe(
       'paid $500.00 for services'
     )
     expect(activityOf(entry({ useCase: 'UC-SDR-01', counterparty: ALI })).text).toBe(
       'invested $500.00 in capital'
     )
-    expect(
-      activityOf(entry({ useCase: 'UC-MEMBER-01', counterparty: ALI, shares: 120 })).text
-    ).toBe('invested $500.00 in capital and got 120 SHER')
   })
 
   it('narrates an expense withdrawal, a dividend and a share issuance', () => {
@@ -181,9 +160,9 @@ describe('activityOf — plain rows', () => {
       text: 'Cash receipt'
     })
     // an actor use case without a counterparty has no one to name
-    expect(activityOf(entry({ useCase: 'UC-BANK-01' }))).toEqual({
+    expect(activityOf(entry({ useCase: 'UC-BANK-02' }))).toEqual({
       kind: 'plain',
-      text: 'Owner capital contribution'
+      text: 'Service revenue'
     })
     // a memo-only mint with no shares
     expect(
@@ -219,6 +198,6 @@ describe('entryLabel', () => {
   it('maps each use case to its generic label', () => {
     expect(entryLabel(entry({ useCase: 'CASH-OUT' }))).toBe('Cash payment')
     expect(entryLabel(entry({ useCase: 'UC-BANK-03' }))).toBe('Treasury funding')
-    expect(entryLabel(entry({ useCase: 'UC-MEMBER-01' }))).toBe('Member capital contribution')
+    expect(entryLabel(entry({ useCase: 'UC-BANK-02' }))).toBe('Service revenue')
   })
 })

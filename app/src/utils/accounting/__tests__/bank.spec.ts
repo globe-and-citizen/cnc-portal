@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { mapBankEvents } from '@/utils/accounting/mappers/bank'
-import { makeCtx, ADDR } from './fixtures'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 
 describe('mapBankEvents', () => {
-  it('books a founder native deposit as UC-BANK-01 (Owner Capital)', () => {
+  it('books a direct native deposit as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapBankEvents(
       {
         deposits: [
@@ -21,16 +21,16 @@ describe('mapBankEvents', () => {
       ctx
     )
     expect(entry).toMatchObject({
-      useCase: 'UC-BANK-01',
+      useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
-      credit: 'Owner Capital',
-      amountUsd: 2, // 1 native * $2
+      credit: 'Service Revenue',
       token: 'native',
       internal: false
     })
+    expect(draftUsdValue(entry)).toBe(2) // 1 native * $2
   })
 
-  it('books a non-founder (client) deposit as UC-BANK-02 (Service Revenue)', () => {
+  it('books a client token deposit as UC-BANK-02 (Service Revenue)', () => {
     const [entry] = mapBankEvents(
       {
         tokenDeposits: [
@@ -50,32 +50,9 @@ describe('mapBankEvents', () => {
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 5, // 5 usdc * $1
       token: 'usdc'
     })
-  })
-
-  it('treats a deposit from an internal pocket as an internal funding move', () => {
-    const [entry] = mapBankEvents(
-      {
-        deposits: [
-          {
-            id: 'd3',
-            contractAddress: ADDR.bank,
-            depositor: ADDR.safe,
-            amount: '1000000000000000000',
-            timestamp: 100
-          }
-        ]
-      },
-      ctx
-    )
-    expect(entry).toMatchObject({
-      useCase: 'INTERNAL',
-      debit: 'Cash — Bank',
-      credit: 'Cash — Safe',
-      internal: true
-    })
+    expect(draftUsdValue(entry)).toBe(5) // 5 USDC * $1
   })
 
   it('books a transfer to an internal pocket as UC-BANK-03 funding', () => {
@@ -95,7 +72,7 @@ describe('mapBankEvents', () => {
     })
   })
 
-  it('flags an external transfer out for off-chain reclassification', () => {
+  it('flags an external transfer out for an off-chain account assignment', () => {
     const [entry] = mapBankEvents(
       {
         transfers: [

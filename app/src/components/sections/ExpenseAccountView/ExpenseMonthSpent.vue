@@ -46,8 +46,8 @@ const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime() 
 const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime() / 1000
 const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0).getTime() / 1000
 
-// EXPERIMENT: derive monthly spend from the RPC-sourced Expense events instead
-// of Ponder. Transfers out = native (tokenAddress = zeroAddress) + token.
+// Derive monthly spend from RPC-sourced Expense events. Transfers out = native
+// (tokenAddress = zeroAddress) + token.
 const { result: expenseEvents, loading, error } = useExpenseEventsViaLogs(contractAddress)
 
 const transfersInRange = (

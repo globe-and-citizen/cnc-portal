@@ -1,13 +1,13 @@
 /**
  * EXPERIMENT (getLogs vs indexer) — InvestorV1 event feed from the RPC, in the
- * exact `InvestorEventsQuery` shape, via the shared `useContractEventsViaLogs`
+ * exact `InvestorEventFeed` shape, via the shared `useContractEventsViaLogs`
  * base.
  */
 import type { MaybeRefOrGetter } from 'vue'
-import InvestorV1abi from '@/artifacts/abi/V1/json/InvestorV1.json'
-import InvestorV01abi from '@/artifacts/abi/V0.1/json/InvestorV1.json'
-import InvestorV0abi from '@/artifacts/abi/V0/json/InvestorV1.json'
-import type { InvestorEventsQuery } from '@/types/ponder/investor'
+import { investorAbi as investorV1Abi } from '@/artifacts/abi/V1/generated'
+import { investorAbi as investorV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { investorAbi as investorV0Abi } from '@/artifacts/abi/V0/generated'
+import type { InvestorEventFeed } from '@/types/contract-events/investor'
 import {
   str,
   unionEventAbi,
@@ -16,9 +16,9 @@ import {
   type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
-const INVESTOR_EVENT_ABI = unionEventAbi([InvestorV1abi, InvestorV01abi, InvestorV0abi])
+const INVESTOR_EVENT_ABI = unionEventAbi([investorV1Abi, investorV01Abi, investorV0Abi])
 
-const empty = (): InvestorEventsQuery => ({
+const empty = (): InvestorEventFeed => ({
   investorMints: { items: [] },
   investorDividendDistributeds: { items: [] },
   investorDividendPaids: { items: [] },
@@ -32,7 +32,7 @@ const mapEvent = ({
   contract,
   eventName,
   args
-}: EventMapContext<InvestorEventsQuery>) => {
+}: EventMapContext<InvestorEventFeed>) => {
   switch (eventName) {
     case 'Minted':
       out.investorMints.items.push({
@@ -79,7 +79,7 @@ const mapEvent = ({
 }
 
 export function useInvestorEventsViaLogs(contractAddress: MaybeRefOrGetter<ContractAddressInput>) {
-  return useContractEventsViaLogs<InvestorEventsQuery>({
+  return useContractEventsViaLogs<InvestorEventFeed>({
     contractAddress,
     queryKey: 'investor-events-logs',
     eventAbi: INVESTOR_EVENT_ABI,

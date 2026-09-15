@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { periodIndex, FREQUENCY } from '../mappers/expensePeriods'
+import { periodIndex } from '../mappers/expensePeriods'
 
 const DAY = 86_400
+const FREQUENCY = { ONE_TIME: 0, DAILY: 1, WEEKLY: 2, MONTHLY: 3, CUSTOM: 4 } as const
 /** 2024-01-01 00:00:00 UTC — a Monday, so weekly windows start clean. */
 const MON = Math.floor(Date.UTC(2024, 0, 1) / 1000)
 

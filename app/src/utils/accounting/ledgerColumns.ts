@@ -1,8 +1,7 @@
 /**
  * The general-ledger table columns — the single list the show/hide selector, the
  * table and both exporters read, so an exported ledger keeps the exact columns
- * (and order) the screen shows. Split from {@link ./ledgerPresenter} (which maps
- * entries into rows) and re-exported from it for convenience.
+ * (and order) the screen shows.
  */
 
 /** The toggleable ledger table columns (keys match the table's cell slots). */
@@ -10,6 +9,7 @@ export type LedgerColumnKey =
   | 'date'
   | 'action'
   | 'transaction'
+  | 'txHash'
   | 'activity'
   | 'account'
   | 'dr'
@@ -19,7 +19,7 @@ export type LedgerColumnKey =
   | 'rate'
 
 /** A ledger column as rendered in the selector and the exports. */
-export type LedgerColumn = { value: LedgerColumnKey; label: string }
+type LedgerColumn = { value: LedgerColumnKey; label: string }
 
 /**
  * Ledger columns as `{ value, label }`, for the show/hide-columns selector.
@@ -30,6 +30,7 @@ export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
   { value: 'date', label: 'Date' },
   { value: 'action', label: 'Action' },
   { value: 'transaction', label: 'Transaction' },
+  { value: 'txHash', label: 'Tx hash' },
   { value: 'activity', label: 'Activity' },
   { value: 'account', label: 'Account' },
   { value: 'currency', label: 'Currency' },

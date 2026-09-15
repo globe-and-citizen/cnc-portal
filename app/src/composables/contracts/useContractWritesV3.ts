@@ -50,6 +50,12 @@ export interface ContractWriteV3Config<
   chainId?: MaybeRef<number | undefined>
   config?: {
     log?: boolean
+    /**
+     * Set false only when the write owns a narrower invalidation plan. This is
+     * useful when a mutation changes a bounded derived view but leaves the
+     * contract record itself unchanged.
+     */
+    invalidateContractReads?: boolean
   }
   /**
    * Runs after the built-in read-invalidation. Awaited, so `mutateAsync`
@@ -200,6 +206,41 @@ export async function executeContractWrite(
 }
 
 /**
+ * Matches every `useReadContract` query subscribed to one contract address.
+ *
+ * A predicate rather than a partial-key target, for two reasons:
+ *
+ *   1. `useReadContract` injects `chainId` into its stored queryKey, so a
+ *      partial-key target that omits `chainId` matches by a subtle
+ *      `partialMatchKey` contract and a target that includes
+ *      `chainId: undefined` fails outright (`typeof undefined !== typeof 31337`).
+ *      Reading the queryKey structurally sidesteps both traps.
+ *   2. Address case drift: the stored key uses whatever address the caller
+ *      passed, so comparing lower-cased on both sides keeps the match robust if
+ *      viem ever checksum-normalises the string somewhere in the pipeline.
+ *
+ * Exported so a write that dirties reads on *another* contract can invalidate
+ * them the same way this composable invalidates its own — see
+ * `useElectionsPublishResults`, where publishing seats the winners on the Board
+ * of Directors.
+ */
+export function contractReadsOfAddress(address: Address, chainId?: number) {
+  const addressLower = address.toLowerCase()
+
+  return (query: { queryKey: readonly unknown[] }) => {
+    const key = query.queryKey
+    if (!Array.isArray(key) || key[0] !== 'readContract') return false
+    const params = key[1] as { address?: string; chainId?: number } | undefined
+    if (!params || typeof params !== 'object') return false
+    if (typeof params.address !== 'string') return false
+    if (params.address.toLowerCase() !== addressLower) return false
+    // If the caller pinned a specific chainId, only invalidate reads on that chain.
+    if (chainId !== undefined && params.chainId !== chainId) return false
+    return true
+  }
+}
+
+/**
  * V3: Lean contract write composable.
  *
  * Accepts contract coordinates (address, abi, functionName, chainId) at call time.
@@ -264,35 +305,12 @@ export function useContractWritesV3<const abi extends Abi, fn extends WriteFunct
         await cfg.onSuccess?.(data, variables)
         return
       }
-      const chainId = unref(cfg.chainId)
-      const addressLower = address.toLowerCase()
-
-      // Invalidate every `useReadContract` subscribed to this contract address.
-      // We use a predicate rather than a partial-key target for two reasons:
-      //
-      //   1. `useReadContract` injects `chainId` into its stored queryKey, so
-      //      a partial-key target that omits `chainId` matches by a subtle
-      //      `partialMatchKey` contract and a target that includes
-      //      `chainId: undefined` fails outright (`typeof undefined !== typeof 31337`).
-      //      The predicate sidesteps both traps by reading the queryKey
-      //      structurally.
-      //   2. Address case drift: the stored key uses whatever address the
-      //      caller passed; comparing lower-cased on both sides makes the
-      //      match robust if viem ever checksum-normalises the string
-      //      somewhere in the pipeline.
-      await queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey
-          if (!Array.isArray(key) || key[0] !== 'readContract') return false
-          const params = key[1] as { address?: string; chainId?: number } | undefined
-          if (!params || typeof params !== 'object') return false
-          if (typeof params.address !== 'string') return false
-          if (params.address.toLowerCase() !== addressLower) return false
-          // If the caller pinned a specific chainId, only invalidate reads on that chain.
-          if (chainId !== undefined && params.chainId !== chainId) return false
-          return true
-        }
-      })
+      if (cfg.config?.invalidateContractReads !== false) {
+        // Invalidate every `useReadContract` subscribed to this contract address.
+        await queryClient.invalidateQueries({
+          predicate: contractReadsOfAddress(address, unref(cfg.chainId))
+        })
+      }
       await cfg.onSuccess?.(data, variables)
     }
   })

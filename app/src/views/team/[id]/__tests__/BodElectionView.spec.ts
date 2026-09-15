@@ -1,39 +1,20 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
 import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
 import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import PastElectionsSection from '@/components/sections/AdministrationView/PastElectionsSection.vue'
 import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
-import { mockLog, useReadContractFn, mockTeamStore } from '@/tests/mocks'
-import { useTeamStore } from '@/stores'
+import { mockElectionsReads, mockLog, resetContractMocks } from '@/tests/mocks'
 
-// Test constants
 const MOCK_ELECTIONS_ADDRESS = '0x1234567890123456789012345678901234567890'
-
-// Reactive refs created after imports
-const mockUseReadContractData = ref<bigint | number | null>(null)
-const mockUseReadContractError = ref<Error | null>(null)
-const mockUseReadContractIsLoading = ref(false)
-
-vi.mock('@/artifacts/abi/elections', () => ({
-  ELECTIONS_ABI: [
-    {
-      type: 'function',
-      name: 'getNextElectionId',
-      inputs: [],
-      outputs: [{ type: 'uint256', name: '' }]
-    }
-  ]
-}))
 
 describe('BodElectionView.vue', () => {
   let wrapper: VueWrapper
 
-  const mountComponent = () => {
-    return mount(BodElectionView, {
+  const mountComponent = () =>
+    mount(BodElectionView, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
@@ -44,23 +25,12 @@ describe('BodElectionView.vue', () => {
         }
       }
     })
-  }
+
+  const summarySection = () => wrapper.findComponent(ElectionSummarySection)
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseReadContractData.value = null
-    mockUseReadContractError.value = null
-    mockUseReadContractIsLoading.value = false
-    useReadContractFn.mockReturnValue({
-      data: mockUseReadContractData,
-      error: mockUseReadContractError,
-      isLoading: mockUseReadContractIsLoading
-    })
-    vi.mocked(useTeamStore).mockReturnValue(mockTeamStore as ReturnType<typeof useTeamStore>)
-    mockTeamStore.getContractAddressByType.mockImplementation((type) => {
-      if (type === 'Elections') return MOCK_ELECTIONS_ADDRESS
-      return undefined
-    })
+    resetContractMocks()
   })
 
   afterEach(() => {
@@ -68,8 +38,7 @@ describe('BodElectionView.vue', () => {
   })
 
   describe('Component Rendering', () => {
-    it('should render all main sections', () => {
-      mockUseReadContractData.value = 5n
+    it('should render the sections that do not depend on an election', () => {
       wrapper = mountComponent()
 
       expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
@@ -77,28 +46,29 @@ describe('BodElectionView.vue', () => {
     })
 
     it('should render ElectionSummarySection when nextElectionId exists', () => {
-      mockUseReadContractData.value = 5n
+      mockElectionsReads.nextElectionId.data.value = 5n
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(true)
+      expect(summarySection().exists()).toBe(true)
     })
 
-    it('should not render ElectionSummarySection when nextElectionId is null', () => {
-      mockUseReadContractData.value = null
+    it('should not render ElectionSummarySection before nextElectionId arrives', () => {
+      mockElectionsReads.nextElectionId.data.value = null
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
+      expect(summarySection().exists()).toBe(false)
     })
 
     it('should not render ElectionSummarySection when nextElectionId is 0', () => {
-      mockUseReadContractData.value = 0n
+      mockElectionsReads.nextElectionId.data.value = 0n
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
+      expect(summarySection().exists()).toBe(false)
     })
+  })
 
-    it('should render ContractOwnerCard when electionsAddress exists', () => {
-      mockUseReadContractData.value = 5n
+  describe('Elections Address Handling', () => {
+    it('should pass the elections address to ContractOwnerCard', () => {
       wrapper = mountComponent()
 
       const contractOwnerCard = wrapper.findComponent(ContractOwnerCard)
@@ -106,300 +76,102 @@ describe('BodElectionView.vue', () => {
       expect(contractOwnerCard.props('contractAddress')).toBe(MOCK_ELECTIONS_ADDRESS)
     })
 
-    it('should not render ContractOwnerCard when electionsAddress is undefined', () => {
-      mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
-      mockUseReadContractData.value = 5n
-      wrapper = mountComponent()
-
-      expect(wrapper.findComponent(ContractOwnerCard).exists()).toBe(false)
-    })
-  })
-
-  describe('Elections Address Handling', () => {
-    it('should fetch elections address from team store', () => {
-      wrapper = mountComponent()
-
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Elections')
-    })
-
-    it('should handle missing elections address', () => {
-      mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
+    it('should not render ContractOwnerCard while the elections address is unknown', () => {
+      mockElectionsReads.address.data.value = undefined
       wrapper = mountComponent()
 
       expect(wrapper.findComponent(ContractOwnerCard).exists()).toBe(false)
     })
 
-    it('should pass correct address to ContractOwnerCard', () => {
-      mockUseReadContractData.value = 5n
+    it('should render ContractOwnerCard once the team contracts land', async () => {
+      mockElectionsReads.address.data.value = undefined
       wrapper = mountComponent()
 
-      const contractOwnerCard = wrapper.findComponent(ContractOwnerCard)
-      expect(contractOwnerCard.props('contractAddress')).toBe(MOCK_ELECTIONS_ADDRESS)
+      expect(wrapper.findComponent(ContractOwnerCard).exists()).toBe(false)
+
+      mockElectionsReads.address.data.value = MOCK_ELECTIONS_ADDRESS
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.findComponent(ContractOwnerCard).exists()).toBe(true)
     })
   })
 
   describe('Election ID Computation', () => {
-    it('should compute currentElectionId from nextElectionId (bigint)', () => {
-      mockUseReadContractData.value = 5n
+    it.each([
+      ['bigint', 5n, 4n],
+      ['number', 10, 9n],
+      ['the first election', 1n, 0n],
+      ['a large id', 1000000n, 999999n]
+    ])('should compute the current election id from %s', (_case, nextId, expected) => {
+      mockElectionsReads.nextElectionId.data.value = nextId
       wrapper = mountComponent()
 
-      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
-      expect(currentElectionSection.props('electionId')).toBe(4n)
-    })
-
-    it('should compute currentElectionId from nextElectionId (number)', () => {
-      mockUseReadContractData.value = 10
-      wrapper = mountComponent()
-
-      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
-      expect(currentElectionSection.props('electionId')).toBe(9n)
-    })
-
-    it('should handle nextElectionId of 1', () => {
-      mockUseReadContractData.value = 1n
-      wrapper = mountComponent()
-
-      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
-      expect(currentElectionSection.props('electionId')).toBe(0n)
-    })
-
-    it('should return 0n when nextElectionId is null', () => {
-      mockUseReadContractData.value = null
-      wrapper = mountComponent()
-
-      // Should not render ElectionSummarySection
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
-    })
-
-    it('should return 0n when nextElectionId is undefined', () => {
-      mockUseReadContractData.value = null
-      wrapper = mountComponent()
-
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
-    })
-
-    it('should handle very large election IDs', () => {
-      mockUseReadContractData.value = 1000000n
-      wrapper = mountComponent()
-
-      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
-      expect(currentElectionSection.props('electionId')).toBe(999999n)
+      expect(summarySection().props('electionId')).toBe(expected)
     })
   })
 
   describe('Error Handling', () => {
-    it('should not log error when error is null', async () => {
-      mockUseReadContractError.value = null
+    it('should not log when the read succeeds', async () => {
       wrapper = mountComponent()
-
       await wrapper.vm.$nextTick()
 
       expect(mockLog.error).not.toHaveBeenCalled()
     })
 
-    it('should continue rendering despite errors', () => {
-      mockUseReadContractError.value = new Error('Contract not found')
+    it('should log a failed next-election-id read', async () => {
+      wrapper = mountComponent()
+
+      mockElectionsReads.nextElectionId.error.value = new Error('Contract not found')
+      await wrapper.vm.$nextTick()
+
+      expect(mockLog.error).toHaveBeenCalledWith(
+        'Error fetching next election ID: ',
+        expect.any(Error)
+      )
+    })
+
+    it('should keep rendering the rest of the page when the read fails', () => {
+      mockElectionsReads.nextElectionId.error.value = new Error('Contract not found')
       wrapper = mountComponent()
 
       expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
       expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
-    })
-  })
-
-  describe('Loading States', () => {
-    it('should handle loading state for next election ID', () => {
-      mockUseReadContractIsLoading.value = true
-      wrapper = mountComponent()
-
-      // Component should still render basic sections during loading
-      expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
-      expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
-    })
-
-    it('should not show current election section while loading', () => {
-      mockUseReadContractIsLoading.value = true
-      mockUseReadContractData.value = null
-      wrapper = mountComponent()
-
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
-    })
-  })
-
-  describe('Component Props', () => {
-    it('should pass correct electionId prop to ElectionSummarySection', () => {
-      mockUseReadContractData.value = 7n
-      wrapper = mountComponent()
-
-      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
-      expect(currentElectionSection.props('electionId')).toBe(6n)
-    })
-
-    it('should pass correct contractAddress prop to ContractOwnerCard', () => {
-      mockUseReadContractData.value = 5n
-      wrapper = mountComponent()
-
-      const contractOwnerCard = wrapper.findComponent(ContractOwnerCard)
-      expect(contractOwnerCard.props('contractAddress')).toBe(MOCK_ELECTIONS_ADDRESS)
     })
   })
 
   describe('Reactive Updates', () => {
-    it('should update currentElectionId when nextElectionId changes', async () => {
-      mockUseReadContractData.value = 5n
+    it('should follow nextElectionId as it changes', async () => {
+      mockElectionsReads.nextElectionId.data.value = 5n
       wrapper = mountComponent()
 
-      let currentElectionSection = wrapper.findComponent(ElectionSummarySection)
-      expect(currentElectionSection.props('electionId')).toBe(4n)
+      expect(summarySection().props('electionId')).toBe(4n)
 
-      mockUseReadContractData.value = 10n
+      mockElectionsReads.nextElectionId.data.value = 10n
       await wrapper.vm.$nextTick()
 
-      currentElectionSection = wrapper.findComponent(ElectionSummarySection)
-      expect(currentElectionSection.props('electionId')).toBe(9n)
+      expect(summarySection().props('electionId')).toBe(9n)
     })
 
-    it('should show/hide ElectionSummarySection based on nextElectionId', async () => {
-      mockUseReadContractData.value = 5n
+    it('should show the summary once an election id arrives', async () => {
+      mockElectionsReads.nextElectionId.data.value = null
       wrapper = mountComponent()
 
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(true)
+      expect(summarySection().exists()).toBe(false)
 
-      mockUseReadContractData.value = null
+      mockElectionsReads.nextElectionId.data.value = 3n
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
-    })
-  })
-
-  describe('Edge Cases', () => {
-    it('should handle nextElectionId as 0', () => {
-      mockUseReadContractData.value = 0n
-      wrapper = mountComponent()
-
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
-    })
-
-    it('should handle very large bigint values', () => {
-      const largeValue = BigInt('9007199254740991') // Max safe integer as bigint
-      mockUseReadContractData.value = largeValue
-      wrapper = mountComponent()
-
-      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
-      expect(currentElectionSection.props('electionId')).toBe(largeValue - 1n)
-    })
-
-    it('should handle rapid data updates', async () => {
-      mockUseReadContractData.value = 3n
-      wrapper = mountComponent()
-
-      // Rapid updates
-      for (let i = 4; i <= 10; i++) {
-        mockUseReadContractData.value = BigInt(i)
-        await wrapper.vm.$nextTick()
-      }
-
-      const currentElectionSection = wrapper.findComponent(ElectionSummarySection)
-      expect(currentElectionSection.props('electionId')).toBe(9n)
-    })
-
-    it('should handle transition from null to valid election ID', async () => {
-      mockUseReadContractData.value = null
-      wrapper = mountComponent()
-
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(false)
-
-      mockUseReadContractData.value = 3n
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(ElectionSummarySection).exists()).toBe(true)
-      expect(wrapper.findComponent(ElectionSummarySection).props('electionId')).toBe(2n)
-    })
-  })
-
-  describe('Contract Integration', () => {
-    it('should disable query when elections address is undefined', () => {
-      mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
-      wrapper = mountComponent()
-
-      // Query should still be called but with enabled: false
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Elections')
+      expect(summarySection().exists()).toBe(true)
+      expect(summarySection().props('electionId')).toBe(2n)
     })
   })
 
   describe('Component Lifecycle', () => {
-    it('should clean up properly on unmount', () => {
-      mockUseReadContractData.value = 5n
+    it('should unmount without throwing', () => {
+      mockElectionsReads.nextElectionId.data.value = 5n
       wrapper = mountComponent()
 
       expect(() => wrapper.unmount()).not.toThrow()
     })
-
-    it('should maintain state consistency across re-renders', async () => {
-      mockUseReadContractData.value = 5n
-      wrapper = mountComponent()
-
-      const initialElectionId = wrapper.findComponent(ElectionSummarySection).props('electionId')
-
-      await wrapper.vm.$forceUpdate()
-
-      const afterRerenderElectionId = wrapper
-        .findComponent(ElectionSummarySection)
-        .props('electionId')
-      expect(afterRerenderElectionId).toBe(initialElectionId)
-    })
   })
-
-  describe('Multiple Contract Types', () => {
-    it('should only fetch Elections contract address', () => {
-      wrapper = mountComponent()
-
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Elections')
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledTimes(1)
-    })
-
-    // it('should handle when other contract types are requested', () => {
-    //   mockTeamStore.getContractAddressByType.mockImplementation((type: string) => {
-    //     if (type === 'Elections') return MOCK_ELECTIONS_ADDRESS
-    //     if (type === 'BoardOfDirectors') return '0x9999999999999999999999999999999999999999'
-    //     return undefined
-    //   })
-
-    //   wrapper = mountComponent()
-
-    //   expect(mockTeamStore.getContractAddressByType('Elections')).toBe(MOCK_ELECTIONS_ADDRESS)
-    // })
-  })
-
-  // describe('Conditional Rendering Logic', () => {
-  //   it('should always render BodMembersSection regardless of election data', () => {
-  //     mockUseReadContractData.value = null
-  //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
-
-  //     mockUseReadContractData.value = 5n
-  //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
-  //   })
-
-  //   it('should always render PastElectionsSection', () => {
-  //     mockUseReadContractData.value = null
-  //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
-
-  //     mockUseReadContractData.value = 5n
-  //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
-  //   })
-
-  //   it('should conditionally render ContractOwnerCard based on electionsAddress', () => {
-  //     mockTeamStore.getContractAddressByType.mockReturnValue(MOCK_ELECTIONS_ADDRESS)
-  //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(ContractOwnerCard).exists()).toBe(true)
-  //     wrapper.unmount()
-
-  //     mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
-  //     wrapper = mountComponent()
-  //     expect(wrapper.findComponent(ContractOwnerCard).exists()).toBe(false)
-  //   })
-  // })
 })

@@ -2,13 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { type VueWrapper } from '@vue/test-utils'
 import type { Address } from 'viem'
-import { useQuery } from '@vue/apollo-composable'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import {
-  createMockApolloQueryState,
+  createMockEventFeedState,
   makeCurrencyStoreMock,
-  mockApolloUseQueryByVariableKey,
-  resetMockApolloQueryState
+  resetMockEventFeedState
 } from '@/tests/mocks'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
@@ -59,7 +57,7 @@ vi.mock('@nuxt/ui/components/Select.vue', () => ({
   }
 }))
 
-const mockCashRemQuery = createMockApolloQueryState()
+const mockCashRemQuery = createMockEventFeedState()
 const mockCashRemAddr = { value: null as null | { value: string } }
 
 vi.mock('@/composables/cashRemuneration/useCashRemunerationEventsViaLogs', () => ({
@@ -68,7 +66,12 @@ vi.mock('@/composables/cashRemuneration/useCashRemunerationEventsViaLogs', () =>
     return mockCashRemQuery
   }
 }))
-const incomingTransfersQuery = createMockApolloQueryState()
+const incomingTransfersQuery = createMockEventFeedState()
+
+vi.mock('@/composables/bank/useIncomingBankTokenTransfersViaLogs', () => ({
+  useIncomingBankTokenTransfersViaLogs: () => incomingTransfersQuery
+}))
+
 const mockCurrencyStore = makeCurrencyStoreMock()
 const mockGetTokenPrice = mockCurrencyStore.getTokenPrice
 
@@ -89,14 +92,11 @@ describe('CashRemunerationTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockApolloUseQueryByVariableKey(vi.mocked(useQuery), mockCashRemQuery, {
-      toAddress: incomingTransfersQuery
-    })
     vi.mocked(useCurrencyStore).mockReturnValue(
       mockCurrencyStore as unknown as ReturnType<typeof useCurrencyStore>
     )
-    resetMockApolloQueryState(mockCashRemQuery, buildCashRemunerationQueryResult())
-    resetMockApolloQueryState(incomingTransfersQuery, buildIncomingTransfersQueryResult())
+    resetMockEventFeedState(mockCashRemQuery, buildCashRemunerationQueryResult())
+    resetMockEventFeedState(incomingTransfersQuery, buildIncomingTransfersQueryResult())
     mockCurrencyStore.supportedTokens = [
       { id: 'native', symbol: 'ETH', address: ZERO_ADDRESS },
       { id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }
@@ -159,22 +159,10 @@ describe('CashRemunerationTransactions', () => {
     expect(tableData(wrapper)).toHaveLength(0)
   })
 
-  it('uses disabled query option when contract address is empty', () => {
+  it('passes an empty address to the event feed when the contract address is empty', () => {
     wrapper = createWrapper('' as Address)
 
-    // Payroll events now come from the getLogs composable — assert it received
-    // the empty address. The incoming-transfers feed is still Apollo (call 0).
     expect(mockCashRemAddr.value?.value).toBe('')
-
-    const incomingQueryVariables = vi.mocked(useQuery).mock.calls[0]?.[1] as {
-      toAddress: { value: string }
-    }
-    const incomingQueryOptions = vi.mocked(useQuery).mock.calls[0]?.[2] as {
-      enabled: { value: boolean }
-    }
-
-    expect(incomingQueryVariables.toAddress.value).toBe('')
-    expect(incomingQueryOptions.enabled.value).toBe(false)
   })
 
   it('maps ownership transfer events with a zero amount', () => {

@@ -1,10 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  getActiveOfficerFolder,
-  getActiveOfficerVersion,
-  isActiveOfficerVersion,
-  semverForVersionFolder,
-} from '../officerVersion';
+import { isActiveOfficerVersion } from '../officerVersion';
 
 vi.mock('../viem.config', () => ({
   default: {
@@ -15,20 +10,6 @@ vi.mock('../viem.config', () => ({
 }));
 
 describe('officerVersion', () => {
-  describe('generation floors', () => {
-    it('maps each registry folder to its on-chain floor', () => {
-      expect(semverForVersionFolder('V0')).toBe('0.0.0');
-      expect(semverForVersionFolder('V0.1')).toBe('0.1.0');
-      expect(semverForVersionFolder('V1')).toBe('1.0.0');
-      expect(semverForVersionFolder('V2')).toBe('2.0.0');
-    });
-
-    it('reports the active generation for the configured network', () => {
-      expect(getActiveOfficerFolder()).toBe('V2');
-      expect(getActiveOfficerVersion()).toBe('2.0.0');
-    });
-  });
-
   describe('isActiveOfficerVersion', () => {
     it('accepts the floor of the active generation', () => {
       expect(isActiveOfficerVersion('2.0.0')).toBe(true);

@@ -5,7 +5,8 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import claimRoutes from '../../routes/claimRoute';
 import { prisma } from '../../utils';
-import { DAILY_CLAIM_MEMO_MAX_LENGTH } from '../../validation';
+
+const DAILY_CLAIM_MEMO_MAX_LENGTH = 3_000;
 
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
@@ -57,7 +58,6 @@ vi.mock('../../utils/featureUtils', async () => {
 // Mock the cash remuneration utility
 vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn(),
-  getCashRemunerationOwner: vi.fn(),
 }));
 
 // Mock the wage resolution utility so addClaim's resolveCurrentWage call

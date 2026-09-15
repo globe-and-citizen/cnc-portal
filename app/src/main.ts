@@ -1,32 +1,19 @@
 import './assets/main.css'
 import { WagmiPlugin } from '@wagmi/vue'
 import { config } from './wagmi.config'
-import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import apolloClient from './apollo-client'
-import { DefaultApolloClient } from '@vue/apollo-composable'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import * as Sentry from '@sentry/vue'
 import ui from '@nuxt/ui/vue-plugin'
 import { setupAuthInterceptor } from '@/lib/axios'
+import { queryClient } from '@/queries/queryClient'
 
 export function setupApp() {
   const app = createApp(App)
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        // Refetch every 20 seconds (20,000 ms)
-        refetchInterval: 200000,
-        // Optional: only refetch when the window is focused
-        refetchOnWindowFocus: true,
-        // Optional: retry on failure
-        retry: 2
-      }
-    }
-  })
   const pinia = createPinia()
 
   app.use(pinia)
@@ -36,7 +23,6 @@ export function setupApp() {
   app.use(ui)
   app.use(WagmiPlugin, { config })
   app.use(VueQueryPlugin, { queryClient, enableDevtoolsV6Plugin: true })
-  app.provide(DefaultApolloClient, apolloClient)
 
   // Setup axios interceptors after app initialization
   // This ensures router and Pinia are fully available for the interceptor
@@ -80,7 +66,6 @@ export function setupApp() {
     tracePropagationTargets: [
       'localhost',
       import.meta.env.VITE_APP_BACKEND_URL, // Node.js API
-      import.meta.env.VITE_APP_SUBGRAPH_ENDPOINT, // GraphQL subgraph
       /^https:\/\/[\w-]+\.cncportal\.io/ // all prod subdomains
     ],
     // Session Replay

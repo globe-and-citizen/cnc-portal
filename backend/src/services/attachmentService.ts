@@ -4,14 +4,6 @@ import { deleteFile, getPresignedDownloadUrl } from './storageService';
 
 export type { FileAttachmentData };
 
-type RefreshedKey = { fileKey: string; fileUrl: string };
-type RefreshError = { fileKey: string; error: string };
-
-export type BatchRefreshResult = {
-  refreshed: RefreshedKey[];
-  errors: RefreshError[];
-};
-
 /**
  * Minimal shape needed to *address* a stored file: just a non-empty fileKey.
  * Used on the delete path so we can still clean up legacy rows that are
@@ -90,30 +82,4 @@ export const deleteFileByKey = async (fileKey: string): Promise<boolean> => {
     console.warn(`Could not delete file ${fileKey}:`, e);
     return false;
   }
-};
-
-/**
- * Batch-refresh presigned URLs for an array of file keys.
- * Returns a structured result with successfully refreshed URLs and any errors.
- */
-export const batchRefreshUrls = async (
-  fileKeys: string[],
-  expirySeconds?: number
-): Promise<BatchRefreshResult> => {
-  const refreshed: RefreshedKey[] = [];
-  const errors: RefreshError[] = [];
-
-  await Promise.all(
-    fileKeys.map(async (fileKey) => {
-      try {
-        const fileUrl = await getPresignedDownloadUrl(fileKey, expirySeconds);
-        refreshed.push({ fileKey, fileUrl });
-      } catch (e) {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        errors.push({ fileKey, error: message });
-      }
-    })
-  );
-
-  return { refreshed, errors };
 };

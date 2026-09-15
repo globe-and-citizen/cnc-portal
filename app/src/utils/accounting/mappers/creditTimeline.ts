@@ -13,7 +13,7 @@ import type {
   FixedReturnLendingOfferFundedRow,
   FixedReturnLenderRepaidRow,
   FixedReturnPrincipalRefundedRow
-} from '@/types/ponder/fixedReturn'
+} from '@/types/contract-events/fixedReturn'
 
 /**
  * A funded round's economics, read from `getLendingOffer`. Only the rate is
@@ -45,6 +45,10 @@ type CreditEventKind = 'lent' | 'funded' | 'interest' | 'refunded' | 'repaid'
 export interface CreditEvent {
   kind: CreditEventKind
   id: string
+  /** Transaction-backed source operation when a derived event belongs to one. */
+  sourceOperationId?: string
+  /** Contract that emitted the backing event; retained as reconciliation evidence. */
+  contractAddress?: string
   offerId: string
   timestamp: number
   /** Absent only on `funded`, which carries the whole round. */
@@ -143,6 +147,8 @@ function interestEvents(input: FixedReturnMapperInput): CreditEvent[] {
           // Keyed by the round and the lender alone — the id never moves, so the
           // row keeps its identity across refetches, exports and drill-downs.
           id: `credit-interest-${funded.offerId}-${lender.toLowerCase()}`,
+          sourceOperationId: funded.id,
+          contractAddress: funded.contractAddress,
           offerId: funded.offerId,
           timestamp: funded.timestamp,
           lender,
@@ -159,6 +165,7 @@ export function creditTimeline(input: FixedReturnMapperInput): CreditEvent[] {
     ...(input.fundsLents ?? []).map((row) => ({
       kind: 'lent' as const,
       id: row.id,
+      contractAddress: row.contractAddress,
       offerId: row.offerId,
       timestamp: row.timestamp,
       lender: row.lender,
@@ -167,12 +174,14 @@ export function creditTimeline(input: FixedReturnMapperInput): CreditEvent[] {
     ...(input.lendingOfferFundeds ?? []).map((row) => ({
       kind: 'funded' as const,
       id: row.id,
+      contractAddress: row.contractAddress,
       offerId: row.offerId,
       timestamp: row.timestamp
     })),
     ...(input.lenderRepaids ?? []).map((row) => ({
       kind: 'repaid' as const,
       id: row.id,
+      contractAddress: row.contractAddress,
       offerId: row.offerId,
       timestamp: row.timestamp,
       lender: row.lender,
@@ -181,6 +190,7 @@ export function creditTimeline(input: FixedReturnMapperInput): CreditEvent[] {
     ...(input.principalRefundeds ?? []).map((row) => ({
       kind: 'refunded' as const,
       id: row.id,
+      contractAddress: row.contractAddress,
       offerId: row.offerId,
       timestamp: row.timestamp,
       lender: row.lender,

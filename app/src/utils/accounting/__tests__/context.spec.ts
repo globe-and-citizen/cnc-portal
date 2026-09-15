@@ -14,8 +14,6 @@ describe('buildMapperContext', () => {
   const ctx = buildMapperContext({
     contracts,
     internalAddresses: new Set(),
-    founderAddresses: [ADDR.founder],
-    feeCollectorAddress: ADDR.feeCollector,
     sherTokenAddress: ADDR.sherToken,
     rateOfRecord: () => 3 // $3 for every non-pegged token
   })
@@ -25,7 +23,7 @@ describe('buildMapperContext', () => {
     expect(ctx.pocketOf(ADDR.safe)).toBe('Cash — Safe')
     expect(ctx.pocketOf(ADDR.payroll)).toBe('Cash — Payroll')
     expect(ctx.pocketOf(ADDR.expense)).toBe('Cash — Expense')
-    expect(ctx.pocketOf(ADDR.feeCollector)).toBe('Cash — FeeCollector')
+    expect(ctx.pocketOf(ADDR.feeCollector)).toBeNull()
     expect(ctx.pocketOf(ADDR.client)).toBeNull()
   })
 
@@ -40,9 +38,5 @@ describe('buildMapperContext', () => {
     expect(ctx.toUsd(1_000_000n, 'sher', new Date(0))).toBe(3)
     // native is not pegged → resolver ($3) × 1 whole token (18 decimals).
     expect(ctx.toUsd(10n ** 18n, 'native', new Date(0))).toBe(3)
-  })
-
-  it('checksum-normalizes founder addresses', () => {
-    expect(ctx.founderAddresses.has('0x6666666666666666666666666666666666666666')).toBe(true)
   })
 })

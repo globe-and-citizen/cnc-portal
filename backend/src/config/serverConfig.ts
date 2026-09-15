@@ -17,7 +17,7 @@ import wageRoutes from '../routes/wageRoute';
 import claimRoutes from '../routes/claimRoute';
 import weeklyClaimRoutes from '../routes/weeklyClaimRoute';
 import expenseRoutes from '../routes/expenseRoute';
-import classificationRoutes from '../routes/classificationRoute';
+import journalAccountAssignmentRoutes from '../routes/journalAccountAssignmentRoute';
 import fixedReturnOfferingRoutes from '../routes/fixedReturnOfferingRoute';
 import investorMigrationRoutes from '../routes/investorMigrationRoute';
 import uploadRoute from '../routes/uploadRoute';
@@ -118,7 +118,7 @@ class Server {
       wage: '/api/wage/',
       weeklyClaim: '/api/weeklyclaim/',
       expense: '/api/expense/',
-      accountingClassification: '/api/accounting/classification/',
+      accountingAccountAssignment: '/api/accounting/account-assignment/',
       fixedReturnOffering: '/api/fixed-return-offering/',
       investorMigration: '/api/investor-migration/',
       claim: '/api/claim/',
@@ -211,7 +211,11 @@ class Server {
     this.app.use(this.paths.actions, authorizeUser, actionRoutes);
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
-    this.app.use(this.paths.accountingClassification, authorizeUser, classificationRoutes);
+    this.app.use(
+      this.paths.accountingAccountAssignment,
+      authorizeUser,
+      journalAccountAssignmentRoutes
+    );
     this.app.use(this.paths.fixedReturnOffering, authorizeUser, fixedReturnOfferingRoutes);
     this.app.use(this.paths.investorMigration, authorizeUser, investorMigrationRoutes);
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);

@@ -12,9 +12,9 @@
  * Minted` is **not** re-booked by the investor mapper — see {@link mapInvestorEvents}.
  */
 import { formatUnits } from 'viem'
-import type { SafeDepositRow } from '@/types/ponder/investor'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import { atDate, type MapperContext } from './context'
+import type { SafeDepositRow } from '@/types/contract-events/investor'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import type { MapperContext } from './context'
 
 export interface SafeDepositRouterMapperInput {
   deposits?: readonly SafeDepositRow[]
@@ -24,19 +24,20 @@ export interface SafeDepositRouterMapperInput {
 export function mapSafeDepositRouterEvents(
   input: SafeDepositRouterMapperInput,
   ctx: MapperContext
-): LedgerEntry[] {
+): JournalEntryDraft[] {
   return (input.deposits ?? []).map((row) => {
     const tokenId = ctx.tokenIdOf(row.token)
-    return makeEntry({
+    return makeJournalEntryDraft({
       id: row.id,
+      sourceContract: row.contractAddress,
       timestamp: row.timestamp,
       useCase: 'UC-SDR-01',
       debit: 'Cash — Safe',
       credit: 'Investor Equity',
-      amountUsd: ctx.toUsd(BigInt(row.tokenAmount), tokenId, atDate(row.timestamp)),
       token: tokenId,
       rawAmount: row.tokenAmount,
       counterparty: row.depositor,
+      txHash: row.txHash,
       shares: Number(formatUnits(BigInt(row.sherAmount), 6)),
       memo: 'Investment via SafeDepositRouter → SHER mint'
     })

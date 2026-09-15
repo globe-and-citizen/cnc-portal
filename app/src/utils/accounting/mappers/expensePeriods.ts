@@ -10,7 +10,7 @@
  */
 
 /** Approval reset behaviour, matching the contract's `FrequencyType` enum. */
-export const FREQUENCY = {
+const FREQUENCY = {
   ONE_TIME: 0,
   DAILY: 1,
   WEEKLY: 2,
@@ -39,7 +39,7 @@ function monthsSince(startDate: number, timestamp: number): number {
 }
 
 /** A budget's frequency behaviour, as needed to place a draw in its period. */
-export interface PeriodSpec {
+interface PeriodSpec {
   frequencyType: number
   /** Period-anchor time, Unix seconds — the approval's `startDate`. */
   startDate: number

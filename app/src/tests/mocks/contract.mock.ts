@@ -8,14 +8,18 @@ import type { LendingOfferStruct } from '@/types'
  * Elections Contract Mocks
  */
 export const mockElectionsReads = {
-  address: createContractReadMock('0x1234567890123456789012345678901234567890'),
+  address: createContractReadMock<string | undefined>('0x1234567890123456789012345678901234567890'),
   owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
+  nextElectionId: createContractReadMock<bigint | number | null>(null),
   getElection: createContractReadMock<readonly (string | bigint | boolean)[] | null>(null),
   getVoteCount: createContractReadMock(0n),
+  getCandidateVoteCounts: createContractReadMock<Readonly<Record<string, bigint>>>({}),
   getCandidates: createContractReadMock<string[]>([]),
   getEligibleVoters: createContractReadMock<string[]>([]),
   getWinners: createContractReadMock<string[]>([]),
-  hasVoted: createContractReadMock(false)
+  getResults: createContractReadMock<string[]>([]),
+  hasVoted: createContractReadMock(false),
+  getVoterChoice: createContractReadMock<string | undefined>(undefined)
 }
 
 export const mockElectionsWrites = {
@@ -274,4 +278,10 @@ export const resetContractMocks = () => {
       mock.executeApproveAction.mockClear()
     }
   })
+
+  // Data is left alone above so a suite can seed it once, but the Elections
+  // address and election id decide whether the pages render at all: a test that
+  // clears one must not decide the next test’s starting point.
+  mockElectionsReads.address.data.value = '0x1234567890123456789012345678901234567890'
+  mockElectionsReads.nextElectionId.data.value = null
 }

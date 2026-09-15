@@ -44,9 +44,9 @@ const tableColumns = (wrapper: VueWrapper) =>
 const tableLoading = (wrapper: VueWrapper) =>
   wrapper.findComponent({ name: 'UTable' }).props('loading') as boolean
 
-const { apolloState, mockGetTokenPrice, mockInvestorSymbolData, mockGetContractAddressByType } =
+const { eventFeedState, mockGetTokenPrice, mockInvestorSymbolData, mockGetContractAddressByType } =
   vi.hoisted(() => {
-    const apolloState = {
+    const eventFeedState = {
       investorResult: null as unknown as { value: unknown },
       investorError: null as unknown as { value: Error | null },
       investorLoading: null as unknown as { value: boolean },
@@ -62,7 +62,7 @@ const { apolloState, mockGetTokenPrice, mockInvestorSymbolData, mockGetContractA
       return null
     })
     return {
-      apolloState,
+      eventFeedState,
       mockGetTokenPrice,
       mockInvestorSymbolData,
       mockGetContractAddressByType
@@ -71,28 +71,28 @@ const { apolloState, mockGetTokenPrice, mockInvestorSymbolData, mockGetContractA
 
 vi.mock('@/composables/investor/useInvestorEventsViaLogs', async () => {
   const { ref } = await import('vue')
-  apolloState.investorResult = ref()
-  apolloState.investorError = ref<Error | null>(null)
-  apolloState.investorLoading = ref(false)
+  eventFeedState.investorResult = ref()
+  eventFeedState.investorError = ref<Error | null>(null)
+  eventFeedState.investorLoading = ref(false)
   return {
     useInvestorEventsViaLogs: () => ({
-      result: apolloState.investorResult,
-      error: apolloState.investorError,
-      loading: apolloState.investorLoading
+      result: eventFeedState.investorResult,
+      error: eventFeedState.investorError,
+      loading: eventFeedState.investorLoading
     })
   }
 })
 
 vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => {
   const { ref } = await import('vue')
-  apolloState.safeResult = ref()
-  apolloState.safeError = ref<Error | null>(null)
-  apolloState.safeLoading = ref(false)
+  eventFeedState.safeResult = ref()
+  eventFeedState.safeError = ref<Error | null>(null)
+  eventFeedState.safeLoading = ref(false)
   return {
     useSafeDepositRouterEventsViaLogs: () => ({
-      result: apolloState.safeResult,
-      error: apolloState.safeError,
-      loading: apolloState.safeLoading
+      result: eventFeedState.safeResult,
+      error: eventFeedState.safeError,
+      loading: eventFeedState.safeLoading
     })
   }
 })
@@ -102,12 +102,12 @@ describe('InvestorsTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    apolloState.investorResult.value = buildInvestorResult()
-    apolloState.investorError.value = null
-    apolloState.investorLoading.value = false
-    apolloState.safeResult.value = buildSafeResult()
-    apolloState.safeError.value = null
-    apolloState.safeLoading.value = false
+    eventFeedState.investorResult.value = buildInvestorResult()
+    eventFeedState.investorError.value = null
+    eventFeedState.investorLoading.value = false
+    eventFeedState.safeResult.value = buildSafeResult()
+    eventFeedState.safeError.value = null
+    eventFeedState.safeLoading.value = false
     mockGetTokenPrice.mockReturnValue(1)
     mockInvestorSymbolData.value = 'SHER'
     mockInvestorReads.symbol.data.value = 'SHER'
@@ -144,7 +144,7 @@ describe('InvestorsTransactions', () => {
   })
 
   it('passes loading from investor query to table', () => {
-    apolloState.investorLoading.value = true
+    eventFeedState.investorLoading.value = true
     wrapper = createWrapper()
     expect(tableLoading(wrapper)).toBe(true)
   })

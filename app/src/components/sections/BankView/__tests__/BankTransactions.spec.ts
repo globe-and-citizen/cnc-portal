@@ -3,13 +3,11 @@ import { type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
 import { log } from '@/lib/logging'
-import { useQuery } from '@vue/apollo-composable'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import {
-  createMockApolloQueryState,
+  createMockEventFeedState,
   makeCurrencyStoreMock,
-  mockApolloUseQuery,
-  resetMockApolloQueryState
+  resetMockEventFeedState
 } from '@/tests/mocks'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
@@ -33,7 +31,7 @@ vi.mock('@nuxt/ui/components/Select.vue', () => ({
   }
 }))
 
-const mockBankQuery = createMockApolloQueryState()
+const mockBankQuery = createMockEventFeedState()
 const mockBankAddr = { value: null as null | { value: string } }
 
 vi.mock('@/composables/bank/useBankEventsViaLogs', () => ({
@@ -61,11 +59,10 @@ describe('BankTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockApolloUseQuery(vi.mocked(useQuery), mockBankQuery)
     vi.mocked(useCurrencyStore).mockReturnValue(
       mockCurrencyStore as unknown as ReturnType<typeof useCurrencyStore>
     )
-    resetMockApolloQueryState(mockBankQuery, buildBankQueryResult())
+    resetMockEventFeedState(mockBankQuery, buildBankQueryResult())
     mockCurrencyStore.supportedTokens = [
       { id: 'native', symbol: 'ETH', address: ZERO_ADDRESS },
       { id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }
@@ -320,7 +317,7 @@ describe('BankTransactions', () => {
     mockBankQuery.error.value = error
     await nextTick()
 
-    expect(logErrorSpy).toHaveBeenCalledWith('Ponder bank transaction query error:', error)
+    expect(logErrorSpy).toHaveBeenCalledWith('RPC log bank transaction query error:', error)
 
     mockBankQuery.error.value = null
     await nextTick()

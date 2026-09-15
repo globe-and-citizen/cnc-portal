@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { addressSchema, nonEmptyStringSchema, urlSchema } from './common';
+import { nonEmptyStringSchema, urlSchema } from './common';
 
 /**
  * User-related validation schemas
@@ -30,32 +30,4 @@ export const userPaginationQuerySchema = z.object({
     .max(100, 'Maximum limit is 100')
     .default(10),
   search: z.coerce.string().trim().optional(),
-});
-
-// User creation schema (if needed for future endpoints)
-export const createUserBodySchema = z.object({
-  name: nonEmptyStringSchema.max(100, 'Name cannot exceed 100 characters'),
-  address: addressSchema,
-  imageUrl: urlSchema.optional(),
-});
-
-// User profile validation (comprehensive schema for profile updates)
-export const userProfileSchema = z.object({
-  name: nonEmptyStringSchema
-    .max(100, 'Name cannot exceed 100 characters')
-    .refine((name) => !name.includes('<') && !name.includes('>'), {
-      message: 'Name cannot contain HTML tags',
-    }),
-  bio: z.string().trim().max(500, 'Bio cannot exceed 500 characters').optional(),
-  website: urlSchema.optional(),
-  twitter: z
-    .string()
-    .trim()
-    .regex(/^@?[a-zA-Z0-9_]{1,15}$/, 'Invalid Twitter handle format')
-    .optional(),
-  github: z
-    .string()
-    .trim()
-    .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/, 'Invalid GitHub username format')
-    .optional(),
 });

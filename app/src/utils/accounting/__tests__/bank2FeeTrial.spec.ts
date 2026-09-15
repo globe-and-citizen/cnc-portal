@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { mapBankEvents } from '@/utils/accounting/mappers/bank'
-import { mapFees } from '@/utils/accounting/mappers/fees'
-import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { entriesForAccount } from '@/utils/accounting/accountLedger'
-import { makeCtx } from './fixtures'
+import { makeCtx, usd } from './fixtures'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 
 const BANK_A = '0x1111111111111111111111111111111111111111'
@@ -16,7 +16,6 @@ const TX = '0xdeadbeef00000000000000000000000000000000000000000000000000000001'
 // Two Bank deployments + a payroll pocket, so a transfer out of BANK_A carries a
 // fee skimmed from BANK_A — the PDF's "Bank transferred money to Payroll" case.
 const ctx = makeCtx({
-  founderAddresses: new Set([FOUNDER as `0x${string}`]),
   pocketOf: (address) => {
     const a = address?.toLowerCase()
     if (a === BANK_A || a === BANK_B) return 'Cash — Bank' as AccountName
@@ -27,7 +26,7 @@ const ctx = makeCtx({
 
 describe('repro: Bank 2 transfer fee on the trial balance', () => {
   // A deposit establishes BANK_B as an instance; the transfer establishes BANK_A.
-  const bankEntries = mapBankEvents(
+  const entries = mapBankEvents(
     {
       tokenDeposits: [
         {
@@ -48,13 +47,8 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
           amount: '100000000', // 100 USDC BANK_A -> Payroll, ts 300
           timestamp: 300
         }
-      ]
-    },
-    ctx
-  )
-  const feeEntries = mapFees(
-    {
-      bankFeePaids: [
+      ],
+      fees: [
         {
           id: `${TX}-3`,
           contractAddress: BANK_A,
@@ -66,27 +60,46 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
       ]
     },
     ctx
-  )
-  const entries = [...bankEntries, ...feeEntries]
+  ).map((entry) => ({ ...entry, rate: 1 }))
 
   it('books the fee on the same Bank deployment as its transfer (BANK_A)', () => {
     const fee = entries.find((e) => e.useCase === 'FEE')!
     expect(fee.creditInstance?.toLowerCase()).toBe(BANK_A)
+    expect(fee.sourceOperationId).toBe(TX)
   })
 
   it('rolls the fee into BANK_A on the trial balance, not the other deployment', () => {
-    const gl = buildGeneralLedger(buildJournal(entries))
-    const bankRows = gl.trialBalance.filter((r) => r.account === 'Cash — Bank')
-    const rowA = bankRows.find((r) => r.instance?.toLowerCase() === BANK_A)
-    const rowB = bankRows.find((r) => r.instance?.toLowerCase() === BANK_B)
+    const gl = buildGeneralLedger(finalizeJournal(entries))
+    const bankRows = gl.trialBalance.filter((r) => r.account.family.name === 'Cash — Bank')
+    const rowA = bankRows.find((r) => r.account.contractAddress?.toLowerCase() === BANK_A)
+    const rowB = bankRows.find((r) => r.account.contractAddress?.toLowerCase() === BANK_B)
     // BANK_A sent 100 net + 0.5 fee = 100.5 gross out.
-    expect(rowA?.totalCredit).toBe(100.5)
+    expect(rowA?.totalCredit).toBe(usd(100.5))
     // The fee must NOT have leaked onto BANK_B (the other deployment).
-    expect(rowB?.totalCredit ?? 0).toBe(0)
+    expect(rowB?.totalCredit ?? 0n).toBe(0n)
+  })
+
+  it('assembles the transfer and its fee as one multi-line journal entry', () => {
+    const journal = finalizeJournal(entries)
+    const transfer = journal.find((entry) => entry.sourceOperationId === TX)!
+
+    expect(transfer.lines).toMatchObject([
+      { account: { family: { name: 'Cash — Payroll' } }, debit: usd(100) },
+      { account: { family: { name: 'Transaction Fee Expense' } }, debit: usd(0.5) },
+      { account: { family: { name: 'Cash — Bank' } }, credit: usd(100.5) }
+    ])
   })
 
   it('shows the fee inside the BANK_A drill-down', () => {
-    const scoped = entriesForAccount(entries, 'Cash — Bank', null, null, { instance: BANK_A })
-    expect(scoped.some((e) => e.useCase === 'FEE')).toBe(true)
+    const journal = finalizeJournal(entries)
+    const account = buildGeneralLedger(journal).trialBalance.find(
+      (row) => row.account.contractAddress?.toLowerCase() === BANK_A
+    )!.account
+    const scoped = entriesForAccount(journal, account)
+    expect(
+      scoped.some((entry) =>
+        entry.lines.some((line) => line.account.family.name === 'Transaction Fee Expense')
+      )
+    ).toBe(true)
   })
 })

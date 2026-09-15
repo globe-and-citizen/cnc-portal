@@ -57,7 +57,7 @@ import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { formatUnits, isAddress, isAddressEqual, zeroAddress } from 'viem'
 import { useCommunityCreditStore, useUserDataStore } from '@/stores'
-import { useBankAddress, useBankOwner } from '@/composables/bank/reads'
+import { useBankAddress, useBankOwner, useBankPaused } from '@/composables/bank/reads'
 import { useFundFixedReturnRepayment } from '@/composables/bank/writes'
 import { useErc20BalanceOf } from '@/composables/erc20/reads'
 import {
@@ -148,6 +148,7 @@ const round = computed<CreditRound | undefined>(() => {
 const lendRound = ref<CreditRound | null>(null)
 const bankAddress = useBankAddress()
 const { data: bankOwner } = useBankOwner()
+const { data: bankPaused } = useBankPaused()
 const repayResult = useFundFixedReturnRepayment()
 const repaymentError = ref<string | null>(null)
 const decimals = computed(() =>
@@ -156,19 +157,12 @@ const decimals = computed(() =>
 const outstandingUnits = computed(() =>
   offer.value ? offerOutstandingObligation(offer.value) : null
 )
-const outstanding = computed(() =>
-  outstandingUnits.value === null
-    ? null
-    : Number(formatUnits(outstandingUnits.value, decimals.value))
-)
 const { data: treasuryBalanceRaw, refetch: refetchTreasuryBalance } = useErc20BalanceOf(
   tokenAddress,
   computed(() => bankAddress.value ?? zeroAddress)
 )
-const treasuryBalance = computed(() =>
-  typeof treasuryBalanceRaw.value === 'bigint'
-    ? Number(formatUnits(treasuryBalanceRaw.value, decimals.value))
-    : null
+const treasuryBalanceUnits = computed(() =>
+  typeof treasuryBalanceRaw.value === 'bigint' ? treasuryBalanceRaw.value : null
 )
 const isRepayable = computed(() => !!round.value && isRepayableRoundStatus(round.value.status))
 const canRepayViaBank = computed(() => {
@@ -179,16 +173,17 @@ const canRepayViaBank = computed(() => {
     isAddress(owner) &&
     typeof userAddress === 'string' &&
     isAddress(userAddress) &&
-    isAddressEqual(owner, userAddress)
+    isAddressEqual(owner, userAddress) &&
+    bankPaused.value !== true
   )
 })
 const isRepaymentReady = computed(
-  () =>
-    !!offer.value && outstandingUnits.value !== null && typeof treasuryBalanceRaw.value === 'bigint'
+  () => !!offer.value && outstandingUnits.value !== null && treasuryBalanceUnits.value !== null
 )
 const repayment = computed<RepaymentPanelState>(() => ({
-  outstanding: outstanding.value,
-  treasuryBalance: treasuryBalance.value,
+  outstanding: outstandingUnits.value,
+  treasuryBalance: treasuryBalanceUnits.value,
+  decimals: decimals.value,
   isReady: isRepaymentReady.value,
   isRepayable: isRepayable.value,
   canRepayViaBank: canRepayViaBank.value,
@@ -263,7 +258,7 @@ async function repayRound(amount: string) {
     amount,
     decimals: decimals.value,
     outstanding: outstandingUnits.value,
-    treasuryBalance: typeof treasuryBalanceRaw.value === 'bigint' ? treasuryBalanceRaw.value : null
+    treasuryBalance: treasuryBalanceUnits.value
   })
   if (!validation.valid) {
     repaymentError.value = validation.errorMessage

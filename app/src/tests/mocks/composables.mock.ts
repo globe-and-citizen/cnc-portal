@@ -122,15 +122,6 @@ export const mockUseContractBalance = {
 }
 
 /**
- * Mock Apollo useQuery result
- */
-export const mockUseApolloQuery = {
-  result: ref(null),
-  error: ref<Error | null>(null),
-  loading: ref(false)
-}
-
-/**
  * Mock native transaction functions
  */
 export const mockTransactionFunctions = {
@@ -322,11 +313,6 @@ export const resetComposableMocks = () => {
   if (vi.isMockFunction(mockUseSubmitRestriction.checkRestriction)) {
     mockUseSubmitRestriction.checkRestriction.mockClear()
   }
-
-  // Reset Apollo query mock
-  mockUseApolloQuery.result.value = null
-  mockUseApolloQuery.error.value = null
-  mockUseApolloQuery.loading.value = false
 }
 
 // Keep for backwards compatibility

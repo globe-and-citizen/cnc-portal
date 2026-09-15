@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ref, toValue, type MaybeRefOrGetter } from 'vue'
 import { parseEventLogs } from 'viem'
 import {
   scanContractLogs,
   START_BLOCK,
+  useContractEventsViaLogs,
   type ChainClient,
   type DecodedLogLike,
-  type EventMapContext
+  type EventMapContext,
+  type ScanTarget
 } from '../eventsViaLogs'
+import { useQueryFn } from '@/tests/mocks/composables.mock'
 
 /**
  * Decoding is viem's job and tested there; override the globally-mocked
@@ -140,6 +144,48 @@ describe('scanContractLogs', () => {
     expect(out.data.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x3-1'])
     expect(out.data.items.find((i) => i.id === '0x1-0')?.timestamp).toBe(1010)
     expect(out.data.items.find((i) => i.id === '0x3-1')?.timestamp).toBe(1030)
+    expect(out.timestampGaps).toEqual([])
+  })
+
+  it('withholds an event whose block timestamp cannot be resolved', async () => {
+    const client = makeClient({
+      [OLD]: [log({ transactionHash: '0x1', logIndex: 0, blockNumber: 10n })]
+    })
+
+    const out = await scanContractLogs(
+      client as unknown as ChainClient,
+      [{ address: OLD }],
+      opts,
+      async () => {
+        throw new Error('block unavailable')
+      }
+    )
+
+    expect(out.data.items).toEqual([])
+    expect(out.timestampGaps).toEqual([
+      {
+        transactionHash: '0x1',
+        blockNumber: 10n,
+        reason: 'block-unavailable'
+      }
+    ])
+  })
+
+  it('withholds an event that has no block number instead of assigning timestamp zero', async () => {
+    const client = makeClient({
+      [OLD]: [log({ transactionHash: '0x1', logIndex: 0, blockNumber: null })]
+    })
+
+    const out = await scanContractLogs(client as unknown as ChainClient, [{ address: OLD }], opts)
+
+    expect(out.data.items).toEqual([])
+    expect(out.timestampGaps).toEqual([
+      {
+        transactionHash: '0x1',
+        blockNumber: null,
+        reason: 'missing-block-number'
+      }
+    ])
   })
 
   it('preserves the loaded generations when another returns no logs', async () => {
@@ -213,5 +259,87 @@ describe('scanContractLogs', () => {
 
     const fee = out.data.items.find((i) => i.eventName === 'FeePaid')
     expect(fee?.contract).toBe(OLD)
+  })
+})
+
+interface CapturedQuery {
+  queryKey: MaybeRefOrGetter<readonly unknown[]>
+}
+
+const capturedQuery = (): CapturedQuery => useQueryFn.mock.calls.at(-1)?.[0] as CapturedQuery
+
+const useTestEventFeed = (contractAddress: MaybeRefOrGetter<readonly ScanTarget[]>) =>
+  useContractEventsViaLogs({
+    contractAddress,
+    queryKey: 'test-events-logs',
+    ...opts
+  })
+
+describe('useContractEventsViaLogs query identity', () => {
+  it('is stable across target order and address casing', () => {
+    useTestEventFeed([
+      { address: NEW, fromBlock: 20n },
+      { address: OLD.toUpperCase(), fromBlock: 10n }
+    ])
+    const firstKey = toValue(capturedQuery().queryKey)
+
+    useTestEventFeed([
+      { address: OLD, fromBlock: 10n },
+      { address: NEW.toUpperCase(), fromBlock: 20n }
+    ])
+
+    expect(toValue(capturedQuery().queryKey)).toEqual(firstKey)
+    expect(firstKey).toEqual([
+      'test-events-logs',
+      {
+        targets: [
+          { address: OLD, fromBlock: '10' },
+          { address: NEW, fromBlock: '20' }
+        ]
+      }
+    ])
+  })
+
+  it('uses the earliest effective boundary when an address is repeated', () => {
+    useTestEventFeed([
+      { address: OLD, fromBlock: 30n },
+      { address: OLD.toUpperCase(), fromBlock: 10n },
+      { address: NEW }
+    ])
+
+    expect(toValue(capturedQuery().queryKey)).toEqual([
+      'test-events-logs',
+      {
+        targets: [
+          { address: OLD, fromBlock: '10' },
+          { address: NEW, fromBlock: START_BLOCK.toString() }
+        ]
+      }
+    ])
+  })
+
+  it('reacts when a deployment boundary becomes available or changes', () => {
+    const targets = ref<ScanTarget[]>([{ address: OLD }])
+    useTestEventFeed(targets)
+    const query = capturedQuery()
+
+    expect(toValue(query.queryKey)).toEqual([
+      'test-events-logs',
+      { targets: [{ address: OLD, fromBlock: START_BLOCK.toString() }] }
+    ])
+
+    targets.value = [{ address: OLD, fromBlock: 100n }]
+
+    expect(toValue(query.queryKey)).toEqual([
+      'test-events-logs',
+      { targets: [{ address: OLD, fromBlock: '100' }] }
+    ])
+
+    targets.value = [{ address: OLD, fromBlock: 200n }]
+
+    expect(toValue(query.queryKey)).toEqual([
+      'test-events-logs',
+      { targets: [{ address: OLD, fromBlock: '200' }] }
+    ])
   })
 })

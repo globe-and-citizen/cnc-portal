@@ -55,10 +55,10 @@ Naming:
 ## Mocking conventions
 
 **Reuse the global mocks. Do not re-mock them locally.** `app/vitest.config.ts` loads setup files from `app/src/tests/setup/` that
-`vi.mock(...)` every commonly used dependency (wagmi, viem, TanStack Query, Apollo, Pinia stores, the
-`@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives, `@/lib/axios`, `@/lib/logging`, `@/utils/expenses/model`,
-`@/queries/*.queries`, …). Per-test override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) come from `@/tests/mocks`.
-ESLint blocks `vi.mock('<globally-mocked-path>')` in specs (`bannedGlobalMockPaths` in `app/eslint.config.js`); see
+`vi.mock(...)` every commonly used dependency (wagmi, viem, TanStack Query, Pinia stores, the `@/composables/<domain>/{reads,writes}`
+modules, the stubbed Nuxt UI primitives, `@/lib/axios`, `@/lib/logging`, `@/utils/expenses/model`, `@/queries/*.queries`, …). Per-test
+override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) come from `@/tests/mocks`. ESLint blocks
+`vi.mock('<globally-mocked-path>')` in specs (`bannedGlobalMockPaths` in `app/eslint.config.js`); see
 [`testing-anti-patterns.md`](./testing-anti-patterns.md) and `app/src/tests/README.md`.
 
 The canonical pattern is `vi.hoisted` for mocks that need to be referenced inside `vi.mock` factories. See lines 9–19 of

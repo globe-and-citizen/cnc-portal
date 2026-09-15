@@ -1,6 +1,6 @@
 /**
  * Vesting event feed from the RPC (getLogs vs indexer), in the exact
- * `VestingEventsQuery` shape, via the shared `useContractEventsViaLogs` base.
+ * `VestingEventFeed` shape, via the shared `useContractEventsViaLogs` base.
  *
  * Only the three lifecycle events the books care about are mapped:
  *   - `VestingCreated`      — a grant (agreement only, no tokens move),
@@ -8,11 +8,11 @@
  *   - `VestingStopped`      — a schedule stopped, its unvested remainder dropped.
  */
 import type { MaybeRefOrGetter } from 'vue'
-import VestingV2abi from '@/artifacts/abi/V2/json/Vesting.json'
-import VestingV1abi from '@/artifacts/abi/V1/json/Vesting.json'
-import VestingV01abi from '@/artifacts/abi/V0.1/json/Vesting.json'
-import VestingV0abi from '@/artifacts/abi/V0/json/Vesting.json'
-import type { VestingEventsQuery } from '@/types/ponder/vesting'
+import { vestingAbi as vestingV2Abi } from '@/artifacts/abi/V2/generated'
+import { vestingAbi as vestingV1Abi } from '@/artifacts/abi/V1/generated'
+import { vestingAbi as vestingV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { vestingAbi as vestingV0Abi } from '@/artifacts/abi/V0/generated'
+import type { VestingEventFeed } from '@/types/contract-events/vesting'
 import {
   str,
   unionEventAbi,
@@ -21,9 +21,9 @@ import {
   type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
-const VESTING_EVENT_ABI = unionEventAbi([VestingV2abi, VestingV1abi, VestingV01abi, VestingV0abi])
+const VESTING_EVENT_ABI = unionEventAbi([vestingV2Abi, vestingV1Abi, vestingV01Abi, vestingV0Abi])
 
-const empty = (): VestingEventsQuery => ({
+const empty = (): VestingEventFeed => ({
   vestingCreateds: { items: [] },
   vestingTokensReleaseds: { items: [] },
   vestingStoppeds: { items: [] }
@@ -36,7 +36,7 @@ const mapEvent = ({
   contract,
   eventName,
   args
-}: EventMapContext<VestingEventsQuery>) => {
+}: EventMapContext<VestingEventFeed>) => {
   switch (eventName) {
     case 'VestingCreated':
       out.vestingCreateds.items.push({
@@ -71,7 +71,7 @@ const mapEvent = ({
 }
 
 export function useVestingEventsViaLogs(contractAddress: MaybeRefOrGetter<ContractAddressInput>) {
-  return useContractEventsViaLogs<VestingEventsQuery>({
+  return useContractEventsViaLogs<VestingEventFeed>({
     contractAddress,
     queryKey: 'vesting-events-logs',
     eventAbi: VESTING_EVENT_ABI,

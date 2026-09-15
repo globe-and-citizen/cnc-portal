@@ -11,10 +11,10 @@
  * collapsed to a single hyphen, no leading/trailing hyphens. Falls back to
  * `'team'` when the input has no usable characters (e.g. only symbols).
  *
- * The output always satisfies the shared `slugSchema` regex
- * (`^[a-z0-9]+(?:-[a-z0-9]+)*$`) in `validation/utils.ts`.
+ * The output always satisfies the company slug format
+ * (`^[a-z0-9]+(?:-[a-z0-9]+)*$`).
  */
-export const slugify = (input: string): string => {
+const slugify = (input: string): string => {
   const slug = input
     .toLowerCase()
     // Collapse every run of non-alphanumerics to a single hyphen. After this

@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import {
-  buildJournal,
-  createJournalEntry,
-  isBalanced,
-  type JournalEntry
-} from '@/utils/accounting/generalLedger'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { createJournalEntry } from '@/utils/accounting/journalEntry'
+import { ZERO_USD_AMOUNT } from '@/utils/accounting/monetaryAmount'
+import type { JournalEntry } from '@/utils/accounting/types'
+import { usd } from './fixtures'
+
+const accounts = buildAccountRegistry([])
+
+function account(name: AccountName) {
+  return accounts.resolve(name)
+}
 
 function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
   return {
@@ -17,51 +24,72 @@ function monetaryEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
     internal: true,
     kind: 'monetary',
     lines: [
-      { id: 'operation-42:principal:debit', account: 'Cash — Payroll', debit: 10 },
-      { id: 'operation-42:principal:credit', account: 'Cash — Bank', credit: 10 }
+      {
+        id: 'operation-42:principal:debit',
+        account: account('Cash — Payroll'),
+        debit: usd(10)
+      },
+      {
+        id: 'operation-42:principal:credit',
+        account: account('Cash — Bank'),
+        credit: usd(10)
+      }
     ],
     ...overrides
   }
 }
 
+function hasBalancedLines(entry: JournalEntry): boolean {
+  const debit = entry.lines.reduce(
+    (sum, line) => sum + (line.debit ?? ZERO_USD_AMOUNT),
+    ZERO_USD_AMOUNT
+  )
+  const credit = entry.lines.reduce(
+    (sum, line) => sum + (line.credit ?? ZERO_USD_AMOUNT),
+    ZERO_USD_AMOUNT
+  )
+  return debit === credit
+}
+
 describe('JournalEntry', () => {
-  it('keeps entry and source-operation identities distinct for one multi-entry operation', () => {
-    const principal = createJournalEntry(monetaryEntry())
-    const fee = createJournalEntry(
+  it('models a source operation as one multi-line JournalEntry', () => {
+    const entry = createJournalEntry(
       monetaryEntry({
-        id: 'operation-42:fee',
-        useCase: 'FEE',
-        memo: 'Transaction fee',
         lines: [
-          { id: 'operation-42:fee:debit', account: 'Transaction Fee Expense', debit: 0.05 },
-          { id: 'operation-42:fee:credit', account: 'Cash — Bank', credit: 0.05 }
+          { id: 'operation-42:destination', account: account('Cash — Payroll'), debit: usd(10) },
+          {
+            id: 'operation-42:fee',
+            account: account('Transaction Fee Expense'),
+            debit: usd(0.05)
+          },
+          { id: 'operation-42:bank', account: account('Cash — Bank'), credit: usd(10.05) }
         ]
       })
     )
 
-    expect(principal.sourceOperationId).toBe(fee.sourceOperationId)
-    expect(principal.id).not.toBe(fee.id)
-    expect(principal.lines.map((line) => line.id)).toEqual([
-      'operation-42:principal:debit',
-      'operation-42:principal:credit'
-    ])
-    expect(isBalanced(principal)).toBe(true)
-    expect(isBalanced(fee)).toBe(true)
+    expect(entry.id).toBe('operation-42:principal')
+    expect(entry.sourceOperationId).toBe('operation-42')
+    expect(entry.lines).toHaveLength(3)
+    expect(hasBalancedLines(entry)).toBe(true)
   })
 
   it('accepts a compound entry with one credit and several debit lines', () => {
     const compound = createJournalEntry(
       monetaryEntry({
         lines: [
-          { id: 'operation-42:cash', account: 'Cash — Expense', debit: 10 },
-          { id: 'operation-42:fee', account: 'Transaction Fee Expense', debit: 0.05 },
-          { id: 'operation-42:bank', account: 'Cash — Bank', credit: 10.05 }
+          { id: 'operation-42:cash', account: account('Cash — Expense'), debit: usd(10) },
+          {
+            id: 'operation-42:fee',
+            account: account('Transaction Fee Expense'),
+            debit: usd(0.05)
+          },
+          { id: 'operation-42:bank', account: account('Cash — Bank'), credit: usd(10.05) }
         ]
       })
     )
 
     expect(compound.lines).toHaveLength(3)
-    expect(isBalanced(compound)).toBe(true)
+    expect(hasBalancedLines(compound)).toBe(true)
   })
 
   it('represents a memo-only entry explicitly without monetary lines', () => {
@@ -79,7 +107,7 @@ describe('JournalEntry', () => {
 
     expect(memo.kind).toBe('memo')
     expect(memo.lines).toEqual([])
-    expect(isBalanced(memo)).toBe(true)
+    expect(hasBalancedLines(memo)).toBe(true)
   })
 
   it('rejects a memo entry that contains a monetary line', () => {
@@ -87,7 +115,7 @@ describe('JournalEntry', () => {
       createJournalEntry(
         monetaryEntry({
           kind: 'memo',
-          lines: [{ id: 'operation-42:memo', account: 'Cash — Bank', debit: 10 }]
+          lines: [{ id: 'operation-42:memo', account: account('Cash — Bank'), debit: usd(10) }]
         })
       )
     ).toThrow('memo entries cannot contain monetary lines')
@@ -98,8 +126,8 @@ describe('JournalEntry', () => {
       createJournalEntry(
         monetaryEntry({
           lines: [
-            { id: 'operation-42:debit', account: 'Cash — Payroll', debit: 10 },
-            { id: 'operation-42:credit', account: 'Cash — Bank', credit: 9.99 }
+            { id: 'operation-42:debit', account: account('Cash — Payroll'), debit: usd(10) },
+            { id: 'operation-42:credit', account: account('Cash — Bank'), credit: usd(9.99) }
           ]
         })
       )
@@ -110,20 +138,36 @@ describe('JournalEntry', () => {
     expect(() =>
       createJournalEntry(
         monetaryEntry({
-          lines: [{ id: 'operation-42:debit', account: 'Cash — Payroll', debit: 10 }]
+          lines: [{ id: 'operation-42:debit', account: account('Cash — Payroll'), debit: usd(10) }]
         })
       )
     ).toThrow('monetary entries require at least one debit and one credit line')
   })
 
-  it('adapts a consolidated posting with deterministic source and line identities', () => {
-    const posting: LedgerEntry = {
-      id: 'bank-event-7',
-      timestamp: 1_700_000_001,
+  it('rejects a monetary line without a canonical account identity', () => {
+    expect(() =>
+      createJournalEntry(
+        monetaryEntry({
+          lines: [
+            {
+              id: 'operation-42:debit',
+              account: { ...account('Cash — Payroll'), id: '' },
+              debit: usd(10)
+            },
+            { id: 'operation-42:credit', account: account('Cash — Bank'), credit: usd(10) }
+          ]
+        })
+      )
+    ).toThrow('account id is required')
+  })
+
+  it('rejects a monetary source posting without a rate of record', () => {
+    const posting: JournalEntryDraft = {
+      id: 'unstamped-bank-event',
+      timestamp: 1_700_000_000,
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 100,
       token: 'usdc',
       rawAmount: '100000000',
       internal: false,
@@ -131,16 +175,52 @@ describe('JournalEntry', () => {
       enrichment: 'not-applicable'
     }
 
-    expect(buildJournal([posting])).toEqual([
-      expect.objectContaining({
+    expect(() => finalizeJournal([posting])).toThrow(
+      'Journal entry draft "unstamped-bank-event" requires a rate before finalization'
+    )
+  })
+
+  it('adapts a consolidated posting with deterministic source, line and account identities', () => {
+    const posting: JournalEntryDraft = {
+      id: 'bank-event-7',
+      timestamp: 1_700_000_001,
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Bank',
+      credit: 'Service Revenue',
+      token: 'usdc',
+      rawAmount: '100000000',
+      rate: 1,
+      internal: false,
+      memo: 'Client payment',
+      enrichment: 'not-applicable'
+    }
+
+    expect(finalizeJournal([posting])).toMatchObject([
+      {
         id: 'bank-event-7',
         sourceOperationId: 'bank-event-7',
         kind: 'monetary',
         lines: [
-          { id: 'bank-event-7:debit', account: 'Cash — Bank', debit: 100 },
-          { id: 'bank-event-7:credit', account: 'Service Revenue', credit: 100 }
+          {
+            id: 'bank-event-7:debit',
+            account: {
+              id: 'cash-bank:unresolved',
+              family: { id: 'cash-bank', name: 'Cash — Bank' },
+              resolution: 'unresolved'
+            },
+            debit: usd(100)
+          },
+          {
+            id: 'bank-event-7:credit',
+            account: {
+              id: 'service-revenue',
+              family: { id: 'service-revenue', name: 'Service Revenue' },
+              resolution: 'resolved'
+            },
+            credit: usd(100)
+          }
         ]
-      })
+      }
     ])
   })
 })

@@ -13,13 +13,11 @@
 </template>
 <script lang="ts" setup>
 import { electionsAbi } from '@/artifacts/abi/generated'
-import { useTeamStore } from '@/stores'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
-import { useQueryClient } from '@tanstack/vue-query'
-import { useElectionsPublishResults } from '@/composables/elections/writes'
+import { useElectionsAddress, useElectionsPublishResults } from '@/composables/elections'
 import { estimateGas } from '@wagmi/core'
-import { type Address, encodeFunctionData } from 'viem'
+import { encodeFunctionData } from 'viem'
 import { computed } from 'vue'
 import { config } from '@/wagmi.config'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
@@ -27,13 +25,8 @@ import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 const toast = useToast()
-const queryClient = useQueryClient()
 const { mutate: publishResults, isPending } = useElectionsPublishResults()
-const teamStore = useTeamStore()
-const electionsAddress = computed(() => {
-  const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
-  return address as Address
-})
+const electionsAddress = useElectionsAddress()
 const {
   electionId,
   disabled = false,
@@ -76,9 +69,8 @@ const handlePublishResults = async (electionId: number) => {
   publishResults(
     { args: [BigInt(electionId)] },
     {
-      onSuccess: async () => {
+      onSuccess: () => {
         toast.add({ title: 'Election results published successfully!', color: 'success' })
-        await queryClient.invalidateQueries({ queryKey: ['pastElections'] })
       },
       onError: (error) => {
         log.error('Error publishing results:', error)

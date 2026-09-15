@@ -7,21 +7,25 @@ const mockEnv = {
   AWS_SECRET_ACCESS_KEY: 'test-secret-key',
   AWS_DEFAULT_REGION: 'auto',
   AWS_ENDPOINT_URL: 'https://storage.railway.app',
-  AWS_PUBLIC_BASE_URL: 'https://cdn.example.com/files',
 };
 
 // Hoisted mocks for AWS SDK
-const { mockSend, mockGetSignedUrl } = vi.hoisted(() => ({
+const { mockSend, mockGetSignedUrl, mockS3ClientConfig } = vi.hoisted(() => ({
   mockSend: vi.fn(),
   mockGetSignedUrl: vi.fn(() =>
     Promise.resolve('https://signed-url.example.com/file?signature=abc123')
   ),
+  mockS3ClientConfig: vi.fn(),
 }));
 
 // Mock S3Client and Commands as proper class constructors
 vi.mock('@aws-sdk/client-s3', () => {
   return {
     S3Client: class MockS3Client {
+      constructor(config: unknown) {
+        mockS3ClientConfig(config);
+      }
+
       send = mockSend;
     },
     PutObjectCommand: class MockPutObjectCommand {
@@ -71,7 +75,7 @@ describe('storageService', () => {
     });
   });
 
-  describe('configuration helpers', () => {
+  describe('configuration', () => {
     it('getMissingConfig returns all missing required vars', async () => {
       delete process.env.AWS_S3_BUCKET_NAME;
       delete process.env.AWS_ACCESS_KEY_ID;
@@ -87,48 +91,47 @@ describe('storageService', () => {
       ]);
     });
 
-    it('getStorageConfig applies default endpoint/region/publicBaseUrl fallback', async () => {
+    it('applies default endpoint and region when generating a presigned URL', async () => {
       delete process.env.AWS_DEFAULT_REGION;
       delete process.env.AWS_ENDPOINT_URL;
-      delete process.env.AWS_PUBLIC_BASE_URL;
-      delete process.env.AWS_S3_PUBLIC_BASE_URL;
-      process.env.AWS_S3_BUCKET_NAME = 'fallback-bucket';
+      mockSend.mockResolvedValue({});
 
       vi.resetModules();
-      const { getStorageConfig } = await import('../storageService');
-      const config = getStorageConfig();
+      const { getPresignedDownloadUrl } = await import('../storageService');
+      await getPresignedDownloadUrl('uploads/example.pdf');
 
-      expect(config.region).toBe('auto');
-      expect(config.endpoint).toBe('https://storage.railway.app');
-      expect(config.publicBaseUrl).toBe('https://storage.railway.app/fallback-bucket');
+      expect(mockS3ClientConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          region: 'auto',
+          endpoint: expect.any(String),
+        })
+      );
+      expect(mockGetSignedUrl).toHaveBeenCalled();
     });
   });
 
-  describe('pure helpers', () => {
-    it('validateFile rejects unsupported mime type', async () => {
+  describe('uploadFiles validation', () => {
+    it('rejects an unsupported mime type', async () => {
       vi.resetModules();
-      const { validateFile } = await import('../storageService');
-      const result = validateFile({
-        mimetype: 'application/json',
-        size: 10,
-      } as Express.Multer.File);
+      const { uploadFiles } = await import('../storageService');
+      const [result] = await uploadFiles([
+        {
+          originalname: 'unsupported.json',
+          mimetype: 'application/json',
+          size: 10,
+          buffer: Buffer.from('{}'),
+        } as Express.Multer.File,
+      ]);
 
-      expect(result.valid).toBe(false);
-      if (!result.valid) {
+      expect(result.success).toBe(false);
+      if (!result.success) {
         expect(result.error).toContain('Only image files');
       }
-    });
-
-    it('getPublicFileUrl normalizes and encodes each key segment', async () => {
-      vi.resetModules();
-      const { getPublicFileUrl } = await import('../storageService');
-      const url = getPublicFileUrl('/profiles/0xabc/My Avatar.png');
-
-      expect(url).toBe('https://cdn.example.com/files/profiles/0xabc/My%20Avatar.png');
+      expect(mockSend).not.toHaveBeenCalled();
     });
   });
 
-  describe('uploadFile', () => {
+  describe('uploadFiles single-file behavior', () => {
     beforeEach(() => {
       process.env = { ...originalEnv, ...mockEnv };
       mockSend.mockResolvedValue({});
@@ -136,7 +139,7 @@ describe('storageService', () => {
 
     it('should reject files exceeding max size', async () => {
       vi.resetModules();
-      const { uploadFile, MAX_FILE_SIZE } = await import('../storageService');
+      const { uploadFiles, MAX_FILE_SIZE } = await import('../storageService');
 
       const mockFile = {
         originalname: 'large.png',
@@ -145,7 +148,7 @@ describe('storageService', () => {
         buffer: Buffer.from('x'.repeat(100)),
       } as Express.Multer.File;
 
-      const result = await uploadFile(mockFile);
+      const [result] = await uploadFiles([mockFile]);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -156,7 +159,7 @@ describe('storageService', () => {
     it('should handle S3 upload errors', async () => {
       mockSend.mockRejectedValue(new Error('S3 connection failed'));
       vi.resetModules();
-      const { uploadFile } = await import('../storageService');
+      const { uploadFiles } = await import('../storageService');
 
       const mockFile = {
         originalname: 'test.png',
@@ -165,7 +168,7 @@ describe('storageService', () => {
         buffer: Buffer.from('test'),
       } as Express.Multer.File;
 
-      const result = await uploadFile(mockFile);
+      const [result] = await uploadFiles([mockFile]);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -176,7 +179,7 @@ describe('storageService', () => {
     it('should use Unknown error fallback when upload throws non-Error value', async () => {
       mockSend.mockRejectedValue('boom');
       vi.resetModules();
-      const { uploadFile } = await import('../storageService');
+      const { uploadFiles } = await import('../storageService');
 
       const mockFile = {
         originalname: 'test.png',
@@ -185,7 +188,7 @@ describe('storageService', () => {
         buffer: Buffer.from('test'),
       } as Express.Multer.File;
 
-      const result = await uploadFile(mockFile);
+      const [result] = await uploadFiles([mockFile]);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -306,8 +309,4 @@ describe('storageService', () => {
       expect(mockGetSignedUrl).toHaveBeenCalled();
     });
   });
-
-  // Note: uploadProfileImage tests removed - function is now deprecated
-  // Use uploadFile(file, `profiles/${userAddress}`) instead
-  // The functionality is tested through uploadFile tests with different folders
 });

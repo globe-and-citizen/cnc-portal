@@ -109,7 +109,7 @@ export function resolveAddressWithFallback(
   return safeResolveAddress(key) ?? fallback
 }
 // Token addresses for different networks
-export const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
+const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
   // Polygon Mainnet
   137: {
     USDCe: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // Polygon USDC.e
@@ -238,9 +238,6 @@ export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 // The embeddable Payment Gate widget script's base URL — differs per
 // environment (local dev server, staging, the real pay.cncportal.io CDN).
 export const WIDGET_SCRIPT_URL = import.meta.env.VITE_APP_WIDGET_URL
-
-// GraphQL poll interval for transaction queries (in milliseconds)
-export const GRAPHQL_POLL_INTERVAL = 12000
 
 const NETWORK_TO_COIN_ID: Record<string, string> = {
   POL: 'polygon-ecosystem-token',

@@ -37,9 +37,9 @@
           </div>
           <div class="mt-1.5 flex items-baseline gap-2">
             <span class="text-[28px] font-extrabold tracking-tight">{{
-              formatAmount(round.raised)
+              formatAmount(round.raised, round.token)
             }}</span>
-            <span class="text-muted text-sm">/ {{ formatAmount(round.target) }}</span>
+            <span class="text-muted text-sm">/ {{ formatAmount(round.target, round.token) }}</span>
           </div>
           <UProgress :model-value="pct" :max="100" size="md" class="mt-3.5" />
         </div>
@@ -78,10 +78,11 @@
         >
           <div class="text-primary text-sm font-semibold">Total due at maturity</div>
           <div class="mt-2 text-3xl font-extrabold tracking-tight">
-            {{ formatAmount(totalDue) }}
+            {{ formatAmount(totalDue, round.token) }}
           </div>
           <div class="text-muted mt-1 text-xs">
-            {{ formatAmount(round.raised) }} principal + {{ formatAmount(interest) }} interest
+            {{ formatAmount(round.raised, round.token) }} principal +
+            {{ formatAmount(interest, round.token) }} interest
           </div>
         </div>
 
@@ -103,7 +104,7 @@
               </div>
               <div class="flex flex-col items-end gap-1">
                 <span :class="lender.refunded ? 'text-muted text-sm' : 'text-sm font-bold'">{{
-                  formatAmount(lender.amount)
+                  formatAmount(lender.amount, round.token)
                 }}</span>
                 <UBadge
                   v-if="lender.refunded"
@@ -201,7 +202,7 @@ const schedule = computed(() => {
   const fundingReceived = {
     title: 'Funding received',
     date: r.status === 'open' ? 'in progress' : r.opened || '—',
-    amount: formatAmount(r.raised),
+    amount: formatAmount(r.raised, r.token),
     icon: 'heroicons:arrow-down-left',
     chipClass: 'bg-success/12 text-success',
     amountClass: 'text-success'
@@ -212,7 +213,7 @@ const schedule = computed(() => {
       {
         title: 'Principal refunded',
         date: 'returned to lenders',
-        amount: formatAmount(r.raised),
+        amount: formatAmount(r.raised, r.token),
         icon: 'heroicons:arrow-uturn-left',
         chipClass: 'bg-neutral/12 text-neutral',
         amountClass: 'text-default'
@@ -224,7 +225,7 @@ const schedule = computed(() => {
     {
       title: 'Repayment (principal + interest)',
       date: `matures ${r.maturity || '—'}`,
-      amount: formatAmount(totalDue.value),
+      amount: formatAmount(totalDue.value, r.token),
       icon: 'heroicons:arrow-up-right',
       chipClass: 'bg-warning/15 text-warning',
       amountClass: 'text-default'

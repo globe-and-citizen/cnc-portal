@@ -41,33 +41,31 @@ describe('toSafeTransferRows', () => {
       blockNumber: 4,
       transactionHash: '0xhash4',
       to: ADDR.safe,
-      from: ROUTER, // routed investment — booked from the router event, must be excluded
+      from: ROUTER,
       value: '9000000',
       tokenAddress: ADDR.usdcToken
     }
   ]
 
-  it('drops NFT and router-originated transfers and converts dates to unix seconds', () => {
-    const rows = toSafeTransferRows(transfers, ROUTER)
-    expect(rows).toHaveLength(2)
+  it('drops NFT transfers and converts dates to unix seconds', () => {
+    const rows = toSafeTransferRows(transfers)
+    expect(rows).toHaveLength(3)
     expect(rows[0]).toMatchObject({ token: null, amount: '1000000000000000000', txHash: '0xhash1' })
     expect(rows[1]).toMatchObject({ token: ADDR.usdcToken, amount: '5000000' })
+    expect(rows[2]).toMatchObject({ from: ROUTER, amount: '9000000', txHash: '0xhash4' })
     expect(rows[0].timestamp).toBe(Math.floor(Date.parse('2026-03-01T00:00:00Z') / 1000))
   })
 
   it('tolerates a null transfer list', () => {
-    expect(toSafeTransferRows(null, ROUTER)).toEqual([])
+    expect(toSafeTransferRows(null)).toEqual([])
   })
 
-  it('excludes an inflow that matches a router deposit by (depositor, amount)', () => {
-    // The router forwards an investment to the Safe with `from = the depositor`,
-    // so it is not caught by the router-address check — it must be matched and
-    // dropped by (depositor, amount), since UC-SDR-01 books it as Investor Equity.
+  it('excludes an inflow in the same transaction as a router deposit', () => {
     const investorDeposit: SafeIncomingTransfer = {
       type: 'ERC20_TRANSFER',
       executionDate: '2026-03-05T00:00:00Z',
       blockNumber: 5,
-      transactionHash: '0xhash5',
+      transactionHash: '0xrouterdeposit',
       to: ADDR.safe,
       from: ADDR.client,
       value: '7000000',
@@ -76,6 +74,7 @@ describe('toSafeTransferRows', () => {
     const deposits = [
       {
         id: 'd1',
+        txHash: '0xrouterdeposit',
         contractAddress: ROUTER,
         depositor: ADDR.client,
         token: ADDR.usdcToken,
@@ -85,11 +84,38 @@ describe('toSafeTransferRows', () => {
       }
     ]
 
-    const withoutDeposits = toSafeTransferRows([investorDeposit], ROUTER)
+    const withoutDeposits = toSafeTransferRows([investorDeposit])
     expect(withoutDeposits).toHaveLength(1) // no router data → kept (would be misread as a client payment)
 
-    const withDeposits = toSafeTransferRows([investorDeposit], ROUTER, deposits)
-    expect(withDeposits).toHaveLength(0) // matched the router deposit → excluded
+    const withDeposits = toSafeTransferRows([investorDeposit], deposits)
+    expect(withDeposits).toHaveLength(0) // matched router transaction → excluded
+  })
+
+  it('keeps a same-amount direct deposit from the same sender in another transaction', () => {
+    const directDeposit: SafeIncomingTransfer = {
+      type: 'ERC20_TRANSFER',
+      executionDate: '2026-03-06T00:00:00Z',
+      blockNumber: 6,
+      transactionHash: '0xdirectdeposit',
+      to: ADDR.safe,
+      from: ADDR.client,
+      value: '7000000',
+      tokenAddress: ADDR.usdcToken
+    }
+    const routerDeposits = [
+      {
+        id: 'd2',
+        txHash: '0xrouterdeposit',
+        contractAddress: ROUTER,
+        depositor: ADDR.client,
+        token: ADDR.usdcToken,
+        tokenAmount: '7000000',
+        sherAmount: '14000000',
+        timestamp: 5
+      }
+    ]
+
+    expect(toSafeTransferRows([directDeposit], routerDeposits)).toHaveLength(1)
   })
 })
 
