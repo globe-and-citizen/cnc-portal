@@ -1,3 +1,7 @@
+/* eslint-disable max-lines -- Already the largest reads.ts in the codebase (elections/reads.ts,
+   the next-largest, is 292 lines) because FixedReturn genuinely has the most distinct read
+   shapes of any contract here. Splitting it into multiple files would recreate the same
+   file-proliferation this contract's composables were just consolidated to avoid. */
 import { computed, unref, type MaybeRef, type MaybeRefOrGetter, toValue } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { useReadContract } from '@wagmi/vue'
@@ -9,7 +13,7 @@ import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
 import { log } from '@/lib/logging'
 import type {
-  FixedReturnLenderPosition,
+  FixedReturnLenderPositionResult,
   FixedReturnOfferLender,
   FixedReturnRawOffer,
   LendingOfferStruct
@@ -17,6 +21,24 @@ import type {
 
 /** View/pure names only — `useReadContract` rejects state-changing ones. */
 type FixedReturnReadNames = ContractFunctionName<typeof fixedReturnAbi, 'view' | 'pure'>
+
+/**
+ * Query-key prefixes for the three `useQuery`-based reads below (`useFixedReturnAllOffers`,
+ * `useFixedReturnOfferLenders`, `useFixedReturnMyLenderPositions`). These aren't
+ * `useReadContract`-wrapped, so they fall outside `useContractWritesV3`'s automatic
+ * per-contract-address invalidation and need their own keys, previously duplicated as
+ * raw string-literal arrays across this file and every view/modal that reads or
+ * invalidates them. Every external caller (retry buttons, `invalidate.ts`) only ever
+ * needs one of these coarse prefixes — the address/offer/lender-specific leaf is used
+ * only here, inline at each `useQuery` call, the same way `elections/reads.ts` inlines
+ * its one custom query key rather than routing it through a builder function.
+ */
+export const fixedReturnKeys = {
+  all: ['fixedReturn'] as const,
+  allOffers: ['fixedReturn', 'allOffers'] as const,
+  offerLenders: ['fixedReturn', 'offerLenders'] as const,
+  myLenderPositions: ['fixedReturn', 'myLenderPositions'] as const
+} as const
 
 /**
  * FixedReturn contract address helper
@@ -125,6 +147,22 @@ export function useFixedReturnHasDeposited(offerId: MaybeRef<bigint>, lender: Ma
   return useFixedReturnOfferLenderRead('getHasDeposited', offerId, lender)
 }
 
+/**
+ * The connected wallet's live position (whitelist allocation + cumulative deposits)
+ * on ONE offer — built on the existing single-value useReadContract wrappers above,
+ * which useContractWritesV3 already auto-invalidates on every FixedReturn write.
+ * For a single round's detail page, this is 2 reads instead of re-running
+ * useFixedReturnMyLenderPositions' full all-offers computation (1+4N reads) just to
+ * extract one Map entry — see RoundView.vue.
+ */
+export function useFixedReturnMyLenderPosition(offerId: MaybeRef<bigint>) {
+  const userStore = useUserDataStore()
+  const lender = computed(() => userStore.address as Address | undefined)
+  const allocation = useFixedReturnLenderAllocation(offerId, lender as MaybeRef<Address>)
+  const deposited = useFixedReturnLenderDeposits(offerId, lender as MaybeRef<Address>)
+  return { allocation, deposited }
+}
+
 export function useFixedReturnIsTokenSupported(token: MaybeRef<Address>) {
   const fixedReturnAddress = useFixedReturnAddress()
   const tokenValue = computed(() => unref(token))
@@ -208,7 +246,9 @@ export function useFixedReturnAllOffers(address?: MaybeRefOrGetter<string | unde
   }
 
   return useQuery({
-    queryKey: ['fixedReturnAllOffers', fixedReturnAddress],
+    queryKey: computed(
+      () => [...fixedReturnKeys.allOffers, { address: fixedReturnAddress.value ?? null }] as const
+    ),
     queryFn: fetchAllOffers,
     enabled: computed(() => !!fixedReturnAddress.value)
   })
@@ -266,7 +306,7 @@ export function useFixedReturnOfferLenders(
       )
     } catch (error) {
       log.error('Failed to fetch FixedReturn offer lenders:', error)
-      return []
+      throw error
     }
   }
 
@@ -281,7 +321,17 @@ export function useFixedReturnOfferLenders(
   // placeholder in the first place.
   const tokenValue = computed(() => toValue(token))
   return useQuery({
-    queryKey: ['fixedReturnOfferLenders', fixedReturnAddress, offerId, tokenValue],
+    queryKey: computed(
+      () =>
+        [
+          ...fixedReturnKeys.offerLenders,
+          {
+            address: fixedReturnAddress.value ?? null,
+            offerId: toValue(offerId) ?? null,
+            token: tokenValue.value ?? null
+          }
+        ] as const
+    ),
     queryFn: fetchLenders,
     enabled: computed(
       () =>
@@ -307,7 +357,7 @@ export function useFixedReturnMyLenderPositions() {
   const lenderAddress = computed(() => userStore.address as Address | undefined)
   const { data: allOffers } = useFixedReturnAllOffers()
 
-  async function fetchMyLenderPositions(): Promise<Map<number, FixedReturnLenderPosition>> {
+  async function fetchMyLenderPositions(): Promise<Map<number, FixedReturnLenderPositionResult>> {
     const address = fixedReturnAddress.value
     const lender = lenderAddress.value
     if (!address || !lender) return new Map()
@@ -329,14 +379,14 @@ export function useFixedReturnMyLenderPositions() {
               args: [BigInt(offerId), lender]
             }) as Promise<bigint>
           ])
-          return [offerId, { allocation, deposited }] as const
+          return [offerId, { status: 'ok', allocation, deposited }] as const
         } catch (error) {
           log.error(`Failed to fetch lender position for offer #${offerId}:`, error)
-          return [offerId, { allocation: 0n, deposited: 0n }] as const
+          return [offerId, { status: 'error', error }] as const
         }
       })
     )
-    return new Map(entries)
+    return new Map<number, FixedReturnLenderPositionResult>(entries)
   }
 
   // Plain offerIds, not `allOffers` itself — TanStack Query hashes the query key with
@@ -344,7 +394,17 @@ export function useFixedReturnMyLenderPositions() {
   const offerIds = computed(() => (allOffers.value ?? []).map(({ offerId }) => offerId))
 
   return useQuery({
-    queryKey: ['fixedReturnMyLenderPositions', fixedReturnAddress, lenderAddress, offerIds],
+    queryKey: computed(
+      () =>
+        [
+          ...fixedReturnKeys.myLenderPositions,
+          {
+            address: fixedReturnAddress.value ?? null,
+            lender: lenderAddress.value ?? null,
+            offerIds: offerIds.value
+          }
+        ] as const
+    ),
     queryFn: fetchMyLenderPositions,
     enabled: computed(() => !!fixedReturnAddress.value && offerIds.value.length > 0)
   })

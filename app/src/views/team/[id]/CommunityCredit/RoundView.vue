@@ -10,10 +10,10 @@
       All rounds
     </button>
     <CreditRoundReadState
-      v-if="store.isError"
+      v-if="store.isError || lenderDataError"
       :has-round="true"
       :is-loading="store.isLoading"
-      :is-error="store.isError"
+      :is-error="store.isError || lenderDataError"
     />
     <CreditRoundDetailSection
       v-model="activeVariant"
@@ -29,6 +29,7 @@
           :round="round"
           :is-owner="store.isOwner"
           :is-lend-allowed="canLend"
+          :is-lend-position-unavailable="isLendPositionUnavailable"
           :is-repayment-available="repayment.isReady && repayment.canRepayViaBank"
           :is-refund-pending="refundLendersResult.isPending.value"
           :is-partial-funding-pending="acceptPartialFundingResult.isPending.value"
@@ -36,6 +37,7 @@
           @repay="activeVariant = 'repay'"
           @refund="refundLenders"
           @accept-partial-funding="acceptPartialFunding"
+          @retry-lend-position="retryLendPosition"
         />
       </template>
     </CreditRoundDetailSection>
@@ -64,12 +66,17 @@ import {
   useFixedReturnAddress,
   useFixedReturnGetLendingOffer,
   useFixedReturnOfferLenders,
-  useFixedReturnMyLenderPositions
+  useFixedReturnMyLenderPosition
 } from '@/composables/fixedReturn/reads'
 import {
   useFixedReturnRefundLenders,
   useFixedReturnAcceptPartialFunding
 } from '@/composables/fixedReturn/writes'
+import {
+  invalidateAfterRefund,
+  invalidateAfterAcceptPartialFunding,
+  invalidateAfterRepay
+} from '@/composables/fixedReturn/invalidate'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
 import {
@@ -128,7 +135,10 @@ const baseRound = computed(() => store.getRound(roundId.value))
 const { data: rawOffer, refetch: refetchOffer } = useFixedReturnGetLendingOffer(offerId)
 const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)
 const tokenAddress = computed(() => offer.value?.token ?? zeroAddress)
-const { data: lenderData } = useFixedReturnOfferLenders(roundId, tokenAddress)
+const { data: lenderData, isError: lenderDataError } = useFixedReturnOfferLenders(
+  roundId,
+  tokenAddress
+)
 
 const round = computed<CreditRound | undefined>(() => {
   const base = baseRound.value
@@ -190,12 +200,19 @@ const repayment = computed<RepaymentPanelState>(() => ({
   isSubmitting: repayResult.isPending.value,
   errorMessage: repaymentError.value
 }))
-const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
+const { allocation: myAllocation } = useFixedReturnMyLenderPosition(offerId)
 const canLend = computed(() => {
   if (!round.value || !round.value.restricted) return true
-  const position = myLenderPositions.value?.get(Number(round.value.id))
-  return !!position && position.allocation > 0n
+  return typeof myAllocation.data.value === 'bigint' && myAllocation.data.value > 0n
 })
+// A failed read isn't a confirmed zero allocation — don't present it as ineligible,
+// same distinction CreditRoundCard/CreditLendModal already make for this same data.
+const isLendPositionUnavailable = computed(
+  () => !!round.value?.restricted && myAllocation.isError.value
+)
+function retryLendPosition() {
+  myAllocation.refetch()
+}
 const goList = () => router.push({ name: 'community-credit', params: { id: teamId.value } })
 
 function goRound() {
@@ -206,14 +223,6 @@ function goRound() {
 }
 const refundLendersResult = useFixedReturnRefundLenders()
 const acceptPartialFundingResult = useFixedReturnAcceptPartialFunding()
-async function invalidateRound() {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
-    queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] }),
-    queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
-    queryClient.invalidateQueries({ queryKey: ['fixed-return-events-logs'] })
-  ])
-}
 async function refundLenders() {
   try {
     await refundLendersResult.mutateAsync({ args: [offerId.value] })
@@ -221,7 +230,7 @@ async function refundLenders() {
       title: 'Round refunded — every lender got their principal back',
       color: 'success'
     })
-    await invalidateRound()
+    await invalidateAfterRefund(queryClient, tokenAddress.value)
   } catch (error) {
     toast.add({
       title: classifyError(error, { contract: 'FixedReturn' }).userMessage,
@@ -236,7 +245,7 @@ async function acceptPartialFunding() {
       title: 'Round accepted with partial funding — ready to repay lenders',
       color: 'success'
     })
-    await invalidateRound()
+    await invalidateAfterAcceptPartialFunding(queryClient, tokenAddress.value)
   } catch (error) {
     toast.add({
       title: classifyError(error, { contract: 'FixedReturn' }).userMessage,
@@ -267,7 +276,7 @@ async function repayRound(amount: string) {
   repaymentError.value = null
   try {
     await repayResult.mutateAsync({ args: [offerId.value, validation.amountUnits] })
-    await invalidateRound()
+    await invalidateAfterRepay(queryClient, tokenAddress.value)
     await Promise.all([refetchOffer(), refetchTreasuryBalance()])
   } catch (error) {
     repaymentError.value = classifyError(error, { contract: 'Bank' }).userMessage

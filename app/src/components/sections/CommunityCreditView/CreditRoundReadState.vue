@@ -78,6 +78,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
+import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
 
 defineProps<{
   hasRound: boolean
@@ -95,7 +96,10 @@ const isRetrying = ref(false)
 async function retryRound() {
   isRetrying.value = true
   try {
-    await queryClient.refetchQueries({ queryKey: ['fixedReturnAllOffers'] })
+    // The broad prefix, not just .allOffers — this component is reused for any
+    // FixedReturn read failure on the round-detail page (e.g. the lender list),
+    // not only the overview projection that first populates `round`.
+    await queryClient.refetchQueries({ queryKey: fixedReturnKeys.all })
   } finally {
     isRetrying.value = false
   }

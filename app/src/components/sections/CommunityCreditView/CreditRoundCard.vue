@@ -77,8 +77,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useCommunityCreditStore } from '@/stores'
 import { useFixedReturnMyLenderPositions } from '@/composables/fixedReturn/reads'
+import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
 import { formatAmount, reachedFundingTarget, statusMeta } from '@/utils/communityCredit/model'
 import { percentOf } from '@/utils/communityCredit/offer'
 import type { CreditRound } from '@/types'
@@ -88,17 +90,29 @@ const props = defineProps<{ round: CreditRound }>()
 const emit = defineEmits<{ open: []; lend: []; repay: [] }>()
 
 const store = useCommunityCreditStore()
+const queryClient = useQueryClient()
 const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
+const myPosition = computed(() => myLenderPositions.value?.get(Number(props.round.id)))
 
 // Restricted rounds only accept deposits from whitelisted addresses — lenderAllocation
 // reads back 0 for anyone not on the whitelist, owner included. The contract already
 // reverts lendFunds for them; hide the Lend action too instead of offering a button
-// that's guaranteed to fail on-chain.
+// that's guaranteed to fail on-chain. A read failure is NOT the same as a confirmed
+// zero allocation, though — see positionUnavailable below.
 const canLend = computed(() => {
   if (!props.round.restricted) return true
-  const position = myLenderPositions.value?.get(Number(props.round.id))
-  return !!position && position.allocation > 0n
+  const position = myPosition.value
+  return !!position && position.status === 'ok' && position.allocation > 0n
 })
+
+// A failed on-chain read for this round's position is not evidence of ineligibility —
+// it's just unknown. Don't render it as "not eligible"; offer a retry instead.
+const positionUnavailable = computed(
+  () => props.round.restricted && myPosition.value?.status === 'error'
+)
+function retryPosition() {
+  queryClient.refetchQueries({ queryKey: fixedReturnKeys.myLenderPositions })
+}
 
 const status = computed(() => statusMeta(props.round.status))
 const pct = computed(() => percentOf(props.round.raised, props.round.target))
@@ -131,12 +145,12 @@ const terms = computed(() => [
   }
 ])
 
-type CardCtaEvent = 'open' | 'lend' | 'repay'
+type CardCtaEvent = 'open' | 'lend' | 'repay' | 'retry-position'
 type Cta = {
   label: string
   icon: string
   event: CardCtaEvent
-  color: 'primary' | 'neutral'
+  color: 'primary' | 'neutral' | 'warning'
   variant: 'solid' | 'soft'
 }
 
@@ -154,16 +168,26 @@ const LEND: Cta = {
   color: 'primary',
   variant: 'solid'
 }
+const RETRY_POSITION: Cta = {
+  label: 'Check eligibility',
+  icon: 'heroicons:arrow-path',
+  event: 'retry-position',
+  color: 'warning',
+  variant: 'soft'
+}
 
 const ctas = computed<Cta[]>(() => {
   const { status: s } = props.round
   // Open rounds are lendable by anyone eligible. The owner is a member too, so they
   // keep a Manage action alongside the Lend action — but Lend itself only appears when
-  // this user (owner or not) can actually deposit into the round.
+  // this user (owner or not) can actually deposit into the round. A restricted round
+  // whose position failed to load is neither eligible nor confirmed ineligible — offer
+  // a retry instead of silently hiding Lend as if the answer were known.
   if (s === 'open') {
     const list: Cta[] = []
     if (store.isOwner) list.push(MANAGE)
     if (canLend.value) list.push(LEND)
+    else if (positionUnavailable.value) list.push(RETRY_POSITION)
     return list
   }
   // Funded / in repayment: the owner repays, everyone else just views.
@@ -195,6 +219,8 @@ function onCta(event: CardCtaEvent) {
       return emit('lend')
     case 'repay':
       return emit('repay')
+    case 'retry-position':
+      return retryPosition()
     default:
       return emit('open')
   }

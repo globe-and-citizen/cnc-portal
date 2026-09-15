@@ -134,6 +134,8 @@ automatically when a deadline or maturity date passes.
 - [x] A lending amount must be greater than 0.
 - [x] A lending amount cannot exceed the lender's available amount.
 - [x] Token approval is requested only when the current allowance is insufficient.
+- [x] A failed read of the connected member's whitelist allocation or deposited amount is presented as unavailable with a retry, never as a
+      confirmed zero — a transient read failure must not look like "not eligible" or "nothing deposited yet."
 
 #### Edge & Error Cases
 
@@ -227,11 +229,33 @@ The following verified gaps have technical evidence and remediation directions i
 
 - Rounds that require an issuer action are grouped with settled history.
 - Lenders cannot review their personal deposited and expected-return positions separately from the company's debt.
-- Lending and repayment refresh the matching activity feed but not every affected token balance.
+- Lending, repayment, refunding, and accepting partial funding now invalidate the cached balance/allowance reads for the round's own token
+  (so a widget that renders them would pick up the change on its next read), but no Community Credit surface currently renders a lender's
+  own token balance — the matching activity feed still doesn't refresh every affected balance visibly.
+
+## Read Model & Caching
+
+FixedReturn's three on-chain read hooks (`useFixedReturnAllOffers`, `useFixedReturnOfferLenders`, `useFixedReturnMyLenderPositions`, all in
+`composables/fixedReturn/reads.ts`) share one `fixedReturnKeys` query-key factory (`composables/fixedReturn/keys.ts`) instead of duplicated
+string literals, and one domain invalidation function per successful mutation (`invalidateAfterLend`/`Repay`/`Refund`/`AcceptPartialFunding`
+in `composables/fixedReturn/invalidate.ts`) instead of a hand-copied 4-key set at every call site.
+
+A failed on-chain read for an offer's lenders or a connected member's position is never converted into a fabricated empty list or a zero
+position — `useFixedReturnOfferLenders` rejects the query on failure (matching `useFixedReturnAllOffers`'s existing behavior), and
+`useFixedReturnMyLenderPositions`'s result is a discriminated union per offer (`{status: 'ok', ...} | {status: 'error', error}`) so one
+offer's failed read doesn't erase another offer's confirmed data. Consumers present a failed read as "unavailable, retry" rather than "not
+eligible" — see `CreditLendModal.vue`'s and `RoundView.vue`'s own "Check eligibility" retry actions, and `CreditRoundCard.vue`'s equivalent.
+
+The round-detail page reads its own offer's position directly via `useFixedReturnMyLenderPosition(offerId)` (built on the existing
+single-value `getLenderAllocation`/`getLenderDeposits` reads) instead of the plural, all-offers-shaped hook — removing a duplicate 1+4N-read
+re-fetch of the entire round list on every cold visit to a round's detail route. Measured via
+`composables/fixedReturn/__tests__/rpcBudget.spec.ts`: the overview (all offers + all connected-member positions) costs `1 + 4N` on-chain
+calls for `N` offers, and a single offer's lender breakdown costs `1 + 2L` for `L` lenders — the round-detail page no longer pays the
+overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d22c21b7d46e0b07cc1720063dab67ce8c0074e9`
+**Implementation evidence reviewed against:** `ff8ce37802a9108e946d3c7d0605bb80801cc4e6`
 
 - [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
@@ -243,6 +267,9 @@ The following verified gaps have technical evidence and remediation directions i
 - [Credit round read states](../../../app/src/components/sections/CommunityCreditView/CreditRoundReadState.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
+- [FixedReturn query-key factory](../../../app/src/composables/fixedReturn/keys.ts)
+- [FixedReturn mutation cache invalidation](../../../app/src/composables/fixedReturn/invalidate.ts)
+- [Connected lender's live offering derivation](../../../app/src/composables/fixedReturn/useMyLenderOffering.ts)
 - [Bank reads (owner and paused state, gating repayment)](../../../app/src/composables/bank/reads.ts)
 - [Repayment amount validation](../../../app/src/types/communityCredit.schemas.ts)
 - [Repayment lifecycle status](../../../app/src/utils/communityCredit/roundStatus.ts)

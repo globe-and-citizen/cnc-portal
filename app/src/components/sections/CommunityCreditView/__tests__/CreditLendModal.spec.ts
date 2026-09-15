@@ -9,6 +9,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
+import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
 import { USDC_ADDRESS } from '@/constant'
 import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
 import CreditLendModal from '../CreditLendModal.vue'
@@ -66,12 +67,16 @@ describe('CreditLendModal.vue', () => {
     mockInvalidateQueries.mockClear()
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
+      refetchQueries: vi.fn(),
       getQueryData: vi.fn(),
       setQueryData: vi.fn(),
       removeQueries: vi.fn()
     })
     mockFixedReturnReads.getLendingOffer.data.value = null
-    mockFixedReturnReads.myLenderPositions.data.value = new Map()
+    mockFixedReturnReads.lenderAllocation.data.value = 0n
+    mockFixedReturnReads.lenderAllocation.isError.value = false
+    mockFixedReturnReads.lenderDeposits.data.value = 0n
+    mockFixedReturnReads.lenderDeposits.isError.value = false
   })
 
   // Teleported content isn't auto-removed between tests.
@@ -93,7 +98,7 @@ describe('CreditLendModal.vue', () => {
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Credit signed — 1,000 USDC sent', color: 'success' })
     )
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['fixedReturnAllOffers'] })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: fixedReturnKeys.all })
     expect(wrapper.emitted('lent')).toHaveLength(1)
   })
 
@@ -131,9 +136,7 @@ describe('CreditLendModal.vue', () => {
         fundingAccess: 1, // whitelist
         isCapEnabled: false // general cap unset — would wrongly read as "No cap" pre-fix
       })
-      mockFixedReturnReads.myLenderPositions.data.value = new Map([
-        [1, { allocation: 5000_000000n, deposited: 0n }]
-      ])
+      mockFixedReturnReads.lenderAllocation.data.value = 5000_000000n
       const { modal } = mountModal(sampleRound({ restricted: true, cap: null }))
       await flushPromises()
 
@@ -145,9 +148,7 @@ describe('CreditLendModal.vue', () => {
         isCapEnabled: true,
         lenderCap: 10000_000000n
       })
-      mockFixedReturnReads.myLenderPositions.data.value = new Map([
-        [1, { allocation: 0n, deposited: 4000_000000n }]
-      ])
+      mockFixedReturnReads.lenderDeposits.data.value = 4000_000000n
       // lenders: [] simulates opening the modal from the Index list, where the round
       // prop is never enriched with lender positions.
       const { modal } = mountModal(sampleRound({ cap: 10000, lenders: [] }))
@@ -162,9 +163,6 @@ describe('CreditLendModal.vue', () => {
         lenderCap: 3000_000000n,
         totalFunded: 0n
       })
-      mockFixedReturnReads.myLenderPositions.data.value = new Map([
-        [1, { allocation: 0n, deposited: 0n }]
-      ])
       // Funding-level remaining is 40,000; the lender's own cap of 3,000 is the tighter bound.
       const { modal } = mountModal(sampleRound({ target: 40000, raised: 0, cap: 3000 }))
       await flushPromises()
@@ -181,9 +179,6 @@ describe('CreditLendModal.vue', () => {
         lenderCap: 3000_000000n,
         totalFunded: 0n
       })
-      mockFixedReturnReads.myLenderPositions.data.value = new Map([
-        [1, { allocation: 0n, deposited: 0n }]
-      ])
       // Funding-level remaining is 40,000; the lender's own cap of 3,000 is the tighter bound.
       // 25%/50% of the round-level 40,000 would both clamp to 3,000 (same as Max) — they
       // must instead be 25%/50% of the lender's actual 3,000 ceiling: 750 and 1,500.
@@ -206,9 +201,7 @@ describe('CreditLendModal.vue', () => {
         isCapEnabled: true,
         lenderCap: 1_000000n // 1 USDC cap
       })
-      mockFixedReturnReads.myLenderPositions.data.value = new Map([
-        [1, { allocation: 0n, deposited: 500000n }] // already deposited 0.5 USDC
-      ])
+      mockFixedReturnReads.lenderDeposits.data.value = 500000n // already deposited 0.5 USDC
       const { modal } = mountModal(sampleRound({ cap: 1 }))
       await flushPromises()
 
@@ -222,9 +215,6 @@ describe('CreditLendModal.vue', () => {
         fundingTarget: 400000n, // 0.4 USDC target
         totalFunded: 0n
       })
-      mockFixedReturnReads.myLenderPositions.data.value = new Map([
-        [1, { allocation: 0n, deposited: 0n }]
-      ])
       const { modal } = mountModal(sampleRound({ target: 0.4, raised: 0, cap: null }))
       await flushPromises()
 
@@ -232,6 +222,19 @@ describe('CreditLendModal.vue', () => {
       expect(
         (modal.find('[data-test="lend-amount-input"]').element as HTMLInputElement).value
       ).toBe('0.2')
+    })
+  })
+
+  describe('position read failure', () => {
+    it('warns and blocks submission instead of silently treating a failed read as a zero position', async () => {
+      mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
+      mockFixedReturnReads.lenderAllocation.isError.value = true
+      const { modal } = mountModal(sampleRound())
+      await flushPromises()
+
+      expect(modal.find('[data-test="lend-position-unavailable"]').exists()).toBe(true)
+      const confirmButton = modal.find('[data-test="lend-confirm"]').element as HTMLButtonElement
+      expect(confirmButton.disabled).toBe(true)
     })
   })
 })

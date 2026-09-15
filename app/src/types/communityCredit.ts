@@ -85,6 +85,17 @@ export interface FixedReturnLenderPosition {
 }
 
 /**
+ * Per-offer result from useFixedReturnMyLenderPositions. A discriminated union rather
+ * than a bare FixedReturnLenderPosition so one offer's on-chain read failure can be
+ * represented explicitly instead of fabricated as a zero position — a fabricated zero
+ * is indistinguishable from "not on this restricted round's whitelist," which would
+ * wrongly present a transient RPC failure as a real ineligibility.
+ */
+export type FixedReturnLenderPositionResult =
+  | ({ status: 'ok' } & FixedReturnLenderPosition)
+  | { status: 'error'; error: unknown }
+
+/**
  * Off-chain title/purpose metadata for a FixedReturn offer, as returned by
  * GET /api/fixed-return-offering — see backend/prisma/schema.prisma's
  * FixedReturnOffering model.
