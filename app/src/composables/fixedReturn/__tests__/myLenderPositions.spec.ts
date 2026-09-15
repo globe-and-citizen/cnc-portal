@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { ref, toValue } from 'vue'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks'
 
@@ -16,6 +16,12 @@ const OFFERS = [
   { offerId: 2, offer: {}, decimals: 6, lenderAddresses: [] }
 ]
 
+function scopeOf(options: unknown): unknown {
+  const { queryKey } = options as { queryKey: unknown }
+  const key = toValue(queryKey) as readonly unknown[]
+  return key[1]
+}
+
 describe('useFixedReturnMyLenderPositions', () => {
   let capturedQuery: CapturedQuery | null = null
 
@@ -23,11 +29,11 @@ describe('useFixedReturnMyLenderPositions', () => {
     vi.clearAllMocks()
     capturedQuery = null
     // useFixedReturnMyLenderPositions internally calls useFixedReturnAllOffers, which
-    // registers its own useQuery — key off queryKey[0] to feed that inner call a fixed
-    // offer list without it re-registering as the query under test below.
+    // registers its own useQuery — key off the fixedReturnKeys scope segment to feed
+    // that inner call a fixed offer list without it re-registering as the query under
+    // test below.
     useQueryFn.mockImplementation((options: unknown) => {
-      const { queryKey } = options as { queryKey: readonly unknown[] }
-      if (queryKey[0] === 'fixedReturnAllOffers') {
+      if (scopeOf(options) === 'allOffers') {
         return {
           data: ref(OFFERS),
           isLoading: ref(false),
@@ -70,8 +76,7 @@ describe('useFixedReturnMyLenderPositions', () => {
 
   it('returns an empty map with no RPC calls when there are no offers to check', async () => {
     useQueryFn.mockImplementation((options: unknown) => {
-      const { queryKey } = options as { queryKey: readonly unknown[] }
-      if (queryKey[0] === 'fixedReturnAllOffers') {
+      if (scopeOf(options) === 'allOffers') {
         return {
           data: ref([]),
           isLoading: ref(false),

@@ -13,6 +13,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { offerStruct, sampleRound } from './communityCreditFixtures'
+import { fixedReturnKeys } from '@/composables/fixedReturn/keys'
 
 const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
 const repaymentLenderData = [
@@ -125,7 +126,7 @@ describe('RoundView repayment', () => {
     })
     expect(mockFixedReturnReads.getLendingOffer.refetch).toHaveBeenCalled()
     expect(mockERC20Reads.balanceOf.refetch).toHaveBeenCalled()
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['fixedReturnOfferLenders'] })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: fixedReturnKeys.all })
     expect(mockRouterPush).toHaveBeenLastCalledWith(
       expect.objectContaining({
         name: 'community-credit-round',

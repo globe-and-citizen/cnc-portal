@@ -78,6 +78,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
+import { fixedReturnKeys } from '@/composables/fixedReturn/keys'
 
 defineProps<{
   hasRound: boolean
@@ -95,7 +96,7 @@ const isRetrying = ref(false)
 async function retryRound() {
   isRetrying.value = true
   try {
-    await queryClient.refetchQueries({ queryKey: ['fixedReturnAllOffers'] })
+    await queryClient.refetchQueries({ queryKey: fixedReturnKeys.allOffersAll() })
   } finally {
     isRetrying.value = false
   }

@@ -6,6 +6,7 @@ import { formatUnits, isAddress, zeroAddress, type Address, type ContractFunctio
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { config } from '@/wagmi.config'
 import { fixedReturnAbi } from '@/artifacts/abi/generated'
+import { fixedReturnKeys } from './keys'
 import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
 import { log } from '@/lib/logging'
 import type {
@@ -208,7 +209,7 @@ export function useFixedReturnAllOffers(address?: MaybeRefOrGetter<string | unde
   }
 
   return useQuery({
-    queryKey: ['fixedReturnAllOffers', fixedReturnAddress],
+    queryKey: computed(() => fixedReturnKeys.allOffers(fixedReturnAddress)),
     queryFn: fetchAllOffers,
     enabled: computed(() => !!fixedReturnAddress.value)
   })
@@ -281,7 +282,7 @@ export function useFixedReturnOfferLenders(
   // placeholder in the first place.
   const tokenValue = computed(() => toValue(token))
   return useQuery({
-    queryKey: ['fixedReturnOfferLenders', fixedReturnAddress, offerId, tokenValue],
+    queryKey: computed(() => fixedReturnKeys.offerLenders(fixedReturnAddress, offerId, tokenValue)),
     queryFn: fetchLenders,
     enabled: computed(
       () =>
@@ -344,7 +345,9 @@ export function useFixedReturnMyLenderPositions() {
   const offerIds = computed(() => (allOffers.value ?? []).map(({ offerId }) => offerId))
 
   return useQuery({
-    queryKey: ['fixedReturnMyLenderPositions', fixedReturnAddress, lenderAddress, offerIds],
+    queryKey: computed(() =>
+      fixedReturnKeys.myLenderPositions(fixedReturnAddress, lenderAddress, offerIds)
+    ),
     queryFn: fetchMyLenderPositions,
     enabled: computed(() => !!fixedReturnAddress.value && offerIds.value.length > 0)
   })

@@ -70,6 +70,11 @@ import {
   useFixedReturnRefundLenders,
   useFixedReturnAcceptPartialFunding
 } from '@/composables/fixedReturn/writes'
+import {
+  invalidateAfterRefund,
+  invalidateAfterAcceptPartialFunding,
+  invalidateAfterRepay
+} from '@/composables/fixedReturn/invalidate'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
 import {
@@ -207,14 +212,6 @@ function goRound() {
 }
 const refundLendersResult = useFixedReturnRefundLenders()
 const acceptPartialFundingResult = useFixedReturnAcceptPartialFunding()
-async function invalidateRound() {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
-    queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] }),
-    queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
-    queryClient.invalidateQueries({ queryKey: ['fixed-return-events-logs'] })
-  ])
-}
 async function refundLenders() {
   try {
     await refundLendersResult.mutateAsync({ args: [offerId.value] })
@@ -222,7 +219,7 @@ async function refundLenders() {
       title: 'Round refunded — every lender got their principal back',
       color: 'success'
     })
-    await invalidateRound()
+    await invalidateAfterRefund(queryClient, tokenAddress.value)
   } catch (error) {
     toast.add({
       title: classifyError(error, { contract: 'FixedReturn' }).userMessage,
@@ -237,7 +234,7 @@ async function acceptPartialFunding() {
       title: 'Round accepted with partial funding — ready to repay lenders',
       color: 'success'
     })
-    await invalidateRound()
+    await invalidateAfterAcceptPartialFunding(queryClient, tokenAddress.value)
   } catch (error) {
     toast.add({
       title: classifyError(error, { contract: 'FixedReturn' }).userMessage,
@@ -268,7 +265,7 @@ async function repayRound(amount: string) {
   repaymentError.value = null
   try {
     await repayResult.mutateAsync({ args: [offerId.value, validation.amountUnits] })
-    await invalidateRound()
+    await invalidateAfterRepay(queryClient, tokenAddress.value)
     await Promise.all([refetchOffer(), refetchTreasuryBalance()])
   } catch (error) {
     repaymentError.value = classifyError(error, { contract: 'Bank' }).userMessage

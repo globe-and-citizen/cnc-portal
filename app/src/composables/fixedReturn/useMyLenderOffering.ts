@@ -1,6 +1,7 @@
 import { computed, type Ref } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useFixedReturnMyLenderPositions } from './reads'
+import { fixedReturnKeys } from './keys'
 import { toLenderOffering } from '@/utils/communityCredit/offer'
 import { UNCAPPED_ALLOCATION } from '@/utils/communityCredit/model'
 import type { CreditLenderOffering, CreditRound, LendingOfferStruct } from '@/types'
@@ -40,7 +41,7 @@ export function useMyLenderOffering(
   })
 
   function retryPosition() {
-    return queryClient.refetchQueries({ queryKey: ['fixedReturnMyLenderPositions'] })
+    return queryClient.refetchQueries({ queryKey: fixedReturnKeys.myLenderPositionsAll() })
   }
 
   return { lenderOffering, positionUnavailable, retryPosition }

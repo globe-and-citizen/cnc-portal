@@ -9,6 +9,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
+import { fixedReturnKeys } from '@/composables/fixedReturn/keys'
 import { USDC_ADDRESS } from '@/constant'
 import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
 import CreditLendModal from '../CreditLendModal.vue'
@@ -94,7 +95,7 @@ describe('CreditLendModal.vue', () => {
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Credit signed — 1,000 USDC sent', color: 'success' })
     )
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['fixedReturnAllOffers'] })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: fixedReturnKeys.all })
     expect(wrapper.emitted('lent')).toHaveLength(1)
   })
 

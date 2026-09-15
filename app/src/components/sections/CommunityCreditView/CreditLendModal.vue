@@ -155,6 +155,7 @@ import {
   useFixedReturnGetLendingOffer
 } from '@/composables/fixedReturn/reads'
 import { useMyLenderOffering } from '@/composables/fixedReturn/useMyLenderOffering'
+import { invalidateAfterLend } from '@/composables/fixedReturn/invalidate'
 import { useFixedReturnLendFunds } from '@/composables/fixedReturn/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useERC20Approve } from '@/composables/erc20/writes'
@@ -299,6 +300,7 @@ async function confirm() {
     submitError.value = "Couldn't verify your lending position — retry before continuing."
     return
   }
+  const tokenAddress = token.value.address as Address
 
   try {
     await refetchAllowance()
@@ -310,12 +312,7 @@ async function confirm() {
       title: `Credit signed — ${formatAmount(numericAmount.value, round.token)} sent`,
       color: 'success'
     })
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixed-return-events-logs'] })
-    ])
+    await invalidateAfterLend(queryClient, tokenAddress)
     emit('lent')
   } catch (error) {
     submitError.value = classifyError(error, { contract: 'FixedReturn' }).userMessage

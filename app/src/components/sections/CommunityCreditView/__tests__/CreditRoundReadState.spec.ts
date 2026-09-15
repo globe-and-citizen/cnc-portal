@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { useQueryClientFn } from '@/tests/mocks'
+import { fixedReturnKeys } from '@/composables/fixedReturn/keys'
 import CreditRoundReadState from '../CreditRoundReadState.vue'
 
 const mockRefetchQueries = vi.fn().mockResolvedValue(undefined)
@@ -28,7 +29,7 @@ describe('CreditRoundReadState', () => {
 
     expect(wrapper.find('[data-test="round-error"]').exists()).toBe(true)
     await wrapper.find('[data-test="round-error-retry"]').trigger('click')
-    expect(mockRefetchQueries).toHaveBeenCalledWith({ queryKey: ['fixedReturnAllOffers'] })
+    expect(mockRefetchQueries).toHaveBeenCalledWith({ queryKey: fixedReturnKeys.allOffersAll() })
   })
 
   it('marks cached details as outdated without hiding them', () => {
