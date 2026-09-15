@@ -270,5 +270,22 @@ describe('Community Credit views', () => {
       await flushPromises()
       expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
     })
+
+    it('offers a retry instead of hiding Lend when the position read failed, not confirmed zero', async () => {
+      store.isOwner = true
+      mockFixedReturnReads.lenderAllocation.data.value = 0n
+      mockFixedReturnReads.lenderAllocation.isError.value = true
+      const wrapper = mountRound(sampleRound({ restricted: true }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="round-cta-retry-lend-position"]').exists()).toBe(true)
+    })
+
+    it('shows a refresh-error banner instead of an empty lender list when offerLenders fails', async () => {
+      mockFixedReturnReads.offerLenders.isError.value = true
+      const wrapper = mountRound(sampleRound())
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-refresh-error"]').exists()).toBe(true)
+    })
   })
 })

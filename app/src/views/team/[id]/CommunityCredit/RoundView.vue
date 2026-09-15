@@ -10,10 +10,10 @@
       All rounds
     </button>
     <CreditRoundReadState
-      v-if="store.isError"
+      v-if="store.isError || lenderDataError"
       :has-round="true"
       :is-loading="store.isLoading"
-      :is-error="store.isError"
+      :is-error="store.isError || lenderDataError"
     />
     <CreditRoundDetailSection
       v-model="activeVariant"
@@ -29,6 +29,7 @@
           :round="round"
           :is-owner="store.isOwner"
           :is-lend-allowed="canLend"
+          :is-lend-position-unavailable="isLendPositionUnavailable"
           :is-repayment-available="repayment.isReady && repayment.canRepayViaBank"
           :is-refund-pending="refundLendersResult.isPending.value"
           :is-partial-funding-pending="acceptPartialFundingResult.isPending.value"
@@ -36,6 +37,7 @@
           @repay="activeVariant = 'repay'"
           @refund="refundLenders"
           @accept-partial-funding="acceptPartialFunding"
+          @retry-lend-position="retryLendPosition"
         />
       </template>
     </CreditRoundDetailSection>
@@ -133,7 +135,10 @@ const baseRound = computed(() => store.getRound(roundId.value))
 const { data: rawOffer, refetch: refetchOffer } = useFixedReturnGetLendingOffer(offerId)
 const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)
 const tokenAddress = computed(() => offer.value?.token ?? zeroAddress)
-const { data: lenderData } = useFixedReturnOfferLenders(roundId, tokenAddress)
+const { data: lenderData, isError: lenderDataError } = useFixedReturnOfferLenders(
+  roundId,
+  tokenAddress
+)
 
 const round = computed<CreditRound | undefined>(() => {
   const base = baseRound.value
@@ -200,6 +205,14 @@ const canLend = computed(() => {
   if (!round.value || !round.value.restricted) return true
   return typeof myAllocation.data.value === 'bigint' && myAllocation.data.value > 0n
 })
+// A failed read isn't a confirmed zero allocation — don't present it as ineligible,
+// same distinction CreditRoundCard/CreditLendModal already make for this same data.
+const isLendPositionUnavailable = computed(
+  () => !!round.value?.restricted && myAllocation.isError.value
+)
+function retryLendPosition() {
+  myAllocation.refetch()
+}
 const goList = () => router.push({ name: 'community-credit', params: { id: teamId.value } })
 
 function goRound() {
