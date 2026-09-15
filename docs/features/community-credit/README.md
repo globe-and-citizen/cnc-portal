@@ -102,12 +102,17 @@ automatically when a deadline or maturity date passes.
 - [x] Fully capped restricted allocations must total at least the funding target.
 - [x] The subscription deadline is validated again immediately before publication.
 - [x] Off-chain metadata is associated with the exact offer identifier emitted by the on-chain creation transaction.
+- [x] Saving metadata is idempotent on (team, offer identifier): retrying with the same title and purpose leaves the stored record
+      unchanged, and retrying with edited values overwrites it with whatever is currently in the form — there is no separate conflict check
+      against the original save.
+- [x] Metadata cannot be saved for an offer identifier that does not yet exist on the connected Credit Account.
 
 #### Edge & Error Cases
 
 - [x] Invalid round terms are rejected before an on-chain transaction is requested.
 - [x] Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
-- [x] Once the on-chain round exists, a metadata failure can be retried without creating a second round.
+- [x] Once the on-chain round exists, a metadata save failure can be retried any number of times with identical or edited values without
+      creating a duplicate round or a conflict error.
 
 **Accounting:** Publishing terms moves no company funds and creates no journal entry.
 
@@ -231,7 +236,7 @@ The following verified gaps have technical evidence and remediation directions i
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d22c21b7d46e0b07cc1720063dab67ce8c0074e9`
+**Implementation evidence reviewed against:** `ce9bc14f9b694fa93ed98f9cff1b8136c77fdf35`
 
 - [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
@@ -258,6 +263,8 @@ The following verified gaps have technical evidence and remediation directions i
 - [Whitelist allocation editor](../../../app/src/components/sections/CommunityCreditView/CreditWhitelistEditor.vue)
 - [FixedReturn contract](../../../contract/contracts/FixedReturn.sol)
 - [Contract behaviour tests](../../../contract/test/FixedReturn.spec.ts)
+- [Metadata controller](../../../backend/src/controllers/fixedReturnOfferingController.ts)
+- [Metadata route](../../../backend/src/routes/fixedReturnOfferingRoute.ts)
 - [Metadata controller tests](../../../backend/src/controllers/__tests__/fixedReturnOfferingController.test.ts)
 - [Frontend feature tests](../../../app/src/views/team/[id]/CommunityCredit/__tests__/communityCreditViews.spec.ts)
 
