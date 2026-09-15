@@ -244,7 +244,7 @@ A failed on-chain read for an offer's lenders or a connected member's position i
 position — `useFixedReturnOfferLenders` rejects the query on failure (matching `useFixedReturnAllOffers`'s existing behavior), and
 `useFixedReturnMyLenderPositions`'s result is a discriminated union per offer (`{status: 'ok', ...} | {status: 'error', error}`) so one
 offer's failed read doesn't erase another offer's confirmed data. Consumers present a failed read as "unavailable, retry" rather than "not
-eligible" — see `useMyLenderOffering.ts` (used by the Lend modal) and `CreditRoundCard.vue`'s "Check eligibility" retry action.
+eligible" — see `CreditLendModal.vue`'s and `RoundView.vue`'s own "Check eligibility" retry actions, and `CreditRoundCard.vue`'s equivalent.
 
 The round-detail page reads its own offer's position directly via `useFixedReturnMyLenderPosition(offerId)` (built on the existing
 single-value `getLenderAllocation`/`getLenderDeposits` reads) instead of the plural, all-offers-shaped hook — removing a duplicate 1+4N-read
@@ -255,7 +255,7 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6eaae6d2ca8f922ec152ab5ad027ac828e5c34b4`
+**Implementation evidence reviewed against:** `ff8ce37802a9108e946d3c7d0605bb80801cc4e6`
 
 - [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
