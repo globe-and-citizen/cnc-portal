@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/vue-query'
 import type { Address } from 'viem'
 import { contractReadsOfAddress } from '@/composables/contracts/useContractWritesV3'
-import { fixedReturnKeys } from './keys'
+import { fixedReturnKeys } from './reads'
 
 /** Owned by useFixedReturnEventsViaLogs.ts, not this module — invalidated alongside
  *  the FixedReturn reads above since every mutation here also appends a new event. */

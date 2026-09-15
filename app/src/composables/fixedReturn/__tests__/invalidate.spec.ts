@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { QueryClient } from '@tanstack/vue-query'
-import { fixedReturnKeys } from '../keys'
+import { fixedReturnKeys } from '../reads'
 import {
   invalidateAfterAcceptPartialFunding,
   invalidateAfterLend,

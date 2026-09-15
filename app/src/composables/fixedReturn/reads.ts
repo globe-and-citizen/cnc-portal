@@ -1,3 +1,7 @@
+/* eslint-disable max-lines -- Already the largest reads.ts in the codebase (elections/reads.ts,
+   the next-largest, is 292 lines) because FixedReturn genuinely has the most distinct read
+   shapes of any contract here. Splitting it into multiple files would recreate the same
+   file-proliferation this contract's composables were just consolidated to avoid. */
 import { computed, unref, type MaybeRef, type MaybeRefOrGetter, toValue } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { useReadContract } from '@wagmi/vue'
@@ -6,7 +10,6 @@ import { formatUnits, isAddress, zeroAddress, type Address, type ContractFunctio
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { config } from '@/wagmi.config'
 import { fixedReturnAbi } from '@/artifacts/abi/generated'
-import { fixedReturnKeys } from './keys'
 import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
 import { log } from '@/lib/logging'
 import type {
@@ -18,6 +21,24 @@ import type {
 
 /** View/pure names only — `useReadContract` rejects state-changing ones. */
 type FixedReturnReadNames = ContractFunctionName<typeof fixedReturnAbi, 'view' | 'pure'>
+
+/**
+ * Query-key prefixes for the three `useQuery`-based reads below (`useFixedReturnAllOffers`,
+ * `useFixedReturnOfferLenders`, `useFixedReturnMyLenderPositions`). These aren't
+ * `useReadContract`-wrapped, so they fall outside `useContractWritesV3`'s automatic
+ * per-contract-address invalidation and need their own keys, previously duplicated as
+ * raw string-literal arrays across this file and every view/modal that reads or
+ * invalidates them. Every external caller (retry buttons, `invalidate.ts`) only ever
+ * needs one of these coarse prefixes — the address/offer/lender-specific leaf is used
+ * only here, inline at each `useQuery` call, the same way `elections/reads.ts` inlines
+ * its one custom query key rather than routing it through a builder function.
+ */
+export const fixedReturnKeys = {
+  all: ['fixedReturn'] as const,
+  allOffers: ['fixedReturn', 'allOffers'] as const,
+  offerLenders: ['fixedReturn', 'offerLenders'] as const,
+  myLenderPositions: ['fixedReturn', 'myLenderPositions'] as const
+} as const
 
 /**
  * FixedReturn contract address helper
@@ -225,7 +246,9 @@ export function useFixedReturnAllOffers(address?: MaybeRefOrGetter<string | unde
   }
 
   return useQuery({
-    queryKey: computed(() => fixedReturnKeys.allOffers(fixedReturnAddress)),
+    queryKey: computed(
+      () => [...fixedReturnKeys.allOffers, { address: fixedReturnAddress.value ?? null }] as const
+    ),
     queryFn: fetchAllOffers,
     enabled: computed(() => !!fixedReturnAddress.value)
   })
@@ -298,7 +321,17 @@ export function useFixedReturnOfferLenders(
   // placeholder in the first place.
   const tokenValue = computed(() => toValue(token))
   return useQuery({
-    queryKey: computed(() => fixedReturnKeys.offerLenders(fixedReturnAddress, offerId, tokenValue)),
+    queryKey: computed(
+      () =>
+        [
+          ...fixedReturnKeys.offerLenders,
+          {
+            address: fixedReturnAddress.value ?? null,
+            offerId: toValue(offerId) ?? null,
+            token: tokenValue.value ?? null
+          }
+        ] as const
+    ),
     queryFn: fetchLenders,
     enabled: computed(
       () =>
@@ -361,8 +394,16 @@ export function useFixedReturnMyLenderPositions() {
   const offerIds = computed(() => (allOffers.value ?? []).map(({ offerId }) => offerId))
 
   return useQuery({
-    queryKey: computed(() =>
-      fixedReturnKeys.myLenderPositions(fixedReturnAddress, lenderAddress, offerIds)
+    queryKey: computed(
+      () =>
+        [
+          ...fixedReturnKeys.myLenderPositions,
+          {
+            address: fixedReturnAddress.value ?? null,
+            lender: lenderAddress.value ?? null,
+            offerIds: offerIds.value
+          }
+        ] as const
     ),
     queryFn: fetchMyLenderPositions,
     enabled: computed(() => !!fixedReturnAddress.value && offerIds.value.length > 0)

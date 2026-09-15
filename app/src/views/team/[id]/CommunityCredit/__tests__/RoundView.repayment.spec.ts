@@ -13,7 +13,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { offerStruct, sampleRound } from './communityCreditFixtures'
-import { fixedReturnKeys } from '@/composables/fixedReturn/keys'
+import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
 
 const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
 const repaymentLenderData = [

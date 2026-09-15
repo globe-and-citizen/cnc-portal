@@ -156,7 +156,7 @@ import {
   useFixedReturnGetSupportedTokens
 } from '@/composables/fixedReturn/reads'
 import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writes'
-import { fixedReturnKeys } from '@/composables/fixedReturn/keys'
+import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
 import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffering.queries'
 import { applyZodFieldErrors, toCreditCallOfferParams } from '@/utils/communityCredit/model'
 import {
@@ -314,7 +314,7 @@ async function publish() {
       })
     }
 
-    await queryClient.invalidateQueries({ queryKey: fixedReturnKeys.allOffersAll() })
+    await queryClient.invalidateQueries({ queryKey: fixedReturnKeys.allOffers })
     toast.add({ title: 'Credit call published — now Open', color: 'success' })
     goList()
   } catch (error) {

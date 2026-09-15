@@ -80,7 +80,7 @@ import { computed } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useCommunityCreditStore } from '@/stores'
 import { useFixedReturnMyLenderPositions } from '@/composables/fixedReturn/reads'
-import { fixedReturnKeys } from '@/composables/fixedReturn/keys'
+import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
 import { formatAmount, reachedFundingTarget, statusMeta } from '@/utils/communityCredit/model'
 import { percentOf } from '@/utils/communityCredit/offer'
 import type { CreditRound } from '@/types'
@@ -111,7 +111,7 @@ const positionUnavailable = computed(
   () => props.round.restricted && myPosition.value?.status === 'error'
 )
 function retryPosition() {
-  queryClient.refetchQueries({ queryKey: fixedReturnKeys.myLenderPositionsAll() })
+  queryClient.refetchQueries({ queryKey: fixedReturnKeys.myLenderPositions })
 }
 
 const status = computed(() => statusMeta(props.round.status))

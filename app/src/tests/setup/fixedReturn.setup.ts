@@ -24,7 +24,16 @@ vi.mock('@/composables/fixedReturn/reads', () => ({
   useFixedReturnMyLenderPosition: vi.fn(() => ({
     allocation: mockFixedReturnReads.lenderAllocation,
     deposited: mockFixedReturnReads.lenderDeposits
-  }))
+  })),
+  // Plain data, not a hook — re-exported as-is so anything importing it from the
+  // mocked module (directly, or transitively via invalidate.ts) still gets the real
+  // shape rather than undefined.
+  fixedReturnKeys: {
+    all: ['fixedReturn'],
+    allOffers: ['fixedReturn', 'allOffers'],
+    offerLenders: ['fixedReturn', 'offerLenders'],
+    myLenderPositions: ['fixedReturn', 'myLenderPositions']
+  }
 }))
 
 vi.mock('@/composables/fixedReturn/writes', () => ({
