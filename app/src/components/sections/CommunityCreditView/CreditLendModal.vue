@@ -33,8 +33,10 @@
               </div>
             </div>
             <div class="bg-muted flex-1 rounded-xl px-3.5 py-3">
-              <div class="text-muted text-[11px] font-semibold">{{ capLabel }}</div>
-              <div class="mt-0.5 text-base font-bold" data-test="lend-cap">{{ capValue }}</div>
+              <div class="text-muted text-[11px] font-semibold">{{ capDisplay.label }}</div>
+              <div class="mt-0.5 text-base font-bold" data-test="lend-cap">
+                {{ capDisplay.value }}
+              </div>
             </div>
           </div>
 
@@ -173,9 +175,9 @@ import { useToast } from '@nuxt/ui/composables'
 import { useUserDataStore } from '@/stores'
 import {
   useFixedReturnAddress,
-  useFixedReturnGetLendingOffer
+  useFixedReturnGetLendingOffer,
+  useFixedReturnMyLenderPosition
 } from '@/composables/fixedReturn/reads'
-import { useMyLenderOffering } from '@/composables/fixedReturn/useMyLenderOffering'
 import { invalidateAfterLend } from '@/composables/fixedReturn/invalidate'
 import { useFixedReturnLendFunds } from '@/composables/fixedReturn/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
@@ -183,11 +185,21 @@ import { useERC20Approve } from '@/composables/erc20/writes'
 import {
   applyZodFieldErrors,
   formatAmount,
-  roundToDisplayPrecision
+  roundToDisplayPrecision,
+  UNCAPPED_ALLOCATION
 } from '@/utils/communityCredit/model'
 import { classifyError } from '@/utils/errors/classifyContractError'
-import { findCreditToken } from '@/utils/communityCredit/offer'
-import { createLendAmountSchema, type CreditRound, type LendingOfferStruct } from '@/types'
+import {
+  creditLenderCapDisplay,
+  findCreditToken,
+  toLenderOffering
+} from '@/utils/communityCredit/offer'
+import {
+  createLendAmountSchema,
+  type CreditLenderOffering,
+  type CreditRound,
+  type LendingOfferStruct
+} from '@/types'
 
 const props = defineProps<{ round: CreditRound | null }>()
 const emit = defineEmits<{ close: []; lent: [] }>()
@@ -225,22 +237,41 @@ const isSubmitting = computed(() => approveResult.isPending.value || lendResult.
 // ever reflects the General-mode lenderCap (FixedReturn.sol docs it as "General mode only"),
 // never a whitelist allocation, and `lenders` is empty when opened from the Index list (see
 // lendingOfferToCreditRound's comment — lenders are "resolved lazily by the detail view").
-// Read the live per-lender position the same way the Lender Marketplace does instead.
+// Read the live per-lender position directly (one offer, not the full list) — same
+// approach RoundView.vue's own canLend check uses, and cheaper than the plural
+// useFixedReturnMyLenderPositions this modal previously went through for one round.
 const offerId = computed(() => (props.round ? BigInt(props.round.id) : 0n))
 const { data: rawOffer } = useFixedReturnGetLendingOffer(offerId)
-const roundRef = computed(() => props.round)
-const rawOfferStruct = computed(() => rawOffer.value as LendingOfferStruct | undefined)
-const { lenderOffering, positionUnavailable, retryPosition } = useMyLenderOffering(
-  roundRef,
-  rawOfferStruct,
-  decimals
-)
+const { allocation: myAllocation, deposited: myDeposited } = useFixedReturnMyLenderPosition(offerId)
 
-/** Personal ceiling left — whitelist allocation or general cap, whichever the offer uses. */
-const capLeft = computed(() => {
-  const offering = lenderOffering.value
-  return offering?.cap != null ? Math.max(0, offering.cap - offering.myDeposited) : null
+// A failed read isn't a confirmed zero position — treating it as one could understate
+// a whitelist cap or overstate what's already deposited. Surface it and block
+// submission instead of silently guessing (see lend-position-unavailable below).
+const positionUnavailable = computed(() => myAllocation.isError.value || myDeposited.isError.value)
+
+const lenderOffering = computed<CreditLenderOffering | null>(() => {
+  if (!props.round || !rawOffer.value) return null
+  const allocationValue = typeof myAllocation.data.value === 'bigint' ? myAllocation.data.value : 0n
+  const depositedValue = typeof myDeposited.data.value === 'bigint' ? myDeposited.data.value : 0n
+  const offering = toLenderOffering(
+    Number(props.round.id),
+    rawOffer.value as LendingOfferStruct,
+    decimals.value,
+    allocationValue,
+    depositedValue
+  )
+  // toLenderOffering formatUnits-es the raw allocation as-is — for an uncapped
+  // whitelist lender that's UNCAPPED_ALLOCATION (near-max uint256), which would
+  // otherwise render as a nonsensical giant "cap" figure. Treat it like no cap.
+  return allocationValue === UNCAPPED_ALLOCATION ? { ...offering, cap: null } : offering
 })
+
+function retryPosition() {
+  void myAllocation.refetch()
+  void myDeposited.refetch()
+}
+
+const capDisplay = computed(() => creditLenderCapDisplay(lenderOffering.value))
 
 // The "Remaining" tile mirrors the Lender Marketplace's single "remaining" figure — the
 // tighter of the round's funding gap and the lender's own cap/allocation left — not just
@@ -263,15 +294,6 @@ const subtitle = computed(() =>
     ? `${props.round.rate}% interest · repaid ${props.round.maturity || 'at maturity'}`
     : ''
 )
-const capLabel = computed(() =>
-  lenderOffering.value?.cap != null ? 'Your cap left' : 'Per-lender cap'
-)
-const capValue = computed(() =>
-  lenderOffering.value?.cap != null
-    ? formatAmount(capLeft.value ?? 0, props.round?.token)
-    : 'No cap'
-)
-
 const interest = computed(() => (props.round ? (numericAmount.value * props.round.rate) / 100 : 0))
 const total = computed(() => numericAmount.value + interest.value)
 
