@@ -26,7 +26,7 @@ vi.mock('../../utils', async () => {
     ...actual,
     prisma: {
       fixedReturnOffering: {
-        create: vi.fn(),
+        upsert: vi.fn(),
         findMany: vi.fn(),
       },
       team: {
@@ -76,6 +76,21 @@ const mockOffering = {
   updatedAt: new Date(),
 } as FixedReturnOffering;
 
+/**
+ * The controller now calls `readContract` twice per request (owner, then
+ * getTotalOfferings), so a `functionName`-keyed implementation is more robust
+ * than sequencing `mockResolvedValueOnce` calls in call order.
+ */
+const mockReadContract = (opts: { owner?: string; totalOfferings?: bigint } = {}) => {
+  vi.spyOn(publicClient, 'readContract').mockImplementation((async (args: {
+    functionName: string;
+  }) => {
+    if (args.functionName === 'owner') return opts.owner ?? CALLER_ADDRESS;
+    if (args.functionName === 'getTotalOfferings') return opts.totalOfferings ?? 10n;
+    throw new Error(`Unexpected functionName in test: ${args.functionName}`);
+  }) as typeof publicClient.readContract);
+};
+
 describe('FixedReturnOffering Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,9 +118,7 @@ describe('FixedReturnOffering Controller', () => {
 
     it('should return 403 if the caller is not the on-chain owner', async () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce(mockTeamContract);
-      vi.spyOn(publicClient, 'readContract').mockResolvedValueOnce(
-        '0x0000000000000000000000000000000000000000'
-      );
+      mockReadContract({ owner: '0x0000000000000000000000000000000000000000' });
 
       const response = await request(app)
         .post('/')
@@ -115,10 +128,25 @@ describe('FixedReturnOffering Controller', () => {
       expect(response.body.message).toBe('Caller is not the owner of the FixedReturn contract');
     });
 
-    it('should create offering metadata', async () => {
+    it('should reject an offerId that does not exist on-chain yet, before any DB write', async () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce(mockTeamContract);
-      vi.spyOn(publicClient, 'readContract').mockResolvedValueOnce(CALLER_ADDRESS);
-      vi.spyOn(prisma.fixedReturnOffering, 'create').mockResolvedValueOnce(mockOffering);
+      mockReadContract({ totalOfferings: 2n });
+
+      const response = await request(app)
+        .post('/')
+        .send({ teamId: 1, offerId: 3, title: 'Riverside Expansion Note' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe(
+        'offerId 3 does not exist on this FixedReturn contract yet (2 offering(s) created so far)'
+      );
+      expect(prisma.fixedReturnOffering.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should create offering metadata on first save', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce(mockTeamContract);
+      mockReadContract({ totalOfferings: 5n });
+      vi.spyOn(prisma.fixedReturnOffering, 'upsert').mockResolvedValueOnce(mockOffering);
 
       const response = await request(app).post('/').send({
         teamId: 1,
@@ -127,22 +155,75 @@ describe('FixedReturnOffering Controller', () => {
         purpose: 'Working capital for Q3',
       });
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(response.body).toEqual(JSON.parse(JSON.stringify(mockOffering)));
-      expect(prisma.fixedReturnOffering.create).toHaveBeenCalledWith({
-        data: {
+      expect(prisma.fixedReturnOffering.upsert).toHaveBeenCalledWith({
+        where: { teamId_offerId: { teamId: 1, offerId: 2 } },
+        create: {
           teamId: 1,
           offerId: 2,
           title: 'Riverside Expansion Note',
           purpose: 'Working capital for Q3',
         },
+        update: { title: 'Riverside Expansion Note', purpose: 'Working capital for Q3' },
       });
+    });
+
+    it('should succeed identically when retried with the same payload (simulated response loss)', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(mockTeamContract);
+      mockReadContract({ totalOfferings: 5n });
+      vi.spyOn(prisma.fixedReturnOffering, 'upsert').mockResolvedValue(mockOffering);
+
+      const payload = {
+        teamId: 1,
+        offerId: 2,
+        title: 'Riverside Expansion Note',
+        purpose: 'Working capital for Q3',
+      };
+      const first = await request(app).post('/').send(payload);
+      // The client never saw `first`'s response (timeout/dropped connection) and retries
+      // with the exact same payload.
+      const retry = await request(app).post('/').send(payload);
+
+      expect(first.status).toBe(200);
+      expect(retry.status).toBe(200);
+      expect(prisma.fixedReturnOffering.upsert).toHaveBeenCalledTimes(2);
+      expect(prisma.fixedReturnOffering.upsert).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ where: { teamId_offerId: { teamId: 1, offerId: 2 } } })
+      );
+    });
+
+    it('should overwrite with edited title/purpose on retry', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce(mockTeamContract);
+      mockReadContract({ totalOfferings: 5n });
+      const updated = {
+        ...mockOffering,
+        title: 'Riverside Expansion Note v2',
+        purpose: 'Revised: bridge financing',
+      };
+      vi.spyOn(prisma.fixedReturnOffering, 'upsert').mockResolvedValueOnce(updated);
+
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        offerId: 2,
+        title: 'Riverside Expansion Note v2',
+        purpose: 'Revised: bridge financing',
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(JSON.parse(JSON.stringify(updated)));
+      expect(prisma.fixedReturnOffering.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: { title: 'Riverside Expansion Note v2', purpose: 'Revised: bridge financing' },
+        })
+      );
     });
 
     it('should return 500 if there is a server error', async () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce(mockTeamContract);
-      vi.spyOn(publicClient, 'readContract').mockResolvedValueOnce(CALLER_ADDRESS);
-      vi.spyOn(prisma.fixedReturnOffering, 'create').mockRejectedValueOnce('Server error');
+      mockReadContract({ totalOfferings: 5n });
+      vi.spyOn(prisma.fixedReturnOffering, 'upsert').mockRejectedValueOnce('Server error');
 
       const response = await request(app)
         .post('/')
