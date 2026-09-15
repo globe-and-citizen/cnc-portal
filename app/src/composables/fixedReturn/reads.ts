@@ -353,7 +353,7 @@ export function useFixedReturnMyLenderPositions() {
         }
       })
     )
-    return new Map(entries)
+    return new Map<number, FixedReturnLenderPositionResult>(entries)
   }
 
   // Plain offerIds, not `allOffers` itself — TanStack Query hashes the query key with

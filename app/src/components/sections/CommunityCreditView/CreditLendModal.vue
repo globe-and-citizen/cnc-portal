@@ -107,7 +107,26 @@
         </div>
 
         <!-- Position unavailable -->
-        <CreditLendPositionAlert v-if="positionUnavailable" @retry="retryPosition" />
+        <div v-if="positionUnavailable" class="px-6">
+          <UAlert
+            color="warning"
+            variant="soft"
+            icon="i-lucide-triangle-alert"
+            title="Couldn't verify your lending position"
+            description="The cap and remaining amounts above may be inaccurate until this is retried."
+            data-test="lend-position-unavailable"
+          >
+            <template #actions>
+              <UButton
+                color="warning"
+                variant="outline"
+                size="xs"
+                label="Try again"
+                @click="retryPosition"
+              />
+            </template>
+          </UAlert>
+        </div>
 
         <!-- Error -->
         <div v-if="submitError" class="px-6">
@@ -145,6 +164,8 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable max-lines -- The modal owns its reactive state; extracting a controller would
+   recreate the removed one-consumer composable (see CreateVesting.vue for the same call). */
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { parseUnits, zeroAddress, type Address } from 'viem'
@@ -167,7 +188,6 @@ import {
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { findCreditToken } from '@/utils/communityCredit/offer'
 import { createLendAmountSchema, type CreditRound, type LendingOfferStruct } from '@/types'
-import CreditLendPositionAlert from './CreditLendPositionAlert.vue'
 
 const props = defineProps<{ round: CreditRound | null }>()
 const emit = defineEmits<{ close: []; lent: [] }>()
