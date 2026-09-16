@@ -497,7 +497,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `31ed7556f7c6c8540d76bc67339e039098106f17`
+**Implementation evidence reviewed against:** `eb626b91fed7fde07b0b11552e8289615a7f5560`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
@@ -515,8 +515,19 @@ flowchart LR
   [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
+- [Shared E2E chain harness](../../../app/test/e2e/e2e-chain.ts) and [shared E2E page harness](../../../app/test/e2e/e2e-page.ts): the
+  deterministic mock tokens and Safe infrastructure seeded by the [Playwright global setup](../../../app/test/e2e/global-setup.ts) at the
+  addresses published in [`src/e2e/chain.ts`](../../../app/src/e2e/chain.ts), backend stubbing, and sidebar navigation reused by every
+  account journey
 - [Chain-backed Bank Account E2E journeys](../../../app/test/e2e/bank/bank-account.spec.ts) and
   [their isolated deployment fixture](../../../app/test/e2e/bank/bank-chain.ts), covering `US-BANK-001` through `US-BANK-004`
+- [Chain-backed Expense Account E2E journeys](../../../app/test/e2e/expense/expense-account.spec.ts) and
+  [their isolated Expense fixture](../../../app/test/e2e/expense/expense-chain.ts), covering `US-EXP-001` through `US-EXP-004`: approval
+  signature, ERC-20 spend and exhaustion, activation changes, history-query failure, and archive restrictions
+- [Chain-backed Safe Account E2E journeys](../../../app/test/e2e/safe/safe-account.spec.ts) and
+  [their isolated Safe fixture](../../../app/test/e2e/safe/safe-chain.ts), covering `US-SAFE-001` through `US-SAFE-006`: deployment and
+  import, inspection, native/ERC-20 deposits and transfers, signer and threshold changes, transaction filtering and details, and two-of-two
+  approval and execution
 - [Bank transfer form](../../../app/src/components/forms/TransferForm.vue)
 - [Current treasury cash-out action](../../../app/src/components/sections/DashboardView/CashOutAllAction.vue),
   [historic-generation withdrawal action](../../../app/src/components/sections/ContractManagementView/LegacyGenerationWithdrawAction.vue),
