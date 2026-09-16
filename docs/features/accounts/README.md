@@ -78,22 +78,22 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A member can deposit the native token into the Bank.
-- [x] A member can deposit a supported ERC-20 token into the Bank.
-- [x] A successful deposit increases the corresponding Bank balance.
+- [x] `AC-US-BANK-001-01` A member can deposit the native token into the Bank.
+- [x] `AC-US-BANK-001-02` A member can deposit a supported ERC-20 token into the Bank.
+- [x] `AC-US-BANK-001-03` A successful deposit increases the corresponding Bank balance.
 
 #### Business Rules
 
-- [x] A deposit amount must be positive and cannot exceed the connected wallet balance.
-- [x] An ERC-20 deposit can use no more than six decimal places.
-- [x] The Bank accepts only ERC-20 tokens supported by its current configuration. _(contract)_
-- [x] An ERC-20 deposit authorizes the Bank only when the existing allowance is insufficient.
+- [x] `AC-US-BANK-001-04` A deposit amount must be positive and cannot exceed the connected wallet balance.
+- [x] `AC-US-BANK-001-05` An ERC-20 deposit can use no more than six decimal places.
+- [x] `AC-US-BANK-001-06` The Bank accepts only ERC-20 tokens supported by its current configuration. _(contract)_
+- [x] `AC-US-BANK-001-07` An ERC-20 deposit authorizes the Bank only when the existing allowance is insufficient.
 
 #### Edge & Error Cases
 
-- [x] An archived company cannot initiate a deposit.
-- [x] Cancelling or rejecting a deposit leaves the Bank balance unchanged.
-- [x] A failed deposit leaves the Bank balance unchanged.
+- [x] `AC-US-BANK-001-08` An archived company cannot initiate a deposit.
+- [x] `AC-US-BANK-001-09` Cancelling or rejecting a deposit leaves the Bank balance unchanged.
+- [x] `AC-US-BANK-001-10` A failed deposit leaves the Bank balance unchanged.
 
 **Accounting:** An external receipt is booked by [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt).
 A receipt from another known company pocket is an internal transfer instead.
@@ -110,27 +110,27 @@ A receipt from another known company pocket is an internal transfer instead.
 
 #### Happy Path
 
-- [x] The Bank owner can transfer a held native or supported ERC-20 balance to a valid recipient.
-- [x] A Board member can submit the same transfer as a Board action for approval.
-- [x] A successful transfer decreases the Bank balance and delivers the requested net amount to the recipient.
+- [x] `AC-US-BANK-002-01` The Bank owner can transfer a held native or supported ERC-20 balance to a valid recipient.
+- [x] `AC-US-BANK-002-02` A Board member can submit the same transfer as a Board action for approval.
+- [x] `AC-US-BANK-002-03` A successful transfer decreases the Bank balance and delivers the requested net amount to the recipient.
 
 #### Business Rules
 
-- [x] Only the Bank owner can execute a direct transfer. _(contract)_
-- [x] A Board-submitted transfer identifies its approval requirement before submission.
-- [x] A transfer amount must be positive and cannot exceed the available balance after protocol fees.
-- [x] A transfer recipient cannot be the zero address. _(contract)_
-- [x] SHER transfers are not available through the Bank transfer journey.
-- [x] A native Bank transfer with a positive `BANK` rate pays its calculated fee to its generation's FeeCollector and delivers the net
-      amount to the recipient. _(contract)_
-- [x] An ERC-20 Bank transfer with a positive `BANK` rate pays its calculated fee to its generation's FeeCollector only when that token is
-      FeeCollector-supported; otherwise it delivers the full amount to the recipient. _(contract)_
+- [x] `AC-US-BANK-002-04` Only the Bank owner can execute a direct transfer. _(contract)_
+- [x] `AC-US-BANK-002-05` A Board-submitted transfer identifies its approval requirement before submission.
+- [x] `AC-US-BANK-002-06` A transfer amount must be positive and cannot exceed the available balance after protocol fees.
+- [x] `AC-US-BANK-002-07` A transfer recipient cannot be the zero address. _(contract)_
+- [x] `AC-US-BANK-002-08` SHER transfers are not available through the Bank transfer journey.
+- [x] `AC-US-BANK-002-09` A native Bank transfer with a positive `BANK` rate pays its calculated fee to its generation's FeeCollector and
+      delivers the net amount to the recipient. _(contract)_
+- [x] `AC-US-BANK-002-10` An ERC-20 Bank transfer with a positive `BANK` rate pays its calculated fee to its generation's FeeCollector only
+      when that token is FeeCollector-supported; otherwise it delivers the full amount to the recipient. _(contract)_
 
 #### Edge & Error Cases
 
-- [x] An archived company cannot initiate a transfer or Board action.
-- [x] A paused Bank rejects outgoing transfers. _(contract)_
-- [x] Cancelling, rejecting, or failing a transfer leaves the Bank balance unchanged.
+- [x] `AC-US-BANK-002-11` An archived company cannot initiate a transfer or Board action.
+- [x] `AC-US-BANK-002-12` A paused Bank rejects outgoing transfers. _(contract)_
+- [x] `AC-US-BANK-002-13` Cancelling, rejecting, or failing a transfer leaves the Bank balance unchanged.
 
 **Accounting:** The destination determines the rule: company-pocket funding uses
 [`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket), an external payment uses
@@ -149,22 +149,22 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 
 #### Happy Path
 
-- [x] A company member can inspect the Bank address, native balance, token holdings, and local-currency value.
-- [x] Bank history exposes each transaction's date, type, counterparty, value, and transaction hash when available.
-- [x] A company member can filter Bank history by date and transaction type.
+- [x] `AC-US-BANK-003-01` A company member can inspect the Bank address, native balance, token holdings, and local-currency value.
+- [x] `AC-US-BANK-003-02` Bank history exposes each transaction's date, type, counterparty, value, and transaction hash when available.
+- [x] `AC-US-BANK-003-03` A company member can filter Bank history by date and transaction type.
 
 #### Business Rules
 
-- [x] Every company member can inspect Bank balances and history regardless of transfer permission.
-- [x] Grouped events from one transaction remain attributable to the same transaction hash.
-- [x] Bank history surfaces money that arrives at or leaves the Bank by a direct token transfer, even when the Bank emitted no event of its
-      own — for example, the funds swept in when a Community Credit round is funded. A movement a Bank event already records is not shown a
-      second time.
+- [x] `AC-US-BANK-003-04` Every company member can inspect Bank balances and history regardless of transfer permission.
+- [x] `AC-US-BANK-003-05` Grouped events from one transaction remain attributable to the same transaction hash.
+- [x] `AC-US-BANK-003-06` Bank history surfaces money that arrives at or leaves the Bank by a direct token transfer, even when the Bank
+      emitted no event of its own — for example, the funds swept in when a Community Credit round is funded. A movement a Bank event already
+      records is not shown a second time.
 
 #### Edge & Error Cases
 
-- [x] A history filter with no matching events returns an empty result.
-- [ ] A failed history read is distinguishable from a successfully loaded empty history.
+- [x] `AC-US-BANK-003-07` A history filter with no matching events returns an empty result.
+- [ ] `AC-US-BANK-003-08` A failed history read is distinguishable from a successfully loaded empty history.
 
 **Dependencies:** Current Bank contract and an available chain event provider
 
@@ -185,23 +185,24 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 
 #### Happy Path
 
-- [x] The Bank owner can consolidate available Cash Remuneration and Expense Account funds into the current Bank, then transfer each held
-      native or supported ERC-20 asset to the connected wallet.
-- [x] The owner of a historic contract generation can forward its available Bank funds to the company's current Bank, including eligible
-      source-account sweeps.
+- [x] `AC-US-BANK-004-01` The Bank owner can consolidate available Cash Remuneration and Expense Account funds into the current Bank, then
+      transfer each held native or supported ERC-20 asset to the connected wallet.
+- [x] `AC-US-BANK-004-02` The owner of a historic contract generation can forward its available Bank funds to the company's current Bank,
+      including eligible source-account sweeps.
 
 #### Business Rules
 
-- [x] Only the relevant Bank owner can start a cash-out run, and an archived current company cannot start one.
-- [x] Each Bank transfer reads balances after the source-account steps, so zero-balance assets do not create transactions.
-- [x] Historic generations without source-account withdrawal support can transfer only their Bank balance and identify the funds that remain
-      in their source accounts.
+- [x] `AC-US-BANK-004-03` Only the relevant Bank owner can start a cash-out run, and an archived current company cannot start one.
+- [x] `AC-US-BANK-004-04` Each Bank transfer reads balances after the source-account steps, so zero-balance assets do not create
+      transactions.
+- [x] `AC-US-BANK-004-05` Historic generations without source-account withdrawal support can transfer only their Bank balance and identify
+      the funds that remain in their source accounts.
 
 #### Edge & Error Cases
 
-- [x] A failed step stops the sequence, leaves later steps pending, and lets the owner retry from the failed step.
-- [x] Rejecting a wallet request leaves the remaining steps unrun and identifies the rejected step to the owner.
-- [x] A cash-out run does not start when no eligible funded account is available.
+- [x] `AC-US-BANK-004-06` A failed step stops the sequence, leaves later steps pending, and lets the owner retry from the failed step.
+- [x] `AC-US-BANK-004-07` Rejecting a wallet request leaves the remaining steps unrun and identifies the rejected step to the owner.
+- [x] `AC-US-BANK-004-08` A cash-out run does not start when no eligible funded account is available.
 
 **Accounting:** Source-account sweeps are [`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
 The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment) with any matched
@@ -219,22 +220,22 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 
 #### Happy Path
 
-- [x] The current Expense Account owner can grant a spending approval to a recipient.
-- [x] A valid approval records its recipient, token, amount, schedule, expiry, and signature domain.
-- [x] A successfully granted approval becomes available to its recipient and the company.
+- [x] `AC-US-EXP-001-01` The current Expense Account owner can grant a spending approval to a recipient.
+- [x] `AC-US-EXP-001-02` A valid approval records its recipient, token, amount, schedule, expiry, and signature domain.
+- [x] `AC-US-EXP-001-03` A successfully granted approval becomes available to its recipient and the company.
 
 #### Business Rules
 
-- [x] Only the current Expense Account owner can create a valid approval.
-- [x] An approval is bound to the current Expense Account contract and active network.
-- [x] The persisted approval signer must recover to the connected owner. _(API)_
-- [x] The signed Expense Account must match the company's current Expense Account. _(API)_
+- [x] `AC-US-EXP-001-04` Only the current Expense Account owner can create a valid approval.
+- [x] `AC-US-EXP-001-05` An approval is bound to the current Expense Account contract and active network.
+- [x] `AC-US-EXP-001-06` The persisted approval signer must recover to the connected owner. _(API)_
+- [x] `AC-US-EXP-001-07` The signed Expense Account must match the company's current Expense Account. _(API)_
 
 #### Edge & Error Cases
 
-- [x] An archived company cannot grant a spending approval.
-- [x] An invalid or mismatched signature is rejected without creating an approval.
-- [x] Cancelling or rejecting the signature leaves the recipient's approvals unchanged.
+- [x] `AC-US-EXP-001-08` An archived company cannot grant a spending approval.
+- [x] `AC-US-EXP-001-09` An invalid or mismatched signature is rejected without creating an approval.
+- [x] `AC-US-EXP-001-10` Cancelling or rejecting the signature leaves the recipient's approvals unchanged.
 
 **Accounting:** Creating an approval moves no money and creates no journal entry. A later spend owns the accounting operation.
 
@@ -250,24 +251,24 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 
 #### Happy Path
 
-- [x] An approved recipient can transfer the authorized token to a valid destination.
-- [x] A successful spend decreases both the available approval amount and the Expense Account balance.
-- [x] A recurring approval remains available while it has remaining allowance in its active period.
+- [x] `AC-US-EXP-002-01` An approved recipient can transfer the authorized token to a valid destination.
+- [x] `AC-US-EXP-002-02` A successful spend decreases both the available approval amount and the Expense Account balance.
+- [x] `AC-US-EXP-002-03` A recurring approval remains available while it has remaining allowance in its active period.
 
 #### Business Rules
 
-- [x] A spend cannot exceed the lower of the approval remainder and the Expense Account balance.
-- [x] A spend must use the approval's recipient, token, contract, network, and recovered owner signature.
-- [x] A one-time approval cannot be spent more than once. _(contract)_
-- [ ] Every ERC-20 spend, including a one-time approval, requires a supported token. _(contract)_
+- [x] `AC-US-EXP-002-04` A spend cannot exceed the lower of the approval remainder and the Expense Account balance.
+- [x] `AC-US-EXP-002-05` A spend must use the approval's recipient, token, contract, network, and recovered owner signature.
+- [x] `AC-US-EXP-002-06` A one-time approval cannot be spent more than once. _(contract)_
+- [ ] `AC-US-EXP-002-07` Every ERC-20 spend, including a one-time approval, requires a supported token. _(contract)_
 
 #### Edge & Error Cases
 
-- [x] An archived company cannot initiate a spend.
-- [ ] A paused Expense Account rejects spending. _(contract)_
-- [x] An expired or exhausted approval rejects spending.
-- [x] A mismatched or unverifiable approval rejects spending without changing balances.
-- [x] A failed balance read prevents spending until the available amount can be verified.
+- [x] `AC-US-EXP-002-08` An archived company cannot initiate a spend.
+- [ ] `AC-US-EXP-002-09` A paused Expense Account rejects spending. _(contract)_
+- [x] `AC-US-EXP-002-10` An expired or exhausted approval rejects spending.
+- [x] `AC-US-EXP-002-11` A mismatched or unverifiable approval rejects spending without changing balances.
+- [x] `AC-US-EXP-002-12` A failed balance read prevents spending until the available amount can be verified.
 
 **Accounting:** An external payout is booked by [`UC-EXP-01`](../accounting/journal-entry-catalogue.md#uc-exp-01--approved-expense-payout);
 a transfer to another known company pocket is
@@ -285,21 +286,21 @@ a transfer to another known company pocket is
 
 #### Happy Path
 
-- [x] The current Expense Account owner can deactivate an enabled approval.
-- [x] The current Expense Account owner can reactivate a disabled approval.
-- [x] A successful state change is reflected in the company and recipient approval records.
+- [x] `AC-US-EXP-003-01` The current Expense Account owner can deactivate an enabled approval.
+- [x] `AC-US-EXP-003-02` The current Expense Account owner can reactivate a disabled approval.
+- [x] `AC-US-EXP-003-03` A successful state change is reflected in the company and recipient approval records.
 
 #### Business Rules
 
-- [x] Only the current Expense Account owner can change an approval's active state.
-- [ ] A deactivated approval cannot authorize a spend. _(contract)_
-- [x] Reactivation preserves the approval's original signed limits and expiry.
+- [x] `AC-US-EXP-003-04` Only the current Expense Account owner can change an approval's active state.
+- [ ] `AC-US-EXP-003-05` A deactivated approval cannot authorize a spend. _(contract)_
+- [x] `AC-US-EXP-003-06` Reactivation preserves the approval's original signed limits and expiry.
 
 #### Edge & Error Cases
 
-- [x] An archived company cannot deactivate or reactivate an approval.
-- [x] A failed state change preserves the approval's prior reported state.
-- [x] Expired and exhausted approvals remain unavailable after state synchronization.
+- [x] `AC-US-EXP-003-07` An archived company cannot deactivate or reactivate an approval.
+- [x] `AC-US-EXP-003-08` A failed state change preserves the approval's prior reported state.
+- [x] `AC-US-EXP-003-09` Expired and exhausted approvals remain unavailable after state synchronization.
 
 **Accounting:** Changing an approval's active state moves no money and creates no journal entry.
 
@@ -315,23 +316,23 @@ a transfer to another known company pocket is
 
 #### Happy Path
 
-- [x] A company member can inspect the Expense Account address, balances, monthly spend, and approved total.
-- [x] A recipient can inspect approvals granted to their connected wallet.
-- [x] A company member can inspect company approvals and their current enabled, disabled, expired, or exhausted state.
-- [x] Expense history exposes transaction dates, types, counterparties, values, and transaction hashes when available.
-- [x] A company member can filter Expense history by date and transaction type.
+- [x] `AC-US-EXP-004-01` A company member can inspect the Expense Account address, balances, monthly spend, and approved total.
+- [x] `AC-US-EXP-004-02` A recipient can inspect approvals granted to their connected wallet.
+- [x] `AC-US-EXP-004-03` A company member can inspect company approvals and their current enabled, disabled, expired, or exhausted state.
+- [x] `AC-US-EXP-004-04` Expense history exposes transaction dates, types, counterparties, values, and transaction hashes when available.
+- [x] `AC-US-EXP-004-05` A company member can filter Expense history by date and transaction type.
 
 #### Business Rules
 
-- [x] Approval availability reflects on-chain usage, current time, and active-state synchronization.
-- [x] One recipient sees only approvals issued to their connected wallet in their personal approval scope.
-- [x] Every company member can inspect the shared Expense Account history.
+- [x] `AC-US-EXP-004-06` Approval availability reflects on-chain usage, current time, and active-state synchronization.
+- [x] `AC-US-EXP-004-07` One recipient sees only approvals issued to their connected wallet in their personal approval scope.
+- [x] `AC-US-EXP-004-08` Every company member can inspect the shared Expense Account history.
 
 #### Edge & Error Cases
 
-- [x] A scope with no approvals or transactions returns an empty result.
-- [x] A failed approval read is distinguishable from a successfully loaded empty approval scope.
-- [x] A failed transaction read is distinguishable from a successfully loaded empty history.
+- [x] `AC-US-EXP-004-09` A scope with no approvals or transactions returns an empty result.
+- [x] `AC-US-EXP-004-10` A failed approval read is distinguishable from a successfully loaded empty approval scope.
+- [x] `AC-US-EXP-004-11` A failed transaction read is distinguishable from a successfully loaded empty history.
 
 **Dependencies:** Current Expense Account contract and available API and chain providers
 
@@ -345,24 +346,24 @@ a transfer to another known company pocket is
 
 #### Happy Path
 
-- [x] A company without a registered Safe can deploy a new Safe.
-- [x] A company without a registered Safe can import an existing Safe from the active network.
-- [x] A newly deployed or imported Safe is registered to the company.
+- [x] `AC-US-SAFE-001-01` A company without a registered Safe can deploy a new Safe.
+- [x] `AC-US-SAFE-001-02` A company without a registered Safe can import an existing Safe from the active network.
+- [x] `AC-US-SAFE-001-03` A newly deployed or imported Safe is registered to the company.
 
 #### Business Rules
 
-- [x] Only the company owner can deploy, import, or register a Safe for the company.
-- [x] A newly deployed Safe starts with the company owner as its only signer and a threshold of one.
-- [x] Importing a Safe preserves its owners, threshold, assets, and on-chain configuration.
-- [x] An imported address must resolve to a Safe on the active network before registration.
-- [x] Every valid registered Safe address is checksum-normalized before routing, reads, writes, SDK initialization, or transaction-service
-      requests.
+- [x] `AC-US-SAFE-001-04` Only the company owner can deploy, import, or register a Safe for the company.
+- [x] `AC-US-SAFE-001-05` A newly deployed Safe starts with the company owner as its only signer and a threshold of one.
+- [x] `AC-US-SAFE-001-06` Importing a Safe preserves its owners, threshold, assets, and on-chain configuration.
+- [x] `AC-US-SAFE-001-07` An imported address must resolve to a Safe on the active network before registration.
+- [x] `AC-US-SAFE-001-08` Every valid registered Safe address is checksum-normalized before routing, reads, writes, SDK initialization, or
+      transaction-service requests.
 
 #### Edge & Error Cases
 
-- [x] The company owner can continue company creation without setting up a Safe.
-- [x] If registration fails after deployment, the deployed Safe remains available for a registration retry.
-- [x] An archived company cannot deploy, import, or retry Safe registration.
+- [x] `AC-US-SAFE-001-09` The company owner can continue company creation without setting up a Safe.
+- [x] `AC-US-SAFE-001-10` If registration fails after deployment, the deployed Safe remains available for a registration retry.
+- [x] `AC-US-SAFE-001-11` An archived company cannot deploy, import, or retry Safe registration.
 
 **Dependencies:** Current company and active network
 
@@ -376,20 +377,20 @@ a transfer to another known company pocket is
 
 #### Happy Path
 
-- [x] A company member can inspect the Safe address, balances, token holdings, owners, and signature threshold.
-- [x] A company member can inspect incoming native-token, ERC-20, and ERC-721 transfers.
-- [x] Safe information refreshes after an account action succeeds.
+- [x] `AC-US-SAFE-002-01` A company member can inspect the Safe address, balances, token holdings, owners, and signature threshold.
+- [x] `AC-US-SAFE-002-02` A company member can inspect incoming native-token, ERC-20, and ERC-721 transfers.
+- [x] `AC-US-SAFE-002-03` Safe information refreshes after an account action succeeds.
 
 #### Business Rules
 
-- [x] Inspecting Safe details does not require Safe signer permission.
-- [x] The registered Safe address identifies the wallet whose balances, owners, and threshold are reported.
+- [x] `AC-US-SAFE-002-04` Inspecting Safe details does not require Safe signer permission.
+- [x] `AC-US-SAFE-002-05` The registered Safe address identifies the wallet whose balances, owners, and threshold are reported.
 
 #### Edge & Error Cases
 
-- [x] A Safe with no incoming transfers returns an empty deposit history.
-- [x] A failed Safe information read is reported without hiding unaffected Safe information.
-- [x] A failed Safe information read can be retried without registering another Safe.
+- [x] `AC-US-SAFE-002-06` A Safe with no incoming transfers returns an empty deposit history.
+- [x] `AC-US-SAFE-002-07` A failed Safe information read is reported without hiding unaffected Safe information.
+- [x] `AC-US-SAFE-002-08` A failed Safe information read can be retried without registering another Safe.
 
 **Dependencies:** US-SAFE-001
 
@@ -403,21 +404,21 @@ a transfer to another known company pocket is
 
 #### Happy Path
 
-- [x] A user can deposit the native token or a supported token into the Safe.
-- [x] A Safe owner can propose a transfer of an asset held by the Safe.
-- [x] A completed transfer refreshes the Safe balances and transaction state.
+- [x] `AC-US-SAFE-003-01` A user can deposit the native token or a supported token into the Safe.
+- [x] `AC-US-SAFE-003-02` A Safe owner can propose a transfer of an asset held by the Safe.
+- [x] `AC-US-SAFE-003-03` A completed transfer refreshes the Safe balances and transaction state.
 
 #### Business Rules
 
-- [x] Only a current Safe owner can propose an outgoing Safe transfer.
-- [x] Company membership alone does not grant Safe signer permission.
-- [x] An outgoing transfer follows the Safe's current approval threshold.
+- [x] `AC-US-SAFE-003-04` Only a current Safe owner can propose an outgoing Safe transfer.
+- [x] `AC-US-SAFE-003-05` Company membership alone does not grant Safe signer permission.
+- [x] `AC-US-SAFE-003-06` An outgoing transfer follows the Safe's current approval threshold.
 
 #### Edge & Error Cases
 
-- [x] A proposal below the approval threshold remains pending without moving funds.
-- [x] A rejected or failed proposal leaves Safe balances unchanged.
-- [x] An archived company cannot initiate a Safe deposit or transfer.
+- [x] `AC-US-SAFE-003-07` A proposal below the approval threshold remains pending without moving funds.
+- [x] `AC-US-SAFE-003-08` A rejected or failed proposal leaves Safe balances unchanged.
+- [x] `AC-US-SAFE-003-09` An archived company cannot initiate a Safe deposit or transfer.
 
 **Accounting:** A confirmed transfer is classified as
 [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
@@ -436,21 +437,21 @@ a transfer to another known company pocket is
 
 #### Happy Path
 
-- [x] A Safe owner can propose adding a signer.
-- [x] A Safe owner can propose removing a signer.
-- [x] A Safe owner can propose changing the approval threshold.
-- [x] A completed change refreshes the reported owners and threshold.
+- [x] `AC-US-SAFE-004-01` A Safe owner can propose adding a signer.
+- [x] `AC-US-SAFE-004-02` A Safe owner can propose removing a signer.
+- [x] `AC-US-SAFE-004-03` A Safe owner can propose changing the approval threshold.
+- [x] `AC-US-SAFE-004-04` A completed change refreshes the reported owners and threshold.
 
 #### Business Rules
 
-- [x] Only a current Safe owner can propose signer or threshold changes.
-- [x] Signer and threshold changes follow the Safe's current approval threshold.
-- [x] A signer change cannot leave the Safe with an invalid threshold.
+- [x] `AC-US-SAFE-004-05` Only a current Safe owner can propose signer or threshold changes.
+- [x] `AC-US-SAFE-004-06` Signer and threshold changes follow the Safe's current approval threshold.
+- [x] `AC-US-SAFE-004-07` A signer change cannot leave the Safe with an invalid threshold.
 
 #### Edge & Error Cases
 
-- [x] A user without Safe signer permission cannot propose a control change.
-- [x] A rejected or failed change preserves the current signers and threshold.
+- [x] `AC-US-SAFE-004-08` A user without Safe signer permission cannot propose a control change.
+- [x] `AC-US-SAFE-004-09` A rejected or failed change preserves the current signers and threshold.
 
 **Dependencies:** US-SAFE-006
 
@@ -464,21 +465,21 @@ a transfer to another known company pocket is
 
 #### Happy Path
 
-- [x] Safe transactions expose their action, recipient, value, approval progress, status, and last update.
-- [x] A company member can inspect transaction details and the on-chain hash when available.
-- [x] A company member can filter transactions by approval, execution, conflict, and completion state.
+- [x] `AC-US-SAFE-005-01` Safe transactions expose their action, recipient, value, approval progress, status, and last update.
+- [x] `AC-US-SAFE-005-02` A company member can inspect transaction details and the on-chain hash when available.
+- [x] `AC-US-SAFE-005-03` A company member can filter transactions by approval, execution, conflict, and completion state.
 
 #### Business Rules
 
-- [x] Reviewing transaction details does not require Safe signer permission.
-- [x] Pending approval, ready to execute, conflicting, executed, and invalid transactions remain distinct states.
-- [x] The available next action is derived from the transaction state and the connected signer's approvals.
+- [x] `AC-US-SAFE-005-04` Reviewing transaction details does not require Safe signer permission.
+- [x] `AC-US-SAFE-005-05` Pending approval, ready to execute, conflicting, executed, and invalid transactions remain distinct states.
+- [x] `AC-US-SAFE-005-06` The available next action is derived from the transaction state and the connected signer's approvals.
 
 #### Edge & Error Cases
 
-- [x] A Safe with no matching transactions returns an empty result.
-- [x] A failed transaction read is distinguishable from a successfully loaded empty result.
-- [x] A failed transaction read can be retried without hiding unaffected Safe information.
+- [x] `AC-US-SAFE-005-07` A Safe with no matching transactions returns an empty result.
+- [x] `AC-US-SAFE-005-08` A failed transaction read is distinguishable from a successfully loaded empty result.
+- [x] `AC-US-SAFE-005-09` A failed transaction read can be retried without hiding unaffected Safe information.
 
 **Dependencies:** US-SAFE-001
 
@@ -492,23 +493,23 @@ a transfer to another known company pocket is
 
 #### Happy Path
 
-- [x] A Safe owner can approve a pending transaction they have not already approved.
-- [x] A Safe owner can execute a transaction after it reaches the required threshold.
-- [x] Execution refreshes the transaction state and affected Safe information.
+- [x] `AC-US-SAFE-006-01` A Safe owner can approve a pending transaction they have not already approved.
+- [x] `AC-US-SAFE-006-02` A Safe owner can execute a transaction after it reaches the required threshold.
+- [x] `AC-US-SAFE-006-03` Execution refreshes the transaction state and affected Safe information.
 
 #### Business Rules
 
-- [x] Only current Safe owners can approve or execute a Safe transaction.
-- [x] One signer cannot approve the same transaction twice.
-- [x] Approval and execution remain separate actions after the threshold is reached.
-- [x] Executed and stale-nonce transactions cannot be approved or executed again.
+- [x] `AC-US-SAFE-006-04` Only current Safe owners can approve or execute a Safe transaction.
+- [x] `AC-US-SAFE-006-05` One signer cannot approve the same transaction twice.
+- [x] `AC-US-SAFE-006-06` Approval and execution remain separate actions after the threshold is reached.
+- [x] `AC-US-SAFE-006-07` Executed and stale-nonce transactions cannot be approved or executed again.
 
 #### Edge & Error Cases
 
-- [x] Before approving a threshold-reaching transaction or executing a transaction while another valid transaction is pending, the Safe
-      owner sees a warning that names the pending action and can cancel or continue.
-- [x] A rejected or failed approval does not increase the approval count.
-- [x] A rejected or failed execution leaves the transaction unexecuted.
+- [x] `AC-US-SAFE-006-08` Before approving a threshold-reaching transaction or executing a transaction while another valid transaction is
+      pending, the Safe owner sees a warning that names the pending action and can cancel or continue.
+- [x] `AC-US-SAFE-006-09` A rejected or failed approval does not increase the approval count.
+- [x] `AC-US-SAFE-006-10` A rejected or failed execution leaves the transaction unexecuted.
 
 **Dependencies:** US-SAFE-001
 

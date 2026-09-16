@@ -96,6 +96,29 @@ Acceptance criteria are the centre of feature review. Their checkboxes record ve
   again.
 - The review date changes only after the affected behaviour has been reviewed again.
 
+### Acceptance-Criterion Traceability
+
+Give every acceptance criterion a stable ID using `AC-<user-story-id>-<two-digit-sequence>`. Keep the sequence local to the story, allocate
+each number exactly once, and never renumber or reuse an ID after it has been assigned. The ID remains attached to the criterion when the
+criterion moves between categories or changes position within its story.
+
+```markdown
+- [x] `AC-US-FEATURE-001-01` A matching operation retains all of its journal lines.
+```
+
+Reference the ID in the title of the smallest representative behaviour test when executable evidence directly proves the documented outcome.
+One criterion may have more than one representative test when distinct success and failure paths are necessary, but do not tag every
+low-level test that happens to exercise the same code.
+
+```typescript
+it('[AC-US-FEATURE-001-01] retains every line of a matching JournalEntry', () => {
+  // Test the observable criterion.
+})
+```
+
+Every criterion has an ID even when no representative automated test exists. A test reference records evidence, not comprehensive coverage,
+and it does not replace the criterion's observable outcome, checkbox state, implementation evidence, or required human validation.
+
 ### Story Statuses
 
 | Status           | Meaning                                                    |

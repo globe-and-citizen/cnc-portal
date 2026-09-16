@@ -52,13 +52,13 @@ These acceptance criteria follow the
 
 #### Happy Path
 
-- [x] The merchant can select an accepted token from the options offered on the Setup page, and the embed snippet and live preview update
-      immediately to reflect that choice.
+- [x] `AC-US-PAYGATE-001-01` The merchant can select an accepted token from the options offered on the Setup page, and the embed snippet and
+      live preview update immediately to reflect that choice.
 
 #### Business Rules
 
-- [x] No product element other than the accepted token is configurable in this version — style and layout are fixed.
-- [ ] Only tokens the widget can actually accept payment in are offered as selectable options.
+- [x] `AC-US-PAYGATE-001-02` No product element other than the accepted token is configurable in this version — style and layout are fixed.
+- [ ] `AC-US-PAYGATE-001-03` Only tokens the widget can actually accept payment in are offered as selectable options.
 
 **Dependencies:** none — this is the capability's entry point
 
@@ -72,20 +72,21 @@ These acceptance criteria follow the
 
 #### Happy Path
 
-- [x] The merchant can view and copy their company's Bank address.
-- [x] The merchant can view and copy a complete embed snippet — script tag, mount point, and example checkout wiring — reflecting the
-      current Bank address and selected token.
+- [x] `AC-US-PAYGATE-002-01` The merchant can view and copy their company's Bank address.
+- [x] `AC-US-PAYGATE-002-02` The merchant can view and copy a complete embed snippet — script tag, mount point, and example checkout wiring
+      — reflecting the current Bank address and selected token.
 
 #### Business Rules
 
-- [x] The Bank address shown is the company's own existing Bank contract; embedding the widget requires no separate account or key.
+- [x] `AC-US-PAYGATE-002-03` The Bank address shown is the company's own existing Bank contract; embedding the widget requires no separate
+      account or key.
 
 #### Edge & Error Cases
 
-- [x] When the company has no deployed Bank contract yet, the Setup page shows an explicit "no Bank" state instead of a snippet built around
-      a placeholder address.
-- [x] When the widget's script URL isn't configured for this deployment, the Setup page shows an explicit "unavailable" state instead of a
-      snippet whose script tag would never actually load a widget.
+- [x] `AC-US-PAYGATE-002-04` When the company has no deployed Bank contract yet, the Setup page shows an explicit "no Bank" state instead of
+      a snippet built around a placeholder address.
+- [x] `AC-US-PAYGATE-002-05` When the widget's script URL isn't configured for this deployment, the Setup page shows an explicit
+      "unavailable" state instead of a snippet whose script tag would never actually load a widget.
 
 **Dependencies:** US-PAYGATE-001 and a company with a deployed Bank contract
 
@@ -106,34 +107,37 @@ These acceptance criteria follow the
 
 #### Happy Path
 
-- [x] The widget shows a payment recap — amount and facture ID — before the customer pays.
-- [x] A successful payment settles the exact configured amount to the company's Bank and shows the customer a confirmation with the amount,
-      facture ID, and transaction hash.
-- [x] The widget reports the payment's outcome — success or failure, with the facture ID — to the merchant's page through the `onStatus`
-      callback.
+- [x] `AC-US-PAYGATE-003-01` The widget shows a payment recap — amount and facture ID — before the customer pays.
+- [x] `AC-US-PAYGATE-003-02` A successful payment settles the exact configured amount to the company's Bank and shows the customer a
+      confirmation with the amount, facture ID, and transaction hash.
+- [x] `AC-US-PAYGATE-003-03` The widget reports the payment's outcome — success or failure, with the facture ID — to the merchant's page
+      through the `onStatus` callback.
 
 #### Business Rules
 
-- [x] Configuring the widget with an unsupported payment token (including native POL) shows an explicit "unsupported token" message instead
-      of a payment form.
-- [x] The widget only requests an ERC-20 approval when the customer's existing allowance is insufficient for the configured amount.
-- [x] The facture ID must be 1-64 characters of letters, digits, and `- _ . / :` before use — it's permanently readable on-chain and
-      rendered as-is in every transaction table, so free text (a sentence, a pasted note) is rejected at the source instead of reaching an
-      irreversible on-chain transaction; an invalid value throws synchronously to the merchant's own integration code. _(system)_
-- [x] The amount must be a non-negative decimal number before use; an invalid value throws synchronously to the merchant's own integration
-      code rather than reaching the review pane or the chain. _(system)_
+- [x] `AC-US-PAYGATE-003-04` Configuring the widget with an unsupported payment token (including native POL) shows an explicit "unsupported
+      token" message instead of a payment form.
+- [x] `AC-US-PAYGATE-003-05` The widget only requests an ERC-20 approval when the customer's existing allowance is insufficient for the
+      configured amount.
+- [x] `AC-US-PAYGATE-003-06` The facture ID must be 1-64 characters of letters, digits, and `- _ . / :` before use — it's permanently
+      readable on-chain and rendered as-is in every transaction table, so free text (a sentence, a pasted note) is rejected at the source
+      instead of reaching an irreversible on-chain transaction; an invalid value throws synchronously to the merchant's own integration
+      code. _(system)_
+- [x] `AC-US-PAYGATE-003-07` The amount must be a non-negative decimal number before use; an invalid value throws synchronously to the
+      merchant's own integration code rather than reaching the review pane or the chain. _(system)_
 
 #### Edge & Error Cases
 
-- [ ] A transaction confirmed on-chain is only reported as a successful payment when the Bank's deposit event for that payment is present in
-      the receipt. _(contract)_
-- [x] A transaction that reverts on-chain after broadcast is reported to the customer as failed, not successful.
-- [ ] A wallet-rejected payment shows a clear cancellation message, not the raw wallet/SDK error.
-- [ ] An on-chain revert (e.g. insufficient balance) shows a decoded, readable reason, not the raw contract/SDK error.
-- [ ] After a failed payment, the customer can retry without leaving the widget or the merchant reloading their page.
-- [x] If the merchant's page embeds the widget with a missing or invalid-format `data-bank`/`data-token` script attribute, the customer sees
-      an explicit "payment unavailable" message instead of a payment form built around bad data, and the merchant gets a console diagnostic
-      naming exactly what's wrong.
+- [ ] `AC-US-PAYGATE-003-08` A transaction confirmed on-chain is only reported as a successful payment when the Bank's deposit event for
+      that payment is present in the receipt. _(contract)_
+- [x] `AC-US-PAYGATE-003-09` A transaction that reverts on-chain after broadcast is reported to the customer as failed, not successful.
+- [ ] `AC-US-PAYGATE-003-10` A wallet-rejected payment shows a clear cancellation message, not the raw wallet/SDK error.
+- [ ] `AC-US-PAYGATE-003-11` An on-chain revert (e.g. insufficient balance) shows a decoded, readable reason, not the raw contract/SDK
+      error.
+- [ ] `AC-US-PAYGATE-003-12` After a failed payment, the customer can retry without leaving the widget or the merchant reloading their page.
+- [x] `AC-US-PAYGATE-003-13` If the merchant's page embeds the widget with a missing or invalid-format `data-bank`/`data-token` script
+      attribute, the customer sees an explicit "payment unavailable" message instead of a payment form built around bad data, and the
+      merchant gets a console diagnostic naming exactly what's wrong.
 
 **Dependencies:** US-PAYGATE-002, a connected wallet, and a sufficient token balance
 
@@ -147,20 +151,21 @@ These acceptance criteria follow the
 
 #### Happy Path
 
-- [x] The merchant can view a table of confirmed payments made through the widget, each showing its facture ID, date, amount and token, and
-      a link to the underlying transaction.
-- [x] Selecting a payment's transaction opens its on-chain detail — initiator, block, timestamp, status, decoded call, and events.
+- [x] `AC-US-PAYGATE-004-01` The merchant can view a table of confirmed payments made through the widget, each showing its facture ID, date,
+      amount and token, and a link to the underlying transaction.
+- [x] `AC-US-PAYGATE-004-02` Selecting a payment's transaction opens its on-chain detail — initiator, block, timestamp, status, decoded
+      call, and events.
 
 #### Business Rules
 
-- [x] History is derived directly from the company's Bank contract's token-deposit events; no separate backend record exists to fall out of
-      sync.
-- [x] Only deposits carrying a decodable facture ID are listed; a plain, non-widget Bank deposit is excluded.
+- [x] `AC-US-PAYGATE-004-03` History is derived directly from the company's Bank contract's token-deposit events; no separate backend record
+      exists to fall out of sync.
+- [x] `AC-US-PAYGATE-004-04` Only deposits carrying a decodable facture ID are listed; a plain, non-widget Bank deposit is excluded.
 
 #### Edge & Error Cases
 
-- [x] An empty history is shown as an explicit empty state, not an empty table with no explanation.
-- [x] A failed history read is shown as an explicit error instead of a silently empty or stale table.
+- [x] `AC-US-PAYGATE-004-05` An empty history is shown as an explicit empty state, not an empty table with no explanation.
+- [x] `AC-US-PAYGATE-004-06` A failed history read is shown as an explicit error instead of a silently empty or stale table.
 
 **Dependencies:** US-PAYGATE-003
 
@@ -174,12 +179,12 @@ These acceptance criteria follow the
 
 #### Happy Path
 
-- [ ] A merchant can submit a facture ID and Bank address and receive that payment's real current status.
+- [ ] `AC-US-PAYGATE-005-01` A merchant can submit a facture ID and Bank address and receive that payment's real current status.
 
 #### Business Rules
 
-- [ ] The mechanism linking a facture ID to its on-chain transaction — a contract-level record or a database record — is decided and
-      implemented.
+- [ ] `AC-US-PAYGATE-005-02` The mechanism linking a facture ID to its on-chain transaction — a contract-level record or a database record —
+      is decided and implemented.
 
 **Dependencies:** US-PAYGATE-003
 
