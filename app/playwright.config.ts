@@ -74,6 +74,10 @@ export default defineConfig({
           env: {
             ...process.env,
             VITE_E2E: 'true',
+            // CI does not have the developer-only .env file. The E2E tests
+            // intercept this backend origin in the browser, so it only needs
+            // to be a stable, valid URL rather than a running service.
+            VITE_APP_BACKEND_URL: 'http://127.0.0.1:3000',
             VITE_APP_NETWORK_ALIAS: 'hardhat',
             VITE_E2E_RPC_URL: E2E_RPC_URL,
             VITE_E2E_USDC_ADDRESS: E2E_TOKENS.usdc,
