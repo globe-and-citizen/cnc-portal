@@ -88,7 +88,7 @@ export function encode(abi: Abi, functionName: string, args: readonly unknown[] 
   return encodeFunctionData({ abi, functionName, args: args as never })
 }
 
-async function hasCode(address: Address): Promise<boolean> {
+export async function hasCode(address: Address): Promise<boolean> {
   const code = await publicClient.getCode({ address })
   return Boolean(code && code !== '0x')
 }

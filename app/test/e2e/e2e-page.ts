@@ -116,15 +116,21 @@ export async function selectToken(page: Page, dialog: Locator, symbol: string): 
   await page.getByRole('option', { name: symbol, exact: true }).click()
 }
 
-/** Fail every `eth_getLogs` call while letting the rest of the RPC batch through. */
-export async function failLogReads(route: Route): Promise<void> {
-  const payload = route.request().postDataJSON() as
-    | { id: number; method: string }
-    | Array<{ id: number; method: string }>
+export interface RpcCall {
+  id: number
+  method: string
+  params?: unknown[]
+}
+
+/** Fail the selected JSON-RPC calls while letting the rest of the batch through. */
+export async function failRpcCalls(
+  route: Route,
+  shouldFail: (call: RpcCall) => boolean,
+  message: string
+): Promise<void> {
+  const payload = route.request().postDataJSON() as RpcCall | RpcCall[]
   const calls = Array.isArray(payload) ? payload : [payload]
-  const failedIds = new Set(
-    calls.filter((call) => call.method === 'eth_getLogs').map((call) => call.id)
-  )
+  const failedIds = new Set(calls.filter(shouldFail).map((call) => call.id))
   if (failedIds.size === 0) return route.continue()
 
   const response = await route.fetch()
@@ -133,12 +139,12 @@ export async function failLogReads(route: Route): Promise<void> {
     | Array<{ id: number; result?: unknown }>
   const replace = (item: { id: number; result?: unknown }) =>
     failedIds.has(item.id)
-      ? {
-          jsonrpc: '2.0',
-          id: item.id,
-          error: { code: -32000, message: 'E2E log read failed' }
-        }
+      ? { jsonrpc: '2.0', id: item.id, error: { code: -32000, message } }
       : item
   const body = Array.isArray(upstream) ? upstream.map(replace) : replace(upstream)
   await route.fulfill({ response, contentType: 'application/json', body: JSON.stringify(body) })
 }
+
+/** Fail every `eth_getLogs` call while letting the rest of the RPC batch through. */
+export const failLogReads = (route: Route) =>
+  failRpcCalls(route, (call) => call.method === 'eth_getLogs', 'E2E log read failed')

@@ -42,16 +42,24 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     // Run in headless mode by default, unless HEADLESS=false
-    headless: process.env.HEADLESS !== 'false',
-    ...(E2E_BROWSER_EXECUTABLE ? { launchOptions: { executablePath: E2E_BROWSER_EXECUTABLE } } : {})
+    headless: process.env.HEADLESS !== 'false'
   },
 
-  // Web3 e2e runs on Chromium.
+  // Web3 e2e runs on Chromium. PLAYWRIGHT_FIREFOX=true adds a Firefox pass of
+  // the same journeys; the developer-local executable only applies to Chromium.
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
-    }
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(E2E_BROWSER_EXECUTABLE
+          ? { launchOptions: { executablePath: E2E_BROWSER_EXECUTABLE } }
+          : {})
+      }
+    },
+    ...(process.env.PLAYWRIGHT_FIREFOX === 'true'
+      ? [{ name: 'firefox', use: { ...devices['Desktop Firefox'] } }]
+      : [])
   ],
 
   // The dedicated Hardhat port keeps the suite's deployment fixture isolated
