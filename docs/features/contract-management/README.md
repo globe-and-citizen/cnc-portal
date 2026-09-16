@@ -185,10 +185,10 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b4f3e0551e7c765b89f84247f7066c149df1e4d1`
+**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
 
 - [Contract Management components](../../../app/src/components/sections/ContractManagementView/),
-  [Board writes](../../../app/src/composables/bod/writes.ts),
+  [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
   [shared contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts)
 - [Proposal creation](../../../app/src/components/sections/ProposalsView/forms/CreateProposalForm.vue)
