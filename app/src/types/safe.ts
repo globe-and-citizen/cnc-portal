@@ -4,8 +4,6 @@ import type {
 } from '@safe-global/types-kit'
 
 import { type TokenId } from '@/constant'
-/* istanbul ignore next -- ESM imports do not carry an executable coverage counter. */
-import { E2E_SAFE_TX_SERVICE_URL } from '@/e2e/chain'
 
 export interface SafeFiatTotal {
   value: number
@@ -113,6 +111,10 @@ export interface SafeChainConfig {
   url: string
   nativeSymbol: string
 }
+
+// Mirrors the deterministic E2E service URL in `src/e2e/chain.ts`; the unit
+// test keeps the browser and Node fixtures aligned.
+const E2E_SAFE_TX_SERVICE_URL = 'https://safe-e2e.invalid'
 
 const E2E_TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> =
   import.meta.env.VITE_E2E === 'true'

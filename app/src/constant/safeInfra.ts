@@ -1,8 +1,6 @@
 import { isAddress, type Address } from 'viem'
 import { getNetwork } from './network'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
-/* istanbul ignore next -- ESM imports do not carry an executable coverage counter. */
-import { E2E_SAFE_INFRA } from '@/e2e/chain'
 
 // Safe v1.4.1 infrastructure (Singleton, ProxyFactory, CompatibilityFallbackHandler).
 // Polygon already has the canonical addresses live (same across every chain that
@@ -24,7 +22,15 @@ interface HardhatSafeInfraAddresses {
 const HARDHAT_SAFE_INFRA = hardhat as HardhatSafeInfraAddresses
 
 // The Playwright global setup seeds its own Safe infrastructure on the E2E
-// node, so the E2E build ignores the developer-local deployment artifact.
+// node, so the E2E build ignores the developer-local deployment artifact. Keep
+// these deterministic addresses in sync with `src/e2e/chain.ts`; the unit test
+// asserts that both browser and Node fixtures use the same values.
+const E2E_SAFE_INFRA: SafeInfraAddresses = {
+  singleton: '0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0',
+  proxyFactory: '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9',
+  fallbackHandler: '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9'
+}
+
 const isE2E = import.meta.env.VITE_E2E === 'true'
 
 const POLYGON_SAFE_INFRA: SafeInfraAddresses = {
