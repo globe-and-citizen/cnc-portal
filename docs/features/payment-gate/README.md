@@ -202,7 +202,7 @@ These acceptance criteria follow the
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `63e518bdef0023972c79164fe53b3b260cc08c3d`
+**Implementation evidence reviewed against:** `0d5e32409b5fe192d18abe9ae9be8a7833bc3e64`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet, with explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),

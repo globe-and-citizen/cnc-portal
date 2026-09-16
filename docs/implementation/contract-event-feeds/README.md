@@ -36,9 +36,9 @@ flowchart LR
 2. `useContractEventsViaLogs` lowercases and deduplicates the targets, retains the earliest effective deployment boundary for each address,
    and fetches and decodes the relevant logs. Its TanStack query identity contains the sorted target address and effective `fromBlock`, so a
    boundary that resolves asynchronously starts the correct scan instead of reusing a cache entry for another range.
-3. The composable returns the standard TanStack query result. Its `data` contains the complete scan result: the domain event feed, failed
-   generation scans, and unresolved timestamp gaps. Consumers use the standard `isPending`, `error`, and `refetch` members instead of
-   feed-specific aliases.
+3. The composable returns the standard TanStack query result. Its `data` contains the complete scan result as
+   `{ events, gaps, timestampGaps }`; the explicit `events` name avoids an ambiguous `data.data` access. Consumers use the standard
+   `isPending`, `error`, and `refetch` members instead of feed-specific aliases.
 4. The immutable timestamp query is keyed by network and block number with infinite staleness and garbage-collection time, so concurrent
    feeds and later scans reuse one block read.
 5. A decoded log enters its domain mapper only after its timestamp resolves. Missing block identity or a failed block read withholds that
@@ -68,7 +68,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `63e518bdef0023972c79164fe53b3b260cc08c3d`
+**Implementation evidence reviewed against:** `0d5e32409b5fe192d18abe9ae9be8a7833bc3e64`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
