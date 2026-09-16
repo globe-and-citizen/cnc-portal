@@ -122,7 +122,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('passes loading state to UTable', () => {
-    incomingTransfersQuery.loading.value = true
+    incomingTransfersQuery.isPending.value = true
 
     wrapper = createWrapper()
     expect(tableLoading(wrapper)).toBe(true)
@@ -166,7 +166,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('maps ownership transfer events with a zero amount', () => {
-    mockCashRemQuery.result.value = {
+    mockCashRemQuery.data.value!.events = {
       ...buildCashRemunerationQueryResult(),
       cashRemunerationOwnershipTransferreds: {
         items: [
@@ -196,7 +196,7 @@ describe('CashRemunerationTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    mockCashRemQuery.result.value = {
+    mockCashRemQuery.data.value!.events = {
       cashRemunerationDeposits: {
         items: [
           {
@@ -241,7 +241,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('renders grouped child rows and aggregated parent values', () => {
-    mockCashRemQuery.result.value = {
+    mockCashRemQuery.data.value!.events = {
       cashRemunerationDeposits: {
         items: [
           {
@@ -273,7 +273,7 @@ describe('CashRemunerationTransactions', () => {
       cashRemunerationTokenSupportAddeds: { items: [] },
       cashRemunerationTokenSupportRemoveds: { items: [] }
     }
-    incomingTransfersQuery.result.value = undefined
+    incomingTransfersQuery.data.value = undefined
 
     wrapper = createWrapper()
 
@@ -287,7 +287,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('renders counterparty and value fallbacks for zero-value metadata events', () => {
-    mockCashRemQuery.result.value = {
+    mockCashRemQuery.data.value!.events = {
       cashRemunerationDeposits: { items: [] },
       cashRemunerationWithdraws: { items: [] },
       cashRemunerationWithdrawTokens: { items: [] },
@@ -308,7 +308,7 @@ describe('CashRemunerationTransactions', () => {
       cashRemunerationTokenSupportAddeds: { items: [] },
       cashRemunerationTokenSupportRemoveds: { items: [] }
     }
-    incomingTransfersQuery.result.value = undefined
+    incomingTransfersQuery.data.value = undefined
 
     wrapper = createWrapper()
 

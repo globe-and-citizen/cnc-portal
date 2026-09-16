@@ -31,13 +31,11 @@ flowchart LR
   test selectors are retained.
 - A date or type-filter change resets the page and collapses expanded rows without reacting to query refreshes.
 - A selected row opens its detail in `TransactionDetailSlideover`; closing it does not alter the applied filters.
-- Bank and Expense Account history show an explicit failure state when their query fails, a contract-generation scan is incomplete, or
-  timestamps cannot be resolved. The empty state is reserved for a successful scan with no matching transactions.
 - Date-range selection is documented by the [Date Picker capability](../date-picker/README.md).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `bbca5e1096e4f8ef226ee2f8fb2ad0533b2be1f8`
+**Implementation evidence reviewed against:** `0d5e32409b5fe192d18abe9ae9be8a7833bc3e64`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Bank history](../../../app/src/components/sections/BankView/BankTransactions.vue),

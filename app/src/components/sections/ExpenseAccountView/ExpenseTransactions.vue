@@ -216,17 +216,15 @@ const contractAddress = computed(() => props.expenseAddress.toLowerCase())
 const currentBankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
 const {
-  result,
+  data: expenseData,
   error,
-  gaps,
-  timestampGaps,
-  loading: expenseLoading
+  isPending: expenseLoading
 } = useExpenseEventsViaLogs(contractAddress)
 
 const {
-  result: incomingTokenTransfersResult,
+  data: incomingTokenTransfersData,
   error: incomingTokenTransfersError,
-  loading: incomingTokenTransfersLoading
+  isPending: incomingTokenTransfersLoading
 } = useIncomingBankTokenTransfersViaLogs(
   () => teamStore.currentTeamId,
   contractAddress,
@@ -234,17 +232,10 @@ const {
 )
 
 const loading = computed(() => expenseLoading.value || incomingTokenTransfersLoading.value)
-const hasError = computed(() =>
-  Boolean(
-    error.value ||
-    gaps.value.length > 0 ||
-    timestampGaps.value.length > 0 ||
-    incomingTokenTransfersError.value
-  )
-)
+const hasError = computed(() => Boolean(error.value || incomingTokenTransfersError.value))
 
 const rawTransactions = computed(() =>
-  buildRawExpenseTransactions(result.value, incomingTokenTransfersResult.value)
+  buildRawExpenseTransactions(expenseData.value?.events, incomingTokenTransfersData.value?.events)
 )
 
 const transactions = computed<ExpenseTransaction[]>(() =>

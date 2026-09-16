@@ -86,7 +86,7 @@ describe('BankTransactions', () => {
   })
 
   it('passes loading state to UTable', () => {
-    mockBankQuery.loading.value = true
+    mockBankQuery.isPending.value = true
 
     wrapper = createWrapper()
     expect(tableLoading(wrapper)).toBe(true)
@@ -129,7 +129,7 @@ describe('BankTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    mockBankQuery.result.value = {
+    mockBankQuery.data.value!.events = {
       bankDeposits: {
         items: [
           {
@@ -176,7 +176,7 @@ describe('BankTransactions', () => {
   })
 
   it('renders child value fallback for grouped zero-value events', () => {
-    mockBankQuery.result.value = {
+    mockBankQuery.data.value!.events = {
       bankDeposits: {
         items: [
           {
@@ -214,7 +214,7 @@ describe('BankTransactions', () => {
   })
 
   it('maps token support and ownership transfer events with a — value', () => {
-    mockBankQuery.result.value = {
+    mockBankQuery.data.value!.events = {
       ...buildBankQueryResult(),
       bankDeposits: { items: [] },
       bankTransfers: { items: [] },
@@ -267,7 +267,7 @@ describe('BankTransactions', () => {
   })
 
   it('shows the initial token support count for the deployment ownership transfer', () => {
-    mockBankQuery.result.value = {
+    mockBankQuery.data.value!.events = {
       ...buildBankQueryResult(),
       bankDeposits: { items: [] },
       bankTransfers: { items: [] },
@@ -323,28 +323,5 @@ describe('BankTransactions', () => {
     await nextTick()
 
     expect(logErrorSpy).toHaveBeenCalledTimes(1)
-  })
-
-  it('distinguishes an empty history from a failed history read', () => {
-    mockBankQuery.result.value = undefined
-    wrapper = createWrapper()
-
-    expect(wrapper.find('[data-test="bank-transactions-empty"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="bank-transactions-error"]').exists()).toBe(false)
-
-    wrapper.unmount()
-    mockBankQuery.error.value = new Error('bank query failed')
-    wrapper = createWrapper()
-
-    expect(wrapper.find('[data-test="bank-transactions-error"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="bank-transactions-empty"]').exists()).toBe(false)
-
-    wrapper.unmount()
-    mockBankQuery.error.value = null
-    mockBankQuery.gaps.value = [{ address: BANK_ADDRESS, error: new Error('log scan failed') }]
-    wrapper = createWrapper()
-
-    expect(wrapper.find('[data-test="bank-transactions-error"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="bank-transactions-empty"]').exists()).toBe(false)
   })
 })

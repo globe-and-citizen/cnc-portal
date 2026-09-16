@@ -157,23 +157,6 @@
           <span v-else class="text-muted">—</span>
         </template>
       </template>
-
-      <template #empty>
-        <div
-          v-if="hasError"
-          class="text-error py-6 text-center text-sm"
-          data-test="bank-transactions-error"
-        >
-          Failed to load transactions. Please try again later.
-        </div>
-        <div
-          v-else
-          class="py-6 text-center text-sm text-gray-500"
-          data-test="bank-transactions-empty"
-        >
-          No transactions for the selected filters.
-        </div>
-      </template>
     </UTable>
 
     <template #footer>
@@ -232,12 +215,9 @@ const currencyStore = useCurrencyStore()
 const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.bankAddress.toLowerCase())
 
-const { result, error, gaps, timestampGaps, loading } = useBankEventsViaLogs(contractAddress)
-const hasError = computed(() =>
-  Boolean(error.value || gaps.value.length > 0 || timestampGaps.value.length > 0)
-)
+const { data, error, isPending: loading } = useBankEventsViaLogs(contractAddress)
 
-const rawTransactions = computed(() => buildRawBankTransactions(result.value))
+const rawTransactions = computed(() => buildRawBankTransactions(data.value?.events))
 
 const transactions = computed<BankTransaction[]>(() =>
   rawTransactions.value.map((row) => ({

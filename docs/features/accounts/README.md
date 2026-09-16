@@ -521,7 +521,7 @@ a transfer to another known company pocket is
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f203c6d19f6651adf081223aac9c2d909eb63a12`
+**Implementation evidence reviewed against:** `0d5e32409b5fe192d18abe9ae9be8a7833bc3e64`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
@@ -534,8 +534,8 @@ a transfer to another known company pocket is
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts),
   [Bank transaction feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
   [version-aware Bank fee normalization](../../../app/src/composables/bank/bankFees.ts),
-  [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts),
-  [Bank owner read](../../../app/src/composables/bod/reads.ts), and [Bank contract](../../../contract/contracts/Bank.sol)
+  [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts), and
+  [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
 - [Bank transfer form](../../../app/src/components/forms/TransferForm.vue)
