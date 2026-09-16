@@ -287,4 +287,16 @@ describe('ExpenseTransactions', () => {
     wrapper = createWrapper()
     expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(true)
   })
+
+  it('shows an error state when the expense log scan is incomplete', () => {
+    mockExpenseQuery.result.value = undefined
+    incomingTransfersQuery.result.value = undefined
+    mockExpenseQuery.gaps.value = [
+      { address: EXPENSE_ADDRESS, error: new Error('expense log scan failed') }
+    ]
+    wrapper = createWrapper()
+
+    expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="expense-transactions-empty"]').exists()).toBe(false)
+  })
 })

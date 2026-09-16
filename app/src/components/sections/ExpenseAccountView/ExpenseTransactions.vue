@@ -215,7 +215,13 @@ const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.expenseAddress.toLowerCase())
 const currentBankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
-const { result, error, loading: expenseLoading } = useExpenseEventsViaLogs(contractAddress)
+const {
+  result,
+  error,
+  gaps,
+  timestampGaps,
+  loading: expenseLoading
+} = useExpenseEventsViaLogs(contractAddress)
 
 const {
   result: incomingTokenTransfersResult,
@@ -228,7 +234,14 @@ const {
 )
 
 const loading = computed(() => expenseLoading.value || incomingTokenTransfersLoading.value)
-const hasError = computed(() => Boolean(error.value || incomingTokenTransfersError.value))
+const hasError = computed(() =>
+  Boolean(
+    error.value ||
+    gaps.value.length > 0 ||
+    timestampGaps.value.length > 0 ||
+    incomingTokenTransfersError.value
+  )
+)
 
 const rawTransactions = computed(() =>
   buildRawExpenseTransactions(result.value, incomingTokenTransfersResult.value)
