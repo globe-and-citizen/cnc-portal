@@ -21,10 +21,6 @@ interface HardhatSafeInfraAddresses {
 
 const HARDHAT_SAFE_INFRA = hardhat as HardhatSafeInfraAddresses
 
-// The Playwright global setup seeds its own Safe infrastructure on the E2E
-// node, so the E2E build ignores the developer-local deployment artifact. Keep
-// these deterministic addresses in sync with `src/e2e/chain.ts`; the unit test
-// asserts that both browser and Node fixtures use the same values.
 const E2E_SAFE_INFRA: SafeInfraAddresses = {
   singleton: '0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0',
   proxyFactory: '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9',

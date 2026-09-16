@@ -112,8 +112,6 @@ export interface SafeChainConfig {
   nativeSymbol: string
 }
 
-// Mirrors the deterministic E2E service URL in `src/e2e/chain.ts`; the unit
-// test keeps the browser and Node fixtures aligned.
 const E2E_SAFE_TX_SERVICE_URL = 'https://safe-e2e.invalid'
 
 const E2E_TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> =
