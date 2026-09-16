@@ -4,6 +4,7 @@ import type {
 } from '@safe-global/types-kit'
 
 import { type TokenId } from '@/constant'
+/* istanbul ignore next -- ESM imports do not carry an executable coverage counter. */
 import { E2E_SAFE_TX_SERVICE_URL } from '@/e2e/chain'
 
 export interface SafeFiatTotal {

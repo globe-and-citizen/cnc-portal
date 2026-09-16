@@ -1,6 +1,7 @@
 import { isAddress, type Address } from 'viem'
 import { getNetwork } from './network'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
+/* istanbul ignore next -- ESM imports do not carry an executable coverage counter. */
 import { E2E_SAFE_INFRA } from '@/e2e/chain'
 
 // Safe v1.4.1 infrastructure (Singleton, ProxyFactory, CompatibilityFallbackHandler).
