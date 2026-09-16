@@ -218,8 +218,8 @@ const loading = computed(() => cashRemunerationLoading.value || incomingTokenTra
 
 const rawTransactions = computed(() =>
   buildRawCashRemunerationTransactions(
-    cashRemunerationData.value?.data,
-    incomingTokenTransfersData.value?.data
+    cashRemunerationData.value?.events,
+    incomingTokenTransfersData.value?.events
   )
 )
 

@@ -11,7 +11,7 @@ import { zeroAddress } from 'viem'
 // logic without touching the RPC. `refetch` resolves so the refresh test passes.
 const { feeds, historicalRates, useHistoricalRatesQuery } = vi.hoisted(() => {
   const scanResult = () => ({
-    data: null as unknown,
+    events: null as unknown,
     gaps: [] as Array<{ address: string; error: unknown }>,
     timestampGaps: [] as Array<{
       transactionHash: string | null
@@ -94,7 +94,7 @@ const dividendFeed = (token: string): InvestorEventFeed => ({
 })
 
 const setInvestorFeed = (value: InvestorEventFeed) => {
-  feeds.investor.data.value.data = value
+  feeds.investor.data.value.events = value
 }
 
 // Relies on the global mocks (tests/setup/composables.setup.ts):
@@ -107,7 +107,7 @@ describe('useCNCAccounting', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     Object.values(feeds).forEach((feed) => {
-      feed.data.value = { data: null, gaps: [], timestampGaps: [] }
+      feed.data.value = { events: null, gaps: [], timestampGaps: [] }
       feed.isPending.value = false
       feed.error.value = null
     })

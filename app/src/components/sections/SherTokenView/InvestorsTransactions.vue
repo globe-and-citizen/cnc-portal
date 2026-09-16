@@ -259,7 +259,7 @@ const {
 const loading = computed(() => investorLoading.value || safeLoading.value)
 
 const enrichedTransactions = computed(() =>
-  buildRawInvestorTransactions(investorData.value?.data, safeData.value?.data).map((tx) =>
+  buildRawInvestorTransactions(investorData.value?.events, safeData.value?.events).map((tx) =>
     mapRawInvestorTransaction(
       tx,
       investorTokenSymbol.value,

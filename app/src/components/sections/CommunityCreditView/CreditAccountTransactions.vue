@@ -226,7 +226,7 @@ const contractAddress = computed(() => props.fixedReturnAddress.toLowerCase())
 const { data, error, isPending: loading } = useFixedReturnEventsViaLogs(contractAddress)
 
 const rawTransactions = computed(() => {
-  const rows = buildRawFixedReturnTransactions(data.value?.data)
+  const rows = buildRawFixedReturnTransactions(data.value?.events)
   return props.roundId ? rows.filter((row) => row.offerId === props.roundId) : rows
 })
 

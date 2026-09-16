@@ -103,13 +103,13 @@ describe('InvestorsTransactions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     eventFeedState.investorResult.value = {
-      data: buildInvestorResult(),
+      events: buildInvestorResult(),
       gaps: [],
       timestampGaps: []
     }
     eventFeedState.investorError.value = null
     eventFeedState.investorLoading.value = false
-    eventFeedState.safeResult.value = { data: buildSafeResult(), gaps: [], timestampGaps: [] }
+    eventFeedState.safeResult.value = { events: buildSafeResult(), gaps: [], timestampGaps: [] }
     eventFeedState.safeError.value = null
     eventFeedState.safeLoading.value = false
     mockGetTokenPrice.mockReturnValue(1)

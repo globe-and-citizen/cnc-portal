@@ -166,7 +166,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('maps ownership transfer events with a zero amount', () => {
-    mockCashRemQuery.data.value!.data = {
+    mockCashRemQuery.data.value!.events = {
       ...buildCashRemunerationQueryResult(),
       cashRemunerationOwnershipTransferreds: {
         items: [
@@ -196,7 +196,7 @@ describe('CashRemunerationTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    mockCashRemQuery.data.value!.data = {
+    mockCashRemQuery.data.value!.events = {
       cashRemunerationDeposits: {
         items: [
           {
@@ -241,7 +241,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('renders grouped child rows and aggregated parent values', () => {
-    mockCashRemQuery.data.value!.data = {
+    mockCashRemQuery.data.value!.events = {
       cashRemunerationDeposits: {
         items: [
           {
@@ -287,7 +287,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('renders counterparty and value fallbacks for zero-value metadata events', () => {
-    mockCashRemQuery.data.value!.data = {
+    mockCashRemQuery.data.value!.events = {
       cashRemunerationDeposits: { items: [] },
       cashRemunerationWithdraws: { items: [] },
       cashRemunerationWithdrawTokens: { items: [] },

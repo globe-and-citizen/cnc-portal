@@ -66,7 +66,7 @@ const setSpend = (currentUsdc: number[], prevUsdc: number[]) => {
     ...currentUsdc.map((w) => usdcTransfer(w, tsInCurrentMonth)),
     ...prevUsdc.map((w) => usdcTransfer(w, tsInPrevMonth))
   ]
-  state.data.value = { data: events, gaps: [], timestampGaps: [] }
+  state.data.value = { events, gaps: [], timestampGaps: [] }
 }
 
 const createWrapper = (): VueWrapper => mount(ExpenseMonthSpent)
@@ -74,7 +74,7 @@ const delta = (wrapper: VueWrapper) => wrapper.find('[data-test="percentage-chan
 
 describe('ExpenseMonthSpent', () => {
   beforeEach(() => {
-    state.data.value = { data: emptyEvents(), gaps: [], timestampGaps: [] }
+    state.data.value = { events: emptyEvents(), gaps: [], timestampGaps: [] }
     state.error.value = null
   })
 

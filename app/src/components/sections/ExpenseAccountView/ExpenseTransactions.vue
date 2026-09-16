@@ -235,7 +235,7 @@ const loading = computed(() => expenseLoading.value || incomingTokenTransfersLoa
 const hasError = computed(() => Boolean(error.value || incomingTokenTransfersError.value))
 
 const rawTransactions = computed(() =>
-  buildRawExpenseTransactions(expenseData.value?.data, incomingTokenTransfersData.value?.data)
+  buildRawExpenseTransactions(expenseData.value?.events, incomingTokenTransfersData.value?.events)
 )
 
 const transactions = computed<ExpenseTransaction[]>(() =>

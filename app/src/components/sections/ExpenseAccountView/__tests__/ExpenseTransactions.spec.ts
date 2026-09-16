@@ -131,7 +131,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('groups multiple events sharing the same tx hash as sub-rows', () => {
-    mockExpenseQuery.data.value!.data = buildGroupedExpenseQueryResult()
+    mockExpenseQuery.data.value!.events = buildGroupedExpenseQueryResult()
     incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
 
@@ -151,7 +151,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('renders grouped zero-value child events with value fallback', () => {
-    mockExpenseQuery.data.value!.data = buildGroupedZeroChildExpenseQueryResult()
+    mockExpenseQuery.data.value!.events = buildGroupedZeroChildExpenseQueryResult()
     incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
 
@@ -175,7 +175,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('changes page via table footer pagination controls', async () => {
-    mockExpenseQuery.data.value!.data = buildPaginatedExpenseQueryResult(25)
+    mockExpenseQuery.data.value!.events = buildPaginatedExpenseQueryResult(25)
     incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
 
@@ -190,7 +190,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('anchors the current first row when page size changes', async () => {
-    mockExpenseQuery.data.value!.data = buildPaginatedExpenseQueryResult(25)
+    mockExpenseQuery.data.value!.events = buildPaginatedExpenseQueryResult(25)
     incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
 
@@ -212,7 +212,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('maps ownership transfer events with a — value', () => {
-    mockExpenseQuery.data.value!.data = {
+    mockExpenseQuery.data.value!.events = {
       ...buildExpenseQueryResult(),
       expenseOwnershipTransferreds: {
         items: [
@@ -241,7 +241,7 @@ describe('ExpenseTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    mockExpenseQuery.data.value!.data = buildFallbackExpenseQueryResult()
+    mockExpenseQuery.data.value!.events = buildFallbackExpenseQueryResult()
 
     wrapper = createWrapper()
 

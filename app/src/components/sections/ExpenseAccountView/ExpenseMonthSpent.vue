@@ -54,7 +54,7 @@ const transfersInRange = (
   start: number,
   end: number
 ): { amount: bigint; tokenAddress: string }[] => {
-  const events = expenseEvents.value?.data
+  const events = expenseEvents.value?.events
   if (!events) return []
   const inRange = (ts: number) => ts >= start && ts <= end
   return [

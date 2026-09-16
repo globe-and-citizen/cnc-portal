@@ -11,7 +11,7 @@ export const createMockEventFeedState = <T = unknown>(
   initialResult?: T
 ): MockEventFeedState<T> => ({
   data: ref(
-    initialResult === undefined ? undefined : { data: initialResult, gaps: [], timestampGaps: [] }
+    initialResult === undefined ? undefined : { events: initialResult, gaps: [], timestampGaps: [] }
   ) as Ref<ScanResult<T> | undefined>,
   error: ref<Error | null>(null),
   isPending: ref(false)
@@ -19,7 +19,7 @@ export const createMockEventFeedState = <T = unknown>(
 
 export const resetMockEventFeedState = <T = unknown>(state: MockEventFeedState<T>, result?: T) => {
   state.data.value =
-    result === undefined ? undefined : { data: result, gaps: [], timestampGaps: [] }
+    result === undefined ? undefined : { events: result, gaps: [], timestampGaps: [] }
   state.error.value = null
   state.isPending.value = false
 }

@@ -78,9 +78,9 @@ describe('scanContractLogs', () => {
       opts
     )
 
-    expect(out.data.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x2-0'])
-    expect(out.data.items.find((i) => i.id === '0x1-0')?.contract).toBe(OLD)
-    expect(out.data.items.find((i) => i.id === '0x2-0')?.contract).toBe(NEW)
+    expect(out.events.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x2-0'])
+    expect(out.events.items.find((i) => i.id === '0x1-0')?.contract).toBe(OLD)
+    expect(out.events.items.find((i) => i.id === '0x2-0')?.contract).toBe(NEW)
   })
 
   it('scans each generation from its own deploy boundary', async () => {
@@ -123,8 +123,8 @@ describe('scanContractLogs', () => {
 
     const out = await scanContractLogs(client as unknown as ChainClient, [{ address: OLD }], opts)
 
-    expect(out.data.items).toHaveLength(1)
-    expect(out.data.items[0].id).toBe('0x1-0')
+    expect(out.events.items).toHaveLength(1)
+    expect(out.events.items[0].id).toBe('0x1-0')
   })
 
   it('keeps every event regardless of input order and resolves timestamps', async () => {
@@ -141,9 +141,9 @@ describe('scanContractLogs', () => {
       opts
     )
 
-    expect(out.data.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x3-1'])
-    expect(out.data.items.find((i) => i.id === '0x1-0')?.timestamp).toBe(1010)
-    expect(out.data.items.find((i) => i.id === '0x3-1')?.timestamp).toBe(1030)
+    expect(out.events.items.map((i) => i.id).sort()).toEqual(['0x1-0', '0x3-1'])
+    expect(out.events.items.find((i) => i.id === '0x1-0')?.timestamp).toBe(1010)
+    expect(out.events.items.find((i) => i.id === '0x3-1')?.timestamp).toBe(1030)
     expect(out.timestampGaps).toEqual([])
   })
 
@@ -161,7 +161,7 @@ describe('scanContractLogs', () => {
       }
     )
 
-    expect(out.data.items).toEqual([])
+    expect(out.events.items).toEqual([])
     expect(out.timestampGaps).toEqual([
       {
         transactionHash: '0x1',
@@ -178,7 +178,7 @@ describe('scanContractLogs', () => {
 
     const out = await scanContractLogs(client as unknown as ChainClient, [{ address: OLD }], opts)
 
-    expect(out.data.items).toEqual([])
+    expect(out.events.items).toEqual([])
     expect(out.timestampGaps).toEqual([
       {
         transactionHash: '0x1',
@@ -200,7 +200,7 @@ describe('scanContractLogs', () => {
       opts
     )
 
-    expect(out.data.items.map((i) => i.id)).toEqual(['0x1-0'])
+    expect(out.events.items.map((i) => i.id)).toEqual(['0x1-0'])
   })
 
   it('records a gap and keeps the other generations when one scan fails', async () => {
@@ -221,7 +221,7 @@ describe('scanContractLogs', () => {
       opts
     )
 
-    expect(out.data.items.map((i) => i.id)).toEqual(['0x2-0'])
+    expect(out.events.items.map((i) => i.id)).toEqual(['0x2-0'])
     expect(out.gaps).toHaveLength(1)
     expect(out.gaps[0].address).toBe(OLD)
   })
@@ -230,7 +230,7 @@ describe('scanContractLogs', () => {
     const client = makeClient({})
     const out = await scanContractLogs(client as unknown as ChainClient, [], opts)
 
-    expect(out.data.items).toEqual([])
+    expect(out.events.items).toEqual([])
     expect(client.getLogs).not.toHaveBeenCalled()
   })
 
@@ -257,7 +257,7 @@ describe('scanContractLogs', () => {
       withExtra
     )
 
-    const fee = out.data.items.find((i) => i.eventName === 'FeePaid')
+    const fee = out.events.items.find((i) => i.eventName === 'FeePaid')
     expect(fee?.contract).toBe(OLD)
   })
 })

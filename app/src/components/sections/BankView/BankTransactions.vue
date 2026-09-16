@@ -217,7 +217,7 @@ const contractAddress = computed(() => props.bankAddress.toLowerCase())
 
 const { data, error, isPending: loading } = useBankEventsViaLogs(contractAddress)
 
-const rawTransactions = computed(() => buildRawBankTransactions(data.value?.data))
+const rawTransactions = computed(() => buildRawBankTransactions(data.value?.events))
 
 const transactions = computed<BankTransaction[]>(() =>
   rawTransactions.value.map((row) => ({
