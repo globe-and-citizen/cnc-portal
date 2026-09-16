@@ -12,9 +12,8 @@ const { captured, feed } = vi.hoisted(() => {
   const feed = (key: string) => (arg: unknown) => {
     captured[key] = arg
     return {
-      result: { value: null },
-      gaps: { value: [] },
-      loading: { value: false },
+      data: { value: { data: null, gaps: [], timestampGaps: [] } },
+      isPending: { value: false },
       error: { value: null },
       refetch: () => Promise.resolve()
     }

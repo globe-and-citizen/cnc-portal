@@ -1,21 +1,25 @@
 import { ref, type Ref } from 'vue'
+import type { ScanResult } from '@/composables/eventsViaLogs'
 
 export type MockEventFeedState<T = unknown> = {
-  result: Ref<T | undefined>
+  data: Ref<ScanResult<T> | undefined>
   error: Ref<Error | null>
-  loading: Ref<boolean>
+  isPending: Ref<boolean>
 }
 
 export const createMockEventFeedState = <T = unknown>(
   initialResult?: T
 ): MockEventFeedState<T> => ({
-  result: ref(initialResult) as Ref<T | undefined>,
+  data: ref(
+    initialResult === undefined ? undefined : { data: initialResult, gaps: [], timestampGaps: [] }
+  ) as Ref<ScanResult<T> | undefined>,
   error: ref<Error | null>(null),
-  loading: ref(false)
+  isPending: ref(false)
 })
 
 export const resetMockEventFeedState = <T = unknown>(state: MockEventFeedState<T>, result?: T) => {
-  state.result.value = result
+  state.data.value =
+    result === undefined ? undefined : { data: result, gaps: [], timestampGaps: [] }
   state.error.value = null
-  state.loading.value = false
+  state.isPending.value = false
 }

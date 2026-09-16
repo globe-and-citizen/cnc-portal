@@ -295,9 +295,9 @@ export function useBankEventsViaLogs(contractAddress: MaybeRefOrGetter<ContractA
 
   return {
     ...query,
-    result: computed(() => {
-      const feed = query.result.value
-      return feed ? normalizeLegacyBankFeeTokens(feed) : null
+    data: computed(() => {
+      const result = query.data.value
+      return result ? { ...result, data: normalizeLegacyBankFeeTokens(result.data) } : undefined
     })
   }
 }

@@ -287,14 +287,5 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
     }
   })
 
-  // `gaps` surfaces generations whose scan failed; `refetch` lets consumers
-  // explicitly refresh the RPC log scan.
-  return {
-    result: computed(() => query.data.value?.data ?? null),
-    gaps: computed<ScanGap[]>(() => query.data.value?.gaps ?? []),
-    timestampGaps: computed<TimestampGap[]>(() => query.data.value?.timestampGaps ?? []),
-    loading: query.isPending,
-    error: query.error,
-    refetch: query.refetch
-  }
+  return query
 }

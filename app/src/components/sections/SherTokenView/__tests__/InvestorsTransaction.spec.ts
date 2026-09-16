@@ -76,9 +76,9 @@ vi.mock('@/composables/investor/useInvestorEventsViaLogs', async () => {
   eventFeedState.investorLoading = ref(false)
   return {
     useInvestorEventsViaLogs: () => ({
-      result: eventFeedState.investorResult,
+      data: eventFeedState.investorResult,
       error: eventFeedState.investorError,
-      loading: eventFeedState.investorLoading
+      isPending: eventFeedState.investorLoading
     })
   }
 })
@@ -90,9 +90,9 @@ vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => 
   eventFeedState.safeLoading = ref(false)
   return {
     useSafeDepositRouterEventsViaLogs: () => ({
-      result: eventFeedState.safeResult,
+      data: eventFeedState.safeResult,
       error: eventFeedState.safeError,
-      loading: eventFeedState.safeLoading
+      isPending: eventFeedState.safeLoading
     })
   }
 })
@@ -102,10 +102,14 @@ describe('InvestorsTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    eventFeedState.investorResult.value = buildInvestorResult()
+    eventFeedState.investorResult.value = {
+      data: buildInvestorResult(),
+      gaps: [],
+      timestampGaps: []
+    }
     eventFeedState.investorError.value = null
     eventFeedState.investorLoading.value = false
-    eventFeedState.safeResult.value = buildSafeResult()
+    eventFeedState.safeResult.value = { data: buildSafeResult(), gaps: [], timestampGaps: [] }
     eventFeedState.safeError.value = null
     eventFeedState.safeLoading.value = false
     mockGetTokenPrice.mockReturnValue(1)

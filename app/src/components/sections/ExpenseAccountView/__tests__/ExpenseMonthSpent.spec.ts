@@ -1,25 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { USDC_ADDRESS } from '@/constant'
+import type { ScanResult } from '@/composables/eventsViaLogs'
 import type { ExpenseEventFeed } from '@/types/contract-events/expense'
 import ExpenseMonthSpent from '../ExpenseMonthSpent.vue'
 
 // The component now derives monthly spend from the RPC-sourced Expense events
 // (via useExpenseEventsViaLogs), filtering token transfers by timestamp. This
-// holds the single result ref the mocked composable returns.
+// holds the standard TanStack data ref the mocked composable returns.
 const state = vi.hoisted(() => ({
-  result: null as unknown as { value: ExpenseEventFeed | undefined },
+  data: null as unknown as { value: ScanResult<ExpenseEventFeed> | undefined },
   error: null as unknown as { value: Error | null }
 }))
 
 vi.mock('@/composables/expense/useExpenseEventsViaLogs', async () => {
   const { ref } = await import('vue')
-  state.result = ref<ExpenseEventFeed | undefined>(undefined)
+  state.data = ref<ScanResult<ExpenseEventFeed> | undefined>(undefined)
   state.error = ref<Error | null>(null)
   return {
     useExpenseEventsViaLogs: () => ({
-      result: state.result,
-      loading: ref(false),
+      data: state.data,
+      isPending: ref(false),
       error: state.error
     })
   }
@@ -65,7 +66,7 @@ const setSpend = (currentUsdc: number[], prevUsdc: number[]) => {
     ...currentUsdc.map((w) => usdcTransfer(w, tsInCurrentMonth)),
     ...prevUsdc.map((w) => usdcTransfer(w, tsInPrevMonth))
   ]
-  state.result.value = events
+  state.data.value = { data: events, gaps: [], timestampGaps: [] }
 }
 
 const createWrapper = (): VueWrapper => mount(ExpenseMonthSpent)
@@ -73,7 +74,7 @@ const delta = (wrapper: VueWrapper) => wrapper.find('[data-test="percentage-chan
 
 describe('ExpenseMonthSpent', () => {
   beforeEach(() => {
-    state.result.value = emptyEvents()
+    state.data.value = { data: emptyEvents(), gaps: [], timestampGaps: [] }
     state.error.value = null
   })
 

@@ -10,17 +10,18 @@ import { zeroAddress } from 'viem'
 // pattern the *Transactions.vue specs use — so this spec exercises the assembly
 // logic without touching the RPC. `refetch` resolves so the refresh test passes.
 const { feeds, historicalRates, useHistoricalRatesQuery } = vi.hoisted(() => {
+  const scanResult = () => ({
+    data: null as unknown,
+    gaps: [] as Array<{ address: string; error: unknown }>,
+    timestampGaps: [] as Array<{
+      transactionHash: string | null
+      blockNumber: bigint | null
+      reason: 'missing-block-number' | 'block-unavailable'
+    }>
+  })
   const feed = () => ({
-    result: { value: null },
-    gaps: { value: [] as Array<{ address: string; error: unknown }> },
-    timestampGaps: {
-      value: [] as Array<{
-        transactionHash: string | null
-        blockNumber: bigint | null
-        reason: 'missing-block-number' | 'block-unavailable'
-      }>
-    },
-    loading: { value: false },
+    data: { value: scanResult() },
+    isPending: { value: false },
     error: { value: null as unknown },
     refetch: vi.fn().mockResolvedValue(undefined)
   })
@@ -93,8 +94,7 @@ const dividendFeed = (token: string): InvestorEventFeed => ({
 })
 
 const setInvestorFeed = (value: InvestorEventFeed) => {
-  const result = feeds.investor.result as { value: InvestorEventFeed | null }
-  result.value = value
+  feeds.investor.data.value.data = value
 }
 
 // Relies on the global mocks (tests/setup/composables.setup.ts):
@@ -107,10 +107,8 @@ describe('useCNCAccounting', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     Object.values(feeds).forEach((feed) => {
-      feed.result.value = null
-      feed.gaps.value = []
-      feed.timestampGaps.value = []
-      feed.loading.value = false
+      feed.data.value = { data: null, gaps: [], timestampGaps: [] }
+      feed.isPending.value = false
       feed.error.value = null
     })
     historicalRates.isLoading.value = false
@@ -232,7 +230,7 @@ describe('useCNCAccounting', () => {
       error: ref(null),
       refetch: vi.fn()
     } as unknown as ReturnType<typeof useGetTeamQuery>)
-    feeds.bank.gaps.value = [
+    feeds.bank.data.value.gaps = [
       { address: '0x1111111111111111111111111111111111111111', error: new Error('RPC') }
     ]
 
@@ -264,7 +262,7 @@ describe('useCNCAccounting', () => {
       error: ref(null),
       refetch: vi.fn()
     } as unknown as ReturnType<typeof useGetTeamQuery>)
-    feeds.bank.timestampGaps.value = [
+    feeds.bank.data.value.timestampGaps = [
       {
         transactionHash: `0x${'a'.repeat(64)}`,
         blockNumber: 42n,
@@ -301,7 +299,7 @@ describe('useCNCAccounting', () => {
       error: ref(null),
       refetch: vi.fn()
     } as unknown as ReturnType<typeof useGetTeamQuery>)
-    feeds.bank.loading.value = true
+    feeds.bank.isPending.value = true
 
     const { status } = useCNCAccounting('1')
 

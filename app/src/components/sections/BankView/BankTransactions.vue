@@ -215,9 +215,9 @@ const currencyStore = useCurrencyStore()
 const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.bankAddress.toLowerCase())
 
-const { result, error, loading } = useBankEventsViaLogs(contractAddress)
+const { data, error, isPending: loading } = useBankEventsViaLogs(contractAddress)
 
-const rawTransactions = computed(() => buildRawBankTransactions(result.value))
+const rawTransactions = computed(() => buildRawBankTransactions(data.value?.data))
 
 const transactions = computed<BankTransaction[]>(() =>
   rawTransactions.value.map((row) => ({

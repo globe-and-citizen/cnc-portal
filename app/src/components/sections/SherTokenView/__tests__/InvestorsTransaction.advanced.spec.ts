@@ -84,9 +84,9 @@ vi.mock('@/composables/investor/useInvestorEventsViaLogs', async () => {
     useInvestorEventsViaLogs: (addr: { value: string }) => {
       capture.investor = addr
       return {
-        result: eventFeedState.investorResult,
+        data: eventFeedState.investorResult,
         error: eventFeedState.investorError,
-        loading: eventFeedState.investorLoading
+        isPending: eventFeedState.investorLoading
       }
     }
   }
@@ -101,9 +101,9 @@ vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => 
     useSafeDepositRouterEventsViaLogs: (addr: { value: string }) => {
       capture.safe = addr
       return {
-        result: eventFeedState.safeResult,
+        data: eventFeedState.safeResult,
         error: eventFeedState.safeError,
-        loading: eventFeedState.safeLoading
+        isPending: eventFeedState.safeLoading
       }
     }
   }
@@ -114,10 +114,14 @@ describe('InvestorsTransactions advanced', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    eventFeedState.investorResult.value = buildInvestorResult()
+    eventFeedState.investorResult.value = {
+      data: buildInvestorResult(),
+      gaps: [],
+      timestampGaps: []
+    }
     eventFeedState.investorError.value = null
     eventFeedState.investorLoading.value = false
-    eventFeedState.safeResult.value = buildSafeResult()
+    eventFeedState.safeResult.value = { data: buildSafeResult(), gaps: [], timestampGaps: [] }
     eventFeedState.safeError.value = null
     eventFeedState.safeLoading.value = false
     mockGetTokenPrice.mockReturnValue(1)
@@ -156,32 +160,36 @@ describe('InvestorsTransactions advanced', () => {
   it('handles parse failures and usd price fallbacks', () => {
     mockGetTokenPrice.mockReturnValue(0)
     eventFeedState.safeResult.value = {
-      safeDeposits: {
-        items: [
-          {
-            id: '0xusdcdeposit-0',
-            contractAddress: SAFE_ROUTER_ADDRESS,
-            depositor: '0x4444444444444444444444444444444444444444',
-            token: USDC_ADDRESS,
-            tokenAmount: '5000000',
-            sherAmount: '0',
-            timestamp: 1_700_000_300
-          },
-          {
-            id: '0xnativedeposit-0',
-            contractAddress: SAFE_ROUTER_ADDRESS,
-            depositor: '0x5555555555555555555555555555555555555555',
-            token: ZERO_ADDRESS,
-            tokenAmount: 'not-a-number',
-            sherAmount: '0',
-            timestamp: 1_700_000_400
-          }
-        ]
+      data: {
+        safeDeposits: {
+          items: [
+            {
+              id: '0xusdcdeposit-0',
+              contractAddress: SAFE_ROUTER_ADDRESS,
+              depositor: '0x4444444444444444444444444444444444444444',
+              token: USDC_ADDRESS,
+              tokenAmount: '5000000',
+              sherAmount: '0',
+              timestamp: 1_700_000_300
+            },
+            {
+              id: '0xnativedeposit-0',
+              contractAddress: SAFE_ROUTER_ADDRESS,
+              depositor: '0x5555555555555555555555555555555555555555',
+              token: ZERO_ADDRESS,
+              tokenAmount: 'not-a-number',
+              sherAmount: '0',
+              timestamp: 1_700_000_400
+            }
+          ]
+        },
+        safeDepositsEnableds: { items: [] },
+        safeDepositsDisableds: { items: [] },
+        safeAddressUpdateds: { items: [] },
+        safeMultiplierUpdateds: { items: [] }
       },
-      safeDepositsEnableds: { items: [] },
-      safeDepositsDisableds: { items: [] },
-      safeAddressUpdateds: { items: [] },
-      safeMultiplierUpdateds: { items: [] }
+      gaps: [],
+      timestampGaps: []
     }
     wrapper = createWrapper()
     const data = tableData(wrapper)

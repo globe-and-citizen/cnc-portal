@@ -276,6 +276,14 @@ const useTestEventFeed = (contractAddress: MaybeRefOrGetter<readonly ScanTarget[
   })
 
 describe('useContractEventsViaLogs query identity', () => {
+  it('returns the standard TanStack query result without custom aliases', () => {
+    const query = useTestEventFeed([{ address: OLD }])
+
+    expect(query).toBe(useQueryFn.mock.results.at(-1)?.value)
+    expect(query).not.toHaveProperty('result')
+    expect(query).not.toHaveProperty('loading')
+  })
+
   it('is stable across target order and address casing', () => {
     useTestEventFeed([
       { address: NEW, fromBlock: 20n },

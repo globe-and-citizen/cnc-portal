@@ -199,15 +199,15 @@ const contractAddress = computed(() => props.cashRemunerationAddress.toLowerCase
 const currentBankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
 const {
-  result,
+  data: cashRemunerationData,
   error,
-  loading: cashRemunerationLoading
+  isPending: cashRemunerationLoading
 } = useCashRemunerationEventsViaLogs(contractAddress)
 
 const {
-  result: incomingTokenTransfersResult,
+  data: incomingTokenTransfersData,
   error: incomingTokenTransfersError,
-  loading: incomingTokenTransfersLoading
+  isPending: incomingTokenTransfersLoading
 } = useIncomingBankTokenTransfersViaLogs(
   () => teamStore.currentTeamId,
   contractAddress,
@@ -217,7 +217,10 @@ const {
 const loading = computed(() => cashRemunerationLoading.value || incomingTokenTransfersLoading.value)
 
 const rawTransactions = computed(() =>
-  buildRawCashRemunerationTransactions(result.value, incomingTokenTransfersResult.value)
+  buildRawCashRemunerationTransactions(
+    cashRemunerationData.value?.data,
+    incomingTokenTransfersData.value?.data
+  )
 )
 
 const transactions = computed<CashRemunerationTransaction[]>(() =>

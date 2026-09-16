@@ -244,18 +244,22 @@ const getUsdPrice = (tokenId: TokenId | null): number => {
   return 0
 }
 
-const { result, error, loading: investorLoading } = useInvestorEventsViaLogs(investorAddress)
+const {
+  data: investorData,
+  error,
+  isPending: investorLoading
+} = useInvestorEventsViaLogs(investorAddress)
 
 const {
-  result: safeResult,
+  data: safeData,
   error: safeError,
-  loading: safeLoading
+  isPending: safeLoading
 } = useSafeDepositRouterEventsViaLogs(safeDepositRouterAddress)
 
 const loading = computed(() => investorLoading.value || safeLoading.value)
 
 const enrichedTransactions = computed(() =>
-  buildRawInvestorTransactions(result.value, safeResult.value).map((tx) =>
+  buildRawInvestorTransactions(investorData.value?.data, safeData.value?.data).map((tx) =>
     mapRawInvestorTransaction(
       tx,
       investorTokenSymbol.value,
