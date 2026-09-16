@@ -31,9 +31,13 @@ interface TimestampGap {
   blockNumber: bigint | null
 }
 
+interface EventFeedData {
+  gaps: readonly EventGap[]
+  timestampGaps: readonly TimestampGap[]
+}
+
 interface EventFeedAvailability extends QueryAvailability {
-  gaps?: ReactiveValue<readonly EventGap[]>
-  timestampGaps?: ReactiveValue<readonly TimestampGap[]>
+  data?: ReactiveValue<EventFeedData | undefined>
 }
 
 export interface AccountingSourceDefinition {
@@ -121,7 +125,7 @@ function availabilityOf(definition: AccountingSourceDefinition): AccountingSourc
 }
 
 function eventPartialReason(feed: EventFeedAvailability): string | undefined {
-  const gaps = (feed.gaps?.value.length ?? 0) + (feed.timestampGaps?.value.length ?? 0)
+  const gaps = (feed.data?.value?.gaps.length ?? 0) + (feed.data?.value?.timestampGaps.length ?? 0)
   return gaps ? `${gaps} event evidence gap${gaps === 1 ? '' : 's'} detected.` : undefined
 }
 
@@ -182,14 +186,14 @@ export function useAccountingStatus(input: AccountingStatusInput): AccountingSta
         })
       ),
     ...input.eventSources.flatMap(({ source, query }) => [
-      ...(query.gaps?.value ?? []).map(
+      ...(query.data?.value?.gaps ?? []).map(
         (gap): AccountingDiagnostic => ({
           kind: 'source-scan-failed',
           source,
           address: gap.address
         })
       ),
-      ...(query.timestampGaps?.value ?? []).map(
+      ...(query.data?.value?.timestampGaps ?? []).map(
         (gap): AccountingDiagnostic => ({
           kind: 'block-timestamp-unavailable',
           source,
