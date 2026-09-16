@@ -35,7 +35,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
+**Implementation evidence reviewed against:** `0d5e32409b5fe192d18abe9ae9be8a7833bc3e64`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Bank history](../../../app/src/components/sections/BankView/BankTransactions.vue),

@@ -17,7 +17,7 @@
     "preview": "vite preview",
     "test:unit": "vitest",
     "test:api-surface": "node --test scripts/__tests__/check-api-surface.node.mjs",
-    "test:architecture": "node --test scripts/__tests__/check-architecture-candidates.node.mjs",
+    "test:architecture": "node --test scripts/__tests__/check-architecture-candidates.node.mjs scripts/__tests__/query-contract-eslint.node.mjs",
     "test:utility-boundaries": "node --test scripts/__tests__/check-utility-boundaries.node.mjs",
     "test:watch": "vitest -u",
     "test:unit:coverage": "npx vitest run --coverage",

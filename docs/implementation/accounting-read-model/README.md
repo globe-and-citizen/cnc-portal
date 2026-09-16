@@ -52,12 +52,13 @@ flowchart LR
 `useCNCAccounting` calls the on-chain, Safe, and portal queries directly and owns their reactive state. It exposes only the journal, a
 grouped status, and a refresh operation. `useAccountingStatus` projects each applicable source into `loading`, `ready`, `partial`, or
 `failed`; a source that does not apply is `not-applicable`. A fatal company failure takes precedence, then loading, then partial evidence.
-Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken for final books. Typed diagnostics identify source errors,
-contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, and unavailable rates. The parent Accounting route remains
-mounted while its report child changes, so the shared context prevents those reports from independently fetching and assembling the same
-books. The team workspace gives that route owner a stable key within one team and a new key when the team identifier changes. Its three pure
-runtime stages are `buildCncJournalEntryDrafts(CncAccountingInput)`, `applyHistoricalRates(drafts, rateOfRecord)`, and
-`assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
+Contract event feeds retain their domain events and completeness gaps together as `{ events, gaps, timestampGaps }` in the standard TanStack
+query `data`. Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken for final books. Typed diagnostics identify
+source errors, contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, and unavailable rates. The parent Accounting
+route remains mounted while its report child changes, so the shared context prevents those reports from independently fetching and
+assembling the same books. The team workspace gives that route owner a stable key within one team and a new key when the team identifier
+changes. Its three pure runtime stages are `buildCncJournalEntryDrafts(CncAccountingInput)`, `applyHistoricalRates(drafts, rateOfRecord)`,
+and `assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
 diagnostics without Vue or network I/O.
 
 The incoming-transfer and executed-transaction Safe queries remain disabled until the reactive company Safe address resolves. Once enabled,
@@ -600,7 +601,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `51b89731ae01941c367b49b2cf03f763693ea150`
+**Implementation evidence reviewed against:** `0d5e32409b5fe192d18abe9ae9be8a7833bc3e64`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

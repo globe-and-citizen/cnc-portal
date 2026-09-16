@@ -125,6 +125,41 @@ const globalMockReMockSelectors = bannedGlobalMockPaths.map((path) => ({
   message: globalMockMessage(path)
 }))
 
+export const noCustomQueryFacadeRule = {
+  meta: {
+    type: 'suggestion',
+    docs: {
+      description: 'review composables that replace standard query data and pending members'
+    },
+    schema: [],
+    messages: {
+      preferStandardQuery:
+        'Review this custom result/loading facade. Query-backed composables should normally return the standard TanStack query so consumers discover data, isPending, error, refetch, and the remaining query state.'
+    }
+  },
+  create(context) {
+    return {
+      'ReturnStatement > ObjectExpression'(node) {
+        const propertyNames = new Set(
+          node.properties
+            .filter((property) => property.type === 'Property' && !property.computed)
+            .map((property) => property.key.name ?? property.key.value)
+        )
+
+        if (propertyNames.has('result') && propertyNames.has('loading')) {
+          context.report({ node, messageId: 'preferStandardQuery' })
+        }
+      }
+    }
+  }
+}
+
+const queryContractPlugin = {
+  rules: {
+    'no-custom-query-facade': noCustomQueryFacadeRule
+  }
+}
+
 // Contract-writes V3 enforcement (issues #1798, #1926).
 //
 // All on-chain writes must go through `useContractWritesV3` from
@@ -305,5 +340,14 @@ export default [
       'vue/no-restricted-syntax': ['error', ...formattingSelectors]
     }
   },
-  skipFormatting
+  skipFormatting,
+  {
+    name: 'app/query-contract-review',
+    files: ['src/composables/**/*.{ts,tsx}'],
+    ignores: ['**/__tests__/**', '**/*.spec.{ts,tsx}'],
+    plugins: { cnc: queryContractPlugin },
+    rules: {
+      'cnc/no-custom-query-facade': 'warn'
+    }
+  }
 ]
