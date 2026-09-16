@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mapBankEvents } from '@/utils/accounting/mappers/bank'
-import { makeCtx, ADDR } from './fixtures'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 
@@ -25,9 +25,9 @@ describe('Bank fee mapping', () => {
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
-      amountUsd: 1,
       internal: false
     })
+    expect(draftUsdValue(entry)).toBe(1)
   })
 
   it('keeps distinct fees (different amount or timestamp) separate', () => {
@@ -92,7 +92,8 @@ describe('Bank fee mapping', () => {
       },
       ctx
     )
-    expect(entry).toMatchObject({ token: 'native', amountUsd: 2 })
+    expect(entry).toMatchObject({ token: 'native' })
+    expect(draftUsdValue(entry)).toBe(2)
   })
 
   it('preserves fee source evidence for JournalEntry reconciliation', () => {

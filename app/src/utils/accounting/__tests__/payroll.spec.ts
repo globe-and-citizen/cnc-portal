@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mapPayroll } from '@/utils/accounting/mappers/payroll'
-import { makeCtx, ADDR } from './fixtures'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 
@@ -24,9 +24,9 @@ describe('mapPayroll settlements', () => {
       useCase: 'UC-CASH-03',
       debit: 'Wage Payable',
       credit: 'Cash — Payroll',
-      amountUsd: 2,
       enrichment: 'needs-off-chain-data'
     })
+    expect(draftUsdValue(entry)).toBe(2)
   })
 
   it('books a SHER WithdrawToken as the equity leg (SHERS To Be Issued → Investor Equity)', () => {
@@ -50,9 +50,9 @@ describe('mapPayroll settlements', () => {
       debit: 'SHERS To Be Issued',
       credit: 'Investor Equity',
       token: 'sher',
-      shares: 10,
-      amountUsd: 5 // 10 sher * $0.50
+      shares: 10
     })
+    expect(draftUsdValue(entry)).toBe(5) // 10 SHER * $0.50
   })
 
   it('books a USDC WithdrawToken as a cash settlement', () => {

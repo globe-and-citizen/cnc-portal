@@ -8,15 +8,16 @@ import {
   openingRow,
   withRunningBalance
 } from '@/utils/accounting/accountLedger'
-import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { catalogueLedger } from './catalogueLedger'
 import { usd } from './fixtures'
 
-const journal = buildJournal(catalogueLedger)
+const journal = finalizeJournal(catalogueLedger)
 const generalLedger = buildGeneralLedger(journal)
 
 function trialBalanceOf(account: AccountName): bigint {
@@ -102,13 +103,12 @@ describe('accountLedger — JournalEntry drill-downs', () => {
 
   it('keeps a transfer fee as an ordinary line of its one JournalEntry', () => {
     const txHash = `0x${'a'.repeat(64)}`
-    const transfer: LedgerEntry = {
+    const transfer: JournalEntryDraft = {
       id: `${txHash}-5`,
       timestamp: 100,
       useCase: 'UC-BANK-03',
       debit: 'Cash — Payroll',
       credit: 'Cash — Bank',
-      amountUsd: 2,
       token: 'usdc',
       rawAmount: '2000000',
       rate: 1,
@@ -116,13 +116,12 @@ describe('accountLedger — JournalEntry drill-downs', () => {
       memo: 'Fund Cash — Payroll from Bank',
       enrichment: 'not-applicable'
     }
-    const fee: LedgerEntry = {
+    const fee: JournalEntryDraft = {
       id: `${txHash}-3`,
       timestamp: 100,
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
-      amountUsd: 0.5,
       token: 'usdc',
       rawAmount: '500000',
       rate: 1,
@@ -131,7 +130,7 @@ describe('accountLedger — JournalEntry drill-downs', () => {
       enrichment: 'not-applicable'
     }
 
-    const feeJournal = buildJournal([transfer, fee])
+    const feeJournal = finalizeJournal([transfer, fee])
     const entries = entriesForAccount(feeJournal, 'Cash — Bank')
     const rows = journalLedgerRows(entries, feeJournal)
     expect(entries).toHaveLength(1)

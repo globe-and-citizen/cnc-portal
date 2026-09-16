@@ -10,10 +10,10 @@ import { getTokenDecimals } from '@/utils/tokens/metadata'
 import type { UsdAmount, UsdRate } from './types'
 
 /** Decimal places retained for a USD price of one whole token. */
-export const USD_RATE_DECIMALS = 6
+const USD_RATE_DECIMALS = 6
 
 /** Decimal places retained for every accounting amount. */
-export const USD_AMOUNT_DECIMALS = 24
+const USD_AMOUNT_DECIMALS = 24
 
 export const ZERO_USD_AMOUNT: UsdAmount = 0n
 

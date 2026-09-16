@@ -1,24 +1,22 @@
 import { describe, it, expect } from 'vitest'
 import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import { round6 } from '@/utils/accounting/toUsd'
-import { ADDR } from './fixtures'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { finalizeJournal } from './assembleAccounting'
+import { ADDR, draftUsdValue, usd } from './fixtures'
 
 /** Whole SHER → base units (6 decimals). */
 function raw(sher: number): string {
   return String(BigInt(Math.round(sher * 1e6)))
 }
 
-/** A SHER wage accrual (UC-CASH-02): Cr SHERS To Be Issued. Its stamped USD is a
- *  placeholder — settleWithdrawnSher recomputes it. */
-function accrual(sher: number, over: Partial<LedgerEntry> = {}) {
-  return makeEntry({
+/** A SHER wage accrual (UC-CASH-02): Cr SHERS To Be Issued. */
+function accrual(sher: number, over: Partial<JournalEntryDraft> = {}) {
+  return makeJournalEntryDraft({
     id: `accrual-${over.id ?? sher}`,
     timestamp: 100,
     useCase: 'UC-CASH-02',
     debit: 'Deferred SHER Compensation',
     credit: 'SHERS To Be Issued',
-    amountUsd: 0,
     token: 'sher',
     rawAmount: raw(sher),
     counterparty: ADDR.member,
@@ -28,14 +26,13 @@ function accrual(sher: number, over: Partial<LedgerEntry> = {}) {
 }
 
 /** A SHER issuance (UC-CASH-03 withdrawal / DEFAULT-D mint) frozen at `rate` on its date. */
-function withdrawal(sher: number, rate: number, over: Partial<LedgerEntry> = {}) {
-  return makeEntry({
+function withdrawal(sher: number, rate: number, over: Partial<JournalEntryDraft> = {}) {
+  return makeJournalEntryDraft({
     id: `withdraw-${over.id ?? sher}`,
     timestamp: 200,
     useCase: 'UC-CASH-03',
     debit: 'SHERS To Be Issued',
     credit: 'Investor Equity',
-    amountUsd: round6(sher * rate),
     rate,
     token: 'sher',
     rawAmount: raw(sher),
@@ -45,23 +42,31 @@ function withdrawal(sher: number, rate: number, over: Partial<LedgerEntry> = {})
   })
 }
 
-/** Open `SHERS To Be Issued` equity (credit-normal): Σ credits − Σ debits. */
-function shersToBeIssuedNet(entries: readonly LedgerEntry[]): number {
-  let net = 0
-  for (const e of entries) {
-    if (e.credit === 'SHERS To Be Issued') net += e.amountUsd
-    if (e.debit === 'SHERS To Be Issued') net -= e.amountUsd
-  }
-  return round6(net)
+/** USD value of every valuation slice from one source accrual. */
+function sourceValue(entries: readonly JournalEntryDraft[], sourceId: string): number {
+  return entries
+    .filter((entry) => entry.id === sourceId || entry.sourceOperationId === sourceId)
+    .reduce((sum, entry) => sum + draftUsdValue(entry), 0)
 }
 
-const find = (entries: readonly LedgerEntry[], id: string) => entries.find((e) => e.id === id)!
+/** Open `SHERS To Be Issued` equity (credit-normal): Σ credits − Σ debits. */
+function shersToBeIssuedNet(entries: readonly JournalEntryDraft[]): number {
+  let net = 0
+  for (const e of entries) {
+    if (e.credit === 'SHERS To Be Issued') net += draftUsdValue(e)
+    if (e.debit === 'SHERS To Be Issued') net -= draftUsdValue(e)
+  }
+  return Math.round(net * 1e6) / 1e6
+}
+
+const find = (entries: readonly JournalEntryDraft[], id: string) =>
+  entries.find((e) => e.id === id)!
 
 describe('settleWithdrawnSher', () => {
   it('floats a never-withdrawn accrual at the current rate', () => {
     // 50 SHER accrued, never withdrawn; current multiplier 5x → $0.20 / SHER.
     const [a] = settleWithdrawnSher([accrual(50)], 0.2)
-    expect(a.amountUsd).toBe(10) // 50 × 0.20
+    expect(draftUsdValue(a)).toBe(10) // 50 × 0.20
     expect(a.rate).toBe(0.2)
   })
 
@@ -71,19 +76,33 @@ describe('settleWithdrawnSher', () => {
     const settled = settleWithdrawnSher([accrual(50), withdrawal(50, 0.2)], 0.1)
     const a = find(settled, 'accrual-50')
     const w = find(settled, 'withdraw-50')
-    expect(a.amountUsd).toBe(10) // frozen at 50 × 0.20, not 50 × 0.10
-    expect(w.amountUsd).toBe(10) // the withdrawal itself is untouched
+    expect(draftUsdValue(a)).toBe(10) // frozen at 50 × 0.20, not 50 × 0.10
+    expect(draftUsdValue(w)).toBe(10) // the withdrawal itself is untouched
     expect(shersToBeIssuedNet(settled)).toBe(0) // matched legs cancel
   })
 
   it('weights a partly-withdrawn accrual: withdrawn part frozen, the rest at current', () => {
     // 100 SHER accrued; 40 withdrawn at 5x ($0.20); current 2x ($0.50).
     const settled = settleWithdrawnSher([accrual(100), withdrawal(40, 0.2)], 0.5)
-    const a = find(settled, 'accrual-100')
-    expect(a.amountUsd).toBe(38) // 40×0.20 (frozen) + 60×0.50 (current)
-    expect(a.rate).toBe(0.38)
+    const slices = settled.filter((entry) => entry.sourceOperationId === 'accrual-100')
+    expect(sourceValue(settled, 'accrual-100')).toBe(38) // 40×0.20 + 60×0.50
+    expect(slices.map(({ rawAmount, rate }) => [rawAmount, rate])).toEqual([
+      ['40000000', 0.2],
+      ['60000000', 0.5]
+    ])
     // SHERS To Be Issued left open = the pending 60 SHER at the current rate.
     expect(shersToBeIssuedNet(settled)).toBe(30)
+  })
+
+  it('finalizes partial accrual slices without a weighted-rate rounding residue', () => {
+    const settled = settleWithdrawnSher([accrual(100), withdrawal(40, 0.2)], 0.5)
+    const accrualEntry = finalizeJournal(settled).find(
+      (entry) => entry.sourceOperationId === 'accrual-100'
+    )
+
+    expect(accrualEntry?.activityAmount).toBe(usd(38))
+    expect(accrualEntry?.lines.reduce((sum, line) => sum + (line.debit ?? 0n), 0n)).toBe(usd(38))
+    expect(accrualEntry?.lines.reduce((sum, line) => sum + (line.credit ?? 0n), 0n)).toBe(usd(38))
   })
 
   it('consumes accruals FIFO across a single withdrawal', () => {
@@ -91,8 +110,8 @@ describe('settleWithdrawnSher', () => {
     const a2 = accrual(30, { id: 'a2', timestamp: 150 })
     const w = withdrawal(50, 0.2, { id: 'w1', timestamp: 200 }) // withdraw 50 at 5x
     const settled = settleWithdrawnSher([a1, a2, w], 1) // current 1x → $1
-    expect(find(settled, 'a1').amountUsd).toBe(6) // fully withdrawn: 30 × 0.20
-    expect(find(settled, 'a2').amountUsd).toBe(14) // 20×0.20 frozen + 10×1 current
+    expect(sourceValue(settled, 'a1')).toBe(6) // fully withdrawn: 30 × 0.20
+    expect(sourceValue(settled, 'a2')).toBe(14) // 20×0.20 frozen + 10×1 current
     expect(shersToBeIssuedNet(settled)).toBe(10) // pending 10 SHER × $1
   })
 
@@ -101,16 +120,16 @@ describe('settleWithdrawnSher', () => {
     const after = accrual(20, { id: 'after', timestamp: 300 })
     const mint = withdrawal(20, 0.2, { id: 'mint', useCase: 'DEFAULT-D', timestamp: 200 })
     const settled = settleWithdrawnSher([before, after, mint], 0.5)
-    expect(find(settled, 'before').amountUsd).toBe(4) // consumed → frozen 20 × 0.20
-    expect(find(settled, 'after').amountUsd).toBe(10) // dated after the mint → 20 × 0.50
+    expect(draftUsdValue(find(settled, 'before'))).toBe(4) // consumed → frozen 20 × 0.20
+    expect(draftUsdValue(find(settled, 'after'))).toBe(10) // dated after the mint → 20 × 0.50
   })
 
   it('never consumes another member’s accrual', () => {
     const mine = accrual(50, { id: 'mine', counterparty: ADDR.member })
     const other = withdrawal(50, 0.2, { id: 'other', counterparty: ADDR.founder })
     const settled = settleWithdrawnSher([mine, other], 0.5)
-    expect(find(settled, 'mine').amountUsd).toBe(25) // stays pending → 50 × 0.50
-    expect(find(settled, 'other').amountUsd).toBe(10) // withdrawal keeps its own value
+    expect(draftUsdValue(find(settled, 'mine'))).toBe(25) // stays pending → 50 × 0.50
+    expect(draftUsdValue(find(settled, 'other'))).toBe(10) // withdrawal keeps its own value
   })
 
   it('keeps a member’s wage promise and their vesting grant in separate lanes', () => {
@@ -121,8 +140,8 @@ describe('settleWithdrawnSher', () => {
     const paid = withdrawal(40, 0.2, { id: 'paid', timestamp: 200 })
     const settled = settleWithdrawnSher([grant, wage, paid], 0.5)
 
-    expect(find(settled, 'wage').amountUsd).toBe(8) // frozen at 40 × 0.20
-    expect(find(settled, 'grant').amountUsd).toBe(30) // untouched → 60 × 0.50
+    expect(draftUsdValue(find(settled, 'wage'))).toBe(8) // frozen at 40 × 0.20
+    expect(draftUsdValue(find(settled, 'grant'))).toBe(30) // untouched → 60 × 0.50
   })
 
   it('clears a vesting grant against its release and the stop that cancels the rest', () => {
@@ -137,7 +156,7 @@ describe('settleWithdrawnSher', () => {
     const settled = settleWithdrawnSher([grant, released, cancelled], 0.5)
 
     // 25 frozen at the release rate + 75 at the stop rate — the current rate never applies.
-    expect(find(settled, 'grant').amountUsd).toBe(35)
+    expect(sourceValue(settled, 'grant')).toBe(35)
     expect(shersToBeIssuedNet(settled)).toBe(0)
   })
 })

@@ -56,5 +56,6 @@ flags:
 ignore:
   - "app/*.ts"
   - "app/src/main.ts"
-  - "app/src/e2e"  # mock connector is test infra, not product code
+  - "app/src/artifacts/abi/**/generated.ts" # generated literal data, not executable product logic
+  - "app/src/e2e" # mock connector is test infra, not product code
   - "app/src/e2e/**"

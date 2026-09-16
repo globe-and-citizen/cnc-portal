@@ -1,181 +1,22 @@
 /**
  * General ledger + trial balance (issue #2117).
  *
- * Turns the consolidated {@link LedgerEntry} feed into the double-entry journal
- * (catalogue §6.2) and rolls it up into a trial balance (catalogue §6.4) that
- * must satisfy two identities:
+ * Rolls the finalized JournalEntry collection into a trial balance (catalogue
+ * §6.4) that must satisfy two identities:
  *
  * - **Gross**: Σ of every journal debit line = Σ of every credit line
  *   (`totalDebit === totalCredit`) — the journal total, 678.10 in the worked example.
  * - **Net**: Σ of the debit-normal account balances = Σ of the credit-normal
  *   balances (`debitBalanceTotal === creditBalanceTotal`) — 253 in the worked example.
  *
- * Accounting assembly adapts the consolidated {@link LedgerEntry} feed into
- * validated {@link JournalEntry} records once. The General Ledger, Trial Balance,
- * Summary, Income Statement, and Balance Sheet consume that assembled journal.
+ * Accounting assembly finalizes source drafts before this projection. The General
+ * Ledger, Trial Balance, Summary, Income Statement, and Balance Sheet all consume
+ * that same journal.
  */
 import { ACCOUNT_NAMES, type AccountName } from './chartOfAccounts'
-import { buildAccountRegistry } from './accountRegistry'
-import { sourceOperationIdOf, transactionHashOf, type LedgerEntry } from './ledgerEntry'
-import { accountAssignmentStateForSources } from './journalAccountAssignment'
-import { getTokenDecimals } from '@/utils/tokens/metadata'
-import { ZERO_USD_AMOUNT, usdAmountFromToken, usdRateFromNumber } from './monetaryAmount'
-import {
-  createJournalEntry,
-  creditOf,
-  debitOf,
-  isBankFeePosting,
-  reconcileJournalEntrySources
-} from './journalEntry'
-import type {
-  Account,
-  AccountId,
-  AccountRegistry,
-  GeneralLedger,
-  JournalEntry,
-  JournalEntryLine,
-  UsdAmount
-} from './types'
-
-/** Convert a current two-leg consolidated posting into journal lines with concrete account identity. */
-function linesOf(entry: LedgerEntry, accounts: AccountRegistry): JournalEntryLine[] {
-  const lines: JournalEntryLine[] = []
-  if (typeof entry.rate !== 'number') {
-    throw new Error(`Ledger entry "${entry.id}" requires a rate before journal assembly`)
-  }
-  const rate = usdRateFromNumber(entry.rate)
-  const rawAmount = BigInt(entry.rawAmount)
-  const amount = usdAmountFromToken(rawAmount, entry.token, rate)
-  if (entry.debit) {
-    const account = accounts.resolve(entry.debit, entry.debitInstance)
-    lines.push({
-      id: `${entry.id}:debit`,
-      account,
-      movement: {
-        token: entry.token,
-        rawAmount,
-        decimals: getTokenDecimals(entry.token),
-        rate
-      },
-      debit: amount
-    })
-  }
-  if (entry.credit) {
-    const account = accounts.resolve(entry.credit, entry.creditInstance)
-    lines.push({
-      id: `${entry.id}:credit`,
-      account,
-      movement: {
-        token: entry.token,
-        rawAmount,
-        decimals: getTokenDecimals(entry.token),
-        rate
-      },
-      credit: amount
-    })
-  }
-  return lines
-}
-
-/** One source operation's monetary lines, coalesced by their concrete account and token movement. */
-function mergedLines(
-  entries: readonly LedgerEntry[],
-  accounts: AccountRegistry
-): JournalEntryLine[] {
-  const debit = entries.flatMap((entry) =>
-    linesOf(entry, accounts).filter((line) => line.debit !== undefined)
-  )
-  const credit = entries.flatMap((entry) =>
-    linesOf(entry, accounts).filter((line) => line.credit !== undefined)
-  )
-  const merge = (lines: readonly JournalEntryLine[]): JournalEntryLine[] => {
-    const byMovement = new Map<string, JournalEntryLine>()
-    for (const line of lines) {
-      const side = line.debit !== undefined ? 'debit' : 'credit'
-      const movement = line.movement
-      const key = [
-        side,
-        line.account.id,
-        movement?.token ?? '',
-        movement ? movement.rate : '',
-        movement ? 'movement' : 'none'
-      ].join('|')
-      const existing = byMovement.get(key)
-      if (!existing) {
-        byMovement.set(key, { ...line, ...(movement ? { movement: { ...movement } } : {}) })
-        continue
-      }
-
-      if (existing.debit !== undefined && line.debit !== undefined) existing.debit += line.debit
-      if (existing.credit !== undefined && line.credit !== undefined) existing.credit += line.credit
-      if (existing.movement && movement) {
-        existing.movement.rawAmount += movement.rawAmount
-      }
-    }
-    return [...byMovement.values()]
-  }
-  // Conventional journal order puts every debit before every credit. This makes a
-  // transfer plus fee read Dr destination · Dr fee · Cr Bank gross.
-  return [...merge(debit), ...merge(credit)]
-}
-
-/** Adapt one source operation's consolidated postings at the validated journal boundary. */
-function journalEntryFromLedgerEntries(
-  entries: readonly LedgerEntry[],
-  accounts: AccountRegistry,
-  operationId: string
-): JournalEntry {
-  const ordered = entries
-    .slice()
-    .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
-  const primary = ordered.find((entry) => !isBankFeePosting(entry)) ?? ordered[0]!
-  const lineEntries = [primary, ...ordered.filter((entry) => entry !== primary)]
-  const monetary = ordered.some((entry) => entry.debit !== null || entry.credit !== null)
-  const counterparties = new Set(
-    ordered.flatMap((entry) => (entry.counterparty ? [entry.counterparty.toLowerCase()] : []))
-  )
-  const source = counterparties.size > 1 ? { ...primary, counterparty: undefined } : primary
-  const txHash = ordered.find((entry) => entry.txHash)?.txHash ?? transactionHashOf(operationId)
-  const nonFeeSources = ordered.filter((entry) => !isBankFeePosting(entry))
-  const accountAssignment = accountAssignmentStateForSources(ordered, operationId)
-  return createJournalEntry({
-    id: operationId,
-    sourceOperationId: operationId,
-    timestamp: ordered[0]!.timestamp,
-    useCase: primary.useCase,
-    memo: primary.memo,
-    // A protocol fee adds an expense line but does not turn a proven pocket-to-pocket
-    // transfer into an external movement.
-    internal: nonFeeSources.length > 0 && nonFeeSources.every((entry) => entry.internal),
-    kind: monetary ? 'monetary' : 'memo',
-    ...(primary.category ? { category: primary.category } : {}),
-    ...(txHash ? { txHash } : {}),
-    source,
-    ...(accountAssignment ? { accountAssignment } : {}),
-    lines: monetary ? mergedLines(lineEntries, accounts) : []
-  })
-}
-
-/** Adapt consolidated postings into the validated, ordered double-entry journal. */
-export function buildJournal(
-  entries: readonly LedgerEntry[],
-  accounts?: AccountRegistry
-): JournalEntry[] {
-  const reconciled = reconcileJournalEntrySources(entries)
-  const accountRegistry = accounts ?? buildAccountRegistry(reconciled.entries)
-  const byOperation = new Map<string, LedgerEntry[]>()
-  for (const entry of reconciled.entries) {
-    const operationId = sourceOperationIdOf(entry.txHash ?? entry.sourceOperationId ?? entry.id)
-    const group = byOperation.get(operationId)
-    if (group) group.push(entry)
-    else byOperation.set(operationId, [entry])
-  }
-  return [...byOperation.entries()]
-    .map(([operationId, group]) =>
-      journalEntryFromLedgerEntries(group, accountRegistry, operationId)
-    )
-    .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
-}
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import { creditOf, debitOf } from './journalEntry'
+import type { Account, AccountId, GeneralLedger, JournalEntry, UsdAmount } from './types'
 
 type TrialBalanceRow = GeneralLedger['trialBalance'][number]
 

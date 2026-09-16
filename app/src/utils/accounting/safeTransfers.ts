@@ -6,7 +6,7 @@
  */
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import type { SafeDepositRow } from '@/types/contract-events/investor'
-import { transactionHashOf } from '@/utils/accounting/ledgerEntry'
+import { transactionHashOf } from '@/utils/accounting/journalEntryDraft'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
 
 /** A SHER value transfer carries no cash; skip NFT moves entirely. */

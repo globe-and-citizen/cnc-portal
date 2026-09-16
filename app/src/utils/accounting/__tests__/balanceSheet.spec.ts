@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
-import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { entriesForAccount } from '@/utils/accounting/accountLedger'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { catalogueLedger } from './catalogueLedger'
 import { usd } from './fixtures'
 
-function balanceSheet(entries: readonly LedgerEntry[]) {
-  return buildBalanceSheet(buildJournal(entries))
+function balanceSheet(entries: readonly JournalEntryDraft[]) {
+  return buildBalanceSheet(finalizeJournal(entries))
 }
 
 function posting(
@@ -16,14 +17,13 @@ function posting(
   debit: AccountName,
   credit: AccountName,
   amountUsd: number
-): LedgerEntry {
+): JournalEntryDraft {
   return {
     id,
     timestamp: 1,
     useCase: 'CASH-IN',
     debit,
     credit,
-    amountUsd,
     token: 'usdc',
     rawAmount: String(Math.round(amountUsd * 1_000_000)),
     rate: 1,
@@ -35,7 +35,7 @@ function posting(
 
 describe('buildBalanceSheet', () => {
   it('reuses every permanent concrete Trial Balance account row', () => {
-    const journal = buildJournal(catalogueLedger)
+    const journal = finalizeJournal(catalogueLedger)
     const trialRows = buildGeneralLedger(journal).trialBalance.filter((row) =>
       ['ASSET', 'LIABILITY', 'EQUITY', 'CONTRA_EQUITY'].includes(row.account.family.accountClass)
     )
@@ -99,7 +99,7 @@ describe('buildBalanceSheet', () => {
   it('keeps later and unresolved Bank accounts separate and drillable', () => {
     const bank1 = '0x1111111111111111111111111111111111111111'
     const bank2 = '0x2222222222222222222222222222222222222222'
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       { ...posting('bank-1', 'Cash — Bank', 'Service Revenue', 100), debitInstance: bank1 },
       {
         ...posting('bank-2', 'Cash — Bank', 'Service Revenue', 25),

@@ -142,7 +142,7 @@ describe('accounting non-regression', () => {
       expect(line.movement?.token).toBe('native')
       // Every native posting carries the $0.08 rate of record, stored at 6-dp.
       expect(line.movement?.rate).toBe(usdRateFromNumber(POL_USD))
-      // amountUsd = whole-token quantity × rate, so the derived USD is consistent.
+      // Final JournalEntry lines derive USD from whole-token quantity × rate.
       expect(line.debit ?? line.credit).toBeGreaterThan(0n)
     }
   })

@@ -9,7 +9,7 @@
 import type { Address } from 'viem'
 import type { TokenId } from '@/constant'
 import type { AccountFamily, AccountName } from './chartOfAccounts'
-import type { LedgerEntry, UseCase } from './ledgerEntry'
+import type { UseCase } from './journalEntryDraft'
 
 /** USD amount scaled by the canonical Accounting amount precision. */
 export type UsdAmount = bigint
@@ -146,8 +146,28 @@ export interface JournalEntry {
   category?: string
   /** Transaction hash, when known. */
   txHash?: string
-  /** Contextual source snapshot used for narration and drill-down links. */
-  source?: LedgerEntry
+  /** Exact amount narrated for the primary business posting, excluding attached fees. */
+  activityAmount: UsdAmount
+  /** Single party narrated by the operation; absent when an operation names several parties. */
+  counterparty?: Address
+  /** Signer who initiated an internal transfer, when receipt evidence identifies one. */
+  initiator?: Address
+  /** Whole SHER count involved in an equity operation. */
+  shares?: number
+  /** Community Credit round used by the operation drill-down. */
+  creditOfferId?: string
+  /** USD debt left after a Community Credit repayment. */
+  creditRemainingUsd?: number
+  /** Minutes worked behind a payroll operation. */
+  minutesWorked?: number
+  /** End of the payroll period, in Unix seconds. */
+  periodEnd?: number
+  /** Expense approval frequency behind a payout. */
+  expenseFrequencyType?: number
+  /** Approved expense amount in USD. */
+  expenseApprovedUsd?: number
+  /** Expense budget remaining after the payout, in USD. */
+  expenseRemainingUsd?: number
   /** Optional owner workflow for the entry's assignable counter-account line. */
   accountAssignment?: {
     /** False for compound operations, which remain visible but read-only. */

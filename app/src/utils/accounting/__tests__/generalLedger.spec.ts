@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { catalogueLedger } from './catalogueLedger'
 import { usdNumber } from './fixtures'
 
-const generalLedger = (entries: readonly LedgerEntry[]) => buildGeneralLedger(buildJournal(entries))
+const generalLedger = (entries: readonly JournalEntryDraft[]) =>
+  buildGeneralLedger(finalizeJournal(entries))
 
 describe('buildGeneralLedger — catalogue worked example', () => {
   const gl = generalLedger(catalogueLedger)
@@ -52,13 +54,12 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     // but the pooled 0.01 credit rounds to a single 0.01. Rounding per account
     // then summing reads 0.02 vs 0.01 — "out of balance" — yet the raw totals are
     // exactly equal. The balanced check must run on the raw sums.
-    const cent = (id: string, debit: AccountName, credit: AccountName): LedgerEntry => ({
+    const cent = (id: string, debit: AccountName, credit: AccountName): JournalEntryDraft => ({
       id,
       timestamp: 1,
       useCase: 'UC-BANK-02',
       debit,
       credit,
-      amountUsd: 0.005,
       token: 'usdc',
       rawAmount: '5000',
       rate: 1,
@@ -85,14 +86,13 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       instance: string,
       amountUsd: number,
       timestamp: number
-    ): LedgerEntry => ({
+    ): JournalEntryDraft => ({
       id,
       timestamp,
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       debitInstance: instance as `0x${string}`,
       credit: 'Service Revenue',
-      amountUsd,
       token: 'usdc',
       rawAmount: String(amountUsd * 1e6),
       rate: 1,
@@ -102,13 +102,12 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     })
     // A leg with NO instance (a FixedReturn sweep straight to Bank) has no source
     // evidence for either Bank deployment. It remains explicit for reconciliation.
-    const blankBankLeg: LedgerEntry = {
+    const blankBankLeg: JournalEntryDraft = {
       id: 'd',
       timestamp: 15,
       useCase: 'UC-CREDIT-01',
       debit: 'Cash — Bank',
       credit: 'Loan Payable',
-      amountUsd: 20,
       token: 'usdc',
       rawAmount: '20000000',
       rate: 1,
@@ -142,14 +141,13 @@ describe('buildGeneralLedger — catalogue worked example', () => {
   })
 
   it('does not split Safe — its address survives redeploys', () => {
-    const safeLeg = (id: string, instance: string, amountUsd: number): LedgerEntry => ({
+    const safeLeg = (id: string, instance: string, amountUsd: number): JournalEntryDraft => ({
       id,
       timestamp: Number(id),
       useCase: 'UC-BANK-02',
       debit: 'Cash — Safe',
       debitInstance: instance as `0x${string}`,
       credit: 'Service Revenue',
-      amountUsd,
       token: 'usdc',
       rawAmount: String(amountUsd * 1e6),
       rate: 1,
@@ -179,7 +177,6 @@ describe('buildGeneralLedger — catalogue worked example', () => {
         debit: 'Cash — Bank',
         debitInstance: bank as `0x${string}`,
         credit: 'Service Revenue',
-        amountUsd: 42,
         token: 'usdc',
         rawAmount: '42000000',
         rate: 1,
@@ -195,13 +192,12 @@ describe('buildGeneralLedger — catalogue worked example', () => {
   })
 
   it('rejects an unbalanced posting before the trial-balance projection runs', () => {
-    const halfPosting: LedgerEntry = {
+    const halfPosting: JournalEntryDraft = {
       id: 'broken',
       timestamp: 1,
       useCase: 'CASH-IN',
       debit: 'Cash — Bank',
       credit: null, // mapper bug: a debit with no matching credit
-      amountUsd: 5,
       token: 'usdc',
       rawAmount: '5000000',
       rate: 1,

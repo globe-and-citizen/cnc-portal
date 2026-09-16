@@ -9,7 +9,7 @@
  */
 import { getAddress, isAddress, type Address } from 'viem'
 import { ACCOUNT_FAMILIES, accountFamilyOf, type AccountName } from './chartOfAccounts'
-import type { LedgerEntry } from './ledgerEntry'
+import type { JournalEntryDraft } from './journalEntryDraft'
 import type { Account, AccountId, AccountRegistry } from './types'
 
 function normalizeContractAddress(value: string | null | undefined): Address | undefined {
@@ -50,7 +50,7 @@ function noteAccount(
  * attached by a mapper is the only evidence used to resolve a deployment-specific
  * account; posting order and activity on another contract are intentionally ignored.
  */
-export function buildAccountRegistry(entries: readonly LedgerEntry[]): AccountRegistry {
+export function buildAccountRegistry(entries: readonly JournalEntryDraft[]): AccountRegistry {
   const accounts = new Map<AccountId, Account>()
 
   // Non-deployment families are always one concrete account. Deployment-specific

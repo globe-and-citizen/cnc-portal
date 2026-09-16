@@ -19,10 +19,10 @@
 import { computed, type MaybeRefOrGetter } from 'vue'
 import { parseAbiItem, type Address } from 'viem'
 import { currentChainId } from '@/constant'
-import BankV2 from '@/artifacts/abi/V2/json/Bank.json'
-import BankV1 from '@/artifacts/abi/V1/json/Bank.json'
-import BankV01 from '@/artifacts/abi/V0.1/json/Bank.json'
-import BankV0 from '@/artifacts/abi/V0/json/Bank.json'
+import { bankAbi as bankV2Abi } from '@/artifacts/abi/V2/generated'
+import { bankAbi as bankV1Abi } from '@/artifacts/abi/V1/generated'
+import { bankAbi as bankV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { bankAbi as bankV0Abi } from '@/artifacts/abi/V0/generated'
 import type { BankEventFeed } from '@/types/contract-events/bank'
 import { feeCollectorAddressesForChain, normalizeLegacyBankFeeTokens } from './bankFees'
 import {
@@ -36,7 +36,7 @@ import {
   type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
-const BANK_EVENT_ABI = unionEventAbi([BankV2, BankV1, BankV01, BankV0])
+const BANK_EVENT_ABI = unionEventAbi([bankV2Abi, bankV1Abi, bankV01Abi, bankV0Abi])
 
 const FEE_PAID_EVENT = parseAbiItem(
   'event FeePaid(string indexed contractType, address indexed payer, address indexed token, uint256 amount)'

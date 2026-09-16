@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mapBankEvents } from '@/utils/accounting/mappers/bank'
-import { makeCtx, ADDR } from './fixtures'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 
@@ -24,10 +24,10 @@ describe('mapBankEvents', () => {
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 2, // 1 native * $2
       token: 'native',
       internal: false
     })
+    expect(draftUsdValue(entry)).toBe(2) // 1 native * $2
   })
 
   it('books a client token deposit as UC-BANK-02 (Service Revenue)', () => {
@@ -50,9 +50,9 @@ describe('mapBankEvents', () => {
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 5, // 5 usdc * $1
       token: 'usdc'
     })
+    expect(draftUsdValue(entry)).toBe(5) // 5 USDC * $1
   })
 
   it('books a transfer to an internal pocket as UC-BANK-03 funding', () => {

@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import type { Ref } from 'vue'
 import { renderWithProviders } from '@/tests/mocks'
-import { buildJournal } from '@/utils/accounting/generalLedger'
-import { makeEntry } from '@/utils/accounting/ledgerEntry'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { JournalEntry } from '@/utils/accounting/types'
 import SummaryView from '../SummaryView.vue'
 
@@ -25,47 +25,43 @@ vi.mock('@/composables/accounting/useAccountingExport', () => ({
 }))
 
 const TX = `0x${'a'.repeat(64)}`
-const bankTransfer = makeEntry({
+const bankTransfer = makeJournalEntryDraft({
   id: `${TX}-1`,
   timestamp: 100,
   useCase: 'INTERNAL',
   debit: 'Cash — Payroll',
   credit: 'Cash — Bank',
-  amountUsd: 100,
   token: 'usdc',
   rawAmount: '100000000',
   rate: 1,
   memo: 'Fund payroll',
   internal: true
 })
-const fee = makeEntry({
+const fee = makeJournalEntryDraft({
   ...bankTransfer,
   id: `${TX}-2`,
   useCase: 'FEE',
   debit: 'Transaction Fee Expense',
-  amountUsd: 1,
   rawAmount: '1000000',
   internal: false
 })
 const repayments = [1, 2, 3, 4].map((index) =>
-  makeEntry({
+  makeJournalEntryDraft({
     ...bankTransfer,
     id: `${TX}-${index}`,
     useCase: 'UC-CREDIT-03',
     debit: 'Loan Payable',
-    amountUsd: 2,
     rawAmount: '2000000',
     internal: false
   })
 )
-const memo = makeEntry({
+const memo = makeJournalEntryDraft({
   ...bankTransfer,
   id: 'synthetic-share-note',
   sourceOperationId: 'synthetic-share-note',
   txHash: undefined,
   debit: null,
   credit: null,
-  amountUsd: 0,
   rawAmount: '0',
   shares: '2'
 })
@@ -96,7 +92,7 @@ describe('Summary journal export count', () => {
   ])(
     'counts $name from JournalEntry records, not source postings or lines',
     async ({ postings, count }) => {
-      state.journal!.value = buildJournal(postings)
+      state.journal!.value = finalizeJournal(postings)
       const view = await openExport()
 
       expect(view.get('[data-test="section-ledger"]').text()).toContain(`${count} entries`)
@@ -107,7 +103,7 @@ describe('Summary journal export count', () => {
     const view = await openExport()
     expect(view.get('[data-test="section-ledger"]').text()).toContain('0 entries')
 
-    state.journal!.value = buildJournal([...repayments, memo])
+    state.journal!.value = finalizeJournal([...repayments, memo])
     await flushPromises()
     expect(view.get('[data-test="section-ledger"]').text()).toContain('2 entries')
 

@@ -4,9 +4,9 @@ import type { Ref } from 'vue'
 import { NETWORK } from '@/constant'
 import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import { mockTeamData, mockToast, mockUserStore, renderWithProviders } from '@/tests/mocks'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { applyJournalAccountAssignments } from '@/utils/accounting/journalAccountAssignment'
-import { makeEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { JournalEntry } from '@/utils/accounting/types'
 import AccountAssignmentsView from '../AccountAssignmentsView.vue'
 
@@ -55,14 +55,13 @@ vi.mock('@/queries/journalAccountAssignment.queries', async () => {
 const TX = `0x${'c'.repeat(64)}`
 const originalExplorerUrl = NETWORK.blockExplorerUrl
 const withdrawal = () =>
-  makeEntry({
+  makeJournalEntryDraft({
     id: `${TX}-2`,
     timestamp: 100,
     useCase: 'CASH-OUT',
     debit: 'Operating Expense',
     credit: 'Cash — Bank',
     creditInstance: '0x1111111111111111111111111111111111111111',
-    amountUsd: 100,
     token: 'usdc',
     rawAmount: '100000000',
     rate: 1,
@@ -92,14 +91,13 @@ beforeEach(() => {
   mockUserStore.address = mockTeamData.ownerAddress!
   const source = withdrawal()
   state.journal!.value = applyJournalAccountAssignments(
-    buildJournal([
+    finalizeJournal([
       source,
-      makeEntry({
+      makeJournalEntryDraft({
         ...source,
         id: `${TX}-3`,
         useCase: 'FEE',
         debit: 'Transaction Fee Expense',
-        amountUsd: 1,
         rawAmount: '1000000'
       })
     ]),
@@ -184,7 +182,7 @@ describe('Journal account assignment owner workflow', () => {
   })
 
   it('requires an account before saving a new assignment', () => {
-    state.journal!.value = buildJournal([withdrawal()])
+    state.journal!.value = finalizeJournal([withdrawal()])
     const view = render()
     expect(view.get('[data-test="ledger-account-assignment-trigger"]').text()).toBe(
       'Inferred account'
@@ -204,9 +202,9 @@ describe('Journal account assignment owner workflow', () => {
 
   it('keeps a compound JournalEntry visible once but read-only', () => {
     const first = withdrawal()
-    state.journal!.value = buildJournal([
+    state.journal!.value = finalizeJournal([
       first,
-      makeEntry({ ...first, id: `${TX}-8`, counterparty: mockTeamData.ownerAddress })
+      makeJournalEntryDraft({ ...first, id: `${TX}-8`, counterparty: mockTeamData.ownerAddress })
     ])
     const view = render()
     expect(view.get('[data-test="assignment-count"]').text()).toContain('1 journal')
@@ -216,8 +214,8 @@ describe('Journal account assignment owner workflow', () => {
 
   it('shows loading then an empty state when the journal only contains a deposit', async () => {
     state.loading!.value = true
-    state.journal!.value = buildJournal([
-      makeEntry({
+    state.journal!.value = finalizeJournal([
+      makeJournalEntryDraft({
         ...withdrawal(),
         useCase: 'UC-BANK-02',
         debit: 'Cash — Bank',

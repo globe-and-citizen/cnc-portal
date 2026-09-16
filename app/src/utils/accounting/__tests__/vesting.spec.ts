@@ -7,7 +7,7 @@ import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
 import { journalFamilyBalances } from '@/utils/accounting/journalBalances'
 import type { JournalEntry } from '@/utils/accounting/types'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import { makeCtx, ADDR, usdNumber } from './fixtures'
+import { makeCtx, ADDR, draftUsdValue, usdNumber } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
 
 const ctx = makeCtx()
@@ -38,73 +38,68 @@ function equityContribution(entries: readonly JournalEntry[], account: AccountNa
 describe('mapVestingEvents', () => {
   it('books the grant upfront as Dr Deferred SHER Compensation · Cr SHERS To Be Issued', () => {
     // 100 SHER promised, $0.50 each → the whole $50 award is booked at definition.
-    const [entry] = mapVestingEvents({ createds: [grant('100000000')] }, ctx)
+    const [entry] = mapVestingEvents({ createds: [grant('100000000')] })
 
     expect(entry).toMatchObject({
       useCase: 'UC-VEST-01',
       debit: 'Deferred SHER Compensation',
       credit: 'SHERS To Be Issued',
-      amountUsd: 50,
       shares: 100,
       token: 'sher',
       counterparty: ADDR.member
     })
+    expect(draftUsdValue(entry)).toBe(50)
   })
 
   it('books a release as Dr SHERS To Be Issued · Cr Investor Equity', () => {
     // 25 SHER released, $0.50 each → $12.50 moves from promised to issued.
-    const [entry] = mapVestingEvents({ releases: [release('25000000')] }, ctx)
+    const [entry] = mapVestingEvents({ releases: [release('25000000')] })
 
     expect(entry).toMatchObject({
       useCase: 'UC-VEST-02',
       debit: 'SHERS To Be Issued',
       credit: 'Investor Equity',
-      amountUsd: 12.5,
       shares: 25,
       token: 'sher',
       counterparty: ADDR.member
     })
+    expect(draftUsdValue(entry)).toBe(12.5)
   })
 
   it('reverses the unvested remainder of the grant when a schedule is stopped', () => {
-    const entries = mapVestingEvents(
-      {
-        createds: [grant('100000000')],
-        releases: [release('25000000')],
-        stoppeds: [stop()]
-      },
-      ctx
-    )
+    const entries = mapVestingEvents({
+      createds: [grant('100000000')],
+      releases: [release('25000000')],
+      stoppeds: [stop()]
+    })
     const stopped = entries.find((entry) => entry.useCase === 'UC-VEST-03')
 
     // 100 promised − 25 released = 75 SHER unvested, $0.50 each → $37.50 unwound.
     expect(stopped).toMatchObject({
       debit: 'SHERS To Be Issued',
       credit: 'Deferred SHER Compensation',
-      amountUsd: 37.5,
       shares: 75,
       counterparty: ADDR.member
     })
+    expect(draftUsdValue(stopped!)).toBe(37.5)
   })
 
   it('reverses the whole grant when a schedule is stopped before anything vests', () => {
-    const entries = mapVestingEvents({ createds: [grant('100000000')], stoppeds: [stop()] }, ctx)
+    const entries = mapVestingEvents({ createds: [grant('100000000')], stoppeds: [stop()] })
     const stopped = entries.find((entry) => entry.useCase === 'UC-VEST-03')
 
-    expect(stopped).toMatchObject({ amountUsd: 50, shares: 100 })
+    expect(stopped).toMatchObject({ shares: 100 })
+    expect(draftUsdValue(stopped!)).toBe(50)
   })
 
   it('omits a stop with nothing unvested left to cancel', () => {
     // Everything was released before the stop, so there is no grant left to reverse
     // and the stop is not a ledger posting at all.
-    const entries = mapVestingEvents(
-      {
-        createds: [grant('100000000')],
-        releases: [release('100000000')],
-        stoppeds: [stop()]
-      },
-      ctx
-    )
+    const entries = mapVestingEvents({
+      createds: [grant('100000000')],
+      releases: [release('100000000')],
+      stoppeds: [stop()]
+    })
 
     expect(entries.some((entry) => entry.useCase === 'UC-VEST-03')).toBe(false)
   })
@@ -112,26 +107,24 @@ describe('mapVestingEvents', () => {
   it('books no reversal for a schedule whose grant is not in the feed', () => {
     // The grant predates the indexed window, so it was never booked — nothing to
     // unwind, and no posting is produced.
-    const entries = mapVestingEvents({ stoppeds: [stop()] }, ctx)
+    const entries = mapVestingEvents({ stoppeds: [stop()] })
 
     expect(entries).toHaveLength(0)
   })
 
   it('reverses each schedule against its own grant, not another schedule of the same member', () => {
-    const entries = mapVestingEvents(
-      {
-        createds: [
-          { ...grant('100000000'), scheduleIndex: '0' },
-          { id: 'vc2', ...SCHEDULE, scheduleIndex: '1', amount: '40000000', timestamp: 120 }
-        ],
-        stoppeds: [{ id: 'vs2', ...SCHEDULE, scheduleIndex: '1', timestamp: 300 }]
-      },
-      ctx
-    )
+    const entries = mapVestingEvents({
+      createds: [
+        { ...grant('100000000'), scheduleIndex: '0' },
+        { id: 'vc2', ...SCHEDULE, scheduleIndex: '1', amount: '40000000', timestamp: 120 }
+      ],
+      stoppeds: [{ id: 'vs2', ...SCHEDULE, scheduleIndex: '1', timestamp: 300 }]
+    })
     const stopped = entries.find((entry) => entry.useCase === 'UC-VEST-03')
 
     // Schedule #1 promised 40 SHER; schedule #0 is untouched.
-    expect(stopped).toMatchObject({ shares: 40, amountUsd: 20 })
+    expect(stopped).toMatchObject({ shares: 40 })
+    expect(draftUsdValue(stopped!)).toBe(20)
   })
 })
 
@@ -302,6 +295,6 @@ describe('vesting through the whole pipeline', () => {
     expect(acc.journal.map((entry) => entry.useCase)).toEqual(
       expect.arrayContaining(['UC-VEST-01', 'UC-VEST-02', 'UC-VEST-03'])
     )
-    expect(acc.journal.find((entry) => entry.useCase === 'UC-VEST-01')?.source?.shares).toBe(100)
+    expect(acc.journal.find((entry) => entry.useCase === 'UC-VEST-01')?.shares).toBe(100)
   })
 })

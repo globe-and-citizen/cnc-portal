@@ -16,9 +16,9 @@
  * by the caller to avoid double-counting the same cash.
  */
 import { getAddress, isAddress } from 'viem'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
-import { atDate, type MapperContext } from './context'
+import type { MapperContext } from './context'
 
 /** A normalized token transfer touching the Safe (native = `token: null`). */
 export interface SafeTransferRow {
@@ -43,14 +43,18 @@ function sameAddress(a: string, b: string): boolean {
   return isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
 }
 
-function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
+function inferInflow(
+  row: SafeTransferRow,
+  ctx: MapperContext,
+  safeAddress: string
+): JournalEntryDraft {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
+    sourceContract: safeAddress,
     timestamp: row.timestamp,
     debit: SAFE,
     debitInstance: safeAddress,
-    amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
     counterparty: row.from,
@@ -58,7 +62,7 @@ function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: stri
   }
   const sourcePocket = ctx.pocketOf(row.from)
   if (sourcePocket) {
-    return makeEntry({
+    return makeJournalEntryDraft({
       ...base,
       useCase: 'INTERNAL',
       credit: sourcePocket,
@@ -67,7 +71,7 @@ function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: stri
       memo: `Internal funding into Safe from ${sourcePocket}`
     })
   }
-  return makeEntry({
+  return makeJournalEntryDraft({
     ...base,
     useCase: 'UC-BANK-02',
     credit: 'Service Revenue',
@@ -75,14 +79,18 @@ function inferInflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: stri
   })
 }
 
-function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: string): LedgerEntry {
+function inferOutflow(
+  row: SafeTransferRow,
+  ctx: MapperContext,
+  safeAddress: string
+): JournalEntryDraft {
   const tokenId = ctx.tokenIdOf(row.token)
   const base = {
     id: row.id,
+    sourceContract: safeAddress,
     timestamp: row.timestamp,
     credit: SAFE,
     creditInstance: safeAddress,
-    amountUsd: ctx.toUsd(BigInt(row.amount), tokenId, atDate(row.timestamp)),
     token: tokenId,
     rawAmount: row.amount,
     counterparty: row.to,
@@ -90,7 +98,7 @@ function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: str
   }
   const destPocket = ctx.pocketOf(row.to)
   if (destPocket) {
-    return makeEntry({
+    return makeJournalEntryDraft({
       ...base,
       useCase: 'INTERNAL',
       debit: destPocket,
@@ -99,7 +107,7 @@ function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: str
       memo: `Internal move Safe → ${destPocket}`
     })
   }
-  return makeEntry({
+  return makeJournalEntryDraft({
     ...base,
     useCase: 'CASH-OUT',
     debit: 'Operating Expense',
@@ -110,8 +118,8 @@ function inferOutflow(row: SafeTransferRow, ctx: MapperContext, safeAddress: str
 }
 
 /** Map every Safe transfer to a ledger entry, skipping ones that miss the Safe. */
-export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): LedgerEntry[] {
-  const entries: LedgerEntry[] = []
+export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): JournalEntryDraft[] {
+  const entries: JournalEntryDraft[] = []
   for (const row of input.transfers ?? []) {
     if (sameAddress(row.to, input.safeAddress)) {
       // A Safe inflow is either a direct Service Revenue deposit or an internal

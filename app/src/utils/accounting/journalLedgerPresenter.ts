@@ -13,8 +13,7 @@ import { badgeClassOf, categoryLabelOf } from './ledgerCategory'
 import { currencySymbol, filterByPeriod, formatUnixDateTime, money, periodLabel } from './presenter'
 import { wholeTokenAmount } from './toUsd'
 import { creditOf, debitOf } from './journalEntry'
-import type { LedgerEntry } from './ledgerEntry'
-import { ZERO_USD_AMOUNT, usdAmountToNumber, usdRateToNumber } from './monetaryAmount'
+import { ZERO_USD_AMOUNT, usdRateToNumber } from './monetaryAmount'
 import type { Account, JournalEntry, JournalEntryLine, UsdAmount } from './types'
 
 /** Display-ready journal line shared by the ledger, drill-downs and exporters. */
@@ -68,37 +67,6 @@ interface JournalAccountFilterOption {
 /** The empty activity carried by all but the first line of a journal entry. */
 const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
 const NO_MOVEMENT = { currency: '', quantity: '', rate: '' }
-
-/**
- * A primary source is recorded by assembly for narration. Hand-authored journal
- * entries in unit tests can omit it, so derive a safe display context from their
- * entry-level metadata and first debit / credit lines.
- */
-function sourceOf(entry: JournalEntry): LedgerEntry {
-  if (entry.source) return entry.source
-  const debit = entry.lines.find((line) => line.debit !== undefined)
-  const credit = entry.lines.find((line) => line.credit !== undefined)
-  const movement = debit?.movement ?? credit?.movement
-  return {
-    id: entry.id,
-    sourceOperationId: entry.sourceOperationId,
-    timestamp: entry.timestamp,
-    useCase: entry.useCase,
-    debit: debit?.account.family.name ?? null,
-    credit: credit?.account.family.name ?? null,
-    amountUsd: usdAmountToNumber(
-      entry.lines.reduce((sum, line) => sum + debitOf(line), ZERO_USD_AMOUNT)
-    ),
-    token: movement?.token ?? 'usdc',
-    rawAmount: movement?.rawAmount.toString() ?? '0',
-    ...(movement ? { rate: usdRateToNumber(movement.rate) } : {}),
-    internal: entry.internal,
-    memo: entry.memo,
-    enrichment: 'not-applicable',
-    ...(entry.category ? { category: entry.category } : {}),
-    ...(entry.txHash ? { txHash: entry.txHash } : {})
-  }
-}
 
 /** A deterministic label index for concrete accounts, matching Trial Balance numbering. */
 function accountLabels(entries: readonly JournalEntry[]): Map<string, string> {
@@ -207,15 +175,14 @@ function movementOf(line: JournalEntryLine): Pick<LedgerRow, 'currency' | 'quant
 
 /**
  * Make an internal-transfer narration name the same concrete accounts as its
- * journal rows. The source establishes the debit/credit direction, while the
- * journal lines establish the authoritative deployment identity.
+ * journal rows. The finalized lines establish both direction and authoritative
+ * deployment identity.
  */
 function activityOfJournalEntry(
-  source: LedgerEntry,
   entry: JournalEntry,
   labels: ReadonlyMap<string, string>
 ): ActivityCell {
-  const activity = activityOf(source)
+  const activity = activityOf(entry)
   if (activity.kind !== 'transfer') return activity
 
   const labelOf = (side: 'debit' | 'credit', familyName: string): string => {
@@ -244,17 +211,16 @@ export function journalLedgerRows(
   const labels = accountLabels(labelEntries)
   const rows: LedgerRow[] = []
   for (const entry of entries) {
-    const source = sourceOf(entry)
     entry.lines.forEach((line, index) => {
       const isFirst = index === 0
       const accountLabel = labels.get(line.account.id) ?? line.account.family.name
       rows.push({
         isFirst,
         date: isFirst ? formatUnixDateTime(entry.timestamp) : '',
-        label: isFirst ? entryLabel(source) : '',
+        label: isFirst ? entryLabel(entry) : '',
         ...(isFirst && entry.txHash ? { txHash: entry.txHash } : {}),
-        activity: isFirst ? activityOfJournalEntry(source, entry, labels) : NO_ACTIVITY,
-        ...(isFirst ? { destination: activityDestinationOf(source) } : {}),
+        activity: isFirst ? activityOfJournalEntry(entry, labels) : NO_ACTIVITY,
+        ...(isFirst ? { destination: activityDestinationOf(entry) } : {}),
         category: isFirst ? categoryLabelOf(entry) : '',
         categoryClass: isFirst ? badgeClassOf(entry) : '',
         account: line.account.family.name,

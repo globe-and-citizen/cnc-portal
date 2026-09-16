@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { accountNet, accountOpening, entriesForAccount } from '@/utils/accounting/accountLedger'
-import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { Address } from 'viem'
 import { usd } from './fixtures'
 
@@ -11,13 +12,14 @@ const BANK1 = '0x1111111111111111111111111111111111111111' as Address
 const BANK2 = '0x2222222222222222222222222222222222222222' as Address
 const TRANSFER_TX_HASH = `0x${'a'.repeat(64)}`
 
-function entry(over: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
+function entry(
+  over: Partial<JournalEntryDraft> & Pick<JournalEntryDraft, 'id'>
+): JournalEntryDraft {
   return {
     timestamp: 100,
     useCase: 'UC-BANK-02',
     debit: null,
     credit: null,
-    amountUsd: 0,
     token: 'usdc',
     rawAmount: '0',
     rate: 1,
@@ -28,7 +30,7 @@ function entry(over: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntr
   }
 }
 
-function migrationBook(): LedgerEntry[] {
+function migrationBook(): JournalEntryDraft[] {
   return [
     entry({
       id: 'seed1',
@@ -36,7 +38,6 @@ function migrationBook(): LedgerEntry[] {
       debit: 'Cash — Bank',
       debitInstance: BANK1,
       credit: 'Service Revenue',
-      amountUsd: 200,
       rawAmount: '200000000'
     }),
     entry({
@@ -45,7 +46,6 @@ function migrationBook(): LedgerEntry[] {
       debit: 'Cash — Bank',
       debitInstance: BANK2,
       credit: 'Service Revenue',
-      amountUsd: 10,
       rawAmount: '10000000'
     }),
     entry({
@@ -56,7 +56,6 @@ function migrationBook(): LedgerEntry[] {
       debitInstance: BANK2,
       credit: 'Cash — Bank',
       creditInstance: BANK1,
-      amountUsd: 100,
       rawAmount: '100000000',
       internal: true
     }),
@@ -67,14 +66,13 @@ function migrationBook(): LedgerEntry[] {
       debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
       creditInstance: BANK1,
-      amountUsd: 0.5,
       rawAmount: '500000'
     })
   ]
 }
 
 describe('accountLedger — concrete redeployed accounts', () => {
-  const journal = buildJournal(migrationBook())
+  const journal = finalizeJournal(migrationBook())
   const generalLedger = buildGeneralLedger(journal)
   const bank = (address: Address) =>
     generalLedger.trialBalance.find(

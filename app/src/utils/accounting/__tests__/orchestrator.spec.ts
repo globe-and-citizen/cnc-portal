@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
-import { makeCtx, ADDR } from './fixtures'
+import { mapCncJournalEntryDrafts, type JournalEntrySources } from '@/utils/accounting/mappers'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 
-const sources: LedgerSources = {
+const sources: JournalEntrySources = {
   bank: {
     deposits: [
       {
@@ -55,8 +55,8 @@ const sources: LedgerSources = {
   }
 }
 
-describe('buildCncLedgerEntries', () => {
-  const entries = buildCncLedgerEntries(sources, ctx)
+describe('mapCncJournalEntryDrafts', () => {
+  const entries = mapCncJournalEntryDrafts(sources, ctx)
 
   it('runs every source and returns entries sorted by timestamp', () => {
     expect(entries.map((e) => e.timestamp)).toEqual([100, 200, 300, 400, 500])
@@ -66,14 +66,14 @@ describe('buildCncLedgerEntries', () => {
     let debits = 0
     let credits = 0
     for (const e of entries) {
-      if (e.debit) debits += e.amountUsd
-      if (e.credit) credits += e.amountUsd
+      if (e.debit) debits += draftUsdValue(e)
+      if (e.credit) credits += draftUsdValue(e)
     }
     expect(debits).toBeCloseTo(credits)
   })
 
   it('enriches payroll entries when off-chain data is supplied', () => {
-    const enriched = buildCncLedgerEntries(sources, ctx, {
+    const enriched = mapCncJournalEntryDrafts(sources, ctx, {
       weeklyClaims: [
         {
           memberAddress: ADDR.member,
@@ -90,7 +90,7 @@ describe('buildCncLedgerEntries', () => {
   })
 
   it('books an expense payout cash-basis, enriches it, and reports the remaining budget', () => {
-    const withExpenses = buildCncLedgerEntries(
+    const withExpenses = mapCncJournalEntryDrafts(
       {
         expense: {
           tokenTransfers: [
@@ -134,10 +134,10 @@ describe('buildCncLedgerEntries', () => {
     expect(payout).toMatchObject({
       debit: 'Operating Expense',
       credit: 'Cash — Expense',
-      amountUsd: 120,
       enrichment: 'enriched',
       category: 'Operating'
     })
+    expect(draftUsdValue(payout!)).toBe(120)
     // One-time approval — the payout carries the approved cap, no remaining.
     expect(payout).toMatchObject({ expenseFrequencyType: 0, expenseApprovedUsd: 300 })
     expect(payout?.memo).toContain('one-time approval of 300 USDC')
@@ -146,7 +146,7 @@ describe('buildCncLedgerEntries', () => {
   })
 
   it('falls back to the portal drawn balance when no expense payout is indexed', () => {
-    const entries = buildCncLedgerEntries({}, ctx, {
+    const entries = mapCncJournalEntryDrafts({}, ctx, {
       expenses: [
         {
           id: 7,
@@ -172,9 +172,9 @@ describe('buildCncLedgerEntries', () => {
       id: 'expense-drawn-7',
       debit: 'Operating Expense',
       credit: 'Cash — Expense',
-      amountUsd: 120,
       category: 'Operating'
     })
+    expect(draftUsdValue(drawn!)).toBe(120)
     expect(drawn?.memo).toContain('one-time approval of 300 USDC')
   })
 })

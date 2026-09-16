@@ -4,9 +4,9 @@
  * `useContractEventsViaLogs` base.
  */
 import type { MaybeRefOrGetter } from 'vue'
-import SafeRouterV1 from '@/artifacts/abi/V1/json/SafeDepositRouter.json'
-import SafeRouterV01 from '@/artifacts/abi/V0.1/json/SafeDepositRouter.json'
-import SafeRouterV0 from '@/artifacts/abi/V0/json/SafeDepositRouter.json'
+import { safeDepositRouterAbi as safeRouterV1Abi } from '@/artifacts/abi/V1/generated'
+import { safeDepositRouterAbi as safeRouterV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { safeDepositRouterAbi as safeRouterV0Abi } from '@/artifacts/abi/V0/generated'
 import type { SafeDepositRouterEventFeed } from '@/types/contract-events/investor'
 import {
   str,
@@ -16,7 +16,7 @@ import {
   type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
-const SAFE_ROUTER_EVENT_ABI = unionEventAbi([SafeRouterV1, SafeRouterV01, SafeRouterV0])
+const SAFE_ROUTER_EVENT_ABI = unionEventAbi([safeRouterV1Abi, safeRouterV01Abi, safeRouterV0Abi])
 
 const empty = (): SafeDepositRouterEventFeed => ({
   safeDeposits: { items: [] },

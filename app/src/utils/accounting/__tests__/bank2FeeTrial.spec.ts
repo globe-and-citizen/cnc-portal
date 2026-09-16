@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { mapBankEvents } from '@/utils/accounting/mappers/bank'
-import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { makeCtx, usd } from './fixtures'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
@@ -68,7 +69,7 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
   })
 
   it('rolls the fee into BANK_A on the trial balance, not the other deployment', () => {
-    const gl = buildGeneralLedger(buildJournal(entries))
+    const gl = buildGeneralLedger(finalizeJournal(entries))
     const bankRows = gl.trialBalance.filter((r) => r.account.family.name === 'Cash — Bank')
     const rowA = bankRows.find((r) => r.account.contractAddress?.toLowerCase() === BANK_A)
     const rowB = bankRows.find((r) => r.account.contractAddress?.toLowerCase() === BANK_B)
@@ -79,7 +80,7 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
   })
 
   it('assembles the transfer and its fee as one multi-line journal entry', () => {
-    const journal = buildJournal(entries)
+    const journal = finalizeJournal(entries)
     const transfer = journal.find((entry) => entry.sourceOperationId === TX)!
 
     expect(transfer.lines).toMatchObject([
@@ -90,7 +91,7 @@ describe('repro: Bank 2 transfer fee on the trial balance', () => {
   })
 
   it('shows the fee inside the BANK_A drill-down', () => {
-    const journal = buildJournal(entries)
+    const journal = finalizeJournal(entries)
     const account = buildGeneralLedger(journal).trialBalance.find(
       (row) => row.account.contractAddress?.toLowerCase() === BANK_A
     )!.account

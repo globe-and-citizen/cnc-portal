@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import { mapPayroll } from '@/utils/accounting/mappers/payroll'
-import { makeCtx, ADDR } from './fixtures'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx() // toUsd: native $2, usdc $1, sher $0.50
 
@@ -29,7 +29,7 @@ describe('mapPayroll accruals', () => {
       credit: 'Wage Payable',
       category: 'Payroll'
     })
-    expect(entry.amountUsd).toBe(50) // 2h × 25 USDC × $1
+    expect(draftUsdValue(entry)).toBe(50) // 2h × 25 USDC × $1
   })
 
   it('books the SHER rate as Deferred SHER Compensation against SHERS To Be Issued', () => {
@@ -43,7 +43,7 @@ describe('mapPayroll accruals', () => {
     )
     expect(entry.debit).toBe('Deferred SHER Compensation')
     expect(entry.credit).toBe('SHERS To Be Issued')
-    expect(entry.amountUsd).toBe(10) // 2h × 10 SHER × $0.50
+    expect(draftUsdValue(entry)).toBe(10) // 2h × 10 SHER × $0.50
   })
 
   it('splits a multi-token wage into one balanced posting per rate', () => {
@@ -84,7 +84,7 @@ describe('mapPayroll accruals', () => {
       ctx
     )
     // 2h × $10 + 1h × $20 = $40 — the old flat calc would wrongly book 3h × $10 = $30.
-    expect(entry.amountUsd).toBe(40)
+    expect(draftUsdValue(entry)).toBe(40)
   })
 
   it('does not accrue a disabled (cancelled) claim', () => {

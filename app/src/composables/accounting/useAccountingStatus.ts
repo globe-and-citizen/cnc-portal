@@ -2,7 +2,7 @@
 import { computed, type ComputedRef } from 'vue'
 import { isUsdPegged } from '@/utils/accounting/toUsd'
 import { accountingCompletenessOf } from '@/utils/accounting/accountingCompleteness'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type {
   AccountingDiagnostic,
   AccountingSourceId,
@@ -79,9 +79,8 @@ interface AccountingStatusInput {
     unavailableReceiptOperationIds: ReactiveValue<readonly string[]>
   }
   rates: {
-    rawEntries: ReactiveValue<readonly LedgerEntry[]>
-    hasCustomResolver: boolean
-    isTokenLoading: (token: TokenId) => boolean
+    drafts: ReactiveValue<readonly JournalEntryDraft[]>
+    isLoading: ReactiveValue<boolean>
   }
 }
 
@@ -126,7 +125,7 @@ function eventPartialReason(feed: EventFeedAvailability): string | undefined {
   return gaps ? `${gaps} event evidence gap${gaps === 1 ? '' : 's'} detected.` : undefined
 }
 
-function monetaryNonPeggedTokens(entries: readonly LedgerEntry[]): TokenId[] {
+function monetaryNonPeggedTokens(entries: readonly JournalEntryDraft[]): TokenId[] {
   return [
     ...new Set(
       entries
@@ -148,20 +147,16 @@ export function useAccountingStatus(input: AccountingStatusInput): AccountingSta
     partialReason: () => eventPartialReason(definition.query)
   }))
   const definitions = [...input.sources, ...eventSources]
-  const nonPeggedTokens = computed(() => monetaryNonPeggedTokens(input.rates.rawEntries.value))
+  const nonPeggedTokens = computed(() => monetaryNonPeggedTokens(input.rates.drafts.value))
   const unavailableRateTokens = computed(() =>
     monetaryNonPeggedTokens(
-      input.rates.rawEntries.value.filter((entry) => !entry.rate || entry.rate <= 0)
+      input.rates.drafts.value.filter((entry) => !entry.rate || entry.rate <= 0)
     )
   )
 
   const sources = computed<readonly AccountingSourceStatus[]>(() => {
     const statuses = definitions.map(availabilityOf)
-    const rateLoading =
-      !input.rates.hasCustomResolver &&
-      unavailableRateTokens.value.some(
-        (token) => token !== 'sher' && input.rates.isTokenLoading(token)
-      )
+    const rateLoading = input.rates.isLoading.value && unavailableRateTokens.value.length > 0
     const rateStatus: AccountingSourceStatus = !nonPeggedTokens.value.length
       ? { source: 'token-rates', label: 'Token USD rates', state: 'not-applicable' }
       : rateLoading

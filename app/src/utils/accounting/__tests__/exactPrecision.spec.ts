@@ -1,14 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
-import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import {
-  USD_AMOUNT_DECIMALS,
-  usdAmountFromToken,
-  usdRateFromNumber
-} from '@/utils/accounting/monetaryAmount'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { usdAmountFromToken, usdRateFromNumber } from '@/utils/accounting/monetaryAmount'
 import { presentBalance, presentIncome } from '@/utils/accounting/presenter'
 import type { TokenId } from '@/constant'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
@@ -23,9 +20,9 @@ function posting(
     token?: TokenId
     rate?: number
     sourceOperationId?: string
-    useCase?: LedgerEntry['useCase']
+    useCase?: JournalEntryDraft['useCase']
   } = {}
-): LedgerEntry {
+): JournalEntryDraft {
   const token = options.token ?? 'usdc'
   const rate = options.rate ?? 1
   return {
@@ -35,8 +32,6 @@ function posting(
     useCase: options.useCase ?? 'CASH-IN',
     debit,
     credit,
-    // Transitional narration metadata is deliberately not the accounting source.
-    amountUsd: 0,
     token,
     rawAmount: rawAmount.toString(),
     rate,
@@ -47,14 +42,13 @@ function posting(
 }
 
 describe('exact accounting precision', () => {
-  it('represents every supported token base unit at the common 24-decimal USD scale', () => {
-    expect(USD_AMOUNT_DECIMALS).toBe(24)
+  it('represents every supported token base unit on one exact USD scale', () => {
     expect(usdAmountFromToken(1n, 'usdc', usdRateFromNumber(1))).toBe(10n ** 18n)
     expect(usdAmountFromToken(1n, 'native', usdRateFromNumber(0.08))).toBe(80_000n)
   })
 
   it('retains multiple sub-cent asset accounts and balances them exactly', () => {
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       posting('bank-capital', 'Cash — Bank', 'Investor Equity', 3_000n),
       posting('safe-capital', 'Cash — Safe', 'Investor Equity', 3_000n)
     ])
@@ -75,7 +69,7 @@ describe('exact accounting precision', () => {
   })
 
   it('sums report families before presentation rounding', () => {
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       posting('service', 'Cash — Bank', 'Service Revenue', 4_000n),
       posting('gain', 'Cash — Safe', 'Trading Gain', 4_000n),
       posting('expense', 'Operating Expense', 'Cash — Bank', 3_000n)
@@ -99,7 +93,7 @@ describe('exact accounting precision', () => {
 
   it('keeps a Bank transfer and fee in one exactly balanced JournalEntry', () => {
     const operationId = `0x${'a'.repeat(64)}`
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       posting(`${operationId}-5`, 'Cash — Expense', 'Cash — Bank', 100_000_000n, {
         sourceOperationId: operationId,
         useCase: 'UC-BANK-03'

@@ -1,13 +1,13 @@
 /**
  * Source-mapper barrel + orchestrator.
  *
- * {@link buildCncLedgerEntries} runs every source mapper over the raw indexed
- * events, concatenates the resulting ledger entries, sorts them chronologically,
- * and runs the off-chain enrichment join. The result is the normalized general
- * ledger the trial-balance / income-statement / balance-sheet layer rolls up.
+ * {@link mapCncJournalEntryDrafts} runs every source mapper over the raw indexed
+ * events, concatenates the resulting source drafts, sorts them chronologically,
+ * and runs the off-chain enrichment join. Finalization later reconciles them into
+ * the canonical journal consumed by every accounting report.
  */
 import { enrichEntries, type EnrichmentSources } from '@/utils/accounting/enrichment'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { mapBankEvents, type BankMapperInput } from './bank'
 import { mapPayroll, type PayrollMapperInput } from './payroll'
 import { mapExpense, type ExpenseMapperInput } from './expenseAccount'
@@ -19,7 +19,7 @@ import { mapSafeDepositRouterEvents, type SafeDepositRouterMapperInput } from '.
 import type { MapperContext } from './context'
 
 /** Every raw-event source the mappers consume, grouped by contract. */
-export interface LedgerSources {
+export interface JournalEntrySources {
   bank?: BankMapperInput
   payroll?: PayrollMapperInput
   expense?: ExpenseMapperInput
@@ -31,16 +31,16 @@ export interface LedgerSources {
 }
 
 /**
- * Run every mapper and return the unsorted, un-enriched ledger entries. The
+ * Run every mapper and return the unsorted, un-enriched journal drafts. The
  * portal `expenses` (off-chain) supply each budget's cap so a partial expense
  * payout can report its remaining balance.
  */
 function mapAllSources(
-  sources: LedgerSources,
+  sources: JournalEntrySources,
   ctx: MapperContext,
   offChain: EnrichmentSources = {}
-): LedgerEntry[] {
-  const entries: LedgerEntry[] = []
+): JournalEntryDraft[] {
+  const entries: JournalEntryDraft[] = []
   if (sources.bank) entries.push(...mapBankEvents(sources.bank, ctx))
   entries.push(
     ...mapPayroll(
@@ -54,7 +54,7 @@ function mapAllSources(
   entries.push(...mapExpense(sources.expense ?? {}, ctx, offChain.expenses))
   if (sources.fixedReturn) entries.push(...mapFixedReturnEvents(sources.fixedReturn, ctx))
   if (sources.investor) entries.push(...mapInvestorEvents(sources.investor, ctx))
-  if (sources.vesting) entries.push(...mapVestingEvents(sources.vesting, ctx))
+  if (sources.vesting) entries.push(...mapVestingEvents(sources.vesting))
   if (sources.safe) entries.push(...mapSafeTransfers(sources.safe, ctx))
   if (sources.safeDepositRouter) {
     entries.push(...mapSafeDepositRouterEvents(sources.safeDepositRouter, ctx))
@@ -63,7 +63,7 @@ function mapAllSources(
 }
 
 /**
- * Build the CNC general ledger end to end: map every domain, sort by time, then
+ * Build the CNC journal drafts: map every domain, sort by time, then
  * enrich Payroll and Expense entries with their off-chain category.
  *
  * Expenses stay cash-basis (booked at each on-chain payout). When the indexer
@@ -72,11 +72,11 @@ function mapAllSources(
  * inside the Expense boundary so the books still reflect the spend. The two are
  * mutually exclusive, so the fallback never double-counts an indexed payout.
  */
-export function buildCncLedgerEntries(
-  sources: LedgerSources,
+export function mapCncJournalEntryDrafts(
+  sources: JournalEntrySources,
   ctx: MapperContext,
   offChain: EnrichmentSources = {}
-): LedgerEntry[] {
+): JournalEntryDraft[] {
   const mapped = mapAllSources(sources, ctx, offChain).sort((a, b) => a.timestamp - b.timestamp)
   return enrichEntries(mapped, offChain, ctx.tokenIdOf)
 }

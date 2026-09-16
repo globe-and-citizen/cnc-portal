@@ -4,22 +4,23 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 
 ## Quick Reference
 
-| File                        | Domain        | Description                            |
-| --------------------------- | ------------- | -------------------------------------- |
-| `action.queries.ts`         | Actions       | BOD actions and election notifications |
-| `auth.queries.ts`           | Auth          | Token validation                       |
-| `blockTimestamp.queries.ts` | Chain data    | Immutable block timestamp cache        |
-| `contract.queries.ts`       | Contracts     | Smart contract management              |
-| `expense.queries.ts`        | Expenses      | Expense account operations             |
-| `health.queries.ts`         | Health        | Backend health checks                  |
-| `member.queries.ts`         | Members       | Team member management                 |
-| `notification.queries.ts`   | Notifications | User notifications                     |
-| `queryClient.ts`            | Shared cache  | Application-wide query client          |
-| `safe.queries.ts`           | Safe          | Gnosis Safe operations                 |
-| `team.queries.ts`           | Teams         | Team CRUD operations                   |
-| `user.queries.ts`           | Users         | User profile management                |
-| `wage.queries.ts`           | Wages         | Member wage settings                   |
-| `weeklyClaim.queries.ts`    | Claims        | Weekly claim operations                |
+| File                             | Domain        | Description                            |
+| -------------------------------- | ------------- | -------------------------------------- |
+| `action.queries.ts`              | Actions       | BOD actions and election notifications |
+| `auth.queries.ts`                | Auth          | Token validation                       |
+| `blockTimestamp.queries.ts`      | Chain data    | Immutable block timestamp cache        |
+| `contract.queries.ts`            | Contracts     | Smart contract management              |
+| `expense.queries.ts`             | Expenses      | Expense account operations             |
+| `health.queries.ts`              | Health        | Backend health checks                  |
+| `historicalTokenRate.queries.ts` | Market data   | Immutable transaction-date USD rates   |
+| `member.queries.ts`              | Members       | Team member management                 |
+| `notification.queries.ts`        | Notifications | User notifications                     |
+| `queryClient.ts`                 | Shared cache  | Application-wide query client          |
+| `safe.queries.ts`                | Safe          | Gnosis Safe operations                 |
+| `team.queries.ts`                | Teams         | Team CRUD operations                   |
+| `user.queries.ts`                | Users         | User profile management                |
+| `wage.queries.ts`                | Wages         | Member wage settings                   |
+| `weeklyClaim.queries.ts`         | Claims        | Weekly claim operations                |
 
 ## Naming Conventions
 

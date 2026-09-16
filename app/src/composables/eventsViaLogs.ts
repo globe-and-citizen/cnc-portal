@@ -265,15 +265,17 @@ export async function scanContractLogs<T>(
 export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
   const targets = computed(() => normalizeTargets(toValue(opts.contractAddress)))
   const queryKey = computed(() => toValue(opts.queryKey))
-  const addressKey = computed(() =>
+  const targetKey = computed(() =>
     targets.value
-      .map((t) => t.address)
-      .sort()
-      .join(',')
+      .map(({ address, fromBlock }) => ({
+        address,
+        fromBlock: (fromBlock ?? START_BLOCK).toString()
+      }))
+      .sort((left, right) => left.address.localeCompare(right.address))
   )
 
   const query = useQuery({
-    queryKey: computed(() => [queryKey.value, addressKey.value]),
+    queryKey: computed(() => [queryKey.value, { targets: targetKey.value }]),
     enabled: computed(() => targets.value.length > 0),
     staleTime: 30_000,
     queryFn: async (): Promise<ScanResult<T>> => {

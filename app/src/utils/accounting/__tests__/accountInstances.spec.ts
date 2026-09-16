@@ -8,7 +8,7 @@ import {
   transfersFromReceiptLogs,
   type TransactionAccountEvidence
 } from '@/utils/accounting/accountInstances'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 const BANK = '0x1111111111111111111111111111111111111111' as Address
 const BANK_2 = '0x2222222222222222222222222222222222222222' as Address
@@ -35,15 +35,14 @@ const contracts: TeamContract[] = [
 
 function posting(
   id: string,
-  fields: Pick<LedgerEntry, 'debit' | 'credit'> & Partial<LedgerEntry>
-): LedgerEntry {
-  return makeEntry({
+  fields: Pick<JournalEntryDraft, 'debit' | 'credit'> & Partial<JournalEntryDraft>
+): JournalEntryDraft {
+  return makeJournalEntryDraft({
     id,
     timestamp: 1,
     useCase: 'INTERNAL',
     debit: fields.debit,
     credit: fields.credit,
-    amountUsd: 1,
     token: 'usdc',
     rawAmount: '1000000',
     rate: 1,

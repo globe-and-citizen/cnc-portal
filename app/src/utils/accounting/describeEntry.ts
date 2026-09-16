@@ -1,10 +1,10 @@
 /**
- * Activity narration for ledger entries — the "labélisation" layer.
+ * Activity narration for finalized journal entries — the "labélisation" layer.
  *
  * The general ledger's "Activity" column reads like a story: an avatar of the
  * actor (or the two contract pockets, for a transfer) plus a short predicate
  * ("submitted 35h · week ending Jun 14", "invested $105.00 in capital"). This
- * module turns a {@link LedgerEntry} into a structured {@link ActivityCell} the
+ * module turns a {@link JournalEntry} into a structured {@link ActivityCell} the
  * table renders; identity (member name + avatar, contract icon) is resolved at
  * render time via `resolveUser`, so this layer stays pure and unit-testable.
  *
@@ -12,7 +12,9 @@
  * unassigned cash) fall back to the generic per-use-case {@link entryLabel}.
  */
 import { money, formatUnixDate } from './presenter'
-import type { LedgerEntry, UseCase } from './ledgerEntry'
+import { formatAddress, formatDuration } from '@/utils/format'
+import type { UseCase } from './journalEntryDraft'
+import type { JournalEntry } from './types'
 
 /**
  * Normalized accounting-entry label per use case — the generic fallback shown in
@@ -42,7 +44,7 @@ const ENTRY_LABEL: Record<UseCase, string> = {
 }
 
 /** The generic accounting-entry label a ledger row shows (falls back to the memo). */
-export function entryLabel(entry: LedgerEntry): string {
+export function entryLabel(entry: JournalEntry): string {
   return ENTRY_LABEL[entry.useCase] ?? entry.memo
 }
 
@@ -98,7 +100,7 @@ const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
  * so no "today"/"this week" qualifier is needed. An unmatched withdrawal (no
  * approval on file) reads the generic phrase.
  */
-function expensePredicate(entry: LedgerEntry, amount: string): string {
+function expensePredicate(entry: JournalEntry, amount: string): string {
   if (entry.expenseFrequencyType === 0 && entry.expenseApprovedUsd != null) {
     return `withdrew ${amount} from a one-time expense approval of ${money(entry.expenseApprovedUsd)}`
   }
@@ -112,23 +114,14 @@ function expensePredicate(entry: LedgerEntry, amount: string): string {
   return `withdrew ${amount} for an expense`
 }
 
-/** Hours and minutes worked — e.g. "16h", "1h 30min", "50min" — never a decimal. */
-function formatDuration(minutes: number | undefined): string | null {
-  if (!minutes || minutes <= 0) return null
-  const hours = Math.floor(minutes / 60)
-  const mins = Math.round(minutes - hours * 60)
-  if (hours === 0) return `${mins}min`
-  if (mins === 0) return `${hours}h`
-  return `${hours}h ${mins}min`
-}
-
 /**
  * The name-less predicate shown after the actor's avatar (the avatar carries the
  * name). The "· N SHER" tail appears once the entry carries the share count.
  */
-function predicate(entry: LedgerEntry): string {
-  const amount = money(entry.amountUsd)
-  const hours = formatDuration(entry.minutesWorked)
+function predicate(entry: JournalEntry): string {
+  const amount = money(entry.activityAmount)
+  const hours =
+    entry.minutesWorked && entry.minutesWorked > 0 ? formatDuration(entry.minutesWorked) : null
   const sher = entry.shares ? ` and got ${entry.shares} SHER` : ''
 
   switch (entry.useCase) {
@@ -149,7 +142,8 @@ function predicate(entry: LedgerEntry): string {
       // The legs of one installment read differently — the debit is what marks the
       // split (see the FixedReturn mapper): principal retires the loan, while both
       // interest legs settle the fixed return, accrued or not.
-      return entry.debit === 'Loan Payable'
+      return entry.lines.find((line) => line.debit !== undefined)?.account.family.name ===
+        'Loan Payable'
         ? `was repaid ${amount} of loan principal`
         : `was paid ${amount} of interest on their loan`
     case 'UC-CREDIT-04':
@@ -181,14 +175,16 @@ function predicate(entry: LedgerEntry): string {
  * to the debited one); an entry that names a party becomes an `actor`; anything
  * else is `plain` text.
  */
-export function activityOf(entry: LedgerEntry): ActivityCell {
-  if (TRANSFER_USE_CASES.has(entry.useCase) && entry.debit && entry.credit) {
+export function activityOf(entry: JournalEntry): ActivityCell {
+  const debit = entry.lines.find((line) => line.debit !== undefined)?.account.family.name
+  const credit = entry.lines.find((line) => line.credit !== undefined)?.account.family.name
+  if (TRANSFER_USE_CASES.has(entry.useCase) && debit && credit) {
     // `actor` (the signer who performed the move) is shown when resolved from the
     // transaction; otherwise the table reads the source pocket as the doer.
     return {
       kind: 'transfer',
-      from: entry.credit,
-      to: entry.debit,
+      from: credit,
+      to: debit,
       ...(entry.initiator ? { actor: entry.initiator } : {})
     }
   }
@@ -196,11 +192,6 @@ export function activityOf(entry: LedgerEntry): ActivityCell {
     return { kind: 'actor', actor: entry.counterparty, text: predicate(entry) }
   }
   return { kind: 'plain', text: entryLabel(entry) }
-}
-
-/** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */
-function shortAddress(value: string): string {
-  return /^0x[0-9a-fA-F]{40}$/.test(value) ? `${value.slice(0, 6)}…${value.slice(-4)}` : value
 }
 
 /** A pocket account name without its `"Cash — "` prefix, matching the on-screen avatar label. */
@@ -216,7 +207,7 @@ function pocketName(account: string): string {
  */
 export function activityText(
   cell: ActivityCell,
-  resolveName: (address: string) => string = shortAddress
+  resolveName: (address: string) => string = formatAddress
 ): string {
   switch (cell.kind) {
     case 'actor':

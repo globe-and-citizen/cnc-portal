@@ -4,9 +4,9 @@
  * base.
  */
 import type { MaybeRefOrGetter } from 'vue'
-import InvestorV1abi from '@/artifacts/abi/V1/json/InvestorV1.json'
-import InvestorV01abi from '@/artifacts/abi/V0.1/json/InvestorV1.json'
-import InvestorV0abi from '@/artifacts/abi/V0/json/InvestorV1.json'
+import { investorAbi as investorV1Abi } from '@/artifacts/abi/V1/generated'
+import { investorAbi as investorV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { investorAbi as investorV0Abi } from '@/artifacts/abi/V0/generated'
 import type { InvestorEventFeed } from '@/types/contract-events/investor'
 import {
   str,
@@ -16,7 +16,7 @@ import {
   type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
-const INVESTOR_EVENT_ABI = unionEventAbi([InvestorV1abi, InvestorV01abi, InvestorV0abi])
+const INVESTOR_EVENT_ABI = unionEventAbi([investorV1Abi, investorV01Abi, investorV0Abi])
 
 const empty = (): InvestorEventFeed => ({
   investorMints: { items: [] },

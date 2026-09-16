@@ -19,7 +19,7 @@ import type { TokenId } from '@/constant'
 import type { Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import { buildClaimRatesWithOvertime } from '@/utils/wages/model'
-import type { LedgerEntry } from './ledgerEntry'
+import type { JournalEntryDraft } from './journalEntryDraft'
 
 export interface EnrichmentSources {
   weeklyClaims?: readonly WeeklyClaim[]
@@ -91,7 +91,7 @@ function claimTokenTotal(claim: WeeklyClaim, token: TokenId): bigint | null {
  */
 function takePayrollClaim(
   pool: WeeklyClaim[] | undefined,
-  entry: LedgerEntry
+  entry: JournalEntryDraft
 ): WeeklyClaim | undefined {
   if (!pool?.length) return undefined
   let amount: bigint | null = null
@@ -121,7 +121,10 @@ function rateLabel(wage: Wage | undefined): string | null {
   return rate ? `${rate.amount} ${rate.type}/h` : null
 }
 
-function enrichPayroll(entry: LedgerEntry, claim: WeeklyClaim | undefined): LedgerEntry {
+function enrichPayroll(
+  entry: JournalEntryDraft,
+  claim: WeeklyClaim | undefined
+): JournalEntryDraft {
   if (!claim) return { ...entry, enrichment: 'needs-off-chain-data' }
   const parts = [
     rateLabel(claim.wage),
@@ -137,7 +140,10 @@ function enrichPayroll(entry: LedgerEntry, claim: WeeklyClaim | undefined): Ledg
   }
 }
 
-function enrichExpense(entry: LedgerEntry, expense: ExpenseResponse | undefined): LedgerEntry {
+function enrichExpense(
+  entry: JournalEntryDraft,
+  expense: ExpenseResponse | undefined
+): JournalEntryDraft {
   if (!expense) return { ...entry, enrichment: 'needs-off-chain-data' }
   return {
     ...entry,
@@ -155,10 +161,10 @@ function enrichExpense(entry: LedgerEntry, expense: ExpenseResponse | undefined)
  * in another token can't be the payout's backing record.
  */
 export function enrichEntries(
-  entries: readonly LedgerEntry[],
+  entries: readonly JournalEntryDraft[],
   sources: EnrichmentSources,
   tokenIdOf?: (tokenAddress: string | null | undefined) => TokenId
-): LedgerEntry[] {
+): JournalEntryDraft[] {
   const claimsByMember = indexByAddress(sources.weeklyClaims, (claim) => claim.memberAddress)
   const expensesByUser = indexByAddress(sources.expenses, (expense) => expense.userAddress)
 

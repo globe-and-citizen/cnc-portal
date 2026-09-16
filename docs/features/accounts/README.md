@@ -55,7 +55,7 @@ flowchart LR
 | ----------- | ------------------------------------------ | -------------------------- | -------------- |
 | US-BANK-001 | Fund the Bank                              | Company member             | 🧪 Validation  |
 | US-BANK-002 | Transfer Bank funds                        | Owner / Board member       | 🧪 Validation  |
-| US-BANK-003 | Review the Bank position and history       | Company member             | 🧪 Validation  |
+| US-BANK-003 | Review the Bank position and history       | Company member             | 🚧 In Progress |
 | US-BANK-004 | Cash out available treasury funds          | Bank owner                 | 🧪 Validation  |
 | US-EXP-001  | Grant a signed spending approval           | Expense Account owner      | 🧪 Validation  |
 | US-EXP-002  | Spend from the Expense Account             | Approved recipient         | 🚧 In Progress |
@@ -81,7 +81,6 @@ flowchart LR
 - [x] A member can deposit the native token into the Bank.
 - [x] A member can deposit a supported ERC-20 token into the Bank.
 - [x] A successful deposit increases the corresponding Bank balance.
-- [x] A successful deposit refreshes the Bank balance and transaction history.
 
 #### Business Rules
 
@@ -95,6 +94,9 @@ flowchart LR
 - [x] An archived company cannot initiate a deposit.
 - [x] Cancelling or rejecting a deposit leaves the Bank balance unchanged.
 - [x] A failed deposit leaves the Bank balance unchanged.
+
+**Accounting:** An external receipt is booked by [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt).
+A receipt from another known company pocket is an internal transfer instead.
 
 **Dependencies:** Current Bank contract and a connected wallet
 
@@ -111,7 +113,6 @@ flowchart LR
 - [x] The Bank owner can transfer a held native or supported ERC-20 balance to a valid recipient.
 - [x] A Board member can submit the same transfer as a Board action for approval.
 - [x] A successful transfer decreases the Bank balance and delivers the requested net amount to the recipient.
-- [x] A successful transfer refreshes the Bank balance and transaction history.
 
 #### Business Rules
 
@@ -130,6 +131,11 @@ flowchart LR
 - [x] An archived company cannot initiate a transfer or Board action.
 - [x] A paused Bank rejects outgoing transfers. _(contract)_
 - [x] Cancelling, rejecting, or failing a transfer leaves the Bank balance unchanged.
+
+**Accounting:** The destination determines the rule: company-pocket funding uses
+[`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket), an external payment uses
+[`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment), and any matched protocol fee is attached
+through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-component).
 
 **Dependencies:** US-BANK-001 and the Board action capability for non-owner proposals
 
@@ -158,7 +164,7 @@ flowchart LR
 #### Edge & Error Cases
 
 - [x] A history filter with no matching events returns an empty result.
-- [x] A failed history read is distinguishable from a successfully loaded empty history.
+- [ ] A failed history read is distinguishable from a successfully loaded empty history.
 
 **Dependencies:** Current Bank contract and an available chain event provider
 
@@ -197,6 +203,10 @@ flowchart LR
 - [x] Rejecting a wallet request leaves the remaining steps unrun and identifies the rejected step to the owner.
 - [x] A cash-out run does not start when no eligible funded account is available.
 
+**Accounting:** Source-account sweeps are [`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
+The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment) with any matched
+[`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-component).
+
 **Dependencies:** US-BANK-001, US-BANK-002, and the current Cash Remuneration and Expense Account contracts
 
 ## US-EXP-001: Grant a Signed Spending Approval
@@ -225,6 +235,8 @@ flowchart LR
 - [x] An archived company cannot grant a spending approval.
 - [x] An invalid or mismatched signature is rejected without creating an approval.
 - [x] Cancelling or rejecting the signature leaves the recipient's approvals unchanged.
+
+**Accounting:** Creating an approval moves no money and creates no journal entry. A later spend owns the accounting operation.
 
 **Dependencies:** Current Expense Account contract and connected contract owner
 
@@ -257,6 +269,10 @@ flowchart LR
 - [x] A mismatched or unverifiable approval rejects spending without changing balances.
 - [x] A failed balance read prevents spending until the available amount can be verified.
 
+**Accounting:** An external payout is booked by [`UC-EXP-01`](../accounting/journal-entry-catalogue.md#uc-exp-01--approved-expense-payout);
+a transfer to another known company pocket is
+[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
+
 **Dependencies:** US-EXP-001 and a funded Expense Account
 
 ## US-EXP-003: Deactivate or Reactivate an Approval
@@ -284,6 +300,8 @@ flowchart LR
 - [x] An archived company cannot deactivate or reactivate an approval.
 - [x] A failed state change preserves the approval's prior reported state.
 - [x] Expired and exhausted approvals remain unavailable after state synchronization.
+
+**Accounting:** Changing an approval's active state moves no money and creates no journal entry.
 
 **Dependencies:** US-EXP-001
 
@@ -401,6 +419,11 @@ flowchart LR
 - [x] A rejected or failed proposal leaves Safe balances unchanged.
 - [x] An archived company cannot initiate a Safe deposit or transfer.
 
+**Accounting:** A confirmed transfer is classified as
+[`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
+[`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment), or
+[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer) from its counterparty evidence.
+
 **Dependencies:** US-SAFE-001 and US-SAFE-006
 
 ## US-SAFE-004: Manage Safe Signers and Threshold
@@ -491,20 +514,19 @@ flowchart LR
 
 ## Known Gaps
 
+- Bank history does not distinguish a failed event read from a successfully loaded empty history (`US-BANK-003`).
 - A one-time Expense approval can spend an unsupported ERC-20 token held by the contract (`US-EXP-002`).
 - Pausing the Expense Account does not prevent spending (`US-EXP-002`).
 - Deactivating an Expense approval changes its recorded state but does not prevent that signature from authorizing a spend (`US-EXP-003`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `bbca5e1096e4f8ef226ee2f8fb2ad0533b2be1f8`
+**Implementation evidence reviewed against:** `fa7a1732154709f65a459eb1122ead83fcf05ecf`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
   [Safe components](../../../app/src/components/sections/SafeView/), and
   [owner treasury withdrawal](../../../app/src/components/sections/OwnerTreasuryWithdrawAction.vue)
-- [Safe signer role](../../../app/src/composables/safe/useSafeSignerRole.ts) and its [role copy](../../../app/src/utils/safe/signerRole.ts),
-  which decide whether the connected wallet may propose Safe transfers
 - [Token amount input](../../../app/src/components/ui/inputs/TokenAmountInput.vue) and
   [Safe transaction send orchestration](../../../app/src/composables/transactions/useSafeSendTransaction.ts)
 - [Accounts routes](../../../app/src/router/index.ts) and [Accounts navigation](../../../app/src/composables/useSidebarNavItems.ts). The
@@ -512,24 +534,10 @@ flowchart LR
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts),
   [Bank transaction feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
   [version-aware Bank fee normalization](../../../app/src/composables/bank/bankFees.ts),
-  [Bank/Board ownership routing](../../../app/src/composables/bod/reads.ts),
   [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts), and
   [Bank contract](../../../contract/contracts/Bank.sol)
 - [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
-- [Shared E2E chain harness](../../../app/test/e2e/e2e-chain.ts) and [shared E2E page harness](../../../app/test/e2e/e2e-page.ts): the
-  deterministic mock tokens and Safe infrastructure seeded by the [Playwright global setup](../../../app/test/e2e/global-setup.ts) at the
-  addresses published in [`src/e2e/chain.ts`](../../../app/src/e2e/chain.ts), backend stubbing, and sidebar navigation reused by every
-  account journey
-- [Chain-backed Bank Account E2E journeys](../../../app/test/e2e/bank/bank-account.spec.ts) and
-  [their isolated deployment fixture](../../../app/test/e2e/bank/bank-chain.ts), covering `US-BANK-001` through `US-BANK-004`
-- [Chain-backed Expense Account E2E journeys](../../../app/test/e2e/expense/expense-account.spec.ts) and
-  [their isolated Expense fixture](../../../app/test/e2e/expense/expense-chain.ts), covering `US-EXP-001` through `US-EXP-004`: approval
-  signature, ERC-20 spend and exhaustion, activation changes, history-query failure, and archive restrictions
-- [Chain-backed Safe Account E2E journeys](../../../app/test/e2e/safe/safe-account.spec.ts) and
-  [their isolated Safe fixture](../../../app/test/e2e/safe/safe-chain.ts), covering `US-SAFE-001` through `US-SAFE-006`: deployment and
-  import, inspection, native/ERC-20 deposits and transfers, signer and threshold changes, transaction filtering and details, and two-of-two
-  approval and execution
 - [Bank transfer form](../../../app/src/components/forms/TransferForm.vue)
 - [Current treasury cash-out action](../../../app/src/components/sections/DashboardView/CashOutAllAction.vue),
   [historic-generation withdrawal action](../../../app/src/components/sections/ContractManagementView/LegacyGenerationWithdrawAction.vue),

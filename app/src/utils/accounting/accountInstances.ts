@@ -9,7 +9,7 @@
 import { decodeEventLog, getAddress, isAddress, type Address, type Hex } from 'viem'
 import type { TeamContract, ContractType } from '@/types/teamContract'
 import { accountFamilyOf, type AccountName } from './chartOfAccounts'
-import type { LedgerEntry } from './ledgerEntry'
+import type { JournalEntryDraft } from './journalEntryDraft'
 
 /** Cash account family owned by each company money-pocket contract type. */
 const CASH_ACCOUNT_BY_CONTRACT_TYPE = {
@@ -158,7 +158,7 @@ function needsInstance(
 
 /** Whether a transaction receipt could still resolve either cash leg of an entry. */
 export function needsAccountInstanceEvidence(
-  entry: LedgerEntry,
+  entry: JournalEntryDraft,
   accounts: ReadonlyMap<string, AccountName>
 ): boolean {
   return (
@@ -174,10 +174,10 @@ export function needsAccountInstanceEvidence(
  * than one matching deployment intentionally remains unresolved.
  */
 export function resolveAccountInstances(
-  entries: readonly LedgerEntry[],
+  entries: readonly JournalEntryDraft[],
   accounts: ReadonlyMap<string, AccountName>,
   evidence: TransactionAccountEvidence = new Map()
-): LedgerEntry[] {
+): JournalEntryDraft[] {
   return entries.map((entry) => {
     const transfers = transactionEvidenceFor(entry.txHash, evidence)
     const debitInstance =

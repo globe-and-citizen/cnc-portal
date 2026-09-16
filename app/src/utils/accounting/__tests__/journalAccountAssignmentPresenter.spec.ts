@@ -1,25 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import { accountFor } from '../accountRegistry'
-import { buildJournal } from '../generalLedger'
+import { finalizeJournal } from './assembleAccounting'
 import { applyJournalAccountAssignments } from '../journalAccountAssignment'
 import { presentJournalAccountAssignments } from '../journalAccountAssignmentPresenter'
 import { journalLedgerRows } from '../journalLedgerPresenter'
-import { makeEntry, type LedgerEntry } from '../ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '../journalEntryDraft'
 import { ADDR } from './fixtures'
 
 const TX = `0x${'a'.repeat(64)}`
 const BANK2 = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 
-function withdrawal(overrides: Partial<LedgerEntry> = {}): LedgerEntry {
-  return makeEntry({
+function withdrawal(overrides: Partial<JournalEntryDraft> = {}): JournalEntryDraft {
+  return makeJournalEntryDraft({
     id: `${TX}-7`,
     timestamp: 100,
     useCase: 'CASH-OUT',
     debit: 'Operating Expense',
     credit: 'Cash — Bank',
     creditInstance: ADDR.bank,
-    amountUsd: 100,
     token: 'usdc',
     rawAmount: '100000000',
     rate: 1,
@@ -28,12 +27,11 @@ function withdrawal(overrides: Partial<LedgerEntry> = {}): LedgerEntry {
   })
 }
 
-function fee(overrides: Partial<LedgerEntry> = {}): LedgerEntry {
+function fee(overrides: Partial<JournalEntryDraft> = {}): JournalEntryDraft {
   return withdrawal({
     id: `${TX}-8`,
     useCase: 'FEE',
     debit: 'Transaction Fee Expense',
-    amountUsd: 1,
     rawAmount: '1000000',
     ...overrides
   })
@@ -54,7 +52,7 @@ function assignment(accountId: string, memo: string | null = null): JournalAccou
 
 describe('JournalEntry account-assignment projection', () => {
   it('shows the same complete 100 + 1 fee journal as the General Ledger', () => {
-    const journal = buildJournal([withdrawal(), fee()])
+    const journal = finalizeJournal([withdrawal(), fee()])
     const view = presentJournalAccountAssignments(journal)
     expect(view.entryCount).toBe(1)
     expect(view.rows).toHaveLength(3)
@@ -74,7 +72,7 @@ describe('JournalEntry account-assignment projection', () => {
   })
 
   it('reads the selected account and note from the applied JournalEntry', () => {
-    const journal = applyJournalAccountAssignments(buildJournal([withdrawal()]), [
+    const journal = applyJournalAccountAssignments(finalizeJournal([withdrawal()]), [
       assignment('interest-expense', 'Pay the founder interest')
     ])
     const row = presentJournalAccountAssignments(journal).rows[0]!
@@ -89,7 +87,7 @@ describe('JournalEntry account-assignment projection', () => {
   })
 
   it('reads amounts and concrete accounts only from journal lines', () => {
-    const journal = buildJournal([withdrawal()])
+    const journal = finalizeJournal([withdrawal()])
     journal[0]!.lines = [
       { id: 'debit', account: accountFor('Loan Payable'), debit: 9n },
       { id: 'credit', account: accountFor('Cash — Bank', BANK2), credit: 9n }
@@ -103,7 +101,7 @@ describe('JournalEntry account-assignment projection', () => {
   })
 
   it('numbers Bank generations from the whole journal and keeps unresolved accounts distinct', () => {
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       withdrawal({
         id: 'deposit',
         timestamp: 1,
@@ -129,16 +127,16 @@ describe('JournalEntry account-assignment projection', () => {
     { useCase: 'UC-CREDIT-03', debit: 'Loan Payable' },
     { useCase: 'UC-EXP-01', credit: 'Cash — Expense' },
     { useCase: 'DEFAULT-D', debit: null, credit: null }
-  ] satisfies Partial<LedgerEntry>[])('does not offer assignment for $useCase', (fields) => {
-    expect(presentJournalAccountAssignments(buildJournal([withdrawal(fields)]))).toEqual({
+  ] satisfies Partial<JournalEntryDraft>[])('does not offer assignment for $useCase', (fields) => {
+    expect(presentJournalAccountAssignments(finalizeJournal([withdrawal(fields)]))).toEqual({
       rows: [],
       entryCount: 0
     })
   })
 
   it('never turns a fee or an internal transfer with a fee into an assignable withdrawal', () => {
-    expect(presentJournalAccountAssignments(buildJournal([fee()])).entryCount).toBe(0)
-    const journal = buildJournal([
+    expect(presentJournalAccountAssignments(finalizeJournal([fee()])).entryCount).toBe(0)
+    const journal = finalizeJournal([
       withdrawal({ useCase: 'UC-BANK-03', debit: 'Cash — Safe', internal: true }),
       fee()
     ])
@@ -147,7 +145,7 @@ describe('JournalEntry account-assignment projection', () => {
   })
 
   it('keeps compound withdrawals visible but read-only', () => {
-    const journal = buildJournal([withdrawal(), withdrawal({ id: `${TX}-9` }), fee()])
+    const journal = finalizeJournal([withdrawal(), withdrawal({ id: `${TX}-9` }), fee()])
     const view = presentJournalAccountAssignments(journal)
     expect(view.entryCount).toBe(1)
     expect(view.rows.every((row) => !row.target && row.reviewRequired)).toBe(true)
@@ -155,14 +153,13 @@ describe('JournalEntry account-assignment projection', () => {
 
   it('keeps mixed-currency compound withdrawals read-only', () => {
     const view = presentJournalAccountAssignments(
-      buildJournal([
+      finalizeJournal([
         withdrawal(),
         withdrawal({
           id: `${TX}-9`,
           token: 'native',
           rawAmount: '2000000000000000000',
-          rate: 2,
-          amountUsd: 4
+          rate: 2
         })
       ])
     )

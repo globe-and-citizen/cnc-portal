@@ -7,7 +7,7 @@ on:
     branches: "**"
     paths:
       - "contract/**"
-      - "app/src/artifacts/abi/generated.ts"
+      - "app/src/artifacts/abi/**"
       - ".github/workflows/contract-code-quality.yml"
   workflow_dispatch:
 jobs:

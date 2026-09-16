@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import type { JournalEntry } from '@/utils/accounting/types'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 // A controlled, reactive book so the account / currency filters, their
 // reconciliation, and the export scope all run deterministically. `catalogueLedger`
@@ -31,8 +31,8 @@ import GeneralLedgerView from '../GeneralLedgerView.vue'
 import AccountFilterSelect from '@/components/sections/AccountingView/AccountFilterSelect.vue'
 import CurrencyFilterSelect from '@/components/sections/AccountingView/CurrencyFilterSelect.vue'
 
-const setBook = (entries: LedgerEntry[]) => {
-  ctx.journal!.value = buildJournal(entries)
+const setBook = (entries: JournalEntryDraft[]) => {
+  ctx.journal!.value = finalizeJournal(entries)
 }
 
 /** The menu entries of a filter popover carry `type="button"`; the trigger doesn't. */

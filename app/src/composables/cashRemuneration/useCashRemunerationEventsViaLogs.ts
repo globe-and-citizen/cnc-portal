@@ -5,9 +5,9 @@
  * the dedicated Bank RPC-log feed.
  */
 import type { MaybeRefOrGetter } from 'vue'
-import CashRemV1 from '@/artifacts/abi/V1/json/CashRemunerationEIP712.json'
-import CashRemV01 from '@/artifacts/abi/V0.1/json/CashRemunerationEIP712.json'
-import CashRemV0 from '@/artifacts/abi/V0/json/CashRemunerationEIP712.json'
+import { cashRemunerationEip712Abi as cashRemV1Abi } from '@/artifacts/abi/V1/generated'
+import { cashRemunerationEip712Abi as cashRemV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { cashRemunerationEip712Abi as cashRemV0Abi } from '@/artifacts/abi/V0/generated'
 import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
 import {
   str,
@@ -17,7 +17,7 @@ import {
   type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
-const CASH_REM_EVENT_ABI = unionEventAbi([CashRemV1, CashRemV01, CashRemV0])
+const CASH_REM_EVENT_ABI = unionEventAbi([cashRemV1Abi, cashRemV01Abi, cashRemV0Abi])
 
 const empty = (): CashRemunerationEventFeed => ({
   cashRemunerationDeposits: { items: [] },

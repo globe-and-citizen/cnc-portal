@@ -67,6 +67,8 @@ automatically when a deadline or maturity date passes.
 #### Business Rules
 
 - [ ] Rounds that still require an issuer action remain accessible separately from settled rounds.
+- [x] Account-level statistics (outstanding principal, interest due, lifetime raised, lifetime repaid) are grouped and displayed per token;
+      amounts from different tokens are never summed into a single figure.
 
 #### Edge & Error Cases
 
@@ -107,6 +109,8 @@ automatically when a deadline or maturity date passes.
 - [x] Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
 - [x] Once the on-chain round exists, a metadata failure can be retried without creating a second round.
 
+**Accounting:** Publishing terms moves no company funds and creates no journal entry.
+
 ## US-CC-003: Lend to an Open Round
 
 **As a** company member\
@@ -136,6 +140,10 @@ automatically when a deadline or maturity date passes.
 - [x] Rejecting approval, rejecting the lending transaction, or an on-chain failure leaves the round unchanged and returns a recoverable
       failure outcome.
 
+**Accounting:** A contribution remains source evidence while the round is open. When the round becomes funded, Accounting books principal
+through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--funded-principal) and fixed return through
+[`UC-CREDIT-05`](../accounting/journal-entry-catalogue.md#uc-credit-05--fixed-return-recognized).
+
 ## US-CC-004: Resolve a Stalled Round
 
 **As a** company issuer\
@@ -160,6 +168,9 @@ automatically when a deadline or maturity date passes.
 
 - [x] A partial raise of 0 cannot be accepted.
 - [x] A failed resolution leaves the round unchanged and returns a failure outcome.
+
+**Accounting:** Accepting a partial raise activates `UC-CREDIT-01` and `UC-CREDIT-05`. Refunding lenders returns funds that never entered
+the company's books and creates no journal entry.
 
 ## US-CC-005: Repay Lenders
 
@@ -195,13 +206,17 @@ automatically when a deadline or maturity date passes.
 - [x] The Bank rejects repayment from an account other than its current owner.
 - [x] A paused Bank rejects repayment.
 - [x] The repayment action is unavailable to a wallet other than the current Bank owner.
-- [ ] The repayment action is unavailable while the Bank is paused.
+- [x] The repayment action is unavailable while the Bank is paused.
 
 #### Edge & Error Cases
 
 - [x] A round that is still raising cannot be repaid.
 - [x] A settled round cannot be repaid again.
 - [x] Rejecting or failing a repayment preserves the outstanding amount and returns a recoverable failure outcome.
+
+**Accounting:** Each repayment settles principal and interest through
+[`UC-CREDIT-03`](../accounting/journal-entry-catalogue.md#uc-credit-03--principal-and-interest-repaid). Lender payments from the same
+transaction remain one General Ledger entry.
 
 ## Known Gaps
 
@@ -213,11 +228,10 @@ The following verified gaps have technical evidence and remediation directions i
 - Rounds that require an issuer action are grouped with settled history.
 - Lenders cannot review their personal deposited and expected-return positions separately from the company's debt.
 - Lending and repayment refresh the matching activity feed but not every affected token balance.
-- The main repayment CTA requires both the Credit Account and Bank owner, and the product does not yet reflect the Bank pause state.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
+**Implementation evidence reviewed against:** `d22c21b7d46e0b07cc1720063dab67ce8c0074e9`
 
 - [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
@@ -229,6 +243,7 @@ The following verified gaps have technical evidence and remediation directions i
 - [Credit round read states](../../../app/src/components/sections/CommunityCreditView/CreditRoundReadState.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
+- [Bank reads (owner and paused state, gating repayment)](../../../app/src/composables/bank/reads.ts)
 - [Repayment amount validation](../../../app/src/types/communityCredit.schemas.ts)
 - [Repayment lifecycle status](../../../app/src/utils/communityCredit/roundStatus.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
@@ -253,5 +268,5 @@ The following verified gaps have technical evidence and remediation directions i
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Transaction History implementation](../../implementation/transaction-history/README.md)
 - [Detailed flow and implementation analysis](./user-flow-analysis.md)
-- [Community Credit accounting rules](../accounting/cnc-accounting-spec.md)
+- [Accounting use cases, posting rules, and journal entries](../accounting/journal-entry-catalogue.md)
 - [Product Feature Inventory](../README.md)

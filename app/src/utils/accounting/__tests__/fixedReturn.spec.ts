@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
-import { makeCtx, ADDR, creditOffer, creditEvent, usd } from './fixtures'
+import { makeCtx, ADDR, creditOffer, creditEvent, draftUsdValue, usd } from './fixtures'
 
 const ctx = makeCtx()
 // The three per-lender feeds share one row shape; the alias names the event.
@@ -38,7 +38,7 @@ describe('mapFixedReturnEvents', () => {
     )
     const principal = entries.filter((e) => e.useCase === 'UC-CREDIT-01')
     // The whole principal lands in Bank, split per lender in first-lent order.
-    expect(principal.map((e) => [e.debit, e.credit, e.amountUsd, e.internal])).toEqual([
+    expect(principal.map((e) => [e.debit, e.credit, draftUsdValue(e), e.internal])).toEqual([
       ['Cash — Bank', 'Loan Payable', 4, false],
       ['Cash — Bank', 'Loan Payable', 6, false]
     ])
@@ -64,7 +64,7 @@ describe('mapFixedReturnEvents', () => {
     )
     const repayments = entries.filter((e) => e.useCase === 'UC-CREDIT-03')
     expect(repayments).toHaveLength(3)
-    expect(repayments.map((e) => [e.id, e.debit, e.amountUsd])).toEqual([
+    expect(repayments.map((e) => [e.id, e.debit, draftUsdValue(e)])).toEqual([
       ['rp1-principal', 'Loan Payable', 6],
       // The second installment retires the last 4 of principal; the rest is interest.
       ['rp2-principal', 'Loan Payable', 4],
@@ -92,7 +92,7 @@ describe('mapFixedReturnEvents', () => {
       ctx
     )
 
-    const repayment = buildJournal(entries.map((entry) => ({ ...entry, rate: 1 }))).find(
+    const repayment = finalizeJournal(entries.map((entry) => ({ ...entry, rate: 1 }))).find(
       (entry) => entry.id === txHash
     )
 
@@ -121,8 +121,8 @@ describe('mapFixedReturnEvents', () => {
     const payable = entries.reduce(
       (sum, e) =>
         sum +
-        (e.credit === 'Loan Payable' ? e.amountUsd : 0) -
-        (e.debit === 'Loan Payable' ? e.amountUsd : 0),
+        (e.credit === 'Loan Payable' ? draftUsdValue(e) : 0) -
+        (e.debit === 'Loan Payable' ? draftUsdValue(e) : 0),
       0
     )
     expect(payable).toBe(0)
@@ -172,7 +172,6 @@ describe('mapFixedReturnEvents', () => {
       id: 'credit-unvalued-1',
       debit: null,
       credit: null,
-      amountUsd: 0,
       enrichment: 'needs-off-chain-data'
     })
     expect(entries[0]?.memo).toContain('could not be valued')

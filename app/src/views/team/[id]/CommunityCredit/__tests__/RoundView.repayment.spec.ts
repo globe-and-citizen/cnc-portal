@@ -58,6 +58,7 @@ describe('RoundView repayment', () => {
     mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockReset()
     mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockResolvedValue(undefined)
     mockBankReads.owner.data.value = MOCK_USER_ADDRESS
+    mockBankReads.paused.data.value = false
     mockERC20Reads.balanceOf.data.value = 10_000_000000n
     mockERC20Reads.balanceOf.refetch.mockClear()
     mockFixedReturnReads.getLendingOffer.refetch.mockClear()
@@ -77,6 +78,35 @@ describe('RoundView repayment', () => {
     expect(wrapper.text()).toContain('Repayment breakdown')
     expect(wrapper.text()).toContain('5,250')
     expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
+  })
+
+  it("shows the repay CTA to the Bank owner even when they are not the round's FixedReturn issuer", async () => {
+    store.isOwner = false
+    const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'ledger')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="round-cta-repay"]').exists()).toBe(true)
+  })
+
+  it("shows the repay form to the Bank owner even when they are not the round's FixedReturn issuer", async () => {
+    store.isOwner = false
+    const wrapper = mountRound(sampleRound({ status: 'active' }))
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="repay-bank-blocked"]').exists()).toBe(false)
+  })
+
+  it('blocks repayment while the Bank is paused, even for the treasury owner', async () => {
+    mockBankReads.paused.data.value = true
+    const wrapper = mountRound(sampleRound({ status: 'active' }))
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="repay-bank-blocked"]').exists()).toBe(true)
+    expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
+
+    await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+    expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('writes exact units, refreshes the route data, and returns after a full repayment', async () => {

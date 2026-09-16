@@ -36,8 +36,8 @@
  * early must not absorb later wages); a withdrawal (UC-CASH-03) is unrestricted, since
  * its accrual is dated at week end and can post after an early payout. Any issued
  * quantity with no accrual behind it keeps its own-date value (cash-for-shares on the
- * day). An accrual that is partly withdrawn carries a quantity-weighted value: the
- * withdrawn part frozen, the rest current.
+ * day). An accrual that is partly withdrawn keeps separate exact valuation portions:
+ * the withdrawn part frozen, the rest current.
  *
  * In the vesting lane the same rule is what makes a grant net out exactly: the released
  * quantity is frozen at its release-date rate (so `SHERS To Be Issued` clears against
@@ -45,31 +45,33 @@
  * against UC-VEST-03), leaving `Deferred SHER Compensation` equal to the shares actually
  * issued — net equity zero, nothing on the income statement.
  */
-import { formatUnits } from 'viem'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import { round6 } from '@/utils/accounting/toUsd'
-import { getTokenDecimals } from '@/utils/tokens/metadata'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { sourceOperationIdOf } from '@/utils/accounting/journalEntryDraft'
 
 const SHERS_TO_BE_ISSUED = 'SHERS To Be Issued'
 const INVESTOR_EQUITY = 'Investor Equity'
 const DEFERRED_SHER_COMP = 'Deferred SHER Compensation'
-const SHER_DECIMALS = getTokenDecimals('sher')
-
-/** An accrual being consumed FIFO: the value frozen so far + the quantity still open. */
-interface AccrualState {
-  entry: LedgerEntry
-  totalQty: number
-  matchedQty: number
-  /** Σ (withdrawn quantity × the withdrawal's own-date rate) — the frozen value. */
-  frozenValue: number
+/** One exact quantity valued at one source-owned SHER rate. */
+interface ValuationSlice {
+  rawAmount: bigint
+  rate: number
 }
 
-/** Whole-unit SHER quantity of an entry, tolerating malformed input. */
-function sherQty(entry: LedgerEntry): number {
+/** An accrual being consumed FIFO, preserving each exact valuation portion. */
+interface AccrualState {
+  entry: JournalEntryDraft
+  totalRawAmount: bigint
+  matchedRawAmount: bigint
+  frozenSlices: ValuationSlice[]
+}
+
+/** Raw SHER base-unit quantity of an entry, tolerating malformed input. */
+function sherRawAmount(entry: JournalEntryDraft): bigint {
   try {
-    return Number(formatUnits(BigInt(entry.rawAmount), SHER_DECIMALS))
+    const amount = BigInt(entry.rawAmount)
+    return amount > 0n ? amount : 0n
   } catch {
-    return 0
+    return 0n
   }
 }
 
@@ -81,7 +83,7 @@ type SherLane = 'wage' | 'vesting'
  * direct mint, a vesting release, or the cancellation of a stopped grant — or
  * `null` when the entry is not such a leg.
  */
-function issuanceLane(entry: LedgerEntry): SherLane | null {
+function issuanceLane(entry: JournalEntryDraft): SherLane | null {
   if (entry.token !== 'sher' || entry.debit !== SHERS_TO_BE_ISSUED) return null
   if (entry.useCase === 'UC-CASH-03' || entry.useCase === 'DEFAULT-D') {
     return entry.credit === INVESTOR_EQUITY ? 'wage' : null
@@ -92,7 +94,7 @@ function issuanceLane(entry: LedgerEntry): SherLane | null {
 }
 
 /** The lane of the leg that **opens** `SHERS To Be Issued` — a wage accrual or a grant. */
-function accrualLane(entry: LedgerEntry): SherLane | null {
+function accrualLane(entry: JournalEntryDraft): SherLane | null {
   if (entry.token !== 'sher' || entry.credit !== SHERS_TO_BE_ISSUED) return null
   if (entry.useCase === 'UC-CASH-02') return 'wage'
   if (entry.useCase === 'UC-VEST-01') return 'vesting'
@@ -100,20 +102,20 @@ function accrualLane(entry: LedgerEntry): SherLane | null {
 }
 
 /** `${lane}|${member}` — a wage promise and a vesting grant queue independently. */
-function laneKey(lane: SherLane, entry: LedgerEntry): string {
+function laneKey(lane: SherLane, entry: JournalEntryDraft): string {
   return `${lane}|${(entry.counterparty ?? '').toLowerCase()}`
 }
 
 /** Narrow a `(entry, lane)` pair to the legs that belong to a lane. */
-function isLaned(candidate: { entry: LedgerEntry; lane: SherLane | null }): candidate is {
-  entry: LedgerEntry
+function isLaned(candidate: { entry: JournalEntryDraft; lane: SherLane | null }): candidate is {
+  entry: JournalEntryDraft
   lane: SherLane
 } {
   return candidate.lane !== null
 }
 
 /** FIFO queues of open accrual states, keyed by lane + member ({@link laneKey}). */
-function buildAccrualQueues(entries: readonly LedgerEntry[]): {
+function buildAccrualQueues(entries: readonly JournalEntryDraft[]): {
   states: Map<string, AccrualState>
   queues: Map<string, AccrualState[]>
 } {
@@ -124,9 +126,14 @@ function buildAccrualQueues(entries: readonly LedgerEntry[]): {
     .filter(isLaned)
     .sort((a, b) => a.entry.timestamp - b.entry.timestamp)
   for (const { entry, lane } of accruals) {
-    const qty = sherQty(entry)
-    if (qty <= 0) continue
-    const state: AccrualState = { entry, totalQty: qty, matchedQty: 0, frozenValue: 0 }
+    const rawAmount = sherRawAmount(entry)
+    if (rawAmount <= 0n) continue
+    const state: AccrualState = {
+      entry,
+      totalRawAmount: rawAmount,
+      matchedRawAmount: 0n,
+      frozenSlices: []
+    }
     states.set(entry.id, state)
     const key = laneKey(lane, entry)
     queues.set(key, [...(queues.get(key) ?? []), state])
@@ -138,9 +145,9 @@ function buildAccrualQueues(entries: readonly LedgerEntry[]): {
  * Consume the member's open accruals for one issuance, FIFO by SHER quantity, freezing
  * the matched accrual value at the issuance's own-date rate (`issuance.rate`).
  */
-function consumeAccruals(issuance: LedgerEntry, queue: AccrualState[] | undefined): void {
-  let remaining = sherQty(issuance)
-  if (remaining <= 0 || !queue) return
+function consumeAccruals(issuance: JournalEntryDraft, queue: AccrualState[] | undefined): void {
+  let remaining = sherRawAmount(issuance)
+  if (remaining <= 0n || !queue) return
 
   // The issuance leg is already stamped at its withdraw/mint-date rate — reuse it so
   // the matched accrual cancels the issuance exactly in `SHERS To Be Issued`.
@@ -149,26 +156,28 @@ function consumeAccruals(issuance: LedgerEntry, queue: AccrualState[] | undefine
   const cutoff = issuance.useCase === 'DEFAULT-D' ? issuance.timestamp : Infinity
 
   let head: AccrualState | undefined
-  while (remaining > 0 && (head = queue[0]) && head.entry.timestamp <= cutoff) {
-    const open = head.totalQty - head.matchedQty
-    const take = Math.min(open, remaining)
-    head.matchedQty += take
-    head.frozenValue += take * withdrawRate
+  while (remaining > 0n && (head = queue[0]) && head.entry.timestamp <= cutoff) {
+    const open = head.totalRawAmount - head.matchedRawAmount
+    const take = open < remaining ? open : remaining
+    head.matchedRawAmount += take
+    head.frozenSlices.push({ rawAmount: take, rate: withdrawRate })
     remaining -= take
-    if (head.totalQty - head.matchedQty <= 0) queue.shift()
+    if (head.totalRawAmount - head.matchedRawAmount <= 0n) queue.shift()
   }
 }
 
 /**
  * Re-value every SHER accrual: the withdrawn part frozen at its realization rate, the
- * still-pending part at the current rate. Pure: returns a new array in the same order;
- * only matched/pending accrual legs change (`amountUsd` and the displayed `rate`).
- * Issuance legs are left at their own-date (frozen) value.
+ * still-pending part at the current rate. Pure: returns new drafts in source order.
+ * When one accrual spans several rates, it becomes several valuation slices that
+ * retain the original source-operation identity. Finalization groups those slices
+ * into one JournalEntry and derives exact USD lines from each raw quantity and rate.
+ * Issuance legs keep their own-date rate.
  */
 export function settleWithdrawnSher(
-  entries: readonly LedgerEntry[],
+  entries: readonly JournalEntryDraft[],
   currentSherRate: number
-): LedgerEntry[] {
+): JournalEntryDraft[] {
   const { states, queues } = buildAccrualQueues(entries)
 
   // Issuances consume their own lane's accrual queue, in chronological order (FIFO).
@@ -180,11 +189,26 @@ export function settleWithdrawnSher(
     consumeAccruals(entry, queues.get(laneKey(lane, entry)))
   }
 
-  return entries.map((entry) => {
+  return entries.flatMap((entry) => {
     const state = states.get(entry.id)
-    if (!state || accrualLane(entry) === null) return entry
-    const pendingQty = state.totalQty - state.matchedQty
-    const amountUsd = round6(state.frozenValue + pendingQty * currentSherRate)
-    return { ...entry, amountUsd, rate: round6(amountUsd / state.totalQty) }
+    if (!state || accrualLane(entry) === null) return [entry]
+
+    const pendingRawAmount = state.totalRawAmount - state.matchedRawAmount
+    const slices = [
+      ...state.frozenSlices,
+      ...(pendingRawAmount > 0n ? [{ rawAmount: pendingRawAmount, rate: currentSherRate }] : [])
+    ]
+    if (slices.length === 1) {
+      return [{ ...entry, rawAmount: String(slices[0]!.rawAmount), rate: slices[0]!.rate }]
+    }
+
+    const sourceOperationId = entry.sourceOperationId ?? sourceOperationIdOf(entry.id)
+    return slices.map((slice, index) => ({
+      ...entry,
+      id: `${entry.id}:valuation:${index}`,
+      sourceOperationId,
+      rawAmount: String(slice.rawAmount),
+      rate: slice.rate
+    }))
   })
 }

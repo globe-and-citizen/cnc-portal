@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { accountNet, entriesForAccount } from '@/utils/accounting/accountLedger'
-import { buildJournal } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { money } from '@/utils/accounting/presenter'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 
@@ -11,7 +11,7 @@ vi.mock('@/composables/accounting/useAccountingExport', () => ({
   useAccountingExport: () => ({ exportPdf, exportExcel })
 }))
 
-const journal = buildJournal(catalogueLedger)
+const journal = finalizeJournal(catalogueLedger)
 
 describe('useLedgerDrilldown', () => {
   const entries = ref(journal)
