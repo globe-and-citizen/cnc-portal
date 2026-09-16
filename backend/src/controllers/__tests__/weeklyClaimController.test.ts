@@ -879,7 +879,7 @@ describe('Weekly Claim Controller', () => {
       expect(response.body).toEqual({ teamId: 1, totalProcessed: 0, updated: [], skipped: [] });
     });
 
-    it('should update status from signed to withdrawn when paid on-chain', async () => {
+    it('[AC-US-PAYROLL-011-02] reconciles a paid signed claim to withdrawn', async () => {
       vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
 
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
@@ -1116,7 +1116,7 @@ describe('Weekly Claim Controller', () => {
       expect(prisma.weeklyClaim.upsert).not.toHaveBeenCalled();
     });
 
-    it('rejects with 409 when the week is already signed', async () => {
+    it('[AC-US-PAYROLL-005-19] rejects a new daily claim when the week is signed', async () => {
       mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
         weeklyClaimFactory({ id: 5, status: 'signed', signature: '0xabc' }) as never

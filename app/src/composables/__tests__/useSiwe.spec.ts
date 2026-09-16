@@ -84,7 +84,7 @@ describe('useSiweMutation', () => {
     vi.clearAllMocks()
   })
 
-  it('runs the full SIWE flow and redirects on success', async () => {
+  it('[AC-US-AUTH-001-01] runs the full SIWE flow and redirects on success', async () => {
     const { mutateAsync } = useSiweMutation()
     await mutateAsync()
     await flushPromises()
@@ -104,7 +104,7 @@ describe('useSiweMutation', () => {
     expect(mockRouterPush).toHaveBeenCalledWith('/teams')
   })
 
-  it('calls connect first when the wallet is not yet connected', async () => {
+  it('[AC-US-AUTH-001-03] calls connect first when the wallet is not yet connected', async () => {
     // First read sees disconnected; reads after `connect()` see connected.
     vi.mocked(wagmiCore.getConnection)
       .mockReturnValueOnce(disconnectedReturn)

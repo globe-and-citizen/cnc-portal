@@ -74,7 +74,7 @@ describe('SafeDepositRouter', function () {
     expect(await router.getDepositsEnabled()).to.equal(false)
   })
 
-  it('allows owner to enable and disable deposits', async () => {
+  it('[AC-US-SHER-005-02] allows the owner to enable and disable deposits', async () => {
     const { owner, router } = await deployFixture()
 
     await expect(router.connect(owner).enableDeposits())
@@ -230,7 +230,7 @@ describe('SafeDepositRouter', function () {
     ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__InvalidSafeAddress')
   })
 
-  it('updates multiplier', async () => {
+  it('[AC-US-SHER-005-03] updates the SHER multiplier', async () => {
     const { owner, router } = await deployFixture()
 
     const newMultiplier = ethers.parseUnits('2', 18)
@@ -243,7 +243,7 @@ describe('SafeDepositRouter', function () {
     expect(await router.getMultiplier()).to.equal(newMultiplier)
   })
 
-  it('rejects multiplier below minimum', async () => {
+  it('[AC-US-SHER-005-06] rejects a multiplier below the configured minimum', async () => {
     const { owner, router } = await deployFixture()
 
     await expect(router.connect(owner).setMultiplier(0)).to.be.revertedWithCustomError(

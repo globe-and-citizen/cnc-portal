@@ -50,7 +50,7 @@ describe('ElectionCandidatesSection', () => {
     wrapper?.unmount()
   })
 
-  it('reads every candidate count once and distributes the grouped values to cards', () => {
+  it('[AC-US-EL-06-02] reads and displays every candidate vote count', () => {
     wrapper = mountComponent()
 
     const cards = wrapper.findAllComponents(ElectionCandidateCard)

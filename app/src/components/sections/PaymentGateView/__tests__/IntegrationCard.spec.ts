@@ -22,7 +22,7 @@ describe('IntegrationCard', () => {
     vi.doUnmock('@/constant')
   })
 
-  it('shows a "no Bank contract" alert instead of a snippet when the team has no Bank yet', async () => {
+  it('[AC-US-PAYGATE-002-04] shows a "no Bank contract" alert instead of a snippet when the team has no Bank yet', async () => {
     mockTeamStore.getContractAddressByType = vi.fn(() => undefined)
     const IntegrationCard = await loadIntegrationCard('https://widget.example/widget.js')
     const wrapper = mount(IntegrationCard, { props: { selectedToken: 'USDC' } })
@@ -31,7 +31,7 @@ describe('IntegrationCard', () => {
     expect(wrapper.text()).not.toContain('Embed snippet')
   })
 
-  it('shows a "not available" alert instead of a snippet when the widget URL is unconfigured', async () => {
+  it('[AC-US-PAYGATE-002-05] shows a "not available" alert instead of a snippet when the widget URL is unconfigured', async () => {
     const IntegrationCard = await loadIntegrationCard('')
     const wrapper = mount(IntegrationCard, { props: { selectedToken: 'USDC' } })
 
@@ -39,7 +39,7 @@ describe('IntegrationCard', () => {
     expect(wrapper.text()).not.toContain('Embed snippet')
   })
 
-  it('shows the Bank address and embed snippet when properly configured', async () => {
+  it('[AC-US-PAYGATE-002-02] shows the Bank address and embed snippet when properly configured', async () => {
     const IntegrationCard = await loadIntegrationCard('https://widget.example/widget.js')
     const wrapper = mount(IntegrationCard, { props: { selectedToken: 'USDC' } })
 

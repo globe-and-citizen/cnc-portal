@@ -153,7 +153,7 @@ describe('authController', () => {
       expect(typeof response.body.accessToken).toBe('string');
     });
 
-    it('should return 200 if authentication successful with new user', async () => {
+    it('[AC-US-AUTH-001-02] should return 200 if authentication successful with new user', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({
         ...createMockUser(),

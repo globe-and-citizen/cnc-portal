@@ -337,7 +337,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.isTokenSupported(await newToken.getAddress())).to.be.true
     })
 
-    it('should not allow adding already supported token', async () => {
+    it('[AC-US-MICROPAYMENTS-003-05] should reject an already supported token', async () => {
       await expect(
         feeCollector.addTokenSupport(await mockUSDT.getAddress())
       ).to.be.revertedWithCustomError(feeCollector, ERRORS.TOKEN_ALREADY_SUPPORTED)
@@ -358,7 +358,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.isTokenSupported(await mockUSDT.getAddress())).to.be.false
     })
 
-    it('should not allow removing unsupported token', async () => {
+    it('[AC-US-MICROPAYMENTS-003-05] should reject removal of an unsupported token', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
@@ -404,7 +404,7 @@ describe('FeeCollector', () => {
       ).to.be.revertedWithCustomError(feeCollector, ERRORS.TOKEN_NOT_SUPPORTED)
     })
 
-    it('should sweep full ERC20 balances of every supported token', async () => {
+    it('[AC-US-MICROPAYMENTS-006-02] should sweep every supported ERC20 balance', async () => {
       const usdtAmount = ethers.parseUnits('100', 6)
       const usdcAmount = ethers.parseUnits('250', 6)
       await mockUSDT.mint(await feeCollector.getAddress(), usdtAmount)
@@ -467,7 +467,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.getBalance()).to.equal(0)
     })
 
-    it('should sweep native and all token balances in a single call', async () => {
+    it('[AC-US-MICROPAYMENTS-006-02] should sweep native and token balances in one call', async () => {
       const usdtAmount = ethers.parseUnits('500', 6)
       const usdcAmount = ethers.parseUnits('750', 6)
       await mockUSDT.mint(await feeCollector.getAddress(), usdtAmount)
@@ -506,7 +506,7 @@ describe('FeeCollector', () => {
       await expect(tx).to.emit(feeCollector, 'Withdrawn').withArgs(user2.address, fullNative)
     })
 
-    it('should fall back to owner when beneficiary is cleared', async () => {
+    it('[AC-US-MICROPAYMENTS-004-02] should fall back to owner when beneficiary is cleared', async () => {
       await feeCollector.setFeeBeneficiary(user2.address)
       await feeCollector.setFeeBeneficiary(ethers.ZeroAddress)
 
@@ -514,19 +514,19 @@ describe('FeeCollector', () => {
       await expect(() => feeCollector.withdraw()).to.changeEtherBalance(ethers, owner, fullNative)
     })
 
-    it('should not allow non-owner to withdraw', async () => {
+    it('[AC-US-MICROPAYMENTS-006-04] should reject a non-owner withdrawal', async () => {
       await expect(feeCollector.connect(user1).withdraw())
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
     })
 
-    it('should not allow non-owner to change the fee beneficiary', async () => {
+    it('[AC-US-MICROPAYMENTS-004-04] should reject a non-owner beneficiary change', async () => {
       await expect(feeCollector.connect(user1).setFeeBeneficiary(user2.address))
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
     })
 
-    it('should be a no-op when every balance is zero', async () => {
+    it('[AC-US-MICROPAYMENTS-006-06] should be a no-op when every balance is zero', async () => {
       const emptyFeeCollector = await deployFeeCollector()
       await expect(emptyFeeCollector.withdraw()).to.not.be.revert(ethers)
       expect(await emptyFeeCollector.getBalance()).to.equal(0)

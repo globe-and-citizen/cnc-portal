@@ -43,7 +43,7 @@ describe('JournalEntry draft finalization', () => {
     expect(result.journal).toHaveLength(2)
   })
 
-  it('reconciles complementary contract events for one internal movement', () => {
+  it('[AC-US-ACCT-002-01] reconciles complementary contract events into one JournalEntry', () => {
     const result = finalizeJournalEntryDrafts([
       transferDraft(TX_A, 1, BANK),
       transferDraft(TX_A, 2, PAYROLL, 'INTERNAL')
@@ -77,7 +77,7 @@ describe('JournalEntry draft finalization', () => {
     ])
   })
 
-  it('attaches a Bank fee to its transaction and reports an orphan fee', () => {
+  it('[AC-US-ACCT-002-03] attaches a Bank fee to its transaction and reports an orphan fee', () => {
     const fee = (txHash: string) =>
       makeJournalEntryDraft({
         id: `${txHash}-9`,

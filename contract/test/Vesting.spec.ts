@@ -74,7 +74,7 @@ describe('Vesting', () => {
   })
 
   describe('addVesting', () => {
-    it('appends a schedule without moving any tokens', async () => {
+    it('[AC-US-VESTING-001-12] records a schedule without minting shares', async () => {
       const { teamOwner, member, investor, vesting, start } = await deployFixture()
 
       await expect(
@@ -96,7 +96,7 @@ describe('Vesting', () => {
       expect(await vesting.getVestingCount(member.address)).to.equal(1)
     })
 
-    it('allows several concurrent schedules for the same member', async () => {
+    it('[AC-US-VESTING-001-05] allows multiple schedules for the same beneficiary', async () => {
       const { teamOwner, member, vesting, start } = await deployFixture()
 
       await vesting
@@ -117,7 +117,7 @@ describe('Vesting', () => {
       expect(indices).to.deep.equal([0n, 1n])
     })
 
-    it('reverts when called by a non-owner', async () => {
+    it('[AC-US-VESTING-001-06] rejects schedule creation by a non-owner', async () => {
       const { member, vesting, start } = await deployFixture()
 
       await expect(
@@ -145,7 +145,7 @@ describe('Vesting', () => {
   })
 
   describe('release', () => {
-    it('mints the full amount once fully vested', async () => {
+    it('[AC-US-VESTING-003-06] mints the full grant once fully vested', async () => {
       const { teamOwner, member, investor, vesting, start } = await deployFixture()
 
       await vesting
@@ -180,7 +180,7 @@ describe('Vesting', () => {
       expect(await investor.balanceOf(member.address)).to.be.lt(VEST_AMOUNT)
     })
 
-    it('only releases the targeted schedule', async () => {
+    it('[AC-US-VESTING-003-04] releases only the selected schedule', async () => {
       const { teamOwner, member, investor, vesting, start } = await deployFixture()
 
       // index 0 fully vests; index 1 starts much later and is still locked.
@@ -211,7 +211,7 @@ describe('Vesting', () => {
       )
     })
 
-    it('guards against a double release', async () => {
+    it('[AC-US-VESTING-003-07] prevents releasing the same shares twice', async () => {
       const { teamOwner, member, vesting, start } = await deployFixture()
 
       await vesting
@@ -275,7 +275,7 @@ describe('Vesting', () => {
       expect(infos[0].released).to.equal(minted)
     })
 
-    it('mints nothing when stopped before the cliff', async () => {
+    it('[AC-US-VESTING-004-06] mints nothing when stopped before the cliff', async () => {
       const { teamOwner, member, investor, vesting, start } = await deployFixture()
 
       await vesting
@@ -302,7 +302,7 @@ describe('Vesting', () => {
       ).to.be.revertedWithCustomError(vesting, 'OwnableUnauthorizedAccount')
     })
 
-    it('reverts on an already-stopped schedule', async () => {
+    it('[AC-US-VESTING-004-07] rejects reuse of a stopped schedule', async () => {
       const { teamOwner, member, vesting, start } = await deployFixture()
 
       await vesting
@@ -351,7 +351,7 @@ describe('Vesting', () => {
   })
 
   describe('pausing', () => {
-    it('blocks operations while paused and resumes after unpause', async () => {
+    it('[AC-US-VESTING-003-08][AC-US-VESTING-004-08] blocks release and stop while paused', async () => {
       const { teamOwner, member, vesting, start } = await deployFixture()
 
       await vesting.connect(teamOwner).pause()

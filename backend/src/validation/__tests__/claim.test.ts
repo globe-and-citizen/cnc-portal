@@ -136,7 +136,7 @@ describe('daily claim memo validation', () => {
     }
   });
 
-  it('allows a partial update without a memo', () => {
+  it('[AC-US-PAYROLL-006-04] allows a partial update without a memo', () => {
     expect(updateClaimBodySchema.safeParse({ minutesWorked: 10 }).success).toBe(true);
   });
 });
