@@ -36,14 +36,17 @@ flowchart LR
 2. `useContractEventsViaLogs` lowercases and deduplicates the targets, retains the earliest effective deployment boundary for each address,
    and fetches and decodes the relevant logs. Its TanStack query identity contains the sorted target address and effective `fromBlock`, so a
    boundary that resolves asynchronously starts the correct scan instead of reusing a cache entry for another range.
-3. The immutable timestamp query is keyed by network and block number with infinite staleness and garbage-collection time, so concurrent
+3. The composable returns the standard TanStack query result. Its `data` contains the complete scan result: the domain event feed, failed
+   generation scans, and unresolved timestamp gaps. Consumers use the standard `isPending`, `error`, and `refetch` members instead of
+   feed-specific aliases.
+4. The immutable timestamp query is keyed by network and block number with infinite staleness and garbage-collection time, so concurrent
    feeds and later scans reuse one block read.
-4. A decoded log enters its domain mapper only after its timestamp resolves. Missing block identity or a failed block read withholds that
+5. A decoded log enters its domain mapper only after its timestamp resolves. Missing block identity or a failed block read withholds that
    log and records a timestamp gap for completeness-aware consumers.
-5. The domain mapper returns its source-neutral event feed for a transaction history or Accounting assembly.
-6. The Bank feed maps V0/V0.1 Bank-emitted fees and queries the V1/V2 FeeCollectors by paying Bank. For legacy ERC-20 fees, it takes the
+6. The domain mapper returns its source-neutral event feed for a transaction history or Accounting assembly.
+7. The Bank feed maps V0/V0.1 Bank-emitted fees and queries the V1/V2 FeeCollectors by paying Bank. For legacy ERC-20 fees, it takes the
    currency only from the next transfer event in the same transaction and Bank generation; native and unmatched fees remain tokenless.
-7. Incoming Bank token transfers use every known Officer-generation Bank target, so a later Bank deployment does not hide prior transfers.
+8. Incoming Bank token transfers use every known Officer-generation Bank target, so a later Bank deployment does not hide prior transfers.
 
 ## Invariants and Failure Behaviour
 
@@ -65,7 +68,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5cdd495a12e9eec43bcc4391563fd2fcb25fd782`
+**Implementation evidence reviewed against:** `63e518bdef0023972c79164fe53b3b260cc08c3d`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
