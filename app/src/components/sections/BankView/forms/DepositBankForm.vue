@@ -76,6 +76,7 @@ import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTr
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useDepositToken } from '@/composables/bank/writes'
+import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useUserDataStore } from '@/stores'
 import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
@@ -214,6 +215,10 @@ const submitForm = async () => {
   try {
     if (selectedTokenId.value === 'native') {
       await nativeDeposit.mutateAsync({ value: parseEther(amount.value) })
+      await queryClient.invalidateQueries({
+        queryKey: contractBalanceKeys.detail(props.bankAddress, chainId.value)
+      })
+      void queryClient.invalidateQueries({ queryKey: bankEventKeys.all })
       amount.value = ''
       toast.add({
         title: `${selectedToken.value?.token.code} deposited successfully`,
@@ -240,6 +245,7 @@ const submitForm = async () => {
       await queryClient.invalidateQueries({
         queryKey: contractBalanceKeys.detail(props.bankAddress, chainId.value)
       })
+      void queryClient.invalidateQueries({ queryKey: bankEventKeys.all })
 
       submitting.value = false
       amount.value = ''

@@ -59,3 +59,5 @@ ignore:
   - "app/src/artifacts/abi/**/generated.ts" # generated literal data, not executable product logic
   - "app/src/e2e" # mock connector is test infra, not product code
   - "app/src/e2e/**"
+  - "app/src/tests" # shared unit-test helpers, mocks, setup, stubs — not product code
+  - "app/src/tests/**"

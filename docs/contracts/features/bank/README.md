@@ -1,21 +1,21 @@
 # Contract: Bank
 
 **Epic Goal:** Hold team treasury funds and distribute dividends proportionally to all shareholders. **Contract File:** `contracts/Bank.sol`
-**Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
+**Upgradeable:** Yes (Beacon) **Last updated:** 2026-09-12
 
 ---
 
 ## Status Overview
 
-| User Story  | Title                                                                | Contract | Frontend | Effort |
+| Capability  | Title                                                                | Contract | Frontend | Effort |
 | ----------- | -------------------------------------------------------------------- | :------: | :------: | ------ |
-| US-BANK-001 | Deposit ETH into the treasury                                        |    ✅    |    🚫    | XS     |
-| US-BANK-002 | Deposit ERC20 tokens into the treasury                               |    ✅    |    🚫    | S      |
-| US-BANK-003 | Transfer ETH to a recipient (with protocol fee)                      |    ✅    |    🚫    | M      |
-| US-BANK-004 | Transfer ERC20 tokens to a recipient (with fee for supported tokens) |    ✅    |    🚫    | M      |
-| US-BANK-005 | Distribute ETH dividends to all shareholders                         |    ✅    |    🚫    | M      |
-| US-BANK-006 | Distribute ERC20 dividends to all shareholders                       |    ✅    |    🚫    | M      |
-| US-BANK-007 | View ETH and token balances                                          |    ✅    |    🚫    | XS     |
+| CT-BANK-001 | Deposit ETH into the treasury                                        |    ✅    |    🚫    | XS     |
+| CT-BANK-002 | Deposit ERC20 tokens into the treasury                               |    ✅    |    🚫    | S      |
+| CT-BANK-003 | Transfer ETH to a recipient (with protocol fee)                      |    ✅    |    🚫    | M      |
+| CT-BANK-004 | Transfer ERC20 tokens to a recipient (with fee for supported tokens) |    ✅    |    🚫    | M      |
+| CT-BANK-005 | Distribute ETH dividends to all shareholders                         |    ✅    |    🚫    | M      |
+| CT-BANK-006 | Distribute ERC20 dividends to all shareholders                       |    ✅    |    🚫    | M      |
+| CT-BANK-007 | View ETH and token balances                                          |    ✅    |    🚫    | XS     |
 
 **Contract: 7 / 7 — Frontend: 0 / 7**
 
@@ -29,14 +29,13 @@
 - **Access roles:** `onlyOwner` for transfers and dividend distribution
 - **Dependencies:** Officer (dynamic resolution of InvestorV1 and FeeCollector addresses), InvestorV1 (push-based dividend execution)
 - **Pattern:** Push-based dividends — funds go directly to shareholders in the same transaction; no claim pattern
-
-## Implementation Evidence
-
-- [Bank deposit form](../../../../app/src/components/sections/BankView/forms/DepositBankForm.vue)
+- **Reference namespace:** `CT-BANK-*` identifies contract capabilities. The canonical portal user stories use `US-BANK-*` in
+  [Accounts](../../../features/accounts/README.md). Legacy references to this document's former `US-BANK-001..007` identifiers map by the
+  same numeric suffix to `CT-BANK-001..007`.
 
 ---
 
-## US-BANK-001: Deposit ETH into the Treasury
+## CT-BANK-001: Deposit ETH into the Treasury
 
 > **As a** team member, **I want to** send ETH to the Bank, **so that** the team treasury accumulates funds for future use.
 
@@ -51,7 +50,7 @@
 
 ---
 
-## US-BANK-002: Deposit ERC20 Tokens into the Treasury
+## CT-BANK-002: Deposit ERC20 Tokens into the Treasury
 
 > **As a** team member, **I want to** deposit ERC20 tokens into the Bank, **so that** the team can hold and distribute non-ETH assets.
 
@@ -66,11 +65,11 @@
 
 ---
 
-## US-BANK-003: Transfer ETH to a Recipient (with Protocol Fee)
+## CT-BANK-003: Transfer ETH to a Recipient (with Protocol Fee)
 
 > **As a** team owner, **I want to** send ETH from the treasury to any address, **so that** I can pay expenses, salaries, or vendors.
 
-**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BANK-001
+**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** CT-BANK-001
 
 ### Acceptance Criteria
 
@@ -83,12 +82,12 @@
 
 ---
 
-## US-BANK-004: Transfer ERC20 Tokens to a Recipient (with Fee for Supported Tokens)
+## CT-BANK-004: Transfer ERC20 Tokens to a Recipient (with Fee for Supported Tokens)
 
 > **As a** team owner, **I want to** send ERC20 tokens from the treasury to any address, **so that** I can pay vendors or team members in
 > tokens.
 
-**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BANK-002
+**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** CT-BANK-002
 
 ### Acceptance Criteria
 
@@ -101,12 +100,12 @@
 
 ---
 
-## US-BANK-005: Distribute ETH Dividends to All Shareholders
+## CT-BANK-005: Distribute ETH Dividends to All Shareholders
 
 > **As a** team owner, **I want to** push ETH dividends to every shareholder proportional to their equity, **so that** profit-sharing is
 > settled on-chain immediately.
 
-**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BANK-001
+**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** CT-BANK-001
 
 ### Acceptance Criteria
 
@@ -120,12 +119,12 @@
 
 ---
 
-## US-BANK-006: Distribute ERC20 Dividends to All Shareholders
+## CT-BANK-006: Distribute ERC20 Dividends to All Shareholders
 
 > **As a** team owner, **I want to** push ERC20 dividends to every shareholder proportional to their equity, **so that** token-denominated
 > profits are distributed on-chain.
 
-**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-BANK-002
+**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** CT-BANK-002
 
 ### Acceptance Criteria
 
@@ -138,7 +137,7 @@
 
 ---
 
-## US-BANK-007: View ETH and Token Balances
+## CT-BANK-007: View ETH and Token Balances
 
 > **As a** team member, **I want to** query the Bank's ETH and ERC20 balances, **so that** I can verify available funds without reading raw
 > blockchain state.
@@ -153,5 +152,17 @@
 - [x] No access restriction — readable by anyone
 
 ---
+
+## Implementation Evidence
+
+**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+
+- [Bank deposit form](../../../../app/src/components/sections/BankView/forms/DepositBankForm.vue),
+  [transfer form](../../../../app/src/components/sections/BankView/forms/TransferModal.vue), and
+  [Bank event feed](../../../../app/src/composables/bank/useBankEventsViaLogs.ts). The transfer form sends the smallest gross amount whose
+  floor-rounded fee still delivers the requested net amount to the recipient, and both forms invalidate the Bank event feed after a
+  successful write so history reflects the receipt immediately.
+- [Chain-backed Bank Account E2E test](../../../../app/test/e2e/bank/bank-account.spec.ts) and
+  [its deployment fixture](../../../../app/test/e2e/bank/bank-chain.ts)
 
 _[← Back to index](../README.md)_
