@@ -50,10 +50,11 @@ describe('BankBalanceSection', () => {
     mockUseContractBalance.isLoading.value = false
   })
 
-  it('renders total balance', () => {
+  it('renders total balances with fixed currency decimals', () => {
     const wrapper = createWrapper()
 
-    expect(wrapper.text()).toContain(mockUseContractBalance.total.value.usd.formatted)
+    expect(wrapper.get('[data-test="bank-total-usd"]').text()).toBe('$50,500.00')
+    expect(wrapper.get('[data-test="bank-total-local"]').text()).toContain('$50,500.00 USD')
     expect(wrapper.text()).toContain('USD')
   })
 

@@ -19,7 +19,7 @@ vi.mock('@nuxt/ui/components/Table.vue', () => ({
   default: {
     name: 'UTable',
     props: ['data', 'columns', 'loading', 'getSubRows'],
-    template: '<div data-test="bank-table"></div>'
+    template: '<div data-test="bank-table"><slot v-if="!data?.length" name="empty" /></div>'
   }
 }))
 vi.mock('@nuxt/ui/components/Select.vue', () => ({

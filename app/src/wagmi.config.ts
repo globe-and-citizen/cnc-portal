@@ -12,6 +12,7 @@ import { e2eMockConnector } from './e2e/mockConnector'
  * consumers (e.g. `useSiweMutation`) just pick the first registered connector.
  */
 const isE2E = import.meta.env.VITE_E2E === 'true'
+const e2eRpcUrl = isE2E ? import.meta.env.VITE_E2E_RPC_URL : undefined
 
 /**
  * Multi-endpoint failover. viem's `http()` only retries the *same* endpoint, so
@@ -46,6 +47,6 @@ export const config = createConfig({
       http('https://polygon-bor-rpc.publicnode.com', batched)
     ]),
     [polygonAmoy.id]: http(undefined, batched),
-    [hardhat.id]: http(undefined, batched)
+    [hardhat.id]: http(e2eRpcUrl, batched)
   }
 })
