@@ -65,13 +65,12 @@ type RpcTransaction = {
 
 const asBigInt = (value: Hex | undefined) => (value === undefined ? undefined : BigInt(value))
 
+/** Falls back to a developer's regular local node when Playwright is not driving the build. */
+const rpcUrl = (): string => import.meta.env.VITE_E2E_RPC_URL ?? 'http://127.0.0.1:8545'
+
 export function e2eMockConnector() {
   const account = privateKeyToAccount(configuredPrivateKey())
-  const walletClient = createWalletClient({
-    account,
-    chain: hardhat,
-    transport: http(import.meta.env.VITE_E2E_RPC_URL ?? 'http://127.0.0.1:8545')
-  })
+  const walletClient = createWalletClient({ account, chain: hardhat, transport: http(rpcUrl()) })
 
   return createConnector((config) => {
     let connected = false
@@ -87,6 +86,10 @@ export function e2eMockConnector() {
             return [account.address]
           case 'personal_sign': {
             const [data] = params as [Hex]
+            return account.signMessage({ message: { raw: data } })
+          }
+          case 'eth_sign': {
+            const [, data] = params as [Address, Hex]
             return account.signMessage({ message: { raw: data } })
           }
           case 'eth_signTypedData_v4': {
@@ -116,10 +119,18 @@ export function e2eMockConnector() {
             })
           }
           default:
-            throw new Error(`e2eMockConnector: unhandled RPC method "${method}"`)
+            // Every read (`eth_call`, `eth_getCode`, `eth_estimateGas`, …) goes
+            // straight to the E2E node, as an injected wallet would forward it.
+            return walletClient.request({ method, params } as never)
         }
       }
     }
+
+    // Safe Protocol Kit consumes the browser's EIP-1193 provider directly,
+    // whereas Wagmi obtains this connector through `getProvider`. Mirror the
+    // E2E-only provider on `window` so Safe writes exercise the same SDK path
+    // as an injected wallet without requiring a browser extension.
+    ;(globalThis as typeof globalThis & { ethereum?: typeof provider }).ethereum = provider
 
     return {
       id: 'e2e-mock',
