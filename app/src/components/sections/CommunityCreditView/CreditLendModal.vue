@@ -178,7 +178,7 @@ import {
   useFixedReturnGetLendingOffer,
   useFixedReturnMyLenderPosition
 } from '@/composables/fixedReturn/reads'
-import { invalidateAfterLend } from '@/composables/fixedReturn/invalidate'
+import { invalidateAfterLend } from '@/composables/fixedReturn/invalidation'
 import { useFixedReturnLendFunds } from '@/composables/fixedReturn/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useERC20Approve } from '@/composables/erc20/writes'

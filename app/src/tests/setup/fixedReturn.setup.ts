@@ -26,7 +26,7 @@ vi.mock('@/composables/fixedReturn/reads', () => ({
     deposited: mockFixedReturnReads.lenderDeposits
   })),
   // Plain data, not a hook — re-exported as-is so anything importing it from the
-  // mocked module (directly, or transitively via invalidate.ts) still gets the real
+  // mocked module (directly, or transitively via invalidation.ts) still gets the real
   // shape rather than undefined.
   fixedReturnKeys: {
     all: ['fixedReturn'],

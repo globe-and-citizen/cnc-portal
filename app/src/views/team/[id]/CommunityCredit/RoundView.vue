@@ -76,7 +76,7 @@ import {
   invalidateAfterRefund,
   invalidateAfterAcceptPartialFunding,
   invalidateAfterRepay
-} from '@/composables/fixedReturn/invalidate'
+} from '@/composables/fixedReturn/invalidation'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
 import {

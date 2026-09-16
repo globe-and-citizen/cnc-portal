@@ -6,7 +6,7 @@ import {
   invalidateAfterLend,
   invalidateAfterRefund,
   invalidateAfterRepay
-} from '../invalidate'
+} from '../invalidation'
 
 const TOKEN_ADDRESS = '0x2222222222222222222222222222222222222222' as const
 const EVENTS_LOG_KEY = ['fixed-return-events-logs']

@@ -238,7 +238,7 @@ The following verified gaps have technical evidence and remediation directions i
 FixedReturn's three on-chain read hooks (`useFixedReturnAllOffers`, `useFixedReturnOfferLenders`, `useFixedReturnMyLenderPositions`, all in
 `composables/fixedReturn/reads.ts`) share one `fixedReturnKeys` query-key factory (`composables/fixedReturn/keys.ts`) instead of duplicated
 string literals, and one domain invalidation function per successful mutation (`invalidateAfterLend`/`Repay`/`Refund`/`AcceptPartialFunding`
-in `composables/fixedReturn/invalidate.ts`) instead of a hand-copied 4-key set at every call site.
+in `composables/fixedReturn/invalidation.ts`) instead of a hand-copied 4-key set at every call site.
 
 A failed on-chain read for an offer's lenders or a connected member's position is never converted into a fabricated empty list or a zero
 position — `useFixedReturnOfferLenders` rejects the query on failure (matching `useFixedReturnAllOffers`'s existing behavior), and
@@ -268,7 +268,7 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
 - [FixedReturn query-key factory](../../../app/src/composables/fixedReturn/keys.ts)
-- [FixedReturn mutation cache invalidation](../../../app/src/composables/fixedReturn/invalidate.ts)
+- [FixedReturn mutation cache invalidation](../../../app/src/composables/fixedReturn/invalidation.ts)
 - [Connected lender's live offering derivation](../../../app/src/composables/fixedReturn/useMyLenderOffering.ts)
 - [Bank reads (owner and paused state, gating repayment)](../../../app/src/composables/bank/reads.ts)
 - [Repayment amount validation](../../../app/src/types/communityCredit.schemas.ts)

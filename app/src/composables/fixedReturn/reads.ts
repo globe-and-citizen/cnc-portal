@@ -28,7 +28,7 @@ type FixedReturnReadNames = ContractFunctionName<typeof fixedReturnAbi, 'view' |
  * `useReadContract`-wrapped, so they fall outside `useContractWritesV3`'s automatic
  * per-contract-address invalidation and need their own keys, previously duplicated as
  * raw string-literal arrays across this file and every view/modal that reads or
- * invalidates them. Every external caller (retry buttons, `invalidate.ts`) only ever
+ * invalidates them. Every external caller (retry buttons, `invalidation.ts`) only ever
  * needs one of these coarse prefixes — the address/offer/lender-specific leaf is used
  * only here, inline at each `useQuery` call, the same way `elections/reads.ts` inlines
  * its one custom query key rather than routing it through a builder function.
