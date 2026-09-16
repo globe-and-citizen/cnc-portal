@@ -73,7 +73,10 @@ export function e2eMockConnector() {
   const walletClient = createWalletClient({ account, chain: hardhat, transport: http(rpcUrl()) })
 
   return createConnector((config) => {
-    let connected = false
+    // The E2E wallet represents a browser wallet whose test account was already
+    // approved. Starting authorized prevents Wagmi's initial reconnect from
+    // racing the SIWE login and replacing its newly-established connection.
+    let connected = true
     let currentChainId = config.chains[0].id
 
     const provider = {

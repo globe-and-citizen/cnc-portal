@@ -186,5 +186,5 @@ export async function exerciseMemberBankAccess(page: Page, fixture: BankE2EFixtu
   await expect(history.locator('tbody').getByText('Token deposit', { exact: true })).toHaveCount(1)
   await history.locator('[data-test="bank-transaction-history-date-select"] button').click()
   await page.locator('[data-test="date-picker-month-previous"]').click()
-  await expect(history.locator('[data-test="bank-transactions-empty"]')).toBeVisible()
+  await expect(history.getByText('No data', { exact: true })).toBeVisible()
 }

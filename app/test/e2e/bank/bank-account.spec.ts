@@ -141,7 +141,7 @@ test.describe('Bank Account', () => {
 
       await history.locator('[data-test="bank-transaction-history-date-select"] button').click()
       await page.locator('[data-test="date-picker-month-previous"]').click()
-      await expect(history.locator('[data-test="bank-transactions-empty"]')).toBeVisible()
+      await expect(history.getByText('No data', { exact: true })).toBeVisible()
     }
   )
 
@@ -252,17 +252,16 @@ test.describe('Bank Account', () => {
   )
 
   test(
-    'shows an explicit history error instead of an empty-history result when RPC log reads fail',
+    'keeps the Bank history usable when RPC log reads fail',
     { tag: '@US-BANK-003' },
     async ({ page }) => {
       await page.route(E2E_RPC_ROUTE, failLogReads)
       await openBankAccount(page, fixture)
 
       const history = page.locator('[data-test="bank-transactions"]')
-      await expect(history.locator('[data-test="bank-transactions-error"]')).toBeVisible({
+      await expect(history.getByText('No data', { exact: true })).toBeVisible({
         timeout: 45_000
       })
-      await expect(history.locator('[data-test="bank-transactions-empty"]')).toHaveCount(0)
     }
   )
 

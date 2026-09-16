@@ -82,8 +82,12 @@ export async function deploySafeE2EFixture(): Promise<SafeE2EFixture> {
   await write(E2E_USDC_ADDRESS, mockErc20.abi, 'mint', [E2E_OWNER, parseUnits('1000', 6)])
   await write(E2E_USDC_ADDRESS, mockErc20.abi, 'mint', [E2E_MEMBER, parseUnits('1000', 6)])
 
-  const safe = await deploySafeProxy([E2E_OWNER], 1, 1n)
-  const multisigSafe = await deploySafeProxy([E2E_OWNER, E2E_MEMBER], 2, 2n)
+  // Playwright restarts the worker before a retry while the shared Hardhat
+  // node remains alive. Deriving the salts from its advancing block height
+  // prevents a retry from attempting to recreate the same CREATE2 proxies.
+  const fixtureSalt = (await publicClient.getBlockNumber()) * 2n
+  const safe = await deploySafeProxy([E2E_OWNER], 1, fixtureSalt + 1n)
+  const multisigSafe = await deploySafeProxy([E2E_OWNER, E2E_MEMBER], 2, fixtureSalt + 2n)
 
   return { safe, multisigSafe, usdc: E2E_USDC_ADDRESS, usdcE: E2E_USDCE_ADDRESS }
 }
