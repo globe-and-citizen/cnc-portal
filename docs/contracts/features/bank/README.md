@@ -155,11 +155,13 @@
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `31ed7556f7c6c8540d76bc67339e039098106f17`
+**Implementation evidence reviewed against:** `bbca5e1096e4f8ef226ee2f8fb2ad0533b2be1f8`
 
 - [Bank deposit form](../../../../app/src/components/sections/BankView/forms/DepositBankForm.vue),
   [transfer form](../../../../app/src/components/sections/BankView/forms/TransferModal.vue), and
-  [Bank event feed](../../../../app/src/composables/bank/useBankEventsViaLogs.ts)
+  [Bank event feed](../../../../app/src/composables/bank/useBankEventsViaLogs.ts). The transfer form sends the smallest gross amount whose
+  floor-rounded fee still delivers the requested net amount to the recipient, and both forms invalidate the Bank event feed after a
+  successful write so history reflects the receipt immediately.
 - [Chain-backed Bank Account E2E test](../../../../app/test/e2e/bank/bank-account.spec.ts) and
   [its deployment fixture](../../../../app/test/e2e/bank/bank-chain.ts)
 

@@ -497,12 +497,14 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `eb626b91fed7fde07b0b11552e8289615a7f5560`
+**Implementation evidence reviewed against:** `bbca5e1096e4f8ef226ee2f8fb2ad0533b2be1f8`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
   [Safe components](../../../app/src/components/sections/SafeView/), and
   [owner treasury withdrawal](../../../app/src/components/sections/OwnerTreasuryWithdrawAction.vue)
+- [Safe signer role](../../../app/src/composables/safe/useSafeSignerRole.ts) and its [role copy](../../../app/src/utils/safe/signerRole.ts),
+  which decide whether the connected wallet may propose Safe transfers
 - [Token amount input](../../../app/src/components/ui/inputs/TokenAmountInput.vue) and
   [Safe transaction send orchestration](../../../app/src/composables/transactions/useSafeSendTransaction.ts)
 - [Accounts routes](../../../app/src/router/index.ts) and [Accounts navigation](../../../app/src/composables/useSidebarNavItems.ts). The
