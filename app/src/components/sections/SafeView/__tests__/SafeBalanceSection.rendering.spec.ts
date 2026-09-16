@@ -204,6 +204,13 @@ describe('SafeBalanceSection', () => {
   })
 
   describe('Component Rendering', () => {
+    it('renders wallet totals with fixed currency decimals', () => {
+      wrapper = createWrapper()
+
+      expect(wrapper.get('[data-test="safe-total-usd"]').text()).toBe('$4,500.00')
+      expect(wrapper.text()).toContain('$4,500.00 USD')
+    })
+
     it('should show loading spinner when isLoading is true', () => {
       mockUseContractBalance.isLoading.value = true
       wrapper = createWrapper()
