@@ -115,6 +115,8 @@ changing agent-instruction Markdown, run:
 npm run lint:md
 # Markdown style lives in .prettier-markdown.json. Checks all tracked Markdown files; subproject format checks exclude Markdown.
 npm run format:md:check
+npm run test:acceptance-traceability
+npm run lint:acceptance-traceability
 npm run test:docs-freshness
 npm run lint:docs-freshness
 bash scripts/audit-doc-drift.sh

@@ -78,7 +78,7 @@ describe('officerVersionController', () => {
     vi.mocked(publicClient.getStorageAt).mockResolvedValue(undefined);
   });
 
-  it('writes the on-chain version() when the Officer exposes one', async () => {
+  it('[AC-US-CONTRACT-OPS-003-03] writes the resolved on-chain Officer version', async () => {
     vi.mocked(prisma.teamOfficer.findMany).mockResolvedValue([buildOfficer()]);
     vi.mocked(publicClient.readContract).mockResolvedValue('2.0.0');
 
@@ -97,7 +97,7 @@ describe('officerVersionController', () => {
     });
   });
 
-  it('falls back to the ERC-1967 beacon for Officers predating version()', async () => {
+  it('[AC-US-CONTRACT-OPS-002-03] falls back to the recognized beacon for legacy Officers', async () => {
     vi.mocked(prisma.teamOfficer.findMany).mockResolvedValue([buildOfficer()]);
     vi.mocked(publicClient.getStorageAt).mockResolvedValue(asStorageWord(V1_BEACON));
 
@@ -114,7 +114,7 @@ describe('officerVersionController', () => {
     });
   });
 
-  it('leaves an Officer untouched when its generation cannot be resolved', async () => {
+  it('[AC-US-CONTRACT-OPS-003-06] leaves an unresolved Officer unchanged', async () => {
     vi.mocked(prisma.teamOfficer.findMany).mockResolvedValue([buildOfficer({ version: 'v0.10' })]);
 
     const response = await syncRequest();
@@ -140,7 +140,7 @@ describe('officerVersionController', () => {
     expect(prisma.teamOfficer.updateMany).not.toHaveBeenCalled();
   });
 
-  it('writes nothing on a dry run but still reports the plan', async () => {
+  it('[AC-US-CONTRACT-OPS-002-08] keeps the synchronization preview read-only', async () => {
     vi.mocked(prisma.teamOfficer.findMany).mockResolvedValue([buildOfficer()]);
     vi.mocked(publicClient.readContract).mockResolvedValue('2.0.0');
 
@@ -174,7 +174,7 @@ describe('officerVersionController', () => {
     });
   });
 
-  it('flags the current Officer of each team', async () => {
+  it('[AC-US-CONTRACT-OPS-002-04] identifies the current Officer of each company', async () => {
     vi.mocked(prisma.teamOfficer.findMany).mockResolvedValue([
       buildOfficer({ id: 1, nextOfficer: { id: 2 } }),
       buildOfficer({ id: 2, nextOfficer: null }),

@@ -114,7 +114,7 @@ describe('journalLedgerPresenter', () => {
     expect(journalLedgerTotal(journal)).toBe('$101.00')
   })
 
-  it('filters by concrete account and currency without dropping the other entry lines', () => {
+  it('[AC-US-ACCT-002-02] retains every line of a matching JournalEntry', () => {
     const journal = finalizeJournal([
       posting({ id: 'a', sourceOperationId: 'operation-a', creditInstance: BANK_A }),
       posting({ id: 'b', sourceOperationId: 'operation-b', creditInstance: BANK_B, timestamp: 200 })

@@ -42,7 +42,7 @@ describe('CreateVesting.vue — submission', () => {
     await flushPromises()
   }
 
-  it('preserves the selected minute and submits exact duration and cliff seconds', async () => {
+  it('[AC-US-VESTING-001-09] submits exact minute-precision schedule boundaries', async () => {
     await fillGrant()
     await wrapper.find('[data-test="duration-48"]').trigger('click')
     await wrapper.find('[data-test="cliff-12"]').trigger('click')

@@ -287,7 +287,7 @@ describe('Bank', () => {
           .withArgs(member1.address)
       })
 
-      it('should reject transfers while paused', async () => {
+      it('[AC-US-BANK-002-12] should reject transfers while paused', async () => {
         await bank.pause()
         await expect(
           bank.transfer(contractor.address, ethers.parseEther('1'))

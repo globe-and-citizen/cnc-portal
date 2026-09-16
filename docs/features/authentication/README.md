@@ -51,22 +51,22 @@ flowchart TB
 
 #### Happy Path
 
-- [x] A portal user can authenticate by signing a SIWE message and access their companies.
-- [x] An unknown wallet address receives a default portal user account after successful authentication.
+- [x] `AC-US-AUTH-001-01` A portal user can authenticate by signing a SIWE message and access their companies.
+- [x] `AC-US-AUTH-001-02` An unknown wallet address receives a default portal user account after successful authentication.
 
 #### Business Rules
 
-- [x] The wallet is connected and switched to the configured network before the SIWE message is signed.
-- [x] The SIWE message binds the wallet address, nonce, chain, domain, URI, and protocol version.
-- [x] The backend verifies the message signature and current nonce before authenticating the user.
-- [x] Successful authentication rotates the nonce and issues a JWT valid for 24 hours.
-- [x] Authentication signs a message without submitting an on-chain transaction or consuming gas.
+- [x] `AC-US-AUTH-001-03` The wallet is connected and switched to the configured network before the SIWE message is signed.
+- [x] `AC-US-AUTH-001-04` The SIWE message binds the wallet address, nonce, chain, domain, URI, and protocol version.
+- [x] `AC-US-AUTH-001-05` The backend verifies the message signature and current nonce before authenticating the user.
+- [x] `AC-US-AUTH-001-06` Successful authentication rotates the nonce and issues a JWT valid for 24 hours.
+- [x] `AC-US-AUTH-001-07` Authentication signs a message without submitting an on-chain transaction or consuming gas.
 
 #### Edge & Error Cases
 
-- [x] A portal user without a valid local session is redirected from protected client routes, including parameterized detail routes, to
-      login.
-- [x] An invalid SIWE message or signature is rejected without authenticating the user.
+- [x] `AC-US-AUTH-001-08` A portal user without a valid local session is redirected from protected client routes, including parameterized
+      detail routes, to login.
+- [x] `AC-US-AUTH-001-09` An invalid SIWE message or signature is rejected without authenticating the user.
 
 ## US-AUTH-002: Sign in to the Backoffice
 
@@ -78,20 +78,20 @@ flowchart TB
 
 #### Happy Path
 
-- [x] A platform administrator can connect a wallet, sign a SIWE message, and access the backoffice.
-- [x] Wallet connection can be completed before the authentication message is signed.
+- [x] `AC-US-AUTH-002-01` A platform administrator can connect a wallet, sign a SIWE message, and access the backoffice.
+- [x] `AC-US-AUTH-002-02` Wallet connection can be completed before the authentication message is signed.
 
 #### Business Rules
 
-- [x] Protected backoffice capabilities require an authenticated user with an administrator or super-administrator role.
-- [x] Successful backoffice authentication persists the access token and authenticated wallet address.
-- [x] Logging out clears the persisted session, disconnects the wallet, and returns the user to login.
+- [x] `AC-US-AUTH-002-03` Protected backoffice capabilities require an authenticated user with an administrator or super-administrator role.
+- [x] `AC-US-AUTH-002-04` Successful backoffice authentication persists the access token and authenticated wallet address.
+- [x] `AC-US-AUTH-002-05` Logging out clears the persisted session, disconnects the wallet, and returns the user to login.
 
 #### Edge & Error Cases
 
-- [x] A missing access token or wallet address redirects the user to login.
-- [x] An authenticated user without an administrator role is denied access to protected backoffice capabilities.
-- [x] A failed token or user validation clears the persisted backoffice session and redirects the user to login.
+- [x] `AC-US-AUTH-002-06` A missing access token or wallet address redirects the user to login.
+- [x] `AC-US-AUTH-002-07` An authenticated user without an administrator role is denied access to protected backoffice capabilities.
+- [x] `AC-US-AUTH-002-08` A failed token or user validation clears the persisted backoffice session and redirects the user to login.
 
 ## US-AUTH-003: Recover from an Interrupted Login
 
@@ -103,20 +103,21 @@ flowchart TB
 
 #### Happy Path
 
-- [x] A user can retry authentication after an unsuccessful login attempt.
+- [x] `AC-US-AUTH-003-01` A user can retry authentication after an unsuccessful login attempt.
 
 #### Business Rules
 
-- [x] Rejecting wallet connection, network switching, or message signing does not authenticate the user.
-- [x] A nonce, authentication, or profile request failure does not set the client authentication state.
-- [x] The client classifies wallet connection, network switching, signature, and backend failures separately.
-- [x] The backoffice classifies rejected signatures, network mismatches, backend failures, and connectivity failures separately.
-- [ ] The client removes an issued access token when the following profile request fails.
+- [x] `AC-US-AUTH-003-02` Rejecting wallet connection, network switching, or message signing does not authenticate the user.
+- [x] `AC-US-AUTH-003-03` A nonce, authentication, or profile request failure does not set the client authentication state.
+- [x] `AC-US-AUTH-003-04` The client classifies wallet connection, network switching, signature, and backend failures separately.
+- [x] `AC-US-AUTH-003-05` The backoffice classifies rejected signatures, network mismatches, backend failures, and connectivity failures
+      separately.
+- [ ] `AC-US-AUTH-003-06` The client removes an issued access token when the following profile request fails.
 
 #### Edge & Error Cases
 
-- [x] A missing wallet provider leaves the user unauthenticated.
-- [x] An unsuccessful login attempt does not provide access to a protected product surface.
+- [x] `AC-US-AUTH-003-07` A missing wallet provider leaves the user unauthenticated.
+- [x] `AC-US-AUTH-003-08` An unsuccessful login attempt does not provide access to a protected product surface.
 
 ## Known Gaps
 

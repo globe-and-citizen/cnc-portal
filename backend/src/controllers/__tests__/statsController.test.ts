@@ -86,7 +86,7 @@ describe('Statistics Controller', () => {
   });
 
   describe('GET /stats/overview', () => {
-    it('should return comprehensive overview statistics', async () => {
+    it('[AC-US-STATS-002-01] returns comprehensive overview statistics', async () => {
       // Mock all the data
       vi.mocked(prisma.team.count)
         .mockResolvedValueOnce(10) // totalTeams
@@ -165,7 +165,7 @@ describe('Statistics Controller', () => {
       expect(response.body.growthMetrics).toHaveProperty('claimsGrowth');
     });
 
-    it('should handle different time periods', async () => {
+    it('[AC-US-STATS-002-04] handles each supported reporting period', async () => {
       // Setup mocks for 7d period
       vi.mocked(prisma.team.count).mockResolvedValue(10);
       vi.mocked(prisma.user.count).mockResolvedValue(50);
@@ -478,7 +478,7 @@ describe('Statistics Controller', () => {
   });
 
   describe('GET /stats/activity/recent', () => {
-    it('should return recent activity feed', async () => {
+    it('[AC-US-STATS-004-01] returns the combined recent activity feed', async () => {
       const mockWeeklyClaims = [
         {
           id: 1,
@@ -555,7 +555,7 @@ describe('Statistics Controller', () => {
   });
 
   describe('Authorization', () => {
-    it('should require authorization', async () => {
+    it('[AC-US-STATS-001-04] requires authorization for statistics', async () => {
       expect(authorizeUser).toBeDefined();
     });
   });

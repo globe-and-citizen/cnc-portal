@@ -46,22 +46,22 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An administrator can list every restriction with its function name and global status.
-- [x] An administrator can create an available predefined restriction with an initial status.
-- [x] An administrator can change an existing restriction's global status.
+- [x] `AC-US-FLAG-001-01` An administrator can list every restriction with its function name and global status.
+- [x] `AC-US-FLAG-001-02` An administrator can create an available predefined restriction with an initial status.
+- [x] `AC-US-FLAG-001-03` An administrator can change an existing restriction's global status.
 
 #### Business Rules
 
-- [x] Only authenticated administrators can manage feature restrictions.
-- [x] A restriction status must be `enabled`, `disabled`, or `beta`.
-- [x] A restriction function name contains only uppercase letters and underscores.
-- [x] Each restriction function name is unique.
+- [x] `AC-US-FLAG-001-04` Only authenticated administrators can manage feature restrictions.
+- [x] `AC-US-FLAG-001-05` A restriction status must be `enabled`, `disabled`, or `beta`.
+- [x] `AC-US-FLAG-001-06` A restriction function name contains only uppercase letters and underscores.
+- [x] `AC-US-FLAG-001-07` Each restriction function name is unique.
 
 #### Edge & Error Cases
 
-- [x] An invalid or duplicate restriction is rejected without creating a record.
-- [x] Updating a missing restriction is rejected without creating a record.
-- [x] An invalid global status update is rejected without changing the persisted restriction.
+- [x] `AC-US-FLAG-001-08` An invalid or duplicate restriction is rejected without creating a record.
+- [x] `AC-US-FLAG-001-09` Updating a missing restriction is rejected without creating a record.
+- [x] `AC-US-FLAG-001-10` An invalid global status update is rejected without changing the persisted restriction.
 
 ## US-FLAG-002: Manage Company Overrides
 
@@ -73,24 +73,24 @@ flowchart LR
 
 #### Happy Path
 
-- [ ] Restriction details include every configured company override.
-- [x] An administrator can add an override for an existing company.
-- [x] An administrator can change an override's status.
-- [x] Removing an override returns the company to the restriction's global status.
+- [ ] `AC-US-FLAG-002-01` Restriction details include every configured company override.
+- [x] `AC-US-FLAG-002-02` An administrator can add an override for an existing company.
+- [x] `AC-US-FLAG-002-03` An administrator can change an override's status.
+- [x] `AC-US-FLAG-002-04` Removing an override returns the company to the restriction's global status.
 
 #### Business Rules
 
-- [x] A company can have at most one override for each restriction.
-- [x] An override status must be `enabled`, `disabled`, or `beta`.
-- [x] A company's override takes precedence over the restriction's global status.
-- [x] An override can reference only an existing restriction and company.
+- [x] `AC-US-FLAG-002-05` A company can have at most one override for each restriction.
+- [x] `AC-US-FLAG-002-06` An override status must be `enabled`, `disabled`, or `beta`.
+- [x] `AC-US-FLAG-002-07` A company's override takes precedence over the restriction's global status.
+- [x] `AC-US-FLAG-002-08` An override can reference only an existing restriction and company.
 
 #### Edge & Error Cases
 
-- [x] A duplicate override is rejected without changing the existing override.
-- [x] Updating a missing override is rejected without creating one.
-- [x] Removing a missing override is rejected without changing other overrides.
-- [x] An invalid override status is rejected without changing the persisted override.
+- [x] `AC-US-FLAG-002-09` A duplicate override is rejected without changing the existing override.
+- [x] `AC-US-FLAG-002-10` Updating a missing override is rejected without creating one.
+- [x] `AC-US-FLAG-002-11` Removing a missing override is rejected without changing other overrides.
+- [x] `AC-US-FLAG-002-12` An invalid override status is rejected without changing the persisted override.
 
 ## US-FLAG-003: Remove Obsolete Restrictions
 
@@ -102,19 +102,19 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An administrator can delete an existing restriction.
-- [x] Successful deletion removes the restriction and all its company overrides.
+- [x] `AC-US-FLAG-003-01` An administrator can delete an existing restriction.
+- [x] `AC-US-FLAG-003-02` Successful deletion removes the restriction and all its company overrides.
 
 #### Business Rules
 
-- [x] Only authenticated administrators can delete a restriction.
+- [x] `AC-US-FLAG-003-03` Only authenticated administrators can delete a restriction.
 
 #### Edge & Error Cases
 
-- [x] Cancelling deletion leaves the restriction and its overrides unchanged.
-- [x] Deleting a missing restriction is rejected.
-- [x] A failed deletion is reported as a failure rather than success.
-- [ ] A failed deletion leaves the restriction and all its company overrides unchanged.
+- [x] `AC-US-FLAG-003-04` Cancelling deletion leaves the restriction and its overrides unchanged.
+- [x] `AC-US-FLAG-003-05` Deleting a missing restriction is rejected.
+- [x] `AC-US-FLAG-003-06` A failed deletion is reported as a failure rather than success.
+- [ ] `AC-US-FLAG-003-07` A failed deletion leaves the restriction and all its company overrides unchanged.
 
 ## Known Gaps
 
