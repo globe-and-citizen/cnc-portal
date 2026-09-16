@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockGetNetwork } = vi.hoisted(() => ({
   mockGetNetwork: vi.fn()
@@ -22,6 +22,10 @@ describe('getSafeInfraAddresses', () => {
     vi.resetModules()
   })
 
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   it('returns the deployed Hardhat addresses on chain 31337 outside E2E', async () => {
     mockGetNetwork.mockReturnValue({ chainId: '0x7A69' })
     const { getSafeInfraAddresses } = await import('../safeInfra')
@@ -31,6 +35,17 @@ describe('getSafeInfraAddresses', () => {
       proxyFactory: '0x2222222222222222222222222222222222222222',
       fallbackHandler: '0x3333333333333333333333333333333333333333'
     })
+  })
+
+  it('returns the Playwright Safe infrastructure on the E2E Hardhat node', async () => {
+    vi.stubEnv('VITE_E2E', 'true')
+    mockGetNetwork.mockReturnValue({ chainId: '0x7A69' })
+    const [{ getSafeInfraAddresses }, { E2E_SAFE_INFRA }] = await Promise.all([
+      import('../safeInfra'),
+      import('@/e2e/chain')
+    ])
+
+    expect(getSafeInfraAddresses()).toEqual(E2E_SAFE_INFRA)
   })
 
   it('returns the canonical Polygon addresses on chain 137', async () => {

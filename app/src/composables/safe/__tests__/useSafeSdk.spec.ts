@@ -1,5 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { hardhat } from 'viem/chains'
 import { useSafeSDK } from '../useSafeSdk'
+import { E2E_SAFE_INFRA, E2E_SAFE_LIBRARIES } from '@/e2e/chain'
 import { mockUseConnection } from '@/tests/mocks'
 
 const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
@@ -28,6 +30,11 @@ describe('useSafeSDK', () => {
     mockGetInjectedProvider.mockReturnValue('mock-provider')
     mockSafeInit.mockResolvedValue({ sdk: 'safe' })
     useSafeSDK().clearCache()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
   })
 
   describe('loadSafe', () => {
@@ -68,6 +75,30 @@ describe('useSafeSDK', () => {
         sdk: 'safe-retry'
       })
       expect(mockSafeInit).toHaveBeenCalledTimes(2)
+    })
+
+    it('configures the E2E Safe deployment addresses on Hardhat', async () => {
+      vi.stubEnv('VITE_E2E', 'true')
+      vi.resetModules()
+      const { useSafeSDK: useE2ESafeSDK } = await import('../useSafeSdk')
+      const { loadSafe } = useE2ESafeSDK()
+
+      await loadSafe(LOWERCASE_SAFE_ADDRESS)
+
+      expect(mockSafeInit).toHaveBeenCalledWith({
+        provider: 'mock-provider',
+        signer: '0x1111111111111111111111111111111111111111',
+        safeAddress: CHECKSUM_SAFE_ADDRESS,
+        contractNetworks: {
+          [hardhat.id]: {
+            safeSingletonAddress: E2E_SAFE_INFRA.singleton,
+            safeProxyFactoryAddress: E2E_SAFE_INFRA.proxyFactory,
+            fallbackHandlerAddress: E2E_SAFE_INFRA.fallbackHandler,
+            multiSendAddress: E2E_SAFE_LIBRARIES.multiSend,
+            multiSendCallOnlyAddress: E2E_SAFE_LIBRARIES.multiSendCallOnly
+          }
+        }
+      })
     })
   })
 })
