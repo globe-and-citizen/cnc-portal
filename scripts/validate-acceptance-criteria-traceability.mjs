@@ -28,8 +28,10 @@ const featurePaths = paths.filter(
     /^docs\/features\/(?:.+\/)?README\.md$/.test(path) &&
     !['docs/features/README.md', 'docs/features/backoffice/README.md'].includes(path)
 )
-const testPaths = paths.filter((path) =>
-  /(?:^|\/)(?:__tests__\/.*|[^/]+\.(?:spec|test))\.[cm]?[jt]sx?$/.test(path)
+const testPaths = paths.filter(
+  (path) =>
+    path !== 'scripts/acceptance-criteria-traceability.test.mjs' &&
+    /(?:^|\/)(?:__tests__\/.*|[^/]+\.(?:spec|test))\.[cm]?[jt]sx?$/.test(path)
 )
 const result = validateAcceptanceCriteriaTraceability({
   featureDocuments: readDocuments(featurePaths),
@@ -46,4 +48,3 @@ if (result.errors.length > 0) {
     `Acceptance-criterion traceability is valid: ${result.criteria.length} criteria across ${featurePaths.length} feature documents; ${referencedIds.size} criteria referenced by representative tests.`
   )
 }
-
