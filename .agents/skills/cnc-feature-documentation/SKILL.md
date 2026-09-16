@@ -87,6 +87,8 @@ Inspect the exact documentation diff, then run:
 ```bash
 npm run lint:md
 npm run format:md:check
+npm run test:acceptance-traceability
+npm run lint:acceptance-traceability
 bash scripts/audit-doc-drift.sh
 git diff --check
 ```
