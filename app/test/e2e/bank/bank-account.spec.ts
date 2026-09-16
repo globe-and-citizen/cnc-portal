@@ -1,33 +1,36 @@
 import { expect, test } from '../fixtures'
 import { parseEther, parseUnits } from 'viem'
 import {
-  bankNativeBalance,
-  boardActionCount,
-  deployBankE2EFixture,
-  E2E_RECIPIENT,
-  grossForNet,
+  E2E_MEMBER,
   nativeBalance,
-  pauseBank,
   revertChain,
   sendNative,
   sendToken,
-  setBankFee,
   snapshotChain,
-  tokenBalance,
+  tokenBalance
+} from '../e2e-chain'
+import {
+  dialogAmount,
+  E2E_RPC_ROUTE,
+  failLogReads,
+  rejectNextWalletRequest,
+  selectToken
+} from '../e2e-page'
+import {
+  boardActionCount,
+  deployBankE2EFixture,
+  grossForNet,
+  pauseBank,
+  setBankFee,
   transferBankOwnership,
   unpauseBank,
   type BankE2EFixture
 } from './bank-chain'
 import {
-  dialogAmount,
-  E2E_RPC_URL,
-  exerciseMemberBankAccess,
-  failLogReads,
   exerciseCashOutRecovery,
+  exerciseMemberBankAccess,
   openBankAccount,
-  rejectNextWalletRequest,
   selectRecipient,
-  selectToken,
   signInAndOpenTeam
 } from './bank-page'
 
@@ -73,7 +76,7 @@ test.describe('Bank Account', () => {
       await dialogAmount(deposit).fill('100000')
       await expect(deposit.locator('[data-test="deposit-button"]')).toBeDisabled()
       await deposit.locator('[data-test="cancel-button"]').click()
-      await expect.poll(() => bankNativeBalance(fixture.bank)).toBe(0n)
+      await expect.poll(() => nativeBalance(fixture.bank)).toBe(0n)
 
       // Rejecting the wallet request keeps the modal open and changes no funds.
       await page.getByRole('button', { name: 'Deposit', exact: true }).click()
@@ -82,14 +85,14 @@ test.describe('Bank Account', () => {
       await rejectNextWalletRequest(page)
       await deposit.locator('[data-test="deposit-button"]').click()
       await expect(deposit.locator('[data-test="error-alert"]')).toBeVisible()
-      await expect.poll(() => bankNativeBalance(fixture.bank)).toBe(0n)
+      await expect.poll(() => nativeBalance(fixture.bank)).toBe(0n)
 
       await dialogAmount(deposit).fill('2')
       await deposit.locator('[data-test="deposit-button"]').click()
       await expect(page.getByText('GO deposited successfully', { exact: true })).toBeVisible({
         timeout: 30_000
       })
-      await expect.poll(() => bankNativeBalance(fixture.bank)).toBe(parseEther('2'))
+      await expect.poll(() => nativeBalance(fixture.bank)).toBe(parseEther('2'))
       await expect(page.locator('[data-test="bank-total-usd"]')).toHaveText('$5.00', {
         timeout: 30_000
       })
@@ -151,7 +154,7 @@ test.describe('Bank Account', () => {
       await setBankFee(fixture.feeCollector, 100)
       await openBankAccount(page, fixture)
 
-      const recipientNativeBefore = await nativeBalance(E2E_RECIPIENT)
+      const recipientNativeBefore = await nativeBalance(E2E_MEMBER)
       const collectorNativeBefore = await nativeBalance(fixture.feeCollector)
       await page.getByRole('button', { name: 'Transfer', exact: true }).click()
       let transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
@@ -166,14 +169,14 @@ test.describe('Bank Account', () => {
 
       const nativeGross = grossForNet(parseEther('1'), 100n)
       await expect
-        .poll(() => nativeBalance(E2E_RECIPIENT))
+        .poll(() => nativeBalance(E2E_MEMBER))
         .toBe(recipientNativeBefore + parseEther('1'))
-      await expect.poll(() => bankNativeBalance(fixture.bank)).toBe(parseEther('5') - nativeGross)
+      await expect.poll(() => nativeBalance(fixture.bank)).toBe(parseEther('5') - nativeGross)
       await expect
         .poll(() => nativeBalance(fixture.feeCollector))
         .toBe(collectorNativeBefore + nativeGross - parseEther('1'))
 
-      const recipientTokenBefore = await tokenBalance(fixture.usdc, E2E_RECIPIENT)
+      const recipientTokenBefore = await tokenBalance(fixture.usdc, E2E_MEMBER)
       const collectorTokenBefore = await tokenBalance(fixture.usdc, fixture.feeCollector)
       await page.getByRole('button', { name: 'Transfer', exact: true }).click()
       transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
@@ -187,7 +190,7 @@ test.describe('Bank Account', () => {
 
       const tokenGross = grossForNet(parseUnits('4', 6), 100n)
       await expect
-        .poll(() => tokenBalance(fixture.usdc, E2E_RECIPIENT))
+        .poll(() => tokenBalance(fixture.usdc, E2E_MEMBER))
         .toBe(recipientTokenBefore + parseUnits('4', 6))
       await expect
         .poll(() => tokenBalance(fixture.usdc, fixture.feeCollector))
@@ -236,7 +239,7 @@ test.describe('Bank Account', () => {
       ).toBeVisible({ timeout: 30_000 })
       await expect.poll(() => boardActionCount(fixture.board)).toBe(1n)
       await expect.poll(() => tokenBalance(fixture.usdc, fixture.bank)).toBe(parseUnits('8', 6))
-      await expect.poll(() => tokenBalance(fixture.usdc, E2E_RECIPIENT)).toBe(0n)
+      await expect.poll(() => tokenBalance(fixture.usdc, E2E_MEMBER)).toBe(0n)
     }
   )
 
@@ -252,7 +255,7 @@ test.describe('Bank Account', () => {
     'shows an explicit history error instead of an empty-history result when RPC log reads fail',
     { tag: '@US-BANK-003' },
     async ({ page }) => {
-      await page.route(E2E_RPC_URL, failLogReads)
+      await page.route(E2E_RPC_ROUTE, failLogReads)
       await openBankAccount(page, fixture)
 
       const history = page.locator('[data-test="bank-transactions"]')
