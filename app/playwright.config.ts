@@ -1,16 +1,17 @@
 import { defineConfig, devices } from '@playwright/test'
+import { E2E_RPC_URL, E2E_TOKENS } from './src/e2e/chain'
 
-// The Bank fixture deploys USDC and USDCe as the first two contracts on its
-// fresh node; keep the Vite E2E build pointed at those deterministic addresses
-// without rewriting the developer-local deployment artifact.
-const E2E_USDC_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
-const E2E_USDCE_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
-const E2E_RPC_URL = 'http://127.0.0.1:8546'
+// A developer-local Chromium can replace the Playwright download.
+const E2E_BROWSER_EXECUTABLE = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
+  // Seed the deterministic mock tokens and Safe infrastructure before any
+  // browser compiles the E2E client or an account fixture deploys contracts.
+  globalSetup: './test/e2e/global-setup.ts',
+
   // Look for test files in the "test/e2e" directory, relative to this configuration file.
   testDir: './test/e2e',
 
@@ -23,8 +24,9 @@ export default defineConfig({
   // Retry on CI only.
   retries: process.env.CI ? 2 : 0,
 
-  // Use half of the number of logical CPU cores for running tests in parallel.
-  workers: process.env.CI ? 1 : undefined,
+  // E2E fixtures deploy into one dedicated Hardhat node. A single worker keeps
+  // their deterministic token addresses stable across every account journey.
+  workers: 1,
 
   // Reporter to use
   reporter: [['html'], ['list']],
@@ -40,7 +42,8 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     // Run in headless mode by default, unless HEADLESS=false
-    headless: process.env.HEADLESS !== 'false'
+    headless: process.env.HEADLESS !== 'false',
+    ...(E2E_BROWSER_EXECUTABLE ? { launchOptions: { executablePath: E2E_BROWSER_EXECUTABLE } } : {})
   },
 
   // Web3 e2e runs on Chromium.
@@ -52,7 +55,9 @@ export default defineConfig({
   ],
 
   // The dedicated Hardhat port keeps the suite's deployment fixture isolated
-  // from a developer's normal local node on :8545.
+  // from a developer's normal local node on :8545. The Vite E2E build reads
+  // the deterministic token addresses seeded by the global setup instead of
+  // the developer-local deployment artifact.
   webServer: process.env.SKIP_SERVER
     ? undefined
     : [
@@ -71,8 +76,8 @@ export default defineConfig({
             VITE_E2E: 'true',
             VITE_APP_NETWORK_ALIAS: 'hardhat',
             VITE_E2E_RPC_URL: E2E_RPC_URL,
-            VITE_E2E_USDC_ADDRESS: E2E_USDC_ADDRESS,
-            VITE_E2E_USDCE_ADDRESS: E2E_USDCE_ADDRESS
+            VITE_E2E_USDC_ADDRESS: E2E_TOKENS.usdc,
+            VITE_E2E_USDCE_ADDRESS: E2E_TOKENS.usdcE
           },
           port: 5174,
           reuseExistingServer: false,
