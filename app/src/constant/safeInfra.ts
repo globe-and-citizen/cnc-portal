@@ -1,6 +1,7 @@
 import { isAddress, type Address } from 'viem'
 import { getNetwork } from './network'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
+import { E2E_SAFE_INFRA } from '@/e2e/chain'
 
 // Safe v1.4.1 infrastructure (Singleton, ProxyFactory, CompatibilityFallbackHandler).
 // Polygon already has the canonical addresses live (same across every chain that
@@ -20,6 +21,10 @@ interface HardhatSafeInfraAddresses {
 }
 
 const HARDHAT_SAFE_INFRA = hardhat as HardhatSafeInfraAddresses
+
+// The Playwright global setup seeds its own Safe infrastructure on the E2E
+// node, so the E2E build ignores the developer-local deployment artifact.
+const isE2E = import.meta.env.VITE_E2E === 'true'
 
 const POLYGON_SAFE_INFRA: SafeInfraAddresses = {
   singleton: '0x29fcB43b46531BcA003ddC8FCB67FFE91900C762', // SafeL2 v1.4.1 canonical
@@ -41,6 +46,8 @@ export function getSafeInfraAddresses(): SafeInfraAddresses {
   const chainId = parseInt(getNetwork().chainId, 16)
 
   if (chainId === 31337) {
+    if (isE2E) return E2E_SAFE_INFRA
+
     return {
       singleton: resolveHardhatSafeAddress('SafeInfraModule#SafeL2'),
       proxyFactory: resolveHardhatSafeAddress('SafeInfraModule#SafeProxyFactory'),

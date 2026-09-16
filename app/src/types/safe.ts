@@ -4,6 +4,7 @@ import type {
 } from '@safe-global/types-kit'
 
 import { type TokenId } from '@/constant'
+import { E2E_SAFE_TX_SERVICE_URL } from '@/e2e/chain'
 
 export interface SafeFiatTotal {
   value: number
@@ -112,6 +113,11 @@ export interface SafeChainConfig {
   nativeSymbol: string
 }
 
+const E2E_TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> =
+  import.meta.env.VITE_E2E === 'true'
+    ? { 31337: { chain: 'hardhat', url: E2E_SAFE_TX_SERVICE_URL, nativeSymbol: 'GO' } }
+    : {}
+
 export const TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> = {
   137: {
     chain: 'polygon',
@@ -128,7 +134,8 @@ export const TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> = {
     chain: 'arbitrum',
     url: 'https://safe-transaction-arbitrum.safe.global',
     nativeSymbol: 'ETH'
-  }
+  },
+  ...E2E_TX_SERVICE_BY_CHAIN
 }
 
 export interface SafeTransferOptions {
