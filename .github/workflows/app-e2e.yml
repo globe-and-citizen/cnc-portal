@@ -43,6 +43,10 @@ jobs:
         run: npm ci
         working-directory: ./app
 
+      - name: 📦 Install contract dependencies (Hardhat node for E2E)
+        run: npm ci
+        working-directory: ./contract
+
       - name: 🧪 Run E2E tests with coverage instrumentation
         run: npm run test:e2e:coverage
         working-directory: ./app
