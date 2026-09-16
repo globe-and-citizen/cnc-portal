@@ -61,6 +61,23 @@ describe('useSafeSDK', () => {
       })
     })
 
+    it('clears a Safe-specific cache entry only while a wallet is connected', async () => {
+      const { loadSafe, clearSafeCache } = useSafeSDK()
+
+      await loadSafe(LOWERCASE_SAFE_ADDRESS)
+      clearSafeCache(CHECKSUM_SAFE_ADDRESS)
+      await loadSafe(LOWERCASE_SAFE_ADDRESS)
+
+      expect(mockSafeInit).toHaveBeenCalledTimes(2)
+
+      mockUseConnection.address.value = undefined
+      clearSafeCache(CHECKSUM_SAFE_ADDRESS)
+      mockUseConnection.address.value = '0x1111111111111111111111111111111111111111'
+
+      await loadSafe(LOWERCASE_SAFE_ADDRESS)
+      expect(mockSafeInit).toHaveBeenCalledTimes(2)
+    })
+
     it('removes rejected cache entries so a later retry reinitializes', async () => {
       mockSafeInit.mockRejectedValueOnce(new Error('init failed'))
       const { loadSafe } = useSafeSDK()

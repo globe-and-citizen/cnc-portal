@@ -7,7 +7,13 @@ import type { Address } from 'viem'
 // logic, so it deliberately opts out of that global mock.
 vi.unmock('@/composables/bod/reads')
 
-import { useBodOwner, useBodIsActionExecuted, useBodIsBodAction, useBodIsMember } from '../reads'
+import {
+  isValidBodFunction,
+  useBodOwner,
+  useBodIsActionExecuted,
+  useBodIsBodAction,
+  useBodIsMember
+} from '../reads'
 
 const MOCK_DATA = {
   bodAddress: '0x3234567890123456789012345678901234567890' as Address,
@@ -18,6 +24,11 @@ const MOCK_DATA = {
 describe('BOD Contract Reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  it('validates Board function names before using them in a contract call', () => {
+    expect(isValidBodFunction('isMember')).toBe(true)
+    expect(isValidBodFunction('notABodFunction')).toBe(false)
   })
 
   it('reads the owner directly from the Bank contract', () => {

@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetNetwork } = vi.hoisted(() => ({
-  mockGetNetwork: vi.fn()
+const { mockGetNetwork, mockHardhatInfra } = vi.hoisted(() => ({
+  mockGetNetwork: vi.fn(),
+  mockHardhatInfra: {
+    'SafeInfraModule#SafeL2': '0x1111111111111111111111111111111111111111',
+    'SafeInfraModule#SafeProxyFactory': '0x2222222222222222222222222222222222222222',
+    'SafeInfraModule#CompatibilityFallbackHandler': '0x3333333333333333333333333333333333333333'
+  }
 }))
 
 vi.mock('../network', () => ({
@@ -9,17 +14,18 @@ vi.mock('../network', () => ({
 }))
 
 vi.mock('@/artifacts/deployed_addresses/chain-31337.json', () => ({
-  default: {
-    'SafeInfraModule#SafeL2': '0x1111111111111111111111111111111111111111',
-    'SafeInfraModule#SafeProxyFactory': '0x2222222222222222222222222222222222222222',
-    'SafeInfraModule#CompatibilityFallbackHandler': '0x3333333333333333333333333333333333333333'
-  }
+  default: mockHardhatInfra
 }))
 
 describe('getSafeInfraAddresses', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    Object.assign(mockHardhatInfra, {
+      'SafeInfraModule#SafeL2': '0x1111111111111111111111111111111111111111',
+      'SafeInfraModule#SafeProxyFactory': '0x2222222222222222222222222222222222222222',
+      'SafeInfraModule#CompatibilityFallbackHandler': '0x3333333333333333333333333333333333333333'
+    })
   })
 
   afterEach(() => {
@@ -57,6 +63,14 @@ describe('getSafeInfraAddresses', () => {
       proxyFactory: '0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67',
       fallbackHandler: '0xfd0732Dc9E303f09fCEf3a7388Ad10A83459Ec99'
     })
+  })
+
+  it('rejects an incomplete local Safe infrastructure deployment', async () => {
+    delete mockHardhatInfra['SafeInfraModule#SafeProxyFactory']
+    mockGetNetwork.mockReturnValue({ chainId: '0x7A69' })
+    const { getSafeInfraAddresses } = await import('../safeInfra')
+
+    expect(() => getSafeInfraAddresses()).toThrow(/SafeProxyFactory/)
   })
 
   it('throws for an unsupported chain', async () => {
