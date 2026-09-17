@@ -313,7 +313,8 @@ This validation does not attest to a live on-chain Officer deployment.
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue),
   [Officer deployment composable](../../../app/src/composables/contracts/useOfficerDeployment.ts), and
   [initial Officer setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/InvestorContractStep.spec.ts)
-- [Company metadata update](../../../app/src/components/sections/DashboardView/TeamMetaUpdateModal.vue),
+- [Company header and its lifecycle actions](../../../app/src/components/sections/DashboardView/TeamMetaSection.vue),
+  [company metadata update](../../../app/src/components/sections/DashboardView/TeamMetaUpdateModal.vue),
   [archive and restore](../../../app/src/components/sections/DashboardView/TeamMetaArchiveModal.vue),
   [member visibility](../../../app/src/components/sections/DashboardView/TeamMetaVisibilityModal.vue), and
   [company deletion](../../../app/src/components/sections/DashboardView/TeamMetaDeleteModal.vue)
@@ -322,6 +323,15 @@ This validation does not attest to a live on-chain Officer deployment.
   [archived-workspace action tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaActions.archived.spec.ts)
 - [Archived-workspace authorization](../../../backend/src/middleware/teamAuthzMiddleware.ts) and
   [company-controller tests](../../../backend/src/controllers/__tests__/teamController.test.ts)
+- Browser journeys: [company creation](../../../app/test/e2e/company/company-creation.spec.ts),
+  [Officer onboarding](../../../app/test/e2e/company/company-onboarding.spec.ts),
+  [Safe setup](../../../app/test/e2e/company/company-safe.spec.ts),
+  [deployment recovery](../../../app/test/e2e/company/company-recovery.spec.ts),
+  [details update](../../../app/test/e2e/company/company-update.spec.ts),
+  [archive and restore](../../../app/test/e2e/company/company-archive.spec.ts),
+  [list visibility](../../../app/test/e2e/company/company-visibility.spec.ts), and
+  [deletion](../../../app/test/e2e/company/company-delete.spec.ts), driven by the
+  [lifecycle backend stub](../../../app/test/e2e/company/company-lifecycle-page.ts) for the owner and member roles
 
 ## Related Documentation
 
