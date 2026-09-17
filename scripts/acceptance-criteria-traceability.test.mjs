@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
+  classifyTestCoverageLayer,
   parseAcceptanceCriteria,
+  summarizeAcceptanceCriterionCoverage,
   validateAcceptanceCriteriaTraceability
 } from './lib/acceptance-criteria-traceability.mjs'
 
@@ -58,6 +60,50 @@ test('accepts complete story-local IDs and known representative test references'
   assert.deepEqual(result.errors, [])
   assert.equal(result.criteria.length, 2)
   assert.equal(result.references.length, 1)
+})
+
+test('classifies representative evidence by repository layer', () => {
+  assert.equal(classifyTestCoverageLayer('app/src/example/__tests__/example.spec.ts'), 'frontend')
+  assert.equal(
+    classifyTestCoverageLayer('backend/src/example/__tests__/example.test.ts'),
+    'backend'
+  )
+  assert.equal(classifyTestCoverageLayer('contract/test/Example.spec.ts'), 'contract')
+  assert.equal(classifyTestCoverageLayer('app/test/e2e/example.spec.ts'), 'e2e')
+  assert.equal(classifyTestCoverageLayer('scripts/example.test.mjs'), 'other')
+})
+
+test('summarizes unique representative files for every acceptance criterion', () => {
+  const criteria = parseAcceptanceCriteria(validFeature)
+  const coverage = summarizeAcceptanceCriterionCoverage(criteria, [
+    {
+      id: 'AC-US-EXAMPLE-001-01',
+      documentPath: 'app/src/example/__tests__/example.spec.ts'
+    },
+    {
+      id: 'AC-US-EXAMPLE-001-01',
+      documentPath: 'app/src/example/__tests__/example.spec.ts'
+    },
+    {
+      id: 'AC-US-EXAMPLE-001-01',
+      documentPath: 'app/test/e2e/example.spec.ts'
+    }
+  ])
+
+  assert.deepEqual(coverage[0].layers, {
+    frontend: ['app/src/example/__tests__/example.spec.ts'],
+    backend: [],
+    contract: [],
+    e2e: ['app/test/e2e/example.spec.ts'],
+    other: []
+  })
+  assert.deepEqual(coverage[1].layers, {
+    frontend: [],
+    backend: [],
+    contract: [],
+    e2e: [],
+    other: []
+  })
 })
 
 test('rejects a criterion without an ID', () => {

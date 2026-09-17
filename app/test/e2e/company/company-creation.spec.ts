@@ -11,7 +11,7 @@ import {
 // Browser coverage of US-COMPANIES-001. The API is simulated, so database
 // persistence, automatic owner membership and unique slugs need backend coverage.
 test.describe('Company creation', { tag: '@US-COMPANIES-001' }, () => {
-  test('creates a company without optional details and opens it after deferring setup', async ({
+  test('[AC-US-COMPANIES-001-01][AC-US-COMPANIES-001-02] creates a company without optional details and opens it after deferring setup', async ({
     page
   }) => {
     const api = await openCompanyCreation(page)
@@ -22,7 +22,9 @@ test.describe('Company creation', { tag: '@US-COMPANIES-001' }, () => {
     expect(api.companies).toHaveLength(1)
   })
 
-  test('requires a company name before advancing or submitting', async ({ page }) => {
+  test('[AC-US-COMPANIES-001-04] requires a company name before advancing or submitting', async ({
+    page
+  }) => {
     const api = await openCompanyCreation(page)
     await page.locator('[data-test="next-button"]').click()
     await expect(page.getByText('Company name is required', { exact: true })).toBeVisible()
@@ -33,7 +35,7 @@ test.describe('Company creation', { tag: '@US-COMPANIES-001' }, () => {
     await expect(page.locator('[data-test="create-team-button"]')).toBeEnabled()
   })
 
-  test('preserves details and selected members when returning to the previous step', async ({
+  test('[AC-US-COMPANIES-001-07] preserves details and selected members when returning to the previous step', async ({
     page
   }) => {
     const api = await openCompanyCreation(page)
@@ -59,7 +61,9 @@ test.describe('Company creation', { tag: '@US-COMPANIES-001' }, () => {
     ])
   })
 
-  test('shows a failed creation and retries the same details successfully', async ({ page }) => {
+  test('[AC-US-COMPANIES-001-08] shows a failed creation and retries the same details successfully', async ({
+    page
+  }) => {
     const api = await openCompanyCreation(page)
     api.failCreation = true
     await enterCompanyDetails(page, 'Preserved after an API failure')
@@ -129,7 +133,7 @@ test.describe('Company creation', { tag: '@US-COMPANIES-001' }, () => {
     expect(api.attempts[0]!.members).toEqual([])
   })
 
-  test('blocks creation when the directory supplies an invalid member address', async ({
+  test('[AC-US-COMPANIES-001-05] blocks creation when the directory supplies an invalid member address', async ({
     page
   }) => {
     const api = await openCompanyCreation(page)

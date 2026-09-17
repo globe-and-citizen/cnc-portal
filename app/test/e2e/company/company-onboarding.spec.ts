@@ -65,7 +65,7 @@ test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () =
 
   test.setTimeout(180_000)
   test(
-    'deploys and registers the Officer suite and a Safe through the complete company wizard',
+    '[AC-US-COMPANIES-002-01][AC-US-COMPANIES-002-02][AC-US-COMPANIES-002-03] deploys and registers the Officer suite and a Safe through the complete company wizard',
     { tag: ['@US-COMPANIES-001', '@US-COMPANIES-002', '@US-SAFE-001'] },
     async ({ page }) => {
       const api = await deployOfficer(page)
@@ -90,7 +90,9 @@ test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () =
     }
   )
 
-  test('requires both share name and symbol before requesting deployment', async ({ page }) => {
+  test('[AC-US-COMPANIES-002-04] requires both share name and symbol before requesting deployment', async ({
+    page
+  }) => {
     const api = await createCompanyUntilOfficer(page)
     const before = await ownerNonce()
     const deploy = page.locator('[data-test="deploy-contracts-button"]')
@@ -117,7 +119,9 @@ test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () =
   }
 
   for (const [failure, cause] of Object.entries(failures)) {
-    test(`keeps Officer setup recoverable after ${failure}`, async ({ page }) => {
+    test(`[AC-US-COMPANIES-002-07] keeps Officer setup recoverable after ${failure}`, async ({
+      page
+    }) => {
       const api = await createCompanyUntilOfficer(page)
       await enterShareDetails(page)
       const before = await ownerNonce()
@@ -155,7 +159,9 @@ test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () =
     expect(await ownerNonce()).toBe(before)
   })
 
-  test('distinguishes a mined deployment from a failed Officer registration', async ({ page }) => {
+  test('[AC-US-COMPANIES-002-08] distinguishes a mined deployment from a failed Officer registration', async ({
+    page
+  }) => {
     const api = await createCompanyUntilOfficer(page)
     api.failOfficerRegistration = true
     await enterShareDetails(page)
