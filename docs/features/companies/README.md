@@ -65,6 +65,22 @@ flowchart LR
 | US-COMPANIES-007 | Control my company-list visibility        | Company member  | ✅ Done |
 | US-COMPANIES-008 | Permanently delete a company              | Company owner   | ✅ Done |
 
+## Test Coverage Overview
+
+Representative counts below come from direct `AC-US-*` references in tracked tests. They show evidence by layer, not exhaustive coverage or
+the result of the latest test run. E2E status is assessed against the stated integration boundary.
+
+| User Story       | Representative AC Coverage | E2E Status    | E2E Boundary                                      |
+| ---------------- | -------------------------- | ------------- | ------------------------------------------------- |
+| US-COMPANIES-001 | Backend 2/8 · E2E 6/8      | 🚧 Partial    | Browser with simulated API and no database        |
+| US-COMPANIES-002 | E2E 6/8                    | 🚧 Partial    | Browser and real Hardhat chain with simulated API |
+| US-COMPANIES-003 | Backend 2/9                | ⚪ Unassessed | Not yet assessed                                  |
+| US-COMPANIES-004 | None linked                | ⚪ Unassessed | Not yet assessed                                  |
+| US-COMPANIES-005 | None linked                | ⚪ Unassessed | Not yet assessed                                  |
+| US-COMPANIES-006 | Backend 1/7                | ⚪ Unassessed | Not yet assessed                                  |
+| US-COMPANIES-007 | Backend 1/6                | ⚪ Unassessed | Not yet assessed                                  |
+| US-COMPANIES-008 | None linked                | ⚪ Unassessed | Not yet assessed                                  |
+
 ## US-COMPANIES-001: Create a Company Workspace
 
 **As a** company creator\
@@ -292,7 +308,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
+**Implementation evidence reviewed against:** `0e28bbcb231617aca2755311ceb831745ba6cab2e`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and
@@ -322,6 +338,8 @@ This validation does not attest to a live on-chain Officer deployment.
   [archived-workspace action tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaActions.archived.spec.ts)
 - [Archived-workspace authorization](../../../backend/src/middleware/teamAuthzMiddleware.ts) and
   [company-controller tests](../../../backend/src/controllers/__tests__/teamController.test.ts)
+- [Company creation E2E](../../../app/test/e2e/company/company-creation.spec.ts) and
+  [contract onboarding E2E](../../../app/test/e2e/company/company-onboarding.spec.ts)
 
 ## Related Documentation
 

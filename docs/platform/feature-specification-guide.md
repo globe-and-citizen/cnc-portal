@@ -119,6 +119,10 @@ it('[AC-US-FEATURE-001-01] retains every line of a matching JournalEntry', () =>
 Every criterion has an ID even when no representative automated test exists. A test reference records evidence, not comprehensive coverage,
 and it does not replace the criterion's observable outcome, checkbox state, implementation evidence, or required human validation.
 
+Run `npm run report:acceptance-coverage -- --feature <feature-slug>` to group representative `AC-US-*` references by frontend, backend,
+contract, and E2E test layer. This report derives evidence from tracked test files; it does not infer whether an unreferenced criterion
+needs automation or whether the latest test run passed.
+
 ### Story Statuses
 
 | Status           | Meaning                                                    |
@@ -188,6 +192,29 @@ journey and its branches, but it must not change that documentation order.
 
 The status overview is the sole delivery-state record for each story. It records implementation and human-validation progress, not planning
 priority or estimation. Detailed stories do not repeat their status after the acceptance criteria.
+
+#### Test Coverage Overview
+
+When a feature is part of an active test-coverage review, add a separate table immediately after the status overview. Do not add test state
+to the product `Status` column: delivery, representative automated evidence, E2E scope, and the latest execution result are different facts.
+
+```markdown
+| User Story     | Representative AC Coverage | E2E Status | E2E Boundary                    |
+| -------------- | -------------------------- | ---------- | ------------------------------- |
+| US-FEATURE-001 | Backend 2/5 · E2E 2/5      | 🚧 Partial | Browser + API; contract stubbed |
+```
+
+- `Representative AC Coverage` summarizes acceptance criteria carrying direct test references; it is evidence, not a coverage percentage or
+  a requirement that every criterion be automated at every layer.
+- `E2E Status` uses `⚪ Unassessed`, `📋 Planned`, `🚧 Partial`, `⚠️ Blocked`, `✅ Covered`, or `➖ Not required`. `✅ Covered` is valid
+  only against an explicitly defined path and integration boundary.
+- `E2E Boundary` names which browser, backend, database, chain, or external-service boundaries are real and which are simulated. A seeded,
+  stubbed, or snapshot-provided dependency is not a validated user action.
+- Store the owning `E2E-PATH-*`, detailed test-file mapping, latest pass/fail result, and run artifacts in the generated coverage report,
+  CI, or a test-run record rather than duplicating them in this durable summary.
+
+The table is optional while this model is being piloted. When present, keep one row per story in the same stable-ID order as the status
+overview and refresh it when representative test references or E2E boundaries change.
 
 ### 5. User Stories
 
@@ -399,6 +426,7 @@ This rule applies to every committed documentation file, not only feature README
 - [ ] Every criterion is a functional, observable, independently reviewable outcome that remains valid after a visual redesign.
 - [ ] UI and UX requirements are kept outside feature acceptance criteria.
 - [ ] Statuses, checkboxes, and the human-validation statement agree.
+- [ ] Any test coverage overview remains separate from product status and states the actual E2E integration boundary.
 - [ ] Known gaps are visible and not hidden under `✅ Done`.
 - [ ] Evidence links resolve to current code or tests.
 - [ ] Related feature and contract documentation is linked without duplication.
