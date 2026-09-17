@@ -9,6 +9,7 @@
       <button
         type="button"
         class="flex w-full items-center justify-between px-4 py-3 text-xl font-medium"
+        data-test="team-meta-toggle"
       >
         <div class="flex items-center justify-center">
           <h2 class="pl-5">{{ currentTeam?.name }}</h2>
