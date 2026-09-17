@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -102,13 +102,22 @@ const coverage = summarizeAcceptanceCriterionCoverage(result.criteria, result.re
 const requestedDocuments = featureDocuments.filter((document) =>
   featurePaths.includes(document.path)
 )
+const report = [
+  '# Acceptance-Criterion Test Coverage',
+  '',
+  `**Generated:** ${new Date().toISOString()}`,
+  '',
+  'Generated from representative `AC-US-*` references. Counts identify evidence by repository layer; they do not prove exhaustive coverage or a passing latest run.',
+  '',
+  requestedDocuments.map((document) => renderFeatureCoverage(document, coverage)).join('\n\n'),
+  ''
+].join('\n')
+const reportName = requestedFeature
+  ? `${requestedFeature.replaceAll('/', '-')}.md`
+  : 'all-features.md'
+const reportDirectory = resolve(repositoryRoot, 'reports/acceptance-coverage')
+const reportPath = resolve(reportDirectory, reportName)
 
-console.log('# Acceptance-Criterion Test Coverage')
-console.log('')
-console.log(
-  'Generated from representative `AC-US-*` references. Counts identify evidence by repository layer; they do not prove exhaustive coverage or a passing latest run.'
-)
-console.log('')
-console.log(
-  requestedDocuments.map((document) => renderFeatureCoverage(document, coverage)).join('\n\n')
-)
+mkdirSync(reportDirectory, { recursive: true })
+writeFileSync(reportPath, report, 'utf8')
+console.log(`Acceptance-criterion coverage report written to ${reportPath}`)

@@ -119,9 +119,9 @@ it('[AC-US-FEATURE-001-01] retains every line of a matching JournalEntry', () =>
 Every criterion has an ID even when no representative automated test exists. A test reference records evidence, not comprehensive coverage,
 and it does not replace the criterion's observable outcome, checkbox state, implementation evidence, or required human validation.
 
-Run `npm run report:acceptance-coverage -- --feature <feature-slug>` to group representative `AC-US-*` references by frontend, backend,
-contract, and E2E test layer. This report derives evidence from tracked test files; it does not infer whether an unreferenced criterion
-needs automation or whether the latest test run passed.
+Run `npm run report:acceptance-coverage -- --feature <feature-slug>` to write a local Markdown report under `reports/acceptance-coverage/`.
+The Git-ignored report groups representative `AC-US-*` references by frontend, backend, contract, and E2E test layer. It derives evidence
+from tracked test files; it does not infer whether an unreferenced criterion needs automation or whether the latest test run passed.
 
 ### Story Statuses
 
