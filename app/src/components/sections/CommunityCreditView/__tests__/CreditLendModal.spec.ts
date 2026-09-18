@@ -84,7 +84,7 @@ describe('CreditLendModal.vue', () => {
     document.body.innerHTML = ''
   })
 
-  it('skips approve and calls lendFunds when allowance is already sufficient', async () => {
+  it('[AC-US-CC-003-10] skips approval when allowance is sufficient', async () => {
     const { wrapper, modal } = mountModal()
     await modal.find('[data-test="lend-amount-input"]').setValue(1000)
 
@@ -102,7 +102,7 @@ describe('CreditLendModal.vue', () => {
     expect(wrapper.emitted('lent')).toHaveLength(1)
   })
 
-  it('approves the contract before lendFunds when allowance is insufficient', async () => {
+  it('[AC-US-CC-003-10] requests approval when allowance is insufficient', async () => {
     mockERC20Reads.allowance.data.value = 0n
     const { modal } = mountModal()
     await modal.find('[data-test="lend-amount-input"]').setValue(1000)

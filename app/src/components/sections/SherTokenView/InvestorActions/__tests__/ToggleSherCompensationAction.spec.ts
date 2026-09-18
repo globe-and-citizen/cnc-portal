@@ -59,7 +59,7 @@ describe('ToggleSherCompensationAction.vue', () => {
     expect(actionButton.exists()).toBe(true)
   })
 
-  it('handleToggleCompensation blocks when user is not owner', async () => {
+  it('[AC-US-SHER-005-04] blocks deposit controls for a non-owner', async () => {
     mockUseConnection.address.value = '0x0000000000000000000000000000000000000001'
     const wrapper = createWrapper()
 

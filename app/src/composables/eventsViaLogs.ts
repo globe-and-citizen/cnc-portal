@@ -57,7 +57,7 @@ export interface ScanGap {
 
 /** What {@link scanContractLogs} returns: the merged feed plus any failed generations. */
 export interface ScanResult<T> {
-  data: T
+  events: T
   gaps: ScanGap[]
   timestampGaps: TimestampGap[]
 }
@@ -178,7 +178,7 @@ export async function scanContractLogs<T>(
     return Number(block.timestamp)
   }
 ): Promise<ScanResult<T>> {
-  if (targets.length === 0) return { data: opts.empty(), gaps: [], timestampGaps: [] }
+  if (targets.length === 0) return { events: opts.empty(), gaps: [], timestampGaps: [] }
 
   const mainById = new Map<string, TaggedLog>()
   const extraById = new Map<string, TaggedLog>()
@@ -259,7 +259,7 @@ export async function scanContractLogs<T>(
   fold(mainById, opts.mapEvent)
   fold(extraById, opts.mapExtra)
 
-  return { data: out, gaps, timestampGaps }
+  return { events: out, gaps, timestampGaps }
 }
 
 export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
@@ -287,14 +287,5 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
     }
   })
 
-  // `gaps` surfaces generations whose scan failed; `refetch` lets consumers
-  // explicitly refresh the RPC log scan.
-  return {
-    result: computed(() => query.data.value?.data ?? null),
-    gaps: computed<ScanGap[]>(() => query.data.value?.gaps ?? []),
-    timestampGaps: computed<TimestampGap[]>(() => query.data.value?.timestampGaps ?? []),
-    loading: query.isPending,
-    error: query.error,
-    refetch: query.refetch
-  }
+  return query
 }

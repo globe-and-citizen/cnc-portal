@@ -71,26 +71,26 @@ stateDiagram-v2
 
 #### Happy Path
 
-- [x] The team owner can create a vesting schedule for a current team member.
-- [x] The owner can use duration and cliff presets or provide custom boundaries.
-- [x] The owner can review a schedule before confirmation without losing the entered values.
-- [x] A successfully created schedule becomes available in the team's schedules.
-- [x] The same beneficiary can receive multiple schedules.
+- [x] `AC-US-VESTING-001-01` The team owner can create a vesting schedule for a current team member.
+- [x] `AC-US-VESTING-001-02` The owner can use duration and cliff presets or provide custom boundaries.
+- [x] `AC-US-VESTING-001-03` The owner can review a schedule before confirmation without losing the entered values.
+- [x] `AC-US-VESTING-001-04` A successfully created schedule becomes available in the team's schedules.
+- [x] `AC-US-VESTING-001-05` The same beneficiary can receive multiple schedules.
 
 #### Business Rules
 
-- [x] Only the team owner can create a schedule.
-- [x] Archived teams cannot create a schedule.
-- [x] A schedule grant must be positive and use no more than six decimal places.
-- [x] Start, end, and optional cliff boundaries use minute precision and preserve their exact UTC values.
-- [x] The end boundary must be after the start boundary.
-- [x] An optional cliff must be between the start and end boundaries.
-- [x] Creating a schedule records an on-chain commitment without minting shares.
+- [x] `AC-US-VESTING-001-06` Only the team owner can create a schedule.
+- [x] `AC-US-VESTING-001-07` Archived teams cannot create a schedule.
+- [x] `AC-US-VESTING-001-08` A schedule grant must be positive and use no more than six decimal places.
+- [x] `AC-US-VESTING-001-09` Start, end, and optional cliff boundaries use minute precision and preserve their exact UTC values.
+- [x] `AC-US-VESTING-001-10` The end boundary must be after the start boundary.
+- [x] `AC-US-VESTING-001-11` An optional cliff must be between the start and end boundaries.
+- [x] `AC-US-VESTING-001-12` Creating a schedule records an on-chain commitment without minting shares.
 
 #### Edge & Error Cases
 
-- [x] Cancelling schedule creation does not create an on-chain schedule.
-- [x] A failed schedule creation does not create an on-chain schedule and preserves the entered context.
+- [x] `AC-US-VESTING-001-13` Cancelling schedule creation does not create an on-chain schedule.
+- [x] `AC-US-VESTING-001-14` A failed schedule creation does not create an on-chain schedule and preserves the entered context.
 
 **Accounting:** Creating the grant records its full commitment through
 [`UC-VEST-01`](../accounting/journal-entry-catalogue.md#uc-vest-01--vesting-grant) without minting shares.
@@ -107,21 +107,21 @@ stateDiagram-v2
 
 #### Happy Path
 
-- [x] Users can access Promised, Vested, Claimable, and Released totals.
-- [x] Every grant has one schedule entry, including grants for a repeated beneficiary.
-- [x] Users can switch between their own schedules and all team schedules.
-- [x] Users can filter schedules by All, Active, Claimable, Completed, or Cancelled.
-- [x] Creating, releasing, or stopping a schedule refreshes the schedules and aggregate totals.
+- [x] `AC-US-VESTING-002-01` Users can access Promised, Vested, Claimable, and Released totals.
+- [x] `AC-US-VESTING-002-02` Every grant has one schedule entry, including grants for a repeated beneficiary.
+- [x] `AC-US-VESTING-002-03` Users can switch between their own schedules and all team schedules.
+- [x] `AC-US-VESTING-002-04` Users can filter schedules by All, Active, Claimable, Completed, or Cancelled.
+- [x] `AC-US-VESTING-002-05` Creating, releasing, or stopping a schedule refreshes the schedules and aggregate totals.
 
 #### Business Rules
 
-- [x] A schedule is Completed when its full grant has been released.
-- [x] A schedule is Cancelled when the team owner has stopped it.
+- [x] `AC-US-VESTING-002-06` A schedule is Completed when its full grant has been released.
+- [x] `AC-US-VESTING-002-07` A schedule is Cancelled when the team owner has stopped it.
 
 #### Edge & Error Cases
 
-- [x] An empty schedule scope returns zero aggregate totals and no schedule entries.
-- [x] A failed schedule read is reported without being treated as successfully loaded data.
+- [x] `AC-US-VESTING-002-08` An empty schedule scope returns zero aggregate totals and no schedule entries.
+- [x] `AC-US-VESTING-002-09` A failed schedule read is reported without being treated as successfully loaded data.
 
 **Dependencies:** US-VESTING-001
 
@@ -135,22 +135,22 @@ stateDiagram-v2
 
 #### Happy Path
 
-- [x] A beneficiary can release accrued shares from one of their active schedules.
-- [x] A successful release updates the schedule's released and claimable amounts.
+- [x] `AC-US-VESTING-003-01` A beneficiary can release accrued shares from one of their active schedules.
+- [x] `AC-US-VESTING-003-02` A successful release updates the schedule's released and claimable amounts.
 
 #### Business Rules
 
-- [x] Only the schedule beneficiary can release its shares.
-- [x] A release affects only the selected schedule.
-- [x] A release is available only when the selected schedule has a positive claimable amount.
-- [x] A release mints the claimable amount without exceeding the grant.
-- [x] Repeated releases cannot mint the same shares twice.
-- [x] Archived teams and paused Vesting contracts cannot release shares.
+- [x] `AC-US-VESTING-003-03` Only the schedule beneficiary can release its shares.
+- [x] `AC-US-VESTING-003-04` A release affects only the selected schedule.
+- [x] `AC-US-VESTING-003-05` A release is available only when the selected schedule has a positive claimable amount.
+- [x] `AC-US-VESTING-003-06` A release mints the claimable amount without exceeding the grant.
+- [x] `AC-US-VESTING-003-07` Repeated releases cannot mint the same shares twice.
+- [x] `AC-US-VESTING-003-08` Archived teams and paused Vesting contracts cannot release shares.
 
 #### Edge & Error Cases
 
-- [x] Cancelling a release does not change the schedule or mint shares.
-- [x] A failed release does not change the schedule or mint shares.
+- [x] `AC-US-VESTING-003-09` Cancelling a release does not change the schedule or mint shares.
+- [x] `AC-US-VESTING-003-10` A failed release does not change the schedule or mint shares.
 
 **Accounting:** A successful release moves promised shares into Investor Equity through
 [`UC-VEST-02`](../accounting/journal-entry-catalogue.md#uc-vest-02--vested-sher-released). Its matching Investor mint is not booked again.
@@ -167,22 +167,22 @@ stateDiagram-v2
 
 #### Happy Path
 
-- [x] The team owner can stop one active vesting schedule.
-- [x] Stopping a schedule releases its claimable shares to the beneficiary and cancels its unvested remainder.
-- [x] A stopped schedule remains available with a Cancelled status.
+- [x] `AC-US-VESTING-004-01` The team owner can stop one active vesting schedule.
+- [x] `AC-US-VESTING-004-02` Stopping a schedule releases its claimable shares to the beneficiary and cancels its unvested remainder.
+- [x] `AC-US-VESTING-004-03` A stopped schedule remains available with a Cancelled status.
 
 #### Business Rules
 
-- [x] Only the team owner can stop an active schedule.
-- [x] Stopping affects only the selected schedule.
-- [x] Stopping a schedule before its cliff mints no shares.
-- [x] A stopped schedule cannot be used again.
-- [x] Archived teams and paused Vesting contracts cannot stop a schedule.
+- [x] `AC-US-VESTING-004-04` Only the team owner can stop an active schedule.
+- [x] `AC-US-VESTING-004-05` Stopping affects only the selected schedule.
+- [x] `AC-US-VESTING-004-06` Stopping a schedule before its cliff mints no shares.
+- [x] `AC-US-VESTING-004-07` A stopped schedule cannot be used again.
+- [x] `AC-US-VESTING-004-08` Archived teams and paused Vesting contracts cannot stop a schedule.
 
 #### Edge & Error Cases
 
-- [x] Cancelling a stop does not change the active schedule.
-- [x] A failed stop leaves the schedule active.
+- [x] `AC-US-VESTING-004-09` Cancelling a stop does not change the active schedule.
+- [x] `AC-US-VESTING-004-10` A failed stop leaves the schedule active.
 
 **Accounting:** A stop may group an accrued release (`UC-VEST-02`) with cancellation of the unvested remainder through
 [`UC-VEST-03`](../accounting/journal-entry-catalogue.md#uc-vest-03--unvested-grant-cancelled) in one journal entry.
@@ -199,19 +199,19 @@ stateDiagram-v2
 
 #### Happy Path
 
-- [x] Each schedule exposes its promised, vested, released, claimable, and unvested shares.
-- [x] Each schedule exposes its next boundary to the minute in local time and UTC.
-- [x] Upcoming, Cliff locked, Accruing, Claimable, Fully vested, Completed, and Cancelled remain distinct states.
+- [x] `AC-US-VESTING-005-01` Each schedule exposes its promised, vested, released, claimable, and unvested shares.
+- [x] `AC-US-VESTING-005-02` Each schedule exposes its next boundary to the minute in local time and UTC.
+- [x] `AC-US-VESTING-005-03` Upcoming, Cliff locked, Accruing, Claimable, Fully vested, Completed, and Cancelled remain distinct states.
 
 #### Business Rules
 
-- [x] Releasing a schedule is available only when its claimable amount is positive.
-- [x] Fully vested and fully released schedules have distinct statuses.
+- [x] `AC-US-VESTING-005-04` Releasing a schedule is available only when its claimable amount is positive.
+- [x] `AC-US-VESTING-005-05` Fully vested and fully released schedules have distinct statuses.
 
 #### Edge & Error Cases
 
-- [x] Accrued shares remain locked before the cliff boundary.
-- [x] A Cancelled schedule exposes both its released amount and its cancelled amount.
+- [x] `AC-US-VESTING-005-06` Accrued shares remain locked before the cliff boundary.
+- [x] `AC-US-VESTING-005-07` A Cancelled schedule exposes both its released amount and its cancelled amount.
 
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 

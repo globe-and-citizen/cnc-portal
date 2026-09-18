@@ -99,7 +99,7 @@ describe('RoundView repayment', () => {
     expect(wrapper.find('[data-test="repay-bank-blocked"]').exists()).toBe(false)
   })
 
-  it('blocks repayment while the Bank is paused, even for the treasury owner', async () => {
+  it('[AC-US-CC-005-12] blocks repayment while the Bank is paused', async () => {
     mockBankReads.paused.data.value = true
     const wrapper = mountRound(sampleRound({ status: 'active' }))
     await flushPromises()
@@ -111,7 +111,7 @@ describe('RoundView repayment', () => {
     expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it('writes exact units, refreshes the route data, and returns after a full repayment', async () => {
+  it('[AC-US-CC-005-06] settles the round after a full repayment', async () => {
     const wrapper = mountRound(
       sampleRound({ status: 'active' }),
       offerStruct({ totalFunded: 5000_000000n })
@@ -161,7 +161,7 @@ describe('RoundView repayment', () => {
     expect(mockRouterPush).not.toHaveBeenCalled()
   })
 
-  it('rejects an amount above the exact remaining obligation without writing', async () => {
+  it('[AC-US-CC-005-08] rejects an amount above the outstanding obligation', async () => {
     const wrapper = mountRound(
       sampleRound({ status: 'active' }),
       offerStruct({ totalFunded: 5000_000000n })
@@ -176,7 +176,7 @@ describe('RoundView repayment', () => {
     expect(wrapper.get('[data-test="repay-error"]').text()).toContain('outstanding balance')
   })
 
-  it('rejects an amount above the exact Bank balance without writing', async () => {
+  it('[AC-US-CC-005-09] rejects an amount above the Bank balance', async () => {
     mockERC20Reads.balanceOf.data.value = 5000_000000n
     const wrapper = mountRound(
       sampleRound({ status: 'active' }),

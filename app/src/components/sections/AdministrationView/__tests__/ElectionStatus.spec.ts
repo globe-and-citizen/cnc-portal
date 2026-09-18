@@ -79,7 +79,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.find('[data-test="election-status-badge"]').exists()).toBe(false)
     })
 
-    it('should display status badge with correct text', () => {
+    it('[AC-US-EL-05-01] should display the current election status', () => {
       mockElectionData.electionStatus.value = { text: 'Upcoming', color: 'warning' }
       wrapper = createComponent()
 
@@ -289,7 +289,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.text()).toContain('•')
     })
 
-    it('should properly format countdown with all elements', () => {
+    it('[AC-US-EL-05-03] should format the election countdown', () => {
       mockElectionData.leftToEnd.value = 7200 // 2 hours
       wrapper = createComponent()
 

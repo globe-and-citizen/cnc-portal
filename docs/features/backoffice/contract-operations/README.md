@@ -61,23 +61,25 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An authenticated administrator can open the contract-history journey.
-- [x] The journey lists each configured generation with its version, deployment date, source revision, supported on-chain version range, and
-      Officer reference.
-- [x] The journey groups each configured contract's generation history and identifies its proxy type, beacon reference when present,
-      implementation reference, and current-generation status.
-- [x] An administrator can inspect the configured upgrade authority for a contract reference.
+- [x] `AC-US-CONTRACT-OPS-001-01` An authenticated administrator can open the contract-history journey.
+- [x] `AC-US-CONTRACT-OPS-001-02` The journey lists each configured generation with its version, deployment date, source revision, supported
+      on-chain version range, and Officer reference.
+- [x] `AC-US-CONTRACT-OPS-001-03` The journey groups each configured contract's generation history and identifies its proxy type, beacon
+      reference when present, implementation reference, and current-generation status.
+- [x] `AC-US-CONTRACT-OPS-001-04` An administrator can inspect the configured upgrade authority for a contract reference.
 
 #### Business Rules
 
-- [x] Contract history is read-only and does not modify a contract, deployment record, or company metadata.
-- [x] A current generation is distinguished from historical generations in the registry view.
-- [x] A contract is included in the history when it has an implementation entry in at least one configured generation.
+- [x] `AC-US-CONTRACT-OPS-001-05` Contract history is read-only and does not modify a contract, deployment record, or company metadata.
+- [x] `AC-US-CONTRACT-OPS-001-06` A current generation is distinguished from historical generations in the registry view.
+- [x] `AC-US-CONTRACT-OPS-001-07` A contract is included in the history when it has an implementation entry in at least one configured
+      generation.
 
 #### Edge & Error Cases
 
-- [x] A generation without a configured beacon remains represented as a transparent-proxy contract rather than as a missing contract.
-- [x] A missing configured address is presented as unavailable rather than as a fabricated address.
+- [x] `AC-US-CONTRACT-OPS-001-08` A generation without a configured beacon remains represented as a transparent-proxy contract rather than
+      as a missing contract.
+- [x] `AC-US-CONTRACT-OPS-001-09` A missing configured address is presented as unavailable rather than as a fabricated address.
 
 **Dependencies:** Dashboard authentication, administrator role, and the bundled version registry
 
@@ -91,25 +93,27 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An authenticated administrator can open the Officer-version synchronization journey.
-- [x] The audit includes archived companies and every stored current and historical Officer record.
-- [x] The audit compares each persisted version with a direct Officer `version()` result, falling back to its recognized proxy beacon when
-      necessary.
-- [x] The preview identifies the company, Officer address, current or historical generation, stored version, detected version, detection
-      source, and proposed change for every loaded Officer.
-- [x] An administrator can limit the visible preview to records that would change or inspect all loaded records.
+- [x] `AC-US-CONTRACT-OPS-002-01` An authenticated administrator can open the Officer-version synchronization journey.
+- [x] `AC-US-CONTRACT-OPS-002-02` The audit includes archived companies and every stored current and historical Officer record.
+- [x] `AC-US-CONTRACT-OPS-002-03` The audit compares each persisted version with a direct Officer `version()` result, falling back to its
+      recognized proxy beacon when necessary.
+- [x] `AC-US-CONTRACT-OPS-002-04` The preview identifies the company, Officer address, current or historical generation, stored version,
+      detected version, detection source, and proposed change for every loaded Officer.
+- [x] `AC-US-CONTRACT-OPS-002-05` An administrator can limit the visible preview to records that would change or inspect all loaded records.
 
 #### Business Rules
 
-- [x] A directly reported Officer version takes precedence over a version inferred from a recognized beacon.
-- [x] An Officer whose version cannot be resolved is reported as unresolved and is not proposed for update.
-- [x] A preview is read-only until an administrator explicitly confirms the synchronization.
+- [x] `AC-US-CONTRACT-OPS-002-06` A directly reported Officer version takes precedence over a version inferred from a recognized beacon.
+- [x] `AC-US-CONTRACT-OPS-002-07` An Officer whose version cannot be resolved is reported as unresolved and is not proposed for update.
+- [x] `AC-US-CONTRACT-OPS-002-08` A preview is read-only until an administrator explicitly confirms the synchronization.
 
 #### Edge & Error Cases
 
-- [x] A platform with no stored Officers reports that no records are available for the audit.
-- [ ] A failed company-list or Officer-history read is reported as a data-load failure instead of a completed empty audit.
-- [ ] An unavailable version and beacon probe is distinguished from an Officer whose generation is genuinely unrecognized.
+- [x] `AC-US-CONTRACT-OPS-002-09` A platform with no stored Officers reports that no records are available for the audit.
+- [ ] `AC-US-CONTRACT-OPS-002-10` A failed company-list or Officer-history read is reported as a data-load failure instead of a completed
+      empty audit.
+- [ ] `AC-US-CONTRACT-OPS-002-11` An unavailable version and beacon probe is distinguished from an Officer whose generation is genuinely
+      unrecognized.
 
 **Dependencies:** US-CONTRACT-OPS-001, dashboard authentication, administrator role, company Officer records, and on-chain read access
 
@@ -123,24 +127,27 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An administrator can start synchronization only after the preview detects at least one update and the administrator confirms it.
-- [x] The synchronization scans every stored Officer record and returns counts and per-record results for updated, unchanged, and unresolved
-      records.
-- [x] A resolved version difference updates only the persisted Officer-version metadata.
-- [x] The dashboard refreshes affected company and Officer caches after a successful synchronization.
+- [x] `AC-US-CONTRACT-OPS-003-01` An administrator can start synchronization only after the preview detects at least one update and the
+      administrator confirms it.
+- [x] `AC-US-CONTRACT-OPS-003-02` The synchronization scans every stored Officer record and returns counts and per-record results for
+      updated, unchanged, and unresolved records.
+- [x] `AC-US-CONTRACT-OPS-003-03` A resolved version difference updates only the persisted Officer-version metadata.
+- [x] `AC-US-CONTRACT-OPS-003-04` The dashboard refreshes affected company and Officer caches after a successful synchronization.
 
 #### Business Rules
 
-- [x] The synchronization API requires an authenticated administrator in addition to the dashboard route guard. _(API)_
-- [x] An unresolved Officer remains unchanged rather than receiving a default or guessed version. _(API)_
-- [x] Historical Officer generations are included in the synchronization as well as current generations. _(API)_
-- [x] The synchronization does not deploy, upgrade, pause, or otherwise modify any on-chain contract.
+- [x] `AC-US-CONTRACT-OPS-003-05` The synchronization API requires an authenticated administrator in addition to the dashboard route guard.
+      _(API)_
+- [x] `AC-US-CONTRACT-OPS-003-06` An unresolved Officer remains unchanged rather than receiving a default or guessed version. _(API)_
+- [x] `AC-US-CONTRACT-OPS-003-07` Historical Officer generations are included in the synchronization as well as current generations. _(API)_
+- [x] `AC-US-CONTRACT-OPS-003-08` The synchronization does not deploy, upgrade, pause, or otherwise modify any on-chain contract.
 
 #### Edge & Error Cases
 
-- [x] A failed synchronization reports failure without presenting the run as complete.
-- [x] When the server resolves a version differently from the dashboard preview, the journey reports that divergence.
-- [x] A synchronization request with no detected changes completes without rewriting an Officer record. _(API)_
+- [x] `AC-US-CONTRACT-OPS-003-09` A failed synchronization reports failure without presenting the run as complete.
+- [x] `AC-US-CONTRACT-OPS-003-10` When the server resolves a version differently from the dashboard preview, the journey reports that
+      divergence.
+- [x] `AC-US-CONTRACT-OPS-003-11` A synchronization request with no detected changes completes without rewriting an Officer record. _(API)_
 
 **Dependencies:** US-CONTRACT-OPS-002, dashboard authentication, administrator role, and on-chain read access
 

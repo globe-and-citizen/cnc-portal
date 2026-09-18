@@ -35,19 +35,20 @@ The display name and profile image can be changed from the client navigation and
 
 #### Happy Path
 
-- [x] An authenticated portal user can open the profile form from the client navigation and save a changed display name or profile image.
-- [x] A successful profile-image upload applies the returned URL to the profile draft before it is saved.
+- [x] `AC-US-PROFILE-001-01` An authenticated portal user can open the profile form from the client navigation and save a changed display
+      name or profile image.
+- [x] `AC-US-PROFILE-001-02` A successful profile-image upload applies the returned URL to the profile draft before it is saved.
 
 #### Business Rules
 
-- [x] The wallet address is displayed but is not editable in the profile form.
-- [x] A display name must contain between 3 and 100 characters.
-- [x] A profile image must use a supported image type and be no larger than 10 MB.
+- [x] `AC-US-PROFILE-001-03` The wallet address is displayed but is not editable in the profile form.
+- [x] `AC-US-PROFILE-001-04` A display name must contain between 3 and 100 characters.
+- [x] `AC-US-PROFILE-001-05` A profile image must use a supported image type and be no larger than 10 MB.
 
 #### Edge & Error Cases
 
-- [x] An invalid image is rejected without changing the profile draft.
-- [x] An upload or profile-save failure leaves the form available and exposes the failure to the user.
+- [x] `AC-US-PROFILE-001-06` An invalid image is rejected without changing the profile draft.
+- [x] `AC-US-PROFILE-001-07` An upload or profile-save failure leaves the form available and exposes the failure to the user.
 
 **Dependencies:** An authenticated portal user and the user-profile API
 

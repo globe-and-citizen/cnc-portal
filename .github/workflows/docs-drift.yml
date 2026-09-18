@@ -37,6 +37,12 @@ jobs:
       - name: ✅ Test documentation freshness rules
         run: npm run test:docs-freshness
 
+      - name: ✅ Test acceptance-criterion traceability rules
+        run: npm run test:acceptance-traceability
+
+      - name: 🔗 Enforce acceptance-criterion traceability
+        run: npm run lint:acceptance-traceability
+
       - name: 🔄 Enforce documentation freshness
         run: npm run lint:docs-freshness
         env:

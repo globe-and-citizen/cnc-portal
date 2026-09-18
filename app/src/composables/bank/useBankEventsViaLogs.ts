@@ -50,6 +50,11 @@ const ERC20_TRANSFER_EVENT = parseAbiItem(
   'event Transfer(address indexed from, address indexed to, uint256 value)'
 )
 
+/** Invalidate this prefix after a Bank write so its history reflects the receipt immediately. */
+export const bankEventKeys = {
+  all: ['bank-events-logs'] as const
+}
+
 /**
  * Every token the Bank has ever declared support for, from its
  * `TokenSupportAdded` logs. Removals are intentionally ignored: a token that
@@ -295,9 +300,9 @@ export function useBankEventsViaLogs(contractAddress: MaybeRefOrGetter<ContractA
 
   return {
     ...query,
-    result: computed(() => {
-      const feed = query.result.value
-      return feed ? normalizeLegacyBankFeeTokens(feed) : null
+    data: computed(() => {
+      const result = query.data.value
+      return result ? { ...result, events: normalizeLegacyBankFeeTokens(result.events) } : undefined
     })
   }
 }

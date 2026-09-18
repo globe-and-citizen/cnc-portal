@@ -116,7 +116,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('passes loading state to UTable', () => {
-    incomingTransfersQuery.loading.value = true
+    incomingTransfersQuery.isPending.value = true
     wrapper = createWrapper()
 
     expect(wrapper.find('[data-test="expense-table"]').attributes('data-loading')).toBe('true')
@@ -131,8 +131,8 @@ describe('ExpenseTransactions', () => {
   })
 
   it('groups multiple events sharing the same tx hash as sub-rows', () => {
-    mockExpenseQuery.result.value = buildGroupedExpenseQueryResult()
-    incomingTransfersQuery.result.value = undefined
+    mockExpenseQuery.data.value!.events = buildGroupedExpenseQueryResult()
+    incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
 
     const rows = getTableRows(wrapper)
@@ -151,8 +151,8 @@ describe('ExpenseTransactions', () => {
   })
 
   it('renders grouped zero-value child events with value fallback', () => {
-    mockExpenseQuery.result.value = buildGroupedZeroChildExpenseQueryResult()
-    incomingTransfersQuery.result.value = undefined
+    mockExpenseQuery.data.value!.events = buildGroupedZeroChildExpenseQueryResult()
+    incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
 
     const childRow = wrapper.find('[data-test="table-child-row"]')
@@ -161,7 +161,7 @@ describe('ExpenseTransactions', () => {
     expect(childRow.text()).toContain('—')
   })
 
-  it('filters displayed rows by date range', async () => {
+  it('[AC-US-EXP-004-05] filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
     expect(wrapper.get('[data-test="expense-transaction-history-date-select"]').exists()).toBe(true)
@@ -175,8 +175,8 @@ describe('ExpenseTransactions', () => {
   })
 
   it('changes page via table footer pagination controls', async () => {
-    mockExpenseQuery.result.value = buildPaginatedExpenseQueryResult(25)
-    incomingTransfersQuery.result.value = undefined
+    mockExpenseQuery.data.value!.events = buildPaginatedExpenseQueryResult(25)
+    incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
 
     expect(getTableRows(wrapper)).toHaveLength(20)
@@ -190,8 +190,8 @@ describe('ExpenseTransactions', () => {
   })
 
   it('anchors the current first row when page size changes', async () => {
-    mockExpenseQuery.result.value = buildPaginatedExpenseQueryResult(25)
-    incomingTransfersQuery.result.value = undefined
+    mockExpenseQuery.data.value!.events = buildPaginatedExpenseQueryResult(25)
+    incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
 
     await wrapper.find('[data-test="footer-next-page"]').trigger('click')
@@ -212,7 +212,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('maps ownership transfer events with a — value', () => {
-    mockExpenseQuery.result.value = {
+    mockExpenseQuery.data.value!.events = {
       ...buildExpenseQueryResult(),
       expenseOwnershipTransferreds: {
         items: [
@@ -226,7 +226,7 @@ describe('ExpenseTransactions', () => {
         ]
       }
     }
-    incomingTransfersQuery.result.value = undefined
+    incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
 
     const row = findRowByTxHash(wrapper, '0xownershiphash')
@@ -241,7 +241,7 @@ describe('ExpenseTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    mockExpenseQuery.result.value = buildFallbackExpenseQueryResult()
+    mockExpenseQuery.data.value!.events = buildFallbackExpenseQueryResult()
 
     wrapper = createWrapper()
 
@@ -272,17 +272,17 @@ describe('ExpenseTransactions', () => {
     expect(logErrorSpy).toHaveBeenCalledTimes(2)
   })
 
-  it('shows an empty state when there are no transactions', () => {
-    mockExpenseQuery.result.value = undefined
-    incomingTransfersQuery.result.value = undefined
+  it('[AC-US-EXP-004-09] shows an empty state when there are no transactions', () => {
+    mockExpenseQuery.data.value = undefined
+    incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
     expect(wrapper.find('[data-test="expense-transactions-empty"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(false)
   })
 
-  it('shows an error state when a transactions query fails', () => {
-    mockExpenseQuery.result.value = undefined
-    incomingTransfersQuery.result.value = undefined
+  it('[AC-US-EXP-004-11] shows an error state when a transaction query fails', () => {
+    mockExpenseQuery.data.value = undefined
+    incomingTransfersQuery.data.value = undefined
     mockExpenseQuery.error.value = new Error('expense query failed')
     wrapper = createWrapper()
     expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(true)

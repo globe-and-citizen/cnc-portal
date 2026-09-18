@@ -113,7 +113,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 403 if caller is not the owner of the team', async () => {
+    it('[AC-US-PAYROLL-001-21] rejects wage changes from a non-owner', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         ...mockTeam,
         ownerAddress: '0x0000000000000000000000000000000000000000',
@@ -156,7 +156,7 @@ describe('Wage Controller', () => {
       expect(prisma.wage.create).toHaveBeenCalled();
     });
 
-    it('should default the daily cap to 8 hours when it is not provided', async () => {
+    it('[AC-US-PAYROLL-001-10] defaults the daily allowance to 8 hours', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);

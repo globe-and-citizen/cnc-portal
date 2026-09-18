@@ -1,12 +1,11 @@
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { ref, nextTick } from 'vue'
+import { nextTick } from 'vue'
 
 import BodMembersSection from '../BodMembersSection.vue'
 import { useTeamStore } from '@/stores'
-import { useReadContract } from '@wagmi/vue'
 import { log } from '@/lib/logging'
-import { mockElectionsReads } from '@/tests/mocks'
+import { mockBODReads, mockElectionsReads } from '@/tests/mocks'
 
 const NotFoundStub = { template: '<div data-test="not-found">no-members</div>' }
 
@@ -25,9 +24,9 @@ describe('BodMembersSection', () => {
   }
 
   let mockTeamStore: TeamStoreMock
-  let readContractMock: ReturnType<typeof vi.fn>
-  // Winners are read through a module-level mock shared by every mount, so a
-  // component left alive by an earlier test would still answer to it.
+  // Both the board and the winners are read through module-level mocks shared by
+  // every mount, so a component left alive by an earlier test would still answer
+  // to them.
   let wrappers: VueWrapper[]
 
   const mountSection = (props?: { electionId: bigint }) => {
@@ -42,6 +41,11 @@ describe('BodMembersSection', () => {
     })
     wrappers.push(wrapper)
     return wrapper
+  }
+
+  const seedBoard = (members: string[] | undefined, isFetching = false) => {
+    mockBODReads.boardMembers.data.value = members
+    mockBODReads.boardMembers.isFetching.value = isFetching
   }
 
   beforeEach(() => {
@@ -64,11 +68,7 @@ describe('BodMembersSection', () => {
     }
     ;(useTeamStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => mockTeamStore)
 
-    readContractMock = vi.fn()
-    ;(useReadContract as unknown as ReturnType<typeof vi.fn>).mockImplementation(readContractMock)
-
-    // Winners come from the shared Elections read, not from this component's own
-    // `useReadContract`, so they are seeded here rather than in readContractMock.
+    seedBoard([])
     mockElectionsReads.getWinners.data.value = []
     mockElectionsReads.getWinners.error.value = null
   })
@@ -78,12 +78,7 @@ describe('BodMembersSection', () => {
   })
 
   it('shows Loading... when fetching', async () => {
-    readContractMock.mockImplementation((options: { functionName?: string }) => {
-      if (options.functionName === 'getBoardOfDirectors') {
-        return { data: ref([]), isFetching: ref(true) }
-      }
-      return { data: ref([]), error: ref(null) }
-    })
+    seedBoard([], true)
 
     const wrapper = mountSection()
 
@@ -91,23 +86,13 @@ describe('BodMembersSection', () => {
   })
 
   it('shows 404 fallback when no members and not fetching', async () => {
-    readContractMock.mockImplementation(() => ({
-      data: ref([]),
-      isFetching: ref(false)
-    }))
-
     const wrapper = mountSection()
 
     expect(wrapper.find('[data-test="not-found"]').exists()).toBe(true)
   })
 
   it('renders current board members when data is available', async () => {
-    readContractMock.mockImplementation((options: { functionName?: string }) => {
-      if (options.functionName === 'getBoardOfDirectors') {
-        return { data: ref(['0x1', '0x2']), isFetching: ref(false) }
-      }
-      return { data: ref([]), error: ref(null) }
-    })
+    seedBoard(['0x1', '0x2'])
 
     const wrapper = mountSection()
 
@@ -115,14 +100,10 @@ describe('BodMembersSection', () => {
     expect(users.length).toBe(2)
     expect(users[0]?.attributes('data-name')).toBe('Alice')
     expect(users[1]?.attributes('data-name')).toBe('Bob')
-    // expect(wrapper.find('[data-test="card-title"]').text()).toContain('Current')
   })
 
   it('renders election winners when electionId is provided', async () => {
-    readContractMock.mockImplementation(() => ({
-      data: ref(['0x1']),
-      isFetching: ref(false)
-    }))
+    seedBoard(['0x1'])
     mockElectionsReads.getWinners.data.value = ['0x2']
 
     const wrapper = mountSection({ electionId: 1n })
@@ -133,10 +114,6 @@ describe('BodMembersSection', () => {
   })
 
   it('renders the elected board even when the current board is empty', async () => {
-    readContractMock.mockImplementation(() => ({
-      data: ref([]),
-      isFetching: ref(false)
-    }))
     mockElectionsReads.getWinners.data.value = ['0x2']
 
     const wrapper = mountSection({ electionId: 1n })
@@ -146,12 +123,7 @@ describe('BodMembersSection', () => {
   })
 
   it('falls back to empty list when board data is unavailable', async () => {
-    readContractMock.mockImplementation((options: { functionName?: string }) => {
-      if (options.functionName === 'getBoardOfDirectors') {
-        return { data: ref(undefined), isFetching: ref(false) }
-      }
-      return { data: ref([]), error: ref(null) }
-    })
+    seedBoard(undefined)
 
     const wrapper = mountSection()
 
@@ -160,9 +132,18 @@ describe('BodMembersSection', () => {
     expect(wrapper.find('[data-test="not-found"]').exists()).toBe(true)
   })
 
-  it('logs when election winners request fails', async () => {
-    readContractMock.mockImplementation(() => ({ data: ref([]), isFetching: ref(false) }))
+  it('follows the board as the shared read settles', async () => {
+    const wrapper = mountSection()
+    expect(wrapper.find('[data-test="not-found"]').exists()).toBe(true)
 
+    seedBoard(['0x1'])
+    await nextTick()
+
+    expect(wrapper.findAll('[data-test="user-col"]')).toHaveLength(1)
+    expect(wrapper.find('[data-test="not-found"]').exists()).toBe(false)
+  })
+
+  it('logs when election winners request fails', async () => {
     mountSection({ electionId: 1n })
 
     const error = new Error('boom')
@@ -173,7 +154,6 @@ describe('BodMembersSection', () => {
   })
 
   it('does not log when election winners error is cleared', async () => {
-    readContractMock.mockImplementation(() => ({ data: ref([]), isFetching: ref(false) }))
     mockElectionsReads.getWinners.error.value = new Error('boom')
 
     mountSection({ electionId: 1n })

@@ -223,10 +223,10 @@ const currencyStore = useCurrencyStore()
 const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.fixedReturnAddress.toLowerCase())
 
-const { result, error, loading } = useFixedReturnEventsViaLogs(contractAddress)
+const { data, error, isPending: loading } = useFixedReturnEventsViaLogs(contractAddress)
 
 const rawTransactions = computed(() => {
-  const rows = buildRawFixedReturnTransactions(result.value)
+  const rows = buildRawFixedReturnTransactions(data.value?.events)
   return props.roundId ? rows.filter((row) => row.offerId === props.roundId) : rows
 })
 

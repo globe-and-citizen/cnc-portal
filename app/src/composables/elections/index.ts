@@ -8,9 +8,11 @@ import {
   useElectionsGetElection,
   useElectionsGetVoteCount,
   useElectionsGetCandidates,
-  useElectionsGetEligibleVoters
+  useElectionsGetEligibleVoters,
+  useElectionsGetWinners
 } from './reads'
 
+export * from './history'
 export * from './reads'
 export * from './writes'
 
@@ -40,6 +42,16 @@ function createBoDElections(currentElectionId: ComputedRef<bigint>) {
       voters: voterList.value?.length ?? 0
     }
   })
+
+  /**
+   * Only the published record names a winner. Until the owner publishes, the
+   * read stays off (id 0 is never an election), so no running count is ever
+   * dressed up as a result — not even on a ballot nobody voted in.
+   */
+  const publishedElectionId = computed(() =>
+    formattedElection.value?.resultsPublished ? currentElectionId.value : 0n
+  )
+  const { data: winners } = useElectionsGetWinners(publishedElectionId)
 
   const now = useNow({ interval: 1000 })
 
@@ -94,7 +106,8 @@ function createBoDElections(currentElectionId: ComputedRef<bigint>) {
     owner,
     candidateList,
     voteCount,
-    voterList
+    voterList,
+    winners
   }
 }
 

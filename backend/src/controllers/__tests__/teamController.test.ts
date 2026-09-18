@@ -171,7 +171,7 @@ describe('Team Controller', () => {
       expect(response.body.name).toEqual('Test Team');
     });
 
-    it('should return 201 and create a team successfully with the team owner in team members', async () => {
+    it('[AC-US-COMPANIES-001-03] creates a team with its owner in the member list', async () => {
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
       vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
 
@@ -274,7 +274,7 @@ describe('Team Controller', () => {
       expect(createCall.data).toMatchObject({ slug: 'acme-corp' });
     });
 
-    it('appends a numeric suffix when the slug is already taken', async () => {
+    it('[AC-US-COMPANIES-001-06] appends a numeric suffix when the slug is already taken', async () => {
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
       // `acme-corp` is taken; the next candidate is free.
       vi.spyOn(prisma.team, 'findUnique').mockImplementation((async (args: {
@@ -379,7 +379,7 @@ describe('Team Controller', () => {
       expect(response.body.message).toBe('Team not found');
     });
 
-    it('should return 200 and team data if user is part of the team', async () => {
+    it('[AC-US-COMPANIES-003-05] returns team data when the requester is a member', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
       vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
         isHidden: false,
@@ -511,7 +511,7 @@ describe('Team Controller', () => {
       mockCaller.roles = ['ROLE_USER'];
     });
 
-    it('should return 200 and all teams for an administrator when no userAddress is provided', async () => {
+    it('[AC-US-TEAM-OPS-001-01] returns all teams for an administrator when no userAddress is provided', async () => {
       mockCaller.roles = ['ROLE_ADMIN'];
       const mockTeams = [
         {
@@ -581,7 +581,7 @@ describe('Team Controller', () => {
       );
     });
 
-    it('should return 403 when a regular user requests the unfiltered platform list', async () => {
+    it('[AC-US-COMPANIES-003-04][AC-US-TEAM-OPS-001-08] rejects a regular user requesting the unfiltered platform list', async () => {
       const response = await request(app).get('/');
 
       expect(response.status).toBe(403);
@@ -698,7 +698,7 @@ describe('Team Controller', () => {
       expect(prisma.wage.findMany).not.toHaveBeenCalled();
     });
 
-    it('includes non-archived hidden branch when showHidden is true', async () => {
+    it('[AC-US-COMPANIES-007-02] includes hidden companies when requested', async () => {
       vi.spyOn(prisma.team, 'findMany').mockResolvedValue([]);
       vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([] as never);
 
@@ -834,7 +834,7 @@ describe('Team Controller', () => {
       expect(response.body.message).toBe('Unauthorized: Only team owner can update metadata');
     });
 
-    it('allows unarchive on archived team as owner', async () => {
+    it('[AC-US-COMPANIES-006-01] allows the owner to restore an archived company', async () => {
       const mockTeam = {
         id: 1,
         ownerAddress: mockOwner.address,

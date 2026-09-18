@@ -7,8 +7,10 @@
     "knip": "knip --config knip.json --include exports",
     "knip:production": "knip --config knip.json --production --include exports --no-exit-code --reporter compact",
     "knip:report": "knip --config knip.json --include exports --no-exit-code --reporter compact",
+    "lint:acceptance-traceability": "node scripts/validate-acceptance-criteria-traceability.mjs",
     "lint:docs-freshness": "node scripts/validate-documentation-freshness.mjs",
     "lint:md": "markdownlint-cli2",
+    "test:acceptance-traceability": "node --test scripts/acceptance-criteria-traceability.test.mjs",
     "test:docs-freshness": "node --test scripts/documentation-freshness.test.mjs",
     "test:ui-ux-review-contract": "node --test scripts/ui-ux-review-contract.test.mjs",
     "prepare": "husky"

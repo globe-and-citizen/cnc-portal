@@ -59,19 +59,21 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A company member can view the active Officer address, its version, and its current non-Campaign contracts.
-- [x] A company member can filter the current contract suite by active or paused status.
-- [x] A company member can inspect a contract's address, owner, deployer, current status, and available on-chain read data.
+- [x] `AC-US-CONTRACT-001-01` A company member can view the active Officer address, its version, and its current non-Campaign contracts.
+- [x] `AC-US-CONTRACT-001-02` A company member can filter the current contract suite by active or paused status.
+- [x] `AC-US-CONTRACT-001-03` A company member can inspect a contract's address, owner, deployer, current status, and available on-chain
+      read data.
 
 #### Business Rules
 
-- [x] Campaign Manager contracts are managed through the Campaigns journey rather than the current contract suite.
-- [x] A contract's paused or active status remains distinguishable in the current suite.
+- [x] `AC-US-CONTRACT-001-04` Campaign Manager contracts are managed through the Campaigns journey rather than the current contract suite.
+- [x] `AC-US-CONTRACT-001-05` A contract's paused or active status remains distinguishable in the current suite.
 
 #### Edge & Error Cases
 
-- [x] A company without an active Officer generation receives an unavailable-state message instead of a contract table.
-- [x] A failed Officer-generation history read is reported without hiding the current company contracts.
+- [x] `AC-US-CONTRACT-001-06` A company without an active Officer generation receives an unavailable-state message instead of a contract
+      table.
+- [x] `AC-US-CONTRACT-001-07` A failed Officer-generation history read is reported without hiding the current company contracts.
 
 **Dependencies:** Current company and its active Officer generation
 
@@ -85,23 +87,23 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An eligible user can transfer ownership of a current contract to a selected recipient.
-- [x] An eligible user can pause an active contract or resume a paused contract.
-- [x] An eligible Board member can open, review, and approve pending Board actions for a contract.
-- [x] A successful direct operation refreshes the displayed contract state.
+- [x] `AC-US-CONTRACT-002-01` An eligible user can transfer ownership of a current contract to a selected recipient.
+- [x] `AC-US-CONTRACT-002-02` An eligible user can pause an active contract or resume a paused contract.
+- [x] `AC-US-CONTRACT-002-03` An eligible Board member can open, review, and approve pending Board actions for a contract.
+- [x] `AC-US-CONTRACT-002-04` A successful direct operation refreshes the displayed contract state.
 
 #### Business Rules
 
-- [x] Direct contract actions are unavailable to users who are neither the current owner nor an eligible Board member for a Board-owned
-      contract.
-- [x] A Board-owned contract uses a Board action for an ownership transfer instead of a direct ownership write.
-- [x] A Board-submitted ownership transfer identifies its approval requirement before submission.
-- [x] An archived company cannot initiate a contract operation or approve a pending Board action.
+- [x] `AC-US-CONTRACT-002-05` Direct contract actions are unavailable to users who are neither the current owner nor an eligible Board
+      member for a Board-owned contract.
+- [x] `AC-US-CONTRACT-002-06` A Board-owned contract uses a Board action for an ownership transfer instead of a direct ownership write.
+- [x] `AC-US-CONTRACT-002-07` A Board-submitted ownership transfer identifies its approval requirement before submission.
+- [x] `AC-US-CONTRACT-002-08` An archived company cannot initiate a contract operation or approve a pending Board action.
 
 #### Edge & Error Cases
 
-- [x] Rejecting a wallet request does not report a successful contract operation.
-- [x] A failed direct ownership transfer is shown in the transfer context without changing the displayed owner.
+- [x] `AC-US-CONTRACT-002-09` Rejecting a wallet request does not report a successful contract operation.
+- [x] `AC-US-CONTRACT-002-10` A failed direct ownership transfer is shown in the transfer context without changing the displayed owner.
 
 **Dependencies:** US-CONTRACT-001, current contract permissions, and a connected wallet
 
@@ -115,17 +117,17 @@ flowchart LR
 
 #### Happy Path
 
-- [ ] A user can identify the Campaign Manager configured for the company.
-- [ ] An authorized user can manage Campaign Manager administrators and settings.
-- [ ] An authorized user can create, review, and close advertising campaigns.
+- [ ] `AC-US-CONTRACT-003-01` A user can identify the Campaign Manager configured for the company.
+- [ ] `AC-US-CONTRACT-003-02` An authorized user can manage Campaign Manager administrators and settings.
+- [ ] `AC-US-CONTRACT-003-03` An authorized user can create, review, and close advertising campaigns.
 
 #### Business Rules
 
-- [ ] Campaign Manager rates and Bank destination determine how validated advertising spend is handled.
+- [ ] `AC-US-CONTRACT-003-04` Campaign Manager rates and Bank destination determine how validated advertising spend is handled.
 
 #### Edge & Error Cases
 
-- [ ] A company without a Campaign Manager receives an actionable unavailable-state message.
+- [ ] `AC-US-CONTRACT-003-05` A company without a Campaign Manager receives an actionable unavailable-state message.
 
 **Dependencies:** Current company and a configured Campaign Manager
 
@@ -139,15 +141,15 @@ flowchart LR
 
 #### Happy Path
 
-- [ ] A company member can view previous Officer generations separately from the active suite.
+- [ ] `AC-US-CONTRACT-004-01` A company member can view previous Officer generations separately from the active suite.
 
 #### Business Rules
 
-- [ ] Previous generations are not presented as contracts currently used for company operations.
+- [ ] `AC-US-CONTRACT-004-02` Previous generations are not presented as contracts currently used for company operations.
 
 #### Edge & Error Cases
 
-- [ ] An empty deployment history remains distinguishable from a failed history read.
+- [ ] `AC-US-CONTRACT-004-03` An empty deployment history remains distinguishable from a failed history read.
 
 **Dependencies:** Current company and the Officer-generation history read
 
@@ -161,34 +163,38 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The company owner can open the redeploy form from the active Officer generation and choose the new share token name and symbol.
-- [x] A successful redeploy registers the new Officer generation, refreshes the displayed contract data, and keeps the company's Safe
-      unchanged.
-- [x] When a previous Officer has shareholders, the owner can sign the follow-up transaction that sets the migration root for the new
-      Investor contract.
+- [x] `AC-US-CONTRACT-005-01` The company owner can open the redeploy form from the active Officer generation and choose the new share token
+      name and symbol.
+- [x] `AC-US-CONTRACT-005-02` A successful redeploy registers the new Officer generation, refreshes the displayed contract data, and keeps
+      the company's Safe unchanged.
+- [x] `AC-US-CONTRACT-005-03` When a previous Officer has shareholders, the owner can sign the follow-up transaction that sets the migration
+      root for the new Investor contract.
 
 #### Business Rules
 
-- [x] The redeploy action is available only to the current company owner and is unavailable for an archived company.
-- [x] The redeploy form requires a share token name and symbol that each contain non-whitespace text.
-- [x] A previous Officer generation and its workspace contracts remain visible in deployment history; they are not deleted by a
-      redeployment.
-- [x] A shareholder migration can be skipped after a failure and completed later from the Share Token journey.
+- [x] `AC-US-CONTRACT-005-04` The redeploy action is available only to the current company owner and is unavailable for an archived company.
+- [x] `AC-US-CONTRACT-005-05` The redeploy form requires a share token name and symbol that each contain non-whitespace text.
+- [x] `AC-US-CONTRACT-005-06` A previous Officer generation and its workspace contracts remain visible in deployment history; they are not
+      deleted by a redeployment.
+- [x] `AC-US-CONTRACT-005-07` A shareholder migration can be skipped after a failure and completed later from the Share Token journey.
 
 #### Edge & Error Cases
 
-- [x] A failed deploy, Officer registration, or follow-up lookup keeps the form open and identifies the step that failed.
-- [x] A failed shareholder migration keeps the form open with options to retry the migration or skip it and close the form.
-- [x] A malformed pending Board-action description remains discoverable with fallback action details and does not hide other actions.
+- [x] `AC-US-CONTRACT-005-08` A failed deploy, Officer registration, or follow-up lookup keeps the form open and identifies the step that
+      failed.
+- [x] `AC-US-CONTRACT-005-09` A failed shareholder migration keeps the form open with options to retry the migration or skip it and close
+      the form.
+- [x] `AC-US-CONTRACT-005-10` A malformed pending Board-action description remains discoverable with fallback action details and does not
+      hide other actions.
 
 **Dependencies:** US-CONTRACT-001, a current company owner, a connected wallet, and an active Officer generation
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b4f3e0551e7c765b89f84247f7066c149df1e4d1`
+**Implementation evidence reviewed against:** `027a59e8c6a540a461c5f686284c92651f143c9f`
 
 - [Contract Management components](../../../app/src/components/sections/ContractManagementView/),
-  [Board writes](../../../app/src/composables/bod/writes.ts),
+  [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
   [shared contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts)
 - [Proposal creation](../../../app/src/components/sections/ProposalsView/forms/CreateProposalForm.vue)

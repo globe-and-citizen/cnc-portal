@@ -207,7 +207,7 @@ describe('TransferModal', () => {
     expect(wrapper.find('[data-test="transfer-form-stub"]').exists()).toBe(true)
   })
 
-  it('uses the bod action path instead of a direct transfer when bod mode is enabled', async () => {
+  it('[AC-US-BANK-002-02] uses the Board action path when Board mode is enabled', async () => {
     wrapper = mountComponent()
     mockBodIsBodAction.isBodAction.value = true
     await openModal(wrapper)
@@ -223,7 +223,7 @@ describe('TransferModal', () => {
     expect(mockBankWrites.transferToken.mutate).not.toHaveBeenCalled()
   })
 
-  it('handles direct token transfers and invalidates the contract balance query', async () => {
+  it('[AC-US-BANK-002-01] handles a direct token transfer and refreshes the balance', async () => {
     const { invalidateQueries } = createQueryClient()
     wrapper = mountComponent()
     await openModal(wrapper)

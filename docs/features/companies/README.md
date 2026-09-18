@@ -75,20 +75,21 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A creator can enter a required company name and an optional description.
-- [x] A creator can add zero or more members by wallet address before creating the workspace.
-- [x] A successful creation adds the creator as company owner and member, persists the workspace, and advances to initial Officer setup.
+- [x] `AC-US-COMPANIES-001-01` A creator can enter a required company name and an optional description.
+- [x] `AC-US-COMPANIES-001-02` A creator can add zero or more members by wallet address before creating the workspace.
+- [x] `AC-US-COMPANIES-001-03` A successful creation adds the creator as company owner and member, persists the workspace, and advances to
+      initial Officer setup.
 
 #### Business Rules
 
-- [x] A company name is required before the form can advance or submit.
-- [x] Every selected member address must be a valid wallet address before the workspace can be created.
-- [x] Companies with the same display name remain distinguishable by a generated unique slug.
+- [x] `AC-US-COMPANIES-001-04` A company name is required before the form can advance or submit.
+- [x] `AC-US-COMPANIES-001-05` Every selected member address must be a valid wallet address before the workspace can be created.
+- [x] `AC-US-COMPANIES-001-06` Companies with the same display name remain distinguishable by a generated unique slug.
 
 #### Edge & Error Cases
 
-- [x] Returning to the previous setup step preserves the entered company details.
-- [x] A failed create request leaves the setup form available and reports that the company was not created.
+- [x] `AC-US-COMPANIES-001-07` Returning to the previous setup step preserves the entered company details.
+- [x] `AC-US-COMPANIES-001-08` A failed create request leaves the setup form available and reports that the company was not created.
 
 **Dependencies:** Connected user with a portal account
 
@@ -102,20 +103,20 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A company owner can enter the initial SHER name and symbol after the workspace is created.
-- [x] A successful deployment registers the deployed Officer address and deployment metadata with the company.
-- [x] After registration, the portal refreshes Officer data and continues to the Safe-setup step.
+- [x] `AC-US-COMPANIES-002-01` A company owner can enter the initial SHER name and symbol after the workspace is created.
+- [x] `AC-US-COMPANIES-002-02` A successful deployment registers the deployed Officer address and deployment metadata with the company.
+- [x] `AC-US-COMPANIES-002-03` After registration, the portal refreshes Officer data and continues to the Safe-setup step.
 
 #### Business Rules
 
-- [x] Both the SHER name and symbol are required before deployment can start.
-- [x] An archived company cannot start the deployment.
-- [x] The owner can defer the Officer deployment and return to it later.
+- [x] `AC-US-COMPANIES-002-04` Both the SHER name and symbol are required before deployment can start.
+- [x] `AC-US-COMPANIES-002-05` An archived company cannot start the deployment.
+- [x] `AC-US-COMPANIES-002-06` The owner can defer the Officer deployment and return to it later.
 
 #### Edge & Error Cases
 
-- [x] A failed on-chain deployment is shown in the deployment step without advancing the setup flow.
-- [x] A failed Officer registration is shown separately from a failed deployment and does not report setup success.
+- [x] `AC-US-COMPANIES-002-07` A failed on-chain deployment is shown in the deployment step without advancing the setup flow.
+- [x] `AC-US-COMPANIES-002-08` A failed Officer registration is shown separately from a failed deployment and does not report setup success.
 
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
 
@@ -129,23 +130,24 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A member can view their active, visible companies and open one workspace from the Companies route.
-- [x] An opened workspace exposes the company metadata, members, lifecycle state, and the feature-specific workspace routes available to
-      that company.
-- [x] A member can include hidden and archived companies when browsing their list.
+- [x] `AC-US-COMPANIES-003-01` A member can view their active, visible companies and open one workspace from the Companies route.
+- [x] `AC-US-COMPANIES-003-02` An opened workspace exposes the company metadata, members, lifecycle state, and the feature-specific
+      workspace routes available to that company.
+- [x] `AC-US-COMPANIES-003-03` A member can include hidden and archived companies when browsing their list.
 
 #### Business Rules
 
-- [x] The Companies list is scoped to the connected member; a member cannot request another member's company list or an unfiltered
-      platform-wide list. _(API)_
-- [x] The company-detail API permits a current member to read the workspace and rejects a requester who is not a member.
-- [x] A hidden or archived state remains visible when that company is included in the member's list.
+- [x] `AC-US-COMPANIES-003-04` The Companies list is scoped to the connected member; a member cannot request another member's company list
+      or an unfiltered platform-wide list. _(API)_
+- [x] `AC-US-COMPANIES-003-05` The company-detail API permits a current member to read the workspace and rejects a requester who is not a
+      member.
+- [x] `AC-US-COMPANIES-003-06` A hidden or archived state remains visible when that company is included in the member's list.
 
 #### Edge & Error Cases
 
-- [x] A member with no matching companies receives an empty result instead of a stale workspace entry.
-- [x] A failed company-list request reports that the list could not be retrieved.
-- [x] An unavailable workspace distinguishes a removed or unknown company from another loading failure.
+- [x] `AC-US-COMPANIES-003-07` A member with no matching companies receives an empty result instead of a stale workspace entry.
+- [x] `AC-US-COMPANIES-003-08` A failed company-list request reports that the list could not be retrieved.
+- [x] `AC-US-COMPANIES-003-09` An unavailable workspace distinguishes a removed or unknown company from another loading failure.
 
 **Dependencies:** Connected user with a portal account
 
@@ -159,18 +161,18 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An owner can save updated company metadata and see it reflected in the workspace and Companies list.
+- [x] `AC-US-COMPANIES-004-01` An owner can save updated company metadata and see it reflected in the workspace and Companies list.
 
 #### Business Rules
 
-- [x] Only the company owner can update company metadata.
-- [x] Company metadata must pass the update form's validation before it is submitted.
-- [x] An archived company must be restored before its metadata can be changed.
+- [x] `AC-US-COMPANIES-004-02` Only the company owner can update company metadata.
+- [x] `AC-US-COMPANIES-004-03` Company metadata must pass the update form's validation before it is submitted.
+- [x] `AC-US-COMPANIES-004-04` An archived company must be restored before its metadata can be changed.
 
 #### Edge & Error Cases
 
-- [x] A rejected metadata update leaves the company unchanged and keeps the update action available with an error.
-- [x] An update against an unavailable company is rejected without creating a replacement workspace.
+- [x] `AC-US-COMPANIES-004-05` A rejected metadata update leaves the company unchanged and keeps the update action available with an error.
+- [x] `AC-US-COMPANIES-004-06` An update against an unavailable company is rejected without creating a replacement workspace.
 
 **Dependencies:** US-COMPANIES-003
 
@@ -184,22 +186,22 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A member can inspect the current company membership from the workspace.
-- [x] An owner can add one or more eligible users who are not already members.
-- [x] An owner can remove an existing member other than the company owner.
+- [x] `AC-US-COMPANIES-005-01` A member can inspect the current company membership from the workspace.
+- [x] `AC-US-COMPANIES-005-02` An owner can add one or more eligible users who are not already members.
+- [x] `AC-US-COMPANIES-005-03` An owner can remove an existing member other than the company owner.
 
 #### Business Rules
 
-- [x] Only the company owner can add or remove members.
-- [x] Each added member must provide a valid wallet address and cannot already belong to the company.
-- [x] The company owner cannot be removed from its own workspace.
-- [x] An archived company cannot add or remove members.
+- [x] `AC-US-COMPANIES-005-04` Only the company owner can add or remove members.
+- [x] `AC-US-COMPANIES-005-05` Each added member must provide a valid wallet address and cannot already belong to the company.
+- [x] `AC-US-COMPANIES-005-06` The company owner cannot be removed from its own workspace.
+- [x] `AC-US-COMPANIES-005-07` An archived company cannot add or remove members.
 
 #### Edge & Error Cases
 
-- [x] A request that includes an existing member is rejected without reporting that the member was added.
-- [x] A request to remove a missing member or the company owner is rejected without changing membership.
-- [x] A rejected membership change preserves the current membership list and reports the failure.
+- [x] `AC-US-COMPANIES-005-08` A request that includes an existing member is rejected without reporting that the member was added.
+- [x] `AC-US-COMPANIES-005-09` A request to remove a missing member or the company owner is rejected without changing membership.
+- [x] `AC-US-COMPANIES-005-10` A rejected membership change preserves the current membership list and reports the failure.
 
 **Dependencies:** US-COMPANIES-003
 
@@ -213,19 +215,22 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An owner can archive an active company and later restore the same company.
-- [x] An archived company is excluded from the default Companies list and remains available when archived companies are included.
-- [x] Restoring a company returns it to the active Companies list and re-enables its writes.
+- [x] `AC-US-COMPANIES-006-01` An owner can archive an active company and later restore the same company.
+- [x] `AC-US-COMPANIES-006-02` An archived company is excluded from the default Companies list and remains available when archived companies
+      are included.
+- [x] `AC-US-COMPANIES-006-03` Restoring a company returns it to the active Companies list and re-enables its writes.
 
 #### Business Rules
 
-- [x] Only the company owner can archive or restore a company.
-- [x] Archiving freezes company settings, membership, contract operations, and claims until the company is restored.
+- [x] `AC-US-COMPANIES-006-04` Only the company owner can archive or restore a company.
+- [x] `AC-US-COMPANIES-006-05` Archiving freezes company settings, membership, contract operations, and claims until the company is
+      restored.
 
 #### Edge & Error Cases
 
-- [x] A member can still change their own list visibility for an archived company without changing its archived state.
-- [x] A request to change other company data while archived is rejected without applying that change.
+- [x] `AC-US-COMPANIES-006-06` A member can still change their own list visibility for an archived company without changing its archived
+      state.
+- [x] `AC-US-COMPANIES-006-07` A request to change other company data while archived is rejected without applying that change.
 
 **Dependencies:** US-COMPANIES-003
 
@@ -239,18 +244,18 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A member can hide a company from their own default list and show it again later.
-- [x] A member can include hidden companies while browsing, so a hidden workspace remains recoverable.
+- [x] `AC-US-COMPANIES-007-01` A member can hide a company from their own default list and show it again later.
+- [x] `AC-US-COMPANIES-007-02` A member can include hidden companies while browsing, so a hidden workspace remains recoverable.
 
 #### Business Rules
 
-- [x] A visibility change applies only to the requesting member's relationship with the company.
-- [x] Every current company member can change their own list visibility, including for an archived company.
+- [x] `AC-US-COMPANIES-007-03` A visibility change applies only to the requesting member's relationship with the company.
+- [x] `AC-US-COMPANIES-007-04` Every current company member can change their own list visibility, including for an archived company.
 
 #### Edge & Error Cases
 
-- [x] A request from someone who is not a member is rejected without changing company visibility.
-- [x] A visibility change for an unavailable company is rejected without creating a new list preference.
+- [x] `AC-US-COMPANIES-007-05` A request from someone who is not a member is rejected without changing company visibility.
+- [x] `AC-US-COMPANIES-007-06` A visibility change for an unavailable company is rejected without creating a new list preference.
 
 **Dependencies:** US-COMPANIES-003
 
@@ -264,18 +269,19 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An owner can confirm permanent deletion of a company and is returned to the Companies list after it succeeds.
-- [x] Deleting a company removes its related company records through the database's cascading relationships.
+- [x] `AC-US-COMPANIES-008-01` An owner can confirm permanent deletion of a company and is returned to the Companies list after it succeeds.
+- [x] `AC-US-COMPANIES-008-02` Deleting a company removes its related company records through the database's cascading relationships.
 
 #### Business Rules
 
-- [x] Only the company owner can permanently delete a company.
-- [x] Permanent deletion is irreversible; a member must create a new workspace instead of restoring a deleted company.
+- [x] `AC-US-COMPANIES-008-03` Only the company owner can permanently delete a company.
+- [x] `AC-US-COMPANIES-008-04` Permanent deletion is irreversible; a member must create a new workspace instead of restoring a deleted
+      company.
 
 #### Edge & Error Cases
 
-- [x] Cancelling the confirmation leaves the company unchanged.
-- [x] A rejected deletion leaves the company available and reports the failure.
+- [x] `AC-US-COMPANIES-008-05` Cancelling the confirmation leaves the company unchanged.
+- [x] `AC-US-COMPANIES-008-06` A rejected deletion leaves the company available and reports the failure.
 
 **Dependencies:** US-COMPANIES-003
 
@@ -286,7 +292,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
+**Implementation evidence reviewed against:** `633d2ce1f8dec6d0451ef97d82e701599e9f8b7e`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and
@@ -307,7 +313,8 @@ This validation does not attest to a live on-chain Officer deployment.
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue),
   [Officer deployment composable](../../../app/src/composables/contracts/useOfficerDeployment.ts), and
   [initial Officer setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/InvestorContractStep.spec.ts)
-- [Company metadata update](../../../app/src/components/sections/DashboardView/TeamMetaUpdateModal.vue),
+- [Company header and its lifecycle actions](../../../app/src/components/sections/DashboardView/TeamMetaSection.vue),
+  [company metadata update](../../../app/src/components/sections/DashboardView/TeamMetaUpdateModal.vue),
   [archive and restore](../../../app/src/components/sections/DashboardView/TeamMetaArchiveModal.vue),
   [member visibility](../../../app/src/components/sections/DashboardView/TeamMetaVisibilityModal.vue), and
   [company deletion](../../../app/src/components/sections/DashboardView/TeamMetaDeleteModal.vue)
@@ -316,6 +323,15 @@ This validation does not attest to a live on-chain Officer deployment.
   [archived-workspace action tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaActions.archived.spec.ts)
 - [Archived-workspace authorization](../../../backend/src/middleware/teamAuthzMiddleware.ts) and
   [company-controller tests](../../../backend/src/controllers/__tests__/teamController.test.ts)
+- Browser journeys: [company creation](../../../app/test/e2e/company/company-creation.spec.ts),
+  [Officer onboarding](../../../app/test/e2e/company/company-onboarding.spec.ts),
+  [Safe setup](../../../app/test/e2e/company/company-safe.spec.ts),
+  [deployment recovery](../../../app/test/e2e/company/company-recovery.spec.ts),
+  [details update](../../../app/test/e2e/company/company-update.spec.ts),
+  [archive and restore](../../../app/test/e2e/company/company-archive.spec.ts),
+  [list visibility](../../../app/test/e2e/company/company-visibility.spec.ts), and
+  [deletion](../../../app/test/e2e/company/company-delete.spec.ts), driven by the
+  [lifecycle backend stub](../../../app/test/e2e/company/company-lifecycle-page.ts) for the owner and member roles
 
 ## Related Documentation
 

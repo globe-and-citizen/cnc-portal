@@ -46,7 +46,7 @@ describe('featureUtils', () => {
   });
 
   describe('findAllFeatures', () => {
-    it('should return all features with overrides count', async () => {
+    it('[AC-US-FLAG-001-01] returns all restrictions with their override count', async () => {
       const mockFeatures = [
         {
           id: 1,
@@ -149,7 +149,7 @@ describe('featureUtils', () => {
   });
 
   describe('insertFeature', () => {
-    it('should create a new feature with specified status', async () => {
+    it('[AC-US-FLAG-001-02] creates a restriction with the specified status', async () => {
       const mockFeature = {
         id: 1,
         functionName: 'NEW_FEATURE',
@@ -189,7 +189,7 @@ describe('featureUtils', () => {
   });
 
   describe('patchFeature', () => {
-    it('should update feature status', async () => {
+    it('[AC-US-FLAG-001-03] updates a restriction global status', async () => {
       const mockUpdatedFeature = {
         id: 1,
         functionName: 'SUBMIT_RESTRICTION',
@@ -227,7 +227,7 @@ describe('featureUtils', () => {
   });
 
   describe('removeFeature', () => {
-    it('should delete feature and its overrides, returning true on success', async () => {
+    it('[AC-US-FLAG-003-02] deletes a restriction and its overrides', async () => {
       vi.mocked(prisma.teamFunctionOverride.deleteMany).mockResolvedValue({ count: 2 });
       vi.mocked(prisma.globalSetting.delete).mockResolvedValue({
         id: 1,
@@ -343,7 +343,7 @@ describe('featureUtils', () => {
   });
 
   describe('insertOverride', () => {
-    it('should create a new team override', async () => {
+    it('[AC-US-FLAG-002-02] creates a company override', async () => {
       const mockOverride = {
         id: 1,
         teamId: 100,
@@ -386,7 +386,7 @@ describe('featureUtils', () => {
   });
 
   describe('patchOverride', () => {
-    it('should update an existing override status', async () => {
+    it('[AC-US-FLAG-002-03] updates a company override status', async () => {
       const mockUpdatedOverride = {
         id: 1,
         teamId: 100,
@@ -471,7 +471,7 @@ describe('featureUtils', () => {
       expect(result).toBe('DISABLED');
     });
 
-    it('should return global status when no override exists', async () => {
+    it('[AC-US-FLAG-002-04] returns the global status when no override exists', async () => {
       vi.mocked(prisma.teamFunctionOverride.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.globalSetting.findUnique).mockResolvedValue({
         status: 'ENABLED' as FeatureStatus,
@@ -496,7 +496,7 @@ describe('featureUtils', () => {
       expect(result).toBeNull();
     });
 
-    it('should prioritize override over global setting', async () => {
+    it('[AC-US-FLAG-002-07] prioritizes the company override over the global status', async () => {
       vi.mocked(prisma.teamFunctionOverride.findUnique).mockResolvedValue({
         status: 'DISABLED' as FeatureStatus,
       });

@@ -13,7 +13,7 @@
       </p>
       <USelect
         :model-value="pageSize"
-        :items="PAGE_SIZE_OPTIONS"
+        :items="pageSizeOptions"
         size="sm"
         class="w-auto"
         :data-test="dataTestPrefix ? `${dataTestPrefix}-page-size` : undefined"
@@ -58,10 +58,13 @@ const props = withDefaults(
     noun?: string
     /** Optional prefix for `data-test` hooks on the selector and page control. */
     dataTestPrefix?: string
+    /** Page sizes offered by the selector; must match the owner's `usePagination` options. */
+    pageSizeOptions?: number[]
   }>(),
   {
     noun: 'items',
-    dataTestPrefix: undefined
+    dataTestPrefix: undefined,
+    pageSizeOptions: () => [10, 20, 50, 100]
   }
 )
 
@@ -69,8 +72,6 @@ const emit = defineEmits<{
   'update:page': [value: number]
   'update:pageSize': [value: number]
 }>()
-
-const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 const rangeStart = computed(() => (props.total === 0 ? 0 : (props.page - 1) * props.pageSize + 1))
 const rangeEnd = computed(() => Math.min(props.page * props.pageSize, props.total))

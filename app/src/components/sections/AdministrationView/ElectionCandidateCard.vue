@@ -16,11 +16,12 @@
     <!-- Candidate identity -->
     <ElectionCandidateIdentity layout="alternate" :user="candidate" />
 
-    <!-- Vote count, right-aligned below the candidate identity -->
-    <div class="mt-2 flex justify-end">
+    <!-- Score: this candidate's votes out of the votes cast so far -->
+    <div class="mt-2 flex items-baseline justify-end gap-1">
       <span class="text-lg font-bold text-gray-700">
         {{ candidate.currentVotes }}/{{ candidate.totalVotes }}
       </span>
+      <span class="text-sm text-gray-500">votes cast</span>
     </div>
 
     <UProgress

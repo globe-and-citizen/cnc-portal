@@ -111,7 +111,7 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-name"]').exists()).toBe(true)
   })
 
-  it('blocks advancing past Basics on a too-short name, then clears once fixed', async () => {
+  it('[AC-US-CC-002-01] blocks a round name shorter than three characters', async () => {
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3')
@@ -125,7 +125,7 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-term-30"]').exists()).toBe(true)
   })
 
-  it('blocks advancing past Basics with a non-positive target', async () => {
+  it('[AC-US-CC-002-03] blocks a non-positive funding target', async () => {
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
@@ -135,7 +135,7 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-target-error"]').text()).toContain('greater than 0')
   })
 
-  it('blocks advancing past Terms with a deadline in the past', async () => {
+  it('[AC-US-CC-002-05] blocks a subscription deadline in the past', async () => {
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
@@ -152,7 +152,7 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-term-30"]').exists()).toBe(true) // still on Terms
   })
 
-  it('creates the offer on-chain and returns to the list on publish', async () => {
+  it('[AC-US-CC-002-06] creates the round on-chain and returns to the list', async () => {
     mockFixedReturnWrites.createLendingOffer.mutateAsync.mockResolvedValueOnce({
       hash: '0xhash',
       receipt: { logs: [] },
@@ -187,7 +187,7 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-error"]').exists()).toBe(true)
   })
 
-  it('retries only the metadata POST after an on-chain success but metadata failure, without re-submitting on-chain', async () => {
+  it('[AC-US-CC-002-15] retries metadata without creating a second on-chain round', async () => {
     mockFixedReturnWrites.createLendingOffer.mutateAsync.mockResolvedValueOnce({
       hash: '0xhash',
       receipt: { logs: [] },
