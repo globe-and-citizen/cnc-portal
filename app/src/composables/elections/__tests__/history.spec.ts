@@ -62,7 +62,7 @@ describe('useElectionsPastElections', () => {
   })
 
   it('returns an empty list when the team has never run an election', async () => {
-    mockWagmiCore.readContract.mockResolvedValueOnce(1n)
+    mockWagmiCore.readContract.mockResolvedValueOnce([])
 
     useElectionsPastElections()
 
@@ -70,25 +70,25 @@ describe('useElectionsPastElections', () => {
     expect(mockWagmiCore.readContract).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps only the published elections, newest first', async () => {
-    mockWagmiCore.readContract
-      .mockResolvedValueOnce(4n)
-      .mockResolvedValueOnce(rawElection(3, false))
-      .mockResolvedValueOnce(rawElection(2, true))
-      .mockResolvedValueOnce(rawElection(1, true))
+  it('keeps only the published elections, newest first, however many there are', async () => {
+    const ids = [1n, 2n, 3n, 4n, 5n, 6n, 7n]
+    mockWagmiCore.readContract.mockResolvedValueOnce(ids)
+    ids.forEach((id) =>
+      mockWagmiCore.readContract.mockResolvedValueOnce(rawElection(Number(id), id !== 7n))
+    )
 
     useElectionsPastElections()
 
     const elections = (await getQuery().queryFn()) as { id: number; resultsPublished: boolean }[]
-    expect(elections.map((election) => election.id)).toEqual([2, 1])
+    expect(elections.map((election) => election.id)).toEqual([6, 5, 4, 3, 2, 1])
     expect(elections.every((election) => election.resultsPublished)).toBe(true)
   })
 
   it('skips an election whose read fails rather than dropping the whole list', async () => {
     mockWagmiCore.readContract
-      .mockResolvedValueOnce(3n)
-      .mockRejectedValueOnce(new Error('rpc'))
+      .mockResolvedValueOnce([1n, 2n])
       .mockResolvedValueOnce(rawElection(1, true))
+      .mockRejectedValueOnce(new Error('rpc'))
 
     useElectionsPastElections()
 
