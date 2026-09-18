@@ -1,4 +1,4 @@
-import { computed, type ComputedRef, type WritableComputedRef } from 'vue'
+import { computed, watch, type ComputedRef, type WritableComputedRef } from 'vue'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
 
 export interface UsePaginationOptions {
@@ -107,4 +107,37 @@ export function usePagination(
   }
 
   return { page, pageSize, rangeStart, reset }
+}
+
+export interface UsePaginatedList<T> extends UsePagination {
+  /** The items on the current page. */
+  pageItems: ComputedRef<T[]>
+  /** Every item, so the owner can size the pager without re-reading the source. */
+  total: ComputedRef<number>
+}
+
+/**
+ * `usePagination` for a list held in memory: slices the current page out of
+ * `items` and, when the list shrinks under the page the URL names, falls back
+ * to the last page that still exists rather than showing an empty one.
+ */
+export function usePaginatedList<T>(
+  items: () => readonly T[],
+  options: UsePaginationOptions = {}
+): UsePaginatedList<T> {
+  const total = computed(() => items().length)
+  const pagination = usePagination(() => total.value, options)
+  const { page, pageSize } = pagination
+
+  const pageItems = computed(() => {
+    const start = (page.value - 1) * pageSize.value
+    return items().slice(start, start + pageSize.value)
+  })
+
+  watch(total, (count) => {
+    const lastPage = Math.max(1, Math.ceil(count / pageSize.value))
+    if (page.value > lastPage) page.value = lastPage
+  })
+
+  return { ...pagination, pageItems, total }
 }
