@@ -1,0 +1,30 @@
+meta {
+  name: Election - 03 - Edge Case - Notifications - Unknown Team
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/elections/999999
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("should return 404 for a team that does not exist", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+  
+  test("should return a correctly spelled message", function() {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.equal('Team not found');
+  });
+}
