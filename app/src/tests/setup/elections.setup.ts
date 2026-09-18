@@ -21,7 +21,6 @@ vi.mock('@/composables/elections/reads', () => ({
   useElectionsGetCandidates: vi.fn(() => mockElectionsReads.getCandidates),
   useElectionsGetEligibleVoters: vi.fn(() => mockElectionsReads.getEligibleVoters),
   useElectionsGetWinners: vi.fn(() => mockElectionsReads.getWinners),
-  useElectionsGetResults: vi.fn(() => mockElectionsReads.getResults),
   useElectionsHasVoted: vi.fn(() => mockElectionsReads.hasVoted),
   useElectionsGetVoterChoice: vi.fn(() => mockElectionsReads.getVoterChoice)
 }))

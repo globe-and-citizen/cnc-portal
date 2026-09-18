@@ -17,7 +17,6 @@ export const mockElectionsReads = {
   getCandidates: createContractReadMock<string[]>([]),
   getEligibleVoters: createContractReadMock<string[]>([]),
   getWinners: createContractReadMock<string[]>([]),
-  getResults: createContractReadMock<string[]>([]),
   hasVoted: createContractReadMock(false),
   getVoterChoice: createContractReadMock<string | undefined>(undefined),
   pastElections: createContractReadMock<Election[]>([])
