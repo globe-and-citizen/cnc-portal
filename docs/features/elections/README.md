@@ -146,11 +146,13 @@ Only one unpublished election can exist at a time. An ended election still block
 #### Business Rules
 
 - [x] `AC-US-EL-04-03` Creating the on-chain election and requesting notifications are separate operations.
+- [x] `AC-US-EL-04-04` Only the company owner can request the election-created notification; the server refuses any other caller without
+      reading the chain, because only the owner can create an election in the first place.
 
 #### Edge & Error Cases
 
-- [x] `AC-US-EL-04-04` A notification failure does not revert a successfully created on-chain election.
-- [ ] `AC-US-EL-04-05` The notification tells each recipient whether they are eligible to vote, whether they are a candidate, and when the
+- [x] `AC-US-EL-04-05` A notification failure does not revert a successfully created on-chain election.
+- [ ] `AC-US-EL-04-06` The notification tells each recipient whether they are eligible to vote, whether they are a candidate, and when the
       election ends.
 
 **Dependencies:** US-EL-01 and the notification service
@@ -341,6 +343,9 @@ Only one unpublished election can exist at a time. An ended election still block
 - [Election composable tests](../../../app/src/composables/elections/__tests__/reads.spec.ts)
 - [Election history tests](../../../app/src/composables/elections/__tests__/history.spec.ts)
 - [Election component tests](../../../app/src/components/sections/AdministrationView/__tests__/)
+- [Election notification API route](../../../backend/src/routes/electionsRoute.ts)
+- [Election notification API controller](../../../backend/src/controllers/electionsController.ts)
+- [Election notification API tests](../../../backend/src/controllers/__tests__/electionsController.test.ts)
 
 ## Related Documentation
 
