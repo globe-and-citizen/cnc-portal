@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 import { ref } from 'vue'
 import { zeroHash } from 'viem'
 import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
-import type { LendingOfferStruct } from '@/types'
+import type { Election, LendingOfferStruct } from '@/types'
 
 /**
  * Elections Contract Mocks
@@ -19,7 +19,8 @@ export const mockElectionsReads = {
   getWinners: createContractReadMock<string[]>([]),
   getResults: createContractReadMock<string[]>([]),
   hasVoted: createContractReadMock(false),
-  getVoterChoice: createContractReadMock<string | undefined>(undefined)
+  getVoterChoice: createContractReadMock<string | undefined>(undefined),
+  pastElections: createContractReadMock<Election[]>([])
 }
 
 export const mockElectionsWrites = {
@@ -59,7 +60,7 @@ export const mockBankWrites = {
  */
 export const mockBODReads = {
   owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
-  boardMembers: createContractReadMock([]),
+  boardMembers: createContractReadMock<string[] | undefined>([]),
   isMember: createContractReadMock(false),
   isActionExecuted: createContractReadMock(false),
   isApproved: createContractReadMock(false),
@@ -224,6 +225,7 @@ export const resetContractMocks = () => {
     Object.values(mockGroup).forEach((mock) => {
       mock.error.value = null
       mock.isLoading.value = false
+      mock.isFetching.value = false
       mock.isSuccess.value = true
       mock.isError.value = false
       mock.isFetched.value = true
