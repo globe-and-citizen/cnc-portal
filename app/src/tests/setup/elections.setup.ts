@@ -31,3 +31,7 @@ vi.mock('@/composables/elections/writes', () => ({
   useElectionsPublishResults: vi.fn(() => mockElectionsWrites.publishResults),
   useElectionsCastVote: vi.fn(() => mockElectionsWrites.castVote)
 }))
+
+vi.mock('@/composables/elections/history', () => ({
+  useElectionsPastElections: vi.fn(() => mockElectionsReads.pastElections)
+}))

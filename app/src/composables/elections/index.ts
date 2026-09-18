@@ -11,6 +11,7 @@ import {
   useElectionsGetEligibleVoters
 } from './reads'
 
+export * from './history'
 export * from './reads'
 export * from './writes'
 

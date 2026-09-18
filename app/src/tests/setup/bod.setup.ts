@@ -7,14 +7,15 @@ import {
 } from '../mocks/contract.mock'
 
 /**
- * Mock BOD read composables. Unused reads (useBodIsApproved, useBodGetBoardOfDirectors,
- * useBodApprovalCount) are commented out in src/composables/bod/reads.ts.
+ * Mock BOD read composables. Unused reads (useBodIsApproved, useBodApprovalCount) are
+ * commented out in src/composables/bod/reads.ts.
  * useBodOwner + useBodIsMember are kept because useBodIsBodAction depends on them internally.
  */
 vi.mock('@/composables/bod/reads', () => ({
   useBodOwner: vi.fn(() => mockBODReads.owner),
   useBodIsActionExecuted: vi.fn(() => mockBODReads.isActionExecuted),
   useBodIsMember: vi.fn(() => mockBODReads.isMember),
+  useBodGetBoardOfDirectors: vi.fn(() => mockBODReads.boardMembers),
   useBodIsBodAction: vi.fn(() => mockBodIsBodAction)
 }))
 

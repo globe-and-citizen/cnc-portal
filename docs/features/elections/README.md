@@ -224,6 +224,7 @@ Only one unpublished election can exist at a time. An ended election still block
 #### Edge & Error Cases
 
 - [x] `AC-US-EL-07-04` An empty Board state is presented as no current Board rather than as a successful populated Board.
+- [x] `AC-US-EL-07-05` The current Board still loads after a full page reload, once the company's contracts are known.
 
 **Dependencies:** US-EL-03 and the Board of Directors contract
 
@@ -248,6 +249,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 - [ ] `AC-US-EL-08-04` Every published election remains reachable regardless of its age.
 - [x] `AC-US-EL-08-05` An empty past-election list remains distinguishable from a failed or loading history read.
+- [x] `AC-US-EL-08-06` The past-election list still loads after a full page reload, once the company's contracts are known.
 
 **Dependencies:** US-EL-03
 
@@ -324,7 +326,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b4f3e0551e7c765b89f84247f7066c149df1e4d1`
+**Implementation evidence reviewed against:** `027a59e8c6a540a461c5f686284c92651f143c9f`
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
@@ -337,6 +339,7 @@ Only one unpublished election can exist at a time. An ended election still block
 - [Current Elections contract](../../../contract/contracts/Elections/Elections.sol)
 - [Elections contract tests](../../../contract/test/Elections.spec.ts)
 - [Election composable tests](../../../app/src/composables/elections/__tests__/reads.spec.ts)
+- [Election history tests](../../../app/src/composables/elections/__tests__/history.spec.ts)
 - [Election component tests](../../../app/src/components/sections/AdministrationView/__tests__/)
 
 ## Related Documentation

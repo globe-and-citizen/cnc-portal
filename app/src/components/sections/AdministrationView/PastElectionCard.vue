@@ -30,71 +30,49 @@
     <div class="mb-5">
       <p class="mb-2 text-gray-600">Elected Members:</p>
       <div class="flex flex-wrap gap-2">
-        <UBadge v-for="(member, i) in electionResults" :key="i" color="info" variant="subtle">
-          {{ teamStore.currentTeam?.members.find((m) => m.address === member)?.name || 'Unknown' }}
+        <UBadge v-for="member in electionResults" :key="member" color="info" variant="subtle">
+          {{ memberName(member) }}
         </UBadge>
       </div>
     </div>
 
     <!-- View Results Button -->
-    <UButton
-      color="success"
-      variant="outline"
-      @click="
-        () => {
-          void router.push(
-            `/teams/${teamStore.currentTeamId}/administration/bod-elections-details?electionId=${election.id}`
-          )
-        }
-      "
-      label="View Results"
-    />
+    <UButton color="success" variant="outline" label="View Results" @click="viewResults" />
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import type { Election } from '@/types'
 import { log } from '@/lib/logging'
 import { formatDate } from '@/utils/format'
-import { useReadContract } from '@wagmi/vue'
+import { useElectionsGetResults, useElectionsGetVoteCount } from '@/composables/elections'
 import { useRouter } from 'vue-router'
 import { computed, watch } from 'vue'
 
-const { election } = defineProps<{
+const props = defineProps<{
   election: Election
 }>()
 const teamStore = useTeamStore()
 const router = useRouter()
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
+const electionId = computed(() => BigInt(props.election.id))
 
-const {
-  data: voteCount,
-  // isLoading: isLoadingVoteCount,
-  error: errorGetVoteCount
-} = useReadContract({
-  functionName: 'getVoteCount',
-  address: electionsAddress,
-  abi: electionsAbi,
-  args: [BigInt(election.id)] // Supply currentElectionId as an argument
-})
+const { data: voteCount, error: errorGetVoteCount } = useElectionsGetVoteCount(electionId)
+const { data: electionResults, error: errorGetElectionResults } = useElectionsGetResults(electionId)
 
-const { data: electionResults, error: errorGetElectionResults } = useReadContract({
-  functionName: 'getElectionResults',
-  address: electionsAddress,
-  abi: electionsAbi,
-  args: [BigInt(election.id)] // Supply currentElectionId as an argument
-})
+const memberName = (address: string) =>
+  teamStore.currentTeam?.members.find((m) => m.address === address)?.name || 'Unknown'
 
-watch(errorGetVoteCount, (newError) => {
-  if (newError) {
-    log.error('Error fetching vote count:', newError)
-  }
+const viewResults = () => {
+  void router.push(
+    `/teams/${teamStore.currentTeamId}/administration/bod-elections-details?electionId=${props.election.id}`
+  )
+}
+
+watch(errorGetVoteCount, (error) => {
+  if (error) log.error('Error fetching vote count:', error)
 })
-watch(errorGetElectionResults, (newError) => {
-  if (newError) {
-    log.error('Error fetching election results:', newError)
-  }
+watch(errorGetElectionResults, (error) => {
+  if (error) log.error('Error fetching election results:', error)
 })
 </script>
