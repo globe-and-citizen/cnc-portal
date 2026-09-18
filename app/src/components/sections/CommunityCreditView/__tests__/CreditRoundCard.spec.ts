@@ -53,13 +53,25 @@ describe('CreditRoundCard', () => {
 
   it('shows the Lend action on a restricted round once the viewer has a whitelist allocation', () => {
     mockFixedReturnReads.myLenderPositions.data.value = new Map([
-      [1, { allocation: 500n, deposited: 0n }]
+      [1, { status: 'ok', allocation: 500n, deposited: 0n }]
     ])
     const wrapper = mount(CreditRoundCard, {
       props: { round: makeRound({ restricted: true }) }
     })
 
     expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
+  })
+
+  it('offers a retry instead of hiding Lend when the position read failed, not confirmed zero', () => {
+    mockFixedReturnReads.myLenderPositions.data.value = new Map([
+      [1, { status: 'error', error: new Error('RPC timeout') }]
+    ])
+    const wrapper = mount(CreditRoundCard, {
+      props: { round: makeRound({ restricted: true }) }
+    })
+
+    expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="round-cta-retry-position"]').exists()).toBe(true)
   })
 
   it('shows a fractional raised amount precisely instead of rounding it down to 0', () => {
