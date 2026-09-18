@@ -23,7 +23,6 @@ import {
   useElectionsAddress,
   useElectionsCastVote,
   useElectionsGetCandidateVoteCounts,
-  useElectionsGetResults,
   useElectionsGetVoterChoice,
   useElectionsHasVoted,
   useBoDElections
@@ -33,6 +32,7 @@ import type { User } from '@/types'
 import { config } from '@/wagmi.config'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
+import { includesAddress, isSameAddress } from '@/utils/elections/election'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{ electionId: bigint }>()
@@ -42,13 +42,12 @@ const electionId = computed(() => props.electionId)
 
 const electionsAddress = useElectionsAddress()
 const userDataStore = useUserDataStore()
-const { candidateList, voteCount, electionStatus } = useBoDElections(electionId)
+const { candidateList, voteCount, electionStatus, winners } = useBoDElections(electionId)
 const voter = computed(() => userDataStore.address as Address | undefined)
 const { data: candidateVoteCounts, error: errorCandidateVoteCounts } =
   useElectionsGetCandidateVoteCounts(electionId, candidateList)
 const { data: hasVoted, error: errorHasVoted } = useElectionsHasVoted(electionId, voter)
 const { data: voterChoice } = useElectionsGetVoterChoice(electionId, voter)
-const { data: electionResults } = useElectionsGetResults(electionId)
 const { mutate: executeCastVote, isPending: isLoadingCastVote } = useElectionsCastVote()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
@@ -83,12 +82,8 @@ const candidates = computed(() =>
       imageUrl: member?.imageUrl,
       currentVotes: Number(candidateVoteCounts.value?.[address] ?? 0n),
       totalVotes: totalVotes.value,
-      isSelected:
-        hasVoted.value === true && voterChoice.value?.toLowerCase() === address.toLowerCase(),
-      isElectionWinner:
-        electionStatus.value?.text === 'Completed' &&
-        (electionResults.value?.some((winner) => winner.toLowerCase() === address.toLowerCase()) ??
-          false),
+      isSelected: hasVoted.value === true && isSameAddress(voterChoice.value, address),
+      isElectionWinner: includesAddress(winners.value, address),
       isVoteDisabled: isVoteDisabled.value,
       voteTooltip: voteTooltip.value
     }

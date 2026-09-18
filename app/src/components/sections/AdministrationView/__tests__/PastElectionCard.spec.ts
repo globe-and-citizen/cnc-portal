@@ -4,11 +4,12 @@ import { createPinia, setActivePinia } from 'pinia'
 import { unref } from 'vue'
 import PastElectionCard from '@/components/sections/AdministrationView/PastElectionCard.vue'
 import { mockTeamStore, mockElectionsReads } from '@/tests/mocks'
-import { useElectionsGetResults, useElectionsGetVoteCount } from '@/composables/elections'
+import { useElectionsGetVoteCount, useElectionsGetWinners } from '@/composables/elections'
 import type { Election } from '@/types'
 
 const memberA = '0x000000000000000000000000000000000000aaaa'
 const memberB = '0x000000000000000000000000000000000000bbbb'
+const memberC = '0x000000000000000000000000000000000000cccc'
 
 describe('PastElectionCard', () => {
   const election: Election = {
@@ -34,7 +35,8 @@ describe('PastElectionCard', () => {
       members: [{ address: memberA, name: 'Alice' }]
     }
     mockElectionsReads.getVoteCount.data.value = 12n
-    mockElectionsReads.getResults.data.value = [memberA, memberB]
+    mockElectionsReads.getCandidates.data.value = [memberA, memberB, memberC]
+    mockElectionsReads.getWinners.data.value = [memberA, memberB]
   })
 
   it('renders the title, vote count and elected members', () => {
@@ -46,12 +48,21 @@ describe('PastElectionCard', () => {
     expect(wrapper.text()).toContain('Unknown')
   })
 
-  it('reads its figures through the shared election helpers for its own election', () => {
+  it('shows the seats and the candidates as two distinct figures', () => {
+    const wrapper = mount(PastElectionCard, { props: { election } })
+    const figure = (name: string) => wrapper.find(`[data-test="${name}"] span:last-child`).text()
+
+    expect(figure('seats')).toBe('2')
+    expect(figure('candidates')).toBe('3')
+    expect(figure('votes-cast')).toBe('12')
+  })
+
+  it('names the elected members from the published winners, never a running count', () => {
     mount(PastElectionCard, { props: { election } })
 
     const [voteCountId] = vi.mocked(useElectionsGetVoteCount).mock.calls[0] ?? []
-    const [resultsId] = vi.mocked(useElectionsGetResults).mock.calls[0] ?? []
+    const [winnersId] = vi.mocked(useElectionsGetWinners).mock.calls[0] ?? []
     expect(unref(voteCountId)).toBe(7n)
-    expect(unref(resultsId)).toBe(7n)
+    expect(unref(winnersId)).toBe(7n)
   })
 })
