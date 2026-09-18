@@ -20,6 +20,25 @@ function invalidateFixedReturnReads(queryClient: QueryClient) {
   ])
 }
 
+/** After createLendingOffer: only the overview list changed (a new offer exists) —
+ *  no existing offer's lenders/positions or any token balance is affected. */
+export function invalidateAfterCreateLendingOffer(queryClient: QueryClient) {
+  return queryClient.invalidateQueries({ queryKey: fixedReturnKeys.allOffers })
+}
+
+/** Manual retry for a failed FixedReturn read — the round-detail page's "Try again"
+ *  action. Not mutation-driven, so it skips the events-log/token invalidation the
+ *  mutation functions below need. */
+export function retryFixedReturnReads(queryClient: QueryClient) {
+  return queryClient.invalidateQueries({ queryKey: fixedReturnKeys.all })
+}
+
+/** Manual retry for a failed lender-position read — the round card's/lend modal's
+ *  "Check eligibility" action, scoped to just that one query. */
+export function retryMyLenderPositions(queryClient: QueryClient) {
+  return queryClient.invalidateQueries({ queryKey: fixedReturnKeys.myLenderPositions })
+}
+
 /**
  * After a successful lendFunds: refresh round/position reads, plus the lender's own
  * ERC20 allowance/balance for the round's token — lendFunds writes to FixedReturn,

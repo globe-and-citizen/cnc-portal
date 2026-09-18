@@ -80,7 +80,7 @@ import { computed } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useCommunityCreditStore } from '@/stores'
 import { useFixedReturnMyLenderPositions } from '@/composables/fixedReturn/reads'
-import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
+import { retryMyLenderPositions } from '@/composables/fixedReturn/invalidation'
 import { formatAmount, reachedFundingTarget, statusMeta } from '@/utils/communityCredit/model'
 import { percentOf } from '@/utils/communityCredit/offer'
 import type { CreditRound } from '@/types'
@@ -110,10 +110,6 @@ const canLend = computed(() => {
 const positionUnavailable = computed(
   () => props.round.restricted && myPosition.value?.status === 'error'
 )
-function retryPosition() {
-  queryClient.refetchQueries({ queryKey: fixedReturnKeys.myLenderPositions })
-}
-
 const status = computed(() => statusMeta(props.round.status))
 const pct = computed(() => percentOf(props.round.raised, props.round.target))
 const visibleLenders = computed(() => props.round.lenders.slice(0, 3))
@@ -220,7 +216,7 @@ function onCta(event: CardCtaEvent) {
     case 'repay':
       return emit('repay')
     case 'retry-position':
-      return retryPosition()
+      return retryMyLenderPositions(queryClient)
     default:
       return emit('open')
   }
