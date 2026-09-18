@@ -59,12 +59,12 @@ describe('ElectionCandidatesSection', () => {
     const cards = wrapper.findAllComponents(ElectionCandidateCard)
     expect(cards).toHaveLength(2)
     expect(useElectionsGetCandidateVoteCounts).toHaveBeenCalledTimes(1)
-    expect(cards[0].props('candidate')).toMatchObject({
+    expect(cards[0]?.props('candidate')).toMatchObject({
       address: ALEX,
       currentVotes: 2,
       totalVotes: 3
     })
-    expect(cards[1].props('candidate')).toMatchObject({
+    expect(cards[1]?.props('candidate')).toMatchObject({
       address: BLAIR,
       currentVotes: 1,
       totalVotes: 3
@@ -78,8 +78,8 @@ describe('ElectionCandidatesSection', () => {
     await wrapper.vm.$nextTick()
 
     const cards = wrapper.findAllComponents(ElectionCandidateCard)
-    expect(cards[0].props('candidate')).toMatchObject({ isSelected: true, isVoteDisabled: true })
-    expect(cards[1].props('candidate')).toMatchObject({ isSelected: false, isVoteDisabled: true })
+    expect(cards[0]?.props('candidate')).toMatchObject({ isSelected: true, isVoteDisabled: true })
+    expect(cards[1]?.props('candidate')).toMatchObject({ isSelected: false, isVoteDisabled: true })
   })
 
   describe('winner badge', () => {
@@ -104,8 +104,8 @@ describe('ElectionCandidatesSection', () => {
       await wrapper.vm.$nextTick()
 
       const cards = wrapper.findAllComponents(ElectionCandidateCard)
-      expect(cards[0].props('candidate').isElectionWinner).toBe(false)
-      expect(cards[1].props('candidate').isElectionWinner).toBe(true)
+      expect(cards[0]?.props('candidate').isElectionWinner).toBe(false)
+      expect(cards[1]?.props('candidate').isElectionWinner).toBe(true)
       expect(winnersReadId()).toBe(4n)
     })
   })
