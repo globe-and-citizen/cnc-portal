@@ -85,7 +85,15 @@ export function useBodIsApproved(actionId: MaybeRef<number>, memberAddress: Mayb
     }
   })
 }
+*/
 
+/**
+ * Members currently seated on the Board of Directors.
+ *
+ * Every page listing the board reads it here: publishing an election
+ * invalidates the Board contract's reads from the election write layer, which
+ * is what keeps the list current without anyone refreshing it by hand.
+ */
 export function useBodGetBoardOfDirectors() {
   const teamStore = useTeamStore()
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
@@ -98,7 +106,6 @@ export function useBodGetBoardOfDirectors() {
     query: { enabled: isBodAddressValid }
   })
 }
-*/
 
 /**
  * Check if an address is a BOD member
