@@ -4,6 +4,7 @@ This directory contains comprehensive testing documentation and guides for the C
 
 ## Contents
 
+- **[Integrated E2E Checklist](./e2e-paths.md)** - G0 through G7 integrated test groups and paths
 - **[Unit Testing Guide](./unit-testing.md)** - Guidelines for writing unit tests with Vue Test Utils and Vitest
 - **[Global Mocks Setup](./global-mocks-setup.md)** - Centralized mock definitions for TanStack Vue Query and Axios
 
