@@ -134,7 +134,7 @@ function buildJournalEntries(input: BuildGeneralLedgerInput): JournalEntry[] {
     if (!inPeriod(e.timestamp, input.periodStart, input.asOf)) {
       continue
     }
-    let lines: JournalLine[] | null = null
+    let lines: JournalLine[] | null
     switch (e.category) {
       case 'DEPOSIT':
         lines = [debit('Cash', e.amount), credit('Owner Capital', e.amount)]
