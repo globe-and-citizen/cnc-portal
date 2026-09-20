@@ -51,8 +51,8 @@ jobs:
         run: npm run compile
         working-directory: ./contract
 
-      - name: 🧪 Run E2E tests with coverage instrumentation
-        run: npm run test:e2e:coverage
+      - name: 🧪 Run mocked and fixture-backed browser tests with coverage instrumentation
+        run: npm run test:e2e:coverage -- --grep-invert @integrated
         working-directory: ./app
         env:
           CI: "true"

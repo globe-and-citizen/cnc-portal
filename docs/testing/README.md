@@ -23,6 +23,24 @@ npm run test:watch
 npm run test:coverage
 ```
 
+### Company browser tests
+
+The Company suites target a frontend that is already running. The integrated profile also expects the backend, migrated database, local
+chain, and required contract infrastructure to be ready; Playwright does not start or mutate that infrastructure.
+
+```bash
+cd app
+
+# Real frontend, backend, database, and chain boundaries
+npm run test:e2e:company:integrated
+
+# Injected validation and failure variants
+npm run test:e2e:company:mocked
+```
+
+CI keeps these evidence levels separate. The regular Playwright job runs mocked and fixture-backed browser coverage, while the Company
+integration job prepares a disposable stack before executing only the `@integrated` paths.
+
 ### Test Structure
 
 Tests are organized alongside their source files:

@@ -55,6 +55,12 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - run the faster, parallel Companies variants with `npm run test:e2e:company:mocked` from `app/`;
   - these Companies scripts skip Playwright service startup and global infrastructure setup, so the developer or CI must prepare the
     frontend and the integrated stack first.
+- CI ownership:
+  - the regular browser job excludes `@integrated` and retains mocked or fixture-backed coverage;
+  - the Company integration job provisions a disposable PostgreSQL database, applies migrations, deploys the required contracts to a fresh
+    local node, and starts the backend and frontend before Playwright runs;
+  - Playwright still performs only user-accessible product actions, and CI retains its report plus failure traces and stack logs as the test
+    run evidence.
 
 ## G0 — Integrated Technical Readiness
 

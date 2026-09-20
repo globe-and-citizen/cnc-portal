@@ -63,23 +63,22 @@ export default defineConfig({
       : [])
   ],
 
-  // The dedicated Hardhat port keeps the suite's deployment fixture isolated
-  // from a developer's normal local node on :8545. The Vite E2E build reads
-  // the deterministic token addresses seeded by the global setup instead of
-  // the developer-local deployment artifact.
+  // The self-managed fixture stack uses the same origins as the shared E2E
+  // constants. Company integration scripts skip these servers and target the
+  // developer- or CI-managed stack instead.
   webServer: process.env.SKIP_SERVER
     ? undefined
     : [
         {
-          command: 'npm --prefix ../contract run node -- --port 8546',
-          port: 8546,
+          command: 'npm --prefix ../contract run node -- --port 8545',
+          port: 8545,
           reuseExistingServer: false,
           timeout: 120000,
           stdout: 'pipe',
           stderr: 'pipe'
         },
         {
-          command: 'npm run dev -- --port 5174',
+          command: 'npm run dev -- --port 5173',
           env: {
             ...process.env,
             VITE_E2E: 'true',
@@ -92,7 +91,7 @@ export default defineConfig({
             VITE_E2E_USDC_ADDRESS: E2E_TOKENS.usdc,
             VITE_E2E_USDCE_ADDRESS: E2E_TOKENS.usdcE
           },
-          port: 5174,
+          port: 5173,
           reuseExistingServer: false,
           timeout: 120000,
           stdout: 'pipe',
