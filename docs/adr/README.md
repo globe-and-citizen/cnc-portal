@@ -38,9 +38,10 @@ source and generated artifacts, and active work or delivery history in GitHub is
 
 ## Index
 
-| ADR                                                | Title                                       | Status   | Date       |
-| -------------------------------------------------- | ------------------------------------------- | -------- | ---------- |
-| [ADR-0001](./0001-member-week-payroll-identity.md) | Use member-week identity for payroll claims | Accepted | 2026-08-23 |
+| ADR                                                        | Title                                                                    | Status   | Date       |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------ | -------- | ---------- |
+| [ADR-0001](./0001-member-week-payroll-identity.md)         | Use member-week identity for payroll claims                              | Accepted | 2026-08-23 |
+| [ADR-0002](./0002-community-credit-lender-payout-scale.md) | Keep unbounded push-based lender payouts in FixedReturn at current scale | Accepted | 2026-09-20 |
 
 ## Related Documentation
 
