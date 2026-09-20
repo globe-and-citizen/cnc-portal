@@ -24,7 +24,7 @@ import {
   useCompanyInfrastructure
 } from './company-page'
 
-test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () => {
+test.describe('[US-COMPANIES-002] Officer onboarding', { tag: '@US-COMPANIES-002' }, () => {
   let addresses: CompanyAddresses
   let snapshot: string
 
@@ -64,8 +64,14 @@ test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () =
   }
 
   test.setTimeout(180_000)
+  /**
+   * Covers:
+   * - [AC-US-COMPANIES-002-01]
+   * - [AC-US-COMPANIES-002-02]
+   * - [AC-US-COMPANIES-002-03]
+   */
   test(
-    '[AC-US-COMPANIES-002-01][AC-US-COMPANIES-002-02][AC-US-COMPANIES-002-03] deploys and registers the Officer suite and a Safe through the complete company wizard',
+    'deploys and registers the Officer suite and a Safe through the complete company wizard',
     { tag: ['@US-COMPANIES-001', '@US-COMPANIES-002', '@US-SAFE-001'] },
     async ({ page }) => {
       const api = await deployOfficer(page)
@@ -76,7 +82,9 @@ test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () =
         deployedAt: expect.any(String)
       })
       await verifyOfficer(officer.address as Address)
-      const block = await publicClient.getBlock({ blockNumber: BigInt(officer.deployBlockNumber!) })
+      const block = await publicClient.getBlock({
+        blockNumber: BigInt(officer.deployBlockNumber!)
+      })
       expect(block.transactions).toHaveLength(1)
       await page.locator('[data-test="deploy-safe-button"]').click()
       await expect(page).toHaveURL(/\/teams\/1$/, { timeout: 60_000 })
@@ -90,9 +98,11 @@ test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () =
     }
   )
 
-  test('[AC-US-COMPANIES-002-04] requires both share name and symbol before requesting deployment', async ({
-    page
-  }) => {
+  /**
+   * Covers:
+   * - [AC-US-COMPANIES-002-04]
+   */
+  test('requires both share name and symbol before requesting deployment', async ({ page }) => {
     const api = await createCompanyUntilOfficer(page)
     const before = await ownerNonce()
     const deploy = page.locator('[data-test="deploy-contracts-button"]')
@@ -119,9 +129,11 @@ test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () =
   }
 
   for (const [failure, cause] of Object.entries(failures)) {
-    test(`[AC-US-COMPANIES-002-07] keeps Officer setup recoverable after ${failure}`, async ({
-      page
-    }) => {
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-002-07]
+     */
+    test(`keeps Officer setup recoverable after ${failure}`, async ({ page }) => {
       const api = await createCompanyUntilOfficer(page)
       await enterShareDetails(page)
       const before = await ownerNonce()
@@ -159,9 +171,11 @@ test.describe('Company onboarding contracts', { tag: '@US-COMPANIES-002' }, () =
     expect(await ownerNonce()).toBe(before)
   })
 
-  test('[AC-US-COMPANIES-002-08] distinguishes a mined deployment from a failed Officer registration', async ({
-    page
-  }) => {
+  /**
+   * Covers:
+   * - [AC-US-COMPANIES-002-08]
+   */
+  test('distinguishes a mined deployment from a failed Officer registration', async ({ page }) => {
     const api = await createCompanyUntilOfficer(page)
     api.failOfficerRegistration = true
     await enterShareDetails(page)

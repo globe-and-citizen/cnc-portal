@@ -37,7 +37,8 @@ export default defineConfig({
   timeout: 60_000,
 
   use: {
-    baseURL: process.env.BASE_URL || 'http://127.0.0.1:5173',
+    // Use the same origin allowed by the developer-run backend CORS policy.
+    baseURL: process.env.BASE_URL || 'http://localhost:5173',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
