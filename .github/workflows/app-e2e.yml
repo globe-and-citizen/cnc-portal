@@ -123,12 +123,12 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/cnc_e2e
       NODE_ENV: test
       SECRET_KEY: company-e2e-only
-      FRONTEND_URL: http://127.0.0.1:5173
+      FRONTEND_URL: http://localhost:5173
       PORT: "3000"
       CHAIN_ID: "31337"
 
     steps:
-      - name: 🛋 Checkout
+      - name: Checkout
         uses: actions/checkout@v6
 
       - name: 🏗 Set up Node.js 24.x
