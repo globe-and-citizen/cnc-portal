@@ -49,11 +49,17 @@ test('parses acceptance criteria only inside a user story acceptance section', (
   ])
 })
 
-test('accepts complete story-local IDs and known representative test references', () => {
+test('accepts structured coverage comments for representative test references', () => {
   const result = validateAcceptanceCriteriaTraceability({
     featureDocuments: [validFeature],
     testDocuments: [
-      testDocument("it('[AC-US-EXAMPLE-001-01] proves the primary outcome', () => {})")
+      testDocument(`describe('[US-EXAMPLE-001] Example', () => {
+  /**
+   * Covers:
+   * - [AC-US-EXAMPLE-001-01]
+   */
+  it('proves the primary outcome', () => {})
+})`)
     ]
   })
 

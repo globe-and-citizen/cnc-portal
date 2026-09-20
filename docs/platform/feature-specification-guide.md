@@ -106,15 +106,26 @@ criterion moves between categories or changes position within its story.
 - [x] `AC-US-FEATURE-001-01` A matching operation retains all of its journal lines.
 ```
 
-Reference the ID in the title of the smallest representative behaviour test when executable evidence directly proves the documented outcome.
-One criterion may have more than one representative test when distinct success and failure paths are necessary, but do not tag every
-low-level test that happens to exercise the same code.
+Keep representative test titles focused on observable behaviour. Put the user-story ID in the enclosing suite title or equivalent test
+metadata, then declare directly proven acceptance criteria in a structured `Covers` comment immediately above the smallest representative
+test. One coherent path may cover multiple criteria. One criterion may also have more than one representative test when distinct success and
+failure paths are necessary, but do not tag every low-level test that happens to exercise the same code.
 
 ```typescript
-it('[AC-US-FEATURE-001-01] retains every line of a matching JournalEntry', () => {
-  // Test the observable criterion.
+describe('[US-FEATURE-001] Matching entries', () => {
+  /**
+   * Covers:
+   * - [AC-US-FEATURE-001-01]
+   */
+  it('retains every line of a matching JournalEntry', () => {
+    // Test the observable criterion.
+  })
 })
 ```
+
+The `Covers` block is traceability metadata, not evidence by itself. Keep it adjacent to the test whose assertions prove the criteria, and
+remove or update it whenever that test stops proving an outcome. Do not place acceptance-criterion IDs in test titles merely to make the
+coverage report discover them.
 
 Every criterion has an ID even when no representative automated test exists. A test reference records evidence, not comprehensive coverage,
 and it does not replace the criterion's observable outcome, checkbox state, implementation evidence, or required human validation.
