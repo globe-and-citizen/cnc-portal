@@ -10,7 +10,7 @@ const E2E_BROWSER_EXECUTABLE = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE
 export default defineConfig({
   // Seed the deterministic mock tokens and Safe infrastructure before any
   // browser compiles the E2E client or an account fixture deploys contracts.
-  globalSetup: './test/e2e/global-setup.ts',
+  globalSetup: process.env.SKIP_GLOBAL_SETUP ? undefined : './test/e2e/global-setup.ts',
 
   // Look for test files in the "test/e2e" directory, relative to this configuration file.
   testDir: './test/e2e',
@@ -37,7 +37,7 @@ export default defineConfig({
   timeout: 60_000,
 
   use: {
-    baseURL: process.env.BASE_URL || 'http://127.0.0.1:5174',
+    baseURL: process.env.BASE_URL || 'http://127.0.0.1:5173',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

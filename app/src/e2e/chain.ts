@@ -10,7 +10,7 @@
  * This module must stay free of `import.meta.env` and browser globals because
  * Node-side test code imports it as well.
  */
-export const E2E_RPC_URL = 'http://127.0.0.1:8546'
+export const E2E_RPC_URL = 'http://127.0.0.1:8545'
 
 /** Unreachable origin; `test/e2e/safe/safe-transaction-service.ts` stubs it. */
 export const E2E_SAFE_TX_SERVICE_URL = 'https://safe-e2e.invalid'
