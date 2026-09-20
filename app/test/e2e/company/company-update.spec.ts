@@ -1,6 +1,5 @@
 import type { Locator } from '@playwright/test'
 import { expect, test } from '../fixtures'
-import { gate } from './company-page'
 import {
   cardDescription,
   cardName,
@@ -8,6 +7,7 @@ import {
   COMPANY_DESCRIPTION,
   COMPANY_NAME,
   dialog,
+  gate,
   LOAD_TIMEOUT,
   openCardMenu,
   openCompanyActions,

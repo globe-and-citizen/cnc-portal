@@ -8,9 +8,20 @@ import { expect, type Locator, type Page, type Request } from '@playwright/test'
 import type { Address } from 'viem'
 import type { Team } from '../../../src/types/team'
 import type { UpdateTeamBody } from '../../../src/queries/team.queries'
-import { E2E_MEMBER_PRIVATE_KEY } from '../e2e-chain'
+import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER } from '../e2e-chain'
 import { json, stubBackend, useWallet, type E2EUser, type StubResponse } from '../e2e-page'
-import { member, owner } from './company-page'
+
+export const owner: E2EUser = { address: E2E_OWNER, name: 'E2E Creator', imageUrl: null }
+export const member: E2EUser = { address: E2E_MEMBER, name: 'E2E Colleague', imageUrl: null }
+
+/** A promise the test resolves by hand, to keep a stubbed request pending. */
+export function gate() {
+  let release = () => {}
+  const promise = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  return { promise, release }
+}
 
 export const COMPANY_NAME = 'E2E Lifecycle Company'
 export const COMPANY_DESCRIPTION = 'A deterministic company used by the lifecycle E2E suites.'

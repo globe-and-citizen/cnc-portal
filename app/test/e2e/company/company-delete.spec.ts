@@ -1,5 +1,4 @@
 import { expect, test } from '../fixtures'
-import { gate } from './company-page'
 import {
   archiveAction,
   archivedBanner,
@@ -14,6 +13,7 @@ import {
   dialog,
   emptyState,
   errorState,
+  gate,
   LOAD_TIMEOUT,
   openCardMenu,
   openCompanyActions,
