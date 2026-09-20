@@ -123,162 +123,139 @@ test.describe(
   }
 )
 
-test.describe('[US-COMPANIES-004] Integrated company details', { tag: '@integrated' }, () => {
-  /**
-   * Covers:
-   * - [AC-US-COMPANIES-004-01]
-   * - [AC-US-COMPANIES-004-03]
-   */
-  test('validates and persists updated company metadata', async ({ page }) => {
-    const company = await createRealCompany(page)
-    const teamId = String(company.id)
-    const updatedName = uniqueCompanyName('Updated E2E Company')
-    const updatedDescription = 'Updated by the integrated company-details journey.'
-    let currentName = company.name
+test.describe(
+  '[US-COMPANIES-004/005] Integrated company administration',
+  {
+    tag: ['@US-COMPANIES-004', '@US-COMPANIES-005', '@integrated']
+  },
+  () => {
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-004-01]
+     * - [AC-US-COMPANIES-005-01]
+     * - [AC-US-COMPANIES-005-02]
+     * - [AC-US-COMPANIES-005-03]
+     */
+    test('updates company details and manages the member lifecycle', async ({ browser, page }) => {
+      const memberContext = await browser.newContext()
+      const memberPage = await memberContext.newPage()
+      await useWallet(memberPage, E2E_MEMBER_PRIVATE_KEY)
+      await signInToRealStack(memberPage)
+      await memberContext.close()
 
-    try {
-      await finishRealCompanyWithoutContracts(page, teamId)
-      await openCompanyMetadataActions(page, company.name)
-      await page.locator('[data-test="team-meta-update-open"]').click()
-      const dialog = page.getByRole('dialog')
-      const name = dialog.getByLabel('Company Name')
-      const description = dialog.getByLabel('Description')
-      await name.fill('x')
-      await dialog.getByRole('button', { name: 'Save changes' }).click()
-      await expect(dialog.getByText('Name must be at least 3 characters')).toBeVisible()
-      await name.fill(updatedName)
-      await description.fill(updatedDescription)
-      await dialog.getByRole('button', { name: 'Save changes' }).click()
-      await expect(page.getByText('Company updated successfully', { exact: true })).toBeVisible()
-      currentName = updatedName
+      const company = await createRealCompany(page)
+      const teamId = String(company.id)
+      const updatedName = uniqueCompanyName('Updated E2E Company')
+      const updatedDescription = 'Updated by the integrated company-administration journey.'
+      let currentName = company.name
 
-      await page.reload()
-      await openCompanyMetadataActions(page, updatedName)
-      await expect(page.getByText(updatedName, { exact: true }).first()).toBeVisible()
-      await expect(page.getByText(updatedDescription, { exact: true })).toBeVisible()
-      await openRealCompaniesList(page)
-      await expect(card(page, teamId)).toContainText(updatedName)
-      await expect(card(page, teamId)).toContainText(updatedDescription)
-    } finally {
-      await deleteCompanyThroughUi(page, teamId, currentName)
-    }
-  })
-})
+      try {
+        await finishRealCompanyWithoutContracts(page, teamId)
+        await openCompanyMetadataActions(page, company.name)
+        await page.locator('[data-test="team-meta-update-open"]').click()
+        const dialog = page.getByRole('dialog')
+        const name = dialog.getByLabel('Company Name')
+        const description = dialog.getByLabel('Description')
+        await name.fill(updatedName)
+        await description.fill(updatedDescription)
+        await dialog.getByRole('button', { name: 'Save changes' }).click()
+        await expect(page.getByText('Company updated successfully', { exact: true })).toBeVisible()
+        currentName = updatedName
 
-test.describe('[US-COMPANIES-005] Integrated company membership', { tag: '@integrated' }, () => {
-  /**
-   * Covers:
-   * - [AC-US-COMPANIES-005-01]
-   * - [AC-US-COMPANIES-005-02]
-   * - [AC-US-COMPANIES-005-03]
-   */
-  test('adds an eligible portal user and removes the same member', async ({ browser, page }) => {
-    const memberContext = await browser.newContext()
-    const memberPage = await memberContext.newPage()
-    await useWallet(memberPage, E2E_MEMBER_PRIVATE_KEY)
-    await signInToRealStack(memberPage)
-    await memberContext.close()
+        await page.reload()
+        await openCompanyMetadataActions(page, updatedName)
+        await expect(page.getByText(updatedName, { exact: true }).first()).toBeVisible()
+        await expect(page.getByText(updatedDescription, { exact: true })).toBeVisible()
+        await openRealCompaniesList(page)
+        await expect(card(page, teamId)).toContainText(updatedName)
+        await expect(card(page, teamId)).toContainText(updatedDescription)
+        await card(page, teamId).locator('[data-test="team-link"]').click()
+        await openAccountFromSidebar(page, `/teams/${teamId}/accounts/payroll-account`)
+        await expect(page.locator('[data-test="members-table"]')).toContainText('1')
 
-    const company = await createRealCompany(page)
-    const teamId = String(company.id)
+        await page.locator('[data-test="add-member-button"]').click()
+        await page.getByPlaceholder('Search by name or address').fill(E2E_MEMBER)
+        await page
+          .locator('[data-test="user-row"]')
+          .filter({ hasText: `${E2E_MEMBER.slice(0, 6)}...${E2E_MEMBER.slice(-4)}` })
+          .click()
+        await page.locator('[data-test="add-members-submit"]').click()
+        await expect(page.getByText('Members added successfully', { exact: true })).toBeVisible()
 
-    try {
-      await finishRealCompanyWithoutContracts(page, teamId)
-      await openAccountFromSidebar(page, `/teams/${teamId}/accounts/payroll-account`)
-      await expect(page.locator('[data-test="members-table"]')).toContainText('1')
+        const memberRow = page
+          .locator('[data-test="members-table"] tbody tr')
+          .filter({ hasText: E2E_MEMBER.slice(0, 6) })
+        await expect(memberRow).toBeVisible()
+        await expect(page.locator('[data-test="members-table"]')).toContainText('2')
+        await memberRow.locator('[data-test="delete-member-button"]').click()
+        await page.locator('[data-test="delete-member-confirm-button"]').click()
+        await expect(memberRow).toHaveCount(0)
+        await expect(page.locator('[data-test="members-table"]')).toContainText('1')
+      } finally {
+        await deleteCompanyThroughUi(page, teamId, currentName)
+      }
+    })
+  }
+)
 
-      await page.locator('[data-test="add-member-button"]').click()
-      await page.getByPlaceholder('Search by name or address').fill(E2E_MEMBER)
-      await page
-        .locator('[data-test="user-row"]')
-        .filter({ hasText: `${E2E_MEMBER.slice(0, 6)}...${E2E_MEMBER.slice(-4)}` })
-        .click()
-      await page.locator('[data-test="add-members-submit"]').click()
-      await expect(page.getByText('Members added successfully', { exact: true })).toBeVisible()
+test.describe(
+  '[US-COMPANIES-006/007] Integrated company access lifecycle',
+  {
+    tag: ['@US-COMPANIES-006', '@US-COMPANIES-007', '@integrated']
+  },
+  () => {
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-006-01]
+     * - [AC-US-COMPANIES-006-02]
+     * - [AC-US-COMPANIES-006-03]
+     * - [AC-US-COMPANIES-007-01]
+     * - [AC-US-COMPANIES-007-02]
+     */
+    test('hides, recovers, archives and restores the same company', async ({ page }) => {
+      const company = await createRealCompany(page)
+      const teamId = String(company.id)
 
-      const memberRow = page
-        .locator('[data-test="members-table"] tbody tr')
-        .filter({ hasText: E2E_MEMBER.slice(0, 6) })
-      await expect(memberRow).toBeVisible()
-      await expect(page.locator('[data-test="members-table"]')).toContainText('2')
-      await memberRow.locator('[data-test="delete-member-button"]').click()
-      await page.locator('[data-test="delete-member-confirm-button"]').click()
-      await expect(memberRow).toHaveCount(0)
-      await expect(page.locator('[data-test="members-table"]')).toContainText('1')
-    } finally {
-      await deleteCompanyThroughUi(page, teamId, company.name)
-    }
-  })
-})
+      try {
+        await finishRealCompanyWithoutContracts(page, teamId)
+        await openCompanyMetadataActions(page, company.name)
+        await page.locator('[data-test="team-meta-visibility-open"]').click()
+        await page.locator('[data-test="visibility-team-button"]').click()
 
-test.describe('[US-COMPANIES-006] Integrated company lifecycle', { tag: '@integrated' }, () => {
-  /**
-   * Covers:
-   * - [AC-US-COMPANIES-006-01]
-   * - [AC-US-COMPANIES-006-02]
-   * - [AC-US-COMPANIES-006-03]
-   */
-  test('archives, finds and restores the same company', async ({ page }) => {
-    const company = await createRealCompany(page)
-    const teamId = String(company.id)
+        await openRealCompaniesList(page)
+        await expect(card(page, teamId)).toHaveCount(0)
+        await page.locator('[data-test="toggle-show-hidden"]').click()
+        await expect(card(page, teamId)).toContainText('Hidden')
+        await card(page, teamId).locator('[data-test="team-link"]').click()
+        await openCompanyMetadataActions(page, company.name)
+        await page.locator('[data-test="team-meta-visibility-open"]').click()
+        await page.locator('[data-test="visibility-team-button"]').click()
 
-    try {
-      await finishRealCompanyWithoutContracts(page, teamId)
-      await openCompanyMetadataActions(page, company.name)
-      await page.locator('[data-test="team-meta-archive-open"]').click()
-      await page.locator('[data-test="archive-team-button"]').click()
-      await expect(page.locator('[data-test="team-archived-banner"]')).toBeVisible()
+        await expect(page.getByText('Company is visible again', { exact: true })).toBeVisible()
+        await openCompanyMetadataActions(page, company.name)
+        await page.locator('[data-test="team-meta-archive-open"]').click()
+        await page.locator('[data-test="archive-team-button"]').click()
+        await expect(page.locator('[data-test="team-archived-banner"]')).toBeVisible()
 
-      await openRealCompaniesList(page)
-      await expect(card(page, teamId)).toHaveCount(0)
-      await page.locator('[data-test="toggle-show-archived"]').click()
-      await expect(card(page, teamId)).toContainText('Archived')
-      await card(page, teamId).locator('[data-test="team-link"]').click()
-      await page.locator('[data-test="team-archived-unarchive-button"]').click()
-      await expect(page.getByText('Company unarchived successfully', { exact: true })).toBeVisible()
-      await expect(page.locator('[data-test="team-archived-banner"]')).toHaveCount(0)
+        await openRealCompaniesList(page)
+        await expect(card(page, teamId)).toHaveCount(0)
+        await page.locator('[data-test="toggle-show-archived"]').click()
+        await expect(card(page, teamId)).toContainText('Archived')
+        await card(page, teamId).locator('[data-test="team-link"]').click()
+        await page.locator('[data-test="team-archived-unarchive-button"]').click()
+        await expect(
+          page.getByText('Company unarchived successfully', { exact: true })
+        ).toBeVisible()
+        await expect(page.locator('[data-test="team-archived-banner"]')).toHaveCount(0)
 
-      await openRealCompaniesList(page)
-      await expect(card(page, teamId)).toBeVisible()
-    } finally {
-      await deleteCompanyThroughUi(page, teamId, company.name)
-    }
-  })
-})
-
-test.describe('[US-COMPANIES-007] Integrated list visibility', { tag: '@integrated' }, () => {
-  /**
-   * Covers:
-   * - [AC-US-COMPANIES-007-01]
-   * - [AC-US-COMPANIES-007-02]
-   */
-  test('hides the company from the default list and shows it again', async ({ page }) => {
-    const company = await createRealCompany(page)
-    const teamId = String(company.id)
-
-    try {
-      await finishRealCompanyWithoutContracts(page, teamId)
-      await openCompanyMetadataActions(page, company.name)
-      await page.locator('[data-test="team-meta-visibility-open"]').click()
-      await page.locator('[data-test="visibility-team-button"]').click()
-
-      await openRealCompaniesList(page)
-      await expect(card(page, teamId)).toHaveCount(0)
-      await page.locator('[data-test="toggle-show-hidden"]').click()
-      await expect(card(page, teamId)).toContainText('Hidden')
-      await card(page, teamId).locator('[data-test="team-link"]').click()
-      await openCompanyMetadataActions(page, company.name)
-      await page.locator('[data-test="team-meta-visibility-open"]').click()
-      await page.locator('[data-test="visibility-team-button"]').click()
-
-      await expect(page.getByText('Company is visible again', { exact: true })).toBeVisible()
-      await openRealCompaniesList(page)
-      await expect(card(page, teamId)).toBeVisible()
-    } finally {
-      await deleteCompanyThroughUi(page, teamId, company.name)
-    }
-  })
-})
+        await openRealCompaniesList(page)
+        await expect(card(page, teamId)).toBeVisible()
+      } finally {
+        await deleteCompanyThroughUi(page, teamId, company.name)
+      }
+    })
+  }
+)
 
 test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integrated' }, () => {
   /**

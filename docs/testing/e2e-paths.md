@@ -47,6 +47,14 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Playwright may submit a contract transaction only through a user-accessible product action;
   - Playwright must not deploy fixture infrastructure, alter contract code or balances, control mining, or mutate chain state directly
     through RPC methods.
+- Execution profiles:
+  - `@integrated` paths use the developer- or CI-managed frontend, backend, database, and local chain without intercepting CNC Portal
+    boundaries;
+  - `@mocked` browser scenarios inject validation, backend, wallet, or network outcomes and do not count as integrated E2E evidence;
+  - run Companies integrated paths with `npm run test:e2e:company:integrated` from `app/`;
+  - run the faster, parallel Companies variants with `npm run test:e2e:company:mocked` from `app/`;
+  - these Companies scripts skip Playwright service startup and global infrastructure setup, so the developer or CI must prepare the
+    frontend and the integrated stack first.
 
 ## G0 — Integrated Technical Readiness
 
@@ -88,8 +96,9 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - failed Officer registration after a successful transaction;
     - non-owner member access and unavailable workspace states.
   - Expected result: the same persisted company moves from creation to a contract-backed workspace and remains recoverable from the list.
-  - Status: executable locally.
-  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
+  - Status: executable locally; required-field, member-address, failed-create, and wallet-rejection variants use mocked browser boundaries.
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
+    [mocked browser variants](../../app/test/e2e/company/company.mocked.spec.ts).
 
 - `E2E-PATH-02` — Establish the company treasury
   - Stories validated:
@@ -124,7 +133,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Remove the member and verify the membership and access changes persist.
   - Separate variants: invalid metadata, existing members, owner removal, non-owner writes, archived-company writes, and rejected requests.
   - Expected result: company identity and membership remain consistent for both actors.
-  - Status: partial; the integrated story checks exist but still run as separate Playwright tests.
+  - Status: partial; metadata and membership mutations now share one integrated path, while second-user access remains planned.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
 
 - `E2E-PATH-04` — Suspend and recover company access
@@ -142,7 +151,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Restore the company and verify its normal actions return.
   - Separate variants: non-member visibility changes, non-owner lifecycle changes, and rejected archived writes.
   - Expected result: personal visibility and company lifecycle remain distinct and recoverable.
-  - Status: partial; archive/restore and hide/show pass separately, while cross-wallet isolation remains planned.
+  - Status: partial; archive/restore and hide/show now share one integrated path, while cross-wallet isolation remains planned.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
 
 - `E2E-PATH-05` — Permanently retire a company

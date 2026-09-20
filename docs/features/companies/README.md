@@ -70,16 +70,16 @@ flowchart LR
 Representative counts below come from direct `AC-US-*` references in tracked tests. They show evidence by layer, not exhaustive coverage or
 the result of the latest test run. E2E status is assessed against the stated integration boundary.
 
-| User Story       | Representative AC Coverage             | E2E Status | E2E Boundary                                                   |
-| ---------------- | -------------------------------------- | ---------- | -------------------------------------------------------------- |
-| US-COMPANIES-001 | integrated E2E 3/8 · simulated E2E 6/8 | 🚧 Partial | Real browser, backend, and PostgreSQL for the main flow        |
-| US-COMPANIES-002 | integrated E2E 3/8 · simulated E2E 6/8 | 🚧 Partial | Real browser, backend, PostgreSQL, and local Hardhat chain     |
-| US-COMPANIES-003 | integrated E2E 2/9 · backend 2/9       | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
-| US-COMPANIES-004 | integrated E2E 2/6                     | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
-| US-COMPANIES-005 | integrated E2E 3/10                    | 🚧 Partial | Two real browser identities, backend, and PostgreSQL           |
-| US-COMPANIES-006 | integrated E2E 3/7 · backend 1/7       | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
-| US-COMPANIES-007 | integrated E2E 2/6 · backend 1/6       | 🚧 Partial | Real browser, member-scoped backend state, and PostgreSQL      |
-| US-COMPANIES-008 | integrated E2E 3/6                     | 🚧 Partial | Real browser, backend, and permanent PostgreSQL record removal |
+| User Story       | Representative AC Coverage              | E2E Status | E2E Boundary                                                   |
+| ---------------- | --------------------------------------- | ---------- | -------------------------------------------------------------- |
+| US-COMPANIES-001 | integrated E2E 3/8 · mocked browser 4/8 | 🚧 Partial | Real backend and PostgreSQL on the main path; mocked variants  |
+| US-COMPANIES-002 | integrated E2E 3/8 · mocked browser 2/8 | 🚧 Partial | Real local-chain deployment on the main path; mocked variants  |
+| US-COMPANIES-003 | integrated E2E 2/9 · backend 2/9        | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
+| US-COMPANIES-004 | integrated E2E 1/6 · mocked browser 1/6 | 🚧 Partial | Real persistence on the main path; mocked validation variant   |
+| US-COMPANIES-005 | integrated E2E 3/10                     | 🚧 Partial | Two real browser identities, backend, and PostgreSQL           |
+| US-COMPANIES-006 | integrated E2E 3/7 · backend 1/7        | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
+| US-COMPANIES-007 | integrated E2E 2/6 · backend 1/6        | 🚧 Partial | Real browser, member-scoped backend state, and PostgreSQL      |
+| US-COMPANIES-008 | integrated E2E 3/6                      | 🚧 Partial | Real browser, backend, and permanent PostgreSQL record removal |
 
 ## US-COMPANIES-001: Create a Company Workspace
 
@@ -340,6 +340,8 @@ This validation does not attest to a live on-chain Officer deployment.
   [company-controller tests](../../../backend/src/controllers/__tests__/teamController.test.ts)
 - [Integrated company lifecycle E2E](../../../app/test/e2e/company/company.integrated.spec.ts), which exercises only user-accessible actions
   against externally prepared backend, database, and chain infrastructure
+- [Mocked company browser variants](../../../app/test/e2e/company/company.mocked.spec.ts), which cover validation and injected failures
+  without being counted as integrated E2E evidence
 
 ## Related Documentation
 
