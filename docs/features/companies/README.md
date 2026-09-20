@@ -70,16 +70,16 @@ flowchart LR
 Representative counts below come from direct `AC-US-*` references in tracked tests. They show evidence by layer, not exhaustive coverage or
 the result of the latest test run. E2E status is assessed against the stated integration boundary.
 
-| User Story       | Representative AC Coverage | E2E Status    | E2E Boundary                                      |
-| ---------------- | -------------------------- | ------------- | ------------------------------------------------- |
-| US-COMPANIES-001 | Backend 2/8 · E2E 6/8      | 🚧 Partial    | Browser with simulated API and no database        |
-| US-COMPANIES-002 | E2E 6/8                    | 🚧 Partial    | Browser and real Hardhat chain with simulated API |
-| US-COMPANIES-003 | Backend 2/9                | ⚪ Unassessed | Not yet assessed                                  |
-| US-COMPANIES-004 | None linked                | ⚪ Unassessed | Not yet assessed                                  |
-| US-COMPANIES-005 | None linked                | ⚪ Unassessed | Not yet assessed                                  |
-| US-COMPANIES-006 | Backend 1/7                | ⚪ Unassessed | Not yet assessed                                  |
-| US-COMPANIES-007 | Backend 1/6                | ⚪ Unassessed | Not yet assessed                                  |
-| US-COMPANIES-008 | None linked                | ⚪ Unassessed | Not yet assessed                                  |
+| User Story       | Representative AC Coverage             | E2E Status | E2E Boundary                                                   |
+| ---------------- | -------------------------------------- | ---------- | -------------------------------------------------------------- |
+| US-COMPANIES-001 | integrated E2E 3/8 · simulated E2E 6/8 | 🚧 Partial | Real browser, backend, and PostgreSQL for the main flow        |
+| US-COMPANIES-002 | integrated E2E 3/8 · simulated E2E 6/8 | 🚧 Partial | Real browser, backend, PostgreSQL, and local Hardhat chain     |
+| US-COMPANIES-003 | integrated E2E 2/9 · backend 2/9       | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
+| US-COMPANIES-004 | integrated E2E 2/6                     | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
+| US-COMPANIES-005 | integrated E2E 3/10                    | 🚧 Partial | Two real browser identities, backend, and PostgreSQL           |
+| US-COMPANIES-006 | integrated E2E 3/7 · backend 1/7       | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
+| US-COMPANIES-007 | integrated E2E 2/6 · backend 1/6       | 🚧 Partial | Real browser, member-scoped backend state, and PostgreSQL      |
+| US-COMPANIES-008 | integrated E2E 3/6                     | 🚧 Partial | Real browser, backend, and permanent PostgreSQL record removal |
 
 ## US-COMPANIES-001: Create a Company Workspace
 
@@ -338,8 +338,10 @@ This validation does not attest to a live on-chain Officer deployment.
   [archived-workspace action tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaActions.archived.spec.ts)
 - [Archived-workspace authorization](../../../backend/src/middleware/teamAuthzMiddleware.ts) and
   [company-controller tests](../../../backend/src/controllers/__tests__/teamController.test.ts)
-- [Company creation E2E](../../../app/test/e2e/company/company-creation.spec.ts) and
-  [contract onboarding E2E](../../../app/test/e2e/company/company-onboarding.spec.ts)
+- [Company creation E2E](../../../app/test/e2e/company/company-creation.spec.ts),
+  [simulated-backend contract onboarding E2E](../../../app/test/e2e/company/company-onboarding.spec.ts),
+  [integrated Officer onboarding E2E](../../../app/test/e2e/company/company-onboarding.integrated.spec.ts), and
+  [integrated company-management E2E](../../../app/test/e2e/company/company-management.integrated.spec.ts)
 
 ## Related Documentation
 

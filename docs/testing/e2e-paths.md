@@ -59,6 +59,15 @@ representative AC subsets must be allocated when each group is decomposed into i
 
 ## G1 — Company Onboarding and Treasury Setup
 
+- `E2E-FLOW-G1-ONBOARDING` — Create, deploy, then open an operational company
+  - Story flow: `US-COMPANIES-001` → `US-COMPANIES-002` → `US-COMPANIES-003`.
+  - Path composition: `E2E-PATH-01` → `E2E-PATH-02` → `E2E-PATH-05`.
+  - Execution rule: one browser test keeps the same authenticated owner and persisted company across the three paths.
+  - Verification boundary: the test submits the company to the real backend, sends the Officer deployment transaction to the local chain,
+    verifies backend and on-chain state, then finds and reopens the same company from the Companies list.
+  - Isolation rule: validation, authorization, and failure variants remain separate tests so one injected failure does not invalidate the
+    main flow.
+
 - `E2E-PATH-01` — Create a company workspace
   - Primary story: `US-COMPANIES-001`.
   - Representative criteria:
