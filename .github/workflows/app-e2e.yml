@@ -182,7 +182,9 @@ jobs:
           exit 1
 
       - name: 🚀 Deploy Company contract infrastructure
-        run: npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network localhost
+        run: |
+          npx hardhat ignition deploy ignition/modules/MockTokensModule.ts --network localhost
+          npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network localhost
         working-directory: ./contract
 
       - name: 📋 Publish local deployment addresses to the frontend build
