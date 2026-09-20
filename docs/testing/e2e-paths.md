@@ -84,7 +84,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - non-owner member access and unavailable workspace states.
   - Expected result: the same persisted company moves from creation to a contract-backed workspace and remains recoverable from the list.
   - Status: executable locally.
-  - Evidence: [integrated onboarding test](../../app/test/e2e/company/company-onboarding.integrated.spec.ts).
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
 
 - `E2E-PATH-02` — Establish the company treasury
   - Stories validated:
@@ -120,7 +120,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Separate variants: invalid metadata, existing members, owner removal, non-owner writes, archived-company writes, and rejected requests.
   - Expected result: company identity and membership remain consistent for both actors.
   - Status: partial; the integrated story checks exist but still run as separate Playwright tests.
-  - Evidence: [integrated management tests](../../app/test/e2e/company/company-management.integrated.spec.ts).
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
 
 - `E2E-PATH-04` — Suspend and recover company access
   - Stories validated:
@@ -138,7 +138,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Separate variants: non-member visibility changes, non-owner lifecycle changes, and rejected archived writes.
   - Expected result: personal visibility and company lifecycle remain distinct and recoverable.
   - Status: partial; archive/restore and hide/show pass separately, while cross-wallet isolation remains planned.
-  - Evidence: [integrated management tests](../../app/test/e2e/company/company-management.integrated.spec.ts).
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
 
 - `E2E-PATH-05` — Permanently retire a company
   - Story validated: `US-COMPANIES-008` — permanently delete a company.
@@ -152,7 +152,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Separate variants: non-owner and rejected deletion.
   - Expected result: the deleted workspace cannot be reopened or restored.
   - Status: partial; cancellation and permanent removal pass, while cascade evidence remains to be added.
-  - Evidence: [integrated management tests](../../app/test/e2e/company/company-management.integrated.spec.ts).
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
 
 ## G3 — Shareholder Lifecycle and SHER
 
