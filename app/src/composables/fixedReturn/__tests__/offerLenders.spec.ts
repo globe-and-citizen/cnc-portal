@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { ref, toValue } from 'vue'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks'
 import { USDC_ADDRESS } from '@/constant'
+import { zeroAddress } from 'viem'
 
 vi.unmock('@/composables/fixedReturn/reads')
 
@@ -10,6 +11,8 @@ import { useFixedReturnOfferLenders } from '../reads'
 
 type CapturedQuery = {
   queryFn: () => Promise<unknown>
+  queryKey: unknown
+  enabled: unknown
 }
 
 describe('useFixedReturnOfferLenders', () => {
@@ -52,5 +55,20 @@ describe('useFixedReturnOfferLenders', () => {
     useFixedReturnOfferLenders('1', USDC_ADDRESS)
 
     await expect(getQuery().queryFn()).resolves.toEqual([])
+  })
+
+  it('stays disabled against the zeroAddress token placeholder, enabling once the real token resolves', () => {
+    useFixedReturnOfferLenders('1', zeroAddress)
+    expect(toValue(getQuery().enabled)).toBe(false)
+
+    useFixedReturnOfferLenders('1', USDC_ADDRESS)
+    expect(toValue(getQuery().enabled)).toBe(true)
+  })
+
+  it('includes the token in the query key so a decimals-affecting token change gets its own cache entry', () => {
+    useFixedReturnOfferLenders('1', USDC_ADDRESS)
+    const key = toValue(getQuery().queryKey) as readonly unknown[]
+
+    expect(key[key.length - 1]).toMatchObject({ offerId: '1', token: USDC_ADDRESS })
   })
 })

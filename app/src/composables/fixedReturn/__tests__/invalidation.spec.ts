@@ -3,9 +3,12 @@ import type { QueryClient } from '@tanstack/vue-query'
 import { fixedReturnKeys } from '../reads'
 import {
   invalidateAfterAcceptPartialFunding,
+  invalidateAfterCreateLendingOffer,
   invalidateAfterLend,
   invalidateAfterRefund,
-  invalidateAfterRepay
+  invalidateAfterRepay,
+  retryFixedReturnReads,
+  retryMyLenderPositions
 } from '../invalidation'
 
 const TOKEN_ADDRESS = '0x2222222222222222222222222222222222222222' as const
@@ -51,5 +54,42 @@ describe.each([
         queryKey: ['readContract', { address: '0x9999999999999999999999999999999999999999' }]
       })
     ).toBe(false)
+  })
+})
+
+describe('invalidateAfterCreateLendingOffer', () => {
+  it('invalidates only the overview list, not the full FixedReturn scope', () => {
+    const queryClient = makeQueryClient()
+
+    invalidateAfterCreateLendingOffer(queryClient)
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: fixedReturnKeys.allOffers
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('retryFixedReturnReads', () => {
+  it('invalidates the broad FixedReturn prefix, not the events log or any token', () => {
+    const queryClient = makeQueryClient()
+
+    retryFixedReturnReads(queryClient)
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: fixedReturnKeys.all })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('retryMyLenderPositions', () => {
+  it('invalidates only the connected-lender-positions query', () => {
+    const queryClient = makeQueryClient()
+
+    retryMyLenderPositions(queryClient)
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: fixedReturnKeys.myLenderPositions
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(1)
   })
 })

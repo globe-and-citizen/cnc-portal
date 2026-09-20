@@ -9,6 +9,7 @@ import { useFixedReturnMyLenderPositions } from '../reads'
 
 type CapturedQuery = {
   queryFn: () => Promise<Map<number, unknown>>
+  enabled: unknown
 }
 
 const OFFERS = [
@@ -99,5 +100,11 @@ describe('useFixedReturnMyLenderPositions', () => {
 
     await expect(getQuery().queryFn()).resolves.toEqual(new Map())
     expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
+    expect(toValue(getQuery().enabled)).toBe(false)
+  })
+
+  it('enables once there is at least one offer to check', () => {
+    useFixedReturnMyLenderPositions()
+    expect(toValue(getQuery().enabled)).toBe(true)
   })
 })
