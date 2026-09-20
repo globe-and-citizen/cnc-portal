@@ -20,6 +20,24 @@ Deposits remain in the Credit Account while a round is raising. Reaching the tar
 the principal to the company Bank. Refunds and repayments are pushed to every lender by an issuer transaction; lenders do not claim them
 individually. The round name and purpose are stored off-chain, while its financial terms and settlement state remain on-chain.
 
+## Architecture
+
+Terminology mapping (FixedReturn instance ↔ Credit Account, lending offer ↔ round) is documented once, above, in
+[Product Model](#product-model) — nothing below restates it. Contract terminology (`FixedReturn`) stays at the gateway layer (contracts,
+composables, cache keys); product terminology (`Community Credit`, round, Credit Account) is used above that boundary (routes, views,
+product-facing copy).
+
+| Layer                    | Owner                                                                                                    | Key files                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| FixedReturn contract     | On-chain offer lifecycle, deposits, whitelist/caps, refunds, repayment fan-out                           | `contract/contracts/FixedReturn.sol`                                                                         |
+| Bank contract            | Resolves the offer token, funds FixedReturn, triggers repayment                                          | `contract/contracts/Bank.sol`                                                                                |
+| Metadata API             | Off-chain `title`/`purpose` by `(teamId, offerId)`                                                       | `backend/src/controllers/fixedReturnOfferingController.ts`, `app/src/queries/fixedReturnOffering.queries.ts` |
+| FixedReturn reads/writes | Raw typed contract gateway — no product naming                                                           | `app/src/composables/fixedReturn/reads.ts`, `app/src/composables/fixedReturn/writes.ts`                      |
+| Cache policy             | Per-component `queryClient.invalidateQueries` calls, raw string-literal keys — no shared key factory yet | inline in views/modals                                                                                       |
+| Community Credit store   | Product read model — offer list + metadata + owner mapped to `CreditRound`; derives `isOwner`            | `app/src/stores/communityCredit.ts`                                                                          |
+| Views (route owners)     | Route/navigation, user intent, mutations, toasts                                                         | `app/src/views/team/[id]/CommunityCredit/{IndexView,NewView,RoundView}.vue`                                  |
+| Presentation components  | Props in, events out — no direct reads/writes                                                            | `app/src/components/sections/CommunityCreditView/*.vue`                                                      |
+
 ## Lifecycle
 
 ```mermaid
