@@ -338,9 +338,8 @@ This validation does not attest to a live on-chain Officer deployment.
   [archived-workspace action tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaActions.archived.spec.ts)
 - [Archived-workspace authorization](../../../backend/src/middleware/teamAuthzMiddleware.ts) and
   [company-controller tests](../../../backend/src/controllers/__tests__/teamController.test.ts)
-- [Company creation and Officer onboarding E2E](../../../app/test/e2e/company/company-onboarding.spec.ts),
-  [company contract and recovery E2E](../../../app/test/e2e/company/company-contracts.spec.ts), and
-  [integrated company lifecycle E2E](../../../app/test/e2e/company/company.integrated.spec.ts)
+- [Integrated company lifecycle E2E](../../../app/test/e2e/company/company.integrated.spec.ts), which exercises only user-accessible actions
+  against externally prepared backend, database, and chain infrastructure
 
 ## Related Documentation
 

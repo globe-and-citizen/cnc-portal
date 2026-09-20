@@ -41,7 +41,12 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 - Runtime ownership:
   - locally, the developer starts and controls the frontend, backend, database, and node;
   - in CI, the workflow prepares those services before Playwright starts;
+  - required infrastructure contracts are deployed before Playwright starts;
   - the E2E test checks readiness and exercises product behaviour, but does not own service startup.
+- Browser-action rule:
+  - Playwright may submit a contract transaction only through a user-accessible product action;
+  - Playwright must not deploy fixture infrastructure, alter contract code or balances, control mining, or mutate chain state directly
+    through RPC methods.
 
 ## G0 — Integrated Technical Readiness
 

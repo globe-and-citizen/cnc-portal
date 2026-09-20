@@ -9,21 +9,26 @@ import {
   officerOwner,
   ownerNonce
 } from './company-chain'
-import { enterShareDetails } from './company-page'
 import {
   createRealCompany,
-  deleteRealCompany,
-  fetchRealCompany,
+  deleteCompanyThroughUi,
+  enterShareDetails,
   finishRealCompanyWithoutContracts,
   openCompanyMetadataActions,
   openRealCompaniesList,
-  realCompanyStatus,
   signInToRealStack,
   uniqueCompanyName
 } from './real-company-page'
 
 const card = (page: Parameters<typeof createRealCompany>[0], teamId: string) =>
   page.locator(`[data-test="team-card-${teamId}"]`)
+
+interface OfficerRegistrationResponse {
+  officer: {
+    address: Address
+    deployBlockNumber: string
+  }
+}
 
 test.describe(
   '[US-COMPANIES-001/002/003] Integrated company onboarding',
@@ -49,8 +54,7 @@ test.describe(
       const teamId = String(team.id)
 
       try {
-        const created = await fetchRealCompany(page, teamId)
-        expect(created).toMatchObject({
+        expect(team).toMatchObject({
           id: team.id,
           name: team.name,
           description: team.description,
@@ -59,22 +63,28 @@ test.describe(
           isHidden: false
         })
         expect(
-          created.members.some(({ address }) => address.toLowerCase() === E2E_OWNER.toLowerCase())
+          team.members.some(({ address }) => address.toLowerCase() === E2E_OWNER.toLowerCase())
         ).toBe(true)
 
         const before = await ownerNonce()
         await enterShareDetails(page)
+        const registered = page.waitForResponse(
+          (response) =>
+            response.request().method() === 'POST' &&
+            new URL(response.url()).pathname === '/api/contract/officer'
+        )
         await page.locator('[data-test="deploy-contracts-button"]').click()
+        const registrationResponse = await registered
+        expect(registrationResponse.ok()).toBe(true)
+        const registration = (await registrationResponse.json()) as OfficerRegistrationResponse
         await expect(page.locator('[data-test="step-4"]')).toBeVisible({ timeout: 120_000 })
 
-        const persisted = await fetchRealCompany(page, teamId)
-        const officer = persisted.currentOfficer?.address as Address | undefined
-        expect(officer).toBeDefined()
+        const officer = registration.officer.address
         expect(await ownerNonce()).toBe(before + 1)
-        expect(await hasCode(officer!)).toBe(true)
-        expect(await officerOwner(officer!)).toBe(E2E_OWNER)
+        expect(await hasCode(officer)).toBe(true)
+        expect(await officerOwner(officer)).toBe(E2E_OWNER)
 
-        const contracts = await deployedContracts(officer!)
+        const contracts = await deployedContracts(officer)
         expect(contracts.map(({ contractType }) => contractType).sort()).toEqual(
           expectedContractTypes
         )
@@ -91,7 +101,7 @@ test.describe(
         })
 
         const deploymentBlock = await publicClient.getBlock({
-          blockNumber: BigInt(persisted.currentOfficer!.deployBlockNumber!)
+          blockNumber: BigInt(registration.officer.deployBlockNumber)
         })
         expect(deploymentBlock.transactions).toHaveLength(1)
 
@@ -107,7 +117,7 @@ test.describe(
         await expect(page.getByText('Team Members', { exact: true })).toBeVisible()
         await expect(page.locator(`a[href="/teams/${teamId}/accounts/bank-account"]`)).toBeVisible()
       } finally {
-        await deleteRealCompany(page, teamId)
+        await deleteCompanyThroughUi(page, teamId, team.name)
       }
     })
   }
@@ -124,6 +134,7 @@ test.describe('[US-COMPANIES-004] Integrated company details', { tag: '@integrat
     const teamId = String(company.id)
     const updatedName = uniqueCompanyName('Updated E2E Company')
     const updatedDescription = 'Updated by the integrated company-details journey.'
+    let currentName = company.name
 
     try {
       await finishRealCompanyWithoutContracts(page, teamId)
@@ -139,15 +150,17 @@ test.describe('[US-COMPANIES-004] Integrated company details', { tag: '@integrat
       await description.fill(updatedDescription)
       await dialog.getByRole('button', { name: 'Save changes' }).click()
       await expect(page.getByText('Company updated successfully', { exact: true })).toBeVisible()
+      currentName = updatedName
 
-      const persisted = await fetchRealCompany(page, teamId)
-      expect(persisted).toMatchObject({ name: updatedName, description: updatedDescription })
+      await page.reload()
+      await openCompanyMetadataActions(page, updatedName)
       await expect(page.getByText(updatedName, { exact: true }).first()).toBeVisible()
+      await expect(page.getByText(updatedDescription, { exact: true })).toBeVisible()
       await openRealCompaniesList(page)
       await expect(card(page, teamId)).toContainText(updatedName)
       await expect(card(page, teamId)).toContainText(updatedDescription)
     } finally {
-      await deleteRealCompany(page, teamId)
+      await deleteCompanyThroughUi(page, teamId, currentName)
     }
   })
 })
@@ -182,22 +195,18 @@ test.describe('[US-COMPANIES-005] Integrated company membership', { tag: '@integ
         .click()
       await page.locator('[data-test="add-members-submit"]').click()
       await expect(page.getByText('Members added successfully', { exact: true })).toBeVisible()
-      await expect.poll(async () => (await fetchRealCompany(page, teamId)).members.length).toBe(2)
 
       const memberRow = page
         .locator('[data-test="members-table"] tbody tr')
         .filter({ hasText: E2E_MEMBER.slice(0, 6) })
       await expect(memberRow).toBeVisible()
+      await expect(page.locator('[data-test="members-table"]')).toContainText('2')
       await memberRow.locator('[data-test="delete-member-button"]').click()
       await page.locator('[data-test="delete-member-confirm-button"]').click()
-      await expect.poll(async () => (await fetchRealCompany(page, teamId)).members.length).toBe(1)
-      expect(
-        (await fetchRealCompany(page, teamId)).members.some(
-          ({ address }) => address.toLowerCase() === E2E_MEMBER.toLowerCase()
-        )
-      ).toBe(false)
+      await expect(memberRow).toHaveCount(0)
+      await expect(page.locator('[data-test="members-table"]')).toContainText('1')
     } finally {
-      await deleteRealCompany(page, teamId)
+      await deleteCompanyThroughUi(page, teamId, company.name)
     }
   })
 })
@@ -229,11 +238,10 @@ test.describe('[US-COMPANIES-006] Integrated company lifecycle', { tag: '@integr
       await expect(page.getByText('Company unarchived successfully', { exact: true })).toBeVisible()
       await expect(page.locator('[data-test="team-archived-banner"]')).toHaveCount(0)
 
-      expect((await fetchRealCompany(page, teamId)).isArchived).toBe(false)
       await openRealCompaniesList(page)
       await expect(card(page, teamId)).toBeVisible()
     } finally {
-      await deleteRealCompany(page, teamId)
+      await deleteCompanyThroughUi(page, teamId, company.name)
     }
   })
 })
@@ -264,11 +272,10 @@ test.describe('[US-COMPANIES-007] Integrated list visibility', { tag: '@integrat
       await page.locator('[data-test="visibility-team-button"]').click()
 
       await expect(page.getByText('Company is visible again', { exact: true })).toBeVisible()
-      await expect.poll(async () => (await fetchRealCompany(page, teamId)).isHidden).toBe(false)
       await openRealCompaniesList(page)
       await expect(card(page, teamId)).toBeVisible()
     } finally {
-      await deleteRealCompany(page, teamId)
+      await deleteCompanyThroughUi(page, teamId, company.name)
     }
   })
 })
@@ -285,23 +292,19 @@ test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integra
   }) => {
     const company = await createRealCompany(page)
     const teamId = String(company.id)
-    let deleted = false
 
-    try {
-      await finishRealCompanyWithoutContracts(page, teamId)
-      await openCompanyMetadataActions(page, company.name)
-      await page.locator('[data-test="team-meta-delete-open"]').click()
-      await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
-      expect(await realCompanyStatus(page, teamId)).toBe(200)
+    await finishRealCompanyWithoutContracts(page, teamId)
+    await page.reload()
+    await openCompanyMetadataActions(page, company.name)
+    await page.locator('[data-test="team-meta-delete-open"]').click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
+    await expect(page.getByRole('heading', { name: company.name, exact: true })).toBeVisible()
 
-      await page.locator('[data-test="team-meta-delete-open"]').click()
-      await page.locator('[data-test="delete-team-button"]').click()
-      await expect(page).toHaveURL(/\/teams$/)
-      await expect(card(page, teamId)).toHaveCount(0)
-      expect(await realCompanyStatus(page, teamId)).toBe(404)
-      deleted = true
-    } finally {
-      if (!deleted) await deleteRealCompany(page, teamId)
-    }
+    await page.locator('[data-test="team-meta-delete-open"]').click()
+    await page.locator('[data-test="delete-team-button"]').click()
+    await expect(page).toHaveURL(/\/teams$/)
+    await expect(card(page, teamId)).toHaveCount(0)
+    await page.reload()
+    await expect(card(page, teamId)).toHaveCount(0)
   })
 })

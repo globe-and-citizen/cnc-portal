@@ -1,8 +1,6 @@
 import { expect, type Page } from '@playwright/test'
 import type { Team } from '../../../src/types/team'
 
-const BACKEND_API_URL = process.env.E2E_BACKEND_API_URL ?? 'http://localhost:4000/api'
-
 export interface RealCompanyOptions {
   description?: string
   name?: string
@@ -64,30 +62,20 @@ export async function openCompanyMetadataActions(page: Page, companyName: string
   await expect(page.locator('[data-test="team-meta-update-open"]')).toBeVisible()
 }
 
-async function authToken(page: Page): Promise<string> {
-  const token = await page.evaluate(() => localStorage.getItem('authToken'))
-  if (!token) throw new Error('The real-stack browser session has no auth token')
-  return token
+export async function enterShareDetails(page: Page): Promise<void> {
+  await page.getByPlaceholder('Company SHER').fill('E2E Shares')
+  await page.getByPlaceholder('SHR', { exact: true }).fill('E2E')
 }
 
-export async function fetchRealCompany(page: Page, teamId: string): Promise<Team> {
-  const response = await page.request.get(`${BACKEND_API_URL}/teams/${teamId}`, {
-    headers: { Authorization: `Bearer ${await authToken(page)}` }
-  })
-  expect(response.ok()).toBe(true)
-  return response.json() as Promise<Team>
-}
-
-export async function deleteRealCompany(page: Page, teamId: string): Promise<void> {
-  const response = await page.request.delete(`${BACKEND_API_URL}/teams/${teamId}`, {
-    headers: { Authorization: `Bearer ${await authToken(page)}` }
-  })
-  if (response.status() !== 404) expect(response.ok()).toBe(true)
-}
-
-export async function realCompanyStatus(page: Page, teamId: string): Promise<number> {
-  const response = await page.request.get(`${BACKEND_API_URL}/teams/${teamId}`, {
-    headers: { Authorization: `Bearer ${await authToken(page)}` }
-  })
-  return response.status()
+export async function deleteCompanyThroughUi(
+  page: Page,
+  teamId: string,
+  companyName: string
+): Promise<void> {
+  await page.goto(`/teams/${teamId}`)
+  await expect(page).toHaveURL(new RegExp(`/teams/${teamId}$`))
+  await openCompanyMetadataActions(page, companyName)
+  await page.locator('[data-test="team-meta-delete-open"]').click()
+  await page.locator('[data-test="delete-team-button"]').click()
+  await expect(page).toHaveURL(/\/teams$/)
 }
