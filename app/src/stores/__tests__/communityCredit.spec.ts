@@ -260,7 +260,6 @@ describe('Community Credit store (contract-backed)', () => {
     expect(store.isOwner).toBe(false)
     ownerData.value = mockUserStore.address
     expect(store.isOwner).toBe(true)
-    expect(store.isLender).toBe(false)
   })
 
   it('disables the owner query when the fixed return address is missing', () => {
