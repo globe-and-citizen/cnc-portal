@@ -37,9 +37,9 @@ Only one unpublished election can exist at a time. An ended election still block
 | US-EL-03   | Publish election results                 | Company owner  | 🚧 In Progress |
 | US-EL-04   | Receive an election-created notification | Company member | 🚧 In Progress |
 | US-EL-05   | Follow the election schedule             | Company member | 🧪 Validation  |
-| US-EL-06   | Follow election turnout and vote counts  | Company member | 🚧 In Progress |
+| US-EL-06   | Follow election turnout and vote counts  | Company member | 🧪 Validation  |
 | US-EL-07   | View the current Board of Directors      | Company member | 🧪 Validation  |
-| US-EL-08   | Review a published election              | Company member | 🚧 In Progress |
+| US-EL-08   | Review a published election              | Company member | 🧪 Validation  |
 | US-EL-09   | Receive a result-published notification  | Company member | 📝 Draft       |
 | US-EL-10   | Understand voter eligibility             | Company member | 🚧 In Progress |
 | US-EL-11   | Cancel an election                       | Company owner  | 📝 Draft       |
@@ -196,7 +196,7 @@ Only one unpublished election can exist at a time. An ended election still block
 #### Business Rules
 
 - [x] `AC-US-EL-06-03` Candidate counts remain attributable to the election being viewed.
-- [ ] `AC-US-EL-06-04` The portal distinguishes provisional vote counts from published winners until results are published.
+- [x] `AC-US-EL-06-04` The portal distinguishes provisional vote counts from published winners until results are published.
 
 #### Edge & Error Cases
 
@@ -224,6 +224,7 @@ Only one unpublished election can exist at a time. An ended election still block
 #### Edge & Error Cases
 
 - [x] `AC-US-EL-07-04` An empty Board state is presented as no current Board rather than as a successful populated Board.
+- [x] `AC-US-EL-07-05` The current Board still loads after a full page reload, once the company's contracts are known.
 
 **Dependencies:** US-EL-03 and the Board of Directors contract
 
@@ -246,8 +247,9 @@ Only one unpublished election can exist at a time. An ended election still block
 
 #### Edge & Error Cases
 
-- [ ] `AC-US-EL-08-04` Every published election remains reachable regardless of its age.
+- [x] `AC-US-EL-08-04` Every published election remains reachable regardless of its age.
 - [x] `AC-US-EL-08-05` An empty past-election list remains distinguishable from a failed or loading history read.
+- [x] `AC-US-EL-08-06` The past-election list still loads after a full page reload, once the company's contracts are known.
 
 **Dependencies:** US-EL-03
 
@@ -324,7 +326,7 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b4f3e0551e7c765b89f84247f7066c149df1e4d1`
+**Implementation evidence reviewed against:** `7acc3be8ba3462eca7dcbc464357611acc5b3a46`
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
@@ -337,6 +339,7 @@ Only one unpublished election can exist at a time. An ended election still block
 - [Current Elections contract](../../../contract/contracts/Elections/Elections.sol)
 - [Elections contract tests](../../../contract/test/Elections.spec.ts)
 - [Election composable tests](../../../app/src/composables/elections/__tests__/reads.spec.ts)
+- [Election history tests](../../../app/src/composables/elections/__tests__/history.spec.ts)
 - [Election component tests](../../../app/src/components/sections/AdministrationView/__tests__/)
 
 ## Related Documentation
@@ -353,7 +356,6 @@ Only one unpublished election can exist at a time. An ended election still block
 - Result publication does not currently request company-member notifications (US-EL-09).
 - The eligible-voter list is a creation-time snapshot, but the portal does not yet explain ineligibility or expose that list for review
   (US-EL-10).
-- The portal supports only the most recent portion of election history rather than an unbounded published-election archive (US-EL-08).
 - The current contract exposes a contract-wide pause, not a per-election cancellation flow, and the portal does not expose an election
   cancellation action (US-EL-11).
 

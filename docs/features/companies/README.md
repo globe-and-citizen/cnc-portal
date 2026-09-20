@@ -308,7 +308,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0e28bbcb231617aca2755311ceb831745ba6cab2e`
+**Implementation evidence reviewed against:** `633d2ce1f8dec6d0451ef97d82e701599e9f8b7e`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and
@@ -329,7 +329,8 @@ This validation does not attest to a live on-chain Officer deployment.
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue),
   [Officer deployment composable](../../../app/src/composables/contracts/useOfficerDeployment.ts), and
   [initial Officer setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/InvestorContractStep.spec.ts)
-- [Company metadata update](../../../app/src/components/sections/DashboardView/TeamMetaUpdateModal.vue),
+- [Company header and its lifecycle actions](../../../app/src/components/sections/DashboardView/TeamMetaSection.vue),
+  [company metadata update](../../../app/src/components/sections/DashboardView/TeamMetaUpdateModal.vue),
   [archive and restore](../../../app/src/components/sections/DashboardView/TeamMetaArchiveModal.vue),
   [member visibility](../../../app/src/components/sections/DashboardView/TeamMetaVisibilityModal.vue), and
   [company deletion](../../../app/src/components/sections/DashboardView/TeamMetaDeleteModal.vue)
@@ -342,6 +343,11 @@ This validation does not attest to a live on-chain Officer deployment.
   against externally prepared backend, database, and chain infrastructure
 - [Mocked company browser variants](../../../app/test/e2e/company/company.mocked.spec.ts), which cover validation and injected failures
   without being counted as integrated E2E evidence
+- Additional stub-driven browser variants: [details update](../../../app/test/e2e/company/company-update.spec.ts),
+  [archive and restore](../../../app/test/e2e/company/company-archive.spec.ts),
+  [list visibility](../../../app/test/e2e/company/company-visibility.spec.ts), and
+  [deletion](../../../app/test/e2e/company/company-delete.spec.ts), driven by the
+  [lifecycle backend stub](../../../app/test/e2e/company/company-lifecycle-page.ts) for the owner and member roles
 
 ## Related Documentation
 

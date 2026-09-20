@@ -5,13 +5,7 @@ import type { Address } from 'viem'
  * this set: the election's title, dates and configuration are immutable, so a
  * vote must not re-fetch the page just to refresh the ballot.
  */
-const ELECTION_VOTE_READS = new Set([
-  'getVoteCount',
-  'getVoteCounts',
-  'getElectionResults',
-  'hasVoted',
-  'getVoterChoice'
-])
+const ELECTION_VOTE_READS = new Set(['getVoteCount', 'getVoteCounts', 'hasVoted', 'getVoterChoice'])
 
 /**
  * Matches only the election reads a successful vote makes stale, including the

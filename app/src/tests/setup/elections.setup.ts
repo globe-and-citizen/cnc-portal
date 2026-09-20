@@ -21,7 +21,6 @@ vi.mock('@/composables/elections/reads', () => ({
   useElectionsGetCandidates: vi.fn(() => mockElectionsReads.getCandidates),
   useElectionsGetEligibleVoters: vi.fn(() => mockElectionsReads.getEligibleVoters),
   useElectionsGetWinners: vi.fn(() => mockElectionsReads.getWinners),
-  useElectionsGetResults: vi.fn(() => mockElectionsReads.getResults),
   useElectionsHasVoted: vi.fn(() => mockElectionsReads.hasVoted),
   useElectionsGetVoterChoice: vi.fn(() => mockElectionsReads.getVoterChoice)
 }))
@@ -30,4 +29,8 @@ vi.mock('@/composables/elections/writes', () => ({
   useElectionsCreateElection: vi.fn(() => mockElectionsWrites.createElection),
   useElectionsPublishResults: vi.fn(() => mockElectionsWrites.publishResults),
   useElectionsCastVote: vi.fn(() => mockElectionsWrites.castVote)
+}))
+
+vi.mock('@/composables/elections/history', () => ({
+  useElectionsPastElections: vi.fn(() => mockElectionsReads.pastElections)
 }))
