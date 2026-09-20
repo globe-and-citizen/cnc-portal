@@ -10,6 +10,10 @@ on:
     branches: "**"
     paths:
       - "app/**"
+      - "backend/**"
+      - "contract/**"
+      - "docs/features/companies/**"
+      - "docs/testing/**"
       - ".github/workflows/app-e2e.yml"
     types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
@@ -92,4 +96,153 @@ jobs:
         with:
           name: playwright-traces
           path: app/test-results/
+          retention-days: 7
+
+  company-integrated-e2e:
+    name: Company integrated E2E
+    if: github.event_name != 'pull_request_target' && (github.event.action != 'labeled' || github.event.label.name == 'run')
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.48.2-noble
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cnc_e2e
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cnc_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      CI: "true"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/cnc_e2e
+      NODE_ENV: test
+      SECRET_KEY: company-e2e-only
+      FRONTEND_URL: http://127.0.0.1:5173
+      PORT: "3000"
+      CHAIN_ID: "31337"
+
+    steps:
+      - name: 🛋 Checkout
+        uses: actions/checkout@v6
+
+      - name: 🏗 Set up Node.js 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: "npm"
+          cache-dependency-path: |
+            app/package-lock.json
+            backend/package-lock.json
+            contract/package-lock.json
+
+      - name: 📦 Install application dependencies
+        run: npm ci
+        working-directory: ./app
+
+      - name: 📦 Install backend dependencies
+        run: npm ci
+        working-directory: ./backend
+
+      - name: 📦 Install contract dependencies
+        run: npm ci
+        working-directory: ./contract
+
+      - name: 🗄 Generate Prisma client and migrate the disposable database
+        run: |
+          npm run prisma:generate
+          npm run prisma:migrate
+        working-directory: ./backend
+
+      - name: 🔨 Compile contracts
+        run: npm run compile
+        working-directory: ./contract
+
+      - name: ⛓ Start the local Hardhat node
+        run: npm run node -- --hostname 0.0.0.0 > ../hardhat-e2e.log 2>&1 &
+        working-directory: ./contract
+
+      - name: ⏳ Wait for the local chain
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent \
+              --header "content-type: application/json" \
+              --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
+              http://127.0.0.1:8545 > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "The local chain did not become ready"
+          exit 1
+
+      - name: 🚀 Deploy Company contract infrastructure
+        run: npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network localhost
+        working-directory: ./contract
+
+      - name: 📋 Publish local deployment addresses to the frontend build
+        run: cp contract/ignition/deployments/chain-31337/deployed_addresses.json app/src/artifacts/deployed_addresses/chain-31337.json
+
+      - name: 🔌 Start the backend
+        run: npm start > ../backend-e2e.log 2>&1 &
+        working-directory: ./backend
+
+      - name: ⏳ Wait for the backend
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "The backend did not become ready"
+          exit 1
+
+      - name: 🖥 Start the E2E frontend
+        run: npm run dev:e2e -- --host 0.0.0.0 --port 5173 > ../frontend-e2e.log 2>&1 &
+        working-directory: ./app
+        env:
+          VITE_APP_BACKEND_URL: http://127.0.0.1:3000
+          VITE_E2E_RPC_URL: http://127.0.0.1:8545
+
+      - name: ⏳ Wait for the frontend
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:5173 > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "The frontend did not become ready"
+          exit 1
+
+      - name: 🧪 Run integrated Company journeys
+        run: npm run test:e2e:company:integrated
+        working-directory: ./app
+        env:
+          HEADLESS: "true"
+
+      - name: 📊 Upload integrated Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-integrated-playwright-report
+          path: app/playwright-report/
+          retention-days: 30
+
+      - name: 📈 Upload integrated traces and stack logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-integrated-failure-evidence
+          path: |
+            app/test-results/
+            hardhat-e2e.log
+            backend-e2e.log
+            frontend-e2e.log
           retention-days: 7
