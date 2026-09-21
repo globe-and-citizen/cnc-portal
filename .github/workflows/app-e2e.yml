@@ -4,106 +4,25 @@ permissions:
   contents: read
 
 on:
-  pull_request_target:
-    types: [assigned, labeled]
   pull_request:
     branches: "**"
     paths:
       - "app/**"
       - "backend/**"
       - "contract/**"
-      - "docs/features/companies/**"
+      - "docs/features/**"
       - "docs/testing/**"
       - ".github/workflows/app-e2e.yml"
     types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 jobs:
-  app-e2e-test:
+  full-stack-e2e:
+    name: Full-stack E2E
     if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
-    # Run inside the official Playwright image: Chromium and its system deps are
-    # preinstalled, so there is no browser download in the critical path.
-    # `playwright install` pulls Chromium from the azureedge.net CDN, which
-    # stalled for >20 min and timed the job out. Caching could not rescue it:
-    # actions/cache only writes in a post-step that is skipped when the job is
-    # cancelled, so a timed-out run never seeds the cache for the next one.
-    # Keep this tag in sync with @playwright/test in app/package.json.
     container: mcr.microsoft.com/playwright:v1.48.2-noble
-    timeout-minutes: 15
-
-    steps:
-      - name: 🛫 Checkout
-        uses: actions/checkout@v6
-
-      - name: 🏗 Set up Node.js 24.x
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24.x
-          cache: "npm"
-          cache-dependency-path: ./app/package-lock.json
-
-      - name: 📦 Install dependencies
-        run: npm ci
-        working-directory: ./app
-
-      - name: 📦 Install contract dependencies (Hardhat node for E2E)
-        run: npm ci
-        working-directory: ./contract
-
-      - name: 🔨 Compile contract artifacts (MockERC20 etc. for E2E)
-        run: npm run compile
-        working-directory: ./contract
-
-      - name: 🧪 Run mocked and fixture-backed browser tests with coverage instrumentation
-        run: npm run test:e2e:coverage -- --grep-invert @integrated
-        working-directory: ./app
-        env:
-          CI: "true"
-          HEADLESS: "true"
-
-      - name: 📊 Generate lcov report from collected coverage
-        if: always()
-        run: npm run coverage:e2e:report
-        working-directory: ./app
-
-      - name: ✅ Upload coverage to Codecov
-        if: always()
-        # Coverage upload must never gate the e2e job, but it must still work.
-        # v4.0.1 (a Node 20 action) sends `service: None` from inside the
-        # Playwright container and the upload silently fails; v5 fixes container
-        # detection and runs on Node 24. `slug` is passed explicitly so it never
-        # falls back to fragile git introspection inside the container.
-        continue-on-error: true
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: ${{ github.repository }}
-          files: ./app/coverage/e2e/lcov.info
-          flags: app-e2e-tests
-
-      - name: 📊 Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: app/playwright-report/
-          retention-days: 30
-
-      - name: 📈 Upload Playwright traces on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-traces
-          path: app/test-results/
-          retention-days: 7
-
-  company-integrated-e2e:
-    name: Company integrated E2E
-    if: github.event_name != 'pull_request_target' && (github.event.action != 'labeled' || github.event.label.name == 'run')
-    runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.48.2-noble
-    timeout-minutes: 25
+    timeout-minutes: 45
 
     services:
       postgres:
@@ -122,13 +41,14 @@ jobs:
       CI: "true"
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/cnc_e2e
       NODE_ENV: test
-      SECRET_KEY: company-e2e-only
+      SECRET_KEY: full-stack-e2e-only
       FRONTEND_URL: http://localhost:5173
       PORT: "3000"
       CHAIN_ID: "31337"
+      RPC_URL: http://127.0.0.1:8545
 
     steps:
-      - name: Checkout
+      - name: 🛫 Checkout
         uses: actions/checkout@v6
 
       - name: 🏗 Set up Node.js 24.x
@@ -153,15 +73,44 @@ jobs:
         run: npm ci
         working-directory: ./contract
 
+      - name: 🔨 Compile contracts
+        run: npm run compile
+        working-directory: ./contract
+
+      - name: 🧪 Run browser acceptance coverage
+        run: npm run test:browser:acceptance:coverage
+        working-directory: ./app
+        env:
+          HEADLESS: "true"
+
+      - name: 📊 Generate browser coverage report
+        if: always()
+        run: npm run coverage:e2e:report
+        working-directory: ./app
+
+      - name: ✅ Upload browser coverage to Codecov
+        if: always()
+        continue-on-error: true
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ${{ github.repository }}
+          files: ./app/coverage/e2e/lcov.info
+          flags: app-browser-acceptance
+
+      - name: 📊 Upload browser acceptance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-acceptance-playwright-report
+          path: app/playwright-report/
+          retention-days: 30
+
       - name: 🗄 Generate Prisma client and migrate the disposable database
         run: |
           npm run prisma:generate
           npm run prisma:migrate
         working-directory: ./backend
-
-      - name: 🔨 Compile contracts
-        run: npm run compile
-        working-directory: ./contract
 
       - name: ⛓ Start the local Hardhat node
         run: npm run node -- --hostname 0.0.0.0 > ../hardhat-e2e.log 2>&1 &
@@ -181,10 +130,11 @@ jobs:
           echo "The local chain did not become ready"
           exit 1
 
-      - name: 🚀 Deploy Company contract infrastructure
+      - name: 🚀 Deploy integrated E2E infrastructure
         run: |
           cp scripts/recipients.json.example scripts/recipients.json
           npx hardhat ignition deploy ignition/modules/MockTokensModule.ts --network localhost
+          npx hardhat ignition deploy ignition/modules/SafeInfraModule.ts --network localhost
           npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network localhost
         working-directory: ./contract
 
@@ -212,6 +162,7 @@ jobs:
         env:
           VITE_APP_BACKEND_URL: http://127.0.0.1:3000
           VITE_E2E_RPC_URL: http://127.0.0.1:8545
+          VITE_E2E_SAFE_INFRA_SOURCE: manifest
 
       - name: ⏳ Wait for the frontend
         run: |
@@ -224,8 +175,8 @@ jobs:
           echo "The frontend did not become ready"
           exit 1
 
-      - name: 🧪 Run integrated Company journeys
-        run: npm run test:e2e:company:integrated
+      - name: 🧪 Run integrated user journeys
+        run: npm run test:e2e:integrated
         working-directory: ./app
         env:
           HEADLESS: "true"
@@ -234,15 +185,15 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: company-integrated-playwright-report
+          name: integrated-playwright-report
           path: app/playwright-report/
           retention-days: 30
 
-      - name: 📈 Upload integrated traces and stack logs on failure
+      - name: 📈 Upload failure traces and stack logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: company-integrated-failure-evidence
+          name: e2e-failure-evidence
           path: |
             app/test-results/
             hardhat-e2e.log
