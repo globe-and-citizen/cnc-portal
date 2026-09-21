@@ -111,7 +111,16 @@ describe('FixedReturn — lender payout gas benchmark (ADR-0002 evidence)', () =
       await fixedReturn.connect(wallet).lendFunds(offerId, DEPOSIT_PER_LENDER)
     }
 
-    return { bank, bankSigner, fixedReturn, token, owner, offerId, totalDeposited, subscriptionDeadline }
+    return {
+      bank,
+      bankSigner,
+      fixedReturn,
+      token,
+      owner,
+      offerId,
+      totalDeposited,
+      subscriptionDeadline
+    }
   }
 
   describe('refundLenders', () => {
@@ -120,8 +129,10 @@ describe('FixedReturn — lender payout gas benchmark (ADR-0002 evidence)', () =
         // Not loadFixture: each iteration needs its own differently-sized setup, so
         // there's no snapshot to reuse across tests — and Hardhat's loadFixture rejects
         // anonymous closures like a per-lenderCount-parameterized call would need anyway.
-        const { fixedReturn, owner, offerId, subscriptionDeadline } =
-          await setupOffer(lenderCount, false)
+        const { fixedReturn, owner, offerId, subscriptionDeadline } = await setupOffer(
+          lenderCount,
+          false
+        )
         await time.increaseTo(subscriptionDeadline + 1)
 
         const tx = await fixedReturn.connect(owner).refundLenders(offerId)
