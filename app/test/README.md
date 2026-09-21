@@ -11,8 +11,8 @@ Instead, when the app is started with `VITE_E2E=true`, `wagmi.config.ts` registe
 connector that wraps a viem local account (Hardhat test account #0). It handles `connect`, `switchChain` and message signing **in-page**, so
 Playwright drives the UI exactly like a real user, with no extension and no popups.
 
-Message signing is done locally with the test private key. The Playwright configuration starts a dedicated Hardhat node on
-`http://127.0.0.1:8546` for the suite, so transaction scenarios never reset or mutate a developer's regular node on port 8545.
+Message signing is done locally with the test private key. Playwright never starts the frontend, backend, database, or Hardhat node. The
+developer or CI must prepare the required stack before running a suite.
 
 ## Quick start
 
@@ -21,7 +21,7 @@ Message signing is done locally with the test private key. The Playwright config
 npm install
 npx playwright install chromium
 
-# Run the E2E suite (compiles contracts, starts Hardhat + Vite, then runs Playwright)
+# Run the integrated suite against an already prepared stack
 npm run test:e2e
 ```
 
@@ -34,15 +34,15 @@ npm run test:e2e:debug    # step-through debugger
 npm run test:e2e:report   # open the last HTML report
 ```
 
-If you prefer to run the dev server yourself:
+For browser acceptance, start the required node and frontend before Playwright:
 
 ```bash
-npm --prefix ../contract run node -- --port 8546 # terminal 1
+npm --prefix ../contract run node -- --port 8545 # terminal 1
 VITE_E2E=true VITE_APP_NETWORK_ALIAS=hardhat \
-  VITE_E2E_RPC_URL=http://127.0.0.1:8546 \
+  VITE_E2E_RPC_URL=http://127.0.0.1:8545 \
   VITE_E2E_USDC_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3 \
-  VITE_E2E_USDCE_ADDRESS=0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 npm run dev -- --port 5174 # terminal 2
-BASE_URL=http://127.0.0.1:5174 SKIP_SERVER=true npm run test:e2e # terminal 3
+  VITE_E2E_USDCE_ADDRESS=0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 npm run dev -- --port 5173 # terminal 2
+BASE_URL=http://127.0.0.1:5173 npm run test:browser:acceptance # terminal 3
 ```
 
 ## Layout

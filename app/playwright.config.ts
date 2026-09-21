@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test'
-import { E2E_RPC_URL, E2E_TOKENS } from './src/e2e/chain'
 
 // A developer-local Chromium can replace the Playwright download.
 const E2E_BROWSER_EXECUTABLE = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE
@@ -61,41 +60,8 @@ export default defineConfig({
     ...(process.env.PLAYWRIGHT_FIREFOX === 'true'
       ? [{ name: 'firefox', use: { ...devices['Desktop Firefox'] } }]
       : [])
-  ],
+  ]
 
-  // The self-managed fixture stack uses the same origins as the shared E2E
-  // constants. Company integration scripts skip these servers and target the
-  // developer- or CI-managed stack instead.
-  webServer: process.env.SKIP_SERVER
-    ? undefined
-    : [
-        {
-          command: 'npm --prefix ../contract run node -- --port 8545',
-          port: 8545,
-          reuseExistingServer: false,
-          timeout: 120000,
-          stdout: 'pipe',
-          stderr: 'pipe'
-        },
-        {
-          command: 'npm run dev -- --port 5173',
-          env: {
-            ...process.env,
-            VITE_E2E: 'true',
-            // CI does not have the developer-only .env file. The E2E tests
-            // intercept this backend origin in the browser, so it only needs
-            // to be a stable, valid URL rather than a running service.
-            VITE_APP_BACKEND_URL: 'http://127.0.0.1:3000',
-            VITE_APP_NETWORK_ALIAS: 'hardhat',
-            VITE_E2E_RPC_URL: E2E_RPC_URL,
-            VITE_E2E_USDC_ADDRESS: E2E_TOKENS.usdc,
-            VITE_E2E_USDCE_ADDRESS: E2E_TOKENS.usdcE
-          },
-          port: 5173,
-          reuseExistingServer: false,
-          timeout: 120000,
-          stdout: 'pipe',
-          stderr: 'pipe'
-        }
-      ]
+  // Playwright never starts application services. Developers and CI prepare
+  // the frontend, backend, database, and local chain before invoking a suite.
 })

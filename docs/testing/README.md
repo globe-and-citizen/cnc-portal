@@ -25,9 +25,9 @@ npm run test:coverage
 
 ### Browser acceptance and integrated E2E
 
-The integrated profile targets a stack that is already running: frontend, backend, migrated database, local chain, and required contract
-infrastructure. Playwright performs only user-accessible actions and does not start services, deploy infrastructure contracts, or seed
-application state directly.
+Every Playwright profile targets services that are already running. The integrated profile requires the frontend, backend, migrated
+database, local chain, and contract infrastructure. Browser acceptance requires its frontend and deterministic local node. Playwright has no
+server startup configuration.
 
 ```bash
 cd app
@@ -39,9 +39,9 @@ npm run test:e2e
 npm run test:browser:acceptance
 ```
 
-CI exposes one `Full-stack E2E` job. Inside that job, browser acceptance runs first for fast UI and failure coverage, then CI provisions a
-disposable PostgreSQL database, backend, local chain, deployment manifest, and frontend before running the `@integrated` paths. The two
-phases publish separate reports because only the integrated phase is E2E evidence.
+CI exposes one `Full-stack E2E` job. The workflow starts the local node and browser-acceptance frontend before the first phase. It then
+resets the chain, provisions the disposable database, backend, deployment manifest, and integrated frontend before running the `@integrated`
+paths. The two phases publish separate reports because only the integrated phase is E2E evidence.
 
 ### Test Structure
 

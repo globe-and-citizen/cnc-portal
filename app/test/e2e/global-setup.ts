@@ -1,8 +1,8 @@
 import { ensureE2EInfrastructure, publicClient } from './e2e-chain'
 
 /**
- * Playwright starts the Hardhat web server before this hook, but the RPC port
- * can accept connections a moment before the node answers requests.
+ * The developer or CI starts Hardhat before Playwright. The RPC port can
+ * accept connections a moment before the node answers requests.
  */
 async function waitForHardhat(): Promise<void> {
   const deadline = Date.now() + 30_000

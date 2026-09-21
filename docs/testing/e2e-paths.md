@@ -55,12 +55,12 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - `@mocked` is the narrower marker for browser scenarios that explicitly replace a product boundary;
   - run every migrated integrated path with `npm run test:e2e` from `app/`;
   - run browser acceptance with `npm run test:browser:acceptance` from `app/`;
-  - the integrated script skips Playwright service startup and global infrastructure setup, so the developer or CI must prepare the stack
-    first.
+  - Playwright contains no service startup configuration; the developer or CI must prepare the required stack before either profile runs;
+  - the integrated script also skips the deterministic browser-fixture setup because its infrastructure comes from the external stack.
 - CI ownership:
   - one `Full-stack E2E` job owns both phases and publishes separate browser-acceptance and integrated reports;
-  - the job provisions a disposable PostgreSQL database, applies migrations, deploys required infrastructure to a fresh local node, and
-    starts the backend and frontend before the integrated phase;
+  - the job starts the browser-acceptance node and frontend before Playwright, then resets the chain, provisions a disposable PostgreSQL
+    database, applies migrations, deploys integrated infrastructure, and starts the backend and integrated frontend before the second phase;
   - Playwright still performs only user-accessible product actions, and CI retains reports plus failure traces and stack logs as evidence.
 
 ## G0 — Integrated Technical Readiness

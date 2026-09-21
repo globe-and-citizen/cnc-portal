@@ -3,7 +3,7 @@
  * build, the Playwright configuration, and the Playwright fixtures.
  *
  * Hardhat derives a contract address from the deployer nonce, so the contracts
- * that `test/e2e/global-setup.ts` deploys from account #0 on a fresh node
+ * that `test/e2e/global-setup.ts` deploys from account #0 on an externally prepared fresh node
  * always land on these addresses, in this exact order: USDC, USDCe, SafeL2,
  * SafeProxyFactory, CompatibilityFallbackHandler, MultiSend, MultiSendCallOnly.
  *
