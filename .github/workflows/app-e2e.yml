@@ -133,9 +133,7 @@ jobs:
       - name: 🚀 Deploy integrated E2E infrastructure
         run: |
           cp scripts/recipients.json.example scripts/recipients.json
-          npx hardhat ignition deploy ignition/modules/MockTokensModule.ts --network localhost --deployment-id ci-e2e
-          npx hardhat ignition deploy ignition/modules/SafeInfraModule.ts --network localhost --deployment-id ci-e2e
-          npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network localhost --deployment-id ci-e2e
+          npx hardhat ignition deploy ignition/modules/IntegratedE2EInfrastructureModule.ts --network localhost --deployment-id ci-e2e
         working-directory: ./contract
 
       - name: 📋 Publish local deployment addresses to the frontend build
