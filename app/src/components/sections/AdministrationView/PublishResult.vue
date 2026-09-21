@@ -12,21 +12,16 @@
   </UTooltip>
 </template>
 <script lang="ts" setup>
-import { electionsAbi } from '@/artifacts/abi/generated'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
-import { useElectionsAddress, useElectionsPublishResults } from '@/composables/elections'
-import { estimateGas } from '@wagmi/core'
-import { encodeFunctionData } from 'viem'
+import { useElectionsPublishResults } from '@/composables/elections'
 import { computed } from 'vue'
-import { config } from '@/wagmi.config'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 const toast = useToast()
 const { mutate: publishResults, isPending } = useElectionsPublishResults()
-const electionsAddress = useElectionsAddress()
 const {
   electionId,
   disabled = false,
@@ -47,24 +42,12 @@ const tooltip = computed(() => {
   return undefined
 })
 
-const handlePublishResults = async (electionId: number) => {
+/**
+ * No gas pre-flight here: the write layer simulates before sending, so a
+ * refusal is reported once, classified, from one place.
+ */
+const handlePublishResults = (electionId: number) => {
   if (isPublishDisabled.value) return
-
-  try {
-    const data = encodeFunctionData({
-      abi: electionsAbi,
-      functionName: 'publishResults',
-      args: [BigInt(electionId)]
-    })
-    await estimateGas(config, {
-      to: electionsAddress.value,
-      data
-    })
-  } catch (err) {
-    log.error('Error estimating gas:', err)
-    toast.add({ title: classifyError(err, { contract: 'Elections' }).userMessage, color: 'error' })
-    return
-  }
 
   publishResults(
     { args: [BigInt(electionId)] },

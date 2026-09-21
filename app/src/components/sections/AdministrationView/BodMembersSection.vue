@@ -8,7 +8,7 @@
       <div
         v-for="memberAddress in members"
         :key="memberAddress"
-        class="overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-t from-emerald-100 to-emerald-50 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+        class="bg-success/10 border-success/30 overflow-hidden rounded-xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
       >
         <UserIdentity :user="memberFor(memberAddress)" :isDetailedView="true" class="p-6" />
       </div>

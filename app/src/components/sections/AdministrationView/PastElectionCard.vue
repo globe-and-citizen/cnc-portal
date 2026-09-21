@@ -3,7 +3,7 @@
     <!-- Status and Date -->
     <div class="mb-3 flex items-start justify-between">
       <UBadge color="neutral" variant="soft"> Completed </UBadge>
-      <span class="text-gray-600">
+      <span class="text-muted">
         {{ formatDate(election.endDate) }}
       </span>
     </div>
@@ -18,16 +18,16 @@
       class="mb-2 flex items-center justify-between"
       :data-test="figure.test"
     >
-      <span class="text-gray-600">{{ figure.label }}:</span>
-      <span class="text-2xl font-semibold text-gray-600">{{ figure.value }}</span>
+      <span class="text-muted">{{ figure.label }}:</span>
+      <span class="text-highlighted text-2xl font-semibold">{{ figure.value }}</span>
     </div>
 
     <div class="grow"></div>
     <!-- Spacer -->
-    <div class="my-4 border-t border-gray-300"></div>
+    <div class="border-default my-4 border-t"></div>
     <!-- Elected Members -->
     <div class="mb-5">
-      <p class="mb-2 text-gray-600">Elected Members:</p>
+      <p class="text-muted mb-2">Elected Members:</p>
       <div class="flex flex-wrap gap-2">
         <UBadge v-for="member in winners" :key="member" color="info" variant="subtle">
           {{ memberName(member) }}

@@ -81,18 +81,12 @@ const badgeColor = computed<BadgeColor>(() => {
   }
 })
 
-const dotClass = computed(() => {
-  switch (electionStatus.value?.color) {
-    case 'warning':
-      return 'bg-yellow-500'
-    case 'error':
-      return 'bg-red-500'
-    case 'neutral':
-      return 'bg-gray-500'
-    case 'success':
-      return 'bg-green-500'
-    default:
-      return 'bg-gray-500'
-  }
-})
+const DOT_CLASS: Record<BadgeColor, string> = {
+  warning: 'bg-warning',
+  error: 'bg-error',
+  neutral: 'bg-neutral',
+  success: 'bg-success'
+}
+
+const dotClass = computed(() => DOT_CLASS[badgeColor.value])
 </script>
