@@ -50,17 +50,18 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 - Execution profiles:
   - `@integrated` paths use the developer- or CI-managed frontend, backend, database, and local chain without intercepting CNC Portal
     boundaries;
-  - `@mocked` browser scenarios inject validation, backend, wallet, or network outcomes and do not count as integrated E2E evidence;
-  - run Companies integrated paths with `npm run test:e2e:company:integrated` from `app/`;
-  - run the faster, parallel Companies variants with `npm run test:e2e:company:mocked` from `app/`;
-  - these Companies scripts skip Playwright service startup and global infrastructure setup, so the developer or CI must prepare the
-    frontend and the integrated stack first.
+  - `@browser` scenarios may inject backend state, direct fixture setup, wallet failures, or network outcomes and do not count as integrated
+    E2E evidence;
+  - `@mocked` is the narrower marker for browser scenarios that explicitly replace a product boundary;
+  - run every migrated integrated path with `npm run test:e2e` from `app/`;
+  - run browser acceptance with `npm run test:browser:acceptance` from `app/`;
+  - the integrated script skips Playwright service startup and global infrastructure setup, so the developer or CI must prepare the stack
+    first.
 - CI ownership:
-  - the regular browser job excludes `@integrated` and retains mocked or fixture-backed coverage;
-  - the Company integration job provisions a disposable PostgreSQL database, applies migrations, deploys the required contracts to a fresh
-    local node, and starts the backend and frontend before Playwright runs;
-  - Playwright still performs only user-accessible product actions, and CI retains its report plus failure traces and stack logs as the test
-    run evidence.
+  - one `Full-stack E2E` job owns both phases and publishes separate browser-acceptance and integrated reports;
+  - the job provisions a disposable PostgreSQL database, applies migrations, deploys required infrastructure to a fresh local node, and
+    starts the backend and frontend before the integrated phase;
+  - Playwright still performs only user-accessible product actions, and CI retains reports plus failure traces and stack logs as evidence.
 
 ## G0 — Integrated Technical Readiness
 
@@ -74,7 +75,10 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Confirm the browser and backend target the same local chain.
     - [ ] Authenticate the owner and member through SIWE.
   - Expected result: every required boundary is ready before a functional path begins.
-  - Status: prerequisite definition; service startup belongs to the developer or CI workflow.
+  - Status: partial; real SIWE authentication is executable, while explicit frontend/backend/database/chain readiness assertions remain to
+    be added.
+  - Owning stories: `US-AUTH-001`; `US-AUTH-002` and `US-AUTH-003` remain outside this client path.
+  - Evidence: [integrated authentication test](../../app/test/e2e/authentication.integrated.spec.ts).
 
 ## G1 — Company Onboarding and Treasury Readiness
 
@@ -122,7 +126,9 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Alternative branch: import an existing local Safe and verify its owners and threshold remain unchanged.
   - Separate variants: rejected wallet requests, failed Safe registration, unsupported imports, and failed deposits.
   - Expected result: the company has a registered Safe and a funded Bank backed by durable chain evidence.
-  - Status: planned; current Safe and Bank browser tests still use simulated backend state.
+  - Status: partial; Safe deployment, backend registration, Bank deposits, balances, and history run through the integrated stack. Safe
+    import and injected failure variants remain browser acceptance coverage.
+  - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
 
 ## G2 — Company Administration and Member Access
 
@@ -312,7 +318,9 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Reload balances, approval state, and transaction history.
   - Separate variants: overspending, invalid signatures, unauthorized actions, and insufficient funds.
   - Expected result: one allowance remains auditable across its complete active and inactive lifecycle.
-  - Status: planned.
+  - Status: partial; the main persisted approval, member spend, lifecycle control, balance, and history sequence is executable. Invalid
+    signatures, overspending, authorization failures, and insufficient-fund variants remain browser acceptance or lower-layer coverage.
+  - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
 
 ## G7 — Cross-Feature Accounting Verification
 

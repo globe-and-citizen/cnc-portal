@@ -23,23 +23,25 @@ npm run test:watch
 npm run test:coverage
 ```
 
-### Company browser tests
+### Browser acceptance and integrated E2E
 
-The Company suites target a frontend that is already running. The integrated profile also expects the backend, migrated database, local
-chain, and required contract infrastructure to be ready; Playwright does not start or mutate that infrastructure.
+The integrated profile targets a stack that is already running: frontend, backend, migrated database, local chain, and required contract
+infrastructure. Playwright performs only user-accessible actions and does not start services, deploy infrastructure contracts, or seed
+application state directly.
 
 ```bash
 cd app
 
-# Real frontend, backend, database, and chain boundaries
-npm run test:e2e:company:integrated
+# Real frontend, backend, database, and chain boundaries for every migrated path
+npm run test:e2e
 
-# Injected validation and failure variants
-npm run test:e2e:company:mocked
+# Simulated backend, failure, and fixture-backed variants
+npm run test:browser:acceptance
 ```
 
-CI keeps these evidence levels separate. The regular Playwright job runs mocked and fixture-backed browser coverage, while the Company
-integration job prepares a disposable stack before executing only the `@integrated` paths.
+CI exposes one `Full-stack E2E` job. Inside that job, browser acceptance runs first for fast UI and failure coverage, then CI provisions a
+disposable PostgreSQL database, backend, local chain, deployment manifest, and frontend before running the `@integrated` paths. The two
+phases publish separate reports because only the integrated phase is E2E evidence.
 
 ### Test Structure
 
