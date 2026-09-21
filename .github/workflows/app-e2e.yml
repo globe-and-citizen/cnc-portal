@@ -133,13 +133,13 @@ jobs:
       - name: 🚀 Deploy integrated E2E infrastructure
         run: |
           cp scripts/recipients.json.example scripts/recipients.json
-          npx hardhat ignition deploy ignition/modules/MockTokensModule.ts --network localhost
-          npx hardhat ignition deploy ignition/modules/SafeInfraModule.ts --network localhost
-          npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network localhost
+          npx hardhat ignition deploy ignition/modules/MockTokensModule.ts --network localhost --deployment-id ci-e2e
+          npx hardhat ignition deploy ignition/modules/SafeInfraModule.ts --network localhost --deployment-id ci-e2e
+          npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network localhost --deployment-id ci-e2e
         working-directory: ./contract
 
       - name: 📋 Publish local deployment addresses to the frontend build
-        run: cp contract/ignition/deployments/chain-31337/deployed_addresses.json app/src/artifacts/deployed_addresses/chain-31337.json
+        run: cp contract/ignition/deployments/ci-e2e/deployed_addresses.json app/src/artifacts/deployed_addresses/chain-31337.json
 
       - name: 🔌 Start the backend
         run: npm start > ../backend-e2e.log 2>&1 &
