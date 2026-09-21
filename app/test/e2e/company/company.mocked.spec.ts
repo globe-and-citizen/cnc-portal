@@ -120,7 +120,7 @@ async function finishMockedCompanyWithoutContracts(page: Page): Promise<void> {
 
 test.describe(
   '[US-COMPANIES-001] Mocked company creation variants',
-  { tag: ['@US-COMPANIES-001', '@mocked'] },
+  { tag: ['@US-COMPANIES-001', '@mocked', '@browser'] },
   () => {
     test.describe.configure({ mode: 'parallel' })
 
@@ -193,7 +193,7 @@ test.describe(
 
 test.describe(
   '[US-COMPANIES-002] Mocked Officer deployment variants',
-  { tag: ['@US-COMPANIES-002', '@mocked'] },
+  { tag: ['@US-COMPANIES-002', '@mocked', '@browser'] },
   () => {
     /**
      * Covers:
@@ -220,7 +220,7 @@ test.describe(
 
 test.describe(
   '[US-COMPANIES-004] Mocked company update variants',
-  { tag: ['@US-COMPANIES-004', '@mocked'] },
+  { tag: ['@US-COMPANIES-004', '@mocked', '@browser'] },
   () => {
     /**
      * Covers:

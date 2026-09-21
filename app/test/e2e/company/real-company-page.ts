@@ -1,9 +1,31 @@
 import { expect, type Page } from '@playwright/test'
+import type { Address } from 'viem'
 import type { Team } from '../../../src/types/team'
+import { E2E_OWNER } from '../e2e-chain'
+import { openAccountFromSidebar, type E2EUser } from '../e2e-page'
+import { stubSafeTransactionService } from '../safe/safe-transaction-service'
 
 export interface RealCompanyOptions {
   description?: string
   name?: string
+}
+
+interface OfficerRegistrationResponse {
+  officer: {
+    address: Address
+    deployBlockNumber: string
+  }
+}
+
+interface RegisteredContract {
+  address: Address
+  type: string
+}
+
+export interface OperationalCompany {
+  team: Team
+  teamId: string
+  officer: OfficerRegistrationResponse['officer']
 }
 
 export function uniqueCompanyName(prefix: string): string {
@@ -65,6 +87,69 @@ export async function openCompanyMetadataActions(page: Page, companyName: string
 export async function enterShareDetails(page: Page): Promise<void> {
   await page.getByPlaceholder('Company SHER').fill('E2E Shares')
   await page.getByPlaceholder('SHR', { exact: true }).fill('E2E')
+}
+
+export async function deployOfficerThroughUi(page: Page): Promise<OfficerRegistrationResponse> {
+  await enterShareDetails(page)
+  const registered = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === '/api/contract/officer'
+  )
+  await page.locator('[data-test="deploy-contracts-button"]').click()
+  const response = await registered
+  expect(response.ok()).toBe(true)
+  const registration = (await response.json()) as OfficerRegistrationResponse
+  await expect(page.locator('[data-test="step-4"]')).toBeVisible({ timeout: 120_000 })
+  return registration
+}
+
+export async function createOperationalCompany(page: Page): Promise<OperationalCompany> {
+  const team = await createRealCompany(page)
+  const officer = await deployOfficerThroughUi(page)
+  return { team, teamId: String(team.id), officer: officer.officer }
+}
+
+export async function deploySafeThroughUi(page: Page, teamId: string): Promise<RegisteredContract> {
+  const owner: E2EUser = {
+    address: E2E_OWNER,
+    name: 'E2E Owner',
+    imageUrl: null
+  }
+  await stubSafeTransactionService(page, undefined, {
+    incomingTransfers: [],
+    transactions: [],
+    user: owner
+  })
+  const registered = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/contract'
+  )
+  await page.locator('[data-test="deploy-safe-button"]').click()
+  const response = await registered
+  expect(response.ok()).toBe(true)
+  const safe = (await response.json()) as RegisteredContract
+  await expect(page.getByText('Safe wallet deployed successfully', { exact: true })).toBeVisible({
+    timeout: 60_000
+  })
+  await expect(page).toHaveURL(new RegExp(`/teams/${teamId}$`))
+  return safe
+}
+
+export async function addRealCompanyMember(
+  page: Page,
+  teamId: string,
+  memberAddress: Address
+): Promise<void> {
+  await openAccountFromSidebar(page, `/teams/${teamId}/accounts/payroll-account`)
+  await page.locator('[data-test="add-member-button"]').click()
+  await page.getByPlaceholder('Search by name or address').fill(memberAddress)
+  await page
+    .locator('[data-test="user-row"]')
+    .filter({ hasText: `${memberAddress.slice(0, 6)}...${memberAddress.slice(-4)}` })
+    .click()
+  await page.locator('[data-test="add-members-submit"]').click()
+  await expect(page.getByText('Members added successfully', { exact: true })).toBeVisible()
 }
 
 export async function deleteCompanyThroughUi(

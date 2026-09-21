@@ -110,9 +110,14 @@ export async function openAccountFromSidebar(page: Page, href: string): Promise<
     hasText: parentLabel
   })
   const accountsToggle = accountsMenu.locator('[aria-controls]')
-  await accountsToggle.click()
+  if ((await accountsToggle.getAttribute('aria-expanded')) !== 'true') {
+    await accountsToggle.click()
+  }
   await expect(accountsToggle).toHaveAttribute('aria-expanded', 'true')
-  await page.locator(`[data-slot="content"] a[href="${href}"]`).click()
+  const accountLink = href.includes('/accounts/safe-account/')
+    ? page.locator('[data-slot="content"] a').filter({ hasText: 'Safe Account' })
+    : page.locator(`[data-slot="content"] a[href="${href}"]`)
+  await accountLink.click()
   await expect(page).toHaveURL(new RegExp(`${href}$`, 'i'), { timeout: 30_000 })
 }
 
