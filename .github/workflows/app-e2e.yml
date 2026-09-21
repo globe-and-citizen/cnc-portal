@@ -32,10 +32,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: cnc_e2e
         options: >-
-          --health-cmd "pg_isready -U postgres -d cnc_e2e"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
+          --health-cmd "pg_isready -U postgres -d cnc_e2e" --health-interval 5s --health-timeout 5s --health-retries 10
 
     env:
       CI: "true"
@@ -77,10 +74,47 @@ jobs:
         run: npm run compile
         working-directory: ./contract
 
+      - name: ⛓ Start the local Hardhat node
+        run: npm run node -- --hostname 0.0.0.0 > ../hardhat-e2e.log 2>&1 &
+        working-directory: ./contract
+
+      - name: ⏳ Wait for the local chain
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent \
+              --header "content-type: application/json" \
+              --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
+              http://127.0.0.1:8545 > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "The local chain did not become ready"
+          exit 1
+
+      - name: 🖥 Start the browser-acceptance frontend
+        run: npm run dev:e2e -- --host 0.0.0.0 --port 5174 > ../browser-frontend-e2e.log 2>&1 &
+        working-directory: ./app
+        env:
+          VITE_APP_BACKEND_URL: http://127.0.0.1:3000
+          VITE_E2E_RPC_URL: http://127.0.0.1:8545
+
+      - name: ⏳ Wait for the browser-acceptance frontend
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:5174 > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "The browser-acceptance frontend did not become ready"
+          exit 1
+
       - name: 🧪 Run browser acceptance coverage
         run: npm run test:browser:acceptance:coverage
         working-directory: ./app
         env:
+          BASE_URL: http://127.0.0.1:5174
           HEADLESS: "true"
 
       - name: 📊 Generate browser coverage report
@@ -106,29 +140,18 @@ jobs:
           path: app/playwright-report/
           retention-days: 30
 
+      - name: ♻️ Reset the local chain for integrated journeys
+        run: |
+          curl --fail --silent \
+            --header "content-type: application/json" \
+            --data '{"jsonrpc":"2.0","method":"hardhat_reset","params":[],"id":1}' \
+            http://127.0.0.1:8545 > /dev/null
+
       - name: 🗄 Generate Prisma client and migrate the disposable database
         run: |
           npm run prisma:generate
           npm run prisma:migrate
         working-directory: ./backend
-
-      - name: ⛓ Start the local Hardhat node
-        run: npm run node -- --hostname 0.0.0.0 > ../hardhat-e2e.log 2>&1 &
-        working-directory: ./contract
-
-      - name: ⏳ Wait for the local chain
-        run: |
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent \
-              --header "content-type: application/json" \
-              --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
-              http://127.0.0.1:8545 > /dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "The local chain did not become ready"
-          exit 1
 
       - name: 🚀 Deploy integrated E2E infrastructure
         run: |
@@ -195,6 +218,7 @@ jobs:
           path: |
             app/test-results/
             hardhat-e2e.log
+            browser-frontend-e2e.log
             backend-e2e.log
             frontend-e2e.log
           retention-days: 7
