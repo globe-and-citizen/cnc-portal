@@ -43,6 +43,9 @@ CI exposes one `Full-stack E2E` job. The workflow starts the local node and brow
 resets the chain, provisions the disposable database, backend, deployment manifest, and integrated frontend before running the `@integrated`
 paths. The two phases publish separate reports because only the integrated phase is E2E evidence.
 
+The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
+active browser suite.
+
 ### Test Structure
 
 Tests are organized alongside their source files:
