@@ -9,7 +9,7 @@
       color="warning"
       variant="solid"
       size="lg"
-      class="absolute top-0 right-0 z-10 -translate-x-1/4 -translate-y-1/2 gap-2 border-2 border-white shadow-lg"
+      class="border-default absolute top-0 right-0 z-10 -translate-x-1/4 -translate-y-1/2 gap-2 border-2 shadow-lg"
     >
       <span class=""> Winner </span>
     </UBadge>
@@ -18,10 +18,10 @@
 
     <!-- Score: this candidate's votes out of the votes cast so far -->
     <div class="mt-2 flex items-baseline justify-end gap-1">
-      <span class="text-lg font-bold text-gray-700">
+      <span class="text-highlighted text-lg font-bold">
         {{ candidate.currentVotes }}/{{ candidate.totalVotes }}
       </span>
-      <span class="text-sm text-gray-500">votes cast</span>
+      <span class="text-muted text-sm">votes cast</span>
     </div>
 
     <UProgress
