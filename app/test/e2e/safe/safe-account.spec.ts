@@ -37,7 +37,7 @@ test.afterEach(async () => {
   await revertChain(snapshotId)
 })
 
-test.describe('Safe Account', () => {
+test.describe('Safe Account', { tag: '@browser' }, () => {
   test.describe.configure({ mode: 'serial' })
   test.setTimeout(180_000)
 

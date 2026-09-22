@@ -145,11 +145,12 @@ function proposedTransaction(
 
 export async function stubSafeTransactionService(
   page: Page,
-  fixture: SafeE2EFixture,
+  fixture: SafeE2EFixture | undefined,
   options: SafeTransactionServiceOptions
 ): Promise<void> {
   const transactions = structuredClone(options.transactions ?? [])
-  const incomingTransfers = options.incomingTransfers ?? initialIncomingTransfers(fixture)
+  const incomingTransfers =
+    options.incomingTransfers ?? (fixture ? initialIncomingTransfers(fixture) : [])
 
   const respond = async (request: Request): Promise<StubResponse> => {
     const { pathname } = new URL(request.url())

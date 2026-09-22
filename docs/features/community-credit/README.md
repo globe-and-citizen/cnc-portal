@@ -50,6 +50,16 @@ automatically when a deadline or maturity date passes.
 | US-CC-004  | Resolve a stalled round    | Company issuer | 🧪 Validation  |
 | US-CC-005  | Repay lenders              | Company issuer | 🚧 In Progress |
 
+## Test Coverage Overview
+
+| User Story | E2E Status | Owning Path |
+| ---------- | ---------- | ----------- |
+| US-CC-001  | 📋 Planned | E2E-PATH-09 |
+| US-CC-002  | 📋 Planned | E2E-PATH-09 |
+| US-CC-003  | 📋 Planned | E2E-PATH-09 |
+| US-CC-004  | 📋 Planned | E2E-PATH-10 |
+| US-CC-005  | 📋 Planned | E2E-PATH-09 |
+
 ## US-CC-001: Inspect the Credit Account
 
 **As a** company member\
