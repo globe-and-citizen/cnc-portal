@@ -34,16 +34,22 @@ npm run test:e2e:debug    # step-through debugger
 npm run test:e2e:report   # open the last HTML report
 ```
 
-For browser acceptance, start the required node and frontend before Playwright:
+For browser acceptance, start the node, provision its deterministic fixtures once, and then start the frontend before Playwright. The setup
+command is intentionally separate from the test runner so Playwright only exercises browser behaviour:
 
 ```bash
 npm --prefix ../contract run node -- --port 8545 # terminal 1
+npm run setup:e2e:browser # terminal 2, once the node is ready
 VITE_E2E=true VITE_APP_NETWORK_ALIAS=hardhat \
   VITE_E2E_RPC_URL=http://127.0.0.1:8545 \
   VITE_E2E_USDC_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3 \
   VITE_E2E_USDCE_ADDRESS=0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 npm run dev -- --port 5173 # terminal 2
 BASE_URL=http://127.0.0.1:5173 npm run test:browser:acceptance # terminal 3
 ```
+
+`npm run setup:e2e:browser` is idempotent for an already prepared browser-acceptance node. It fails on a partially provisioned or unexpected
+chain instead of silently changing that state. The integrated profile has its own externally provisioned contracts, database, backend, and
+frontend; it does not run this browser-fixture command.
 
 ## Layout
 

@@ -41,7 +41,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 - Runtime ownership:
   - locally, the developer starts and controls the frontend, backend, database, and node;
   - in CI, the workflow prepares those services before Playwright starts;
-  - required infrastructure contracts are deployed before Playwright starts;
+  - browser-acceptance fixtures are provisioned explicitly with `npm run setup:e2e:browser`, outside Playwright;
+  - integrated infrastructure is deployed by the developer or CI stack, also before Playwright starts;
   - the E2E test checks readiness and exercises product behaviour, but does not own service startup.
 - Browser-action rule:
   - Playwright may submit a contract transaction only through a user-accessible product action;
@@ -55,12 +56,13 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - `@mocked` is the narrower marker for browser scenarios that explicitly replace a product boundary;
   - run every migrated integrated path with `npm run test:e2e` from `app/`;
   - run browser acceptance with `npm run test:browser:acceptance` from `app/`;
-  - Playwright contains no service startup configuration; the developer or CI must prepare the required stack before either profile runs;
-  - the integrated script also skips the deterministic browser-fixture setup because its infrastructure comes from the external stack.
+  - both commands only select Playwright tests; neither provisions services, contracts, or fixtures;
+  - the developer or CI prepares the selected profile before invoking either command.
 - CI ownership:
   - one `Full-stack E2E` job owns both phases and publishes separate browser-acceptance and integrated reports;
-  - the job starts the browser-acceptance node and frontend before Playwright, then resets the chain, provisions a disposable PostgreSQL
-    database, applies migrations, deploys integrated infrastructure, and starts the backend and integrated frontend before the second phase;
+  - the job starts one local node, provisions browser fixtures outside Playwright, and starts the browser frontend before the first phase;
+  - it then resets that node, provisions a disposable PostgreSQL database, applies migrations, deploys integrated infrastructure, and starts
+    the backend and integrated frontend before the second phase;
   - Playwright still performs only user-accessible product actions, and CI retains reports plus failure traces and stack logs as evidence.
 
 ## G0 — Integrated Technical Readiness

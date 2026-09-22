@@ -7,10 +7,6 @@ const E2E_BROWSER_EXECUTABLE = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  // Seed the deterministic mock tokens and Safe infrastructure before any
-  // browser compiles the E2E client or an account fixture deploys contracts.
-  globalSetup: process.env.SKIP_GLOBAL_SETUP ? undefined : './test/e2e/global-setup.ts',
-
   // Look for test files in the "test/e2e" directory, relative to this configuration file.
   testDir: './test/e2e',
 
@@ -62,6 +58,6 @@ export default defineConfig({
       : [])
   ]
 
-  // Playwright never starts application services. Developers and CI prepare
-  // the frontend, backend, database, and local chain before invoking a suite.
+  // Playwright never provisions infrastructure or starts application services.
+  // Developers and CI prepare the selected profile before invoking a suite.
 })

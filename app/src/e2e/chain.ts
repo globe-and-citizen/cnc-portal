@@ -1,9 +1,9 @@
 /**
  * Deterministic constants of the E2E Hardhat node, shared by the Vite E2E
- * build, the Playwright configuration, and the Playwright fixtures.
+ * build, the external browser setup, and the Playwright fixtures.
  *
  * Hardhat derives a contract address from the deployer nonce, so the contracts
- * that `test/e2e/global-setup.ts` deploys from account #0 on an externally prepared fresh node
+ * that `test/e2e/prepare-browser-environment.ts` deploys from account #0 on a fresh external node
  * always land on these addresses, in this exact order: USDC, USDCe, SafeL2,
  * SafeProxyFactory, CompatibilityFallbackHandler, MultiSend, MultiSendCallOnly.
  *

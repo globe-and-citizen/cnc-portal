@@ -92,6 +92,10 @@ jobs:
           echo "The local chain did not become ready"
           exit 1
 
+      - name: 🧱 Prepare browser-acceptance contracts
+        run: npm run setup:e2e:browser
+        working-directory: ./app
+
       - name: 🖥 Start the browser-acceptance frontend
         run: npm run dev:e2e -- --host 0.0.0.0 --port 5174 > ../browser-frontend-e2e.log 2>&1 &
         working-directory: ./app

@@ -25,9 +25,9 @@ npm run test:coverage
 
 ### Browser acceptance and integrated E2E
 
-Every Playwright profile targets services that are already running. The integrated profile requires the frontend, backend, migrated
-database, local chain, and contract infrastructure. Browser acceptance requires its frontend and deterministic local node. Playwright has no
-server startup configuration.
+Every Playwright profile targets services and fixtures that are already prepared. The integrated profile requires the frontend, backend,
+migrated database, local chain, and contract infrastructure. Browser acceptance requires its frontend and deterministic local node, prepared
+once with `npm run setup:e2e:browser`. Playwright has no server or infrastructure setup configuration.
 
 ```bash
 cd app
@@ -36,12 +36,14 @@ cd app
 npm run test:e2e
 
 # Simulated backend, failure, and fixture-backed variants
+npm run setup:e2e:browser
 npm run test:browser:acceptance
 ```
 
-CI exposes one `Full-stack E2E` job. The workflow starts the local node and browser-acceptance frontend before the first phase. It then
-resets the chain, provisions the disposable database, backend, deployment manifest, and integrated frontend before running the `@integrated`
-paths. The two phases publish separate reports because only the integrated phase is E2E evidence.
+CI exposes one `Full-stack E2E` job. The workflow starts the shared local node, explicitly provisions browser-acceptance contracts, and
+starts the browser frontend before the first Playwright invocation. It then resets the same node and provisions the disposable database,
+backend, integrated deployment manifest, and frontend before the `@integrated` invocation. The two phases keep separate logical state and
+publish separate reports because only the integrated phase is E2E evidence.
 
 The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
 active browser suite.

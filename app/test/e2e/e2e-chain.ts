@@ -1,6 +1,6 @@
 // Chain access shared by every account journey: the E2E accounts, the viem
 // clients bound to the dedicated Hardhat node, contract artifacts, and the
-// deterministic infrastructure that the Playwright global setup seeds.
+// deterministic infrastructure prepared before browser acceptance starts.
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import {
@@ -16,7 +16,7 @@ import {
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { hardhat } from 'viem/chains'
-import { E2E_RPC_URL, E2E_SAFE_INFRA, E2E_SAFE_LIBRARIES, E2E_TOKENS } from '../../src/e2e/chain'
+import { E2E_RPC_URL, E2E_SAFE_INFRA, E2E_SAFE_LIBRARIES, E2E_TOKENS } from '../../src/e2e/chain.ts'
 
 /** Hardhat's well-known accounts #0, #1 and #2 — public test keys. */
 export const E2E_OWNER_PRIVATE_KEY: Hex =
@@ -95,8 +95,8 @@ export async function hasCode(address: Address): Promise<boolean> {
 
 /**
  * Deploy the mock tokens and the Safe infrastructure on the fresh E2E node.
- * Runs once from the Playwright global setup, before any account fixture, so
- * the browser build can rely on the addresses in `src/e2e/chain.ts`.
+ * Runs from the explicit browser-environment setup before Vite and Playwright,
+ * so the browser build can rely on the addresses in `src/e2e/chain.ts`.
  */
 export async function ensureE2EInfrastructure(): Promise<void> {
   const expected: Address[] = [
