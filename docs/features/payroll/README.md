@@ -61,20 +61,20 @@ its complete journey belongs to the Accounts feature.
 
 ## Test Coverage Overview
 
-| User Story     | E2E Status      | Owning Path              |
-| -------------- | --------------- | ------------------------ |
-| US-PAYROLL-001 | 📋 Planned      | E2E-PATH-11              |
-| US-PAYROLL-002 | 📋 Planned      | E2E-PATH-11              |
-| US-PAYROLL-003 | ➖ Not required | E2E-PATH-02 owns funding |
-| US-PAYROLL-004 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-005 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-006 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-007 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-008 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-009 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-010 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-011 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-012 | 📋 Planned      | E2E-PATH-13              |
+| User Story     | Representative AC Coverage | E2E Status      | Owning Path              |
+| -------------- | -------------------------- | --------------- | ------------------------ |
+| US-PAYROLL-001 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-11              |
+| US-PAYROLL-002 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-11              |
+| US-PAYROLL-003 | Accounts-owned dependency  | ➖ Not required | E2E-PATH-02 owns funding |
+| US-PAYROLL-004 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
+| US-PAYROLL-005 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
+| US-PAYROLL-006 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
+| US-PAYROLL-007 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
+| US-PAYROLL-008 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
+| US-PAYROLL-009 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
+| US-PAYROLL-010 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
+| US-PAYROLL-011 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
+| US-PAYROLL-012 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
 
 Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal alone.
 
@@ -514,7 +514,7 @@ Functional gaps map to unchecked acceptance criteria.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `a6fa691863eadd41c14ae6bf7a2ff13c1324fd13`
 
 - [Cash Remuneration components](../../../app/src/components/sections/CashRemunerationView/),
   [claim-history components](../../../app/src/components/sections/ClaimHistoryView/), and
@@ -556,6 +556,7 @@ Functional gaps map to unchecked acceptance criteria.
 - [Claim API tests](../../../backend/src/controllers/__tests__/claimController.test.ts)
 - [Weekly claim API tests](../../../backend/src/controllers/__tests__/weeklyClaimController.test.ts)
 - [Cash Remuneration contract tests](../../../contract/test/CashRemunerationEIP712.spec.ts)
+- [Integrated Payroll E2E journeys](../../../app/test/e2e/payroll/payroll.integrated.spec.ts)
 
 ## Related Documentation
 

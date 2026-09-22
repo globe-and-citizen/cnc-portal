@@ -264,11 +264,13 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-PAYROLL-002` — pause or resume the wage.
   - Dependencies: an operational company with owner and member.
   - Main path:
-    - [ ] Create and then replace the member wage.
-    - [ ] Pause and resume it.
-    - [ ] Verify the persisted active wage and visible status after reload.
+    - [x] Create and then replace the member wage.
+    - [x] Pause and resume it.
+    - [x] Verify the persisted active wage and visible status after reload.
   - Expected result: exactly one current wage controls the member's eligibility.
-  - Status: planned.
+  - Status: partial; the owner journey runs against the real frontend, backend, PostgreSQL database, and local chain. Wage validation,
+    authorization, and rejection variants remain lower-level or browser-acceptance coverage.
+  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-12` — Prepare a weekly claim
   - Stories validated:
@@ -278,11 +280,13 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-PAYROLL-007` — delete a daily claim.
   - Dependencies: an active wage from `E2E-PATH-11`.
   - Main path:
-    - [ ] Save weekly goals.
-    - [ ] Create, edit, and delete eligible daily work entries.
-    - [ ] Recreate the final entry set and verify weekly totals.
+    - [x] Save weekly goals.
+    - [x] Create, edit, and delete eligible daily work entries.
+    - [x] Recreate the final entry set and verify weekly totals.
   - Expected result: the member reaches a deterministic claim-ready week.
-  - Status: planned.
+  - Status: partial; one real member identity saves goals and prepares a persisted claim through the product UI. Submission boundaries,
+    attachments, and rejected edits or deletions remain separately covered.
+  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-13` — Approve, reconcile, withdraw, and review payroll
   - Stories validated:
@@ -294,13 +298,16 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
   - Dependencies: a claim-ready week, current contract owner, and funded Payroll contract.
   - Main path:
-    - [ ] Sign the completed weekly claim.
-    - [ ] Disable and re-enable it without creating a second claim.
-    - [ ] Withdraw through a real chain transaction.
-    - [ ] Reconcile backend and chain state.
-    - [ ] Verify member and owner histories after reload.
+    - [x] Sign the completed weekly claim.
+    - [x] Disable and re-enable it without creating a second claim.
+    - [x] Withdraw through a real chain transaction.
+    - [x] Reconcile backend and chain state.
+    - [x] Verify member and owner histories after reload.
   - Expected result: one claim remains traceable from approval through payment and history.
-  - Status: planned.
+  - Status: partial; the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain flags,
+    withdraws as the paid member, and reloads both perspectives. Invalid signatures, insufficient funding, and unauthorized actions remain
+    separate variants.
+  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 ## G6 — Expense Account Lifecycle
 
