@@ -100,7 +100,11 @@
       </template>
 
       <template #action-cell="{ row }">
-        <div v-if="teamId" class="flex flex-wrap gap-2">
+        <div
+          v-if="teamId"
+          class="flex flex-wrap gap-2"
+          :data-test="`member-actions-${row.original.address}`"
+        >
           <DeleteMemberModal
             :member="{ name: row.original.name, address: row.original.address }"
             :teamId="teamId"

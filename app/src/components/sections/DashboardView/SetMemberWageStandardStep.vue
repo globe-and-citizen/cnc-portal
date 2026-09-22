@@ -15,6 +15,7 @@
             type="number"
             size="xl"
             placeholder="e.g. 40"
+            data-test="weekly-cap-input"
             :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
           >
             <template #leading>
@@ -54,7 +55,7 @@
           :key="rate.type"
           class="flex items-center gap-4"
         >
-          <USwitch v-model="rate.enabled" />
+          <USwitch v-model="rate.enabled" :data-test="`rate-${rate.type}-enabled`" />
           <UFormField :name="`ratePerHour.${index}.amount`" class="w-full">
             <UInput
               v-model="rate.amount"
@@ -63,6 +64,7 @@
               class="w-full"
               size="xl"
               :disabled="!rate.enabled"
+              :data-test="`rate-${rate.type}-amount`"
             >
               <template #trailing>
                 <UBadge

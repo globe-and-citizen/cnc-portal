@@ -22,6 +22,7 @@
     "test:bruno:setup": "ts-node scripts/updateBrunoAuth.ts",
     "test:bruno": "npm run test:bruno:setup && cd \"bruno/CNC Portal\" && npx bru run -r --env \"CNC URI\"",
     "test:bruno:auth": "npm run test:bruno:setup && cd \"bruno/CNC Portal\" && npx bru run Auth -r --env \"CNC URI\"",
+    "setup:e2e:integrated": "ts-node scripts/provisionIntegratedE2e.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

@@ -45,6 +45,10 @@ starts the browser frontend before the first Playwright invocation. It then rese
 backend, integrated deployment manifest, and frontend before the `@integrated` invocation. The two phases keep separate logical state and
 publish separate reports because only the integrated phase is E2E evidence.
 
+The integrated database setup is guarded by `E2E_INTEGRATED_SETUP=true`. It disables the Payroll submission restriction only in that
+disposable database so a completed-week claim can exercise the real approval and withdrawal lifecycle; it must not be run against shared
+data.
+
 The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
 active browser suite.
 
