@@ -39,7 +39,7 @@ describe('validation/middleware/validate', () => {
   });
 
   describe('request validation behavior', () => {
-    it('should validate body successfully', () => {
+    it('accepts a valid body', () => {
       const schema = z.object({ name: z.string() });
       mockRequest.body = { name: 'John' };
 
@@ -50,7 +50,7 @@ describe('validation/middleware/validate', () => {
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
-    it('should return error for invalid body', () => {
+    it('returns error for invalid body', () => {
       const schema = z.object({ name: z.string() });
       mockRequest.body = { name: 123 };
 
@@ -61,7 +61,7 @@ describe('validation/middleware/validate', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should validate query successfully', () => {
+    it('accepts a valid query', () => {
       const schema = z.object({ page: z.string() });
       mockRequest.query = { page: '1' };
 
@@ -72,7 +72,7 @@ describe('validation/middleware/validate', () => {
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
-    it('should return error for invalid query', () => {
+    it('returns error for invalid query', () => {
       const schema = z.object({ page: z.number() });
       mockRequest.query = { page: 'invalid' };
 
@@ -83,7 +83,7 @@ describe('validation/middleware/validate', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should validate params successfully', () => {
+    it('accepts valid params', () => {
       const schema = z.object({ id: z.string() });
       mockRequest.params = { id: '123' };
 
@@ -94,7 +94,7 @@ describe('validation/middleware/validate', () => {
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
-    it('should return error for invalid params', () => {
+    it('returns error for invalid params', () => {
       const schema = z.object({ id: z.number() });
       mockRequest.params = { id: 'invalid' };
 
@@ -105,7 +105,7 @@ describe('validation/middleware/validate', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should validate multiple schemas successfully', () => {
+    it('accepts valid values across multiple schemas', () => {
       const bodySchema = z.object({ name: z.string() });
       const paramsSchema = z.object({ id: z.string() });
       mockRequest.body = { name: 'John' };
@@ -118,7 +118,7 @@ describe('validation/middleware/validate', () => {
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
-    it('should handle unexpected errors', () => {
+    it('returns 500 when schema validation throws unexpectedly', () => {
       const schema = z.object({ name: z.string() });
       mockRequest.body = { name: 'John' };
 
@@ -134,7 +134,7 @@ describe('validation/middleware/validate', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should format multiple validation errors', () => {
+    it('formats multiple validation errors', () => {
       const schema = z.object({
         name: z.string(),
         age: z.number(),
@@ -154,7 +154,7 @@ describe('validation/middleware/validate', () => {
   });
 
   describe('validateBody', () => {
-    it('should validate body using helper function', () => {
+    it('validates body using helper function', () => {
       const schema = z.object({ name: z.string() });
       mockRequest.body = { name: 'John' };
 
@@ -166,7 +166,7 @@ describe('validation/middleware/validate', () => {
   });
 
   describe('validateQuery', () => {
-    it('should validate query using helper function', () => {
+    it('validates query using helper function', () => {
       const schema = z.object({ page: z.string() });
       mockRequest.query = { page: '1' };
 
@@ -178,7 +178,7 @@ describe('validation/middleware/validate', () => {
   });
 
   describe('validateParams', () => {
-    it('should validate params using helper function', () => {
+    it('validates params using helper function', () => {
       const schema = z.object({ id: z.string() });
       mockRequest.params = { id: '123' };
 
@@ -190,7 +190,7 @@ describe('validation/middleware/validate', () => {
   });
 
   describe('validateBodyAndParams', () => {
-    it('should validate body and params using helper function', () => {
+    it('validates body and params using helper function', () => {
       const bodySchema = z.object({ name: z.string() });
       const paramsSchema = z.object({ id: z.string() });
       mockRequest.body = { name: 'John' };
@@ -203,7 +203,7 @@ describe('validation/middleware/validate', () => {
     });
   });
   describe('validateParamsAndQuery', () => {
-    it('should validate params and query using helper function', () => {
+    it('validates params and query using helper function', () => {
       const paramsSchema = z.object({ id: z.string() });
       const querySchema = z.object({ page: z.string() });
       mockRequest.params = { id: '123' };

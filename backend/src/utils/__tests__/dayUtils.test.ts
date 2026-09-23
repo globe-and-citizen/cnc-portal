@@ -3,7 +3,7 @@ import { getMondayStart } from '../dayUtils';
 
 describe('dayUtils', () => {
   describe('getMondayStart', () => {
-    it('should return the Monday of the current week for a Tuesday', () => {
+    it('returns the Monday of the current week for a Tuesday', () => {
       // Tuesday, January 9, 2024
       const tuesday = new Date('2024-01-09T15:30:00');
       const mondayStart = getMondayStart(tuesday);
@@ -18,7 +18,7 @@ describe('dayUtils', () => {
       expect(mondayStart.getDate()).toBe(8);
     });
 
-    it('should return the same day at midnight if date is already Monday', () => {
+    it('returns the same day at midnight if date is already Monday', () => {
       // Monday, January 8, 2024
       const monday = new Date('2024-01-08T15:30:00');
       const mondayStart = getMondayStart(monday);
@@ -30,7 +30,7 @@ describe('dayUtils', () => {
       expect(mondayStart.getDate()).toBe(8);
     });
 
-    it('should go back to the previous Monday for a Sunday', () => {
+    it('goes back to the previous Monday for a Sunday', () => {
       // Sunday, January 14, 2024
       const sunday = new Date('2024-01-14T15:30:00');
       const mondayStart = getMondayStart(sunday);
@@ -42,7 +42,7 @@ describe('dayUtils', () => {
       expect(mondayStart.getDate()).toBe(8);
     });
 
-    it('should handle dates at the start of the year', () => {
+    it('handles dates at the start of the year', () => {
       // Friday, January 5, 2024
       const friday = new Date('2024-01-05T10:00:00');
       const mondayStart = getMondayStart(friday);
@@ -53,7 +53,7 @@ describe('dayUtils', () => {
       expect(mondayStart.getDate()).toBe(1);
     });
 
-    it('should handle dates at the end of the year', () => {
+    it('handles dates at the end of the year', () => {
       // Saturday, December 30, 2023
       const saturday = new Date('2023-12-30T10:00:00');
       const mondayStart = getMondayStart(saturday);

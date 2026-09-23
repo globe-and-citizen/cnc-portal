@@ -8,7 +8,7 @@ import {
 
 describe('expense schemas', () => {
   describe('addExpenseBodySchema', () => {
-    it('should validate expense with valid data structure', () => {
+    it('validates expense with valid data structure', () => {
       const START_DATE = Math.floor(Date.now() / 1000) + 3600;
       const END_DATE = START_DATE + 3600 * 24 * 30;
 
@@ -38,7 +38,7 @@ describe('expense schemas', () => {
       expect(result.data.endDate).toBe(END_DATE);
     });
 
-    it('should throw error for missing required fields in data', () => {
+    it('throws error for missing required fields in data', () => {
       const invalidData = {
         teamId: '1',
         signature: '0xsignature',
@@ -53,7 +53,7 @@ describe('expense schemas', () => {
       expect(() => addExpenseBodySchema.parse(invalidData)).toThrow();
     });
 
-    it('should throw error for empty signature', () => {
+    it('throws error for empty signature', () => {
       const invalidData = {
         teamId: '1',
         signature: '',
@@ -70,7 +70,7 @@ describe('expense schemas', () => {
       expect(() => addExpenseBodySchema.parse(invalidData)).toThrow('Signature cannot be empty');
     });
 
-    it('should throw error for negative values in budgetData', () => {
+    it('throws error for negative values in budgetData', () => {
       const invalidData = {
         teamId: '1',
         signature: '0xsignature',
@@ -87,7 +87,7 @@ describe('expense schemas', () => {
       expect(() => addExpenseBodySchema.parse(invalidData)).toThrow();
     });
 
-    it('should throw error for empty approvedAddress', () => {
+    it('throws error for empty approvedAddress', () => {
       const invalidData = {
         teamId: '1',
         signature: '0xsignature',
@@ -106,19 +106,19 @@ describe('expense schemas', () => {
   });
 
   describe('getExpensesQuerySchema', () => {
-    it('should validate query with default status', () => {
+    it('validates query with default status', () => {
       const query = { teamId: '1' };
       const result = getExpensesQuerySchema.parse(query);
       expect(result.status).toBe('all');
     });
 
-    it('should validate query with explicit status', () => {
+    it('validates query with explicit status', () => {
       const query = { teamId: '1', status: 'pending' };
       const result = getExpensesQuerySchema.parse(query);
       expect(result.status).toBe('pending');
     });
 
-    it('should accept all valid status values', () => {
+    it('accepts all valid status values', () => {
       const statuses = ['all', 'pending', 'approved', 'rejected', 'disabled', 'enabled', 'signed'];
 
       statuses.forEach((status) => {
@@ -128,32 +128,32 @@ describe('expense schemas', () => {
       });
     });
 
-    it('should throw error for invalid status', () => {
+    it('throws error for invalid status', () => {
       const query = { teamId: '1', status: 'invalid' };
       expect(() => getExpensesQuerySchema.parse(query)).toThrow('Invalid status parameter');
     });
   });
 
   describe('updateExpenseBodySchema', () => {
-    it('should validate update with disable status', () => {
+    it('validates update with disable status', () => {
       const body = { status: 'disable' };
       const result = updateExpenseBodySchema.parse(body);
       expect(result.status).toBe('disable');
     });
 
-    it('should validate update with expired status', () => {
+    it('validates update with expired status', () => {
       const body = { status: 'expired' };
       const result = updateExpenseBodySchema.parse(body);
       expect(result.status).toBe('expired');
     });
 
-    it('should validate update with limitReached status', () => {
+    it('validates update with limitReached status', () => {
       const body = { status: 'limitReached' };
       const result = updateExpenseBodySchema.parse(body);
       expect(result.status).toBe('limitReached');
     });
 
-    it('should throw error for invalid status', () => {
+    it('throws error for invalid status', () => {
       const body = { status: 'invalid' };
       expect(() => updateExpenseBodySchema.parse(body)).toThrow(
         'Invalid status. Allowed values: disable, expired, limitReached'
@@ -162,18 +162,18 @@ describe('expense schemas', () => {
   });
 
   describe('updateExpenseParamsSchema', () => {
-    it('should validate positive integer ID', () => {
+    it('validates positive integer ID', () => {
       const params = { id: '123' };
       const result = updateExpenseParamsSchema.parse(params);
       expect(result.id).toBe(123);
     });
 
-    it('should throw error for non-positive ID', () => {
+    it('throws error for non-positive ID', () => {
       const params = { id: '0' };
       expect(() => updateExpenseParamsSchema.parse(params)).toThrow();
     });
 
-    it('should throw error for negative ID', () => {
+    it('throws error for negative ID', () => {
       const params = { id: '-1' };
       expect(() => updateExpenseParamsSchema.parse(params)).toThrow();
     });
