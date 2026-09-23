@@ -266,7 +266,7 @@ The following verified gaps have technical evidence and remediation directions i
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `2467d8a908b568497950dbb39543e062c81a0508`
+**Implementation evidence reviewed against:** `7ea3a75b76c16733fb6924c701d91b2540b2676c`
 
 - [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
