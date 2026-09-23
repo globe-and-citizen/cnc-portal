@@ -71,6 +71,8 @@ requested or required by the active GitHub workflow.
 - For an active coverage review, use the guide's per-story coverage summary and per-criterion target table. Derive current coverage from
   direct `AC-US-*` references, list insufficient boundaries as gaps, and never classify a story as partial solely because a criterion is
   intentionally covered by a mock or a lower test layer.
+- Keep representative test titles declarative and omit `should`. Prefix a backend, unit, or focused integration title with the AC ID only
+  when that test directly represents one criterion. Use the guide's structured `Covers` block for multi-criterion tests and E2E paths.
 - Use Mermaid for every diagram. Add a diagram only when it makes a meaningful state, sequence, branch, hierarchy, or boundary easier to
   review.
 - Link focused rules, architecture, contract behaviour, and evidence to their canonical owners instead of copying them into the journey.

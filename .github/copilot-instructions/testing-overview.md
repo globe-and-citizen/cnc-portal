@@ -48,9 +48,23 @@ Naming:
 - **Use `data-test` attributes**, never CSS classes or DOM structure, to query elements. The component standard requires `data-test` on
   every interactive element.
 - **Test what users see**, not `wrapper.vm.someInternalRef`.
-- **One responsibility per test**, descriptive name (`should emit update:modelValue when option is selected`, not `works correctly`).
+- **One responsibility per test**, with a concise declarative title in the present tense
+  (`emits update:modelValue when an option is selected`, not `should emit ...` or `works correctly`). The title completes the implicit
+  phrase `it ...`, so `should` only repeats what the test API already expresses.
 - **Cover, for each component**: rendering with different props, user interactions, prop/state changes, event emissions, error states,
   loading states, accessibility, edge cases.
+
+## Acceptance traceability in test names
+
+Use acceptance identifiers only on representative tests whose assertions directly prove the criterion. Follow the complete traceability
+contract in the [Feature Documentation Guide](../../docs/platform/feature-specification-guide.md#acceptance-criteria-and-traceability).
+
+- For a backend, unit, or focused integration test that represents exactly one acceptance criterion, prefix the declarative title with its
+  ID: `it('[AC-US-COMPANIES-004-02] rejects metadata updates from a non-owner', ...)`.
+- When one coherent test proves multiple criteria, keep the title readable and list the IDs in a structured `Covers` block immediately above
+  the test.
+- For E2E journeys, put the user-story ID in the enclosing suite and use `Covers` blocks for the criteria proven by each path.
+- An identifier records traceability; the assertions remain the evidence. Do not tag incidental tests merely to increase reported coverage.
 
 ## Mocking conventions
 

@@ -2,7 +2,7 @@
 
 **Status:** Current — applied to every canonical product feature user story
 
-**Last updated:** 2026-08-30
+**Last updated:** 2026-09-23
 
 **Purpose:** Define the canonical, reviewable documentation contract for CNC Portal features
 
@@ -106,16 +106,27 @@ criterion moves between categories or changes position within its story.
 - [x] `AC-US-FEATURE-001-01` A matching operation retains all of its journal lines.
 ```
 
-Keep representative test titles focused on observable behaviour. Put the user-story ID in the enclosing suite title or equivalent test
-metadata, then declare directly proven acceptance criteria in a structured `Covers` comment immediately above the smallest representative
-test. One coherent path may cover multiple criteria. One criterion may also have more than one representative test when distinct success and
-failure paths are necessary, but do not tag every low-level test that happens to exercise the same code.
+Keep representative test titles focused on observable behaviour and write them as concise declarative present-tense phrases. Do not prefix
+them with `should`: the test API already supplies that meaning.
+
+For a backend, unit, or focused integration test that directly represents exactly one criterion, prefix the title with the acceptance ID:
+
+```typescript
+it("[AC-US-FEATURE-001-01] retains every line of a matching JournalEntry", () => {
+  // Test the observable criterion.
+});
+```
+
+When one coherent test proves multiple criteria, keep the title readable and declare the IDs in a structured `Covers` comment immediately
+above the smallest representative test. For E2E journeys, put the user-story ID in the enclosing suite title or equivalent metadata and use
+this `Covers` form for the criteria proven by each path:
 
 ```typescript
 describe("[US-FEATURE-001] Matching entries", () => {
   /**
    * Covers:
    * - [AC-US-FEATURE-001-01]
+   * - [AC-US-FEATURE-001-02]
    */
   it("retains every line of a matching JournalEntry", () => {
     // Test the observable criterion.
@@ -123,9 +134,10 @@ describe("[US-FEATURE-001] Matching entries", () => {
 });
 ```
 
-The `Covers` block is traceability metadata, not evidence by itself. Keep it adjacent to the test whose assertions prove the criteria, and
-remove or update it whenever that test stops proving an outcome. Do not place acceptance-criterion IDs in test titles merely to make the
-coverage report discover them.
+One criterion may have more than one representative test when distinct success and failure paths are necessary, but do not tag every
+low-level test that happens to exercise the same code. An ID prefix or `Covers` block is traceability metadata, not evidence by itself. Keep
+it adjacent to the assertions that prove the outcome, and remove or update it whenever that test stops proving the criterion. Never add an
+acceptance ID merely to make the coverage report discover it.
 
 Every criterion has an ID even when no representative automated test exists. A test reference records evidence, not comprehensive coverage,
 and it does not replace the criterion's observable outcome, checkbox state, implementation evidence, or required human validation.
