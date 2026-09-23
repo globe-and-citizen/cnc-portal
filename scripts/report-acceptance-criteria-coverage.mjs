@@ -286,7 +286,10 @@ function renderRepositoryInventory(inventory) {
     lines.push(
       `#### ${layer}`,
       '',
-      ...files.map((testFile) => `- [ ] \`${testFile.path}\` — ${testFile.declarations} static test declarations`),
+      ...files.map(
+        (testFile) =>
+          `- [ ] \`${testFile.path}\` — ${testFile.declarations} static test declarations; sample: ${titleSample(testFile)}`
+      ),
       ''
     )
   }
