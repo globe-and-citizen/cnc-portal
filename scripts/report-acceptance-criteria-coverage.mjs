@@ -139,6 +139,39 @@ function renderFeatureOverview(featureDocuments, criteria, inventory) {
   return lines.join('\n')
 }
 
+function renderAuditSnapshot(featureDocuments, criteria, inventory) {
+  const totalDeclarations = inventory.reduce((sum, testFile) => sum + testFile.declarations, 0)
+  const classifiedFiles = inventory.filter(
+    (testFile) => testFile.featureDocuments.length > 0 || testFile.technicalDocuments.length > 0
+  )
+  const productFiles = inventory.filter((testFile) => testFile.featureDocuments.length > 0)
+  const storyIds = new Set(criteria.map((criterion) => criterion.storyId))
+  const linkedStoryIds = new Set(inventory.flatMap((testFile) => testFile.storyIds))
+  const acceptanceIds = new Set(criteria.map((criterion) => criterion.id))
+  const linkedAcceptanceIds = new Set(inventory.flatMap((testFile) => testFile.acceptanceIds))
+  const integratedE2e = inventory.filter((testFile) => testFile.e2eMode === 'integrated')
+  const mockedE2e = inventory.filter((testFile) => testFile.e2eMode === 'mocked')
+  const featureDocumentsWithoutTests = featureDocuments.filter(
+    (document) => !inventory.some((testFile) => testFile.featureDocuments.includes(document.path))
+  )
+  const dashboardFiles = inventory.filter((testFile) => testFile.layer === 'dashboard')
+
+  return [
+    '## Coverage Audit Snapshot',
+    '',
+    `- Inventory: ${classifiedFiles.length}/${inventory.length} tracked test files classified; ${totalDeclarations} static test declarations.`,
+    `- Product mapping: ${productFiles.length} files mapped to at least one product feature.`,
+    `- Explicit story traceability: ${linkedStoryIds.size}/${storyIds.size} user stories referenced by tests.`,
+    `- Representative AC evidence: ${linkedAcceptanceIds.size}/${acceptanceIds.size} acceptance criteria referenced by tests.`,
+    `- E2E suites: ${integratedE2e.length} integrated, ${mockedE2e.length} mocked, ${inventory.filter((testFile) => testFile.layer === 'e2e' && testFile.e2eMode === 'unclassified').length} unclassified.`,
+    `- Dashboard suites: ${dashboardFiles.length}; ${dashboardFiles.length === 0 ? 'coverage gap recorded' : 'coverage present'}.`,
+    `- Features without a mapped test file: ${featureDocumentsWithoutTests.length === 0 ? 'none' : featureDocumentsWithoutTests.map(featureTitle).join(', ')}.`,
+    '',
+    'Counts describe repository evidence, not a latest passing run. A missing direct ID is a traceability gap; it does not by itself prove',
+    'that the behavior is untested.'
+  ].join('\n')
+}
+
 function renderRepositoryInventory(inventory) {
   const lines = [
     '## Repository Test Inventory',
@@ -261,6 +294,8 @@ const report = [
   'Generated from tracked test declarations plus representative `US-*` and `AC-US-*` references. The inventory keeps unmapped tests visible, while acceptance counts distinguish repository layers, integrated E2E journeys, and mocked browser tests. References do not prove exhaustive coverage or a passing latest run.',
   '',
   renderRepositoryInventory(inventory),
+  '',
+  renderAuditSnapshot(requestedDocuments, result.criteria, inventory),
   '',
   renderFeatureOverview(requestedDocuments, result.criteria, inventory),
   '',
