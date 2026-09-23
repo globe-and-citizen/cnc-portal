@@ -44,6 +44,12 @@ function coverageMark(paths) {
   return paths.length === 0 ? '—' : `✅ ${paths.length}`
 }
 
+function titleSample(testFile, limit = 4) {
+  const titles = testFile.titles.slice(0, limit).map((title) => `“${title.replaceAll('`', "'")}”`)
+  if (testFile.titles.length > limit) titles.push(`+${testFile.titles.length - limit} more`)
+  return titles.length > 0 ? titles.join('; ') : 'No static title extracted'
+}
+
 function featureTitle(document) {
   return document.content.match(/^# (.+?) — User Stories/m)?.[1] ?? document.path
 }
@@ -145,6 +151,12 @@ function renderAuditSnapshot(featureDocuments, criteria, inventory) {
     (testFile) => testFile.featureDocuments.length > 0 || testFile.technicalDocuments.length > 0
   )
   const productFiles = inventory.filter((testFile) => testFile.featureDocuments.length > 0)
+  const productFilesWithoutDirectIds = productFiles.filter(
+    (testFile) => testFile.storyIds.length === 0 && testFile.acceptanceIds.length === 0
+  )
+  const technicalOnlyFiles = inventory.filter(
+    (testFile) => testFile.featureDocuments.length === 0 && testFile.technicalDocuments.length > 0
+  )
   const storyIds = new Set(criteria.map((criterion) => criterion.storyId))
   const linkedStoryIds = new Set(inventory.flatMap((testFile) => testFile.storyIds))
   const acceptanceIds = new Set(criteria.map((criterion) => criterion.id))
@@ -161,6 +173,7 @@ function renderAuditSnapshot(featureDocuments, criteria, inventory) {
     '',
     `- Inventory: ${classifiedFiles.length}/${inventory.length} tracked test files classified; ${totalDeclarations} static test declarations.`,
     `- Product mapping: ${productFiles.length} files mapped to at least one product feature.`,
+    `- Documentation review queue: ${productFilesWithoutDirectIds.length} product-mapped files without a direct US/AC marker; ${technicalOnlyFiles.length} technical-only files to confirm remain non-product.`,
     `- Explicit story traceability: ${linkedStoryIds.size}/${storyIds.size} user stories referenced by tests.`,
     `- Representative AC evidence: ${linkedAcceptanceIds.size}/${acceptanceIds.size} acceptance criteria referenced by tests.`,
     `- E2E suites: ${integratedE2e.length} integrated, ${mockedE2e.length} mocked, ${inventory.filter((testFile) => testFile.layer === 'e2e' && testFile.e2eMode === 'unclassified').length} unclassified.`,
@@ -170,6 +183,46 @@ function renderAuditSnapshot(featureDocuments, criteria, inventory) {
     'Counts describe repository evidence, not a latest passing run. A missing direct ID is a traceability gap; it does not by itself prove',
     'that the behavior is untested.'
   ].join('\n')
+}
+
+function renderDocumentationReviewQueue(featureDocuments, criteria, inventory) {
+  const lines = [
+    '## Documentation Review Queue',
+    '',
+    'Review these feature-owned tests against the current journey and canonical stories. Use the assertions and implementation as evidence,',
+    'not the title alone:',
+    '',
+    '1. If the behavior matches an existing US/AC, add a direct ID only to a representative test that proves it.',
+    '2. If it exposes a stable user-visible outcome that is absent from the feature contract, revise an existing AC or add a new AC; create',
+    '   a new US only for a distinct actor goal.',
+    '3. If it protects an implementation detail, keep it under technical ownership without creating a product promise.',
+    '4. If it reflects stale or accidental behavior, investigate it instead of documenting it as intended behavior.',
+    ''
+  ]
+
+  for (const document of featureDocuments) {
+    const featureStoryIds = new Set(
+      criteria.filter((criterion) => criterion.documentPath === document.path).map((criterion) => criterion.storyId)
+    )
+    const files = inventory.filter(
+      (testFile) =>
+        testFile.featureDocuments.includes(document.path) &&
+        !testFile.storyIds.some((storyId) => featureStoryIds.has(storyId))
+    )
+    if (files.length === 0) continue
+
+    lines.push(
+      `### ${featureTitle(document)}`,
+      '',
+      ...files.map(
+        (testFile) =>
+          `- [ ] \`${testFile.path}\` — ${testFile.declarations} static tests; sample: ${titleSample(testFile)}`
+      ),
+      ''
+    )
+  }
+
+  return lines.join('\n')
 }
 
 function renderRepositoryInventory(inventory) {
@@ -206,7 +259,7 @@ function renderRepositoryInventory(inventory) {
       '',
       ...technicalOnly.map(
         (testFile) =>
-          `- \`${testFile.path}\` — ${testFile.declarations} static test declarations; owners: ${testFile.technicalDocuments.map((path) => `\`${path}\``).join(', ')}`
+          `- \`${testFile.path}\` — ${testFile.declarations} static test declarations; owners: ${testFile.technicalDocuments.map((path) => `\`${path}\``).join(', ')}; sample: ${titleSample(testFile)}`
       )
     )
   }
@@ -298,6 +351,8 @@ const report = [
   renderAuditSnapshot(requestedDocuments, result.criteria, inventory),
   '',
   renderFeatureOverview(requestedDocuments, result.criteria, inventory),
+  '',
+  renderDocumentationReviewQueue(requestedDocuments, result.criteria, inventory),
   '',
   requestedDocuments.map((document) => renderFeatureCoverage(document, coverage, inventory)).join('\n\n'),
   ''

@@ -1,4 +1,5 @@
 import { posix } from 'node:path'
+import ts from 'typescript'
 
 const STORY_HEADING = /^## (US-[A-Z0-9-]+):\s+/
 const SECTION_HEADING = /^### (.+)$/
@@ -145,6 +146,68 @@ export function countStaticTestDeclarations(document) {
   return directTests.length + parameterizedTests.length
 }
 
+function baseTestCallName(expression) {
+  if (ts.isIdentifier(expression) && ['it', 'test'].includes(expression.text)) return expression.text
+  if (
+    ts.isPropertyAccessExpression(expression) &&
+    ts.isIdentifier(expression.expression) &&
+    ['it', 'test'].includes(expression.expression.text) &&
+    ['only', 'skip', 'todo', 'fixme'].includes(expression.name.text)
+  ) {
+    return expression.expression.text
+  }
+  return null
+}
+
+function isParameterizedTestFactory(expression) {
+  const factory = ts.isCallExpression(expression)
+    ? expression.expression
+    : ts.isTaggedTemplateExpression(expression)
+      ? expression.tag
+      : expression
+  return (
+    (ts.isPropertyAccessExpression(factory) || ts.isPropertyAccessChain(factory)) &&
+    factory.name.text === 'each' &&
+    ts.isIdentifier(factory.expression) &&
+    ['it', 'test'].includes(factory.expression.text)
+  )
+}
+
+function staticTitle(argument) {
+  if (ts.isStringLiteral(argument) || ts.isNoSubstitutionTemplateLiteral(argument)) return argument.text
+  return null
+}
+
+export function extractStaticTestTitles(document) {
+  const source = ts.createSourceFile(
+    document.path,
+    document.content,
+    ts.ScriptTarget.Latest,
+    true,
+    document.path.endsWith('.tsx') || document.path.endsWith('.jsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+  )
+  const titles = []
+
+  function visit(node) {
+    if (ts.isCallExpression(node) && node.arguments.length > 0) {
+      const directTest = baseTestCallName(node.expression)
+      const parameterizedTest =
+        ts.isCallExpression(node.expression) || ts.isTaggedTemplateExpression(node.expression)
+          ? isParameterizedTestFactory(node.expression)
+          : false
+
+      if (directTest || parameterizedTest) {
+        const title = staticTitle(node.arguments[0])
+        if (title) titles.push(title)
+      }
+    }
+    ts.forEachChild(node, visit)
+  }
+
+  visit(source)
+  return titles
+}
+
 function repositoryLinks(document) {
   const links = new Set()
 
@@ -228,6 +291,7 @@ export function summarizeTestFileInventory(
         layer: classifyTestCoverageLayer(document.path),
         e2eMode: classifyE2eCoverageMode(document),
         declarations,
+        titles: extractStaticTestTitles(document),
         acceptanceIds,
         storyIds: [...storyIds].sort(),
         featureDocuments: ownedFeatureDocuments,

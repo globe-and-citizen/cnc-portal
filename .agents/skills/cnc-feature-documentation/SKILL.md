@@ -75,6 +75,9 @@ requested or required by the active GitHub workflow.
   US/AC markers from canonical Implementation Evidence links: the latter maps feature support but does not prove a story or criterion. Keep
   contract- or implementation-owned tests in the technical-only category. Treat an unmapped file as an audit item, not as acceptance
   evidence, until its role is reviewed.
+- Review feature-only and technical-only tests for documentation discovery. If a test proves an existing outcome, link only the
+  representative evidence. Add an AC only for verified stable user-visible behavior or a business rule, and add a US only for a distinct
+  actor goal. Keep implementation details technical, and never document stale or accidental test behavior as product intent.
 - Keep representative test titles declarative and omit `should`. Prefix a backend, unit, or focused integration title with the AC ID only
   when that test directly represents one criterion. Use the guide's structured `Covers` block for multi-criterion tests and E2E paths.
 - Use Mermaid for every diagram. Add a diagram only when it makes a meaningful state, sequence, branch, hierarchy, or boundary easier to

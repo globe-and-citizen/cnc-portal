@@ -74,6 +74,12 @@ criterion evidence. Links from canonical contract or implementation documentatio
 none of these mappings remain visible in the unmapped checklist until reviewed. The feature overview separates feature-only support, direct
 story links, and representative AC evidence, with counts for each repository layer and both E2E integration modes.
 
+Review feature-only and technical-only tests as a documentation discovery surface. A test may reveal an existing US/AC whose representative
+evidence is not linked, or a stable user-visible outcome absent from the feature contract. Verify the assertions, implementation, current
+journey, and intended product boundary before changing documentation. Add a new AC only for an observable product outcome or business rule;
+add a new US only for a distinct actor goal. Keep implementation details under technical ownership, and do not turn stale or accidental test
+behavior into a product promise.
+
 ## Mocking conventions
 
 **Reuse the global mocks. Do not re-mock them locally.** `app/vitest.config.ts` loads setup files from `app/src/tests/setup/` that

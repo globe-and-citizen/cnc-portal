@@ -4,6 +4,7 @@ import {
   classifyE2eCoverageMode,
   classifyTestCoverageLayer,
   countStaticTestDeclarations,
+  extractStaticTestTitles,
   parseAcceptanceCoverageRows,
   parseAcceptanceCriteria,
   summarizeAcceptanceCriterionCoverage,
@@ -245,6 +246,7 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
       layer: 'frontend',
       e2eMode: null,
       declarations: 1,
+      titles: ['[AC-US-EXAMPLE-001-01] proves the primary outcome'],
       acceptanceIds: ['AC-US-EXAMPLE-001-01'],
       storyIds: ['US-EXAMPLE-001'],
       featureDocuments: ['docs/features/example/README.md'],
@@ -256,6 +258,7 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
       layer: 'contract',
       e2eMode: null,
       declarations: 1,
+      titles: ['covers a technical helper'],
       acceptanceIds: [],
       storyIds: [],
       featureDocuments: [],
@@ -267,6 +270,7 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
       layer: 'frontend',
       e2eMode: null,
       declarations: 1,
+      titles: ['supports the feature'],
       acceptanceIds: [],
       storyIds: [],
       featureDocuments: ['docs/features/example/README.md'],
@@ -274,6 +278,21 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
       mappingSources: ['canonical evidence']
     }
   ])
+})
+
+test('extracts direct and parameterized static test titles', () => {
+  assert.deepEqual(
+    extractStaticTestTitles(
+      testDocument(`it('direct outcome', () => {})
+test.skip('skipped outcome', () => {})
+test.each([{ value: 1 }])('parameterized outcome: $value', () => {})
+test.each\`
+  value
+  ${'${1}'}
+\`('table outcome: $value', () => {})`)
+    ),
+    ['direct outcome', 'skipped outcome', 'parameterized outcome: $value', 'table outcome: $value']
+  )
 })
 
 test('rejects a criterion without an ID', () => {

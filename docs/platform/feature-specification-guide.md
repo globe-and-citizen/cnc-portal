@@ -152,6 +152,24 @@ evidence from tracked test files; it does not infer whether an unreferenced crit
 passed. Use the generated feature overview for breadth across layers; use the per-story tables below it when deciding whether a specific
 criterion has the expected kind of representative evidence.
 
+#### Discovering Undocumented Behaviour from Tests
+
+Feature-only and technical-only tests are a review queue, not proof that documentation is complete or incomplete. For each test without a
+direct product identifier, inspect its assertions, the exercised implementation, the reachable journey, and the existing criteria:
+
+1. If it proves an existing criterion, attach the ID only to the smallest representative test; do not tag every incidental regression test.
+2. If it exposes a stable user-visible outcome or independently verifiable business rule that is absent from the feature contract, revise
+   the owning criterion or add a new criterion with the next unused stable ID.
+3. Create a new user story only when the behavior represents a distinct actor goal and user-visible benefit, not merely another test case,
+   endpoint, component state, or contract branch.
+4. If the test protects shared runtime or implementation detail, keep it under implementation or contract documentation without creating a
+   product promise.
+5. If the expectation is stale, accidental, unreachable, or inconsistent with the intended journey, investigate the test or implementation
+   instead of documenting it as required behavior.
+
+The generated documentation-review queue includes behavior samples to support this audit. Test titles are discovery hints; only verified
+current behavior and product intent justify changing a canonical US or AC.
+
 ### Story Statuses
 
 | Status           | Meaning                                                    |
