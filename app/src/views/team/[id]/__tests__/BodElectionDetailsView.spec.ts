@@ -22,7 +22,7 @@ const election = (resultsPublished: boolean): RawElection => [
   resultsPublished
 ]
 
-describe('BodElectionDetailsView.vue', () => {
+describe('[US-EL-05][US-EL-06][US-EL-07][US-EL-08] BodElectionDetailsView.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () =>

@@ -12,7 +12,7 @@ import {
   renderWithProviders
 } from '@/tests/mocks'
 
-describe('SetCompensationMultiplierAction.vue', () => {
+describe('[US-SHER-005] SetCompensationMultiplierAction.vue', () => {
   const createWrapper = () =>
     renderWithProviders(SetCompensationMultiplierAction, {
       global: {

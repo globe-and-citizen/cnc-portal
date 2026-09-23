@@ -156,7 +156,7 @@ describe('PayDividendsAction.vue', () => {
     expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
   })
 
-  it('in BOD mode exits early when bankAddress is missing', async () => {
+  it('[AC-US-SHER-002-11] does not create a Board action without a Bank address', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper({ bankAddress: undefined })
 
@@ -168,7 +168,7 @@ describe('PayDividendsAction.vue', () => {
     expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
   })
 
-  it('in BOD mode creates native dividends action', async () => {
+  it('[AC-US-SHER-002-03] creates a Board action for a native dividend', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
 
@@ -201,7 +201,7 @@ describe('PayDividendsAction.vue', () => {
     )
   })
 
-  it('in non-BOD mode executes native write and closes modal', async () => {
+  it('[AC-US-SHER-002-02] executes a native dividend directly for the Bank owner', async () => {
     const wrapper = createWrapper()
 
     await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')

@@ -14,7 +14,7 @@ const mountRecap = (props: Record<string, unknown> = {}) =>
     }
   })
 
-describe('MintRecapCard.vue', () => {
+describe('[US-SHER-004] MintRecapCard.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvestorReads.symbol.data.value = 'SHER'

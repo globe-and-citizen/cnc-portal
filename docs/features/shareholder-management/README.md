@@ -59,7 +59,7 @@ flowchart LR
 | ----------- | ---------------------------------------- | ------------------------------- | -------------- |
 | US-SHER-001 | Invest in the Safe and receive SHER      | Company member                  | 🧪 Validation  |
 | US-SHER-002 | Distribute dividends to shareholders     | Bank owner / Board member       | 🧪 Validation  |
-| US-SHER-003 | Review shareholder position and activity | Company member                  | 🧪 Validation  |
+| US-SHER-003 | Review shareholder position and activity | Company member                  | 🚧 In Progress |
 | US-SHER-004 | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress |
 | US-SHER-005 | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  |
 | US-SHER-006 | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  |
@@ -176,8 +176,10 @@ Bank's distribution trigger is not booked again.
 
 #### Edge & Error Cases
 
-- [x] `AC-US-SHER-003-06` Missing token data is presented as unavailable rather than as a fabricated balance or supply.
+- [x] `AC-US-SHER-003-06` Missing Investor balance or total-supply data is presented as unavailable rather than as a fabricated amount.
 - [x] `AC-US-SHER-003-07` A failed shareholder or activity read is reported without replacing known values with successful-looking data.
+- [ ] `AC-US-SHER-003-08` Missing or invalid Investor token-symbol data is presented as unavailable throughout the overview and activity
+      history rather than as a fabricated token identity.
 
 **Dependencies:** Current Investor contract and company access
 
@@ -324,12 +326,13 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   requires `MINTER_ROLE`. Neither control preflights that role, so the portal needs one contract-aligned authorization rule (`US-SHER-004`).
 - Migration dispatch and closure are surfaced to the company owner, while the contract restricts them to the Investor owner. The portal does
   not yet verify that both roles resolve to the connected user (`US-SHER-007`).
+- Investor activity falls back to the literal `SHER` symbol when the symbol read is missing or invalid, so the activity history can present
+  a fabricated token identity (`US-SHER-003`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `272d6bd8d455cf09e681192f3b9c6c284b63b4fa`
 
-- [Shareholder and investor components](../../../app/src/components/sections/SherTokenView/)
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
 - [Shareholder list](../../../app/src/components/sections/SherTokenView/ShareholderList.vue) and
@@ -352,19 +355,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   [migration orchestration](../../../app/src/composables/investor/useShareholderMigration.ts), and
   [claim and settlement writes](../../../app/src/composables/investor/useClaimMigration.ts)
 - [Investor overview tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorsHeader.spec.ts),
-  [shareholder-list tests](../../../app/src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts),
-  [issuance-form tests](../../../app/src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts), and
-  [migration-banner tests](../../../app/src/components/sections/SherTokenView/__tests__/ShareholderMigrationBanner.spec.ts)
-
-### Test-suite ownership
-
-- [Investor composable tests](../../../app/src/composables/investor/__tests__/),
-  [Investor view tests](../../../app/src/views/team/%5Bid%5D/__tests__/SherTokenView.spec.ts), and
-  [Safe Deposit Router model tests](../../../app/src/utils/safeDepositRouter/__tests__/)
-- [Migration API tests](../../../backend/src/controllers/__tests__/investorMigrationController.test.ts),
-  [Merkle parity tests](../../../backend/src/services/__tests__/merkleParity.test.ts), and
-  [Merkle snapshot tests](../../../backend/src/services/__tests__/merkleSnapshotService.test.ts)
-- [Investor contract tests](../../../contract/test/Investor.spec.ts)
+  [issuance-form tests](../../../app/src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts)
 
 ## Related Documentation
 

@@ -10,7 +10,7 @@ import { mockElectionsReads, mockLog, resetContractMocks } from '@/tests/mocks'
 
 const MOCK_ELECTIONS_ADDRESS = '0x1234567890123456789012345678901234567890'
 
-describe('BodElectionView.vue', () => {
+describe('[US-EL-05][US-EL-07][US-EL-08] BodElectionView.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () =>

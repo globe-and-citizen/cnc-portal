@@ -69,7 +69,7 @@ describe('PublishResult.vue', () => {
     expect(wrapper.findComponent({ name: 'UButton' }).props('loading')).toBe(true)
   })
 
-  it('does not publish and explains why when the viewer may not publish', async () => {
+  it('[AC-US-EL-03-05] does not publish when the viewer is not authorized', async () => {
     const wrapper = mount(PublishResult, {
       props: { electionId: 5, disabled: true, disabledReason: 'Only the owner can publish' }
     })

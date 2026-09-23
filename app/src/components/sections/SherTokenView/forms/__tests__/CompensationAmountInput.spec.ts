@@ -28,7 +28,7 @@ const MOCK_DATA = {
   highRate: '2.5'
 } as const
 
-describe('CompensationAmountInput', () => {
+describe('[US-SHER-001] CompensationAmountInput', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvestorReads.symbol.data.value = MOCK_DATA.tokenSymbol

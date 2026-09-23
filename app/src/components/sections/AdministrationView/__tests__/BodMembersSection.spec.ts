@@ -85,13 +85,13 @@ describe('BodMembersSection', () => {
     expect(wrapper.text()).toContain('Loading...')
   })
 
-  it('shows 404 fallback when no members and not fetching', async () => {
+  it('shows the empty Board state when no members are available', async () => {
     const wrapper = mountSection()
 
     expect(wrapper.find('[data-test="not-found"]').exists()).toBe(true)
   })
 
-  it('renders current board members when data is available', async () => {
+  it('[AC-US-EL-07-01] renders current board members when data is available', async () => {
     seedBoard(['0x1', '0x2'])
 
     const wrapper = mountSection()
@@ -102,7 +102,7 @@ describe('BodMembersSection', () => {
     expect(users[1]?.attributes('data-name')).toBe('Bob')
   })
 
-  it('renders election winners when electionId is provided', async () => {
+  it('[AC-US-EL-07-02] renders election winners when electionId is provided', async () => {
     seedBoard(['0x1'])
     mockElectionsReads.getWinners.data.value = ['0x2']
 

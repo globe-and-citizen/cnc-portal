@@ -37,7 +37,7 @@ describe('SetSafeAddressAction.vue', () => {
     expect(wrapper.find('[data-test="set-safe-address-button"]').exists()).toBe(false)
   })
 
-  it('sets the team safe address on the router', async () => {
+  it('[AC-US-SHER-005-01] sets the company Safe on the router', async () => {
     const wrapper = createWrapper()
 
     await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')

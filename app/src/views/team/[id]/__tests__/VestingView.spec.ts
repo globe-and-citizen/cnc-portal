@@ -87,7 +87,7 @@ describe('VestingView.vue', () => {
     expect(wrapper.get('[data-test="vesting-released"]').text()).toBe('1 SHR')
   })
 
-  it('refetches active and archived schedules from the visible retry action', async () => {
+  it('[AC-US-VESTING-002-09] retries both schedule reads after a visible read failure', async () => {
     mockVestingReads.vestingsWithMembers.error.value = new Error('read failed')
     const wrapper = mountView()
 

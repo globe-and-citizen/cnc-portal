@@ -3,7 +3,7 @@ import InvestorsHeader from '../InvestorsHeader.vue'
 import { parseUnits } from 'viem'
 import { mockInvestorReads, mockTeamStore, mockUserStore, renderWithProviders } from '@/tests/mocks'
 
-describe('InvestorsHeader', () => {
+describe('[US-SHER-003] InvestorsHeader', () => {
   let wrapper: ReturnType<typeof createComponent>
 
   // Test data constants
